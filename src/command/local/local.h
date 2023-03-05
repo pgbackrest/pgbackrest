@@ -10,6 +10,6 @@ Local Command
 Functions
 ***********************************************************************************************************************************/
 // Local command
-void cmdLocal(ProtocolServer *server);
+FN_EXTERN void cmdLocal(ProtocolServer *server);
 
 #endif

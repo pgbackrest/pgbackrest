@@ -105,7 +105,7 @@ static const struct LogLevel
     },
 };
 
-LogLevel
+FN_EXTERN LogLevel
 logLevelEnum(const StringId logLevelId)
 {
     FUNCTION_TEST_BEGIN();
@@ -127,7 +127,7 @@ logLevelEnum(const StringId logLevelId)
     FUNCTION_TEST_RETURN(ENUM, result);
 }
 
-const char *
+FN_EXTERN const char *
 logLevelStr(LogLevel logLevel)
 {
     FUNCTION_TEST_BEGIN();
@@ -156,7 +156,7 @@ logAnySet(void)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-bool
+FN_EXTERN bool
 logAny(LogLevel logLevel)
 {
     FUNCTION_TEST_BEGIN();
@@ -169,7 +169,7 @@ logAny(LogLevel logLevel)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 logInit(
     LogLevel logLevelStdOutParam, LogLevel logLevelStdErrParam, LogLevel logLevelFileParam, bool logTimestampParam,
     unsigned int processId, unsigned int logProcessMax, bool dryRunParam)
@@ -224,7 +224,7 @@ logFileClose(void)
 }
 
 /**********************************************************************************************************************************/
-bool
+FN_EXTERN bool
 logFileSet(const char *logFile)
 {
     FUNCTION_TEST_BEGIN();
@@ -264,7 +264,7 @@ logFileSet(const char *logFile)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 logClose(void)
 {
     FUNCTION_TEST_VOID();
@@ -472,7 +472,8 @@ logPost(LogPreResult *logData, LogLevel logLevel, LogLevel logRangeMin, LogLevel
     // Determine where to log the message based on log-level-stderr
     if (logLevel <= logLevelStdErr)
     {
-        if (logRange(logLevelStdErr, logRangeMin, logRangeMax))
+        if ((logLevelStdErr > logLevelStdOut && logRange(logLevelStdErr, logRangeMin, logRangeMax)) ||
+            (logLevelStdErr <= logLevelStdOut && logRange(logLevelStdOut, logRangeMin, logRangeMax)))
         {
             logWriteIndent(
                 logFdStdErr, logData->logBufferStdErr, logData->indentSize - (size_t)(logData->logBufferStdErr - logBuffer),
@@ -508,7 +509,7 @@ logPost(LogPreResult *logData, LogLevel logLevel, LogLevel logRangeMin, LogLevel
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 logInternal(
     LogLevel logLevel, LogLevel logRangeMin, LogLevel logRangeMax, unsigned int processId, const char *fileName,
     const char *functionName, int code, const char *message)
@@ -538,7 +539,7 @@ logInternal(
     FUNCTION_TEST_RETURN_VOID();
 }
 
-void
+FN_EXTERN void
 logInternalFmt(
     LogLevel logLevel, LogLevel logRangeMin, LogLevel logRangeMax, unsigned int processId, const char *fileName,
     const char *functionName, int code, const char *format, ...)

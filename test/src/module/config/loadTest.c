@@ -218,7 +218,7 @@ testRun(void)
         TEST_ERROR(
             hrnCfgLoadP(cfgCmdCheck, argList), OptionInvalidValueError,
             "'50.5' is not valid for 'protocol-timeout' option\n"
-                "HINT 'protocol-timeout' option (50.5) should be greater than 'db-timeout' option (100000).");
+            "HINT 'protocol-timeout' option (50.5) should be greater than 'db-timeout' option (100000).");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("very small protocol-timeout triggers db-timeout special handling");
@@ -280,9 +280,9 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdExpire, argList, .comment = "load config for retention warning");
         TEST_RESULT_LOG(
             "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out"
-                " of space\n"
+            " of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the"
-                " maximum.");
+            " maximum.");
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptRepoRetentionArchive), false, "repo1-retention-archive not set");
 
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
@@ -296,9 +296,9 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdExpire, argList, .comment = "multi-repo, load config for retention warning");
         TEST_RESULT_LOG(
             "P00   WARN: option 'repo2-retention-full' is not set for 'repo2-retention-full-type=count', the repository may run out"
-                " of space\n"
+            " of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option 'repo2-retention-full' to the"
-                " maximum.");
+            " maximum.");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-full warning, retention-archive-type incr - expire command");
@@ -311,11 +311,11 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out"
-                " of space\n"
+            " of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the"
-                " maximum.\n"
+            " maximum.\n"
             "P00   WARN: WAL segments will not be expired: option 'repo1-retention-archive-type=incr' but option"
-                " 'repo1-retention-archive' is not set");
+            " 'repo1-retention-archive' is not set");
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptRepoRetentionArchive), false, "repo1-retention-archive not set");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -329,11 +329,11 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out"
-                " of space\n"
+            " of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the"
-                " maximum.\n"
+            " maximum.\n"
             "P00   WARN: WAL segments will not be expired: option 'repo1-retention-archive-type=diff' but neither option"
-                " 'repo1-retention-archive' nor option 'repo1-retention-diff' is set");
+            " 'repo1-retention-archive' nor option 'repo1-retention-diff' is set");
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptRepoRetentionArchive), false, "repo1-retention-archive not set");
 
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionDiff, "2");
@@ -341,9 +341,9 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out"
-                " of space\n"
+            " of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the"
-                " maximum.");
+            " maximum.");
         TEST_RESULT_INT(cfgOptionInt(cfgOptRepoRetentionArchive), 2, "repo1-retention-archive set to retention-diff");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -360,7 +360,7 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   WARN: option 'repo1-retention-diff' is not set for 'repo1-retention-archive-type=diff'\n"
             "            HINT: to retain differential backups indefinitely (without warning), set option 'repo1-retention-diff'"
-                " to the maximum.");
+            " to the maximum.");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("no warning - expire command");
@@ -445,10 +445,10 @@ testRun(void)
 
         TEST_ERROR(
             hrnCfgLoadP(cfgCmdArchiveGet, argList), OptionInvalidValueError,
-            "'bogus.bucket' is not valid for option 'repo111-s3-bucket'"
-                "\nHINT: RFC-2818 forbids dots in wildcard matches."
-                "\nHINT: TLS/SSL verification cannot proceed with this bucket name."
-                "\nHINT: remove dots from the bucket name.");
+            "'bogus.bucket' is not valid for option 'repo111-s3-bucket'\n"
+            "HINT: RFC-2818 forbids dots in wildcard matches.\n"
+            "HINT: TLS/SSL verification cannot proceed with this bucket name.\n"
+            "HINT: remove dots from the bucket name.");
 
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3Key, 111);
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3KeySecret, 111);
@@ -517,6 +517,40 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionValid(cfgOptCompress), false, "compress is not valid");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on invalid compress level");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptCompressType, "gz");
+        hrnCfgArgRawZ(argList, cfgOptCompressLevel, "-2");
+
+        TEST_ERROR(
+            hrnCfgLoadP(cfgCmdArchivePush, argList), OptionInvalidValueError,
+            "'-2' is out of range for 'compress-level' option when 'compress-type' option = 'gz'");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptCompressType, "gz");
+        hrnCfgArgRawZ(argList, cfgOptCompressLevel, "10");
+
+        TEST_ERROR(
+            hrnCfgLoadP(cfgCmdArchivePush, argList), OptionInvalidValueError,
+            "'10' is out of range for 'compress-level' option when 'compress-type' option = 'gz'");
+
+        // In practice level should not be used here but preserve the prior behavior in case something depends on it
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("do not check range when compress-type = none");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptCompressType, "none");
+        hrnCfgArgRawZ(argList, cfgOptCompressLevel, "3");
+
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+        TEST_RESULT_UINT(cfgOptionStrId(cfgOptCompressType), CFGOPTVAL_COMPRESS_TYPE_NONE, "compress-type=none");
+        TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 3, "compress-level=3");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("warn when compress-type and compress both set");
 
         argList = strLstNew();
@@ -532,6 +566,61 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   WARN: 'compress' and 'compress-type' options should not both be set\n"
             "            HINT: 'compress-type' is preferred and 'compress' is deprecated.");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("S3 default chunk size");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 1, "s3");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Bucket, 1, "bucket");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Region, 1, "region");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Endpoint, 1, "endpoint");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoS3KeyType, 1, "auto");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo");
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+
+        TEST_RESULT_UINT(cfgOptionUInt64(cfgOptRepoStorageUploadChunkSize), 5 * 1024 * 1024, "default chunk size");
+        TEST_RESULT_UINT(cfgOptionSource(cfgOptRepoStorageUploadChunkSize), cfgSourceDefault, "chunk size source is default");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("S3 custom chunk size");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 1, "s3");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Bucket, 1, "bucket");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Region, 1, "region");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Endpoint, 1, "endpoint");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoS3KeyType, 1, "auto");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoStorageUploadChunkSize, 1, "64KiB");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo");
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+
+        TEST_RESULT_UINT(cfgOptionUInt64(cfgOptRepoStorageUploadChunkSize), 64 * 1024, "chunk size set");
+        TEST_RESULT_UINT(cfgOptionSource(cfgOptRepoStorageUploadChunkSize), cfgSourceParam, "chunk size source is param");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("Azure default chunk size");
+
+        hrnCfgEnvKeyRawZ(cfgOptRepoAzureAccount, 1, "account");
+        hrnCfgEnvKeyRawZ(cfgOptRepoAzureKey, 1, "mykey");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 1, "azure");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoAzureContainer, 1, "container");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo");
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+
+        TEST_RESULT_UINT(cfgOptionUInt64(cfgOptRepoStorageUploadChunkSize), 4 * 1024 * 1024, "default chunk size");
+        TEST_RESULT_UINT(cfgOptionSource(cfgOptRepoStorageUploadChunkSize), cfgSourceDefault, "chunk size source is default");
+
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoAzureAccount, 1);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoAzureKey, 1);
     }
 
     // *****************************************************************************************************************************
@@ -617,7 +706,6 @@ testRun(void)
         TEST_RESULT_INT(umask(0111), 0000, "umask was reset");
         TEST_RESULT_UINT(ioTimeoutMs(), 95500, "check io timeout");
 
-
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("umask is reset, neutral-umask=n");
 
@@ -643,7 +731,6 @@ testRun(void)
         strLstAddZ(argList, PROJECT_BIN);
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "no command");
-
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("help command only");

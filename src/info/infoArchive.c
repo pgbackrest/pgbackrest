@@ -3,17 +3,17 @@ Archive Info Handler
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <inttypes.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-#include <inttypes.h>
 
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
-#include "common/log.h"
 #include "common/ini.h"
 #include "common/io/bufferWrite.h"
 #include "common/io/io.h"
+#include "common/log.h"
 #include "info/infoArchive.h"
 #include "info/infoPg.h"
 #include "postgres/interface.h"
@@ -56,7 +56,7 @@ infoArchiveNewInternal(void)
 }
 
 /**********************************************************************************************************************************/
-InfoArchive *
+FN_EXTERN InfoArchive *
 infoArchiveNew(unsigned int pgVersion, uint64_t pgSystemId, const String *cipherPassSub)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -83,7 +83,7 @@ infoArchiveNew(unsigned int pgVersion, uint64_t pgSystemId, const String *cipher
 }
 
 /**********************************************************************************************************************************/
-InfoArchive *
+FN_EXTERN InfoArchive *
 infoArchiveNewLoad(IoRead *read)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -185,7 +185,7 @@ infoArchiveSave(InfoArchive *this, IoWrite *write)
 }
 
 /**********************************************************************************************************************************/
-InfoArchive *
+FN_EXTERN InfoArchive *
 infoArchivePgSet(InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -249,7 +249,7 @@ infoArchiveLoadFileCallback(void *const data, const unsigned int try)
     FUNCTION_LOG_RETURN(BOOL, result);
 }
 
-InfoArchive *
+FN_EXTERN InfoArchive *
 infoArchiveLoadFile(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -301,7 +301,7 @@ infoArchiveLoadFile(const Storage *storage, const String *fileName, CipherType c
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 infoArchiveSaveFile(
     InfoArchive *infoArchive, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
 {

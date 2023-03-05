@@ -11,8 +11,8 @@ C Test Harness
 #include <unistd.h>
 
 #include "common/harnessDebug.h"
-#include "common/harnessTest.h"
 #include "common/harnessLog.h"
+#include "common/harnessTest.h"
 
 #define TEST_LIST_SIZE                                              64
 
@@ -57,8 +57,8 @@ static struct HarnessTestLocal
 Extern functions
 ***********************************************************************************************************************************/
 #ifdef HRN_FEATURE_LOG
-    void harnessLogInit(void);
-    void harnessLogFinal(void);
+void harnessLogInit(void);
+void harnessLogFinal(void);
 #endif
 
 /***********************************************************************************************************************************
@@ -351,14 +351,14 @@ hrnTestLogPrefix(const int lineNo)
 
         // Print elapsed time size the beginning of the test run
         printf(
-            "%03" PRIu64 ".%03" PRIu64"s", ((currentTime - testTimeMSecBegin()) / 1000),
+            "%03" PRIu64 ".%03" PRIu64 "s", ((currentTime - testTimeMSecBegin()) / 1000),
             ((currentTime - testTimeMSecBegin()) % 1000));
 
         // Print delta time since the last log message
         if (harnessTestLocal.logLastBeginTime != 0)
         {
             printf(
-                " %03" PRIu64 ".%03" PRIu64"s ", ((currentTime - harnessTestLocal.logLastBeginTime) / 1000),
+                " %03" PRIu64 ".%03" PRIu64 "s ", ((currentTime - harnessTestLocal.logLastBeginTime) / 1000),
                 ((currentTime - harnessTestLocal.logLastBeginTime) % 1000));
         }
         else
@@ -388,9 +388,13 @@ hrnTestResultBegin(const char *const statement, const bool result)
     FUNCTION_HARNESS_STACK_TRACE_LINE_SET(harnessTestLocal.logLastLineNo);
 
     // Set info to report if an error is thrown
-    harnessTestLocal.result =
-        (struct HarnessTestResult){
-            .running = true, .statement = statement, .lineNo = harnessTestLocal.logLastLineNo, .result = result};
+    harnessTestLocal.result = (struct HarnessTestResult)
+    {
+        .running = true,
+        .statement = statement,
+        .lineNo = harnessTestLocal.logLastLineNo,
+        .result = result,
+    };
 
     // Reset line number so it is not used by another test
     harnessTestLocal.logLastLineNo = 0;
@@ -442,7 +446,8 @@ hrnTestResultEnd(void)
 }
 
 /**********************************************************************************************************************************/
-static void hrnTestResultDiff(const char *actual, const char *expected)
+static void
+hrnTestResultDiff(const char *actual, const char *expected)
 {
     if (actual != NULL && expected != NULL && (strstr(actual, "\n") != NULL || strstr(expected, "\n") != NULL))
     {

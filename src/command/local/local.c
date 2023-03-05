@@ -28,7 +28,7 @@ static const ProtocolServerHandler commandLocalHandlerList[] =
 };
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 cmdLocal(ProtocolServer *server)
 {
     FUNCTION_LOG_VOID(logLevelDebug);

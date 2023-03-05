@@ -21,6 +21,16 @@
                 <option id="spool-path"><summary></summary><text><p></p></text></option>
                 <option id="stanza"><summary></summary><text><p></p></text></option>
 
+                <option id="back-trace">
+                    <summary>Enable back trace.</summary>
+
+                    <text>
+                        <p>Back tracing helps with debugging by showing more detail about were an error happened.</p>
+                    </text>
+
+                    <example>false</example>
+                </option>
+
                 <option id="buffer-size">
                     <summary>Buffer size for I/O operations.</summary>
 

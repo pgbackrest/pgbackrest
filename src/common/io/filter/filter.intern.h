@@ -54,7 +54,7 @@ typedef struct IoFilterInterface
 #define ioFilterNewP(type, driver, paramList, ...)                                                                                 \
     ioFilterNew(type, driver, paramList, (IoFilterInterface){__VA_ARGS__})
 
-IoFilter *ioFilterNew(StringId type, void *driver, Pack *paramList, IoFilterInterface);
+FN_EXTERN IoFilter *ioFilterNew(StringId type, void *driver, Pack *paramList, IoFilterInterface);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -69,10 +69,10 @@ typedef struct IoFilterPub
 } IoFilterPub;
 
 // Is the filter done?
-bool ioFilterDone(const IoFilter *this);
+FN_EXTERN bool ioFilterDone(const IoFilter *this);
 
 // Driver for the filter
-__attribute__((always_inline)) static inline void *
+FN_INLINE_ALWAYS void *
 ioFilterDriver(IoFilter *const this)
 {
     return THIS_PUB(IoFilter)->driver;
@@ -80,24 +80,24 @@ ioFilterDriver(IoFilter *const this)
 
 // Does the filter need the same input again? If the filter cannot get all its output into the output buffer then it may need access
 // to the same input again.
-bool ioFilterInputSame(const IoFilter *this);
+FN_EXTERN bool ioFilterInputSame(const IoFilter *this);
 
 // Interface for the filter
-__attribute__((always_inline)) static inline const IoFilterInterface *
+FN_INLINE_ALWAYS const IoFilterInterface *
 ioFilterInterface(const IoFilter *const this)
 {
     return &THIS_PUB(IoFilter)->interface;
 }
 
 // Does filter produce output? All In filters produce output.
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 ioFilterOutput(const IoFilter *const this)
 {
     return THIS_PUB(IoFilter)->interface.inOut != NULL;
 }
 
 // List of filter parameters
-__attribute__((always_inline)) static inline const Pack *
+FN_INLINE_ALWAYS const Pack *
 ioFilterParamList(const IoFilter *const this)
 {
     return THIS_PUB(IoFilter)->paramList;
@@ -107,13 +107,13 @@ ioFilterParamList(const IoFilter *const this)
 Functions
 ***********************************************************************************************************************************/
 // Filter input only (a result is expected)
-void ioFilterProcessIn(IoFilter *this, const Buffer *input);
+FN_EXTERN void ioFilterProcessIn(IoFilter *this, const Buffer *input);
 
 // Filter input and produce output
-void ioFilterProcessInOut(IoFilter *this, const Buffer *input, Buffer *output);
+FN_EXTERN void ioFilterProcessInOut(IoFilter *this, const Buffer *input, Buffer *output);
 
 // Move filter to a new parent mem context
-__attribute__((always_inline)) static inline IoFilter *
+FN_INLINE_ALWAYS IoFilter *
 ioFilterMove(IoFilter *this, MemContext *parentNew)
 {
     return objMoveContext(this, parentNew);
@@ -125,6 +125,6 @@ Macros for function logging
 #define FUNCTION_LOG_IO_FILTER_INTERFACE_TYPE                                                                                      \
     IoFilterInterface *
 #define FUNCTION_LOG_IO_FILTER_INTERFACE_FORMAT(value, buffer, bufferSize)                                                         \
-    objToLog(&value, "IoFilterInterface", buffer, bufferSize)
+    objNameToLog(&value, "IoFilterInterface", buffer, bufferSize)
 
 #endif

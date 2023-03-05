@@ -27,7 +27,7 @@ typedef struct ArchiveGetFileResult
     StringList *warnList;                                           // Warnings from a successful operation
 } ArchiveGetFileResult;
 
-ArchiveGetFileResult archiveGetFile(
+FN_EXTERN ArchiveGetFileResult archiveGetFile(
     const Storage *storage, const String *request, const List *actualList, const String *walDestination);
 
 #endif

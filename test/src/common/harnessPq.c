@@ -169,7 +169,8 @@ harnessPqScriptRun(const char *const function, const VariantList *const param, c
 /***********************************************************************************************************************************
 Shim for PQconnectdb()
 ***********************************************************************************************************************************/
-PGconn *PQconnectdb(const char *conninfo)
+PGconn *
+PQconnectdb(const char *conninfo)
 {
     return (PGconn *)harnessPqScriptRun(HRNPQ_CONNECTDB, varLstAdd(varLstNew(), varNewStrZ(conninfo)), NULL);
 }
@@ -177,7 +178,8 @@ PGconn *PQconnectdb(const char *conninfo)
 /***********************************************************************************************************************************
 Shim for PQstatus()
 ***********************************************************************************************************************************/
-ConnStatusType PQstatus(const PGconn *conn)
+ConnStatusType
+PQstatus(const PGconn *conn)
 {
     return (ConnStatusType)harnessPqScriptRun(HRNPQ_STATUS, NULL, (HarnessPq *)conn)->resultInt;
 }
@@ -185,7 +187,8 @@ ConnStatusType PQstatus(const PGconn *conn)
 /***********************************************************************************************************************************
 Shim for PQerrorMessage()
 ***********************************************************************************************************************************/
-char *PQerrorMessage(const PGconn *conn)
+char *
+PQerrorMessage(const PGconn *conn)
 {
     return (char *)harnessPqScriptRun(HRNPQ_ERRORMESSAGE, NULL, (HarnessPq *)conn)->resultZ;
 }
@@ -359,7 +362,8 @@ PQclear(PGresult *res)
 /***********************************************************************************************************************************
 Shim for PQfinish()
 ***********************************************************************************************************************************/
-void PQfinish(PGconn *conn)
+void
+PQfinish(PGconn *conn)
 {
     if (harnessPqStrict && !harnessPqScriptFail)
         harnessPqScriptRun(HRNPQ_FINISH, NULL, (HarnessPq *)conn);

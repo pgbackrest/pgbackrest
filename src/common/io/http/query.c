@@ -18,7 +18,7 @@ struct HttpQuery
 };
 
 /**********************************************************************************************************************************/
-HttpQuery *
+FN_EXTERN HttpQuery *
 httpQueryNew(HttpQueryNewParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -44,7 +44,7 @@ httpQueryNew(HttpQueryNewParam param)
 }
 
 /**********************************************************************************************************************************/
-HttpQuery *
+FN_EXTERN HttpQuery *
 httpQueryNewStr(const String *query)
 {
     FUNCTION_TEST_BEGIN();
@@ -96,7 +96,7 @@ httpQueryNewStr(const String *query)
 }
 
 /**********************************************************************************************************************************/
-HttpQuery *
+FN_EXTERN HttpQuery *
 httpQueryDup(const HttpQuery *query, HttpQueryDupParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -126,7 +126,7 @@ httpQueryDup(const HttpQuery *query, HttpQueryDupParam param)
 }
 
 /**********************************************************************************************************************************/
-HttpQuery *
+FN_EXTERN HttpQuery *
 httpQueryAdd(HttpQuery *this, const String *key, const String *value)
 {
     FUNCTION_TEST_BEGIN();
@@ -152,7 +152,7 @@ httpQueryAdd(HttpQuery *this, const String *key, const String *value)
 }
 
 /**********************************************************************************************************************************/
-const String *
+FN_EXTERN const String *
 httpQueryGet(const HttpQuery *this, const String *key)
 {
     FUNCTION_TEST_BEGIN();
@@ -167,7 +167,7 @@ httpQueryGet(const HttpQuery *this, const String *key)
 }
 
 /**********************************************************************************************************************************/
-StringList *
+FN_EXTERN StringList *
 httpQueryList(const HttpQuery *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -180,7 +180,7 @@ httpQueryList(const HttpQuery *this)
 }
 
 /**********************************************************************************************************************************/
-HttpQuery *
+FN_EXTERN HttpQuery *
 httpQueryMerge(HttpQuery *this, const HttpQuery *query)
 {
     FUNCTION_TEST_BEGIN();
@@ -208,7 +208,7 @@ httpQueryMerge(HttpQuery *this, const HttpQuery *query)
 }
 
 /**********************************************************************************************************************************/
-HttpQuery *
+FN_EXTERN HttpQuery *
 httpQueryPut(HttpQuery *this, const String *key, const String *value)
 {
     FUNCTION_TEST_BEGIN();
@@ -228,7 +228,7 @@ httpQueryPut(HttpQuery *this, const String *key, const String *value)
 }
 
 /**********************************************************************************************************************************/
-bool
+FN_EXTERN bool
 httpQueryRedact(const HttpQuery *this, const String *key)
 {
     FUNCTION_TEST_BEGIN();
@@ -243,7 +243,7 @@ httpQueryRedact(const HttpQuery *this, const String *key)
 }
 
 /**********************************************************************************************************************************/
-String *
+FN_EXTERN String *
 httpQueryRender(const HttpQuery *this, HttpQueryRenderParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -288,28 +288,25 @@ httpQueryRender(const HttpQuery *this, HttpQueryRenderParam param)
 }
 
 /**********************************************************************************************************************************/
-String *
-httpQueryToLog(const HttpQuery *this)
+FN_EXTERN void
+httpQueryToLog(const HttpQuery *const this, StringStatic *const debugLog)
 {
-    String *result = strCatZ(strNew(), "{");
-    const StringList *keyList = httpQueryList(this);
+    const VariantList *const keyList = kvKeyList(this->kv);
 
-    for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)
+    strStcCatChr(debugLog, '{');
+
+    for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
     {
-        const String *key = strLstGet(keyList, keyIdx);
+        const String *const key = varStr(varLstGet(keyList, keyIdx));
 
-        if (strSize(result) != 1)
-            strCatZ(result, ", ");
-
-        strCatFmt(result, "%s: ", strZ(key));
+        if (keyIdx != 0)
+            strStcCat(debugLog, ", ");
 
         if (httpQueryRedact(this, key))
-            strCatZ(result, "<redacted>");
+            strStcFmt(debugLog, "%s: <redacted>", strZ(key));
         else
-            strCatFmt(result, "'%s'", strZ(httpQueryGet(this, key)));
+            strStcFmt(debugLog, "%s: '%s'", strZ(key), strZ(httpQueryGet(this, key)));
     }
 
-    strCatZ(result, "}");
-
-    return result;
+    strStcCatChr(debugLog, '}');
 }

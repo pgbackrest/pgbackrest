@@ -3,9 +3,9 @@ Stanza Delete Command
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include "command/backup/common.h"
 #include "command/control/common.h"
 #include "command/stanza/delete.h"
-#include "command/backup/common.h"
 #include "common/debug.h"
 #include "common/memContext.h"
 #include "config/config.h"
@@ -18,7 +18,7 @@ Stanza Delete Command
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 cmdStanzaDelete(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);

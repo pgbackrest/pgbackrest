@@ -43,6 +43,7 @@ strIdBitFromZN(const StringIdBit bit, const char *const buffer, size_t size)
         case stringIdBit5:
         {
             // Map to convert characters to encoding
+            // {uncrustify_off - array alignment}
             static const uint8_t map[256] =
             {
                  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -62,6 +63,7 @@ strIdBitFromZN(const StringIdBit bit, const char *const buffer, size_t size)
                  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
                  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
             };
+            // {uncrustify_on}
 
             // Make sure the string is valid for this encoding
             for (size_t bufferIdx = 0; bufferIdx < size; bufferIdx++)
@@ -132,6 +134,7 @@ strIdBitFromZN(const StringIdBit bit, const char *const buffer, size_t size)
             ASSERT(bit == stringIdBit6);
 
             // Map to convert characters to encoding
+            // {uncrustify_off - array alignment}
             static const uint8_t map[256] =
             {
                  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -151,6 +154,7 @@ strIdBitFromZN(const StringIdBit bit, const char *const buffer, size_t size)
                  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
                  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
             };
+            // {uncrustify_on}
 
             // Make sure the string is valid for this encoding
             for (size_t bufferIdx = 0; bufferIdx < size; bufferIdx++)
@@ -211,7 +215,7 @@ strIdBitFromZN(const StringIdBit bit, const char *const buffer, size_t size)
     }
 }
 
-StringId
+FN_EXTERN StringId
 strIdFromZN(const char *const buffer, const size_t size, const bool error)
 {
     FUNCTION_TEST_BEGIN();
@@ -236,7 +240,7 @@ strIdFromZN(const char *const buffer, const size_t size, const bool error)
 }
 
 /**********************************************************************************************************************************/
-size_t
+FN_EXTERN size_t
 strIdToZN(StringId strId, char *const buffer)
 {
     FUNCTION_TEST_BEGIN();
@@ -344,7 +348,7 @@ strIdToZN(StringId strId, char *const buffer)
 }
 
 /**********************************************************************************************************************************/
-String *
+FN_EXTERN String *
 strIdToStr(const StringId strId)
 {
     FUNCTION_TEST_BEGIN();
@@ -358,7 +362,7 @@ strIdToStr(const StringId strId)
 }
 
 /**********************************************************************************************************************************/
-size_t
+FN_EXTERN size_t
 strIdToZ(const StringId strId, char *const buffer)
 {
     FUNCTION_TEST_BEGIN();
@@ -373,7 +377,7 @@ strIdToZ(const StringId strId, char *const buffer)
 }
 
 /**********************************************************************************************************************************/
-size_t
+FN_EXTERN size_t
 strIdToLog(const StringId strId, char *const buffer, const size_t bufferSize)
 {
     ASSERT(bufferSize > STRID_MAX);

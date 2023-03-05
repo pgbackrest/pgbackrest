@@ -22,14 +22,9 @@ typedef enum
 } StorageGcsKeyType;
 
 /***********************************************************************************************************************************
-Defaults
-***********************************************************************************************************************************/
-#define STORAGE_GCS_CHUNKSIZE_DEFAULT                               ((size_t)4 * 1024 * 1024)
-
-/***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-Storage *storageGcsNew(
+FN_EXTERN Storage *storageGcsNew(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
     StorageGcsKeyType keyType, const String *key, size_t blockSize, const String *endpoint, TimeMSec timeout, bool verifyPeer,
     const String *caFile, const String *caPath);

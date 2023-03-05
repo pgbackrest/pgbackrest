@@ -23,11 +23,13 @@ old context and then back. Below is a simplified example:
 
 #include <stdint.h>
 
+#include "common/debug.h"
+
 /***********************************************************************************************************************************
 Minimum number of extra bytes to allocate for strings that are growing or are likely to grow
 ***********************************************************************************************************************************/
 #ifndef STRING_EXTRA_MIN
-    #define STRING_EXTRA_MIN                                            64
+#define STRING_EXTRA_MIN                                            64
 #endif
 
 /***********************************************************************************************************************************
@@ -51,90 +53,90 @@ This syntax signals that the string will be modified so the string is allocated 
 needed. Most strings never need to be modified and can be stored more efficiently by allocating their memory with the object.
 ***********************************************************************************************************************************/
 // Create a new empty string for concatenation
-String *strNew(void);
+FN_EXTERN String *strNew(void);
 
 // Create a new fixed length string from a zero-terminated string
-String *strNewZ(const char *const string);
+FN_EXTERN String *strNewZ(const char *const string);
 
 // Create a new fixed length string from a zero-terminated string with a specific length. The string may or may not be
 // zero-terminated but we'll use that nomenclature since we're not concerned about the end of the string.
-String *strNewZN(const char *string, size_t size);
+FN_EXTERN String *strNewZN(const char *string, size_t size);
 
 // Create a new fixed length string from a buffer. If the buffer has a NULL character this may not work as expected. All the data
 // will be copied but only the data before the NULL character will be used as a string.
-String *strNewBuf(const Buffer *buffer);
+FN_EXTERN String *strNewBuf(const Buffer *buffer);
 
 // Create a new fixed length string by converting the double value
-String *strNewDbl(double value);
+FN_EXTERN String *strNewDbl(double value);
 
-// Create a new fixed length string encoded with the specified type (e.g. encodeBase64) from a buffer
-String *strNewEncode(EncodeType type, const Buffer *buffer);
+// Create a new fixed length string encoded with the specified type (e.g. encodingBase64) from a buffer
+FN_EXTERN String *strNewEncode(EncodingType type, const Buffer *buffer);
 
 // Create a new fixed length string from a format string with parameters (i.e. sprintf)
-String *strNewFmt(const char *format, ...) __attribute__((format(printf, 1, 2)));
+FN_EXTERN FN_PRINTF(1, 2) String *strNewFmt(const char *format, ...);
 
 // Create a new fixed length string from a string
-String *strDup(const String *this);
+FN_EXTERN String *strDup(const String *this);
 
 /***********************************************************************************************************************************
 Getters/setters
 ***********************************************************************************************************************************/
 typedef struct StringPub
 {
-    uint64_t size:32;                                               // Actual size of the string
-    uint64_t extra:32;                                              // Extra space allocated for expansion
+    uint64_t size : 32;                                             // Actual size of the string
+    uint64_t extra : 32;                                            // Extra space allocated for expansion
     char *buffer;                                                   // String buffer
 } StringPub;
 
 // String size minus null-terminator, i.e. the same value that strlen() would return
-__attribute__((always_inline)) static inline size_t
+FN_INLINE_ALWAYS size_t
 strSize(const String *this)
 {
     return THIS_PUB(String)->size;
 }
 
 // Pointer to zero-terminated string. strZNull() returns NULL when the String is NULL.
-__attribute__((always_inline)) static inline const char *
+FN_INLINE_ALWAYS const char *
 strZ(const String *this)
 {
     return THIS_PUB(String)->buffer;
 }
 
-const char *strZNull(const String *this);
+FN_EXTERN const char *strZNull(const String *this);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Return the file part of a string (i.e. everything after the last / or the entire string if there is no /). strBaseZ() does not
 // make a copy of the string so it may be more appropriate for large loops where saving memory is important.
-String *strBase(const String *this);
-const char *strBaseZ(const String *this);
+FN_EXTERN String *strBase(const String *this);
+FN_EXTERN const char *strBaseZ(const String *this);
 
 // Does the string begin with the specified string?
-bool strBeginsWith(const String *this, const String *beginsWith);
-bool strBeginsWithZ(const String *this, const char *beginsWith);
+FN_EXTERN bool strBeginsWith(const String *this, const String *beginsWith);
+FN_EXTERN bool strBeginsWithZ(const String *this, const char *beginsWith);
 
 // Append a string or zero-terminated string
-String *strCat(String *this, const String *cat);
-String *strCatZ(String *this, const char *cat);
+FN_EXTERN String *strCat(String *this, const String *cat);
+FN_EXTERN String *strCatZ(String *this, const char *cat);
 
 // Append a buffer
-String *strCatBuf(String *this, const Buffer *buffer);
+FN_EXTERN String *strCatBuf(String *this, const Buffer *buffer);
 
 // Append a character
-String *strCatChr(String *this, char cat);
+FN_EXTERN String *strCatChr(String *this, char cat);
 
-// Append a string encoded with the specified type (e.g. encodeBase64) from a buffer
-String *strCatEncode(String *this, EncodeType type, const Buffer *buffer);
+// Append a string encoded with the specified type (e.g. encodingBase64) from a buffer
+FN_EXTERN String *strCatEncode(String *this, EncodingType type, const Buffer *buffer);
 
 // Append a formatted string
-String *strCatFmt(String *this, const char *format, ...) __attribute__((format(printf, 2, 3)));
+FN_EXTERN FN_PRINTF(2, 3) String *strCatFmt(String *this, const char *format, ...);
 
 // Append N characters from a zero-terminated string. Note that the string does not actually need to be zero-terminated as long as
 // N is <= the end of the string being concatenated.
-String *strCatZN(String *this, const char *cat, size_t size);
+FN_EXTERN String *strCatZN(String *this, const char *cat, size_t size);
 
-__attribute__((always_inline)) static inline String *
+FN_INLINE_ALWAYS String *
 strCatN(String *this, const String *const cat, const size_t size)
 {
     ASSERT_INLINE(cat != NULL);
@@ -142,68 +144,58 @@ strCatN(String *this, const String *const cat, const size_t size)
 }
 
 // Return the index to the location of the first occurrence of a character within a string, else -1
-int strChr(const String *this, char chr);
+FN_EXTERN int strChr(const String *this, char chr);
 
 // C-style string compare
-int strCmp(const String *this, const String *compare);
-int strCmpZ(const String *this, const char *compare);
+FN_EXTERN int strCmp(const String *this, const String *compare);
+FN_EXTERN int strCmpZ(const String *this, const char *compare);
 
 // Is the string empty?
-bool strEmpty(const String *this);
+FN_EXTERN bool strEmpty(const String *this);
 
 // Does the string end with the specified string?
-bool strEndsWith(const String *this, const String *endsWith);
-bool strEndsWithZ(const String *this, const char *endsWith);
+FN_EXTERN bool strEndsWith(const String *this, const String *endsWith);
+FN_EXTERN bool strEndsWithZ(const String *this, const char *endsWith);
 
 // Are two strings equal?
-bool strEq(const String *this, const String *compare);
-bool strEqZ(const String *this, const char *compare);
+FN_EXTERN bool strEq(const String *this, const String *compare);
+FN_EXTERN bool strEqZ(const String *this, const char *compare);
 
 // Upper-case the first letter
-String *strFirstUpper(String *this);
+FN_EXTERN String *strFirstUpper(String *this);
 
 // Lower-case the first letter
-String *strFirstLower(String *this);
+FN_EXTERN String *strFirstLower(String *this);
 
-// Upper-case entire string
-String *strUpper(String *this);
-
-// Upper-case entire string
-String *strLower(String *this);
+// Lower-case entire string
+FN_EXTERN String *strLower(String *this);
 
 // Return the path part of a string (i.e. everything before the last / or "" if there is no /)
-String *strPath(const String *this);
+FN_EXTERN String *strPath(const String *this);
 
 // Combine with a base path to get an absolute path
-String *strPathAbsolute(const String *this, const String *base);
-
-// Quote a string
-String *strQuote(const String *this, const String *quote);
-String *strQuoteZ(const String *this, const char *quote);
-
-// Replace a substring with another string
-String *strReplace(String *this, const String *replace, const String *with);
+FN_EXTERN String *strPathAbsolute(const String *this, const String *base);
 
 // Replace a character with another character
-String *strReplaceChr(String *this, char find, char replace);
+FN_EXTERN String *strReplaceChr(String *this, char find, char replace);
 
 // Format sizes (file, buffer, etc.) in human-readable form
-String *strSizeFormat(const uint64_t fileSize);
+FN_EXTERN String *strSizeFormat(const uint64_t fileSize);
 
 // Return a substring given only the start position
-String *strSub(const String *this, size_t start);
+FN_EXTERN String *strSub(const String *this, size_t start);
 
 // Return a substring given the start position and size
-String *strSubN(const String *this, size_t start, size_t size);
+FN_EXTERN String *strSubN(const String *this, size_t start, size_t size);
 
 // Trim whitespace from the beginning and end of a string
-String *strTrim(String *this);
+FN_EXTERN String *strTrim(String *this);
 
 // Truncate the end of a string from the index provided to the current end (e.g. 123KB pass index of K returns 123)
-String *strTruncIdx(String *this, int idx);
+FN_EXTERN String *strTruncIdx(String *this, int idx);
 
 // Truncate the string to zero size
-__attribute__((always_inline)) static inline String *
+FN_INLINE_ALWAYS String *
 strTrunc(String *const this)
 {
     return strTruncIdx(this, 0);
@@ -212,7 +204,7 @@ strTrunc(String *const this)
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 strFree(String *const this)
 {
     objFree(this);
@@ -239,17 +231,17 @@ By convention all string constant identifiers are appended with _STR.
 #define STRDEF(buffer)                                                                                                             \
     STR_SIZE(buffer, sizeof(buffer) - 1)
 
-// Used to declare String constants that will be externed using STRING_DECLARE().  Must be used in a .c file.
+// Used to define String constants that will be externed using STRING_DECLARE(). Must be used in a .c file.
 #define STRING_EXTERN(name, buffer)                                                                                                \
-    const String *const name = STRDEF(buffer)
+    VR_EXTERN_DEFINE const String *const name = STRDEF(buffer)
 
-// Used to declare String constants that will be local to the .c file.  Must be used in a .c file.
+// Used to define String constants that will be local to the .c file. Must be used in a .c file.
 #define STRING_STATIC(name, buffer)                                                                                                \
     static const String *const name = STRDEF(buffer)
 
-// Used to extern String constants declared with STRING_EXTERN().  Must be used in a .h file.
+// Used to declare externed String constants defined with STRING_EXTERN(). Must be used in a .h file.
 #define STRING_DECLARE(name)                                                                                                       \
-    extern const String *const name
+    VR_EXTERN_DECLARE const String *const name
 
 /***********************************************************************************************************************************
 Constant strings that are generally useful
@@ -269,23 +261,13 @@ STRING_DECLARE(Y_STR);
 STRING_DECLARE(ZERO_STR);
 
 /***********************************************************************************************************************************
-Helper function/macro for object logging
-***********************************************************************************************************************************/
-typedef String *(*StrObjToLogFormat)(const void *object);
-
-size_t strObjToLog(const void *object, StrObjToLogFormat formatFunc, char *buffer, size_t bufferSize);
-
-#define FUNCTION_LOG_STRING_OBJECT_FORMAT(object, formatFunc, buffer, bufferSize)                                                  \
-    strObjToLog(object, (StrObjToLogFormat)formatFunc, buffer, bufferSize)
-
-/***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-String *strToLog(const String *this);
+FN_EXTERN void strToLog(const String *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_STRING_TYPE                                                                                                   \
     String *
 #define FUNCTION_LOG_STRING_FORMAT(value, buffer, bufferSize)                                                                      \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, strToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, strToLog, buffer, bufferSize)
 
 #endif

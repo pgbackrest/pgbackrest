@@ -17,6 +17,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("PackWrite and PackRead"))
     {
+        char logBuf[STACK_TRACE_PARAM_MAX];
+
         TEST_TITLE("type size");
 
         TEST_RESULT_UINT(sizeof(PackType), 4, "PackType");
@@ -37,9 +39,11 @@ testRun(void)
         }
         MEM_CONTEXT_TEMP_END();
 
-        TEST_RESULT_STR_Z(pckWriteToLog(packWrite), "{depth: 0, idLast: 0}", "log");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(packWrite, pckWriteToLog, logBuf, sizeof(logBuf)), "pckWriteToLog");
+        TEST_RESULT_Z(logBuf, "{depth: 0, idLast: 0}", "check log");
         TEST_RESULT_VOID(pckWriteU64P(packWrite, 0750), "write mode");
-        TEST_RESULT_STR_Z(pckWriteToLog(packWrite), "{depth: 0, idLast: 1}", "log");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(packWrite, pckWriteToLog, logBuf, sizeof(logBuf)), "pckWriteToLog");
+        TEST_RESULT_Z(logBuf, "{depth: 0, idLast: 1}", "check log");
         TEST_RESULT_VOID(pckWriteU64P(packWrite, 1911246845), "write timestamp");
         TEST_RESULT_VOID(pckWriteU64P(packWrite, 0xFFFFFFFFFFFFFFFF, .id = 7), "write max u64");
         TEST_RESULT_VOID(pckWriteU64P(packWrite, 1, .id = 10), "write 1");
@@ -122,9 +126,10 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             hrnPackToStr(pckFromBuf(pack)),
-               "1:u64:488"
-             ", 2:u64:1911246845"
-             ", 7:u64:18446744073709551615"
+            // {uncrustify_off - indentation}
+              "1:u64:488"
+            ", 2:u64:1911246845"
+            ", 7:u64:18446744073709551615"
             ", 10:u64:1"
             ", 11:u64:77"
             ", 12:u32:127"
@@ -170,10 +175,12 @@ testRun(void)
             ", 51:bin:"
             ", 52:pack:<1:u64:345, 3:str:sub>"
             ", 54:array:[1:str:a, 2:str:bcd]",
+            // {uncrustify_on}
             "check pack string");
 
         TEST_RESULT_STR_Z(
-            bufHex(pack),
+            strNewEncode(encodingHex, pack),
+            // {uncrustify_off - indentation}
             "98e803"                                                //  1,  u64, 750
             "98fd9fad8f07"                                          //  2,  u64, 1911246845
             "9c01ffffffffffffffffff01"                              //  7,  u64, 0xFFFFFFFFFFFFFFFF
@@ -219,6 +226,7 @@ testRun(void)
             "f0020998d902790373756200"                              // 52,  pack, 1:u64:345, 3:str:sub
             "11780161780362636400"                                  // 54,  strlst, 1:str:a, 2:str:bcd
             "00",                                                   // end
+            // {uncrustify_on}
             "check pack hex");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -304,7 +312,7 @@ testRun(void)
         TEST_RESULT_INT(pckReadI32P(packRead, .id = 7, .defaultValue = 1), 1, "read default 1");
         TEST_RESULT_VOID(pckReadArrayEndP(packRead), "read array end");
 
-        TEST_RESULT_STR_Z(bufHex(pckReadBinP(packRead)), "050403020100", "read bin");
+        TEST_RESULT_STR_Z(strNewEncode(encodingHex, pckReadBinP(packRead)), "050403020100", "read bin");
         TEST_RESULT_PTR(pckReadBinP(packRead), NULL, "read bin null");
         TEST_RESULT_UINT(bufSize(pckReadBinP(packRead)), 0, "read bin zero length");
 
@@ -323,39 +331,26 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("EOF on short buffer");
 
-        TEST_ASSIGN(packRead, pckReadNew(pckFromBuf(BUFSTRDEF("\255"))), "new read");
-        TEST_ERROR(pckReadU64Internal(packRead), FormatError, "unexpected EOF");
+        TEST_ASSIGN(packRead, pckReadNew(pckFromBuf(BUFSTRDEF(""))), "new read");
+        TEST_ERROR(pckReadBuffer(packRead, 2), FormatError, "unexpected EOF");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on invalid uint64");
 
         TEST_ASSIGN(packRead, pckReadNew(pckFromBuf(BUFSTRDEF("\255\255\255\255\255\255\255\255\255\255"))), "new read");
-        TEST_ERROR(pckReadU64Internal(packRead), FormatError, "unterminated base-128 integer");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("pack/unpack pointer");
-
-        TEST_ASSIGN(packWrite, pckWriteNewP(.size = 1), "new write");
-        TEST_RESULT_VOID(pckWritePtrP(packWrite, NULL), "write default pointer");
-        TEST_RESULT_VOID(pckWritePtrP(packWrite, "sample"), "write pointer");
-        TEST_RESULT_VOID(pckWriteEndP(packWrite), "write end");
-
-        TEST_ASSIGN(packRead, pckReadNew(pckDup(pckWriteResult(packWrite))), "new read");
-        TEST_RESULT_Z(pckReadPtrP(packRead), NULL, "read default pointer");
-        TEST_RESULT_Z(pckReadPtrP(packRead, .id = 2), "sample", "read pointer");
-
-        TEST_RESULT_PTR(pckWriteResult(NULL), NULL, "null pack result");
+        TEST_ERROR(pckReadU64Internal(packRead), FormatError, "unterminated varint-128 integer");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read const packs");
 
-        TEST_ASSIGN(packWrite, pckWriteNewP(), "new write");
+        TEST_ASSIGN(packWrite, pckWriteNewP(.size = 1), "new write");
 
         // Write pack to read as ptr/size
         packSub = pckWriteNewP();
         pckWriteU64P(packSub, 777);
         pckWriteEndP(packSub);
 
+        TEST_RESULT_PTR(pckWriteResult(NULL), NULL, "null pack result");
         TEST_RESULT_VOID(pckWritePackP(packWrite, pckWriteResult(packSub)), "write pack");
 
         // Write pack to read as const
@@ -372,7 +367,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(pckReadNext(packRead), true, "next pack");
         TEST_RESULT_UINT(pckReadSize(packRead), 4, "pack size");
-        TEST_RESULT_STR_Z(bufHex(BUF(pckReadBufPtr(packRead), pckReadSize(packRead))), "98890600", "pack hex");
+        TEST_RESULT_STR_Z(strNewEncode(encodingHex, BUF(pckReadBufPtr(packRead), pckReadSize(packRead))), "98890600", "pack hex");
         TEST_RESULT_UINT(pckReadU64P(pckReadNewC(pckReadBufPtr(packRead), pckReadSize(packRead))), 777, "u64 value");
         TEST_RESULT_VOID(pckReadConsume(packRead), "consume pack");
 

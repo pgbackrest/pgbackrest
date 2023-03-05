@@ -52,49 +52,46 @@ sub run
 
     foreach my $rhRun
     (
-        {pg => '9.0', repoDest => HOST_DB_PRIMARY, tls => 0, storage =>   GCS, encrypt => 1, compress =>  BZ2, repo => 2, bnd => 1},
-        {pg => '9.1', repoDest => HOST_DB_STANDBY, tls => 1, storage =>   GCS, encrypt => 0, compress =>   GZ, repo => 1, bnd => 0},
-        {pg => '9.2', repoDest => HOST_DB_STANDBY, tls => 0, storage => POSIX, encrypt => 1, compress => NONE, repo => 1, bnd => 1},
-        {pg => '9.3', repoDest =>     HOST_BACKUP, tls => 0, storage => AZURE, encrypt => 0, compress => NONE, repo => 2, bnd => 0},
-        {pg => '9.4', repoDest => HOST_DB_STANDBY, tls => 0, storage => POSIX, encrypt => 1, compress =>  LZ4, repo => 1, bnd => 1},
-        {pg => '9.5', repoDest =>     HOST_BACKUP, tls => 1, storage =>    S3, encrypt => 0, compress =>  BZ2, repo => 1, bnd => 0},
-        {pg => '9.6', repoDest =>     HOST_BACKUP, tls => 0, storage => POSIX, encrypt => 0, compress => NONE, repo => 2, bnd => 1},
-        {pg =>  '10', repoDest => HOST_DB_STANDBY, tls => 1, storage =>    S3, encrypt => 1, compress =>   GZ, repo => 2, bnd => 0},
-        {pg =>  '11', repoDest =>     HOST_BACKUP, tls => 1, storage => AZURE, encrypt => 0, compress =>  ZST, repo => 2, bnd => 1},
-        {pg =>  '12', repoDest =>     HOST_BACKUP, tls => 0, storage =>    S3, encrypt => 1, compress =>  LZ4, repo => 1, bnd => 0},
-        {pg =>  '13', repoDest => HOST_DB_STANDBY, tls => 1, storage =>   GCS, encrypt => 0, compress =>  ZST, repo => 1, bnd => 1},
-        {pg =>  '14', repoDest =>     HOST_BACKUP, tls => 0, storage => POSIX, encrypt => 1, compress =>  LZ4, repo => 2, bnd => 0},
-        {pg =>  '15', repoDest => HOST_DB_STANDBY, tls => 0, storage => AZURE, encrypt => 0, compress => NONE, repo => 2, bnd => 1},
+        {pg => '9.3', dst =>     'backup', tls => 0, stg => AZURE, enc => 0, cmp => NONE, rt => 2, bnd => 0, bi => 0},
+        {pg => '9.4', dst => 'db-standby', tls => 0, stg => POSIX, enc => 1, cmp =>  LZ4, rt => 1, bnd => 1, bi => 0},
+        {pg => '9.5', dst =>     'backup', tls => 1, stg =>    S3, enc => 0, cmp =>  BZ2, rt => 1, bnd => 0, bi => 1},
+        {pg => '9.6', dst =>     'backup', tls => 0, stg => POSIX, enc => 0, cmp => NONE, rt => 2, bnd => 1, bi => 1},
+        {pg =>  '10', dst => 'db-standby', tls => 1, stg =>   GCS, enc => 1, cmp =>   GZ, rt => 2, bnd => 0, bi => 0},
+        {pg =>  '11', dst =>     'backup', tls => 1, stg => AZURE, enc => 0, cmp =>  ZST, rt => 2, bnd => 1, bi => 0},
+        {pg =>  '12', dst =>     'backup', tls => 0, stg =>    S3, enc => 1, cmp =>  LZ4, rt => 1, bnd => 0, bi => 1},
+        {pg =>  '13', dst => 'db-standby', tls => 1, stg =>   GCS, enc => 0, cmp =>  ZST, rt => 1, bnd => 1, bi => 1},
+        {pg =>  '14', dst =>     'backup', tls => 0, stg => POSIX, enc => 1, cmp =>  LZ4, rt => 2, bnd => 0, bi => 0},
+        {pg =>  '15', dst => 'db-standby', tls => 0, stg => AZURE, enc => 0, cmp => NONE, rt => 2, bnd => 1, bi => 1},
     )
     {
         # Only run tests for this pg version
         next if ($rhRun->{pg} ne $self->pgVersion());
 
         # Get run parameters
-        my $bHostBackup = $rhRun->{repoDest} eq HOST_BACKUP ? true : false;
-        my $bHostStandby = $self->pgVersion() >= PG_VERSION_HOT_STANDBY ? true : false;
+        my $bHostBackup = $rhRun->{dst} eq HOST_BACKUP ? true : false;
         my $bTls = $rhRun->{tls};
-        my $strBackupDestination = $rhRun->{repoDest};
-        my $strStorage = $rhRun->{storage};
-        my $bRepoEncrypt = $rhRun->{encrypt};
-        my $strCompressType = $rhRun->{compress};
-        my $iRepoTotal = $rhRun->{repo};
+        my $strBackupDestination = $rhRun->{dst};
+        my $strStorage = $rhRun->{stg};
+        my $bRepoEncrypt = $rhRun->{enc};
+        my $strCompressType = $rhRun->{cmp};
+        my $iRepoTotal = $rhRun->{rt};
         my $bBundle = $rhRun->{bnd};
+        my $bBlockIncr = $rhRun->{bi};
 
         # Some tests are not version specific so only run them on a single version of PostgreSQL
         my $bNonVersionSpecific = $self->pgVersion() eq PG_VERSION_96;
 
         # Increment the run, log, and decide whether this unit test should be run
         next if !$self->begin(
-            "bkp ${bHostBackup}, sby ${bHostStandby}, tls ${bTls}, dst ${strBackupDestination}, cmp ${strCompressType}" .
-                ", storage ${strStorage}, enc ${bRepoEncrypt}");
+            "bkp ${bHostBackup}, tls ${bTls}, dst ${strBackupDestination}, cmp ${strCompressType}, storage ${strStorage}" .
+                ", enc ${bRepoEncrypt}, bi ${bBlockIncr}");
 
         # Create hosts, file object, and config
         my ($oHostDbPrimary, $oHostDbStandby, $oHostBackup) = $self->setup(
             false,
-            {bHostBackup => $bHostBackup, bStandby => $bHostStandby, bTls => $bTls, strBackupDestination => $strBackupDestination,
+            {bHostBackup => $bHostBackup, bStandby => true, bTls => $bTls, strBackupDestination => $strBackupDestination,
                 strCompressType => $strCompressType, bArchiveAsync => false, strStorage => $strStorage,
-                bRepoEncrypt => $bRepoEncrypt, iRepoTotal => $iRepoTotal, bBundle => $bBundle});
+                bRepoEncrypt => $bRepoEncrypt, iRepoTotal => $iRepoTotal, bBundle => $bBundle, bBlockIncr => $bBlockIncr});
 
         # Some commands will fail because of the bogus host created when a standby is present. These options reset the bogus host
         # so it won't interfere with commands that won't tolerate a connection failure.
@@ -254,93 +251,82 @@ sub run
 
         # Setup replica
         #---------------------------------------------------------------------------------------------------------------------------
-        if ($bHostStandby)
+        my %oRemapHash;
+        $oRemapHash{&MANIFEST_TARGET_PGDATA} = $oHostDbStandby->dbBasePath();
+
+        $oHostDbStandby->linkRemap($oManifest->walPath(), $oHostDbStandby->dbPath() . '/' . $oManifest->walPath());
+
+        $oHostDbStandby->restore(
+            'restore backup on replica', 'latest',
+            {rhRemapHash => \%oRemapHash, strType => CFGOPTVAL_RESTORE_TYPE_STANDBY,
+                strOptionalParam =>
+                    ' --recovery-option="primary_conninfo=host=' . HOST_DB_PRIMARY .
+                    ' port=' . $oHostDbPrimary->pgPort() . ' user=replicator"'});
+
+        $oHostDbStandby->clusterStart({bHotStandby => true});
+
+        # Make sure streaming replication is on
+        $oHostDbPrimary->sqlSelectOneTest(
+            "select client_addr || '-' || state from pg_stat_replication", $oHostDbStandby->ipGet() . '/32-streaming');
+
+        # Check that the cluster was restored properly
+        $oHostDbStandby->sqlSelectOneTest('select message from test', $strFullMessage);
+
+        # Update message for standby
+        $oHostDbPrimary->sqlExecute("update test set message = '$strStandbyMessage'");
+
+        if (!$bTls)
         {
-            my %oRemapHash;
-            $oRemapHash{&MANIFEST_TARGET_PGDATA} = $oHostDbStandby->dbBasePath();
-
-            if ($oHostDbStandby->pgVersion() >= PG_VERSION_92)
+            # If there is only a primary and a replica and the replica is the backup destination, then if pg2-host and
+            # pg256-host are BOGUS, confirm failure to reach the primary
+            if (!$bHostBackup && $strBackupDestination eq HOST_DB_STANDBY)
             {
-                $oHostDbStandby->linkRemap($oManifest->walPath(), $oHostDbStandby->dbPath() . '/' . $oManifest->walPath());
+                my $strStandbyBackup = $oHostBackup->backup(
+                    CFGOPTVAL_BACKUP_TYPE_FULL, 'backup from standby, failure to reach primary',
+                    {bStandby => true, iExpectedExitStatus => ERROR_DB_CONNECT, strOptionalParam => '--pg256-host=' . BOGUS});
             }
-
-            $oHostDbStandby->restore(
-                'restore backup on replica', 'latest',
-                {rhRemapHash => \%oRemapHash, strType => CFGOPTVAL_RESTORE_TYPE_STANDBY,
-                    strOptionalParam =>
-                        ' --recovery-option="primary_conninfo=host=' . HOST_DB_PRIMARY .
-                        ' port=' . $oHostDbPrimary->pgPort() . ' user=replicator"'});
-
-            $oHostDbStandby->clusterStart({bHotStandby => true});
-
-            # Make sure streaming replication is on
-            $oHostDbPrimary->sqlSelectOneTest(
-                "select client_addr || '-' || state from pg_stat_replication", $oHostDbStandby->ipGet() . '/32-streaming');
-
-            # Check that the cluster was restored properly
-            $oHostDbStandby->sqlSelectOneTest('select message from test', $strFullMessage);
-
-            # Update message for standby
-            $oHostDbPrimary->sqlExecute("update test set message = '$strStandbyMessage'");
-
-            if ($oHostDbStandby->pgVersion() >= PG_VERSION_BACKUP_STANDBY && !$bTls)
+            else
             {
-                # If there is only a primary and a replica and the replica is the backup destination, then if pg2-host and
-                # pg256-host are BOGUS, confirm failure to reach the primary
-                if (!$bHostBackup && $bHostStandby && $strBackupDestination eq HOST_DB_STANDBY)
-                {
-                    my $strStandbyBackup = $oHostBackup->backup(
-                        CFGOPTVAL_BACKUP_TYPE_FULL, 'backup from standby, failure to reach primary',
-                        {bStandby => true, iExpectedExitStatus => ERROR_DB_CONNECT, strOptionalParam => '--pg256-host=' . BOGUS});
-                }
-                else
-                {
-                    my $strStandbyBackup = $oHostBackup->backup(
-                        CFGOPTVAL_BACKUP_TYPE_FULL, 'backup from standby, failure to access at least one standby',
-                        {bStandby => true, iExpectedExitStatus => ERROR_DB_CONNECT, strOptionalParam => '--pg256-host=' . BOGUS});
-                }
+                my $strStandbyBackup = $oHostBackup->backup(
+                    CFGOPTVAL_BACKUP_TYPE_FULL, 'backup from standby, failure to access at least one standby',
+                    {bStandby => true, iExpectedExitStatus => ERROR_DB_CONNECT, strOptionalParam => '--pg256-host=' . BOGUS});
             }
-
-            my $strStandbyBackup = $oHostBackup->backup(
-                CFGOPTVAL_BACKUP_TYPE_FULL, 'backup from standby',
-                {bStandby => true,
-                 iExpectedExitStatus => $oHostDbStandby->pgVersion() >= PG_VERSION_BACKUP_STANDBY ? undef : ERROR_CONFIG,
-                 strOptionalParam => '--repo1-retention-full=1'});
-
-            if ($oHostDbStandby->pgVersion() >= PG_VERSION_BACKUP_STANDBY)
-            {
-                $strFullBackup = $strStandbyBackup;
-            }
-
-            # ??? Removed temporarily until manifest build can be brought back into the check command
-            # # Create a directory in pg_data location that is only readable by root to ensure manifest->build is called by check
-            # my $strDir = $oHostDbStandby->dbBasePath() . '/rootreaddir';
-            # executeTest('sudo mkdir ' . $strDir);
-            # executeTest("sudo chown root:root ${strDir}");
-            # executeTest("sudo chmod 400 ${strDir}");
-            #
-            # my $strComment = 'confirm standby manifest->build executed';
-            #
-            # # If there is an invalid host, the final error returned from check will be the inability to resolve the name which is
-            # # an open error instead of a read error
-            # if (!$oHostDbStandby->bogusHost())
-            # {
-            #     $oHostDbStandby->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_PATH_OPEN});
-            # }
-            # else
-            # {
-            #     $oHostDbStandby->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_FILE_READ});
-            # }
-            #
-            # # Remove the directory in pg_data location that is only readable by root
-            # executeTest("sudo rmdir ${strDir}");
-
-            # Confirm the check command runs without error on a standby (when a bogus host is not configured)
-            $oHostDbStandby->check('verify check command on standby', {strOptionalParam => $strBogusReset});
-
-            # Shutdown the standby before creating tablespaces (this will error since paths are different)
-            $oHostDbStandby->clusterStop({bIgnoreLogError => true});
         }
+
+        my $strStandbyBackup = $oHostBackup->backup(
+            CFGOPTVAL_BACKUP_TYPE_FULL, 'backup from standby',
+            {bStandby => true, iExpectedExitStatus => undef, strOptionalParam => '--repo1-retention-full=1'});
+
+        $strFullBackup = $strStandbyBackup;
+
+        # ??? Removed temporarily until manifest build can be brought back into the check command
+        # # Create a directory in pg_data location that is only readable by root to ensure manifest->build is called by check
+        # my $strDir = $oHostDbStandby->dbBasePath() . '/rootreaddir';
+        # executeTest('sudo mkdir ' . $strDir);
+        # executeTest("sudo chown root:root ${strDir}");
+        # executeTest("sudo chmod 400 ${strDir}");
+        #
+        # my $strComment = 'confirm standby manifest->build executed';
+        #
+        # # If there is an invalid host, the final error returned from check will be the inability to resolve the name which is
+        # # an open error instead of a read error
+        # if (!$oHostDbStandby->bogusHost())
+        # {
+        #     $oHostDbStandby->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_PATH_OPEN});
+        # }
+        # else
+        # {
+        #     $oHostDbStandby->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_FILE_READ});
+        # }
+        #
+        # # Remove the directory in pg_data location that is only readable by root
+        # executeTest("sudo rmdir ${strDir}");
+
+        # Confirm the check command runs without error on a standby (when a bogus host is not configured)
+        $oHostDbStandby->check('verify check command on standby', {strOptionalParam => $strBogusReset});
+
+        # Shutdown the standby before creating tablespaces (this will error since paths are different)
+        $oHostDbStandby->clusterStop({bIgnoreLogError => true});
 
         my $strAdhocBackup;
 
@@ -483,10 +469,7 @@ sub run
         $oHostDbPrimary->sqlExecute("update test set message = '$strNameMessage'", {bCommit => true});
         $oHostDbPrimary->sqlWalRotate();
 
-        if ($oHostDbPrimary->pgVersion() >= PG_VERSION_91)
-        {
-            $oHostDbPrimary->sqlExecute("select pg_create_restore_point('${strNameTarget}')");
-        }
+        $oHostDbPrimary->sqlExecute("select pg_create_restore_point('${strNameTarget}')");
 
         &log(INFO, "        name target is ${strNameTarget}");
 
@@ -618,8 +601,7 @@ sub run
                 undef, $strFullBackup, {bForce => true, strType => CFGOPTVAL_RESTORE_TYPE_IMMEDIATE, strTargetAction => 'promote'});
 
             $oHostDbPrimary->clusterStart();
-            $oHostDbPrimary->sqlSelectOneTest(
-                'select message from test', ($bHostStandby ? $strStandbyMessage : $strFullMessage));
+            $oHostDbPrimary->sqlSelectOneTest('select message from test', ($strStandbyMessage));
         }
 
         # Restore (restore type = xid, inclusive)
@@ -635,8 +617,7 @@ sub run
 
         $oHostDbPrimary->restore(
             undef, $strIncrBackup,
-            {bForce => true, strType => CFGOPTVAL_RESTORE_TYPE_XID, strTarget => $strXidTarget,
-                strTargetAction => $oHostDbPrimary->pgVersion() >= PG_VERSION_91 ? 'promote' : undef,
+            {bForce => true, strType => CFGOPTVAL_RESTORE_TYPE_XID, strTarget => $strXidTarget, strTargetAction => 'promote',
                 strTargetTimeline => $oHostDbPrimary->pgVersion() >= PG_VERSION_12 ? 'current' : undef,
                 strOptionalParam => '--tablespace-map-all=../../tablespace', bTablespace => false,
                 iRepo => $iRepoTotal});
@@ -687,8 +668,7 @@ sub run
 
         $oHostDbPrimary->restore(
             undef, 'latest',
-            {bDelta => true, strType => CFGOPTVAL_RESTORE_TYPE_TIME, strTarget => $strTimeTarget,
-                strTargetAction => $oHostDbPrimary->pgVersion() >= PG_VERSION_91 ? 'promote' : undef,
+            {bDelta => true, strType => CFGOPTVAL_RESTORE_TYPE_TIME, strTarget => $strTimeTarget, strTargetAction => 'promote',
                 strTargetTimeline => $oHostDbPrimary->pgVersion() >= PG_VERSION_12 ? 'current' : undef,
                 strBackupExpected => $strFullBackup});
 
@@ -704,7 +684,7 @@ sub run
         $oHostDbPrimary->restore(
             undef, $strIncrBackup,
             {bDelta => true, strType => CFGOPTVAL_RESTORE_TYPE_XID, strTarget => $strXidTarget, bTargetExclusive => true,
-                strTargetAction => $oHostDbPrimary->pgVersion() >= PG_VERSION_91 ? 'promote' : undef,
+                strTargetAction => 'promote',
                 strTargetTimeline => $oHostDbPrimary->pgVersion() >= PG_VERSION_12 ? 'current' : undef,
                 iRepo => $iRepoTotal});
 
@@ -713,21 +693,18 @@ sub run
 
         # Restore (restore type = name)
         #---------------------------------------------------------------------------------------------------------------------------
-        if ($oHostDbPrimary->pgVersion() >= PG_VERSION_91)
-        {
-            &log(INFO, '    testing recovery type = ' . CFGOPTVAL_RESTORE_TYPE_NAME);
+        &log(INFO, '    testing recovery type = ' . CFGOPTVAL_RESTORE_TYPE_NAME);
 
-            $oHostDbPrimary->clusterStop();
+        $oHostDbPrimary->clusterStop();
 
-            $oHostDbPrimary->restore(
-                undef, 'latest',
-                {bDelta => true, bForce => true, strType => CFGOPTVAL_RESTORE_TYPE_NAME, strTarget => $strNameTarget,
-                    strTargetAction => 'promote',
-                    strTargetTimeline => $oHostDbPrimary->pgVersion() >= PG_VERSION_12 ? 'current' : undef});
+        $oHostDbPrimary->restore(
+            undef, 'latest',
+            {bDelta => true, bForce => true, strType => CFGOPTVAL_RESTORE_TYPE_NAME, strTarget => $strNameTarget,
+                strTargetAction => 'promote',
+                strTargetTimeline => $oHostDbPrimary->pgVersion() >= PG_VERSION_12 ? 'current' : undef});
 
-            $oHostDbPrimary->clusterStart();
-            $oHostDbPrimary->sqlSelectOneTest('select message from test', $strNameMessage);
-        }
+        $oHostDbPrimary->clusterStart();
+        $oHostDbPrimary->sqlSelectOneTest('select message from test', $strNameMessage);
 
         # Restore (restore type = default, timeline = created by type = xid, inclusive recovery)
         #---------------------------------------------------------------------------------------------------------------------------
@@ -745,11 +722,9 @@ sub run
         $oHostDbPrimary->clusterStart({bHotStandby => true});
         $oHostDbPrimary->sqlSelectOneTest('select message from test', $strTimelineMessage, {iTimeout => 120});
 
-        # Stop clusters to catch any errors in the postgres log. Stopping the cluster has started consistently running out of memory
-        # on PostgreSQL 9.1. This seems to have happened after pulling in new packages at some point so it might be build related.
-        # Stopping the cluster is not critical for 9.1 so skip it.
+        # Stop clusters to catch any errors in the postgres log
         #---------------------------------------------------------------------------------------------------------------------------
-        $oHostDbPrimary->clusterStop({bStop => $oHostDbPrimary->pgVersion() != PG_VERSION_91});
+        $oHostDbPrimary->clusterStop();
 
         # Stanza-delete --force without access to pgbackrest on database host. This test is not version specific so is run on only
         # one version.

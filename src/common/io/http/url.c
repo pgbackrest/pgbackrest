@@ -5,8 +5,8 @@ HTTP URL
 
 #include "common/debug.h"
 #include "common/io/http/url.h"
-#include "common/type/stringList.h"
 #include "common/regExp.h"
+#include "common/type/stringList.h"
 
 /***********************************************************************************************************************************
 Regular expression for URLs. This is not intended to be completely comprehensive, e.g. it is still possible to enter bad hostnames.
@@ -50,7 +50,7 @@ httpProtocolTypeStr(HttpProtocolType type)
 }
 
 /**********************************************************************************************************************************/
-HttpUrl *
+FN_EXTERN HttpUrl *
 httpUrlNewParse(const String *const url, HttpUrlNewParseParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -195,13 +195,17 @@ httpUrlNewParse(const String *const url, HttpUrlNewParseParam param)
 }
 
 /**********************************************************************************************************************************/
-String *
-httpUrlToLog(const HttpUrl *this)
+#ifdef DEBUG
+
+FN_EXTERN void
+httpUrlToLog(const HttpUrl *const this, StringStatic *const debugLog)
 {
     // Is IPv6 address?
     bool ipv6 = strChr(this->pub.host, ':') != -1;
 
-    return strNewFmt(
-        "{%s://%s%s%s:%u%s}", strZ(httpProtocolTypeStr(this->pub.type)), ipv6 ? "[" : "", strZ(this->pub.host), ipv6 ? "]" : "",
-        this->pub.port, strZ(this->pub.path));
+    strStcFmt(
+        debugLog, "{%s://%s%s%s:%u%s}", strZ(httpProtocolTypeStr(this->pub.type)), ipv6 ? "[" : "", strZ(this->pub.host),
+        ipv6 ? "]" : "", this->pub.port, strZ(this->pub.path));
 }
+
+#endif // DEBUG

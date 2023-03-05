@@ -311,8 +311,8 @@ eval
         }
 
         # Update permissions
-        executeTest("find ${strDeployPath} -type d -exec chmod 750 {} +");
-        executeTest("find ${strDeployPath} -type f -exec chmod 640 {} +");
+        executeTest("find ${strDeployPath} -path .git -prune -type d -exec chmod 750 {} +");
+        executeTest("find ${strDeployPath} -path .git -prune -type f -exec chmod 640 {} +");
     }
 
     # Exit with success

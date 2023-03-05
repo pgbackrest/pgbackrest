@@ -74,7 +74,7 @@ protocolHelperInit(void)
 }
 
 /**********************************************************************************************************************************/
-bool
+FN_EXTERN bool
 repoIsLocal(unsigned int repoIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -85,7 +85,7 @@ repoIsLocal(unsigned int repoIdx)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 repoIsLocalVerify(void)
 {
     FUNCTION_TEST_VOID();
@@ -96,7 +96,7 @@ repoIsLocalVerify(void)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 repoIsLocalVerifyIdx(unsigned int repoIdx)
 {
     FUNCTION_TEST_VOID();
@@ -108,7 +108,7 @@ repoIsLocalVerifyIdx(unsigned int repoIdx)
 }
 
 /**********************************************************************************************************************************/
-bool
+FN_EXTERN bool
 pgIsLocal(unsigned int pgIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -119,7 +119,7 @@ pgIsLocal(unsigned int pgIdx)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 pgIsLocalVerify(void)
 {
     FUNCTION_TEST_VOID();
@@ -195,6 +195,8 @@ protocolLocalExec(
         FUNCTION_TEST_PARAM(UINT, processId);
     FUNCTION_TEST_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     ASSERT(helper != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -229,7 +231,7 @@ protocolLocalExec(
     FUNCTION_TEST_RETURN_VOID();
 }
 
-ProtocolClient *
+FN_EXTERN ProtocolClient *
 protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx, unsigned int processId)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -323,7 +325,7 @@ protocolHelperClientFree(ProtocolHelperClient *protocolHelperClient)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 protocolLocalFree(unsigned int processId)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -386,7 +388,7 @@ protocolServerAuthorize(const String *authListStr, const String *const stanza)
     FUNCTION_TEST_RETURN(BOOL, result);
 }
 
-ProtocolServer *
+FN_EXTERN ProtocolServer *
 protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -442,8 +444,9 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
             // Ack the config command
             protocolServerDataEndPut(result);
 
-            ioSessionMove(tlsSession, memContextPrior());
+            // Move result to prior context and move session into result so there is only one return value
             protocolServerMove(result, memContextPrior());
+            ioSessionMove(tlsSession, objMemContext(result));
         }
         // Else the client can only detect that the server is alive
         else
@@ -556,8 +559,8 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
                 }
             }
 
-            // Remove options that have been marked for removal if they are not already null or invalid. This is more efficient because
-            // cfgExecParam() won't have to search through as large a list looking for overrides.
+            // Remove options that have been marked for removal if they are not already null or invalid. This is more efficient
+            // because cfgExecParam() won't have to search through as large a list looking for overrides.
             if (remove)
             {
                 // Loop through option indexes
@@ -670,6 +673,8 @@ protocolRemoteExec(
         FUNCTION_TEST_PARAM(UINT, processId);
     FUNCTION_TEST_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     ASSERT(helper != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -759,11 +764,23 @@ protocolRemoteExec(
             {
                 ASSERT(remoteType == CFGOPTVAL_REPO_HOST_TYPE_TLS);
 
-                // Pass parameters to server
-                ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_CONFIG);
-                pckWriteStrLstP(protocolCommandParam(command), protocolRemoteParam(protocolStorageType, hostIdx));
-                protocolClientExecute(helper->client, command, false);
-                protocolCommandFree(command);
+                TRY_BEGIN()
+                {
+                    // Pass parameters to server
+                    ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_CONFIG);
+                    pckWriteStrLstP(protocolCommandParam(command), protocolRemoteParam(protocolStorageType, hostIdx));
+                    protocolClientExecute(helper->client, command, false);
+                    protocolCommandFree(command);
+                }
+                CATCH_ANY()
+                {
+                    // Clear the callback so the client does not try to shut down the connection. Attempting to shut down the
+                    // connection will fail since the server has already disconnected and a new error will be thrown, masking the
+                    // original error.
+                    memContextCallbackClear(objMemContext(helper->client));
+                    RETHROW();
+                }
+                TRY_END();
 
                 break;
             }
@@ -774,7 +791,7 @@ protocolRemoteExec(
     FUNCTION_TEST_RETURN_VOID();
 }
 
-ProtocolClient *
+FN_EXTERN ProtocolClient *
 protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -847,7 +864,7 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 protocolRemoteFree(unsigned int hostIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -861,7 +878,7 @@ protocolRemoteFree(unsigned int hostIdx)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 protocolKeepAlive(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
@@ -879,7 +896,7 @@ protocolKeepAlive(void)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 protocolFree(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);

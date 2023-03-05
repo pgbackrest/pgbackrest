@@ -10,7 +10,7 @@ This wrapper runs the C unit tests.
 
 // Enable memory debugging
 #if defined(HRN_FEATURE_MEMCONTEXT) && defined(DEBUG)
-    #define DEBUG_MEM
+#define DEBUG_MEM
 #endif
 
 /***********************************************************************************************************************************
@@ -30,6 +30,7 @@ The test code is included directly so it can freely interact with the included C
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #ifdef HRN_FEATURE_ERROR
     #include "common/error.h"
@@ -48,28 +49,28 @@ The test code is included directly so it can freely interact with the included C
 #define TEST_PROJECT_EXE                                            "{[C_TEST_PROJECT_EXE]}"
 
 #ifdef HRN_FEATURE_STRING
-    STRING_EXTERN(TEST_PROJECT_EXE_STR, TEST_PROJECT_EXE);
+STRING_EXTERN(TEST_PROJECT_EXE_STR, TEST_PROJECT_EXE);
 #endif
 
 // Path where the test is running
 #define TEST_PATH                                                   "{[C_TEST_PATH]}"
 
 #ifdef HRN_FEATURE_STRING
-    STRING_EXTERN(TEST_PATH_STR, TEST_PATH);
+STRING_EXTERN(TEST_PATH_STR, TEST_PATH);
 #endif
 
 // Path to the source repository
 #define HRN_PATH_REPO                                               "{[C_HRN_PATH_REPO]}"
 
 #ifdef HRN_FEATURE_STRING
-    STRING_EXTERN(HRN_PATH_REPO_STR, HRN_PATH_REPO);
+STRING_EXTERN(HRN_PATH_REPO_STR, HRN_PATH_REPO);
 #endif
 
 // Path where the harness can store data without interfering with the test
 #define HRN_PATH                                                    "{[C_HRN_PATH]}"
 
 #ifdef HRN_FEATURE_STRING
-    STRING_EXTERN(HRN_PATH_STR, HRN_PATH);
+STRING_EXTERN(HRN_PATH_STR, HRN_PATH);
 #endif
 
 // User running the test
@@ -78,7 +79,7 @@ The test code is included directly so it can freely interact with the included C
 #define TEST_USER_ID_Z                                              "{[C_TEST_USER_ID]}"
 
 #ifdef HRN_FEATURE_STRING
-    STRING_EXTERN(TEST_USER_STR, TEST_USER);
+STRING_EXTERN(TEST_USER_STR, TEST_USER);
 #endif
 
 // Group running the test
@@ -87,7 +88,7 @@ The test code is included directly so it can freely interact with the included C
 #define TEST_GROUP_ID_Z                                             "{[C_TEST_GROUP_ID]}"
 
 #ifdef HRN_FEATURE_STRING
-    STRING_EXTERN(TEST_GROUP_STR, TEST_GROUP);
+STRING_EXTERN(TEST_GROUP_STR, TEST_GROUP);
 #endif
 
 // Scaling factor for performance tests
@@ -103,17 +104,17 @@ The test code is included directly so it can freely interact with the included C
 #include "common/harnessTest.intern.h"
 
 #ifdef HRN_FEATURE_LOG
-    #include "common/harnessLog.h"
-    void harnessLogLevelDefaultSet(LogLevel logLevel);
+#include "common/harnessLog.h"
+void harnessLogLevelDefaultSet(LogLevel logLevel);
 #endif
 
 #ifdef HRN_FEATURE_MEMCONTEXT
-    #include "common/memContext.h"
+#include "common/memContext.h"
 #endif
 
 #ifdef HRN_FEATURE_LOG
-    #include "common/harnessLog.h"
-    void harnessLogLevelDefaultSet(LogLevel logLevel);
+#include "common/harnessLog.h"
+void harnessLogLevelDefaultSet(LogLevel logLevel);
 #endif
 
 {[C_TEST_INCLUDE]}
@@ -124,8 +125,8 @@ Includes that are not generally used by tests
 #include <assert.h>
 
 #if defined(HRN_INTEST_SOCKET) || defined(HRN_FEATURE_SOCKET)
-    #include "common/io/socket/common.h"
-    #include "common/harnessServer.h"
+#include "common/harnessServer.h"
+#include "common/io/socket/common.h"
 #endif
 
 #ifdef HRN_FEATURE_STAT
@@ -149,9 +150,6 @@ main(int argListSize, const char *argList[])
         fflush(stderr);
         exit(25);
     }
-
-    // Initialize stack trace for the harness
-    FUNCTION_HARNESS_INIT(argList[0]);
 
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(INT, argListSize);
@@ -238,7 +236,7 @@ main(int argListSize, const char *argList[])
 
 #ifdef HRN_FEATURE_ERROR
         }
-        CATCH_ANY()
+        CATCH_FATAL()
         {
             // If a test was running then throw a detailed result exception
 #ifdef DEBUG

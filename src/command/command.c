@@ -23,7 +23,7 @@ static TimeMSec timeBegin;
 static String *cmdOptionStr;
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 cmdInit(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
@@ -34,7 +34,7 @@ cmdInit(void)
 }
 
 /**********************************************************************************************************************************/
-const String *
+FN_EXTERN const String *
 cmdOption(void)
 {
     FUNCTION_TEST_VOID();
@@ -157,7 +157,7 @@ cmdOption(void)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 cmdBegin(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
@@ -189,7 +189,7 @@ cmdBegin(void)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 cmdEnd(int code, const String *errorMessage)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

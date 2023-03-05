@@ -13,6 +13,6 @@ in a FilterGroup if the last filter is not already an InOut filter, so there is 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-IoFilter *ioBufferNew(void);
+FN_EXTERN IoFilter *ioBufferNew(void);
 
 #endif

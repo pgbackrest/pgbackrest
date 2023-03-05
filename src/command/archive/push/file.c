@@ -3,8 +3,8 @@ Archive Push File
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include "command/archive/push/file.h"
 #include "command/archive/common.h"
+#include "command/archive/push/file.h"
 #include "command/control/common.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
@@ -90,7 +90,7 @@ archivePushFileIo(ArchivePushFileIoType type, IoWrite *write, const Buffer *buff
 }
 
 /**********************************************************************************************************************************/
-ArchivePushFileResult
+FN_EXTERN ArchivePushFileResult
 archivePushFile(
     const String *const walSource, const bool headerCheck, const bool modeCheck, const unsigned int pgVersion,
     const uint64_t pgSystemId, const String *const archiveFile, const CompressType compressType, const int compressLevel,
@@ -108,6 +108,8 @@ archivePushFile(
         FUNCTION_LOG_PARAM_P(VOID, repoList);
         FUNCTION_LOG_PARAM(STRING_LIST, priorErrorList);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_STRUCT();
 
     ASSERT(walSource != NULL);
     ASSERT(archiveFile != NULL);
@@ -160,8 +162,8 @@ archivePushFile(
             ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
             ioReadDrain(read);
 
-            const String *walSegmentChecksum = pckReadStrP(
-                ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE));
+            const String *const walSegmentChecksum = strNewEncode(
+                encodingHex, pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE)));
 
             // Check each repo for the WAL segment
             for (unsigned int repoListIdx = 0; repoListIdx < lstSize(repoList); repoListIdx++)
@@ -264,7 +266,7 @@ archivePushFile(
                     {
                         ioFilterGroupAdd(
                             ioWriteFilterGroup(storageWriteIo(destination[repoListIdx])),
-                            cipherBlockNew(cipherModeEncrypt, repoData->cipherType, BUFSTR(repoData->cipherPass), NULL));
+                            cipherBlockNewP(cipherModeEncrypt, repoData->cipherType, BUFSTR(repoData->cipherPass)));
                     }
                 }
             }

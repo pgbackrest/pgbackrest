@@ -14,17 +14,18 @@ Test GCS Storage
 Constants
 ***********************************************************************************************************************************/
 #define TEST_ENDPOINT                                               "storage.googleapis.com"
-    STRING_STATIC(TEST_ENDPOINT_STR,                                TEST_ENDPOINT);
+STRING_STATIC(TEST_ENDPOINT_STR,                                    TEST_ENDPOINT);
 #define TEST_PORT                                                   ((unsigned int)443)
 #define TEST_TIMEOUT                                                5000
 #define TEST_CHUNK_SIZE                                             16
 #define TEST_BUCKET                                                 "bucket"
-    STRING_STATIC(TEST_BUCKET_STR,                                  TEST_BUCKET);
+STRING_STATIC(TEST_BUCKET_STR,                                      TEST_BUCKET);
 #define TEST_KEY_FILE                                               TEST_PATH "/key.json"
-    STRING_STATIC(TEST_KEY_FILE_STR,                                TEST_KEY_FILE);
+STRING_STATIC(TEST_KEY_FILE_STR,                                    TEST_KEY_FILE);
 #define TEST_TOKEN                                                  "X X"
-    STRING_STATIC(TEST_TOKEN_STR,                                   TEST_TOKEN);
+STRING_STATIC(TEST_TOKEN_STR,                                       TEST_TOKEN);
 
+// {uncrustify_off - comment inside string}
 #define TEST_KEY                                                                                                                   \
     "{\n"                                                                                                                          \
     "\"type\": \"service_account\",\n"                                                                                             \
@@ -60,6 +61,7 @@ Constants
     "\"client_email\": \"service@project.iam.gserviceaccount.com\",\n"                                                             \
     "\"token_uri\": \"https://%s:%u/token\"\n"                                                                                     \
     "}\n"
+// {uncrustify_on}
 
 /***********************************************************************************************************************************
 Helper to build test requests
@@ -173,8 +175,8 @@ testResponse(IoWrite *write, TestResponseParam param)
         strCatFmt(
             response,
             "content-length:%zu\r\n"
-                "\r\n"
-                "%s",
+            "\r\n"
+            "%s",
             strlen(param.content), param.content);
     }
     else
@@ -223,7 +225,7 @@ testRun(void)
         TEST_RESULT_STR_Z(storage->path, "/repo", "check path");
         TEST_RESULT_STR(((StorageGcs *)storageDriver(storage))->bucket, TEST_BUCKET_STR, "check bucket");
         TEST_RESULT_STR_Z(((StorageGcs *)storageDriver(storage))->endpoint, "storage.googleapis.com", "check endpoint");
-        TEST_RESULT_UINT(((StorageGcs *)storageDriver(storage))->chunkSize, STORAGE_GCS_CHUNKSIZE_DEFAULT, "check chunk size");
+        TEST_RESULT_UINT(((StorageGcs *)storageDriver(storage))->chunkSize, 4 * 1024 * 1024, "check chunk size");
         TEST_RESULT_STR(((StorageGcs *)storageDriver(storage))->token, TEST_TOKEN_STR, "check token");
         TEST_RESULT_BOOL(storageFeature(storage, storageFeaturePath), false, "check path feature");
     }
@@ -540,6 +542,7 @@ testRun(void)
                 TEST_RESULT_STR_Z(storageWriteName(write), "/file.txt", "check file name");
                 TEST_RESULT_BOOL(storageWriteSyncFile(write), true, "file is synced");
                 TEST_RESULT_BOOL(storageWriteSyncPath(write), true, "path is synced");
+                TEST_RESULT_BOOL(storageWriteTruncate(write), true, "file will be truncated");
 
                 TEST_RESULT_VOID(storageWriteGcsClose(write->driver), "close file again");
 

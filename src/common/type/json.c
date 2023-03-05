@@ -83,7 +83,7 @@ jsonTypeContainer(const JsonType type)
 }
 
 /**********************************************************************************************************************************/
-JsonRead *
+FN_EXTERN JsonRead *
 jsonReadNew(const String *const json)
 {
     FUNCTION_TEST_BEGIN();
@@ -140,7 +140,7 @@ jsonReadConsumeWhiteSpace(JsonRead *const this)
 }
 
 /**********************************************************************************************************************************/
-JsonType
+FN_EXTERN JsonType
 jsonReadTypeNext(JsonRead *const this)
 {
     FUNCTION_TEST_BEGIN();
@@ -431,7 +431,7 @@ jsonReadNumber(JsonRead *const this)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 jsonReadArrayBegin(JsonRead *const this)
 {
     FUNCTION_TEST_BEGIN();
@@ -446,7 +446,7 @@ jsonReadArrayBegin(JsonRead *const this)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-void
+FN_EXTERN void
 jsonReadArrayEnd(JsonRead *const this)
 {
     FUNCTION_TEST_BEGIN();
@@ -462,7 +462,7 @@ jsonReadArrayEnd(JsonRead *const this)
 }
 
 /**********************************************************************************************************************************/
-bool
+FN_EXTERN bool
 jsonReadBool(JsonRead *const this)
 {
     FUNCTION_TEST_BEGIN();
@@ -491,7 +491,7 @@ jsonReadBool(JsonRead *const this)
 }
 
 /**********************************************************************************************************************************/
-int
+FN_EXTERN int
 jsonReadInt(JsonRead *const this)
 {
     FUNCTION_TEST_BEGIN();
@@ -519,7 +519,7 @@ jsonReadInt(JsonRead *const this)
 }
 
 /**********************************************************************************************************************************/
-int64_t
+FN_EXTERN int64_t
 jsonReadInt64(JsonRead *const this)
 {
     FUNCTION_TEST_BEGIN();
@@ -572,7 +572,7 @@ jsonReadKeyZN(JsonRead *const this)
             THROW(JsonFormatError, "expected '\"' but found null delimiter");
 
         this->json++;
-    };
+    }
 
     // Set key size
     result.size = (size_t)(this->json - result.buffer);
@@ -591,7 +591,7 @@ jsonReadKeyZN(JsonRead *const this)
     FUNCTION_TEST_RETURN_TYPE(JsonReadKeyInternalResult, result);
 }
 
-String *
+FN_EXTERN String *
 jsonReadKey(JsonRead *const this)
 {
     FUNCTION_TEST_BEGIN();
@@ -607,7 +607,7 @@ jsonReadKey(JsonRead *const this)
 }
 
 /**********************************************************************************************************************************/
-bool
+FN_EXTERN bool
 jsonReadKeyExpect(JsonRead *const this, const String *const key)
 {
     FUNCTION_TEST_BEGIN();
@@ -661,7 +661,7 @@ jsonReadKeyExpect(JsonRead *const this, const String *const key)
     FUNCTION_TEST_RETURN(BOOL, result);
 }
 
-bool
+FN_EXTERN bool
 jsonReadKeyExpectStrId(JsonRead *const this, const StringId key)
 {
     FUNCTION_TEST_BEGIN();
@@ -677,7 +677,7 @@ jsonReadKeyExpectStrId(JsonRead *const this, const StringId key)
     FUNCTION_TEST_RETURN(BOOL, jsonReadKeyExpect(this, STR_SIZE(buffer, strIdToZ(key, buffer))));
 }
 
-bool
+FN_EXTERN bool
 jsonReadKeyExpectZ(JsonRead *const this, const char *const key)
 {
     FUNCTION_TEST_BEGIN();
@@ -691,7 +691,7 @@ jsonReadKeyExpectZ(JsonRead *const this, const char *const key)
     FUNCTION_TEST_RETURN(BOOL, jsonReadKeyExpect(this, STR(key)));
 }
 
-JsonRead *
+FN_EXTERN JsonRead *
 jsonReadKeyRequire(JsonRead *const this, const String *const key)
 {
     FUNCTION_TEST_BEGIN();
@@ -708,7 +708,7 @@ jsonReadKeyRequire(JsonRead *const this, const String *const key)
     FUNCTION_TEST_RETURN(JSON_READ, this);
 }
 
-JsonRead *
+FN_EXTERN JsonRead *
 jsonReadKeyRequireStrId(JsonRead *const this, const StringId key)
 {
     FUNCTION_TEST_BEGIN();
@@ -724,7 +724,7 @@ jsonReadKeyRequireStrId(JsonRead *const this, const StringId key)
     FUNCTION_TEST_RETURN(JSON_READ, jsonReadKeyRequire(this, STR_SIZE(buffer, strIdToZ(key, buffer))));
 }
 
-JsonRead *
+FN_EXTERN JsonRead *
 jsonReadKeyRequireZ(JsonRead *const this, const char *const key)
 {
     FUNCTION_TEST_BEGIN();
@@ -739,7 +739,7 @@ jsonReadKeyRequireZ(JsonRead *const this, const char *const key)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 jsonReadNull(JsonRead *const this)
 {
     FUNCTION_TEST_BEGIN();
@@ -760,7 +760,7 @@ jsonReadNull(JsonRead *const this)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 jsonReadObjectBegin(JsonRead *const this)
 {
     FUNCTION_TEST_BEGIN();
@@ -775,7 +775,7 @@ jsonReadObjectBegin(JsonRead *const this)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-void
+FN_EXTERN void
 jsonReadObjectEnd(JsonRead *const this)
 {
     FUNCTION_TEST_BEGIN();
@@ -845,7 +845,7 @@ jsonReadSkipStr(JsonRead *const this)
             THROW(JsonFormatError, "expected '\"' but found null delimiter");
 
         this->json++;
-    };
+    }
 
     // Advance the character array pointer to the next element after the string
     this->json++;
@@ -923,7 +923,7 @@ jsonReadSkipRecurse(JsonRead *const this)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-void
+FN_EXTERN void
 jsonReadSkip(JsonRead *const this)
 {
     FUNCTION_TEST_BEGIN();
@@ -938,7 +938,7 @@ jsonReadSkip(JsonRead *const this)
 }
 
 /**********************************************************************************************************************************/
-String *
+FN_EXTERN String *
 jsonReadStr(JsonRead *const this)
 {
     FUNCTION_TEST_BEGIN();
@@ -1060,7 +1060,7 @@ jsonReadStr(JsonRead *const this)
 }
 
 /**********************************************************************************************************************************/
-StringId
+FN_EXTERN StringId
 jsonReadStrId(JsonRead *const this)
 {
     FUNCTION_TEST_BEGIN();
@@ -1081,7 +1081,7 @@ jsonReadStrId(JsonRead *const this)
 }
 
 /**********************************************************************************************************************************/
-StringList *
+FN_EXTERN StringList *
 jsonReadStrLst(JsonRead *const this)
 {
     FUNCTION_TEST_BEGIN();
@@ -1107,7 +1107,7 @@ jsonReadStrLst(JsonRead *const this)
 }
 
 /**********************************************************************************************************************************/
-unsigned int
+FN_EXTERN unsigned int
 jsonReadUInt(JsonRead *const this)
 {
     FUNCTION_TEST_BEGIN();
@@ -1130,7 +1130,7 @@ jsonReadUInt(JsonRead *const this)
 }
 
 /**********************************************************************************************************************************/
-uint64_t
+FN_EXTERN uint64_t
 jsonReadUInt64(JsonRead *const this)
 {
     FUNCTION_TEST_BEGIN();
@@ -1181,7 +1181,13 @@ jsonReadVarRecurse(JsonRead *const this)
         }
 
         case jsonTypeString:
-            FUNCTION_TEST_RETURN(VARIANT, varNewStr(jsonReadStr(this)));
+        {
+            String *const string = jsonReadStr(this);
+            Variant *const result = varNewStr(string);
+            strFree(string);
+
+            FUNCTION_TEST_RETURN(VARIANT, result);
+        }
 
         case jsonTypeArrayBegin:
         {
@@ -1228,7 +1234,7 @@ jsonReadVarRecurse(JsonRead *const this)
     }
 }
 
-Variant *
+FN_EXTERN Variant *
 jsonReadVar(JsonRead *const this)
 {
     FUNCTION_TEST_BEGIN();
@@ -1241,7 +1247,7 @@ jsonReadVar(JsonRead *const this)
 }
 
 /**********************************************************************************************************************************/
-Variant *
+FN_EXTERN Variant *
 jsonToVar(const String *const json)
 {
     FUNCTION_TEST_BEGIN();
@@ -1266,7 +1272,7 @@ jsonToVar(const String *const json)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 jsonValidate(const String *const json)
 {
     FUNCTION_TEST_BEGIN();
@@ -1293,14 +1299,18 @@ jsonValidate(const String *const json)
 }
 
 /**********************************************************************************************************************************/
-String *
-jsonReadToLog(const JsonRead *const this)
+#ifdef DEBUG
+
+FN_EXTERN void
+jsonReadToLog(const JsonRead *const this, StringStatic *const debugLog)
 {
-    return strNewFmt("{json: %s}", this->json);
+    strStcFmt(debugLog, "{json: %s}", this->json);
 }
 
+#endif // DEBUG
+
 /**********************************************************************************************************************************/
-JsonWrite *
+FN_EXTERN JsonWrite *
 jsonWriteNew(JsonWriteNewParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -1447,7 +1457,7 @@ jsonWritePop(JsonWrite *const this ASSERT_PARAM(const JsonType type))
 }
 
 /**********************************************************************************************************************************/
-JsonWrite *
+FN_EXTERN JsonWrite *
 jsonWriteArrayBegin(JsonWrite *const this)
 {
     FUNCTION_TEST_BEGIN();
@@ -1462,7 +1472,7 @@ jsonWriteArrayBegin(JsonWrite *const this)
     FUNCTION_TEST_RETURN(JSON_WRITE, this);
 }
 
-JsonWrite *
+FN_EXTERN JsonWrite *
 jsonWriteArrayEnd(JsonWrite *const this)
 {
     FUNCTION_TEST_BEGIN();
@@ -1478,7 +1488,7 @@ jsonWriteArrayEnd(JsonWrite *const this)
 }
 
 /**********************************************************************************************************************************/
-JsonWrite *
+FN_EXTERN JsonWrite *
 jsonWriteBool(JsonWrite *const this, const bool value)
 {
     FUNCTION_TEST_BEGIN();
@@ -1495,7 +1505,7 @@ jsonWriteBool(JsonWrite *const this, const bool value)
 }
 
 /**********************************************************************************************************************************/
-JsonWrite *
+FN_EXTERN JsonWrite *
 jsonWriteInt(JsonWrite *const this, const int value)
 {
     FUNCTION_TEST_BEGIN();
@@ -1514,7 +1524,7 @@ jsonWriteInt(JsonWrite *const this, const int value)
 }
 
 /**********************************************************************************************************************************/
-JsonWrite *
+FN_EXTERN JsonWrite *
 jsonWriteInt64(JsonWrite *const this, const int64_t value)
 {
     FUNCTION_TEST_BEGIN();
@@ -1533,7 +1543,7 @@ jsonWriteInt64(JsonWrite *const this, const int64_t value)
 }
 
 /**********************************************************************************************************************************/
-JsonWrite *
+FN_EXTERN JsonWrite *
 jsonWriteJson(JsonWrite *const this, const String *const value)
 {
     FUNCTION_TEST_BEGIN();
@@ -1555,7 +1565,7 @@ jsonWriteJson(JsonWrite *const this, const String *const value)
 }
 
 /**********************************************************************************************************************************/
-JsonWrite *
+FN_EXTERN JsonWrite *
 jsonWriteKey(JsonWrite *const this, const String *const key)
 {
     FUNCTION_TEST_BEGIN();
@@ -1579,7 +1589,7 @@ jsonWriteKey(JsonWrite *const this, const String *const key)
     FUNCTION_TEST_RETURN(JSON_WRITE, this);
 }
 
-JsonWrite *
+FN_EXTERN JsonWrite *
 jsonWriteKeyStrId(JsonWrite *const this, const StringId key)
 {
     FUNCTION_TEST_BEGIN();
@@ -1601,7 +1611,7 @@ jsonWriteKeyStrId(JsonWrite *const this, const StringId key)
     FUNCTION_TEST_RETURN(JSON_WRITE, this);
 }
 
-JsonWrite *
+FN_EXTERN JsonWrite *
 jsonWriteKeyZ(JsonWrite *const this, const char *const key)
 {
     FUNCTION_TEST_BEGIN();
@@ -1616,7 +1626,7 @@ jsonWriteKeyZ(JsonWrite *const this, const char *const key)
 }
 
 /**********************************************************************************************************************************/
-JsonWrite *
+FN_EXTERN JsonWrite *
 jsonWriteNull(JsonWrite *const this)
 {
     FUNCTION_TEST_BEGIN();
@@ -1633,7 +1643,7 @@ jsonWriteNull(JsonWrite *const this)
 }
 
 /**********************************************************************************************************************************/
-JsonWrite *
+FN_EXTERN JsonWrite *
 jsonWriteObjectBegin(JsonWrite *const this)
 {
     FUNCTION_TEST_BEGIN();
@@ -1648,7 +1658,7 @@ jsonWriteObjectBegin(JsonWrite *const this)
     FUNCTION_TEST_RETURN(JSON_WRITE, this);
 }
 
-JsonWrite *
+FN_EXTERN JsonWrite *
 jsonWriteObjectEnd(JsonWrite *const this)
 {
     FUNCTION_TEST_BEGIN();
@@ -1664,7 +1674,7 @@ jsonWriteObjectEnd(JsonWrite *const this)
 }
 
 /**********************************************************************************************************************************/
-JsonWrite *
+FN_EXTERN JsonWrite *
 jsonWriteStr(JsonWrite *const this, const String *const value)
 {
     FUNCTION_TEST_BEGIN();
@@ -1765,7 +1775,7 @@ jsonWriteStr(JsonWrite *const this, const String *const value)
 }
 
 /**********************************************************************************************************************************/
-JsonWrite *
+FN_EXTERN JsonWrite *
 jsonWriteStrFmt(JsonWrite *const this, const char *const format, ...)
 {
     FUNCTION_TEST_BEGIN();
@@ -1795,7 +1805,7 @@ jsonWriteStrFmt(JsonWrite *const this, const char *const format, ...)
 }
 
 /**********************************************************************************************************************************/
-JsonWrite *
+FN_EXTERN JsonWrite *
 jsonWriteStrId(JsonWrite *const this, const StringId value)
 {
     FUNCTION_TEST_BEGIN();
@@ -1818,7 +1828,7 @@ jsonWriteStrId(JsonWrite *const this, const StringId value)
 }
 
 /**********************************************************************************************************************************/
-JsonWrite *
+FN_EXTERN JsonWrite *
 jsonWriteStrLst(JsonWrite *const this, const StringList *const value)
 {
     FUNCTION_TEST_BEGIN();
@@ -1840,7 +1850,7 @@ jsonWriteStrLst(JsonWrite *const this, const StringList *const value)
 }
 
 /**********************************************************************************************************************************/
-JsonWrite *
+FN_EXTERN JsonWrite *
 jsonWriteUInt(JsonWrite *const this, const unsigned int value)
 {
     FUNCTION_TEST_BEGIN();
@@ -1859,7 +1869,7 @@ jsonWriteUInt(JsonWrite *const this, const unsigned int value)
 }
 
 /**********************************************************************************************************************************/
-JsonWrite *
+FN_EXTERN JsonWrite *
 jsonWriteUInt64(JsonWrite *const this, const uint64_t value)
 {
     FUNCTION_TEST_BEGIN();
@@ -1976,7 +1986,7 @@ jsonWriteVarRecurse(JsonWrite *const this, const Variant *const value)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-JsonWrite *
+FN_EXTERN JsonWrite *
 jsonWriteVar(JsonWrite *const this, const Variant *const value)
 {
     FUNCTION_TEST_BEGIN();
@@ -1992,7 +2002,7 @@ jsonWriteVar(JsonWrite *const this, const Variant *const value)
 }
 
 /**********************************************************************************************************************************/
-JsonWrite *
+FN_EXTERN JsonWrite *
 jsonWriteZ(JsonWrite *const this, const char *const value)
 {
     FUNCTION_TEST_BEGIN();
@@ -2008,7 +2018,7 @@ jsonWriteZ(JsonWrite *const this, const char *const value)
 }
 
 /**********************************************************************************************************************************/
-const String *
+FN_EXTERN const String *
 jsonWriteResult(JsonWrite *const this)
 {
     FUNCTION_TEST_BEGIN();
@@ -2022,7 +2032,7 @@ jsonWriteResult(JsonWrite *const this)
 }
 
 /**********************************************************************************************************************************/
-String *
+FN_EXTERN String *
 jsonFromVar(const Variant *const value)
 {
     FUNCTION_TEST_BEGIN();
@@ -2041,8 +2051,12 @@ jsonFromVar(const Variant *const value)
 }
 
 /**********************************************************************************************************************************/
-String *
-jsonWriteToLog(const JsonWrite *const this)
+#ifdef DEBUG
+
+FN_EXTERN void
+jsonWriteToLog(const JsonWrite *const this, StringStatic *const debugLog)
 {
-    return strNewFmt("{size: %zu}", strSize(this->json));
+    strStcFmt(debugLog, "{size: %zu}", strSize(this->json));
 }
+
+#endif // DEBUG

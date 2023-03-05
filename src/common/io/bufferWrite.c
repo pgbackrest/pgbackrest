@@ -23,7 +23,7 @@ Macros for function logging
 #define FUNCTION_LOG_IO_BUFFER_WRITE_TYPE                                                                                          \
     IoBufferWrite *
 #define FUNCTION_LOG_IO_BUFFER_WRITE_FORMAT(value, buffer, bufferSize)                                                             \
-    objToLog(value, "IoBufferWrite", buffer, bufferSize)
+    objNameToLog(value, "IoBufferWrite", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Write to the buffer
@@ -47,7 +47,7 @@ ioBufferWrite(THIS_VOID, const Buffer *buffer)
 }
 
 /**********************************************************************************************************************************/
-IoWrite *
+FN_EXTERN IoWrite *
 ioBufferWriteNew(Buffer *buffer)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -60,7 +60,7 @@ ioBufferWriteNew(Buffer *buffer)
 
     OBJ_NEW_BEGIN(IoBufferWrite, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        IoBufferWrite *driver = OBJ_NEW_ALLOC();
+        IoBufferWrite *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoWrite::IoBufferWrite);
 
         *driver = (IoBufferWrite)
         {

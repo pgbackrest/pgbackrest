@@ -17,7 +17,7 @@ memory requirements for large numbers of zero-terminated strings.
 Size of blocks allocated for blob data
 ***********************************************************************************************************************************/
 #ifndef BLOB_BLOCK_SIZE
-    #define BLOB_BLOCK_SIZE                                         (64 * 1024)
+#define BLOB_BLOCK_SIZE                                             (64 * 1024)
 #endif
 
 /***********************************************************************************************************************************
@@ -30,18 +30,18 @@ typedef struct Blob Blob;
 /***********************************************************************************************************************************
 Constructor
 ***********************************************************************************************************************************/
-Blob *blbNew(void);
+FN_EXTERN Blob *blbNew(void);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Add data to the blob
-const void *blbAdd(Blob *this, const void *data, size_t size);
+FN_EXTERN const void *blbAdd(Blob *this, const void *data, size_t size);
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 strBlbFree(Blob *const this)
 {
     objFree(this);
@@ -53,6 +53,6 @@ Macros for function logging
 #define FUNCTION_LOG_BLOB_TYPE                                                                                                     \
     Blob *
 #define FUNCTION_LOG_BLOB_FORMAT(value, buffer, bufferSize)                                                                        \
-    objToLog(value, "Blob", buffer, bufferSize)
+    objNameToLog(value, "Blob", buffer, bufferSize)
 
 #endif

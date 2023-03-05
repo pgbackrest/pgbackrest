@@ -106,7 +106,7 @@ testRun(void)
         TEST_RESULT_Z(PGBACKREST_CONFIG_ORIG_PATH_FILE, "/etc/pgbackrest.conf", "check old config path");
         TEST_RESULT_STR_Z(PGBACKREST_CONFIG_ORIG_PATH_FILE_STR, "/etc/pgbackrest.conf", "check old config path str");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("confirm same behavior with multiple config include files");
 
         argList = strLstNew();
@@ -182,7 +182,7 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionInt64(cfgOptBufferSize), 65536, "buffer-size is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBufferSize), cfgSourceConfig, "backup-standby is source config");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("rename conf files - ensure read of conf extension only is attempted");
 
         HRN_SYSTEM_FMT("mv %s/db-backup.conf %s/db-backup.conf.save", strZ(configIncludePath), strZ(configIncludePath));
@@ -236,7 +236,7 @@ testRun(void)
             "recovery-option=c=d\n",
             "config-include-path with .conf files and non-.conf files");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("pass invalid values");
 
         // --config valid, --config-include-path invalid (does not exist)
@@ -266,7 +266,7 @@ testRun(void)
         strLstFree(parseOptionList[cfgOptConfig].indexList[0].valueList);
         strLstFree(parseOptionList[cfgOptConfigIncludePath].indexList[0].valueList);
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("neither config nor config-include-path passed as parameter (defaults but none exist)");
 
         parseOptionList[cfgOptConfig].indexList[0].found = false;
@@ -278,7 +278,7 @@ testRun(void)
             cfgFileLoad(storageTest, parseOptionList, backupCmdDefConfigValue, backupCmdDefConfigInclPathValue, oldConfigDefault),
             NULL, "config default, config-include-path default but nothing to read");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("config not passed as parameter (config does not exist), config-include-path passed - only include read");
 
         value = strLstNew();
@@ -298,7 +298,7 @@ testRun(void)
             "recovery-option=c=d\n",
             "config default and doesn't exist, config-include-path passed read");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("config and config-include-path are 'default' with files existing - old location ignored");
 
         // config file exists in both current default and old default location - old location ignored.
@@ -328,7 +328,7 @@ testRun(void)
             "recovery-option=c=d\n",
             "config and config-include-path default, files appended, original config not read");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("config not passed (only old default exists), config-include-path passed - old default and include read");
 
         // Config not passed as parameter - config does not exist in new default but does exist in old default. config-include-path
@@ -353,7 +353,7 @@ testRun(void)
             "recovery-option=c=d\n",
             "config old default read, config-include-path passed read");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("files read only from include path and not current or old config");
 
         // --no-config and config-include-path passed as parameter (files read only from include path and not current or old config)
@@ -375,7 +375,7 @@ testRun(void)
             "recovery-option=c=d\n",
             "--no-config, only config-include-path read");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("--no-config and config-include-path default exists with files - nothing to read");
 
         parseOptionList[cfgOptConfig].indexList[0].found = true;
@@ -388,7 +388,7 @@ testRun(void)
             cfgFileLoad(storageTest, parseOptionList, backupCmdDefConfigValue, configIncludePath, oldConfigDefault),
             NULL, "--no-config, config-include-path default, nothing read");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("config passed and config-include-path default exists with files - only config read");
 
         value = strLstNew();
@@ -408,7 +408,7 @@ testRun(void)
             "spool-path=/path/to/spool\n",
             "config param specified, config-include-path default, only config read");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("config-include-path and new config default read");
 
         // config new default and config-include-path passed - both exists with files. config-include-path & new config default read
@@ -433,7 +433,7 @@ testRun(void)
             "recovery-option=c=d\n",
             "config new default exists with files, config-include-path passed, default config and config-include-path read");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("config-path overrides - config and config-include-path are 'default'");
 
         parseOptionList[cfgOptConfig].indexList[0].found = false;
@@ -545,7 +545,7 @@ testRun(void)
         parseOptionList[cfgOptConfigPath].indexList[0].found = false;
         parseOptionList[cfgOptConfigPath].indexList[0].source = cfgSourceDefault;
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("config default and config-include-path passed, no config files in the include path - only in the default path");
 
         // rm command is split here because code counter is confused by what looks like a comment
@@ -567,7 +567,7 @@ testRun(void)
             "spool-path=/path/to/spool\n",
             "config default exists with files but config-include-path path passed is empty - only config read");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("config default and config-include-path passed, only empty file in include path, nothing in config defaults");
 
         HRN_SYSTEM_FMT("touch %s/empty.conf", strZ(configIncludePath));
@@ -855,14 +855,17 @@ testRun(void)
         strLstAddZ(argList, "--repo-storage-ca-file");
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
-            "option 'repo-storage-ca-file' must have an index");
+            "option 'repo-storage-ca-file' requires an index\n"
+            "HINT: add the required index, e.g. repo1-storage-ca-file.");
 
         argList = strLstNew();
         strLstAddZ(argList, TEST_BACKREST_EXE);
         strLstAddZ(argList, "--repo-azure-ca-path");
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
-            "deprecated option 'repo-azure-ca-path' must have an index");
+            "deprecated option 'repo-azure-ca-path' requires an index\n"
+            "HINT: add the required index, e.g. repo1-azure-ca-path.\n"
+            "HINT: consider using the non-deprecated name, e.g. repo1-storage-ca-path.");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("allow option parse without an index");
@@ -1193,6 +1196,16 @@ testRun(void)
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
             "option 'force' not valid without option 'no-online'");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/db");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
+        strLstAddZ(argList, TEST_COMMAND_BACKUP);
+        TEST_ERROR(
+            configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
+            "option 'repo1-block' not valid without option 'repo1-bundle'");
 
         argList = strLstNew();
         strLstAddZ(argList, TEST_BACKREST_EXE);
@@ -1538,7 +1551,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptConfig), false, "config is not set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptConfig), cfgSourceParam, "config is source param");
-        TEST_RESULT_BOOL(cfgOptionNegate(cfgOptConfig), true, "config is negated");
+        TEST_RESULT_BOOL(cfgOptionIdxNegate(cfgOptConfig, 0), true, "config is negated");
         TEST_RESULT_INT(cfgOptionSource(cfgOptStanza), cfgSourceParam, "stanza is source param");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptStanza), "db", "stanza is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptStanza), cfgSourceParam, "stanza is source param");
@@ -1668,7 +1681,6 @@ testRun(void)
         TEST_RESULT_Z(cfgOptionGroupName(cfgOptGrpPg, 0), "pg1", "pg1 group display (cached)");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/db", "default pg-path");
         TEST_RESULT_STR_Z(varStr(cfgOptionVar(cfgOptPgPath)), "/path/to/db", "default pg-path as variant");
-        TEST_RESULT_BOOL(cfgOptionGroupValid(cfgOptGrpPg), true, "pg group is valid");
         TEST_RESULT_UINT(cfgOptionGroupIdxTotal(cfgOptGrpPg), 3, "pg1, pg2, and pg256 are set");
         TEST_RESULT_BOOL(cfgOptionIdxBool(cfgOptPgLocal, 1), true, "pg2-local is set");
         TEST_RESULT_BOOL(cfgOptionIdxTest(cfgOptPgHost, 1), false, "pg2-host is not set (pg2-local override)");
@@ -1703,7 +1715,7 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptCompressLevel), cfgSourceConfig, "compress-level is source config");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptBackupStandby), false, "backup-standby not is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBackupStandby), cfgSourceDefault, "backup-standby is source default");
-        TEST_RESULT_BOOL(cfgOptionReset(cfgOptBackupStandby), true, "backup-standby was reset");
+        TEST_RESULT_BOOL(cfgOptionIdxReset(cfgOptBackupStandby, 0), true, "backup-standby was reset");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptDelta), true, "delta is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptDelta), cfgSourceConfig, "delta is source config");
         TEST_RESULT_INT(cfgOptionInt64(cfgOptBufferSize), 65536, "buffer-size is set");
@@ -1820,7 +1832,7 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/path/to/1");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCmd), TEST_PROJECT_EXE , "--cmd not provided; cmd is defaulted to " TEST_PROJECT_EXE);
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCmd), TEST_PROJECT_EXE, "--cmd not provided; cmd is defaulted to " TEST_PROJECT_EXE);
 
         argList = strLstNew();
         strLstAddZ(argList, TEST_BACKREST_EXE);
@@ -2017,6 +2029,50 @@ testRun(void)
         TEST_ERROR(
             hrnCfgLoadP(cfgCmdBackup, argList, .role = cfgCmdRoleLocal), OptionInvalidValueError,
             "key '4' is not valid for 'pg' option");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("remove groups indexes that do not have a non-default option");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 5, "repo5");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 112, "/repo112");
+        hrnCfgEnvKeyRawZ(cfgOptRepoS3Key, 1, "x1x");
+        hrnCfgEnvKeyRawZ(cfgOptRepoS3Key, 3, "x3x");
+        hrnCfgEnvKeyRawZ(cfgOptRepoS3Key, 255, "x255x");
+        HRN_CFG_LOAD(cfgCmdCheck, argList);
+
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3Key, 1);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3Key, 3);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3Key, 255);
+
+        TEST_RESULT_UINT(cfgOptionGroupIdxTotal(cfgOptGrpRepo), 2, "check repo group total");
+        TEST_RESULT_UINT(cfgOptionGroupIdxToKey(cfgOptGrpRepo, 0), 5, "check repo5 key");
+        TEST_RESULT_Z(cfgOptionGroupName(cfgOptGrpRepo, 0), "repo5", "check repo5 name");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoHost, 0), "repo5", "check repo5-host");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoPath, 0), "/var/lib/pgbackrest", "check repo5-path");
+        TEST_RESULT_UINT(cfgOptionGroupIdxToKey(cfgOptGrpRepo, 1), 112, "check repo112 key");
+        TEST_RESULT_Z(cfgOptionGroupName(cfgOptGrpRepo, 1), "repo112", "check repo112 name");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoPath, 1), "/repo112", "check repo112-path");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("two indexes with default options (first is remapped to repo1)");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
+        hrnCfgEnvKeyRawZ(cfgOptRepoS3Key, 4, "x4x");
+        hrnCfgEnvKeyRawZ(cfgOptRepoS3Key, 255, "x255x");
+        HRN_CFG_LOAD(cfgCmdCheck, argList);
+
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3Key, 4);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3Key, 255);
+
+        TEST_RESULT_UINT(cfgOptionGroupIdxTotal(cfgOptGrpRepo), 1, "check repo group total");
+        TEST_RESULT_UINT(cfgOptionGroupIdxToKey(cfgOptGrpRepo, 0), 1, "check repo1 key");
+        TEST_RESULT_Z(cfgOptionGroupName(cfgOptGrpRepo, 0), "repo1", "check repo1 name");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoPath, 0), "/var/lib/pgbackrest", "check repo1-path");
     }
 
     // *****************************************************************************************************************************

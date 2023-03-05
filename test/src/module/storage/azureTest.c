@@ -14,13 +14,13 @@ Test Azure Storage
 Constants
 ***********************************************************************************************************************************/
 #define TEST_ACCOUNT                                                "account"
-    STRING_STATIC(TEST_ACCOUNT_STR,                                 TEST_ACCOUNT);
+STRING_STATIC(TEST_ACCOUNT_STR,                                     TEST_ACCOUNT);
 #define TEST_CONTAINER                                              "container"
-    STRING_STATIC(TEST_CONTAINER_STR,                               TEST_CONTAINER);
+STRING_STATIC(TEST_CONTAINER_STR,                                   TEST_CONTAINER);
 #define TEST_KEY_SAS                                                "?sig=key"
-    STRING_STATIC(TEST_KEY_SAS_STR,                                 TEST_KEY_SAS);
+STRING_STATIC(TEST_KEY_SAS_STR,                                     TEST_KEY_SAS);
 #define TEST_KEY_SHARED                                             "YXpLZXk="
-    STRING_STATIC(TEST_KEY_SHARED_STR,                              TEST_KEY_SHARED);
+STRING_STATIC(TEST_KEY_SHARED_STR,                                  TEST_KEY_SHARED);
 
 /***********************************************************************************************************************************
 Helper to build test requests
@@ -76,7 +76,7 @@ testRequest(IoWrite *write, const char *verb, const char *path, TestRequestParam
     if (param.content != NULL)
     {
         strCatFmt(
-            request, "content-md5:%s\r\n", strZ(strNewEncode(encodeBase64, cryptoHashOne(hashTypeMd5, BUFSTRZ(param.content)))));
+            request, "content-md5:%s\r\n", strZ(strNewEncode(encodingBase64, cryptoHashOne(hashTypeMd5, BUFSTRZ(param.content)))));
     }
 
     // Add date
@@ -156,8 +156,8 @@ testResponse(IoWrite *write, TestResponseParam param)
         strCatFmt(
             response,
             "content-length:%zu\r\n"
-                "\r\n"
-                "%s",
+            "\r\n"
+            "%s",
             strlen(param.content), param.content);
     }
     else
@@ -200,10 +200,10 @@ testRun(void)
         TEST_RESULT_STR(((StorageAzure *)storageDriver(storage))->account, TEST_ACCOUNT_STR, "check account");
         TEST_RESULT_STR(((StorageAzure *)storageDriver(storage))->container, TEST_CONTAINER_STR, "check container");
         TEST_RESULT_STR(
-            strNewEncode(encodeBase64, ((StorageAzure *)storageDriver(storage))->sharedKey), TEST_KEY_SHARED_STR, "check key");
+            strNewEncode(encodingBase64, ((StorageAzure *)storageDriver(storage))->sharedKey), TEST_KEY_SHARED_STR, "check key");
         TEST_RESULT_STR_Z(((StorageAzure *)storageDriver(storage))->host, TEST_ACCOUNT ".blob.core.windows.net", "check host");
         TEST_RESULT_STR_Z(((StorageAzure *)storageDriver(storage))->pathPrefix, "/" TEST_CONTAINER, "check path prefix");
-        TEST_RESULT_UINT(((StorageAzure *)storageDriver(storage))->blockSize, STORAGE_AZURE_BLOCKSIZE_MIN, "check block size");
+        TEST_RESULT_UINT(((StorageAzure *)storageDriver(storage))->blockSize, 4 * 1024 * 1024, "check block size");
         TEST_RESULT_BOOL(storageFeature(storage, storageFeaturePath), false, "check path feature");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -382,6 +382,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storageAzureAuth()"))
     {
+        char logBuf[STACK_TRACE_PARAM_MAX];
+
         StorageAzure *storage = NULL;
         HttpHeader *header = NULL;
         const String *dateTime = STRDEF("Sun, 21 Jun 2020 12:46:19 GMT");
@@ -401,10 +403,11 @@ testRun(void)
         header = httpHeaderAdd(httpHeaderNew(NULL), HTTP_HEADER_CONTENT_LENGTH_STR, ZERO_STR);
 
         TEST_RESULT_VOID(storageAzureAuth(storage, HTTP_VERB_GET_STR, STRDEF("/path"), NULL, dateTime, header), "auth");
-        TEST_RESULT_STR_Z(
-            httpHeaderToLog(header),
-            "{authorization: 'SharedKey account:edqgT7EhsiIN3q6Al2HCZlpXr2D5cJFavr2ZCkhG9R8=', content-length: '0'"
-                ", date: 'Sun, 21 Jun 2020 12:46:19 GMT', host: 'account.blob.core.windows.net', x-ms-version: '2019-02-02'}",
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(header, httpHeaderToLog, logBuf, sizeof(logBuf)), "httpHeaderToLog");
+        TEST_RESULT_Z(
+            logBuf,
+            "{content-length: '0', host: 'account.blob.core.windows.net', date: 'Sun, 21 Jun 2020 12:46:19 GMT'"
+            ", x-ms-version: '2019-02-02', authorization: 'SharedKey account:edqgT7EhsiIN3q6Al2HCZlpXr2D5cJFavr2ZCkhG9R8='}",
             "check headers");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -416,11 +419,12 @@ testRun(void)
         HttpQuery *query = httpQueryAdd(httpQueryNewP(), STRDEF("a"), STRDEF("b"));
 
         TEST_RESULT_VOID(storageAzureAuth(storage, HTTP_VERB_GET_STR, STRDEF("/path/file"), query, dateTime, header), "auth");
-        TEST_RESULT_STR_Z(
-            httpHeaderToLog(header),
-            "{authorization: 'SharedKey account:5qAnroLtbY8IWqObx8+UVwIUysXujsfWZZav7PrBON0=', content-length: '44'"
-                ", content-md5: 'b64f49553d5c441652e95697a2c5949e', date: 'Sun, 21 Jun 2020 12:46:19 GMT'"
-                ", host: 'account.blob.core.windows.net', x-ms-version: '2019-02-02'}",
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(header, httpHeaderToLog, logBuf, sizeof(logBuf)), "httpHeaderToLog");
+        TEST_RESULT_Z(
+            logBuf,
+            "{content-length: '44', content-md5: 'b64f49553d5c441652e95697a2c5949e', host: 'account.blob.core.windows.net'"
+            ", date: 'Sun, 21 Jun 2020 12:46:19 GMT', x-ms-version: '2019-02-02'"
+            ", authorization: 'SharedKey account:5qAnroLtbY8IWqObx8+UVwIUysXujsfWZZav7PrBON0='}",
             "check headers");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -438,8 +442,8 @@ testRun(void)
         header = httpHeaderAdd(httpHeaderNew(NULL), HTTP_HEADER_CONTENT_LENGTH_STR, STRDEF("66"));
 
         TEST_RESULT_VOID(storageAzureAuth(storage, HTTP_VERB_GET_STR, STRDEF("/path/file"), query, dateTime, header), "auth");
-        TEST_RESULT_STR_Z(
-            httpHeaderToLog(header), "{content-length: '66', host: 'account.blob.core.usgovcloudapi.net'}", "check headers");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(header, httpHeaderToLog, logBuf, sizeof(logBuf)), "httpHeaderToLog");
+        TEST_RESULT_Z(logBuf, "{content-length: '66', host: 'account.blob.core.usgovcloudapi.net'}", "check headers");
         TEST_RESULT_STR_Z(httpQueryRenderP(query), "a=b&sig=key", "check query");
     }
 
@@ -590,6 +594,7 @@ testRun(void)
                 TEST_RESULT_STR_Z(storageWriteName(write), "/file.txt", "check file name");
                 TEST_RESULT_BOOL(storageWriteSyncFile(write), true, "file is synced");
                 TEST_RESULT_BOOL(storageWriteSyncPath(write), true, "path is synced");
+                TEST_RESULT_BOOL(storageWriteTruncate(write), true, "file will be truncated");
 
                 TEST_RESULT_VOID(storageWriteAzureClose(write->driver), "close file again");
 

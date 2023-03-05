@@ -31,10 +31,10 @@ struct HttpClient
 };
 
 /**********************************************************************************************************************************/
-HttpClient *
+FN_EXTERN HttpClient *
 httpClientNew(IoClient *ioClient, TimeMSec timeout)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug)
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_CLIENT, ioClient);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
     FUNCTION_LOG_END();
@@ -65,7 +65,7 @@ httpClientNew(IoClient *ioClient, TimeMSec timeout)
 }
 
 /**********************************************************************************************************************************/
-HttpSession *
+FN_EXTERN HttpSession *
 httpClientOpen(HttpClient *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -97,7 +97,7 @@ httpClientOpen(HttpClient *this)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 httpClientReuse(HttpClient *this, HttpSession *session)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -115,10 +115,10 @@ httpClientReuse(HttpClient *this, HttpSession *session)
 }
 
 /**********************************************************************************************************************************/
-String *
-httpClientToLog(const HttpClient *this)
+FN_EXTERN void
+httpClientToLog(const HttpClient *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{ioClient: %s, reusable: %u, timeout: %" PRIu64"}", strZ(ioClientToLog(this->ioClient)), lstSize(this->sessionReuseList),
-        httpClientTimeout(this));
+    strStcCat(debugLog, "{ioClient: ");
+    ioClientToLog(this->ioClient, debugLog);
+    strStcFmt(debugLog, ", reusable: %u, timeout: %" PRIu64 "}", lstSize(this->sessionReuseList), httpClientTimeout(this));
 }

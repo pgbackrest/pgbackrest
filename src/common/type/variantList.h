@@ -16,30 +16,30 @@ typedef struct VariantList VariantList;
 Constructors
 ***********************************************************************************************************************************/
 // Create empty VariantList
-__attribute__((always_inline)) static inline VariantList *
+FN_INLINE_ALWAYS VariantList *
 varLstNew(void)
 {
-    return (VariantList *)lstNewP(sizeof(Variant *));
+    return (VariantList *)OBJ_NAME(lstNewP(sizeof(Variant *)), VariantList::List);
 }
 
 // Create VariantList from StringList
-VariantList *varLstNewStrLst(const StringList *stringList);
+FN_EXTERN VariantList *varLstNewStrLst(const StringList *stringList);
 
 // Duplicate a variant list
-VariantList *varLstDup(const VariantList *source);
+FN_EXTERN VariantList *varLstDup(const VariantList *source);
 
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
 // List size
-__attribute__((always_inline)) static inline unsigned int
+FN_INLINE_ALWAYS unsigned int
 varLstSize(const VariantList *const this)
 {
     return lstSize((List *)this);
 }
 
 // Is the list empty?
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 varLstEmpty(const VariantList *const this)
 {
     return varLstSize(this) == 0;
@@ -49,7 +49,7 @@ varLstEmpty(const VariantList *const this)
 Functions
 ***********************************************************************************************************************************/
 // Add to list
-__attribute__((always_inline)) static inline VariantList *
+FN_INLINE_ALWAYS VariantList *
 varLstAdd(VariantList *const this, Variant *const data)
 {
     lstAdd((List *)this, &data);
@@ -57,14 +57,14 @@ varLstAdd(VariantList *const this, Variant *const data)
 }
 
 // Get by index
-__attribute__((always_inline)) static inline Variant *
+FN_INLINE_ALWAYS Variant *
 varLstGet(const VariantList *const this, const unsigned int listIdx)
 {
     return *(Variant **)lstGet((List *)this, listIdx);
 }
 
 // Move to new parent mem context
-__attribute__((always_inline)) static inline VariantList *
+FN_INLINE_ALWAYS VariantList *
 varLstMove(VariantList *const this, MemContext *const parentNew)
 {
     return (VariantList *)lstMove((List *)this, parentNew);
@@ -73,7 +73,7 @@ varLstMove(VariantList *const this, MemContext *const parentNew)
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 varLstFree(VariantList *const this)
 {
     lstFree((List *)this);
@@ -85,6 +85,6 @@ Macros for function logging
 #define FUNCTION_LOG_VARIANT_LIST_TYPE                                                                                             \
     VariantList *
 #define FUNCTION_LOG_VARIANT_LIST_FORMAT(value, buffer, bufferSize)                                                                \
-    objToLog(value, "VariantList", buffer, bufferSize)
+    objNameToLog(value, "VariantList", buffer, bufferSize)
 
 #endif

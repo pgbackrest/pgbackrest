@@ -10,59 +10,59 @@ Parse Configuration Yaml
 Command role constants
 ***********************************************************************************************************************************/
 #define CMD_ROLE_ASYNC                                              "async"
-    STRING_DECLARE(CMD_ROLE_ASYNC_STR);
+STRING_DECLARE(CMD_ROLE_ASYNC_STR);
 #define CMD_ROLE_LOCAL                                              "local"
-    STRING_DECLARE(CMD_ROLE_LOCAL_STR);
+STRING_DECLARE(CMD_ROLE_LOCAL_STR);
 #define CMD_ROLE_MAIN                                               "main"
-    STRING_DECLARE(CMD_ROLE_MAIN_STR);
+STRING_DECLARE(CMD_ROLE_MAIN_STR);
 #define CMD_ROLE_REMOTE                                             "remote"
-    STRING_DECLARE(CMD_ROLE_REMOTE_STR);
+STRING_DECLARE(CMD_ROLE_REMOTE_STR);
 
 /***********************************************************************************************************************************
 Command constants
 ***********************************************************************************************************************************/
 #define CMD_HELP                                                    "help"
-    STRING_DECLARE(CMD_HELP_STR);
+STRING_DECLARE(CMD_HELP_STR);
 #define CMD_VERSION                                                 "version"
-    STRING_DECLARE(CMD_VERSION_STR);
+STRING_DECLARE(CMD_VERSION_STR);
 
 /***********************************************************************************************************************************
 Option type constants
 ***********************************************************************************************************************************/
 #define OPT_TYPE_BOOLEAN                                            "boolean"
-    STRING_DECLARE(OPT_TYPE_BOOLEAN_STR);
+STRING_DECLARE(OPT_TYPE_BOOLEAN_STR);
 #define OPT_TYPE_HASH                                               "hash"
-    STRING_DECLARE(OPT_TYPE_HASH_STR);
+STRING_DECLARE(OPT_TYPE_HASH_STR);
 #define OPT_TYPE_INTEGER                                            "integer"
-    STRING_DECLARE(OPT_TYPE_INTEGER_STR);
+STRING_DECLARE(OPT_TYPE_INTEGER_STR);
 #define OPT_TYPE_LIST                                               "list"
-    STRING_DECLARE(OPT_TYPE_LIST_STR);
+STRING_DECLARE(OPT_TYPE_LIST_STR);
 #define OPT_TYPE_PATH                                               "path"
-    STRING_DECLARE(OPT_TYPE_PATH_STR);
+STRING_DECLARE(OPT_TYPE_PATH_STR);
 #define OPT_TYPE_SIZE                                               "size"
-    STRING_DECLARE(OPT_TYPE_SIZE_STR);
+STRING_DECLARE(OPT_TYPE_SIZE_STR);
 #define OPT_TYPE_STRING                                             "string"
-    STRING_DECLARE(OPT_TYPE_STRING_STR);
+STRING_DECLARE(OPT_TYPE_STRING_STR);
 #define OPT_TYPE_STRING_ID                                          "string-id"
-    STRING_DECLARE(OPT_TYPE_STRING_ID_STR);
+STRING_DECLARE(OPT_TYPE_STRING_ID_STR);
 #define OPT_TYPE_TIME                                               "time"
-    STRING_DECLARE(OPT_TYPE_TIME_STR);
+STRING_DECLARE(OPT_TYPE_TIME_STR);
 
 /***********************************************************************************************************************************
 Option constants
 ***********************************************************************************************************************************/
 #define OPT_STANZA                                                  "stanza"
-    STRING_DECLARE(OPT_STANZA_STR);
+STRING_DECLARE(OPT_STANZA_STR);
 
 /***********************************************************************************************************************************
 Section constants
 ***********************************************************************************************************************************/
 #define SECTION_COMMAND_LINE                                        "command-line"
-    STRING_DECLARE(SECTION_COMMAND_LINE_STR);
+STRING_DECLARE(SECTION_COMMAND_LINE_STR);
 #define SECTION_GLOBAL                                              "global"
-    STRING_DECLARE(SECTION_GLOBAL_STR);
+STRING_DECLARE(SECTION_GLOBAL_STR);
 #define SECTION_STANZA                                              "stanza"
-    STRING_DECLARE(SECTION_STANZA_STR);
+STRING_DECLARE(SECTION_STANZA_STR);
 
 /***********************************************************************************************************************************
 Types

@@ -61,7 +61,7 @@ fdReadyRetry(int pollResult, int errNo, bool first, TimeMSec *timeout, TimeMSec 
     FUNCTION_TEST_RETURN(BOOL, result);
 }
 
-bool
+FN_EXTERN bool
 fdReady(int fd, bool read, bool write, TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

@@ -40,12 +40,10 @@ use constant VM_IMAGE                                               => 'image';
     push @EXPORT, qw(VM_IMAGE);
 use constant VM_OS_BASE                                             => 'os-base';
     push @EXPORT, qw(VM_OS_BASE);
-use constant VMDEF_PGSQL_BIN                                        => 'pgsql-bin';
+use constant VMDEF_PGSQL_BIN                                        => 'psql-bin';
     push @EXPORT, qw(VMDEF_PGSQL_BIN);
 use constant VMDEF_LCOV_VERSION                                     => 'lcov-version';
     push @EXPORT, qw(VMDEF_LCOV_VERSION);
-use constant VMDEF_WITH_BACKTRACE                                   => 'with-backtrace';
-    push @EXPORT, qw(VMDEF_WITH_BACKTRACE);
 use constant VMDEF_WITH_LZ4                                         => 'with-lz4';
     push @EXPORT, qw(VMDEF_WITH_LZ4);
 use constant VMDEF_WITH_ZST                                         => 'with-zst';
@@ -191,14 +189,10 @@ my $oyVm =
         &VM_ARCH => VM_ARCH_I386,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
-        &VMDEF_WITH_BACKTRACE => true,
         &VMDEF_WITH_ZST => true,
 
         &VM_DB =>
         [
-            PG_VERSION_90,
-            PG_VERSION_91,
-            PG_VERSION_92,
             PG_VERSION_93,
             PG_VERSION_94,
             PG_VERSION_95,
@@ -207,9 +201,6 @@ my $oyVm =
 
         &VM_DB_TEST =>
         [
-            PG_VERSION_90,
-            PG_VERSION_91,
-            PG_VERSION_92,
             PG_VERSION_93,
             PG_VERSION_94,
         ],
@@ -224,14 +215,10 @@ my $oyVm =
         &VMDEF_COVERAGE_C => true,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
-        &VMDEF_WITH_BACKTRACE => true,
         &VMDEF_WITH_ZST => true,
 
         &VM_DB =>
         [
-            PG_VERSION_90,
-            PG_VERSION_91,
-            PG_VERSION_92,
             PG_VERSION_93,
             PG_VERSION_94,
             PG_VERSION_95,
@@ -261,14 +248,10 @@ my $oyVm =
         &VMDEF_COVERAGE_C => true,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
-        &VMDEF_WITH_BACKTRACE => true,
         &VMDEF_WITH_ZST => true,
 
         &VM_DB =>
         [
-            PG_VERSION_90,
-            PG_VERSION_91,
-            PG_VERSION_92,
             PG_VERSION_93,
             PG_VERSION_94,
             PG_VERSION_95,
@@ -444,18 +427,6 @@ sub hostArch
 }
 
 push @EXPORT, qw(hostArch);
-
-####################################################################################################################################
-# Does the VM support libbacktrace?
-####################################################################################################################################
-sub vmWithBackTrace
-{
-    my $strVm = shift;
-
-    return ($oyVm->{$strVm}{&VMDEF_WITH_BACKTRACE} ? true : false);
-}
-
-push @EXPORT, qw(vmWithBackTrace);
 
 ####################################################################################################################################
 # Does the VM support liblz4?

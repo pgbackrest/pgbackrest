@@ -23,7 +23,7 @@ static struct
 } dbProtocolLocal;
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 dbOpenProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -69,7 +69,7 @@ dbOpenProtocol(PackRead *const param, ProtocolServer *const server)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 dbQueryProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -95,7 +95,7 @@ dbQueryProtocol(PackRead *const param, ProtocolServer *const server)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 dbCloseProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);

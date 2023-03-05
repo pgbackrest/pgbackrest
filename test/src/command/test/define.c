@@ -23,6 +23,8 @@ testDefParseModuleList(Yaml *const yaml, List *const moduleList)
         FUNCTION_LOG_PARAM(LIST, moduleList);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     // Global lists to be copied to next test
     StringList *const globalDependList = strLstNew();
     StringList *const globalFeatureList = strLstNew();
@@ -47,8 +49,7 @@ testDefParseModuleList(Yaml *const yaml, List *const moduleList)
                 // Check if next is db for integration tests
                 bool pgRequired = false;
 
-                if (type == testDefTypeIntegration && yamlEventPeek(yaml).type == yamlEventTypeScalar &&
-                    strEqZ(yamlEventPeek(yaml).value, "db"))
+                if (type == testDefTypeIntegration && strEqZ(yamlEventPeek(yaml).value, "db"))
                 {
                     yamlScalarNextCheckZ(yaml, "db");
                     pgRequired = yamlBoolParse(yamlScalarNext(yaml));
@@ -92,13 +93,18 @@ testDefParseModuleList(Yaml *const yaml, List *const moduleList)
                                     YAML_MAP_BEGIN(yaml)
                                     {
                                         testDefCoverage.name = yamlScalarNext(yaml).value;
-                                        yamlScalarNextCheckZ(yaml, "noCode");
+                                        const String *const type = yamlScalarNext(yaml).value;
+                                        testDefCoverage.included = true;
+
+                                        if (strEqZ(type, "included"))
+                                        {
+                                            testDefCoverage.coverable = true;
+                                        }
+                                        else
+                                            CHECK_FMT(AssertError, strEqZ(type, "noCode"), "invalid coverage type %s", strZ(type));
                                     }
                                     YAML_MAP_END();
                                 }
-
-                                testDefCoverage.include =
-                                    strEndsWithZ(testDefCoverage.name, ".vendor") || strEndsWithZ(testDefCoverage.name, ".auto");
 
                                 MEM_CONTEXT_OBJ_BEGIN(coverageList)
                                 {
@@ -108,7 +114,7 @@ testDefParseModuleList(Yaml *const yaml, List *const moduleList)
                                 MEM_CONTEXT_OBJ_END();
 
                                 // Also add to the global depend list
-                                if (testDefCoverage.coverable && !testDefCoverage.include)
+                                if (testDefCoverage.coverable && !testDefCoverage.included)
                                     strLstAddIfMissing(globalDependList, testDefCoverage.name);
                             }
                             YAML_SEQ_END();
@@ -199,15 +205,14 @@ testDefParseModuleList(Yaml *const yaml, List *const moduleList)
                         {
                             testDefModule.name = strNewFmt("%s/%s", strZ(moduleName), strZ(yamlScalarNext(yaml).value));
                         }
-                        else if (strEqZ(subModuleDef.value, "total"))
-                        {
-                            testDefModule.total = cvtZToUInt(strZ(yamlScalarNext(yaml).value));
-                        }
                         else
                         {
-                            THROW_FMT(
-                                FormatError, "unexpected scalar '%s' at line %zu, column %zu", strZ(subModuleDef.value),
-                                subModuleDef.line, subModuleDef.column);
+                            CHECK_FMT(
+                                FormatError, strEqZ(subModuleDef.value, "total"),
+                                "unexpected keyword '%s' at line %zu, column %zu",
+                                strZ(subModuleDef.value), subModuleDef.line, subModuleDef.column);
+
+                            testDefModule.total = cvtZToUInt(strZ(yamlScalarNext(yaml).value));
                         }
                     }
                     YAML_MAP_END();
@@ -219,11 +224,8 @@ testDefParseModuleList(Yaml *const yaml, List *const moduleList)
                     {
                         const String *const depend = strLstGet(globalDependList, dependIdx);
 
-                        if ((coverageList == NULL || !lstExists(coverageList, &depend)) &&
-                            (includeList == NULL || !strLstExists(includeList, depend)))
-                        {
+                        if (!lstExists(coverageList, &depend) && !strLstExists(includeList, depend))
                             strLstAdd(dependList, depend);
-                        }
                     }
 
                     // Add test module
@@ -251,14 +253,13 @@ testDefParseModuleList(Yaml *const yaml, List *const moduleList)
                             for (unsigned int harnessIdx = 0; harnessIdx < lstSize(globalHarnessList); harnessIdx++)
                             {
                                 const TestDefHarness *const globalHarness = lstGet(globalHarnessList, harnessIdx);
+                                const TestDefHarness testDefHarness =
+                                {
+                                    .name = strDup(globalHarness->name),
+                                    .includeList = strLstDup(globalHarness->includeList),
+                                };
 
-                                lstAdd(
-                                    harnessList,
-                                    &(TestDefHarness)
-                                    {
-                                        .name = strDup(globalHarness->name),
-                                        .includeList = strLstDup(globalHarness->includeList),
-                                    });
+                                lstAdd(harnessList, &testDefHarness);
                             }
                         }
                         MEM_CONTEXT_OBJ_END();
@@ -273,14 +274,13 @@ testDefParseModuleList(Yaml *const yaml, List *const moduleList)
                             for (unsigned int shimIdx = 0; shimIdx < lstSize(globalShimList); shimIdx++)
                             {
                                 const TestDefShim *const globalShim = lstGet(globalShimList, shimIdx);
+                                const TestDefShim testDefShim =
+                                {
+                                    .name = strDup(globalShim->name),
+                                    .functionList = strLstDup(globalShim->functionList),
+                                };
 
-                                lstAdd(
-                                    shimList,
-                                    &(TestDefShim)
-                                    {
-                                        .name = strDup(globalShim->name),
-                                        .functionList = strLstDup(globalShim->functionList),
-                                    });
+                                lstAdd(shimList, &testDefShim);
                             }
                         }
                         MEM_CONTEXT_OBJ_END();
@@ -312,6 +312,8 @@ testDefParse(const Storage *const storageRepo)
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storageRepo);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_STRUCT();
 
     // Module list
     List *const moduleList = lstNewP(sizeof(TestDefModule), .comparator = lstComparatorStr);

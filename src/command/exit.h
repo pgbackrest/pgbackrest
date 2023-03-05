@@ -4,8 +4,8 @@ Exit Routines
 #ifndef COMMAND_EXIT_H
 #define COMMAND_EXIT_H
 
-#include <stdbool.h>
 #include <signal.h>
+#include <stdbool.h>
 
 /***********************************************************************************************************************************
 Signal type
@@ -22,9 +22,9 @@ typedef enum
 Functions
 ***********************************************************************************************************************************/
 // Setup signal handlers
-void exitInit(void);
+FN_EXTERN void exitInit(void);
 
 // Do cleanup and return result code
-int exitSafe(int result, bool error, SignalType signalType);
+FN_EXTERN int exitSafe(int result, bool error, SignalType signalType);
 
 #endif

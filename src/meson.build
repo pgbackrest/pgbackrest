@@ -1,4 +1,22 @@
 ####################################################################################################################################
+# Make externed functions/variables static when unity is enabled
+####################################################################################################################################
+arg_unity = []
+
+if get_option('unity') == 'on'
+    configuration.set('FN_EXTERN', 'static', description: 'Function is static for unity build')
+    configuration.set('VR_EXTERN_DECLARE', 'static', description: 'Variable declaration is static for unity build')
+    configuration.set('VR_EXTERN_DEFINE', 'static', description: 'Variable definition is static for unity build')
+
+    # Add args to builds to prevent non-pgbackrest binaries failing due to unused functions
+    arg_unity += '-Wno-unused-function'
+else
+    configuration.set('FN_EXTERN', 'extern', description: 'Extern function required by other compilation units')
+    configuration.set('VR_EXTERN_DECLARE', 'extern', description: 'Extern variable declaration required by other compilation units')
+    configuration.set('VR_EXTERN_DEFINE', '', description: 'Extern variable definition required by other compilation units')
+endif
+
+####################################################################################################################################
 # Write configuration
 ####################################################################################################################################
 configure_file(output: 'build.auto.h', configuration: configuration)
@@ -31,10 +49,10 @@ src_common = files(
 	'common/type/list.c',
 	'common/type/object.c',
 	'common/type/pack.c',
-	'common/type/string.c',
-	'common/type/stringZ.c',
 	'common/type/stringId.c',
 	'common/type/stringList.c',
+	'common/type/stringStatic.c',
+	'common/type/stringZ.c',
 	'common/type/variant.c',
 	'common/type/variantList.c',
 	'common/user.c',
@@ -55,6 +73,8 @@ src_common = files(
 ####################################################################################################################################
 src_build_code = [
 	'build/common/render.c',
+	'build/common/string.c',
+	'build/common/xml.c',
 	'build/common/yaml.c',
 	'build/config/parse.c',
 	'build/config/render.c',
@@ -67,7 +87,6 @@ src_build_code = [
 	'build/main.c',
 	'common/compress/bz2/common.c',
 	'common/compress/bz2/compress.c',
-	'common/type/xml.c',
 ]
 
 build_code = executable(
@@ -75,9 +94,13 @@ build_code = executable(
     src_common,
     src_build_code,
     dependencies: [
+        lib_backtrace,
         lib_bz2,
         lib_xml,
         lib_yaml
+    ],
+    c_args: [
+        arg_unity,
     ],
 )
 
@@ -91,6 +114,7 @@ subdir('postgres')
 # pgBackRest target
 ####################################################################################################################################
 src_pgbackrest = [
+	'command/annotate/annotate.c',
 	'command/archive/common.c',
 	'command/archive/get/file.c',
 	'command/archive/get/get.c',
@@ -99,6 +123,8 @@ src_pgbackrest = [
 	'command/archive/push/protocol.c',
 	'command/archive/push/push.c',
 	'command/backup/backup.c',
+	'command/backup/blockIncr.c',
+	'command/backup/blockMap.c',
 	'command/backup/common.c',
 	'command/backup/pageChecksum.c',
 	'command/backup/protocol.c',
@@ -120,6 +146,7 @@ src_pgbackrest = [
 	'command/repo/ls.c',
 	'command/repo/put.c',
 	'command/repo/rm.c',
+	'command/restore/blockHash.c',
 	'command/restore/file.c',
 	'command/restore/protocol.c',
 	'command/restore/restore.c',
@@ -152,10 +179,12 @@ src_pgbackrest = [
 	'common/exec.c',
 	'common/fork.c',
 	'common/ini.c',
+    'common/io/chunkedRead.c',
 	'common/io/client.c',
 	'common/io/fd.c',
 	'common/io/fdRead.c',
 	'common/io/fdWrite.c',
+	'common/io/filter/chunk.c',
 	'common/io/filter/size.c',
 	'common/io/http/client.c',
 	'common/io/http/common.c',
@@ -178,6 +207,7 @@ src_pgbackrest = [
 	'common/lock.c',
 	'common/stat.c',
 	'common/type/json.c',
+	'common/type/string.c',
 	'common/type/xml.c',
 	'config/config.c',
 	'config/exec.c',
@@ -230,6 +260,7 @@ executable(
     help_auto_c_inc,
     interface_auto_c_inc,
     dependencies : [
+        lib_backtrace,
         lib_bz2,
         lib_openssl,
         lib_lz4,

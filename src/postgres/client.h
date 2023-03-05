@@ -8,10 +8,10 @@ casts to queries to output one of these types.
 #ifndef POSTGRES_QUERY_H
 #define POSTGRES_QUERY_H
 
+#include "common/time.h"
 #include "common/type/object.h"
 #include "common/type/pack.h"
 #include "common/type/string.h"
-#include "common/time.h"
 
 /***********************************************************************************************************************************
 Query result types
@@ -32,7 +32,7 @@ typedef struct PgClient PgClient;
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-PgClient *pgClientNew(
+FN_EXTERN PgClient *pgClientNew(
     const String *host, const unsigned int port, const String *database, const String *user, const TimeMSec timeout);
 
 /***********************************************************************************************************************************
@@ -48,35 +48,35 @@ typedef struct PgClientPub
 } PgClientPub;
 
 // Pg host
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 pgClientHost(const PgClient *const this)
 {
     return THIS_PUB(PgClient)->host;
 }
 
 // Pg port
-__attribute__((always_inline)) static inline unsigned int
+FN_INLINE_ALWAYS unsigned int
 pgClientPort(const PgClient *const this)
 {
     return THIS_PUB(PgClient)->port;
 }
 
 // Pg database
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 pgClientDatabase(const PgClient *const this)
 {
     return THIS_PUB(PgClient)->database;
 }
 
 // Pg user
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 pgClientUser(const PgClient *const this)
 {
     return THIS_PUB(PgClient)->user;
 }
 
 // Timeout for statements/queries
-__attribute__((always_inline)) static inline TimeMSec
+FN_INLINE_ALWAYS TimeMSec
 pgClientTimeout(const PgClient *const this)
 {
     return THIS_PUB(PgClient)->timeout;
@@ -86,25 +86,25 @@ pgClientTimeout(const PgClient *const this)
 Functions
 ***********************************************************************************************************************************/
 // Open connection to PostgreSQL
-PgClient *pgClientOpen(PgClient *this);
+FN_EXTERN PgClient *pgClientOpen(PgClient *this);
 
 // Move to a new parent mem context
-__attribute__((always_inline)) static inline PgClient *
+FN_INLINE_ALWAYS PgClient *
 pgClientMove(PgClient *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
 }
 
 // Execute a query and return results
-Pack *pgClientQuery(PgClient *this, const String *query, PgClientQueryResult resultType);
+FN_EXTERN Pack *pgClientQuery(PgClient *this, const String *query, PgClientQueryResult resultType);
 
 // Close connection to PostgreSQL
-void pgClientClose(PgClient *this);
+FN_EXTERN void pgClientClose(PgClient *this);
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 pgClientFree(PgClient *const this)
 {
     objFree(this);
@@ -113,11 +113,11 @@ pgClientFree(PgClient *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-String *pgClientToLog(const PgClient *this);
+FN_EXTERN void pgClientToLog(const PgClient *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_PG_CLIENT_TYPE                                                                                                \
     PgClient *
 #define FUNCTION_LOG_PG_CLIENT_FORMAT(value, buffer, bufferSize)                                                                   \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, pgClientToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, pgClientToLog, buffer, bufferSize)
 
 #endif

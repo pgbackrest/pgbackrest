@@ -19,11 +19,11 @@ Io server type
 Statistics constants
 ***********************************************************************************************************************************/
 #define SOCKET_STAT_SERVER                                          "socket.server"         // Servers created
-    STRING_DECLARE(SOCKET_STAT_SERVER_STR);
+STRING_DECLARE(SOCKET_STAT_SERVER_STR);
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-IoServer *sckServerNew(const String *address, unsigned int port, TimeMSec timeout);
+FN_EXTERN IoServer *sckServerNew(const String *address, unsigned int port, TimeMSec timeout);
 
 #endif

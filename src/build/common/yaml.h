@@ -12,8 +12,8 @@ Yaml object
 typedef struct Yaml Yaml;
 
 #include "common/memContext.h"
-#include "common/type/object.h"
 #include "common/type/buffer.h"
+#include "common/type/object.h"
 #include "common/type/stringId.h"
 
 /***********************************************************************************************************************************
@@ -66,7 +66,7 @@ YamlEvent yamlEventCheck(YamlEvent event, YamlEventType type);
 YamlEvent yamlEventPeek(Yaml *this);
 
 // Get next scalar
-__attribute__((always_inline)) static inline YamlEvent
+FN_INLINE_ALWAYS YamlEvent
 yamlScalarNext(Yaml *const this)
 {
     return yamlEventNextCheck(this, yamlEventTypeScalar);
@@ -75,7 +75,7 @@ yamlScalarNext(Yaml *const this)
 // Check scalar
 void yamlScalarCheck(YamlEvent event, const String *value);
 
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 yamlScalarCheckZ(const YamlEvent event, const char *const value)
 {
     yamlScalarCheck(event, STR(value));
@@ -83,7 +83,7 @@ yamlScalarCheckZ(const YamlEvent event, const char *const value)
 
 void yamlScalarNextCheck(Yaml *this, const String *value);
 
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 yamlScalarNextCheckZ(Yaml *const this, const char *const value)
 {
     yamlScalarNextCheck(this, STR(value));
@@ -95,7 +95,7 @@ bool yamlBoolParse(YamlEvent event);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 yamlFree(Yaml *const this)
 {
     objFree(this);
@@ -139,11 +139,11 @@ Macros for function logging
 #define FUNCTION_LOG_YAML_TYPE                                                                                                     \
     Yaml *
 #define FUNCTION_LOG_YAML_FORMAT(value, buffer, bufferSize)                                                                        \
-    objToLog(value, "Yaml", buffer, bufferSize)
+    objNameToLog(value, "Yaml", buffer, bufferSize)
 
 #define FUNCTION_LOG_YAML_EVENT_TYPE                                                                                               \
     YamlEvent
 #define FUNCTION_LOG_YAML_EVENT_FORMAT(value, buffer, bufferSize)                                                                  \
-    objToLog(&value, "YamlEvent", buffer, bufferSize)
+    objNameToLog(&value, "YamlEvent", buffer, bufferSize)
 
 #endif

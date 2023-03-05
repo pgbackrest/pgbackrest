@@ -110,6 +110,8 @@ checkPrimary(const DbGetResult dbGroup)
         FUNCTION_LOG_PARAM(DB_GET_RESULT, dbGroup);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     // If a primary is defined, check the configuration and perform a WAL switch and make sure the WAL is archived
     if (dbGroup.primary != NULL)
     {
@@ -152,9 +154,12 @@ checkPrimary(const DbGetResult dbGroup)
                 storageRepo, repoArchiveId[repoIdx], walSegment, cfgOptionUInt64(cfgOptArchiveTimeout));
 
             LOG_INFO_FMT(
-                "WAL segment %s successfully archived to '%s' on %s", strZ(walSegment),
-                strZ(storagePathP(storageRepo, strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(repoArchiveId[repoIdx]),
-                strZ(walSegmentFile)))), cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
+                "WAL segment %s successfully archived to '%s' on %s",
+                strZ(walSegment),
+                strZ(
+                    storagePathP(
+                        storageRepo, strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(repoArchiveId[repoIdx]), strZ(walSegmentFile)))),
+                cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
         }
 
         dbFree(dbGroup.primary);
@@ -164,7 +169,7 @@ checkPrimary(const DbGetResult dbGroup)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 cmdCheck(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);

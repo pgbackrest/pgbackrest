@@ -26,7 +26,7 @@ typedef struct IoWriteInterface
 #define ioWriteNewP(driver, ...)                                                                                                   \
     ioWriteNew(driver, (IoWriteInterface){__VA_ARGS__})
 
-IoWrite *ioWriteNew(void *driver, IoWriteInterface interface);
+FN_EXTERN IoWrite *ioWriteNew(void *driver, IoWriteInterface interface);
 
 /***********************************************************************************************************************************
 Macros for function logging
@@ -34,6 +34,6 @@ Macros for function logging
 #define FUNCTION_LOG_IO_WRITE_INTERFACE_TYPE                                                                                       \
     IoWriteInterface
 #define FUNCTION_LOG_IO_WRITE_INTERFACE_FORMAT(value, buffer, bufferSize)                                                          \
-    objToLog(&value, "IoWriteInterface", buffer, bufferSize)
+    objNameToLog(&value, "IoWriteInterface", buffer, bufferSize)
 
 #endif

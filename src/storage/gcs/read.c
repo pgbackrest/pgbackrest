@@ -33,7 +33,7 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_READ_GCS_TYPE                                                                                         \
     StorageReadGcs *
 #define FUNCTION_LOG_STORAGE_READ_GCS_FORMAT(value, buffer, bufferSize)                                                            \
-    objToLog(value, "StorageReadGcs", buffer, bufferSize)
+    objNameToLog(value, "StorageReadGcs", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Open the file
@@ -114,7 +114,7 @@ storageReadGcsEof(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-StorageRead *
+FN_EXTERN StorageRead *
 storageReadGcsNew(
     StorageGcs *const storage, const String *const name, const bool ignoreMissing, const uint64_t offset,
     const Variant *const limit)

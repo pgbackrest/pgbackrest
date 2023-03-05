@@ -16,7 +16,8 @@
 # Some options are unique to tests:
 #     * coverage - a list of code modules that the test provides coverage for. A code module may be covered by multiple tests. That
 #         means you must run all the tests by providing the --run option multiple times to get full coverage on the code module. If
-#         a code module contains only data it should be marked noCode (e.g. - help/help.auto.c: noCode).
+#         a code module contains only data it should be marked noCode (e.g. - help/help.auto: noCode). If a code module is included
+#         in another code module it should be marked as included (e.g. - md5.vendor: included).
 #     * feature - Defines a feature that is now available in the harness. For example, the "error" feature defines HRN_FEATURE_ERROR
 #         used to automatically check for errors in later tests. The common/error test is not able to access this error handling
 #         because it is used to implement the error handling, so it must do error testing in a more primitive way.
@@ -64,19 +65,19 @@ unit:
       - name: stack-trace
         total: 4
         feature: stackTrace
+        harness:
+          name: stackTrace
+          shim:
+            common/stackTrace:
+              function:
+                - stackTraceBackCallback
 
         coverage:
           - common/stackTrace
 
         depend:
           - common/debug
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: type-convert
-        total: 12
-
-        coverage:
-          - common/type/convert
+          - common/type/stringStatic
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: assert-off
@@ -91,9 +92,6 @@ unit:
         total: 1
         define: -DNDEBUG
 
-        coverage:
-          - common/debug
-
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: assert-on
         feature: assert
@@ -104,13 +102,20 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: mem-context
-        total: 7
+        total: 8
         feature: memContext
 
         coverage:
           - common/memContext
 
         depend:
+          - common/type/convert
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: type-convert
+        total: 12
+
+        coverage:
           - common/type/convert
 
       # ----------------------------------------------------------------------------------------------------------------------------
@@ -122,7 +127,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: encode
-        total: 2
+        total: 3
 
         coverage:
           - common/encode
@@ -143,11 +148,12 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-string
-        total: 27
+        total: 26
         feature: string
 
         coverage:
-          - common/type/string
+          - build/common/string
+          - common/type/string: included
           - common/type/stringZ
           - common/type/stringId
           - common/type/stringList
@@ -168,7 +174,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-buffer
-        total: 6
+        total: 5
 
         coverage:
           - common/type/buffer
@@ -186,7 +192,8 @@ unit:
         total: 3
 
         coverage:
-          - common/regExp
+          - build/common/regExp
+          - common/regExp: included
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: log
@@ -202,11 +209,12 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: debug-on
-        total: 3
+        total: 4
         feature: debug
 
         coverage:
           - common/debug
+          - common/type/stringStatic
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: fork
@@ -241,7 +249,8 @@ unit:
         total: 1
 
         coverage:
-          - common/type/xml
+          - build/common/xml
+          - common/type/xml: included
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: stat
@@ -260,17 +269,19 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: io
-        total: 4
+        total: 6
         feature: IO
         harness: pack
 
         coverage:
           - common/io/bufferRead
           - common/io/bufferWrite
+          - common/io/chunkedRead
           - common/io/fd
           - common/io/fdRead
           - common/io/fdWrite
           - common/io/filter/buffer
+          - common/io/filter/chunk
           - common/io/filter/filter
           - common/io/filter/group
           - common/io/filter/sink
@@ -328,7 +339,7 @@ unit:
           - common/crypto/cipherBlock
           - common/crypto/common
           - common/crypto/hash
-          - common/crypto/md5.vendor
+          - common/crypto/md5.vendor: included
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: io-tls
@@ -376,7 +387,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: ini
-        total: 4
+        total: 2
 
         coverage:
           - common/ini
@@ -385,12 +396,15 @@ unit:
       - name: lock
         total: 3
         harness: config
+        harness:
+          name: storageHelper
+          shim:
+            storage/helper: ~
 
         coverage:
           - common/lock
 
         depend:
-          - command/backup/pageChecksum
           - common/lock
           - config/common
           - config/config
@@ -483,7 +497,7 @@ unit:
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: posix
-        total: 22
+        total: 23
 
         coverage:
           - storage/cifs/helper
@@ -500,7 +514,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: remote
-        total: 9
+        total: 10
 
         coverage:
           - storage/remote/read
@@ -625,6 +639,19 @@ unit:
           - build/postgres/render
 
   # ********************************************************************************************************************************
+  - name: test
+
+    test:
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: test
+        total: 3
+
+        coverage:
+          - test/command/test/build
+          - test/command/test/define
+          - test/command/test/test
+
+  # ********************************************************************************************************************************
   - name: info
 
     test:
@@ -653,6 +680,10 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: manifest
         total: 6
+        harness:
+          name: manifest
+          shim:
+            info/manifest: ~
 
         coverage:
           - info/manifest
@@ -694,6 +725,13 @@ unit:
           - command/control/common
           - command/control/start
           - command/control/stop
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: annotate
+        total: 1
+
+        coverage:
+          - command/annotate/annotate
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: archive-common
@@ -782,32 +820,14 @@ unit:
           - command/info/info
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: remote
-        total: 1
-
-        coverage:
-          - command/remote/remote
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: restore
-        total: 12
-
-        coverage:
-          - command/restore/file
-          - command/restore/protocol
-          - command/restore/restore
-
-        include:
-          - common/user
-          - info/infoBackup
-          - info/manifest
-
-      # ----------------------------------------------------------------------------------------------------------------------------
       - name: backup
-        total: 11
+        total: 13
+        harness: backup
 
         coverage:
           - command/backup/backup
+          - command/backup/blockIncr
+          - command/backup/blockMap
           - command/backup/common
           - command/backup/file
           - command/backup/pageChecksum
@@ -817,6 +837,21 @@ unit:
           - info/info
           - info/manifest
           - storage/storage
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: restore
+        total: 14
+
+        coverage:
+          - command/restore/blockHash
+          - command/restore/file
+          - command/restore/protocol
+          - command/restore/restore
+
+        include:
+          - common/user
+          - info/infoBackup
+          - info/manifest
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: repo
@@ -849,6 +884,13 @@ unit:
 
         coverage:
           - command/local/local
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: remote
+        total: 1
+
+        coverage:
+          - command/remote/remote
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: exit

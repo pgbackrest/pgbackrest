@@ -41,7 +41,7 @@ checkArchiveCommand(const String *archiveCommand)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 checkDbConfig(const unsigned int pgVersion, const unsigned int pgIdx, const Db *dbObject, bool isStandby)
 {
     FUNCTION_TEST_BEGIN();
@@ -72,7 +72,7 @@ checkDbConfig(const unsigned int pgVersion, const unsigned int pgIdx, const Db *
         // Check archive configuration if option is valid for the command and set
         if (!isStandby && cfgOptionValid(cfgOptArchiveCheck) && cfgOptionBool(cfgOptArchiveCheck))
         {
-            // Error if archive_mode = off since pg_start_backup () will fail
+            // Error if archive_mode = off since backup start will fail
             if (strCmpZ(dbArchiveMode(dbObject), "off") == 0)
             {
                 THROW(ArchiveDisabledError, "archive_mode must be enabled");
@@ -94,7 +94,7 @@ checkDbConfig(const unsigned int pgVersion, const unsigned int pgIdx, const Db *
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 checkStanzaInfo(const InfoPgData *archiveInfo, const InfoPgData *backupInfo)
 {
     FUNCTION_TEST_BEGIN();
@@ -122,7 +122,7 @@ checkStanzaInfo(const InfoPgData *archiveInfo, const InfoPgData *backupInfo)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 checkStanzaInfoPg(
     const Storage *storage, const unsigned int pgVersion, const uint64_t pgSystemId, CipherType cipherType,
     const String *cipherPass)
@@ -151,7 +151,9 @@ checkStanzaInfoPg(
         // Check that the version and system id match the current database
         if (pgVersion != archiveInfoPg.version || pgSystemId != archiveInfoPg.systemId)
         {
-            THROW(FileInvalidError, "backup and archive info files exist but do not match the database\n"
+            THROW(
+                FileInvalidError,
+                "backup and archive info files exist but do not match the database\n"
                 "HINT: is this the correct stanza?\n"
                 "HINT: did an error occur during stanza-upgrade?");
         }

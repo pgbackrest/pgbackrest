@@ -575,6 +575,8 @@ sub backupCompare
     my $oActualManifest = new pgBackRestTest::Env::Manifest(
         $self->repoBackupPath("${strBackup}/" . FILE_MANIFEST), {strCipherPass => $self->cipherPassManifest()});
 
+    ${$oExpectedManifest}{&MANIFEST_SECTION_BACKUP}{'backup-reference'} =
+        $oActualManifest->get(MANIFEST_SECTION_BACKUP, 'backup-reference');
     ${$oExpectedManifest}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TIMESTAMP_START} =
         $oActualManifest->get(MANIFEST_SECTION_BACKUP, &MANIFEST_KEY_TIMESTAMP_START);
     ${$oExpectedManifest}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TIMESTAMP_STOP} =
@@ -601,6 +603,9 @@ sub backupCompare
 
     foreach my $strFileKey ($oActualManifest->keys(MANIFEST_SECTION_TARGET_FILE))
     {
+        # Remove repo checksum
+        $oActualManifest->remove(&MANIFEST_SECTION_TARGET_FILE, $strFileKey, 'rck');
+
         # Determine repo size if compression or encryption is enabled
         my $strCompressType = $oExpectedManifest->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS_TYPE};
 
@@ -1101,6 +1106,11 @@ sub configCreate
         # Set bundle size/limit smaller for testing and because FakeGCS does not do multi-part upload
         $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-bundle-size'} = '1MiB';
         $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-bundle-limit'} = '64KiB';
+    }
+
+    if ($oParam->{bBlockIncr})
+    {
+        $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-block'} = 'y';
     }
 
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{'log-path'} = $self->logPath();
@@ -1943,6 +1953,16 @@ sub restoreCompare
 
     foreach my $strName ($oActualManifest->keys(MANIFEST_SECTION_TARGET_FILE))
     {
+        # Remove repo checksum
+        delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{'rck'});
+
+        # When bundling zero-length files will not have a reference
+        if ($oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{'backup-bundle'} &&
+            $oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{&MANIFEST_SUBKEY_SIZE} == 0)
+        {
+            $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE);
+        }
+
         # If synthetic match checksum errors since they can't be verified here
         if ($self->synthetic)
         {
@@ -1991,13 +2011,17 @@ sub restoreCompare
                 ${$oExpectedManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strName}{size});
         }
 
-        # Remove repo-size, bno, bni from the manifest
+        # Remove repo-size, bn*, bi* from the manifest
         $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REPO_SIZE);
         delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{&MANIFEST_SUBKEY_REPO_SIZE});
         $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, "bni");
         delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{"bni"});
         $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, "bno");
         delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{"bno"});
+        $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, "bi");
+        delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{"bi"});
+        $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, "bim");
+        delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{"bim"});
 
         if ($oActualManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) != 0)
         {
@@ -2116,6 +2140,9 @@ sub restoreCompare
             MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL, undef,
             $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_LABEL});
         $oActualManifest->set(
+            MANIFEST_SECTION_BACKUP, 'backup-reference', undef,
+            $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{'backup-reference'});
+        $oActualManifest->set(
             MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START, undef,
             $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TIMESTAMP_COPY_START});
         $oActualManifest->set(
@@ -2134,6 +2161,10 @@ sub restoreCompare
                 MANIFEST_SECTION_BACKUP, 'backup-bundle', undef,
                 $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{'backup-bundle'});
         }
+
+        # Delete block incr headers since old Perl manifest code will not generate them
+        delete($oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{'backup-block-incr'});
+        delete($oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{'backup-block-incr-size'});
 
         $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LSN_START, undef,
                               ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_LSN_START});

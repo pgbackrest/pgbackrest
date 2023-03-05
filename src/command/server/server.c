@@ -109,7 +109,7 @@ cmdServerSigChild(const int signalType, siginfo_t *signalInfo, void *context)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 cmdServer(const unsigned int argListSize, const char *argList[])
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);

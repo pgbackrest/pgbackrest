@@ -4,8 +4,8 @@ Block Cipher Header
 #ifndef COMMON_CRYPTO_CIPHERBLOCK_H
 #define COMMON_CRYPTO_CIPHERBLOCK_H
 
-#include "common/io/filter/group.h"
 #include "common/crypto/common.h"
+#include "common/io/filter/group.h"
 
 /***********************************************************************************************************************************
 Filter type constant
@@ -15,13 +15,24 @@ Filter type constant
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-IoFilter *cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const String *digestName);
-IoFilter *cipherBlockNewPack(const Pack *paramList);
+typedef struct CipherBlockNewParam
+{
+    VAR_PARAM_HEADER;
+    const String *digest;                                           // Digest to use (defaults to SHA-1)
+    bool raw;                                                       // Omit header magic to save space
+} CipherBlockNewParam;
+
+#define cipherBlockNewP(mode, cipherType, pass, ...)                                                                               \
+    cipherBlockNew(mode, cipherType, pass, (CipherBlockNewParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN IoFilter *cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, CipherBlockNewParam param);
+FN_EXTERN IoFilter *cipherBlockNewPack(const Pack *paramList);
 
 /***********************************************************************************************************************************
 Helper functions
 ***********************************************************************************************************************************/
 // Add a block cipher to an io object
-IoFilterGroup *cipherBlockFilterGroupAdd(IoFilterGroup *filterGroup, CipherType type, CipherMode mode, const String *pass);
+FN_EXTERN IoFilterGroup *cipherBlockFilterGroupAdd(
+    IoFilterGroup *filterGroup, CipherType type, CipherMode mode, const String *pass);
 
 #endif

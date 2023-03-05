@@ -12,9 +12,6 @@ PostgreSQL name
 /***********************************************************************************************************************************
 PostgreSQL version constants
 ***********************************************************************************************************************************/
-#define PG_VERSION_90                                                90000
-#define PG_VERSION_91                                                90100
-#define PG_VERSION_92                                                90200
 #define PG_VERSION_93                                                90300
 #define PG_VERSION_94                                                90400
 #define PG_VERSION_95                                                90500
@@ -31,18 +28,6 @@ PostgreSQL version constants
 /***********************************************************************************************************************************
 Version where various PostgreSQL capabilities were introduced
 ***********************************************************************************************************************************/
-// pg_is_in_recovery() supported
-#define PG_VERSION_HOT_STANDBY                                      PG_VERSION_91
-
-// pg_create_restore_point() supported
-#define PG_VERSION_RESTORE_POINT                                    PG_VERSION_91
-
-// pause_at_recovery_target is supported
-#define PG_VERSION_RECOVERY_TARGET_PAUSE                            PG_VERSION_91
-
-// Backup from standby is supported
-#define PG_VERSION_BACKUP_STANDBY                                   PG_VERSION_92
-
 // tablespace_map is created during backup
 #define PG_VERSION_TABLESPACE_MAP                                   PG_VERSION_95
 
@@ -61,9 +46,6 @@ Version where various PostgreSQL capabilities were introduced
 /***********************************************************************************************************************************
 PostgreSQL version string constants for use in error messages
 ***********************************************************************************************************************************/
-#define PG_VERSION_90_STR                                            "9.0"
-#define PG_VERSION_91_STR                                            "9.1"
-#define PG_VERSION_92_STR                                            "9.2"
 #define PG_VERSION_93_STR                                            "9.3"
 #define PG_VERSION_94_STR                                            "9.4"
 #define PG_VERSION_95_STR                                            "9.5"

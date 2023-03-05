@@ -45,7 +45,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("bufNewDecode()");
 
-        TEST_RESULT_STR_Z(strNewBuf(bufNewDecode(encodeBase64, STRDEF("eno="))), "zz", "decode base64");
+        TEST_RESULT_STR_Z(strNewBuf(bufNewDecode(encodingBase64, STRDEF("eno="))), "zz", "decode base64");
+        TEST_RESULT_STR_Z(strNewBuf(bufNewDecode(encodingBase64, STRDEF(""))), "", "decode empty base64");
     }
 
     // *****************************************************************************************************************************
@@ -133,12 +134,6 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("bufHex()"))
-    {
-        TEST_RESULT_STR_Z(bufHex(BUFSTRDEF("ABC-CBA")), "4142432d434241", "buffer to hex");
-    }
-
-    // *****************************************************************************************************************************
     if (testBegin("bufCat*()"))
     {
         TEST_RESULT_STR_Z(strNewBuf(bufCat(bufNewC("123", 3), NULL)), "123", "cat null buffer");
@@ -157,11 +152,15 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("bufToLog()"))
     {
+        char logBuf[STACK_TRACE_PARAM_MAX];
+
         Buffer *buffer = bufNew(100);
-        TEST_RESULT_STR_Z(bufToLog(buffer), "{used: 0, size: 100}", "buf to log");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(buffer, bufToLog, logBuf, sizeof(logBuf)), "bufToLog");
+        TEST_RESULT_Z(logBuf, "{used: 0, size: 100}", "check log");
 
         bufLimitSet(buffer, 50);
-        TEST_RESULT_STR_Z(bufToLog(buffer), "{used: 0, size: 50, sizeAlloc: 100}", "buf to log");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(buffer, bufToLog, logBuf, sizeof(logBuf)), "bufToLog");
+        TEST_RESULT_Z(logBuf, "{used: 0, size: 50, sizeAlloc: 100}", "check log");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

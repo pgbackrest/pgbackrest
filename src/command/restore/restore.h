@@ -8,6 +8,6 @@ Restore Command
 Functions
 ***********************************************************************************************************************************/
 // Restore a backup
-void cmdRestore(void);
+FN_EXTERN void cmdRestore(void);
 
 #endif

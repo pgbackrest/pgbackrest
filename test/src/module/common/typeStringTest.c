@@ -89,7 +89,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("strNewEncode()");
 
-        TEST_RESULT_STR_Z(strNewEncode(encodeBase64, BUFSTRDEF("zz")), "eno=", "encode base64");
+        TEST_RESULT_STR_Z(strNewEncode(encodingBase64, BUFSTRDEF("zz")), "eno=", "encode base64");
+        TEST_RESULT_STR_Z(strNewEncode(encodingHex, bufNew(0)), "", "encode empty hex");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("fixed string large enough to need separate allocation");
@@ -144,7 +145,7 @@ testRun(void)
         TEST_RESULT_UINT(string->pub.extra, 60, "check extra");
         TEST_RESULT_STR_Z(strCatZ(string, ""), "XXXX", "cat empty string");
         TEST_RESULT_UINT(string->pub.extra, 60, "check extra");
-        TEST_RESULT_STR_Z(strCatEncode(string, encodeBase64, BUFSTRDEF("")), "XXXX", "cat empty encode");
+        TEST_RESULT_STR_Z(strCatEncode(string, encodingBase64, BUFSTRDEF("")), "XXXX", "cat empty encode");
         TEST_RESULT_UINT(string->pub.extra, 60, "check extra");
         TEST_RESULT_STR_Z(strCat(string, STRDEF("YYYY")), "XXXXYYYY", "cat string");
         TEST_RESULT_UINT(string->pub.extra, 56, "check extra");
@@ -161,7 +162,7 @@ testRun(void)
             "XXXXYYYY?00777!$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$", "cat chr");
         TEST_RESULT_UINT(string->pub.extra, 35, "check extra");
         TEST_RESULT_STR_Z(
-            strCatEncode(string, encodeBase64, BUFSTRDEF("zzzzz")),
+            strCatEncode(string, encodingBase64, BUFSTRDEF("zzzzz")),
             "XXXXYYYY?00777!$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$enp6eno=", "cat encode");
         TEST_RESULT_UINT(string->pub.extra, 27, "check extra");
         TEST_RESULT_VOID(strFree(string), "free string");
@@ -247,12 +248,6 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("strQuote()"))
-    {
-        TEST_RESULT_STR_Z(strQuote(STRDEF("abcd"), STRDEF("'")), "'abcd'", "quote string");
-    }
-
-    // *****************************************************************************************************************************
     if (testBegin("strReplace() and strReplaceChr()"))
     {
         TEST_RESULT_STR_Z(strReplace(strNewZ(""), STRDEF("A"), STRDEF("B")), "", "replace none");
@@ -311,17 +306,12 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("strToLog() and strObjToLog()"))
+    if (testBegin("strToLog()"))
     {
-        TEST_RESULT_STR_Z(strToLog(STRDEF("test")), "{\"test\"}", "format string");
-        TEST_RESULT_STR_Z(strToLog(NULL), "null", "format null string");
+        char logBuf[STACK_TRACE_PARAM_MAX];
 
-        char buffer[256];
-        TEST_RESULT_UINT(strObjToLog(NULL, (StrObjToLogFormat)strToLog, buffer, sizeof(buffer)), 4, "format null string");
-        TEST_RESULT_Z(buffer, "null", "check null string");
-
-        TEST_RESULT_UINT(strObjToLog(STRDEF("teststr"), (StrObjToLogFormat)strToLog, buffer, sizeof(buffer)), 11, "format string");
-        TEST_RESULT_Z(buffer, "{\"teststr\"}", "check string");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(STRDEF("test"), strToLog, logBuf, sizeof(logBuf)), "strToLog");
+        TEST_RESULT_Z(logBuf, "{\"test\"}", "check log");
     }
 
     // *****************************************************************************************************************************
@@ -367,6 +357,13 @@ testRun(void)
         MEM_CONTEXT_TEMP_END();
 
         TEST_RESULT_UINT(strLstSize(list), 9, "list size");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("strLstFindIdxP()");
+
+        TEST_RESULT_UINT(strLstFindIdxP(list, STRDEF("STR05")), 5, "find STR05");
+        TEST_RESULT_UINT(strLstFindIdxP(list, STRDEF("STR10")), LIST_NOT_FOUND, "find missing STR10");
+        TEST_ERROR(strLstFindIdxP(list, STRDEF("STR10"), .required = true), AssertError, "unable to find 'STR10' in string list");
 
         // Read them back and check values
         // -------------------------------------------------------------------------------------------------------------------------
@@ -714,16 +711,21 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("strLstToLog()"))
     {
+        char logBuf[STACK_TRACE_PARAM_MAX];
+
         StringList *list = strLstNew();
 
-        TEST_RESULT_STR_Z(strLstToLog(list), "{[]}", "format empty list");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(list, strLstToLog, logBuf, sizeof(logBuf)), "strLstToLog");
+        TEST_RESULT_Z(logBuf, "{[]}", "check log");
 
         strLstInsert(list, 0, STRDEF("item3"));
-        TEST_RESULT_STR_Z(strLstToLog(list), "{[\"item3\"]}", "format 1 item list");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(list, strLstToLog, logBuf, sizeof(logBuf)), "strLstToLog");
+        TEST_RESULT_Z(logBuf, "{[\"item3\"]}", "check log");
 
         strLstInsert(list, 0, STRDEF("item1"));
-        strLstInsert(list, 1, STRDEF("item2"));
-        TEST_RESULT_STR_Z(strLstToLog(list), "{[\"item1\", \"item2\", \"item3\"]}", "format 3 item list");
+        strLstInsert(list, 1, NULL);
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(list, strLstToLog, logBuf, sizeof(logBuf)), "strLstToLog");
+        TEST_RESULT_Z(logBuf, "{[\"item1\", null, \"item3\"]}", "check log");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

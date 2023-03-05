@@ -16,9 +16,10 @@ Test Database
 /***********************************************************************************************************************************
 Macro to check that replay is making progress -- this does not seem useful enough to be included in the pq harness header
 ***********************************************************************************************************************************/
-#define HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS(                                                                                \
-    sessionParam, walNameParam, lsnNameParam, targetLsnParam, targetReachedParam, replayLsnParam, replayLastLsnParam,              \
-    replayProgressParam, sleepParam)                                                                                               \
+#define                                                                                                                            \
+    HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS(                                                                                    \
+        sessionParam, walNameParam, lsnNameParam, targetLsnParam, targetReachedParam, replayLsnParam, replayLastLsnParam,          \
+        replayProgressParam, sleepParam)                                                                                           \
     {.session = sessionParam,                                                                                                      \
         .function = HRNPQ_SENDQUERY,                                                                                               \
         .param =                                                                                                                   \
@@ -42,8 +43,9 @@ Macro to check that replay is making progress -- this does not seem useful enoug
     {.session = sessionParam, .function = HRNPQ_CLEAR},                                                                            \
     {.session = sessionParam, .function = HRNPQ_GETRESULT, .resultNull = true}
 
-#define HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS_GE_10(                                                                          \
-    sessionParam, targetLsnParam, targetReachedParam, replayLsnParam, replayLastLsnParam, replayProgressParam, sleepParam)         \
+#define                                                                                                                            \
+    HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS_GE_10(                                                                              \
+        sessionParam, targetLsnParam, targetReachedParam, replayLsnParam, replayLastLsnParam, replayProgressParam, sleepParam)     \
     HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS(                                                                                    \
         sessionParam, "wal", "lsn", targetLsnParam, targetReachedParam, replayLsnParam, replayLastLsnParam, replayProgressParam,   \
         sleepParam)
@@ -82,15 +84,18 @@ testRun(void)
                     HRNPQ_MACRO_OPEN(1, "dbname='testdb' port=5432"),
                     HRNPQ_MACRO_SET_SEARCH_PATH(1),
                     HRNPQ_MACRO_SET_CLIENT_ENCODING(1),
-                    HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_90, TEST_PATH "/pg", NULL, NULL),
+                    HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_93, TEST_PATH "/pg", NULL, NULL),
                     HRNPQ_MACRO_SET_APPLICATION_NAME(1),
+                    HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),
                     HRNPQ_MACRO_CLOSE(1),
 
                     HRNPQ_MACRO_OPEN(1, "dbname='testdb' port=5432"),
                     HRNPQ_MACRO_SET_SEARCH_PATH(1),
                     HRNPQ_MACRO_SET_CLIENT_ENCODING(1),
-                    HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_90, TEST_PATH "/pg", NULL, NULL),
+                    HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_93, TEST_PATH "/pg", NULL, NULL),
                     HRNPQ_MACRO_SET_APPLICATION_NAME(1),
+                    HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),
+                    HRNPQ_MACRO_CREATE_RESTORE_POINT(1, "2/3"),
                     HRNPQ_MACRO_WAL_SWITCH(1, "xlog", "000000030000000200000003"),
                     HRNPQ_MACRO_CLOSE(1),
 
@@ -218,13 +223,17 @@ testRun(void)
             HRNPQ_MACRO_SET_CLIENT_ENCODING(1),
 
             // Return NULL for a row in pg_settings
-            {.session = 1, .function = HRNPQ_SENDQUERY, .param =
-                "[\"select (select setting from pg_catalog.pg_settings where name = 'server_version_num')::int4,"
+            {
+                .session = 1,
+                .function = HRNPQ_SENDQUERY,
+                .param =
+                    "[\"select (select setting from pg_catalog.pg_settings where name = 'server_version_num')::int4,"
                     " (select setting from pg_catalog.pg_settings where name = 'data_directory')::text,"
                     " (select setting from pg_catalog.pg_settings where name = 'archive_mode')::text,"
                     " (select setting from pg_catalog.pg_settings where name = 'archive_command')::text,"
                     " (select setting from pg_catalog.pg_settings where name = 'checkpoint_timeout')::int4\"]",
-                .resultInt = 1},
+                .resultInt = 1,
+            },
             {.session = 1, .function = HRNPQ_CONSUMEINPUT},
             {.session = 1, .function = HRNPQ_ISBUSY},
             {.session = 1, .function = HRNPQ_GETRESULT},
@@ -262,42 +271,6 @@ testRun(void)
             "            HINT: is the pg_read_all_settings role assigned for PostgreSQL >= 10?");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("PostgreSQL 9.0 start backup with no WAL switch");
-
-        harnessPqScriptSet((HarnessPq [])
-        {
-            // Connect to primary
-            HRNPQ_MACRO_OPEN_LE_91(1, "dbname='backupdb' port=5432", PG_VERSION_90, TEST_PATH "/pg1", NULL, NULL),
-
-            // Get advisory lock
-            HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-
-            // Start backup with no wal switch
-            HRNPQ_MACRO_CURRENT_WAL_LE_96(1, "000000010000000100000001"),
-            HRNPQ_MACRO_START_BACKUP_LE_95(1, false, "1/1", "000000010000000100000001"),
-
-            // Close primary
-            HRNPQ_MACRO_CLOSE(1),
-
-            HRNPQ_MACRO_DONE()
-        });
-
-        DbGetResult db = {0};
-        TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
-
-        TEST_RESULT_UINT(dbDbTimeout(db.primary), 888000, "check timeout");
-        TEST_RESULT_UINT(dbPgControl(db.primary).timeline, 1, "check timeline");
-
-        DbBackupStartResult backupStartResult = {0};
-        TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, false, true), "start backup");
-        TEST_RESULT_STR_Z(backupStartResult.lsn, "1/1", "start backup");
-        TEST_RESULT_PTR(backupStartResult.walSegmentCheck, NULL, "WAL segment check");
-
-        TEST_RESULT_VOID(dbPing(db.primary, false), "ping cluster");
-
-        TEST_RESULT_VOID(dbFree(db.primary), "free primary");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("PostgreSQL 9.5 start/stop backup");
 
         HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_93, .checkpoint = pgLsnFromStr(STRDEF("2/3")));
@@ -305,7 +278,7 @@ testRun(void)
         harnessPqScriptSet((HarnessPq [])
         {
             // Connect to primary
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='backupdb' port=5432", PG_VERSION_95, TEST_PATH "/pg1", false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_93(1, "dbname='backupdb' port=5432", PG_VERSION_95, TEST_PATH "/pg1", false, NULL, NULL),
 
             // Get start time
             HRNPQ_MACRO_TIME_QUERY(1, 1000),
@@ -329,6 +302,7 @@ testRun(void)
             HRNPQ_MACRO_DONE()
         });
 
+        DbGetResult db = {0};
         TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
 
         TEST_RESULT_UINT(dbTimeMSec(db.primary), 1000, "check time");
@@ -338,6 +312,7 @@ testRun(void)
             "unable to acquire pgBackRest advisory lock\n"
             "HINT: is another pgBackRest backup already running on this cluster?");
 
+        DbBackupStartResult backupStartResult = {0};
         TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, true, false), "start backup");
         TEST_RESULT_STR_Z(backupStartResult.lsn, "2/3", "check lsn");
         TEST_RESULT_STR_Z(backupStartResult.walSegmentName, "000000010000000200000003", "check wal segment name");
@@ -362,7 +337,7 @@ testRun(void)
         harnessPqScriptSet((HarnessPq [])
         {
             // Connect to primary
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='backupdb' port=5432", PG_VERSION_95, TEST_PATH "/pg1", false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_93(1, "dbname='backupdb' port=5432", PG_VERSION_95, TEST_PATH "/pg1", false, NULL, NULL),
 
             // Start backup when backup is in progress
             HRNPQ_MACRO_ADVISORY_LOCK(1, true),
@@ -389,7 +364,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: the cluster is already in backup mode but no pgBackRest backup process is running."
-                " pg_stop_backup() will be called so a new backup can be started.");
+            " pg_stop_backup() will be called so a new backup can be started.");
 
         TEST_RESULT_STR_Z(dbBackupStop(db.primary).lsn, "2/6", "stop backup");
 
@@ -468,10 +443,10 @@ testRun(void)
         harnessPqScriptSet((HarnessPq [])
         {
             // Connect to primary
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_95, TEST_PATH "/pg1", false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_95, TEST_PATH "/pg1", false, NULL, NULL),
 
             // Connect to standby
-            HRNPQ_MACRO_OPEN_GE_92(2, "dbname='postgres' port=5433", PG_VERSION_95, TEST_PATH "/pg2", true, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_93(2, "dbname='postgres' port=5433", PG_VERSION_95, TEST_PATH "/pg2", true, NULL, NULL),
 
             // Start backup
             HRNPQ_MACRO_ADVISORY_LOCK(1, true),
@@ -548,13 +523,15 @@ testRun(void)
             HRNPQ_MACRO_WAL_SWITCH(1, "wal", "000000050000000500000005"),
 
             // Standby returns NULL lsn
-            {.session = 2,
+            {
+                .session = 2,
                 .function = HRNPQ_SENDQUERY,
                 .param =
                     "[\"select replayLsn::text,\\n"
                     "       (replayLsn > '5/5')::bool as targetReached\\n"
                     "  from pg_catalog.pg_last_wal_replay_lsn() as replayLsn\"]",
-                .resultInt = 1},
+                .resultInt = 1,
+            },
             {.session = 2, .function = HRNPQ_CONSUMEINPUT},
             {.session = 2, .function = HRNPQ_ISBUSY},
             {.session = 2, .function = HRNPQ_GETRESULT},
@@ -682,7 +659,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: start-fast is disabled and db-timeout (299s) is smaller than the PostgreSQL checkpoint_timeout (300s) -"
-                " timeout may occur before the backup starts");
+            " timeout may occur before the backup starts");
 
         TEST_RESULT_VOID(dbFree(db.primary), "free primary");
 
@@ -765,7 +742,7 @@ testRun(void)
             "HINT: are all available clusters in recovery?");
         TEST_RESULT_LOG(
             "P00   WARN: unable to check pg1: [DbConnectError] unable to connect to 'dbname='postgres' port=5432 user='bob'':"
-                " error");
+            " error");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("only available cluster is a standby");
@@ -809,7 +786,7 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_LE_91(1, "dbname='postgres' port=5432 user='bob'", PG_VERSION_90, TEST_PATH "/pg1", NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_93(1, "dbname='postgres' port=5432 user='bob'", PG_VERSION_93, TEST_PATH "/pg1", false, NULL, NULL),
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_DONE()
         });
@@ -820,7 +797,7 @@ testRun(void)
         TEST_RESULT_BOOL(result.primary != NULL, true, "check primary");
         TEST_RESULT_INT(result.standbyIdx, 0, "check standby id");
         TEST_RESULT_BOOL(result.standby == NULL, true, "check standby");
-        TEST_RESULT_INT(dbPgVersion(result.primary), PG_VERSION_90, "version set");
+        TEST_RESULT_INT(dbPgVersion(result.primary), PG_VERSION_93, "version set");
         TEST_RESULT_STR_Z(dbPgDataPath(result.primary), TEST_PATH "/pg1", "path set");
 
         TEST_RESULT_VOID(dbFree(result.primary), "free primary");
@@ -841,8 +818,8 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_LE_91(1, "dbname='postgres' port=5432", PG_VERSION_90, TEST_PATH "/pg1", NULL, NULL),
-            HRNPQ_MACRO_OPEN_LE_91(8, "dbname='postgres' port=5433", PG_VERSION_90, TEST_PATH "/pg8", NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_95, TEST_PATH "/pg1", false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_93(8, "dbname='postgres' port=5433", PG_VERSION_95, TEST_PATH "/pg8", false, NULL, NULL),
 
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_CLOSE(8),
@@ -857,8 +834,8 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH "/pg1", true, NULL, NULL),
-            HRNPQ_MACRO_OPEN_GE_92(8, "dbname='postgres' port=5433", PG_VERSION_92, TEST_PATH "/pg8", true, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_96, TEST_PATH "/pg1", true, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_96(8, "dbname='postgres' port=5433", PG_VERSION_96, TEST_PATH "/pg8", true, NULL, NULL),
 
             HRNPQ_MACRO_CLOSE(8),
             HRNPQ_MACRO_CLOSE(1),
@@ -876,8 +853,8 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH "/pg1", true, NULL, NULL),
-            HRNPQ_MACRO_OPEN_GE_92(8, "dbname='postgres' port=5433", PG_VERSION_92, TEST_PATH "/pg8", true, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_10, TEST_PATH "/pg1", true, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_96(8, "dbname='postgres' port=5433", PG_VERSION_10, TEST_PATH "/pg8", true, NULL, NULL),
 
             HRNPQ_MACRO_CLOSE(8),
             HRNPQ_MACRO_CLOSE(1),
@@ -912,7 +889,7 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH "/pg1", true, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_12, TEST_PATH "/pg1", true, NULL, NULL),
 
             // pg4 error
             {.session = 4, .function = HRNPQ_CONNECTDB, .param = "[\"dbname='postgres' port=5433\"]"},
@@ -920,10 +897,10 @@ testRun(void)
             {.session = 4, .function = HRNPQ_ERRORMESSAGE, .resultZ = "error"},
             {.session = 4, .function = HRNPQ_FINISH},
 
-            HRNPQ_MACRO_OPEN_GE_92(8, "dbname='postgres' port=5434", PG_VERSION_92, TEST_PATH "/pg8", false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_96(8, "dbname='postgres' port=5434", PG_VERSION_12, TEST_PATH "/pg8", false, NULL, NULL),
 
             HRNPQ_MACRO_CREATE_RESTORE_POINT(8, "2/3"),
-            HRNPQ_MACRO_WAL_SWITCH(8, "xlog", "000000010000000200000003"),
+            HRNPQ_MACRO_WAL_SWITCH(8, "wal", "000000010000000200000003"),
 
             HRNPQ_MACRO_CLOSE(8),
             HRNPQ_MACRO_CLOSE(1),
@@ -937,7 +914,7 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   WARN: unable to check pg4: [DbConnectError] unable to connect to 'dbname='postgres' port=5433': error\n"
             "P00   WARN: unable to check pg5: [DbConnectError] raised from remote-0 ssh protocol on 'localhost':"
-                " unable to connect to 'dbname='postgres' port=5432': [PG ERROR]");
+            " unable to connect to 'dbname='postgres' port=5432': [PG ERROR]");
 
         TEST_RESULT_INT(result.primaryIdx, 3, "check primary idx");
         TEST_RESULT_BOOL(result.primary != NULL, true, "check primary");

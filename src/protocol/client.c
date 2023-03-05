@@ -74,7 +74,7 @@ protocolClientFreeResource(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-ProtocolClient *
+FN_EXTERN ProtocolClient *
 protocolClientNew(const String *name, const String *service, IoRead *read, IoWrite *write)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -140,7 +140,7 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
                     THROW_FMT(
                         ProtocolError,
                         "expected value '%s' for greeting key '%s' but got '%s'\n"
-                            "HINT: is the same version of " PROJECT_NAME " installed on the local and remote host?",
+                        "HINT: is the same version of " PROJECT_NAME " installed on the local and remote host?",
                         expected[expectedIdx].value, strZ(strIdToStr(expected[expectedIdx].key)), strZ(actualValue));
                 }
             }
@@ -175,7 +175,7 @@ protocolClientStateExpect(const ProtocolClient *const this, const ProtocolClient
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 protocolClientDataPut(ProtocolClient *const this, PackWrite *const data)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -251,7 +251,7 @@ protocolClientError(ProtocolClient *const this, const ProtocolMessageType type, 
 }
 
 /**********************************************************************************************************************************/
-PackRead *
+FN_EXTERN PackRead *
 protocolClientDataGet(ProtocolClient *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -293,7 +293,7 @@ protocolClientDataGet(ProtocolClient *const this)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 protocolClientDataEndGet(ProtocolClient *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -325,7 +325,7 @@ protocolClientDataEndGet(ProtocolClient *const this)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 protocolClientCommandPut(ProtocolClient *const this, ProtocolCommand *const command, const bool dataPut)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -356,7 +356,7 @@ protocolClientCommandPut(ProtocolClient *const this, ProtocolCommand *const comm
 }
 
 /**********************************************************************************************************************************/
-PackRead *
+FN_EXTERN PackRead *
 protocolClientExecute(ProtocolClient *const this, ProtocolCommand *const command, const bool resultRequired)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -384,7 +384,7 @@ protocolClientExecute(ProtocolClient *const this, ProtocolCommand *const command
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 protocolClientNoOp(ProtocolClient *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -403,8 +403,10 @@ protocolClientNoOp(ProtocolClient *this)
 }
 
 /**********************************************************************************************************************************/
-String *
-protocolClientToLog(const ProtocolClient *this)
+FN_EXTERN void
+protocolClientToLog(const ProtocolClient *const this, StringStatic *const debugLog)
 {
-    return strNewFmt("{name: %s, state: %s}", strZ(this->name), strZ(strIdToStr(this->state)));
+    strStcFmt(debugLog, "{name: %s, state: ", strZ(this->name));
+    strStcResultSizeInc(debugLog, strIdToLog(this->state, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+    strStcCatChr(debugLog, '}');
 }

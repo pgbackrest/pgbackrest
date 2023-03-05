@@ -4,14 +4,14 @@ Log Test Harness
 #include "build.auto.h"
 
 #include <fcntl.h>
-#include <unistd.h>
 #include <regex.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
+#include "build/common/regExp.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/regExp.h"
 #include "common/type/stringList.h"
 
 #include "common/harnessDebug.h"
@@ -95,7 +95,8 @@ hrnLogLevelFile(void)
     return logLevelFile;
 }
 
-void hrnLogLevelFileSet(unsigned int logLevel)
+void
+hrnLogLevelFileSet(unsigned int logLevel)
 {
     logLevelFile = logLevel;
 }
@@ -106,7 +107,8 @@ hrnLogLevelStdOut(void)
     return logLevelStdOut;
 }
 
-void hrnLogLevelStdOutSet(unsigned int logLevel)
+void
+hrnLogLevelStdOutSet(unsigned int logLevel)
 {
     logLevelStdOut = logLevel;
 }
@@ -117,7 +119,8 @@ hrnLogLevelStdErr(void)
     return logLevelStdErr;
 }
 
-void hrnLogLevelStdErrSet(unsigned int logLevel)
+void
+hrnLogLevelStdErrSet(unsigned int logLevel)
 {
     logLevelStdErr = logLevel;
 }
@@ -173,7 +176,8 @@ harnessLogLevelDefaultSet(LogLevel logLevel)
 }
 
 /**********************************************************************************************************************************/
-void hrnLogProcessIdSet(unsigned int processId)
+void
+hrnLogProcessIdSet(unsigned int processId)
 {
     logProcessId = processId;
 }
@@ -325,10 +329,11 @@ hrnLogReplace(void)
                 while (regExpMatch(logReplace->regExp, STRDEF(harnessLogBuffer)))
                 {
                     // Get the match
-                    String *match = regExpMatchStr(logReplace->regExp);
+                    String *match = regExpMatchStr(logReplace->regExp, STRDEF(harnessLogBuffer));
 
                     // Find beginning of match
-                    char *begin = harnessLogBuffer + (regExpMatchPtr(logReplace->regExp) - harnessLogBuffer);
+                    char *begin =
+                        harnessLogBuffer + (regExpMatchPtr(logReplace->regExp, STRDEF(harnessLogBuffer)) - harnessLogBuffer);
 
                     // If there is a sub expression then evaluate it
                     if (logReplace->regExpSub != NULL)
@@ -342,10 +347,10 @@ hrnLogReplace(void)
                         }
 
                         // Find beginning of match
-                        begin += regExpMatchPtr(logReplace->regExpSub) - strZ(match);
+                        begin += regExpMatchPtr(logReplace->regExpSub, match) - strZ(match);
 
                         // Get the match
-                        match = regExpMatchStr(logReplace->regExpSub);
+                        match = regExpMatchStr(logReplace->regExpSub, match);
                     }
 
                     // Build replacement string.  If versioned then append the version number.
@@ -353,7 +358,7 @@ hrnLogReplace(void)
 
                     if (logReplace->version)
                     {
-                        unsigned int index = lstFindIdx((List *)logReplace->matchList, &match);
+                        unsigned int index = strLstFindIdxP(logReplace->matchList, match);
 
                         if (index == LIST_NOT_FOUND)
                         {

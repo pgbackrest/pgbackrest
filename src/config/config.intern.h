@@ -86,44 +86,44 @@ typedef struct Config
 Init Function
 ***********************************************************************************************************************************/
 // Init with new configuration
-void cfgInit(Config *config);
+FN_EXTERN void cfgInit(Config *config);
 
 /***********************************************************************************************************************************
 Command Functions
 ***********************************************************************************************************************************/
 // List of retry intervals for local jobs. The interval for the first retry will always be 0. NULL if there are no retries.
-VariantList *cfgCommandJobRetry(void);
+FN_EXTERN VariantList *cfgCommandJobRetry(void);
 
 /***********************************************************************************************************************************
 Option Group Functions
 ***********************************************************************************************************************************/
 // Is the option in a group?
-bool cfgOptionGroup(ConfigOption optionId);
+FN_EXTERN bool cfgOptionGroup(ConfigOption optionId);
 
 // Group id if the option is in a group
-unsigned int cfgOptionGroupId(ConfigOption optionId);
+FN_EXTERN unsigned int cfgOptionGroupId(ConfigOption optionId);
 
 /***********************************************************************************************************************************
 Option Functions
 ***********************************************************************************************************************************/
 // Option default - should only be called by the help command
-const String *cfgOptionDefault(ConfigOption optionId);
+FN_EXTERN const String *cfgOptionDefault(ConfigOption optionId);
 
 // Format a variant for display using the supplied option type. cfgOptionDisplay()/cfgOptionIdxDisplay() should be used whenever
 // possible, but sometimes the variant needs to be manipulated before being formatted.
-const String *cfgOptionDisplayVar(const Variant *const value, const ConfigOptionType optionType);
+FN_EXTERN const String *cfgOptionDisplayVar(const Variant *const value, const ConfigOptionType optionType);
 
 // Convert the key used in the original configuration to a group index. This is used when an option key must be translated into the
 // local group index, e.g. during parsing or when getting the value of specific options from a remote.
-unsigned int cfgOptionKeyToIdx(ConfigOption optionId, unsigned int key);
+FN_EXTERN unsigned int cfgOptionKeyToIdx(ConfigOption optionId, unsigned int key);
 
 // Total indexes for the option if in a group, 1 otherwise.
-unsigned int cfgOptionIdxTotal(ConfigOption optionId);
+FN_EXTERN unsigned int cfgOptionIdxTotal(ConfigOption optionId);
 
 // Get config option as a Variant
-Variant *cfgOptionIdxVar(ConfigOption optionId, unsigned int optionIdx);
+FN_EXTERN Variant *cfgOptionIdxVar(ConfigOption optionId, unsigned int optionIdx);
 
-__attribute__((always_inline)) static inline Variant *
+FN_INLINE_ALWAYS Variant *
 cfgOptionVar(const ConfigOption optionId)
 {
     return cfgOptionIdxVar(optionId, cfgOptionIdxDefault(optionId));
@@ -131,6 +131,6 @@ cfgOptionVar(const ConfigOption optionId)
 
 // Invalidate an option so it will not be passed to other processes. This is used to manage deprecated options that have a newer
 // option that should be used when possible, e.g. compress and compress-type.
-void cfgOptionInvalidate(ConfigOption optionId);
+FN_EXTERN void cfgOptionInvalidate(ConfigOption optionId);
 
 #endif

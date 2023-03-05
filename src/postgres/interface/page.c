@@ -13,7 +13,7 @@ Include the page checksum code
 #include "postgres/interface/pageChecksum.vendor.c.inc"
 
 /**********************************************************************************************************************************/
-uint16_t
+FN_EXTERN uint16_t
 pgPageChecksum(unsigned char *page, uint32_t blockNo)
 {
     return pg_checksum_page((char *)page, blockNo);

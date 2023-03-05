@@ -9,7 +9,7 @@ Common Handler for Control Commands
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
-String *
+FN_EXTERN String *
 lockStopFileName(const String *stanza)
 {
     FUNCTION_TEST_BEGIN();
@@ -22,7 +22,7 @@ lockStopFileName(const String *stanza)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 lockStopTest(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);

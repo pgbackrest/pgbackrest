@@ -19,7 +19,7 @@ struct Blob
 };
 
 /**********************************************************************************************************************************/
-Blob *
+FN_EXTERN Blob *
 blbNew(void)
 {
     FUNCTION_TEST_VOID();
@@ -41,7 +41,7 @@ blbNew(void)
 }
 
 /**********************************************************************************************************************************/
-const void *
+FN_EXTERN const void *
 blbAdd(Blob *const this, const void *const data, const size_t size)
 {
     FUNCTION_TEST_BEGIN();
@@ -84,5 +84,4 @@ blbAdd(Blob *const this, const void *const data, const size_t size)
     MEM_CONTEXT_OBJ_END();
 
     FUNCTION_TEST_RETURN_P(VOID, result);
-
 }

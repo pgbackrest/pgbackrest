@@ -8,6 +8,6 @@ Stanza Upgrade Command
 Functions
 ***********************************************************************************************************************************/
 // Process stanza-upgrade
-void cmdStanzaUpgrade(void);
+FN_EXTERN void cmdStanzaUpgrade(void);
 
 #endif

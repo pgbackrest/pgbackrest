@@ -63,17 +63,17 @@ Functions
 // Convert N chars to StringId, If the string is longer than the allowable length for the selected encoding then the StringID will
 // be marked as "partial" and will have a '+' appended whenever it is converted back to a string. This is to distinguish it from a
 // string with the same number of encoded characters that did not overflow.
-StringId strIdFromZN(const char *buffer, size_t size, bool error);
+FN_EXTERN StringId strIdFromZN(const char *buffer, size_t size, bool error);
 
 // Convert String to StringId using strIdFromZN()
-__attribute__((always_inline)) static inline StringId
+FN_INLINE_ALWAYS StringId
 strIdFromStr(const String *const str)
 {
     return strIdFromZN(strZ(str), strSize(str), true);
 }
 
 // Convert zero-terminated string to StringId using strIdFromZN()
-__attribute__((always_inline)) static inline StringId
+FN_INLINE_ALWAYS StringId
 strIdFromZ(const char *const str)
 {
     return strIdFromZN(str, strlen(str), true);
@@ -82,18 +82,18 @@ strIdFromZ(const char *const str)
 // Write StringId to characters without zero-terminating. The buffer at ptr must have enough space to write the entire StringId,
 // which could be eight characters. However, the caller may know the exact (or max length) in advance and act accordingly. The
 // actual number of bytes written is returned.
-size_t strIdToZN(StringId strId, char *const buffer);
+FN_EXTERN size_t strIdToZN(StringId strId, char *const buffer);
 
 // Convert StringId to String
-String *strIdToStr(const StringId strId);
+FN_EXTERN String *strIdToStr(const StringId strId);
 
 // Convert StringId to zero-terminated string. See strIdToZN() for buffer sizing and return value.
-size_t strIdToZ(const StringId strId, char *const buffer);
+FN_EXTERN size_t strIdToZ(const StringId strId, char *const buffer);
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-size_t strIdToLog(const StringId strId, char *const buffer, const size_t bufferSize);
+FN_EXTERN size_t strIdToLog(StringId strId, char *buffer, size_t bufferSize);
 
 #define FUNCTION_LOG_STRING_ID_TYPE                                                                                                \
     StringId

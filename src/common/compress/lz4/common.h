@@ -15,7 +15,7 @@ LZ4 extension
 Functions
 ***********************************************************************************************************************************/
 // Process lz4 errors
-size_t lz4Error(size_t error);
+FN_EXTERN size_t lz4Error(size_t error);
 
 #endif // HAVE_LIBLZ4
 

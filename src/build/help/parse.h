@@ -4,8 +4,8 @@ Parse Help Xml
 #ifndef BUILD_HELP_PARSE_H
 #define BUILD_HELP_PARSE_H
 
+#include "build/common/xml.h"
 #include "build/config/parse.h"
-#include "common/type/xml.h"
 
 /***********************************************************************************************************************************
 Types

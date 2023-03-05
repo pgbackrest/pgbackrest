@@ -8,6 +8,6 @@ Stanza Delete Command
 Functions
 ***********************************************************************************************************************************/
 // Process stanza-delete
-void cmdStanzaDelete(void);
+FN_EXTERN void cmdStanzaDelete(void);
 
 #endif

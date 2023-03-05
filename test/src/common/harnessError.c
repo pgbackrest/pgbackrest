@@ -3,8 +3,8 @@ Harness for Loading Test Configurations
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include "common/harnessError.h"
 #include "common/harnessDebug.h"
+#include "common/harnessError.h"
 #include "common/harnessLog.h"
 #include "common/harnessTest.h"
 
@@ -14,7 +14,8 @@ Include shimmed C modules
 {[SHIM_MODULE]}
 
 /**********************************************************************************************************************************/
-void hrnErrorThrow(const HrnErrorThrowParam param)
+void
+hrnErrorThrow(const HrnErrorThrowParam param)
 {
     errorContext.error.errorType = param.errorType != NULL ? param.errorType : &AssertError;
     errorContext.error.fileName = param.fileName != NULL ? param.fileName : "ERR_FILE";

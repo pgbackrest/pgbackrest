@@ -13,11 +13,10 @@ S3 Storage
 #include "common/io/tls/client.h"
 #include "common/log.h"
 #include "common/regExp.h"
-#include "common/type/object.h"
 #include "common/type/json.h"
+#include "common/type/object.h"
 #include "common/type/xml.h"
 #include "storage/s3/read.h"
-#include "storage/s3/storage.intern.h"
 #include "storage/s3/write.h"
 
 /***********************************************************************************************************************************
@@ -57,7 +56,7 @@ STRING_STATIC(S3_XML_TAG_IS_TRUNCATED_STR,                          "IsTruncated
 STRING_STATIC(S3_XML_TAG_KEY_STR,                                   "Key");
 STRING_STATIC(S3_XML_TAG_LAST_MODIFIED_STR,                         "LastModified");
 #define S3_XML_TAG_NEXT_CONTINUATION_TOKEN                          "NextContinuationToken"
-    STRING_STATIC(S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR,           S3_XML_TAG_NEXT_CONTINUATION_TOKEN);
+STRING_STATIC(S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR,               S3_XML_TAG_NEXT_CONTINUATION_TOKEN);
 STRING_STATIC(S3_XML_TAG_OBJECT_STR,                                "Object");
 STRING_STATIC(S3_XML_TAG_PREFIX_STR,                                "Prefix");
 STRING_STATIC(S3_XML_TAG_QUIET_STR,                                 "Quiet");
@@ -67,10 +66,10 @@ STRING_STATIC(S3_XML_TAG_SIZE_STR,                                  "Size");
 AWS authentication v4 constants
 ***********************************************************************************************************************************/
 #define S3                                                          "s3"
-    BUFFER_STRDEF_STATIC(S3_BUF,                                    S3);
+BUFFER_STRDEF_STATIC(S3_BUF,                                        S3);
 #define AWS4                                                        "AWS4"
 #define AWS4_REQUEST                                                "aws4_request"
-    BUFFER_STRDEF_STATIC(AWS4_REQUEST_BUF,                          AWS4_REQUEST);
+BUFFER_STRDEF_STATIC(AWS4_REQUEST_BUF,                              AWS4_REQUEST);
 #define AWS4_HMAC_SHA256                                            "AWS4-HMAC-SHA256"
 
 /***********************************************************************************************************************************
@@ -204,7 +203,7 @@ storageS3Auth(
         // Generate string to sign
         const String *stringToSign = strNewFmt(
             AWS4_HMAC_SHA256 "\n%s\n%s/%s/" S3 "/" AWS4_REQUEST "\n%s", strZ(dateTime), strZ(date), strZ(this->region),
-            strZ(bufHex(cryptoHashOne(hashTypeSha256, BUFSTR(canonicalRequest)))));
+            strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha256, BUFSTR(canonicalRequest)))));
 
         // Generate signing key.  This key only needs to be regenerated every seven days but we'll do it once a day to keep the
         // logic simple.  It's a relatively expensive operation so we'd rather not do it for every request.
@@ -229,7 +228,7 @@ storageS3Auth(
         const String *authorization = strNewFmt(
             AWS4_HMAC_SHA256 " Credential=%s/%s/%s/" S3 "/" AWS4_REQUEST ",SignedHeaders=%s,Signature=%s",
             strZ(this->accessKey), strZ(date), strZ(this->region), strZ(signedHeaders),
-            strZ(bufHex(cryptoHmacOne(hashTypeSha256, this->signingKey, BUFSTR(stringToSign)))));
+            strZ(strNewEncode(encodingHex, cryptoHmacOne(hashTypeSha256, this->signingKey, BUFSTR(stringToSign)))));
 
         httpHeaderPut(httpHeader, HTTP_HEADER_AUTHORIZATION_STR, authorization);
     }
@@ -316,7 +315,7 @@ storageS3AuthAuto(StorageS3 *const this, HttpHeader *const header)
                 THROW(
                     ProtocolError,
                     "role to retrieve temporary credentials not found\n"
-                        "HINT: is a valid IAM role associated with this instance?");
+                    "HINT: is a valid IAM role associated with this instance?");
             }
             // Else an error that we can't handle
             else if (!httpResponseCodeOk(response))
@@ -341,7 +340,7 @@ storageS3AuthAuto(StorageS3 *const this, HttpHeader *const header)
             THROW_FMT(
                 ProtocolError,
                 "role '%s' not found\n"
-                    "HINT: is '%s' a valid IAM role associated with this instance?",
+                "HINT: is '%s' a valid IAM role associated with this instance?",
                 strZ(this->credRole), strZ(this->credRole));
         }
         // Else an error that we can't handle
@@ -443,7 +442,7 @@ storageS3AuthWebId(StorageS3 *const this, const HttpHeader *const header)
 /***********************************************************************************************************************************
 Process S3 request
 ***********************************************************************************************************************************/
-HttpRequest *
+FN_EXTERN HttpRequest *
 storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, StorageS3RequestAsyncParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -464,8 +463,8 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        HttpHeader *requestHeader = param.header == NULL ?
-            httpHeaderNew(this->headerRedactList) : httpHeaderDup(param.header, this->headerRedactList);
+        HttpHeader *requestHeader =
+            param.header == NULL ? httpHeaderNew(this->headerRedactList) : httpHeaderDup(param.header, this->headerRedactList);
 
         // Set content length
         httpHeaderAdd(
@@ -476,7 +475,8 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
         if (param.content != NULL)
         {
             httpHeaderAdd(
-                requestHeader, HTTP_HEADER_CONTENT_MD5_STR, strNewEncode(encodeBase64, cryptoHashOne(hashTypeMd5, param.content)));
+                requestHeader, HTTP_HEADER_CONTENT_MD5_STR,
+                strNewEncode(encodingBase64, cryptoHashOne(hashTypeMd5, param.content)));
         }
 
         // Set KMS headers when requested
@@ -531,8 +531,10 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
         // Generate authorization header
         storageS3Auth(
             this, verb, path, param.query, storageS3DateTime(time(NULL)), requestHeader,
-            param.content == NULL || bufEmpty(param.content) ?
-                HASH_TYPE_SHA256_ZERO_STR : bufHex(cryptoHashOne(hashTypeSha256, param.content)));
+            strNewEncode(
+                encodingHex,
+                param.content == NULL || bufEmpty(param.content) ?
+                    HASH_TYPE_SHA256_ZERO_BUF : cryptoHashOne(hashTypeSha256, param.content)));
 
         // Send request
         MEM_CONTEXT_PRIOR_BEGIN()
@@ -547,7 +549,7 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
     FUNCTION_LOG_RETURN(HTTP_REQUEST, result);
 }
 
-HttpResponse *
+FN_EXTERN HttpResponse *
 storageS3Response(HttpRequest *request, StorageS3ResponseParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -577,7 +579,7 @@ storageS3Response(HttpRequest *request, StorageS3ResponseParam param)
     FUNCTION_LOG_RETURN(HTTP_RESPONSE, result);
 }
 
-HttpResponse *
+FN_EXTERN HttpResponse *
 storageS3Request(StorageS3 *this, const String *verb, const String *path, StorageS3RequestParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -619,6 +621,8 @@ storageS3ListInternal(
         FUNCTION_LOG_PARAM(FUNCTIONP, callback);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_CALLBACK();
 
     ASSERT(this != NULL);
     ASSERT(path != NULL);
@@ -886,6 +890,7 @@ storageS3NewWrite(THIS_VOID, const String *file, StorageInterfaceNewWriteParam p
     ASSERT(this != NULL);
     ASSERT(file != NULL);
     ASSERT(param.createPath);
+    ASSERT(param.truncate);
     ASSERT(param.user == NULL);
     ASSERT(param.group == NULL);
     ASSERT(param.timeModified == 0);
@@ -1086,7 +1091,7 @@ static const StorageInterface storageInterfaceS3 =
     .remove = storageS3Remove,
 };
 
-Storage *
+FN_EXTERN Storage *
 storageS3New(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
     const String *endPoint, StorageS3UriStyle uriStyle, const String *region, StorageS3KeyType keyType, const String *accessKey,
@@ -1128,7 +1133,7 @@ storageS3New(
 
     OBJ_NEW_BEGIN(StorageS3, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageS3 *driver = OBJ_NEW_ALLOC();
+        StorageS3 *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), Storage::StorageS3);
 
         *driver = (StorageS3)
         {
@@ -1140,8 +1145,8 @@ storageS3New(
             .partSize = partSize,
             .deleteMax = STORAGE_S3_DELETE_MAX,
             .uriStyle = uriStyle,
-            .bucketEndpoint = uriStyle == storageS3UriStyleHost ?
-                strNewFmt("%s.%s", strZ(bucket), strZ(endPoint)) : strDup(endPoint),
+            .bucketEndpoint =
+                uriStyle == storageS3UriStyleHost ? strNewFmt("%s.%s", strZ(bucket), strZ(endPoint)) : strDup(endPoint),
 
             // Force the signing key to be generated on the first run
             .signingKeyDate = YYYYMMDD_STR,

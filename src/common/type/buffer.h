@@ -16,16 +16,16 @@ typedef struct Buffer Buffer;
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-Buffer *bufNew(size_t size);
+FN_EXTERN Buffer *bufNew(size_t size);
 
 // Create a new buffer from a C buffer
-Buffer *bufNewC(const void *buffer, size_t size);
+FN_EXTERN Buffer *bufNewC(const void *buffer, size_t size);
 
 // Create a new buffer from a string encoded with the specified type
-Buffer *bufNewDecode(EncodeType type, const String *string);
+FN_EXTERN Buffer *bufNewDecode(EncodingType type, const String *string);
 
 // Duplicate a buffer
-Buffer *bufDup(const Buffer *buffer);
+FN_EXTERN Buffer *bufDup(const Buffer *buffer);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -41,70 +41,70 @@ typedef struct BufferPub
 
 // Amount of the buffer actually used. This will be updated automatically when possible but if the buffer is modified by using
 // bufPtr() then the user is responsible for updating used.
-__attribute__((always_inline)) static inline size_t
+FN_INLINE_ALWAYS size_t
 bufUsed(const Buffer *const this)
 {
     return THIS_PUB(Buffer)->used;
 }
 
 // Is the buffer empty?
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 bufEmpty(const Buffer *const this)
 {
     return bufUsed(this) == 0;
 }
 
 // Buffer size
-__attribute__((always_inline)) static inline size_t
+FN_INLINE_ALWAYS size_t
 bufSize(const Buffer *const this)
 {
     return THIS_PUB(Buffer)->size;
 }
 
 // Is the buffer full?
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 bufFull(const Buffer *const this)
 {
     return bufUsed(this) == bufSize(this);
 }
 
 // Buffer pointer
-__attribute__((always_inline)) static inline unsigned char *
+FN_INLINE_ALWAYS unsigned char *
 bufPtr(Buffer *const this)
 {
     return THIS_PUB(Buffer)->buffer;
 }
 
 // Const buffer pointer
-__attribute__((always_inline)) static inline const unsigned char *
+FN_INLINE_ALWAYS const unsigned char *
 bufPtrConst(const Buffer *const this)
 {
     return THIS_PUB(Buffer)->buffer;
 }
 
 // Remaining space in the buffer
-__attribute__((always_inline)) static inline size_t
+FN_INLINE_ALWAYS size_t
 bufRemains(const Buffer *const this)
 {
     return bufSize(this) - bufUsed(this);
 }
 
 // Pointer to remaining buffer space (after used space)
-__attribute__((always_inline)) static inline unsigned char *
+FN_INLINE_ALWAYS unsigned char *
 bufRemainsPtr(Buffer *const this)
 {
     return bufPtr(this) + bufUsed(this);
 }
 
 // Allocated buffer size. This may be different from bufSize() if a limit has been set.
-__attribute__((always_inline)) static inline size_t
+FN_INLINE_ALWAYS size_t
 bufSizeAlloc(const Buffer *const this)
 {
     return THIS_PUB(Buffer)->sizeAlloc;
 }
 
 // Is the size limited to make the buffer appear smaller?
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 bufSizeLimit(const Buffer *const this)
 {
     return THIS_PUB(Buffer)->sizeLimit;
@@ -114,42 +114,39 @@ bufSizeLimit(const Buffer *const this)
 Functions
 ***********************************************************************************************************************************/
 // Append the contents of another buffer
-Buffer *bufCat(Buffer *this, const Buffer *cat);
+FN_EXTERN Buffer *bufCat(Buffer *this, const Buffer *cat);
 
 // Append a C buffer
-Buffer *bufCatC(Buffer *this, const unsigned char *cat, size_t catOffset, size_t catSize);
+FN_EXTERN Buffer *bufCatC(Buffer *this, const unsigned char *cat, size_t catOffset, size_t catSize);
 
 // Append a subset of another buffer
-Buffer *bufCatSub(Buffer *this, const Buffer *cat, size_t catOffset, size_t catSize);
+FN_EXTERN Buffer *bufCatSub(Buffer *this, const Buffer *cat, size_t catOffset, size_t catSize);
 
 // Are two buffers equal?
-bool bufEq(const Buffer *this, const Buffer *compare);
-
-// Convert the buffer to a hex string
-String *bufHex(const Buffer *this);
+FN_EXTERN bool bufEq(const Buffer *this, const Buffer *compare);
 
 // Move to a new parent mem context
-__attribute__((always_inline)) static inline Buffer *
+FN_INLINE_ALWAYS Buffer *
 bufMove(Buffer *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
 }
 
 // Resize the buffer
-Buffer *bufResize(Buffer *this, size_t size);
+FN_EXTERN Buffer *bufResize(Buffer *this, size_t size);
 
 // Manage buffer limits
-void bufLimitClear(Buffer *this);
-void bufLimitSet(Buffer *this, size_t limit);
+FN_EXTERN void bufLimitClear(Buffer *this);
+FN_EXTERN void bufLimitSet(Buffer *this, size_t limit);
 
-void bufUsedInc(Buffer *this, size_t inc);
-void bufUsedSet(Buffer *this, size_t used);
-void bufUsedZero(Buffer *this);
+FN_EXTERN void bufUsedInc(Buffer *this, size_t inc);
+FN_EXTERN void bufUsedSet(Buffer *this, size_t used);
+FN_EXTERN void bufUsedZero(Buffer *this);
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 bufFree(Buffer *const this)
 {
     objFree(this);
@@ -181,17 +178,22 @@ By convention all buffer constant identifiers are appended with _BUF.
 #define BUFSTRDEF(stringdef)                                                                                                       \
     BUF((unsigned char *)stringdef, (sizeof(stringdef) - 1))
 
-// Used to declare buffer constants that will be externed using BUFFER_DECLARE().  Must be used in a .c file.
+// Used to define buffer constants that will be externed using BUFFER_DECLARE(). Must be used in a .c file.
+#define BUFFER_EXTERN(name, ...)                                                                                                   \
+    static const uint8_t name##_RAW[] = {__VA_ARGS__};                                                                             \
+    VR_EXTERN_DEFINE const Buffer *const name = BUF(name##_RAW, sizeof(name##_RAW));
+
+// Used to define String Buffer constants that will be externed using BUFFER_DECLARE(). Must be used in a .c file.
 #define BUFFER_STRDEF_EXTERN(name, string)                                                                                         \
-    const Buffer *const name = BUFSTRDEF(string)
+    VR_EXTERN_DEFINE const Buffer *const name = BUFSTRDEF(string)
 
-// Used to declare buffer constants that will be local to the .c file.  Must be used in a .c file.
+// Used to define String Buffer constants that will be local to the .c file. Must be used in a .c file.
 #define BUFFER_STRDEF_STATIC(name, string)                                                                                         \
-    static BUFFER_STRDEF_EXTERN(name, string)
+    static const Buffer *const name = BUFSTRDEF(string)
 
-// Used to extern buffer constants declared with BUFFER_STRDEF_EXTERN(.  Must be used in a .h file.
+// Used to declare externed Buffer constants defined with BUFFER*EXTERN(). Must be used in a .h file.
 #define BUFFER_DECLARE(name)                                                                                                       \
-    extern const Buffer *const name
+    VR_EXTERN_DECLARE const Buffer *const name
 
 /***********************************************************************************************************************************
 Constant buffers that are generally useful
@@ -208,11 +210,11 @@ BUFFER_DECLARE(QUOTED_BUF);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-String *bufToLog(const Buffer *this);
+FN_EXTERN void bufToLog(const Buffer *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_BUFFER_TYPE                                                                                                   \
     Buffer *
 #define FUNCTION_LOG_BUFFER_FORMAT(value, buffer, bufferSize)                                                                      \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, bufToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, bufToLog, buffer, bufferSize)
 
 #endif

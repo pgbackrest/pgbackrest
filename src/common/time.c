@@ -15,7 +15,7 @@ Constants describing number of sub-units in an interval
 #define MSEC_PER_USEC                                               ((TimeMSec)1000)
 
 /**********************************************************************************************************************************/
-TimeMSec
+FN_EXTERN TimeMSec
 timeMSec(void)
 {
     FUNCTION_TEST_VOID();
@@ -27,7 +27,7 @@ timeMSec(void)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 sleepMSec(TimeMSec sleepMSec)
 {
     FUNCTION_TEST_BEGIN();
@@ -46,7 +46,7 @@ sleepMSec(TimeMSec sleepMSec)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 datePartsValid(int year, int month, int day)
 {
     FUNCTION_TEST_BEGIN();
@@ -68,7 +68,7 @@ datePartsValid(int year, int month, int day)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 timePartsValid(int hour, int minute, int second)
 {
     FUNCTION_TEST_BEGIN();
@@ -84,7 +84,7 @@ timePartsValid(int hour, int minute, int second)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 tzPartsValid(int tzHour, int tzMinute)
 {
     FUNCTION_TEST_BEGIN();
@@ -96,7 +96,7 @@ tzPartsValid(int tzHour, int tzMinute)
     // ??? This is only a sanity check for basic validity of timezone offset of 15 minute intervals until the timezone
     // database is implemented.
     if (!(((tzHour > -12 && tzHour < 14) && (tzMinute % 15 == 0)) || (tzHour == -12 && tzMinute == 0) ||
-        (tzHour == 14 && tzMinute == 0)))
+          (tzHour == 14 && tzMinute == 0)))
     {
         THROW_FMT(FormatError, "invalid timezone %02d%02d", tzHour, tzMinute);
     }
@@ -105,7 +105,7 @@ tzPartsValid(int tzHour, int tzMinute)
 }
 
 /**********************************************************************************************************************************/
-int
+FN_EXTERN int
 tzOffsetSeconds(int tzHour, int tzMinute)
 {
     FUNCTION_TEST_BEGIN();
@@ -129,7 +129,7 @@ tzOffsetSeconds(int tzHour, int tzMinute)
 }
 
 /**********************************************************************************************************************************/
-bool
+FN_EXTERN bool
 yearIsLeap(int year)
 {
     FUNCTION_TEST_BEGIN();
@@ -140,7 +140,7 @@ yearIsLeap(int year)
 }
 
 /**********************************************************************************************************************************/
-int
+FN_EXTERN int
 dayOfYear(int year, int month, int day)
 {
     FUNCTION_TEST_BEGIN();
@@ -161,7 +161,7 @@ dayOfYear(int year, int month, int day)
 }
 
 /**********************************************************************************************************************************/
-time_t
+FN_EXTERN time_t
 epochFromParts(int year, int month, int day, int hour, int minute, int second, int tzOffsetSecond)
 {
     FUNCTION_TEST_BEGIN();

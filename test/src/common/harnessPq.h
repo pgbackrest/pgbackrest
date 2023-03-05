@@ -488,8 +488,9 @@ Macros for defining groups of functions that implement various queries and comma
     {.session = sessionParam, .function = HRNPQ_CLEAR},                                                                            \
     {.session = sessionParam, .function = HRNPQ_GETRESULT, .resultNull = true}
 
-#define HRNPQ_MACRO_REPLAY_TARGET_REACHED(                                                                                         \
-    sessionParam, walNameParam, lsnNameParam, targetLsnParam, targetReachedParam, replayLsnParam)                                  \
+#define                                                                                                                            \
+    HRNPQ_MACRO_REPLAY_TARGET_REACHED(                                                                                             \
+        sessionParam, walNameParam, lsnNameParam, targetLsnParam, targetReachedParam, replayLsnParam)                              \
     {.session = sessionParam,                                                                                                      \
         .function = HRNPQ_SENDQUERY,                                                                                               \
         .param = zNewFmt(                                                                                                          \
@@ -516,8 +517,9 @@ Macros for defining groups of functions that implement various queries and comma
 #define HRNPQ_MACRO_REPLAY_TARGET_REACHED_GE_10(sessionParam, targetLsnParam, targetReachedParam, reachedLsnParam)                 \
     HRNPQ_MACRO_REPLAY_TARGET_REACHED(sessionParam, "wal", "lsn", targetLsnParam, targetReachedParam, reachedLsnParam)
 
-#define HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED(                                                                                     \
-    sessionParam, lsnNameParam, targetLsnParam, targetReachedParam, checkpointLsnParam, sleepParam)                                \
+#define                                                                                                                            \
+    HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED(                                                                                         \
+        sessionParam, lsnNameParam, targetLsnParam, targetReachedParam, checkpointLsnParam, sleepParam)                            \
     {.session = sessionParam,                                                                                                      \
         .function = HRNPQ_SENDQUERY,                                                                                               \
         .param = zNewFmt(                                                                                                          \
@@ -542,8 +544,9 @@ Macros for defining groups of functions that implement various queries and comma
     HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED(                                                                                         \
         sessionParam, "location", targetLsnParam, targetReachedParam, checkpointLsnParam, sleepParam)
 
-#define HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED_GE_10(                                                                               \
-    sessionParam, targetLsnParam, targetReachedParam, checkpointLsnParam, sleepParam)                                              \
+#define                                                                                                                            \
+    HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED_GE_10(                                                                                   \
+        sessionParam, targetLsnParam, targetReachedParam, checkpointLsnParam, sleepParam)                                          \
     HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED(sessionParam, "lsn", targetLsnParam, targetReachedParam, checkpointLsnParam, sleepParam)
 
 #define HRNPQ_MACRO_REPLAY_WAIT_LE_95(sessionParam, targetLsnParam)                                                                \
@@ -569,14 +572,7 @@ Macros for defining groups of functions that implement various queries and comma
 /***********************************************************************************************************************************
 Macros to simplify dbOpen() for specific database versions
 ***********************************************************************************************************************************/
-#define HRNPQ_MACRO_OPEN_LE_91(sessionParam, connectParam, pgVersion, pgPathParam, archiveMode, archiveCommand)                    \
-    HRNPQ_MACRO_OPEN(sessionParam, connectParam),                                                                                  \
-    HRNPQ_MACRO_SET_SEARCH_PATH(sessionParam),                                                                                     \
-    HRNPQ_MACRO_SET_CLIENT_ENCODING(sessionParam),                                                                                 \
-    HRNPQ_MACRO_VALIDATE_QUERY(sessionParam, pgVersion, pgPathParam, archiveMode, archiveCommand),                                 \
-    HRNPQ_MACRO_SET_APPLICATION_NAME(sessionParam)
-
-#define HRNPQ_MACRO_OPEN_GE_92(sessionParam, connectParam, pgVersion, pgPathParam, standbyParam, archiveMode, archiveCommand)      \
+#define HRNPQ_MACRO_OPEN_GE_93(sessionParam, connectParam, pgVersion, pgPathParam, standbyParam, archiveMode, archiveCommand)      \
     HRNPQ_MACRO_OPEN(sessionParam, connectParam),                                                                                  \
     HRNPQ_MACRO_SET_SEARCH_PATH(sessionParam),                                                                                     \
     HRNPQ_MACRO_SET_CLIENT_ENCODING(sessionParam),                                                                                 \

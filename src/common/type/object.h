@@ -42,6 +42,15 @@ OBJ_NEW_END();
     MEM_CONTEXT_NEW_END()
 
 /***********************************************************************************************************************************
+Rename an object for auditing purposes. The original name for an object is based on the type used to create the object but a
+different name might be needed to identify it during auditing. For example, a filter named IoSink would need to be renamed to
+IoFilter to identify it as a filter for auditing.
+
+This only has an effect in test builds.
+***********************************************************************************************************************************/
+#define OBJ_NAME(this, name)                                        MEM_CONTEXT_AUDIT_ALLOC_EXTRA_NAME(this, name)
+
+/***********************************************************************************************************************************
 Used in interface function parameter lists to discourage use of the untyped thisVoid parameter, e.g.:
 
 size_t bufferRead(THIS_VOID, Buffer *buffer)
@@ -59,7 +68,7 @@ Create a local "this" variable of the correct type from a THIS_VOID parameter
 Cast this private struct, e.g. List, to the associated public struct, e.g. ListPub. Note that the public struct must be the first
 member of the private struct. For example:
 
-__attribute__((always_inline)) static inline unsigned int
+FN_INLINE_ALWAYS unsigned int
 lstSize(const List *const this)
 {
     return THIS_PUB(List)->listSize;
@@ -69,7 +78,7 @@ The macro also ensures that this != NULL so there is no need to do that in the c
 ***********************************************************************************************************************************/
 #define THIS_PUB(type)                                              ((type##Pub *)thisNotNull(this))
 
-__attribute__((always_inline)) static inline const void *
+FN_INLINE_ALWAYS const void *
 thisNotNull(const void *const this)
 {
     ASSERT_INLINE(this != NULL);
@@ -87,31 +96,31 @@ Functions
 
 To ensure proper type checking, these functions are meant to be called from inline functions created specifically for each object:
 
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 storageFree(Storage *this)
 {
     objFree(this);
 }
 ***********************************************************************************************************************************/
 // Get the object mem context
-__attribute__((always_inline)) static inline MemContext *
+FN_INLINE_ALWAYS MemContext *
 objMemContext(void *const this)
 {
     return memContextFromAllocExtra(this);
 }
 
 // Move an object to a new context if this != NULL
-void *objMove(THIS_VOID, MemContext *parentNew);
+FN_EXTERN void *objMove(THIS_VOID, MemContext *parentNew);
 
 // Move an object to a new context if this != NULL. The mem context to move must be the first member of the object struct. This
 // pattern is typically used by interfaces.
-void *objMoveContext(THIS_VOID, MemContext *parentNew);
+FN_EXTERN void *objMoveContext(THIS_VOID, MemContext *parentNew);
 
 // Free the object mem context if this != NULL
-void objFree(THIS_VOID);
+FN_EXTERN void objFree(THIS_VOID);
 
 // Free the object mem context if not NULL. The mem context to be freed must be the first member of the object struct. This pattern
 // is typically used by interfaces.
-void objFreeContext(THIS_VOID);
+FN_EXTERN void objFreeContext(THIS_VOID);
 
 #endif

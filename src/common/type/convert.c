@@ -92,7 +92,7 @@ cvtZToUInt64Internal(const char *value, const char *type, int base)
 }
 
 /**********************************************************************************************************************************/
-size_t
+FN_EXTERN size_t
 cvtBoolToZ(bool value, char *buffer, size_t bufferSize)
 {
     FUNCTION_TEST_BEGIN();
@@ -111,34 +111,14 @@ cvtBoolToZ(bool value, char *buffer, size_t bufferSize)
     FUNCTION_TEST_RETURN(SIZE, result);
 }
 
-const char *
+FN_EXTERN const char *
 cvtBoolToConstZ(bool value)
 {
     return value ? TRUE_Z : FALSE_Z;
 }
 
 /**********************************************************************************************************************************/
-size_t
-cvtCharToZ(char value, char *buffer, size_t bufferSize)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(BOOL, value);
-        FUNCTION_TEST_PARAM_P(CHARDATA, buffer);
-        FUNCTION_TEST_PARAM(SIZE, bufferSize);
-    FUNCTION_TEST_END();
-
-    ASSERT(buffer != NULL);
-
-    size_t result = (size_t)snprintf(buffer, bufferSize, "%c", value);
-
-    if (result >= bufferSize)
-        THROW(AssertError, "buffer overflow");
-
-    FUNCTION_TEST_RETURN(SIZE, result);
-}
-
-/**********************************************************************************************************************************/
-size_t
+FN_EXTERN size_t
 cvtDoubleToZ(double value, char *buffer, size_t bufferSize)
 {
     FUNCTION_TEST_BEGIN();
@@ -181,7 +161,7 @@ cvtDoubleToZ(double value, char *buffer, size_t bufferSize)
     FUNCTION_TEST_RETURN(SIZE, (size_t)(end - buffer + 1));
 }
 
-double
+FN_EXTERN double
 cvtZToDouble(const char *value)
 {
     FUNCTION_TEST_BEGIN();
@@ -200,7 +180,7 @@ cvtZToDouble(const char *value)
 }
 
 /**********************************************************************************************************************************/
-size_t
+FN_EXTERN size_t
 cvtIntToZ(int value, char *buffer, size_t bufferSize)
 {
     FUNCTION_TEST_BEGIN();
@@ -219,7 +199,7 @@ cvtIntToZ(int value, char *buffer, size_t bufferSize)
     FUNCTION_TEST_RETURN(SIZE, result);
 }
 
-int
+FN_EXTERN int
 cvtZToIntBase(const char *value, int base)
 {
     FUNCTION_TEST_BEGIN();
@@ -236,7 +216,7 @@ cvtZToIntBase(const char *value, int base)
     FUNCTION_TEST_RETURN(INT, (int)result);
 }
 
-int
+FN_EXTERN int
 cvtZToInt(const char *value)
 {
     FUNCTION_TEST_BEGIN();
@@ -248,7 +228,7 @@ cvtZToInt(const char *value)
     FUNCTION_TEST_RETURN(INT, cvtZToIntBase(value, 10));
 }
 
-int
+FN_EXTERN int
 cvtZSubNToIntBase(const char *const value, const size_t offset, const size_t size, const int base)
 {
     FUNCTION_TEST_BEGIN();
@@ -262,14 +242,14 @@ cvtZSubNToIntBase(const char *const value, const size_t offset, const size_t siz
 
     char buffer[CVT_BASE10_BUFFER_SIZE + 1];
     ASSERT(size <= CVT_BASE10_BUFFER_SIZE);
-    strncpy(buffer, value + offset, size);
+    memcpy(buffer, value + offset, size);
     buffer[size] = '\0';
 
     FUNCTION_TEST_RETURN(INT, cvtZToIntBase(buffer, base));
 }
 
 /**********************************************************************************************************************************/
-size_t
+FN_EXTERN size_t
 cvtInt64ToZ(int64_t value, char *buffer, size_t bufferSize)
 {
     FUNCTION_TEST_BEGIN();
@@ -288,7 +268,7 @@ cvtInt64ToZ(int64_t value, char *buffer, size_t bufferSize)
     FUNCTION_TEST_RETURN(SIZE, result);
 }
 
-int64_t
+FN_EXTERN int64_t
 cvtZToInt64Base(const char *value, int base)
 {
     FUNCTION_TEST_BEGIN();
@@ -300,7 +280,7 @@ cvtZToInt64Base(const char *value, int base)
     FUNCTION_TEST_RETURN(INT64, cvtZToInt64Internal(value, "int64", base));
 }
 
-int64_t
+FN_EXTERN int64_t
 cvtZToInt64(const char *value)
 {
     FUNCTION_TEST_BEGIN();
@@ -312,7 +292,7 @@ cvtZToInt64(const char *value)
     FUNCTION_TEST_RETURN(INT64, cvtZToInt64Base(value, 10));
 }
 
-int64_t
+FN_EXTERN int64_t
 cvtZSubNToInt64Base(const char *const value, const size_t offset, const size_t size, const int base)
 {
     FUNCTION_TEST_BEGIN();
@@ -326,14 +306,14 @@ cvtZSubNToInt64Base(const char *const value, const size_t offset, const size_t s
 
     char buffer[CVT_BASE10_BUFFER_SIZE + 1];
     ASSERT(size <= CVT_BASE10_BUFFER_SIZE);
-    strncpy(buffer, value + offset, size);
+    memcpy(buffer, value + offset, size);
     buffer[size] = '\0';
 
     FUNCTION_TEST_RETURN(INT64, cvtZToInt64Base(buffer, base));
 }
 
 /**********************************************************************************************************************************/
-size_t
+FN_EXTERN size_t
 cvtModeToZ(mode_t value, char *buffer, size_t bufferSize)
 {
     FUNCTION_TEST_BEGIN();
@@ -352,7 +332,7 @@ cvtModeToZ(mode_t value, char *buffer, size_t bufferSize)
     FUNCTION_TEST_RETURN(SIZE, result);
 }
 
-mode_t
+FN_EXTERN mode_t
 cvtZToMode(const char *value)
 {
     FUNCTION_TEST_BEGIN();
@@ -365,7 +345,7 @@ cvtZToMode(const char *value)
 }
 
 /**********************************************************************************************************************************/
-size_t
+FN_EXTERN size_t
 cvtSizeToZ(size_t value, char *buffer, size_t bufferSize)
 {
     FUNCTION_TEST_BEGIN();
@@ -384,27 +364,8 @@ cvtSizeToZ(size_t value, char *buffer, size_t bufferSize)
     FUNCTION_TEST_RETURN(SIZE, result);
 }
 
-size_t
-cvtSSizeToZ(ssize_t value, char *buffer, size_t bufferSize)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(SSIZE, value);
-        FUNCTION_TEST_PARAM_P(CHARDATA, buffer);
-        FUNCTION_TEST_PARAM(SIZE, bufferSize);
-    FUNCTION_TEST_END();
-
-    ASSERT(buffer != NULL);
-
-    size_t result = (size_t)snprintf(buffer, bufferSize, "%zd", value);
-
-    if (result >= bufferSize)
-        THROW(AssertError, "buffer overflow");
-
-    FUNCTION_TEST_RETURN(SIZE, result);
-}
-
 /**********************************************************************************************************************************/
-size_t
+FN_EXTERN size_t
 cvtTimeToZ(time_t value, char *buffer, size_t bufferSize)
 {
     FUNCTION_TEST_BEGIN();
@@ -425,7 +386,7 @@ cvtTimeToZ(time_t value, char *buffer, size_t bufferSize)
 }
 
 /**********************************************************************************************************************************/
-size_t
+FN_EXTERN size_t
 cvtUIntToZ(unsigned int value, char *buffer, size_t bufferSize)
 {
     FUNCTION_TEST_BEGIN();
@@ -444,7 +405,7 @@ cvtUIntToZ(unsigned int value, char *buffer, size_t bufferSize)
     FUNCTION_TEST_RETURN(SIZE, result);
 }
 
-unsigned int
+FN_EXTERN unsigned int
 cvtZToUIntBase(const char *value, int base)
 {
     FUNCTION_TEST_BEGIN();
@@ -462,7 +423,7 @@ cvtZToUIntBase(const char *value, int base)
     FUNCTION_TEST_RETURN(UINT, (unsigned int)result);
 }
 
-unsigned int
+FN_EXTERN unsigned int
 cvtZToUInt(const char *value)
 {
     FUNCTION_TEST_BEGIN();
@@ -474,7 +435,7 @@ cvtZToUInt(const char *value)
     FUNCTION_TEST_RETURN(UINT, cvtZToUIntBase(value, 10));
 }
 
-unsigned int
+FN_EXTERN unsigned int
 cvtZSubNToUIntBase(const char *const value, const size_t offset, const size_t size, const int base)
 {
     FUNCTION_TEST_BEGIN();
@@ -488,14 +449,14 @@ cvtZSubNToUIntBase(const char *const value, const size_t offset, const size_t si
 
     char buffer[CVT_BASE10_BUFFER_SIZE + 1];
     ASSERT(size <= CVT_BASE10_BUFFER_SIZE);
-    strncpy(buffer, value + offset, size);
+    memcpy(buffer, value + offset, size);
     buffer[size] = '\0';
 
     FUNCTION_TEST_RETURN(UINT, cvtZToUIntBase(buffer, base));
 }
 
 /**********************************************************************************************************************************/
-size_t
+FN_EXTERN size_t
 cvtUInt64ToZ(uint64_t value, char *buffer, size_t bufferSize)
 {
     FUNCTION_TEST_BEGIN();
@@ -514,7 +475,7 @@ cvtUInt64ToZ(uint64_t value, char *buffer, size_t bufferSize)
     FUNCTION_TEST_RETURN(SIZE, result);
 }
 
-uint64_t
+FN_EXTERN uint64_t
 cvtZToUInt64Base(const char *value, int base)
 {
     FUNCTION_TEST_BEGIN();
@@ -532,7 +493,7 @@ cvtZToUInt64Base(const char *value, int base)
     FUNCTION_TEST_RETURN(UINT64, result);
 }
 
-uint64_t
+FN_EXTERN uint64_t
 cvtZToUInt64(const char *value)
 {
     FUNCTION_TEST_BEGIN();
@@ -544,7 +505,7 @@ cvtZToUInt64(const char *value)
     FUNCTION_TEST_RETURN(UINT64, cvtZToUInt64Base(value, 10));
 }
 
-uint64_t
+FN_EXTERN uint64_t
 cvtZSubNToUInt64Base(const char *const value, const size_t offset, const size_t size, const int base)
 {
     FUNCTION_TEST_BEGIN();
@@ -558,14 +519,14 @@ cvtZSubNToUInt64Base(const char *const value, const size_t offset, const size_t 
 
     char buffer[CVT_BASE10_BUFFER_SIZE + 1];
     ASSERT(size <= CVT_BASE10_BUFFER_SIZE);
-    strncpy(buffer, value + offset, size);
+    memcpy(buffer, value + offset, size);
     buffer[size] = '\0';
 
     FUNCTION_TEST_RETURN(UINT64, cvtZToUInt64Base(buffer, base));
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 cvtUInt64ToVarInt128(uint64_t value, uint8_t *const buffer, size_t *const bufferPos, const size_t bufferSize)
 {
     FUNCTION_TEST_BEGIN();
@@ -602,31 +563,36 @@ cvtUInt64ToVarInt128(uint64_t value, uint8_t *const buffer, size_t *const buffer
     FUNCTION_TEST_RETURN_VOID();
 }
 
-uint64_t
-cvtUInt64FromVarInt128(const uint8_t *const value, size_t *const valuePos)
+FN_EXTERN uint64_t
+cvtUInt64FromVarInt128(const uint8_t *const buffer, size_t *const bufferPos, const size_t bufferSize)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, value);
-        FUNCTION_TEST_PARAM_P(UINT64, valuePos);
+        FUNCTION_TEST_PARAM_P(VOID, buffer);
+        FUNCTION_TEST_PARAM_P(SIZE, bufferPos);
+        FUNCTION_TEST_PARAM(SIZE, bufferSize);
     FUNCTION_TEST_END();
 
-    ASSERT(value != NULL);
-    ASSERT(valuePos != NULL);
+    ASSERT(buffer != NULL);
+    ASSERT(bufferPos != NULL);
 
     // Decode all bytes
     uint64_t result = 0;
     uint8_t byte;
 
-    for (unsigned int valueIdx = 0; valueIdx < CVT_VARINT128_BUFFER_SIZE; valueIdx++)
+    for (unsigned int bufferIdx = 0; bufferIdx < CVT_VARINT128_BUFFER_SIZE; bufferIdx++)
     {
+        // Error if the buffer position is beyond the buffer size
+        if (*bufferPos >= bufferSize)
+            THROW(FormatError, "buffer position is beyond buffer size");
+
         // Get the next encoded byte
-        byte = value[*valuePos];
+        byte = buffer[*bufferPos];
 
         // Shift the lower order 7 encoded bits into the uint64 in reverse order
-        result |= (uint64_t)(byte & 0x7f) << (7 * valueIdx);
+        result |= (uint64_t)(byte & 0x7f) << (7 * bufferIdx);
 
-        // Increment value position to indicate that the byte has been processed
-        (*valuePos)++;
+        // Increment buffer position to indicate that the byte has been processed
+        (*bufferPos)++;
 
         // Done if the high order bit is not set to indicate more data
         if (byte < 0x80)
@@ -634,7 +600,7 @@ cvtUInt64FromVarInt128(const uint8_t *const value, size_t *const valuePos)
     }
 
     // By this point all bytes should have been read so error if this is not the case. This could be due to a coding error or
-    // corrupton in the data stream.
+    // corruption in the data stream.
     if (byte >= 0x80)
         THROW(FormatError, "unterminated varint-128 integer");
 

@@ -15,7 +15,7 @@ typedef struct StorageIterator StorageIterator;
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-StorageIterator *storageItrNew(
+FN_EXTERN StorageIterator *storageItrNew(
     void *driver, const String *path, StorageInfoLevel level, bool errorOnMissing, bool nullOnMissing, bool recurse,
     SortOrder sortOrder, const String *expression);
 
@@ -23,10 +23,10 @@ StorageIterator *storageItrNew(
 Functions
 ***********************************************************************************************************************************/
 // Is there more info to be retrieved from the iterator?
-bool storageItrMore(StorageIterator *this);
+FN_EXTERN bool storageItrMore(StorageIterator *this);
 
 // Move to a new parent mem context
-__attribute__((always_inline)) static inline StorageIterator *
+FN_INLINE_ALWAYS StorageIterator *
 storageItrMove(StorageIterator *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
@@ -34,12 +34,12 @@ storageItrMove(StorageIterator *const this, MemContext *const parentNew)
 
 // Get next info. An error will be thrown if there is no more data so use storageItrMore() to check. Note that StorageInfo pointer
 // members (e.g. name) will be undefined after the next call to storageItrMore().
-StorageInfo storageItrNext(StorageIterator *this);
+FN_EXTERN StorageInfo storageItrNext(StorageIterator *this);
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 storageItrFree(StorageIterator *const this)
 {
     objFree(this);
@@ -48,11 +48,11 @@ storageItrFree(StorageIterator *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-String *storageItrToLog(const StorageIterator *this);
+FN_EXTERN void storageItrToLog(const StorageIterator *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_STORAGE_ITERATOR_TYPE                                                                                         \
     StorageIterator *
 #define FUNCTION_LOG_STORAGE_ITERATOR_FORMAT(value, buffer, bufferSize)                                                            \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, storageItrToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, storageItrToLog, buffer, bufferSize)
 
 #endif

@@ -24,7 +24,7 @@ Posix Storage
 Define PATH_MAX if it is not defined
 ***********************************************************************************************************************************/
 #ifndef PATH_MAX
-    #define PATH_MAX                                                (4 * 1024)
+#define PATH_MAX                                                    (4 * 1024)
 #endif
 
 /***********************************************************************************************************************************
@@ -47,6 +47,8 @@ storagePosixInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageI
         FUNCTION_LOG_PARAM(ENUM, level);
         FUNCTION_LOG_PARAM(BOOL, param.followLink);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_STRUCT();
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
@@ -113,6 +115,44 @@ storagePosixInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageI
 }
 
 /**********************************************************************************************************************************/
+static void
+storagePosixLinkCreate(
+    THIS_VOID, const String *const target, const String *const linkPath, const StorageInterfaceLinkCreateParam param)
+{
+    THIS(StoragePosix);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
+        FUNCTION_LOG_PARAM(STRING, target);
+        FUNCTION_LOG_PARAM(STRING, linkPath);
+        FUNCTION_LOG_PARAM(ENUM, param.linkType);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(target != NULL);
+    ASSERT(linkPath != NULL);
+
+    // Create symlink
+    if (param.linkType == storageLinkSym)
+    {
+        THROW_ON_SYS_ERROR_FMT(
+            symlink(strZ(target), strZ(linkPath)) == -1, FileOpenError, "unable to create symlink '%s' to '%s'", strZ(linkPath),
+            strZ(target));
+    }
+    // Else create hardlink
+    else
+    {
+        ASSERT(param.linkType == storageLinkHard);
+
+        THROW_ON_SYS_ERROR_FMT(
+            link(strZ(target), strZ(linkPath)) == -1, FileOpenError, "unable to create hardlink '%s' to '%s'", strZ(linkPath),
+            strZ(target));
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
 // Helper function to get info for a file if it exists. This logic can't live directly in storagePosixList() because there is a race
 // condition where a file might exist while listing the directory but it is gone before stat() can be called. In order to get
 // complete test coverage this function must be split out.
@@ -128,6 +168,8 @@ storagePosixListEntry(
         FUNCTION_TEST_PARAM(STRINGZ, name);
         FUNCTION_TEST_PARAM(ENUM, level);
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     ASSERT(this != NULL);
     ASSERT(list != NULL);
@@ -192,14 +234,14 @@ storagePosixList(THIS_VOID, const String *const path, const StorageInfoLevel lev
                         // stat() and is therefore relatively slow
                         if (level == storageInfoLevelExists)
                         {
-                            storageLstAdd(
-                                result,
-                                &(StorageInfo)
-                                {
-                                    .name = STR(dirEntry->d_name),
-                                    .level = storageInfoLevelExists,
-                                    .exists = true,
-                                });
+                            const StorageInfo storageInfo =
+                            {
+                                .name = STR(dirEntry->d_name),
+                                .level = storageInfoLevelExists,
+                                .exists = true,
+                            };
+
+                            storageLstAdd(result, &storageInfo);
                         }
                         // Else more info is required which requires a call to stat()
                         else
@@ -336,6 +378,7 @@ storagePosixNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWritePara
         FUNCTION_LOG_PARAM(BOOL, param.syncFile);
         FUNCTION_LOG_PARAM(BOOL, param.syncPath);
         FUNCTION_LOG_PARAM(BOOL, param.atomic);
+        FUNCTION_LOG_PARAM(BOOL, param.truncate);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -345,11 +388,11 @@ storagePosixNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWritePara
         STORAGE_WRITE,
         storageWritePosixNew(
             this, file, param.modeFile, param.modePath, param.user, param.group, param.timeModified, param.createPath,
-            param.syncFile, this->interface.pathSync != NULL ? param.syncPath : false, param.atomic));
+            param.syncFile, this->interface.pathSync != NULL ? param.syncPath : false, param.atomic, param.truncate));
 }
 
 /**********************************************************************************************************************************/
-void
+static void
 storagePosixPathCreate(
     THIS_VOID, const String *const path, const bool errorOnExists, const bool noParentCreate, const mode_t mode,
     const StorageInterfacePathCreateParam param)
@@ -459,7 +502,7 @@ storagePosixPathRemove(THIS_VOID, const String *path, bool recurse, StorageInter
 }
 
 /**********************************************************************************************************************************/
-void
+static void
 storagePosixPathSync(THIS_VOID, const String *path, StorageInterfacePathSyncParam param)
 {
     THIS(StoragePosix);
@@ -534,6 +577,7 @@ static const StorageInterface storageInterfacePosix =
     .feature = 1 << storageFeaturePath,
 
     .info = storagePosixInfo,
+    .linkCreate = storagePosixLinkCreate,
     .list = storagePosixList,
     .move = storagePosixMove,
     .newRead = storagePosixNewRead,
@@ -544,7 +588,7 @@ static const StorageInterface storageInterfacePosix =
     .remove = storagePosixRemove,
 };
 
-Storage *
+FN_EXTERN Storage *
 storagePosixNewInternal(
     StringId type, const String *path, mode_t modeFile, mode_t modePath, bool write,
     StoragePathExpressionCallback pathExpressionFunction, bool pathSync)
@@ -572,7 +616,7 @@ storagePosixNewInternal(
 
     OBJ_NEW_BEGIN(StoragePosix, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        StoragePosix *driver = OBJ_NEW_ALLOC();
+        StoragePosix *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), Storage::StoragePosix);
 
         *driver = (StoragePosix)
         {
@@ -596,7 +640,7 @@ storagePosixNewInternal(
     FUNCTION_LOG_RETURN(STORAGE, this);
 }
 
-Storage *
+FN_EXTERN Storage *
 storagePosixNew(const String *path, StoragePosixNewParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);

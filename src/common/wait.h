@@ -15,7 +15,7 @@ typedef struct Wait Wait;
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-Wait *waitNew(TimeMSec waitTime);
+FN_EXTERN Wait *waitNew(TimeMSec waitTime);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -26,7 +26,7 @@ typedef struct WaitPub
 } WaitPub;
 
 // How much time is remaining? Recalculated each time waitMore() is called.
-__attribute__((always_inline)) static inline TimeMSec
+FN_INLINE_ALWAYS TimeMSec
 waitRemaining(const Wait *const this)
 {
     return THIS_PUB(Wait)->remainTime;
@@ -36,12 +36,12 @@ waitRemaining(const Wait *const this)
 Functions
 ***********************************************************************************************************************************/
 // Wait and return whether the caller has more time left
-bool waitMore(Wait *this);
+FN_EXTERN bool waitMore(Wait *this);
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 waitFree(Wait *const this)
 {
     objFree(this);
@@ -53,6 +53,6 @@ Macros for function logging
 #define FUNCTION_LOG_WAIT_TYPE                                                                                                     \
     Wait *
 #define FUNCTION_LOG_WAIT_FORMAT(value, buffer, bufferSize)                                                                        \
-    objToLog(value, "Wait", buffer, bufferSize)
+    objNameToLog(value, "Wait", buffer, bufferSize)
 
 #endif

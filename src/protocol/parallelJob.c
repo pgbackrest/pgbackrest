@@ -17,7 +17,7 @@ struct ProtocolParallelJob
 };
 
 /**********************************************************************************************************************************/
-ProtocolParallelJob *
+FN_EXTERN ProtocolParallelJob *
 protocolParallelJobNew(const Variant *key, ProtocolCommand *command)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -48,7 +48,7 @@ protocolParallelJobNew(const Variant *key, ProtocolCommand *command)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 protocolParallelJobErrorSet(ProtocolParallelJob *this, int code, const String *message)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -72,7 +72,7 @@ protocolParallelJobErrorSet(ProtocolParallelJob *this, int code, const String *m
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 protocolParallelJobProcessIdSet(ProtocolParallelJob *this, unsigned int processId)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -89,7 +89,7 @@ protocolParallelJobProcessIdSet(ProtocolParallelJob *this, unsigned int processI
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 protocolParallelJobResultSet(ProtocolParallelJob *const this, PackRead *const result)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -106,7 +106,7 @@ protocolParallelJobResultSet(ProtocolParallelJob *const this, PackRead *const re
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 protocolParallelJobStateSet(ProtocolParallelJob *this, ProtocolParallelJobState state)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -130,13 +130,29 @@ protocolParallelJobStateSet(ProtocolParallelJob *this, ProtocolParallelJobState 
     FUNCTION_LOG_RETURN_VOID();
 }
 
-String *
-protocolParallelJobToLog(const ProtocolParallelJob *this)
+FN_EXTERN void
+protocolParallelJobToLog(const ProtocolParallelJob *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{state: %s, key: %s, command: %s, code: %d, message: %s, result: %s}",
-        strZ(strIdToStr(protocolParallelJobState(this))), strZ(varToLog(protocolParallelJobKey(this))),
-        strZ(protocolCommandToLog(protocolParallelJobCommand(this))), protocolParallelJobErrorCode(this),
-        strZ(strToLog(protocolParallelJobErrorMessage(this))),
-        protocolParallelJobResult(this) == NULL ? NULL_Z : strZ(pckReadToLog(protocolParallelJobResult(this))));
+    strStcCat(debugLog, "{state: ");
+    strStcResultSizeInc(debugLog, strIdToLog(protocolParallelJobState(this), strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+
+    strStcCat(debugLog, ", key: ");
+    varToLog(protocolParallelJobKey(this), debugLog);
+
+    strStcCat(debugLog, ", command: ");
+    protocolCommandToLog(protocolParallelJobCommand(this), debugLog);
+
+    strStcCat(debugLog, ", result: ");
+    strStcResultSizeInc(
+        debugLog,
+        FUNCTION_LOG_OBJECT_FORMAT(
+            protocolParallelJobResult(this), pckReadToLog, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+
+    strStcFmt(debugLog, "code: %d, message: ", protocolParallelJobErrorCode(this));
+
+    strStcResultSizeInc(
+        debugLog,
+        FUNCTION_LOG_OBJECT_FORMAT(
+            protocolParallelJobErrorMessage(this), strToLog, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+    strStcCatChr(debugLog, '}');
 }

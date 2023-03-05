@@ -17,12 +17,6 @@ Control file size used to create pg_control
 /***********************************************************************************************************************************
 System id constants by version
 ***********************************************************************************************************************************/
-#define HRN_PG_SYSTEMID_90                                          (10000000000000000000ULL + (uint64_t)PG_VERSION_90)
-#define HRN_PG_SYSTEMID_90_Z                                        "10000000000000090000"
-#define HRN_PG_SYSTEMID_91                                          (10000000000000000000ULL + (uint64_t)PG_VERSION_91)
-#define HRN_PG_SYSTEMID_91_Z                                        "10000000000000090100"
-#define HRN_PG_SYSTEMID_92                                          (10000000000000000000ULL + (uint64_t)PG_VERSION_92)
-#define HRN_PG_SYSTEMID_92_Z                                        "10000000000000090200"
 #define HRN_PG_SYSTEMID_93                                          (10000000000000000000ULL + (uint64_t)PG_VERSION_93)
 #define HRN_PG_SYSTEMID_93_Z                                        "10000000000000090300"
 #define HRN_PG_SYSTEMID_94                                          (10000000000000000000ULL + (uint64_t)PG_VERSION_94)
@@ -43,13 +37,30 @@ System id constants by version
 #define HRN_PG_SYSTEMID_13_Z                                        "10000000000000130000"
 #define HRN_PG_SYSTEMID_14                                          (10000000000000000000ULL + (uint64_t)PG_VERSION_14)
 #define HRN_PG_SYSTEMID_14_Z                                        "10000000000000140000"
+#define HRN_PG_SYSTEMID_15                                          (10000000000000000000ULL + (uint64_t)PG_VERSION_15)
+#define HRN_PG_SYSTEMID_15_Z                                        "10000000000000150000"
 
 /***********************************************************************************************************************************
 Put a control file to storage
 ***********************************************************************************************************************************/
 #define HRN_PG_CONTROL_PUT(storageParam, versionParam, ...)                                                                        \
     HRN_STORAGE_PUT(                                                                                                               \
-        storageParam, PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = versionParam, __VA_ARGS__}))
+        storageParam, PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,                                                                        \
+        hrnPgControlToBuffer(0, (PgControl){.version = versionParam, __VA_ARGS__}))
+
+#define HRN_PG_CONTROL_OVERRIDE_PUT(storageParam, versionParam, controlVersionParam, ...)                                          \
+    HRN_STORAGE_PUT(                                                                                                               \
+        storageParam, PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,                                                                        \
+        hrnPgControlToBuffer(controlVersionParam, (PgControl){.version = versionParam, __VA_ARGS__}))
+
+/***********************************************************************************************************************************
+Copy WAL info to buffer
+***********************************************************************************************************************************/
+#define HRN_PG_WAL_TO_BUFFER(walBufferParam, versionParam, ...)                                                                    \
+    hrnPgWalToBuffer(walBufferParam, 0, (PgWal){.version = versionParam, __VA_ARGS__})
+
+#define HRN_PG_WAL_OVERRIDE_TO_BUFFER(walBufferParam, versionParam, magicParam, ...)                                               \
+    hrnPgWalToBuffer(walBufferParam, magicParam, (PgWal){.version = versionParam, __VA_ARGS__})
 
 /***********************************************************************************************************************************
 Update control file time
@@ -64,16 +75,16 @@ Functions
 unsigned int hrnPgCatalogVersion(unsigned int pgVersion);
 
 // Create pg_control
-Buffer *hrnPgControlToBuffer(PgControl pgControl);
+Buffer *hrnPgControlToBuffer(unsigned int controlVersion, PgControl pgControl);
 
 // Get system id by version
-__attribute__((always_inline)) static inline uint64_t
+FN_INLINE_ALWAYS uint64_t
 hrnPgSystemId(const unsigned int pgVersion)
 {
     return 10000000000000000000ULL + (uint64_t)pgVersion;
 }
 
 // Create WAL for testing
-void hrnPgWalToBuffer(PgWal pgWal, Buffer *walBuffer);
+void hrnPgWalToBuffer(Buffer *walBuffer, unsigned int magic, PgWal pgWal);
 
 #endif

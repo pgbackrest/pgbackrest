@@ -22,7 +22,7 @@ typedef struct Exec Exec;
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-Exec *execNew(const String *command, const StringList *param, const String *name, TimeMSec timeout);
+FN_EXTERN Exec *execNew(const String *command, const StringList *param, const String *name, TimeMSec timeout);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -34,21 +34,21 @@ typedef struct ExecPub
 } ExecPub;
 
 // Read interface
-__attribute__((always_inline)) static inline IoRead *
+FN_INLINE_ALWAYS IoRead *
 execIoRead(Exec *const this)
 {
     return THIS_PUB(Exec)->ioReadExec;
 }
 
 // Write interface
-__attribute__((always_inline)) static inline IoWrite *
+FN_INLINE_ALWAYS IoWrite *
 execIoWrite(Exec *const this)
 {
     return THIS_PUB(Exec)->ioWriteExec;
 }
 
 // Exec MemContext
-__attribute__((always_inline)) static inline MemContext *
+FN_INLINE_ALWAYS MemContext *
 execMemContext(Exec *const this)
 {
     return objMemContext(this);
@@ -58,12 +58,12 @@ execMemContext(Exec *const this)
 Functions
 ***********************************************************************************************************************************/
 // Execute command
-void execOpen(Exec *this);
+FN_EXTERN void execOpen(Exec *this);
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 execFree(Exec *const this)
 {
     objFree(this);
@@ -75,6 +75,6 @@ Macros for function logging
 #define FUNCTION_LOG_EXEC_TYPE                                                                                                     \
     Exec *
 #define FUNCTION_LOG_EXEC_FORMAT(value, buffer, bufferSize)                                                                        \
-    objToLog(value, "Exec", buffer, bufferSize)
+    objNameToLog(value, "Exec", buffer, bufferSize)
 
 #endif

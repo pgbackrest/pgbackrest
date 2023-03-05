@@ -4,7 +4,7 @@
 project(
     'pgbackrest',
     ['c'],
-    version: '2.41dev',
+    version: '2.45dev',
     license: 'MIT',
     meson_version: '>=0.45',
     default_options: [
@@ -14,6 +14,9 @@ project(
 
         # Base options
         'b_ndebug=if-release',
+
+        # Perform unity builds in a single file
+        'unity_size=100000',
 
         # Compiler options
         'c_std=c99',
@@ -130,6 +133,13 @@ add_project_arguments(cc.get_supported_arguments('-fmacro-prefix-map=@0@/test/sr
 ####################################################################################################################################
 configuration = configuration_data()
 
+# Find optional backtrace library
+lib_backtrace = cc.find_library('backtrace', required: false)
+
+if lib_backtrace.found()
+    configuration.set('HAVE_LIBBACKTRACE', true, description: 'Is libbacktrace present?')
+endif
+
 # Find required bz2 library
 lib_bz2 = cc.find_library('bz2')
 
@@ -177,6 +187,18 @@ configuration.set_quoted('CFGOPTDEF_CONFIG_PATH', get_option('configdir'), descr
 
 # Set FN_NO_RETURN macro
 configuration.set('FN_NO_RETURN', '__attribute__((__noreturn__))', description: 'Indicate that a function does not return')
+
+# Set FN_INLINE_ALWAYS macro
+configuration.set(
+    'FN_INLINE_ALWAYS', '__attribute__((always_inline)) static inline',
+    description: 'Indicate that a function should always be inlined'
+)
+
+# Set FN_PRINTF macro
+configuration.set(
+    'FN_PRINTF(fmt, args)', '__attribute__((format(printf, fmt, args)))',
+    description: 'Indicate that a function is formatted like printf (and provide format and args position)'
+)
 
 ####################################################################################################################################
 # Include subdirs

@@ -34,6 +34,7 @@ VARIANT_STRDEF_STATIC(ARCHIVE_KEY_MIN_VAR,                          "min");
 VARIANT_STRDEF_STATIC(ARCHIVE_KEY_MAX_VAR,                          "max");
 VARIANT_STRDEF_STATIC(BACKREST_KEY_FORMAT_VAR,                      "format");
 VARIANT_STRDEF_STATIC(BACKREST_KEY_VERSION_VAR,                     "version");
+VARIANT_STRDEF_STATIC(BACKUP_KEY_ANNOTATION_VAR,                    "annotation");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_BACKREST_VAR,                      "backrest");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_ERROR_VAR,                         "error");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_ERROR_LIST_VAR,                    "error-list");
@@ -55,11 +56,13 @@ VARIANT_STRDEF_STATIC(KEY_ARCHIVE_VAR,                              "archive");
 VARIANT_STRDEF_STATIC(KEY_CIPHER_VAR,                               "cipher");
 VARIANT_STRDEF_STATIC(KEY_DATABASE_VAR,                             "database");
 VARIANT_STRDEF_STATIC(KEY_DELTA_VAR,                                "delta");
+VARIANT_STRDEF_STATIC(KEY_DELTA_MAP_VAR,                            "delta-map");
 VARIANT_STRDEF_STATIC(KEY_DESTINATION_VAR,                          "destination");
 VARIANT_STRDEF_STATIC(KEY_NAME_VAR,                                 "name");
 VARIANT_STRDEF_STATIC(KEY_OID_VAR,                                  "oid");
 VARIANT_STRDEF_STATIC(KEY_REPO_KEY_VAR,                             "repo-key");
 VARIANT_STRDEF_STATIC(KEY_SIZE_VAR,                                 "size");
+VARIANT_STRDEF_STATIC(KEY_SIZE_MAP_VAR,                             "size-map");
 VARIANT_STRDEF_STATIC(KEY_START_VAR,                                "start");
 VARIANT_STRDEF_STATIC(KEY_STOP_VAR,                                 "stop");
 VARIANT_STRDEF_STATIC(REPO_KEY_KEY_VAR,                             "key");
@@ -120,7 +123,7 @@ typedef struct InfoRepoData
 #define FUNCTION_LOG_INFO_REPO_DATA_TYPE                                                                                           \
     InfoRepoData *
 #define FUNCTION_LOG_INFO_REPO_DATA_FORMAT(value, buffer, bufferSize)                                                              \
-    objToLog(value, "InfoRepoData", buffer, bufferSize)
+    objNameToLog(value, "InfoRepoData", buffer, bufferSize)
 
 // Stanza with repository list of information for each repository
 typedef struct InfoStanzaRepo
@@ -137,7 +140,7 @@ typedef struct InfoStanzaRepo
 #define FUNCTION_LOG_INFO_STANZA_REPO_TYPE                                                                                         \
     InfoStanzaRepo *
 #define FUNCTION_LOG_INFO_STANZA_REPO_FORMAT(value, buffer, bufferSize)                                                            \
-    objToLog(value, "InfoStanzaRepo", buffer, bufferSize)
+    objNameToLog(value, "InfoStanzaRepo", buffer, bufferSize)
 
 // Group all databases with the same system-id and version together regardless of db-id or repo
 typedef struct DbGroup
@@ -153,7 +156,7 @@ typedef struct DbGroup
 #define FUNCTION_LOG_DB_GROUP_TYPE                                                                                                 \
     DbGroup *
 #define FUNCTION_LOG_DB_GROUP_FORMAT(value, buffer, bufferSize)                                                                    \
-    objToLog(value, "DbGroup", buffer, bufferSize)
+    objNameToLog(value, "DbGroup", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Helper function for reporting errors
@@ -305,6 +308,8 @@ archiveDbList(
         FUNCTION_TEST_PARAM(UINT, repoKey);
     FUNCTION_TEST_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     ASSERT(stanza != NULL);
     ASSERT(pgData != NULL);
     ASSERT(archiveSection != NULL);
@@ -396,6 +401,8 @@ backupListAdd(
         FUNCTION_TEST_PARAM(INFO_REPO_DATA, repoData);              // The repo data where this backup is located
     FUNCTION_TEST_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     ASSERT(backupSection != NULL);
     ASSERT(backupData != NULL);
     ASSERT(repoData != NULL);
@@ -404,7 +411,6 @@ backupListAdd(
 
     // Flags used to decide what data to add
     const bool outputJson = cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_JSON;
-    const bool backupLabelMatch = backupLabel != NULL && strEq(backupData->backupLabel, backupLabel);
 
     // main keys
     kvPut(varKv(backupInfo), BACKUP_KEY_LABEL_VAR, VARSTR(backupData->backupLabel));
@@ -450,6 +456,12 @@ backupListAdd(
     kvPut(repoInfo, KEY_SIZE_VAR, VARUINT64(backupData->backupInfoRepoSize));
     kvPut(repoInfo, KEY_DELTA_VAR, VARUINT64(backupData->backupInfoRepoSizeDelta));
 
+    if (outputJson && backupData->backupInfoRepoSizeMap != NULL)
+    {
+        kvPut(repoInfo, KEY_SIZE_MAP_VAR, backupData->backupInfoRepoSizeMap);
+        kvPut(repoInfo, KEY_DELTA_MAP_VAR, backupData->backupInfoRepoSizeMapDelta);
+    }
+
     // timestamp section
     KeyValue *timeInfo = kvPutKv(varKv(backupInfo), BACKUP_KEY_TIMESTAMP_VAR);
 
@@ -462,15 +474,19 @@ backupListAdd(
         kvPut(varKv(backupInfo), BACKUP_KEY_ERROR_VAR, backupData->backupError);
 
     // Add start/stop backup lsn info to json output or --set text
-    if ((outputJson || backupLabelMatch) && backupData->backupLsnStart != NULL && backupData->backupLsnStop != NULL)
+    if ((outputJson || backupLabel != NULL) && backupData->backupLsnStart != NULL && backupData->backupLsnStop != NULL)
     {
         KeyValue *const lsnInfo = kvPutKv(varKv(backupInfo), BACKUP_KEY_LSN_VAR);
         kvPut(lsnInfo, KEY_START_VAR, VARSTR(backupData->backupLsnStart));
         kvPut(lsnInfo, KEY_STOP_VAR, VARSTR(backupData->backupLsnStop));
     }
 
+    // Add annotations to json output or --set text
+    if ((outputJson || backupLabel != NULL) && backupData->backupAnnotation != NULL)
+        kvPut(varKv(backupInfo), BACKUP_KEY_ANNOTATION_VAR, backupData->backupAnnotation);
+
     // If a backup label was specified and this is that label, then get the data from the loaded manifest
-    if (backupLabelMatch)
+    if (backupLabel != NULL)
     {
         // Get the list of databases in this backup
         VariantList *databaseSection = varLstNew();
@@ -516,8 +532,9 @@ backupListAdd(
                 {
                     kvPut(varKv(link), KEY_NAME_VAR, varNewStr(target->file));
                     kvPut(
-                        varKv(link), KEY_DESTINATION_VAR, varNewStr(strNewFmt("%s/%s", strZ(target->path),
-                        strZ(target->file))));
+                        varKv(link), KEY_DESTINATION_VAR,
+                        varNewStr(strNewFmt("%s/%s", strZ(target->path), strZ(target->file))));
+
                     varLstAdd(linkSection, link);
                 }
                 else
@@ -582,6 +599,8 @@ backupList(
         FUNCTION_TEST_PARAM(UINT, repoIdxMax);                      // The index of the last repo to check
     FUNCTION_TEST_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     ASSERT(backupSection != NULL);
     ASSERT(stanzaData != NULL);
 
@@ -627,12 +646,15 @@ backupList(
         InfoRepoData *repoData = &stanzaData->repoList[backupNextRepoIdx];
         InfoBackupData backupData = infoBackupData(repoData->backupInfo, repoData->backupIdx);
         repoData->backupIdx++;
+        backupTotalProcessed++;
+
+        // Don't add the backup data to the backup section if a backup label was specified but this is not it
+        if (backupLabel != NULL && !strEq(backupData.backupLabel, backupLabel))
+            continue;
 
         // Add the backup data to the backup section
         if (!cfgOptionTest(cfgOptType) || cfgOptionStrId(cfgOptType) == backupData.backupType)
             backupListAdd(backupSection, &backupData, backupLabel, repoData);
-
-        backupTotalProcessed++;
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -650,6 +672,8 @@ stanzaInfoList(List *stanzaRepoList, const String *const backupLabel, const unsi
         FUNCTION_TEST_PARAM(UINT, repoIdxMin);
         FUNCTION_TEST_PARAM(UINT, repoIdxMax);
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     ASSERT(stanzaRepoList != NULL);
 
@@ -796,6 +820,8 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr)
         FUNCTION_TEST_PARAM(DB_GROUP, dbGroup);
         FUNCTION_TEST_PARAM(STRING, resultStr);
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     ASSERT(dbGroup != NULL);
 
@@ -955,6 +981,25 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr)
             else
                 strCatZ(resultStr, "            error(s) detected during backup\n");
         }
+
+        // Annotations metadata
+        if (kvGet(backupInfo, BACKUP_KEY_ANNOTATION_VAR) != NULL)
+        {
+            const KeyValue *const annotationKv = varKv(kvGet(backupInfo, BACKUP_KEY_ANNOTATION_VAR));
+            const StringList *const annotationKeyList = strLstNewVarLst(kvKeyList(annotationKv));
+            String *const annotationStr = strNew();
+
+            for (unsigned int keyIdx = 0; keyIdx < strLstSize(annotationKeyList); keyIdx++)
+            {
+                const String *const key = strLstGet(annotationKeyList, keyIdx);
+                const String *const value = varStr(kvGet(annotationKv, VARSTR(key)));
+                ASSERT(value != NULL);
+
+                strCatFmt(annotationStr, "                %s: %s\n", strZ(key), strZ(value));
+            }
+
+            strCatFmt(resultStr, "            annotation(s)\n%s", strZ(annotationStr));
+        }
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -975,6 +1020,8 @@ formatTextDb(
         FUNCTION_TEST_PARAM(STRING, currentPgVersion);
         FUNCTION_TEST_PARAM(UINT64, currentPgSystemId);
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     ASSERT(stanzaInfo != NULL);
     ASSERT(currentPgVersion != NULL);
@@ -1055,11 +1102,6 @@ formatTextDb(
     for (unsigned int backupIdx = 0; backupIdx < varLstSize(backupSection); backupIdx++)
     {
         KeyValue *backupInfo = varKv(varLstGet(backupSection, backupIdx));
-
-        // If a backup label was specified but this is not it then continue
-        if (backupLabel != NULL && !strEq(varStr(kvGet(backupInfo, BACKUP_KEY_LABEL_VAR)), backupLabel))
-            continue;
-
         KeyValue *backupDbInfo = varKv(kvGet(backupInfo, KEY_DATABASE_VAR));
         unsigned int backupDbId = varUInt(kvGet(backupDbInfo, DB_KEY_ID_VAR));
         unsigned int backupRepoKey = varUInt(kvGet(backupDbInfo, KEY_REPO_KEY_VAR));
@@ -1140,6 +1182,8 @@ infoUpdateStanza(
         FUNCTION_TEST_PARAM(BOOL, stanzaExists);
         FUNCTION_TEST_PARAM(STRING, backupLabel);
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     ASSERT(storage != NULL);
     ASSERT(stanzaRepo != NULL);
@@ -1254,11 +1298,6 @@ infoRender(void)
         // Get the backup label if specified
         const String *backupLabel = cfgOptionStrNull(cfgOptSet);
         bool backupFound = false;
-
-        // Since the --set option depends on the --stanza option, the parser will error before this if the backup label is
-        // specified but a stanza is not
-        if (backupLabel != NULL && cfgOptionStrId(cfgOptOutput) != CFGOPTVAL_OUTPUT_TEXT)
-            THROW(ConfigError, "option '" CFGOPT_SET "' is currently only valid for " CFGOPTVAL_OUTPUT_TEXT_Z " output");
 
         // Initialize the repo index
         unsigned int repoIdxMin = 0;
@@ -1463,9 +1502,10 @@ infoRender(void)
                     KeyValue *backupLockKv = varKv(kvGet(lockKv, STATUS_KEY_LOCK_BACKUP_VAR));
                     bool backupLockHeld = varBool(kvGet(backupLockKv, STATUS_KEY_LOCK_BACKUP_HELD_VAR));
                     const Variant *const percentComplete = kvGet(backupLockKv, STATUS_KEY_LOCK_BACKUP_PERCENT_COMPLETE_VAR);
-                    const String *const percentCompleteStr = percentComplete != NULL ?
-                        strNewFmt(" - %u.%02u%% complete", varUInt(percentComplete) / 100, varUInt(percentComplete) % 100) :
-                        EMPTY_STR;
+                    const String *const percentCompleteStr =
+                        percentComplete != NULL ?
+                            strNewFmt(" - %u.%02u%% complete", varUInt(percentComplete) / 100, varUInt(percentComplete) % 100) :
+                            EMPTY_STR;
 
                     if (statusCode != INFO_STANZA_STATUS_CODE_OK)
                     {
@@ -1514,7 +1554,6 @@ infoRender(void)
                                     }
                                     else
                                     {
-
                                         strCatFmt(
                                             resultStr, INFO_STANZA_STATUS_ERROR " (%s)\n",
                                             strZ(varStr(kvGet(repoStatus, STATUS_KEY_MESSAGE_VAR))));
@@ -1598,7 +1637,7 @@ infoRender(void)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 cmdInfo(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);

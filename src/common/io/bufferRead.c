@@ -26,7 +26,7 @@ Macros for function logging
 #define FUNCTION_LOG_IO_BUFFER_READ_TYPE                                                                                           \
     IoBufferRead *
 #define FUNCTION_LOG_IO_BUFFER_READ_FORMAT(value, buffer, bufferSize)                                                              \
-    objToLog(value, "IoBufferRead", buffer, bufferSize)
+    objNameToLog(value, "IoBufferRead", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Read data from the buffer
@@ -83,7 +83,7 @@ ioBufferReadEof(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-IoRead *
+FN_EXTERN IoRead *
 ioBufferReadNew(const Buffer *buffer)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -96,7 +96,7 @@ ioBufferReadNew(const Buffer *buffer)
 
     OBJ_NEW_BEGIN(IoBufferRead, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        IoBufferRead *driver = OBJ_NEW_ALLOC();
+        IoBufferRead *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoRead::IoBufferRead);
 
         *driver = (IoBufferRead)
         {

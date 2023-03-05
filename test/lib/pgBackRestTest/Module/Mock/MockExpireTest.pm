@@ -68,7 +68,7 @@ sub run
             my $oExpireTest = new pgBackRestTest::Env::ExpireEnvTest(
                 $oHostBackup, $self->backrestExe(), storageRepo(), $oHostDbPrimary->dbPath(), $self);
 
-            $oExpireTest->stanzaCreate($self->stanza(), PG_VERSION_92);
+            $oExpireTest->stanzaCreate($self->stanza(), PG_VERSION_96);
 
             #-----------------------------------------------------------------------------------------------------------------------
             $strDescription = 'Nothing to expire';
@@ -160,7 +160,7 @@ sub run
             my $oExpireTest = new pgBackRestTest::Env::ExpireEnvTest(
                 $oHostBackup, $self->backrestExe(), storageRepo(), $oHostDbPrimary->dbPath(), $self);
 
-            $oExpireTest->stanzaCreate($self->stanza(), PG_VERSION_92);
+            $oExpireTest->stanzaCreate($self->stanza(), PG_VERSION_96);
 
             #-----------------------------------------------------------------------------------------------------------------------
             $strDescription = 'Create backups in current db version';

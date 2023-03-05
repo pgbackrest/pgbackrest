@@ -12,10 +12,10 @@ Configuration Protocol Handler
 Functions
 ***********************************************************************************************************************************/
 // Process config protocol requests
-void configOptionProtocol(PackRead *param, ProtocolServer *server);
+FN_EXTERN void configOptionProtocol(PackRead *param, ProtocolServer *server);
 
 // Get option values from a remote process
-VariantList *configOptionRemote(ProtocolClient *client, const VariantList *paramList);
+FN_EXTERN VariantList *configOptionRemote(ProtocolClient *client, const VariantList *paramList);
 
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()

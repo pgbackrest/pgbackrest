@@ -506,7 +506,7 @@ sub containerBuild
             {
                 $strScript .=
                     "    echo \"deb http://apt.postgresql.org/pub/repos/apt/ \$(lsb_release -s -c)-pgdg main" .
-                        ($strOS eq VM_U20 || $strOS eq VM_U22 ? ' 15' : '') . "\" >> /etc/apt/sources.list.d/pgdg.list && \\\n" .
+                        "\" >> /etc/apt/sources.list.d/pgdg.list && \\\n" .
                     "    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \\\n" .
                     "    apt-get update && \\\n" .
                     "    apt-get install -y --no-install-recommends postgresql-common libpq-dev && \\\n" .

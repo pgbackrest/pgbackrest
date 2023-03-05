@@ -15,41 +15,29 @@ typedef struct RegExp RegExp;
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-RegExp *regExpNew(const String *expression);
+FN_EXTERN RegExp *regExpNew(const String *expression);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Match on a regular expression
-bool regExpMatch(RegExp *this, const String *string);
-
-/***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-// Get pointer to the last match.  NULL if there was no match.
-const char *regExpMatchPtr(RegExp *this);
-
-// Get size of the last match.  0 if there was no match.
-size_t regExpMatchSize(RegExp *this);
-
-// Get the last match as a String.  NULL if there was no match.
-String *regExpMatchStr(RegExp *this);
+FN_EXTERN bool regExpMatch(RegExp *this, const String *string);
 
 /***********************************************************************************************************************************
 Helper functions
 ***********************************************************************************************************************************/
 // Match a regular expression in one call for brevity
-bool regExpMatchOne(const String *expression, const String *string);
+FN_EXTERN bool regExpMatchOne(const String *expression, const String *string);
 
 // Return the common prefix of a regular expression, if it has one. The common prefix consists of fixed characters that must always
 // be found at the beginning of the string to be matched. Escaped characters will not be included in the prefix. If there is no
 // usable prefix then NULL is returned.
-String *regExpPrefix(const String *expression);
+FN_EXTERN String *regExpPrefix(const String *expression);
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 regExpFree(RegExp *const this)
 {
     objFree(this);
@@ -61,6 +49,6 @@ Macros for function logging
 #define FUNCTION_LOG_REGEXP_TYPE                                                                                                   \
     RegExp *
 #define FUNCTION_LOG_REGEXP_FORMAT(value, buffer, bufferSize)                                                                      \
-    objToLog(value, "RegExp", buffer, bufferSize)
+    objNameToLog(value, "RegExp", buffer, bufferSize)
 
 #endif

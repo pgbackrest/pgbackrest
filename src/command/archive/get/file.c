@@ -3,8 +3,8 @@ Archive Get File
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include "command/archive/get/file.h"
 #include "command/archive/common.h"
+#include "command/archive/get/file.h"
 #include "command/control/common.h"
 #include "common/compress/helper.h"
 #include "common/crypto/cipherBlock.h"
@@ -17,8 +17,9 @@ Archive Get File
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
-ArchiveGetFileResult archiveGetFile(
-    const Storage *storage, const String *request, const List *actualList, const String *walDestination)
+FN_EXTERN ArchiveGetFileResult
+archiveGetFile(
+    const Storage *const storage, const String *const request, const List *const actualList, const String *const walDestination)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storage);
@@ -26,6 +27,8 @@ ArchiveGetFileResult archiveGetFile(
         FUNCTION_LOG_PARAM(LIST, actualList);
         FUNCTION_LOG_PARAM(STRING, walDestination);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_STRUCT();
 
     ASSERT(request != NULL);
     ASSERT(actualList != NULL && !lstEmpty(actualList));
@@ -58,7 +61,7 @@ ArchiveGetFileResult archiveGetFile(
                 {
                     ioFilterGroupAdd(
                         ioWriteFilterGroup(storageWriteIo(destination)),
-                        cipherBlockNew(cipherModeDecrypt, actual->cipherType, BUFSTR(actual->cipherPassArchive), NULL));
+                        cipherBlockNewP(cipherModeDecrypt, actual->cipherType, BUFSTR(actual->cipherPassArchive)));
                     compressible = false;
                 }
 

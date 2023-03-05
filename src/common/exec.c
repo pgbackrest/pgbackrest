@@ -11,7 +11,6 @@ Execute Process
 #include <unistd.h>
 
 #include "common/debug.h"
-#include "common/log.h"
 #include "common/exec.h"
 #include "common/fork.h"
 #include "common/io/fdRead.h"
@@ -19,6 +18,7 @@ Execute Process
 #include "common/io/io.h"
 #include "common/io/read.h"
 #include "common/io/write.h"
+#include "common/log.h"
 #include "common/wait.h"
 
 /***********************************************************************************************************************************
@@ -111,10 +111,10 @@ execFreeResource(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-Exec *
+FN_EXTERN Exec *
 execNew(const String *command, const StringList *param, const String *name, TimeMSec timeout)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug)
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, command);
         FUNCTION_LOG_PARAM(STRING_LIST, param);
         FUNCTION_LOG_PARAM(STRING, name);
@@ -298,10 +298,10 @@ execFdRead(const THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 execOpen(Exec *this)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug)
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(EXEC, this);
     FUNCTION_LOG_END();
 
@@ -336,7 +336,7 @@ execOpen(Exec *this)
         PIPE_DUP2(pipeError, 1, STDERR_FILENO);
 
         // Execute the binary.  This statement will not return if it is successful
-        execvp(strZ(this->command), (char ** const)strLstPtr(this->param));
+        execvp(strZ(this->command), (char **const)strLstPtr(this->param));
 
         // If we got here then there was an error.  We can't use a throw as we normally would because we have already shutdown
         // logging and we don't want to execute exit paths that might free parent resources which we still have references to.

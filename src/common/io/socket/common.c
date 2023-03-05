@@ -30,7 +30,7 @@ static struct SocketLocal
 } socketLocal;
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 sckInit(bool block, bool keepAlive, int tcpKeepAliveCount, int tcpKeepAliveIdle, int tcpKeepAliveInterval)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -56,7 +56,7 @@ sckInit(bool block, bool keepAlive, int tcpKeepAliveCount, int tcpKeepAliveIdle,
 }
 
 /**********************************************************************************************************************************/
-struct addrinfo *
+FN_EXTERN struct addrinfo *
 sckHostLookup(const String *const host, unsigned int port)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -91,7 +91,7 @@ sckHostLookup(const String *const host, unsigned int port)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 sckOptionSet(int fd)
 {
     FUNCTION_TEST_BEGIN();
@@ -121,7 +121,7 @@ sckOptionSet(int fd)
     // Automatically close the socket (in the child process) on a successful execve() call. Connections are never shared between
     // processes so there is no reason to leave them open.
 #ifdef F_SETFD
-	THROW_ON_SYS_ERROR(fcntl(fd, F_SETFD, FD_CLOEXEC) == -1, ProtocolError, "unable to set FD_CLOEXEC");
+    THROW_ON_SYS_ERROR(fcntl(fd, F_SETFD, FD_CLOEXEC) == -1, ProtocolError, "unable to set FD_CLOEXEC");
 #endif
 
     // Enable TCP keepalives
@@ -156,7 +156,7 @@ sckOptionSet(int fd)
         }
 #endif
 
-    // Set TCP_KEEPINTVL when available
+        // Set TCP_KEEPINTVL when available
 #ifdef TCP_KEEPIDLE
         if (socketLocal.tcpKeepAliveInterval > 0)
         {
@@ -179,7 +179,7 @@ sckConnectInProgress(int errNo)
     return errNo == EINPROGRESS || errNo == EINTR;
 }
 
-void
+FN_EXTERN void
 sckConnect(int fd, const String *host, unsigned int port, const struct addrinfo *hostAddress, TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

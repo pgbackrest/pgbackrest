@@ -4,7 +4,7 @@ Parse PostgreSQL Interface Yaml
 #ifndef BUILD_POSTRES_PARSE_H
 #define BUILD_POSTRES_PARSE_H
 
-#include "common/type/string.h"
+#include "build/common/string.h"
 
 /***********************************************************************************************************************************
 Types

@@ -21,15 +21,17 @@ Constants
 Make sure ASSERT() always exists for tests to use, even when DEBUG is disabled for performance
 ***********************************************************************************************************************************/
 #ifdef HRN_FEATURE_ASSERT
-    #undef ASSERT
 
-    #define ASSERT(condition)                                                                                                      \
-        do                                                                                                                         \
-        {                                                                                                                          \
-            if (!(condition))                                                                                                      \
-                THROW_FMT(AssertError, "assertion '%s' failed", #condition);                                                       \
-        }                                                                                                                          \
-        while (0)
+#undef ASSERT
+
+#define ASSERT(condition)                                                                                                          \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        if (!(condition))                                                                                                          \
+            THROW_FMT(AssertError, "assertion '%s' failed", #condition);                                                           \
+    }                                                                                                                              \
+    while (0)
+
 #endif
 
 /***********************************************************************************************************************************
@@ -69,6 +71,19 @@ unsigned int testIdx(void);
 /***********************************************************************************************************************************
 Test that an expected error is actually thrown and error when it isn't
 ***********************************************************************************************************************************/
+// Wrap the error in a temp mem context (when available) to free memory and execute callbacks after CATCH_FATAL()
+#ifdef HRN_FEATURE_MEMCONTEXT
+
+#include "common/memContext.h"
+
+#define TEST_ERROR_MEM_CONTEXT_BEGIN()                              MEM_CONTEXT_TEMP_BEGIN()
+#define TEST_ERROR_MEM_CONTEXT_END()                                MEM_CONTEXT_TEMP_END()
+
+#else
+#define TEST_ERROR_MEM_CONTEXT_BEGIN()
+#define TEST_ERROR_MEM_CONTEXT_END()
+#endif
+
 #define TEST_ERROR(statement, errorTypeExpected, errorMessageExpected)                                                             \
 {                                                                                                                                  \
     bool TEST_ERROR_catch = false;                                                                                                 \
@@ -80,20 +95,24 @@ Test that an expected error is actually thrown and error when it isn't
     printf("expect %s: %s\n", errorTypeName(&errorTypeExpected), errorMessageExpected);                                            \
     fflush(stdout);                                                                                                                \
                                                                                                                                    \
-    TRY_BEGIN()                                                                                                                    \
+    TEST_ERROR_MEM_CONTEXT_BEGIN()                                                                                                 \
     {                                                                                                                              \
-        statement;                                                                                                                 \
-    }                                                                                                                              \
-    CATCH_FATAL()                                                                                                                  \
-    {                                                                                                                              \
-        TEST_ERROR_catch = true;                                                                                                   \
+        TRY_BEGIN()                                                                                                                \
+        {                                                                                                                          \
+            statement;                                                                                                             \
+        }                                                                                                                          \
+        CATCH_FATAL()                                                                                                              \
+        {                                                                                                                          \
+            TEST_ERROR_catch = true;                                                                                               \
                                                                                                                                    \
-        if (strcmp(errorMessage(), errorMessageExpected) != 0 || errorType() != &errorTypeExpected)                                \
-            THROW_FMT(                                                                                                             \
-                TestError, "EXPECTED %s: %s\n\n BUT GOT %s: %s\n\nTHROWN AT:\n%s", errorTypeName(&errorTypeExpected),              \
-                errorMessageExpected, errorName(), errorMessage(), errorStackTrace());                                             \
+            if (strcmp(errorMessage(), errorMessageExpected) != 0 || errorType() != &errorTypeExpected)                            \
+                THROW_FMT(                                                                                                         \
+                    TestError, "EXPECTED %s: %s\n\n BUT GOT %s: %s\n\nTHROWN AT:\n%s", errorTypeName(&errorTypeExpected),          \
+                    errorMessageExpected, errorName(), errorMessage(), errorStackTrace());                                         \
+        }                                                                                                                          \
+        TRY_END();                                                                                                                 \
     }                                                                                                                              \
-    TRY_END();                                                                                                                     \
+    TEST_ERROR_MEM_CONTEXT_END();                                                                                                  \
                                                                                                                                    \
     if (!TEST_ERROR_catch)                                                                                                         \
         THROW_FMT(                                                                                                                 \

@@ -18,10 +18,10 @@ Repository Put Command
 /***********************************************************************************************************************************
 Write source IO to destination file
 ***********************************************************************************************************************************/
-void
+static void
 storagePutProcess(IoRead *source)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug)
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_READ, source);
     FUNCTION_LOG_END();
 
@@ -77,7 +77,7 @@ storagePutProcess(IoRead *source)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 cmdStoragePut(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);

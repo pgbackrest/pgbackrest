@@ -11,23 +11,24 @@ Encoding types
 ***********************************************************************************************************************************/
 typedef enum
 {
-    encodeBase64,
-    encodeBase64Url,
-} EncodeType;
+    encodingBase64,
+    encodingBase64Url,
+    encodingHex,
+} EncodingType;
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Encode binary data to a printable string
-void encodeToStr(EncodeType type, const unsigned char *source, size_t sourceSize, char *destination);
+FN_EXTERN void encodeToStr(EncodingType type, const unsigned char *source, size_t sourceSize, char *destination);
 
 // Size of the string returned by encodeToStr()
-size_t encodeToStrSize(EncodeType type, size_t sourceSize);
+FN_EXTERN size_t encodeToStrSize(EncodingType type, size_t sourceSize);
 
 // Decode a string to binary data
-void decodeToBin(EncodeType type, const char *source, unsigned char *destination);
+FN_EXTERN void decodeToBin(EncodingType type, const char *source, unsigned char *destination);
 
 // Size of the binary data returned by decodeToBin()
-size_t decodeToBinSize(EncodeType type, const char *source);
+FN_EXTERN size_t decodeToBinSize(EncodingType type, const char *source);
 
 #endif

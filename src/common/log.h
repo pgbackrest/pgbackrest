@@ -14,31 +14,31 @@ Log Handler
 Max size allowed for a single log message including header
 ***********************************************************************************************************************************/
 #ifndef LOG_BUFFER_SIZE
-    #define LOG_BUFFER_SIZE                                         ((size_t)(32 * 1024))
+#define LOG_BUFFER_SIZE                                             ((size_t)(32 * 1024))
 #endif
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Initialize the log system
-void logInit(
+FN_EXTERN void logInit(
     LogLevel logLevelStdOutParam, LogLevel logLevelStdErrParam, LogLevel logLevelFileParam, bool logTimestampParam,
     unsigned int processId, unsigned int logProcessMax, bool dryRun);
 
 // Close the log system
-void logClose(void);
+FN_EXTERN void logClose(void);
 
 // Set the log file. Returns true if file logging is off or the log file was successfully opened, false if the log file could not be
 // opened.
-bool logFileSet(const char *logFile);
+FN_EXTERN bool logFileSet(const char *logFile);
 
 // Check if a log level will be logged to any output. This is useful for log messages that are expensive to generate and should be
 // skipped if they will be discarded.
-bool logAny(LogLevel logLevel);
+FN_EXTERN bool logAny(LogLevel logLevel);
 
 // Convert log level to string and vice versa
-LogLevel logLevelEnum(StringId logLevelId);
-const char *logLevelStr(LogLevel logLevel);
+FN_EXTERN LogLevel logLevelEnum(StringId logLevelId);
+FN_EXTERN const char *logLevelStr(LogLevel logLevel);
 
 /***********************************************************************************************************************************
 Macros
@@ -52,10 +52,10 @@ be used directly. They are included for completeness and future usage.
 // Define a macro to test logAny() that can be removed when performing coverage testing.  Checking logAny() saves a function call
 // for logging calls that won't be output anywhere, but since the macro contains a branch it causes coverage problems.
 #ifdef DEBUG_COVERAGE
-    #define IF_LOG_ANY(logLevel)
+#define IF_LOG_ANY(logLevel)
 #else
-    #define IF_LOG_ANY(logLevel)                                                                                                   \
-        if (logAny(logLevel))
+#define IF_LOG_ANY(logLevel)                                                                                                       \
+    if (logAny(logLevel))
 #endif
 
 #define LOG_INTERNAL(logLevel, logRangeMin, logRangeMax, processId, code, message)                                                 \
@@ -152,13 +152,13 @@ do                                                                              
 Internal Functions (in virtually all cases the macros above should be used in preference to these functions)
 ***********************************************************************************************************************************/
 // Log function
-void logInternal(
+FN_EXTERN void logInternal(
     LogLevel logLevel, LogLevel logRangeMin, LogLevel logRangeMax, unsigned int processId, const char *fileName,
     const char *functionName, int code, const char *message);
 
 // Log function with formatting
-void logInternalFmt(
+FN_EXTERN FN_PRINTF(8, 9) void logInternalFmt(
     LogLevel logLevel, LogLevel logRangeMin, LogLevel logRangeMax, unsigned int processId, const char *fileName,
-    const char *functionName, int code, const char *format, ...) __attribute__((format(printf, 8, 9)));
+    const char *functionName, int code, const char *format, ...);
 
 #endif

@@ -72,10 +72,11 @@ main(int argListSize, const char *argList[])
                 {
                     cmdTest(
                         cfgOptionStr(cfgOptRepoPath), cfgOptionStr(cfgOptTestPath), cfgOptionStr(cfgOptVm),
-                        cfgOptionUInt(cfgOptVmId), cfgCommandParam(), cfgOptionTest(cfgOptTest) ? cfgOptionUInt(cfgOptTest) : 0,
-                        cfgOptionUInt64(cfgOptScale), logLevelEnum(cfgOptionStrId(cfgOptLogLevelTest)),
-                        cfgOptionBool(cfgOptLogTimestamp), cfgOptionStrNull(cfgOptTz), cfgOptionBool(cfgOptCoverage),
-                        cfgOptionBool(cfgOptProfile), cfgOptionBool(cfgOptOptimize));
+                        cfgOptionUInt(cfgOptVmId), strLstGet(cfgCommandParam(), 0),
+                        cfgOptionTest(cfgOptTest) ? cfgOptionUInt(cfgOptTest) : 0, cfgOptionUInt64(cfgOptScale),
+                        logLevelEnum(cfgOptionStrId(cfgOptLogLevelTest)), cfgOptionBool(cfgOptLogTimestamp),
+                        cfgOptionStrNull(cfgOptTz), cfgOptionBool(cfgOptCoverage), cfgOptionBool(cfgOptProfile),
+                        cfgOptionBool(cfgOptOptimize), cfgOptionBool(cfgOptBackTrace));
 
                     break;
                 }

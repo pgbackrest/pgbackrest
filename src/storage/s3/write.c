@@ -47,7 +47,7 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_WRITE_S3_TYPE                                                                                         \
     StorageWriteS3 *
 #define FUNCTION_LOG_STORAGE_WRITE_S3_FORMAT(value, buffer, bufferSize)                                                            \
-    objToLog(value, "StorageWriteS3", buffer, bufferSize)
+    objNameToLog(value, "StorageWriteS3", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Open the file
@@ -178,8 +178,10 @@ storageWriteS3(THIS_VOID, const Buffer *buffer)
     do
     {
         // Copy as many bytes as possible into the part buffer
-        size_t bytesNext = bufRemains(this->partBuffer) > bufUsed(buffer) - bytesTotal ?
-            bufUsed(buffer) - bytesTotal : bufRemains(this->partBuffer);
+        const size_t bytesNext =
+            bufRemains(this->partBuffer) > bufUsed(buffer) - bytesTotal ?
+                bufUsed(buffer) - bytesTotal : bufRemains(this->partBuffer);
+
         bufCatSub(this->partBuffer, buffer, bytesTotal, bytesNext);
         bytesTotal += bytesNext;
 
@@ -241,7 +243,7 @@ storageWriteS3Close(THIS_VOID)
                     .content = xmlDocumentBuf(partList));
                 HttpResponse *response = storageS3ResponseP(request);
 
-                // Error if there is no etag in the result. This indicates that the request did not succeed despite the success code.
+                // Error when no etag in the result. This indicates that the request did not succeed despite the success code.
                 if (xmlNodeChild(
                         xmlDocumentRoot(xmlDocumentNewBuf(httpResponseContent(response))), S3_XML_TAG_ETAG_STR, false) == NULL)
                 {
@@ -265,7 +267,7 @@ storageWriteS3Close(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-StorageWrite *
+FN_EXTERN StorageWrite *
 storageWriteS3New(StorageS3 *storage, const String *name, size_t partSize)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -280,7 +282,7 @@ storageWriteS3New(StorageS3 *storage, const String *name, size_t partSize)
 
     OBJ_NEW_BEGIN(StorageWriteS3, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageWriteS3 *driver = OBJ_NEW_ALLOC();
+        StorageWriteS3 *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), StorageWrite::StorageWriteS3);
 
         *driver = (StorageWriteS3)
         {
@@ -295,6 +297,7 @@ storageWriteS3New(StorageS3 *storage, const String *name, size_t partSize)
                 .createPath = true,
                 .syncFile = true,
                 .syncPath = true,
+                .truncate = true,
 
                 .ioInterface = (IoWriteInterface)
                 {

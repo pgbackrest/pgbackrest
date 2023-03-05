@@ -13,7 +13,7 @@ Variant List Handler
 #include "common/type/variantList.h"
 
 /**********************************************************************************************************************************/
-VariantList *
+FN_EXTERN VariantList *
 varLstNewStrLst(const StringList *const stringList)
 {
     FUNCTION_TEST_BEGIN();
@@ -38,7 +38,7 @@ varLstNewStrLst(const StringList *const stringList)
 }
 
 /**********************************************************************************************************************************/
-VariantList *
+FN_EXTERN VariantList *
 varLstDup(const VariantList *const source)
 {
     FUNCTION_TEST_BEGIN();

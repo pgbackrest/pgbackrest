@@ -24,10 +24,10 @@ typedef struct XmlNodeList XmlNodeList;
 Document Constructors
 ***********************************************************************************************************************************/
 // Document with the specified root node
-XmlDocument *xmlDocumentNew(const String *rootNode);
+FN_EXTERN XmlDocument *xmlDocumentNew(const String *rootNode);
 
 // Document from Buffer
-XmlDocument *xmlDocumentNewBuf(const Buffer *);
+FN_EXTERN XmlDocument *xmlDocumentNewBuf(const Buffer *);
 
 /***********************************************************************************************************************************
 Document Getters
@@ -38,10 +38,10 @@ typedef struct XmlDocumentPub
 } XmlDocumentPub;
 
 // Dump document to a buffer
-Buffer *xmlDocumentBuf(const XmlDocument *this);
+FN_EXTERN Buffer *xmlDocumentBuf(const XmlDocument *this);
 
 // Root node
-__attribute__((always_inline)) static inline XmlNode *
+FN_INLINE_ALWAYS XmlNode *
 xmlDocumentRoot(const XmlDocument *const this)
 {
     return ((XmlDocumentPub *const)this)->root;
@@ -50,7 +50,7 @@ xmlDocumentRoot(const XmlDocument *const this)
 /***********************************************************************************************************************************
 Document Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 xmlDocumentFree(XmlDocument *const this)
 {
     objFree(this);
@@ -60,50 +60,39 @@ xmlDocumentFree(XmlDocument *const this)
 Node Functions
 ***********************************************************************************************************************************/
 // Add a node
-XmlNode *xmlNodeAdd(XmlNode *this, const String *name);
+FN_EXTERN XmlNode *xmlNodeAdd(XmlNode *this, const String *name);
 
 /***********************************************************************************************************************************
 Node Getters/Setters
 ***********************************************************************************************************************************/
-// Node attribute
-String *xmlNodeAttribute(const XmlNode *this, const String *name);
-
 // Node child (by name or index)
-XmlNode *xmlNodeChildN(const XmlNode *this, const String *name, unsigned int index, bool errorOnMissing);
+FN_EXTERN XmlNode *xmlNodeChildN(const XmlNode *this, const String *name, unsigned int index, bool errorOnMissing);
 
-__attribute__((always_inline)) static inline XmlNode *
+FN_INLINE_ALWAYS XmlNode *
 xmlNodeChild(const XmlNode *const this, const String *const name, const bool errorOnMissing)
 {
     return xmlNodeChildN(this, name, 0, errorOnMissing);
 }
 
 // List of child nodes
-XmlNodeList *xmlNodeChildList(const XmlNode *this, const String *name);
-
-// Node child total
-unsigned int xmlNodeChildTotal(const XmlNode *this, const String *name);
+FN_EXTERN XmlNodeList *xmlNodeChildList(const XmlNode *this, const String *name);
 
 // Node content
-String *xmlNodeContent(const XmlNode *this);
-void xmlNodeContentSet(XmlNode *this, const String *content);
-
-/***********************************************************************************************************************************
-Node Destructor
-***********************************************************************************************************************************/
-void xmlNodeFree(XmlNode *this);
+FN_EXTERN String *xmlNodeContent(const XmlNode *this);
+FN_EXTERN void xmlNodeContentSet(XmlNode *this, const String *content);
 
 /***********************************************************************************************************************************
 Node List Getters
 ***********************************************************************************************************************************/
 // Get a node from the list
-__attribute__((always_inline)) static inline XmlNode *
+FN_INLINE_ALWAYS XmlNode *
 xmlNodeLstGet(const XmlNodeList *const this, const unsigned int listIdx)
 {
     return *(XmlNode **)lstGet((List *const)this, listIdx);
 }
 
 // Node list size
-__attribute__((always_inline)) static inline unsigned int
+FN_INLINE_ALWAYS unsigned int
 xmlNodeLstSize(const XmlNodeList *const this)
 {
     return lstSize((List *const)this);
@@ -112,7 +101,7 @@ xmlNodeLstSize(const XmlNodeList *const this)
 /***********************************************************************************************************************************
 Node List Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 xmlNodeLstFree(XmlNodeList *const this)
 {
     lstFree((List *const)this);
@@ -124,16 +113,16 @@ Macros for function logging
 #define FUNCTION_LOG_XML_DOCUMENT_TYPE                                                                                             \
     XmlDocument *
 #define FUNCTION_LOG_XML_DOCUMENT_FORMAT(value, buffer, bufferSize)                                                                \
-    objToLog(value, "XmlDocument", buffer, bufferSize)
+    objNameToLog(value, "XmlDocument", buffer, bufferSize)
 
 #define FUNCTION_LOG_XML_NODE_TYPE                                                                                                 \
     XmlNode *
 #define FUNCTION_LOG_XML_NODE_FORMAT(value, buffer, bufferSize)                                                                    \
-    objToLog(value, "XmlNode", buffer, bufferSize)
+    objNameToLog(value, "XmlNode", buffer, bufferSize)
 
 #define FUNCTION_LOG_XML_NODE_LIST_TYPE                                                                                            \
     XmlNodeList *
 #define FUNCTION_LOG_XML_NODE_LIST_FORMAT(value, buffer, bufferSize)                                                               \
-    objToLog(value, "XmlNodeList", buffer, bufferSize)
+    objNameToLog(value, "XmlNodeList", buffer, bufferSize)
 
 #endif

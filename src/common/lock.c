@@ -28,7 +28,7 @@ Lock Handler
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
-// Indicates a lock that was made by matching exec-id rather than holding an actual lock. This disguishes it from -1, which is a
+// Indicates a lock that was made by matching exec-id rather than holding an actual lock. This distinguishes it from -1, which is a
 // general system error.
 #define LOCK_ON_EXEC_ID                                             -2
 
@@ -65,7 +65,7 @@ static struct LockLocal
 };
 
 /**********************************************************************************************************************************/
-String *
+FN_EXTERN String *
 lockFileName(const String *const stanza, const LockType lockType)
 {
     FUNCTION_TEST_BEGIN();
@@ -92,6 +92,8 @@ lockReadFileData(const String *const lockFile, const int fd)
         FUNCTION_LOG_PARAM(STRING, lockFile);
         FUNCTION_LOG_PARAM(INT, fd);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_STRUCT();
 
     ASSERT(lockFile != NULL);
     ASSERT(fd != -1);
@@ -135,13 +137,15 @@ lockReadFileData(const String *const lockFile, const int fd)
 }
 
 /**********************************************************************************************************************************/
-LockReadResult
+FN_EXTERN LockReadResult
 lockReadFile(const String *const lockFile, const LockReadFileParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, lockFile);
         FUNCTION_LOG_PARAM(BOOL, param.remove);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_STRUCT();
 
     ASSERT(lockFile != NULL);
 
@@ -195,7 +199,7 @@ lockReadFile(const String *const lockFile, const LockReadFileParam param)
 }
 
 /**********************************************************************************************************************************/
-LockReadResult
+FN_EXTERN LockReadResult
 lockRead(const String *const lockPath, const String *const stanza, const LockType lockType)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -203,6 +207,8 @@ lockRead(const String *const lockPath, const String *const stanza, const LockTyp
         FUNCTION_LOG_PARAM(STRING, stanza);
         FUNCTION_LOG_PARAM(ENUM, lockType);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_STRUCT();
 
     LockReadResult result = {0};
 
@@ -224,7 +230,7 @@ lockRead(const String *const lockPath, const String *const stanza, const LockTyp
 /***********************************************************************************************************************************
 Write contents of lock file
 ***********************************************************************************************************************************/
-void
+FN_EXTERN void
 lockWriteData(const LockType lockType, const LockWriteDataParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -384,7 +390,7 @@ lockAcquireFile(const String *const lockFile, const TimeMSec lockTimeout, const 
     FUNCTION_LOG_RETURN(INT, result);
 }
 
-bool
+FN_EXTERN bool
 lockAcquire(
     const String *lockPath, const String *stanza, const String *execId, LockType lockType, TimeMSec lockTimeout, bool failOnNoLock)
 {
@@ -487,7 +493,7 @@ lockReleaseFile(const int lockFd, const String *const lockFile)
     FUNCTION_LOG_RETURN_VOID();
 }
 
-bool
+FN_EXTERN bool
 lockRelease(bool failOnNoLock)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);

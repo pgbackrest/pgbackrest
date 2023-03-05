@@ -7,6 +7,7 @@ Main
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "command/annotate/annotate.h"
 #include "command/archive/get/get.h"
 #include "command/archive/push/push.h"
 #include "command/backup/backup.h"
@@ -72,10 +73,6 @@ main(int argListSize, const char *argList[])
 
     storageHelperInit(storageHelperList);
 
-#ifdef WITH_BACKTRACE
-    stackTraceInit(argList[0]);
-#endif
-
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INT, argListSize);
         FUNCTION_LOG_PARAM(CHARPY, argList);
@@ -133,6 +130,12 @@ main(int argListSize, const char *argList[])
         {
             switch (cfgCommand())
             {
+                // Annotate command
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdAnnotate:
+                    cmdAnnotate();
+                    break;
+
                 // Archive get command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdArchiveGet:

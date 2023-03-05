@@ -6,8 +6,8 @@ Protocol Command
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/type/keyValue.h"
-#include "protocol/command.h"
 #include "protocol/client.h"
+#include "protocol/command.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -19,7 +19,7 @@ struct ProtocolCommand
 };
 
 /**********************************************************************************************************************************/
-ProtocolCommand *
+FN_EXTERN ProtocolCommand *
 protocolCommandNew(const StringId command)
 {
     FUNCTION_TEST_BEGIN();
@@ -45,7 +45,7 @@ protocolCommandNew(const StringId command)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 protocolCommandPut(ProtocolCommand *const this, IoWrite *const write)
 {
     FUNCTION_TEST_BEGIN();
@@ -80,7 +80,7 @@ protocolCommandPut(ProtocolCommand *const this, IoWrite *const write)
 }
 
 /**********************************************************************************************************************************/
-PackWrite *
+FN_EXTERN PackWrite *
 protocolCommandParam(ProtocolCommand *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -102,8 +102,10 @@ protocolCommandParam(ProtocolCommand *this)
 }
 
 /**********************************************************************************************************************************/
-String *
-protocolCommandToLog(const ProtocolCommand *this)
+FN_EXTERN void
+protocolCommandToLog(const ProtocolCommand *const this, StringStatic *const debugLog)
 {
-    return strNewFmt("{command: %s}", strZ(strIdToStr(this->command)));
+    strStcFmt(debugLog, "{name: ");
+    strStcResultSizeInc(debugLog, strIdToLog(this->command, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+    strStcCatChr(debugLog, '}');
 }

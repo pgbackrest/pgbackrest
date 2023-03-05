@@ -21,11 +21,11 @@ Io client type
 Statistics constants
 ***********************************************************************************************************************************/
 #define TLS_STAT_CLIENT                                             "tls.client"        // Clients created
-    STRING_DECLARE(TLS_STAT_CLIENT_STR);
+STRING_DECLARE(TLS_STAT_CLIENT_STR);
 #define TLS_STAT_RETRY                                              "tls.retry"         // Connection retries
-    STRING_DECLARE(TLS_STAT_RETRY_STR);
+STRING_DECLARE(TLS_STAT_RETRY_STR);
 #define TLS_STAT_SESSION                                            "tls.session"       // Sessions created
-    STRING_DECLARE(TLS_STAT_SESSION_STR);
+STRING_DECLARE(TLS_STAT_SESSION_STR);
 
 /***********************************************************************************************************************************
 Constructors
@@ -42,7 +42,7 @@ typedef struct TlsClientNewParam
 #define tlsClientNewP(ioClient, host, timeoutConnect, timeoutSession, verifyPeer, ...)                                             \
     tlsClientNew(ioClient, host, timeoutConnect, timeoutSession, verifyPeer, (TlsClientNewParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-IoClient *tlsClientNew(
+FN_EXTERN IoClient *tlsClientNew(
     IoClient *ioClient, const String *host, TimeMSec timeoutConnect, TimeMSec timeoutSession, bool verifyPeer,
     TlsClientNewParam param);
 

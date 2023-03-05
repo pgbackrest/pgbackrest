@@ -33,7 +33,7 @@ struct ProtocolParallel
 };
 
 /**********************************************************************************************************************************/
-ProtocolParallel *
+FN_EXTERN ProtocolParallel *
 protocolParallelNew(TimeMSec timeout, ParallelJobCallback *callbackFunction, void *callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -67,7 +67,7 @@ protocolParallelNew(TimeMSec timeout, ParallelJobCallback *callbackFunction, voi
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 protocolParallelClientAdd(ProtocolParallel *this, ProtocolClient *client)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -88,7 +88,7 @@ protocolParallelClientAdd(ProtocolParallel *this, ProtocolClient *client)
 }
 
 /**********************************************************************************************************************************/
-unsigned int
+FN_EXTERN unsigned int
 protocolParallelProcess(ProtocolParallel *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -228,7 +228,7 @@ protocolParallelProcess(ProtocolParallel *this)
 }
 
 /**********************************************************************************************************************************/
-ProtocolParallelJob *
+FN_EXTERN ProtocolParallelJob *
 protocolParallelResult(ProtocolParallel *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -257,7 +257,7 @@ protocolParallelResult(ProtocolParallel *this)
 }
 
 /**********************************************************************************************************************************/
-bool
+FN_EXTERN bool
 protocolParallelDone(ProtocolParallel *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -275,10 +275,10 @@ protocolParallelDone(ProtocolParallel *this)
 }
 
 /**********************************************************************************************************************************/
-String *
-protocolParallelToLog(const ProtocolParallel *this)
+FN_EXTERN void
+protocolParallelToLog(const ProtocolParallel *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{state: %s, clientTotal: %u, jobTotal: %u}", strZ(strIdToStr(this->state)), lstSize(this->clientList),
-        lstSize(this->jobList));
+    strStcCat(debugLog, "{state: ");
+    strStcResultSizeInc(debugLog, strIdToLog(this->state, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+    strStcFmt(debugLog, ", clientTotal: %u, jobTotal: %u}", lstSize(this->clientList), lstSize(this->jobList));
 }

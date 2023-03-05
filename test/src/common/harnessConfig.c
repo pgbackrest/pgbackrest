@@ -7,6 +7,7 @@ Harness for Loading Test Configurations
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "build/common/string.h"
 #include "common/io/io.h"
 #include "config/config.intern.h"
 #include "config/load.h"
@@ -17,6 +18,7 @@ Harness for Loading Test Configurations
 #include "common/harnessConfig.h"
 #include "common/harnessDebug.h"
 #include "common/harnessLog.h"
+#include "common/harnessStorageHelper.h"
 #include "common/harnessTest.h"
 
 /**********************************************************************************************************************************/
@@ -72,7 +74,7 @@ hrnCfgLoad(ConfigCommand commandId, const StringList *argListParam, const HrnCfg
     }
 
     // Free objects in storage helper
-    storageHelperFree();
+    hrnStorageHelperFree();
 
     // Parse config
     configParse(storageLocal(), strLstSize(argList), strLstPtr(argList), false);
@@ -199,7 +201,7 @@ hrnCfgArgKeyRawReset(StringList *argList, ConfigOption optionId, unsigned option
 }
 
 /**********************************************************************************************************************************/
-__attribute__((always_inline)) static inline const char *
+FN_INLINE_ALWAYS const char *
 hrnCfgEnvName(const ConfigOption optionId, const unsigned optionKey)
 {
     return strZ(

@@ -11,8 +11,8 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct HttpUrl HttpUrl;
 
-#include "common/type/param.h"
 #include "common/type/object.h"
+#include "common/type/param.h"
 #include "common/type/string.h"
 
 /***********************************************************************************************************************************
@@ -37,7 +37,7 @@ typedef struct HttpUrlNewParseParam
 #define httpUrlNewParseP(url, ...)                                                                                                 \
     httpUrlNewParse(url, (HttpUrlNewParseParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-HttpUrl *httpUrlNewParse(const String *const url, HttpUrlNewParseParam param);
+FN_EXTERN HttpUrl *httpUrlNewParse(const String *const url, HttpUrlNewParseParam param);
 
 /***********************************************************************************************************************************
 Getters/setters
@@ -52,35 +52,35 @@ typedef struct HttpUrlPub
 } HttpUrlPub;
 
 // Protocol type
-__attribute__((always_inline)) static inline HttpProtocolType
+FN_INLINE_ALWAYS HttpProtocolType
 httpUrlProtocolType(const HttpUrl *const this)
 {
     return THIS_PUB(HttpUrl)->type;
 }
 
 // Host
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 httpUrlHost(const HttpUrl *const this)
 {
     return THIS_PUB(HttpUrl)->host;
 }
 
 // Path
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 httpUrlPath(const HttpUrl *const this)
 {
     return THIS_PUB(HttpUrl)->path;
 }
 
 // Port
-__attribute__((always_inline)) static inline unsigned int
+FN_INLINE_ALWAYS unsigned int
 httpUrlPort(const HttpUrl *const this)
 {
     return THIS_PUB(HttpUrl)->port;
 }
 
 // URL (exactly as originally passed)
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 httpUrl(const HttpUrl *const this)
 {
     return THIS_PUB(HttpUrl)->url;
@@ -89,7 +89,7 @@ httpUrl(const HttpUrl *const this)
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 httpUrlFree(HttpUrl *const this)
 {
     objFree(this);
@@ -98,11 +98,15 @@ httpUrlFree(HttpUrl *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-String *httpUrlToLog(const HttpUrl *this);
+#ifdef DEBUG
+
+FN_EXTERN void httpUrlToLog(const HttpUrl *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_HTTP_URL_TYPE                                                                                               \
     HttpUrl *
 #define FUNCTION_LOG_HTTP_URL_FORMAT(value, buffer, bufferSize)                                                                  \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, httpUrlToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, httpUrlToLog, buffer, bufferSize)
+
+#endif // DEBUG
 
 #endif

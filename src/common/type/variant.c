@@ -19,9 +19,9 @@ Variant Data Type
 /***********************************************************************************************************************************
 Constant variants that are generally useful
 ***********************************************************************************************************************************/
-// Used to declare Bool Variant constants that will be externed using VARIANT_DECLARE().  Must be used in a .c file.
+// Used to define Bool Variant constants that will be externed using VARIANT_DECLARE().
 #define VARIANT_BOOL_EXTERN(name, dataParam)                                                                                       \
-    const Variant *const name = ((const Variant *)&(const VariantBoolPub){.type = varTypeBool, .data = dataParam})
+    VR_EXTERN_DEFINE const Variant *const name = ((const Variant *)&(const VariantBoolPub){.type = varTypeBool, .data = dataParam})
 
 VARIANT_BOOL_EXTERN(BOOL_FALSE_VAR,                                 false);
 VARIANT_BOOL_EXTERN(BOOL_TRUE_VAR,                                  true);
@@ -92,7 +92,7 @@ static const char *const variantTypeName[] =
 };
 
 /**********************************************************************************************************************************/
-Variant *
+FN_EXTERN Variant *
 varDup(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -145,7 +145,7 @@ varDup(const Variant *this)
 }
 
 /**********************************************************************************************************************************/
-bool
+FN_EXTERN bool
 varEq(const Variant *this1, const Variant *this2)
 {
     FUNCTION_TEST_BEGIN();
@@ -200,7 +200,7 @@ varEq(const Variant *this1, const Variant *this2)
 }
 
 /**********************************************************************************************************************************/
-Variant *
+FN_EXTERN Variant *
 varNewBool(bool data)
 {
     FUNCTION_TEST_BEGIN();
@@ -211,7 +211,7 @@ varNewBool(bool data)
 
     OBJ_NEW_BEGIN(VariantBool)
     {
-        this = OBJ_NEW_ALLOC();
+        this = OBJ_NAME(OBJ_NEW_ALLOC(), Variant::VariantBool);
 
         *this = (VariantBool)
         {
@@ -228,7 +228,7 @@ varNewBool(bool data)
 }
 
 /**********************************************************************************************************************************/
-bool
+FN_EXTERN bool
 varBool(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -241,7 +241,7 @@ varBool(const Variant *this)
     FUNCTION_TEST_RETURN(BOOL, ((VariantBool *)this)->pub.data);
 }
 
-bool
+FN_EXTERN bool
 varBoolForce(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -309,7 +309,7 @@ varBoolForce(const Variant *this)
 }
 
 /**********************************************************************************************************************************/
-Variant *
+FN_EXTERN Variant *
 varNewInt(int data)
 {
     FUNCTION_TEST_BEGIN();
@@ -320,7 +320,7 @@ varNewInt(int data)
 
     OBJ_NEW_BEGIN(VariantInt)
     {
-        this = OBJ_NEW_ALLOC();
+        this = OBJ_NAME(OBJ_NEW_ALLOC(), Variant::VariantInt);
 
         *this = (VariantInt)
         {
@@ -337,7 +337,7 @@ varNewInt(int data)
 }
 
 /**********************************************************************************************************************************/
-int
+FN_EXTERN int
 varInt(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -350,7 +350,7 @@ varInt(const Variant *this)
     FUNCTION_TEST_RETURN(INT, ((VariantInt *)this)->pub.data);
 }
 
-int
+FN_EXTERN int
 varIntForce(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -425,7 +425,7 @@ varIntForce(const Variant *this)
 }
 
 /**********************************************************************************************************************************/
-Variant *
+FN_EXTERN Variant *
 varNewInt64(int64_t data)
 {
     FUNCTION_TEST_BEGIN();
@@ -436,7 +436,7 @@ varNewInt64(int64_t data)
 
     OBJ_NEW_BEGIN(VariantInt64)
     {
-        this = OBJ_NEW_ALLOC();
+        this = OBJ_NAME(OBJ_NEW_ALLOC(), Variant::VariantInt64);
 
         *this = (VariantInt64)
         {
@@ -453,7 +453,7 @@ varNewInt64(int64_t data)
 }
 
 /**********************************************************************************************************************************/
-int64_t
+FN_EXTERN int64_t
 varInt64(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -466,7 +466,7 @@ varInt64(const Variant *this)
     FUNCTION_TEST_RETURN(INT64, ((VariantInt64 *)this)->pub.data);
 }
 
-int64_t
+FN_EXTERN int64_t
 varInt64Force(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -525,7 +525,7 @@ varInt64Force(const Variant *this)
 }
 
 /**********************************************************************************************************************************/
-Variant *
+FN_EXTERN Variant *
 varNewUInt(unsigned int data)
 {
     FUNCTION_TEST_BEGIN();
@@ -536,7 +536,7 @@ varNewUInt(unsigned int data)
 
     OBJ_NEW_BEGIN(VariantUInt)
     {
-        this = OBJ_NEW_ALLOC();
+        this = OBJ_NAME(OBJ_NEW_ALLOC(), Variant::VariantUInt);
 
         *this = (VariantUInt)
         {
@@ -553,7 +553,7 @@ varNewUInt(unsigned int data)
 }
 
 /**********************************************************************************************************************************/
-unsigned int
+FN_EXTERN unsigned int
 varUInt(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -566,7 +566,7 @@ varUInt(const Variant *this)
     FUNCTION_TEST_RETURN(UINT, ((VariantUInt *)this)->pub.data);
 }
 
-unsigned int
+FN_EXTERN unsigned int
 varUIntForce(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -650,7 +650,7 @@ varUIntForce(const Variant *this)
 }
 
 /**********************************************************************************************************************************/
-Variant *
+FN_EXTERN Variant *
 varNewUInt64(uint64_t data)
 {
     FUNCTION_TEST_BEGIN();
@@ -661,7 +661,7 @@ varNewUInt64(uint64_t data)
 
     OBJ_NEW_BEGIN(VariantUInt64)
     {
-        this = OBJ_NEW_ALLOC();
+        this = OBJ_NAME(OBJ_NEW_ALLOC(), Variant::VariantUInt64);
 
         *this = (VariantUInt64)
         {
@@ -678,7 +678,7 @@ varNewUInt64(uint64_t data)
 }
 
 /**********************************************************************************************************************************/
-uint64_t
+FN_EXTERN uint64_t
 varUInt64(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -691,7 +691,7 @@ varUInt64(const Variant *this)
     FUNCTION_TEST_RETURN(UINT64, ((VariantUInt64 *)this)->pub.data);
 }
 
-uint64_t
+FN_EXTERN uint64_t
 varUInt64Force(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -762,7 +762,7 @@ varUInt64Force(const Variant *this)
 }
 
 /**********************************************************************************************************************************/
-Variant *
+FN_EXTERN Variant *
 varNewKv(KeyValue *data)
 {
     FUNCTION_TEST_BEGIN();
@@ -773,7 +773,7 @@ varNewKv(KeyValue *data)
 
     OBJ_NEW_BEGIN(VariantKeyValue, .childQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
+        this = OBJ_NAME(OBJ_NEW_ALLOC(), Variant::VariantKeyValue);
 
         *this = (VariantKeyValue)
         {
@@ -789,7 +789,7 @@ varNewKv(KeyValue *data)
 }
 
 /**********************************************************************************************************************************/
-KeyValue *
+FN_EXTERN KeyValue *
 varKv(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -808,7 +808,7 @@ varKv(const Variant *this)
 }
 
 /**********************************************************************************************************************************/
-Variant *
+FN_EXTERN Variant *
 varNewStr(const String *data)
 {
     FUNCTION_TEST_BEGIN();
@@ -826,7 +826,7 @@ varNewStr(const String *data)
 
         OBJ_NEW_BEGIN(VariantString, .childQty = 1)
         {
-            this = OBJ_NEW_ALLOC();
+            this = OBJ_NAME(OBJ_NEW_ALLOC(), Variant::VariantString);
 
             *this = (VariantString)
             {
@@ -844,7 +844,7 @@ varNewStr(const String *data)
 
     OBJ_NEW_EXTRA_BEGIN(VariantString, (uint16_t)(allocExtra))
     {
-        this = OBJ_NEW_ALLOC();
+        this = OBJ_NAME(OBJ_NEW_ALLOC(), Variant::VariantString);
 
         *this = (VariantString)
         {
@@ -868,7 +868,7 @@ varNewStr(const String *data)
             };
 
             // Assign the string
-            strncpy(pubData->buffer, strZ(data), strSize(data));
+            memcpy(pubData->buffer, strZ(data), strSize(data));
             pubData->buffer[strSize(data)] = '\0';
         }
     }
@@ -877,7 +877,7 @@ varNewStr(const String *data)
     FUNCTION_TEST_RETURN(VARIANT, (Variant *)this);
 }
 
-Variant *
+FN_EXTERN Variant *
 varNewStrZ(const char *data)
 {
     FUNCTION_TEST_BEGIN();
@@ -888,7 +888,7 @@ varNewStrZ(const char *data)
 }
 
 /**********************************************************************************************************************************/
-const String *
+FN_EXTERN const String *
 varStr(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -906,7 +906,7 @@ varStr(const Variant *this)
     FUNCTION_TEST_RETURN(STRING, result);
 }
 
-String *
+FN_EXTERN String *
 varStrForce(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -971,7 +971,7 @@ varStrForce(const Variant *this)
 }
 
 /**********************************************************************************************************************************/
-Variant *
+FN_EXTERN Variant *
 varNewVarLst(const VariantList *data)
 {
     FUNCTION_TEST_BEGIN();
@@ -982,7 +982,7 @@ varNewVarLst(const VariantList *data)
 
     OBJ_NEW_BEGIN(VariantVariantList, .childQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
+        this = OBJ_NAME(OBJ_NEW_ALLOC(), Variant::VariantVariantList);
 
         *this = (VariantVariantList)
         {
@@ -998,7 +998,7 @@ varNewVarLst(const VariantList *data)
 }
 
 /**********************************************************************************************************************************/
-VariantList *
+FN_EXTERN VariantList *
 varVarLst(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -1017,40 +1017,43 @@ varVarLst(const Variant *this)
 }
 
 /**********************************************************************************************************************************/
-String *
-varToLog(const Variant *this)
+FN_EXTERN void
+varToLog(const Variant *const this, StringStatic *const debugLog)
 {
-    String *result = NULL;
-
-    if (this == NULL)
-        result = strDup(NULL_STR);
-    else
+    switch (varType(this))
     {
-        switch (varType(this))
-        {
-            case varTypeString:
-                result = strToLog(varStr(this));
-                break;
+        case varTypeString:
+            strStcResultSizeInc(
+                debugLog,
+                FUNCTION_LOG_OBJECT_FORMAT(varStr(this), strToLog, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+            break;
 
-            case varTypeKeyValue:
-                result = strNewZ("{KeyValue}");
-                break;
+        case varTypeKeyValue:
+            strStcCat(debugLog, "{KeyValue}");
+            break;
 
-            case varTypeVariantList:
-                result = strNewZ("{VariantList}");
-                break;
+        case varTypeVariantList:
+            strStcCat(debugLog, "{VariantList}");
+            break;
 
-            case varTypeBool:
-            case varTypeInt:
-            case varTypeInt64:
-            case varTypeUInt:
-            case varTypeUInt64:
-            {
-                result = strNewFmt("{%s}", strZ(varStrForce(this)));
-                break;
-            }
-        }
+        case varTypeBool:
+            strStcFmt(debugLog, "{%s}", cvtBoolToConstZ(varBool(this)));
+            break;
+
+        case varTypeInt:
+            strStcFmt(debugLog, "{%d}", varInt(this));
+            break;
+
+        case varTypeInt64:
+            strStcFmt(debugLog, "{%" PRId64 "}", varInt64(this));
+            break;
+
+        case varTypeUInt:
+            strStcFmt(debugLog, "{%u}", varUInt(this));
+            break;
+
+        case varTypeUInt64:
+            strStcFmt(debugLog, "{%" PRIu64 "}", varUInt64(this));
+            break;
     }
-
-    return result;
 }

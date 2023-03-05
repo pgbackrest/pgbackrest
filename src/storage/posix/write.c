@@ -13,7 +13,6 @@ Posix Storage File write
 #include "common/log.h"
 #include "common/type/object.h"
 #include "common/user.h"
-#include "storage/posix/storage.intern.h"
 #include "storage/posix/write.h"
 #include "storage/write.intern.h"
 
@@ -36,14 +35,13 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_WRITE_POSIX_TYPE                                                                                      \
     StorageWritePosix *
 #define FUNCTION_LOG_STORAGE_WRITE_POSIX_FORMAT(value, buffer, bufferSize)                                                         \
-    objToLog(value, "StorageWritePosix", buffer, bufferSize)
+    objNameToLog(value, "StorageWritePosix", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 File open constants
 
 Since open is called more than once use constants to make sure these parameters are always the same
 ***********************************************************************************************************************************/
-#define FILE_OPEN_FLAGS                                             (O_CREAT | O_TRUNC | O_WRONLY)
 #define FILE_OPEN_PURPOSE                                           "write"
 
 /***********************************************************************************************************************************
@@ -81,16 +79,18 @@ storageWritePosixOpen(THIS_VOID)
     ASSERT(this->fd == -1);
 
     // Open the file
-    this->fd = open(strZ(this->nameTmp), FILE_OPEN_FLAGS, this->interface.modeFile);
+    const int flags = O_CREAT | O_WRONLY | (this->interface.truncate ? O_TRUNC : 0);
+
+    this->fd = open(strZ(this->nameTmp), flags, this->interface.modeFile);
 
     // Attempt to create the path if it is missing
     if (this->fd == -1 && errno == ENOENT && this->interface.createPath)                                            // {vm_covered}
     {
-         // Create the path
+        // Create the path
         storageInterfacePathCreateP(this->storage, this->path, false, false, this->interface.modePath);
 
         // Open file again
-        this->fd = open(strZ(this->nameTmp), FILE_OPEN_FLAGS, this->interface.modeFile);
+        this->fd = open(strZ(this->nameTmp), flags, this->interface.modeFile);
     }
 
     // Handle errors
@@ -219,10 +219,11 @@ storageWritePosixFd(const THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-StorageWrite *
+FN_EXTERN StorageWrite *
 storageWritePosixNew(
-    StoragePosix *storage, const String *name, mode_t modeFile, mode_t modePath, const String *user, const String *group,
-    time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic)
+    StoragePosix *const storage, const String *const name, const mode_t modeFile, const mode_t modePath, const String *const user,
+    const String *const group, const time_t timeModified, const bool createPath, const bool syncFile, const bool syncPath,
+    const bool atomic, const bool truncate)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_POSIX, storage);
@@ -236,6 +237,7 @@ storageWritePosixNew(
         FUNCTION_LOG_PARAM(BOOL, syncFile);
         FUNCTION_LOG_PARAM(BOOL, syncPath);
         FUNCTION_LOG_PARAM(BOOL, atomic);
+        FUNCTION_LOG_PARAM(BOOL, truncate);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
@@ -247,7 +249,7 @@ storageWritePosixNew(
 
     OBJ_NEW_BEGIN(StorageWritePosix, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        StorageWritePosix *driver = OBJ_NEW_ALLOC();
+        StorageWritePosix *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), StorageWrite::StorageWritePosix);
 
         *driver = (StorageWritePosix)
         {
@@ -266,6 +268,7 @@ storageWritePosixNew(
                 .modePath = modePath,
                 .syncFile = syncFile,
                 .syncPath = syncPath,
+                .truncate = truncate,
                 .user = strDup(user),
                 .timeModified = timeModified,
 

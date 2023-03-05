@@ -28,7 +28,7 @@ Macros for function logging
 #define FUNCTION_LOG_IO_FD_WRITE_TYPE                                                                                              \
     IoFdWrite *
 #define FUNCTION_LOG_IO_FD_WRITE_FORMAT(value, buffer, bufferSize)                                                                 \
-    objToLog(value, "IoFdWrite", buffer, bufferSize)
+    objNameToLog(value, "IoFdWrite", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 // Can bytes be written immediately?
@@ -101,7 +101,7 @@ ioFdWriteFd(const THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-IoWrite *
+FN_EXTERN IoWrite *
 ioFdWriteNew(const String *name, int fd, TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -114,7 +114,7 @@ ioFdWriteNew(const String *name, int fd, TimeMSec timeout)
 
     OBJ_NEW_BEGIN(IoFdWrite, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        IoFdWrite *driver = OBJ_NEW_ALLOC();
+        IoFdWrite *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoWrite::IoFdWrite);
 
         *driver = (IoFdWrite)
         {
@@ -131,7 +131,7 @@ ioFdWriteNew(const String *name, int fd, TimeMSec timeout)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 ioFdWriteOneStr(int fd, const String *string)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

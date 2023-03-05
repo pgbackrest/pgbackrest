@@ -116,7 +116,9 @@ typedef enum
     pckTypeMapI32 = 3,                                              // Maps to pckTypeI32
     pckTypeMapI64 = 4,                                              // Maps to pckTypeI64
     pckTypeMapObj = 5,                                              // Maps to pckTypeObj
-    pckTypeMapPtr = 6,                                              // Maps to pckTypePtr
+
+    // The empty position 6 can be used for a new type that will be encoded entirely in the tag
+
     pckTypeMapStr = 7,                                              // Maps to pckTypeStr
     pckTypeMapU32 = 8,                                              // Maps to pckTypeU32
     pckTypeMapU64 = 9,                                              // Maps to pckTypeU64
@@ -162,10 +164,8 @@ static const PackTypeMapData packTypeMapData[] =
     {
         .type = pckTypeObj,
     },
-    {
-        .type = pckTypePtr,
-        .valueMultiBit = true,
-    },
+    // Placeholders for unused type that can be encoded entirely in the tag
+    {0},
     {
         .type = pckTypeStr,
         .valueSingleBit = true,
@@ -352,7 +352,7 @@ pckReadNewInternal(void)
     FUNCTION_TEST_RETURN(PACK_READ, this);
 }
 
-PackRead *
+FN_EXTERN PackRead *
 pckReadNewIo(IoRead *read)
 {
     FUNCTION_TEST_BEGIN();
@@ -374,7 +374,7 @@ pckReadNewIo(IoRead *read)
     FUNCTION_TEST_RETURN(PACK_READ, this);
 }
 
-PackRead *
+FN_EXTERN PackRead *
 pckReadNew(const Pack *const pack)
 {
     FUNCTION_TEST_BEGIN();
@@ -387,7 +387,7 @@ pckReadNew(const Pack *const pack)
     FUNCTION_TEST_RETURN(PACK_READ, pckReadNewC(bufPtrConst((const Buffer *)pack), bufUsed((const Buffer *)pack)));
 }
 
-PackRead *
+FN_EXTERN PackRead *
 pckReadNewC(const unsigned char *const buffer, size_t size)
 {
     FUNCTION_TEST_BEGIN();
@@ -484,33 +484,14 @@ pckReadU64Internal(PackRead *this)
 
     ASSERT(this != NULL);
 
-    uint64_t result = 0;
-    uint8_t byte;
-
-    // Convert bytes from varint-128 encoding to a uint64
-    for (unsigned int bufferIdx = 0; bufferIdx < CVT_VARINT128_BUFFER_SIZE; bufferIdx++)
+    if (this->read != NULL)
     {
-        // Get the next encoded byte
-        pckReadBuffer(this, 1);
-        byte = this->bufferPtr[this->bufferPos];
-
-        // Shift the lower order 7 encoded bits into the uint64 in reverse order
-        result |= (uint64_t)(byte & 0x7f) << (7 * bufferIdx);
-
-        // Increment buffer position to indicate that the byte has been processed
-        this->bufferPos++;
-
-        // Done if the high order bit is not set to indicate more data
-        if (byte < 0x80)
-            break;
+        // Internal buffer should be empty
+        ASSERT(this->bufferUsed == this->bufferPos);
+        FUNCTION_TEST_RETURN(UINT64, ioReadVarIntU64(this->read));
     }
 
-    // By this point all bytes should have been read so error if this is not the case. This could be due to a coding error or
-    // corrupton in the data stream.
-    if (byte >= 0x80)
-        THROW(FormatError, "unterminated base-128 integer");
-
-    FUNCTION_TEST_RETURN(UINT64, result);
+    FUNCTION_TEST_RETURN(UINT64, cvtUInt64FromVarInt128(this->bufferPtr, &this->bufferPos, this->bufferUsed));
 }
 
 /***********************************************************************************************************************************
@@ -702,7 +683,7 @@ pckReadTag(PackRead *this, unsigned int *id, PackTypeMap typeMap, bool peek)
 }
 
 /**********************************************************************************************************************************/
-bool
+FN_EXTERN bool
 pckReadNext(PackRead *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -716,7 +697,7 @@ pckReadNext(PackRead *this)
 }
 
 /**********************************************************************************************************************************/
-unsigned int
+FN_EXTERN unsigned int
 pckReadId(PackRead *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -729,7 +710,7 @@ pckReadId(PackRead *this)
 }
 
 /**********************************************************************************************************************************/
-size_t
+FN_EXTERN size_t
 pckReadSize(PackRead *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -743,7 +724,7 @@ pckReadSize(PackRead *this)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 pckReadConsume(PackRead *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -762,7 +743,7 @@ pckReadConsume(PackRead *this)
 }
 
 /**********************************************************************************************************************************/
-const unsigned char *
+FN_EXTERN const unsigned char *
 pckReadBufPtr(PackRead *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -804,7 +785,7 @@ pckReadNullInternal(PackRead *this, unsigned int *id)
     FUNCTION_TEST_RETURN(BOOL, false);
 }
 
-bool
+FN_EXTERN bool
 pckReadNull(PackRead *this, PackIdParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -818,7 +799,7 @@ pckReadNull(PackRead *this, PackIdParam param)
 }
 
 /**********************************************************************************************************************************/
-PackType
+FN_EXTERN PackType
 pckReadType(PackRead *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -831,7 +812,7 @@ pckReadType(PackRead *this)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 pckReadArrayBegin(PackRead *this, PackIdParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -850,7 +831,7 @@ pckReadArrayBegin(PackRead *this, PackIdParam param)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-void
+FN_EXTERN void
 pckReadArrayEnd(PackRead *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -876,7 +857,7 @@ pckReadArrayEnd(PackRead *this)
 }
 
 /**********************************************************************************************************************************/
-Buffer *
+FN_EXTERN Buffer *
 pckReadBin(PackRead *this, PckReadBinParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -913,7 +894,7 @@ pckReadBin(PackRead *this, PckReadBinParam param)
 }
 
 /**********************************************************************************************************************************/
-bool
+FN_EXTERN bool
 pckReadBool(PackRead *this, PckReadBoolParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -931,7 +912,7 @@ pckReadBool(PackRead *this, PckReadBoolParam param)
 }
 
 /**********************************************************************************************************************************/
-int32_t
+FN_EXTERN int32_t
 pckReadI32(PackRead *this, PckReadI32Param param)
 {
     FUNCTION_TEST_BEGIN();
@@ -949,7 +930,7 @@ pckReadI32(PackRead *this, PckReadI32Param param)
 }
 
 /**********************************************************************************************************************************/
-int64_t
+FN_EXTERN int64_t
 pckReadI64(PackRead *this, PckReadI64Param param)
 {
     FUNCTION_TEST_BEGIN();
@@ -967,7 +948,7 @@ pckReadI64(PackRead *this, PckReadI64Param param)
 }
 
 /**********************************************************************************************************************************/
-mode_t
+FN_EXTERN mode_t
 pckReadMode(PackRead *this, PckReadModeParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -985,7 +966,7 @@ pckReadMode(PackRead *this, PckReadModeParam param)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 pckReadObjBegin(PackRead *this, PackIdParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -1004,7 +985,7 @@ pckReadObjBegin(PackRead *this, PackIdParam param)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-void
+FN_EXTERN void
 pckReadObjEnd(PackRead *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -1030,7 +1011,7 @@ pckReadObjEnd(PackRead *this)
 }
 
 /**********************************************************************************************************************************/
-PackRead *
+FN_EXTERN PackRead *
 pckReadPackRead(PackRead *this, PckReadPackParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -1047,7 +1028,7 @@ pckReadPackRead(PackRead *this, PckReadPackParam param)
     FUNCTION_TEST_RETURN(PACK_READ, result);
 }
 
-PackRead *
+FN_EXTERN PackRead *
 pckReadPackReadConst(PackRead *this, PckReadPackParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -1068,7 +1049,7 @@ pckReadPackReadConst(PackRead *this, PckReadPackParam param)
     FUNCTION_TEST_RETURN(PACK_READ, result);
 }
 
-Pack *
+FN_EXTERN Pack *
 pckReadPack(PackRead *const this, PckReadPackParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -1085,7 +1066,7 @@ pckReadPack(PackRead *const this, PckReadPackParam param)
     pckReadTag(this, &param.id, pckTypeMapPack, false);
 
     // Get the pack size
-    Buffer *result = bufNew(this->tagNextSize);
+    Buffer *const result = OBJ_NAME(bufNew(this->tagNextSize), Pack::Buffer);
 
     // Read the pack out in chunks
     while (bufUsed(result) < bufSize(result))
@@ -1099,24 +1080,7 @@ pckReadPack(PackRead *const this, PckReadPackParam param)
 }
 
 /**********************************************************************************************************************************/
-void *
-pckReadPtr(PackRead *this, PckReadPtrParam param)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PACK_READ, this);
-        FUNCTION_TEST_PARAM(UINT, param.id);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    if (pckReadNullInternal(this, &param.id))
-        FUNCTION_TEST_RETURN_P(VOID, NULL);
-
-    FUNCTION_TEST_RETURN_P(VOID, (void *)(uintptr_t)pckReadTag(this, &param.id, pckTypeMapPtr, false));
-}
-
-/**********************************************************************************************************************************/
-String *
+FN_EXTERN String *
 pckReadStr(PackRead *this, PckReadStrParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -1156,7 +1120,7 @@ pckReadStr(PackRead *this, PckReadStrParam param)
 }
 
 /**********************************************************************************************************************************/
-StringId
+FN_EXTERN StringId
 pckReadStrId(PackRead *this, PckReadStrIdParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -1174,7 +1138,7 @@ pckReadStrId(PackRead *this, PckReadStrIdParam param)
 }
 
 /**********************************************************************************************************************************/
-StringList *
+FN_EXTERN StringList *
 pckReadStrLst(PackRead *const this, PckReadStrLstParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -1204,7 +1168,7 @@ pckReadStrLst(PackRead *const this, PckReadStrLstParam param)
 }
 
 /**********************************************************************************************************************************/
-time_t
+FN_EXTERN time_t
 pckReadTime(PackRead *this, PckReadTimeParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -1222,7 +1186,7 @@ pckReadTime(PackRead *this, PckReadTimeParam param)
 }
 
 /**********************************************************************************************************************************/
-uint32_t
+FN_EXTERN uint32_t
 pckReadU32(PackRead *this, PckReadU32Param param)
 {
     FUNCTION_TEST_BEGIN();
@@ -1240,7 +1204,7 @@ pckReadU32(PackRead *this, PckReadU32Param param)
 }
 
 /**********************************************************************************************************************************/
-uint64_t
+FN_EXTERN uint64_t
 pckReadU64(PackRead *this, PckReadU64Param param)
 {
     FUNCTION_TEST_BEGIN();
@@ -1258,7 +1222,7 @@ pckReadU64(PackRead *this, PckReadU64Param param)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 pckReadEnd(PackRead *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -1278,11 +1242,11 @@ pckReadEnd(PackRead *this)
 }
 
 /**********************************************************************************************************************************/
-String *
-pckReadToLog(const PackRead *this)
+FN_EXTERN void
+pckReadToLog(const PackRead *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{depth: %u, idLast: %u, tagNextId: %u, tagNextType: %u, tagNextValue %" PRIu64 "}", this->tagStack.depth,
+    strStcFmt(
+        debugLog, "{depth: %u, idLast: %u, tagNextId: %u, tagNextType: %u, tagNextValue %" PRIu64 "}", this->tagStack.depth,
         this->tagStack.top->idLast, this->tagNextId, this->tagNextTypeMap, this->tagNextValue);
 }
 
@@ -1311,7 +1275,7 @@ pckWriteNewInternal(void)
     FUNCTION_TEST_RETURN(PACK_WRITE, this);
 }
 
-PackWrite *
+FN_EXTERN PackWrite *
 pckWriteNew(const PckWriteNewParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -1329,7 +1293,7 @@ pckWriteNew(const PckWriteNewParam param)
     FUNCTION_TEST_RETURN(PACK_WRITE, this);
 }
 
-PackWrite *
+FN_EXTERN PackWrite *
 pckWriteNewIo(IoWrite *write)
 {
     FUNCTION_TEST_BEGIN();
@@ -1569,7 +1533,7 @@ pckWriteDefaultNull(PackWrite *this, bool defaultWrite, bool defaultEqual)
 }
 
 /**********************************************************************************************************************************/
-PackWrite *
+FN_EXTERN PackWrite *
 pckWriteNull(PackWrite *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -1582,7 +1546,7 @@ pckWriteNull(PackWrite *this)
 }
 
 /**********************************************************************************************************************************/
-PackWrite *
+FN_EXTERN PackWrite *
 pckWriteArrayBegin(PackWrite *this, PackIdParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -1601,7 +1565,7 @@ pckWriteArrayBegin(PackWrite *this, PackIdParam param)
     FUNCTION_TEST_RETURN(PACK_WRITE, this);
 }
 
-PackWrite *
+FN_EXTERN PackWrite *
 pckWriteArrayEnd(PackWrite *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -1623,7 +1587,7 @@ pckWriteArrayEnd(PackWrite *this)
 }
 
 /**********************************************************************************************************************************/
-PackWrite *
+FN_EXTERN PackWrite *
 pckWriteBin(PackWrite *this, const Buffer *value, PckWriteBinParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -1653,7 +1617,7 @@ pckWriteBin(PackWrite *this, const Buffer *value, PckWriteBinParam param)
 }
 
 /**********************************************************************************************************************************/
-PackWrite *
+FN_EXTERN PackWrite *
 pckWriteBool(PackWrite *this, bool value, PckWriteBoolParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -1673,7 +1637,7 @@ pckWriteBool(PackWrite *this, bool value, PckWriteBoolParam param)
 }
 
 /**********************************************************************************************************************************/
-PackWrite *
+FN_EXTERN PackWrite *
 pckWriteI32(PackWrite *this, int32_t value, PckWriteI32Param param)
 {
     FUNCTION_TEST_BEGIN();
@@ -1693,7 +1657,7 @@ pckWriteI32(PackWrite *this, int32_t value, PckWriteI32Param param)
 }
 
 /**********************************************************************************************************************************/
-PackWrite *
+FN_EXTERN PackWrite *
 pckWriteI64(PackWrite *this, int64_t value, PckWriteI64Param param)
 {
     FUNCTION_TEST_BEGIN();
@@ -1713,7 +1677,7 @@ pckWriteI64(PackWrite *this, int64_t value, PckWriteI64Param param)
 }
 
 /**********************************************************************************************************************************/
-PackWrite *
+FN_EXTERN PackWrite *
 pckWriteMode(PackWrite *this, mode_t value, PckWriteModeParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -1733,7 +1697,7 @@ pckWriteMode(PackWrite *this, mode_t value, PckWriteModeParam param)
 }
 
 /**********************************************************************************************************************************/
-PackWrite *
+FN_EXTERN PackWrite *
 pckWriteObjBegin(PackWrite *this, PackIdParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -1752,7 +1716,7 @@ pckWriteObjBegin(PackWrite *this, PackIdParam param)
     FUNCTION_TEST_RETURN(PACK_WRITE, this);
 }
 
-PackWrite *
+FN_EXTERN PackWrite *
 pckWriteObjEnd(PackWrite *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -1774,7 +1738,7 @@ pckWriteObjEnd(PackWrite *this)
 }
 
 /**********************************************************************************************************************************/
-PackWrite *
+FN_EXTERN PackWrite *
 pckWritePack(PackWrite *const this, const Pack *const value, const PckWritePackParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -1798,26 +1762,7 @@ pckWritePack(PackWrite *const this, const Pack *const value, const PckWritePackP
 }
 
 /**********************************************************************************************************************************/
-PackWrite *
-pckWritePtr(PackWrite *this, const void *value, PckWritePtrParam param)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PACK_WRITE, this);
-        FUNCTION_TEST_PARAM_P(VOID, value);
-        FUNCTION_TEST_PARAM(UINT, param.id);
-        FUNCTION_TEST_PARAM(BOOL, param.defaultWrite);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    if (!pckWriteDefaultNull(this, param.defaultWrite, value == NULL))
-        pckWriteTag(this, pckTypeMapPtr, param.id, (uintptr_t)value);
-
-    FUNCTION_TEST_RETURN(PACK_WRITE, this);
-}
-
-/**********************************************************************************************************************************/
-PackWrite *
+FN_EXTERN PackWrite *
 pckWriteStr(PackWrite *this, const String *value, PckWriteStrParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -1847,7 +1792,7 @@ pckWriteStr(PackWrite *this, const String *value, PckWriteStrParam param)
 }
 
 /**********************************************************************************************************************************/
-PackWrite *
+FN_EXTERN PackWrite *
 pckWriteStrId(PackWrite *this, uint64_t value, PckWriteStrIdParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -1867,7 +1812,7 @@ pckWriteStrId(PackWrite *this, uint64_t value, PckWriteStrIdParam param)
 }
 
 /**********************************************************************************************************************************/
-PackWrite *
+FN_EXTERN PackWrite *
 pckWriteStrLst(PackWrite *const this, const StringList *const value, const PckWriteStrLstParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -1894,7 +1839,7 @@ pckWriteStrLst(PackWrite *const this, const StringList *const value, const PckWr
 }
 
 /**********************************************************************************************************************************/
-PackWrite *
+FN_EXTERN PackWrite *
 pckWriteTime(PackWrite *this, time_t value, PckWriteTimeParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -1914,7 +1859,7 @@ pckWriteTime(PackWrite *this, time_t value, PckWriteTimeParam param)
 }
 
 /**********************************************************************************************************************************/
-PackWrite *
+FN_EXTERN PackWrite *
 pckWriteU32(PackWrite *this, uint32_t value, PckWriteU32Param param)
 {
     FUNCTION_TEST_BEGIN();
@@ -1934,7 +1879,7 @@ pckWriteU32(PackWrite *this, uint32_t value, PckWriteU32Param param)
 }
 
 /**********************************************************************************************************************************/
-PackWrite *
+FN_EXTERN PackWrite *
 pckWriteU64(PackWrite *this, uint64_t value, PckWriteU64Param param)
 {
     FUNCTION_TEST_BEGIN();
@@ -1954,7 +1899,7 @@ pckWriteU64(PackWrite *this, uint64_t value, PckWriteU64Param param)
 }
 
 /**********************************************************************************************************************************/
-PackWrite *
+FN_EXTERN PackWrite *
 pckWriteEnd(PackWrite *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -1981,7 +1926,7 @@ pckWriteEnd(PackWrite *this)
 }
 
 /**********************************************************************************************************************************/
-Pack *
+FN_EXTERN Pack *
 pckWriteResult(PackWrite *const this)
 {
     FUNCTION_TEST_BEGIN();
@@ -1994,15 +1939,16 @@ pckWriteResult(PackWrite *const this)
     {
         ASSERT(this->tagStack.top == NULL);
 
-        result = (Pack *)this->buffer;
+        result = (Pack *)OBJ_NAME(this->buffer, Pack::Buffer);
     }
 
     FUNCTION_TEST_RETURN(PACK, result);
 }
 
 /**********************************************************************************************************************************/
-String *
-pckWriteToLog(const PackWrite *this)
+FN_EXTERN void
+pckWriteToLog(const PackWrite *const this, StringStatic *const debugLog)
 {
-    return strNewFmt("{depth: %u, idLast: %u}", this->tagStack.depth, this->tagStack.top == NULL ? 0 : this->tagStack.top->idLast);
+    strStcFmt(
+        debugLog, "{depth: %u, idLast: %u}", this->tagStack.depth, this->tagStack.top == NULL ? 0 : this->tagStack.top->idLast);
 }

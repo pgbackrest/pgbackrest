@@ -113,8 +113,10 @@ testRun(void)
 #ifndef HARNESS_PQ_REAL
         harnessPqScriptSet((HarnessPq [])
         {
-            {.function = HRNPQ_CONNECTDB,
-                .param = "[\"dbname='postgres' port=5432 user='" TEST_USER "' host='/var/run/postgresql'\"]"},
+            {
+                .function = HRNPQ_CONNECTDB,
+                .param = "[\"dbname='postgres' port=5432 user='" TEST_USER "' host='/var/run/postgresql'\"]",
+            },
             {.function = HRNPQ_STATUS, .resultInt = CONNECTION_OK},
             {.function = NULL}
         });

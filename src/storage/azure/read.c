@@ -27,7 +27,7 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_READ_AZURE_TYPE                                                                                       \
     StorageReadAzure *
 #define FUNCTION_LOG_STORAGE_READ_AZURE_FORMAT(value, buffer, bufferSize)                                                          \
-    objToLog(value, "StorageReadAzure", buffer, bufferSize)
+    objNameToLog(value, "StorageReadAzure", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Open the file
@@ -107,7 +107,7 @@ storageReadAzureEof(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-StorageRead *
+FN_EXTERN StorageRead *
 storageReadAzureNew(
     StorageAzure *const storage, const String *const name, const bool ignoreMissing, const uint64_t offset,
     const Variant *const limit)

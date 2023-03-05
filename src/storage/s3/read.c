@@ -7,8 +7,8 @@ S3 Storage Read
 #include "common/io/http/client.h"
 #include "common/log.h"
 #include "common/type/object.h"
-#include "storage/s3/read.h"
 #include "storage/read.intern.h"
+#include "storage/s3/read.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -30,7 +30,7 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_READ_S3_TYPE                                                                                          \
     StorageReadS3 *
 #define FUNCTION_LOG_STORAGE_READ_S3_FORMAT(value, buffer, bufferSize)                                                             \
-    objToLog(value, "StorageReadS3", buffer, bufferSize)
+    objNameToLog(value, "StorageReadS3", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Open the file
@@ -110,7 +110,7 @@ storageReadS3Eof(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-StorageRead *
+FN_EXTERN StorageRead *
 storageReadS3New(
     StorageS3 *const storage, const String *const name, const bool ignoreMissing, const uint64_t offset, const Variant *const limit)
 {

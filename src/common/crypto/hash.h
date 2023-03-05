@@ -20,10 +20,10 @@ Hashes for zero-length files (i.e., starting hash)
 ***********************************************************************************************************************************/
 #define HASH_TYPE_MD5_ZERO                                          "d41d8cd98f00b204e9800998ecf8427e"
 #define HASH_TYPE_SHA1_ZERO                                         "da39a3ee5e6b4b0d3255bfef95601890afd80709"
-    STRING_DECLARE(HASH_TYPE_SHA1_ZERO_STR);
+BUFFER_DECLARE(HASH_TYPE_SHA1_ZERO_BUF);
 #define HASH_TYPE_SHA256_ZERO                                                                                                      \
     "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-    STRING_DECLARE(HASH_TYPE_SHA256_ZERO_STR);
+BUFFER_DECLARE(HASH_TYPE_SHA256_ZERO_BUF);
 
 /***********************************************************************************************************************************
 Hash type sizes
@@ -40,16 +40,16 @@ Hash type sizes
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-IoFilter *cryptoHashNew(HashType type);
-IoFilter *cryptoHashNewPack(const Pack *paramList);
+FN_EXTERN IoFilter *cryptoHashNew(HashType type);
+FN_EXTERN IoFilter *cryptoHashNewPack(const Pack *paramList);
 
 /***********************************************************************************************************************************
 Helper functions
 ***********************************************************************************************************************************/
 // Get hash for one buffer
-Buffer *cryptoHashOne(HashType type, const Buffer *message);
+FN_EXTERN Buffer *cryptoHashOne(HashType type, const Buffer *message);
 
 // Get hmac for one message/key
-Buffer *cryptoHmacOne(HashType type, const Buffer *key, const Buffer *message);
+FN_EXTERN Buffer *cryptoHmacOne(HashType type, const Buffer *key, const Buffer *message);
 
 #endif

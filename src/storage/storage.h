@@ -7,15 +7,27 @@ Storage Interface
 #include <sys/types.h>
 
 /***********************************************************************************************************************************
+Storage link type
+***********************************************************************************************************************************/
+typedef enum
+{
+    // Symbolic (or soft) link
+    storageLinkSym,
+
+    // Hard link
+    storageLinkHard,
+} StorageLinkType;
+
+/***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 typedef struct Storage Storage;
 
-#include "common/type/buffer.h"
-#include "common/type/stringList.h"
 #include "common/io/filter/group.h"
 #include "common/time.h"
+#include "common/type/buffer.h"
 #include "common/type/param.h"
+#include "common/type/stringList.h"
 #include "storage/info.h"
 #include "storage/iterator.h"
 #include "storage/read.h"
@@ -54,7 +66,7 @@ Functions
 #define storageCopyP(source, destination)                                                                                          \
     storageCopy(source, destination)
 
-bool storageCopy(StorageRead *source, StorageWrite *destination);
+FN_EXTERN bool storageCopy(StorageRead *source, StorageWrite *destination);
 
 // Does a file exist? This function is only for files, not paths.
 typedef struct StorageExistsParam
@@ -66,7 +78,7 @@ typedef struct StorageExistsParam
 #define storageExistsP(this, pathExp, ...)                                                                                         \
     storageExists(this, pathExp, (StorageExistsParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-bool storageExists(const Storage *this, const String *pathExp, StorageExistsParam param);
+FN_EXTERN bool storageExists(const Storage *this, const String *pathExp, StorageExistsParam param);
 
 // Read from storage into a buffer
 typedef struct StorageGetParam
@@ -78,7 +90,7 @@ typedef struct StorageGetParam
 #define storageGetP(file, ...)                                                                                                     \
     storageGet(file, (StorageGetParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-Buffer *storageGet(StorageRead *file, StorageGetParam param);
+FN_EXTERN Buffer *storageGet(StorageRead *file, StorageGetParam param);
 
 // File/path info
 typedef struct StorageInfoParam
@@ -93,7 +105,7 @@ typedef struct StorageInfoParam
 #define storageInfoP(this, fileExp, ...)                                                                                           \
     storageInfo(this, fileExp, (StorageInfoParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-StorageInfo storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param);
+FN_EXTERN StorageInfo storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param);
 
 // Iterator for all files/links/paths in a path which returns different info based on the value of the level parameter
 typedef struct StorageNewItrParam
@@ -110,7 +122,7 @@ typedef struct StorageNewItrParam
 #define storageNewItrP(this, fileExp, ...)                                                                                         \
     storageNewItr(this, fileExp, (StorageNewItrParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-StorageIterator *storageNewItr(const Storage *this, const String *pathExp, StorageNewItrParam param);
+FN_EXTERN StorageIterator *storageNewItr(const Storage *this, const String *pathExp, StorageNewItrParam param);
 
 // Get a list of files from a directory
 typedef struct StorageListParam
@@ -124,13 +136,13 @@ typedef struct StorageListParam
 #define storageListP(this, pathExp, ...)                                                                                           \
     storageList(this, pathExp, (StorageListParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-StringList *storageList(const Storage *this, const String *pathExp, StorageListParam param);
+FN_EXTERN StringList *storageList(const Storage *this, const String *pathExp, StorageListParam param);
 
 // Move a file
 #define storageMoveP(this, source, destination)                                                                                    \
     storageMove(this, source, destination)
 
-void storageMove(const Storage *this, StorageRead *source, StorageWrite *destination);
+FN_EXTERN void storageMove(const Storage *this, StorageRead *source, StorageWrite *destination);
 
 // Open a file for reading
 typedef struct StorageNewReadParam
@@ -149,7 +161,7 @@ typedef struct StorageNewReadParam
 #define storageNewReadP(this, pathExp, ...)                                                                                        \
     storageNewRead(this, pathExp, (StorageNewReadParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-StorageRead *storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam param);
+FN_EXTERN StorageRead *storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam param);
 
 // Open a file for writing
 typedef struct StorageNewWriteParam
@@ -159,6 +171,11 @@ typedef struct StorageNewWriteParam
     bool noSyncFile;
     bool noSyncPath;
     bool noAtomic;
+
+    // Do not truncate file if it exists. Use this only in cases where the file will be manipulated directly through the file
+    // handle, which should always be the exception and indicates functionality that should be added to the storage interface.
+    bool noTruncate;
+
     bool compressible;
     mode_t modeFile;
     mode_t modePath;
@@ -170,7 +187,7 @@ typedef struct StorageNewWriteParam
 #define storageNewWriteP(this, pathExp, ...)                                                                                       \
     storageNewWrite(this, pathExp, (StorageNewWriteParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-StorageWrite *storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam param);
+FN_EXTERN StorageWrite *storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam param);
 
 // Get absolute path in the storage
 typedef struct StoragePathParam
@@ -182,7 +199,7 @@ typedef struct StoragePathParam
 #define storagePathP(this, pathExp, ...)                                                                                                \
     storagePath(this, pathExp, (StoragePathParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-String *storagePath(const Storage *this, const String *pathExp, StoragePathParam param);
+FN_EXTERN String *storagePath(const Storage *this, const String *pathExp, StoragePathParam param);
 
 // Create a path
 typedef struct StoragePathCreateParam
@@ -196,13 +213,13 @@ typedef struct StoragePathCreateParam
 #define storagePathCreateP(this, pathExp, ...)                                                                                     \
     storagePathCreate(this, pathExp, (StoragePathCreateParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-void storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateParam param);
+FN_EXTERN void storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateParam param);
 
 // Does a path exist?
 #define storagePathExistsP(this, pathExp)                                                                                          \
     storagePathExists(this, pathExp)
 
-bool storagePathExists(const Storage *this, const String *pathExp);
+FN_EXTERN bool storagePathExists(const Storage *this, const String *pathExp);
 
 // Remove a path
 typedef struct StoragePathRemoveParam
@@ -215,19 +232,19 @@ typedef struct StoragePathRemoveParam
 #define storagePathRemoveP(this, pathExp, ...)                                                                                     \
     storagePathRemove(this, pathExp, (StoragePathRemoveParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-void storagePathRemove(const Storage *this, const String *pathExp, StoragePathRemoveParam param);
+FN_EXTERN void storagePathRemove(const Storage *this, const String *pathExp, StoragePathRemoveParam param);
 
 // Sync a path
 #define storagePathSyncP(this, pathExp)                                                                                            \
     storagePathSync(this, pathExp)
 
-void storagePathSync(const Storage *this, const String *pathExp);
+FN_EXTERN void storagePathSync(const Storage *this, const String *pathExp);
 
 // Write a buffer to storage
 #define storagePutP(file, buffer)                                                                                                  \
     storagePut(file, buffer)
 
-void storagePut(StorageWrite *file, const Buffer *buffer);
+FN_EXTERN void storagePut(StorageWrite *file, const Buffer *buffer);
 
 // Remove a file
 typedef struct StorageRemoveParam
@@ -239,20 +256,34 @@ typedef struct StorageRemoveParam
 #define storageRemoveP(this, fileExp, ...)                                                                                         \
     storageRemove(this, fileExp, (StorageRemoveParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-void storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam param);
+FN_EXTERN void storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam param);
+
+// Create a hard or symbolic link
+typedef struct StorageLinkCreateParam
+{
+    VAR_PARAM_HEADER;
+
+    // Flag to create hard or symbolic link
+    StorageLinkType linkType;
+} StorageLinkCreateParam;
+
+#define storageLinkCreateP(this, target, linkPath, ...)                                                                            \
+    storageLinkCreate(this, target, linkPath, (StorageLinkCreateParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN void storageLinkCreate(const Storage *this, const String *target, const String *linkPath, StorageLinkCreateParam param);
 
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
 // Is the feature supported by this storage?
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 storageFeature(const Storage *const this, const StorageFeature feature)
 {
     return THIS_PUB(Storage)->interface.feature >> feature & 1;
 }
 
 // Storage type (posix, cifs, etc.)
-__attribute__((always_inline)) static inline StringId
+FN_INLINE_ALWAYS StringId
 storageType(const Storage *const this)
 {
     return THIS_PUB(Storage)->type;
@@ -261,11 +292,11 @@ storageType(const Storage *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-String *storageToLog(const Storage *this);
+FN_EXTERN void storageToLog(const Storage *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_STORAGE_TYPE                                                                                                  \
     Storage *
 #define FUNCTION_LOG_STORAGE_FORMAT(value, buffer, bufferSize)                                                                     \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, storageToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, storageToLog, buffer, bufferSize)
 
 #endif

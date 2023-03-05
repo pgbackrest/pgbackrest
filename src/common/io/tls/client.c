@@ -7,12 +7,12 @@ TLS Client
 
 #include "common/crypto/common.h"
 #include "common/debug.h"
-#include "common/log.h"
 #include "common/io/client.h"
 #include "common/io/io.h"
 #include "common/io/tls/client.h"
 #include "common/io/tls/common.h"
 #include "common/io/tls/session.h"
+#include "common/log.h"
 #include "common/stat.h"
 #include "common/type/object.h"
 #include "common/wait.h"
@@ -41,20 +41,23 @@ typedef struct TlsClient
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-static String *
-tlsClientToLog(const THIS_VOID)
+static void
+tlsClientToLog(const THIS_VOID, StringStatic *const debugLog)
 {
     THIS(const TlsClient);
 
-    return strNewFmt(
-        "{ioClient: %s, timeoutConnect: %" PRIu64 ", timeoutSession: %" PRIu64 ", verifyPeer: %s}",
-        strZ(ioClientToLog(this->ioClient)), this->timeoutConnect, this->timeoutSession, cvtBoolToConstZ(this->verifyPeer));
+    strStcCat(debugLog, "{ioClient: ");
+    ioClientToLog(this->ioClient, debugLog);
+
+    strStcFmt(
+        debugLog, ", timeoutConnect: %" PRIu64 ", timeoutSession: %" PRIu64 ", verifyPeer: %s}", this->timeoutConnect,
+        this->timeoutSession, cvtBoolToConstZ(this->verifyPeer));
 }
 
 #define FUNCTION_LOG_TLS_CLIENT_TYPE                                                                                               \
     TlsClient *
 #define FUNCTION_LOG_TLS_CLIENT_FORMAT(value, buffer, bufferSize)                                                                  \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, tlsClientToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, tlsClientToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Free connection
@@ -344,7 +347,7 @@ static const IoClientInterface tlsClientInterface =
     .toLog = tlsClientToLog,
 };
 
-IoClient *
+FN_EXTERN IoClient *
 tlsClientNew(
     IoClient *const ioClient, const String *const host, const TimeMSec timeoutConnect, const TimeMSec timeoutSession,
     const bool verifyPeer, const TlsClientNewParam param)
@@ -367,7 +370,7 @@ tlsClientNew(
 
     OBJ_NEW_BEGIN(TlsClient, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        TlsClient *driver = OBJ_NEW_ALLOC();
+        TlsClient *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoClient::TlsClient);
 
         *driver = (TlsClient)
         {

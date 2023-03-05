@@ -16,29 +16,29 @@ typedef struct StorageGcs StorageGcs;
 HTTP headers
 ***********************************************************************************************************************************/
 #define GCS_HEADER_UPLOAD_ID                                        "x-guploader-uploadid"
-    STRING_DECLARE(GCS_HEADER_UPLOAD_ID_STR);
+STRING_DECLARE(GCS_HEADER_UPLOAD_ID_STR);
 
 /***********************************************************************************************************************************
 Query tokens
 ***********************************************************************************************************************************/
 #define GCS_QUERY_FIELDS                                            "fields"
-    STRING_DECLARE(GCS_QUERY_FIELDS_STR);
+STRING_DECLARE(GCS_QUERY_FIELDS_STR);
 #define GCS_QUERY_MEDIA                                             "media"
-    STRING_DECLARE(GCS_QUERY_MEDIA_STR);
+STRING_DECLARE(GCS_QUERY_MEDIA_STR);
 #define GCS_QUERY_NAME                                              "name"
-    STRING_DECLARE(GCS_QUERY_NAME_STR);
+STRING_DECLARE(GCS_QUERY_NAME_STR);
 #define GCS_QUERY_UPLOAD_ID                                         "upload_id"
-    STRING_DECLARE(GCS_QUERY_UPLOAD_ID_STR);
+STRING_DECLARE(GCS_QUERY_UPLOAD_ID_STR);
 
 /***********************************************************************************************************************************
 JSON tokens
 ***********************************************************************************************************************************/
 #define GCS_JSON_MD5_HASH                                           "md5Hash"
-    VARIANT_DECLARE(GCS_JSON_MD5_HASH_VAR);
+VARIANT_DECLARE(GCS_JSON_MD5_HASH_VAR);
 #define GCS_JSON_NAME                                               "name"
-    VARIANT_DECLARE(GCS_JSON_NAME_VAR);
+VARIANT_DECLARE(GCS_JSON_NAME_VAR);
 #define GCS_JSON_SIZE                                               "size"
-    VARIANT_DECLARE(GCS_JSON_SIZE_VAR);
+VARIANT_DECLARE(GCS_JSON_SIZE_VAR);
 
 /***********************************************************************************************************************************
 Perform a GCS Request
@@ -59,7 +59,7 @@ typedef struct StorageGcsRequestAsyncParam
 #define storageGcsRequestAsyncP(this, verb, ...)                                                                                   \
     storageGcsRequestAsync(this, verb, (StorageGcsRequestAsyncParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-HttpRequest *storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAsyncParam param);
+FN_EXTERN HttpRequest *storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAsyncParam param);
 
 // Get async response
 typedef struct StorageGcsResponseParam
@@ -73,7 +73,7 @@ typedef struct StorageGcsResponseParam
 #define storageGcsResponseP(request, ...)                                                                                          \
     storageGcsResponse(request, (StorageGcsResponseParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-HttpResponse *storageGcsResponse(HttpRequest *request, StorageGcsResponseParam param);
+FN_EXTERN HttpResponse *storageGcsResponse(HttpRequest *request, StorageGcsResponseParam param);
 
 typedef struct StorageGcsRequestParam
 {
@@ -93,7 +93,7 @@ typedef struct StorageGcsRequestParam
 #define storageGcsRequestP(this, verb, ...)                                                                                        \
     storageGcsRequest(this, verb, (StorageGcsRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-HttpResponse *storageGcsRequest(StorageGcs *this, const String *verb, StorageGcsRequestParam param);
+FN_EXTERN HttpResponse *storageGcsRequest(StorageGcs *this, const String *verb, StorageGcsRequestParam param);
 
 /***********************************************************************************************************************************
 Macros for function logging
@@ -101,6 +101,6 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_GCS_TYPE                                                                                              \
     StorageGcs *
 #define FUNCTION_LOG_STORAGE_GCS_FORMAT(value, buffer, bufferSize)                                                                 \
-    objToLog(value, "StorageGcs", buffer, bufferSize)
+    objNameToLog(value, "StorageGcs", buffer, bufferSize)
 
 #endif

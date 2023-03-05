@@ -12,10 +12,10 @@ Write to a file descriptor using the IoWrite interface.
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-IoWrite *ioFdWriteNew(const String *name, int fd, TimeMSec timeout);
+FN_EXTERN IoWrite *ioFdWriteNew(const String *name, int fd, TimeMSec timeout);
 
 // Construct and open write fd
-__attribute__((always_inline)) static inline IoWrite *
+FN_INLINE_ALWAYS IoWrite *
 ioFdWriteNewOpen(const String *const name, const int fd, const TimeMSec timeout)
 {
     IoWrite *const result = ioFdWriteNew(name, fd, timeout);
@@ -27,6 +27,6 @@ ioFdWriteNewOpen(const String *const name, const int fd, const TimeMSec timeout)
 Helper functions
 ***********************************************************************************************************************************/
 // Write a string to the specified file descriptor
-void ioFdWriteOneStr(int fd, const String *string);
+FN_EXTERN void ioFdWriteOneStr(int fd, const String *string);
 
 #endif

@@ -10,20 +10,22 @@ nothing is missing or corrupt.  It is also useful for reporting, e.g. size of ba
 #ifndef INFO_MANIFEST_H
 #define INFO_MANIFEST_H
 
+#include "common/type/string.h"
+
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
 #define BACKUP_MANIFEST_EXT                                         ".manifest"
 #define BACKUP_MANIFEST_FILE                                        "backup" BACKUP_MANIFEST_EXT
-    STRING_DECLARE(BACKUP_MANIFEST_FILE_STR);
+STRING_DECLARE(BACKUP_MANIFEST_FILE_STR);
 
 #define MANIFEST_PATH_BUNDLE                                        "bundle"
-    STRING_DECLARE(MANIFEST_PATH_BUNDLE_STR);
+STRING_DECLARE(MANIFEST_PATH_BUNDLE_STR);
 
 #define MANIFEST_TARGET_PGDATA                                      "pg_data"
-    STRING_DECLARE(MANIFEST_TARGET_PGDATA_STR);
+STRING_DECLARE(MANIFEST_TARGET_PGDATA_STR);
 #define MANIFEST_TARGET_PGTBLSPC                                    "pg_tblspc"
-    STRING_DECLARE(MANIFEST_TARGET_PGTBLSPC_STR);
+STRING_DECLARE(MANIFEST_TARGET_PGTBLSPC_STR);
 
 /***********************************************************************************************************************************
 Object type
@@ -34,8 +36,8 @@ typedef struct Manifest Manifest;
 #include "common/compress/helper.h"
 #include "common/crypto/common.h"
 #include "common/crypto/hash.h"
-#include "common/type/variant.h"
 #include "common/type/object.h"
+#include "common/type/variant.h"
 #include "info/info.h"
 #include "info/infoBackup.h"
 #include "storage/storage.h"
@@ -54,6 +56,7 @@ typedef struct ManifestData
     time_t backupTimestampStop;                                     // When did the backup stop?
     BackupType backupType;                                          // Type of backup: full, diff, incr
     bool bundle;                                                    // Does the backup bundle files?
+    bool blockIncr;                                                 // Does the backup perform block incremental?
 
     // ??? Note that these fields are redundant and verbose since storing the start/stop lsn as a uint64 would be sufficient.
     // However, we currently lack the functions to transform these values back and forth so this will do for now.
@@ -66,6 +69,8 @@ typedef struct ManifestData
     unsigned int pgVersion;                                         // PostgreSQL version
     uint64_t pgSystemId;                                            // PostgreSQL system identifier
     unsigned int pgCatalogVersion;                                  // PostgreSQL catalog version
+
+    const Variant *annotation;                                      // Backup annotation(s) metadata
 
     bool backupOptionArchiveCheck;                                  // Will WAL segments be checked at the end of the backup?
     bool backupOptionArchiveCopy;                                   // Will WAL segments be copied to the backup?
@@ -80,6 +85,31 @@ typedef struct ManifestData
     bool backupOptionOnline;                                        // Will an online backup be performed?
     const Variant *backupOptionProcessMax;                          // How many processes will be used for backup?
 } ManifestData;
+
+/***********************************************************************************************************************************
+Block incremental size maps
+***********************************************************************************************************************************/
+// Map file size to block size
+typedef struct ManifestBlockIncrSizeMap
+{
+    unsigned int fileSize;                                          // File size
+    unsigned int blockSize;                                         // Block size for files >= file size
+} ManifestBlockIncrSizeMap;
+
+// Map file age to block multiplier
+typedef struct ManifestBlockIncrAgeMap
+{
+    uint32_t fileAge;                                               // File age in seconds
+    uint32_t blockMultiplier;                                       // Block multiplier
+} ManifestBlockIncrAgeMap;
+
+typedef struct ManifestBlockIncrMap
+{
+    const ManifestBlockIncrSizeMap *sizeMap;                        // Block size map
+    unsigned int sizeMapSize;                                       // Block size map size
+    const ManifestBlockIncrAgeMap *ageMap;                          // File age map
+    unsigned int ageMapSize;                                        // File age map size
+} ManifestBlockIncrMap;
 
 /***********************************************************************************************************************************
 Db type
@@ -97,16 +127,22 @@ File type
 typedef struct ManifestFile
 {
     const String *name;                                             // File name (must be first member in struct)
-    bool checksumPage:1;                                            // Does this file have page checksums?
-    bool checksumPageError:1;                                       // Is there an error in the page checksum?
+    bool copy : 1;                                                  // Should the file be copied (backup only)?
+    bool delta : 1;                                                 // Verify checksum in PGDATA before copying (backup only)?
+    bool resume : 1;                                                // Is the file being resumed (backup only)?
+    bool checksumPage : 1;                                          // Does this file have page checksums?
+    bool checksumPageError : 1;                                     // Is there an error in the page checksum?
     mode_t mode;                                                    // File mode
-    char checksumSha1[HASH_TYPE_SHA1_SIZE_HEX + 1];                 // SHA1 checksum
+    const uint8_t *checksumSha1;                                    // SHA1 checksum
+    const uint8_t *checksumRepoSha1;                                // SHA1 checksum as stored in repo (including compression, etc.)
     const String *checksumPageErrorList;                            // List of page checksum errors if there are any
     const String *user;                                             // User name
     const String *group;                                            // Group name
     const String *reference;                                        // Reference to a prior backup
     uint64_t bundleId;                                              // Bundle id
     uint64_t bundleOffset;                                          // Bundle offset
+    size_t blockIncrSize;                                           // Size of incremental blocks
+    uint64_t blockIncrMapSize;                                      // Block incremental map size
     uint64_t size;                                                  // Original size
     uint64_t sizeRepo;                                              // Size in repo
     time_t timestamp;                                               // Original timestamp
@@ -157,12 +193,13 @@ typedef struct ManifestTarget
 Constructors
 ***********************************************************************************************************************************/
 // Build a new manifest for a PostgreSQL data directory
-Manifest *manifestNewBuild(
-    const Storage *storagePg, unsigned int pgVersion, unsigned int pgCatalogVersion, bool online, bool checksumPage, bool bundle,
-    const StringList *excludeList, const Pack *tablespaceList);
+FN_EXTERN Manifest *manifestNewBuild(
+    const Storage *storagePg, unsigned int pgVersion, unsigned int pgCatalogVersion, time_t timestampStart, bool online,
+    bool checksumPage, bool bundle, bool blockIncr, const ManifestBlockIncrMap *blockIncrMap, const StringList *excludeList,
+    const Pack *tablespaceList);
 
 // Load a manifest from IO
-Manifest *manifestNewLoad(IoRead *read);
+FN_EXTERN Manifest *manifestNewLoad(IoRead *read);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -177,86 +214,92 @@ typedef struct ManifestPub
     List *linkList;                                                 // List of links
     List *pathList;                                                 // List of paths
     List *targetList;                                               // List of targets
+    StringList *referenceList;                                      // List of file references
 } ManifestPub;
 
 // Get/set the cipher subpassphrase
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 manifestCipherSubPass(const Manifest *const this)
 {
     return infoCipherPass(THIS_PUB(Manifest)->info);
 }
 
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 manifestCipherSubPassSet(Manifest *const this, const String *const cipherSubPass)
 {
     infoCipherPassSet(THIS_PUB(Manifest)->info, cipherSubPass);
 }
 
 // Get manifest configuration and options
-__attribute__((always_inline)) static inline const ManifestData *
+FN_INLINE_ALWAYS const ManifestData *
 manifestData(const Manifest *const this)
 {
     return &(THIS_PUB(Manifest)->data);
 }
 
+// Get reference list
+FN_INLINE_ALWAYS const StringList *
+manifestReferenceList(const Manifest *const this)
+{
+    return THIS_PUB(Manifest)->referenceList;
+}
+
 // Set backup label
-void manifestBackupLabelSet(Manifest *this, const String *backupLabel);
+FN_EXTERN void manifestBackupLabelSet(Manifest *this, const String *backupLabel);
 
 /***********************************************************************************************************************************
 Build functions
 ***********************************************************************************************************************************/
 // Validate the timestamps in the manifest given a copy start time, i.e. all times should be <= the copy start time
-void manifestBuildValidate(Manifest *this, bool delta, time_t copyStart, CompressType compressType);
+FN_EXTERN void manifestBuildValidate(Manifest *this, bool delta, time_t copyStart, CompressType compressType);
 
 // Create a diff/incr backup by comparing to a previous backup manifest
-void manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type, const String *archiveStart);
+FN_EXTERN void manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type, const String *archiveStart);
 
 // Set remaining values before the final save
-void manifestBuildComplete(
-    Manifest *this, time_t timestampStart, const String *lsnStart, const String *archiveStart, time_t timestampStop,
-    const String *lsnStop, const String *archiveStop, unsigned int pgId, uint64_t pgSystemId, const Pack *dbList,
-    bool optionArchiveCheck, bool optionArchiveCopy, size_t optionBufferSize, unsigned int optionCompressLevel,
-    unsigned int optionCompressLevelNetwork, bool optionHardLink, unsigned int optionProcessMax, bool optionStandby);
+FN_EXTERN void manifestBuildComplete(
+    Manifest *this, const String *lsnStart, const String *archiveStart, time_t timestampStop, const String *lsnStop,
+    const String *archiveStop, unsigned int pgId, uint64_t pgSystemId, const Pack *dbList, bool optionArchiveCheck,
+    bool optionArchiveCopy, size_t optionBufferSize, unsigned int optionCompressLevel, unsigned int optionCompressLevelNetwork,
+    bool optionHardLink, unsigned int optionProcessMax, bool optionStandby, const KeyValue *annotation);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Ensure that symlinks do not point to the same file, directory, or subdirectory of another link
-void manifestLinkCheck(const Manifest *this);
+FN_EXTERN void manifestLinkCheck(const Manifest *this);
 
 // Move to a new parent mem context
-__attribute__((always_inline)) static inline Manifest *
+FN_INLINE_ALWAYS Manifest *
 manifestMove(Manifest *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
 }
 
 // Manifest save
-void manifestSave(Manifest *this, IoWrite *write);
+FN_EXTERN void manifestSave(Manifest *this, IoWrite *write);
 
 // Validate a completed manifest.  Use strict mode only when saving the manifest after a backup.
-void manifestValidate(Manifest *this, bool strict);
+FN_EXTERN void manifestValidate(Manifest *this, bool strict);
 
 /***********************************************************************************************************************************
 Db functions and getters/setters
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline const ManifestDb *
+FN_INLINE_ALWAYS const ManifestDb *
 manifestDb(const Manifest *const this, const unsigned int dbIdx)
 {
     return lstGet(THIS_PUB(Manifest)->dbList, dbIdx);
 }
 
-const ManifestDb *manifestDbFind(const Manifest *this, const String *name);
-
 // If the database requested is not found in the list, return the default passed rather than throw an error
-__attribute__((always_inline)) static inline const ManifestDb *
+FN_INLINE_ALWAYS const ManifestDb *
 manifestDbFindDefault(const Manifest *const this, const String *const name, const ManifestDb *const dbDefault)
 {
     ASSERT_INLINE(name != NULL);
     return lstFindDefault(THIS_PUB(Manifest)->dbList, &name, (void *)dbDefault);
 }
 
-__attribute__((always_inline)) static inline unsigned int
+FN_INLINE_ALWAYS unsigned int
 manifestDbTotal(const Manifest *const this)
 {
     return lstSize(THIS_PUB(Manifest)->dbList);
@@ -268,37 +311,37 @@ File functions and getters/setters
 typedef struct ManifestFilePack ManifestFilePack;
 
 // Unpack file pack returned by manifestFilePackGet()
-ManifestFile manifestFileUnpack(const Manifest *manifest, const ManifestFilePack *filePack);
+FN_EXTERN ManifestFile manifestFileUnpack(const Manifest *manifest, const ManifestFilePack *filePack);
 
 // Get file in pack format by index
-__attribute__((always_inline)) static inline const ManifestFilePack *
+FN_INLINE_ALWAYS const ManifestFilePack *
 manifestFilePackGet(const Manifest *const this, const unsigned int fileIdx)
 {
     return *(ManifestFilePack **)lstGet(THIS_PUB(Manifest)->fileList, fileIdx);
 }
 
 // Get file name
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 manifestFileNameGet(const Manifest *const this, const unsigned int fileIdx)
 {
     return (const String *)manifestFilePackGet(this, fileIdx);
 }
 
 // Get file by index
-__attribute__((always_inline)) static inline ManifestFile
+FN_INLINE_ALWAYS ManifestFile
 manifestFile(const Manifest *const this, const unsigned int fileIdx)
 {
     return manifestFileUnpack(this, manifestFilePackGet(this, fileIdx));
 }
 
 // Add a file
-void manifestFileAdd(Manifest *this, ManifestFile *file);
+FN_EXTERN void manifestFileAdd(Manifest *this, ManifestFile *file);
 
 // Find file in pack format by name
-const ManifestFilePack *manifestFilePackFind(const Manifest *this, const String *name);
+FN_EXTERN const ManifestFilePack *manifestFilePackFind(const Manifest *this, const String *name);
 
 // Find file by name
-__attribute__((always_inline)) static inline ManifestFile
+FN_INLINE_ALWAYS ManifestFile
 manifestFileFind(const Manifest *const this, const String *const name)
 {
     ASSERT_INLINE(name != NULL);
@@ -306,69 +349,67 @@ manifestFileFind(const Manifest *const this, const String *const name)
 }
 
 // Does the file exist?
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 manifestFileExists(const Manifest *const this, const String *const name)
 {
     ASSERT_INLINE(name != NULL);
     return lstFindDefault(THIS_PUB(Manifest)->fileList, &name, NULL) != NULL;
 }
 
-void manifestFileRemove(const Manifest *this, const String *name);
+FN_EXTERN void manifestFileRemove(const Manifest *this, const String *name);
 
-__attribute__((always_inline)) static inline unsigned int
+FN_INLINE_ALWAYS unsigned int
 manifestFileTotal(const Manifest *const this)
 {
     return lstSize(THIS_PUB(Manifest)->fileList);
 }
 
 // Update a file with new data
-void manifestFileUpdate(
-    Manifest *this, const String *name, uint64_t size, uint64_t sizeRepo, const char *checksumSha1, const Variant *reference,
-    bool checksumPage, bool checksumPageError, const String *checksumPageErrorList, uint64_t bundleId, uint64_t bundleOffset);
+FN_EXTERN void manifestFileUpdate(Manifest *const this, const ManifestFile *file);
 
 /***********************************************************************************************************************************
 Link functions and getters/setters
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline const ManifestLink *
+FN_INLINE_ALWAYS const ManifestLink *
 manifestLink(const Manifest *const this, const unsigned int linkIdx)
 {
     return lstGet(THIS_PUB(Manifest)->linkList, linkIdx);
 }
 
-void manifestLinkAdd(Manifest *this, const ManifestLink *link);
-const ManifestLink *manifestLinkFind(const Manifest *this, const String *name);
+FN_EXTERN void manifestLinkAdd(Manifest *this, const ManifestLink *link);
+FN_EXTERN const ManifestLink *manifestLinkFind(const Manifest *this, const String *name);
 
 // If the link requested is not found in the list, return the default passed rather than throw an error
-__attribute__((always_inline)) static inline const ManifestLink *
+FN_INLINE_ALWAYS const ManifestLink *
 manifestLinkFindDefault(const Manifest *const this, const String *const name, const ManifestLink *const linkDefault)
 {
     ASSERT_INLINE(name != NULL);
     return lstFindDefault(THIS_PUB(Manifest)->linkList, &name, (void *)linkDefault);
 }
 
-void manifestLinkRemove(const Manifest *this, const String *name);
+FN_EXTERN void manifestLinkRemove(const Manifest *this, const String *name);
 
-__attribute__((always_inline)) static inline unsigned int
+FN_INLINE_ALWAYS unsigned int
 manifestLinkTotal(const Manifest *const this)
 {
     return lstSize(THIS_PUB(Manifest)->linkList);
 }
 
-void manifestLinkUpdate(const Manifest *this, const String *name, const String *path);
+FN_EXTERN void manifestLinkUpdate(const Manifest *this, const String *name, const String *path);
 
 /***********************************************************************************************************************************
 Path functions and getters/setters
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline const ManifestPath *
+FN_INLINE_ALWAYS const ManifestPath *
 manifestPath(const Manifest *const this, const unsigned int pathIdx)
 {
     return lstGet(THIS_PUB(Manifest)->pathList, pathIdx);
 }
 
-const ManifestPath *manifestPathFind(const Manifest *this, const String *name);
+FN_EXTERN const ManifestPath *manifestPathFind(const Manifest *this, const String *name);
 
 // If the path requested is not found in the list, return the default passed rather than throw an error
-__attribute__((always_inline)) static inline const ManifestPath *
+FN_INLINE_ALWAYS const ManifestPath *
 manifestPathFindDefault(const Manifest *const this, const String *const name, const ManifestPath *const pathDefault)
 {
     ASSERT_INLINE(name != NULL);
@@ -376,9 +417,9 @@ manifestPathFindDefault(const Manifest *const this, const String *const name, co
 }
 
 // Data directory relative path for any manifest file/link/path/target name
-String *manifestPathPg(const String *manifestPath);
+FN_EXTERN String *manifestPathPg(const String *manifestPath);
 
-__attribute__((always_inline)) static inline unsigned int
+FN_INLINE_ALWAYS unsigned int
 manifestPathTotal(const Manifest *const this)
 {
     return lstSize(THIS_PUB(Manifest)->pathList);
@@ -387,17 +428,17 @@ manifestPathTotal(const Manifest *const this)
 /***********************************************************************************************************************************
 Target functions and getters/setters
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline const ManifestTarget *
+FN_INLINE_ALWAYS const ManifestTarget *
 manifestTarget(const Manifest *const this, const unsigned int targetIdx)
 {
     return lstGet(THIS_PUB(Manifest)->targetList, targetIdx);
 }
 
-void manifestTargetAdd(Manifest *this, const ManifestTarget *target);
-const ManifestTarget *manifestTargetFind(const Manifest *this, const String *name);
+FN_EXTERN void manifestTargetAdd(Manifest *this, const ManifestTarget *target);
+FN_EXTERN const ManifestTarget *manifestTargetFind(const Manifest *this, const String *name);
 
 // If the target requested is not found in the list, return the default passed rather than throw an error
-__attribute__((always_inline)) static inline const ManifestTarget *
+FN_INLINE_ALWAYS const ManifestTarget *
 manifestTargetFindDefault(const Manifest *const this, const String *const name, const ManifestTarget *const targetDefault)
 {
     ASSERT_INLINE(name != NULL);
@@ -405,29 +446,29 @@ manifestTargetFindDefault(const Manifest *const this, const String *const name, 
 }
 
 // Base target, i.e. the target that is the data directory
-__attribute__((always_inline)) static inline const ManifestTarget *
+FN_INLINE_ALWAYS const ManifestTarget *
 manifestTargetBase(const Manifest *const this)
 {
     return manifestTargetFind(this, MANIFEST_TARGET_PGDATA_STR);
 }
 
 // Absolute path to the target
-String *manifestTargetPath(const Manifest *this, const ManifestTarget *target);
+FN_EXTERN String *manifestTargetPath(const Manifest *this, const ManifestTarget *target);
 
-void manifestTargetRemove(const Manifest *this, const String *name);
+FN_EXTERN void manifestTargetRemove(const Manifest *this, const String *name);
 
-__attribute__((always_inline)) static inline unsigned int
+FN_INLINE_ALWAYS unsigned int
 manifestTargetTotal(const Manifest *const this)
 {
     return lstSize(THIS_PUB(Manifest)->targetList);
 }
 
-void manifestTargetUpdate(const Manifest *this, const String *name, const String *path, const String *file);
+FN_EXTERN void manifestTargetUpdate(const Manifest *this, const String *name, const String *path, const String *file);
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 manifestFree(Manifest *const this)
 {
     objFree(this);
@@ -437,7 +478,8 @@ manifestFree(Manifest *const this)
 Helper functions
 ***********************************************************************************************************************************/
 // Load backup manifest
-Manifest *manifestLoadFile(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
+FN_EXTERN Manifest *manifestLoadFile(
+    const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
 
 /***********************************************************************************************************************************
 Macros for function logging
@@ -445,31 +487,31 @@ Macros for function logging
 #define FUNCTION_LOG_MANIFEST_TYPE                                                                                                 \
     Manifest *
 #define FUNCTION_LOG_MANIFEST_FORMAT(value, buffer, bufferSize)                                                                    \
-    objToLog(value, "Manifest", buffer, bufferSize)
+    objNameToLog(value, "Manifest", buffer, bufferSize)
 
 #define FUNCTION_LOG_MANIFEST_DB_TYPE                                                                                              \
     ManifestDb *
 #define FUNCTION_LOG_MANIFEST_DB_FORMAT(value, buffer, bufferSize)                                                                 \
-    objToLog(value, "ManifestDb", buffer, bufferSize)
+    objNameToLog(value, "ManifestDb", buffer, bufferSize)
 
 #define FUNCTION_LOG_MANIFEST_FILE_TYPE                                                                                            \
     ManifestFile *
 #define FUNCTION_LOG_MANIFEST_FILE_FORMAT(value, buffer, bufferSize)                                                               \
-    objToLog(value, "ManifestFile", buffer, bufferSize)
+    objNameToLog(value, "ManifestFile", buffer, bufferSize)
 
 #define FUNCTION_LOG_MANIFEST_LINK_TYPE                                                                                            \
     ManifestLink *
 #define FUNCTION_LOG_MANIFEST_LINK_FORMAT(value, buffer, bufferSize)                                                               \
-    objToLog(value, "ManifestLink", buffer, bufferSize)
+    objNameToLog(value, "ManifestLink", buffer, bufferSize)
 
 #define FUNCTION_LOG_MANIFEST_PATH_TYPE                                                                                            \
     ManifestPath *
 #define FUNCTION_LOG_MANIFEST_PATH_FORMAT(value, buffer, bufferSize)                                                               \
-    objToLog(value, "ManifestPath", buffer, bufferSize)
+    objNameToLog(value, "ManifestPath", buffer, bufferSize)
 
 #define FUNCTION_LOG_MANIFEST_TARGET_TYPE                                                                                          \
     ManifestTarget *
 #define FUNCTION_LOG_MANIFEST_TARGET_FORMAT(value, buffer, bufferSize)                                                             \
-    objToLog(value, "ManifestTarget", buffer, bufferSize)
+    objNameToLog(value, "ManifestTarget", buffer, bufferSize)
 
 #endif

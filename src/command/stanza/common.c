@@ -14,7 +14,7 @@ Stanza Commands Handler
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
-String *
+FN_EXTERN String *
 cipherPassGen(CipherType cipherType)
 {
     FUNCTION_TEST_BEGIN();
@@ -28,14 +28,14 @@ cipherPassGen(CipherType cipherType)
         unsigned char buffer[48]; // 48 is the amount of entropy needed to get a 64 base key
         cryptoRandomBytes(buffer, sizeof(buffer));
 
-        result = strNewEncode(encodeBase64, BUF(buffer, sizeof(buffer)));
+        result = strNewEncode(encodingBase64, BUF(buffer, sizeof(buffer)));
     }
 
     FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/
-PgControl
+FN_EXTERN PgControl
 pgValidate(void)
 {
     FUNCTION_TEST_VOID();

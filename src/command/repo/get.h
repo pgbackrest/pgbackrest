@@ -8,6 +8,6 @@ Repository Get Command
 Functions
 ***********************************************************************************************************************************/
 // Get a file from the repository
-int cmdStorageGet(void);
+FN_EXTERN int cmdStorageGet(void);
 
 #endif

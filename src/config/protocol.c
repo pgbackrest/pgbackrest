@@ -13,7 +13,7 @@ Configuration Protocol Handler
 #include "config/protocol.h"
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 configOptionProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -45,7 +45,7 @@ configOptionProtocol(PackRead *const param, ProtocolServer *const server)
 }
 
 /**********************************************************************************************************************************/
-VariantList *
+FN_EXTERN VariantList *
 configOptionRemote(ProtocolClient *client, const VariantList *paramList)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -63,11 +63,11 @@ configOptionRemote(ProtocolClient *client, const VariantList *paramList)
         for (unsigned int paramIdx = 0; paramIdx < varLstSize(paramList); paramIdx++)
             pckWriteStrP(param, varStr(varLstGet(paramList, paramIdx)));
 
-        const String *const json = pckReadStrP(protocolClientExecute(client, command, true));
+        const VariantList *const list = varVarLst(jsonToVar(pckReadStrP(protocolClientExecute(client, command, true))));
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
-            result = varVarLst(jsonToVar(json));
+            result = varLstDup(list);
         }
         MEM_CONTEXT_PRIOR_END();
     }

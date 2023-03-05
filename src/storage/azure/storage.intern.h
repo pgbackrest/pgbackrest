@@ -16,11 +16,11 @@ typedef struct StorageAzure StorageAzure;
 Azure query tokens
 ***********************************************************************************************************************************/
 #define AZURE_QUERY_COMP                                            "comp"
-    STRING_DECLARE(AZURE_QUERY_COMP_STR);
+STRING_DECLARE(AZURE_QUERY_COMP_STR);
 #define AZURE_QUERY_RESTYPE                                         "restype"
-    STRING_DECLARE(AZURE_QUERY_RESTYPE_STR);
+STRING_DECLARE(AZURE_QUERY_RESTYPE_STR);
 #define AZURE_QUERY_VALUE_CONTAINER                                 "container"
-    STRING_DECLARE(AZURE_QUERY_VALUE_CONTAINER_STR);
+STRING_DECLARE(AZURE_QUERY_VALUE_CONTAINER_STR);
 
 /***********************************************************************************************************************************
 Perform an Azure Request
@@ -38,7 +38,7 @@ typedef struct StorageAzureRequestAsyncParam
 #define storageAzureRequestAsyncP(this, verb, ...)                                                                                 \
     storageAzureRequestAsync(this, verb, (StorageAzureRequestAsyncParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-HttpRequest *storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureRequestAsyncParam param);
+FN_EXTERN HttpRequest *storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureRequestAsyncParam param);
 
 // Get async response
 typedef struct StorageAzureResponseParam
@@ -51,7 +51,7 @@ typedef struct StorageAzureResponseParam
 #define storageAzureResponseP(request, ...)                                                                                        \
     storageAzureResponse(request, (StorageAzureResponseParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-HttpResponse *storageAzureResponse(HttpRequest *request, StorageAzureResponseParam param);
+FN_EXTERN HttpResponse *storageAzureResponse(HttpRequest *request, StorageAzureResponseParam param);
 
 typedef struct StorageAzureRequestParam
 {
@@ -67,7 +67,7 @@ typedef struct StorageAzureRequestParam
 #define storageAzureRequestP(this, verb, ...)                                                                                      \
     storageAzureRequest(this, verb, (StorageAzureRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-HttpResponse *storageAzureRequest(StorageAzure *this, const String *verb, StorageAzureRequestParam param);
+FN_EXTERN HttpResponse *storageAzureRequest(StorageAzure *this, const String *verb, StorageAzureRequestParam param);
 
 /***********************************************************************************************************************************
 Macros for function logging
@@ -75,6 +75,6 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_AZURE_TYPE                                                                                            \
     StorageAzure *
 #define FUNCTION_LOG_STORAGE_AZURE_FORMAT(value, buffer, bufferSize)                                                               \
-    objToLog(value, "StorageAzure", buffer, bufferSize)
+    objNameToLog(value, "StorageAzure", buffer, bufferSize)
 
 #endif

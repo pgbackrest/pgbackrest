@@ -11,10 +11,10 @@ Read from a Buffer object using the IoRead interface.
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-IoRead *ioBufferReadNew(const Buffer *buffer);
+FN_EXTERN IoRead *ioBufferReadNew(const Buffer *buffer);
 
 // Construct and open buffer read
-__attribute__((always_inline)) static inline IoRead *
+FN_INLINE_ALWAYS IoRead *
 ioBufferReadNewOpen(const Buffer *const buffer)
 {
     IoRead *const result = ioBufferReadNew(buffer);

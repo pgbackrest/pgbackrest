@@ -28,6 +28,8 @@ storageListRenderInfo(const StorageInfo *const info, IoWrite *const write, const
         FUNCTION_TEST_PARAM(BOOL, json);
     FUNCTION_TEST_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     ASSERT(info != NULL);
     ASSERT(write != NULL);
 
@@ -80,9 +82,11 @@ storageListRenderInfo(const StorageInfo *const info, IoWrite *const write, const
 static void
 storageListRender(IoWrite *write)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug)
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_WRITE, write);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     // Get sort order
     SortOrder sortOrder = sortOrderAsc;
@@ -173,7 +177,7 @@ storageListRender(IoWrite *write)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 cmdStorageList(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);

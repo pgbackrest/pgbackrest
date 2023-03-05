@@ -34,9 +34,9 @@ Constants
 #define INFO_BACKUP_FILE                                            "backup.info"
 
 #define INFO_BACKUP_PATH_FILE                                       STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE
-    STRING_DECLARE(INFO_BACKUP_PATH_FILE_STR);
+STRING_DECLARE(INFO_BACKUP_PATH_FILE_STR);
 #define INFO_BACKUP_PATH_FILE_COPY                                  INFO_BACKUP_PATH_FILE INFO_COPY_EXT
-    STRING_DECLARE(INFO_BACKUP_PATH_FILE_COPY_STR);
+STRING_DECLARE(INFO_BACKUP_PATH_FILE_COPY_STR);
 
 /***********************************************************************************************************************************
 Information about an existing backup
@@ -46,10 +46,13 @@ typedef struct InfoBackupData
     const String *backupLabel;                                      // backupLabel must be first to allow for built-in list sorting
     unsigned int backrestFormat;
     const String *backrestVersion;
+    Variant *backupAnnotation;                                      // Backup annotations, if present
     const String *backupArchiveStart;
     const String *backupArchiveStop;
     uint64_t backupInfoRepoSize;
     uint64_t backupInfoRepoSizeDelta;
+    const Variant *backupInfoRepoSizeMap;
+    const Variant *backupInfoRepoSizeMapDelta;
     uint64_t backupInfoSize;
     uint64_t backupInfoSizeDelta;
     const String *backupLsnStart;
@@ -73,10 +76,11 @@ typedef struct InfoBackupData
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-InfoBackup *infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalogVersion, const String *cipherPassSub);
+FN_EXTERN InfoBackup *infoBackupNew(
+    unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalogVersion, const String *cipherPassSub);
 
 // Create new object and load contents from IoRead
-InfoBackup *infoBackupNewLoad(IoRead *read);
+FN_EXTERN InfoBackup *infoBackupNewLoad(IoRead *read);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -89,26 +93,26 @@ typedef struct InfoBackupPub
 } InfoBackupPub;
 
 // PostgreSQL info
-__attribute__((always_inline)) static inline InfoPg *
+FN_INLINE_ALWAYS InfoPg *
 infoBackupPg(const InfoBackup *const this)
 {
     return THIS_PUB(InfoBackup)->infoPg;
 }
 
-InfoBackup *infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalogVersion);
+FN_EXTERN InfoBackup *infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalogVersion);
 
 // Cipher passphrase
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 infoBackupCipherPass(const InfoBackup *const this)
 {
     return infoPgCipherPass(infoBackupPg(this));
 }
 
 // Return a structure of the backup data from a specific index
-InfoBackupData infoBackupData(const InfoBackup *this, unsigned int backupDataIdx);
+FN_EXTERN InfoBackupData infoBackupData(const InfoBackup *this, unsigned int backupDataIdx);
 
 // Does the specified backup label exist?
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 infoBackupLabelExists(const InfoBackup *const this, const String *const backupLabel)
 {
     ASSERT_INLINE(backupLabel != NULL);
@@ -116,7 +120,7 @@ infoBackupLabelExists(const InfoBackup *const this, const String *const backupLa
 }
 
 // Return a pointer to a structure from the current backup data given a label, else NULL
-__attribute__((always_inline)) static inline InfoBackupData *
+FN_INLINE_ALWAYS InfoBackupData *
 infoBackupDataByLabel(const InfoBackup *const this, const String *const backupLabel)
 {
     ASSERT_INLINE(infoBackupLabelExists(this, backupLabel));
@@ -124,7 +128,7 @@ infoBackupDataByLabel(const InfoBackup *const this, const String *const backupLa
 }
 
 // Get total current backups
-__attribute__((always_inline)) static inline unsigned int
+FN_INLINE_ALWAYS unsigned int
 infoBackupDataTotal(const InfoBackup *const this)
 {
     return lstSize(THIS_PUB(InfoBackup)->backup);
@@ -134,19 +138,22 @@ infoBackupDataTotal(const InfoBackup *const this)
 Functions
 ***********************************************************************************************************************************/
 // Add backup to the current list
-void infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest);
+FN_EXTERN void infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest);
+
+// Set Annotation in the backup data for a specific backup label
+FN_EXTERN void infoBackupDataAnnotationSet(const InfoBackup *this, const String *const backupLabel, const KeyValue *annotationKv);
 
 // Delete backup from the current backup list
-void infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel);
+FN_EXTERN void infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel);
 
 // Given a backup label, get the dependency list
-StringList *infoBackupDataDependentList(const InfoBackup *this, const String *backupLabel);
+FN_EXTERN StringList *infoBackupDataDependentList(const InfoBackup *this, const String *backupLabel);
 
 // Return a list of current backup labels, applying a regex expression if provided
-StringList *infoBackupDataLabelList(const InfoBackup *this, const String *expression);
+FN_EXTERN StringList *infoBackupDataLabelList(const InfoBackup *this, const String *expression);
 
 // Move to a new parent mem context
-__attribute__((always_inline)) static inline InfoBackup *
+FN_INLINE_ALWAYS InfoBackup *
 infoBackupMove(InfoBackup *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
@@ -155,7 +162,7 @@ infoBackupMove(InfoBackup *const this, MemContext *const parentNew)
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 infoBackupFree(InfoBackup *const this)
 {
     objFree(this);
@@ -165,29 +172,29 @@ infoBackupFree(InfoBackup *const this)
 Helper functions
 ***********************************************************************************************************************************/
 // Load backup info
-InfoBackup *infoBackupLoadFile(
+FN_EXTERN InfoBackup *infoBackupLoadFile(
     const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
 
 // Load backup info and update it by adding valid backups from the repo or removing backups no longer in the repo
-InfoBackup *infoBackupLoadFileReconstruct(
+FN_EXTERN InfoBackup *infoBackupLoadFileReconstruct(
     const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
 
 // Save backup info
-void infoBackupSaveFile(
+FN_EXTERN void infoBackupSaveFile(
     InfoBackup *infoBackup, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-String *infoBackupDataToLog(const InfoBackupData *this);
+FN_EXTERN void infoBackupDataToLog(const InfoBackupData *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_INFO_BACKUP_TYPE                                                                                              \
     InfoBackup *
 #define FUNCTION_LOG_INFO_BACKUP_FORMAT(value, buffer, bufferSize)                                                                 \
-    objToLog(value, "InfoBackup", buffer, bufferSize)
+    objNameToLog(value, "InfoBackup", buffer, bufferSize)
 #define FUNCTION_LOG_INFO_BACKUP_DATA_TYPE                                                                                         \
     InfoBackupData
 #define FUNCTION_LOG_INFO_BACKUP_DATA_FORMAT(value, buffer, bufferSize)                                                            \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(&value, infoBackupDataToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(&value, infoBackupDataToLog, buffer, bufferSize)
 
 #endif

@@ -5,8 +5,8 @@ Test HTTP
 
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
-#include "common/io/tls/client.h"
 #include "common/io/socket/client.h"
+#include "common/io/tls/client.h"
 
 #include "common/harnessFork.h"
 #include "common/harnessServer.h"
@@ -55,6 +55,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("HttpHeader"))
     {
+        char logBuf[STACK_TRACE_PARAM_MAX];
         HttpHeader *header = NULL;
 
         MEM_CONTEXT_TEMP_BEGIN()
@@ -88,7 +89,8 @@ testRun(void)
             httpHeaderGet(httpHeaderPutRange(header, 44, NULL), HTTP_HEADER_RANGE_STR), "bytes=44-",
             "put range header with offset");
 
-        TEST_RESULT_STR_Z(httpHeaderToLog(header), "{key1: 'value1', key2: 'value2a, value2b', range: 'bytes=44-'}", "log output");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(header, httpHeaderToLog, logBuf, sizeof(logBuf)), "httpHeaderToLog");
+        TEST_RESULT_Z(logBuf, "{key2: 'value2a, value2b', key1: 'value1', range: 'bytes=44-'}", "check log");
 
         TEST_RESULT_VOID(httpHeaderFree(header), "free header");
 
@@ -101,25 +103,29 @@ testRun(void)
         httpHeaderAdd(header, STRDEF("secret"), STRDEF("secret-value"));
         httpHeaderAdd(header, STRDEF("public"), STRDEF("public-value"));
 
-        TEST_RESULT_STR_Z(httpHeaderToLog(header), "{public: 'public-value', secret: <redacted>}", "log output");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(header, httpHeaderToLog, logBuf, sizeof(logBuf)), "httpHeaderToLog");
+        TEST_RESULT_Z(logBuf, "{secret: <redacted>, public: 'public-value'}", "check log");
 
         // Duplicate
         // -------------------------------------------------------------------------------------------------------------------------
         redact = strLstNew();
         strLstAddZ(redact, "public");
 
-        TEST_RESULT_STR_Z(
-            httpHeaderToLog(httpHeaderDup(header, NULL)), "{public: 'public-value', secret: <redacted>}",
-            "dup and keep redactions");
-        TEST_RESULT_STR_Z(
-            httpHeaderToLog(httpHeaderDup(header, redact)), "{public: <redacted>, secret: 'secret-value'}",
-            "dup and change redactions");
+        TEST_RESULT_VOID(
+            FUNCTION_LOG_OBJECT_FORMAT(httpHeaderDup(header, NULL), httpHeaderToLog, logBuf, sizeof(logBuf)), "httpHeaderToLog");
+        TEST_RESULT_Z(logBuf, "{secret: <redacted>, public: 'public-value'}", "check log");
+
+        TEST_RESULT_VOID(
+            FUNCTION_LOG_OBJECT_FORMAT(httpHeaderDup(header, redact), httpHeaderToLog, logBuf, sizeof(logBuf)), "httpHeaderToLog");
+        TEST_RESULT_Z(logBuf, "{secret: 'secret-value', public: <redacted>}", "check log");
+
         TEST_RESULT_PTR(httpHeaderDup(NULL, NULL), NULL, "dup null header");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("HttpQuery"))
     {
+        char logBuf[STACK_TRACE_PARAM_MAX];
         HttpQuery *query = NULL;
 
         MEM_CONTEXT_TEMP_BEGIN()
@@ -152,7 +158,8 @@ testRun(void)
         TEST_RESULT_STR_Z(httpQueryGet(query, STRDEF("key2")), "value2a", "get value");
         TEST_RESULT_STR(httpQueryGet(query, STRDEF(BOGUS_STR)), NULL, "get missing value");
 
-        TEST_RESULT_STR_Z(httpQueryToLog(query), "{key1: 'value 1?', key2: <redacted>}", "log output");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(query, httpQueryToLog, logBuf, sizeof(logBuf)), "httpQueryToLog");
+        TEST_RESULT_Z(logBuf, "{key2: <redacted>, key1: 'value 1?'}", "check log");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("dup query with redaction");
@@ -161,7 +168,8 @@ testRun(void)
         strLstAddZ(redactList, "key1");
 
         TEST_ASSIGN(query, httpQueryDupP(query, .redactList = redactList), "dup query");
-        TEST_RESULT_STR_Z(httpQueryToLog(query), "{key1: <redacted>, key2: 'value2a'}", "log output");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(query, httpQueryToLog, logBuf, sizeof(logBuf)), "httpQueryToLog");
+        TEST_RESULT_Z(logBuf, "{key2: 'value2a', key1: <redacted>}", "check log");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("new query from string");
@@ -187,6 +195,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("HttpUrl"))
     {
+        char logBuf[STACK_TRACE_PARAM_MAX];
         HttpUrl *url = NULL;
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -209,7 +218,8 @@ testRun(void)
         TEST_RESULT_STR_Z(httpUrlPath(url), "/", "check path");
         TEST_RESULT_UINT(httpUrlPort(url), 80, "check port");
         TEST_RESULT_UINT(httpUrlProtocolType(url), httpProtocolTypeHttp, "check protocol");
-        TEST_RESULT_STR_Z(httpUrlToLog(url), "{http://test:80/}", "check log");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(url, httpUrlToLog, logBuf, sizeof(logBuf)), "httpUrlToLog");
+        TEST_RESULT_Z(logBuf, "{http://test:80/}", "check log");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("host and port");
@@ -220,7 +230,8 @@ testRun(void)
         TEST_RESULT_STR_Z(httpUrlPath(url), "/", "check path");
         TEST_RESULT_UINT(httpUrlPort(url), 4443, "check port");
         TEST_RESULT_UINT(httpUrlProtocolType(url), httpProtocolTypeHttps, "check protocol");
-        TEST_RESULT_STR_Z(httpUrlToLog(url), "{https://gcs:4443/}", "check log");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(url, httpUrlToLog, logBuf, sizeof(logBuf)), "httpUrlToLog");
+        TEST_RESULT_Z(logBuf, "{https://gcs:4443/}", "check log");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("http but expected https");
@@ -238,7 +249,8 @@ testRun(void)
         TEST_RESULT_STR_Z(httpUrlPath(url), "/path", "check path");
         TEST_RESULT_UINT(httpUrlPort(url), 445, "check port");
         TEST_RESULT_UINT(httpUrlProtocolType(url), httpProtocolTypeHttps, "check protocol");
-        TEST_RESULT_STR_Z(httpUrlToLog(url), "{https://test.com:445/path}", "check log");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(url, httpUrlToLog, logBuf, sizeof(logBuf)), "httpUrlToLog");
+        TEST_RESULT_Z(logBuf, "{https://test.com:445/path}", "check log");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("host only");
@@ -249,7 +261,8 @@ testRun(void)
         TEST_RESULT_STR_Z(httpUrlPath(url), "/", "check path");
         TEST_RESULT_UINT(httpUrlPort(url), 443, "check port");
         TEST_RESULT_UINT(httpUrlProtocolType(url), httpProtocolTypeHttps, "check protocol");
-        TEST_RESULT_STR_Z(httpUrlToLog(url), "{https://test.com:443/}", "check log");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(url, httpUrlToLog, logBuf, sizeof(logBuf)), "httpUrlToLog");
+        TEST_RESULT_Z(logBuf, "{https://test.com:443/}", "check log");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("IPv6");
@@ -260,7 +273,8 @@ testRun(void)
         TEST_RESULT_STR_Z(httpUrlPath(url), "/", "check path");
         TEST_RESULT_UINT(httpUrlPort(url), 81, "check port");
         TEST_RESULT_UINT(httpUrlProtocolType(url), httpProtocolTypeHttp, "check protocol");
-        TEST_RESULT_STR_Z(httpUrlToLog(url), "{http://[2001:db8::ff00:42:8329]:81/}", "check log");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(url, httpUrlToLog, logBuf, sizeof(logBuf)), "httpUrlToLog");
+        TEST_RESULT_Z(logBuf, "{http://[2001:db8::ff00:42:8329]:81/}", "check log");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("IPv6 no port");
@@ -271,7 +285,8 @@ testRun(void)
         TEST_RESULT_STR_Z(httpUrlPath(url), "/url", "check path");
         TEST_RESULT_UINT(httpUrlPort(url), 80, "check port");
         TEST_RESULT_UINT(httpUrlProtocolType(url), httpProtocolTypeHttp, "check protocol");
-        TEST_RESULT_STR_Z(httpUrlToLog(url), "{http://[2001:db8::ff00:42:8329]:80/url}", "check log");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(url, httpUrlToLog, logBuf, sizeof(logBuf)), "httpUrlToLog");
+        TEST_RESULT_Z(logBuf, "{http://[2001:db8::ff00:42:8329]:80/url}", "check log");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("free");
@@ -282,6 +297,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("HttpClient"))
     {
+        char logBuf[STACK_TRACE_PARAM_MAX];
         HttpClient *client = NULL;
 
         TEST_ASSIGN(client, httpClientNew(sckClientNew(STRDEF("localhost"), hrnServerPort(0), 500, 500), 500), "new client");
@@ -457,8 +473,8 @@ testRun(void)
 
                 hrnServerScriptAccept(http);
 
-                hrnServerScriptExpectZ(http,
-                    "GET /?name=%2Fpath%2FA%20Z.txt&type=test HTTP/1.1\r\n" TEST_USER_AGENT "host:myhost.com\r\n\r\n");
+                hrnServerScriptExpectZ(
+                    http, "GET /?name=%2Fpath%2FA%20Z.txt&type=test HTTP/1.1\r\n" TEST_USER_AGENT "host:myhost.com\r\n\r\n");
                 hrnServerScriptReplyZ(http, "HTTP/1.1 500 Internal Error\r\nConnection:close\r\n\r\n");
 
                 hrnServerScriptClose(http);
@@ -503,9 +519,11 @@ testRun(void)
                 TEST_RESULT_BOOL(httpResponseCodeOk(response), true, "check response code ok");
                 TEST_RESULT_STR_Z(httpResponseReason(response), "OK", "check response message");
                 TEST_RESULT_UINT(httpResponseEof(response), true, "io is eof");
-                TEST_RESULT_STR_Z(
-                    httpHeaderToLog(httpResponseHeader(response)),
-                    "{connection: 'ack', content-length: '0', key1: '0', key2: 'value2'}", "check response headers");
+                TEST_RESULT_VOID(
+                    FUNCTION_LOG_OBJECT_FORMAT(httpResponseHeader(response), httpHeaderToLog, logBuf, sizeof(logBuf)),
+                    "httpHeaderToLog");
+                TEST_RESULT_Z(
+                    logBuf, "{key1: '0', key2: 'value2', connection: 'ack', content-length: '0'}", "check response headers");
                 TEST_RESULT_UINT(bufSize(httpResponseContent(response)), 0, "content is empty");
 
                 TEST_RESULT_VOID(httpResponseFree(response), "free response");
@@ -524,8 +542,10 @@ testRun(void)
                 TEST_RESULT_STR_Z(httpResponseReason(response), "OK", "check response message");
                 TEST_RESULT_BOOL(httpResponseEof(response), true, "io is eof");
                 TEST_RESULT_PTR(response->session, NULL, "session is not busy");
-                TEST_RESULT_STR_Z(
-                    httpHeaderToLog(httpResponseHeader(response)), "{content-length: '380'}", "check response headers");
+                TEST_RESULT_VOID(
+                    FUNCTION_LOG_OBJECT_FORMAT(httpResponseHeader(response), httpHeaderToLog, logBuf, sizeof(logBuf)),
+                    "httpHeaderToLog");
+                TEST_RESULT_Z(logBuf, "{content-length: '380'}", "check response headers");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("head request with transfer encoding but no content");
@@ -540,8 +560,10 @@ testRun(void)
                 TEST_RESULT_STR_Z(httpResponseReason(response), "OK", "check response message");
                 TEST_RESULT_BOOL(httpResponseEof(response), true, "io is eof");
                 TEST_RESULT_PTR(response->session, NULL, "session is not busy");
-                TEST_RESULT_STR_Z(
-                    httpHeaderToLog(httpResponseHeader(response)), "{transfer-encoding: 'chunked'}", "check response headers");
+                TEST_RESULT_VOID(
+                    FUNCTION_LOG_OBJECT_FORMAT(httpResponseHeader(response), httpHeaderToLog, logBuf, sizeof(logBuf)),
+                    "httpHeaderToLog");
+                TEST_RESULT_Z(logBuf, "{transfer-encoding: 'chunked'}", "check response headers");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("head request with connection close but no content");
@@ -556,8 +578,10 @@ testRun(void)
                 TEST_RESULT_STR_Z(httpResponseReason(response), "OK", "check response message");
                 TEST_RESULT_BOOL(httpResponseEof(response), true, "io is eof");
                 TEST_RESULT_PTR(response->session, NULL, "session is not busy");
-                TEST_RESULT_STR_Z(
-                    httpHeaderToLog(httpResponseHeader(response)), "{connection: 'close'}", "check response headers");
+                TEST_RESULT_VOID(
+                    FUNCTION_LOG_OBJECT_FORMAT(httpResponseHeader(response), httpHeaderToLog, logBuf, sizeof(logBuf)),
+                    "httpHeaderToLog");
+                TEST_RESULT_Z(logBuf, "{connection: 'close'}", "check response headers");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error with content (with a few slow down errors)");
@@ -585,8 +609,10 @@ testRun(void)
                 TEST_RESULT_UINT(httpResponseCode(response), 404, "check response code");
                 TEST_RESULT_BOOL(httpResponseCodeOk(response), false, "check response code error");
                 TEST_RESULT_STR_Z(httpResponseReason(response), "Not Found", "check response message");
-                TEST_RESULT_STR_Z(
-                    httpHeaderToLog(httpResponseHeader(response)), "{}", "check response headers");
+                TEST_RESULT_VOID(
+                    FUNCTION_LOG_OBJECT_FORMAT(httpResponseHeader(response), httpHeaderToLog, logBuf, sizeof(logBuf)),
+                    "httpHeaderToLog");
+                TEST_RESULT_Z(logBuf, "{}", "check response headers");
 
                 TEST_ERROR(
                     httpRequestError(request, response), ProtocolError,
@@ -617,9 +643,10 @@ testRun(void)
                 TEST_ASSIGN(response, httpRequestResponse(request, false), "response");
                 TEST_RESULT_UINT(httpResponseCode(response), 403, "check response code");
                 TEST_RESULT_STR_Z(httpResponseReason(response), "", "check empty response message");
-                TEST_RESULT_STR_Z(
-                    httpHeaderToLog(httpResponseHeader(response)), "{connection: 'close', content-type: 'application/json'}",
-                    "check response headers");
+                TEST_RESULT_VOID(
+                    FUNCTION_LOG_OBJECT_FORMAT(httpResponseHeader(response), httpHeaderToLog, logBuf, sizeof(logBuf)),
+                    "httpHeaderToLog");
+                TEST_RESULT_Z(logBuf, "{connection: 'close', content-type: 'application/json'}", "check response headers");
                 TEST_RESULT_STR_Z(strNewBuf(httpResponseContent(response)), "CONTENT", "check response content");
 
                 TEST_ERROR(
@@ -680,8 +707,9 @@ testRun(void)
                 hrnServerScriptAccept(http);
 
                 hrnServerScriptExpectZ(
-                    http, "GET /path/file%201.txt HTTP/1.1\r\n" TEST_USER_AGENT "content-length:30\r\n\r\n"
-                        "012345678901234567890123456789");
+                    http,
+                    "GET /path/file%201.txt HTTP/1.1\r\n" TEST_USER_AGENT "content-length:30\r\n\r\n"
+                    "012345678901234567890123456789");
                 hrnServerScriptReplyZ(
                     http,
                     "HTTP/1.1 200 OK\r\nConnection:ClosE\r\ncontent-type:application/xml\r\n\r\n01234567890123456789012345678901");
@@ -702,9 +730,10 @@ testRun(void)
                             .content = BUFSTRDEF("012345678901234567890123456789")), true),
                     "request");
                 TEST_RESULT_BOOL(httpResponseReadIgnoreUnexpectedEof(response), true, "check unexpected eof allowed");
-                TEST_RESULT_STR_Z(
-                    httpHeaderToLog(httpResponseHeader(response)), "{connection: 'close', content-type: 'application/xml'}",
-                    "check response headers");
+                TEST_RESULT_VOID(
+                    FUNCTION_LOG_OBJECT_FORMAT(httpResponseHeader(response), httpHeaderToLog, logBuf, sizeof(logBuf)),
+                    "httpHeaderToLog");
+                TEST_RESULT_Z(logBuf, "{connection: 'close', content-type: 'application/xml'}", "check response headers");
                 TEST_RESULT_STR_Z(strNewBuf(httpResponseContent(response)), "01234567890123456789012345678901", "check response");
                 TEST_RESULT_UINT(httpResponseRead(response, bufNew(1), true), 0, "call internal read to check eof");
 
@@ -761,13 +790,35 @@ testRun(void)
                     "0\r\n\r\n");
 
                 TEST_ASSIGN(response, httpRequestResponse(httpRequestNewP(client, STRDEF("GET"), STRDEF("/")), false), "request");
-                TEST_RESULT_STR_Z(
-                    httpHeaderToLog(httpResponseHeader(response)), "{transfer-encoding: 'chunked'}", "check response headers");
+                TEST_RESULT_VOID(
+                    FUNCTION_LOG_OBJECT_FORMAT(httpResponseHeader(response), httpHeaderToLog, logBuf, sizeof(logBuf)),
+                    "httpHeaderToLog");
+                TEST_RESULT_Z(logBuf, "{transfer-encoding: 'chunked'}", "check response headers");
 
                 Buffer *buffer = bufNew(35);
 
                 TEST_RESULT_VOID(ioRead(httpResponseIoRead(response), buffer), "read response");
                 TEST_RESULT_STR_Z(strNewBuf(buffer), "01234567890123456789012345678901012", "check response");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("request with zero-length chunked content");
+
+                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
+                hrnServerScriptReplyZ(
+                    http,
+                    "HTTP/1.1 200 OK\r\nTransfer-Encoding:chunked\r\n\r\n"
+                    "0\r\n\r\n");
+
+                TEST_ASSIGN(response, httpRequestResponse(httpRequestNewP(client, STRDEF("GET"), STRDEF("/")), false), "request");
+                TEST_RESULT_VOID(
+                    FUNCTION_LOG_OBJECT_FORMAT(httpResponseHeader(response), httpHeaderToLog, logBuf, sizeof(logBuf)),
+                    "httpHeaderToLog");
+                TEST_RESULT_Z(logBuf, "{transfer-encoding: 'chunked'}", "check response headers");
+
+                buffer = bufNew(0);
+
+                TEST_RESULT_VOID(ioRead(httpResponseIoRead(response), buffer), "read response");
+                TEST_RESULT_STR_Z(strNewBuf(buffer), "", "check response");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("close connection and end server process");

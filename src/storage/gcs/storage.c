@@ -6,8 +6,8 @@ GCS Storage
 #include <string.h>
 
 #include <openssl/bio.h>
-#include <openssl/x509.h>
 #include <openssl/pem.h>
+#include <openssl/x509.h>
 
 #include "common/crypto/common.h"
 #include "common/crypto/hash.h"
@@ -22,7 +22,6 @@ GCS Storage
 #include "common/type/json.h"
 #include "common/type/object.h"
 #include "storage/gcs/read.h"
-#include "storage/gcs/storage.intern.h"
 #include "storage/gcs/write.h"
 #include "storage/posix/storage.h"
 
@@ -53,19 +52,19 @@ VARIANT_STRDEF_STATIC(GCS_JSON_ERROR_VAR,                           "error");
 VARIANT_STRDEF_STATIC(GCS_JSON_ERROR_DESCRIPTION_VAR,               "error_description");
 VARIANT_STRDEF_STATIC(GCS_JSON_EXPIRES_IN_VAR,                      "expires_in");
 #define GCS_JSON_ITEMS                                              "items"
-    VARIANT_STRDEF_STATIC(GCS_JSON_ITEMS_VAR,                       GCS_JSON_ITEMS);
+VARIANT_STRDEF_STATIC(GCS_JSON_ITEMS_VAR,                           GCS_JSON_ITEMS);
 VARIANT_STRDEF_EXTERN(GCS_JSON_MD5_HASH_VAR,                        GCS_JSON_MD5_HASH);
 VARIANT_STRDEF_EXTERN(GCS_JSON_NAME_VAR,                            GCS_JSON_NAME);
 #define GCS_JSON_NEXT_PAGE_TOKEN                                    "nextPageToken"
-    VARIANT_STRDEF_STATIC(GCS_JSON_NEXT_PAGE_TOKEN_VAR,             GCS_JSON_NEXT_PAGE_TOKEN);
+VARIANT_STRDEF_STATIC(GCS_JSON_NEXT_PAGE_TOKEN_VAR,                 GCS_JSON_NEXT_PAGE_TOKEN);
 #define GCS_JSON_PREFIXES                                           "prefixes"
-    VARIANT_STRDEF_STATIC(GCS_JSON_PREFIXES_VAR,                    GCS_JSON_PREFIXES);
+VARIANT_STRDEF_STATIC(GCS_JSON_PREFIXES_VAR,                        GCS_JSON_PREFIXES);
 VARIANT_STRDEF_STATIC(GCS_JSON_PRIVATE_KEY_VAR,                     "private_key");
 VARIANT_STRDEF_EXTERN(GCS_JSON_SIZE_VAR,                            GCS_JSON_SIZE);
 VARIANT_STRDEF_STATIC(GCS_JSON_TOKEN_TYPE_VAR,                      "token_type");
 VARIANT_STRDEF_STATIC(GCS_JSON_TOKEN_URI_VAR,                       "token_uri");
 #define GCS_JSON_UPDATED                                            "updated"
-    VARIANT_STRDEF_STATIC(GCS_JSON_UPDATED_VAR,                     GCS_JSON_UPDATED);
+VARIANT_STRDEF_STATIC(GCS_JSON_UPDATED_VAR,                         GCS_JSON_UPDATED);
 
 // Fields required when listing files
 #define GCS_FIELD_LIST                                                                                                             \
@@ -118,6 +117,8 @@ storageGcsAuthToken(HttpRequest *const request, const time_t timeBegin)
         FUNCTION_TEST_PARAM(HTTP_REQUEST, request);
         FUNCTION_TEST_PARAM(TIME, timeBegin);
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_STRUCT();
 
     StorageGcsAuthTokenResult result = {0};
 
@@ -178,11 +179,11 @@ storageGcsAuthJwt(StorageGcs *this, time_t timeBegin)
     {
         // Add claim
         strCatEncode(
-            result, encodeBase64Url,
+            result, encodingBase64Url,
             BUFSTR(
                 strNewFmt(
                     "{\"iss\":\"%s\",\"scope\":\"https://www.googleapis.com/auth/devstorage.read%s\",\"aud\":\"%s\""
-                        ",\"exp\":%" PRIu64 ",\"iat\":%" PRIu64 "}",
+                    ",\"exp\":%" PRIu64 ",\"iat\":%" PRIu64 "}",
                     strZ(this->credential), this->write ? "_write" : "_only", strZ(httpUrl(this->authUrl)),
                     (uint64_t)timeBegin + 3600, (uint64_t)timeBegin)));
 
@@ -220,7 +221,7 @@ storageGcsAuthJwt(StorageGcs *this, time_t timeBegin)
 
             // Add dot delimiter and signature
             strCatChr(result, '.');
-            strCatEncode(result, encodeBase64Url, signature);
+            strCatEncode(result, encodingBase64Url, signature);
         }
         FINALLY()
         {
@@ -246,6 +247,8 @@ storageGcsAuthService(StorageGcs *this, time_t timeBegin)
         FUNCTION_TEST_PARAM(STORAGE_GCS, this);
         FUNCTION_TEST_PARAM(TIME, timeBegin);
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_STRUCT();
 
     ASSERT(this != NULL);
     ASSERT(timeBegin > 0);
@@ -289,6 +292,8 @@ storageGcsAuthAuto(StorageGcs *this, time_t timeBegin)
         FUNCTION_TEST_PARAM(STORAGE_GCS, this);
         FUNCTION_TEST_PARAM(TIME, timeBegin);
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_STRUCT();
 
     ASSERT(this != NULL);
     ASSERT(timeBegin > 0);
@@ -343,8 +348,9 @@ storageGcsAuth(StorageGcs *this, HttpHeader *httpHeader)
             // If the current token has expired then request a new one
             if (timeBegin >= this->tokenTimeExpire)
             {
-                StorageGcsAuthTokenResult tokenResult = this->keyType == storageGcsKeyTypeAuto ?
-                    storageGcsAuthAuto(this, timeBegin) : storageGcsAuthService(this, timeBegin);
+                StorageGcsAuthTokenResult tokenResult =
+                    this->keyType == storageGcsKeyTypeAuto ?
+                        storageGcsAuthAuto(this, timeBegin) : storageGcsAuthService(this, timeBegin);
 
                 MEM_CONTEXT_OBJ_BEGIN(this)
                 {
@@ -370,7 +376,7 @@ storageGcsAuth(StorageGcs *this, HttpHeader *httpHeader)
 /***********************************************************************************************************************************
 Process Gcs request
 ***********************************************************************************************************************************/
-HttpRequest *
+FN_EXTERN HttpRequest *
 storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAsyncParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -403,8 +409,8 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
             strCatFmt(path, "/%s", strZ(httpUriEncode(strSub(param.object, 1), false)));
 
         // Create header list and add content length
-        HttpHeader *requestHeader = param.header == NULL ?
-            httpHeaderNew(this->headerRedactList) : httpHeaderDup(param.header, this->headerRedactList);
+        HttpHeader *requestHeader =
+            param.header == NULL ? httpHeaderNew(this->headerRedactList) : httpHeaderDup(param.header, this->headerRedactList);
 
         // Set host
         httpHeaderPut(requestHeader, HTTP_HEADER_HOST_STR, this->endpoint);
@@ -434,7 +440,7 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
     FUNCTION_LOG_RETURN(HTTP_REQUEST, result);
 }
 
-HttpResponse *
+FN_EXTERN HttpResponse *
 storageGcsResponse(HttpRequest *request, StorageGcsResponseParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -467,7 +473,7 @@ storageGcsResponse(HttpRequest *request, StorageGcsResponseParam param)
     FUNCTION_LOG_RETURN(HTTP_RESPONSE, result);
 }
 
-HttpResponse *
+FN_EXTERN HttpResponse *
 storageGcsRequest(StorageGcs *const this, const String *const verb, const StorageGcsRequestParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -543,6 +549,8 @@ storageGcsListInternal(
         FUNCTION_LOG_PARAM(FUNCTIONP, callback);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_CALLBACK();
 
     ASSERT(this != NULL);
     ASSERT(path != NULL);
@@ -817,6 +825,7 @@ storageGcsNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWriteParam 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
     ASSERT(param.createPath);
+    ASSERT(param.truncate);
     ASSERT(param.user == NULL);
     ASSERT(param.group == NULL);
     ASSERT(param.timeModified == 0);
@@ -935,7 +944,7 @@ static const StorageInterface storageInterfaceGcs =
     .remove = storageGcsRemove,
 };
 
-Storage *
+FN_EXTERN Storage *
 storageGcsNew(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
     StorageGcsKeyType keyType, const String *key, size_t chunkSize, const String *endpoint, TimeMSec timeout, bool verifyPeer,
@@ -965,7 +974,7 @@ storageGcsNew(
 
     OBJ_NEW_BEGIN(StorageGcs, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageGcs *driver = OBJ_NEW_ALLOC();
+        StorageGcs *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), Storage::StorageGcs);
 
         *driver = (StorageGcs)
         {

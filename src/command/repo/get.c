@@ -21,10 +21,10 @@ Repository Get Command
 /***********************************************************************************************************************************
 Write source file to destination IO
 ***********************************************************************************************************************************/
-int
+static int
 storageGetProcess(IoWrite *destination)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug)
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_READ, destination);
     FUNCTION_LOG_END();
 
@@ -121,8 +121,11 @@ storageGetProcess(IoWrite *destination)
                                     !strEndsWithZ(file, BACKUP_MANIFEST_FILE INFO_COPY_EXT))
                                 {
                                     const Manifest *manifest = manifestLoadFile(
-                                        storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s/%s", strZ(stanza),
-                                        strZ(strLstGet(filePathSplitLst, 2)), BACKUP_MANIFEST_FILE), repoCipherType, cipherPass);
+                                        storageRepo(),
+                                        strNewFmt(
+                                            STORAGE_PATH_BACKUP "/%s/%s/%s", strZ(stanza), strZ(strLstGet(filePathSplitLst, 2)),
+                                            BACKUP_MANIFEST_FILE),
+                                        repoCipherType, cipherPass);
                                     cipherPass = manifestCipherSubPass(manifest);
                                 }
                             }
@@ -162,7 +165,7 @@ storageGetProcess(IoWrite *destination)
 }
 
 /**********************************************************************************************************************************/
-int
+FN_EXTERN int
 cmdStorageGet(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);

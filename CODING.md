@@ -1,5 +1,13 @@
 # pgBackRest <br/> Coding Standards
 
+## Formatting with uncrustify
+
+pgBackRest uses uncrustify to check/update the code formatting. If the `code-format` test fails in CI then reformat the code:
+```
+pgbackrest/test/test.pl --code-format
+```
+Also review the standards in the following sections below. Some standards require further explanation and others are not enforced by uncrustify.
+
 ## Standards
 
 ### Indentation
@@ -218,7 +226,7 @@ typedef struct ListPub
 } ListPub;
 
 // List size
-__attribute__((always_inline)) static inline unsigned int
+FN_INLINE_ALWAYS unsigned int
 lstSize(const List *const this)
 {
     return THIS_PUB(List)->listSize;

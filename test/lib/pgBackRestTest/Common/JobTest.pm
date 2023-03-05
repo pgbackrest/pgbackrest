@@ -65,11 +65,11 @@ sub new
         $self->{bShowOutputAsync},
         $self->{bNoCleanup},
         $self->{iRetry},
+        $self->{bBackTraceUnit},
         $self->{bValgrindUnit},
         $self->{bCoverageUnit},
         $self->{bCoverageSummary},
         $self->{bOptimize},
-        $self->{bBackTrace},
         $self->{bProfile},
         $self->{iScale},
         $self->{strTimeZone},
@@ -98,11 +98,11 @@ sub new
             {name => 'bShowOutputAsync'},
             {name => 'bNoCleanup'},
             {name => 'iRetry'},
+            {name => 'bBackTraceUnit'},
             {name => 'bValgrindUnit'},
             {name => 'bCoverageUnit'},
             {name => 'bCoverageSummary'},
             {name => 'bOptimize'},
-            {name => 'bBackTrace'},
             {name => 'bProfile'},
             {name => 'iScale'},
             {name => 'strTimeZone', required => false},
@@ -263,7 +263,7 @@ sub run
                         ' --repo-path=' . $self->{strTestPath} . '/repo' . ' --test-path=' . $self->{strTestPath} .
                         " --log-level=$self->{strLogLevel}" . ' --vm=' . $self->{oTest}->{&TEST_VM} .
                         ' --vm-id=' . $self->{iVmIdx} . ($self->{bProfile} ? ' --profile' : '') .
-                        ($bCoverage ? '' : ' --no-coverage') . ' test ' .
+                        ($self->{bBackTraceUnit} ? '' : ' --no-back-trace') . ($bCoverage ? '' : ' --no-coverage') . ' test ' .
                         $self->{oTest}->{&TEST_MODULE} . '/' . $self->{oTest}->{&TEST_NAME} . " && \\\n" .
                     # Allow stderr to be copied to stderr and stdout
                     "exec 3>&1 && \\\n" .
@@ -290,7 +290,7 @@ sub run
                     ($self->{strLogLevel} ne lc(INFO) ? " --log-level=$self->{strLogLevel}" : '') .
                     ($self->{strLogLevelTestFile} ne lc(TRACE) ? " --log-level-test-file=$self->{strLogLevelTestFile}" : '') .
                     ($self->{bLogTimestamp} ? '' : ' --no-log-timestamp') .
-                    ' --pgsql-bin=' . $self->{oTest}->{&TEST_PGSQL_BIN} .
+                    ' --psql-bin=' . $self->{oTest}->{&TEST_PGSQL_BIN} .
                     ($self->{strTimeZone} ? " --tz='$self->{strTimeZone}'" : '') .
                     ($self->{bDryRun} ? ' --dry-run' : '') .
                     ($self->{bDryRun} ? ' --vm-out' : '') .
@@ -382,19 +382,8 @@ sub end
         # Output error
         if ($iExitStatus != 0 || (defined($oExecDone->{strErrorLog}) && $oExecDone->{strErrorLog} ne ''))
         {
-            # Get stdout
+            # Get stdout (no need to get stderr since stderr is redirected to stdout)
             my $strOutput = trim($oExecDone->{strOutLog}) ? "STDOUT:\n" . trim($oExecDone->{strOutLog}) : '';
-
-            # Get stderr
-            if (defined($oExecDone->{strErrorLog}) && trim($oExecDone->{strErrorLog}) ne '')
-            {
-                if ($strOutput ne '')
-                {
-                    $strOutput .= "\n";
-                }
-
-                $strOutput .= "STDERR:\n" . trim($oExecDone->{strErrorLog});
-            }
 
             # If no stdout or stderr output something rather than a blank line
             if ($strOutput eq '')

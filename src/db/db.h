@@ -21,7 +21,7 @@ typedef struct Db Db;
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-Db *dbNew(PgClient *client, ProtocolClient *remoteClient, const Storage *storage, const String *applicationName);
+FN_EXTERN Db *dbNew(PgClient *client, ProtocolClient *remoteClient, const Storage *storage, const String *applicationName);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -40,56 +40,56 @@ typedef struct DbPub
 } DbPub;
 
 // Archive mode loaded from the archive_mode GUC
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 dbArchiveMode(const Db *const this)
 {
     return THIS_PUB(Db)->archiveMode;
 }
 
 // Archive command loaded from the archive_command GUC
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 dbArchiveCommand(const Db *const this)
 {
     return THIS_PUB(Db)->archiveCommand;
 }
 
 // Control data
-__attribute__((always_inline)) static inline PgControl
+FN_INLINE_ALWAYS PgControl
 dbPgControl(const Db *const this)
 {
     return THIS_PUB(Db)->pgControl;
 }
 
 // Data path loaded from the data_directory GUC
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 dbPgDataPath(const Db *const this)
 {
     return THIS_PUB(Db)->pgDataPath;
 }
 
 // Is the cluster a standby?
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 dbIsStandby(const Db *const this)
 {
     return THIS_PUB(Db)->standby;
 }
 
 // Version loaded from the server_version_num GUC
-__attribute__((always_inline)) static inline unsigned int
+FN_INLINE_ALWAYS unsigned int
 dbPgVersion(const Db *const this)
 {
     return THIS_PUB(Db)->pgVersion;
 }
 
 // Checkpoint timeout loaded from the checkpoint_timeout GUC
-__attribute__((always_inline)) static inline TimeMSec
+FN_INLINE_ALWAYS TimeMSec
 dbCheckpointTimeout(const Db *const this)
 {
     return THIS_PUB(Db)->checkpointTimeout;
 }
 
 // Database timeout from main/remote process
-__attribute__((always_inline)) static inline TimeMSec
+FN_INLINE_ALWAYS TimeMSec
 dbDbTimeout(const Db *const this)
 {
     return THIS_PUB(Db)->dbTimeout;
@@ -99,7 +99,7 @@ dbDbTimeout(const Db *const this)
 Functions
 ***********************************************************************************************************************************/
 // Open the db connection
-void dbOpen(Db *this);
+FN_EXTERN void dbOpen(Db *this);
 
 // Start backup and return starting lsn and wal segment name
 typedef struct DbBackupStartResult
@@ -109,7 +109,7 @@ typedef struct DbBackupStartResult
     String *walSegmentCheck;                                        // Segment used to check archiving, may be NULL
 } DbBackupStartResult;
 
-DbBackupStartResult dbBackupStart(Db *this, bool startFast, bool stopAuto, bool archiveCheck);
+FN_EXTERN DbBackupStartResult dbBackupStart(Db *this, bool startFast, bool stopAuto, bool archiveCheck);
 
 // Stop backup and return starting lsn, wal segment name, backup label, and tablespace map
 typedef struct DbBackupStopResult
@@ -120,29 +120,28 @@ typedef struct DbBackupStopResult
     String *tablespaceMap;
 } DbBackupStopResult;
 
-DbBackupStopResult dbBackupStop(Db *this);
+FN_EXTERN DbBackupStopResult dbBackupStop(Db *this);
 
 // Get list of databases in the cluster: select oid, datname, datlastsysoid from pg_database
-Pack *dbList(Db *this);
+FN_EXTERN Pack *dbList(Db *this);
 
 // Waits for replay on the standby to equal the target LSN
-void dbReplayWait(Db *this, const String *targetLsn, uint32_t targetTimeline, TimeMSec timeout);
+FN_EXTERN void dbReplayWait(Db *this, const String *targetLsn, uint32_t targetTimeline, TimeMSec timeout);
 
 // Check that the cluster is alive and correctly configured during the backup
-void dbPing(Db *const this, bool force);
+FN_EXTERN void dbPing(Db *const this, bool force);
 
 // Epoch time on the PostgreSQL host in ms
-TimeMSec dbTimeMSec(Db *this);
+FN_EXTERN TimeMSec dbTimeMSec(Db *this);
 
 // Get list of tablespaces in the cluster: select oid, datname, datlastsysoid from pg_database
-Pack *dbTablespaceList(Db *this);
+FN_EXTERN Pack *dbTablespaceList(Db *this);
 
 // Switch the WAL segment and return the segment that should have been archived
-String *dbWalSwitch(Db *this);
-void dbClose(Db *this);
+FN_EXTERN String *dbWalSwitch(Db *this);
 
 // Move to a new parent mem context
-__attribute__((always_inline)) static inline Db *
+FN_INLINE_ALWAYS Db *
 dbMove(Db *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
@@ -151,7 +150,7 @@ dbMove(Db *const this, MemContext *const parentNew)
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 dbFree(Db *const this)
 {
     objFree(this);
@@ -160,11 +159,11 @@ dbFree(Db *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-String *dbToLog(const Db *this);
+FN_EXTERN void dbToLog(const Db *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_DB_TYPE                                                                                                       \
     Db *
 #define FUNCTION_LOG_DB_FORMAT(value, buffer, bufferSize)                                                                          \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, dbToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, dbToLog, buffer, bufferSize)
 
 #endif

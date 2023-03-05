@@ -156,7 +156,7 @@ archiveGetFind(
                                 strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(cacheArchive->archiveId), strZ(path)),
                                 .expression = strNewFmt(
                                     "^%s%s-[0-f]{40}" COMPRESS_TYPE_REGEXP "{0,1}$", strZ(strSubN(archiveFileRequest, 0, 24)),
-                                        walIsPartial(archiveFileRequest) ? WAL_SEGMENT_PARTIAL_EXT : ""));
+                                    walIsPartial(archiveFileRequest) ? WAL_SEGMENT_PARTIAL_EXT : ""));
                         }
                         // Else multiple files will be requested so cache list results
                         else
@@ -171,17 +171,17 @@ archiveGetFind(
                             {
                                 MEM_CONTEXT_BEGIN(lstMemContext(cacheArchive->pathList))
                                 {
-                                    cachePath = lstAdd(
-                                        cacheArchive->pathList,
-                                        &(ArchiveGetFindCachePath)
-                                        {
-                                            .path = strDup(path),
-                                            .fileList = storageListP(
-                                                storageRepoIdx(cacheRepo->repoIdx),
-                                                strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(cacheArchive->archiveId), strZ(path)),
-                                                .expression = strNewFmt(
-                                                    "^%s[0-F]{8}-[0-f]{40}" COMPRESS_TYPE_REGEXP "{0,1}$", strZ(path))),
-                                        });
+                                    const ArchiveGetFindCachePath archiveGetFindCachePath =
+                                    {
+                                        .path = strDup(path),
+                                        .fileList = storageListP(
+                                            storageRepoIdx(cacheRepo->repoIdx),
+                                            strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(cacheArchive->archiveId), strZ(path)),
+                                            .expression = strNewFmt(
+                                                "^%s[0-F]{8}-[0-f]{40}" COMPRESS_TYPE_REGEXP "{0,1}$", strZ(path))),
+                                    };
+
+                                    cachePath = lstAdd(cacheArchive->pathList, &archiveGetFindCachePath);
                                 }
                                 MEM_CONTEXT_END();
                             }
@@ -201,39 +201,40 @@ archiveGetFind(
                         {
                             MEM_CONTEXT_BEGIN(lstMemContext(getCheckResult->archiveFileMapList))
                             {
-                                lstAdd(
-                                    matchList,
-                                    &(ArchiveGetFile)
-                                    {
-                                        .file = strNewFmt(
-                                            "%s/%s/%s", strZ(cacheArchive->archiveId), strZ(path),
-                                            strZ(strLstGet(segmentList, segmentIdx))),
-                                        .repoIdx = cacheRepo->repoIdx,
-                                        .archiveId = cacheArchive->archiveId,
-                                        .cipherType = cacheRepo->cipherType,
-                                        .cipherPassArchive = cacheRepo->cipherPassArchive,
-                                    });
+                                const ArchiveGetFile archiveGetFile =
+                                {
+                                    .file = strNewFmt(
+                                        "%s/%s/%s", strZ(cacheArchive->archiveId), strZ(path),
+                                        strZ(strLstGet(segmentList, segmentIdx))),
+                                    .repoIdx = cacheRepo->repoIdx,
+                                    .archiveId = cacheArchive->archiveId,
+                                    .cipherType = cacheRepo->cipherType,
+                                    .cipherPassArchive = cacheRepo->cipherPassArchive,
+                                };
+
+                                lstAdd(matchList, &archiveGetFile);
                             }
                             MEM_CONTEXT_END();
                         }
                     }
                     // Else if not a WAL segment, see if it exists in the archiveId path
-                    else if (storageExistsP(
-                        storageRepoIdx(cacheRepo->repoIdx), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(cacheArchive->archiveId),
-                        strZ(archiveFileRequest))))
+                    else if (
+                        storageExistsP(
+                            storageRepoIdx(cacheRepo->repoIdx),
+                            strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(cacheArchive->archiveId), strZ(archiveFileRequest))))
                     {
                         MEM_CONTEXT_BEGIN(lstMemContext(getCheckResult->archiveFileMapList))
                         {
-                            lstAdd(
-                                matchList,
-                                &(ArchiveGetFile)
-                                {
-                                    .file = strNewFmt("%s/%s", strZ(cacheArchive->archiveId), strZ(archiveFileRequest)),
-                                    .repoIdx = cacheRepo->repoIdx,
-                                    .archiveId = cacheArchive->archiveId,
-                                    .cipherType = cacheRepo->cipherType,
-                                    .cipherPassArchive = cacheRepo->cipherPassArchive,
-                                });
+                            const ArchiveGetFile archiveGetFile =
+                            {
+                                .file = strNewFmt("%s/%s", strZ(cacheArchive->archiveId), strZ(archiveFileRequest)),
+                                .repoIdx = cacheRepo->repoIdx,
+                                .archiveId = cacheArchive->archiveId,
+                                .cipherType = cacheRepo->cipherType,
+                                .cipherPassArchive = cacheRepo->cipherPassArchive,
+                            };
+
+                            lstAdd(matchList, &archiveGetFile);
                         }
                         MEM_CONTEXT_END();
                     }
@@ -264,7 +265,6 @@ archiveGetFind(
                 getCheckResult->warnList = strLstMove(fileWarnList, memContextCurrent());
             }
             MEM_CONTEXT_END();
-
         }
         // Else if a file was found
         else if (!lstEmpty(matchList))
@@ -318,7 +318,7 @@ archiveGetFind(
                         getCheckResult->errorFile = strDup(archiveFileRequest);
                         getCheckResult->errorMessage = strNewFmt(
                             "duplicates found for WAL segment %s:%s\n"
-                                "HINT: are multiple primaries archiving to this stanza?",
+                            "HINT: are multiple primaries archiving to this stanza?",
                             strZ(archiveFileRequest), strZ(message));
                         getCheckResult->warnList = strLstMove(fileWarnList, memContextCurrent());
                     }
@@ -362,6 +362,8 @@ archiveGetCheck(const StringList *archiveRequestList)
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING_LIST, archiveRequestList);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_STRUCT();
 
     ASSERT(archiveRequestList != NULL);
     ASSERT(!strLstEmpty(archiveRequestList));
@@ -597,7 +599,7 @@ queueNeed(const String *walSegment, bool found, uint64_t queueSize, size_t walSe
 }
 
 /**********************************************************************************************************************************/
-int
+FN_EXTERN int
 cmdArchiveGet(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
@@ -843,7 +845,8 @@ typedef struct ArchiveGetAsyncData
     unsigned int archiveFileIdx;                                    // Current index in the list to be processed
 } ArchiveGetAsyncData;
 
-static ProtocolParallelJob *archiveGetAsyncCallback(void *data, unsigned int clientIdx)
+static ProtocolParallelJob *
+archiveGetAsyncCallback(void *const data, const unsigned int clientIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
@@ -894,7 +897,7 @@ static ProtocolParallelJob *archiveGetAsyncCallback(void *data, unsigned int cli
     FUNCTION_TEST_RETURN(PROTOCOL_PARALLEL_JOB, result);
 }
 
-void
+FN_EXTERN void
 cmdArchiveGetAsync(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);

@@ -5,23 +5,27 @@ Cryptographic Hash
 
 #include <string.h>
 
-#include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
 #include <openssl/hmac.h>
 
+#include "common/crypto/common.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
 #include "common/io/filter/filter.h"
 #include "common/log.h"
 #include "common/type/object.h"
 #include "common/type/pack.h"
-#include "common/crypto/common.h"
 
 /***********************************************************************************************************************************
 Hashes for zero-length files (i.e., seed value)
 ***********************************************************************************************************************************/
-STRING_EXTERN(HASH_TYPE_SHA1_ZERO_STR,                              HASH_TYPE_SHA1_ZERO);
-STRING_EXTERN(HASH_TYPE_SHA256_ZERO_STR,                            HASH_TYPE_SHA256_ZERO);
+BUFFER_EXTERN(
+    HASH_TYPE_SHA1_ZERO_BUF, 0xda, 0x39, 0xa3, 0xee, 0x5e, 0x6b, 0x4b, 0x0d, 0x32, 0x55, 0xbf, 0xef, 0x95, 0x60, 0x18, 0x90, 0xaf,
+    0xd8, 0x07, 0x09);
+BUFFER_EXTERN(
+    HASH_TYPE_SHA256_ZERO_BUF, 0xe3, 0xb0, 0xc4, 0x42, 0x98, 0xfc, 0x1c, 0x14, 0x9a, 0xfb, 0xf4, 0xc8, 0x99, 0x6f, 0xb9, 0x24, 0x27,
+    0xae, 0x41, 0xe4, 0x64, 0x9b, 0x93, 0x4c, 0xa4, 0x95, 0x99, 0x1b, 0x78, 0x52, 0xb8, 0x55);
 
 /***********************************************************************************************************************************
 Include local MD5 code
@@ -45,7 +49,7 @@ Macros for function logging
 #define FUNCTION_LOG_CRYPTO_HASH_TYPE                                                                                              \
     CryptoHash *
 #define FUNCTION_LOG_CRYPTO_HASH_FORMAT(value, buffer, bufferSize)                                                                 \
-    objToLog(value, "CryptoHash", buffer, bufferSize)
+    objNameToLog(value, "CryptoHash", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Free hash context
@@ -152,7 +156,7 @@ cryptoHashResult(THIS_VOID)
     {
         PackWrite *const packWrite = pckWriteNewP();
 
-        pckWriteStrP(packWrite, bufHex(cryptoHash(this)));
+        pckWriteBinP(packWrite, cryptoHash(this));
         pckWriteEndP(packWrite);
 
         result = pckMove(pckWriteResult(packWrite), memContextPrior());
@@ -163,7 +167,7 @@ cryptoHashResult(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-IoFilter *
+FN_EXTERN IoFilter *
 cryptoHashNew(const HashType type)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -180,7 +184,7 @@ cryptoHashNew(const HashType type)
 
     OBJ_NEW_BEGIN(CryptoHash, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        CryptoHash *driver = OBJ_NEW_ALLOC();
+        CryptoHash *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::CryptoHash);
         *driver = (CryptoHash){0};
 
         // Use local MD5 implementation since FIPS-enabled systems do not allow MD5. This is a bit misguided since there are valid
@@ -234,7 +238,7 @@ cryptoHashNew(const HashType type)
     FUNCTION_LOG_RETURN(IO_FILTER, this);
 }
 
-IoFilter *
+FN_EXTERN IoFilter *
 cryptoHashNewPack(const Pack *const paramList)
 {
     FUNCTION_TEST_BEGIN();
@@ -253,7 +257,7 @@ cryptoHashNewPack(const Pack *const paramList)
 }
 
 /**********************************************************************************************************************************/
-Buffer *
+FN_EXTERN Buffer *
 cryptoHashOne(const HashType type, const Buffer *message)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -287,7 +291,7 @@ cryptoHashOne(const HashType type, const Buffer *message)
 }
 
 /**********************************************************************************************************************************/
-Buffer *
+FN_EXTERN Buffer *
 cryptoHmacOne(const HashType type, const Buffer *const key, const Buffer *const message)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

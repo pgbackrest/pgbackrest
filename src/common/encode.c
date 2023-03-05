@@ -6,15 +6,15 @@ Binary to String Encode/Decode
 #include <stdbool.h>
 #include <string.h>
 
-#include "common/encode.h"
 #include "common/debug.h"
+#include "common/encode.h"
 #include "common/error.h"
 
 /***********************************************************************************************************************************
 Assert that encoding type is valid. This needs to be kept up to date with the last item in the enum.
 ***********************************************************************************************************************************/
 #define ASSERT_ENCODE_TYPE_VALID(type)                                                                                             \
-    ASSERT(type <= encodeBase64Url);
+    ASSERT(type <= encodingHex);
 
 /***********************************************************************************************************************************
 Base64 encoding/decoding
@@ -99,7 +99,7 @@ encodeToStrSizeBase64(size_t sourceSize)
 }
 
 /**********************************************************************************************************************************/
-static const int decodeBase64Lookup[256] =
+static const int8_t decodeBase64Lookup[256] =
 {
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -181,14 +181,16 @@ decodeToBinBase64(const char *source, unsigned char *destination)
         // Second character is optional
         if (source[sourceIdx + 2] != 0x3d)
         {
-            destination[destinationIdx++] = (unsigned char)
-                (decodeBase64Lookup[(int)source[sourceIdx + 1]] << 4 | decodeBase64Lookup[(int)source[sourceIdx + 2]] >> 2);
+            destination[destinationIdx++] =
+                (unsigned char)
+                ((decodeBase64Lookup[(int)source[sourceIdx + 1]] << 4) | (decodeBase64Lookup[(int)source[sourceIdx + 2]] >> 2));
         }
 
         // Third character is optional
         if (source[sourceIdx + 3] != 0x3d)
         {
-            destination[destinationIdx++] = (unsigned char)
+            destination[destinationIdx++] =
+                (unsigned char)
                 (((decodeBase64Lookup[(int)source[sourceIdx + 2]] << 6) & 0xc0) | decodeBase64Lookup[(int)source[sourceIdx + 3]]);
         }
     }
@@ -225,7 +227,7 @@ decodeToBinSizeBase64(const char *source)
 }
 
 /***********************************************************************************************************************************
-Base64 encoding
+Base64Url encoding
 ***********************************************************************************************************************************/
 static const char encodeBase64LookupUrl[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
@@ -315,10 +317,137 @@ encodeToStrSizeBase64Url(size_t sourceSize)
 }
 
 /***********************************************************************************************************************************
+Hex encoding/decoding
+***********************************************************************************************************************************/
+static const char encodeHexLookup[] = "0123456789abcdef";
+
+static void
+encodeToStrHex(const unsigned char *const source, const size_t sourceSize, char *const destination)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(UCHARDATA, source);
+        FUNCTION_TEST_PARAM(SIZE, sourceSize);
+        FUNCTION_TEST_PARAM_P(CHARDATA, destination);
+    FUNCTION_TEST_END();
+
+    ASSERT(source != NULL);
+    ASSERT(destination != NULL);
+
+    unsigned int destinationIdx = 0;
+
+    // Encode the string from one bytes to two characters
+    for (unsigned int sourceIdx = 0; sourceIdx < sourceSize; sourceIdx += 1)
+    {
+        destination[destinationIdx++] = encodeHexLookup[source[sourceIdx] >> 4];
+        destination[destinationIdx++] = encodeHexLookup[source[sourceIdx] & 0xF];
+    }
+
+    // Zero-terminate the string
+    destination[destinationIdx] = 0;
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+static size_t
+encodeToStrSizeHex(const size_t sourceSize)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(SIZE, sourceSize);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(SIZE, sourceSize * 2);
+}
+
+/**********************************************************************************************************************************/
+// {uncrustify_off - array alignment}
+static const int8_t decodeHexLookup[256] =
+{
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+     0,  1,  2,  3,  4,  5,  6,  7,  8,  9, -1, -1, -1, -1, -1, -1,
+    -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+};
+// {uncrustify_on}
+
+static void
+decodeToBinValidateHex(const char *const source)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGZ, source);
+    FUNCTION_TEST_END();
+
+    // Check for the correct length
+    const size_t sourceSize = strlen(source);
+
+    if (sourceSize % 2 != 0)
+        THROW_FMT(FormatError, "hex size %zu is not evenly divisible by 2", sourceSize);
+
+    // Check all characters
+    for (unsigned int sourceIdx = 0; sourceIdx < sourceSize; sourceIdx++)
+    {
+        if (decodeHexLookup[(int)source[sourceIdx]] == -1)
+            THROW_FMT(FormatError, "hex invalid character found at position %u", sourceIdx);
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+static void
+decodeToBinHex(const char *const source, unsigned char *const destination)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGZ, source);
+        FUNCTION_TEST_PARAM_P(UCHARDATA, destination);
+    FUNCTION_TEST_END();
+
+    // Validate encoded string
+    decodeToBinValidateHex(source);
+
+    int destinationIdx = 0;
+
+    // Decode the binary data from two characters to one byte
+    for (unsigned int sourceIdx = 0; sourceIdx < strlen(source); sourceIdx += 2)
+    {
+        destination[destinationIdx++] =
+            (unsigned char)(decodeHexLookup[(int)source[sourceIdx]] << 4 | decodeHexLookup[(int)source[sourceIdx + 1]]);
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+static size_t
+decodeToBinSizeHex(const char *const source)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGZ, source);
+    FUNCTION_TEST_END();
+
+    // Validate encoded string
+    decodeToBinValidateHex(source);
+
+    FUNCTION_TEST_RETURN(SIZE, strlen(source) / 2);
+}
+
+/***********************************************************************************************************************************
 Generic encoding/decoding
 ***********************************************************************************************************************************/
-void
-encodeToStr(EncodeType type, const unsigned char *source, size_t sourceSize, char *destination)
+FN_EXTERN void
+encodeToStr(const EncodingType type, const unsigned char *const source, const size_t sourceSize, char *const destination)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, type);
@@ -331,12 +460,16 @@ encodeToStr(EncodeType type, const unsigned char *source, size_t sourceSize, cha
 
     switch (type)
     {
-        case encodeBase64:
+        case encodingBase64:
             encodeToStrBase64(source, sourceSize, destination);
             break;
 
-        case encodeBase64Url:
+        case encodingBase64Url:
             encodeToStrBase64Url(source, sourceSize, destination);
+            break;
+
+        case encodingHex:
+            encodeToStrHex(source, sourceSize, destination);
             break;
     }
 
@@ -344,8 +477,8 @@ encodeToStr(EncodeType type, const unsigned char *source, size_t sourceSize, cha
 }
 
 /**********************************************************************************************************************************/
-size_t
-encodeToStrSize(EncodeType type, size_t sourceSize)
+FN_EXTERN size_t
+encodeToStrSize(const EncodingType type, const size_t sourceSize)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, type);
@@ -358,12 +491,16 @@ encodeToStrSize(EncodeType type, size_t sourceSize)
 
     switch (type)
     {
-        case encodeBase64:
+        case encodingBase64:
             destinationSize = encodeToStrSizeBase64(sourceSize);
             break;
 
-        case encodeBase64Url:
+        case encodingBase64Url:
             destinationSize = encodeToStrSizeBase64Url(sourceSize);
+            break;
+
+        case encodingHex:
+            destinationSize = encodeToStrSizeHex(sourceSize);
             break;
     }
 
@@ -371,8 +508,8 @@ encodeToStrSize(EncodeType type, size_t sourceSize)
 }
 
 /**********************************************************************************************************************************/
-void
-decodeToBin(EncodeType type, const char *source, unsigned char *destination)
+FN_EXTERN void
+decodeToBin(const EncodingType type, const char *const source, unsigned char *const destination)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, type);
@@ -384,8 +521,12 @@ decodeToBin(EncodeType type, const char *source, unsigned char *destination)
 
     switch (type)
     {
-        case encodeBase64:
+        case encodingBase64:
             decodeToBinBase64(source, destination);
+            break;
+
+        case encodingHex:
+            decodeToBinHex(source, destination);
             break;
 
         default:
@@ -396,8 +537,8 @@ decodeToBin(EncodeType type, const char *source, unsigned char *destination)
 }
 
 /**********************************************************************************************************************************/
-size_t
-decodeToBinSize(EncodeType type, const char *source)
+FN_EXTERN size_t
+decodeToBinSize(const EncodingType type, const char *const source)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, type);
@@ -410,8 +551,12 @@ decodeToBinSize(EncodeType type, const char *source)
 
     switch (type)
     {
-        case encodeBase64:
+        case encodingBase64:
             destinationSize = decodeToBinSizeBase64(source);
+            break;
+
+        case encodingHex:
+            destinationSize = decodeToBinSizeHex(source);
             break;
 
         default:

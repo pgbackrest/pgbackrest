@@ -18,10 +18,10 @@ struct HttpSession
 };
 
 /**********************************************************************************************************************************/
-HttpSession *
+FN_EXTERN HttpSession *
 httpSessionNew(HttpClient *httpClient, IoSession *ioSession)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug)
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(HTTP_CLIENT, httpClient);
         FUNCTION_LOG_PARAM(IO_SESSION, ioSession);
     FUNCTION_LOG_END();
@@ -47,10 +47,10 @@ httpSessionNew(HttpClient *httpClient, IoSession *ioSession)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 httpSessionDone(HttpSession *this)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug)
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(HTTP_SESSION, this);
     FUNCTION_LOG_END();
 
@@ -62,7 +62,7 @@ httpSessionDone(HttpSession *this)
 }
 
 /**********************************************************************************************************************************/
-IoRead *
+FN_EXTERN IoRead *
 httpSessionIoRead(HttpSession *const this, const HttpSessionIoReadParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -76,7 +76,7 @@ httpSessionIoRead(HttpSession *const this, const HttpSessionIoReadParam param)
 }
 
 /**********************************************************************************************************************************/
-IoWrite *
+FN_EXTERN IoWrite *
 httpSessionIoWrite(HttpSession *this)
 {
     FUNCTION_TEST_BEGIN();

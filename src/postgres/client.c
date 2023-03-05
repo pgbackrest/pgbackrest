@@ -39,7 +39,7 @@ pgClientFreeResource(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-PgClient *
+FN_EXTERN PgClient *
 pgClientNew(const String *host, const unsigned int port, const String *database, const String *user, const TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -118,7 +118,7 @@ pgClientEscape(const String *string)
 }
 
 /**********************************************************************************************************************************/
-PgClient *
+FN_EXTERN PgClient *
 pgClientOpen(PgClient *this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -165,7 +165,7 @@ pgClientOpen(PgClient *this)
 }
 
 /**********************************************************************************************************************************/
-Pack *
+FN_EXTERN Pack *
 pgClientQuery(PgClient *const this, const String *const query, const PgClientQueryResult resultType)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -357,7 +357,7 @@ pgClientQuery(PgClient *const this, const String *const query, const PgClientQue
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 pgClientClose(PgClient *this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -377,10 +377,22 @@ pgClientClose(PgClient *this)
 }
 
 /**********************************************************************************************************************************/
-String *
-pgClientToLog(const PgClient *this)
+FN_EXTERN void
+pgClientToLog(const PgClient *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{host: %s, port: %u, database: %s, user: %s, queryTimeout %" PRIu64 "}", strZ(strToLog(pgClientHost(this))),
-        pgClientPort(this), strZ(strToLog(pgClientDatabase(this))), strZ(strToLog(pgClientUser(this))), pgClientTimeout(this));
+    strStcCat(debugLog, "{host: ");
+    strStcResultSizeInc(
+        debugLog,
+        FUNCTION_LOG_OBJECT_FORMAT(pgClientHost(this), strToLog, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+
+    strStcCat(debugLog, ", database: ");
+    strToLog(pgClientDatabase(this), debugLog);
+
+    strStcCat(debugLog, ", user: ");
+    strStcResultSizeInc(
+        debugLog,
+        FUNCTION_LOG_OBJECT_FORMAT(pgClientUser(this), strToLog, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+
+    strStcFmt(
+        debugLog, ", port: %u, queryTimeout %" PRIu64 "}", pgClientPort(this), pgClientTimeout(this));
 }

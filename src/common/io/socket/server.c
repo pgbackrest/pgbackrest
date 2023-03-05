@@ -4,16 +4,16 @@ Socket Server
 #include "build.auto.h"
 
 #include <netinet/in.h>
-#include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include "common/debug.h"
-#include "common/log.h"
 #include "common/io/server.h"
-#include "common/io/socket/server.h"
 #include "common/io/socket/common.h"
+#include "common/io/socket/server.h"
 #include "common/io/socket/session.h"
+#include "common/log.h"
 #include "common/memContext.h"
 #include "common/stat.h"
 #include "common/type/object.h"
@@ -40,18 +40,18 @@ typedef struct SocketServer
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-static String *
-sckServerToLog(const THIS_VOID)
+static void
+sckServerToLog(const THIS_VOID, StringStatic *const debugLog)
 {
     THIS(const SocketServer);
 
-    return strNewFmt("{address: %s, port: %u, timeout: %" PRIu64 "}", strZ(this->address), this->port, this->timeout);
+    strStcFmt(debugLog, "{address: %s, port: %u, timeout: %" PRIu64 "}", strZ(this->address), this->port, this->timeout);
 }
 
 #define FUNCTION_LOG_SOCKET_SERVER_TYPE                                                                                            \
     SocketServer *
 #define FUNCTION_LOG_SOCKET_SERVER_FORMAT(value, buffer, bufferSize)                                                               \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, sckServerToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, sckServerToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Free connection
@@ -141,10 +141,10 @@ static const IoServerInterface sckServerInterface =
     .toLog = sckServerToLog,
 };
 
-IoServer *
+FN_EXTERN IoServer *
 sckServerNew(const String *const address, const unsigned int port, const TimeMSec timeout)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug)
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, address);
         FUNCTION_LOG_PARAM(UINT, port);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
@@ -157,7 +157,7 @@ sckServerNew(const String *const address, const unsigned int port, const TimeMSe
 
     OBJ_NEW_BEGIN(SocketServer, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        SocketServer *const driver = OBJ_NEW_ALLOC();
+        SocketServer *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoServer::SocketServer);
 
         *driver = (SocketServer)
         {

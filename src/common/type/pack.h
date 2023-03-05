@@ -94,7 +94,7 @@ cumulative field ID. At the end of a container the numbering will continue from 
 Minimum number of extra bytes to allocate for packs that are growing or are likely to grow
 ***********************************************************************************************************************************/
 #ifndef PACK_EXTRA_MIN
-    #define PACK_EXTRA_MIN                                          128
+#define PACK_EXTRA_MIN                                              128
 #endif
 
 /***********************************************************************************************************************************
@@ -123,7 +123,6 @@ typedef enum
     pckTypeObj = STRID5("obj", 0x284f0),
     pckTypeMode = STRID5("mode", 0x291ed0),
     pckTypePack = STRID5("pack", 0x58c300),
-    pckTypePtr = STRID5("ptr", 0x4a900),
     pckTypeStr = STRID5("str", 0x4a930),
     pckTypeStrId = STRID5("strid", 0x44ca930),
     pckTypeTime = STRID5("time", 0x2b5340),
@@ -135,28 +134,28 @@ typedef enum
 Pack Functions
 ***********************************************************************************************************************************/
 // Duplicate pack
-__attribute__((always_inline)) static inline Pack *
+FN_INLINE_ALWAYS Pack *
 pckDup(const Pack *const this)
 {
-    return (Pack *)bufDup((const Buffer *)this);
+    return (Pack *)OBJ_NAME(bufDup((const Buffer *)this), Pack::Buffer);
 }
 
 // Cast Buffer to Pack
-__attribute__((always_inline)) static inline const Pack *
+FN_INLINE_ALWAYS const Pack *
 pckFromBuf(const Buffer *const buffer)
 {
     return (const Pack *)buffer;
 }
 
 // Move to a new parent mem context
-__attribute__((always_inline)) static inline Pack *
+FN_INLINE_ALWAYS Pack *
 pckMove(Pack *const this, MemContext *const parentNew)
 {
     return (Pack *)bufMove((Buffer *)this, parentNew);
 }
 
 // Cast Pack to Buffer
-__attribute__((always_inline)) static inline const Buffer *
+FN_INLINE_ALWAYS const Buffer *
 pckToBuf(const Pack *const pack)
 {
     return (const Buffer *)pack;
@@ -166,10 +165,10 @@ pckToBuf(const Pack *const pack)
 Read Constructors
 ***********************************************************************************************************************************/
 // Note that the pack is not moved into the PackRead mem context and must be moved explicitly if the PackRead object is moved.
-PackRead *pckReadNew(const Pack *pack);
-PackRead *pckReadNewC(const unsigned char *const buffer, size_t size);
+FN_EXTERN PackRead *pckReadNew(const Pack *pack);
+FN_EXTERN PackRead *pckReadNewC(const unsigned char *const buffer, size_t size);
 
-PackRead *pckReadNewIo(IoRead *read);
+FN_EXTERN PackRead *pckReadNewIo(IoRead *read);
 
 /***********************************************************************************************************************************
 Read Functions
@@ -182,41 +181,41 @@ typedef struct PackIdParam
 
 // Read next field. This is useful when the type of the next field is unknown, i.e. a completely dynamic data structure, or for
 // debugging. If you just need to know if the field exists or not, then use pckReadNullP().
-bool pckReadNext(PackRead *this);
+FN_EXTERN bool pckReadNext(PackRead *this);
 
 // Current field buffer for fields that have a size, e.g. bin. Can only be used when the pack was created with pckReadNew(). Note
 // that this pointer is tied to the buffer the pack was created with so be careful not to free it too soon.
-const unsigned char *pckReadBufPtr(PackRead *this);
+FN_EXTERN const unsigned char *pckReadBufPtr(PackRead *this);
 
 // Consume the next field regardless of type.
-void pckReadConsume(PackRead *this);
+FN_EXTERN void pckReadConsume(PackRead *this);
 
 // Current field id. Set after a call to pckReadNext().
-unsigned int pckReadId(PackRead *this);
+FN_EXTERN unsigned int pckReadId(PackRead *this);
 
 // Current field size for fields that have a size, e.g. bin
-size_t pckReadSize(PackRead *this);
+FN_EXTERN size_t pckReadSize(PackRead *this);
 
 // Current field type. Set after a call to pckReadNext().
-PackType pckReadType(PackRead *this);
+FN_EXTERN PackType pckReadType(PackRead *this);
 
 // Is the field NULL? If the field is NULL the id will be advanced so the field does not need to be read explicitly. If the field is
 // not NULL then the id is not advanced since a subsequent read is expected.
 #define pckReadNullP(this, ...)                                                                                                    \
     pckReadNull(this, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-bool pckReadNull(PackRead *this, PackIdParam param);
+FN_EXTERN bool pckReadNull(PackRead *this, PackIdParam param);
 
 // Read array begin/end
 #define pckReadArrayBeginP(this, ...)                                                                                              \
     pckReadArrayBegin(this, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-void pckReadArrayBegin(PackRead *this, PackIdParam param);
+FN_EXTERN void pckReadArrayBegin(PackRead *this, PackIdParam param);
 
 #define pckReadArrayEndP(this)                                                                                                     \
     pckReadArrayEnd(this)
 
-void pckReadArrayEnd(PackRead *this);
+FN_EXTERN void pckReadArrayEnd(PackRead *this);
 
 // Read binary
 typedef struct PckReadBinParam
@@ -228,7 +227,7 @@ typedef struct PckReadBinParam
 #define pckReadBinP(this, ...)                                                                                                     \
     pckReadBin(this, (PckReadBinParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-Buffer *pckReadBin(PackRead *this, PckReadBinParam param);
+FN_EXTERN Buffer *pckReadBin(PackRead *this, PckReadBinParam param);
 
 // Read boolean
 typedef struct PckReadBoolParam
@@ -241,7 +240,7 @@ typedef struct PckReadBoolParam
 #define pckReadBoolP(this, ...)                                                                                                    \
     pckReadBool(this, (PckReadBoolParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-bool pckReadBool(PackRead *this, PckReadBoolParam param);
+FN_EXTERN bool pckReadBool(PackRead *this, PckReadBoolParam param);
 
 // Read 32-bit signed integer
 typedef struct PckReadI32Param
@@ -254,7 +253,7 @@ typedef struct PckReadI32Param
 #define pckReadI32P(this, ...)                                                                                                     \
     pckReadI32(this, (PckReadI32Param){VAR_PARAM_INIT, __VA_ARGS__})
 
-int32_t pckReadI32(PackRead *this, PckReadI32Param param);
+FN_EXTERN int32_t pckReadI32(PackRead *this, PckReadI32Param param);
 
 // Read 64-bit signed integer
 typedef struct PckReadI64Param
@@ -267,7 +266,7 @@ typedef struct PckReadI64Param
 #define pckReadI64P(this, ...)                                                                                                     \
     pckReadI64(this, (PckReadI64Param){VAR_PARAM_INIT, __VA_ARGS__})
 
-int64_t pckReadI64(PackRead *this, PckReadI64Param param);
+FN_EXTERN int64_t pckReadI64(PackRead *this, PckReadI64Param param);
 
 // Read mode
 typedef struct PckReadModeParam
@@ -280,10 +279,10 @@ typedef struct PckReadModeParam
 #define pckReadModeP(this, ...)                                                                                                    \
     pckReadMode(this, (PckReadModeParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-mode_t pckReadMode(PackRead *this, PckReadModeParam param);
+FN_EXTERN mode_t pckReadMode(PackRead *this, PckReadModeParam param);
 
 // Move to a new parent mem context
-__attribute__((always_inline)) static inline PackRead *
+FN_INLINE_ALWAYS PackRead *
 pckReadMove(PackRead *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
@@ -293,12 +292,12 @@ pckReadMove(PackRead *const this, MemContext *const parentNew)
 #define pckReadObjBeginP(this, ...)                                                                                                \
     pckReadObjBegin(this, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-void pckReadObjBegin(PackRead *this, PackIdParam param);
+FN_EXTERN void pckReadObjBegin(PackRead *this, PackIdParam param);
 
 #define pckReadObjEndP(this)                                                                                                       \
     pckReadObjEnd(this)
 
-void pckReadObjEnd(PackRead *this);
+FN_EXTERN void pckReadObjEnd(PackRead *this);
 
 // Read pack
 typedef struct PckReadPackParam
@@ -310,32 +309,20 @@ typedef struct PckReadPackParam
 #define pckReadPackReadP(this, ...)                                                                                                \
     pckReadPackRead(this, (PckReadPackParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-PackRead *pckReadPackRead(PackRead *this, PckReadPackParam param);
+FN_EXTERN PackRead *pckReadPackRead(PackRead *this, PckReadPackParam param);
 
 // Read pack using the same buffer passed to pckReadNew(). Note that this pointer is tied to the buffer the pack was created with so
 // be careful not to free it too soon.
 #define pckReadPackReadConstP(this, ...)                                                                                           \
     pckReadPackReadConst(this, (PckReadPackParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-PackRead *pckReadPackReadConst(PackRead *this, PckReadPackParam param);
+FN_EXTERN PackRead *pckReadPackReadConst(PackRead *this, PckReadPackParam param);
 
 // Read pack buffer
 #define pckReadPackP(this, ...)                                                                                                    \
     pckReadPack(this, (PckReadPackParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-Pack *pckReadPack(PackRead *this, PckReadPackParam param);
-
-// Read pointer. Use with extreme caution. Pointers cannot be sent to another host -- they must only be used locally.
-typedef struct PckReadPtrParam
-{
-    VAR_PARAM_HEADER;
-    unsigned int id;
-} PckReadPtrParam;
-
-#define pckReadPtrP(this, ...)                                                                                                     \
-    pckReadPtr(this, (PckReadPtrParam){VAR_PARAM_INIT, __VA_ARGS__})
-
-void *pckReadPtr(PackRead *this, PckReadPtrParam param);
+FN_EXTERN Pack *pckReadPack(PackRead *this, PckReadPackParam param);
 
 // Read string
 typedef struct PckReadStrParam
@@ -348,7 +335,7 @@ typedef struct PckReadStrParam
 #define pckReadStrP(this, ...)                                                                                                     \
     pckReadStr(this, (PckReadStrParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-String *pckReadStr(PackRead *this, PckReadStrParam param);
+FN_EXTERN String *pckReadStr(PackRead *this, PckReadStrParam param);
 
 // Read string id
 typedef struct PckReadStrIdParam
@@ -361,7 +348,7 @@ typedef struct PckReadStrIdParam
 #define pckReadStrIdP(this, ...)                                                                                                   \
     pckReadStrId(this, (PckReadStrIdParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-uint64_t pckReadStrId(PackRead *this, PckReadStrIdParam param);
+FN_EXTERN uint64_t pckReadStrId(PackRead *this, PckReadStrIdParam param);
 
 // Read string list
 typedef struct PckReadStrLstParam
@@ -373,7 +360,7 @@ typedef struct PckReadStrLstParam
 #define pckReadStrLstP(this, ...)                                                                                                  \
     pckReadStrLst(this, (PckReadStrLstParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-StringList *pckReadStrLst(PackRead *const this, PckReadStrLstParam param);
+FN_EXTERN StringList *pckReadStrLst(PackRead *const this, PckReadStrLstParam param);
 
 // Read time
 typedef struct PckReadTimeParam
@@ -386,7 +373,7 @@ typedef struct PckReadTimeParam
 #define pckReadTimeP(this, ...)                                                                                                    \
     pckReadTime(this, (PckReadTimeParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-time_t pckReadTime(PackRead *this, PckReadTimeParam param);
+FN_EXTERN time_t pckReadTime(PackRead *this, PckReadTimeParam param);
 
 // Read 32-bit unsigned integer
 typedef struct PckReadU32Param
@@ -399,7 +386,7 @@ typedef struct PckReadU32Param
 #define pckReadU32P(this, ...)                                                                                                     \
     pckReadU32(this, (PckReadU32Param){VAR_PARAM_INIT, __VA_ARGS__})
 
-uint32_t pckReadU32(PackRead *this, PckReadU32Param param);
+FN_EXTERN uint32_t pckReadU32(PackRead *this, PckReadU32Param param);
 
 // Read 64-bit unsigned integer
 typedef struct PckReadU64Param
@@ -412,18 +399,18 @@ typedef struct PckReadU64Param
 #define pckReadU64P(this, ...)                                                                                                     \
     pckReadU64(this, (PckReadU64Param){VAR_PARAM_INIT, __VA_ARGS__})
 
-uint64_t pckReadU64(PackRead *this, PckReadU64Param param);
+FN_EXTERN uint64_t pckReadU64(PackRead *this, PckReadU64Param param);
 
 // Read end
 #define pckReadEndP(this)                                                                                                          \
     pckReadEnd(this)
 
-void pckReadEnd(PackRead *this);
+FN_EXTERN void pckReadEnd(PackRead *this);
 
 /***********************************************************************************************************************************
 Read Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 pckReadFree(PackRead *const this)
 {
     objFree(this);
@@ -441,9 +428,9 @@ typedef struct PckWriteNewParam
 #define pckWriteNewP(...)                                                                                                          \
     pckWriteNew((PckWriteNewParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-PackWrite *pckWriteNew(PckWriteNewParam param);
+FN_EXTERN PackWrite *pckWriteNew(PckWriteNewParam param);
 
-PackWrite *pckWriteNewIo(IoWrite *write);
+FN_EXTERN PackWrite *pckWriteNewIo(IoWrite *write);
 
 /***********************************************************************************************************************************
 Write Functions
@@ -452,12 +439,12 @@ Write Functions
 #define pckWriteArrayBeginP(this, ...)                                                                                             \
     pckWriteArrayBegin(this, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-PackWrite *pckWriteArrayBegin(PackWrite *this, PackIdParam param);
+FN_EXTERN PackWrite *pckWriteArrayBegin(PackWrite *this, PackIdParam param);
 
 #define pckWriteArrayEndP(this)                                                                                                    \
     pckWriteArrayEnd(this)
 
-PackWrite *pckWriteArrayEnd(PackWrite *this);
+FN_EXTERN PackWrite *pckWriteArrayEnd(PackWrite *this);
 
 // Write binary
 typedef struct PckWriteBinParam
@@ -469,7 +456,7 @@ typedef struct PckWriteBinParam
 #define pckWriteBinP(this, value, ...)                                                                                             \
     pckWriteBin(this, value, (PckWriteBinParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-PackWrite *pckWriteBin(PackWrite *this, const Buffer *value, PckWriteBinParam param);
+FN_EXTERN PackWrite *pckWriteBin(PackWrite *this, const Buffer *value, PckWriteBinParam param);
 
 // Write boolean
 typedef struct PckWriteBoolParam
@@ -483,7 +470,7 @@ typedef struct PckWriteBoolParam
 #define pckWriteBoolP(this, value, ...)                                                                                            \
     pckWriteBool(this, value, (PckWriteBoolParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-PackWrite *pckWriteBool(PackWrite *this, bool value, PckWriteBoolParam param);
+FN_EXTERN PackWrite *pckWriteBool(PackWrite *this, bool value, PckWriteBoolParam param);
 
 // Write 32-bit signed integer
 typedef struct PckWriteI32Param
@@ -497,7 +484,7 @@ typedef struct PckWriteI32Param
 #define pckWriteI32P(this, value, ...)                                                                                             \
     pckWriteI32(this, value, (PckWriteI32Param){VAR_PARAM_INIT, __VA_ARGS__})
 
-PackWrite *pckWriteI32(PackWrite *this, int32_t value, PckWriteI32Param param);
+FN_EXTERN PackWrite *pckWriteI32(PackWrite *this, int32_t value, PckWriteI32Param param);
 
 // Write 64-bit signed integer
 typedef struct PckWriteI64Param
@@ -511,7 +498,7 @@ typedef struct PckWriteI64Param
 #define pckWriteI64P(this, value, ...)                                                                                             \
     pckWriteI64(this, value, (PckWriteI64Param){VAR_PARAM_INIT, __VA_ARGS__})
 
-PackWrite *pckWriteI64(PackWrite *this, int64_t value, PckWriteI64Param param);
+FN_EXTERN PackWrite *pckWriteI64(PackWrite *this, int64_t value, PckWriteI64Param param);
 
 // Write mode
 typedef struct PckWriteModeParam
@@ -525,10 +512,10 @@ typedef struct PckWriteModeParam
 #define pckWriteModeP(this, value, ...)                                                                                            \
     pckWriteMode(this, value, (PckWriteModeParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-PackWrite *pckWriteMode(PackWrite *this, mode_t value, PckWriteModeParam param);
+FN_EXTERN PackWrite *pckWriteMode(PackWrite *this, mode_t value, PckWriteModeParam param);
 
 // Move to a new parent mem context
-__attribute__((always_inline)) static inline PackWrite *
+FN_INLINE_ALWAYS PackWrite *
 pckWriteMove(PackWrite *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
@@ -538,18 +525,18 @@ pckWriteMove(PackWrite *const this, MemContext *const parentNew)
 #define pckWriteNullP(this)                                                                                                        \
     pckWriteNull(this)
 
-PackWrite *pckWriteNull(PackWrite *this);
+FN_EXTERN PackWrite *pckWriteNull(PackWrite *this);
 
 // Write object begin/end
 #define pckWriteObjBeginP(this, ...)                                                                                               \
     pckWriteObjBegin(this, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-PackWrite *pckWriteObjBegin(PackWrite *this, PackIdParam param);
+FN_EXTERN PackWrite *pckWriteObjBegin(PackWrite *this, PackIdParam param);
 
 #define pckWriteObjEndP(this)                                                                                                      \
     pckWriteObjEnd(this)
 
-PackWrite *pckWriteObjEnd(PackWrite *this);
+FN_EXTERN PackWrite *pckWriteObjEnd(PackWrite *this);
 
 // Write pack
 typedef struct PckWritePackParam
@@ -562,20 +549,7 @@ typedef struct PckWritePackParam
 #define pckWritePackP(this, value, ...)                                                                                            \
     pckWritePack(this, value, (PckWritePackParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-PackWrite *pckWritePack(PackWrite *this, const Pack *value, PckWritePackParam param);
-
-// Write pointer. Use with extreme caution. Pointers cannot be sent to another host -- they must only be used locally.
-typedef struct PckWritePtrParam
-{
-    VAR_PARAM_HEADER;
-    bool defaultWrite;
-    unsigned int id;
-} PckWritePtrParam;
-
-#define pckWritePtrP(this, value, ...)                                                                                             \
-    pckWritePtr(this, value, (PckWritePtrParam){VAR_PARAM_INIT, __VA_ARGS__})
-
-PackWrite *pckWritePtr(PackWrite *this, const void *value, PckWritePtrParam param);
+FN_EXTERN PackWrite *pckWritePack(PackWrite *this, const Pack *value, PckWritePackParam param);
 
 // Write string
 typedef struct PckWriteStrParam
@@ -589,7 +563,7 @@ typedef struct PckWriteStrParam
 #define pckWriteStrP(this, value, ...)                                                                                             \
     pckWriteStr(this, value, (PckWriteStrParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-PackWrite *pckWriteStr(PackWrite *this, const String *value, PckWriteStrParam param);
+FN_EXTERN PackWrite *pckWriteStr(PackWrite *this, const String *value, PckWriteStrParam param);
 
 // Write string id
 typedef struct PckWriteStrIdParam
@@ -603,7 +577,7 @@ typedef struct PckWriteStrIdParam
 #define pckWriteStrIdP(this, value, ...)                                                                                           \
     pckWriteStrId(this, value, (PckWriteStrIdParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-PackWrite *pckWriteStrId(PackWrite *this, uint64_t value, PckWriteStrIdParam param);
+FN_EXTERN PackWrite *pckWriteStrId(PackWrite *this, uint64_t value, PckWriteStrIdParam param);
 
 // Write string list
 typedef struct PckWriteStrLstParam
@@ -615,7 +589,7 @@ typedef struct PckWriteStrLstParam
 #define pckWriteStrLstP(this, value, ...)                                                                                          \
     pckWriteStrLst(this, value, (PckWriteStrLstParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-PackWrite *pckWriteStrLst(PackWrite *const this, const StringList *const value, const PckWriteStrLstParam param);
+FN_EXTERN PackWrite *pckWriteStrLst(PackWrite *const this, const StringList *const value, const PckWriteStrLstParam param);
 
 // Write time
 typedef struct PckWriteTimeParam
@@ -629,7 +603,7 @@ typedef struct PckWriteTimeParam
 #define pckWriteTimeP(this, value, ...)                                                                                            \
     pckWriteTime(this, value, (PckWriteTimeParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-PackWrite *pckWriteTime(PackWrite *this, time_t value, PckWriteTimeParam param);
+FN_EXTERN PackWrite *pckWriteTime(PackWrite *this, time_t value, PckWriteTimeParam param);
 
 // Write 32-bit unsigned integer
 typedef struct PckWriteU32Param
@@ -643,7 +617,7 @@ typedef struct PckWriteU32Param
 #define pckWriteU32P(this, value, ...)                                                                                             \
     pckWriteU32(this, value, (PckWriteU32Param){VAR_PARAM_INIT, __VA_ARGS__})
 
-PackWrite *pckWriteU32(PackWrite *this, uint32_t value, PckWriteU32Param param);
+FN_EXTERN PackWrite *pckWriteU32(PackWrite *this, uint32_t value, PckWriteU32Param param);
 
 // Write 64-bit unsigned integer
 typedef struct PckWriteU64Param
@@ -657,25 +631,25 @@ typedef struct PckWriteU64Param
 #define pckWriteU64P(this, value, ...)                                                                                             \
     pckWriteU64(this, value, (PckWriteU64Param){VAR_PARAM_INIT, __VA_ARGS__})
 
-PackWrite *pckWriteU64(PackWrite *this, uint64_t value, PckWriteU64Param param);
+FN_EXTERN PackWrite *pckWriteU64(PackWrite *this, uint64_t value, PckWriteU64Param param);
 
 // Write end
 #define pckWriteEndP(this)                                                                                                         \
     pckWriteEnd(this)
 
-PackWrite *pckWriteEnd(PackWrite *this);
+FN_EXTERN PackWrite *pckWriteEnd(PackWrite *this);
 
 /***********************************************************************************************************************************
 Write Getters/Setters
 ***********************************************************************************************************************************/
 // Get Pack the PackWrite was writing to (returns NULL if pckWriteNew() was not used to construct the object). This function is only
 // valid after pckWriteEndP() has been called.
-Pack *pckWriteResult(PackWrite *this);
+FN_EXTERN Pack *pckWriteResult(PackWrite *this);
 
 /***********************************************************************************************************************************
 Write Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 pckWriteFree(PackWrite *const this)
 {
     objFree(this);
@@ -687,20 +661,20 @@ Macros for function logging
 #define FUNCTION_LOG_PACK_TYPE                                                                                                     \
     Pack *
 #define FUNCTION_LOG_PACK_FORMAT(value, buffer, bufferSize)                                                                        \
-    objToLog(value, "Pack", buffer, bufferSize)
+    objNameToLog(value, "Pack", buffer, bufferSize)
 
-String *pckReadToLog(const PackRead *this);
+FN_EXTERN void pckReadToLog(const PackRead *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_PACK_READ_TYPE                                                                                                \
     PackRead *
 #define FUNCTION_LOG_PACK_READ_FORMAT(value, buffer, bufferSize)                                                                   \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, pckReadToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, pckReadToLog, buffer, bufferSize)
 
-String *pckWriteToLog(const PackWrite *this);
+FN_EXTERN void pckWriteToLog(const PackWrite *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_PACK_WRITE_TYPE                                                                                               \
     PackWrite *
 #define FUNCTION_LOG_PACK_WRITE_FORMAT(value, buffer, bufferSize)                                                                  \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, pckWriteToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, pckWriteToLog, buffer, bufferSize)
 
 #endif

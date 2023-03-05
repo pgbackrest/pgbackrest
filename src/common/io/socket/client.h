@@ -18,15 +18,15 @@ Io client type
 Statistics constants
 ***********************************************************************************************************************************/
 #define SOCKET_STAT_CLIENT                                          "socket.client"         // Clients created
-    STRING_DECLARE(SOCKET_STAT_CLIENT_STR);
+STRING_DECLARE(SOCKET_STAT_CLIENT_STR);
 #define SOCKET_STAT_RETRY                                           "socket.retry"          // Connection retries
-    STRING_DECLARE(SOCKET_STAT_RETRY_STR);
+STRING_DECLARE(SOCKET_STAT_RETRY_STR);
 #define SOCKET_STAT_SESSION                                         "socket.session"        // Sessions created
-    STRING_DECLARE(SOCKET_STAT_SESSION_STR);
+STRING_DECLARE(SOCKET_STAT_SESSION_STR);
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-IoClient *sckClientNew(const String *host, unsigned int port, TimeMSec timeoutConnect, TimeMSec timeoutSession);
+FN_EXTERN IoClient *sckClientNew(const String *host, unsigned int port, TimeMSec timeoutConnect, TimeMSec timeoutSession);
 
 #endif

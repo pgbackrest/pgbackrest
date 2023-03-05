@@ -3,9 +3,9 @@ Stanza Update Command
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
-#include <inttypes.h>
 
 #include "command/check/common.h"
 #include "command/control/common.h"
@@ -24,7 +24,7 @@ Stanza Update Command
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 cmdStanzaUpgrade(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);

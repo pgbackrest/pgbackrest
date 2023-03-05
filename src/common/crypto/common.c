@@ -9,10 +9,10 @@ Crypto Common
 #include <openssl/rand.h>
 #include <openssl/ssl.h>
 
+#include "common/crypto/common.h"
 #include "common/debug.h"
 #include "common/error.h"
 #include "common/log.h"
-#include "common/crypto/common.h"
 
 /***********************************************************************************************************************************
 Flag to indicate if OpenSSL has already been initialized
@@ -20,7 +20,7 @@ Flag to indicate if OpenSSL has already been initialized
 static bool cryptoInitDone = false;
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 cryptoError(bool error, const char *description)
 {
     FUNCTION_TEST_BEGIN();
@@ -34,7 +34,7 @@ cryptoError(bool error, const char *description)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-void
+FN_EXTERN void
 cryptoErrorCode(unsigned long code, const char *description)
 {
     FUNCTION_TEST_BEGIN();
@@ -49,7 +49,7 @@ cryptoErrorCode(unsigned long code, const char *description)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 cryptoInit(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
@@ -77,15 +77,7 @@ cryptoInit(void)
 }
 
 /**********************************************************************************************************************************/
-bool
-cryptoIsInit(void)
-{
-    FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(BOOL, cryptoInitDone);
-}
-
-/**********************************************************************************************************************************/
-void
+FN_EXTERN void
 cryptoRandomBytes(unsigned char *buffer, size_t size)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

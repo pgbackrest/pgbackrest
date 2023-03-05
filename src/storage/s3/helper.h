@@ -9,7 +9,7 @@ S3 Storage Helper
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-Storage *storageS3Helper(unsigned int repoIdx, bool write, StoragePathExpressionCallback pathExpressionCallback);
+FN_EXTERN Storage *storageS3Helper(unsigned int repoIdx, bool write, StoragePathExpressionCallback pathExpressionCallback);
 
 /***********************************************************************************************************************************
 Storage helper for StorageHelper array passed to storageHelperInit()

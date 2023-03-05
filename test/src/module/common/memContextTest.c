@@ -73,7 +73,7 @@ testRun(void)
     {
         TEST_TITLE("struct size");
 
-        TEST_RESULT_UINT(sizeof(MemContext), TEST_64BIT() ? 24 : 16, "MemContext size");
+        TEST_RESULT_UINT(sizeof(MemContext), TEST_64BIT() ? 32 : 24, "MemContext size");
         TEST_RESULT_UINT(sizeof(MemContextChildMany), TEST_64BIT() ? 16 : 12, "MemContextChildMany size");
         TEST_RESULT_UINT(sizeof(MemContextAllocMany), TEST_64BIT() ? 16 : 12, "MemContextAllocMany size");
         TEST_RESULT_UINT(sizeof(MemContextCallbackOne), TEST_64BIT() ? 16 : 8, "MemContextCallbackOne size");
@@ -120,7 +120,6 @@ testRun(void)
             "test5", .allocExtra = 16, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1);
         TEST_RESULT_PTR(memContextAllocExtra(memContext), memContext + 1, "mem context alloc extra");
         TEST_RESULT_PTR(memContextFromAllocExtra(memContext + 1), memContext, "mem context from alloc extra");
-        TEST_RESULT_PTR(memContextConstFromAllocExtra(memContext + 1), memContext, "const mem context from alloc extra");
         memContextKeep();
         TEST_RESULT_INT(
             memContextChildMany(memContextTop())->listSize, MEM_CONTEXT_INITIAL_SIZE * 2, "increased child context list size");
@@ -175,7 +174,7 @@ testRun(void)
             MEM_CONTEXT_INITIAL_SIZE, "context child list initial size");
 
         // This test will change if the contexts above change
-        TEST_RESULT_UINT(memContextSize(memContextTop()), TEST_64BIT() ? 584 : 376, "check size");
+        TEST_RESULT_UINT(memContextSize(memContextTop()), TEST_64BIT() ? 656 : 448, "check size");
 
         TEST_ERROR(
             memContextFree(memContextChildMany(memContextTop())->list[MEM_CONTEXT_INITIAL_SIZE]), AssertError,
@@ -197,10 +196,9 @@ testRun(void)
     {
         TEST_TITLE("struct size");
 
-        TEST_RESULT_UINT(sizeof(MemContextAlloc), 8, "MemContextAlloc size");
+        TEST_RESULT_UINT(sizeof(MemContextAlloc), 8, "check MemContextAlloc size (same for 32/64 bit)");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_UINT(sizeof(MemContextAlloc), 8, "check MemContextAlloc size (same for 32/64 bit)");
         TEST_RESULT_PTR(MEM_CONTEXT_ALLOC_BUFFER((void *)1), (void *)(sizeof(MemContextAlloc) + 1), "check buffer macro");
         TEST_RESULT_PTR(MEM_CONTEXT_ALLOC_HEADER((void *)sizeof(MemContextAlloc)), (void *)0, "check header macro");
 
@@ -256,14 +254,14 @@ testRun(void)
             memContextAllocMany(memContextCurrent())->freeIdx, MEM_CONTEXT_ALLOC_INITIAL_SIZE + 3, "check alloc free idx");
 
         // This test will change if the allocations above change
-        TEST_RESULT_UINT(memContextSize(memContextCurrent()), TEST_64BIT() ? 209 : 145, "check size");
+        TEST_RESULT_UINT(memContextSize(memContextCurrent()), TEST_64BIT() ? 217 : 153, "check size");
 
         TEST_ERROR(
             memFree(NULL), AssertError,
             "assertion 'alloc != NULL && "
-                "(uintptr_t)alloc != (uintptr_t)-sizeof(MemContextAlloc) && "
-                "alloc->allocIdx < memContextAllocMany(memContextStack[memContextCurrentStackIdx].memContext)->listSize && "
-                "memContextAllocMany(memContextStack[memContextCurrentStackIdx].memContext)->list[alloc->allocIdx]' failed");
+            "(uintptr_t)alloc != (uintptr_t)-sizeof(MemContextAlloc) &&"
+            " alloc->allocIdx < memContextAllocMany(memContextStack[memContextCurrentStackIdx].memContext)->listSize &&"
+            " memContextAllocMany(memContextStack[memContextCurrentStackIdx].memContext)->list[alloc->allocIdx]' failed");
         memFree(buffer);
 
         memContextSwitch(memContextTop());
@@ -283,7 +281,7 @@ testRun(void)
         TEST_ASSIGN(buffer, memNew(200), "new");
 
         // This test will change if the allocations above change
-        TEST_RESULT_UINT(memContextSize(memContextCurrent()), TEST_64BIT() ? 240 : 228, "check size");
+        TEST_RESULT_UINT(memContextSize(memContextCurrent()), TEST_64BIT() ? 248 : 236, "check size");
 
         TEST_RESULT_VOID(memContextSwitch(memContextTop()), "switch to top");
         TEST_RESULT_VOID(memContextFree(memContext), "context free");
@@ -299,7 +297,7 @@ testRun(void)
         TEST_RESULT_VOID(memFree(buffer), "free");
 
         // This test will change if the allocations above change
-        TEST_RESULT_UINT(memContextSize(memContextCurrent()), TEST_64BIT() ? 32 : 20, "check size");
+        TEST_RESULT_UINT(memContextSize(memContextCurrent()), TEST_64BIT() ? 40 : 28, "check size");
 
         TEST_RESULT_VOID(memContextSwitch(memContextTop()), "switch to top");
         TEST_RESULT_VOID(memContextFree(memContext), "context free");
@@ -356,12 +354,14 @@ testRun(void)
 
         // Check block that errors
         TEST_ERROR(
+            // {uncrustify_off - indentation}
             MEM_CONTEXT_BEGIN(memContext)
             {
                 TEST_RESULT_Z(memContextCurrent()->name, "test-block", "context is now test-block");
                 THROW(AssertError, "error in test block");
             }
             MEM_CONTEXT_END(),
+            // {uncrustify_on}
             AssertError, "error in test block");
 
         TEST_RESULT_Z(memContextCurrent()->name, "TOP", "context is now top");
@@ -414,16 +414,41 @@ testRun(void)
             {
                 memContext = MEM_CONTEXT_NEW();
                 TEST_RESULT_Z(memContext->name, memContextTestName, "check mem context name");
-                THROW(AssertError, "create failed");
+                THROW(FormatError, "create failed");
             }
             MEM_CONTEXT_NEW_END();
         }
-        CATCH(AssertError)
+        CATCH(FormatError)
         {
             catch = true;
         }
         TRY_END();
 
+        TEST_RESULT_BOOL(catch, true, "new context error was caught");
+        TEST_RESULT_PTR(memContextCurrent(), memContextTop(), "context is now 'TOP'");
+
+        // ------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("new context not freed on fatal error");
+
+        MemContext *volatile memContextFatal;
+        catch = false;
+
+        TRY_BEGIN()
+        {
+            MEM_CONTEXT_NEW_BEGIN(test-new-failed-fatal-block, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+            {
+                memContextFatal = MEM_CONTEXT_NEW();
+                THROW(AssertError, "create failed");
+            }
+            MEM_CONTEXT_NEW_END();
+        }
+        CATCH_FATAL()
+        {
+            catch = true;
+        }
+        TRY_END();
+
+        TEST_RESULT_VOID(memContextFree(memContextFatal), "free new context not freed by catch fatal");
         TEST_RESULT_BOOL(catch, true, "new context error was caught");
         TEST_RESULT_PTR(memContextCurrent(), memContextTop(), "context is now 'TOP'");
     }
@@ -509,6 +534,140 @@ testRun(void)
         TEST_RESULT_VOID(memContextMove(memContextChild, memContextParent2), "move");
         TEST_RESULT_PTR(memContextChildOne(memContextParent1)->context, NULL, "check parent1");
         TEST_RESULT_PTR(memContextChildOne(memContextParent2)->context, memContextChild, "check parent2");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("memContextAudit*s()"))
+    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("one child context void success with no child context");
+
+        MemContext *parent = memContextNewP("to be renamed", .allocExtra = 8, .childQty = 1);
+        memContextKeep();
+        memContextSwitch(parent);
+
+        TEST_RESULT_VOID(memContextAuditAllocExtraName(memContextAllocExtra(parent), "one context child"), "rename context");
+        TEST_RESULT_Z(parent->name, "one context child", "check name");
+
+        MemContextAuditState audit = {.memContext = memContextCurrent()};
+
+        TEST_RESULT_VOID(memContextAuditBegin(&audit), "audit begin");
+        TEST_RESULT_VOID(memContextAuditEnd(&audit, "void"), "audit end");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("return immediately on any");
+
+        audit = (MemContextAuditState){.memContext = memContextCurrent()};
+
+        TEST_RESULT_VOID(memContextAuditBegin(&audit), "audit begin");
+        audit.returnTypeAny = true;
+        TEST_RESULT_VOID(memContextAuditEnd(&audit, "void"), "audit end");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("one child context void success");
+
+        MemContext *child = memContextNewP("child", .childQty = 1);
+        memContextKeep();
+
+        audit = (MemContextAuditState){.memContext = memContextCurrent()};
+
+        TEST_RESULT_VOID(memContextAuditBegin(&audit), "audit begin");
+        TEST_RESULT_VOID(memContextAuditEnd(&audit, "void"), "audit end");
+
+        memContextFree(child);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("one child context void success (freed context)");
+
+        audit = (MemContextAuditState){.memContext = memContextCurrent()};
+
+        TEST_RESULT_VOID(memContextAuditBegin(&audit), "audit begin");
+        TEST_RESULT_VOID(memContextAuditEnd(&audit, "void"), "audit end");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("one child context match success");
+
+        audit = (MemContextAuditState){.memContext = memContextCurrent()};
+        TEST_RESULT_VOID(memContextAuditBegin(&audit), "audit begin");
+
+        child = memContextNewP("child", .childQty = 1);
+        memContextKeep();
+
+        TEST_RESULT_VOID(memContextAuditEnd(&audit, "child"), "audit end");
+        TEST_RESULT_VOID(memContextAuditEnd(&audit, "child *"), "audit end");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("one child context match failure");
+
+        TEST_ERROR(memContextAuditEnd(&audit, "child2"), AssertError, "expected return type 'child2' but found 'child'");
+        TEST_ERROR(memContextAuditEnd(&audit, "chil"), AssertError, "expected return type 'chil' but found 'child'");
+
+        memContextSwitchBack();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("many child context void success with no child context");
+
+        parent = memContextNewP("many context child", .childQty = MEM_CONTEXT_QTY_MAX);
+        memContextKeep();
+        memContextSwitch(parent);
+
+        audit = (MemContextAuditState){.memContext = memContextCurrent()};
+
+        TEST_RESULT_VOID(memContextAuditBegin(&audit), "audit begin");
+        TEST_RESULT_VOID(memContextAuditEnd(&audit, "void"), "audit end");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("many child context void success");
+
+        child = memContextNewP("child", .childQty = 1);
+        memContextKeep();
+
+        audit = (MemContextAuditState){.memContext = memContextCurrent()};
+
+        TEST_RESULT_VOID(memContextAuditBegin(&audit), "audit begin");
+        TEST_RESULT_VOID(memContextAuditEnd(&audit, "void"), "audit end");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("many child context success with child context created before");
+
+        audit = (MemContextAuditState){.memContext = memContextCurrent()};
+
+        TEST_RESULT_VOID(memContextAuditBegin(&audit), "audit begin");
+        TEST_RESULT_VOID(memContextAuditEnd(&audit, "child"), "audit end");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("many child context failure with multiple matches");
+
+        audit = (MemContextAuditState){.memContext = memContextCurrent()};
+
+        TEST_RESULT_VOID(memContextAuditBegin(&audit), "audit begin");
+
+        memContextNewP("child2::extra", .childQty = 1);
+        memContextKeep();
+
+        memContextFree(child);
+        memContextNewP("child2::extra", .childQty = 1);
+        memContextKeep();
+
+        TEST_ERROR(
+            memContextAuditEnd(&audit, "child2"), AssertError,
+            "expected return type 'child2::extra' already found but also found 'child2::extra'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("many child context failure with no match");
+
+        audit = (MemContextAuditState){.memContext = memContextCurrent()};
+
+        TEST_RESULT_VOID(memContextAuditBegin(&audit), "audit begin");
+
+        memContextNewP("child3::extra", .childQty = 1);
+        memContextKeep();
+
+        TEST_ERROR(
+            memContextAuditEnd(&audit, "child2"), AssertError,
+            "expected return type 'child2' but found 'child3::extra'");
+
+        memContextSwitchBack();
     }
 
     memContextFree(memContextTop());

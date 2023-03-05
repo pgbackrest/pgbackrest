@@ -27,7 +27,7 @@ typedef struct IoServerPub
 } IoServerPub;
 
 // Name that identifies the server
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 ioServerName(const IoServer *const this)
 {
     return THIS_PUB(IoServer)->interface->name(THIS_PUB(IoServer)->driver);
@@ -37,14 +37,14 @@ ioServerName(const IoServer *const this)
 Functions
 ***********************************************************************************************************************************/
 // Move to a new parent mem context
-__attribute__((always_inline)) static inline IoServer *
+FN_INLINE_ALWAYS IoServer *
 ioServerMove(IoServer *const this, MemContext *const parentNew)
 {
     return objMoveContext(this, parentNew);
 }
 
 // Open session
-__attribute__((always_inline)) static inline IoSession *
+FN_INLINE_ALWAYS IoSession *
 ioServerAccept(IoServer *const this, IoSession *const session)
 {
     return THIS_PUB(IoServer)->interface->accept(THIS_PUB(IoServer)->driver, session);
@@ -53,7 +53,7 @@ ioServerAccept(IoServer *const this, IoSession *const session)
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 ioServerFree(IoServer *const this)
 {
     objFreeContext(this);
@@ -62,11 +62,11 @@ ioServerFree(IoServer *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-String *ioServerToLog(const IoServer *this);
+FN_EXTERN void ioServerToLog(const IoServer *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_IO_SERVER_TYPE                                                                                                \
     IoServer *
 #define FUNCTION_LOG_IO_SERVER_FORMAT(value, buffer, bufferSize)                                                                   \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, ioServerToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, ioServerToLog, buffer, bufferSize)
 
 #endif

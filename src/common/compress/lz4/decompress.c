@@ -5,8 +5,8 @@ LZ4 Decompress
 
 #ifdef HAVE_LIBLZ4
 
-#include <stdio.h>
 #include <lz4frame.h>
+#include <stdio.h>
 
 #include "common/compress/lz4/common.h"
 #include "common/compress/lz4/decompress.h"
@@ -32,18 +32,18 @@ typedef struct Lz4Decompress
 /***********************************************************************************************************************************
 Render as string for logging
 ***********************************************************************************************************************************/
-static String *
-lz4DecompressToLog(const Lz4Decompress *this)
+static void
+lz4DecompressToLog(const Lz4Decompress *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{inputSame: %s, inputOffset: %zu, frameDone %s, done: %s}", cvtBoolToConstZ(this->inputSame), this->inputOffset,
-        cvtBoolToConstZ(this->frameDone), cvtBoolToConstZ(this->done));
+    strStcFmt(
+        debugLog, "{inputSame: %s, inputOffset: %zu, frameDone %s, done: %s}", cvtBoolToConstZ(this->inputSame),
+        this->inputOffset, cvtBoolToConstZ(this->frameDone), cvtBoolToConstZ(this->done));
 }
 
 #define FUNCTION_LOG_LZ4_DECOMPRESS_TYPE                                                                                           \
     Lz4Decompress *
 #define FUNCTION_LOG_LZ4_DECOMPRESS_FORMAT(value, buffer, bufferSize)                                                              \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, lz4DecompressToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, lz4DecompressToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Free decompression context
@@ -156,7 +156,7 @@ lz4DecompressInputSame(const THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-IoFilter *
+FN_EXTERN IoFilter *
 lz4DecompressNew(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
@@ -165,7 +165,7 @@ lz4DecompressNew(void)
 
     OBJ_NEW_BEGIN(Lz4Decompress, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        Lz4Decompress *driver = OBJ_NEW_ALLOC();
+        Lz4Decompress *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::Lz4Decompress);
         *driver = (Lz4Decompress){0};
 
         // Create lz4 context

@@ -10,6 +10,6 @@ Remote Command
 Functions
 ***********************************************************************************************************************************/
 // Remote command
-void cmdRemote(ProtocolServer *server);
+FN_EXTERN void cmdRemote(ProtocolServer *server);
 
 #endif

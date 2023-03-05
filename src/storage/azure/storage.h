@@ -30,14 +30,9 @@ typedef enum
 } StorageAzureUriStyle;
 
 /***********************************************************************************************************************************
-Defaults
-***********************************************************************************************************************************/
-#define STORAGE_AZURE_BLOCKSIZE_MIN                                 ((size_t)4 * 1024 * 1024)
-
-/***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-Storage *storageAzureNew(
+FN_EXTERN Storage *storageAzureNew(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *container,
     const String *account, StorageAzureKeyType keyType, const String *key, size_t blockSize, const String *endpoint,
     StorageAzureUriStyle uriStyle, unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile,

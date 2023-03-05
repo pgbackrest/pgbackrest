@@ -8,13 +8,13 @@ Repository Create Command
 #include "common/memContext.h"
 #include "common/type/json.h"
 #include "config/config.h"
-#include "storage/helper.h"
 #include "storage/azure/storage.intern.h"
 #include "storage/gcs/storage.intern.h"
+#include "storage/helper.h"
 #include "storage/s3/storage.intern.h"
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 cmdRepoCreate(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);

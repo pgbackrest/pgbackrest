@@ -42,7 +42,7 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_WRITE_GCS_TYPE                                                                                        \
     StorageWriteGcs *
 #define FUNCTION_LOG_STORAGE_WRITE_GCS_FORMAT(value, buffer, bufferSize)                                                           \
-    objToLog(value, "StorageWriteGcs", buffer, bufferSize)
+    objNameToLog(value, "StorageWriteGcs", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Open the file
@@ -89,14 +89,14 @@ storageWriteGcsVerify(StorageWriteGcs *const this, HttpResponse *const response)
         const String *const md5base64 = varStr(kvGet(content, GCS_JSON_MD5_HASH_VAR));
         CHECK(FormatError, md5base64 != NULL, "MD5 missing");
 
-        const String *const md5actual = bufHex(bufNewDecode(encodeBase64, md5base64));
-        const String *const md5expected = pckReadStrP(pckReadNew(ioFilterResult(this->md5hash)));
+        const Buffer *const md5actual = bufNewDecode(encodingBase64, md5base64);
+        const Buffer *const md5expected = pckReadBinP(pckReadNew(ioFilterResult(this->md5hash)));
 
-        if (!strEq(md5actual, md5expected))
+        if (!bufEq(md5actual, md5expected))
         {
             THROW_FMT(
-                FormatError, "expected md5 '%s' for '%s' but actual is '%s'", strZ(md5expected), strZ(this->interface.name),
-                strZ(md5actual));
+                FormatError, "expected md5 '%s' for '%s' but actual is '%s'", strZ(strNewEncode(encodingHex, md5expected)),
+                strZ(this->interface.name), strZ(strNewEncode(encodingHex, md5actual)));
         }
 
         // Check the size when available
@@ -249,13 +249,14 @@ storageWriteGcs(THIS_VOID, const Buffer *buffer)
         }
 
         // Copy as many bytes as possible into the chunk buffer
-        size_t bytesNext = bufRemains(this->chunkBuffer) > bufUsed(buffer) - bytesTotal ?
-            bufUsed(buffer) - bytesTotal : bufRemains(this->chunkBuffer);
+        const size_t bytesNext =
+            bufRemains(this->chunkBuffer) > bufUsed(buffer) - bytesTotal ?
+                bufUsed(buffer) - bytesTotal : bufRemains(this->chunkBuffer);
+
         bufCatSub(this->chunkBuffer, buffer, bytesTotal, bytesNext);
         bytesTotal += bytesNext;
     }
     while (bytesTotal != bufUsed(buffer));
-
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -319,7 +320,7 @@ storageWriteGcsClose(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-StorageWrite *
+FN_EXTERN StorageWrite *
 storageWriteGcsNew(StorageGcs *storage, const String *name, size_t chunkSize)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -335,7 +336,7 @@ storageWriteGcsNew(StorageGcs *storage, const String *name, size_t chunkSize)
 
     OBJ_NEW_BEGIN(StorageWriteGcs, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageWriteGcs *driver = OBJ_NEW_ALLOC();
+        StorageWriteGcs *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), StorageWrite::StorageWriteGcs);
 
         *driver = (StorageWriteGcs)
         {
@@ -350,6 +351,7 @@ storageWriteGcsNew(StorageGcs *storage, const String *name, size_t chunkSize)
                 .createPath = true,
                 .syncFile = true,
                 .syncPath = true,
+                .truncate = true,
 
                 .ioInterface = (IoWriteInterface)
                 {

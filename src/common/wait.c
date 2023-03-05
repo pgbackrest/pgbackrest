@@ -20,7 +20,7 @@ struct Wait
 };
 
 /**********************************************************************************************************************************/
-Wait *
+FN_EXTERN Wait *
 waitNew(TimeMSec waitTime)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -62,7 +62,7 @@ waitNew(TimeMSec waitTime)
 }
 
 /**********************************************************************************************************************************/
-bool
+FN_EXTERN bool
 waitMore(Wait *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

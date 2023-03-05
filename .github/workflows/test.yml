@@ -40,8 +40,11 @@ jobs:
           # All integration tests
           - param: test --vm=u22 --param=build-package --param=module=mock --param=module=real
 
-          # All unit tests with coverage and alternate timezone
-          - param: test --vm=u22 --param=c-only --param=tz=America/New_York
+          # All unit tests with coverage, backtrace and alternate timezone
+          - param: test --vm=u22 --param=c-only --param=no-valgrind --param=tz=America/New_York
+
+          # All unit tests with valgrind (disable coverage and backtrace for performance)
+          - param: test --vm=u22 --param=c-only --param=no-coverage --param=no-back-trace
 
           # All unit tests on the newest gcc available
           - param: test --vm=f36 --param=c-only --param=no-valgrind --param=no-coverage --param=no-performance
@@ -99,6 +102,44 @@ jobs:
             git config --global --add safe.directory ${GITHUB_WORKSPACE?}/pgbackrest
             ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=none --min-gen --no-valgrind --no-coverage --no-optimize --build-max=2 --module=command --test=backup
             ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=none --min-gen --no-valgrind --no-coverage --no-optimize --build-max=2 --module=postgres --test=interface
+
+  # Run meson unity build to check for errors, unused functions, and externed functions
+  unity:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+        with:
+          path: pgbackrest
+
+      - name: Install
+        run: |
+          sudo apt-get update
+          DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive sudo apt-get install -y zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config meson liblz4-dev libzstd-dev libbz2-dev
+
+      - name: Build
+        run: |
+          meson setup --unity=on -Dforce-release=true -Dwerror=true build ${GITHUB_WORKSPACE?}/pgbackrest
+          ninja -vC build
+
+      - name: Check
+        run: |
+          diff ${GITHUB_WORKSPACE?}/pgbackrest/.github/workflows/symbol.out <(nm -gj --defined-only build/src/pgbackrest)
+
+  # Check that code is correctly formatted
+  code-format:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+        with:
+          path: pgbackrest
+
+      - name: Check
+        run: |
+          cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.pl test --vm=none --param=code-format-check
 
   codeql:
     runs-on: ubuntu-latest

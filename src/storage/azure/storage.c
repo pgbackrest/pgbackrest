@@ -17,7 +17,6 @@ Azure Storage
 #include "common/type/object.h"
 #include "common/type/xml.h"
 #include "storage/azure/read.h"
-#include "storage/azure/storage.intern.h"
 #include "storage/azure/write.h"
 
 /***********************************************************************************************************************************
@@ -166,8 +165,10 @@ storageAzureAuth(
 
             // Generate authorization header
             httpHeaderPut(
-                httpHeader, HTTP_HEADER_AUTHORIZATION_STR, strNewFmt("SharedKey %s:%s", strZ(this->account),
-                strZ(strNewEncode(encodeBase64, cryptoHmacOne(hashTypeSha256, this->sharedKey, BUFSTR(stringToSign))))));
+                httpHeader, HTTP_HEADER_AUTHORIZATION_STR,
+                strNewFmt(
+                    "SharedKey %s:%s", strZ(this->account),
+                    strZ(strNewEncode(encodingBase64, cryptoHmacOne(hashTypeSha256, this->sharedKey, BUFSTR(stringToSign))))));
         }
         // SAS authentication
         else
@@ -181,7 +182,7 @@ storageAzureAuth(
 /***********************************************************************************************************************************
 Process Azure request
 ***********************************************************************************************************************************/
-HttpRequest *
+FN_EXTERN HttpRequest *
 storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureRequestAsyncParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -204,8 +205,8 @@ storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureReq
         param.path = param.path == NULL ? this->pathPrefix : strNewFmt("%s%s", strZ(this->pathPrefix), strZ(param.path));
 
         // Create header list and add content length
-        HttpHeader *requestHeader = param.header == NULL ?
-            httpHeaderNew(this->headerRedactList) : httpHeaderDup(param.header, this->headerRedactList);
+        HttpHeader *requestHeader =
+            param.header == NULL ? httpHeaderNew(this->headerRedactList) : httpHeaderDup(param.header, this->headerRedactList);
 
         // Set content length
         httpHeaderAdd(
@@ -216,7 +217,8 @@ storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureReq
         if (param.content != NULL)
         {
             httpHeaderAdd(
-                requestHeader, HTTP_HEADER_CONTENT_MD5_STR, strNewEncode(encodeBase64, cryptoHashOne(hashTypeMd5, param.content)));
+                requestHeader, HTTP_HEADER_CONTENT_MD5_STR,
+                strNewEncode(encodingBase64, cryptoHashOne(hashTypeMd5, param.content)));
         }
 
         // Encode path
@@ -244,7 +246,7 @@ storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureReq
     FUNCTION_LOG_RETURN(HTTP_REQUEST, result);
 }
 
-HttpResponse *
+FN_EXTERN HttpResponse *
 storageAzureResponse(HttpRequest *request, StorageAzureResponseParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -274,7 +276,7 @@ storageAzureResponse(HttpRequest *request, StorageAzureResponseParam param)
     FUNCTION_LOG_RETURN(HTTP_RESPONSE, result);
 }
 
-HttpResponse *
+FN_EXTERN HttpResponse *
 storageAzureRequest(StorageAzure *this, const String *verb, StorageAzureRequestParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -314,6 +316,8 @@ storageAzureListInternal(
         FUNCTION_LOG_PARAM(FUNCTIONP, callback);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_CALLBACK();
 
     ASSERT(this != NULL);
     ASSERT(path != NULL);
@@ -579,6 +583,7 @@ storageAzureNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWritePara
     ASSERT(this != NULL);
     ASSERT(file != NULL);
     ASSERT(param.createPath);
+    ASSERT(param.truncate);
     ASSERT(param.user == NULL);
     ASSERT(param.group == NULL);
     ASSERT(param.timeModified == 0);
@@ -697,7 +702,7 @@ static const StorageInterface storageInterfaceAzure =
     .remove = storageAzureRemove,
 };
 
-Storage *
+FN_EXTERN Storage *
 storageAzureNew(
     const String *const path, const bool write, StoragePathExpressionCallback pathExpressionFunction, const String *const container,
     const String *const account, const StorageAzureKeyType keyType, const String *const key, const size_t blockSize,
@@ -733,7 +738,7 @@ storageAzureNew(
 
     OBJ_NEW_BEGIN(StorageAzure, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageAzure *driver = OBJ_NEW_ALLOC();
+        StorageAzure *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), Storage::StorageAzure);
 
         *driver = (StorageAzure)
         {
@@ -742,13 +747,14 @@ storageAzureNew(
             .account = strDup(account),
             .blockSize = blockSize,
             .host = uriStyle == storageAzureUriStyleHost ? strNewFmt("%s.%s", strZ(account), strZ(endpoint)) : strDup(endpoint),
-            .pathPrefix = uriStyle == storageAzureUriStyleHost ?
-                strNewFmt("/%s", strZ(container)) : strNewFmt("/%s/%s", strZ(account), strZ(container)),
+            .pathPrefix =
+                uriStyle == storageAzureUriStyleHost ?
+                    strNewFmt("/%s", strZ(container)) : strNewFmt("/%s/%s", strZ(account), strZ(container)),
         };
 
         // Store shared key or parse sas query
         if (keyType == storageAzureKeyTypeShared)
-            driver->sharedKey = bufNewDecode(encodeBase64, key);
+            driver->sharedKey = bufNewDecode(encodingBase64, key);
         else
             driver->sasKey = httpQueryNewStr(key);
 

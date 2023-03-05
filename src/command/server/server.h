@@ -9,6 +9,6 @@ Server Command
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-void cmdServer(unsigned int argListSize, const char *argList[]);
+FN_EXTERN void cmdServer(unsigned int argListSize, const char *argList[]);
 
 #endif

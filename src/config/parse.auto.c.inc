@@ -328,6 +328,21 @@ Command parse data
 
 static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
 {
+    PARSE_RULE_COMMAND                                                                                               // cmd/annotate
+    (                                                                                                                // cmd/annotate
+        PARSE_RULE_COMMAND_NAME("annotate"),                                                                         // cmd/annotate
+        PARSE_RULE_COMMAND_LOCK_REQUIRED(true),                                                                      // cmd/annotate
+        PARSE_RULE_COMMAND_LOCK_REMOTE_REQUIRED(true),                                                               // cmd/annotate
+        PARSE_RULE_COMMAND_LOCK_TYPE(lockTypeBackup),                                                                // cmd/annotate
+        PARSE_RULE_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo),                                                          // cmd/annotate
+                                                                                                                     // cmd/annotate
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST                                                                           // cmd/annotate
+        (                                                                                                            // cmd/annotate
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleMain)                                                                  // cmd/annotate
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)                                                                // cmd/annotate
+        ),                                                                                                           // cmd/annotate
+    ),                                                                                                               // cmd/annotate
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_COMMAND                                                                                            // cmd/archive-get
     (                                                                                                             // cmd/archive-get
         PARSE_RULE_COMMAND_NAME("archive-get"),                                                                   // cmd/archive-get
@@ -663,6 +678,35 @@ Option parse data
 
 static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 {
+    PARSE_RULE_OPTION                                                                                              // opt/annotation
+    (                                                                                                              // opt/annotation
+        PARSE_RULE_OPTION_NAME("annotation"),                                                                      // opt/annotation
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeHash),                                                                    // opt/annotation
+        PARSE_RULE_OPTION_RESET(true),                                                                             // opt/annotation
+        PARSE_RULE_OPTION_REQUIRED(false),                                                                         // opt/annotation
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),                                                               // opt/annotation
+        PARSE_RULE_OPTION_MULTI(true),                                                                             // opt/annotation
+                                                                                                                   // opt/annotation
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                             // opt/annotation
+        (                                                                                                          // opt/annotation
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                              // opt/annotation
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                // opt/annotation
+        ),                                                                                                         // opt/annotation
+                                                                                                                   // opt/annotation
+        PARSE_RULE_OPTIONAL                                                                                        // opt/annotation
+        (                                                                                                          // opt/annotation
+            PARSE_RULE_OPTIONAL_GROUP                                                                              // opt/annotation
+            (                                                                                                      // opt/annotation
+                PARSE_RULE_FILTER_CMD                                                                              // opt/annotation
+                (                                                                                                  // opt/annotation
+                    PARSE_RULE_VAL_CMD(cfgCmdAnnotate),                                                            // opt/annotation
+                ),                                                                                                 // opt/annotation
+                                                                                                                   // opt/annotation
+                PARSE_RULE_OPTIONAL_REQUIRED(),                                                                    // opt/annotation
+            ),                                                                                                     // opt/annotation
+        ),                                                                                                         // opt/annotation
+    ),                                                                                                             // opt/annotation
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                           // opt/archive-async
     (                                                                                                           // opt/archive-async
         PARSE_RULE_OPTION_NAME("archive-async"),                                                                // opt/archive-async
@@ -1076,6 +1120,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                   // opt/buffer-size
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                            // opt/buffer-size
         (                                                                                                         // opt/buffer-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                             // opt/buffer-size
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                           // opt/buffer-size
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                          // opt/buffer-size
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                               // opt/buffer-size
@@ -1113,6 +1158,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                   // opt/buffer-size
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                          // opt/buffer-size
         (                                                                                                         // opt/buffer-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                             // opt/buffer-size
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                           // opt/buffer-size
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                          // opt/buffer-size
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                               // opt/buffer-size
@@ -1329,18 +1375,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         (                                                                                                      // opt/compress-level
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                       // opt/compress-level
         ),                                                                                                     // opt/compress-level
-                                                                                                               // opt/compress-level
-        PARSE_RULE_OPTIONAL                                                                                    // opt/compress-level
-        (                                                                                                      // opt/compress-level
-            PARSE_RULE_OPTIONAL_GROUP                                                                          // opt/compress-level
-            (                                                                                                  // opt/compress-level
-                PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                                // opt/compress-level
-                (                                                                                              // opt/compress-level
-                    PARSE_RULE_VAL_INT(parseRuleValInt0),                                                      // opt/compress-level
-                    PARSE_RULE_VAL_INT(parseRuleValInt9),                                                      // opt/compress-level
-                ),                                                                                             // opt/compress-level
-            ),                                                                                                 // opt/compress-level
-        ),                                                                                                     // opt/compress-level
     ),                                                                                                         // opt/compress-level
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                  // opt/compress-level-network
@@ -1353,6 +1387,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                        // opt/compress-level-network
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                 // opt/compress-level-network
         (                                                                                              // opt/compress-level-network
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                  // opt/compress-level-network
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                // opt/compress-level-network
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                               // opt/compress-level-network
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                    // opt/compress-level-network
@@ -1453,6 +1488,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                        // opt/config
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                                 // opt/config
         (                                                                                                              // opt/config
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                                  // opt/config
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                                // opt/config
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                               // opt/config
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                    // opt/config
@@ -1492,6 +1528,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                        // opt/config
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                               // opt/config
         (                                                                                                              // opt/config
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                                  // opt/config
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                                // opt/config
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                               // opt/config
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                    // opt/config
@@ -1530,6 +1567,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                           // opt/config-include-path
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                    // opt/config-include-path
         (                                                                                                 // opt/config-include-path
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                     // opt/config-include-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                   // opt/config-include-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                  // opt/config-include-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                       // opt/config-include-path
@@ -1569,6 +1607,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                           // opt/config-include-path
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                  // opt/config-include-path
         (                                                                                                 // opt/config-include-path
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                     // opt/config-include-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                   // opt/config-include-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                  // opt/config-include-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                       // opt/config-include-path
@@ -1607,6 +1646,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                   // opt/config-path
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                            // opt/config-path
         (                                                                                                         // opt/config-path
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                             // opt/config-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                           // opt/config-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                          // opt/config-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                               // opt/config-path
@@ -1646,6 +1686,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                   // opt/config-path
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                          // opt/config-path
         (                                                                                                         // opt/config-path
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                             // opt/config-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                           // opt/config-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                          // opt/config-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                               // opt/config-path
@@ -1852,6 +1893,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                       // opt/exec-id
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                                // opt/exec-id
         (                                                                                                             // opt/exec-id
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                                 // opt/exec-id
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                               // opt/exec-id
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                              // opt/exec-id
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                   // opt/exec-id
@@ -1891,6 +1933,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                       // opt/exec-id
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                              // opt/exec-id
         (                                                                                                             // opt/exec-id
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                                 // opt/exec-id
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                               // opt/exec-id
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                              // opt/exec-id
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                   // opt/exec-id
@@ -2029,6 +2072,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                    // opt/io-timeout
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                             // opt/io-timeout
         (                                                                                                          // opt/io-timeout
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                              // opt/io-timeout
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                            // opt/io-timeout
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                           // opt/io-timeout
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                // opt/io-timeout
@@ -2066,6 +2110,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                    // opt/io-timeout
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                           // opt/io-timeout
         (                                                                                                          // opt/io-timeout
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                              // opt/io-timeout
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                            // opt/io-timeout
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                           // opt/io-timeout
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                // opt/io-timeout
@@ -2297,6 +2342,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                     // opt/lock-path
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                              // opt/lock-path
         (                                                                                                           // opt/lock-path
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                               // opt/lock-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                             // opt/lock-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                            // opt/lock-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                 // opt/lock-path
@@ -2326,6 +2372,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                     // opt/lock-path
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                            // opt/lock-path
         (                                                                                                           // opt/lock-path
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                               // opt/lock-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                             // opt/lock-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                            // opt/lock-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                 // opt/lock-path
@@ -2358,6 +2405,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                             // opt/log-level-console
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                      // opt/log-level-console
         (                                                                                                   // opt/log-level-console
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                       // opt/log-level-console
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                     // opt/log-level-console
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                    // opt/log-level-console
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                         // opt/log-level-console
@@ -2397,6 +2445,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                             // opt/log-level-console
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                    // opt/log-level-console
         (                                                                                                   // opt/log-level-console
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                       // opt/log-level-console
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                     // opt/log-level-console
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                    // opt/log-level-console
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                         // opt/log-level-console
@@ -2448,6 +2497,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                // opt/log-level-file
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                         // opt/log-level-file
         (                                                                                                      // opt/log-level-file
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                          // opt/log-level-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                        // opt/log-level-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                       // opt/log-level-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                            // opt/log-level-file
@@ -2487,6 +2537,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                // opt/log-level-file
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                       // opt/log-level-file
         (                                                                                                      // opt/log-level-file
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                          // opt/log-level-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                        // opt/log-level-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                       // opt/log-level-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                            // opt/log-level-file
@@ -2538,6 +2589,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                              // opt/log-level-stderr
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                       // opt/log-level-stderr
         (                                                                                                    // opt/log-level-stderr
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                        // opt/log-level-stderr
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                      // opt/log-level-stderr
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                     // opt/log-level-stderr
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                          // opt/log-level-stderr
@@ -2577,6 +2629,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                              // opt/log-level-stderr
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                     // opt/log-level-stderr
         (                                                                                                    // opt/log-level-stderr
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                        // opt/log-level-stderr
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                      // opt/log-level-stderr
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                     // opt/log-level-stderr
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                          // opt/log-level-stderr
@@ -2628,6 +2681,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                      // opt/log-path
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                               // opt/log-path
         (                                                                                                            // opt/log-path
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                                // opt/log-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                              // opt/log-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                             // opt/log-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                  // opt/log-path
@@ -2667,6 +2721,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                      // opt/log-path
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                             // opt/log-path
         (                                                                                                            // opt/log-path
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                                // opt/log-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                              // opt/log-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                             // opt/log-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                  // opt/log-path
@@ -2707,6 +2762,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                // opt/log-subprocess
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                         // opt/log-subprocess
         (                                                                                                      // opt/log-subprocess
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                          // opt/log-subprocess
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                        // opt/log-subprocess
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                       // opt/log-subprocess
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                            // opt/log-subprocess
@@ -2741,6 +2797,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                // opt/log-subprocess
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                       // opt/log-subprocess
         (                                                                                                      // opt/log-subprocess
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                          // opt/log-subprocess
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                        // opt/log-subprocess
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                       // opt/log-subprocess
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                            // opt/log-subprocess
@@ -2781,6 +2838,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                 // opt/log-timestamp
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                          // opt/log-timestamp
         (                                                                                                       // opt/log-timestamp
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                           // opt/log-timestamp
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                         // opt/log-timestamp
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                        // opt/log-timestamp
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                             // opt/log-timestamp
@@ -2820,6 +2878,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                 // opt/log-timestamp
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                        // opt/log-timestamp
         (                                                                                                       // opt/log-timestamp
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                           // opt/log-timestamp
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                         // opt/log-timestamp
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                        // opt/log-timestamp
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                             // opt/log-timestamp
@@ -2892,6 +2951,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                 // opt/neutral-umask
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                          // opt/neutral-umask
         (                                                                                                       // opt/neutral-umask
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                           // opt/neutral-umask
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                         // opt/neutral-umask
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                        // opt/neutral-umask
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                             // opt/neutral-umask
@@ -2928,6 +2988,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                 // opt/neutral-umask
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                        // opt/neutral-umask
         (                                                                                                       // opt/neutral-umask
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                           // opt/neutral-umask
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                         // opt/neutral-umask
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                        // opt/neutral-umask
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                             // opt/neutral-umask
@@ -3935,6 +3996,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                       // opt/process
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                              // opt/process
         (                                                                                                             // opt/process
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                                 // opt/process
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                               // opt/process
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                              // opt/process
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                   // opt/process
@@ -4017,6 +4079,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                              // opt/protocol-timeout
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                       // opt/protocol-timeout
         (                                                                                                    // opt/protocol-timeout
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                        // opt/protocol-timeout
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                      // opt/protocol-timeout
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                     // opt/protocol-timeout
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                          // opt/protocol-timeout
@@ -4052,6 +4115,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                              // opt/protocol-timeout
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                     // opt/protocol-timeout
         (                                                                                                    // opt/protocol-timeout
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                        // opt/protocol-timeout
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                      // opt/protocol-timeout
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                     // opt/protocol-timeout
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                          // opt/protocol-timeout
@@ -4189,6 +4253,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                   // opt/remote-type
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                          // opt/remote-type
         (                                                                                                         // opt/remote-type
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                             // opt/remote-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                           // opt/remote-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                          // opt/remote-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                               // opt/remote-type
@@ -4228,6 +4293,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                          // opt/repo
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                                   // opt/repo
         (                                                                                                                // opt/repo
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                                    // opt/repo
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                                  // opt/repo
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                      // opt/repo
             PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)                                                                      // opt/repo
@@ -4257,6 +4323,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                          // opt/repo
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                                 // opt/repo
         (                                                                                                                // opt/repo
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                                    // opt/repo
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                                  // opt/repo
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                                 // opt/repo
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                                       // opt/repo
@@ -4299,6 +4366,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                            // opt/repo-azure-account
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                     // opt/repo-azure-account
         (                                                                                                  // opt/repo-azure-account
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                      // opt/repo-azure-account
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                    // opt/repo-azure-account
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                   // opt/repo-azure-account
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                        // opt/repo-azure-account
@@ -4334,6 +4402,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                            // opt/repo-azure-account
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                   // opt/repo-azure-account
         (                                                                                                  // opt/repo-azure-account
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                      // opt/repo-azure-account
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                    // opt/repo-azure-account
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                   // opt/repo-azure-account
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                         // opt/repo-azure-account
@@ -4375,6 +4444,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                          // opt/repo-azure-container
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                   // opt/repo-azure-container
         (                                                                                                // opt/repo-azure-container
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                    // opt/repo-azure-container
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                  // opt/repo-azure-container
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                 // opt/repo-azure-container
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                      // opt/repo-azure-container
@@ -4410,6 +4480,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                          // opt/repo-azure-container
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                 // opt/repo-azure-container
         (                                                                                                // opt/repo-azure-container
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                    // opt/repo-azure-container
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                  // opt/repo-azure-container
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                 // opt/repo-azure-container
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                       // opt/repo-azure-container
@@ -4452,6 +4523,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                           // opt/repo-azure-endpoint
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                    // opt/repo-azure-endpoint
         (                                                                                                 // opt/repo-azure-endpoint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                     // opt/repo-azure-endpoint
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                   // opt/repo-azure-endpoint
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                  // opt/repo-azure-endpoint
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                       // opt/repo-azure-endpoint
@@ -4487,6 +4559,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                           // opt/repo-azure-endpoint
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                  // opt/repo-azure-endpoint
         (                                                                                                 // opt/repo-azure-endpoint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                     // opt/repo-azure-endpoint
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                   // opt/repo-azure-endpoint
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                  // opt/repo-azure-endpoint
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                        // opt/repo-azure-endpoint
@@ -4534,6 +4607,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                // opt/repo-azure-key
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                         // opt/repo-azure-key
         (                                                                                                      // opt/repo-azure-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                          // opt/repo-azure-key
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                        // opt/repo-azure-key
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                       // opt/repo-azure-key
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                            // opt/repo-azure-key
@@ -4569,6 +4643,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                // opt/repo-azure-key
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                       // opt/repo-azure-key
         (                                                                                                      // opt/repo-azure-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                          // opt/repo-azure-key
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                        // opt/repo-azure-key
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                       // opt/repo-azure-key
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                             // opt/repo-azure-key
@@ -4610,6 +4685,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                           // opt/repo-azure-key-type
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                    // opt/repo-azure-key-type
         (                                                                                                 // opt/repo-azure-key-type
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                     // opt/repo-azure-key-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                   // opt/repo-azure-key-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                  // opt/repo-azure-key-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                       // opt/repo-azure-key-type
@@ -4645,6 +4721,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                           // opt/repo-azure-key-type
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                  // opt/repo-azure-key-type
         (                                                                                                 // opt/repo-azure-key-type
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                     // opt/repo-azure-key-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                   // opt/repo-azure-key-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                  // opt/repo-azure-key-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                        // opt/repo-azure-key-type
@@ -4698,6 +4775,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                          // opt/repo-azure-uri-style
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                   // opt/repo-azure-uri-style
         (                                                                                                // opt/repo-azure-uri-style
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                    // opt/repo-azure-uri-style
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                  // opt/repo-azure-uri-style
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                 // opt/repo-azure-uri-style
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                      // opt/repo-azure-uri-style
@@ -4733,6 +4811,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                          // opt/repo-azure-uri-style
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                 // opt/repo-azure-uri-style
         (                                                                                                // opt/repo-azure-uri-style
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                    // opt/repo-azure-uri-style
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                  // opt/repo-azure-uri-style
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                 // opt/repo-azure-uri-style
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                       // opt/repo-azure-uri-style
@@ -4773,6 +4852,99 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             ),                                                                                           // opt/repo-azure-uri-style
         ),                                                                                               // opt/repo-azure-uri-style
     ),                                                                                                   // opt/repo-azure-uri-style
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                              // opt/repo-block
+    (                                                                                                              // opt/repo-block
+        PARSE_RULE_OPTION_NAME("repo-block"),                                                                      // opt/repo-block
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),                                                                 // opt/repo-block
+        PARSE_RULE_OPTION_NEGATE(true),                                                                            // opt/repo-block
+        PARSE_RULE_OPTION_RESET(true),                                                                             // opt/repo-block
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                          // opt/repo-block
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),                                                               // opt/repo-block
+        PARSE_RULE_OPTION_GROUP_MEMBER(true),                                                                      // opt/repo-block
+        PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),                                                                 // opt/repo-block
+                                                                                                                   // opt/repo-block
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                             // opt/repo-block
+        (                                                                                                          // opt/repo-block
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                // opt/repo-block
+        ),                                                                                                         // opt/repo-block
+                                                                                                                   // opt/repo-block
+        PARSE_RULE_OPTIONAL                                                                                        // opt/repo-block
+        (                                                                                                          // opt/repo-block
+            PARSE_RULE_OPTIONAL_GROUP                                                                              // opt/repo-block
+            (                                                                                                      // opt/repo-block
+                PARSE_RULE_OPTIONAL_DEPEND                                                                         // opt/repo-block
+                (                                                                                                  // opt/repo-block
+                    PARSE_RULE_OPTIONAL_DEPEND_DEFAULT(PARSE_RULE_VAL_BOOL_FALSE),                                 // opt/repo-block
+                    PARSE_RULE_VAL_OPT(cfgOptRepoBundle),                                                          // opt/repo-block
+                    PARSE_RULE_VAL_BOOL_TRUE,                                                                      // opt/repo-block
+                ),                                                                                                 // opt/repo-block
+                                                                                                                   // opt/repo-block
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                        // opt/repo-block
+                (                                                                                                  // opt/repo-block
+                    PARSE_RULE_VAL_BOOL_FALSE,                                                                     // opt/repo-block
+                ),                                                                                                 // opt/repo-block
+            ),                                                                                                     // opt/repo-block
+        ),                                                                                                         // opt/repo-block
+    ),                                                                                                             // opt/repo-block
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                      // opt/repo-block-age-map
+    (                                                                                                      // opt/repo-block-age-map
+        PARSE_RULE_OPTION_NAME("repo-block-age-map"),                                                      // opt/repo-block-age-map
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeHash),                                                            // opt/repo-block-age-map
+        PARSE_RULE_OPTION_RESET(true),                                                                     // opt/repo-block-age-map
+        PARSE_RULE_OPTION_REQUIRED(false),                                                                 // opt/repo-block-age-map
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),                                                       // opt/repo-block-age-map
+        PARSE_RULE_OPTION_MULTI(true),                                                                     // opt/repo-block-age-map
+        PARSE_RULE_OPTION_GROUP_MEMBER(true),                                                              // opt/repo-block-age-map
+        PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),                                                         // opt/repo-block-age-map
+                                                                                                           // opt/repo-block-age-map
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                     // opt/repo-block-age-map
+        (                                                                                                  // opt/repo-block-age-map
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                        // opt/repo-block-age-map
+        ),                                                                                                 // opt/repo-block-age-map
+                                                                                                           // opt/repo-block-age-map
+        PARSE_RULE_OPTIONAL                                                                                // opt/repo-block-age-map
+        (                                                                                                  // opt/repo-block-age-map
+            PARSE_RULE_OPTIONAL_GROUP                                                                      // opt/repo-block-age-map
+            (                                                                                              // opt/repo-block-age-map
+                PARSE_RULE_OPTIONAL_DEPEND                                                                 // opt/repo-block-age-map
+                (                                                                                          // opt/repo-block-age-map
+                    PARSE_RULE_VAL_OPT(cfgOptRepoBlock),                                                   // opt/repo-block-age-map
+                    PARSE_RULE_VAL_BOOL_TRUE,                                                              // opt/repo-block-age-map
+                ),                                                                                         // opt/repo-block-age-map
+            ),                                                                                             // opt/repo-block-age-map
+        ),                                                                                                 // opt/repo-block-age-map
+    ),                                                                                                     // opt/repo-block-age-map
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                     // opt/repo-block-size-map
+    (                                                                                                     // opt/repo-block-size-map
+        PARSE_RULE_OPTION_NAME("repo-block-size-map"),                                                    // opt/repo-block-size-map
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeHash),                                                           // opt/repo-block-size-map
+        PARSE_RULE_OPTION_RESET(true),                                                                    // opt/repo-block-size-map
+        PARSE_RULE_OPTION_REQUIRED(false),                                                                // opt/repo-block-size-map
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),                                                      // opt/repo-block-size-map
+        PARSE_RULE_OPTION_MULTI(true),                                                                    // opt/repo-block-size-map
+        PARSE_RULE_OPTION_GROUP_MEMBER(true),                                                             // opt/repo-block-size-map
+        PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),                                                        // opt/repo-block-size-map
+                                                                                                          // opt/repo-block-size-map
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                    // opt/repo-block-size-map
+        (                                                                                                 // opt/repo-block-size-map
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                       // opt/repo-block-size-map
+        ),                                                                                                // opt/repo-block-size-map
+                                                                                                          // opt/repo-block-size-map
+        PARSE_RULE_OPTIONAL                                                                               // opt/repo-block-size-map
+        (                                                                                                 // opt/repo-block-size-map
+            PARSE_RULE_OPTIONAL_GROUP                                                                     // opt/repo-block-size-map
+            (                                                                                             // opt/repo-block-size-map
+                PARSE_RULE_OPTIONAL_DEPEND                                                                // opt/repo-block-size-map
+                (                                                                                         // opt/repo-block-size-map
+                    PARSE_RULE_VAL_OPT(cfgOptRepoBlock),                                                  // opt/repo-block-size-map
+                    PARSE_RULE_VAL_BOOL_TRUE,                                                             // opt/repo-block-size-map
+                ),                                                                                        // opt/repo-block-size-map
+            ),                                                                                            // opt/repo-block-size-map
+        ),                                                                                                // opt/repo-block-size-map
+    ),                                                                                                    // opt/repo-block-size-map
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                             // opt/repo-bundle
     (                                                                                                             // opt/repo-bundle
@@ -4896,6 +5068,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                              // opt/repo-cipher-pass
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                       // opt/repo-cipher-pass
         (                                                                                                    // opt/repo-cipher-pass
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                        // opt/repo-cipher-pass
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                      // opt/repo-cipher-pass
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                     // opt/repo-cipher-pass
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                          // opt/repo-cipher-pass
@@ -4931,6 +5104,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                              // opt/repo-cipher-pass
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                     // opt/repo-cipher-pass
         (                                                                                                    // opt/repo-cipher-pass
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                        // opt/repo-cipher-pass
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                      // opt/repo-cipher-pass
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                     // opt/repo-cipher-pass
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                           // opt/repo-cipher-pass
@@ -4973,6 +5147,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                              // opt/repo-cipher-type
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                       // opt/repo-cipher-type
         (                                                                                                    // opt/repo-cipher-type
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                        // opt/repo-cipher-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                      // opt/repo-cipher-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                     // opt/repo-cipher-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                          // opt/repo-cipher-type
@@ -5008,6 +5183,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                              // opt/repo-cipher-type
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                     // opt/repo-cipher-type
         (                                                                                                    // opt/repo-cipher-type
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                        // opt/repo-cipher-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                      // opt/repo-cipher-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                     // opt/repo-cipher-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                           // opt/repo-cipher-type
@@ -5055,6 +5231,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                               // opt/repo-gcs-bucket
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                        // opt/repo-gcs-bucket
         (                                                                                                     // opt/repo-gcs-bucket
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                         // opt/repo-gcs-bucket
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                       // opt/repo-gcs-bucket
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                      // opt/repo-gcs-bucket
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                           // opt/repo-gcs-bucket
@@ -5090,6 +5267,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                               // opt/repo-gcs-bucket
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                      // opt/repo-gcs-bucket
         (                                                                                                     // opt/repo-gcs-bucket
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                         // opt/repo-gcs-bucket
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                       // opt/repo-gcs-bucket
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                      // opt/repo-gcs-bucket
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                            // opt/repo-gcs-bucket
@@ -5130,6 +5308,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                             // opt/repo-gcs-endpoint
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                      // opt/repo-gcs-endpoint
         (                                                                                                   // opt/repo-gcs-endpoint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                       // opt/repo-gcs-endpoint
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                     // opt/repo-gcs-endpoint
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                    // opt/repo-gcs-endpoint
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                         // opt/repo-gcs-endpoint
@@ -5165,6 +5344,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                             // opt/repo-gcs-endpoint
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                    // opt/repo-gcs-endpoint
         (                                                                                                   // opt/repo-gcs-endpoint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                       // opt/repo-gcs-endpoint
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                     // opt/repo-gcs-endpoint
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                    // opt/repo-gcs-endpoint
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                          // opt/repo-gcs-endpoint
@@ -5211,6 +5391,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                  // opt/repo-gcs-key
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                           // opt/repo-gcs-key
         (                                                                                                        // opt/repo-gcs-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                            // opt/repo-gcs-key
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                          // opt/repo-gcs-key
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                         // opt/repo-gcs-key
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                              // opt/repo-gcs-key
@@ -5246,6 +5427,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                  // opt/repo-gcs-key
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                         // opt/repo-gcs-key
         (                                                                                                        // opt/repo-gcs-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                            // opt/repo-gcs-key
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                          // opt/repo-gcs-key
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                         // opt/repo-gcs-key
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                               // opt/repo-gcs-key
@@ -5288,6 +5470,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                             // opt/repo-gcs-key-type
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                      // opt/repo-gcs-key-type
         (                                                                                                   // opt/repo-gcs-key-type
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                       // opt/repo-gcs-key-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                     // opt/repo-gcs-key-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                    // opt/repo-gcs-key-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                         // opt/repo-gcs-key-type
@@ -5323,6 +5506,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                             // opt/repo-gcs-key-type
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                    // opt/repo-gcs-key-type
         (                                                                                                   // opt/repo-gcs-key-type
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                       // opt/repo-gcs-key-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                     // opt/repo-gcs-key-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                    // opt/repo-gcs-key-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                          // opt/repo-gcs-key-type
@@ -5412,6 +5596,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                     // opt/repo-host
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                              // opt/repo-host
         (                                                                                                           // opt/repo-host
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                               // opt/repo-host
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                             // opt/repo-host
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                            // opt/repo-host
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                 // opt/repo-host
@@ -5470,6 +5655,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                             // opt/repo-host-ca-file
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                      // opt/repo-host-ca-file
         (                                                                                                   // opt/repo-host-ca-file
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                       // opt/repo-host-ca-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                     // opt/repo-host-ca-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                    // opt/repo-host-ca-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                         // opt/repo-host-ca-file
@@ -5528,6 +5714,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                             // opt/repo-host-ca-path
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                      // opt/repo-host-ca-path
         (                                                                                                   // opt/repo-host-ca-path
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                       // opt/repo-host-ca-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                     // opt/repo-host-ca-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                    // opt/repo-host-ca-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                         // opt/repo-host-ca-path
@@ -5586,6 +5773,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                           // opt/repo-host-cert-file
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                    // opt/repo-host-cert-file
         (                                                                                                 // opt/repo-host-cert-file
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                     // opt/repo-host-cert-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                   // opt/repo-host-cert-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                  // opt/repo-host-cert-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                       // opt/repo-host-cert-file
@@ -5644,6 +5832,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                 // opt/repo-host-cmd
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                          // opt/repo-host-cmd
         (                                                                                                       // opt/repo-host-cmd
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                           // opt/repo-host-cmd
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                         // opt/repo-host-cmd
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                        // opt/repo-host-cmd
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                              // opt/repo-host-cmd
@@ -5698,6 +5887,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                              // opt/repo-host-config
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                       // opt/repo-host-config
         (                                                                                                    // opt/repo-host-config
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                        // opt/repo-host-config
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                      // opt/repo-host-config
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                     // opt/repo-host-config
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                           // opt/repo-host-config
@@ -5757,6 +5947,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                 // opt/repo-host-config-include-path
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                          // opt/repo-host-config-include-path
         (                                                                                       // opt/repo-host-config-include-path
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                           // opt/repo-host-config-include-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                         // opt/repo-host-config-include-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                        // opt/repo-host-config-include-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                              // opt/repo-host-config-include-path
@@ -5816,6 +6007,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                         // opt/repo-host-config-path
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                  // opt/repo-host-config-path
         (                                                                                               // opt/repo-host-config-path
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                   // opt/repo-host-config-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                 // opt/repo-host-config-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                // opt/repo-host-config-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                      // opt/repo-host-config-path
@@ -5875,6 +6067,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                            // opt/repo-host-key-file
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                     // opt/repo-host-key-file
         (                                                                                                  // opt/repo-host-key-file
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                      // opt/repo-host-key-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                    // opt/repo-host-key-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                   // opt/repo-host-key-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                        // opt/repo-host-key-file
@@ -5933,6 +6126,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                // opt/repo-host-port
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                         // opt/repo-host-port
         (                                                                                                      // opt/repo-host-port
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                          // opt/repo-host-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                        // opt/repo-host-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                       // opt/repo-host-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                             // opt/repo-host-port
@@ -5993,6 +6187,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                // opt/repo-host-type
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                         // opt/repo-host-type
         (                                                                                                      // opt/repo-host-type
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                          // opt/repo-host-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                        // opt/repo-host-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                       // opt/repo-host-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                            // opt/repo-host-type
@@ -6063,6 +6258,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                // opt/repo-host-user
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                         // opt/repo-host-user
         (                                                                                                      // opt/repo-host-user
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                          // opt/repo-host-user
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                        // opt/repo-host-user
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                       // opt/repo-host-user
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                             // opt/repo-host-user
@@ -6123,6 +6319,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                    // opt/repo-local
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                             // opt/repo-local
         (                                                                                                          // opt/repo-local
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                              // opt/repo-local
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                            // opt/repo-local
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                           // opt/repo-local
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                // opt/repo-local
@@ -6181,6 +6378,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                     // opt/repo-path
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                              // opt/repo-path
         (                                                                                                           // opt/repo-path
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                               // opt/repo-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                             // opt/repo-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                            // opt/repo-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                 // opt/repo-path
@@ -6216,6 +6414,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                     // opt/repo-path
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                            // opt/repo-path
         (                                                                                                           // opt/repo-path
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                               // opt/repo-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                             // opt/repo-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                            // opt/repo-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                                  // opt/repo-path
@@ -6444,6 +6643,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                // opt/repo-s3-bucket
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                         // opt/repo-s3-bucket
         (                                                                                                      // opt/repo-s3-bucket
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                          // opt/repo-s3-bucket
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                        // opt/repo-s3-bucket
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                       // opt/repo-s3-bucket
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                            // opt/repo-s3-bucket
@@ -6479,6 +6679,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                // opt/repo-s3-bucket
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                       // opt/repo-s3-bucket
         (                                                                                                      // opt/repo-s3-bucket
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                          // opt/repo-s3-bucket
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                        // opt/repo-s3-bucket
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                       // opt/repo-s3-bucket
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                             // opt/repo-s3-bucket
@@ -6521,6 +6722,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                              // opt/repo-s3-endpoint
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                       // opt/repo-s3-endpoint
         (                                                                                                    // opt/repo-s3-endpoint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                        // opt/repo-s3-endpoint
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                      // opt/repo-s3-endpoint
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                     // opt/repo-s3-endpoint
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                          // opt/repo-s3-endpoint
@@ -6556,6 +6758,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                              // opt/repo-s3-endpoint
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                     // opt/repo-s3-endpoint
         (                                                                                                    // opt/repo-s3-endpoint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                        // opt/repo-s3-endpoint
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                      // opt/repo-s3-endpoint
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                     // opt/repo-s3-endpoint
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                           // opt/repo-s3-endpoint
@@ -6599,6 +6802,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                   // opt/repo-s3-key
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                            // opt/repo-s3-key
         (                                                                                                         // opt/repo-s3-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                             // opt/repo-s3-key
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                           // opt/repo-s3-key
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                          // opt/repo-s3-key
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                               // opt/repo-s3-key
@@ -6634,6 +6838,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                   // opt/repo-s3-key
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                          // opt/repo-s3-key
         (                                                                                                         // opt/repo-s3-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                             // opt/repo-s3-key
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                           // opt/repo-s3-key
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                          // opt/repo-s3-key
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                                // opt/repo-s3-key
@@ -6677,6 +6882,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                            // opt/repo-s3-key-secret
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                     // opt/repo-s3-key-secret
         (                                                                                                  // opt/repo-s3-key-secret
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                      // opt/repo-s3-key-secret
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                    // opt/repo-s3-key-secret
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                   // opt/repo-s3-key-secret
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                        // opt/repo-s3-key-secret
@@ -6712,6 +6918,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                            // opt/repo-s3-key-secret
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                   // opt/repo-s3-key-secret
         (                                                                                                  // opt/repo-s3-key-secret
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                      // opt/repo-s3-key-secret
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                    // opt/repo-s3-key-secret
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                   // opt/repo-s3-key-secret
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                         // opt/repo-s3-key-secret
@@ -6753,6 +6960,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                              // opt/repo-s3-key-type
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                       // opt/repo-s3-key-type
         (                                                                                                    // opt/repo-s3-key-type
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                        // opt/repo-s3-key-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                      // opt/repo-s3-key-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                     // opt/repo-s3-key-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                          // opt/repo-s3-key-type
@@ -6788,6 +6996,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                              // opt/repo-s3-key-type
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                     // opt/repo-s3-key-type
         (                                                                                                    // opt/repo-s3-key-type
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                        // opt/repo-s3-key-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                      // opt/repo-s3-key-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                     // opt/repo-s3-key-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                           // opt/repo-s3-key-type
@@ -6842,6 +7051,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                            // opt/repo-s3-kms-key-id
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                     // opt/repo-s3-kms-key-id
         (                                                                                                  // opt/repo-s3-kms-key-id
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                      // opt/repo-s3-kms-key-id
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                    // opt/repo-s3-kms-key-id
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                   // opt/repo-s3-kms-key-id
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                        // opt/repo-s3-kms-key-id
@@ -6877,6 +7087,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                            // opt/repo-s3-kms-key-id
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                   // opt/repo-s3-kms-key-id
         (                                                                                                  // opt/repo-s3-kms-key-id
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                      // opt/repo-s3-kms-key-id
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                    // opt/repo-s3-kms-key-id
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                   // opt/repo-s3-kms-key-id
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                         // opt/repo-s3-kms-key-id
@@ -6919,6 +7130,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                // opt/repo-s3-region
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                         // opt/repo-s3-region
         (                                                                                                      // opt/repo-s3-region
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                          // opt/repo-s3-region
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                        // opt/repo-s3-region
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                       // opt/repo-s3-region
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                            // opt/repo-s3-region
@@ -6954,6 +7166,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                // opt/repo-s3-region
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                       // opt/repo-s3-region
         (                                                                                                      // opt/repo-s3-region
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                          // opt/repo-s3-region
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                        // opt/repo-s3-region
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                       // opt/repo-s3-region
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                             // opt/repo-s3-region
@@ -6995,6 +7208,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                  // opt/repo-s3-role
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                           // opt/repo-s3-role
         (                                                                                                        // opt/repo-s3-role
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                            // opt/repo-s3-role
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                          // opt/repo-s3-role
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                         // opt/repo-s3-role
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                              // opt/repo-s3-role
@@ -7030,6 +7244,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                  // opt/repo-s3-role
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                         // opt/repo-s3-role
         (                                                                                                        // opt/repo-s3-role
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                            // opt/repo-s3-role
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                          // opt/repo-s3-role
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                         // opt/repo-s3-role
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                               // opt/repo-s3-role
@@ -7072,6 +7287,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                 // opt/repo-s3-token
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                          // opt/repo-s3-token
         (                                                                                                       // opt/repo-s3-token
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                           // opt/repo-s3-token
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                         // opt/repo-s3-token
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                        // opt/repo-s3-token
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                             // opt/repo-s3-token
@@ -7107,6 +7323,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                 // opt/repo-s3-token
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                        // opt/repo-s3-token
         (                                                                                                       // opt/repo-s3-token
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                           // opt/repo-s3-token
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                         // opt/repo-s3-token
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                        // opt/repo-s3-token
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                              // opt/repo-s3-token
@@ -7148,6 +7365,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                             // opt/repo-s3-uri-style
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                      // opt/repo-s3-uri-style
         (                                                                                                   // opt/repo-s3-uri-style
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                       // opt/repo-s3-uri-style
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                     // opt/repo-s3-uri-style
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                    // opt/repo-s3-uri-style
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                         // opt/repo-s3-uri-style
@@ -7183,6 +7401,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                             // opt/repo-s3-uri-style
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                    // opt/repo-s3-uri-style
         (                                                                                                   // opt/repo-s3-uri-style
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                       // opt/repo-s3-uri-style
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                     // opt/repo-s3-uri-style
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                    // opt/repo-s3-uri-style
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                          // opt/repo-s3-uri-style
@@ -7236,6 +7455,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                          // opt/repo-storage-ca-file
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                   // opt/repo-storage-ca-file
         (                                                                                                // opt/repo-storage-ca-file
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                    // opt/repo-storage-ca-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                  // opt/repo-storage-ca-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                 // opt/repo-storage-ca-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                      // opt/repo-storage-ca-file
@@ -7271,6 +7491,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                          // opt/repo-storage-ca-file
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                 // opt/repo-storage-ca-file
         (                                                                                                // opt/repo-storage-ca-file
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                    // opt/repo-storage-ca-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                  // opt/repo-storage-ca-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                 // opt/repo-storage-ca-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                       // opt/repo-storage-ca-file
@@ -7314,6 +7535,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                          // opt/repo-storage-ca-path
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                   // opt/repo-storage-ca-path
         (                                                                                                // opt/repo-storage-ca-path
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                    // opt/repo-storage-ca-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                  // opt/repo-storage-ca-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                 // opt/repo-storage-ca-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                      // opt/repo-storage-ca-path
@@ -7349,6 +7571,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                          // opt/repo-storage-ca-path
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                 // opt/repo-storage-ca-path
         (                                                                                                // opt/repo-storage-ca-path
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                    // opt/repo-storage-ca-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                  // opt/repo-storage-ca-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                 // opt/repo-storage-ca-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                       // opt/repo-storage-ca-path
@@ -7392,6 +7615,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                             // opt/repo-storage-host
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                      // opt/repo-storage-host
         (                                                                                                   // opt/repo-storage-host
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                       // opt/repo-storage-host
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                     // opt/repo-storage-host
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                    // opt/repo-storage-host
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                         // opt/repo-storage-host
@@ -7427,6 +7651,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                             // opt/repo-storage-host
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                    // opt/repo-storage-host
         (                                                                                                   // opt/repo-storage-host
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                       // opt/repo-storage-host
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                     // opt/repo-storage-host
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                    // opt/repo-storage-host
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                          // opt/repo-storage-host
@@ -7469,6 +7694,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                             // opt/repo-storage-port
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                      // opt/repo-storage-port
         (                                                                                                   // opt/repo-storage-port
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                       // opt/repo-storage-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                     // opt/repo-storage-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                    // opt/repo-storage-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                         // opt/repo-storage-port
@@ -7504,6 +7730,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                             // opt/repo-storage-port
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                    // opt/repo-storage-port
         (                                                                                                   // opt/repo-storage-port
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                       // opt/repo-storage-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                     // opt/repo-storage-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                    // opt/repo-storage-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                          // opt/repo-storage-port
@@ -7546,6 +7773,92 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                  // opt/repo-storage-port
     ),                                                                                                      // opt/repo-storage-port
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                          // opt/repo-storage-upload-chunk-size
+    (                                                                                          // opt/repo-storage-upload-chunk-size
+        PARSE_RULE_OPTION_NAME("repo-storage-upload-chunk-size"),                              // opt/repo-storage-upload-chunk-size
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeSize),                                                // opt/repo-storage-upload-chunk-size
+        PARSE_RULE_OPTION_RESET(true),                                                         // opt/repo-storage-upload-chunk-size
+        PARSE_RULE_OPTION_REQUIRED(false),                                                     // opt/repo-storage-upload-chunk-size
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),                                           // opt/repo-storage-upload-chunk-size
+        PARSE_RULE_OPTION_GROUP_MEMBER(true),                                                  // opt/repo-storage-upload-chunk-size
+        PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),                                             // opt/repo-storage-upload-chunk-size
+                                                                                               // opt/repo-storage-upload-chunk-size
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                         // opt/repo-storage-upload-chunk-size
+        (                                                                                      // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                          // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                        // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                       // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                            // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                             // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)                                            // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                              // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                        // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)                                           // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)                                            // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)                                           // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)                                            // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                           // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                      // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                      // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                     // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                            // opt/repo-storage-upload-chunk-size
+        ),                                                                                     // opt/repo-storage-upload-chunk-size
+                                                                                               // opt/repo-storage-upload-chunk-size
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                        // opt/repo-storage-upload-chunk-size
+        (                                                                                      // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                        // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                       // opt/repo-storage-upload-chunk-size
+        ),                                                                                     // opt/repo-storage-upload-chunk-size
+                                                                                               // opt/repo-storage-upload-chunk-size
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                        // opt/repo-storage-upload-chunk-size
+        (                                                                                      // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                        // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                       // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                            // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                           // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                            // opt/repo-storage-upload-chunk-size
+        ),                                                                                     // opt/repo-storage-upload-chunk-size
+                                                                                               // opt/repo-storage-upload-chunk-size
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                       // opt/repo-storage-upload-chunk-size
+        (                                                                                      // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                          // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                        // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                       // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                             // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                              // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                        // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)                                           // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)                                            // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)                                           // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)                                            // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                           // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                      // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                      // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                     // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                            // opt/repo-storage-upload-chunk-size
+        ),                                                                                     // opt/repo-storage-upload-chunk-size
+                                                                                               // opt/repo-storage-upload-chunk-size
+        PARSE_RULE_OPTIONAL                                                                    // opt/repo-storage-upload-chunk-size
+        (                                                                                      // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTIONAL_GROUP                                                          // opt/repo-storage-upload-chunk-size
+            (                                                                                  // opt/repo-storage-upload-chunk-size
+                PARSE_RULE_OPTIONAL_DEPEND                                                     // opt/repo-storage-upload-chunk-size
+                (                                                                              // opt/repo-storage-upload-chunk-size
+                    PARSE_RULE_VAL_OPT(cfgOptRepoType),                                        // opt/repo-storage-upload-chunk-size
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdAzure),                              // opt/repo-storage-upload-chunk-size
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdGcs),                                // opt/repo-storage-upload-chunk-size
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdS3),                                 // opt/repo-storage-upload-chunk-size
+                ),                                                                             // opt/repo-storage-upload-chunk-size
+                                                                                               // opt/repo-storage-upload-chunk-size
+                PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                // opt/repo-storage-upload-chunk-size
+                (                                                                              // opt/repo-storage-upload-chunk-size
+                    PARSE_RULE_VAL_INT(parseRuleValInt65536),                                  // opt/repo-storage-upload-chunk-size
+                    PARSE_RULE_VAL_INT(parseRuleValInt1099511627776),                          // opt/repo-storage-upload-chunk-size
+                ),                                                                             // opt/repo-storage-upload-chunk-size
+            ),                                                                                 // opt/repo-storage-upload-chunk-size
+        ),                                                                                     // opt/repo-storage-upload-chunk-size
+    ),                                                                                         // opt/repo-storage-upload-chunk-size
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                 // opt/repo-storage-verify-tls
     (                                                                                                 // opt/repo-storage-verify-tls
         PARSE_RULE_OPTION_NAME("repo-storage-verify-tls"),                                            // opt/repo-storage-verify-tls
@@ -7559,6 +7872,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                       // opt/repo-storage-verify-tls
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                // opt/repo-storage-verify-tls
         (                                                                                             // opt/repo-storage-verify-tls
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                 // opt/repo-storage-verify-tls
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                               // opt/repo-storage-verify-tls
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                              // opt/repo-storage-verify-tls
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                   // opt/repo-storage-verify-tls
@@ -7594,6 +7908,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                       // opt/repo-storage-verify-tls
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                              // opt/repo-storage-verify-tls
         (                                                                                             // opt/repo-storage-verify-tls
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                 // opt/repo-storage-verify-tls
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                               // opt/repo-storage-verify-tls
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                              // opt/repo-storage-verify-tls
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                    // opt/repo-storage-verify-tls
@@ -7643,6 +7958,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                     // opt/repo-type
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                              // opt/repo-type
         (                                                                                                           // opt/repo-type
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                               // opt/repo-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                             // opt/repo-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                            // opt/repo-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                 // opt/repo-type
@@ -7678,6 +7994,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                     // opt/repo-type
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                            // opt/repo-type
         (                                                                                                           // opt/repo-type
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                               // opt/repo-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                             // opt/repo-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                            // opt/repo-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                                  // opt/repo-type
@@ -7753,6 +8070,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                     // opt/sck-block
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                              // opt/sck-block
         (                                                                                                           // opt/sck-block
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                               // opt/sck-block
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                             // opt/sck-block
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                            // opt/sck-block
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                 // opt/sck-block
@@ -7790,6 +8108,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                     // opt/sck-block
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                            // opt/sck-block
         (                                                                                                           // opt/sck-block
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                               // opt/sck-block
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                             // opt/sck-block
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                            // opt/sck-block
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                 // opt/sck-block
@@ -7830,6 +8149,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                // opt/sck-keep-alive
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                         // opt/sck-keep-alive
         (                                                                                                      // opt/sck-keep-alive
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                          // opt/sck-keep-alive
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                        // opt/sck-keep-alive
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                       // opt/sck-keep-alive
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                            // opt/sck-keep-alive
@@ -7867,6 +8187,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                // opt/sck-keep-alive
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                       // opt/sck-keep-alive
         (                                                                                                      // opt/sck-keep-alive
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                          // opt/sck-keep-alive
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                        // opt/sck-keep-alive
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                       // opt/sck-keep-alive
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                            // opt/sck-keep-alive
@@ -7905,6 +8226,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                           // opt/set
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                                    // opt/set
         (                                                                                                                 // opt/set
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                                     // opt/set
             PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)                                                                       // opt/set
             PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                                                         // opt/set
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                                                      // opt/set
@@ -7913,6 +8235,16 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                           // opt/set
         PARSE_RULE_OPTIONAL                                                                                               // opt/set
         (                                                                                                                 // opt/set
+            PARSE_RULE_OPTIONAL_GROUP                                                                                     // opt/set
+            (                                                                                                             // opt/set
+                PARSE_RULE_FILTER_CMD                                                                                     // opt/set
+                (                                                                                                         // opt/set
+                    PARSE_RULE_VAL_CMD(cfgCmdAnnotate),                                                                   // opt/set
+                ),                                                                                                        // opt/set
+                                                                                                                          // opt/set
+                PARSE_RULE_OPTIONAL_REQUIRED(),                                                                           // opt/set
+            ),                                                                                                            // opt/set
+                                                                                                                          // opt/set
             PARSE_RULE_OPTIONAL_GROUP                                                                                     // opt/set
             (                                                                                                             // opt/set
                 PARSE_RULE_FILTER_CMD                                                                                     // opt/set
@@ -8044,6 +8376,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                        // opt/stanza
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                                 // opt/stanza
         (                                                                                                              // opt/stanza
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                                  // opt/stanza
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                                // opt/stanza
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                               // opt/stanza
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                    // opt/stanza
@@ -8081,6 +8414,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                        // opt/stanza
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                               // opt/stanza
         (                                                                                                              // opt/stanza
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                                  // opt/stanza
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                                // opt/stanza
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                               // opt/stanza
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                    // opt/stanza
@@ -8342,6 +8676,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                          // opt/tcp-keep-alive-count
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                   // opt/tcp-keep-alive-count
         (                                                                                                // opt/tcp-keep-alive-count
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                    // opt/tcp-keep-alive-count
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                  // opt/tcp-keep-alive-count
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                 // opt/tcp-keep-alive-count
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                      // opt/tcp-keep-alive-count
@@ -8379,6 +8714,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                          // opt/tcp-keep-alive-count
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                 // opt/tcp-keep-alive-count
         (                                                                                                // opt/tcp-keep-alive-count
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                    // opt/tcp-keep-alive-count
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                  // opt/tcp-keep-alive-count
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                 // opt/tcp-keep-alive-count
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                      // opt/tcp-keep-alive-count
@@ -8425,6 +8761,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                           // opt/tcp-keep-alive-idle
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                    // opt/tcp-keep-alive-idle
         (                                                                                                 // opt/tcp-keep-alive-idle
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                     // opt/tcp-keep-alive-idle
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                   // opt/tcp-keep-alive-idle
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                  // opt/tcp-keep-alive-idle
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                       // opt/tcp-keep-alive-idle
@@ -8462,6 +8799,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                           // opt/tcp-keep-alive-idle
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                  // opt/tcp-keep-alive-idle
         (                                                                                                 // opt/tcp-keep-alive-idle
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                     // opt/tcp-keep-alive-idle
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                   // opt/tcp-keep-alive-idle
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                  // opt/tcp-keep-alive-idle
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                       // opt/tcp-keep-alive-idle
@@ -8508,6 +8846,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                       // opt/tcp-keep-alive-interval
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                // opt/tcp-keep-alive-interval
         (                                                                                             // opt/tcp-keep-alive-interval
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                 // opt/tcp-keep-alive-interval
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                               // opt/tcp-keep-alive-interval
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                              // opt/tcp-keep-alive-interval
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                   // opt/tcp-keep-alive-interval
@@ -8545,6 +8884,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                       // opt/tcp-keep-alive-interval
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                              // opt/tcp-keep-alive-interval
         (                                                                                             // opt/tcp-keep-alive-interval
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                 // opt/tcp-keep-alive-interval
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                               // opt/tcp-keep-alive-interval
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                              // opt/tcp-keep-alive-interval
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                   // opt/tcp-keep-alive-interval
@@ -9065,6 +9405,7 @@ Order for option parse resolution
 static const uint8_t optionResolveOrder[] =
 {
     cfgOptStanza,                                                                                               // opt-resolve-order
+    cfgOptAnnotation,                                                                                           // opt-resolve-order
     cfgOptArchiveAsync,                                                                                         // opt-resolve-order
     cfgOptArchiveGetQueueMax,                                                                                   // opt-resolve-order
     cfgOptArchiveHeaderCheck,                                                                                   // opt-resolve-order
@@ -9179,6 +9520,9 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoAzureKey,                                                                                         // opt-resolve-order
     cfgOptRepoAzureKeyType,                                                                                     // opt-resolve-order
     cfgOptRepoAzureUriStyle,                                                                                    // opt-resolve-order
+    cfgOptRepoBlock,                                                                                            // opt-resolve-order
+    cfgOptRepoBlockAgeMap,                                                                                      // opt-resolve-order
+    cfgOptRepoBlockSizeMap,                                                                                     // opt-resolve-order
     cfgOptRepoCipherPass,                                                                                       // opt-resolve-order
     cfgOptRepoGcsKeyType,                                                                                       // opt-resolve-order
     cfgOptRepoHost,                                                                                             // opt-resolve-order
@@ -9201,6 +9545,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoStorageCaPath,                                                                                    // opt-resolve-order
     cfgOptRepoStorageHost,                                                                                      // opt-resolve-order
     cfgOptRepoStoragePort,                                                                                      // opt-resolve-order
+    cfgOptRepoStorageUploadChunkSize,                                                                           // opt-resolve-order
     cfgOptRepoStorageVerifyTls,                                                                                 // opt-resolve-order
     cfgOptTarget,                                                                                               // opt-resolve-order
     cfgOptTargetAction,                                                                                         // opt-resolve-order

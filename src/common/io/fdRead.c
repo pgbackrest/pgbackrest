@@ -29,7 +29,7 @@ Macros for function logging
 #define FUNCTION_LOG_IO_FD_READ_TYPE                                                                                               \
     IoFdRead *
 #define FUNCTION_LOG_IO_FD_READ_FORMAT(value, buffer, bufferSize)                                                                  \
-    objToLog(value, "IoFdRead", buffer, bufferSize)
+    objNameToLog(value, "IoFdRead", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Are there bytes ready to read immediately?
@@ -143,7 +143,7 @@ ioFdReadFd(const THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-IoRead *
+FN_EXTERN IoRead *
 ioFdReadNew(const String *name, int fd, TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -158,7 +158,7 @@ ioFdReadNew(const String *name, int fd, TimeMSec timeout)
 
     OBJ_NEW_BEGIN(IoFdRead, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        IoFdRead *driver = OBJ_NEW_ALLOC();
+        IoFdRead *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoRead::IoFdRead);
 
         *driver = (IoFdRead)
         {

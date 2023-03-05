@@ -4,16 +4,16 @@ Socket Client
 #include "build.auto.h"
 
 #include <netinet/in.h>
-#include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include "common/debug.h"
-#include "common/log.h"
 #include "common/io/client.h"
 #include "common/io/socket/client.h"
 #include "common/io/socket/common.h"
 #include "common/io/socket/session.h"
+#include "common/log.h"
 #include "common/stat.h"
 #include "common/type/object.h"
 #include "common/wait.h"
@@ -40,20 +40,20 @@ typedef struct SocketClient
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-static String *
-sckClientToLog(const THIS_VOID)
+static void
+sckClientToLog(const THIS_VOID, StringStatic *const debugLog)
 {
     THIS(const SocketClient);
 
-    return strNewFmt(
-        "{host: %s, port: %u, timeoutConnect: %" PRIu64 ", timeoutSession: %" PRIu64 "}", strZ(this->host), this->port,
+    strStcFmt(
+        debugLog, "{host: %s, port: %u, timeoutConnect: %" PRIu64 ", timeoutSession: %" PRIu64 "}", strZ(this->host), this->port,
         this->timeoutConnect, this->timeoutSession);
 }
 
 #define FUNCTION_LOG_SOCKET_CLIENT_TYPE                                                                                            \
     SocketClient *
 #define FUNCTION_LOG_SOCKET_CLIENT_FORMAT(value, buffer, bufferSize)                                                               \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, sckClientToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, sckClientToLog, buffer, bufferSize)
 
 /**********************************************************************************************************************************/
 static IoSession *
@@ -158,10 +158,10 @@ static const IoClientInterface sckClientInterface =
     .toLog = sckClientToLog,
 };
 
-IoClient *
+FN_EXTERN IoClient *
 sckClientNew(const String *const host, const unsigned int port, const TimeMSec timeoutConnect, const TimeMSec timeoutSession)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug)
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, host);
         FUNCTION_LOG_PARAM(UINT, port);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeoutConnect);
@@ -174,7 +174,7 @@ sckClientNew(const String *const host, const unsigned int port, const TimeMSec t
 
     OBJ_NEW_BEGIN(SocketClient, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        SocketClient *driver = OBJ_NEW_ALLOC();
+        SocketClient *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoClient::SocketClient);
 
         *driver = (SocketClient)
         {

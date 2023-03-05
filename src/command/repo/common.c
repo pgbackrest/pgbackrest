@@ -9,7 +9,7 @@ Common Functions and Definitions for Repo Commands
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
-String *
+FN_EXTERN String *
 repoPathIsValid(const String *path)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);

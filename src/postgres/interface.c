@@ -38,7 +38,7 @@ STRING_STATIC(PG_PATH_PGXLOG_STR,                                   "pg_xlog");
 STRING_STATIC(PG_PATH_PGCLOG_STR,                                   "pg_clog");
 STRING_STATIC(PG_PATH_PGXACT_STR,                                   "pg_xact");
 
-// Lsn name used in functions depnding on version
+// Lsn name used in functions depending on version
 STRING_STATIC(PG_NAME_LSN_STR,                                      "lsn");
 STRING_STATIC(PG_NAME_LOCATION_STR,                                 "location");
 
@@ -117,7 +117,7 @@ pgInterfaceVersion(unsigned int pgVersion)
 }
 
 /**********************************************************************************************************************************/
-bool
+FN_EXTERN bool
 pgDbIsTemplate(const String *const name)
 {
     FUNCTION_TEST_BEGIN();
@@ -128,7 +128,7 @@ pgDbIsTemplate(const String *const name)
 }
 
 /**********************************************************************************************************************************/
-bool
+FN_EXTERN bool
 pgDbIsSystem(const String *const name)
 {
     FUNCTION_TEST_BEGIN();
@@ -139,7 +139,7 @@ pgDbIsSystem(const String *const name)
 }
 
 /**********************************************************************************************************************************/
-bool
+FN_EXTERN bool
 pgDbIsSystemId(const unsigned int id)
 {
     FUNCTION_TEST_BEGIN();
@@ -200,7 +200,7 @@ pgControlFromBuffer(const Buffer *controlFile)
         THROW_FMT(
             VersionNotSupportedError,
             "unexpected control version = %u and catalog version = %u\n"
-                "HINT: is this version of PostgreSQL supported?",
+            "HINT: is this version of PostgreSQL supported?",
             controlCommon->controlVersion, controlCommon->catalogVersion);
     }
 
@@ -218,7 +218,7 @@ pgControlFromBuffer(const Buffer *controlFile)
     FUNCTION_LOG_RETURN(PG_CONTROL, result);
 }
 
-PgControl
+FN_EXTERN PgControl
 pgControlFromFile(const Storage *storage)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -243,7 +243,7 @@ pgControlFromFile(const Storage *storage)
 }
 
 /**********************************************************************************************************************************/
-uint32_t
+FN_EXTERN uint32_t
 pgControlVersion(unsigned int pgVersion)
 {
     FUNCTION_TEST_BEGIN();
@@ -266,7 +266,7 @@ typedef struct PgWalCommon
 #define PG_WAL_LONG_HEADER                                          0x0002
 
 /**********************************************************************************************************************************/
-PgWal
+FN_EXTERN PgWal
 pgWalFromBuffer(const Buffer *walBuffer)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -297,7 +297,7 @@ pgWalFromBuffer(const Buffer *walBuffer)
         THROW_FMT(
             VersionNotSupportedError,
             "unexpected WAL magic %u\n"
-                "HINT: is this version of PostgreSQL supported?",
+            "HINT: is this version of PostgreSQL supported?",
             ((const PgWalCommon *)bufPtrConst(walBuffer))->magic);
     }
 
@@ -311,7 +311,7 @@ pgWalFromBuffer(const Buffer *walBuffer)
     FUNCTION_LOG_RETURN(PG_WAL, result);
 }
 
-PgWal
+FN_EXTERN PgWal
 pgWalFromFile(const String *walFile, const Storage *storage)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -335,7 +335,7 @@ pgWalFromFile(const String *walFile, const Storage *storage)
 }
 
 /**********************************************************************************************************************************/
-String *
+FN_EXTERN String *
 pgTablespaceId(unsigned int pgVersion, unsigned int pgCatalogVersion)
 {
     FUNCTION_TEST_BEGIN();
@@ -361,7 +361,7 @@ pgTablespaceId(unsigned int pgVersion, unsigned int pgCatalogVersion)
 }
 
 /**********************************************************************************************************************************/
-uint64_t
+FN_EXTERN uint64_t
 pgLsnFromStr(const String *lsn)
 {
     FUNCTION_TEST_BEGIN();
@@ -383,7 +383,7 @@ pgLsnFromStr(const String *lsn)
     FUNCTION_TEST_RETURN(UINT64, result);
 }
 
-String *
+FN_EXTERN String *
 pgLsnToStr(uint64_t lsn)
 {
     FUNCTION_TEST_BEGIN();
@@ -394,7 +394,7 @@ pgLsnToStr(uint64_t lsn)
 }
 
 /**********************************************************************************************************************************/
-String *
+FN_EXTERN String *
 pgLsnToWalSegment(uint32_t timeline, uint64_t lsn, unsigned int walSegmentSize)
 {
     FUNCTION_TEST_BEGIN();
@@ -407,26 +407,8 @@ pgLsnToWalSegment(uint32_t timeline, uint64_t lsn, unsigned int walSegmentSize)
         STRING, strNewFmt("%08X%08X%08X", timeline, (unsigned int)(lsn >> 32), (unsigned int)(lsn & 0xFFFFFFFF) / walSegmentSize));
 }
 
-uint64_t
-pgLsnFromWalSegment(const String *const walSegment, const unsigned int walSegmentSize)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, walSegment);
-        FUNCTION_TEST_PARAM(UINT, walSegmentSize);
-    FUNCTION_TEST_END();
-
-    ASSERT(walSegment != NULL);
-    ASSERT(strSize(walSegment) == 24);
-    ASSERT(walSegmentSize > 0);
-
-    FUNCTION_TEST_RETURN(
-        UINT64,
-        (cvtZSubNToUInt64Base(strZ(walSegment), 8, 8, 16) << 32) +
-        (cvtZSubNToUInt64Base(strZ(walSegment), 16, 8, 16) * walSegmentSize));
-}
-
 /**********************************************************************************************************************************/
-uint32_t
+FN_EXTERN uint32_t
 pgTimelineFromWalSegment(const String *const walSegment)
 {
     FUNCTION_TEST_BEGIN();
@@ -440,32 +422,25 @@ pgTimelineFromWalSegment(const String *const walSegment)
 }
 
 /**********************************************************************************************************************************/
-StringList *
+FN_EXTERN StringList *
 pgLsnRangeToWalSegmentList(
-    const unsigned int pgVersion, const uint32_t timeline, const uint64_t lsnStart, const uint64_t lsnStop,
-    const unsigned int walSegmentSize)
+    const uint32_t timeline, const uint64_t lsnStart, const uint64_t lsnStop, const unsigned int walSegmentSize)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(UINT, pgVersion);
         FUNCTION_TEST_PARAM(UINT, timeline);
         FUNCTION_TEST_PARAM(UINT64, lsnStart);
         FUNCTION_TEST_PARAM(UINT64, lsnStop);
         FUNCTION_TEST_PARAM(UINT, walSegmentSize);
     FUNCTION_TEST_END();
 
-    ASSERT(pgVersion != 0);
     ASSERT(timeline != 0);
     ASSERT(lsnStart <= lsnStop);
     ASSERT(walSegmentSize != 0);
-    ASSERT(pgVersion > PG_VERSION_92 || walSegmentSize == PG_WAL_SEGMENT_SIZE_DEFAULT);
 
     StringList *const result = strLstNew();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Skip the FF segment when PostgreSQL <= 9.2 (in this case segment size should always be 16MB)
-        const bool skipFF = pgVersion <= PG_VERSION_92;
-
         // Calculate the start and stop segments
         unsigned int startMajor = (unsigned int)(lsnStart >> 32);
         unsigned int startMinor = (unsigned int)(lsnStart & 0xFFFFFFFF) / walSegmentSize;
@@ -482,7 +457,7 @@ pgLsnRangeToWalSegmentList(
         {
             startMinor++;
 
-            if ((skipFF && startMinor == 0xFF) || (!skipFF && startMinor > minorPerMajor))
+            if (startMinor > minorPerMajor)
             {
                 startMajor++;
                 startMinor = 0;
@@ -497,7 +472,7 @@ pgLsnRangeToWalSegmentList(
 }
 
 /**********************************************************************************************************************************/
-const String *
+FN_EXTERN const String *
 pgLsnName(unsigned int pgVersion)
 {
     FUNCTION_TEST_BEGIN();
@@ -510,7 +485,7 @@ pgLsnName(unsigned int pgVersion)
 /***********************************************************************************************************************************
 Get WAL name (wal/xlog) for a PostgreSQL version
 ***********************************************************************************************************************************/
-const String *
+FN_EXTERN const String *
 pgWalName(unsigned int pgVersion)
 {
     FUNCTION_TEST_BEGIN();
@@ -521,7 +496,7 @@ pgWalName(unsigned int pgVersion)
 }
 
 /**********************************************************************************************************************************/
-const String *
+FN_EXTERN const String *
 pgWalPath(unsigned int pgVersion)
 {
     FUNCTION_TEST_BEGIN();
@@ -532,7 +507,7 @@ pgWalPath(unsigned int pgVersion)
 }
 
 /**********************************************************************************************************************************/
-const String *
+FN_EXTERN const String *
 pgXactPath(unsigned int pgVersion)
 {
     FUNCTION_TEST_BEGIN();
@@ -543,12 +518,12 @@ pgXactPath(unsigned int pgVersion)
 }
 
 /**********************************************************************************************************************************/
-unsigned int
+FN_EXTERN unsigned int
 pgVersionFromStr(const String *const version)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STRING, version);
-    FUNCTION_LOG_END();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, version);
+    FUNCTION_TEST_END();
 
     ASSERT(version != NULL);
 
@@ -560,37 +535,37 @@ pgVersionFromStr(const String *const version)
     const int idxStart = strChr(version, '.');
 
     if (idxStart == -1)
-        FUNCTION_LOG_RETURN(UINT, cvtZToUInt(strZ(version)) * 10000);
+        FUNCTION_TEST_RETURN(UINT, cvtZToUInt(strZ(version)) * 10000);
 
     // Major and minor version are needed
-    FUNCTION_LOG_RETURN(
+    FUNCTION_TEST_RETURN(
         UINT, cvtZSubNToUInt(strZ(version), 0, (size_t)idxStart) * 10000 + cvtZToUInt(strZ(version) + (size_t)idxStart + 1) * 100);
 }
 
-String *
+FN_EXTERN String *
 pgVersionToStr(unsigned int version)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(UINT, version);
-    FUNCTION_LOG_END();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, version);
+    FUNCTION_TEST_END();
 
-    String *result = version >= PG_VERSION_10 ?
-        strNewFmt("%u", version / 10000) : strNewFmt("%u.%u", version / 10000, version % 10000 / 100);
-
-    FUNCTION_LOG_RETURN(STRING, result);
+    FUNCTION_TEST_RETURN(
+        STRING,
+        version >= PG_VERSION_10 ?
+            strNewFmt("%u", version / 10000) : strNewFmt("%u.%u", version / 10000, version % 10000 / 100));
 }
 
 /**********************************************************************************************************************************/
-String *
-pgControlToLog(const PgControl *pgControl)
+FN_EXTERN void
+pgControlToLog(const PgControl *const pgControl, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{version: %u, systemId: %" PRIu64 ", walSegmentSize: %u, pageChecksum: %s}", pgControl->version, pgControl->systemId,
-        pgControl->walSegmentSize, cvtBoolToConstZ(pgControl->pageChecksum));
+    strStcFmt(
+        debugLog, "{version: %u, systemId: %" PRIu64 ", walSegmentSize: %u, pageChecksum: %s}", pgControl->version,
+        pgControl->systemId, pgControl->walSegmentSize, cvtBoolToConstZ(pgControl->pageChecksum));
 }
 
-String *
-pgWalToLog(const PgWal *pgWal)
+FN_EXTERN void
+pgWalToLog(const PgWal *const pgWal, StringStatic *const debugLog)
 {
-    return strNewFmt("{version: %u, systemId: %" PRIu64 "}", pgWal->version, pgWal->systemId);
+    strStcFmt(debugLog, "{version: %u, systemId: %" PRIu64 "}", pgWal->version, pgWal->systemId);
 }

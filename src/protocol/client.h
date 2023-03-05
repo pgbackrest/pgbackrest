@@ -50,7 +50,7 @@ be added to the expected binary size to account for overhead.
 #define PROTOCOL_PACK_DEFAULT_SIZE                                  1024
 
 // Pack large enough for standard data. Note that the buffer will automatically resize when required.
-__attribute__((always_inline)) static inline PackWrite *
+FN_INLINE_ALWAYS PackWrite *
 protocolPackNew(void)
 {
     return pckWriteNewP(.size = PROTOCOL_PACK_DEFAULT_SIZE);
@@ -59,7 +59,7 @@ protocolPackNew(void)
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-ProtocolClient *protocolClientNew(const String *name, const String *service, IoRead *read, IoWrite *write);
+FN_EXTERN ProtocolClient *protocolClientNew(const String *name, const String *service, IoRead *read, IoWrite *write);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -70,7 +70,7 @@ typedef struct ProtocolClientPub
 } ProtocolClientPub;
 
 // Read file descriptor
-__attribute__((always_inline)) static inline int
+FN_INLINE_ALWAYS int
 protocolClientIoReadFd(ProtocolClient *const this)
 {
     return ioReadFd(THIS_PUB(ProtocolClient)->read);
@@ -80,39 +80,39 @@ protocolClientIoReadFd(ProtocolClient *const this)
 Functions
 ***********************************************************************************************************************************/
 // Execute a command and get the result
-PackRead *protocolClientExecute(ProtocolClient *this, ProtocolCommand *command, bool resultRequired);
+FN_EXTERN PackRead *protocolClientExecute(ProtocolClient *this, ProtocolCommand *command, bool resultRequired);
 
 // Move to a new parent mem context
-__attribute__((always_inline)) static inline ProtocolClient *
+FN_INLINE_ALWAYS ProtocolClient *
 protocolClientMove(ProtocolClient *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
 }
 
 // Do not send exit command to the server when the client is freed
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 protocolClientNoExit(ProtocolClient *const this)
 {
     memContextCallbackClear(objMemContext(this));
 }
 
 // Send noop to test connection or keep it alive
-void protocolClientNoOp(ProtocolClient *this);
+FN_EXTERN void protocolClientNoOp(ProtocolClient *this);
 
 // Get data put by the server
-PackRead *protocolClientDataGet(ProtocolClient *this);
-void protocolClientDataEndGet(ProtocolClient *this);
+FN_EXTERN PackRead *protocolClientDataGet(ProtocolClient *this);
+FN_EXTERN void protocolClientDataEndGet(ProtocolClient *this);
 
 // Put command to the server
-void protocolClientCommandPut(ProtocolClient *this, ProtocolCommand *command, const bool dataPut);
+FN_EXTERN void protocolClientCommandPut(ProtocolClient *this, ProtocolCommand *command, const bool dataPut);
 
 // Put data to the server
-void protocolClientDataPut(ProtocolClient *this, PackWrite *data);
+FN_EXTERN void protocolClientDataPut(ProtocolClient *this, PackWrite *data);
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 protocolClientFree(ProtocolClient *const this)
 {
     objFree(this);
@@ -121,11 +121,11 @@ protocolClientFree(ProtocolClient *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-String *protocolClientToLog(const ProtocolClient *this);
+FN_EXTERN void protocolClientToLog(const ProtocolClient *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_PROTOCOL_CLIENT_TYPE                                                                                          \
     ProtocolClient *
 #define FUNCTION_LOG_PROTOCOL_CLIENT_FORMAT(value, buffer, bufferSize)                                                             \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, protocolClientToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, protocolClientToLog, buffer, bufferSize)
 
 #endif

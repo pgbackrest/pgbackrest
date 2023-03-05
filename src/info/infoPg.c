@@ -6,8 +6,8 @@ PostgreSQL Info Handler
 #include <limits.h>
 #include <stdarg.h>
 #include <stdarg.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "common/debug.h"
@@ -43,6 +43,8 @@ infoPgNewInternal(InfoPgType type)
         FUNCTION_TEST_PARAM(STRING_ID, type);
     FUNCTION_TEST_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     InfoPg *this = OBJ_NEW_ALLOC();
 
     *this = (InfoPg)
@@ -59,7 +61,7 @@ infoPgNewInternal(InfoPgType type)
 }
 
 /**********************************************************************************************************************************/
-InfoPg *
+FN_EXTERN InfoPg *
 infoPgNew(InfoPgType type, const String *cipherPassSub)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -106,6 +108,8 @@ infoPgLoadCallback(void *const data, const String *const section, const String *
         FUNCTION_TEST_PARAM(STRING, value);
     FUNCTION_TEST_END();
 
+    FUNCTION_AUDIT_CALLBACK();
+
     ASSERT(data != NULL);
     ASSERT(section != NULL);
     ASSERT(key != NULL);
@@ -129,11 +133,14 @@ infoPgLoadCallback(void *const data, const String *const section, const String *
 
         // Catalog version
         if (loadData->infoPg->type == infoPgBackup)
+        {
             infoPgData.catalogVersion = jsonReadUInt(jsonReadKeyRequireZ(json, INFO_KEY_DB_CATALOG_VERSION));
+            infoPgData.controlVersion = jsonReadUInt(jsonReadKeyRequireZ(json, INFO_KEY_DB_CONTROL_VERSION));
+        }
 
         // System id
         infoPgData.systemId = jsonReadUInt64(
-                jsonReadKeyRequireZ(json, loadData->infoPg->type == infoPgArchive ? INFO_KEY_DB_ID : INFO_KEY_DB_SYSTEM_ID));
+            jsonReadKeyRequireZ(json, loadData->infoPg->type == infoPgArchive ? INFO_KEY_DB_ID : INFO_KEY_DB_SYSTEM_ID));
 
         // PostgreSQL version
         infoPgData.version = pgVersionFromStr(jsonReadStr(jsonReadKeyRequireZ(json, INFO_KEY_DB_VERSION)));
@@ -148,7 +155,7 @@ infoPgLoadCallback(void *const data, const String *const section, const String *
     FUNCTION_TEST_RETURN_VOID();
 }
 
-InfoPg *
+FN_EXTERN InfoPg *
 infoPgNewLoad(IoRead *read, InfoPgType type, InfoLoadNewCallback *callbackFunction, void *callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -199,7 +206,7 @@ infoPgNewLoad(IoRead *read, InfoPgType type, InfoLoadNewCallback *callbackFuncti
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 infoPgAdd(InfoPg *this, const InfoPgData *infoPgData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -217,7 +224,7 @@ infoPgAdd(InfoPg *this, const InfoPgData *infoPgData)
 }
 
 /**********************************************************************************************************************************/
-InfoPg *
+FN_EXTERN InfoPg *
 infoPgSet(
     InfoPg *this, InfoPgType type, const unsigned int pgVersion, const uint64_t pgSystemId, const unsigned int pgCatalogVersion)
 {
@@ -247,10 +254,14 @@ infoPgSet(
 
             // This is different in archive.info due to a typo that can't be fixed without a format version bump
             .systemId = pgSystemId,
-
-            // Catalog version is only required for backup info to preserve the repo format
-            .catalogVersion = this->type == infoPgBackup ? pgCatalogVersion : 0,
         };
+
+        // Catalog/control version required for backup info to preserve the repo format
+        if (this->type == infoPgBackup)
+        {
+            infoPgData.catalogVersion = pgCatalogVersion;
+            infoPgData.controlVersion = pgControlVersion(pgVersion);
+        }
 
         // Add the pg data to the history list
         infoPgAdd(this, &infoPgData);
@@ -277,6 +288,8 @@ infoPgSaveCallback(void *const data, const String *const sectionNext, InfoSave *
         FUNCTION_TEST_PARAM(STRING, sectionNext);
         FUNCTION_TEST_PARAM(INFO_SAVE, infoSaveData);
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_CALLBACK();
 
     ASSERT(data != NULL);
     ASSERT(infoSaveData != NULL);
@@ -318,7 +331,7 @@ infoPgSaveCallback(void *const data, const String *const sectionNext, InfoSave *
             if (saveData->infoPg->type == infoPgBackup)
             {
                 jsonWriteUInt(jsonWriteKeyZ(json, INFO_KEY_DB_CATALOG_VERSION), pgData.catalogVersion);
-                jsonWriteUInt(jsonWriteKeyZ(json, INFO_KEY_DB_CONTROL_VERSION), pgControlVersion(pgData.version));
+                jsonWriteUInt(jsonWriteKeyZ(json, INFO_KEY_DB_CONTROL_VERSION), pgData.controlVersion);
             }
 
             if (saveData->infoPg->type == infoPgArchive)
@@ -342,7 +355,7 @@ infoPgSaveCallback(void *const data, const String *const sectionNext, InfoSave *
     FUNCTION_TEST_RETURN_VOID();
 }
 
-void
+FN_EXTERN void
 infoPgSave(InfoPg *this, IoWrite *write, InfoSaveCallback *callbackFunction, void *callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -373,7 +386,7 @@ infoPgSave(InfoPg *this, IoWrite *write, InfoSaveCallback *callbackFunction, voi
 }
 
 /**********************************************************************************************************************************/
-String *
+FN_EXTERN String *
 infoPgArchiveId(const InfoPg *const this, const unsigned int pgDataIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -394,7 +407,7 @@ infoPgArchiveId(const InfoPg *const this, const unsigned int pgDataIdx)
 }
 
 /**********************************************************************************************************************************/
-InfoPgData
+FN_EXTERN InfoPgData
 infoPgData(const InfoPg *this, unsigned int pgDataIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -408,7 +421,7 @@ infoPgData(const InfoPg *this, unsigned int pgDataIdx)
 }
 
 /**********************************************************************************************************************************/
-InfoPgData
+FN_EXTERN InfoPgData
 infoPgDataCurrent(const InfoPg *this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -421,7 +434,7 @@ infoPgDataCurrent(const InfoPg *this)
 }
 
 /**********************************************************************************************************************************/
-unsigned int
+FN_EXTERN unsigned int
 infoPgDataCurrentId(const InfoPg *this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -434,7 +447,7 @@ infoPgDataCurrentId(const InfoPg *this)
 }
 
 /**********************************************************************************************************************************/
-unsigned int
+FN_EXTERN unsigned int
 infoPgCurrentDataId(const InfoPg *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -449,10 +462,10 @@ infoPgCurrentDataId(const InfoPg *this)
 }
 
 /**********************************************************************************************************************************/
-String *
-infoPgDataToLog(const InfoPgData *this)
+FN_EXTERN void
+infoPgDataToLog(const InfoPgData *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{id: %u, version: %u, systemId: %" PRIu64 ", catalogVersion: %u}", this->id, this->version, this->systemId,
+    strStcFmt(
+        debugLog, "{id: %u, version: %u, systemId: %" PRIu64 ", catalogVersion: %u}", this->id, this->version, this->systemId,
         this->catalogVersion);
 }

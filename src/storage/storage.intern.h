@@ -87,6 +87,23 @@ typedef StorageInfo StorageInterfaceInfo(
     STORAGE_COMMON_INTERFACE(thisVoid).info(thisVoid, file, level, (StorageInterfaceInfoParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 // ---------------------------------------------------------------------------------------------------------------------------------
+// Create a hard or symbolic link
+typedef struct StorageInterfaceLinkCreateParam
+{
+    VAR_PARAM_HEADER;
+
+    // Flag to create hard or symbolic link
+    StorageLinkType linkType;
+} StorageInterfaceLinkCreateParam;
+
+typedef void StorageInterfaceLinkCreate(
+    void *thisVoid, const String *target, const String *linkPath, StorageInterfaceLinkCreateParam param);
+
+#define storageInterfaceLinkCreateP(thisVoid, target, linkPath, ...)                                                               \
+    STORAGE_COMMON_INTERFACE(thisVoid).linkCreate(thisVoid, target, linkPath,                                                      \
+        (StorageInterfaceLinkCreateParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+// ---------------------------------------------------------------------------------------------------------------------------------
 // Create a file read object.  The file should not be opened immediately -- open() will be called on the IoRead interface when the
 // file needs to be opened.
 typedef struct StorageInterfaceNewReadParam
@@ -138,6 +155,10 @@ typedef struct StorageInterfaceNewWriteParam
     // Ensure the file is written atomically. If this is false it's OK to write atomically if that's all the storage supports
     // (e.g. S3). Non-atomic writes are used in some places where there is a performance advantage and atomicity is not needed.
     bool atomic;
+
+    // Truncate file if it exists. Disable this only in cases where the file will be manipulated directly through the file handle,
+    // which should always be the exception and shows functionality that should be added to the storage interface.
+    bool truncate;
 
     // Is the file compressible?  This is used when the file must be moved across a network and temporary compression is helpful.
     bool compressible;
@@ -275,6 +296,7 @@ typedef struct StorageInterface
     StorageInterfaceRemove *remove;
 
     // Optional functions
+    StorageInterfaceLinkCreate *linkCreate;
     StorageInterfaceMove *move;
     StorageInterfacePathCreate *pathCreate;
     StorageInterfacePathSync *pathSync;
@@ -283,7 +305,7 @@ typedef struct StorageInterface
 #define storageNewP(type, path, modeFile, modePath, write, pathExpressionFunction, driver, ...)                                    \
     storageNew(type, path, modeFile, modePath, write, pathExpressionFunction, driver, (StorageInterface){__VA_ARGS__})
 
-Storage *storageNew(
+FN_EXTERN Storage *storageNew(
     StringId type, const String *path, mode_t modeFile, mode_t modePath, bool write,
     StoragePathExpressionCallback pathExpressionFunction, void *driver, StorageInterface interface);
 
@@ -314,14 +336,14 @@ typedef struct StoragePub
 } StoragePub;
 
 // Storage driver
-__attribute__((always_inline)) static inline void *
+FN_INLINE_ALWAYS void *
 storageDriver(const Storage *const this)
 {
     return THIS_PUB(Storage)->driver;
 }
 
 // Storage interface
-__attribute__((always_inline)) static inline StorageInterface
+FN_INLINE_ALWAYS StorageInterface
 storageInterface(const Storage *const this)
 {
     return THIS_PUB(Storage)->interface;
@@ -333,6 +355,6 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_INTERFACE_TYPE                                                                                        \
     StorageInterface
 #define FUNCTION_LOG_STORAGE_INTERFACE_FORMAT(value, buffer, bufferSize)                                                           \
-    objToLog(&value, "StorageInterface", buffer, bufferSize)
+    objNameToLog(&value, "StorageInterface", buffer, bufferSize)
 
 #endif

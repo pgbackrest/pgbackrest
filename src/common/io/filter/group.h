@@ -24,7 +24,7 @@ typedef struct IoFilterGroup IoFilterGroup;
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-IoFilterGroup *ioFilterGroupNew(void);
+FN_EXTERN IoFilterGroup *ioFilterGroupNew(void);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -42,7 +42,7 @@ typedef struct IoFilterGroupPub
 } IoFilterGroupPub;
 
 // Is the filter group done processing?
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 ioFilterGroupDone(const IoFilterGroup *const this)
 {
     ASSERT_INLINE(THIS_PUB(IoFilterGroup)->opened && !THIS_PUB(IoFilterGroup)->closed);
@@ -51,7 +51,7 @@ ioFilterGroupDone(const IoFilterGroup *const this)
 
 // Should the same input be passed again? A buffer of input can produce multiple buffers of output, e.g. when a file containing all
 // zeroes is being decompressed.
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 ioFilterGroupInputSame(const IoFilterGroup *const this)
 {
     ASSERT_INLINE(THIS_PUB(IoFilterGroup)->opened && !THIS_PUB(IoFilterGroup)->closed);
@@ -59,7 +59,7 @@ ioFilterGroupInputSame(const IoFilterGroup *const this)
 }
 
 // Get all filters and their parameters so they can be passed to a remote
-Pack *ioFilterGroupParamAll(const IoFilterGroup *this);
+FN_EXTERN Pack *ioFilterGroupParamAll(const IoFilterGroup *this);
 
 // Get filter results. If the same filter was used more than once then idx can be used to specify which one to get.
 typedef struct IoFilterGroupResultParam
@@ -71,19 +71,19 @@ typedef struct IoFilterGroupResultParam
 #define ioFilterGroupResultP(this, filterType, ...)                                                                                \
     ioFilterGroupResult(this, filterType, (IoFilterGroupResultParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-PackRead *ioFilterGroupResult(const IoFilterGroup *this, StringId filterType, IoFilterGroupResultParam param);
+FN_EXTERN PackRead *ioFilterGroupResult(const IoFilterGroup *this, StringId filterType, IoFilterGroupResultParam param);
 
 #define ioFilterGroupResultPackP(this, filterType, ...)                                                                            \
     ioFilterGroupResultPack(this, filterType, (IoFilterGroupResultParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-const Pack *ioFilterGroupResultPack(const IoFilterGroup *this, StringId filterType, IoFilterGroupResultParam param);
+FN_EXTERN const Pack *ioFilterGroupResultPack(const IoFilterGroup *this, StringId filterType, IoFilterGroupResultParam param);
 
 // Get/set all filter results
-Pack *ioFilterGroupResultAll(const IoFilterGroup *this);
-void ioFilterGroupResultAllSet(IoFilterGroup *this, const Pack *filterResult);
+FN_EXTERN Pack *ioFilterGroupResultAll(const IoFilterGroup *this);
+FN_EXTERN void ioFilterGroupResultAllSet(IoFilterGroup *this, const Pack *filterResult);
 
 // Return total number of filters
-__attribute__((always_inline)) static inline unsigned int
+FN_INLINE_ALWAYS unsigned int
 ioFilterGroupSize(const IoFilterGroup *const this)
 {
     return lstSize(THIS_PUB(IoFilterGroup)->filterList);
@@ -93,27 +93,27 @@ ioFilterGroupSize(const IoFilterGroup *const this)
 Functions
 ***********************************************************************************************************************************/
 // Add a filter
-IoFilterGroup *ioFilterGroupAdd(IoFilterGroup *this, IoFilter *filter);
+FN_EXTERN IoFilterGroup *ioFilterGroupAdd(IoFilterGroup *this, IoFilter *filter);
 
 // Insert a filter before an index
-IoFilterGroup *ioFilterGroupInsert(IoFilterGroup *this, unsigned int listIdx, IoFilter *filter);
+FN_EXTERN IoFilterGroup *ioFilterGroupInsert(IoFilterGroup *this, unsigned int listIdx, IoFilter *filter);
 
 // Clear filters
-IoFilterGroup *ioFilterGroupClear(IoFilterGroup *this);
+FN_EXTERN IoFilterGroup *ioFilterGroupClear(IoFilterGroup *this);
 
 // Open filter group
-void ioFilterGroupOpen(IoFilterGroup *this);
+FN_EXTERN void ioFilterGroupOpen(IoFilterGroup *this);
 
 // Process filters
-void ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *output);
+FN_EXTERN void ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *output);
 
 // Close filter group and gather results
-void ioFilterGroupClose(IoFilterGroup *this);
+FN_EXTERN void ioFilterGroupClose(IoFilterGroup *this);
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 ioFilterGroupFree(IoFilterGroup *const this)
 {
     objFree(this);
@@ -122,11 +122,11 @@ ioFilterGroupFree(IoFilterGroup *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-String *ioFilterGroupToLog(const IoFilterGroup *this);
+FN_EXTERN void ioFilterGroupToLog(const IoFilterGroup *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_IO_FILTER_GROUP_TYPE                                                                                          \
     IoFilterGroup *
 #define FUNCTION_LOG_IO_FILTER_GROUP_FORMAT(value, buffer, bufferSize)                                                             \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, ioFilterGroupToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, ioFilterGroupToLog, buffer, bufferSize)
 
 #endif

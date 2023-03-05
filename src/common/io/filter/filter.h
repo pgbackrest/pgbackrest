@@ -24,10 +24,10 @@ typedef struct IoFilter IoFilter;
 Getters/Setters
 ***********************************************************************************************************************************/
 // Get filter result
-Pack *ioFilterResult(const IoFilter *this);
+FN_EXTERN Pack *ioFilterResult(const IoFilter *this);
 
 // Identifies the filter and is used when pulling results from the filter group
-__attribute__((always_inline)) static inline StringId
+FN_INLINE_ALWAYS StringId
 ioFilterType(const IoFilter *const this)
 {
     return THIS_PUB(IoFilter)->type;
@@ -36,7 +36,7 @@ ioFilterType(const IoFilter *const this)
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 ioFilterFree(IoFilter *const this)
 {
     objFreeContext(this);
@@ -45,11 +45,11 @@ ioFilterFree(IoFilter *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-String *ioFilterToLog(const IoFilter *this);
+FN_EXTERN void ioFilterToLog(const IoFilter *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_IO_FILTER_TYPE                                                                                                \
     IoFilter *
 #define FUNCTION_LOG_IO_FILTER_FORMAT(value, buffer, bufferSize)                                                                   \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, ioFilterToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, ioFilterToLog, buffer, bufferSize)
 
 #endif

@@ -12,7 +12,8 @@ Harness for Loading Test Configurations
 #include "common/harnessPack.h"
 
 /**********************************************************************************************************************************/
-String *hrnPackToStr(const Pack *const pack)
+String *
+hrnPackToStr(const Pack *const pack)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(PACK, pack);
@@ -22,7 +23,8 @@ String *hrnPackToStr(const Pack *const pack)
 }
 
 /**********************************************************************************************************************************/
-String *hrnPackReadToStr(PackRead *read)
+String *
+hrnPackReadToStr(PackRead *read)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(PACK_READ, read);
@@ -54,7 +56,7 @@ String *hrnPackReadToStr(PackRead *read)
                 break;
 
             case pckTypeBin:
-                strCatFmt(result, "%s", strZ(bufHex(pckReadBinP(read, .id = id))));
+                strCatFmt(result, "%s", strZ(strNewEncode(encodingHex, pckReadBinP(read, .id = id))));
                 break;
 
             case pckTypeI32:
@@ -80,10 +82,6 @@ String *hrnPackReadToStr(PackRead *read)
                 strCatFmt(result, "<%s>", strZ(hrnPackReadToStr(pckReadPackReadP(read, .id = id))));
                 break;
             }
-
-            case pckTypePtr:
-                strCatFmt(result, "%p", pckReadPtrP(read, .id = id));
-                break;
 
             case pckTypeStr:
                 strCatFmt(result, "%s", strZ(pckReadStrP(read, .id = id)));

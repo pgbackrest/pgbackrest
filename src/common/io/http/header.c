@@ -18,7 +18,7 @@ struct HttpHeader
 };
 
 /**********************************************************************************************************************************/
-HttpHeader *
+FN_EXTERN HttpHeader *
 httpHeaderNew(const StringList *redactList)
 {
     FUNCTION_TEST_VOID();
@@ -42,7 +42,7 @@ httpHeaderNew(const StringList *redactList)
 }
 
 /**********************************************************************************************************************************/
-HttpHeader *
+FN_EXTERN HttpHeader *
 httpHeaderDup(const HttpHeader *header, const StringList *redactList)
 {
     FUNCTION_TEST_BEGIN();
@@ -72,7 +72,7 @@ httpHeaderDup(const HttpHeader *header, const StringList *redactList)
 }
 
 /**********************************************************************************************************************************/
-HttpHeader *
+FN_EXTERN HttpHeader *
 httpHeaderAdd(HttpHeader *this, const String *key, const String *value)
 {
     FUNCTION_TEST_BEGIN();
@@ -112,7 +112,7 @@ httpHeaderAdd(HttpHeader *this, const String *key, const String *value)
 }
 
 /**********************************************************************************************************************************/
-const String *
+FN_EXTERN const String *
 httpHeaderGet(const HttpHeader *this, const String *key)
 {
     FUNCTION_TEST_BEGIN();
@@ -127,7 +127,7 @@ httpHeaderGet(const HttpHeader *this, const String *key)
 }
 
 /**********************************************************************************************************************************/
-StringList *
+FN_EXTERN StringList *
 httpHeaderList(const HttpHeader *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -140,7 +140,7 @@ httpHeaderList(const HttpHeader *this)
 }
 
 /**********************************************************************************************************************************/
-HttpHeader *
+FN_EXTERN HttpHeader *
 httpHeaderPut(HttpHeader *this, const String *key, const String *value)
 {
     FUNCTION_TEST_BEGIN();
@@ -160,7 +160,7 @@ httpHeaderPut(HttpHeader *this, const String *key, const String *value)
 }
 
 /**********************************************************************************************************************************/
-HttpHeader *
+FN_EXTERN HttpHeader *
 httpHeaderPutRange(HttpHeader *const this, const uint64_t offset, const Variant *const limit)
 {
     FUNCTION_TEST_BEGIN();
@@ -187,7 +187,7 @@ httpHeaderPutRange(HttpHeader *const this, const uint64_t offset, const Variant 
 }
 
 /**********************************************************************************************************************************/
-bool
+FN_EXTERN bool
 httpHeaderRedact(const HttpHeader *this, const String *key)
 {
     FUNCTION_TEST_BEGIN();
@@ -202,26 +202,25 @@ httpHeaderRedact(const HttpHeader *this, const String *key)
 }
 
 /**********************************************************************************************************************************/
-String *
-httpHeaderToLog(const HttpHeader *this)
+FN_EXTERN void
+httpHeaderToLog(const HttpHeader *const this, StringStatic *const debugLog)
 {
-    String *result = strCatZ(strNew(), "{");
-    const StringList *keyList = httpHeaderList(this);
+    const VariantList *const keyList = kvKeyList(this->kv);
 
-    for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)
+    strStcCatChr(debugLog, '{');
+
+    for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
     {
-        const String *key = strLstGet(keyList, keyIdx);
+        const String *const key = varStr(varLstGet(keyList, keyIdx));
 
-        if (strSize(result) != 1)
-            strCatZ(result, ", ");
+        if (keyIdx != 0)
+            strStcCat(debugLog, ", ");
 
         if (httpHeaderRedact(this, key))
-            strCatFmt(result, "%s: <redacted>", strZ(key));
+            strStcFmt(debugLog, "%s: <redacted>", strZ(key));
         else
-            strCatFmt(result, "%s: '%s'", strZ(key), strZ(httpHeaderGet(this, key)));
+            strStcFmt(debugLog, "%s: '%s'", strZ(key), strZ(httpHeaderGet(this, key)));
     }
 
-    strCatZ(result, "}");
-
-    return result;
+    strStcCatChr(debugLog, '}');
 }

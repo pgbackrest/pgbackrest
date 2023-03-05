@@ -6,10 +6,10 @@ Expire Command
 #include "command/archive/common.h"
 #include "command/backup/common.h"
 #include "command/control/common.h"
-#include "common/time.h"
-#include "common/type/list.h"
 #include "common/debug.h"
 #include "common/regExp.h"
+#include "common/time.h"
+#include "common/type/list.h"
 #include "config/config.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
@@ -448,13 +448,12 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
 
                 // globalBackupRetentionList is ordered newest to oldest backup, so create globalBackupArchiveRetentionList of the
                 // newest backups whose archives will be retained
-                for (unsigned int idx = 0;
-                     idx < (archiveRetention < strLstSize(globalBackupRetentionList) ?
-                        archiveRetention : strLstSize(globalBackupRetentionList));
-                     idx++)
-                {
-                    strLstAdd(globalBackupArchiveRetentionList, strLstGet(globalBackupRetentionList, idx));
-                }
+                const unsigned int retentionSize =
+                    archiveRetention < strLstSize(globalBackupRetentionList) ?
+                        archiveRetention : strLstSize(globalBackupRetentionList);
+
+                for (unsigned int retentionIdx = 0; retentionIdx < retentionSize; retentionIdx++)
+                    strLstAdd(globalBackupArchiveRetentionList, strLstGet(globalBackupRetentionList, retentionIdx));
 
                 // From newest to oldest, confirm the pgVersion and pgSystemId from the archive.info history id match that of the
                 // same history id of the backup.info and if not, there is a mismatch between the info files so do not continue.
@@ -498,7 +497,7 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
                         // this archiveId (e.g. 9.4-1), e.g. If globalBackupRetention has 4F, 3F, 2F, 1F then
                         // localBackupRetentionList will have 1F, 2F, 3F, 4F (assuming they all have same history id)
                         for (unsigned int retentionIdx = strLstSize(globalBackupRetentionList) - 1;
-                             (int)retentionIdx >=0; retentionIdx--)
+                             (int)retentionIdx >= 0; retentionIdx--)
                         {
                             for (unsigned int backupIdx = 0; backupIdx < infoBackupDataTotal(infoBackup); backupIdx++)
                             {
@@ -718,6 +717,7 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
                                             // Track that this archive was removed
                                             archiveExpire.total++;
                                             archiveExpire.stop = strDup(strSubN(walSubPath, 0, 24));
+
                                             if (archiveExpire.start == NULL)
                                                 archiveExpire.start = strDup(strSubN(walSubPath, 0, 24));
                                         }
@@ -747,7 +747,6 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
                                         .expression = WAL_TIMELINE_HISTORY_REGEXP_STR),
                                     sortOrderAsc);
 
-
                             for (unsigned int historyFileIdx = 0; historyFileIdx < strLstSize(historyFilesList); historyFileIdx++)
                             {
                                 String *historyFile = strLstGet(historyFilesList, historyFileIdx);
@@ -768,7 +767,6 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
                                         strZ(archiveId), strZ(historyFile));
                                 }
                             }
-
                         }
                     }
                 }
@@ -959,7 +957,7 @@ removeExpiredHistory(InfoBackup *infoBackup, unsigned int repoIdx)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 cmdExpire(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
@@ -1044,7 +1042,8 @@ cmdExpire(void)
                         if (cfgOptionIdxTest(cfgOptRepoRetentionFull, repoIdx))
                         {
                             expireTimeBasedBackup(
-                                infoBackup, time(NULL) - (time_t)(cfgOptionUInt(cfgOptRepoRetentionFull) * SEC_PER_DAY), repoIdx);
+                                infoBackup, time(NULL) - (time_t)(cfgOptionIdxUInt(cfgOptRepoRetentionFull, repoIdx) * SEC_PER_DAY),
+                                repoIdx);
                         }
                     }
                     else

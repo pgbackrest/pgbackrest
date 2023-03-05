@@ -206,7 +206,6 @@ testRun(void)
 
         HRN_FORK_BEGIN(.timeout = 15000)
         {
-
             HRN_FORK_CHILD_BEGIN(.prefix = "client")
             {
                 TEST_TITLE("ping localhost");

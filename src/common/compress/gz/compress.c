@@ -30,18 +30,18 @@ typedef struct GzCompress
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-static String *
-gzCompressToLog(const GzCompress *this)
+static void
+gzCompressToLog(const GzCompress *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{inputSame: %s, done: %s, flushing: %s, availIn: %u}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done),
-        cvtBoolToConstZ(this->flushing), this->stream.avail_in);
+    strStcFmt(
+        debugLog, "{inputSame: %s, done: %s, flushing: %s, availIn: %u}", cvtBoolToConstZ(this->inputSame),
+        cvtBoolToConstZ(this->done), cvtBoolToConstZ(this->flushing), this->stream.avail_in);
 }
 
 #define FUNCTION_LOG_GZ_COMPRESS_TYPE                                                                                              \
     GzCompress *
 #define FUNCTION_LOG_GZ_COMPRESS_FORMAT(value, buffer, bufferSize)                                                                 \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, gzCompressToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, gzCompressToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Compression constants
@@ -161,20 +161,20 @@ gzCompressInputSame(const THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-IoFilter *
+FN_EXTERN IoFilter *
 gzCompressNew(int level)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(INT, level);
     FUNCTION_LOG_END();
 
-    ASSERT(level >= -1 && level <= 9);
+    ASSERT(level >= GZ_COMPRESS_LEVEL_MIN && level <= GZ_COMPRESS_LEVEL_MAX);
 
     IoFilter *this = NULL;
 
     OBJ_NEW_BEGIN(GzCompress, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        GzCompress *driver = OBJ_NEW_ALLOC();
+        GzCompress *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::GzCompress);
 
         *driver = (GzCompress)
         {

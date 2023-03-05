@@ -6,12 +6,13 @@ Build Common
 
 #include <inttypes.h>
 
-#include "common/type/string.h"
+#include "build/common/string.h"
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************
 Block comments
 ***********************************************************************************************************************************/
+// {uncrustify_off - comment inside string}
 #define COMMENT_BLOCK_BEGIN                                                                                                        \
     "/***************************************************************************************************************************" \
     "********"
@@ -23,12 +24,13 @@ Block comments
 #define COMMENT_SEPARATOR                                                                                                          \
     "    // ---------------------------------------------------------------------------------------------------------------------" \
     "--------"
+// {uncrustify_on}
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Format a #define with the value aligned at column 69
-__attribute__((always_inline)) static inline String *
+FN_INLINE_ALWAYS String *
 bldDefineRender(const String *const define, const String *const value)
 {
     return strNewFmt("#define %s%*s%s", strZ(define), (int)(60 - strSize(define)), "", strZ(value));
@@ -38,7 +40,7 @@ bldDefineRender(const String *const define, const String *const value)
 String *bldEnum(const char *const prefix, const String *const value);
 
 // Format file header
-__attribute__((always_inline)) static inline String *
+FN_INLINE_ALWAYS String *
 bldHeader(const char *const module, const char *const description)
 {
     return strCatFmt(
@@ -52,7 +54,7 @@ bldHeader(const char *const module, const char *const description)
 }
 
 // Put the file if it is different than the existing file
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 bldPut(const Storage *const storage, const char *const file, const Buffer *const contentNew)
 {
     const Buffer *const contentOld = storageGetP(storageNewReadP(storage, STR(file), .ignoreMissing = true));

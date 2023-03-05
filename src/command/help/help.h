@@ -10,6 +10,6 @@ Help Command
 Functions
 ***********************************************************************************************************************************/
 // Render help and output to stdout
-void cmdHelp(const Buffer *const helpData);
+FN_EXTERN void cmdHelp(const Buffer *const helpData);
 
 #endif

@@ -43,7 +43,8 @@ messages need to be accumulated and then returned together.
 
 This empty function is required because without it libxml2 will dump errors to stdout.  Really.
 ***********************************************************************************************************************************/
-static void xmlErrorHandler(void *ctx, const char *format, ...)
+static void
+xmlErrorHandler(void *ctx, const char *format, ...)
 {
     (void)ctx;
     (void)format;
@@ -79,7 +80,7 @@ static XmlNodeList *
 xmlNodeLstNew(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(XML_NODE_LIST, (XmlNodeList *)lstNewP(sizeof(XmlNode *)));
+    FUNCTION_TEST_RETURN(XML_NODE_LIST, (XmlNodeList *)OBJ_NAME(lstNewP(sizeof(XmlNode *)), XmlNodeList::List));
 }
 
 /**********************************************************************************************************************************/
@@ -103,7 +104,7 @@ xmlNodeNew(xmlNodePtr node)
 }
 
 /**********************************************************************************************************************************/
-XmlNode *
+FN_EXTERN XmlNode *
 xmlNodeAdd(XmlNode *this, const String *name)
 {
     FUNCTION_TEST_BEGIN();
@@ -145,31 +146,7 @@ xmlNodeLstAdd(XmlNodeList *this, xmlNodePtr node)
 }
 
 /**********************************************************************************************************************************/
-String *
-xmlNodeAttribute(const XmlNode *this, const String *name)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(XML_NODE, this);
-        FUNCTION_TEST_PARAM(STRING, name);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    ASSERT(name != NULL);
-
-    String *result = NULL;
-    xmlChar *value = xmlGetProp(this->node, (unsigned char *)strZ(name));
-
-    if (value != NULL)
-    {
-        result = strNewZ((char *)value);
-        xmlFree(value);
-    }
-
-    FUNCTION_TEST_RETURN(STRING, result);
-}
-
-/**********************************************************************************************************************************/
-String *
+FN_EXTERN String *
 xmlNodeContent(const XmlNode *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -188,7 +165,7 @@ xmlNodeContent(const XmlNode *this)
     FUNCTION_TEST_RETURN(STRING, result);
 }
 
-void
+FN_EXTERN void
 xmlNodeContentSet(XmlNode *this, const String *content)
 {
     FUNCTION_TEST_BEGIN();
@@ -205,7 +182,7 @@ xmlNodeContentSet(XmlNode *this, const String *content)
 }
 
 /**********************************************************************************************************************************/
-XmlNodeList *
+FN_EXTERN XmlNodeList *
 xmlNodeChildList(const XmlNode *this, const String *name)
 {
     FUNCTION_TEST_BEGIN();
@@ -228,7 +205,7 @@ xmlNodeChildList(const XmlNode *this, const String *name)
 }
 
 /**********************************************************************************************************************************/
-XmlNode *
+FN_EXTERN XmlNode *
 xmlNodeChildN(const XmlNode *this, const String *name, unsigned int index, bool errorOnMissing)
 {
     FUNCTION_TEST_BEGIN();
@@ -263,41 +240,6 @@ xmlNodeChildN(const XmlNode *this, const String *name, unsigned int index, bool 
     FUNCTION_TEST_RETURN(XML_NODE, child);
 }
 
-/**********************************************************************************************************************************/
-unsigned int
-xmlNodeChildTotal(const XmlNode *this, const String *name)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(XML_NODE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    unsigned int result = 0;
-
-    for (xmlNodePtr currentNode = this->node->children; currentNode != NULL; currentNode = currentNode->next)
-    {
-        if (currentNode->type == XML_ELEMENT_NODE && strEqZ(name, (char *)currentNode->name))
-            result++;
-    }
-
-    FUNCTION_TEST_RETURN(UINT, result);
-}
-
-/**********************************************************************************************************************************/
-void
-xmlNodeFree(XmlNode *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(XML_NODE, this);
-    FUNCTION_TEST_END();
-
-    if (this != NULL)
-        memFree(this);
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
 /***********************************************************************************************************************************
 Free document
 ***********************************************************************************************************************************/
@@ -318,7 +260,7 @@ xmlDocumentFreeResource(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-XmlDocument *
+FN_EXTERN XmlDocument *
 xmlDocumentNew(const String *rootName)
 {
     FUNCTION_TEST_BEGIN();
@@ -353,7 +295,7 @@ xmlDocumentNew(const String *rootName)
 }
 
 /**********************************************************************************************************************************/
-XmlDocument *
+FN_EXTERN XmlDocument *
 xmlDocumentNewBuf(const Buffer *buffer)
 {
     FUNCTION_TEST_BEGIN();
@@ -388,7 +330,7 @@ xmlDocumentNewBuf(const Buffer *buffer)
 }
 
 /**********************************************************************************************************************************/
-Buffer *
+FN_EXTERN Buffer *
 xmlDocumentBuf(const XmlDocument *this)
 {
     FUNCTION_TEST_BEGIN();

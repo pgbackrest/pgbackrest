@@ -47,7 +47,7 @@ dbGetIdx(unsigned int pgIdx)
     FUNCTION_LOG_RETURN(DB, result);
 }
 
-DbGetResult
+FN_EXTERN DbGetResult
 dbGet(bool primaryOnly, bool primaryRequired, bool standbyRequired)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -55,6 +55,8 @@ dbGet(bool primaryOnly, bool primaryRequired, bool standbyRequired)
         FUNCTION_LOG_PARAM(BOOL, primaryRequired);
         FUNCTION_LOG_PARAM(BOOL, standbyRequired);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_STRUCT();
 
     ASSERT(!(primaryOnly && standbyRequired));
 

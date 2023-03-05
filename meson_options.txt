@@ -1,2 +1,3 @@
 option('configdir', type: 'string', value: '/etc/pgbackrest', description: 'Configuration directory')
 option('fatal-errors', type: 'boolean', value: false, description: 'Stop compilation on first error')
+option('force-release', type: 'boolean', value: false, description: 'Force a release build (for testing only!)')

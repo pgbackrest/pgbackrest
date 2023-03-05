@@ -23,13 +23,13 @@ typedef struct IoClientInterface
     IoSession *(*open)(void *driver);
 
     // Driver log function
-    String *(*toLog)(const void *driver);
+    void (*toLog)(const void *driver, StringStatic *debugLog);
 } IoClientInterface;
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-IoClient *ioClientNew(void *driver, const IoClientInterface *interface);
+FN_EXTERN IoClient *ioClientNew(void *driver, const IoClientInterface *interface);
 
 /***********************************************************************************************************************************
 Macros for function logging
@@ -37,6 +37,6 @@ Macros for function logging
 #define FUNCTION_LOG_IO_CLIENT_INTERFACE_TYPE                                                                                      \
     IoClientInterface *
 #define FUNCTION_LOG_IO_CLIENT_INTERFACE_FORMAT(value, buffer, bufferSize)                                                         \
-    objToLog(&value, "IoClientInterface", buffer, bufferSize)
+    objNameToLog(&value, "IoClientInterface", buffer, bufferSize)
 
 #endif

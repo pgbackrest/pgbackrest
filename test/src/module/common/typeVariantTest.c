@@ -115,8 +115,8 @@ testRun(void)
             varInt64Force(varNewStrZ("9223372036854775808")), FormatError,
             "unable to convert base 10 string '9223372036854775808' to int64");
         TEST_ERROR(varInt64Force(varNewVarLst(varLstNew())), AssertError, "unable to force VariantList to int64");
-        TEST_ERROR(varInt64Force(VARUINT64(9223372036854775808U)), FormatError,
-            "unable to convert uint64 9223372036854775808 to int64");
+        TEST_ERROR(
+            varInt64Force(VARUINT64(9223372036854775808U)), FormatError, "unable to convert uint64 9223372036854775808 to int64");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(varInt64(varNewStrZ("string")), AssertError, "assertion 'varType(this) == varTypeInt64' failed");
@@ -286,6 +286,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR_Z(varStrForce(VARSTRDEF("teststring")), "teststring", "force string to string");
         TEST_RESULT_STR_Z(varStrForce(VARINT(999)), "999", "force int to string");
+        TEST_RESULT_STR_Z(varStrForce(VARUINT(888)), "888", "force uint to string");
         TEST_RESULT_STR_Z(varStrForce(VARINT64(9223372036854775807L)), "9223372036854775807", "force int64 to string");
         TEST_RESULT_STR_Z(varStrForce(varNewBool(true)), "true", "force bool to string");
         TEST_RESULT_STR_Z(varStrForce(varNewBool(false)), "false", "force bool to string");
@@ -369,11 +370,19 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("varToLog"))
     {
-        TEST_RESULT_STR_Z(varToLog(varNewStrZ("testme")), "{\"testme\"}", "format String");
-        TEST_RESULT_STR_Z(varToLog(varNewBool(false)), "{false}", "format bool");
-        TEST_RESULT_STR_Z(varToLog(varNewKv(kvNew())), "{KeyValue}", "format KeyValue");
-        TEST_RESULT_STR_Z(varToLog(varNewVarLst(varLstNew())), "{VariantList}", "format VariantList");
-        TEST_RESULT_STR_Z(varToLog(NULL), "null", "format null");
+        char logBuf[STACK_TRACE_PARAM_MAX];
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(varNewStrZ("testme"), varToLog, logBuf, sizeof(logBuf)), "varToLog");
+        TEST_RESULT_Z(logBuf, "{\"testme\"}", "check log");
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(varNewBool(false), varToLog, logBuf, sizeof(logBuf)), "varToLog");
+        TEST_RESULT_Z(logBuf, "{false}", "check log");
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(varNewKv(kvNew()), varToLog, logBuf, sizeof(logBuf)), "varToLog");
+        TEST_RESULT_Z(logBuf, "{KeyValue}", "check log");
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(varNewVarLst(varLstNew()), varToLog, logBuf, sizeof(logBuf)), "varToLog");
+        TEST_RESULT_Z(logBuf, "{VariantList}", "check log");
     }
 
     // *****************************************************************************************************************************

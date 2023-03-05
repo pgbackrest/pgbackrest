@@ -31,22 +31,22 @@ typedef struct IoSessionInterface
     IoSessionRole (*role)(const void *driver);
 
     // Driver log function
-    String *(*toLog)(const void *driver);
+    void (*toLog)(const void *driver, StringStatic *debugLog);
 } IoSessionInterface;
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-IoSession *ioSessionNew(void *driver, const IoSessionInterface *interface);
+FN_EXTERN IoSession *ioSessionNew(void *driver, const IoSessionInterface *interface);
 
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
 // Has the session been authenticated?
-void ioSessionAuthenticatedSet(IoSession *this, bool authenticated);
+FN_EXTERN void ioSessionAuthenticatedSet(IoSession *this, bool authenticated);
 
 // Set the peer name
-void ioSessionPeerNameSet(IoSession *this, const String *peerName);
+FN_EXTERN void ioSessionPeerNameSet(IoSession *this, const String *peerName);
 
 /***********************************************************************************************************************************
 Macros for function logging
@@ -54,6 +54,6 @@ Macros for function logging
 #define FUNCTION_LOG_IO_SESSION_INTERFACE_TYPE                                                                                     \
     IoSessionInterface *
 #define FUNCTION_LOG_IO_SESSION_INTERFACE_FORMAT(value, buffer, bufferSize)                                                        \
-    objToLog(&value, "IoSessionInterface", buffer, bufferSize)
+    objNameToLog(&value, "IoSessionInterface", buffer, bufferSize)
 
 #endif

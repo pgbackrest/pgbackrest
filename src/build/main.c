@@ -67,7 +67,7 @@ main(const int argListSize, const char *const argList[])
 
     // Error
     if (strEqZ(STRDEF("error"), argList[1]))
-        bldErrRender(storageRepo, bldErrParse(storageRepo));
+        bldErrRender(storageBuild, bldErrParse(storageRepo));
 
     // Help
     if (strEqZ(STRDEF("help"), argList[1]))

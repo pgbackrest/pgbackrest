@@ -588,6 +588,46 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("ioReadVarIntU64() and ioWriteVarIntU64()"))
+    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("ioWriteVarIntU64()");
+
+        Buffer *buffer = bufNew(32);
+        IoWrite *write = ioBufferWriteNewOpen(buffer);
+
+        TEST_RESULT_VOID(ioWriteVarIntU64(write, 7777777), "write varint");
+        TEST_RESULT_VOID(ioWriteVarIntU64(write, 0), "write varint");
+        TEST_RESULT_VOID(ioWriteClose(write), "close write");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("ioReadVarIntU64()");
+
+        IoRead *read = ioBufferReadNewOpen(buffer);
+
+        TEST_RESULT_UINT(ioReadVarIntU64(read), 7777777, "read varint");
+        TEST_RESULT_UINT(ioReadVarIntU64(read), 0, "read varint");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on eof");
+
+        bufPtr(buffer)[0] = 0xFF;
+        bufUsedSet(buffer, 1);
+        read = ioBufferReadNewOpen(buffer);
+
+        TEST_ERROR(ioReadVarIntU64(read), FileReadError, "unexpected eof");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on too many bytes");
+
+        memset(bufPtr(buffer), 0xFF, bufSize(buffer));
+        bufUsedSet(buffer, bufSize(buffer));
+        read = ioBufferReadNewOpen(buffer);
+
+        TEST_ERROR(ioReadVarIntU64(read), FormatError, "unterminated base-128 integer");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("IoFdRead, IoFdWrite, and ioFdWriteOneStr()"))
     {
         ioBufferSizeSet(16);
@@ -729,6 +769,47 @@ testRun(void)
             freeaddrinfo(hostBadAddress);
         }
         TRY_END();
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("IoChunkedRead and ioChunkedWrite"))
+    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("write chunks");
+
+        ioBufferSizeSet(3);
+        Buffer *destination = bufNew(256);
+        IoWrite *write = ioBufferWriteNew(destination);
+        ioFilterGroupAdd(ioWriteFilterGroup(write), ioChunkNew());
+        ioWriteOpen(write);
+
+        TEST_RESULT_VOID(ioWrite(write, BUFSTRDEF("ABC")), "write");
+        TEST_RESULT_VOID(ioWrite(write, BUFSTRDEF("DEF")), "write");
+        TEST_RESULT_VOID(ioWriteClose(write), "close");
+
+        TEST_RESULT_STR_Z(strNewEncode(encodingHex, destination), "034142430144454600", "check");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("read chunks");
+
+        ioBufferSizeSet(2);
+        IoRead *read = ioChunkedReadNew(ioBufferReadNewOpen(destination));
+        ioReadOpen(read);
+
+        Buffer *actual = bufNew(3);
+        TEST_RESULT_UINT(ioRead(read, actual), 3, "read");
+        TEST_RESULT_STR_Z(strNewBuf(actual), "ABC", "check");
+
+        actual = bufNew(1);
+        TEST_RESULT_UINT(ioRead(read, actual), 1, "read");
+        TEST_RESULT_STR_Z(strNewBuf(actual), "D", "check");
+
+        actual = bufNew(3);
+        TEST_RESULT_UINT(ioRead(read, actual), 2, "read");
+        TEST_RESULT_STR_Z(strNewBuf(actual), "EF", "check");
+
+        actual = bufNew(2);
+        TEST_RESULT_UINT(ioRead(read, actual), 0, "eof");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

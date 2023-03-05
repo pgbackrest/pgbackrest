@@ -33,7 +33,7 @@ typedef struct ProtocolServerHandler
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-ProtocolServer *protocolServerNew(const String *name, const String *service, IoRead *read, IoWrite *write);
+FN_EXTERN ProtocolServer *protocolServerNew(const String *name, const String *service, IoRead *read, IoWrite *write);
 
 /***********************************************************************************************************************************
 Functions
@@ -46,27 +46,27 @@ typedef struct ProtocolServerCommandGetResult
     Pack *param;                                                    // Parameter pack
 } ProtocolServerCommandGetResult;
 
-ProtocolServerCommandGetResult protocolServerCommandGet(ProtocolServer *this);
+FN_EXTERN ProtocolServerCommandGetResult protocolServerCommandGet(ProtocolServer *this);
 
 // Get data from the client
-PackRead *protocolServerDataGet(ProtocolServer *this);
+FN_EXTERN PackRead *protocolServerDataGet(ProtocolServer *this);
 
 // Put data to the client
-void protocolServerDataPut(ProtocolServer *this, PackWrite *data);
+FN_EXTERN void protocolServerDataPut(ProtocolServer *this, PackWrite *data);
 
 // Put data end to the client. This ends command processing and no more data should be sent.
-void protocolServerDataEndPut(ProtocolServer *this);
+FN_EXTERN void protocolServerDataEndPut(ProtocolServer *this);
 
 // Return an error
-void protocolServerError(ProtocolServer *this, int code, const String *message, const String *stack);
+FN_EXTERN void protocolServerError(ProtocolServer *this, int code, const String *message, const String *stack);
 
 // Process requests
-void protocolServerProcess(
+FN_EXTERN void protocolServerProcess(
     ProtocolServer *this, const VariantList *retryInterval, const ProtocolServerHandler *handlerList,
     const unsigned int handlerListSize);
 
 // Move to a new parent mem context
-__attribute__((always_inline)) static inline ProtocolServer *
+FN_INLINE_ALWAYS ProtocolServer *
 protocolServerMove(ProtocolServer *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
@@ -75,7 +75,7 @@ protocolServerMove(ProtocolServer *const this, MemContext *const parentNew)
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 protocolServerFree(ProtocolServer *const this)
 {
     objFree(this);
@@ -84,11 +84,11 @@ protocolServerFree(ProtocolServer *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-String *protocolServerToLog(const ProtocolServer *this);
+FN_EXTERN void protocolServerToLog(const ProtocolServer *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_PROTOCOL_SERVER_TYPE                                                                                          \
     ProtocolServer *
 #define FUNCTION_LOG_PROTOCOL_SERVER_FORMAT(value, buffer, bufferSize)                                                             \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, protocolServerToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, protocolServerToLog, buffer, bufferSize)
 
 #endif

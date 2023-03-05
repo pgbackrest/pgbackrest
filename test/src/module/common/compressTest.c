@@ -1,9 +1,9 @@
 /***********************************************************************************************************************************
 Test Compression
 ***********************************************************************************************************************************/
-#include "common/io/filter/group.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
+#include "common/io/filter/group.h"
 #include "common/io/io.h"
 #include "storage/posix/storage.h"
 
@@ -197,16 +197,27 @@ testRun(void)
         TEST_ERROR(gzError(999), AssertError, "zlib threw error: [999] unknown error");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("compressLevelDefault(), compressLevelMin(), and compressLevelMax()");
+
+        TEST_RESULT_INT(compressLevelDefault(compressTypeGz), 6, "level default");
+        TEST_RESULT_INT(compressLevelMin(compressTypeGz), -1, "level default");
+        TEST_RESULT_INT(compressLevelMax(compressTypeGz), 9, "level default");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("gzDecompressToLog() and gzCompressToLog()");
+
+        char buffer[STACK_TRACE_PARAM_MAX];
 
         GzDecompress *decompress = (GzDecompress *)ioFilterDriver(gzDecompressNew());
 
-        TEST_RESULT_STR_Z(gzDecompressToLog(decompress), "{inputSame: false, done: false, availIn: 0}", "format object");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(decompress, gzDecompressToLog, buffer, sizeof(buffer)), "gzDecompressToLog");
+        TEST_RESULT_Z(buffer, "{inputSame: false, done: false, availIn: 0}", "check log");
 
         decompress->inputSame = true;
         decompress->done = true;
 
-        TEST_RESULT_STR_Z(gzDecompressToLog(decompress), "{inputSame: true, done: true, availIn: 0}", "format object");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(decompress, gzDecompressToLog, buffer, sizeof(buffer)), "gzDecompressToLog");
+        TEST_RESULT_Z(buffer, "{inputSame: true, done: true, availIn: 0}", "check log");
     }
 
     // *****************************************************************************************************************************
@@ -235,21 +246,31 @@ testRun(void)
         TEST_ERROR(bz2Error(-999), AssertError, "bz2 error: [-999] unknown error");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("compressLevelDefault(), compressLevelMin(), and compressLevelMax()");
+
+        TEST_RESULT_INT(compressLevelDefault(compressTypeBz2), 9, "level default");
+        TEST_RESULT_INT(compressLevelMin(compressTypeBz2), 1, "level default");
+        TEST_RESULT_INT(compressLevelMax(compressTypeBz2), 9, "level default");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("bz2DecompressToLog() and bz2CompressToLog()");
+
+        char buffer[STACK_TRACE_PARAM_MAX];
 
         Bz2Compress *compress = (Bz2Compress *)ioFilterDriver(bz2CompressNew(1));
 
         compress->stream.avail_in = 999;
 
-        TEST_RESULT_STR_Z(
-            bz2CompressToLog(compress), "{inputSame: false, done: false, flushing: false, avail_in: 999}", "format object");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(compress, bz2CompressToLog, buffer, sizeof(buffer)), "bz2CompressToLog");
+        TEST_RESULT_Z(buffer, "{inputSame: false, done: false, flushing: false, avail_in: 999}", "check log");
 
         Bz2Decompress *decompress = (Bz2Decompress *)ioFilterDriver(bz2DecompressNew());
 
         decompress->inputSame = true;
         decompress->done = true;
 
-        TEST_RESULT_STR_Z(bz2DecompressToLog(decompress), "{inputSame: true, done: true, avail_in: 0}", "format object");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(decompress, bz2DecompressToLog, buffer, sizeof(buffer)), "bz2DecompressToLog");
+        TEST_RESULT_Z(buffer, "{inputSame: true, done: true, avail_in: 0}", "check log");
     }
 
     // *****************************************************************************************************************************
@@ -266,15 +287,24 @@ testRun(void)
         TEST_ERROR(lz4Error((size_t)-2), FormatError, "lz4 error: [-2] ERROR_maxBlockSize_invalid");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("compressLevelDefault(), compressLevelMin(), and compressLevelMax()");
+
+        TEST_RESULT_INT(compressLevelDefault(compressTypeLz4), 1, "level default");
+        TEST_RESULT_INT(compressLevelMin(compressTypeLz4), -5, "level default");
+        TEST_RESULT_INT(compressLevelMax(compressTypeLz4), 12, "level default");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("lz4DecompressToLog() and lz4CompressToLog()");
+
+        char buffer[STACK_TRACE_PARAM_MAX];
 
         Lz4Compress *compress = (Lz4Compress *)ioFilterDriver(lz4CompressNew(7));
 
         compress->inputSame = true;
         compress->flushing = true;
 
-        TEST_RESULT_STR_Z(
-            lz4CompressToLog(compress), "{level: 7, first: true, inputSame: true, flushing: true}", "format object");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(compress, lz4CompressToLog, buffer, sizeof(buffer)), "lz4CompressToLog");
+        TEST_RESULT_Z(buffer, "{level: 7, first: true, inputSame: true, flushing: true}", "check log");
 
         Lz4Decompress *decompress = (Lz4Decompress *)ioFilterDriver(lz4DecompressNew());
 
@@ -282,9 +312,8 @@ testRun(void)
         decompress->done = true;
         decompress->inputOffset = 999;
 
-        TEST_RESULT_STR_Z(
-            lz4DecompressToLog(decompress), "{inputSame: true, inputOffset: 999, frameDone false, done: true}",
-            "format object");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(decompress, lz4DecompressToLog, buffer, sizeof(buffer)), "lz4DecompressToLog");
+        TEST_RESULT_Z(buffer, "{inputSame: true, inputOffset: 999, frameDone false, done: true}", "check log");
 #else
         TEST_ERROR(compressTypePresent(compressTypeLz4), OptionInvalidValueError, "pgBackRest not compiled with lz4 support");
 #endif // HAVE_LIBLZ4
@@ -304,7 +333,16 @@ testRun(void)
         TEST_ERROR(zstError((size_t)-12), FormatError, "zst error: [-12] Version not supported");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("compressLevelDefault(), compressLevelMin(), and compressLevelMax()");
+
+        TEST_RESULT_INT(compressLevelDefault(compressTypeZst), 3, "level default");
+        TEST_RESULT_INT(compressLevelMin(compressTypeZst), -7, "level default");
+        TEST_RESULT_INT(compressLevelMax(compressTypeZst), 22, "level default");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("zstDecompressToLog() and zstCompressToLog()");
+
+        char buffer[STACK_TRACE_PARAM_MAX];
 
         ZstCompress *compress = (ZstCompress *)ioFilterDriver(zstCompressNew(14));
 
@@ -312,8 +350,8 @@ testRun(void)
         compress->inputOffset = 49;
         compress->flushing = true;
 
-        TEST_RESULT_STR_Z(
-            zstCompressToLog(compress), "{level: 14, inputSame: true, inputOffset: 49, flushing: true}", "format object");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(compress, zstCompressToLog, buffer, sizeof(buffer)), "zstCompressToLog");
+        TEST_RESULT_Z(buffer, "{level: 14, inputSame: true, inputOffset: 49, flushing: true}", "check log");
 
         ZstDecompress *decompress = (ZstDecompress *)ioFilterDriver(zstDecompressNew());
 
@@ -321,9 +359,8 @@ testRun(void)
         decompress->done = true;
         decompress->inputOffset = 999;
 
-        TEST_RESULT_STR_Z(
-            zstDecompressToLog(decompress), "{inputSame: true, inputOffset: 999, frameDone false, done: true}",
-            "format object");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(decompress, zstDecompressToLog, buffer, sizeof(buffer)), "zstDecompressToLog");
+        TEST_RESULT_Z(buffer, "{inputSame: true, inputOffset: 999, frameDone false, done: true}", "check log");
 #else
         TEST_ERROR(compressTypePresent(compressTypeZst), OptionInvalidValueError, "pgBackRest not compiled with zst support");
 #endif // HAVE_LIBZST
@@ -380,12 +417,6 @@ testRun(void)
         TEST_ERROR(compressExtStrip(STRDEF("file"), compressTypeGz), FormatError, "'file' must have '.gz' extension");
         TEST_RESULT_STR_Z(compressExtStrip(STRDEF("file"), compressTypeNone), "file", "nothing to strip");
         TEST_RESULT_STR_Z(compressExtStrip(STRDEF("file.gz"), compressTypeGz), "file", "strip gz");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("compressLevelDefault()");
-
-        TEST_RESULT_INT(compressLevelDefault(compressTypeNone), 0, "none level=0");
-        TEST_RESULT_INT(compressLevelDefault(compressTypeGz), 6, "gz level=6");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
