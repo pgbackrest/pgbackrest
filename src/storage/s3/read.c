@@ -164,6 +164,7 @@ storageReadS3New(
                 .ignoreMissing = ignoreMissing,
                 .offset = offset,
                 .limit = varDup(limit),
+                .retry = true,
 
                 .ioInterface = (IoReadInterface)
                 {

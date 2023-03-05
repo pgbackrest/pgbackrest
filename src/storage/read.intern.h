@@ -18,6 +18,7 @@ typedef struct StorageReadInterface
     bool ignoreMissing;
     uint64_t offset;                                                // Where to start reading in the file
     Variant *limit;                                                 // Limit how many bytes are read (NULL for no limit)
+    bool retry;                                                     // Are read retries allowed?
     IoReadInterface ioInterface;
 } StorageReadInterface;
 

@@ -32,6 +32,7 @@ typedef struct StorageReadPub
     IoRead *io;                                                     // Read interface
     uint64_t offset;                                                // Where to start reading in the file
     const Variant *limit;                                           // Limit how many bytes are read (NULL for no limit)
+    bool ignoreMissing;                                             // Ignore missing file?
 } StorageReadPub;
 
 // Should a missing file be ignored?

@@ -6,6 +6,7 @@ Storage Read Interface
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/wait.h"
 #include "storage/read.h"
 
 /***********************************************************************************************************************************
@@ -15,7 +16,7 @@ struct StorageRead
 {
     StorageReadPub pub;                                             // Publicly accessible variables
     void *driver;                                                   // Driver
-    uint64_t offsetCurrent;                                         // Current offset into the file
+    uint64_t bytesRead;                                             // Bytes that have been successfully read
 };
 
 /***********************************************************************************************************************************
@@ -59,36 +60,71 @@ storageRead(THIS_VOID, Buffer *const buffer, const bool block)
 
     ASSERT(this != NULL);
 
+    size_t bufUsedBegin = bufUsed(buffer);
     size_t result = 0;
 
-    TRY_BEGIN()
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = this->pub.interface->ioInterface.read(this->driver, buffer, block);
+        // Use a specific number of tries here instead of a timeout because the underlying operations already have timeouts and
+        // failures will generally happen after some delay, so it is not clear what timeout would be appropriate here.
+        unsigned int try = this->pub.interface->retry ? 3 : 1;
+
+        // While tries remaining
+        while (try >= 1)
+        {
+            TRY_BEGIN()
+            {
+                this->pub.interface->ioInterface.read(this->driver, buffer, block);
+
+                result += bufUsed(buffer) - bufUsedBegin;
+                this->bytesRead += bufUsed(buffer) - bufUsedBegin;
+
+                try = 1;
+            }
+            CATCH_ANY()
+            {
+                // If there is another try remaining then close the file and reopen it to the new position, taking into account any
+                // bytes that have already been read
+                if (try > 1)
+                {
+                    // Account for bytes that have been read
+                    result += bufUsed(buffer) - bufUsedBegin;
+                    this->bytesRead += bufUsed(buffer) - bufUsedBegin;
+                    bufUsedBegin = bufUsed(buffer);
+
+                    // Close the file
+                    this->pub.interface->ioInterface.close(this->driver);
+
+                    // The file must not be missing on retry. If we got here then the file must have existed originally and it if is
+                    // missing now we want a hard error.
+                    this->pub.interface->ignoreMissing = false;
+
+                    // Update offset and limit (when present) based on how many bytes have been successfully read
+                    this->pub.interface->offset = this->pub.offset + this->bytesRead;
+
+                    if (this->pub.limit != NULL)
+                    {
+                        varFree(this->pub.interface->limit);
+
+                        MEM_CONTEXT_OBJ_BEGIN(this->driver)
+                        {
+                            this->pub.interface->limit = varNewUInt64(varUInt64(this->pub.limit) - this->bytesRead);
+                        }
+                        MEM_CONTEXT_OBJ_END();
+                    }
+
+                    // Open file with new offset/limit
+                    this->pub.interface->ioInterface.open(this->driver);
+                }
+                else
+                    RETHROW();
+            }
+            TRY_END();
+
+            try--;
+        }
     }
-    CATCH_ANY()
-    {
-        // ioReadClose(this->io);
-
-        // this->pub.interface.offset = offsetCurrent;
-
-        // if (this->pub.interface.limit != NULL)
-        // {
-        //     varFree(this->pub.interface.limit);
-
-        //     MEM_CONTEXT_OBJ_BEGIN(this->driver)
-        //     {
-        //         this->pub.interface.limit = varNewUInt64(
-        //     }
-        //     MEM_CONTEXT_OBJ_END();
-        // }
-
-        // !!! NOT SURE HOW TO HANDLE THE ERROR SINCE THE DRIVER MEM CONTEXT CANNOT BE FREED
-
-        RETHROW();
-    }
-    TRY_END();
-
-    this->offsetCurrent += result;
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(SIZE, result);
 }
@@ -183,6 +219,7 @@ storageReadNew(void *driver, StorageReadInterface *const interface)
                 .io = ioReadNew(this, storageIoReadInterface),
                 .offset = interface->offset,
                 .limit = varDup(interface->limit),
+                .ignoreMissing = interface->ignoreMissing,
             },
             .driver = objMove(driver, objMemContext(this)),
         };
