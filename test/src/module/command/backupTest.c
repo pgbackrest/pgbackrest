@@ -460,7 +460,7 @@ typedef struct TestBackupPqScriptParam
     const char *cipherPass;                                         // Cipher pass
     unsigned int walTotal;                                          // Total WAL to write
     unsigned int timeline;                                          // Timeline to use for WAL files
-    const char *pgVersionForce;                                     // PG version to use when control/catalog not found
+    const String *pgVersionForce;                                     // PG version to use when control/catalog not found
 } TestBackupPqScriptParam;
 
 #define testBackupPqScriptP(pgVersion, backupStartTime, ...)                                                                       \
