@@ -460,6 +460,7 @@ typedef struct TestBackupPqScriptParam
     const char *cipherPass;                                         // Cipher pass
     unsigned int walTotal;                                          // Total WAL to write
     unsigned int timeline;                                          // Timeline to use for WAL files
+    const char *pgVersionForce;                                     // PG version to use when control/catalog not found
 } TestBackupPqScriptParam;
 
 #define testBackupPqScriptP(pgVersion, backupStartTime, ...)                                                                       \
@@ -475,7 +476,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
     param.timeline = param.timeline == 0 ? 1 : param.timeline;
 
     // Read pg_control to get info about the cluster
-    PgControl pgControl = pgControlFromFile(storagePg(), NULL);
+    PgControl pgControl = pgControlFromFile(storagePg(), param.pgVersionForce);
 
     // Set archive timeout really small to save time on errors
     cfgOptionSet(cfgOptArchiveTimeout, cfgSourceParam, varNewInt64(100));
@@ -3422,7 +3423,7 @@ testRun(void)
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("online 11 full backup with tablespaces, bundles and annotations");
+        TEST_TITLE("online 11 full backup with tablespaces, bundles, annotations and unexpected pg_control/pg_catalog version");
 
         backupTimeStart = BACKUP_EPOCH + 2400000;
 
@@ -3441,7 +3442,13 @@ testRun(void)
             hrnCfgArgRawBool(argList, cfgOptResume, false);
             hrnCfgArgRawZ(argList, cfgOptAnnotation, "extra key=this is an annotation");
             hrnCfgArgRawZ(argList, cfgOptAnnotation, "source=this is another annotation");
+            hrnCfgArgRawZ(argList, cfgOptPgVersion, "11");
             HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+            // Create pg_control with unexpected catalog and control version
+            HRN_PG_CONTROL_OVERRIDE_PUT(
+                storagePgWrite(), PG_VERSION_11, 1501, .catalogVersion = 202211110, .pageChecksum = true,
+                .walSegmentSize = 1024 * 1024);
 
             // Set to a smaller values than the defaults allow
             cfgOptionSet(cfgOptRepoBundleSize, cfgSourceParam, VARINT64(PG_PAGE_SIZE_DEFAULT));
@@ -3469,7 +3476,8 @@ testRun(void)
             HRN_STORAGE_PUT(storagePgWrite(), "bigish.dat", bigish, .timeModified = 1500000001);
 
             // Run backup
-            testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2);
+            testBackupPqScriptP(
+                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2, .pgVersionForce = STRDEF("11"));
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
