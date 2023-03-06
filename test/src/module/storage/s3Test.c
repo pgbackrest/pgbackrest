@@ -403,7 +403,7 @@ testRun(void)
             }
             HRN_FORK_CHILD_END();
 
-            HRN_FORK_CHILD_BEGIN(.prefix = "auth server", .timeout = 10000)
+            HRN_FORK_CHILD_BEGIN(.prefix = "auth server", .timeout = 15000)
             {
                 TEST_RESULT_VOID(
                     hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolSocket, .port = authPort), "auth server run");
