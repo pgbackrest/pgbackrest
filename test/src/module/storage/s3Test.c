@@ -508,25 +508,29 @@ testRun(void)
 
                 ioBufferSizeSet(ioBufferSizeDefault);
 
+                // Close to reset buffer size
+                hrnServerScriptClose(service);
+                hrnServerScriptAccept(service);
+
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get file all retries fail");
 
                 testRequestP(service, s3, HTTP_VERB_GET, "/file.txt", .range = "1-29");
                 testResponseP(service, .content = "X", .contentSize = VARUINT(30));
 
-                hrnServerScriptAbort(service);
+                hrnServerScriptClose(service);
                 hrnServerScriptAccept(service);
 
                 testRequestP(service, s3, HTTP_VERB_GET, "/file.txt", .range = "1-29");
                 testResponseP(service, .content = "X", .contentSize = VARUINT(30));
 
-                hrnServerScriptAbort(service);
+                hrnServerScriptClose(service);
                 hrnServerScriptAccept(service);
 
                 testRequestP(service, s3, HTTP_VERB_GET, "/file.txt", .range = "1-29");
                 testResponseP(service, .content = "X", .contentSize = VARUINT(30));
 
-                hrnServerScriptAbort(service);
+                hrnServerScriptClose(service);
                 hrnServerScriptAccept(service);
 
                 bool errorCaught = false;
@@ -542,10 +546,6 @@ testRun(void)
                 TRY_END();
 
                 TEST_RESULT_BOOL(errorCaught, true, "check error was caught");
-
-                // Close to reset buffer size
-                hrnServerScriptClose(service);
-                hrnServerScriptAccept(service);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get zero-length file");
