@@ -339,27 +339,6 @@ testRun(void)
             .remove = true, .comment = "check repo for WAL file, then remove");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // TEST_TITLE("FIXME");
-
-        // argListTemp = strLstDup(argList);
-        // hrnCfgArgRawZ(argListTemp, cfgOptPgVersion, "11");
-        // hrnCfgArgRawNegate(argListTemp, cfgOptArchiveModeCheck);
-        // strLstAddZ(argListTemp, "pg_wal/000000010000000100000001");
-        // HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp);
-
-        // // Create pg_control with unexpected catalog and control version
-        // HRN_PG_CONTROL_OVERRIDE_PUT(storagePgWrite(), PG_VERSION_11, 1501, .catalogVersion = 202211110);
-        // HRN_STORAGE_PUT(storagePgWrite(), "pg_wal/000000010000000100000002", walBuffer1);
-
-        // TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment");
-
-        // TEST_STORAGE_EXISTS(
-        //     storageRepoIdxWrite(0), zNewFmt(STORAGE_REPO_ARCHIVE "/11-1/000000010000000100000002-%s.gz", walBuffer1Sha1),
-        //     .remove = true, .comment = "check repo for WAL file, then remove");
-
-        // HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_11);
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("generate valid WAL and push them, with parameter --no-archive-mode-check to suppress duplicate WAL warning");
 
         argListTemp = strLstDup(argList);
@@ -392,12 +371,20 @@ testRun(void)
             "P00   INFO: pushed WAL file '000000010000000100000001' to the archive");
 
         // Push the same WAL with a modified control/catalog version using the --pg-version option
-        HRN_PG_CONTROL_OVERRIDE_PUT(storagePgWrite(), PG_VERSION_11, 1501, .catalogVersion = 202211110);
+        HRN_PG_CONTROL_OVERRIDE_PUT(storagePgWrite(), PG_VERSION_11, 1501, .catalogVersion = 202211111);
+
+        TEST_ERROR(
+            cmdArchivePush(), VersionNotSupportedError,
+            "unexpected control version = 1501 and catalog version = 202211111\n"
+            "HINT: is this version of PostgreSQL supported?");
+
         hrnCfgArgRawZ(argListTemp, cfgOptPgVersion, "11");
         HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp);
         TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment with a modified control/catalog version");
         TEST_RESULT_LOG(
             "P00   INFO: pushed WAL file '000000010000000100000001' to the archive");
+
+        // Reset control file
         HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_11);
 
         // Now create a new WAL buffer with a different checksum to test checksum errors
