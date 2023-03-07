@@ -245,13 +245,13 @@ storageWritePosixNew(
     ASSERT(modeFile != 0);
     ASSERT(modePath != 0);
 
-    StorageWrite *this = NULL;
+    StorageWritePosix *this = NULL;
 
-    OBJ_NEW_BEGIN(StorageWritePosix, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(StorageWritePosix, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        StorageWritePosix *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), StorageWrite::StorageWritePosix);
+        this = OBJ_NEW_ALLOC();
 
-        *driver = (StorageWritePosix)
+        *this = (StorageWritePosix)
         {
             .storage = storage,
             .path = strPath(name),
@@ -283,11 +283,9 @@ storageWritePosixNew(
         };
 
         // Create temp file name
-        driver->nameTmp = atomic ? strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strZ(name)) : driver->interface.name;
-
-        this = storageWriteNew(driver, &driver->interface);
+        this->nameTmp = atomic ? strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strZ(name)) : this->interface.name;
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_WRITE, this);
+    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteNew(this, &this->interface));
 }
