@@ -70,7 +70,7 @@ archiveGetFile(
 
                 if (compressType != compressTypeNone)
                 {
-                    ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(destination)), decompressFilter(compressType));
+                    ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(destination)), decompressFilterP(compressType));
                     compressible = false;
                 }
 

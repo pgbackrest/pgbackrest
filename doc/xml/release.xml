@@ -25,6 +25,7 @@
                         <commit subject="Rename DeltaMap to BlockHash."/>
                         <commit subject="Add repo-block-age-map and repo-block-size-map options."/>
                         <commit subject="Rename block incremental manifest keys."/>
+                        <commit subject="Add optional raw format for compression types."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>

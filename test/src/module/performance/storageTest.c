@@ -334,7 +334,7 @@ testRun(void)
             MEM_CONTEXT_TEMP_BEGIN()
             {
                 BENCHMARK_BEGIN();
-                BENCHMARK_FILTER_ADD(gzCompressNew(6));
+                BENCHMARK_FILTER_ADD(gzCompressNew(6, false));
                 BENCHMARK_END(gzip6Total);
             }
             MEM_CONTEXT_TEMP_END();
@@ -346,7 +346,7 @@ testRun(void)
             MEM_CONTEXT_TEMP_BEGIN()
             {
                 BENCHMARK_BEGIN();
-                BENCHMARK_FILTER_ADD(lz4CompressNew(1));
+                BENCHMARK_FILTER_ADD(lz4CompressNew(1, false));
                 BENCHMARK_END(lz41Total);
             }
             MEM_CONTEXT_TEMP_END();

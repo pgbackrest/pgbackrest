@@ -191,7 +191,7 @@ testBackupValidateList(
                             if (manifestData->backupOptionCompressType != compressTypeNone)
                             {
                                 ioFilterGroupAdd(
-                                    ioReadFilterGroup(chunkRead), decompressFilter(manifestData->backupOptionCompressType));
+                                    ioReadFilterGroup(chunkRead), decompressFilterP(manifestData->backupOptionCompressType));
                             }
 
                             ioReadOpen(chunkRead);
@@ -243,7 +243,7 @@ testBackupValidateList(
                         if (manifestData->backupOptionCompressType != compressTypeNone)
                         {
                             ioFilterGroupAdd(
-                                ioReadFilterGroup(storageReadIo(read)), decompressFilter(manifestData->backupOptionCompressType));
+                                ioReadFilterGroup(storageReadIo(read)), decompressFilterP(manifestData->backupOptionCompressType));
                         }
 
                         ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(hashTypeSha1));
@@ -530,7 +530,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
                     strZ(walChecksum), strZ(compressExtStr(param.walCompressType))));
 
             if (param.walCompressType != compressTypeNone)
-                ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(write)), compressFilter(param.walCompressType, 1));
+                ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(write)), compressFilterP(param.walCompressType, 1));
 
             storagePutP(write, walBuffer);
         }
@@ -1252,7 +1252,7 @@ testRun(void)
             blockIncrNewPack(
                 ioFilterParamList(
                     blockIncrNew(
-                        3, 2, 4, 5, NULL, compressFilter(compressTypeGz, 1),
+                        3, 2, 4, 5, NULL, compressFilterP(compressTypeGz, 1),
                         cipherBlockNewP(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS), .raw = true)))),
             "block incr pack");
     }

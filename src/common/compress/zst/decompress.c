@@ -156,9 +156,11 @@ zstDecompressInputSame(const THIS_VOID)
 
 /**********************************************************************************************************************************/
 FN_EXTERN IoFilter *
-zstDecompressNew(void)
+zstDecompressNew(const bool raw)
 {
-    FUNCTION_LOG_VOID(logLevelTrace);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        (void)raw;                                                  // Raw unsupported
+    FUNCTION_LOG_END();
 
     IoFilter *this = NULL;
 

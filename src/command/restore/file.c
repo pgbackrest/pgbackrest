@@ -403,7 +403,7 @@ restoreFile(
                                             if (repoFileCompressType != compressTypeNone)
                                             {
                                                 ioFilterGroupAdd(
-                                                    ioReadFilterGroup(chunkedRead), decompressFilter(repoFileCompressType));
+                                                    ioReadFilterGroup(chunkedRead), decompressFilterP(repoFileCompressType));
                                             }
 
                                             // Open chunked read
@@ -454,7 +454,7 @@ restoreFile(
 
                         // Add decompression filter
                         if (repoFileCompressType != compressTypeNone)
-                            ioFilterGroupAdd(filterGroup, decompressFilter(repoFileCompressType));
+                            ioFilterGroupAdd(filterGroup, decompressFilterP(repoFileCompressType));
 
                         // Add sha1 filter
                         ioFilterGroupAdd(filterGroup, cryptoHashNew(hashTypeSha1));

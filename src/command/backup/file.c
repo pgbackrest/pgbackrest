@@ -215,7 +215,7 @@ backupFile(
                     // Compress filter
                     IoFilter *const compress =
                         repoFileCompressType != compressTypeNone ?
-                            compressFilter(repoFileCompressType, repoFileCompressLevel) : NULL;
+                            compressFilterP(repoFileCompressType, repoFileCompressLevel) : NULL;
 
                     // Encrypt filter
                     IoFilter *const encrypt =
