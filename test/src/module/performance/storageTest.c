@@ -145,15 +145,23 @@ testRun(void)
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleRemote);
 
                 // Create a driver to test remote performance of storageNewItrP() and inject it into storageRepo()
-                StorageTestPerfList driver =
+                StorageTestPerfList *driver = NULL;
+
+                OBJ_NEW_BEGIN(StorageTestPerfList, .childQty = MEM_CONTEXT_QTY_MAX)
                 {
-                    .interface = storageInterfaceTestDummy,
-                    .fileTotal = fileTotal,
-                };
+                    driver = OBJ_NEW_ALLOC();
 
-                driver.interface.list = storageTestPerfList;
+                    *driver = (StorageTestPerfList)
+                    {
+                        .interface = storageInterfaceTestDummy,
+                        .fileTotal = fileTotal,
+                    };
+                }
+                OBJ_NEW_END();
 
-                Storage *storageTest = storageNew(strIdFromZ("test"), STRDEF("/"), 0, 0, false, NULL, &driver, driver.interface);
+                driver->interface.list = storageTestPerfList;
+
+                Storage *storageTest = storageNew(strIdFromZ("test"), STRDEF("/"), 0, 0, false, NULL, driver, driver->interface);
                 storageHelper.storageRepoWrite = memNew(sizeof(Storage *));
                 storageHelper.storageRepoWrite[0] = storageTest;
 

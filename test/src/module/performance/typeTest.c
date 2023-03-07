@@ -249,17 +249,25 @@ testRun(void)
         ASSERT(TEST_SCALE <= 1000000);
 
         // Create a storage driver to test manifest build with an arbitrary number of files
-        StorageTestManifestNewBuild driver =
-        {
-            .interface = storageInterfaceTestDummy,
-            .fileTotal = 100000 * (unsigned int)TEST_SCALE,
-        };
+        StorageTestManifestNewBuild *driver = NULL;
 
-        driver.interface.info = storageTestManifestNewBuildInfo;
-        driver.interface.list = storageTestManifestNewBuildList;
+        OBJ_NEW_BEGIN(StorageTestManifestNewBuild, .childQty = MEM_CONTEXT_QTY_MAX)
+        {
+            driver = OBJ_NEW_ALLOC();
+
+            *driver = (StorageTestManifestNewBuild)
+            {
+                .interface = storageInterfaceTestDummy,
+                .fileTotal = 100000 * (unsigned int)TEST_SCALE,
+            };
+        }
+        OBJ_NEW_END();
+
+        driver->interface.info = storageTestManifestNewBuildInfo;
+        driver->interface.list = storageTestManifestNewBuildList;
 
         const Storage *const storagePg = storageNew(
-            strIdFromZ("test"), STRDEF("/pg"), 0, 0, false, NULL, &driver, driver.interface);
+            strIdFromZ("test"), STRDEF("/pg"), 0, 0, false, NULL, driver, driver->interface);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("build manifest");
@@ -280,7 +288,7 @@ testRun(void)
         TEST_LOG_FMT("completed in %ums", (unsigned int)(timeMSec() - timeBegin));
         // TEST_LOG_FMT("memory used %zu", memContextSize(testContext));
 
-        TEST_RESULT_UINT(manifestFileTotal(manifest), driver.fileTotal, "   check file total");
+        TEST_RESULT_UINT(manifestFileTotal(manifest), driver->fileTotal, "   check file total");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("save manifest");
@@ -310,7 +318,7 @@ testRun(void)
         TEST_LOG_FMT("completed in %ums", (unsigned int)(timeMSec() - timeBegin));
         // TEST_LOG_FMT("memory used %zu", memContextSize(testContext));
 
-        TEST_RESULT_UINT(manifestFileTotal(manifest), driver.fileTotal, "   check file total");
+        TEST_RESULT_UINT(manifestFileTotal(manifest), driver->fileTotal, "   check file total");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("find all files");
