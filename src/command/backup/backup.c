@@ -1871,6 +1871,7 @@ backupJobCallback(void *data, unsigned int clientIdx)
                     {
                         pckWriteStrP(param, backupFileRepoPathP(jobData->backupLabel, .bundleId = jobData->bundleId));
                         pckWriteU64P(param, jobData->bundleId);
+                        pckWriteBoolP(param, manifestData(jobData->manifest)->bundleRaw);
                     }
                     else
                     {

@@ -27,8 +27,8 @@ Restore File
 FN_EXTERN List *
 restoreFile(
     const String *const repoFile, const unsigned int repoIdx, const CompressType repoFileCompressType, const time_t copyTimeBegin,
-    const bool delta, const bool deltaForce, const String *const cipherPass, const StringList *const referenceList,
-    List *const fileList)
+    const bool delta, const bool deltaForce, const bool bundleRaw, const String *const cipherPass,
+    const StringList *const referenceList, List *const fileList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, repoFile);
@@ -37,6 +37,7 @@ restoreFile(
         FUNCTION_LOG_PARAM(TIME, copyTimeBegin);
         FUNCTION_LOG_PARAM(BOOL, delta);
         FUNCTION_LOG_PARAM(BOOL, deltaForce);
+        FUNCTION_LOG_PARAM(BOOL, bundleRaw);
         FUNCTION_TEST_PARAM(STRING, cipherPass);
         FUNCTION_LOG_PARAM(STRING_LIST, referenceList);             // List of references (for block incremental)
         FUNCTION_LOG_PARAM(LIST, fileList);                         // List of files to restore
@@ -403,7 +404,8 @@ restoreFile(
                                             if (repoFileCompressType != compressTypeNone)
                                             {
                                                 ioFilterGroupAdd(
-                                                    ioReadFilterGroup(chunkedRead), decompressFilterP(repoFileCompressType));
+                                                    ioReadFilterGroup(chunkedRead),
+                                                    decompressFilterP(repoFileCompressType, .raw = true));
                                             }
 
                                             // Open chunked read
@@ -449,12 +451,13 @@ restoreFile(
                         if (cipherPass != NULL)
                         {
                             ioFilterGroupAdd(
-                                filterGroup, cipherBlockNewP(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass)));
+                                filterGroup,
+                                cipherBlockNewP(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass), .raw = bundleRaw));
                         }
 
                         // Add decompression filter
                         if (repoFileCompressType != compressTypeNone)
-                            ioFilterGroupAdd(filterGroup, decompressFilterP(repoFileCompressType));
+                            ioFilterGroupAdd(filterGroup, decompressFilterP(repoFileCompressType, .raw = bundleRaw));
 
                         // Add sha1 filter
                         ioFilterGroupAdd(filterGroup, cryptoHashNew(hashTypeSha1));
