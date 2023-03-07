@@ -50,7 +50,7 @@ verifyFile(
 
         // Add decompression filter
         if (compressType != compressTypeNone)
-            ioFilterGroupAdd(filterGroup, decompressFilter(compressType));
+            ioFilterGroupAdd(filterGroup, decompressFilterP(compressType));
 
         // Add sha1 filter
         ioFilterGroupAdd(filterGroup, cryptoHashNew(hashTypeSha1));

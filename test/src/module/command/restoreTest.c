@@ -246,7 +246,7 @@ testRun(void)
         TEST_ERROR(
             restoreFile(
                 strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, compressTypeGz,
-                0, false, false, STRDEF("badpass"), NULL, fileList),
+                0, false, false, false, STRDEF("badpass"), NULL, fileList),
             ChecksumError,
             "error restoring 'normal': actual checksum 'd1cd8a7d11daa26814b93eb604e1d49ab4b43770' does not match expected checksum"
             " 'ffffffffffffffffffffffffffffffffffffffff'");
@@ -1857,6 +1857,9 @@ testRun(void)
         const String *restoreLabel = STRDEF("LABEL");
         #define RECOVERY_SETTING_PREFIX                             "# Removed by pgBackRest restore on LABEL # "
 
+        Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F"), PG_VERSION_12, STRDEF("/pg"));
+        manifest->pub.data.backupOptionOnline = true;
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when standby_mode setting is present");
 
@@ -1963,8 +1966,6 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("PG12 restore type preserve");
-
-        Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F"), PG_VERSION_12, STRDEF("/pg"));
 
         HRN_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
 
@@ -2074,7 +2075,9 @@ testRun(void)
             manifest->pub.data.pgVersion = PG_VERSION_94;
             manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_94);
             manifest->pub.data.backupType = backupTypeFull;
+            manifest->pub.data.backupTimestampStart = 1482182860;
             manifest->pub.data.backupTimestampCopyStart = 1482182861; // So file timestamps should be less than this
+            manifest->pub.data.backupOptionOnline = true;
 
             // Data directory
             HRN_MANIFEST_TARGET_ADD(manifest, .name = MANIFEST_TARGET_PGDATA, .path = strZ(pgPath));
@@ -2143,7 +2146,7 @@ testRun(void)
                 "            FileMissingError: unable to open missing file '%s/repo/backup/test1/backup.info.copy' for read\n"
                 "            HINT: backup.info cannot be opened and is required to perform a backup.\n"
                 "            HINT: has a stanza-create been performed?\n"
-                "P00   INFO: repo2: restore backup set 20161219-212741F\n"
+                "P00   INFO: repo2: restore backup set 20161219-212741F, recovery will start at 2016-12-19 21:27:40\n"
                 "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
                 "P00 DETAIL: create path '" TEST_PATH "/pg/global'\n"
                 "P00 DETAIL: create path '" TEST_PATH "/pg/pg_tblspc'\n"
@@ -2280,7 +2283,7 @@ testRun(void)
         cmdRestore();
 
         TEST_RESULT_LOG(
-            "P00   INFO: repo1: restore backup set 20161219-212741F\n"
+            "P00   INFO: repo1: restore backup set 20161219-212741F, recovery will start at 2016-12-19 21:27:40\n"
             "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
             "P00 DETAIL: check '" TEST_PATH "/ts/1/PG_9.4_201409291' exists\n"
             "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/pg'\n"
@@ -2358,7 +2361,7 @@ testRun(void)
         cmdRestore();
 
         TEST_RESULT_LOG(
-            "P00   INFO: repo1: restore backup set 20161219-212741F\n"
+            "P00   INFO: repo1: restore backup set 20161219-212741F, recovery will start at 2016-12-19 21:27:40\n"
             "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
             "P00 DETAIL: check '" TEST_PATH "/ts/1/PG_9.4_201409291' exists\n"
             "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/pg'\n"

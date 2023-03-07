@@ -25,6 +25,8 @@
                         <commit subject="Rename DeltaMap to BlockHash."/>
                         <commit subject="Add repo-block-age-map and repo-block-size-map options."/>
                         <commit subject="Rename block incremental manifest keys."/>
+                        <commit subject="Add optional raw format for compression types."/>
+                        <commit subject="Use raw compression/encryption to bundling and block incremental backup."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
@@ -33,6 +35,19 @@
                         <p>Block-level incremental backup.</p>
                     </release-item>
                 </release-feature-list>
+
+                <release-improvement-list>
+                    <release-item>
+                        <github-pull-request id="2011"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Keep only one all-default group index.</p>
+                    </release-item>
+                </release-improvement-list>
             </release-core-list>
 
             <release-doc-list>

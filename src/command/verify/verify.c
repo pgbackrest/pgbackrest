@@ -184,7 +184,7 @@ verifyFileLoad(const String *pathFileName, const String *cipherPass)
 
     // If the file is compressed, add a decompression filter
     if (compressTypeFromName(pathFileName) != compressTypeNone)
-        ioFilterGroupAdd(ioReadFilterGroup(read), decompressFilter(compressTypeFromName(pathFileName)));
+        ioFilterGroupAdd(ioReadFilterGroup(read), decompressFilterP(compressTypeFromName(pathFileName)));
 
     FUNCTION_TEST_RETURN(STORAGE_READ, result);
 }

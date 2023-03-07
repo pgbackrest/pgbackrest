@@ -2029,6 +2029,50 @@ testRun(void)
         TEST_ERROR(
             hrnCfgLoadP(cfgCmdBackup, argList, .role = cfgCmdRoleLocal), OptionInvalidValueError,
             "key '4' is not valid for 'pg' option");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("remove groups indexes that do not have a non-default option");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 5, "repo5");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 112, "/repo112");
+        hrnCfgEnvKeyRawZ(cfgOptRepoS3Key, 1, "x1x");
+        hrnCfgEnvKeyRawZ(cfgOptRepoS3Key, 3, "x3x");
+        hrnCfgEnvKeyRawZ(cfgOptRepoS3Key, 255, "x255x");
+        HRN_CFG_LOAD(cfgCmdCheck, argList);
+
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3Key, 1);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3Key, 3);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3Key, 255);
+
+        TEST_RESULT_UINT(cfgOptionGroupIdxTotal(cfgOptGrpRepo), 2, "check repo group total");
+        TEST_RESULT_UINT(cfgOptionGroupIdxToKey(cfgOptGrpRepo, 0), 5, "check repo5 key");
+        TEST_RESULT_Z(cfgOptionGroupName(cfgOptGrpRepo, 0), "repo5", "check repo5 name");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoHost, 0), "repo5", "check repo5-host");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoPath, 0), "/var/lib/pgbackrest", "check repo5-path");
+        TEST_RESULT_UINT(cfgOptionGroupIdxToKey(cfgOptGrpRepo, 1), 112, "check repo112 key");
+        TEST_RESULT_Z(cfgOptionGroupName(cfgOptGrpRepo, 1), "repo112", "check repo112 name");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoPath, 1), "/repo112", "check repo112-path");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("two indexes with default options (first is remapped to repo1)");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
+        hrnCfgEnvKeyRawZ(cfgOptRepoS3Key, 4, "x4x");
+        hrnCfgEnvKeyRawZ(cfgOptRepoS3Key, 255, "x255x");
+        HRN_CFG_LOAD(cfgCmdCheck, argList);
+
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3Key, 4);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3Key, 255);
+
+        TEST_RESULT_UINT(cfgOptionGroupIdxTotal(cfgOptGrpRepo), 1, "check repo group total");
+        TEST_RESULT_UINT(cfgOptionGroupIdxToKey(cfgOptGrpRepo, 0), 1, "check repo1 key");
+        TEST_RESULT_Z(cfgOptionGroupName(cfgOptGrpRepo, 0), "repo1", "check repo1 name");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoPath, 0), "/var/lib/pgbackrest", "check repo1-path");
     }
 
     // *****************************************************************************************************************************

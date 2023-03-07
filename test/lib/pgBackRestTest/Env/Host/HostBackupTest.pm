@@ -2162,6 +2162,13 @@ sub restoreCompare
                 $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{'backup-bundle'});
         }
 
+        if (defined($oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{'backup-bundle-raw'}))
+        {
+            $oActualManifest->set(
+                MANIFEST_SECTION_BACKUP, 'backup-bundle-raw', undef,
+                $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{'backup-bundle-raw'});
+        }
+
         # Delete block incr headers since old Perl manifest code will not generate them
         delete($oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{'backup-block-incr'});
         delete($oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{'backup-block-incr-size'});

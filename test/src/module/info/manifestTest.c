@@ -59,6 +59,7 @@ testRun(void)
             "[backup]\n"                                                                                                           \
             "backup-block-incr=true\n"                                                                                             \
             "backup-bundle=true\n"                                                                                                 \
+            "backup-bundle-raw=true\n"                                                                                             \
             "backup-label=null\n"                                                                                                  \
             "backup-reference=\"\"\n"                                                                                              \
             "backup-timestamp-copy-start=0\n"                                                                                      \
@@ -668,7 +669,7 @@ testRun(void)
         TEST_ASSIGN(
             manifest,
             manifestNewBuild(
-                storagePg, PG_VERSION_12, hrnPgCatalogVersion(PG_VERSION_12), 0, true, false, false, false, NULL, NULL, NULL),
+                storagePg, PG_VERSION_12, hrnPgCatalogVersion(PG_VERSION_12), 0, true, false, true, false, NULL, NULL, NULL),
             "build manifest");
 
         contentSave = bufNew(0);
@@ -677,7 +678,14 @@ testRun(void)
             strNewBuf(contentSave),
             strNewBuf(
                 harnessInfoChecksumZ(
-                    TEST_MANIFEST_HEADER
+                    "[backup]\n"
+                    "backup-bundle=true\n"
+                    "backup-label=null\n"
+                    "backup-reference=\"\"\n"
+                    "backup-timestamp-copy-start=0\n"
+                    "backup-timestamp-start=0\n"
+                    "backup-timestamp-stop=0\n"
+                    "backup-type=\"full\"\n"
                     TEST_MANIFEST_DB_12
                     TEST_MANIFEST_OPTION_ARCHIVE
                     TEST_MANIFEST_OPTION_CHECKSUM_PAGE_FALSE
@@ -1054,6 +1062,8 @@ testRun(void)
             manifestPrior = manifestNewInternal();
             manifestPrior->pub.data.backupLabel = strNewZ("20190101-010101F");
             strLstAdd(manifestPrior->pub.referenceList, manifestPrior->pub.data.backupLabel);
+            manifestPrior->pub.data.bundle = true;
+            manifestPrior->pub.data.bundleRaw = true;
 
             HRN_MANIFEST_FILE_ADD(
                 manifestPrior, .name = MANIFEST_TARGET_PGDATA "/FILE3", .size = 0, .sizeRepo = 0, .timestamp = 1482182860,
@@ -1402,6 +1412,8 @@ testRun(void)
         // Manifest with minimal features
         const Buffer *contentLoad = harnessInfoChecksumZ(
             "[backup]\n"
+            "backup-bundle=true\n"
+            "backup-bundle-raw=true\n"
             "backup-label=\"20190808-163540F\"\n"
             "backup-reference=\"20190808-163540F\"\n"
             "backup-timestamp-copy-start=1565282141\n"
@@ -1486,6 +1498,7 @@ testRun(void)
             "backup-archive-stop=\"000000030000028500000089\"\n"                                                                   \
             "backup-block-incr=true\n"                                                                                             \
             "backup-bundle=true\n"                                                                                                 \
+            "backup-bundle-raw=true\n"                                                                                             \
             "backup-label=\"20190818-084502F_20190820-084502D\"\n"                                                                 \
             "backup-lsn-start=\"285/89000028\"\n"                                                                                  \
             "backup-lsn-stop=\"285/89001F88\"\n"                                                                                   \
@@ -1609,6 +1622,7 @@ testRun(void)
                         "backup-archive-stop=\"000000040000028500000089\"\n"
                         "backup-block-incr=true\n"
                         "backup-bundle=true\n"
+                        "backup-bundle-raw=true\n"
                         "backup-label=\"20190818-084502F_20190820-084502D\"\n"
                         "backup-lsn-start=\"300/89000028\"\n"
                         "backup-lsn-stop=\"300/89001F88\"\n"

@@ -23,7 +23,7 @@ Functions
 FN_INLINE_ALWAYS StorageWrite *
 storageWriteMove(StorageWrite *const this, MemContext *const parentNew)
 {
-    return objMoveContext(this, parentNew);
+    return objMove(this, parentNew);
 }
 
 /***********************************************************************************************************************************
@@ -31,7 +31,6 @@ Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct StorageWritePub
 {
-    MemContext *memContext;                                         // Mem context
     const StorageWriteInterface *interface;                         // File data (name, driver type, etc.)
     IoWrite *io;                                                    // Write interface
 } StorageWritePub;
@@ -113,7 +112,7 @@ Destructor
 FN_INLINE_ALWAYS void
 storageWriteFree(StorageWrite *const this)
 {
-    objFreeContext(this);
+    objFree(this);
 }
 
 /***********************************************************************************************************************************

@@ -157,10 +157,11 @@ bz2CompressInputSame(const THIS_VOID)
 
 /**********************************************************************************************************************************/
 FN_EXTERN IoFilter *
-bz2CompressNew(int level)
+bz2CompressNew(const int level, const bool raw)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(INT, level);
+        (void)raw;                                                  // Raw unsupported
     FUNCTION_LOG_END();
 
     ASSERT(level >= BZ2_COMPRESS_LEVEL_MIN && level <= BZ2_COMPRESS_LEVEL_MAX);

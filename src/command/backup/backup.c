@@ -1089,7 +1089,7 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
             if (compressType != compressTypeNone)
             {
                 ioFilterGroupAdd(
-                    ioWriteFilterGroup(storageWriteIo(write)), compressFilter(compressType, cfgOptionInt(cfgOptCompressLevel)));
+                    ioWriteFilterGroup(storageWriteIo(write)), compressFilterP(compressType, cfgOptionInt(cfgOptCompressLevel)));
 
                 repoChecksum = true;
             }
@@ -1876,6 +1876,7 @@ backupJobCallback(void *data, unsigned int clientIdx)
                     {
                         pckWriteStrP(param, backupFileRepoPathP(jobData->backupLabel, .bundleId = jobData->bundleId));
                         pckWriteU64P(param, jobData->bundleId);
+                        pckWriteBoolP(param, manifestData(jobData->manifest)->bundleRaw);
                     }
                     else
                     {
@@ -2277,12 +2278,12 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
                         if (archiveCompressType != backupCompressType)
                         {
                             if (archiveCompressType != compressTypeNone)
-                                ioFilterGroupAdd(filterGroup, decompressFilter(archiveCompressType));
+                                ioFilterGroupAdd(filterGroup, decompressFilterP(archiveCompressType));
 
                             if (backupCompressType != compressTypeNone)
                             {
                                 ioFilterGroupAdd(
-                                    filterGroup, compressFilter(backupCompressType, cfgOptionInt(cfgOptCompressLevel)));
+                                    filterGroup, compressFilterP(backupCompressType, cfgOptionInt(cfgOptCompressLevel)));
                             }
                         }
 
@@ -2379,7 +2380,7 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
                 STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s/%s.manifest%s", strZ(strSubN(backupLabel, 0, 4)),
                 strZ(backupLabel), strZ(compressExtStr(compressTypeGz))));
 
-        ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(manifestWrite)), compressFilter(compressTypeGz, 9));
+        ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(manifestWrite)), compressFilterP(compressTypeGz, 9));
 
         cipherBlockFilterGroupAdd(
             ioWriteFilterGroup(storageWriteIo(manifestWrite)), cfgOptionStrId(cfgOptRepoCipherType), cipherModeEncrypt,

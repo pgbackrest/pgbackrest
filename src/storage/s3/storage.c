@@ -1093,11 +1093,12 @@ static const StorageInterface storageInterfaceS3 =
 
 FN_EXTERN Storage *
 storageS3New(
-    const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
-    const String *endPoint, StorageS3UriStyle uriStyle, const String *region, StorageS3KeyType keyType, const String *accessKey,
-    const String *secretAccessKey, const String *securityToken, const String *const kmsKeyId, const String *credRole,
-    const String *const webIdToken, size_t partSize, const String *host, unsigned int port, TimeMSec timeout, bool verifyPeer,
-    const String *caFile, const String *caPath)
+    const String *const path, const bool write, StoragePathExpressionCallback pathExpressionFunction, const String *const bucket,
+    const String *const endPoint, const StorageS3UriStyle uriStyle, const String *const region, const StorageS3KeyType keyType,
+    const String *const accessKey, const String *const secretAccessKey, const String *const securityToken,
+    const String *const kmsKeyId, const String *const credRole, const String *const webIdToken, const size_t partSize,
+    const String *host, const unsigned int port, const TimeMSec timeout, const bool verifyPeer, const String *const caFile,
+    const String *const caPath)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -1129,13 +1130,13 @@ storageS3New(
     ASSERT(region != NULL);
     ASSERT(partSize != 0);
 
-    Storage *this = NULL;
+    StorageS3 *this = NULL;
 
-    OBJ_NEW_BEGIN(StorageS3, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(StorageS3, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageS3 *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), Storage::StorageS3);
+        this = OBJ_NEW_ALLOC();
 
-        *driver = (StorageS3)
+        *this = (StorageS3)
         {
             .interface = storageInterfaceS3,
             .bucket = strDup(bucket),
@@ -1154,26 +1155,26 @@ storageS3New(
 
         // Create the HTTP client used to service requests
         if (host == NULL)
-            host = driver->bucketEndpoint;
+            host = this->bucketEndpoint;
 
-        driver->httpClient = httpClientNew(
+        this->httpClient = httpClientNew(
             tlsClientNewP(
                 sckClientNew(host, port, timeout, timeout), host, timeout, timeout, verifyPeer, .caFile = caFile, .caPath = caPath),
             timeout);
 
         // Initialize authentication
-        switch (driver->keyType)
+        switch (this->keyType)
         {
             // Create the HTTP client used to retrieve temporary security credentials
             case storageS3KeyTypeAuto:
             {
                 ASSERT(accessKey == NULL && secretAccessKey == NULL && securityToken == NULL);
 
-                driver->credRole = strDup(credRole);
-                driver->credHost = S3_CREDENTIAL_HOST_STR;
-                driver->credExpirationTime = time(NULL);
-                driver->credHttpClient = httpClientNew(
-                    sckClientNew(driver->credHost, S3_CREDENTIAL_PORT, timeout, timeout), timeout);
+                this->credRole = strDup(credRole);
+                this->credHost = S3_CREDENTIAL_HOST_STR;
+                this->credExpirationTime = time(NULL);
+                this->credHttpClient = httpClientNew(
+                    sckClientNew(this->credHost, S3_CREDENTIAL_PORT, timeout, timeout), timeout);
 
                 break;
             }
@@ -1185,13 +1186,13 @@ storageS3New(
                 ASSERT(credRole != NULL);
                 ASSERT(webIdToken != NULL);
 
-                driver->credRole = strDup(credRole);
-                driver->webIdToken = strDup(webIdToken);
-                driver->credHost = S3_STS_HOST_STR;
-                driver->credExpirationTime = time(NULL);
-                driver->credHttpClient = httpClientNew(
+                this->credRole = strDup(credRole);
+                this->webIdToken = strDup(webIdToken);
+                this->credHost = S3_STS_HOST_STR;
+                this->credExpirationTime = time(NULL);
+                this->credHttpClient = httpClientNew(
                     tlsClientNewP(
-                        sckClientNew(driver->credHost, S3_STS_PORT, timeout, timeout), driver->credHost, timeout, timeout, true,
+                        sckClientNew(this->credHost, S3_STS_PORT, timeout, timeout), this->credHost, timeout, timeout, true,
                         .caFile = caFile, .caPath = caPath),
                     timeout);
 
@@ -1201,26 +1202,24 @@ storageS3New(
             // Set shared key credentials
             default:
             {
-                ASSERT(driver->keyType == storageS3KeyTypeShared);
+                ASSERT(this->keyType == storageS3KeyTypeShared);
                 ASSERT(accessKey != NULL && secretAccessKey != NULL);
 
-                driver->accessKey = strDup(accessKey);
-                driver->secretAccessKey = strDup(secretAccessKey);
-                driver->securityToken = strDup(securityToken);
+                this->accessKey = strDup(accessKey);
+                this->secretAccessKey = strDup(secretAccessKey);
+                this->securityToken = strDup(securityToken);
 
                 break;
             }
         }
 
         // Create list of redacted headers
-        driver->headerRedactList = strLstNew();
-        strLstAdd(driver->headerRedactList, HTTP_HEADER_AUTHORIZATION_STR);
-        strLstAdd(driver->headerRedactList, S3_HEADER_DATE_STR);
-        strLstAdd(driver->headerRedactList, S3_HEADER_TOKEN_STR);
-
-        this = storageNew(STORAGE_S3_TYPE, path, 0, 0, write, pathExpressionFunction, driver, driver->interface);
+        this->headerRedactList = strLstNew();
+        strLstAdd(this->headerRedactList, HTTP_HEADER_AUTHORIZATION_STR);
+        strLstAdd(this->headerRedactList, S3_HEADER_DATE_STR);
+        strLstAdd(this->headerRedactList, S3_HEADER_TOKEN_STR);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE, this);
+    FUNCTION_LOG_RETURN(STORAGE, storageNew(STORAGE_S3_TYPE, path, 0, 0, write, pathExpressionFunction, this, this->interface));
 }

@@ -244,7 +244,7 @@ blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, Io
             }
 
             if (this->compressType != compressTypeNone)
-                ioFilterGroupAdd(ioReadFilterGroup(this->chunkedRead), decompressFilter(this->compressType));
+                ioFilterGroupAdd(ioReadFilterGroup(this->chunkedRead), decompressFilterP(this->compressType, .raw = true));
 
             ioReadOpen(this->chunkedRead);
 
