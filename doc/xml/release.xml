@@ -16,6 +16,24 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.45dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <commit subject="Set online flag in manifest in command/restore unit tests."/>
+                        <commit subject="Skip writing recovery.signal by default for restores of offline backups.">
+                            <github-issue id="2018"/>
+                            <github-pull-request id="2019"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="marcel.borger"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Skip writing <file>recovery.signal</file> by default for restores of offline backups.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-feature-list>
                     <release-item>
                         <commit subject="Add block incremental to real/all test output."/>
