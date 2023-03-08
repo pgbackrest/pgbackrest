@@ -126,13 +126,13 @@ storageReadS3New(
     ASSERT(name != NULL);
     ASSERT(limit == NULL || varUInt64(limit) > 0);
 
-    StorageRead *this = NULL;
+    StorageReadS3 *this = NULL;
 
     OBJ_NEW_BEGIN(StorageReadS3, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageReadS3 *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), StorageRead::StorageReadS3);
+        this = OBJ_NEW_ALLOC();
 
-        *driver = (StorageReadS3)
+        *this = (StorageReadS3)
         {
             .storage = storage,
 
@@ -152,10 +152,8 @@ storageReadS3New(
                 },
             },
         };
-
-        this = storageReadNew(driver, &driver->interface);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_READ, this);
+    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadNew(this, &this->interface));
 }

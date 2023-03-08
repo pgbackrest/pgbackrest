@@ -157,9 +157,11 @@ lz4DecompressInputSame(const THIS_VOID)
 
 /**********************************************************************************************************************************/
 FN_EXTERN IoFilter *
-lz4DecompressNew(void)
+lz4DecompressNew(const bool raw)
 {
-    FUNCTION_LOG_VOID(logLevelTrace);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        (void)raw;                                                  // Not required for decompress
+    FUNCTION_LOG_END();
 
     IoFilter *this = NULL;
 

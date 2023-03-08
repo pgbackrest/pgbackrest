@@ -255,7 +255,7 @@ helpRender(const Buffer *const helpData)
 
         // Read pack from compressed buffer
         IoRead *const helpRead = ioBufferReadNew(helpData);
-        ioFilterGroupAdd(ioReadFilterGroup(helpRead), bz2DecompressNew());
+        ioFilterGroupAdd(ioReadFilterGroup(helpRead), bz2DecompressNew(false));
         ioReadOpen(helpRead);
 
         PackRead *pckHelp = pckReadNewIo(helpRead);

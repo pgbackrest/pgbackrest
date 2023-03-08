@@ -241,7 +241,7 @@ archivePushFile(
             if (isSegment && compressType != compressTypeNone)
             {
                 compressExtCat(archiveDestination, compressType);
-                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(source)), compressFilter(compressType, compressLevel));
+                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(source)), compressFilterP(compressType, compressLevel));
                 compressible = false;
             }
 
