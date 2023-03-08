@@ -1798,21 +1798,45 @@ testRun(void)
             "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFE, wal stop: 000000020000000700000FFE");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("none output, verbose, with no verify failures");
+        TEST_TITLE("invalid WAL magic");
+
+        // Create WAL file with just header info and small WAL size
+        walBuffer = bufNew((size_t)(1024 * 1024));
+        bufUsedSet(walBuffer, bufSize(walBuffer));
+        memset(bufPtr(walBuffer), 0, bufSize(walBuffer));
+        HRN_PG_WAL_OVERRIDE_TO_BUFFER(walBuffer, PG_VERSION_11, 999, .size = 1024 * 1024);
+        const char *walBufferSha2 = strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, walBuffer)));
+
+        HRN_STORAGE_PUT(
+            storageRepoIdxWrite(0),
+            zNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000200000007/000000020000000700000FFD-%s", walBufferSha2), walBuffer,
+            .comment = "invalid WAL magic");
+
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
+        TEST_ERROR(
+            verifyProcess(cfgOptionBool(cfgOptVerbose)), VersionNotSupportedError,
+            "unexpected WAL magic 999\n"
+            "HINT: is this version of PostgreSQL supported?");
+        TEST_RESULT_LOG(
+            "P00 DETAIL: no backups exist in the repo");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("none output, verbose, override WAL magic, with no verify failures");
 
         hrnCfgArgRawZ(argList, cfgOptVerbose, "y");
+        hrnCfgArgRawZ(argList, cfgOptPgVersion, PG_VERSION_11_STR);
         HRN_CFG_LOAD(cfgCmdVerify, argList);
         TEST_RESULT_STR_Z(
             verifyProcess(cfgOptionBool(cfgOptVerbose)),
             "stanza: db\n"
             "status: ok\n"
-            "  archiveId: 11-2, total WAL checked: 1, total valid WAL: 1\n"
+            "  archiveId: 11-2, total WAL checked: 2, total valid WAL: 2\n"
             "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0\n"
             "  backup: none found",
             "verify none output, verbose, with no failures");
         TEST_RESULT_LOG(
             "P00 DETAIL: no backups exist in the repo\n"
-            "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFE, wal stop: 000000020000000700000FFE");
+            "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFD, wal stop: 000000020000000700000FFE");
     }
 
     // *****************************************************************************************************************************
