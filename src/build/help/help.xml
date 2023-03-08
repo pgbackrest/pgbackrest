@@ -1719,7 +1719,7 @@
                         <summary>Force <postgres/> version.</summary>
 
                         <text>
-                            <p>The specified <postgres/> version will be used instead of the version automatically detected by reading <file>pg_control</file> or WAL headers. This is mainly useful for <postgres/> forks or development versions where those values are different from the release version.</p>
+                            <p>The specified <postgres/> version will be used instead of the version automatically detected by reading <file>pg_control</file> or WAL headers. This is mainly useful for <postgres/> forks or development versions where those values are different from the release version. The version reported by <postgres/> via `server_version_num` must match the forced version.</p>
 
                             <admonition type="warning">Be cautious when using this option because <file>pg_control</file> and WAL headers will still be read with expected format for the specified version, i.e. the format from the official open-source version of <postgres/>. If the fork or development version changes the format of the fields that <backrest/> depends on it will lead to unexpected behavior.</admonition>
                         </text>
