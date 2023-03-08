@@ -3449,7 +3449,7 @@ testRun(void)
             hrnCfgArgRawBool(argList, cfgOptResume, false);
             hrnCfgArgRawZ(argList, cfgOptAnnotation, "extra key=this is an annotation");
             hrnCfgArgRawZ(argList, cfgOptAnnotation, "source=this is another annotation");
-            hrnCfgArgRawZ(argList, cfgOptPgVersion, "11");
+            hrnCfgArgRawZ(argList, cfgOptPgVersionForce, "11");
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Create pg_control with unexpected catalog and control version

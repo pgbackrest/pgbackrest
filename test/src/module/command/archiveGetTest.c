@@ -844,7 +844,7 @@ testRun(void)
             "HINT: is this version of PostgreSQL supported?");
 
         StringList *argListTemp = strLstDup(argList);
-        hrnCfgArgRawZ(argListTemp, cfgOptPgVersion, "10");
+        hrnCfgArgRawZ(argListTemp, cfgOptPgVersionForce, "10");
         HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp);
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");

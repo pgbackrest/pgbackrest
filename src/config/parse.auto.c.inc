@@ -3978,55 +3978,55 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                            // opt/pg-user
     ),                                                                                                                // opt/pg-user
     // -----------------------------------------------------------------------------------------------------------------------------
-    PARSE_RULE_OPTION                                                                                              // opt/pg-version
-    (                                                                                                              // opt/pg-version
-        PARSE_RULE_OPTION_NAME("pg-version"),                                                                      // opt/pg-version
-        PARSE_RULE_OPTION_TYPE(cfgOptTypeString),                                                                  // opt/pg-version
-        PARSE_RULE_OPTION_RESET(true),                                                                             // opt/pg-version
-        PARSE_RULE_OPTION_REQUIRED(false),                                                                         // opt/pg-version
-        PARSE_RULE_OPTION_SECTION(cfgSectionStanza),                                                               // opt/pg-version
-                                                                                                                   // opt/pg-version
-        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                             // opt/pg-version
-        (                                                                                                          // opt/pg-version
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                            // opt/pg-version
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                           // opt/pg-version
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                // opt/pg-version
-            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                                 // opt/pg-version
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                                               // opt/pg-version
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                          // opt/pg-version
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                          // opt/pg-version
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                         // opt/pg-version
-            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                                // opt/pg-version
-        ),                                                                                                         // opt/pg-version
-                                                                                                                   // opt/pg-version
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                            // opt/pg-version
-        (                                                                                                          // opt/pg-version
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                            // opt/pg-version
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                           // opt/pg-version
-        ),                                                                                                         // opt/pg-version
-                                                                                                                   // opt/pg-version
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                            // opt/pg-version
-        (                                                                                                          // opt/pg-version
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                            // opt/pg-version
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                           // opt/pg-version
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                // opt/pg-version
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                                               // opt/pg-version
-            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                                // opt/pg-version
-        ),                                                                                                         // opt/pg-version
-                                                                                                                   // opt/pg-version
-        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                           // opt/pg-version
-        (                                                                                                          // opt/pg-version
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                            // opt/pg-version
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                           // opt/pg-version
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                // opt/pg-version
-            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                                 // opt/pg-version
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                                               // opt/pg-version
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                          // opt/pg-version
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                          // opt/pg-version
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                         // opt/pg-version
-            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                                // opt/pg-version
-        ),                                                                                                         // opt/pg-version
-    ),                                                                                                             // opt/pg-version
+    PARSE_RULE_OPTION                                                                                        // opt/pg-version-force
+    (                                                                                                        // opt/pg-version-force
+        PARSE_RULE_OPTION_NAME("pg-version-force"),                                                          // opt/pg-version-force
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeString),                                                            // opt/pg-version-force
+        PARSE_RULE_OPTION_RESET(true),                                                                       // opt/pg-version-force
+        PARSE_RULE_OPTION_REQUIRED(false),                                                                   // opt/pg-version-force
+        PARSE_RULE_OPTION_SECTION(cfgSectionStanza),                                                         // opt/pg-version-force
+                                                                                                             // opt/pg-version-force
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                       // opt/pg-version-force
+        (                                                                                                    // opt/pg-version-force
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                      // opt/pg-version-force
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                     // opt/pg-version-force
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                          // opt/pg-version-force
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                           // opt/pg-version-force
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                                         // opt/pg-version-force
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                    // opt/pg-version-force
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                    // opt/pg-version-force
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                   // opt/pg-version-force
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                          // opt/pg-version-force
+        ),                                                                                                   // opt/pg-version-force
+                                                                                                             // opt/pg-version-force
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                      // opt/pg-version-force
+        (                                                                                                    // opt/pg-version-force
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                      // opt/pg-version-force
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                     // opt/pg-version-force
+        ),                                                                                                   // opt/pg-version-force
+                                                                                                             // opt/pg-version-force
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                      // opt/pg-version-force
+        (                                                                                                    // opt/pg-version-force
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                      // opt/pg-version-force
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                     // opt/pg-version-force
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                          // opt/pg-version-force
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                                         // opt/pg-version-force
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                          // opt/pg-version-force
+        ),                                                                                                   // opt/pg-version-force
+                                                                                                             // opt/pg-version-force
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                     // opt/pg-version-force
+        (                                                                                                    // opt/pg-version-force
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                      // opt/pg-version-force
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                     // opt/pg-version-force
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                          // opt/pg-version-force
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                           // opt/pg-version-force
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                                         // opt/pg-version-force
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                    // opt/pg-version-force
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                    // opt/pg-version-force
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                   // opt/pg-version-force
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                          // opt/pg-version-force
+        ),                                                                                                   // opt/pg-version-force
+    ),                                                                                                       // opt/pg-version-force
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                                 // opt/process
     (                                                                                                                 // opt/process
@@ -9508,7 +9508,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptPgPort,                                                                                               // opt-resolve-order
     cfgOptPgSocketPath,                                                                                         // opt-resolve-order
     cfgOptPgUser,                                                                                               // opt-resolve-order
-    cfgOptPgVersion,                                                                                            // opt-resolve-order
+    cfgOptPgVersionForce,                                                                                       // opt-resolve-order
     cfgOptProcess,                                                                                              // opt-resolve-order
     cfgOptProcessMax,                                                                                           // opt-resolve-order
     cfgOptProtocolTimeout,                                                                                      // opt-resolve-order

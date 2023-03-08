@@ -1541,7 +1541,7 @@ option:
     depend:
       option: pg-path
 
-  pg-version:
+  pg-version-force:
     section: stanza
     type: string
     required: false

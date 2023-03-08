@@ -1715,7 +1715,7 @@
                         <example>25</example>
                     </config-key>
 
-                    <config-key id="pg-version" name="PostgreSQL version">
+                    <config-key id="pg-version-force" name="Force PostgreSQL version">
                         <summary>Force <postgres/> version.</summary>
 
                         <text>

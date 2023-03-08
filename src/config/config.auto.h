@@ -95,7 +95,7 @@ Option constants
 #define CFGOPT_ONLINE                                               "online"
 #define CFGOPT_OUTPUT                                               "output"
 #define CFGOPT_PG                                                   "pg"
-#define CFGOPT_PG_VERSION                                           "pg-version"
+#define CFGOPT_PG_VERSION_FORCE                                     "pg-version-force"
 #define CFGOPT_PROCESS                                              "process"
 #define CFGOPT_PROCESS_MAX                                          "process-max"
 #define CFGOPT_PROTOCOL_TIMEOUT                                     "protocol-timeout"
@@ -430,7 +430,7 @@ typedef enum
     cfgOptPgPort,
     cfgOptPgSocketPath,
     cfgOptPgUser,
-    cfgOptPgVersion,
+    cfgOptPgVersionForce,
     cfgOptProcess,
     cfgOptProcessMax,
     cfgOptProtocolTimeout,

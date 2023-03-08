@@ -520,7 +520,7 @@ testRun(void)
         TEST_TITLE("stanza-create forcing another PG version");
 
         argList = strLstDup(argListBase);
-        hrnCfgArgRawZ(argList, cfgOptPgVersion, "15");
+        hrnCfgArgRawZ(argList, cfgOptPgVersionForce, "15");
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
         HRN_PG_CONTROL_OVERRIDE_PUT(storagePgWrite(), PG_VERSION_15, 1501, .catalogVersion = 202211111);
@@ -925,7 +925,7 @@ testRun(void)
         TEST_TITLE("stanza-upgrade forcing another PG version");
 
         argList = strLstDup(argListBase);
-        hrnCfgArgRawZ(argList, cfgOptPgVersion, "15");
+        hrnCfgArgRawZ(argList, cfgOptPgVersionForce, "15");
         HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
 
         HRN_PG_CONTROL_OVERRIDE_PUT(storagePgWrite(), PG_VERSION_15, 1501, .catalogVersion = 202211111);

@@ -429,7 +429,7 @@ testRun(void)
         TEST_TITLE("checkDbConfig() using the pg-version option");
 
         StringList *argListPgVersion = strLstDup(argList);
-        hrnCfgArgRawZ(argListPgVersion, cfgOptPgVersion, "11");
+        hrnCfgArgRawZ(argListPgVersion, cfgOptPgVersionForce, "11");
         HRN_CFG_LOAD(cfgCmdCheck, argListPgVersion);
 
         TEST_RESULT_VOID(
