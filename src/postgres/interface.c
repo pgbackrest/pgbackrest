@@ -109,7 +109,6 @@ pgInterfaceVersion(unsigned int pgVersion)
         }
     }
 
-
     // If the version was not found then error
     if (result == NULL)
     {
