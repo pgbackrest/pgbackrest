@@ -321,7 +321,6 @@ testRun(void)
             "Stanza Options:\n"
             "\n"
             "  --pg-path                         postgreSQL data directory\n"
-            "  --pg-version-force                force PostgreSQL version\n"
             "\n"
             "Use 'pgbackrest help restore [option]' for more information.\n");
 
