@@ -69,7 +69,10 @@
 
                 <release-development-list>
                     <release-item>
-                        <github-pull-request id="2012"/>
+                        <commit subject="Allow control version and WAL magic to be overridden in test harness."/>
+                        <commit subject="Add pg-version-force option for fork integration.">
+                            <github-pull-request id="2012"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="stefan.fercot"/>
@@ -78,7 +81,7 @@
 
                         <p>Add <br-option>pg-version-force</br-option> option for fork integration.</p>
                     </release-item>
-                </release-improvement-list>
+                </release-development-list>
             </release-core-list>
 
             <release-doc-list>
