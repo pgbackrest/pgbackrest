@@ -109,9 +109,16 @@ pgInterfaceVersion(unsigned int pgVersion)
         }
     }
 
-    // If the version was not found then error !!! UPDATE ERROR IF THIS REMAINS EXTERNALLY FACING
+
+    // If the version was not found then error
     if (result == NULL)
-        THROW_FMT(AssertError, "invalid " PG_NAME " version %u", pgVersion);
+    {
+        THROW_FMT(
+            VersionNotSupportedError,
+            "invalid " PG_NAME " version %u\n"
+            "HINT: is this version of PostgreSQL supported?",
+            pgVersion);
+    }
 
     FUNCTION_TEST_RETURN_TYPE_CONST_P(PgInterface, result);
 }

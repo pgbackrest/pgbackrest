@@ -49,7 +49,10 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("pgControlVersion()"))
     {
-        TEST_ERROR(pgControlVersion(70300), AssertError, "invalid PostgreSQL version 70300");
+        TEST_ERROR(
+            pgControlVersion(70300), VersionNotSupportedError,
+            "invalid PostgreSQL version 70300\n"
+            "HINT: is this version of PostgreSQL supported?");
         TEST_RESULT_UINT(pgControlVersion(PG_VERSION_93), 937, "9.3 control version");
         TEST_RESULT_UINT(pgControlVersion(PG_VERSION_11), 1100, "11 control version");
     }
@@ -119,7 +122,10 @@ testRun(void)
             pgControlFromFile(storageTest, NULL), VersionNotSupportedError,
             "unexpected control version = 1501 and catalog version = 202211111\n"
             "HINT: is this version of PostgreSQL supported?");
-        TEST_ERROR(pgControlFromFile(storageTest, STRDEF("99")), AssertError, "invalid PostgreSQL version 990000");
+        TEST_ERROR(
+            pgControlFromFile(storageTest, STRDEF("99")), VersionNotSupportedError,
+            "invalid PostgreSQL version 990000\n"
+            "HINT: is this version of PostgreSQL supported?");
 
         TEST_ASSIGN(info, pgControlFromFile(storageTest, STRDEF(PG_VERSION_15_STR)), "get control info v90");
         TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "check system id");
