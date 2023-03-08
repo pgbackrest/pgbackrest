@@ -1,5 +1,7 @@
 /***********************************************************************************************************************************
 Gz Compress
+
+Based on the documentation at https://github.com/madler/zlib/blob/master/zlib.h
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
@@ -162,10 +164,11 @@ gzCompressInputSame(const THIS_VOID)
 
 /**********************************************************************************************************************************/
 FN_EXTERN IoFilter *
-gzCompressNew(int level)
+gzCompressNew(const int level, const bool raw)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(INT, level);
+        FUNCTION_LOG_PARAM(BOOL, raw);
     FUNCTION_LOG_END();
 
     ASSERT(level >= GZ_COMPRESS_LEVEL_MIN && level <= GZ_COMPRESS_LEVEL_MAX);
@@ -182,7 +185,7 @@ gzCompressNew(int level)
         };
 
         // Create gz stream
-        gzError(deflateInit2(&driver->stream, level, Z_DEFLATED, WANT_GZ | WINDOW_BITS, MEM_LEVEL, Z_DEFAULT_STRATEGY));
+        gzError(deflateInit2(&driver->stream, level, Z_DEFLATED, (raw ? 0 : WANT_GZ) | WINDOW_BITS, MEM_LEVEL, Z_DEFAULT_STRATEGY));
 
         // Set free callback to ensure gz context is freed
         memContextCallbackSet(objMemContext(driver), gzCompressFreeResource, driver);
@@ -195,6 +198,7 @@ gzCompressNew(int level)
             PackWrite *const packWrite = pckWriteNewP();
 
             pckWriteI32P(packWrite, level);
+            pckWriteBoolP(packWrite, raw);
             pckWriteEndP(packWrite);
 
             paramList = pckMove(pckWriteResult(packWrite), memContextPrior());

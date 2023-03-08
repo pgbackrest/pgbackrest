@@ -14,7 +14,7 @@ Object type
 struct StorageRead
 {
     StorageReadPub pub;                                             // Publicly accessible variables
-    void *driver;
+    void *driver;                                                   // Driver
 };
 
 /***********************************************************************************************************************************
@@ -27,7 +27,7 @@ Macros for function logging
 
 /**********************************************************************************************************************************/
 FN_EXTERN StorageRead *
-storageReadNew(void *driver, const StorageReadInterface *interface)
+storageReadNew(void *const driver, const StorageReadInterface *const interface)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM_P(VOID, driver);
@@ -41,18 +41,21 @@ storageReadNew(void *driver, const StorageReadInterface *interface)
 
     StorageRead *this = NULL;
 
-    this = memNew(sizeof(StorageRead));
-
-    *this = (StorageRead)
+    OBJ_NEW_BEGIN(StorageRead, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        .pub =
+        this = OBJ_NEW_ALLOC();
+
+        *this = (StorageRead)
         {
-            .memContext = memContextCurrent(),
-            .interface = interface,
-            .io = ioReadNew(driver, interface->ioInterface),
-        },
-        .driver = driver,
-    };
+            .pub =
+            {
+                .interface = interface,
+                .io = ioReadNew(driver, interface->ioInterface),
+            },
+            .driver = objMove(driver, objMemContext(this)),
+        };
+    }
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(STORAGE_READ, this);
 }

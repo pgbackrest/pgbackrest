@@ -2348,6 +2348,7 @@ restoreJobCallback(void *data, unsigned int clientIdx)
                     pckWriteTimeP(param, manifestData(jobData->manifest)->backupTimestampCopyStart);
                     pckWriteBoolP(param, cfgOptionBool(cfgOptDelta));
                     pckWriteBoolP(param, cfgOptionBool(cfgOptDelta) && cfgOptionBool(cfgOptForce));
+                    pckWriteBoolP(param, file.bundleId != 0 && manifestData(jobData->manifest)->bundleRaw);
                     pckWriteStrP(param, jobData->cipherSubPass);
                     pckWriteStrLstP(param, manifestReferenceList(jobData->manifest));
 

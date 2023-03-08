@@ -1270,6 +1270,7 @@ manifestNewBuild(
         this->pub.data.backupOptionOnline = online;
         this->pub.data.backupOptionChecksumPage = varNewBool(checksumPage);
         this->pub.data.bundle = bundle;
+        this->pub.data.bundleRaw = blockIncr;
         this->pub.data.blockIncr = blockIncr;
 
         MEM_CONTEXT_TEMP_BEGIN()
@@ -1547,6 +1548,9 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
 
         // Set diff/incr backup type
         this->pub.data.backupType = type;
+
+        // Bundle raw must not change in a backup set
+        this->pub.data.bundleRaw = manifestPrior->pub.data.bundleRaw;
     }
     MEM_CONTEXT_END();
 
@@ -1790,6 +1794,7 @@ manifestBuildComplete(
 #define MANIFEST_KEY_BACKUP_ARCHIVE_STOP                            "backup-archive-stop"
 #define MANIFEST_KEY_BACKUP_BLOCK_INCR                              "backup-block-incr"
 #define MANIFEST_KEY_BACKUP_BUNDLE                                  "backup-bundle"
+#define MANIFEST_KEY_BACKUP_BUNDLE_RAW                              "backup-bundle-raw"
 #define MANIFEST_KEY_BACKUP_LABEL                                   "backup-label"
 #define MANIFEST_KEY_BACKUP_LSN_START                               "backup-lsn-start"
 #define MANIFEST_KEY_BACKUP_LSN_STOP                                "backup-lsn-stop"
@@ -2199,6 +2204,8 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
                 manifest->pub.data.blockIncr = varBool(jsonToVar(value));
             else if (strEqZ(key, MANIFEST_KEY_BACKUP_BUNDLE))
                 manifest->pub.data.bundle = varBool(jsonToVar(value));
+            else if (strEqZ(key, MANIFEST_KEY_BACKUP_BUNDLE_RAW))
+                manifest->pub.data.bundleRaw = varBool(jsonToVar(value));
             else if (strEqZ(key, MANIFEST_KEY_BACKUP_LABEL))
                 manifest->pub.data.backupLabel = varStr(jsonToVar(value));
             else if (strEqZ(key, MANIFEST_KEY_BACKUP_LSN_START))
@@ -2446,6 +2453,13 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
         {
             infoSaveValue(
                 infoSaveData, MANIFEST_SECTION_BACKUP, MANIFEST_KEY_BACKUP_BUNDLE, jsonFromVar(VARBOOL(manifest->pub.data.bundle)));
+
+            if (manifest->pub.data.bundleRaw)
+            {
+                infoSaveValue(
+                    infoSaveData, MANIFEST_SECTION_BACKUP, MANIFEST_KEY_BACKUP_BUNDLE_RAW,
+                    jsonFromVar(VARBOOL(manifest->pub.data.bundleRaw)));
+            }
         }
 
         infoSaveValue(

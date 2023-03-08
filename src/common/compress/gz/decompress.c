@@ -1,5 +1,7 @@
 /***********************************************************************************************************************************
 Gz Decompress
+
+Based on the documentation at https://github.com/madler/zlib/blob/master/zlib.h
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
@@ -144,9 +146,11 @@ gzDecompressInputSame(const THIS_VOID)
 
 /**********************************************************************************************************************************/
 FN_EXTERN IoFilter *
-gzDecompressNew(void)
+gzDecompressNew(const bool raw)
 {
-    FUNCTION_LOG_VOID(logLevelTrace);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(BOOL, raw);
+    FUNCTION_LOG_END();
 
     IoFilter *this = NULL;
 
@@ -161,14 +165,28 @@ gzDecompressNew(void)
         };
 
         // Create gz stream
-        gzError(driver->result = inflateInit2(&driver->stream, WANT_GZ | WINDOW_BITS));
+        gzError(driver->result = inflateInit2(&driver->stream, (raw ? 0 : WANT_GZ) | WINDOW_BITS));
 
         // Set free callback to ensure gz context is freed
         memContextCallbackSet(objMemContext(driver), gzDecompressFreeResource, driver);
 
+        // Create param list
+        Pack *paramList = NULL;
+
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            PackWrite *const packWrite = pckWriteNewP();
+
+            pckWriteBoolP(packWrite, raw);
+            pckWriteEndP(packWrite);
+
+            paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
+        }
+        MEM_CONTEXT_TEMP_END();
+
         // Create filter interface
         this = ioFilterNewP(
-            GZ_DECOMPRESS_FILTER_TYPE, driver, NULL, .done = gzDecompressDone, .inOut = gzDecompressProcess,
+            GZ_DECOMPRESS_FILTER_TYPE, driver, paramList, .done = gzDecompressDone, .inOut = gzDecompressProcess,
             .inputSame = gzDecompressInputSame);
     }
     OBJ_NEW_END();

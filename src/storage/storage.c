@@ -21,7 +21,6 @@ Object type
 struct Storage
 {
     StoragePub pub;                                                 // Publicly accessible variables
-    MemContext *memContext;
     const String *path;
     mode_t modeFile;
     mode_t modePath;
@@ -32,8 +31,8 @@ struct Storage
 /**********************************************************************************************************************************/
 FN_EXTERN Storage *
 storageNew(
-    StringId type, const String *path, mode_t modeFile, mode_t modePath, bool write,
-    StoragePathExpressionCallback pathExpressionFunction, void *driver, StorageInterface interface)
+    const StringId type, const String *const path, const mode_t modeFile, const mode_t modePath, const bool write,
+    StoragePathExpressionCallback pathExpressionFunction, void *const driver, const StorageInterface interface)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING_ID, type);
@@ -58,45 +57,50 @@ storageNew(
     ASSERT(interface.pathRemove != NULL);
     ASSERT(interface.remove != NULL);
 
-    Storage *this = (Storage *)memNew(sizeof(Storage));
+    Storage *this = NULL;
 
-    *this = (Storage)
+    OBJ_NEW_BEGIN(Storage, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        .pub =
+        this = OBJ_NEW_ALLOC();
+
+        *this = (Storage)
         {
-            .type = type,
-            .driver = driver,
-            .interface = interface,
-        },
-        .memContext = memContextCurrent(),
-        .path = strDup(path),
-        .modeFile = modeFile,
-        .modePath = modePath,
-        .write = write,
-        .pathExpressionFunction = pathExpressionFunction,
-    };
+            .pub =
+            {
+                .type = type,
+                .driver = objMove(driver, objMemContext(this)),
+                .interface = interface,
+            },
+            .path = strDup(path),
+            .modeFile = modeFile,
+            .modePath = modePath,
+            .write = write,
+            .pathExpressionFunction = pathExpressionFunction,
+        };
 
-    // If path sync feature is enabled then path feature must be enabled
-    CHECK(
-        AssertError, !storageFeature(this, storageFeaturePathSync) || storageFeature(this, storageFeaturePath),
-        "path feature required");
+        // If path sync feature is enabled then path feature must be enabled
+        CHECK(
+            AssertError, !storageFeature(this, storageFeaturePathSync) || storageFeature(this, storageFeaturePath),
+            "path feature required");
 
-    // If hardlink feature is enabled then path feature must be enabled
-    CHECK(
-        AssertError, !storageFeature(this, storageFeatureHardLink) || storageFeature(this, storageFeaturePath),
-        "path feature required");
+        // If hardlink feature is enabled then path feature must be enabled
+        CHECK(
+            AssertError, !storageFeature(this, storageFeatureHardLink) || storageFeature(this, storageFeaturePath),
+            "path feature required");
 
-    // If symlink feature is enabled then path feature must be enabled
-    CHECK(
-        AssertError, !storageFeature(this, storageFeatureSymLink) || storageFeature(this, storageFeaturePath),
-        "path feature required");
+        // If symlink feature is enabled then path feature must be enabled
+        CHECK(
+            AssertError, !storageFeature(this, storageFeatureSymLink) || storageFeature(this, storageFeaturePath),
+            "path feature required");
 
-    // If link features are enabled then linkCreate must be implemented
-    CHECK(
-        AssertError,
-        (!storageFeature(this, storageFeatureSymLink) && !storageFeature(this, storageFeatureHardLink)) ||
-        interface.linkCreate != NULL,
-        "linkCreate required");
+        // If link features are enabled then linkCreate must be implemented
+        CHECK(
+            AssertError,
+            (!storageFeature(this, storageFeatureSymLink) && !storageFeature(this, storageFeatureHardLink)) ||
+            interface.linkCreate != NULL,
+            "linkCreate required");
+    }
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(STORAGE, this);
 }

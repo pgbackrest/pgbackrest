@@ -131,7 +131,7 @@ testStorageGet(const Storage *const storage, const char *const file, const char 
     if (param.compressType != compressTypeNone)
     {
         ASSERT(param.compressType == compressTypeGz || param.compressType == compressTypeBz2);
-        ioFilterGroupAdd(filterGroup, decompressFilter(param.compressType));
+        ioFilterGroupAdd(filterGroup, decompressFilterP(param.compressType));
     }
 
     printf("test content of %s'%s'", strEmpty(filter) ? "" : strZ(filter), strZ(fileFull));
@@ -429,7 +429,7 @@ hrnStoragePut(
     if (param.compressType != compressTypeNone)
     {
         ASSERT(param.compressType == compressTypeGz || param.compressType == compressTypeBz2);
-        ioFilterGroupAdd(filterGroup, compressFilter(param.compressType, 1));
+        ioFilterGroupAdd(filterGroup, compressFilterP(param.compressType, 1));
 
         strCatFmt(filter, "%scmp[%s]", strEmpty(filter) ? "" : "/", strZ(compressTypeStr(param.compressType)));
     }

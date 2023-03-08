@@ -47,6 +47,6 @@ typedef struct RestoreFileResult
 
 FN_EXTERN List *restoreFile(
     const String *repoFile, unsigned int repoIdx, CompressType repoFileCompressType, time_t copyTimeBegin, bool delta,
-    bool deltaForce, const String *cipherPass, const StringList *referenceList, List *fileList);
+    bool deltaForce, bool bundleRaw, const String *cipherPass, const StringList *referenceList, List *fileList);
 
 #endif

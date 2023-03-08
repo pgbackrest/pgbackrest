@@ -53,14 +53,32 @@ FN_EXTERN const String *compressTypeStr(CompressType type);
 FN_EXTERN CompressType compressTypeFromName(const String *name);
 
 // Compression filter for the specified type.  Error when compress type is none or invalid.
-FN_EXTERN IoFilter *compressFilter(CompressType type, int level);
+typedef struct CompressFilterParam
+{
+    VAR_PARAM_HEADER;
+    bool raw;                                                       // Omit headers, checksum, etc. when possible
+} CompressFilterParam;
+
+#define compressFilterP(type, level, ...)                                                                                          \
+    compressFilter(type, level, (CompressFilterParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN IoFilter *compressFilter(CompressType type, int level, CompressFilterParam param);
 
 // Compression/decompression filter based on string type and a parameter list.  This is useful when a filter must be created on a
 // remote system since the filter type and parameters can be passed through a protocol.
 FN_EXTERN IoFilter *compressFilterPack(StringId filterType, const Pack *filterParam);
 
 // Decompression filter for the specified type.  Error when compress type is none or invalid.
-FN_EXTERN IoFilter *decompressFilter(CompressType type);
+typedef struct DecompressFilterParam
+{
+    VAR_PARAM_HEADER;
+    bool raw;                                                       // Omit headers, checksum, etc. when possible
+} DecompressFilterParam;
+
+#define decompressFilterP(type, ...)                                                                                               \
+    decompressFilter(type, (DecompressFilterParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN IoFilter *decompressFilter(CompressType type, DecompressFilterParam param);
 
 // Get extension for the current compression type
 FN_EXTERN const String *compressExtStr(CompressType type);

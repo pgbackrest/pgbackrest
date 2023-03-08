@@ -164,10 +164,11 @@ zstCompressInputSame(const THIS_VOID)
 
 /**********************************************************************************************************************************/
 FN_EXTERN IoFilter *
-zstCompressNew(int level)
+zstCompressNew(const int level, const bool raw)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(INT, level);
+        (void)raw;                                                  // Raw unsupported
     FUNCTION_LOG_END();
 
     ASSERT(level >= ZST_COMPRESS_LEVEL_MIN && level <= ZST_COMPRESS_LEVEL_MAX);
