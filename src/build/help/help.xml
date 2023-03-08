@@ -1716,10 +1716,12 @@
                     </config-key>
 
                     <config-key id="pg-version" name="PostgreSQL version">
-                        <summary><postgres/> release to use for pg_control version.</summary>
+                        <summary>Force <postgres/> version.</summary>
 
                         <text>
-                            <p>The <postgres/> release to use for pg_control version. Mainly useful for <postgres/> forks where those values are modified.</p>
+                            <p>The specified <postgres/> version will be used instead of the version automatically detected by reading <file>pg_control</file> or WAL headers. This is mainly useful for <postgres/> forks or development versions where those values are different from the release version.</p>
+
+                            <admonition type="warning">Be cautious when using this option because <file>pg_control</file> and WAL headers will still be read with expected format for the specified version, i.e. the format from the official open-source version of <postgres/>. If the fork or development version changes the format of the fields that <backrest/> depends on it will lead to unexpected behavior.</admonition>
                         </text>
 
                         <example>15</example>
