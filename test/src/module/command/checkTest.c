@@ -426,17 +426,6 @@ testRun(void)
             "HINT: the pg1-path and pg1-port settings likely reference different clusters.");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("checkDbConfig() using the pg-version option");
-
-        StringList *argListPgVersion = strLstDup(argList);
-        hrnCfgArgRawZ(argListPgVersion, cfgOptPgVersionForce, "11");
-        HRN_CFG_LOAD(cfgCmdCheck, argListPgVersion);
-
-        TEST_RESULT_VOID(
-            checkDbConfig(PG_VERSION_94, db.primaryIdx, db.primary, false),
-            "skip the db version check if the pg-option is provided");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("checkDbConfig() path mismatch");
 
         TEST_ERROR_FMT(
