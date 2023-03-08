@@ -18,8 +18,11 @@
             <release-core-list>
                 <release-bug-list>
                     <release-item>
-                        <github-issue id="2018"/>
-                        <github-pull-request id="2019"/>
+                        <commit subject="Set online flag in manifest in command/restore unit tests."/>
+                        <commit subject="Skip writing recovery.signal by default for restores of offline backups.">
+                            <github-issue id="2018"/>
+                            <github-pull-request id="2019"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-ideator id="marcel.borger"/>
