@@ -2159,6 +2159,8 @@
                                 <list-item><id>standby</id> - add <setting>standby_mode=on</setting> to <file>recovery.conf</file> file so cluster will start in standby mode.</list-item>
                                 <list-item><id>none</id> - no <file>recovery.conf</file> file is written so <postgres/> will attempt to achieve consistency using WAL segments present in <path>pg_xlog</path>/<path>pg_wal</path>. Provide the required WAL segments or use the <setting>archive-copy</setting> setting to include them with the backup.</list-item>
                             </list>
+
+                            <p>Note that the default restore <br-option>type</br-option> for offline backups is <id>none</id> since Point-in-Time-Recovery is not possible if <setting>wal_level=minimal</setting>. If <br-option>type</br-option> is set explicitly then it will be honored since Point-in-Time-Recovery is possible from offline backups as long as <setting>wal_level > minimal</setting>.</p>
                         </text>
 
                         <example>xid</example>
