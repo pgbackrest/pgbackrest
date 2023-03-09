@@ -376,7 +376,7 @@ archiveGetCheck(const StringList *archiveRequestList)
         StringList *warnList = strLstNew();
 
         // Get pg control info
-        PgControl controlInfo = pgControlFromFile(storagePg());
+        PgControl controlInfo = pgControlFromFile(storagePg(), cfgOptionStrNull(cfgOptPgVersionForce));
 
         // Build list of repos/archiveIds where WAL may be found
         List *cacheRepoList = lstNewP(sizeof(ArchiveGetFindCacheRepo));
@@ -724,7 +724,7 @@ cmdArchiveGet(void)
                         false))
                 {
                     // Get control info
-                    PgControl pgControl = pgControlFromFile(storagePg());
+                    PgControl pgControl = pgControlFromFile(storagePg(), cfgOptionStrNull(cfgOptPgVersionForce));
 
                     // Create the queue
                     storagePathCreateP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN_STR);

@@ -1872,7 +1872,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(
-            restoreRecoveryWriteAutoConf(PG_VERSION_12, restoreLabel), OptionInvalidError,
+            restoreRecoveryWriteAutoConf(manifest, PG_VERSION_12, restoreLabel), OptionInvalidError,
             "'standby_mode' setting is not valid for PostgreSQL >= 12\n"
             "HINT: use --type=standby instead of --recovery-option=standby_mode=on.");
 
@@ -1888,7 +1888,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptType, "none");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        restoreRecoveryWriteAutoConf(PG_VERSION_12, restoreLabel);
+        restoreRecoveryWriteAutoConf(manifest, PG_VERSION_12, restoreLabel);
 
         TEST_STORAGE_GET_EMPTY(storagePg(), PG_FILE_POSTGRESQLAUTOCONF, .comment = "check postgresql.auto.conf");
         TEST_STORAGE_LIST(
@@ -1911,7 +1911,7 @@ testRun(void)
             "# DO NOT MODIFY\n"
             "\t recovery_target_action='promote'\n\n");
 
-        restoreRecoveryWriteAutoConf(PG_VERSION_12, restoreLabel);
+        restoreRecoveryWriteAutoConf(manifest, PG_VERSION_12, restoreLabel);
 
         TEST_STORAGE_GET(
             storagePg(), PG_FILE_POSTGRESQLAUTOCONF,
@@ -1925,6 +1925,33 @@ testRun(void)
             .comment = "recovery.signal exists, standby.signal missing");
 
         TEST_RESULT_LOG("P00   INFO: write updated " TEST_PATH "/pg/postgresql.auto.conf");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("PG12 restore type none and offline");
+
+        manifest->pub.data.backupOptionOnline = false;
+        HRN_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
+
+        HRN_STORAGE_PUT_Z(
+            storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF,
+            "# DO NOT MODIFY\n"
+            "\t recovery_target_action='promote'\n\n");
+
+        restoreRecoveryWriteAutoConf(manifest, PG_VERSION_12, restoreLabel);
+
+        TEST_STORAGE_GET(
+            storagePg(), PG_FILE_POSTGRESQLAUTOCONF,
+            "# DO NOT MODIFY\n"
+            RECOVERY_SETTING_PREFIX "\t recovery_target_action='promote'\n\n",
+            .comment = "check postgresql.auto.conf");
+        TEST_STORAGE_LIST(
+            storagePg(), NULL,
+            PG_FILE_POSTGRESQLAUTOCONF "\n",
+            .comment = "recovery.signal missing, standby.signal missing");
+
+        TEST_RESULT_LOG("P00   INFO: write updated " TEST_PATH "/pg/postgresql.auto.conf");
+
+        manifest->pub.data.backupOptionOnline = true;
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("PG12 restore type standby and remove existing recovery settings");
@@ -1945,7 +1972,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRecoveryOption, "restore-command=my_restore_command");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        restoreRecoveryWriteAutoConf(PG_VERSION_12, restoreLabel);
+        restoreRecoveryWriteAutoConf(manifest, PG_VERSION_12, restoreLabel);
 
         TEST_STORAGE_GET(
             storagePg(), PG_FILE_POSTGRESQLAUTOCONF,
@@ -3124,8 +3151,7 @@ testRun(void)
             "base/1/2\n"
             "global/\n"
             "global/pg_control\n"
-            "postgresql.auto.conf\n"
-            "recovery.signal\n",
+            "postgresql.auto.conf\n",
             .level = storageInfoLevelType);
     }
 

@@ -1734,6 +1734,18 @@
 
                         <example>25</example>
                     </config-key>
+
+                    <config-key id="pg-version-force" name="Force PostgreSQL version">
+                        <summary>Force <postgres/> version.</summary>
+
+                        <text>
+                            <p>The specified <postgres/> version will be used instead of the version automatically detected by reading <file>pg_control</file> or WAL headers. This is mainly useful for <postgres/> forks or development versions where those values are different from the release version. The version reported by <postgres/> via `server_version_num` must match the forced version.</p>
+
+                            <admonition type="warning">Be cautious when using this option because <file>pg_control</file> and WAL headers will still be read with expected format for the specified version, i.e. the format from the official open-source version of <postgres/>. If the fork or development version changes the format of the fields that <backrest/> depends on it will lead to unexpected behavior.</admonition>
+                        </text>
+
+                        <example>15</example>
+                    </config-key>
                 </config-key-list>
             </config-section>
         </config-section-list>
@@ -2179,6 +2191,8 @@
                                 <list-item><id>standby</id> - add <setting>standby_mode=on</setting> to <file>recovery.conf</file> file so cluster will start in standby mode.</list-item>
                                 <list-item><id>none</id> - no <file>recovery.conf</file> file is written so <postgres/> will attempt to achieve consistency using WAL segments present in <path>pg_xlog</path>/<path>pg_wal</path>. Provide the required WAL segments or use the <setting>archive-copy</setting> setting to include them with the backup.</list-item>
                             </list>
+
+                            <p>Note that the default restore <br-option>type</br-option> for offline backups is <id>none</id> since Point-in-Time-Recovery is not possible if <setting>wal_level=minimal</setting>. If <br-option>type</br-option> is set explicitly then it will be honored since Point-in-Time-Recovery is possible from offline backups as long as <setting>wal_level > minimal</setting>.</p>
                         </text>
 
                         <example>xid</example>

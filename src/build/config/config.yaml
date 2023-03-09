@@ -1541,6 +1541,22 @@ option:
     depend:
       option: pg-path
 
+  pg-version-force:
+    section: stanza
+    type: string
+    internal: true
+    required: false
+    command:
+      archive-get: {}
+      archive-push: {}
+      backup: {}
+      check: {}
+      restore: {}
+      stanza-create: {}
+      stanza-delete: {}
+      stanza-upgrade: {}
+      verify: {}
+
   # Repository options
   #---------------------------------------------------------------------------------------------------------------------------------
   repo:

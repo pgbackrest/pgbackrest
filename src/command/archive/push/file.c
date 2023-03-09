@@ -129,7 +129,7 @@ archivePushFile(
         // If this is a segment compare archive version and systemId to the WAL header
         if (headerCheck && isSegment)
         {
-            PgWal walInfo = pgWalFromFile(walSource, storageLocal());
+            PgWal walInfo = pgWalFromFile(walSource, storageLocal(), cfgOptionStrNull(cfgOptPgVersionForce));
 
             if (walInfo.version != pgVersion || walInfo.systemId != pgSystemId)
             {
