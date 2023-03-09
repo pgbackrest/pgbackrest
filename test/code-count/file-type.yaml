@@ -575,11 +575,11 @@ src/command/repo/rm.h:
   class: core
   type: c/h
 
-src/command/restore/blockHash.c:
+src/command/restore/blockChecksum.c:
   class: core
   type: c
 
-src/command/restore/blockHash.h:
+src/command/restore/blockChecksum.h:
   class: core
   type: c/h
 

@@ -37,7 +37,7 @@ typedef struct RestoreFile
     size_t blockIncrSize;                                           // Block incremental size (when map size > 0)
     size_t blockIncrChecksumSize;                                   // Checksum size (when map size > 0)
     const String *manifestFile;                                     // Manifest file
-    const Buffer *blockHash;                                        // Hashes for block incremental restore, set in restoreFile()
+    const Buffer *blockChecksum;                                    // Checksums for block incremental restore, set in restoreFile()
 } RestoreFile;
 
 typedef struct RestoreFileResult

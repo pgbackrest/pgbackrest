@@ -157,14 +157,14 @@ testRun(void)
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     // *****************************************************************************************************************************
-    if (testBegin("BlockHash"))
+    if (testBegin("BlockChecksum"))
     {
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("too large for one buffer");
 
         Buffer *output = bufNew(0);
         IoWrite *write = ioBufferWriteNew(output);
-        ioFilterGroupAdd(ioWriteFilterGroup(write), blockHashNew(3, 8));
+        ioFilterGroupAdd(ioWriteFilterGroup(write), blockChecksumNew(3, 8));
         ioWriteOpen(write);
 
         TEST_RESULT_VOID(ioWrite(write, BUFSTRDEF("ABCDEF")), "write");
@@ -172,11 +172,11 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteClose(write), "close");
 
         TEST_RESULT_STR_Z(
-            strNewEncode(encodingHex, pckReadBinP(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_HASH_FILTER_TYPE))),
+            strNewEncode(encodingHex, pckReadBinP(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_CHECKSUM_FILTER_TYPE))),
             "9e947f00ecd6acb2"
             "cb221327e5a387af"
             "9e947f00ecd6acb2",
-            "block hash list");
+            "block checksum list");
 
         ioWriteFree(write);
 
@@ -185,7 +185,7 @@ testRun(void)
 
         output = bufNew(0);
         write = ioBufferWriteNew(output);
-        ioFilterGroupAdd(ioWriteFilterGroup(write), blockHashNew(3, 8));
+        ioFilterGroupAdd(ioWriteFilterGroup(write), blockChecksumNew(3, 8));
         ioWriteOpen(write);
 
         TEST_RESULT_VOID(ioWrite(write, BUFSTRDEF("DE")), "write");
@@ -196,12 +196,12 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteClose(write), "close");
 
         TEST_RESULT_STR_Z(
-            strNewEncode(encodingHex, pckReadBinP(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_HASH_FILTER_TYPE))),
+            strNewEncode(encodingHex, pckReadBinP(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_CHECKSUM_FILTER_TYPE))),
             "cb221327e5a387af"
             "9e947f00ecd6acb2"
             "9e947f00ecd6acb2"
             "92c3453969207870",
-            "block hash list");
+            "block checksum list");
 
         ioWriteFree(write);
     }

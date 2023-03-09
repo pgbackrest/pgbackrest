@@ -54,14 +54,14 @@ typedef struct BlockDeltaReference
 
 FN_EXTERN BlockDelta *
 blockDeltaNew(
-    const BlockMap *const blockMap, const size_t blockSize, const size_t checksumSize, const Buffer *const blockHash,
+    const BlockMap *const blockMap, const size_t blockSize, const size_t checksumSize, const Buffer *const blockChecksum,
     const CipherType cipherType, const String *const cipherPass, const CompressType compressType)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BLOCK_MAP, blockMap);
         FUNCTION_TEST_PARAM(SIZE, blockSize);
         FUNCTION_TEST_PARAM(SIZE, checksumSize);
-        FUNCTION_TEST_PARAM(BUFFER, blockHash);
+        FUNCTION_TEST_PARAM(BUFFER, blockChecksum);
         FUNCTION_TEST_PARAM(STRING_ID, cipherType);
         FUNCTION_TEST_PARAM(STRING, cipherPass);
         FUNCTION_TEST_PARAM(ENUM, compressType);
@@ -98,20 +98,20 @@ blockDeltaNew(
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Build list of references and for each reference the list of blocks for that reference
-            const unsigned int blockHashSize =
-                blockHash == NULL ? 0 : (unsigned int)(bufUsed(blockHash) / this->checksumSize);
+            const unsigned int blockChecksumSize =
+                blockChecksum == NULL ? 0 : (unsigned int)(bufUsed(blockChecksum) / this->checksumSize);
             List *const referenceList = lstNewP(sizeof(BlockDeltaReference), .comparator = lstComparatorUInt);
 
             for (unsigned int blockMapIdx = 0; blockMapIdx < blockMapSize(blockMap); blockMapIdx++)
             {
                 const BlockMapItem *const blockMapItem = blockMapGet(blockMap, blockMapIdx);
 
-                // The block must be updated if it is beyond the blocks that exist in the block hash list or when the checksum
-                // stored in the repository is different from the block hash list
-                if (blockMapIdx >= blockHashSize ||
+                // The block must be updated if it is beyond the blocks that exist in the block checksum list or when the checksum
+                // stored in the repository is different from the block checksum list
+                if (blockMapIdx >= blockChecksumSize ||
                     !bufEq(
                         BUF(blockMapItem->checksum, this->checksumSize),
-                        BUF(bufPtrConst(blockHash) + blockMapIdx * this->checksumSize, this->checksumSize)))
+                        BUF(bufPtrConst(blockChecksum) + blockMapIdx * this->checksumSize, this->checksumSize)))
                 {
                     const unsigned int reference = blockMapItem->reference;
                     BlockDeltaReference *const referenceData = lstFind(referenceList, &reference);

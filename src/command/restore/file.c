@@ -9,8 +9,8 @@ Restore File
 
 #include "command/backup/blockIncr.h"
 #include "command/backup/blockMap.h"
+#include "command/restore/blockChecksum.h"
 #include "command/restore/blockDelta.h"
-#include "command/restore/blockHash.h"
 #include "command/restore/file.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
@@ -125,12 +125,12 @@ restoreFile(
                                     read = storageReadIo(storageNewReadP(storagePg(), file->name));
                                     ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
 
-                                    // Generate block hash list if block incremental
+                                    // Generate block checksum list if block incremental
                                     if (file->blockIncrMapSize != 0)
                                     {
                                         ioFilterGroupAdd(
                                             ioReadFilterGroup(read),
-                                            blockHashNew(file->blockIncrSize, file->blockIncrChecksumSize));
+                                            blockChecksumNew(file->blockIncrSize, file->blockIncrChecksumSize));
                                     }
 
                                     ioReadDrain(read);
@@ -142,9 +142,9 @@ restoreFile(
                                         file->checksum,
                                         pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE))))
                                 {
-                                    // If the hash/size are now the same but the time is not, then set the time back to the backup
-                                    // time. This helps with unit testing, but also presents a pristine version of the database
-                                    // after restore.
+                                    // If the checksum/size are now the same but the time is not, then set the time back to the
+                                    // backup time. This helps with unit testing, but also presents a pristine version of the
+                                    // database after restore.
                                     if (info.timeModified != file->timeModified)
                                     {
                                         const struct utimbuf uTimeBuf =
@@ -161,16 +161,16 @@ restoreFile(
                                     fileResult->result = restoreResultPreserve;
                                 }
 
-                                // If block incremental and not preserving the file, store the block hash list for later use in
+                                // If block incremental and not preserving the file, store the block checksum list for later use in
                                 // reconstructing the pg file
                                 if (file->blockIncrMapSize != 0 && fileResult->result != restoreResultPreserve)
                                 {
-                                    PackRead *const blockHashResult = ioFilterGroupResultP(
-                                        ioReadFilterGroup(read), BLOCK_HASH_FILTER_TYPE);
+                                    PackRead *const blockChecksumResult = ioFilterGroupResultP(
+                                        ioReadFilterGroup(read), BLOCK_CHECKSUM_FILTER_TYPE);
 
                                     MEM_CONTEXT_OBJ_BEGIN(fileList)
                                     {
-                                        file->blockHash = pckReadBinP(blockHashResult);
+                                        file->blockChecksum = pckReadBinP(blockChecksumResult);
                                     }
                                     MEM_CONTEXT_OBJ_END();
                                 }
@@ -284,7 +284,7 @@ restoreFile(
                     StorageWrite *pgFileWrite = storageNewWriteP(
                         storagePgWrite(), file->name, .modeFile = file->mode, .user = file->user, .group = file->group,
                         .timeModified = file->timeModified, .noAtomic = true, .noCreatePath = true, .noSyncPath = true,
-                        .noTruncate = file->blockHash != NULL);
+                        .noTruncate = file->blockChecksum != NULL);
 
                     // If block incremental file
                     const Buffer *checksum = NULL;
@@ -293,8 +293,8 @@ restoreFile(
                     {
                         ASSERT(referenceList != NULL);
 
-                        // Read block map. This will be compared to the block hash list already created to determine which blocks
-                        // need to be fetched from the repository. If we got here there must be at least one block to fetch.
+                        // Read block map. This will be compared to the block checksum list already created to determine which
+                        // blocks need to be fetched from the repository. If we got here there must be at least one block to fetch.
                         const BlockMap *const blockMap = blockMapNewRead(storageReadIo(repoFileRead), file->blockIncrChecksumSize);
 
                         // The repo file needs to be closed so that block lists can be read from the remote protocol
@@ -305,7 +305,7 @@ restoreFile(
 
                         // Apply delta to file
                         BlockDelta *const blockDelta = blockDeltaNew(
-                            blockMap, file->blockIncrSize, file->blockIncrChecksumSize, file->blockHash,
+                            blockMap, file->blockIncrSize, file->blockIncrChecksumSize, file->blockChecksum,
                             cipherPass == NULL ? cipherTypeNone : cipherTypeAes256Cbc, cipherPass, repoFileCompressType);
 
                         for (unsigned int readIdx = 0; readIdx < blockDeltaReadSize(blockDelta); readIdx++)

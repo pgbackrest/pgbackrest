@@ -845,8 +845,8 @@ unit:
         total: 14
 
         coverage:
+          - command/restore/blockChecksum
           - command/restore/blockDelta
-          - command/restore/blockHash
           - command/restore/file
           - command/restore/protocol
           - command/restore/restore
