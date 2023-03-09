@@ -274,12 +274,16 @@ Build block incremental maps
 static const ManifestBlockIncrSizeMap manifestBlockIncrSizeMapDefault[] =
 {
     {.fileSize = 1024 * 1024 * 1024, .blockSize = 1024 * 1024},
-    {.fileSize = 256 * 1024 * 1024, .blockSize = 768 * 1024},
-    {.fileSize = 64 * 1024 * 1024, .blockSize = 512 * 1024},
-    {.fileSize = 16 * 1024 * 1024, .blockSize = 384 * 1024},
-    {.fileSize = 4 * 1024 * 1024, .blockSize = 256 * 1024},
-    {.fileSize = 2 * 1024 * 1024, .blockSize = 192 * 1024},
-    {.fileSize = 128 * 1024, .blockSize = 128 * 1024},
+    {.fileSize = 512 * 1024 * 1024, .blockSize = 768 * 1024},
+    {.fileSize = 256 * 1024 * 1024, .blockSize = 512 * 1024},
+    {.fileSize = 64 * 1024 * 1024, .blockSize = 384 * 1024},
+    {.fileSize = 16 * 1024 * 1024, .blockSize = 256 * 1024},
+    {.fileSize = 4 * 1024 * 1024, .blockSize = 192 * 1024},
+    {.fileSize = 2 * 1024 * 1024, .blockSize = 128 * 1024},
+    {.fileSize = 1024 * 1024, .blockSize = 64 * 1024},
+    {.fileSize = 512 * 1024, .blockSize = 32 * 1024},
+    {.fileSize = 128 * 1024, .blockSize = 16 * 1024},
+    {.fileSize = 16 * 1024, .blockSize = 8 * 1024},
 };
 
 // Age map
@@ -1590,6 +1594,7 @@ typedef struct BackupJobData
     uint64_t bundleLimit;                                           // Limit on files to bundle
     uint64_t bundleId;                                              // Bundle id
     const bool blockIncr;                                           // Block incremental?
+    size_t blockIncrSizeSuper;                                      // Super block size
 
     List *queueList;                                                // List of processing queues
 } BackupJobData;
@@ -1909,6 +1914,7 @@ backupJobCallback(void *data, unsigned int clientIdx)
                 if (blockIncr)
                 {
                     pckWriteU64P(param, file.blockIncrSize);
+                    pckWriteU64P(param, jobData->blockIncrSizeSuper);
 
                     if (file.blockIncrMapSize != 0)
                     {
@@ -2019,6 +2025,14 @@ backupProcess(
         {
             jobData.bundleSize = cfgOptionUInt64(cfgOptRepoBundleSize);
             jobData.bundleLimit = cfgOptionUInt64(cfgOptRepoBundleLimit);
+        }
+
+        if (jobData.blockIncr)
+        {
+            // Set super block size based on the backup type
+            jobData.blockIncrSizeSuper =
+                backupType == backupTypeFull ?
+                    (size_t)cfgOptionUInt64(cfgOptRepoBlockSizeSuperFull) : (size_t)cfgOptionUInt64(cfgOptRepoBlockSizeSuper);
         }
 
         // If this is a full backup or hard-linked and paths are supported then create all paths explicitly so that empty paths will

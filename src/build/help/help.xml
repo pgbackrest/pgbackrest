@@ -542,6 +542,26 @@
                         <example>16KiB=8KiB</example>
                     </config-key>
 
+                    <config-key id="repo-block-size-super" name="Block Incremental Super Block Size">
+                        <summary>Block incremental super block size.</summary>
+
+                        <text>
+                            <p>A super block contains multiple blocks to improve compression efficiency. The disadvantage is that block reads must read from the beginning of the super block.</p>
+                       </text>
+
+                        <example>2MiB</example>
+                    </config-key>
+
+                    <config-key id="repo-block-size-super-full" name="Block Incremental Full Super Block Size">
+                        <summary>Block incremental full super block size.</summary>
+
+                        <text>
+                            <p>Super block size for full backups. This is generally larger than <br-option>repo-block-size-super</br-option> because it is likely that many blocks will need to be restored from the full backup so the larger super block size is not a disadvantage.</p>
+                       </text>
+
+                        <example>8MiB</example>
+                    </config-key>
+
                     <config-key id="repo-bundle" name="Repository Bundles">
                         <summary>Bundle files in repository.</summary>
 

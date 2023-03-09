@@ -832,6 +832,7 @@ unit:
           - command/backup/file
           - command/backup/pageChecksum
           - command/backup/protocol
+          - command/restore/blockDelta
 
         include:
           - info/info
@@ -843,6 +844,7 @@ unit:
         total: 14
 
         coverage:
+          - command/restore/blockDelta
           - command/restore/blockHash
           - command/restore/file
           - command/restore/protocol

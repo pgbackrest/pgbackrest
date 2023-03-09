@@ -773,11 +773,10 @@ typedef struct ManifestBuildData
 } ManifestBuildData;
 
 // Calculate block incremental size for a file. The block size is based on the size and age of the file. Larger files get larger
-// block sizes to reduce the cost of the map and individual block compression. Older files also get larger block sizes under the
-// assumption that they are unlikely to be modified if they have not been modified in a while. Very old and very small files skip
-// block incremental entirely.
+// block sizes to reduce the cost of the map. Older files also get larger block sizes under the assumption that they are unlikely to
+// be modified if they have not been modified in a while. Very old and very small files skip block incremental entirely.
 //
-// The minimum practical block size is 128k. After that, the loss of compression efficiency becomes too expensive in terms of space.
+// Smaller blocks will be compressed/encrypted together in a larger super block for efficiency.
 static size_t
 manifestBuildBlockIncrSize(const ManifestBuildData *const buildData, const ManifestFile *const file)
 {
