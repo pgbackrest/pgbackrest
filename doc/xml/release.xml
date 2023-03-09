@@ -49,6 +49,7 @@
                             <github-pull-request id="2011"/>
                         </commit>
                         <commit subject="Use xxHash instead of SHA-1 for block incremental checksums."/>
+                        <commit subject="Exclude backup set size from info for block incremental backups."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>

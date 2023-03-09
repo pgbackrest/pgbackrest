@@ -1263,7 +1263,6 @@ testRun(void)
                                         "\"repository\":{"
                                             "\"delta\":346,"
                                             "\"delta-map\":12,"
-                                            "\"size\":2369186,"
                                             "\"size-map\":100"
                                         "},"
                                         "\"size\":20162900"
@@ -1538,7 +1537,7 @@ testRun(void)
                     "            timestamp start/stop: 2020-11-19 15:21:00 / 2020-11-19 15:21:03\n"
                     "            wal start/stop: 000000010000000000000005 / 000000010000000000000005\n"
                     "            database size: 19.2MB, database backup size: 8.2KB\n"
-                    "            repo1: backup set size: 2.3MB, backup size: 346B\n"
+                    "            repo1: backup size: 346B\n"
                     "            backup reference list: 20201116-155000F\n"
                     "\n"
                     "stanza: stanza2\n"
@@ -2364,7 +2363,7 @@ testRun(void)
             "            timestamp start/stop: 2020-11-19 15:21:00 / 2020-11-19 15:21:03\n"
             "            wal start/stop: 000000010000000000000005 / 000000010000000000000005\n"
             "            database size: 19.2MB, database backup size: 8.2KB\n"
-            "            repo1: backup set size: 2.3MB, backup size: 346B\n"
+            "            repo1: backup size: 346B\n"
             "            backup reference list: 20201116-155000F\n"
             "            database list: none\n"
             "            annotation(s)\n"
@@ -2525,7 +2524,7 @@ testRun(void)
             "            timestamp start/stop: 2020-11-19 15:21:00 / 2020-11-19 15:21:03\n"
             "            wal start/stop: 000000010000000000000005 / 000000010000000000000005\n"
             "            database size: 19.2MB, database backup size: 8.2KB\n"
-            "            repo1: backup set size: 2.3MB, backup size: 346B\n"
+            "            repo1: backup size: 346B\n"
             "            backup reference list: 20201116-155000F\n",
             "text - multi-repo, valid backups only on repo1");
 
@@ -2582,7 +2581,7 @@ testRun(void)
             "            timestamp start/stop: 2020-11-19 15:21:00 / 2020-11-19 15:21:03\n"
             "            wal start/stop: 000000010000000000000005 / 000000010000000000000005\n"
             "            database size: 19.2MB, database backup size: 8.2KB\n"
-            "            repo1: backup set size: 2.3MB, backup size: 346B\n"
+            "            repo1: backup size: 346B\n"
             "            backup reference list: 20201116-155000F\n",
             "text - multi-repo, prior backup: no archives but backups (code coverage)");
 
