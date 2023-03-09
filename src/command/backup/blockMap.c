@@ -38,7 +38,7 @@ References, super blocks, and blocks are encoded with a bit that indicates when 
 #define BLOCK_MAP_FLAG_OFFSET                                       4   // Reference has an offset
 #define BLOCK_MAP_FLAG_BUNDLE_ID                                    2   // Reference has a bundle id
 #define BLOCK_MAP_FLAG_CONTINUE                                     2   // Reference continues a prior super block
-#define BLOCK_MAP_FLAG_CONTINUE_LAST                                4   // Continued super is last for the reference
+#define BLOCK_MAP_FLAG_CONTINUE_LAST                                4   // Continued super block is last for the reference
 #define BLOCK_MAP_REFERENCE_SHIFT                                   3   // Shift bits for reference
 #define BLOCK_MAP_SUPER_BLOCK_SHIFT                                 1   // Shift bits for super block
 #define BLOCK_MAP_BLOCK_SHIFT                                       1   // Shift bits for block
