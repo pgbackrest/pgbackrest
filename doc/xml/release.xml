@@ -45,12 +45,16 @@
                         <commit subject="Rename block incremental manifest keys."/>
                         <commit subject="Add optional raw format for compression types."/>
                         <commit subject="Use raw compression/encryption to bundling and block incremental backup."/>
+                        <commit subject="Block-level incremental backup super blocks.">
+                            <github-pull-request id="2011"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="john.morris"/>
                         </release-item-contributor-list>
 
-                        <p>Block-level incremental backup.</p>
+                        <p>Block-level incremental backup (BETA).</p>
                     </release-item>
                 </release-feature-list>
 
