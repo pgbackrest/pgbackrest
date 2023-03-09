@@ -512,6 +512,41 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   WARN: option --force is no longer supported\n"
             "P00   INFO: stanza-create for stanza 'db' on repo1");
+
+        // Clean-up file in archive directory
+        HRN_STORAGE_REMOVE(storageRepoIdxWrite(0), STORAGE_REPO_ARCHIVE "/somefile", .comment = "remove old test file");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("stanza-create forcing another PG version");
+
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptPgVersionForce, "15");
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
+
+        HRN_PG_CONTROL_OVERRIDE_PUT(storagePgWrite(), PG_VERSION_15, 1501, .catalogVersion = 202211111);
+
+        TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - forcing another PG version");
+        TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
+
+        HRN_INFO_PUT(
+            storageHrn, "test.info",
+            "[db]\n"
+            "db-catalog-version=202211111\n"
+            "db-control-version=1300\n"
+            "db-id=1\n"
+            "db-system-id=" HRN_PG_SYSTEMID_15_Z "\n"
+            "db-version=\"15\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":202211111,\"db-control-version\":1300,\"db-system-id\":" HRN_PG_SYSTEMID_15_Z
+            ",\"db-version\":\"15\"}\n",
+            .comment = "put backup info to test file, control version for PG 15, catalog version forced from pg_control");
+
+        TEST_RESULT_BOOL(
+            bufEq(
+                storageGetP(storageNewReadP(storageRepoIdx(0), INFO_BACKUP_PATH_FILE_STR)),
+                storageGetP(storageNewReadP(storageHrn, STRDEF("test.info")))),
+            true, "test and stanza backup info files are equal");
     }
 
     // *****************************************************************************************************************************
@@ -881,6 +916,81 @@ testRun(void)
             bufEq(
                 storageGetP(storageNewReadP(storageRepoIdx(0), INFO_BACKUP_PATH_FILE_STR)),
                 storageGetP(storageNewReadP(storageRepoIdx(0), STRDEF(INFO_BACKUP_PATH_FILE INFO_COPY_EXT)))) &&
+            bufEq(
+                storageGetP(storageNewReadP(storageRepoIdx(0), INFO_BACKUP_PATH_FILE_STR)),
+                storageGetP(storageNewReadP(storageHrn, STRDEF("test.info")))),
+            true, "test and stanza backup info files are equal");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("stanza-upgrade forcing another PG version");
+
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptPgVersionForce, "15");
+        HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
+
+        HRN_PG_CONTROL_OVERRIDE_PUT(storagePgWrite(), PG_VERSION_15, 1501, .catalogVersion = 202211111);
+
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE,
+            "[db]\n"
+            "db-catalog-version=201608131\n"
+            "db-control-version=960\n"
+            "db-id=1\n"
+            "db-system-id=6569239123849665999\n"
+            "db-version=\"9.6\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665999"
+            ",\"db-version\":\"9.6\"}\n");
+
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE,
+            "[db]\n"
+            "db-id=1\n"
+            "db-system-id=6569239123849665999\n"
+            "db-version=\"9.6\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":6569239123849665999,\"db-version\":\"9.6\"}\n");
+
+        TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - forcing another PG version");
+        TEST_RESULT_LOG("P00   INFO: stanza-upgrade for stanza 'db' on repo1");
+
+        HRN_INFO_PUT(
+            storageHrn, "test.info",
+            "[db]\n"
+            "db-id=2\n"
+            "db-system-id=" HRN_PG_SYSTEMID_15_Z "\n"
+            "db-version=\"15\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":6569239123849665999,\"db-version\":\"9.6\"}\n"
+            "2={\"db-id\":" HRN_PG_SYSTEMID_15_Z ",\"db-version\":\"15\"}\n",
+            .comment = "put archive info to test file");
+
+        TEST_RESULT_BOOL(
+            bufEq(
+                storageGetP(storageNewReadP(storageRepoIdx(0), INFO_ARCHIVE_PATH_FILE_STR)),
+                storageGetP(storageNewReadP(storageHrn, STRDEF("test.info")))),
+            true, "test and stanza archive info files are equal");
+
+        HRN_INFO_PUT(
+            storageHrn, "test.info",
+            "[db]\n"
+            "db-catalog-version=202211111\n"
+            "db-control-version=1300\n"
+            "db-id=2\n"
+            "db-system-id=" HRN_PG_SYSTEMID_15_Z "\n"
+            "db-version=\"15\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665999"
+            ",\"db-version\":\"9.6\"}\n"
+            "2={\"db-catalog-version\":202211111,\"db-control-version\":1300,\"db-system-id\":" HRN_PG_SYSTEMID_15_Z
+            ",\"db-version\":\"15\"}\n",
+            .comment = "put backup info to test file, control version for PG 15, catalog version forced from pg_control");
+
+        TEST_RESULT_BOOL(
             bufEq(
                 storageGetP(storageNewReadP(storageRepoIdx(0), INFO_BACKUP_PATH_FILE_STR)),
                 storageGetP(storageNewReadP(storageHrn, STRDEF("test.info")))),

@@ -832,6 +832,30 @@ testRun(void)
 
         TEST_RESULT_LOG("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1: 10-1 archive");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("get WAL segment with a modified control/catalog version");
+
+        // Modify control/catalog version and use the --pg-version option
+        HRN_PG_CONTROL_OVERRIDE_PUT(storagePgWrite(), PG_VERSION_10, 1501, .catalogVersion = 202211111);
+
+        TEST_ERROR(
+            cmdArchiveGet(), VersionNotSupportedError,
+            "unexpected control version = 1501 and catalog version = 202211111\n"
+            "HINT: is this version of PostgreSQL supported?");
+
+        StringList *argListTemp = strLstDup(argList);
+        hrnCfgArgRawZ(argListTemp, cfgOptPgVersionForce, "10");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp);
+
+        TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
+
+        TEST_RESULT_LOG("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1: 10-1 archive");
+
+        // Reset control file and command options
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_10);
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+
+        // Clean-up pg_wal directory
         TEST_RESULT_UINT(storageInfoP(storagePg(), STRDEF("pg_wal/RECOVERYXLOG")).size, 16 * 1024 * 1024, "check size");
         TEST_STORAGE_LIST(storagePgWrite(), "pg_wal", "RECOVERYXLOG\n", .remove = true);
 
