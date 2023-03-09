@@ -294,6 +294,17 @@ static const ManifestBlockIncrAgeMap manifestBlockIncrAgeMapDefault[] =
     {.fileAge = 7 * SEC_PER_DAY, .blockMultiplier = 2},
 };
 
+// Checksum size map
+static const ManifestBlockIncrChecksumSizeMap manifestBlockIncrChecksumSizeMapDefault[] =
+{
+    {.blockSize = 4 * 1024 * 1024, .checksumSize = BLOCK_INCR_CHECKSUM_SIZE_MIN + 6},
+    {.blockSize = 2 * 1024 * 1024, .checksumSize = BLOCK_INCR_CHECKSUM_SIZE_MIN + 5},
+    {.blockSize = 1024 * 1024, .checksumSize = BLOCK_INCR_CHECKSUM_SIZE_MIN + 4},
+    {.blockSize = 512 * 1024, .checksumSize = BLOCK_INCR_CHECKSUM_SIZE_MIN + 3},
+    {.blockSize = 128 * 1024, .checksumSize = BLOCK_INCR_CHECKSUM_SIZE_MIN + 2},
+    {.blockSize = 32 * 1024, .checksumSize = BLOCK_INCR_CHECKSUM_SIZE_MIN + 1},
+};
+
 // All maps
 static const ManifestBlockIncrMap manifestBlockIncrMap =
 {
@@ -301,6 +312,8 @@ static const ManifestBlockIncrMap manifestBlockIncrMap =
     .sizeMapSize = LENGTH_OF(manifestBlockIncrSizeMapDefault),
     .ageMap = manifestBlockIncrAgeMapDefault,
     .ageMapSize = LENGTH_OF(manifestBlockIncrAgeMapDefault),
+    .checksumSizeMap = manifestBlockIncrChecksumSizeMapDefault,
+    .checksumSizeMapSize = LENGTH_OF(manifestBlockIncrChecksumSizeMapDefault),
 };
 
 // Convert map size
@@ -331,6 +344,37 @@ backupBlockIncrMapSize(ConfigOption optionId, unsigned int optionKeyIdx, const S
     {
         THROW_FMT(
             OptionInvalidValueError, "'%s' is not valid for '%s' option", strZ(value),
+            cfgParseOptionKeyIdxName(optionId, optionKeyIdx));
+    }
+
+    FUNCTION_TEST_RETURN(UINT, result);
+}
+
+// Convert map checksum size
+static unsigned int
+backupBlockIncrMapChecksumSize(ConfigOption optionId, unsigned int optionKeyIdx, const Variant *const value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+        FUNCTION_TEST_PARAM(UINT, optionKeyIdx);
+        FUNCTION_TEST_PARAM(VARIANT, value);
+    FUNCTION_TEST_END();
+
+    unsigned int result = 0;
+
+    TRY_BEGIN()
+    {
+        result = varUIntForce(value);
+    }
+    CATCH_ANY()
+    {
+    }
+    TRY_END();
+
+    if (result < BLOCK_INCR_CHECKSUM_SIZE_MIN)
+    {
+        THROW_FMT(
+            OptionInvalidValueError, "'%s' is not valid for '%s' option", strZ(varStr(value)),
             cfgParseOptionKeyIdxName(optionId, optionKeyIdx));
     }
 
@@ -403,6 +447,36 @@ backupBlockIncrMap(void)
 
             result.ageMap = lstGet(map, 0);
             result.ageMapSize = lstSize(map);
+        }
+
+        // Build checksum size map
+        const KeyValue *const manifestBlockIncrChecksumSizeKv = cfgOptionKvNull(cfgOptRepoBlockChecksumSizeMap);
+
+        if (manifestBlockIncrChecksumSizeKv != NULL)
+        {
+            List *const map = lstNewP(sizeof(ManifestBlockIncrChecksumSizeMap), .comparator = lstComparatorUInt);
+            const VariantList *const mapKeyList = kvKeyList(manifestBlockIncrChecksumSizeKv);
+
+            for (unsigned int mapKeyIdx = 0; mapKeyIdx < varLstSize(mapKeyList); mapKeyIdx++)
+            {
+                const Variant *mapKey = varLstGet(mapKeyList, mapKeyIdx);
+
+                ManifestBlockIncrChecksumSizeMap manifestBuildBlockIncrChecksumSizeMap =
+                {
+                    .blockSize = backupBlockIncrMapSize(
+                        cfgOptRepoBlockSizeMap, cfgOptionIdxDefault(cfgOptRepoBlockChecksumSizeMap), varStr(mapKey)),
+                    .checksumSize = backupBlockIncrMapChecksumSize(
+                        cfgOptRepoBlockSizeMap, cfgOptionIdxDefault(cfgOptRepoBlockChecksumSizeMap),
+                        kvGet(manifestBlockIncrChecksumSizeKv, mapKey)),
+                };
+
+                lstAdd(map, &manifestBuildBlockIncrChecksumSizeMap);
+            }
+
+            lstSort(map, sortOrderDesc);
+
+            result.checksumSizeMap = lstGet(map, 0);
+            result.checksumSizeMapSize = lstSize(map);
         }
     }
 
@@ -1914,6 +1988,7 @@ backupJobCallback(void *data, unsigned int clientIdx)
                 if (blockIncr)
                 {
                     pckWriteU64P(param, file.blockIncrSize);
+                    pckWriteU64P(param, file.blockIncrChecksumSize);
                     pckWriteU64P(param, jobData->blockIncrSizeSuper);
 
                     if (file.blockIncrMapSize != 0)

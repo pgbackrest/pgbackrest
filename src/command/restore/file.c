@@ -127,7 +127,11 @@ restoreFile(
 
                                     // Generate block hash list if block incremental
                                     if (file->blockIncrMapSize != 0)
-                                        ioFilterGroupAdd(ioReadFilterGroup(read), blockHashNew(file->blockIncrSize));
+                                    {
+                                        ioFilterGroupAdd(
+                                            ioReadFilterGroup(read),
+                                            blockHashNew(file->blockIncrSize, file->blockIncrChecksumSize));
+                                    }
 
                                     ioReadDrain(read);
                                 }
@@ -291,7 +295,7 @@ restoreFile(
 
                         // Read block map. This will be compared to the block hash list already created to determine which blocks
                         // need to be fetched from the repository. If we got here there must be at least one block to fetch.
-                        const BlockMap *const blockMap = blockMapNewRead(storageReadIo(repoFileRead));
+                        const BlockMap *const blockMap = blockMapNewRead(storageReadIo(repoFileRead), file->blockIncrChecksumSize);
 
                         // The repo file needs to be closed so that block lists can be read from the remote protocol
                         ioReadClose(storageReadIo(repoFileRead));
@@ -301,7 +305,7 @@ restoreFile(
 
                         // Apply delta to file
                         BlockDelta *const blockDelta = blockDeltaNew(
-                            blockMap, file->blockIncrSize, file->blockHash,
+                            blockMap, file->blockIncrSize, file->blockIncrChecksumSize, file->blockHash,
                             cipherPass == NULL ? cipherTypeNone : cipherTypeAes256Cbc, cipherPass, repoFileCompressType);
 
                         for (unsigned int readIdx = 0; readIdx < blockDeltaReadSize(blockDelta); readIdx++)

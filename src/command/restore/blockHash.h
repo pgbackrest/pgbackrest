@@ -18,6 +18,6 @@ Filter type constant
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN IoFilter *blockHashNew(size_t blockSize);
+FN_EXTERN IoFilter *blockHashNew(size_t blockSize, size_t checksumSize);
 
 #endif

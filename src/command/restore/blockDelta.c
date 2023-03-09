@@ -23,13 +23,14 @@ typedef struct BlockDeltaBlock
 {
     uint64_t no;                                                    // Block number in the super block
     uint64_t offset;                                                // Offset into original file
-    unsigned char checksum[HASH_TYPE_SHA1_SIZE];                    // Checksum of the block
+    unsigned char checksum[XX_HASH_SIZE_MAX];                       // Checksum of the block
 } BlockDeltaBlock;
 
 struct BlockDelta
 {
     BlockDeltaPub pub;                                              // Publicly accessible variables
     size_t blockSize;                                               // Block size
+    size_t checksumSize;                                            // Checksum size
     CipherType cipherType;                                          // Cipher type
     String *cipherPass;                                             // Cipher passphrase
     CompressType compressType;                                      // Compress type
@@ -53,12 +54,13 @@ typedef struct BlockDeltaReference
 
 FN_EXTERN BlockDelta *
 blockDeltaNew(
-    const BlockMap *const blockMap, const size_t blockSize, const Buffer *const blockHash, const CipherType cipherType,
-    const String *const cipherPass, const CompressType compressType)
+    const BlockMap *const blockMap, const size_t blockSize, const size_t checksumSize, const Buffer *const blockHash,
+    const CipherType cipherType, const String *const cipherPass, const CompressType compressType)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BLOCK_MAP, blockMap);
         FUNCTION_TEST_PARAM(SIZE, blockSize);
+        FUNCTION_TEST_PARAM(SIZE, checksumSize);
         FUNCTION_TEST_PARAM(BUFFER, blockHash);
         FUNCTION_TEST_PARAM(STRING_ID, cipherType);
         FUNCTION_TEST_PARAM(STRING, cipherPass);
@@ -83,6 +85,7 @@ blockDeltaNew(
                 .readList = lstNewP(sizeof(BlockDeltaRead)),
             },
             .blockSize = blockSize,
+            .checksumSize = checksumSize,
             .cipherType = cipherType,
             .cipherPass = strDup(cipherPass),
             .compressType = compressType,
@@ -96,7 +99,7 @@ blockDeltaNew(
         {
             // Build list of references and for each reference the list of blocks for that reference
             const unsigned int blockHashSize =
-                blockHash == NULL ? 0 : (unsigned int)(bufUsed(blockHash) / HASH_TYPE_SHA1_SIZE);
+                blockHash == NULL ? 0 : (unsigned int)(bufUsed(blockHash) / this->checksumSize);
             List *const referenceList = lstNewP(sizeof(BlockDeltaReference), .comparator = lstComparatorUInt);
 
             for (unsigned int blockMapIdx = 0; blockMapIdx < blockMapSize(blockMap); blockMapIdx++)
@@ -107,8 +110,8 @@ blockDeltaNew(
                 // stored in the repository is different from the block hash list
                 if (blockMapIdx >= blockHashSize ||
                     !bufEq(
-                        BUF(blockMapItem->checksum, HASH_TYPE_SHA1_SIZE),
-                        BUF(bufPtrConst(blockHash) + blockMapIdx * HASH_TYPE_SHA1_SIZE, HASH_TYPE_SHA1_SIZE)))
+                        BUF(blockMapItem->checksum, this->checksumSize),
+                        BUF(bufPtrConst(blockHash) + blockMapIdx * this->checksumSize, this->checksumSize)))
                 {
                     const unsigned int reference = blockMapItem->reference;
                     BlockDeltaReference *const referenceData = lstFind(referenceList, &reference);

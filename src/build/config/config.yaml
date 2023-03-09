@@ -1866,6 +1866,9 @@ option:
   repo-block-age-map:
     inherit: repo-block-size-map
 
+  repo-block-checksum-size-map:
+    inherit: repo-block-size-map
+
   repo-block-size-super:
     section: global
     group: repo

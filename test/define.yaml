@@ -331,7 +331,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: crypto
-        total: 3
+        total: 4
         feature: STORAGE
         harness: storage
 
@@ -340,6 +340,7 @@ unit:
           - common/crypto/common
           - common/crypto/hash
           - common/crypto/md5.vendor: included
+          - common/crypto/xxhash
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: io-tls

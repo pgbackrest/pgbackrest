@@ -7,7 +7,7 @@ Block Incremental Filter
 #include "command/backup/blockMap.h"
 #include "common/compress/helper.h"
 #include "common/crypto/cipherBlock.h"
-#include "common/crypto/hash.h"
+#include "common/crypto/xxhash.h"
 #include "common/debug.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
@@ -39,6 +39,7 @@ typedef struct BlockIncr
     uint64_t blockOffset;                                           // Block offset
     uint64_t superBlockSize;                                        // Super block
     size_t blockSize;                                               // Block size
+    size_t checksumSize;                                            // Checksum size
     Buffer *block;                                                  // Block buffer
 
     Buffer *blockOut;                                               // Block output buffer
@@ -124,7 +125,7 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
             MEM_CONTEXT_TEMP_BEGIN()
             {
                 // Get block checksum
-                const Buffer *const checksum = cryptoHashOne(hashTypeSha1, this->block);
+                const Buffer *const checksum = xxHashOne(this->checksumSize, this->block);
 
                 // Does the block exist in the input map?
                 const BlockMapItem *const blockMapItemIn =
@@ -132,8 +133,7 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
                         blockMapGet(this->blockMapPrior, this->blockNo) : NULL;
 
                 // If the block is new or has changed then write it
-                if (blockMapItemIn == NULL ||
-                    memcmp(blockMapItemIn->checksum, bufPtrConst(checksum), bufUsed(checksum)) != 0)
+                if (blockMapItemIn == NULL || memcmp(blockMapItemIn->checksum, bufPtrConst(checksum), this->checksumSize) != 0)
                 {
                     // Begin the super block
                     if (this->blockOutWrite == NULL)
@@ -273,7 +273,7 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
 
                 // Write the map
                 ioWriteOpen(write);
-                blockMapWrite(this->blockMapOut, write, this->blockSize == this->superBlockSize);
+                blockMapWrite(this->blockMapOut, write, this->blockSize == this->superBlockSize, this->checksumSize);
                 ioWriteClose(write);
 
                 // Get total bytes written for the map
@@ -382,12 +382,14 @@ blockIncrInputSame(const THIS_VOID)
 /**********************************************************************************************************************************/
 FN_EXTERN IoFilter *
 blockIncrNew(
-    const uint64_t superBlockSize, const size_t blockSize, const unsigned int reference, const uint64_t bundleId,
-    const uint64_t bundleOffset, const Buffer *const blockMapPrior, const IoFilter *const compress, const IoFilter *const encrypt)
+    const uint64_t superBlockSize, const size_t blockSize, const size_t checksumSize, const unsigned int reference,
+    const uint64_t bundleId, const uint64_t bundleOffset, const Buffer *const blockMapPrior, const IoFilter *const compress,
+    const IoFilter *const encrypt)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(UINT64, superBlockSize);
         FUNCTION_LOG_PARAM(SIZE, blockSize);
+        FUNCTION_LOG_PARAM(SIZE, checksumSize);
         FUNCTION_LOG_PARAM(UINT, reference);
         FUNCTION_LOG_PARAM(UINT64, bundleId);
         FUNCTION_LOG_PARAM(UINT64, bundleOffset);
@@ -407,6 +409,7 @@ blockIncrNew(
             .memContext = memContextCurrent(),
             .superBlockSize = superBlockSize,
             .blockSize = blockSize,
+            .checksumSize = checksumSize,
             .reference = reference,
             .bundleId = bundleId,
             .blockOffset = bundleOffset,
@@ -439,7 +442,7 @@ blockIncrNew(
 
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {
-                    driver->blockMapPrior = blockMapNewRead(read);
+                    driver->blockMapPrior = blockMapNewRead(read, checksumSize);
                 }
                 MEM_CONTEXT_PRIOR_END();
             }
@@ -455,6 +458,7 @@ blockIncrNew(
 
             pckWriteU64P(packWrite, driver->superBlockSize);
             pckWriteU64P(packWrite, blockSize);
+            pckWriteU64P(packWrite, checksumSize);
             pckWriteU32P(packWrite, reference);
             pckWriteU64P(packWrite, bundleId);
             pckWriteU64P(packWrite, bundleOffset);
@@ -491,6 +495,7 @@ blockIncrNewPack(const Pack *const paramList)
         PackRead *const paramListPack = pckReadNew(paramList);
         const uint64_t superBlockSize = pckReadU64P(paramListPack);
         const size_t blockSize = (size_t)pckReadU64P(paramListPack);
+        const size_t checksumSize = (size_t)pckReadU64P(paramListPack);
         const unsigned int reference = pckReadU32P(paramListPack);
         const uint64_t bundleId = pckReadU64P(paramListPack);
         const uint64_t bundleOffset = pckReadU64P(paramListPack);
@@ -511,7 +516,8 @@ blockIncrNewPack(const Pack *const paramList)
             encrypt = cipherBlockNewPack(encryptParam);
 
         result = ioFilterMove(
-            blockIncrNew(superBlockSize, blockSize, reference, bundleId, bundleOffset, blockMapPrior, compress, encrypt),
+            blockIncrNew(
+                superBlockSize, blockSize, checksumSize, reference, bundleId, bundleOffset, blockMapPrior, compress, encrypt),
             memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();

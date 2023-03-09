@@ -27,6 +27,9 @@ STRING_DECLARE(MANIFEST_TARGET_PGDATA_STR);
 #define MANIFEST_TARGET_PGTBLSPC                                    "pg_tblspc"
 STRING_DECLARE(MANIFEST_TARGET_PGTBLSPC_STR);
 
+// Minimum size for the block incremental checksum
+#define BLOCK_INCR_CHECKSUM_SIZE_MIN                                6
+
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
@@ -104,12 +107,21 @@ typedef struct ManifestBlockIncrAgeMap
     uint32_t blockMultiplier;                                       // Block multiplier
 } ManifestBlockIncrAgeMap;
 
+// Map block size to checksum size
+typedef struct ManifestBlockIncrChecksumSizeMap
+{
+    uint32_t blockSize;
+    uint32_t checksumSize;
+} ManifestBlockIncrChecksumSizeMap;
+
 typedef struct ManifestBlockIncrMap
 {
     const ManifestBlockIncrSizeMap *sizeMap;                        // Block size map
     unsigned int sizeMapSize;                                       // Block size map size
     const ManifestBlockIncrAgeMap *ageMap;                          // File age map
     unsigned int ageMapSize;                                        // File age map size
+    const ManifestBlockIncrChecksumSizeMap *checksumSizeMap;        // Checksum size map
+    unsigned int checksumSizeMapSize;                               // Checksum size map size
 } ManifestBlockIncrMap;
 
 /***********************************************************************************************************************************
@@ -143,6 +155,7 @@ typedef struct ManifestFile
     uint64_t bundleId;                                              // Bundle id
     uint64_t bundleOffset;                                          // Bundle offset
     size_t blockIncrSize;                                           // Size of incremental blocks
+    size_t blockIncrChecksumSize;                                   // Size of incremental block checksum
     uint64_t blockIncrMapSize;                                      // Block incremental map size
     uint64_t size;                                                  // Original size
     uint64_t sizeRepo;                                              // Size in repo

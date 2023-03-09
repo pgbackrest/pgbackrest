@@ -61,7 +61,10 @@ restoreFileProtocol(PackRead *const param, ProtocolServer *const server)
             file.blockIncrMapSize = pckReadU64P(param);
 
             if (file.blockIncrMapSize != 0)
+            {
                 file.blockIncrSize = (size_t)pckReadU64P(param);
+                file.blockIncrChecksumSize = (size_t)pckReadU64P(param);
+            }
 
             file.manifestFile = pckReadStrP(param);
 

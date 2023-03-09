@@ -2020,6 +2020,8 @@ sub restoreCompare
         delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{"bno"});
         $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, "bi");
         delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{"bi"});
+        $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, "bic");
+        delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{"bic"});
         $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, "bim");
         delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{"bim"});
 

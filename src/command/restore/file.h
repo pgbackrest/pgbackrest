@@ -35,6 +35,7 @@ typedef struct RestoreFile
     const Variant *limit;                                           // Limit for read in the repo file
     uint64_t blockIncrMapSize;                                      // Block incremental map size (0 if not incremental)
     size_t blockIncrSize;                                           // Block incremental size (when map size > 0)
+    size_t blockIncrChecksumSize;                                   // Checksum size (when map size > 0)
     const String *manifestFile;                                     // Manifest file
     const Buffer *blockHash;                                        // Hashes for block incremental restore, set in restoreFile()
 } RestoreFile;

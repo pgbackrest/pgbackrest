@@ -53,6 +53,7 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
 
             if (file.blockIncrSize > 0)
             {
+                file.blockIncrChecksumSize = (size_t)pckReadU64P(param);
                 file.blockIncrSuperSize = pckReadU64P(param);
                 file.blockIncrMapPriorFile = pckReadStrP(param);
 

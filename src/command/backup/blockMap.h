@@ -13,18 +13,18 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct BlockMap BlockMap;
 
-#include "common/crypto/hash.h"
+#include "common/crypto/xxhash.h"
 #include "common/type/list.h"
 #include "common/type/object.h"
 
 typedef struct BlockMapItem
 {
     unsigned int reference;                                         // Reference to backup where the block is stored
-    unsigned char checksum[HASH_TYPE_SHA1_SIZE];                    // Checksum of the block
     uint64_t bundleId;                                              // Bundle where the block is stored (0 if not bundled)
     uint64_t offset;                                                // Offset of super block into the bundle
     uint64_t size;                                                  // Size of the super block (including compression, etc.)
     uint64_t block;                                                 // Block no inside of super block
+    unsigned char checksum[XX_HASH_SIZE_MAX];                       // Checksum of the block
 } BlockMapItem;
 
 /***********************************************************************************************************************************
@@ -38,7 +38,7 @@ blockMapNew(void)
 }
 
 // New block map from IO
-FN_EXTERN BlockMap *blockMapNewRead(IoRead *map);
+FN_EXTERN BlockMap *blockMapNewRead(IoRead *map, size_t checksumSize);
 
 /***********************************************************************************************************************************
 Functions
@@ -52,7 +52,7 @@ blockMapAdd(BlockMap *const this, const BlockMapItem *const item)
 }
 
 // Write map to IO
-FN_EXTERN void blockMapWrite(const BlockMap *this, IoWrite *output, bool blockEqual);
+FN_EXTERN void blockMapWrite(const BlockMap *this, IoWrite *output, bool blockEqual, size_t checksumSize);
 
 /***********************************************************************************************************************************
 Getters/Setters

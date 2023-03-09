@@ -2386,7 +2386,10 @@ restoreJobCallback(void *data, unsigned int clientIdx)
                 pckWriteU64P(param, file.blockIncrMapSize);
 
                 if (file.blockIncrMapSize != 0)
+                {
                     pckWriteU64P(param, file.blockIncrSize);
+                    pckWriteU64P(param, file.blockIncrChecksumSize);
+                }
 
                 pckWriteStrP(param, file.name);
 

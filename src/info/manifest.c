@@ -240,6 +240,7 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
         ASSERT(file->blockIncrSize % BLOCK_INCR_SIZE_FACTOR == 0);
 
         cvtUInt64ToVarInt128(file->blockIncrSize / BLOCK_INCR_SIZE_FACTOR, buffer, &bufferPos, sizeof(buffer));
+        cvtUInt64ToVarInt128(file->blockIncrChecksumSize, buffer, &bufferPos, sizeof(buffer));
         cvtUInt64ToVarInt128(file->blockIncrMapSize, buffer, &bufferPos, sizeof(buffer));
     }
 
@@ -367,6 +368,7 @@ manifestFileUnpack(const Manifest *const manifest, const ManifestFilePack *const
     {
         result.blockIncrSize =
             (size_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX) * BLOCK_INCR_SIZE_FACTOR;
+        result.blockIncrChecksumSize = (size_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
         result.blockIncrMapSize = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
     }
 
@@ -815,6 +817,33 @@ manifestBuildBlockIncrSize(const ManifestBuildData *const buildData, const Manif
     FUNCTION_TEST_RETURN(UINT64, result);
 }
 
+// Get checksum size for a block size. Since these checksums are used to determine if a block has changed (not for corruption) they
+// should be set larger than usual. For example, it is common to use 32-bit checksums to check for corruption in blocks up to 4MiB
+// but here we used more bits to ensure block changes are correctly detected, since valid changes may look a lot different than
+// corruption.
+static size_t
+manifestBuildBlockIncrChecksumSize(const ManifestBuildData *const buildData, const size_t blockSize)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, buildData);
+        FUNCTION_TEST_PARAM(SIZE, blockSize);
+    FUNCTION_TEST_END();
+
+    size_t result = BLOCK_INCR_CHECKSUM_SIZE_MIN;
+
+    // Search checksum size map for larger value
+    for (unsigned int sizeIdx = 0; sizeIdx < buildData->blockIncrMap->checksumSizeMapSize; sizeIdx++)
+    {
+        if (blockSize >= buildData->blockIncrMap->checksumSizeMap[sizeIdx].blockSize)
+        {
+            result = buildData->blockIncrMap->checksumSizeMap[sizeIdx].checksumSize;
+            break;
+        }
+    }
+
+    FUNCTION_TEST_RETURN(SIZE, result);
+}
+
 // Process files/links/paths and add them to the manifest
 static void
 manifestBuildInfo(
@@ -1036,7 +1065,10 @@ manifestBuildInfo(
 
             // Get block incremental size
             if (info->size != 0 && buildData->manifest->pub.data.blockIncr)
+            {
                 file.blockIncrSize = manifestBuildBlockIncrSize(buildData, &file);
+                file.blockIncrChecksumSize = manifestBuildBlockIncrChecksumSize(buildData, file.blockIncrSize);
+            }
 
             // Determine if this file should be page checksummed
             if (dbPath && buildData->checksumPage)
@@ -1650,6 +1682,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                     if (file.blockIncrSize > 0)
                     {
                         file.blockIncrSize = filePrior.blockIncrSize;
+                        file.blockIncrChecksumSize = filePrior.blockIncrChecksumSize;
                         file.blockIncrMapSize = filePrior.blockIncrMapSize;
                     }
 
@@ -1804,6 +1837,7 @@ manifestBuildComplete(
 #define MANIFEST_KEY_BACKUP_TIMESTAMP_STOP                          "backup-timestamp-stop"
 #define MANIFEST_KEY_BACKUP_TYPE                                    "backup-type"
 #define MANIFEST_KEY_BLOCK_INCR                                     STRID5("bi", 0x1220)
+#define MANIFEST_KEY_BLOCK_INCR_CHECKSUM                            STRID5("bic", 0xd220)
 #define MANIFEST_KEY_BLOCK_INCR_MAP                                 STRID5("bim", 0x35220)
 #define MANIFEST_KEY_BUNDLE_ID                                      STRID5("bni", 0x25c20)
 #define MANIFEST_KEY_BUNDLE_OFFSET                                  STRID5("bno", 0x3dc20)
@@ -1943,6 +1977,11 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
         if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_BLOCK_INCR))
         {
             file.blockIncrSize = (size_t)jsonReadUInt64(json) * BLOCK_INCR_SIZE_FACTOR;
+
+            if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_BLOCK_INCR_CHECKSUM))
+                file.blockIncrChecksumSize = (size_t)jsonReadUInt64(json);
+            else
+                file.blockIncrChecksumSize = BLOCK_INCR_CHECKSUM_SIZE_MIN;
 
             if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_BLOCK_INCR_MAP))
                 file.blockIncrMapSize = jsonReadUInt64(json);
@@ -2678,6 +2717,9 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
                 if (file.blockIncrSize != 0)
                 {
                     jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_BLOCK_INCR), file.blockIncrSize / BLOCK_INCR_SIZE_FACTOR);
+
+                    if (file.blockIncrChecksumSize != BLOCK_INCR_CHECKSUM_SIZE_MIN)
+                        jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_BLOCK_INCR_CHECKSUM), file.blockIncrChecksumSize);
 
                     if (file.blockIncrMapSize != 0)
                         jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_BLOCK_INCR_MAP), file.blockIncrMapSize);

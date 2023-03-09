@@ -48,10 +48,13 @@
                         <commit subject="Block-level incremental backup super blocks.">
                             <github-pull-request id="2011"/>
                         </commit>
+                        <commit subject="Use xxHash instead of SHA-1 for block incremental checksums."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
                             <release-item-reviewer id="john.morris"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                            <release-item-reviewer id="stefan.fercot"/>
                         </release-item-contributor-list>
 
                         <p>Block-level incremental backup (BETA).</p>

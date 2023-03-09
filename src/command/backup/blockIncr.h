@@ -29,6 +29,14 @@ The super block list is followed by the block map, which is encrypted separately
 of the filter is the stored block map size. Combined with the repo size this allows the block map to be read separately.
 
 The block incremental should be read using BlockDelta since reconstructing the delta is quite involved.
+
+The xxHash algorithm is used to determine which blocks have changed. A 128-bit xxHash is generated and then checksumSize bytes are
+used from the hash depending on the size of the block. xxHash claims to have excellent dispersion characteristics, which has been
+verified by testing with SMHasher and a custom test suite. xxHash-32 is used for up to 4MiB content blocks in lz4 and the lower
+32-bits of xxHash-64 is used for content blocks in zstd. In general 32-bit checksums are pretty common defaults across filesystems
+such as BtrFS and ZFS. We use at least 5 bytes even for the smallest blocks since we are looking for changes and not just
+corruption. Ultimately if there is a collision and a block change is not detected it will almost certainly be caught by the overall
+SHA1 file checksum. This will fail the backup, which is not ideal, but better than restoring corrupted data.
 ***********************************************************************************************************************************/
 #ifndef COMMAND_BACKUP_BLOCK_INCR_H
 #define COMMAND_BACKUP_BLOCK_INCR_H
@@ -50,8 +58,8 @@ Constants needed to read the block number in a super block
 Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN IoFilter *blockIncrNew(
-    uint64_t superBlockSize, size_t blockSize, unsigned int reference, uint64_t bundleId, uint64_t bundleOffset,
-    const Buffer *blockMapPrior, const IoFilter *compress, const IoFilter *encrypt);
+    uint64_t superBlockSize, size_t blockSize, size_t checksumSize, unsigned int reference, uint64_t bundleId,
+    uint64_t bundleOffset, const Buffer *blockMapPrior, const IoFilter *compress, const IoFilter *encrypt);
 FN_EXTERN IoFilter *blockIncrNewPack(const Pack *paramList);
 
 #endif

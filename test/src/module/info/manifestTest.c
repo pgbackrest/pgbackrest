@@ -774,12 +774,21 @@ testRun(void)
             {.fileAge = 7 * 86400, .blockMultiplier = 2},
         };
 
+        static const ManifestBlockIncrChecksumSizeMap manifestBlockIncrChecksumSizeMap[] =
+        {
+            {.blockSize = 512 * 1024, .checksumSize = BLOCK_INCR_CHECKSUM_SIZE_MIN + 3},
+            {.blockSize = 128 * 1024, .checksumSize = BLOCK_INCR_CHECKSUM_SIZE_MIN + 2},
+            {.blockSize = 32 * 1024, .checksumSize = BLOCK_INCR_CHECKSUM_SIZE_MIN + 1},
+        };
+
         static const ManifestBlockIncrMap manifestBuildBlockIncrMap =
         {
             .sizeMap = manifestBlockIncrSizeMap,
             .sizeMapSize = LENGTH_OF(manifestBlockIncrSizeMap),
             .ageMap = manifestBlockIncrAgeMap,
             .ageMapSize = LENGTH_OF(manifestBlockIncrAgeMap),
+            .checksumSizeMap = manifestBlockIncrChecksumSizeMap,
+            .checksumSizeMapSize = LENGTH_OF(manifestBlockIncrChecksumSizeMap),
         };
 
         // pg_wal not ignored
@@ -807,8 +816,8 @@ testRun(void)
                     "pg_data/postgresql.conf={\"file\":\"postgresql.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
                     "\n"
                     "[target:file]\n"
-                    "pg_data/128k={\"bi\":16,\"size\":131072,\"timestamp\":1570000000}\n"
-                    "pg_data/128k-1week={\"bi\":32,\"size\":131072,\"timestamp\":1569395200}\n"
+                    "pg_data/128k={\"bi\":16,\"bic\":8,\"size\":131072,\"timestamp\":1570000000}\n"
+                    "pg_data/128k-1week={\"bi\":32,\"bic\":8,\"size\":131072,\"timestamp\":1569395200}\n"
                     "pg_data/128k-4week={\"size\":131072,\"timestamp\":1567580800}\n"
                     "pg_data/PG_VERSION={\"size\":3,\"timestamp\":1565282100}\n"
                     "pg_data/base/1/555_init={\"size\":0,\"timestamp\":1565282114}\n"
@@ -1345,7 +1354,7 @@ testRun(void)
         // Prior file was not block incr but current file is
         HRN_MANIFEST_FILE_ADD(
             manifest, .name = MANIFEST_TARGET_PGDATA "/block-incr-add", .copy = true, .size = 6, .sizeRepo = 6,
-            .blockIncrSize = 8192, .timestamp = 1482182861, .group = "test", .user = "test");
+            .blockIncrSize = 8192, .blockIncrChecksumSize = 6, .timestamp = 1482182861, .group = "test", .user = "test");
         HRN_MANIFEST_FILE_ADD(
             manifestPrior, .name = MANIFEST_TARGET_PGDATA "/block-incr-add", .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
             .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa");
@@ -1361,10 +1370,11 @@ testRun(void)
         // Prior file has different block incr size
         HRN_MANIFEST_FILE_ADD(
             manifest, .name = MANIFEST_TARGET_PGDATA "/block-incr-keep-size", .copy = true, .size = 6, .sizeRepo = 6,
-            .blockIncrSize = 16384, .timestamp = 1482182861, .group = "test", .user = "test");
+            .blockIncrSize = 16384, .blockIncrChecksumSize = 6, .timestamp = 1482182861, .group = "test", .user = "test");
         HRN_MANIFEST_FILE_ADD(
             manifestPrior, .name = MANIFEST_TARGET_PGDATA "/block-incr-keep-size", .size = 4, .sizeRepo = 4, .blockIncrSize = 8192,
-            .blockIncrMapSize = 31, .timestamp = 1482182860, .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa");
+            .blockIncrChecksumSize = 6, .blockIncrMapSize = 31, .timestamp = 1482182860,
+            .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa");
 
         TEST_RESULT_VOID(
             manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, STRDEF("000000030000000300000003")), "incremental manifest");
@@ -1570,10 +1580,11 @@ testRun(void)
                 ",\"timestamp\":1565282114}\n"                                                                                     \
             "pg_data/base/16384/PG_VERSION={\"bni\":1,\"bno\":1,\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\""         \
                 ",\"group\":\"group2\",\"size\":4,\"timestamp\":1565282115,\"user\":false}\n"                                      \
-            "pg_data/base/32768/33000={\"checksum\":\"7a16d165e4775f7c92e8cdf60c0af57313f0bf90\",\"checksum-page\":true"           \
-                ",\"reference\":\"20190818-084502F\",\"size\":1073741824,\"timestamp\":1565282116}\n"                              \
-            "pg_data/base/32768/33000.32767={\"bi\":3,\"bim\":96,\"checksum\":\"6e99b589e550e68e934fd235ccba59fe5b592a9e\","       \
-                "\"checksum-page\":true,\"reference\":\"20190818-084502F\",\"size\":32768,\"timestamp\":1565282114}\n"             \
+            "pg_data/base/32768/33000={\"bi\":4,\"bim\":99,\"checksum\":\"7a16d165e4775f7c92e8cdf60c0af57313f0bf90\""              \
+                ",\"checksum-page\":true,\"reference\":\"20190818-084502F\",\"size\":1073741824,\"timestamp\":1565282116}\n"       \
+            "pg_data/base/32768/33000.32767={\"bi\":3,\"bic\":16,\"bim\":96"                                                       \
+                ",\"checksum\":\"6e99b589e550e68e934fd235ccba59fe5b592a9e\",\"checksum-page\":true"                                \
+                ",\"reference\":\"20190818-084502F\",\"size\":32768,\"timestamp\":1565282114}\n"                                   \
             "pg_data/postgresql.conf={\"size\":4457,\"timestamp\":1565282114}\n"                                                   \
             "pg_data/special-@#!$^&*()_+~`{}[]\\:;={\"mode\":\"0640\",\"size\":0,\"timestamp\":1565282120,\"user\":false}\n"
 

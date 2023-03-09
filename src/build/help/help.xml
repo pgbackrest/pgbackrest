@@ -532,6 +532,16 @@
                         <example>7=2</example>
                     </config-key>
 
+                    <config-key id="repo-block-checksum-size-map" name="Block Incremental Checksum Size Map">
+                        <summary>Block incremental checksum size map.</summary>
+
+                        <text>
+                            <p>Map block size to checksum size. Smaller checksums save space in the map but may not be able to reliably detect changes in the block.</p>
+                       </text>
+
+                        <example>7=2</example>
+                    </config-key>
+
                     <config-key id="repo-block-size-map" name="Block Incremental Size Map">
                         <summary>Block incremental size map.</summary>
 

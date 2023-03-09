@@ -5,7 +5,7 @@ Restore Delta Map
 
 #include "command/restore/blockHash.h"
 #include "common/crypto/common.h"
-#include "common/crypto/hash.h"
+#include "common/crypto/xxhash.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/type/object.h"
@@ -18,6 +18,7 @@ typedef struct BlockHash
     MemContext *memContext;                                         // Mem context of filter
 
     size_t blockSize;                                               // Block size for checksums
+    size_t checksumSize;                                            // Checksum size
     size_t blockCurrent;                                            // Size of current block
     IoFilter *hash;                                                 // Hash of current block
     List *list;                                                     // List of hashes
@@ -57,7 +58,7 @@ blockHashProcess(THIS_VOID, const Buffer *const input)
         {
             MEM_CONTEXT_BEGIN(this->memContext)
             {
-                this->hash = cryptoHashNew(hashTypeSha1);
+                this->hash = xxHashNew(this->checksumSize);
                 this->blockCurrent = 0;
             }
             MEM_CONTEXT_END();
@@ -115,7 +116,7 @@ blockHashResult(THIS_VOID)
         if (this->hash)
             lstAdd(this->list, bufPtrConst(pckReadBinP(pckReadNew(ioFilterResult(this->hash)))));
 
-        pckWriteBinP(packWrite, BUF(lstGet(this->list, 0), lstSize(this->list) * HASH_TYPE_SHA1_SIZE));
+        pckWriteBinP(packWrite, BUF(lstGet(this->list, 0), lstSize(this->list) * this->checksumSize));
         pckWriteEndP(packWrite);
 
         result = pckMove(pckWriteResult(packWrite), memContextPrior());
@@ -127,10 +128,11 @@ blockHashResult(THIS_VOID)
 
 /**********************************************************************************************************************************/
 FN_EXTERN IoFilter *
-blockHashNew(const size_t blockSize)
+blockHashNew(const size_t blockSize, const size_t checksumSize)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(SIZE, blockSize);
+        FUNCTION_LOG_PARAM(SIZE, checksumSize);
     FUNCTION_LOG_END();
 
     ASSERT(blockSize != 0);
@@ -146,7 +148,8 @@ blockHashNew(const size_t blockSize)
         {
             .memContext = memContextCurrent(),
             .blockSize = blockSize,
-            .list = lstNewP(HASH_TYPE_SHA1_SIZE),
+            .checksumSize = checksumSize,
+            .list = lstNewP(checksumSize),
         };
 
         this = ioFilterNewP(BLOCK_HASH_FILTER_TYPE, driver, NULL, .in = blockHashProcess, .result = blockHashResult);

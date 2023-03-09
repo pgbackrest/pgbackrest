@@ -80,7 +80,7 @@ lstComparatorBlockMapReference(const void *const blockMapRef1, const void *const
 }
 
 FN_EXTERN BlockMap *
-blockMapNewRead(IoRead *const map)
+blockMapNewRead(IoRead *const map, size_t checksumSize)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_READ, map);
@@ -97,7 +97,7 @@ blockMapNewRead(IoRead *const map)
     // Read all references in packed format
     BlockMap *const this = blockMapNew();
     List *const refList = lstNewP(sizeof(BlockMapReference), .comparator = lstComparatorBlockMapReference);
-    Buffer *const checksum = bufNew(HASH_TYPE_SHA1_SIZE);
+    Buffer *const checksum = bufNew(checksumSize);
     int64_t sizeLast = 0;
     bool referenceContinue = false;
 
@@ -247,12 +247,13 @@ blockMapNewRead(IoRead *const map)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-blockMapWrite(const BlockMap *const this, IoWrite *const output, bool blockEqual)
+blockMapWrite(const BlockMap *const this, IoWrite *const output, const bool blockEqual, const size_t checksumSize)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(BLOCK_MAP, this);
         FUNCTION_LOG_PARAM(IO_WRITE, output);
         FUNCTION_LOG_PARAM(BOOL, blockEqual);
+        FUNCTION_LOG_PARAM(SIZE, checksumSize);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -422,7 +423,7 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output, bool blockEqual
                 }
 
                 // Write checksum
-                ioWrite(output, BUF(block->checksum, HASH_TYPE_SHA1_SIZE));
+                ioWrite(output, BUF(block->checksum, checksumSize));
 
                 blockIdx++;
             }

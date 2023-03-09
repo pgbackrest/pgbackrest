@@ -84,6 +84,7 @@ hrnManifestFileAdd(Manifest *const manifest, const HrnManifestFile hrnManifestFi
             .bundleId = hrnManifestFile.bundleId,
             .bundleOffset = hrnManifestFile.bundleOffset,
             .blockIncrSize = hrnManifestFile.blockIncrSize,
+            .blockIncrChecksumSize = hrnManifestFile.blockIncrChecksumSize,
             .blockIncrMapSize = hrnManifestFile.blockIncrMapSize,
             .size = hrnManifestFile.size,
             .sizeRepo = hrnManifestFile.sizeRepo,

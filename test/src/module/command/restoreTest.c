@@ -164,7 +164,7 @@ testRun(void)
 
         Buffer *output = bufNew(0);
         IoWrite *write = ioBufferWriteNew(output);
-        ioFilterGroupAdd(ioWriteFilterGroup(write), blockHashNew(3));
+        ioFilterGroupAdd(ioWriteFilterGroup(write), blockHashNew(3, 8));
         ioWriteOpen(write);
 
         TEST_RESULT_VOID(ioWrite(write, BUFSTRDEF("ABCDEF")), "write");
@@ -173,17 +173,19 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             strNewEncode(encodingHex, pckReadBinP(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_HASH_FILTER_TYPE))),
-            "3c01bdbb26f358bab27f267924aa2c9a03fcfdb8"
-            "6dae29c06c5f04601445c493156d10fe1be23b6d"
-            "3c01bdbb26f358bab27f267924aa2c9a03fcfdb8",
+            "9e947f00ecd6acb2"
+            "cb221327e5a387af"
+            "9e947f00ecd6acb2",
             "block hash list");
+
+        ioWriteFree(write);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("buffer smaller than block and remainder");
 
         output = bufNew(0);
         write = ioBufferWriteNew(output);
-        ioFilterGroupAdd(ioWriteFilterGroup(write), blockHashNew(3));
+        ioFilterGroupAdd(ioWriteFilterGroup(write), blockHashNew(3, 8));
         ioWriteOpen(write);
 
         TEST_RESULT_VOID(ioWrite(write, BUFSTRDEF("DE")), "write");
@@ -195,11 +197,13 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             strNewEncode(encodingHex, pckReadBinP(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_HASH_FILTER_TYPE))),
-            "6dae29c06c5f04601445c493156d10fe1be23b6d"
-            "3c01bdbb26f358bab27f267924aa2c9a03fcfdb8"
-            "3c01bdbb26f358bab27f267924aa2c9a03fcfdb8"
-            "c032adc1ff629c9b66f22749ad667e6beadf144b",
+            "cb221327e5a387af"
+            "9e947f00ecd6acb2"
+            "9e947f00ecd6acb2"
+            "92c3453969207870",
             "block hash list");
+
+        ioWriteFree(write);
     }
 
     // *****************************************************************************************************************************
@@ -2661,7 +2665,7 @@ testRun(void)
             bufUsedSet(fileBuffer, bufSize(fileBuffer));
 
             IoWrite *write = storageWriteIo(storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/1/bi-no-ref.pgbi")));
-            ioFilterGroupAdd(ioWriteFilterGroup(write), blockIncrNew(8192, 8192, 3, 0, 0, NULL, NULL, NULL));
+            ioFilterGroupAdd(ioWriteFilterGroup(write), blockIncrNew(8192, 8192, 11, 3, 0, 0, NULL, NULL, NULL));
             ioFilterGroupAdd(ioWriteFilterGroup(write), ioSizeNew());
 
             ioWriteOpen(write);
@@ -2673,7 +2677,7 @@ testRun(void)
 
             HRN_MANIFEST_FILE_ADD(
                 manifest, .name = TEST_PGDATA "base/1/bi-no-ref", .size = bufUsed(fileBuffer), .sizeRepo = repoSize,
-                .blockIncrSize = 8192, .blockIncrMapSize = blockIncrMapSize, .timestamp = 1482182860,
+                .blockIncrSize = 8192, .blockIncrChecksumSize = 11, .blockIncrMapSize = blockIncrMapSize, .timestamp = 1482182860,
                 .checksumSha1 = "953cdcc904c5d4135d96fc0833f121bf3033c74c");
 
             // Block incremental with a broken reference to show that unneeded references will not be used
@@ -2683,7 +2687,7 @@ testRun(void)
 
             Buffer *fileUnusedMap = bufNew(0);
             write = ioBufferWriteNew(fileUnusedMap);
-            ioFilterGroupAdd(ioWriteFilterGroup(write), blockIncrNew(8192, 8192, 0, 0, 0, NULL, NULL, NULL));
+            ioFilterGroupAdd(ioWriteFilterGroup(write), blockIncrNew(8192, 8192, 11, 0, 0, 0, NULL, NULL, NULL));
 
             ioWriteOpen(write);
             ioWrite(write, fileUnused);
@@ -2702,8 +2706,8 @@ testRun(void)
             ioFilterGroupAdd(
                 ioWriteFilterGroup(write),
                 blockIncrNew(
-                    8192, 8192, 3, 0, 0, BUF(bufPtr(fileUnusedMap) + bufUsed(fileUnusedMap) - fileUnusedMapSize, fileUnusedMapSize),
-                    NULL, NULL));
+                    8192, 8192, 11, 3, 0, 0,
+                    BUF(bufPtr(fileUnusedMap) + bufUsed(fileUnusedMap) - fileUnusedMapSize, fileUnusedMapSize), NULL, NULL));
             ioFilterGroupAdd(ioWriteFilterGroup(write), ioSizeNew());
 
             ioWriteOpen(write);
@@ -2717,7 +2721,7 @@ testRun(void)
 
             HRN_MANIFEST_FILE_ADD(
                 manifest, .name = TEST_PGDATA "base/1/bi-unused-ref", .size = bufUsed(fileUsed), .sizeRepo = fileUsedRepoSize,
-                .blockIncrSize = 8192, .blockIncrMapSize = fileUsedMapSize, .timestamp = 1482182860,
+                .blockIncrSize = 8192, .blockIncrChecksumSize = 11, .blockIncrMapSize = fileUsedMapSize, .timestamp = 1482182860,
                 .checksumSha1 = "febd680181d4cd315dce942348862c25fbd731f3");
 
             memset(bufPtr(fileUnused) + (8192 * 4), 3, 8192);
