@@ -42,6 +42,10 @@ hrnCfgLoad(ConfigCommand commandId, const StringList *argListParam, const HrnCfg
     // Add standard options needed in most cases
     if (!param.noStd)
     {
+        // Enable beta features
+        if (cfgParseOptionValid(commandId, param.role, cfgOptBeta))
+            strLstInsert(argList, 0, STRDEF("--" CFGOPT_BETA));
+
         // Set job retry to 0 if it is valid
         if (cfgParseOptionValid(commandId, param.role, cfgOptJobRetry))
             strLstInsert(argList, 0, strNewFmt("--" CFGOPT_JOB_RETRY "=%u", param.jobRetry));

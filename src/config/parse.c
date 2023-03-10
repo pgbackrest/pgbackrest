@@ -125,6 +125,7 @@ typedef struct ParseRuleOption
 {
     const char *name;                                               // Name
     unsigned int type : 4;                                          // e.g. string, int, boolean
+    bool beta : 1;                                                  // Is the option a beta feature?
     bool negate : 1;                                                // Can the option be negated on the command line?
     bool reset : 1;                                                 // Can the option be reset on the command line?
     bool required : 1;                                              // Is the option required?
@@ -167,6 +168,9 @@ typedef enum
 
 #define PARSE_RULE_OPTION_TYPE(typeParam)                                                                                          \
     .type = typeParam
+
+#define PARSE_RULE_OPTION_BETA(betaParam)                                                                                          \
+    .beta = betaParam
 
 #define PARSE_RULE_OPTION_NEGATE(negateParam)                                                                                      \
     .negate = negateParam
@@ -341,6 +345,32 @@ parseOptionIdxValue(ParseOption *optionList, unsigned int optionId, unsigned int
 
     // Return the indexed value
     FUNCTION_TEST_RETURN_TYPE_P(ParseOptionValue, &optionList[optionId].indexList[optionKeyIdx]);
+}
+
+/***********************************************************************************************************************************
+Check that --beta is set if a beta option is used
+***********************************************************************************************************************************/
+static void
+parseOptionBeta(
+    const unsigned int optionId, const unsigned int optionKeyIdx, const bool beta, const ParseOption *const parseOptionBeta)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, optionId);
+        FUNCTION_TEST_PARAM(UINT, optionKeyIdx);
+        FUNCTION_TEST_PARAM(BOOL, beta);
+        FUNCTION_TEST_PARAM_P(PARSE_OPTION, parseOptionBeta);
+    FUNCTION_TEST_END();
+
+    if (beta && optionId != cfgOptBeta && (parseOptionBeta->indexListTotal == 0 || parseOptionBeta->indexList[0].negate))
+    {
+        THROW_FMT(
+            OptionInvalidError,
+            "option '%s' is not valid without option '" CFGOPT_BETA "'\n"
+            "HINT: beta features require the --" CFGOPT_BETA " option to prevent accidental usage.",
+            cfgParseOptionKeyIdxName(optionId, optionKeyIdx));
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -680,6 +710,9 @@ cfgParseOption(const String *const optionCandidate, const CfgParseOptionParam pa
                     strZ(optionCandidate), groupName, optionFound->name + strlen(groupName));
             }
         }
+
+        // Set the beta flag
+        result.beta = optionFound->beta;
 
         FUNCTION_TEST_RETURN_TYPE(CfgParseOptionResult, result);
     }
@@ -2157,6 +2190,9 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                         {
                             configOptionValue->set = true;
                             configOptionValue->source = parseOptionValue->source;
+
+                            // Check beta status
+                            parseOptionBeta(optionId, optionKeyIdx, parseRuleOption[optionId].beta, &parseOptionList[cfgOptBeta]);
 
                             if (optionType == cfgOptTypeBoolean)
                             {

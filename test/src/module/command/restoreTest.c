@@ -1634,7 +1634,7 @@ testRun(void)
             RECOVERY_SETTING_HEADER
             "a_setting = 'a'\n"
             "b_setting = 'b'\n"
-            "restore_command = '" TEST_PROJECT_EXE " --lock-path=" HRN_PATH "/lock --log-path=" HRN_PATH " --pg1-path=/pg"
+            "restore_command = '" TEST_PROJECT_EXE " --beta --lock-path=" HRN_PATH "/lock --log-path=" HRN_PATH " --pg1-path=/pg"
             " --repo1-path=/repo --stanza=test1 archive-get %f \"%p\"'\n",
             "check recovery options");
 
@@ -1648,8 +1648,8 @@ testRun(void)
         TEST_RESULT_STR_Z(
             restoreRecoveryConf(PG_VERSION_94, restoreLabel),
             RECOVERY_SETTING_HEADER
-            "restore_command = '/usr/local/bin/pg_wrapper.sh --lock-path=" HRN_PATH "/lock --log-path=" HRN_PATH " --pg1-path=/pg"
-            " --repo1-path=/repo --stanza=test1 archive-get %f \"%p\"'\n",
+            "restore_command = '/usr/local/bin/pg_wrapper.sh --beta --lock-path=" HRN_PATH "/lock --log-path=" HRN_PATH
+            " --pg1-path=/pg --repo1-path=/repo --stanza=test1 archive-get %f \"%p\"'\n",
             "restore_command invokes /usr/local/bin/pg_wrapper.sh per --cmd option");
 
         // -------------------------------------------------------------------------------------------------------------------------

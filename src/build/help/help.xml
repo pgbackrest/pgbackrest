@@ -151,6 +151,16 @@
                 </text>
 
                 <config-key-list>
+                    <config-key id="beta" name="Allow Beta Features">
+                        <summary>Allow beta features.</summary>
+
+                        <text>
+                            <p>Allow beta features to be enabled but do not actually enable them. Beta features need to be separately enabled using related options.</p>
+                        </text>
+
+                        <example>2MiB</example>
+                    </config-key>
+
                     <config-key id="buffer-size" name="Buffer Size">
                         <summary>Buffer size for I/O operations.</summary>
 

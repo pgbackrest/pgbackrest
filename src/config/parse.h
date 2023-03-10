@@ -67,6 +67,7 @@ typedef struct CfgParseOptionResult
     bool negate;                                                    // Was the option negated?
     bool reset;                                                     // Was the option reset?
     bool deprecated;                                                // Is the option deprecated?
+    bool beta;                                                      // Is the option in beta?
 } CfgParseOptionResult;
 
 #define cfgParseOptionP(optionName, ...)                                                                                            \

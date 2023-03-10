@@ -147,6 +147,8 @@ use constant CFGDEF_DEFAULT_LITERAL                                 => 'default-
 use constant CFGDEF_GROUP                                           => 'group';
     push @EXPORT, qw(CFGDEF_GROUP);
 
+use constant CFGDEF_BETA                                            => 'beta';
+    push @EXPORT, qw(CFGDEF_BETA);
 use constant CFGDEF_INDEX                                           => 'index';
     push @EXPORT, qw(CFGDEF_INDEX);
 use constant CFGDEF_INHERIT                                         => 'inherit';

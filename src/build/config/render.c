@@ -711,6 +711,9 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
             "        PARSE_RULE_OPTION_TYPE(%s),\n",
             strZ(opt->name), strZ(bldEnum("cfgOptType", opt->type)));
 
+        if (opt->beta)
+            strCatZ(configOpt, "        PARSE_RULE_OPTION_BETA(true),\n");
+
         if (opt->negate)
             strCatZ(configOpt, "        PARSE_RULE_OPTION_NEGATE(true),\n");
 

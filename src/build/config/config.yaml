@@ -610,6 +610,13 @@ option:
     command-role:
       main: {}
 
+  beta:
+    section: global
+    type: boolean
+    default: false
+    internal: true
+    beta: true
+
   buffer-size:
     section: global
     type: size

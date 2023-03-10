@@ -1112,6 +1112,88 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                     // opt/backup-standby
     ),                                                                                                         // opt/backup-standby
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                                    // opt/beta
+    (                                                                                                                    // opt/beta
+        PARSE_RULE_OPTION_NAME("beta"),                                                                                  // opt/beta
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),                                                                       // opt/beta
+        PARSE_RULE_OPTION_BETA(true),                                                                                    // opt/beta
+        PARSE_RULE_OPTION_NEGATE(true),                                                                                  // opt/beta
+        PARSE_RULE_OPTION_RESET(true),                                                                                   // opt/beta
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                                // opt/beta
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),                                                                     // opt/beta
+                                                                                                                         // opt/beta
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                                   // opt/beta
+        (                                                                                                                // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                                    // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                                  // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                                 // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                      // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                                       // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)                                                                      // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                                                        // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                                                  // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)                                                                     // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)                                                                      // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)                                                                     // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)                                                                      // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                                                     // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdServer)                                                                      // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdServerPing)                                                                  // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                                // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                                // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                               // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)                                                                       // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)                                                                        // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                                      // opt/beta
+        ),                                                                                                               // opt/beta
+                                                                                                                         // opt/beta
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                                  // opt/beta
+        (                                                                                                                // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                                  // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                                 // opt/beta
+        ),                                                                                                               // opt/beta
+                                                                                                                         // opt/beta
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                                  // opt/beta
+        (                                                                                                                // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                                  // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                                 // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                      // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                                                     // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                                      // opt/beta
+        ),                                                                                                               // opt/beta
+                                                                                                                         // opt/beta
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                                 // opt/beta
+        (                                                                                                                // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                                    // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                                  // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                                 // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                      // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                                       // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                                                        // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                                                  // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)                                                                     // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)                                                                      // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)                                                                     // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)                                                                      // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                                                     // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                                // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                                // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                               // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                                      // opt/beta
+        ),                                                                                                               // opt/beta
+                                                                                                                         // opt/beta
+        PARSE_RULE_OPTIONAL                                                                                              // opt/beta
+        (                                                                                                                // opt/beta
+            PARSE_RULE_OPTIONAL_GROUP                                                                                    // opt/beta
+            (                                                                                                            // opt/beta
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                              // opt/beta
+                (                                                                                                        // opt/beta
+                    PARSE_RULE_VAL_BOOL_FALSE,                                                                           // opt/beta
+                ),                                                                                                       // opt/beta
+            ),                                                                                                           // opt/beta
+        ),                                                                                                               // opt/beta
+    ),                                                                                                                   // opt/beta
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                             // opt/buffer-size
     (                                                                                                             // opt/buffer-size
         PARSE_RULE_OPTION_NAME("buffer-size"),                                                                    // opt/buffer-size
@@ -9575,6 +9657,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptArchivePushQueueMax,                                                                                  // opt-resolve-order
     cfgOptArchiveTimeout,                                                                                       // opt-resolve-order
     cfgOptBackupStandby,                                                                                        // opt-resolve-order
+    cfgOptBeta,                                                                                                 // opt-resolve-order
     cfgOptBufferSize,                                                                                           // opt-resolve-order
     cfgOptChecksumPage,                                                                                         // opt-resolve-order
     cfgOptCipherPass,                                                                                           // opt-resolve-order

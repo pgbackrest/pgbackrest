@@ -1163,6 +1163,37 @@ testRun(void)
             "HINT: this option could expose secrets in the process list.\n"
             "HINT: specify the option in a configuration file or an environment variable instead.");
 
+        // These tests cheat a bit but there may not always be a beta option available for more general testing
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("beta option dependency");
+
+        // Need to parse a command so there will be a valid index for the error message
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/db");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        strLstAddZ(argList, TEST_COMMAND_BACKUP);
+
+        ParseOption betaOption = {0};
+
+        TEST_ERROR(
+            parseOptionBeta(cfgOptRepoPath, 0, true, &betaOption), OptionInvalidError,
+            "option 'repo1-path' is not valid without option 'beta'\n"
+            "HINT: beta features require the --beta option to prevent accidental usage.");
+
+        betaOption.indexListTotal = 1;
+        ParseOptionValue betaOptionValue = {.negate = true};
+        betaOption.indexList = &betaOptionValue;
+
+        TEST_ERROR(
+            parseOptionBeta(cfgOptRepoPath, 0, true, &betaOption), OptionInvalidError,
+            "option 'repo1-path' is not valid without option 'beta'\n"
+            "HINT: beta features require the --beta option to prevent accidental usage.");
+
+        betaOption.indexList[0].negate = false;
+
+        TEST_RESULT_VOID(parseOptionBeta(cfgOptRepoPath, 0, true, &betaOption), "beta option set");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("dependent option missing");
 

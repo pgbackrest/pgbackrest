@@ -1090,6 +1090,7 @@ sub configCreate
 
     # General options
     # ------------------------------------------------------------------------------------------------------------------------------
+    $oParamHash{&CFGDEF_SECTION_GLOBAL}{'beta'} = 'y';
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{'job-retry'} = 0;
 
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{'log-level-console'} = lc(DETAIL);
