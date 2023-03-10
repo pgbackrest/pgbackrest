@@ -24,10 +24,10 @@ static const StringPub parseRuleValueStr[] =
     PARSE_RULE_STRPUB("1MiB"),                                                                                            // val/str
     PARSE_RULE_STRPUB("2"),                                                                                               // val/str
     PARSE_RULE_STRPUB("20MiB"),                                                                                           // val/str
+    PARSE_RULE_STRPUB("256KiB"),                                                                                          // val/str
     PARSE_RULE_STRPUB("2MiB"),                                                                                            // val/str
     PARSE_RULE_STRPUB("3"),                                                                                               // val/str
     PARSE_RULE_STRPUB("443"),                                                                                             // val/str
-    PARSE_RULE_STRPUB("4MiB"),                                                                                            // val/str
     PARSE_RULE_STRPUB("5432"),                                                                                            // val/str
     PARSE_RULE_STRPUB("60"),                                                                                              // val/str
     PARSE_RULE_STRPUB("8432"),                                                                                            // val/str
@@ -74,10 +74,10 @@ typedef enum
     parseRuleValStrQT_1MiB_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_2_QT,                                                                                          // val/str/enum
     parseRuleValStrQT_20MiB_QT,                                                                                      // val/str/enum
+    parseRuleValStrQT_256KiB_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_2MiB_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_3_QT,                                                                                          // val/str/enum
     parseRuleValStrQT_443_QT,                                                                                        // val/str/enum
-    parseRuleValStrQT_4MiB_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_5432_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_60_QT,                                                                                         // val/str/enum
     parseRuleValStrQT_8432_QT,                                                                                       // val/str/enum
@@ -5054,14 +5054,14 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                         // opt/repo-block-size-super
                 PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                         // opt/repo-block-size-super
                 (                                                                                       // opt/repo-block-size-super
-                    PARSE_RULE_VAL_INT(parseRuleValInt131072),                                          // opt/repo-block-size-super
+                    PARSE_RULE_VAL_INT(parseRuleValInt32768),                                           // opt/repo-block-size-super
                     PARSE_RULE_VAL_INT(parseRuleValInt16777216),                                        // opt/repo-block-size-super
                 ),                                                                                      // opt/repo-block-size-super
                                                                                                         // opt/repo-block-size-super
                 PARSE_RULE_OPTIONAL_DEFAULT                                                             // opt/repo-block-size-super
                 (                                                                                       // opt/repo-block-size-super
-                    PARSE_RULE_VAL_INT(parseRuleValInt1048576),                                         // opt/repo-block-size-super
-                    PARSE_RULE_VAL_STR(parseRuleValStrQT_1MiB_QT),                                      // opt/repo-block-size-super
+                    PARSE_RULE_VAL_INT(parseRuleValInt262144),                                          // opt/repo-block-size-super
+                    PARSE_RULE_VAL_STR(parseRuleValStrQT_256KiB_QT),                                    // opt/repo-block-size-super
                 ),                                                                                      // opt/repo-block-size-super
             ),                                                                                          // opt/repo-block-size-super
         ),                                                                                              // opt/repo-block-size-super
@@ -5094,14 +5094,14 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                    // opt/repo-block-size-super-full
                 PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                    // opt/repo-block-size-super-full
                 (                                                                                  // opt/repo-block-size-super-full
-                    PARSE_RULE_VAL_INT(parseRuleValInt131072),                                     // opt/repo-block-size-super-full
+                    PARSE_RULE_VAL_INT(parseRuleValInt32768),                                      // opt/repo-block-size-super-full
                     PARSE_RULE_VAL_INT(parseRuleValInt16777216),                                   // opt/repo-block-size-super-full
                 ),                                                                                 // opt/repo-block-size-super-full
                                                                                                    // opt/repo-block-size-super-full
                 PARSE_RULE_OPTIONAL_DEFAULT                                                        // opt/repo-block-size-super-full
                 (                                                                                  // opt/repo-block-size-super-full
-                    PARSE_RULE_VAL_INT(parseRuleValInt4194304),                                    // opt/repo-block-size-super-full
-                    PARSE_RULE_VAL_STR(parseRuleValStrQT_4MiB_QT),                                 // opt/repo-block-size-super-full
+                    PARSE_RULE_VAL_INT(parseRuleValInt1048576),                                    // opt/repo-block-size-super-full
+                    PARSE_RULE_VAL_STR(parseRuleValStrQT_1MiB_QT),                                 // opt/repo-block-size-super-full
                 ),                                                                                 // opt/repo-block-size-super-full
             ),                                                                                     // opt/repo-block-size-super-full
         ),                                                                                         // opt/repo-block-size-super-full

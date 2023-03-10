@@ -4050,6 +4050,7 @@ testRun(void)
             hrnCfgArgRawZ(argList, cfgOptRepoBlockSizeMap, STRINGIFY(BLOCK_MAX_FILE_SIZE) "=" STRINGIFY(BLOCK_MAX_SIZE));
             hrnCfgArgRawZ(argList, cfgOptRepoBlockSizeMap, STRINGIFY(BLOCK_MIN_FILE_SIZE) "=" STRINGIFY(BLOCK_MIN_SIZE));
             hrnCfgArgRawZ(argList, cfgOptRepoBlockSizeMap, STRINGIFY(BLOCK_MID_FILE_SIZE) "=" STRINGIFY(BLOCK_MID_SIZE));
+            hrnCfgArgRawZ(argList, cfgOptRepoBlockSizeSuper, "1MiB");
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Grow file size to check block incr delta. This is large enough that it would get a new block size if it were a new

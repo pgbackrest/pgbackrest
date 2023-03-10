@@ -1873,8 +1873,8 @@ option:
     section: global
     group: repo
     type: size
-    default: 1MiB
-    allow-range: [128KiB, 16MiB]
+    default: 256KiB
+    allow-range: [32KiB, 16MiB]
     internal: true
     command: repo-block
     command-role:
@@ -1886,7 +1886,7 @@ option:
 
   repo-block-size-super-full:
     inherit: repo-block-size-super
-    default: 4MiB
+    default: 1MiB
 
   repo-cipher-pass:
     section: global

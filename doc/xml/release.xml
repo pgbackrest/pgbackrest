@@ -51,6 +51,7 @@
                         <commit subject="Use xxHash instead of SHA-1 for block incremental checksums."/>
                         <commit subject="Exclude backup set size from info for block incremental backups."/>
                         <commit subject="Rename BlockHash to BlockChecksum."/>
+                        <commit subject="Update default block size and super block values based on testing."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
