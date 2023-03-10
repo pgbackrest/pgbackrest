@@ -11,6 +11,7 @@ client using the hrnServerScript() functions.
 
 #include "common/io/read.h"
 #include "common/io/write.h"
+#include "common/time.h"
 
 /***********************************************************************************************************************************
 Server protocol type
