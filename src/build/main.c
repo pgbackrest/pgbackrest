@@ -96,7 +96,8 @@ main(const int argListSize, const char *const argList[])
     CATCH_FATAL()
     {
         LOG_FMT(
-            errorTypeCode(&AssertError) ? logLevelAssert : logLevelError, errorCode(), "%s\n%s", errorMessage(), errorStackTrace());
+            errorCode() == errorTypeCode(&AssertError) ? logLevelAssert : logLevelError, errorCode(), "%s\n%s", errorMessage(),
+            errorStackTrace());
 
         result = errorCode();
     }
