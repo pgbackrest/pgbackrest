@@ -490,330 +490,6 @@ testBackupValidate(const Storage *const storage, const String *const path, TestB
 }
 
 /***********************************************************************************************************************************
-Generate pq scripts for versions of PostgreSQL
-***********************************************************************************************************************************/
-typedef struct TestBackupPqScriptParam
-{
-    VAR_PARAM_HEADER;
-    bool startFast;
-    bool backupStandby;
-    bool errorAfterStart;
-    bool noWal;                                                     // Don't write test WAL segments
-    bool noPriorWal;                                                // Don't write prior test WAL segments
-    bool noArchiveCheck;                                            // Do not check archive
-    CompressType walCompressType;                                   // Compress type for the archive files
-    CipherType cipherType;                                          // Cipher type
-    const char *cipherPass;                                         // Cipher pass
-    unsigned int walTotal;                                          // Total WAL to write
-    unsigned int timeline;                                          // Timeline to use for WAL files
-    const String *pgVersionForce;                                     // PG version to use when control/catalog not found
-} TestBackupPqScriptParam;
-
-#define testBackupPqScriptP(pgVersion, backupStartTime, ...)                                                                       \
-    testBackupPqScript(pgVersion, backupStartTime, (TestBackupPqScriptParam){VAR_PARAM_INIT, __VA_ARGS__})
-
-static void
-testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqScriptParam param)
-{
-    const char *pg1Path = TEST_PATH "/pg1";
-    const char *pg2Path = TEST_PATH "/pg2";
-
-    // If no timeline specified then use timeline 1
-    param.timeline = param.timeline == 0 ? 1 : param.timeline;
-
-    // Read pg_control to get info about the cluster
-    PgControl pgControl = pgControlFromFile(storagePg(), param.pgVersionForce);
-
-    // Set archive timeout really small to save time on errors
-    cfgOptionSet(cfgOptArchiveTimeout, cfgSourceParam, varNewInt64(100));
-
-    // Set LSN and WAL start/stop
-    uint64_t lsnStart = ((uint64_t)backupTimeStart & 0xFFFFFF00) << 28;
-    uint64_t lsnStop =
-        lsnStart + ((param.walTotal == 0 ? 0 : param.walTotal - 1) * pgControl.walSegmentSize) + (pgControl.walSegmentSize / 2);
-
-    const char *walSegmentPrior = strZ(
-        pgLsnToWalSegment(param.timeline, lsnStart - pgControl.walSegmentSize, pgControl.walSegmentSize));
-    const char *lsnStartStr = strZ(pgLsnToStr(lsnStart));
-    const char *walSegmentStart = strZ(pgLsnToWalSegment(param.timeline, lsnStart, pgControl.walSegmentSize));
-    const char *lsnStopStr = strZ(pgLsnToStr(lsnStop));
-    const char *walSegmentStop = strZ(pgLsnToWalSegment(param.timeline, lsnStop, pgControl.walSegmentSize));
-
-    // Save pg_control with updated info
-    pgControl.checkpoint = lsnStart;
-    pgControl.timeline = param.timeline;
-
-    HRN_STORAGE_PUT(
-        storagePgIdxWrite(0), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer(0, pgControl),
-        .timeModified = backupTimeStart);
-
-    // Update pg_control on primary with the backup time
-    HRN_PG_CONTROL_TIME(storagePgIdxWrite(0), backupTimeStart);
-
-    // Write WAL segments to the archive
-    // -----------------------------------------------------------------------------------------------------------------------------
-    if (!param.noPriorWal)
-    {
-        InfoArchive *infoArchive = infoArchiveLoadFile(
-            storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, param.cipherType == 0 ? cipherTypeNone : param.cipherType,
-            param.cipherPass == NULL ? NULL : STR(param.cipherPass));
-        const String *archiveId = infoArchiveId(infoArchive);
-        StringList *walSegmentList = pgLsnRangeToWalSegmentList(
-            param.timeline, lsnStart - pgControl.walSegmentSize, param.noWal ? lsnStart - pgControl.walSegmentSize : lsnStop,
-            pgControl.walSegmentSize);
-
-        Buffer *walBuffer = bufNew((size_t)pgControl.walSegmentSize);
-        bufUsedSet(walBuffer, bufSize(walBuffer));
-        memset(bufPtr(walBuffer), 0, bufSize(walBuffer));
-        HRN_PG_WAL_TO_BUFFER(walBuffer, pgControl.version, .systemId = pgControl.systemId);
-        const String *walChecksum = strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, walBuffer));
-
-        for (unsigned int walSegmentIdx = 0; walSegmentIdx < strLstSize(walSegmentList); walSegmentIdx++)
-        {
-            StorageWrite *write = storageNewWriteP(
-                storageRepoWrite(),
-                strNewFmt(
-                    STORAGE_REPO_ARCHIVE "/%s/%s-%s%s", strZ(archiveId), strZ(strLstGet(walSegmentList, walSegmentIdx)),
-                    strZ(walChecksum), strZ(compressExtStr(param.walCompressType))));
-
-            if (param.walCompressType != compressTypeNone)
-                ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(write)), compressFilterP(param.walCompressType, 1));
-
-            storagePutP(write, walBuffer);
-        }
-    }
-
-    // -----------------------------------------------------------------------------------------------------------------------------
-    if (pgVersion == PG_VERSION_95)
-    {
-        ASSERT(!param.backupStandby);
-        ASSERT(!param.errorAfterStart);
-
-        if (param.noArchiveCheck)
-        {
-            harnessPqScriptSet((HarnessPq [])
-            {
-                // Connect to primary
-                HRNPQ_MACRO_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_95, pg1Path, false, NULL, NULL),
-
-                // Get start time
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000),
-
-                // Start backup
-                HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-                HRNPQ_MACRO_IS_IN_BACKUP(1, false),
-                HRNPQ_MACRO_START_BACKUP_LE_95(1, param.startFast, lsnStartStr, walSegmentStart),
-                HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
-                HRNPQ_MACRO_TABLESPACE_LIST_0(1),
-
-                // Get copy start time
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 999),
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 1000),
-
-                // Ping
-                HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),
-                HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),
-
-                // Stop backup
-                HRNPQ_MACRO_STOP_BACKUP_LE_95(1, lsnStopStr, walSegmentStop),
-
-                // Get stop time
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 2000),
-
-                HRNPQ_MACRO_DONE()
-            });
-        }
-        else
-        {
-            harnessPqScriptSet((HarnessPq [])
-            {
-                // Connect to primary
-                HRNPQ_MACRO_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_95, pg1Path, false, NULL, NULL),
-
-                // Get start time
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000),
-
-                // Start backup
-                HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-                HRNPQ_MACRO_IS_IN_BACKUP(1, false),
-                HRNPQ_MACRO_CURRENT_WAL_LE_96(1, walSegmentPrior),
-                HRNPQ_MACRO_START_BACKUP_LE_95(1, param.startFast, lsnStartStr, walSegmentStart),
-                HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
-                HRNPQ_MACRO_TABLESPACE_LIST_0(1),
-
-                // Get copy start time
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 999),
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 1000),
-
-                // Ping
-                HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),
-                HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),
-
-                // Stop backup
-                HRNPQ_MACRO_STOP_BACKUP_LE_95(1, lsnStopStr, walSegmentStop),
-
-                // Get stop time
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 2000),
-
-                HRNPQ_MACRO_DONE()
-            });
-        }
-    }
-    // -----------------------------------------------------------------------------------------------------------------------------
-    else if (pgVersion == PG_VERSION_96)
-    {
-        ASSERT(param.backupStandby);
-        ASSERT(!param.errorAfterStart);
-        ASSERT(!param.noArchiveCheck);
-
-        // Save pg_control with updated info
-        HRN_STORAGE_PUT(storagePgIdxWrite(1), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer(0, pgControl));
-
-        if (param.noPriorWal)
-        {
-            harnessPqScriptSet((HarnessPq [])
-            {
-                // Connect to primary
-                HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_96, pg1Path, false, NULL, NULL),
-
-                // Connect to standby
-                HRNPQ_MACRO_OPEN_GE_96(2, "dbname='postgres' port=5433", PG_VERSION_96, pg2Path, true, NULL, NULL),
-
-                // Get start time
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000),
-
-                // Start backup
-                HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-                HRNPQ_MACRO_CURRENT_WAL_LE_96(1, walSegmentPrior),
-                HRNPQ_MACRO_START_BACKUP_96(1, true, lsnStartStr, walSegmentStart),
-                HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
-                HRNPQ_MACRO_TABLESPACE_LIST_0(1),
-
-                // Wait for standby to sync
-                HRNPQ_MACRO_REPLAY_WAIT_96(2, lsnStartStr),
-
-                HRNPQ_MACRO_DONE()
-            });
-        }
-        else
-        {
-            harnessPqScriptSet((HarnessPq [])
-            {
-                // Connect to primary
-                HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_96, pg1Path, false, NULL, NULL),
-
-                // Connect to standby
-                HRNPQ_MACRO_OPEN_GE_96(2, "dbname='postgres' port=5433", PG_VERSION_96, pg2Path, true, NULL, NULL),
-
-                // Get start time
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000),
-
-                // Start backup
-                HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-                HRNPQ_MACRO_CURRENT_WAL_LE_96(1, walSegmentPrior),
-                HRNPQ_MACRO_START_BACKUP_96(1, true, lsnStartStr, walSegmentStart),
-                HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
-                HRNPQ_MACRO_TABLESPACE_LIST_0(1),
-
-                // Wait for standby to sync
-                HRNPQ_MACRO_REPLAY_WAIT_96(2, lsnStartStr),
-
-                // Get copy start time
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 999),
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 1000),
-
-                // Ping
-                HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),
-                HRNPQ_MACRO_IS_STANDBY_QUERY(2, true),
-                HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),
-                HRNPQ_MACRO_IS_STANDBY_QUERY(2, true),
-
-                // Stop backup
-                HRNPQ_MACRO_STOP_BACKUP_96(1, lsnStopStr, walSegmentStop, false),
-
-                // Get stop time
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 2000),
-
-                HRNPQ_MACRO_DONE()
-            });
-        }
-    }
-    // -----------------------------------------------------------------------------------------------------------------------------
-    else if (pgVersion == PG_VERSION_11)
-    {
-        ASSERT(!param.backupStandby);
-        ASSERT(!param.noArchiveCheck);
-
-        if (param.errorAfterStart)
-        {
-            harnessPqScriptSet((HarnessPq [])
-            {
-                // Connect to primary
-                HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_11, pg1Path, false, NULL, NULL),
-
-                // Get start time
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000),
-
-                // Start backup
-                HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-                HRNPQ_MACRO_CURRENT_WAL_GE_10(1, walSegmentPrior),
-                HRNPQ_MACRO_START_BACKUP_GE_10(1, param.startFast, lsnStartStr, walSegmentStart),
-                HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
-                HRNPQ_MACRO_TABLESPACE_LIST_1(1, 32768, "tblspc32768"),
-
-                // Get copy start time
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 999),
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 1000),
-
-                HRNPQ_MACRO_DONE()
-            });
-        }
-        else
-        {
-            harnessPqScriptSet((HarnessPq [])
-            {
-                // Connect to primary
-                HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_11, pg1Path, false, NULL, NULL),
-
-                // Get start time
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000),
-
-                // Start backup
-                HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-                HRNPQ_MACRO_CURRENT_WAL_GE_10(1, walSegmentStart),
-                HRNPQ_MACRO_START_BACKUP_GE_10(1, param.startFast, lsnStartStr, walSegmentStart),
-
-                // Switch WAL segment so it can be checked
-                HRNPQ_MACRO_CREATE_RESTORE_POINT(1, "X/X"),
-                HRNPQ_MACRO_WAL_SWITCH(1, "wal", walSegmentStart),
-
-                // Get database and tablespace list
-                HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
-                HRNPQ_MACRO_TABLESPACE_LIST_1(1, 32768, "tblspc32768"),
-
-                // Get copy start time
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 999),
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 1000),
-
-                // Ping
-                HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),
-                HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),
-
-                // Stop backup
-                HRNPQ_MACRO_STOP_BACKUP_GE_10(1, lsnStopStr, walSegmentStop, true),
-
-                // Get stop time
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 2000),
-
-                HRNPQ_MACRO_DONE()
-            });
-        }
-    }
-    else
-        THROW_FMT(AssertError, "unsupported test version %u", pgVersion);           // {uncoverable - no invalid versions in tests}
-}
-
-/***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
 static void
@@ -2675,13 +2351,6 @@ testRun(void)
         // Replace checksums since they can differ between architectures (e.g. 32/64 bit)
         hrnLogReplaceAdd("\\) checksum [a-f0-9]{40}", "[a-f0-9]{40}$", "SHA1", false);
 
-        // Backup start time epoch.  The idea is to not have backup times (and therefore labels) ever change.  Each backup added
-        // should be separated by 100,000 seconds (1,000,000 after stanza-upgrade) but after the initial assignments this will only
-        // be possible at the beginning and the end, so new backups added in the middle will average the start times of the prior
-        // and next backup to get their start time.  Backups added to the beginning of the test will need to subtract from the
-        // epoch.
-        #define BACKUP_EPOCH                                        1570000000
-
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("online 9.5 resume uncompressed full backup");
 
@@ -2750,7 +2419,7 @@ testRun(void)
                         strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strZ(resumeLabel)))));
 
             // Run backup
-            testBackupPqScriptP(PG_VERSION_95, backupTimeStart, .noArchiveCheck = true, .noWal = true);
+            hrnBackupPqScriptP(PG_VERSION_95, backupTimeStart, .noArchiveCheck = true, .noWal = true);
 
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
@@ -2887,7 +2556,7 @@ testRun(void)
             ((Storage *)storageRepoWrite())->pub.interface.feature ^= 1 << storageFeaturePathSync;
 
             // Run backup
-            testBackupPqScriptP(PG_VERSION_95, backupTimeStart);
+            hrnBackupPqScriptP(PG_VERSION_95, backupTimeStart);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             // Enable storage features
@@ -3068,7 +2737,7 @@ testRun(void)
                         strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strZ(resumeLabel)))));
 
             // Run backup
-            testBackupPqScriptP(PG_VERSION_95, backupTimeStart);
+            hrnBackupPqScriptP(PG_VERSION_95, backupTimeStart);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             // Check log
@@ -3220,7 +2889,7 @@ testRun(void)
             harnessLogLevelSet(logLevelWarn);
 
             // Run backup but error on first archive check
-            testBackupPqScriptP(
+            hrnBackupPqScriptP(
                 PG_VERSION_96, backupTimeStart, .noPriorWal = true, .backupStandby = true, .walCompressType = compressTypeGz);
             TEST_ERROR(
                 hrnCmdBackup(), ArchiveTimeoutError,
@@ -3230,7 +2899,7 @@ testRun(void)
                 "HINT: run the 'start' command if the stanza was previously stopped.");
 
             // Run backup but error on archive check
-            testBackupPqScriptP(
+            hrnBackupPqScriptP(
                 PG_VERSION_96, backupTimeStart, .noWal = true, .backupStandby = true, .walCompressType = compressTypeGz);
             TEST_ERROR(
                 hrnCmdBackup(), ArchiveTimeoutError,
@@ -3251,7 +2920,7 @@ testRun(void)
             const String *archiveInfoContent = strNewBuf(storageGetP(storageNewReadP(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR)));
 
             // Run backup
-            testBackupPqScriptP(PG_VERSION_96, backupTimeStart, .backupStandby = true, .walCompressType = compressTypeGz);
+            hrnBackupPqScriptP(PG_VERSION_96, backupTimeStart, .backupStandby = true, .walCompressType = compressTypeGz);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             // Check archive.info/copy timestamp was updated but contents were not
@@ -3425,7 +3094,7 @@ testRun(void)
             ((Storage *)storageRepoWrite())->pub.interface.feature ^= 1 << storageFeatureHardLink;
 
             // Run backup
-            testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 3);
+            hrnBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 3);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             // Reset storage features
@@ -3551,7 +3220,7 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Preserve prior timestamp on pg_control
-            testBackupPqScriptP(PG_VERSION_11, BACKUP_EPOCH + 2300000, .errorAfterStart = true);
+            hrnBackupPqScriptP(PG_VERSION_11, BACKUP_EPOCH + 2300000, .errorAfterStart = true);
             HRN_PG_CONTROL_TIME(storagePg(), backupTimeStart);
 
             // Run backup
@@ -3593,7 +3262,7 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Run backup.  Make sure that the timeline selected converts to hexdecimal that can't be interpreted as decimal.
-            testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .timeline = 0x2C, .walTotal = 2);
+            hrnBackupPqScriptP(PG_VERSION_11, backupTimeStart, .timeline = 0x2C, .walTotal = 2);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
@@ -3732,7 +3401,7 @@ testRun(void)
             HRN_STORAGE_PUT(storagePgWrite(), "bigish.dat", bigish, .timeModified = 1500000001);
 
             // Run backup
-            testBackupPqScriptP(
+            hrnBackupPqScriptP(
                 PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2, .pgVersionForce = STRDEF("11"));
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
@@ -3863,7 +3532,7 @@ testRun(void)
             HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "zero", .timeModified = backupTimeStart);
 
             // Run backup
-            testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2);
+            hrnBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
@@ -3973,7 +3642,7 @@ testRun(void)
             HRN_STORAGE_PUT(storagePgWrite(), "grow-to-block-incr", file, .timeModified = backupTimeStart);
 
             // Run backup
-            testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2);
+            hrnBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
@@ -4084,7 +3753,7 @@ testRun(void)
             HRN_STORAGE_PUT(storagePgWrite(), "grow-to-block-incr", file, .timeModified = backupTimeStart);
 
             // Run backup
-            testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2);
+            hrnBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
@@ -4198,7 +3867,7 @@ testRun(void)
             HRN_STORAGE_PUT(storagePgWrite(), "block-incr-grow", file, .timeModified = backupTimeStart);
 
             // Run backup
-            testBackupPqScriptP(
+            hrnBackupPqScriptP(
                 PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherType = cipherTypeAes256Cbc,
                 .cipherPass = TEST_CIPHER_PASS, .walTotal = 2);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
@@ -4290,7 +3959,7 @@ testRun(void)
             HRN_STORAGE_PUT(storagePgWrite(), "block-age-multiplier", file, .timeModified = backupTimeStart - SEC_PER_DAY);
 
             // Run backup
-            testBackupPqScriptP(
+            hrnBackupPqScriptP(
                 PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherType = cipherTypeAes256Cbc,
                 .cipherPass = TEST_CIPHER_PASS, .walTotal = 2);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
