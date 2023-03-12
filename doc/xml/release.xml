@@ -53,6 +53,7 @@
                         <commit subject="Rename BlockHash to BlockChecksum."/>
                         <commit subject="Update default block size and super block values based on testing."/>
                         <commit subject="Ensure no continuations when block size equals super block size."/>
+                        <commit subject="Fix typo in blockIncrProcess()."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>

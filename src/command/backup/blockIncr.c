@@ -225,7 +225,7 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
         // Write the super block
         if (this->blockOutWrite != NULL && (this->done || this->blockOutSize >= this->superBlockSize))
         {
-            // Explicitly terminate the block if all block sizes are equal. This is not required if that last block is smaller than
+            // Explicitly terminate the block if all block sizes are equal. This is not required if the last block is smaller than
             // the block size.
             if (this->blockOutSize % this->blockSize == 0)
                 ioWriteVarIntU64(this->blockOutWrite, 0);
