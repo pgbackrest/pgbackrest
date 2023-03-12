@@ -209,7 +209,7 @@ blockMapNewRead(IoRead *const map, size_t checksumSize)
                 blockTotal += blockTotalEncoded >> BLOCK_MAP_BLOCK_TOTAL_SHIFT;
 
                 // Offset block no from expected
-                if (blockTotalEncoded & BLOCK_MAP_BLOCK_TOTAL_SHIFT)
+                if (blockTotalEncoded & BLOCK_MAP_FLAG_BLOCK_TOTAL_OFFSET)
                     referenceData->block += ioReadVarIntU64(map);
             }
 
