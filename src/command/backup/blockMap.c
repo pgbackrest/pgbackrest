@@ -137,6 +137,8 @@ blockMapNewRead(IoRead *const map, size_t checksumSize)
             // If the reference is continued use the prior offset and size values
             if (referenceEncoded & BLOCK_MAP_FLAG_CONTINUE)
             {
+                ASSERT(!blockEqual);
+
                 blockMapItem.offset = referenceData->offset;
                 blockMapItem.size = referenceData->size;
                 referenceContinue = true;
@@ -333,6 +335,8 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output, const bool bloc
             // the last one for the reference.
             if (reference->offset == referenceData->offset)
             {
+                ASSERT(!blockEqual);
+
                 referenceEncoded |= BLOCK_MAP_FLAG_CONTINUE;
                 referenceContinue = true;
             }
