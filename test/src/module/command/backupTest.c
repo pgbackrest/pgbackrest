@@ -869,7 +869,7 @@ testRun(void)
         blockMapItem = (BlockMapItem)
         {
             .reference = 1,
-            .superBlockSize = 6,
+            .superBlockSize = 3,
             .offset = 0,
             .size = 99,
             .block = 0,
@@ -893,7 +893,7 @@ testRun(void)
         blockMapItem = (BlockMapItem)
         {
             .reference = 2,
-            .superBlockSize = 6,
+            .superBlockSize = 3,
             .offset = 0,
             .size = 1,
             .block = 0,
@@ -950,9 +950,8 @@ testRun(void)
             "eeee03000000ffff"                          // checksum
 
             "08"                                        // reference 1
-            "01"                                        // super block size 6
+            "00"                                        // super block size 3
             "f902"                                      // size 99
-            "00"                                        // block total 1
             "eeee04000000ffff"                          // checksum
 
             "06"                                        // reference 0
@@ -961,9 +960,8 @@ testRun(void)
             "eeee05000000ffff"                          // checksum
 
             "10"                                        // reference 2
-            "01"                                        // super block size 6
+            "00"                                        // super block size 3
             "0f"                                        // size 1
-            "00"                                        // block total 1
             "eeee06000000ffff"                          // checksum
 
             "03"                                        // reference 0

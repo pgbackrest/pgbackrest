@@ -262,8 +262,7 @@ blockMapNewRead(IoRead *const map, const size_t blockSize, const size_t checksum
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-blockMapWrite(
-    const BlockMap *const this, IoWrite *const output, const size_t blockSize, const size_t checksumSize)
+blockMapWrite(const BlockMap *const this, IoWrite *const output, const size_t blockSize, const size_t checksumSize)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(BLOCK_MAP, this);
