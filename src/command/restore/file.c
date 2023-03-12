@@ -295,7 +295,8 @@ restoreFile(
 
                         // Read block map. This will be compared to the block checksum list already created to determine which
                         // blocks need to be fetched from the repository. If we got here there must be at least one block to fetch.
-                        const BlockMap *const blockMap = blockMapNewRead(storageReadIo(repoFileRead), file->blockIncrChecksumSize);
+                        const BlockMap *const blockMap = blockMapNewRead(
+                            storageReadIo(repoFileRead), file->blockIncrSize, file->blockIncrChecksumSize);
 
                         // The repo file needs to be closed so that block lists can be read from the remote protocol
                         ioReadClose(storageReadIo(repoFileRead));

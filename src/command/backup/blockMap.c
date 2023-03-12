@@ -44,14 +44,10 @@ References, super blocks, and blocks are encoded with a bit that indicates when 
 #define BLOCK_MAP_FLAG_BLOCK_TOTAL_OFFSET                           1   // Block total has an offset
 #define BLOCK_MAP_BLOCK_TOTAL_SHIFT                                 1   // Shift bits for block total
 
-// If block size is divisible by this factor it can be stored more efficiently
-#define BLOCK_SIZE_FACTOR                                           8192
-
 typedef enum
 {
     blockMapFlagVersion = 0,                                        // Version (currently always 0)
     blockMapFlagEqual = 1,                                          // Are blocks and super blocks equal size?
-    blockMapFlag8192 = 2,                                           // Is the block size divisible by 8192?
 } BlockMapFlag;
 
 // Stores current information about a reference to avoid needed to encode it again
@@ -87,7 +83,7 @@ lstComparatorBlockMapReference(const void *const blockMapRef1, const void *const
 }
 
 FN_EXTERN BlockMap *
-blockMapNewRead(IoRead *const map, size_t checksumSize)
+blockMapNewRead(IoRead *const map, const size_t blockSize, const size_t checksumSize)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_READ, map);
@@ -97,12 +93,6 @@ blockMapNewRead(IoRead *const map, size_t checksumSize)
     // has changed.
     const uint64_t flags = ioReadVarIntU64(map);
     CHECK(FormatError, (flags & (1 << blockMapFlagVersion)) == 0, "block map version must be zero");
-
-    // Is the block size divisible by 8192?
-    const bool blockSize8192 = flags & (1 << blockMapFlag8192);
-
-    // Read block size
-    const size_t blockSize = (ioReadVarIntU64(map) + 1) * (blockSize8192 ? BLOCK_SIZE_FACTOR : 1);
 
     // Read all references in packed format
     BlockMap *const this = blockMapNew();
@@ -287,11 +277,8 @@ blockMapWrite(
     ASSERT(blockSize > 0);
     ASSERT(output != NULL);
 
-    // Set flag to indicate that block size is divisible by 8192
-    const bool blockSize8192 = blockSize % BLOCK_SIZE_FACTOR == 0;
-    uint64_t flags = blockSize8192 ? 1 << blockMapFlag8192 : 0;
-
     // Set flag to indicate that all super blocks are equal to the block size
+    uint64_t flags = 0;
     unsigned int blockIdx = 0;
 
     for (; blockIdx < blockMapSize(this); blockIdx++)
@@ -305,9 +292,6 @@ blockMapWrite(
 
     // Write flags
     ioWriteVarIntU64(output, flags);
-
-    // Write block size
-    ioWriteVarIntU64(output, (blockSize8192 ? blockSize / BLOCK_SIZE_FACTOR : blockSize) - 1);
 
     // Write all references in packed format
     List *const refList = lstNewP(sizeof(BlockMapReference), .comparator = lstComparatorBlockMapReference);

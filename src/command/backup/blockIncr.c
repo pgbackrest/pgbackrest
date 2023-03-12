@@ -448,7 +448,7 @@ blockIncrNew(
 
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {
-                    driver->blockMapPrior = blockMapNewRead(read, checksumSize);
+                    driver->blockMapPrior = blockMapNewRead(read, blockSize, checksumSize);
                 }
                 MEM_CONTEXT_PRIOR_END();
             }

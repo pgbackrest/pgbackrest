@@ -39,7 +39,7 @@ blockMapNew(void)
 }
 
 // New block map from IO
-FN_EXTERN BlockMap *blockMapNewRead(IoRead *map, size_t checksumSize);
+FN_EXTERN BlockMap *blockMapNewRead(IoRead *map, size_t blockSize, size_t checksumSize);
 
 /***********************************************************************************************************************************
 Functions
