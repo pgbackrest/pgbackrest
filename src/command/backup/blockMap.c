@@ -41,7 +41,8 @@ References, super blocks, and blocks are encoded with a bit that indicates when 
 #define BLOCK_MAP_FLAG_CONTINUE_LAST                                4   // Continued super block is last for the reference
 #define BLOCK_MAP_REFERENCE_SHIFT                                   3   // Shift bits for reference
 #define BLOCK_MAP_SUPER_BLOCK_SHIFT                                 1   // Shift bits for super block
-#define BLOCK_MAP_BLOCK_SHIFT                                       1   // Shift bits for block
+#define BLOCK_MAP_FLAG_BLOCK_TOTAL_OFFSET                           1   // Block total has an offset
+#define BLOCK_MAP_BLOCK_TOTAL_SHIFT                                 1   // Shift bits for block total
 
 typedef enum
 {
@@ -198,19 +199,25 @@ blockMapNewRead(IoRead *const map, size_t checksumSize)
             sizeLast = (int64_t)blockMapItem.size;
             superBlockFirst = false;
 
-            // Read all blocks in the current super block in packed format
-            do
-            {
-                // Block no only needs to be read when super block size does not equal block size
-                uint64_t blockEncoded = BLOCK_MAP_FLAG_LAST;
+            // Read total blocks in the super block
+            uint64_t blockTotal = 1;
 
-                if (!blockEqual)
-                {
-                    // Read block no as the difference from the prior block
-                    blockEncoded = ioReadVarIntU64(map);
-                    blockMapItem.block = (blockEncoded >> BLOCK_MAP_BLOCK_SHIFT) + referenceData->block;
-                    referenceData->block = blockMapItem.block;
-                }
+            if (!blockEqual)
+            {
+                const uint64_t blockTotalEncoded = ioReadVarIntU64(map);
+
+                blockTotal += blockTotalEncoded >> BLOCK_MAP_BLOCK_TOTAL_SHIFT;
+
+                // Offset block no from expected
+                if (blockTotalEncoded & BLOCK_MAP_BLOCK_TOTAL_SHIFT)
+                    referenceData->block += ioReadVarIntU64(map);
+            }
+
+            // Read checksums
+            for (uint64_t blockIdx = 0; blockIdx < blockTotal; blockIdx++)
+            {
+                // Set block no
+                blockMapItem.block = referenceData->block + blockIdx;
 
                 // Read checksum
                 bufUsedZero(checksum);
@@ -219,12 +226,10 @@ blockMapNewRead(IoRead *const map, size_t checksumSize)
 
                 // Add to block list
                 lstAdd((List *)this, &blockMapItem);
-
-                // Break when this is the last block in the super block
-                if (blockEncoded & BLOCK_MAP_FLAG_LAST)
-                    break;
             }
-            while (true);
+
+            // Update block in reference with all blocks read
+            referenceData->block += blockTotal;
 
             // Update offset with the super block size
             blockMapItem.offset += blockMapItem.size;
@@ -408,28 +413,39 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output, const bool bloc
 
             sizeLast = (int64_t)superBlock->size;
 
-            // Write all blocks in the current super block in packed format
-            while (blockIdx < superBlockIdx)
+            // Write total blocks in the super block
+            ASSERT(superBlockIdx - blockIdx > 0);
+
+            if (!blockEqual)
             {
-                const BlockMapItem *const block = blockMapGet(this, blockIdx);
-                ASSERT(block->block >= referenceData->block);
+                ASSERT(superBlock->block >= referenceData->block);
 
-                // Block no only needs to be written when super block size does not equal block size
-                if (!blockEqual)
+                const uint64_t blockTotalEncoded =
+                    (superBlockIdx - blockIdx - 1) << BLOCK_MAP_BLOCK_TOTAL_SHIFT |
+                    (superBlock->block - referenceData->block > 0 ? BLOCK_MAP_FLAG_BLOCK_TOTAL_OFFSET : 0);
+
+                ioWriteVarIntU64(output, blockTotalEncoded);
+
+                // If there is a gap in block no from the prior super block. This can happen when a super block is continued or
+                // had blocks at the beginning overridden by a newer super block.
+                if (blockTotalEncoded & BLOCK_MAP_FLAG_BLOCK_TOTAL_OFFSET)
                 {
-                    // Write block no as the difference from the prior block
-                    ioWriteVarIntU64(
-                        output,
-                        (blockIdx == superBlockIdx - 1 ? BLOCK_MAP_FLAG_LAST : 0) |
-                        (block->block - referenceData->block) << BLOCK_MAP_BLOCK_SHIFT);
-
-                    referenceData->block = block->block;
+                    ioWriteVarIntU64(output, superBlock->block - referenceData->block);
+                    referenceData->block = superBlock->block;
                 }
+            }
 
-                // Write checksum
-                ioWrite(output, BUF(block->checksum, checksumSize));
+            // Increment reference block by number of blocks written
+            referenceData->block += superBlockIdx - blockIdx;
 
-                blockIdx++;
+            // Write checksums
+            for (; blockIdx < superBlockIdx; blockIdx++)
+            {
+                ASSERT(
+                    superBlock == blockMapGet(this, blockIdx) ||
+                    blockMapGet(this, blockIdx)->block == blockMapGet(this, blockIdx - 1)->block + 1);
+
+                ioWrite(output, BUF(blockMapGet(this, blockIdx)->checksum, checksumSize));
             }
         }
     }
