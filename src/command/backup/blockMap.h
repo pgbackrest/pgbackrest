@@ -20,6 +20,7 @@ typedef struct BlockMap BlockMap;
 typedef struct BlockMapItem
 {
     unsigned int reference;                                         // Reference to backup where the block is stored
+    uint64_t superBlockSize;                                        // Size for all super blocks in the reference
     uint64_t bundleId;                                              // Bundle where the block is stored (0 if not bundled)
     uint64_t offset;                                                // Offset of super block into the bundle
     uint64_t size;                                                  // Size of the super block (including compression, etc.)
@@ -52,7 +53,7 @@ blockMapAdd(BlockMap *const this, const BlockMapItem *const item)
 }
 
 // Write map to IO
-FN_EXTERN void blockMapWrite(const BlockMap *this, IoWrite *output, bool blockEqual, size_t checksumSize);
+FN_EXTERN void blockMapWrite(const BlockMap *this, IoWrite *output, size_t blockSize, size_t checksumSize);
 
 /***********************************************************************************************************************************
 Getters/Setters

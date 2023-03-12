@@ -193,6 +193,7 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
                     BlockMapItem blockMapItem =
                     {
                         .reference = this->reference,
+                        .superBlockSize = this->superBlockSize,
                         .bundleId = this->bundleId,
                         .offset = this->blockOffset,
                         .block = this->superBlockNo,
@@ -225,7 +226,7 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
         // Write the super block
         if (this->blockOutWrite != NULL && (this->done || this->blockOutSize >= this->superBlockSize))
         {
-            // Explicitly terminate the block if all block sizes are equal. This is not required if that last block is smaller than
+            // Explicitly terminate the block if all block sizes are equal. This is not required if the last block is smaller than
             // the block size.
             if (this->blockOutSize % this->blockSize == 0)
                 ioWriteVarIntU64(this->blockOutWrite, 0);
@@ -273,7 +274,7 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
 
                 // Write the map
                 ioWriteOpen(write);
-                blockMapWrite(this->blockMapOut, write, this->blockSize == this->superBlockSize, this->checksumSize);
+                blockMapWrite(this->blockMapOut, write, this->blockSize, this->checksumSize);
                 ioWriteClose(write);
 
                 // Get total bytes written for the map
@@ -418,9 +419,14 @@ blockIncrNew(
             .blockMapOut = blockMapNew(),
         };
 
-        // If there will be less than two blocks per super block then set them equal to save space in the map
-        if (superBlockSize < blockSize * 2)
+        // If super block size is less than block size then make them equal
+        if (superBlockSize < blockSize)
+        {
             driver->superBlockSize = blockSize;
+        }
+        // Else make super block size an even number of blocks
+        else if (superBlockSize > blockSize)
+            driver->superBlockSize = (superBlockSize / blockSize + (superBlockSize % blockSize == 0 ? 0 : 1)) * blockSize;
 
         // Duplicate compress filter
         if (compress != NULL)

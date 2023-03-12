@@ -44,16 +44,22 @@ References, super blocks, and blocks are encoded with a bit that indicates when 
 #define BLOCK_MAP_FLAG_BLOCK_TOTAL_OFFSET                           1   // Block total has an offset
 #define BLOCK_MAP_BLOCK_TOTAL_SHIFT                                 1   // Shift bits for block total
 
+// If block size is divisible by this factor it can be stored more efficiently
+#define BLOCK_SIZE_FACTOR                                           8192
+
 typedef enum
 {
     blockMapFlagVersion = 0,                                        // Version (currently always 0)
     blockMapFlagEqual = 1,                                          // Are blocks and super blocks equal size?
+    blockMapFlag8192 = 2,                                           // Is the block size divisible by 8192?
 } BlockMapFlag;
 
 // Stores current information about a reference to avoid needed to encode it again
 typedef struct BlockMapReference
 {
     unsigned int reference;                                         // Reference
+    bool blockEqual;                                                // Is super block size equal to block size?
+    uint64_t superBlockSize;                                        // Super block size
     uint64_t bundleId;                                              // Bundle id
     uint64_t offset;                                                // Offset
     uint64_t size;                                                  // Super block size
@@ -92,8 +98,11 @@ blockMapNewRead(IoRead *const map, size_t checksumSize)
     const uint64_t flags = ioReadVarIntU64(map);
     CHECK(FormatError, (flags & (1 << blockMapFlagVersion)) == 0, "block map version must be zero");
 
-    // Are the super block and block size equal?
-    const bool blockEqual = flags & (1 << blockMapFlagEqual);
+    // Is the block size divisible by 8192?
+    const bool blockSize8192 = flags & (1 << blockMapFlag8192);
+
+    // Read block size
+    const size_t blockSize = (ioReadVarIntU64(map) + 1) * (blockSize8192 ? BLOCK_SIZE_FACTOR : 1);
 
     // Read all references in packed format
     BlockMap *const this = blockMapNew();
@@ -120,10 +129,18 @@ blockMapNewRead(IoRead *const map, size_t checksumSize)
             if (referenceEncoded & BLOCK_MAP_FLAG_OFFSET)
                 blockMapItem.offset = ioReadVarIntU64(map);
 
+            // Read super block size
+            if (flags & (1 << blockMapFlagEqual))
+                blockMapItem.superBlockSize = blockSize;
+            else
+                blockMapItem.superBlockSize = (ioReadVarIntU64(map) + 1) * blockSize;
+
             // Add reference to list
             BlockMapReference referenceDataAdd =
             {
                 .reference = blockMapItem.reference,
+                .blockEqual = blockMapItem.superBlockSize == blockSize,
+                .superBlockSize = blockMapItem.superBlockSize,
                 .bundleId = blockMapItem.bundleId,
                 .offset = blockMapItem.offset,
             };
@@ -133,12 +150,13 @@ blockMapNewRead(IoRead *const map, size_t checksumSize)
         // Else this reference has been read before
         else
         {
+            blockMapItem.superBlockSize = referenceData->superBlockSize;
             blockMapItem.bundleId = referenceData->bundleId;
 
             // If the reference is continued use the prior offset and size values
             if (referenceEncoded & BLOCK_MAP_FLAG_CONTINUE)
             {
-                ASSERT(!blockEqual);
+                ASSERT(!referenceData->blockEqual);
 
                 blockMapItem.offset = referenceData->offset;
                 blockMapItem.size = referenceData->size;
@@ -202,7 +220,7 @@ blockMapNewRead(IoRead *const map, size_t checksumSize)
             // Read total blocks in the super block
             uint64_t blockTotal = 1;
 
-            if (!blockEqual)
+            if (!referenceData->blockEqual)
             {
                 const uint64_t blockTotalEncoded = ioReadVarIntU64(map);
 
@@ -254,21 +272,42 @@ blockMapNewRead(IoRead *const map, size_t checksumSize)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-blockMapWrite(const BlockMap *const this, IoWrite *const output, const bool blockEqual, const size_t checksumSize)
+blockMapWrite(
+    const BlockMap *const this, IoWrite *const output, const size_t blockSize, const size_t checksumSize)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(BLOCK_MAP, this);
         FUNCTION_LOG_PARAM(IO_WRITE, output);
-        FUNCTION_LOG_PARAM(BOOL, blockEqual);
+        FUNCTION_LOG_PARAM(SIZE, blockSize);
         FUNCTION_LOG_PARAM(SIZE, checksumSize);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(blockMapSize(this) > 0);
+    ASSERT(blockSize > 0);
     ASSERT(output != NULL);
 
-    // Set flag to indicate that super block and block size are equal
-    ioWriteVarIntU64(output, blockEqual ? 1 << blockMapFlagEqual : 0);
+    // Set flag to indicate that block size is divisible by 8192
+    const bool blockSize8192 = blockSize % BLOCK_SIZE_FACTOR == 0;
+    uint64_t flags = blockSize8192 ? 1 << blockMapFlag8192 : 0;
+
+    // Set flag to indicate that all super blocks are equal to the block size
+    unsigned int blockIdx = 0;
+
+    for (; blockIdx < blockMapSize(this); blockIdx++)
+    {
+        if (blockMapGet(this, blockIdx)->superBlockSize != blockSize)
+            break;
+    }
+
+    if (blockIdx == blockMapSize(this))
+        flags |= 1 << blockMapFlagEqual;
+
+    // Write flags
+    ioWriteVarIntU64(output, flags);
+
+    // Write block size
+    ioWriteVarIntU64(output, (blockSize8192 ? blockSize / BLOCK_SIZE_FACTOR : blockSize) - 1);
 
     // Write all references in packed format
     List *const refList = lstNewP(sizeof(BlockMapReference), .comparator = lstComparatorBlockMapReference);
@@ -318,10 +357,19 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output, const bool bloc
             if (referenceEncoded & BLOCK_MAP_FLAG_OFFSET)
                 ioWriteVarIntU64(output, reference->offset);
 
+            // Write super block size
+            ASSERT(reference->superBlockSize > 0);
+            ASSERT(reference->superBlockSize % blockSize == 0);
+
+            if (!(flags & (1 << blockMapFlagEqual)))
+                ioWriteVarIntU64(output, (reference->superBlockSize / blockSize) - 1);
+
             // Add reference to list
             const BlockMapReference referenceAdd =
             {
                 .reference = reference->reference,
+                .blockEqual = reference->superBlockSize == blockSize,
+                .superBlockSize = reference->superBlockSize,
                 .bundleId = reference->bundleId,
                 .offset = reference->offset,
             };
@@ -340,7 +388,7 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output, const bool bloc
             // the last one for the reference.
             if (reference->offset == referenceData->offset)
             {
-                ASSERT(!blockEqual);
+                ASSERT(!referenceData->blockEqual);
 
                 referenceEncoded |= BLOCK_MAP_FLAG_CONTINUE;
                 referenceContinue = true;
@@ -416,7 +464,7 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output, const bool bloc
             // Write total blocks in the super block
             ASSERT(superBlockIdx - blockIdx > 0);
 
-            if (!blockEqual)
+            if (!referenceData->blockEqual)
             {
                 ASSERT(superBlock->block >= referenceData->block);
 
