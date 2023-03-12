@@ -363,6 +363,7 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output, const size_t bl
         else
         {
             ASSERT(reference->reference == referenceData->reference);
+            ASSERT(reference->superBlockSize == referenceData->superBlockSize);
             ASSERT(reference->bundleId == referenceData->bundleId);
             ASSERT(reference->offset >= referenceData->offset);
 
