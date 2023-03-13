@@ -40,6 +40,8 @@ References, super blocks, and blocks are encoded with a bit that indicates when 
 #define BLOCK_MAP_FLAG_CONTINUE                                     2   // Reference continues a prior super block
 #define BLOCK_MAP_FLAG_CONTINUE_LAST                                4   // Continued super block is last for the reference
 #define BLOCK_MAP_REFERENCE_SHIFT                                   3   // Shift bits for reference
+#define BLOCK_MAP_FLAG_SUPER_BLOCK_SIZE_REMAINDER                   1   // Remainder for super block size
+#define BLOCK_MAP_SUPER_BLOCK_SIZE_SHIFT                            1   // Shift bits for super block size
 #define BLOCK_MAP_SUPER_BLOCK_SHIFT                                 1   // Shift bits for super block
 #define BLOCK_MAP_FLAG_BLOCK_TOTAL_OFFSET                           1   // Block total has an offset
 #define BLOCK_MAP_BLOCK_TOTAL_SHIFT                                 1   // Shift bits for block total
@@ -123,7 +125,13 @@ blockMapNewRead(IoRead *const map, const size_t blockSize, const size_t checksum
             if (flags & (1 << blockMapFlagEqual))
                 blockMapItem.superBlockSize = blockSize;
             else
-                blockMapItem.superBlockSize = (ioReadVarIntU64(map) + 1) * blockSize;
+            {
+                const uint64_t superBlockSizeEncoded = ioReadVarIntU64(map);
+                blockMapItem.superBlockSize = (superBlockSizeEncoded >> BLOCK_MAP_SUPER_BLOCK_SIZE_SHIFT) * blockSize;
+
+                if (superBlockSizeEncoded & BLOCK_MAP_FLAG_SUPER_BLOCK_SIZE_REMAINDER)
+                    blockMapItem.superBlockSize += ioReadVarIntU64(map);
+            }
 
             // Add reference to list
             BlockMapReference referenceDataAdd =
@@ -342,10 +350,18 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output, const size_t bl
 
             // Write super block size
             ASSERT(reference->superBlockSize > 0);
-            ASSERT(reference->superBlockSize % blockSize == 0);
 
             if (!(flags & (1 << blockMapFlagEqual)))
-                ioWriteVarIntU64(output, (reference->superBlockSize / blockSize) - 1);
+            {
+                const uint64_t superBlockSizeEncoded =
+                    (reference->superBlockSize / blockSize) << BLOCK_MAP_SUPER_BLOCK_SIZE_SHIFT |
+                    (reference->superBlockSize % blockSize == 0 ? 0 : BLOCK_MAP_FLAG_SUPER_BLOCK_SIZE_REMAINDER);
+
+                ioWriteVarIntU64(output, superBlockSizeEncoded);
+
+                if (superBlockSizeEncoded & BLOCK_MAP_FLAG_SUPER_BLOCK_SIZE_REMAINDER)
+                    ioWriteVarIntU64(output, reference->superBlockSize % blockSize);
+            }
 
             // Add reference to list
             const BlockMapReference referenceAdd =
