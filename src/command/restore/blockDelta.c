@@ -312,6 +312,9 @@ blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, Io
     // If no result then the super blocks have been read. Reset for the next read.
     if (result == NULL)
     {
+        ASSERT(this->superBlockIdx == lstSize(readDelta->superBlockList));
+        ASSERT(this->blockIdx == this->blockTotal);
+
         this->superBlockData = NULL;
         this->superBlockIdx = 0;
     }

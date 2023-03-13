@@ -764,31 +764,37 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             strNewEncode(encodingHex, buffer),
-            "02"                                        // Blocks are equal
+            "00"                                        // Version 0
 
             "8008"                                      // reference 128
-            "06"                                        // super block size 3
+            "0c"                                        // size 3
+            "00"                                        // block total 1
             "eeee01ffff"                                // checksum
-            "11"                                        // super block size 5
+            "11"                                        // size
+            "00"                                        // block total 1
             "eeee02ffff"                                // checksum
 
             "06"                                        // reference 0
             "01"                                        // bundle 1
             "01"                                        // offset 1
-            "01"                                        // super block size 5
+            "01"                                        // size 1
+            "00"                                        // block total 1
             "eeee03ffff"                                // checksum
 
             "8008"                                      // reference 128
-            "f105"                                      // super block size 99
+            "f105"                                      // size 99
+            "00"                                        // block total 1
             "eeee04ffff"                                // checksum
 
             "04"                                        // reference 0
             "01"                                        // offset 7
-            "01"                                        // super block size 99
+            "01"                                        // size 99
+            "00"                                        // block total 1
             "eeee05ffff"                                // checksum
 
             "21"                                        // reference 0
-            "d505"                                      // super block size 8
+            "d505"                                      // size 8
+            "00"                                        // block total 1
             "eeee88ffff",                               // checksum
             "compare");
 
@@ -939,8 +945,8 @@ testRun(void)
             "00"                                        // Blocks are unequal
 
             "00"                                        // reference 0
+            "12"                                        // size 4
             "04"                                        // super block size 6
-            "08"                                        // size 4
             "02"                                        // block total 2
             "eeee01000000ffff"                          // checksum
             "eeee02000000ffff"                          // checksum
@@ -950,8 +956,8 @@ testRun(void)
             "eeee03000000ffff"                          // checksum
 
             "08"                                        // reference 1
-            "02"                                        // super block size 3
             "f105"                                      // size 99
+            "00"                                        // block total 1
             "eeee04000000ffff"                          // checksum
 
             "06"                                        // reference 0
@@ -960,8 +966,8 @@ testRun(void)
             "eeee05000000ffff"                          // checksum
 
             "10"                                        // reference 2
+            "1f"                                        // size 1
             "0102"                                      // super block size 2
-            "1d"                                        // size 1
             "00"                                        // block total 1
             "eeee06000000ffff"                          // checksum
 
@@ -1093,7 +1099,7 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteClose(write), "close");
 
         TEST_ASSIGN(mapSize, pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE)), "map size");
-        TEST_RESULT_UINT(mapSize, 31, "map size");
+        TEST_RESULT_UINT(mapSize, 34, "map size");
 
         TEST_RESULT_STR_Z(
             strNewEncode(encodingHex, BUF(bufPtr(destination), bufUsed(destination) - (size_t)mapSize)),
@@ -1133,7 +1139,7 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteClose(write), "close");
 
         TEST_ASSIGN(mapSize, pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE)), "map size");
-        TEST_RESULT_UINT(mapSize, 46, "map size");
+        TEST_RESULT_UINT(mapSize, 48, "map size");
 
         TEST_RESULT_STR_Z(
             strNewEncode(encodingHex, BUF(bufPtr(destination), bufUsed(destination) - (size_t)mapSize)),
