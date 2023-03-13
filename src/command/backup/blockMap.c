@@ -481,9 +481,9 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output, const size_t bl
                     superBlockEncoded |= BLOCK_MAP_FLAG_SUPER_BLOCK_CHANGE;
                 }
 
-                // If this is the first size written then just write the size. !!!Else write the difference from the prior size. This
-                // depends on the expectation that the compressed size of equal-sized blocks will be similar in order to be most
-                // efficient.
+                // If this is the first size written then just write the size. Otherwise write the difference from the prior size.
+                // This depends on the expectation that the compressed size of equal-sized blocks will be similar in order to be
+                // most efficient.
                 ioWriteVarIntU64(
                     output,
                     superBlockEncoded |
