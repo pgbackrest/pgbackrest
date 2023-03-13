@@ -263,16 +263,17 @@ blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, Io
             this->blockData = lstGet(this->superBlockData->blockList, this->blockFindIdx);
         }
 
+        // Find required blocks in the super block
         while (this->blockIdx < this->blockTotal)
         {
-            // Read encoded info about the block (NOT USED !!!)
+            // Read encoded info about the block, which is not used here
             ioReadVarIntU64(this->chunkedRead);
 
             // Apply block size limit if required and read the block
             bufUsedSet(this->write.block, 0);
 
             if (this->blockIdx == this->blockTotal - 1 && this->superBlockData->max % this->blockSize != 0)
-                bufLimitSet(this->write.block, this->superBlockData->max % this->blockSize);
+                bufLimitSet(this->write.block, (size_t)(this->superBlockData->max % this->blockSize));
             else
                 bufLimitClear(this->write.block);
 
@@ -281,6 +282,8 @@ blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, Io
             // If the block matches the block we are expecting
             if (this->blockIdx == this->blockData->no)
             {
+                ASSERT(result == NULL);
+
                 this->write.offset = this->blockData->offset;
                 result = &this->write;
                 this->blockFindIdx++;
@@ -288,8 +291,6 @@ blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, Io
                 // Get the next block if there are any more to read
                 if (this->blockFindIdx < lstSize(this->superBlockData->blockList))
                     this->blockData = lstGet(this->superBlockData->blockList, this->blockFindIdx);
-                // else !!! NEED A SOLUTION HERE
-                //     ioReadDrain(this->chunkedRead);
             }
 
             // Increment the block to read in the super block
