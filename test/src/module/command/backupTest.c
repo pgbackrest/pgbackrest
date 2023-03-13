@@ -767,34 +767,28 @@ testRun(void)
             "00"                                        // Version 0
 
             "8008"                                      // reference 128
-            "0c"                                        // size 3
-            "00"                                        // block total 1
+            "1c"                                        // size 3
             "eeee01ffff"                                // checksum
-            "11"                                        // size
-            "00"                                        // block total 1
+            "25"                                        // size
             "eeee02ffff"                                // checksum
 
             "06"                                        // reference 0
             "01"                                        // bundle 1
             "01"                                        // offset 1
-            "01"                                        // size 1
-            "00"                                        // block total 1
+            "05"                                        // size 1
             "eeee03ffff"                                // checksum
 
             "8008"                                      // reference 128
-            "f105"                                      // size 99
-            "00"                                        // block total 1
+            "e50b"                                      // size 99
             "eeee04ffff"                                // checksum
 
             "04"                                        // reference 0
             "01"                                        // offset 7
-            "01"                                        // size 99
-            "00"                                        // block total 1
+            "05"                                        // size 99
             "eeee05ffff"                                // checksum
 
             "21"                                        // reference 0
-            "d505"                                      // size 8
-            "00"                                        // block total 1
+            "ad0b"                                      // size 8
             "eeee88ffff",                               // checksum
             "compare");
 
@@ -932,6 +926,18 @@ testRun(void)
 
         TEST_RESULT_VOID(blockMapAdd(blockMap, &blockMapItem), "add");
 
+        blockMapItem = (BlockMapItem)
+        {
+            .reference = 1,
+            .superBlockSize = 3,
+            .offset = 99,
+            .size = 1,
+            .block = 1,
+            .checksum = {0xee, 0xee, 0x09, 0, 0, 0, 0xff, 0xff},
+        };
+
+        TEST_RESULT_VOID(blockMapAdd(blockMap, &blockMapItem), "add");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("write unequal block map");
 
@@ -945,19 +951,17 @@ testRun(void)
             "00"                                        // Blocks are unequal
 
             "00"                                        // reference 0
-            "12"                                        // size 4
+            "26"                                        // size 4
             "04"                                        // super block size 6
-            "02"                                        // block total 2
             "eeee01000000ffff"                          // checksum
             "eeee02000000ffff"                          // checksum
 
-            "09"                                        // size 5
+            "11"                                        // size 5
             "00"                                        // block total 1
             "eeee03000000ffff"                          // checksum
 
             "08"                                        // reference 1
-            "f105"                                      // size 99
-            "00"                                        // block total 1
+            "e50b"                                      // size 99
             "eeee04000000ffff"                          // checksum
 
             "06"                                        // reference 0
@@ -966,19 +970,20 @@ testRun(void)
             "eeee05000000ffff"                          // checksum
 
             "10"                                        // reference 2
-            "1f"                                        // size 1
-            "0102"                                      // super block size 2
-            "00"                                        // block total 1
+            "3f01"                                      // size 1
+            "02"                                        // super block size 2
             "eeee06000000ffff"                          // checksum
 
-            "03"                                        // reference 0
+            "02"                                        // reference 0
             "01"                                        // block total 1
             "01"                                        // block 5
             "eeee07000000ffff"                          // checksum
-            "0b"                                        // size 6
-            "0102"                                      // super block size 2
-            "00"                                        // block total 1
-            "eeee08000000ffff",                         // checksum
+
+            "17"                                        // size 6
+            "0102"                                      // size 2
+            "eeee08000000ffff"                          // checksum
+
+            "09490101eeee09000000ffff",
             "compare");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -999,9 +1004,11 @@ testRun(void)
             "read {reference: 2, bundleId: 0, offset: 0, size: 1}\n"
             "  super block {max: 2, size: 1}\n"
             "    block {no: 0, offset: 15}\n"
-            "read {reference: 1, bundleId: 0, offset: 0, size: 99}\n"
+            "read {reference: 1, bundleId: 0, offset: 0, size: 100}\n"
             "  super block {max: 3, size: 99}\n"
             "    block {no: 0, offset: 9}\n"
+            "  super block {max: 3, size: 1}\n"
+            "    block {no: 1, offset: 24}\n"
             "read {reference: 0, bundleId: 0, offset: 0, size: 15}\n"
             "  super block {max: 6, size: 4}\n"
             "    block {no: 0, offset: 0}\n"
@@ -1066,7 +1073,7 @@ testRun(void)
 
         uint64_t mapSize;
         TEST_ASSIGN(mapSize, pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE)), "map size");
-        TEST_RESULT_UINT(mapSize, 14, "map size");
+        TEST_RESULT_UINT(mapSize, 13, "map size");
 
         TEST_RESULT_STR_Z(
             strNewEncode(encodingHex, BUF(bufPtr(destination), bufUsed(destination) - (size_t)mapSize)),
@@ -1099,7 +1106,7 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteClose(write), "close");
 
         TEST_ASSIGN(mapSize, pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE)), "map size");
-        TEST_RESULT_UINT(mapSize, 34, "map size");
+        TEST_RESULT_UINT(mapSize, 31, "map size");
 
         TEST_RESULT_STR_Z(
             strNewEncode(encodingHex, BUF(bufPtr(destination), bufUsed(destination) - (size_t)mapSize)),
@@ -1139,7 +1146,7 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteClose(write), "close");
 
         TEST_ASSIGN(mapSize, pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE)), "map size");
-        TEST_RESULT_UINT(mapSize, 48, "map size");
+        TEST_RESULT_UINT(mapSize, 44, "map size");
 
         TEST_RESULT_STR_Z(
             strNewEncode(encodingHex, BUF(bufPtr(destination), bufUsed(destination) - (size_t)mapSize)),
@@ -1181,7 +1188,7 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteClose(write), "close");
 
         TEST_ASSIGN(mapSize, pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE)), "map size");
-        TEST_RESULT_UINT(mapSize, 34, "map size");
+        TEST_RESULT_UINT(mapSize, 32, "map size");
 
         TEST_RESULT_STR_Z(
             strNewEncode(encodingHex, BUF(bufPtr(destination), bufUsed(destination) - (size_t)mapSize)),
@@ -3677,7 +3684,7 @@ testRun(void)
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-to-block-incr (bundle 1/0, 16.0KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/16383, 8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/24575, 16KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/40997, 2B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/40996, 2B, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DBF06000000001, lsn = 5dbf060/300000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
@@ -3707,9 +3714,9 @@ testRun(void)
                 ",\"timestamp\":1572800000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                 ",\"timestamp\":1572800002}\n"
-                "pg_data/block-incr-grow={\"bi\":1,\"bim\":25,\"checksum\":\"ebdd38b69cd5b9f2d00d273c981e16960fbbb4f7\""
+                "pg_data/block-incr-grow={\"bi\":1,\"bim\":24,\"checksum\":\"ebdd38b69cd5b9f2d00d273c981e16960fbbb4f7\""
                 ",\"size\":24576,\"timestamp\":1572800000}\n"
-                "pg_data/block-incr-shrink={\"bi\":1,\"bim\":30,\"checksum\":\"ce5f8864058b1bb274244b512cb9641355987134\""
+                "pg_data/block-incr-shrink={\"bi\":1,\"bim\":29,\"checksum\":\"ce5f8864058b1bb274244b512cb9641355987134\""
                 ",\"size\":16385,\"timestamp\":1572800000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1572800000}\n"
                 "pg_data/grow-to-block-incr={\"checksum\":\"f5a5c308cf5fcb52bccebe2365f8ed56acbcc41d\",\"size\":16383"
@@ -3788,8 +3795,8 @@ testRun(void)
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-larger (1.4MB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (128KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-to-block-incr (bundle 1/0, 16KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/16419, 8KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/24611, 16.0KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/16418, 8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/24610, 16.0KB, [PCT]) checksum [SHA1]\n"
                 "P00 DETAIL: reference pg_data/PG_VERSION to 20191103-165320F\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DC213000000001, lsn = 5dc2130/300000\n"
@@ -3822,12 +3829,12 @@ testRun(void)
                 ",\"timestamp\":1573000002}\n"
                 "pg_data/block-incr-grow={\"bi\":1,\"bim\":114,\"checksum\":\"1ddde8db92dd9019be0819ae4f9ad9cea2fae399\""
                 ",\"size\":131072,\"timestamp\":1573000000}\n"
-                "pg_data/block-incr-larger={\"bi\":8,\"bic\":7,\"bim\":175"
+                "pg_data/block-incr-larger={\"bi\":8,\"bic\":7,\"bim\":173"
                 ",\"checksum\":\"eec53a6da79c00b3c658a7e09f44b3e9efefd960\",\"size\":1507328,\"timestamp\":1573000000}\n"
                 "pg_data/block-incr-shrink={\"checksum\":\"1c6a17f67562d8b3f64f1b5f2ee592a4c2809b3b\",\"size\":16383"
                 ",\"timestamp\":1573000000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1573000000}\n"
-                "pg_data/grow-to-block-incr={\"bi\":1,\"bim\":27,\"checksum\":\"4f560611d9dc9212432970e5c4bec15d876c226e\","
+                "pg_data/grow-to-block-incr={\"bi\":1,\"bim\":26,\"checksum\":\"4f560611d9dc9212432970e5c4bec15d876c226e\","
                 "\"size\":16385,\"timestamp\":1573000000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
                 ",\"timestamp\":1573000002}\n"
