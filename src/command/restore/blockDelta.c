@@ -16,6 +16,7 @@ Object type
 typedef struct BlockDeltaSuperBlock
 {
     uint64_t size;                                                  // Size of super block
+    uint64_t max;                                                   // Max size of super block
     List *blockList;                                                // Block list
 } BlockDeltaSuperBlock;
 
@@ -173,6 +174,7 @@ blockDeltaNew(
                         {
                             BlockDeltaSuperBlock blockDeltaSuperBlockNew =
                             {
+                                .max = blockMapItem->superBlockSize,
                                 .size = blockMapItem->size,
                                 .blockList = lstNewP(sizeof(BlockDeltaBlock)),
                             };

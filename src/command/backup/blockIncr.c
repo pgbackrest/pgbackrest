@@ -234,14 +234,17 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
             // Close write
             ioWriteClose(this->blockOutWrite);
 
-            // Update size for items already added to the block map
+            // Update size and super block size for items already added to the block map
             const uint64_t blockOutSize = pckReadU64P(
                 ioFilterGroupResultP(ioWriteFilterGroup(this->blockOutWrite), SIZE_FILTER_TYPE));
 
             for (unsigned int blockMapIdx = 0; blockMapIdx < lstSize(this->blockOutList); blockMapIdx++)
             {
-                blockMapGet(
-                    this->blockMapOut, *(unsigned int *)lstGet(this->blockOutList, blockMapIdx))->size = blockOutSize;
+                BlockMapItem *const blockMapItem = blockMapGet(
+                    this->blockMapOut, *(unsigned int *)lstGet(this->blockOutList, blockMapIdx));
+
+                blockMapItem->size = blockOutSize;
+                blockMapItem->superBlockSize = this->blockOutSize;
             }
 
             lstFree(this->blockOutList);

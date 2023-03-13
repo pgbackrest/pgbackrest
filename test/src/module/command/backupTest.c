@@ -50,7 +50,7 @@ testBlockDelta(const BlockMap *const blockMap, const size_t blockSize, const siz
         {
             const BlockDeltaSuperBlock *const superBlock = lstGet(read->superBlockList, superBlockIdx);
 
-            strCatFmt(result, "  super block {size: %" PRIu64 "}\n", superBlock->size);
+            strCatFmt(result, "  super block {max: %" PRIu64 ", size: %" PRIu64 "}\n", superBlock->max, superBlock->size);
 
             for (unsigned int blockIdx = 0; blockIdx < lstSize(superBlock->blockList); blockIdx++)
             {
@@ -769,7 +769,7 @@ testRun(void)
             "8008"                                      // reference 128
             "06"                                        // super block size 3
             "eeee01ffff"                                // checksum
-            "09"                                        // super block size 5
+            "11"                                        // super block size 5
             "eeee02ffff"                                // checksum
 
             "06"                                        // reference 0
@@ -779,7 +779,7 @@ testRun(void)
             "eeee03ffff"                                // checksum
 
             "8008"                                      // reference 128
-            "f902"                                      // super block size 99
+            "f105"                                      // super block size 99
             "eeee04ffff"                                // checksum
 
             "04"                                        // reference 0
@@ -788,7 +788,7 @@ testRun(void)
             "eeee05ffff"                                // checksum
 
             "21"                                        // reference 0
-            "eb02"                                      // super block size 8
+            "d505"                                      // super block size 8
             "eeee88ffff",                               // checksum
             "compare");
 
@@ -808,20 +808,20 @@ testRun(void)
         TEST_RESULT_STR_Z(
             testBlockDelta(blockMapNewRead(ioBufferReadNewOpen(buffer), 1, 5), 1, 5),
             "read {reference: 128, bundleId: 0, offset: 0, size: 107}\n"
-            "  super block {size: 3}\n"
+            "  super block {max: 1, size: 3}\n"
             "    block {no: 0, offset: 0}\n"
-            "  super block {size: 5}\n"
+            "  super block {max: 1, size: 5}\n"
             "    block {no: 0, offset: 1}\n"
-            "  super block {size: 99}\n"
+            "  super block {max: 1, size: 99}\n"
             "    block {no: 0, offset: 3}\n"
             "read {reference: 4, bundleId: 0, offset: 0, size: 8}\n"
-            "  super block {size: 8}\n"
+            "  super block {max: 1, size: 8}\n"
             "    block {no: 0, offset: 5}\n"
             "read {reference: 0, bundleId: 1, offset: 1, size: 5}\n"
-            "  super block {size: 5}\n"
+            "  super block {max: 1, size: 5}\n"
             "    block {no: 0, offset: 2}\n"
             "read {reference: 0, bundleId: 1, offset: 7, size: 99}\n"
-            "  super block {size: 99}\n"
+            "  super block {max: 1, size: 99}\n"
             "    block {no: 0, offset: 4}\n",
             "check delta");
 
@@ -917,7 +917,7 @@ testRun(void)
         blockMapItem = (BlockMapItem)
         {
             .reference = 0,
-            .superBlockSize = 6,
+            .superBlockSize = 2,
             .offset = 9,
             .size = 6,
             .block = 0,
@@ -945,13 +945,13 @@ testRun(void)
             "eeee01000000ffff"                          // checksum
             "eeee02000000ffff"                          // checksum
 
-            "05"                                        // size 5
+            "09"                                        // size 5
             "00"                                        // block total 1
             "eeee03000000ffff"                          // checksum
 
             "08"                                        // reference 1
             "02"                                        // super block size 3
-            "f902"                                      // size 99
+            "f105"                                      // size 99
             "eeee04000000ffff"                          // checksum
 
             "06"                                        // reference 0
@@ -961,7 +961,7 @@ testRun(void)
 
             "10"                                        // reference 2
             "0102"                                      // super block size 2
-            "0f"                                        // size 1
+            "1d"                                        // size 1
             "00"                                        // block total 1
             "eeee06000000ffff"                          // checksum
 
@@ -969,7 +969,8 @@ testRun(void)
             "01"                                        // block total 1
             "01"                                        // block 5
             "eeee07000000ffff"                          // checksum
-            "05"                                        // size 6
+            "0b"                                        // size 6
+            "0102"                                      // super block size 2
             "00"                                        // block total 1
             "eeee08000000ffff",                         // checksum
             "compare");
@@ -990,20 +991,20 @@ testRun(void)
         TEST_RESULT_STR_Z(
             testBlockDelta(blockMapNewRead(ioBufferReadNewOpen(buffer), 3, 8), 3, 8),
             "read {reference: 2, bundleId: 0, offset: 0, size: 1}\n"
-            "  super block {size: 1}\n"
+            "  super block {max: 2, size: 1}\n"
             "    block {no: 0, offset: 15}\n"
             "read {reference: 1, bundleId: 0, offset: 0, size: 99}\n"
-            "  super block {size: 99}\n"
+            "  super block {max: 3, size: 99}\n"
             "    block {no: 0, offset: 9}\n"
             "read {reference: 0, bundleId: 0, offset: 0, size: 15}\n"
-            "  super block {size: 4}\n"
+            "  super block {max: 6, size: 4}\n"
             "    block {no: 0, offset: 0}\n"
             "    block {no: 1, offset: 3}\n"
-            "  super block {size: 5}\n"
+            "  super block {max: 6, size: 5}\n"
             "    block {no: 0, offset: 6}\n"
             "    block {no: 3, offset: 12}\n"
             "    block {no: 5, offset: 18}\n"
-            "  super block {size: 6}\n"
+            "  super block {max: 2, size: 6}\n"
             "    block {no: 0, offset: 21}\n",
             "check delta");
     }
@@ -1059,7 +1060,7 @@ testRun(void)
 
         uint64_t mapSize;
         TEST_ASSIGN(mapSize, pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE)), "map size");
-        TEST_RESULT_UINT(mapSize, 11, "map size");
+        TEST_RESULT_UINT(mapSize, 14, "map size");
 
         TEST_RESULT_STR_Z(
             strNewEncode(encodingHex, BUF(bufPtr(destination), bufUsed(destination) - (size_t)mapSize)),
@@ -1071,7 +1072,7 @@ testRun(void)
         TEST_RESULT_STR_Z(
             testBlockDelta(blockMapNewRead(ioBufferReadNewOpen(map), 3, 8), 3, 8),
             "read {reference: 0, bundleId: 0, offset: 0, size: 7}\n"
-            "  super block {size: 7}\n"
+            "  super block {max: 2, size: 7}\n"
             "    block {no: 0, offset: 0}\n",
             "check delta");
 
@@ -1106,11 +1107,11 @@ testRun(void)
         TEST_RESULT_STR_Z(
             testBlockDelta(blockMapNewRead(ioBufferReadNewOpen(map), 3, 8), 3, 8),
             "read {reference: 2, bundleId: 4, offset: 5, size: 27}\n"
-            "  super block {size: 9}\n"
+            "  super block {max: 3, size: 9}\n"
             "    block {no: 0, offset: 0}\n"
-            "  super block {size: 9}\n"
+            "  super block {max: 3, size: 9}\n"
             "    block {no: 0, offset: 3}\n"
-            "  super block {size: 9}\n"
+            "  super block {max: 3, size: 9}\n"
             "    block {no: 0, offset: 6}\n",
             "check delta");
 
@@ -1132,7 +1133,7 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteClose(write), "close");
 
         TEST_ASSIGN(mapSize, pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE)), "map size");
-        TEST_RESULT_UINT(mapSize, 42, "map size");
+        TEST_RESULT_UINT(mapSize, 46, "map size");
 
         TEST_RESULT_STR_Z(
             strNewEncode(encodingHex, BUF(bufPtr(destination), bufUsed(destination) - (size_t)mapSize)),
@@ -1145,14 +1146,14 @@ testRun(void)
         TEST_RESULT_STR_Z(
             testBlockDelta(blockMapNewRead(ioBufferReadNewOpen(map), 3, 8), 3, 8),
             "read {reference: 3, bundleId: 0, offset: 0, size: 13}\n"
-            "  super block {size: 8}\n"
+            "  super block {max: 3, size: 8}\n"
             "    block {no: 0, offset: 0}\n"
-            "  super block {size: 5}\n"
+            "  super block {max: 1, size: 5}\n"
             "    block {no: 0, offset: 9}\n"
             "read {reference: 2, bundleId: 4, offset: 14, size: 18}\n"
-            "  super block {size: 9}\n"
+            "  super block {max: 3, size: 9}\n"
             "    block {no: 0, offset: 3}\n"
-            "  super block {size: 9}\n"
+            "  super block {max: 3, size: 9}\n"
             "    block {no: 0, offset: 6}\n",
             "check delta");
 
@@ -1174,7 +1175,7 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteClose(write), "close");
 
         TEST_ASSIGN(mapSize, pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE)), "map size");
-        TEST_RESULT_UINT(mapSize, 33, "map size");
+        TEST_RESULT_UINT(mapSize, 34, "map size");
 
         TEST_RESULT_STR_Z(
             strNewEncode(encodingHex, BUF(bufPtr(destination), bufUsed(destination) - (size_t)mapSize)),
@@ -1188,10 +1189,10 @@ testRun(void)
         TEST_RESULT_STR_Z(
             testBlockDelta(blockMapNewRead(ioBufferReadNewOpen(map), 3, 8), 3, 8),
             "read {reference: 2, bundleId: 4, offset: 5, size: 24}\n"
-            "  super block {size: 15}\n"
+            "  super block {max: 6, size: 15}\n"
             "    block {no: 0, offset: 0}\n"
             "    block {no: 1, offset: 3}\n"
-            "  super block {size: 9}\n"
+            "  super block {max: 3, size: 9}\n"
             "    block {no: 0, offset: 6}\n",
             "check delta");
 
@@ -3700,7 +3701,7 @@ testRun(void)
                 ",\"timestamp\":1572800000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                 ",\"timestamp\":1572800002}\n"
-                "pg_data/block-incr-grow={\"bi\":1,\"bim\":26,\"checksum\":\"ebdd38b69cd5b9f2d00d273c981e16960fbbb4f7\""
+                "pg_data/block-incr-grow={\"bi\":1,\"bim\":25,\"checksum\":\"ebdd38b69cd5b9f2d00d273c981e16960fbbb4f7\""
                 ",\"size\":24576,\"timestamp\":1572800000}\n"
                 "pg_data/block-incr-shrink={\"bi\":1,\"bim\":30,\"checksum\":\"ce5f8864058b1bb274244b512cb9641355987134\""
                 ",\"size\":16385,\"timestamp\":1572800000}\n"
@@ -3813,9 +3814,9 @@ testRun(void)
                 ",\"size\":2,\"timestamp\":1572800000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                 ",\"timestamp\":1573000002}\n"
-                "pg_data/block-incr-grow={\"bi\":1,\"bim\":116,\"checksum\":\"1ddde8db92dd9019be0819ae4f9ad9cea2fae399\""
+                "pg_data/block-incr-grow={\"bi\":1,\"bim\":114,\"checksum\":\"1ddde8db92dd9019be0819ae4f9ad9cea2fae399\""
                 ",\"size\":131072,\"timestamp\":1573000000}\n"
-                "pg_data/block-incr-larger={\"bi\":8,\"bic\":7,\"bim\":174"
+                "pg_data/block-incr-larger={\"bi\":8,\"bic\":7,\"bim\":175"
                 ",\"checksum\":\"eec53a6da79c00b3c658a7e09f44b3e9efefd960\",\"size\":1507328,\"timestamp\":1573000000}\n"
                 "pg_data/block-incr-shrink={\"checksum\":\"1c6a17f67562d8b3f64f1b5f2ee592a4c2809b3b\",\"size\":16383"
                 ",\"timestamp\":1573000000}\n"
