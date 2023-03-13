@@ -174,15 +174,8 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
                         ioWriteOpen(this->blockOutWrite);
                     }
 
-                    // Write the block no as a delta of the prior block no. If the size of the last block is smaller than block
-                    // size then write the smaller block size.
-                    const uint64_t blockEncoded = bufUsed(this->block) < this->blockSize ? BLOCK_INCR_FLAG_SIZE : 0;
-
-                    ioWriteVarIntU64(
-                        this->blockOutWrite, blockEncoded | ((this->blockNo - this->blockNoLast) << BLOCK_INCR_BLOCK_SHIFT));
-
-                    if (blockEncoded & BLOCK_INCR_FLAG_SIZE)
-                        ioWriteVarIntU64(this->blockOutWrite, bufUsed(this->block));
+                    // Write the block no as a delta of the prior block no
+                    ioWriteVarIntU64(this->blockOutWrite, this->blockNo - this->blockNoLast);
 
                     // Copy block data through the filters
                     ioCopyP(ioBufferReadNewOpen(this->block), this->blockOutWrite);
@@ -226,11 +219,6 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
         // Write the super block
         if (this->blockOutWrite != NULL && (this->done || this->blockOutSize >= this->superBlockSize))
         {
-            // Explicitly terminate the block if all block sizes are equal. This is not required if the last block is smaller than
-            // the block size.
-            if (this->blockOutSize % this->blockSize == 0)
-                ioWriteVarIntU64(this->blockOutWrite, 0);
-
             // Close write
             ioWriteClose(this->blockOutWrite);
 
