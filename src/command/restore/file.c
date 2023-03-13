@@ -343,6 +343,8 @@ restoreFile(
 
                                 deltaWrite = blockDeltaNext(blockDelta, read, storageReadIo(superBlockRead));
                             }
+
+                            storageReadFree(superBlockRead);
                         }
 
                         // Close the file to complete the update
