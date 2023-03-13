@@ -15,8 +15,8 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct BlockDeltaSuperBlock
 {
-    uint64_t size;                                                  // Stored size of superblock (with compression, etc.)
     uint64_t superBlockSize;                                        // Super block size
+    uint64_t size;                                                  // Stored size of superblock (with compression, etc.)
     List *blockList;                                                // Block list
 } BlockDeltaSuperBlock;
 

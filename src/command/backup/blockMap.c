@@ -459,6 +459,7 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output, const size_t bl
 
             sizeLast = (int64_t)superBlock->size;
 
+            // Write block total if the super block does not include all blocks with no block offset
             if (!(superBlockEncoded & BLOCK_MAP_FLAG_SUPER_BLOCK_COMPLETE))
             {
                 // Write total blocks in the super block

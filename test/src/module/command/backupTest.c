@@ -50,7 +50,8 @@ testBlockDelta(const BlockMap *const blockMap, const size_t blockSize, const siz
         {
             const BlockDeltaSuperBlock *const superBlock = lstGet(read->superBlockList, superBlockIdx);
 
-            strCatFmt(result, "  super block {max: %" PRIu64 ", size: %" PRIu64 "}\n", superBlock->max, superBlock->size);
+            strCatFmt(
+                result, "  super block {max: %" PRIu64 ", size: %" PRIu64 "}\n", superBlock->superBlockSize, superBlock->size);
 
             for (unsigned int blockIdx = 0; blockIdx < lstSize(superBlock->blockList); blockIdx++)
             {
