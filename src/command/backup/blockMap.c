@@ -216,7 +216,10 @@ blockMapNewRead(IoRead *const map, const size_t blockSize, const size_t checksum
 
                 // If the super block size has changed then read it
                 if (superBlockEncoded & BLOCK_MAP_FLAG_LAST && superBlockEncoded & BLOCK_MAP_FLAG_SUPER_BLOCK_CHANGE)
+                {
                     blockMapItem.superBlockSize = blockMapReadSuperBlockSize(map, blockSize);
+                    referenceData->superBlockSize = blockMapItem.superBlockSize;
+                }
 
                 // Set offset, size, and block for the super block
                 if (superBlockFirst)
@@ -492,7 +495,10 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output, const size_t bl
 
                 // If the super block size has changed then write it
                 if (superBlockEncoded & BLOCK_MAP_FLAG_SUPER_BLOCK_CHANGE)
+                {
                     blockMapWriteSuperBlockSize(output, superBlock->superBlockSize, blockSize);
+                    referenceData->superBlockSize = superBlock->superBlockSize;
+                }
 
                 // Set offset, size, and block for the super block
                 referenceData->offset = superBlock->offset;
