@@ -399,7 +399,7 @@ blockIncrNew(
         *driver = (BlockIncr)
         {
             .memContext = memContextCurrent(),
-            .superBlockSize = superBlockSize,
+            .superBlockSize = (superBlockSize / blockSize + (superBlockSize % blockSize == 0 ? 0 : 1)) * blockSize,
             .blockSize = blockSize,
             .checksumSize = checksumSize,
             .reference = reference,
@@ -409,15 +409,6 @@ blockIncrNew(
             .blockOut = bufNew(0),
             .blockMapOut = blockMapNew(),
         };
-
-        // If super block size is less than block size then make them equal
-        if (superBlockSize < blockSize)
-        {
-            driver->superBlockSize = blockSize;
-        }
-        // Else make super block size an even number of blocks
-        else if (superBlockSize > blockSize)
-            driver->superBlockSize = (superBlockSize / blockSize + (superBlockSize % blockSize == 0 ? 0 : 1)) * blockSize;
 
         // Duplicate compress filter
         if (compress != NULL)

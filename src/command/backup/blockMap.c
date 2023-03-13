@@ -26,11 +26,6 @@ The block map is stored as a flag and a series of reference, super block, and bl
       - Checksum.
 
 References, super blocks, and blocks are encoded with a bit that indicates when the last one has been reached.
-
-!!! DONE:
-    - Write a block total instead of block list
-    - Working on block equal
-
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
@@ -65,7 +60,7 @@ typedef struct BlockMapReference
     uint64_t superBlockSize;                                        // Super block size
     uint64_t bundleId;                                              // Bundle id
     uint64_t offset;                                                // Offset
-    uint64_t size;                                                  // Super block size
+    uint64_t size;                                                  // Stored super block size (with compression, etc.)
     uint64_t block;                                                 // Block no
 } BlockMapReference;
 
@@ -271,6 +266,7 @@ blockMapNewRead(IoRead *const map, const size_t blockSize, const size_t checksum
     FUNCTION_LOG_RETURN(BLOCK_MAP, this);
 }
 
+/**********************************************************************************************************************************/
 FN_EXTERN void
 blockMapWrite(const BlockMap *const this, IoWrite *const output, const size_t blockSize, const size_t checksumSize)
 {

@@ -15,8 +15,8 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct BlockDeltaSuperBlock
 {
-    uint64_t size;                                                  // Size of super block
-    uint64_t max;                                                   // Max size of super block
+    uint64_t size;                                                  // Stored size of superblock (with compression, etc.)
+    uint64_t superBlockSize;                                        // Super block size
     List *blockList;                                                // Block list
 } BlockDeltaSuperBlock;
 
@@ -175,7 +175,7 @@ blockDeltaNew(
                         {
                             BlockDeltaSuperBlock blockDeltaSuperBlockNew =
                             {
-                                .max = blockMapItem->superBlockSize,
+                                .superBlockSize = blockMapItem->superBlockSize,
                                 .size = blockMapItem->size,
                                 .blockList = lstNewP(sizeof(BlockDeltaBlock)),
                             };
@@ -258,8 +258,8 @@ blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, Io
             this->blockIdx = 0;
             this->blockFindIdx = 0;
             this->blockTotal =
-                (unsigned int)(this->superBlockData->max / this->blockSize) +
-                (this->superBlockData->max % this->blockSize == 0 ? 0 : 1);
+                (unsigned int)(this->superBlockData->superBlockSize / this->blockSize) +
+                (this->superBlockData->superBlockSize % this->blockSize == 0 ? 0 : 1);
             this->blockData = lstGet(this->superBlockData->blockList, this->blockFindIdx);
         }
 
@@ -272,8 +272,8 @@ blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, Io
             // Apply block size limit if required and read the block
             bufUsedSet(this->write.block, 0);
 
-            if (this->blockIdx == this->blockTotal - 1 && this->superBlockData->max % this->blockSize != 0)
-                bufLimitSet(this->write.block, (size_t)(this->superBlockData->max % this->blockSize));
+            if (this->blockIdx == this->blockTotal - 1 && this->superBlockData->superBlockSize % this->blockSize != 0)
+                bufLimitSet(this->write.block, (size_t)(this->superBlockData->superBlockSize % this->blockSize));
             else
                 bufLimitClear(this->write.block);
 
