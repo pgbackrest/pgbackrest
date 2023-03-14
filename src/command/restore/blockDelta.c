@@ -15,7 +15,8 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct BlockDeltaSuperBlock
 {
-    uint64_t size;                                                  // Size of super block
+    uint64_t superBlockSize;                                        // Super block size
+    uint64_t size;                                                  // Stored size of superblock (with compression, etc.)
     List *blockList;                                                // Block list
 } BlockDeltaSuperBlock;
 
@@ -37,10 +38,11 @@ struct BlockDelta
 
     const BlockDeltaSuperBlock *superBlockData;                     // Current super block data
     unsigned int superBlockIdx;                                     // Current super block index
-    unsigned int blockNo;                                           // Block number in current super block
     IoRead *chunkedRead;                                            // Chunked read for current super block
     const BlockDeltaBlock *blockData;                               // Current block data
     unsigned int blockIdx;                                          // Current block index
+    unsigned int blockTotal;                                        // Block total for super block
+    unsigned int blockFindIdx;                                      // Index of the block to find in the super block
 
     BlockDeltaWrite write;                                          // Block/offset to be returned for write
 };
@@ -173,6 +175,7 @@ blockDeltaNew(
                         {
                             BlockDeltaSuperBlock blockDeltaSuperBlockNew =
                             {
+                                .superBlockSize = blockMapItem->superBlockSize,
                                 .size = blockMapItem->size,
                                 .blockList = lstNewP(sizeof(BlockDeltaBlock)),
                             };
@@ -253,84 +256,65 @@ blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, Io
 
             // Set block info
             this->blockIdx = 0;
-            this->blockNo = 0;
-            this->blockData = lstGet(this->superBlockData->blockList, this->blockIdx);
+            this->blockFindIdx = 0;
+            this->blockTotal =
+                (unsigned int)(this->superBlockData->superBlockSize / this->blockSize) +
+                (this->superBlockData->superBlockSize % this->blockSize == 0 ? 0 : 1);
+            this->blockData = lstGet(this->superBlockData->blockList, this->blockFindIdx);
         }
 
-        // Read encoded info about the block
-        uint64_t blockEncoded = ioReadVarIntU64(this->chunkedRead);
-
-        // Loop through blocks in the super block until a match with the map is found
-        do
+        // Find required blocks in the super block
+        while (this->blockIdx < this->blockTotal)
         {
-            // Break out if encoded block info is zero and this is not the first block. This means the super block has ended when
-            // all blocks are equal size.
-            if (this->blockNo != 0 && blockEncoded == 0)
-            {
-                this->superBlockData = NULL;
-                this->superBlockIdx++;
-                break;
-            }
+            // Read encoded info about the block, which is not used here
+            ioReadVarIntU64(this->chunkedRead);
 
             // Apply block size limit if required and read the block
             bufUsedSet(this->write.block, 0);
 
-            if (blockEncoded & BLOCK_INCR_FLAG_SIZE)
-            {
-                size_t size = (size_t)ioReadVarIntU64(this->chunkedRead);
-                bufLimitSet(this->write.block, size);
-            }
+            if (this->blockIdx == this->blockTotal - 1 && this->superBlockData->superBlockSize % this->blockSize != 0)
+                bufLimitSet(this->write.block, (size_t)(this->superBlockData->superBlockSize % this->blockSize));
             else
                 bufLimitClear(this->write.block);
 
             ioRead(this->chunkedRead, this->write.block);
 
             // If the block matches the block we are expecting
-            if (this->blockNo == this->blockData->no)
+            if (this->blockIdx == this->blockData->no)
             {
+                ASSERT(result == NULL);
+
                 this->write.offset = this->blockData->offset;
                 result = &this->write;
-                this->blockIdx++;
+                this->blockFindIdx++;
 
                 // Get the next block if there are any more to read
-                if (this->blockIdx < lstSize(this->superBlockData->blockList))
-                {
-                    this->blockData = lstGet(this->superBlockData->blockList, this->blockIdx);
-                }
-                // Else stop processing if this is the last super block. This is only works for the last super block because
-                // otherwise the blocks must be read sequentially.
-                else if (this->superBlockIdx >= lstSize(readDelta->superBlockList) - 1)
-                {
-                    this->superBlockData = NULL;
-                    this->superBlockIdx++;
-                }
+                if (this->blockFindIdx < lstSize(this->superBlockData->blockList))
+                    this->blockData = lstGet(this->superBlockData->blockList, this->blockFindIdx);
             }
 
-            // If the size was set (meaning this is the last block in the super block) it must also be the last block we are looking
-            // for in the read. Partial blocks cannot happen in the middle of a read and there is code above to cut out early on the
-            // last super block of a read when possible.
-            ASSERT(blockEncoded ^ BLOCK_INCR_FLAG_SIZE || this->superBlockIdx >= lstSize(readDelta->superBlockList) - 1);
-
             // Increment the block to read in the super block
-            this->blockNo++;
+            this->blockIdx++;
 
             // Break if there is a result
             if (result != NULL)
                 break;
-
-            // Read encoded info about the block
-            blockEncoded = ioReadVarIntU64(this->chunkedRead);
         }
-        while (true);
 
         // Break if there is a result
         if (result != NULL)
             break;
+
+        this->superBlockData = NULL;
+        this->superBlockIdx++;
     }
 
     // If no result then the super blocks have been read. Reset for the next read.
     if (result == NULL)
     {
+        ASSERT(this->superBlockIdx == lstSize(readDelta->superBlockList));
+        ASSERT(this->blockIdx == this->blockTotal);
+
         this->superBlockData = NULL;
         this->superBlockIdx = 0;
     }

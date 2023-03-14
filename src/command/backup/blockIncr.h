@@ -20,9 +20,6 @@ consists of the following, compressed and encrypted as required:
   when the block list is being read sequentially, e.g. during verification. If blocks are accessed from the map then the block
   number is already known and the delta can be ignored.
 
-- If the block number above has BLOCK_INCR_FLAG_SIZE set then the block size is different from the default and must be read. This is
-  because it is at the end of the file and so also indicates the end of the super block.
-
 - Block data.
 
 The super block list is followed by the block map, which is encrypted separately when required but not compressed. The return value
@@ -47,12 +44,6 @@ SHA1 file checksum. This will fail the backup, which is not ideal, but better th
 Filter type constant
 ***********************************************************************************************************************************/
 #define BLOCK_INCR_FILTER_TYPE                                      STRID5("blk-incr", 0x90dc9dad820)
-
-/***********************************************************************************************************************************
-Constants needed to read the block number in a super block
-***********************************************************************************************************************************/
-#define BLOCK_INCR_FLAG_SIZE                                        1 // Does the block have a different size than the default?
-#define BLOCK_INCR_BLOCK_SHIFT                                      1 // Shift required to get block number
 
 /***********************************************************************************************************************************
 Constructors

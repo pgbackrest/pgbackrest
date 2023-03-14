@@ -174,15 +174,8 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
                         ioWriteOpen(this->blockOutWrite);
                     }
 
-                    // Write the block no as a delta of the prior block no. If the size of the last block is smaller than block
-                    // size then write the smaller block size.
-                    const uint64_t blockEncoded = bufUsed(this->block) < this->blockSize ? BLOCK_INCR_FLAG_SIZE : 0;
-
-                    ioWriteVarIntU64(
-                        this->blockOutWrite, blockEncoded | ((this->blockNo - this->blockNoLast) << BLOCK_INCR_BLOCK_SHIFT));
-
-                    if (blockEncoded & BLOCK_INCR_FLAG_SIZE)
-                        ioWriteVarIntU64(this->blockOutWrite, bufUsed(this->block));
+                    // Write the block no as a delta of the prior block no
+                    ioWriteVarIntU64(this->blockOutWrite, this->blockNo - this->blockNoLast);
 
                     // Copy block data through the filters
                     ioCopyP(ioBufferReadNewOpen(this->block), this->blockOutWrite);
@@ -193,6 +186,7 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
                     BlockMapItem blockMapItem =
                     {
                         .reference = this->reference,
+                        .superBlockSize = this->superBlockSize,
                         .bundleId = this->bundleId,
                         .offset = this->blockOffset,
                         .block = this->superBlockNo,
@@ -225,22 +219,20 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
         // Write the super block
         if (this->blockOutWrite != NULL && (this->done || this->blockOutSize >= this->superBlockSize))
         {
-            // Explicitly terminate the block if all block sizes are equal. This is not required if the last block is smaller than
-            // the block size.
-            if (this->blockOutSize % this->blockSize == 0)
-                ioWriteVarIntU64(this->blockOutWrite, 0);
-
             // Close write
             ioWriteClose(this->blockOutWrite);
 
-            // Update size for items already added to the block map
+            // Update size and super block size for items already added to the block map
             const uint64_t blockOutSize = pckReadU64P(
                 ioFilterGroupResultP(ioWriteFilterGroup(this->blockOutWrite), SIZE_FILTER_TYPE));
 
             for (unsigned int blockMapIdx = 0; blockMapIdx < lstSize(this->blockOutList); blockMapIdx++)
             {
-                blockMapGet(
-                    this->blockMapOut, *(unsigned int *)lstGet(this->blockOutList, blockMapIdx))->size = blockOutSize;
+                BlockMapItem *const blockMapItem = blockMapGet(
+                    this->blockMapOut, *(unsigned int *)lstGet(this->blockOutList, blockMapIdx));
+
+                blockMapItem->size = blockOutSize;
+                blockMapItem->superBlockSize = this->blockOutSize;
             }
 
             lstFree(this->blockOutList);
@@ -273,7 +265,7 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
 
                 // Write the map
                 ioWriteOpen(write);
-                blockMapWrite(this->blockMapOut, write, this->blockSize == this->superBlockSize, this->checksumSize);
+                blockMapWrite(this->blockMapOut, write, this->blockSize, this->checksumSize);
                 ioWriteClose(write);
 
                 // Get total bytes written for the map
@@ -407,7 +399,7 @@ blockIncrNew(
         *driver = (BlockIncr)
         {
             .memContext = memContextCurrent(),
-            .superBlockSize = superBlockSize,
+            .superBlockSize = (superBlockSize / blockSize + (superBlockSize % blockSize == 0 ? 0 : 1)) * blockSize,
             .blockSize = blockSize,
             .checksumSize = checksumSize,
             .reference = reference,
@@ -417,10 +409,6 @@ blockIncrNew(
             .blockOut = bufNew(0),
             .blockMapOut = blockMapNew(),
         };
-
-        // If there will be less than two blocks per super block then set them equal to save space in the map
-        if (superBlockSize < blockSize * 2)
-            driver->superBlockSize = blockSize;
 
         // Duplicate compress filter
         if (compress != NULL)
@@ -442,7 +430,7 @@ blockIncrNew(
 
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {
-                    driver->blockMapPrior = blockMapNewRead(read, checksumSize);
+                    driver->blockMapPrior = blockMapNewRead(read, blockSize, checksumSize);
                 }
                 MEM_CONTEXT_PRIOR_END();
             }

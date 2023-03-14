@@ -271,20 +271,19 @@ backupInit(const InfoBackup *infoBackup)
 Build block incremental maps
 ***********************************************************************************************************************************/
 // Size map. Block size is increased when the block map would be larger than a single block. The break can be calculated with this
-// formula: [block size in KiB] / (1024 / [block size in KiB] * [checksum size + 1]) * 1073741824.
+// formula: [block size in KiB] / (1024 / [block size in KiB] * [checksum size]) * 1073741824.
 static const ManifestBlockIncrSizeMap manifestBlockIncrSizeMapDefault[] =
 {
-    {.fileSize = 968 * 1024 * 1024, .blockSize = 96 * 1024},
-    {.fileSize = 800 * 1024 * 1024, .blockSize = 88 * 1024},
-    {.fileSize = 648 * 1024 * 1024, .blockSize = 80 * 1024},
-    {.fileSize = 512 * 1024 * 1024, .blockSize = 72 * 1024},
-    {.fileSize = 392 * 1024 * 1024, .blockSize = 64 * 1024},
-    {.fileSize = 288 * 1024 * 1024, .blockSize = 56 * 1024},
-    {.fileSize = 200 * 1024 * 1024, .blockSize = 48 * 1024},
-    {.fileSize = 128 * 1024 * 1024, .blockSize = 40 * 1024},
-    {.fileSize = 84256 * 1024, .blockSize = 32 * 1024},             // These do not come out evenly because the map record size is 7
-    {.fileSize = 37448 * 1024, .blockSize = 24 * 1024},             // instead of 8 in the rows above
-    {.fileSize = 9360 * 1024, .blockSize = 16 * 1024},
+    {.fileSize = 914 * 1024 * 1024, .blockSize = 88 * 1024},
+    {.fileSize = 740 * 1024 * 1024, .blockSize = 80 * 1024},
+    {.fileSize = 585 * 1024 * 1024, .blockSize = 72 * 1024},
+    {.fileSize = 448 * 1024 * 1024, .blockSize = 64 * 1024},
+    {.fileSize = 329 * 1024 * 1024, .blockSize = 56 * 1024},
+    {.fileSize = 228 * 1024 * 1024, .blockSize = 48 * 1024},
+    {.fileSize = 146 * 1024 * 1024, .blockSize = 40 * 1024},
+    {.fileSize = 96 * 1024 * 1024, .blockSize = 32 * 1024},
+    {.fileSize = 43 * 1024 * 1024, .blockSize = 24 * 1024},
+    {.fileSize = 11 * 1024 * 1024, .blockSize = 16 * 1024},
     {.fileSize = 16 * 1024, .blockSize = 8 * 1024},
 };
 
