@@ -768,28 +768,28 @@ testRun(void)
             "00"                                        // Version 0
 
             "8008"                                      // reference 128
-            "1c"                                        // size 3
+            "18"                                        // size 3
             "eeee01ffff"                                // checksum
-            "25"                                        // size
+            "21"                                        // size
             "eeee02ffff"                                // checksum
 
             "06"                                        // reference 0
             "01"                                        // bundle 1
             "01"                                        // offset 1
-            "05"                                        // size 1
+            "01"                                        // size 1
             "eeee03ffff"                                // checksum
 
             "8008"                                      // reference 128
-            "e50b"                                      // size 99
+            "e10b"                                      // size 99
             "eeee04ffff"                                // checksum
 
             "04"                                        // reference 0
             "01"                                        // offset 7
-            "05"                                        // size 99
+            "01"                                        // size 99
             "eeee05ffff"                                // checksum
 
             "21"                                        // reference 0
-            "ad0b"                                      // size 8
+            "a90b"                                      // size 8
             "eeee88ffff",                               // checksum
             "compare");
 
@@ -952,17 +952,17 @@ testRun(void)
             "00"                                        // Blocks are unequal
 
             "00"                                        // reference 0
-            "26"                                        // size 4
+            "22"                                        // size 4
             "04"                                        // super block size 6
             "eeee01000000ffff"                          // checksum
             "eeee02000000ffff"                          // checksum
 
-            "11"                                        // size 5
+            "15"                                        // size 5
             "00"                                        // block total 1
             "eeee03000000ffff"                          // checksum
 
             "08"                                        // reference 1
-            "e50b"                                      // size 99
+            "e10b"                                      // size 99
             "eeee04000000ffff"                          // checksum
 
             "06"                                        // reference 0
@@ -971,7 +971,7 @@ testRun(void)
             "eeee05000000ffff"                          // checksum
 
             "10"                                        // reference 2
-            "3f01"                                      // size 1
+            "3b01"                                      // size 1
             "02"                                        // super block size 2
             "eeee06000000ffff"                          // checksum
 
@@ -980,11 +980,15 @@ testRun(void)
             "01"                                        // block 5
             "eeee07000000ffff"                          // checksum
 
-            "17"                                        // size 6
+            "13"                                        // size 6
             "0102"                                      // size 2
             "eeee08000000ffff"                          // checksum
 
-            "09490101eeee09000000ffff",
+            "09"                                        // reference 1
+            "4d"                                        // size 1
+            "01"                                        // block total 1
+            "01"                                        // block 1
+            "eeee09000000ffff",                         // checksum
             "compare");
 
         // -------------------------------------------------------------------------------------------------------------------------
