@@ -151,7 +151,7 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
                 HRNPQ_MACRO_STOP_BACKUP_LE_95(1, lsnStopStr, walSegmentStop),
 
                 // Get stop time
-                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 2000),
+                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 52427000),
 
                 HRNPQ_MACRO_DONE()
             });

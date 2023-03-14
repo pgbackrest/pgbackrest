@@ -20,6 +20,7 @@ Main
 #include "command/help/help.h"
 #include "command/info/info.h"
 #include "command/local/local.h"
+#include "command/manifest/manifest.h"
 #include "command/remote/remote.h"
 #include "command/repo/create.h"
 #include "command/repo/get.h"
@@ -207,6 +208,12 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdInfo:
                     cmdInfo();
+                    break;
+
+                // Manifest command
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdManifest:
+                    cmdManifest();
                     break;
 
                 // Repository create command

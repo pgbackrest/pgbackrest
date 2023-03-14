@@ -86,6 +86,13 @@ command:
     log-file: false
     log-level-default: DEBUG
 
+  manifest:
+    command-role:
+      remote: {}
+    internal: true
+    log-file: false
+    log-level-default: DEBUG
+
   repo-create:
     command-role:
       remote: {}
@@ -313,6 +320,7 @@ option:
     command:
       info: {}
       repo-ls: {}
+      manifest: {}
       verify:
         default: none
         allow-list:
@@ -334,6 +342,9 @@ option:
       info:
         depend:
           option: stanza
+      manifest:
+        default: latest
+        required: true
       restore:
         default: latest
         required: true
@@ -353,6 +364,7 @@ option:
       expire: {}
       info:
         required: false
+      manifest: {}
       repo-create:
         required: false
       repo-get:
@@ -553,6 +565,7 @@ option:
     type: string
     required: false
     command:
+      manifest: {}
       repo-ls: {}
     command-role:
       main: {}
@@ -1335,6 +1348,9 @@ option:
       backup:
         command-role:
           local: {}
+      manifest:
+        command-role:
+          main: {}
 
   pg-database:
     section: stanza
@@ -1363,6 +1379,7 @@ option:
         internal: true
       backup: {}
       check: {}
+      manifest: {}
       restore:
         internal: true
       stanza-create: {}
@@ -1424,6 +1441,7 @@ option:
     command:
       backup: {}
       check: {}
+      manifest: {}
       stanza-create: {}
       stanza-delete: {}
       stanza-upgrade: {}
@@ -1503,6 +1521,8 @@ option:
         required: false
       backup: {}
       check: {}
+      manifest:
+        required: false
       restore: {}
       stanza-create: {}
       stanza-delete: {}
@@ -1558,6 +1578,7 @@ option:
       archive-push: {}
       backup: {}
       check: {}
+      manifest: {}
       restore: {}
       stanza-create: {}
       stanza-delete: {}
@@ -1595,6 +1616,10 @@ option:
         command-role:
           main: {}
       info:
+        command-role:
+          main: {}
+          remote: {}
+      manifest:
         command-role:
           main: {}
           remote: {}
@@ -1659,6 +1684,7 @@ option:
       expire:
         internal: true
       info: {}
+      manifest: {}
       repo-create: {}
       repo-get: {}
       repo-ls: {}
@@ -1717,6 +1743,9 @@ option:
         command-role:
           main: {}
           remote: {}
+      manifest:
+        command-role:
+          main: {}
       repo-create:
         command-role:
           main: {}
@@ -2048,6 +2077,7 @@ option:
       archive-push: {}
       check: {}
       info: {}
+      manifest: {}
       repo-create: {}
       repo-get: {}
       repo-ls: {}

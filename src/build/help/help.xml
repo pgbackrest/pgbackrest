@@ -2023,6 +2023,61 @@
                 </option-list>
             </command>
 
+            <command id="manifest" name="Query Manifest">
+                <summary>Query manifest.</summary>
+
+                <text>
+                    <p>Get information from a manifest including the restore strategy.</p>
+                </text>
+
+                <option-list>
+                    <option id="filter" name="Filter Output">
+                        <summary>Filter files in output.</summary>
+
+                        <text>
+                            <p>The filter currently only applies to files and must be specified relative to <id>PGDATA</id>.</p>
+                        </text>
+
+                        <example>base/13398/16397</example>
+                    </option>
+
+                    <option id="output" name="Output">
+                        <summary>Output format.</summary>
+
+                        <text>
+                            <p>The following output types are supported:</p>
+
+                            <list>
+                                <list-item><id>text</id></list-item>
+                                <list-item><id>json</id></list-item>
+                            </list>
+                        </text>
+
+                        <example>json</example>
+                    </option>
+
+                    <option id="pg" name="PostgreSQL Cluster">
+                        <summary>PostgreSQL Cluster</summary>
+
+                        <text>
+                            <p>Specify the PostgreSQL cluster to compare the manifest against.</p>
+                        </text>
+
+                        <example>1</example>
+                    </option>
+
+                    <option id="set" name="Set">
+                        <summary>Manifest to query.</summary>
+
+                        <text>
+                            <p>When not specified the latest manifest will be queried.</p>
+                        </text>
+
+                        <example>20150131-153358F_20150131-153401I</example>
+                    </option>
+                </option-list>
+            </command>
+
             <command id="repo-create" name="Create Repository">
                 <summary>Create the repository.</summary>
 
