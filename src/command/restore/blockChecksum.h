@@ -19,5 +19,6 @@ Filter type constant
 Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN IoFilter *blockChecksumNew(size_t blockSize, size_t checksumSize);
+FN_EXTERN IoFilter *blockChecksumNewPack(const Pack *paramList);
 
 #endif

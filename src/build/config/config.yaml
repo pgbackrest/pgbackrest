@@ -507,6 +507,7 @@ option:
       backup: {}
       check: {}
       info: {}
+      manifest: {}
       repo-create: {}
       repo-get: {}
       repo-ls: {}
@@ -535,6 +536,7 @@ option:
       backup: {}
       check: {}
       info: {}
+      manifest: {}
       repo-create: {}
       repo-get: {}
       repo-ls: {}
@@ -654,6 +656,7 @@ option:
       check: {}
       expire: {}
       info: {}
+      manifest: {}
       repo-create: {}
       repo-get: {}
       repo-ls: {}
@@ -677,6 +680,7 @@ option:
       backup: {}
       check: {}
       info: {}
+      manifest: {}
       repo-create: {}
       repo-get: {}
       repo-ls: {}
@@ -729,6 +733,7 @@ option:
       backup: {}
       check: {}
       info: {}
+      manifest: {}
       repo-get: {}
       repo-ls: {}
       repo-put: {}
@@ -887,6 +892,7 @@ option:
       backup: {}
       check: {}
       info: {}
+      manifest: {}
       repo-create: {}
       repo-get: {}
       repo-ls: {}
@@ -1045,6 +1051,7 @@ option:
       backup: {}
       check: {}
       info: {}
+      manifest: {}
       repo-create: {}
       repo-get: {}
       repo-ls: {}
@@ -1746,6 +1753,7 @@ option:
       manifest:
         command-role:
           main: {}
+          remote: {}
       repo-create:
         command-role:
           main: {}

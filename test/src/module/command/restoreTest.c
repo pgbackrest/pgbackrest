@@ -164,7 +164,7 @@ testRun(void)
 
         Buffer *output = bufNew(0);
         IoWrite *write = ioBufferWriteNew(output);
-        ioFilterGroupAdd(ioWriteFilterGroup(write), blockChecksumNew(3, 8));
+        ioFilterGroupAdd(ioWriteFilterGroup(write), blockChecksumNewPack(ioFilterParamList(blockChecksumNew(3, 8))));
         ioWriteOpen(write);
 
         TEST_RESULT_VOID(ioWrite(write, BUFSTRDEF("ABCDEF")), "write");

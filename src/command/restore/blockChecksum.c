@@ -152,9 +152,44 @@ blockChecksumNew(const size_t blockSize, const size_t checksumSize)
             .list = lstNewP(checksumSize),
         };
 
-        this = ioFilterNewP(BLOCK_CHECKSUM_FILTER_TYPE, driver, NULL, .in = blockChecksumProcess, .result = blockChecksumResult);
+        // Create param list
+        Pack *paramList = NULL;
+
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            PackWrite *const packWrite = pckWriteNewP();
+
+            pckWriteU64P(packWrite, blockSize);
+            pckWriteU64P(packWrite, checksumSize);
+            pckWriteEndP(packWrite);
+
+            paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
+        }
+        MEM_CONTEXT_TEMP_END();
+
+        this = ioFilterNewP(
+            BLOCK_CHECKSUM_FILTER_TYPE, driver, paramList, .in = blockChecksumProcess, .result = blockChecksumResult);
     }
     OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_FILTER, this);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN IoFilter *
+blockChecksumNewPack(const Pack *const paramList)
+{
+    IoFilter *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackRead *const paramListPack = pckReadNew(paramList);
+        const size_t blockSize = (size_t)pckReadU64P(paramListPack);
+        const size_t checksumSize = (size_t)pckReadU64P(paramListPack);
+
+        result = ioFilterMove(blockChecksumNew(blockSize, checksumSize), memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    return result;
 }
