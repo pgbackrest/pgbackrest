@@ -539,7 +539,7 @@
                             <p>Map file age (in days) to a block multiplier. Files that have not been modified recently are less likely to be modified in the future, so the block size is multiplied to reduce the map size. By default, if the file is old enough it will not be stored as a block incremental.</p>
                        </text>
 
-                        <example>7=2</example>
+                        <example>7=2|14=4</example>
                     </config-key>
 
                     <config-key id="repo-block-checksum-size-map" name="Block Incremental Checksum Size Map">
@@ -549,7 +549,7 @@
                             <p>Map block size to checksum size. Smaller checksums save space in the map but may not be able to reliably detect changes in the block.</p>
                        </text>
 
-                        <example>7=2</example>
+                        <example>32KiB=7|128KiB=8</example>
                     </config-key>
 
                     <config-key id="repo-block-size-map" name="Block Incremental Size Map">
@@ -559,7 +559,7 @@
                             <p>Map file size to block size. Block size is the minimum unit that will be stored in the block incremental. Smaller sizes allow for more granular incremental backups but larger sizes mean smaller maps.</p>
                        </text>
 
-                        <example>16KiB=8KiB</example>
+                        <example>16KiB=8KiB|128KiB=16KiB|512KiB=32KiB</example>
                     </config-key>
 
                     <config-key id="repo-block-size-super" name="Block Incremental Super Block Size">

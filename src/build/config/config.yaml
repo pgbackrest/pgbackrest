@@ -1881,7 +1881,7 @@ option:
     section: global
     group: repo
     type: boolean
-    internal: true
+    beta: true
     default: false
     command:
       backup: {}
@@ -1898,7 +1898,7 @@ option:
     group: repo
     type: hash
     required: false
-    internal: true
+    beta: true
     command: repo-block
     command-role:
       main: {}
@@ -1919,7 +1919,7 @@ option:
     type: size
     default: 256KiB
     allow-range: [32KiB, 16MiB]
-    internal: true
+    beta: true
     command: repo-block
     command-role:
       main: {}

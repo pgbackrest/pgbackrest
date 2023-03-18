@@ -57,6 +57,7 @@
                         <commit subject="Block incremental map fixes and improvements.">
                             <github-pull-request id="2026"/>
                         </commit>
+                        <commit subject="Add beta feature and documentation for block incremental backup."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
