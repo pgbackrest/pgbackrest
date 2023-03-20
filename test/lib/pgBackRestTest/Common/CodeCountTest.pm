@@ -66,7 +66,8 @@ sub codeCountScan
                  $strFile =~ '^test/result/' ||
                  $strFile =~ '^test/scratch' ||
                  $strFile =~ '^test/src/valgrind\.suppress\.' ||
-                 $strFile eq 'test/src/lcov.conf');
+                 $strFile eq 'test/src/lcov.conf' ||
+                 $strFile eq 'test/uncrustify.cfg');
 
         # Classify the source file
         my $strClass = 'test/harness';
