@@ -1,5 +1,10 @@
 [
     {
+        "commit": "6ad79d16ca638b7ccdc81b5530a39007b8e01aed",
+        "date": "2023-03-20 09:37:23 +0800",
+        "subject": "v2.45: Block Incremental Backup (BETA)"
+    },
+    {
         "commit": "04d224b88e73194ff1c6497dbecaaff392008dfe",
         "date": "2023-03-18 20:47:03 +0800",
         "subject": "Add beta feature and documentation for block incremental backup."

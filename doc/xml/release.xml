@@ -14,6 +14,9 @@
     </intro>
 
     <release-list>
+        <release date="XXXX-XX-XX" version="2.46dev" title="UNDER DEVELOPMENT">
+        </release>
+
         <release date="2023-03-20" version="2.45" title="Block Incremental Backup (BETA)">
             <release-core-list>
                 <release-bug-list>
