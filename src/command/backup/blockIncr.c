@@ -12,7 +12,6 @@ Block Incremental Filter
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
 #include "common/io/filter/buffer.h"
-#include "common/io/filter/chunk.h"
 #include "common/io/filter/size.h"
 #include "common/io/io.h"
 #include "common/log.h"
@@ -145,37 +144,22 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
                         }
                         MEM_CONTEXT_OBJ_END();
 
-                        bool bufferRequired = true;
-
                         // Add compress filter
                         if (this->compressParam != NULL)
                         {
                             ioFilterGroupAdd(
                                 ioWriteFilterGroup(this->blockOutWrite),
                                 compressFilterPack(this->compressType, this->compressParam));
-                            bufferRequired = false;
                         }
 
                         // Add encrypt filter
                         if (this->encryptParam != NULL)
-                        {
-                            ioFilterGroupAdd(
-                                ioWriteFilterGroup(this->blockOutWrite), cipherBlockNewPack(this->encryptParam));
-                            bufferRequired = false;
-                        }
+                            ioFilterGroupAdd(ioWriteFilterGroup(this->blockOutWrite), cipherBlockNewPack(this->encryptParam));
 
-                        // If no compress/encrypt then add a buffer so chunk sizes are as large as possible
-                        if (bufferRequired)
-                            ioFilterGroupAdd(ioWriteFilterGroup(this->blockOutWrite), ioBufferNew());
-
-                        // Add chunk and size filters
-                        ioFilterGroupAdd(ioWriteFilterGroup(this->blockOutWrite), ioChunkNew());
+                        // Add size filter
                         ioFilterGroupAdd(ioWriteFilterGroup(this->blockOutWrite), ioSizeNew());
                         ioWriteOpen(this->blockOutWrite);
                     }
-
-                    // Write the block no as a delta of the prior block no
-                    ioWriteVarIntU64(this->blockOutWrite, this->blockNo - this->blockNoLast);
 
                     // Copy block data through the filters
                     ioCopyP(ioBufferReadNewOpen(this->block), this->blockOutWrite);

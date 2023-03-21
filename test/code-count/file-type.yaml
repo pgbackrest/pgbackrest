@@ -919,14 +919,6 @@ src/common/io/bufferWrite.h:
   class: core
   type: c/h
 
-src/common/io/chunkedRead.c:
-  class: core
-  type: c
-
-src/common/io/chunkedRead.h:
-  class: core
-  type: c/h
-
 src/common/io/client.c:
   class: core
   type: c
@@ -968,14 +960,6 @@ src/common/io/filter/buffer.c:
   type: c
 
 src/common/io/filter/buffer.h:
-  class: core
-  type: c/h
-
-src/common/io/filter/chunk.c:
-  class: core
-  type: c
-
-src/common/io/filter/chunk.h:
   class: core
   type: c/h
 
@@ -1084,6 +1068,14 @@ src/common/io/io.c:
   type: c
 
 src/common/io/io.h:
+  class: core
+  type: c/h
+
+src/common/io/limitRead.c:
+  class: core
+  type: c
+
+src/common/io/limitRead.h:
   class: core
   type: c/h
 
