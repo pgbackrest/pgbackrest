@@ -292,7 +292,7 @@ bufLimitSet(Buffer *this, size_t limit)
     ASSERT(limit >= bufUsed(this));
 
     this->pub.size = limit;
-    this->pub.sizeLimit = true; // !!! MAYBE OPTIMIZE THIS?
+    this->pub.sizeLimit = limit != bufSizeAlloc(this);
 
     FUNCTION_TEST_RETURN_VOID();
 }

@@ -4439,6 +4439,19 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                            // opt/recurse
     ),                                                                                                                // opt/recurse
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                               // opt/reference
+    (                                                                                                               // opt/reference
+        PARSE_RULE_OPTION_NAME("reference"),                                                                        // opt/reference
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeString),                                                                   // opt/reference
+        PARSE_RULE_OPTION_REQUIRED(false),                                                                          // opt/reference
+        PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),                                                           // opt/reference
+                                                                                                                    // opt/reference
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                              // opt/reference
+        (                                                                                                           // opt/reference
+            PARSE_RULE_OPTION_COMMAND(cfgCmdManifest)                                                               // opt/reference
+        ),                                                                                                          // opt/reference
+    ),                                                                                                              // opt/reference
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                             // opt/remote-type
     (                                                                                                             // opt/remote-type
         PARSE_RULE_OPTION_NAME("remote-type"),                                                                    // opt/remote-type
@@ -9874,6 +9887,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptProtocolTimeout,                                                                                      // opt-resolve-order
     cfgOptRaw,                                                                                                  // opt-resolve-order
     cfgOptRecurse,                                                                                              // opt-resolve-order
+    cfgOptReference,                                                                                            // opt-resolve-order
     cfgOptRemoteType,                                                                                           // opt-resolve-order
     cfgOptRepo,                                                                                                 // opt-resolve-order
     cfgOptRepoBundle,                                                                                           // opt-resolve-order

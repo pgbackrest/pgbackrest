@@ -107,9 +107,20 @@ testRun(void)
 
         // Use limits to change size reporting
         TEST_RESULT_VOID(bufLimitSet(buffer, 64), "set limit");
-        TEST_RESULT_UINT(bufSize(buffer), 64, "    check limited size");
-        TEST_RESULT_VOID(bufLimitClear(buffer), "    clear limit");
-        TEST_RESULT_UINT(bufSize(buffer), 128, "    check unlimited size");
+        TEST_RESULT_UINT(bufSize(buffer), 64, "check limited size");
+        TEST_RESULT_BOOL(buffer->pub.sizeLimit, true, "check limit flag");
+
+        TEST_RESULT_VOID(bufLimitClear(buffer), "clear limit");
+        TEST_RESULT_UINT(bufSize(buffer), 128, "check unlimited size");
+        TEST_RESULT_BOOL(buffer->pub.sizeLimit, false, "check limit flag");
+
+        TEST_RESULT_VOID(bufLimitSet(buffer, 96), "set limit");
+        TEST_RESULT_UINT(bufSize(buffer), 96, "check limited size");
+        TEST_RESULT_BOOL(buffer->pub.sizeLimit, true, "check limit flag");
+
+        TEST_RESULT_VOID(bufLimitSet(buffer, 128), "set limit");
+        TEST_RESULT_UINT(bufSize(buffer), 128, "check unlimited size");
+        TEST_RESULT_BOOL(buffer->pub.sizeLimit, false, "check limit flag");
 
         // Resize to zero buffer
         TEST_RESULT_VOID(bufUsedZero(buffer), "set used to 0");

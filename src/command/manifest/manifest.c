@@ -363,6 +363,10 @@ cmdManifestFileRender(const Manifest *const manifest, const ManifestFile *const 
         if (json)
         {
             strCatFmt(result, "{\"name\":%s", strZ(jsonFromVar(VARSTR(file->name))));
+
+            if (file->reference != NULL)
+                strCatFmt(result, ",\"reference\":%s", strZ(jsonFromVar(VARSTR(file->reference))));
+
             strCatFmt(result, ",\"size\":%" PRIu64, file->size);
             strCatFmt(
                 result, ",\"checksum\":\"%s\"", strZ(strNewEncode(encodingHex, BUF(file->checksumSha1, HASH_TYPE_SHA1_SIZE))));
@@ -387,6 +391,10 @@ cmdManifestFileRender(const Manifest *const manifest, const ManifestFile *const 
         else
         {
             strCatFmt(result, "  - %s\n", strZ(file->name));
+
+            if (file->reference != NULL)
+                strCatFmt(result, "      reference: %s\n", strZ(file->reference));
+
             strCatFmt(
                 result, "      size: %s, repo %s\n", strZ(strSizeFormat(file->size)), strZ(strSizeFormat(file->sizeRepo)));
             strCatFmt(result, "      checksum: %s\n", strZ(strNewEncode(encodingHex, BUF(file->checksumSha1, HASH_TYPE_SHA1_SIZE))));
@@ -500,17 +508,33 @@ cmdManifestRender(void)
         // Multiple files
         else
         {
+            bool first = true;
+
             for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
             {
                 const ManifestFile file = manifestFile(manifest, fileIdx);
 
-                if (fileIdx != 0)
+                // Filter on reference
+                if (cfgOptionTest(cfgOptReference))
+                {
+                    if (strEqZ(cfgOptionStr(cfgOptReference), "latest"))
+                    {
+                        if (file.reference != NULL)
+                            continue;
+                    }
+                    else if (!strEq(cfgOptionStr(cfgOptReference), file.reference))
+                        continue;
+                }
+
+                if (!first)
                 {
                     if (json)
                         strCatChr(result, ',');
                     else
                         strCatChr(result, '\n');
                 }
+                else
+                    first = false;
 
                 strCat(result, cmdManifestFileRender(manifest, &file, false, json));
             }
