@@ -33,7 +33,6 @@ typedef struct BlockIncr
     const Pack *encryptParam;                                       // Encrypt filter parameters
 
     unsigned int blockNo;                                           // Block number
-    unsigned int blockNoLast;                                       // Last block no
     uint64_t superBlockNo;                                          // Block no in super block
     uint64_t blockOffset;                                           // Block offset
     uint64_t superBlockSize;                                        // Super block
@@ -181,9 +180,6 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
                     unsigned int blockMapItemIdx = blockMapSize(this->blockMapOut);
                     blockMapAdd(this->blockMapOut, &blockMapItem);
                     lstAdd(this->blockOutList, &blockMapItemIdx);
-
-                    // Set last block no
-                    this->blockNoLast = this->blockNo;
 
                     // Increment super block no
                     this->superBlockNo++;
