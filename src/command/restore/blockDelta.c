@@ -268,6 +268,8 @@ blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, Io
         {
             // Clear buffer and read block
             bufUsedZero(this->write.block);
+            bufLimitClear(this->write.block);
+
             ioRead(this->limitRead, this->write.block);
 
             // If the block matches the block we are expecting

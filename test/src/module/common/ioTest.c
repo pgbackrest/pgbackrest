@@ -793,7 +793,6 @@ testRun(void)
         bufUsedZero(output);
         TEST_RESULT_UINT(ioRead(read, output), 1, "read");
         TEST_RESULT_STR_Z(strNewBuf(output), "E", "check");
-        // TEST_RESULT_UINT(bufRemains(output), 0, "buffer limited");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
