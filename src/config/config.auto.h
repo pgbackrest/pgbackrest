@@ -104,6 +104,7 @@ Option constants
 #define CFGOPT_RAW                                                  "raw"
 #define CFGOPT_RECOVERY_OPTION                                      "recovery-option"
 #define CFGOPT_RECURSE                                              "recurse"
+#define CFGOPT_REFERENCE                                            "reference"
 #define CFGOPT_REMOTE_TYPE                                          "remote-type"
 #define CFGOPT_REPO                                                 "repo"
 #define CFGOPT_RESUME                                               "resume"
@@ -133,7 +134,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
 #define CFGOPT_VERBOSE                                              "verbose"
 
-#define CFG_OPTION_TOTAL                                            165
+#define CFG_OPTION_TOTAL                                            166
 
 /***********************************************************************************************************************************
 Option value constants
@@ -441,6 +442,7 @@ typedef enum
     cfgOptRaw,
     cfgOptRecoveryOption,
     cfgOptRecurse,
+    cfgOptReference,
     cfgOptRemoteType,
     cfgOptRepo,
     cfgOptRepoAzureAccount,

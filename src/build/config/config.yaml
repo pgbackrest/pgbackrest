@@ -332,6 +332,14 @@ option:
     command-role:
       main: {}
 
+  reference:
+    type: string
+    required: false
+    command:
+      manifest: {}
+    command-role:
+      main: {}
+
   set:
     type: string
     required: false
