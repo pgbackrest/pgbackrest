@@ -749,8 +749,9 @@ testRun(void)
         {
             HRN_FORK_CHILD_BEGIN()
             {
-                lockAcquire(
-                    cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), STRDEF("555-fefefefe"), cfgLockType(), 30000, true);
+                lockAcquireP(
+                    cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), STRDEF("555-fefefefe"), cfgLockType(),
+                    .timeout = 30000, .returnOnNoLock = true);
 
                 // Notify parent that lock has been acquired
                 HRN_FORK_CHILD_NOTIFY_PUT();

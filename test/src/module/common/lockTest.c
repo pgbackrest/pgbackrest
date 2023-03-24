@@ -146,7 +146,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("lockAcquire(), lockRelease()"))
+    if (testBegin("lockAcquireP(), lockRelease()"))
     {
         const String *stanza = STRDEF("test");
         String *archiveLockFile = strNewFmt(TEST_PATH "/%s-archive" LOCK_FILE_EXT, strZ(stanza));
@@ -162,14 +162,15 @@ testRun(void)
 
         TEST_ASSIGN(lockFdTest, lockAcquireFile(archiveLockFile, 0, true), "archive lock by file");
         TEST_RESULT_BOOL(
-            lockAcquire(TEST_PATH_STR, stanza, STRDEF("2-test"), lockTypeArchive, 0, false), false, "archive already locked");
+            lockAcquireP(TEST_PATH_STR, stanza, STRDEF("2-test"), lockTypeArchive, .returnOnNoLock = true), false,
+            "archive already locked");
         TEST_ERROR_FMT(
-            lockAcquire(TEST_PATH_STR, stanza, STRDEF("2-test"), lockTypeArchive, 0, true), LockAcquireError,
+            lockAcquireP(TEST_PATH_STR, stanza, STRDEF("2-test"), lockTypeArchive), LockAcquireError,
             "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
             "HINT: is another pgBackRest process running?",
             strZ(archiveLockFile));
         TEST_ERROR_FMT(
-            lockAcquire(TEST_PATH_STR, stanza, STRDEF("2-test"), lockTypeAll, 0, true), LockAcquireError,
+            lockAcquireP(TEST_PATH_STR, stanza, STRDEF("2-test"), lockTypeAll), LockAcquireError,
             "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
             "HINT: is another pgBackRest process running?", strZ(archiveLockFile));
         TEST_RESULT_VOID(lockReleaseFile(lockFdTest, archiveLockFile), "release lock");
@@ -177,10 +178,10 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         lockLocal.execId = STRDEF("1-test");
 
-        TEST_RESULT_BOOL(lockAcquire(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeArchive, 0, true), true, "archive lock");
+        TEST_RESULT_BOOL(lockAcquireP(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeArchive), true, "archive lock");
         TEST_RESULT_BOOL(storageExistsP(storageTest, archiveLockFile), true, "archive lock file was created");
         TEST_ERROR(
-            lockAcquire(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeArchive, 0, false), AssertError,
+            lockAcquireP(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeArchive, .returnOnNoLock = true), AssertError,
             "lock is already held by this process");
         TEST_RESULT_VOID(lockRelease(true), "release archive lock");
 
@@ -190,11 +191,11 @@ testRun(void)
         TEST_ASSIGN(lockFdTest, lockAcquireFile(backupLockFile, 0, true), "backup lock by file");
 
         TEST_ERROR_FMT(
-            lockAcquire(TEST_PATH_STR, stanza, STRDEF("2-test"), lockTypeBackup, 0, true), LockAcquireError,
+            lockAcquireP(TEST_PATH_STR, stanza, STRDEF("2-test"), lockTypeBackup), LockAcquireError,
             "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
             "HINT: is another pgBackRest process running?", strZ(backupLockFile));
         TEST_ERROR_FMT(
-            lockAcquire(TEST_PATH_STR, stanza, STRDEF("2-test"), lockTypeAll, 0, true), LockAcquireError,
+            lockAcquireP(TEST_PATH_STR, stanza, STRDEF("2-test"), lockTypeAll), LockAcquireError,
             "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
             "HINT: is another pgBackRest process running?", strZ(backupLockFile));
         TEST_RESULT_VOID(lockReleaseFile(lockFdTest, archiveLockFile), "release archive lock");
@@ -203,7 +204,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         lockLocal.execId = STRDEF("1-test");
 
-        TEST_RESULT_BOOL(lockAcquire(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeAll, 0, true), true, "all lock");
+        TEST_RESULT_BOOL(lockAcquireP(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeAll), true, "all lock");
         TEST_RESULT_BOOL(storageExistsP(storageTest, archiveLockFile), true, "archive lock file was created");
         TEST_RESULT_BOOL(storageExistsP(storageTest, backupLockFile), true, "backup lock file was created");
 
@@ -238,8 +239,8 @@ testRun(void)
             "verify percentComplete");
 
         TEST_ERROR(
-            lockAcquire(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeAll, 0, false), AssertError,
-            "assertion 'failOnNoLock || lockType != lockTypeAll' failed");
+            lockAcquireP(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeAll, .returnOnNoLock = true), AssertError,
+            "assertion '!param.returnOnNoLock || lockType != lockTypeAll' failed");
         TEST_RESULT_VOID(lockRelease(true), "release all locks");
 
         TEST_RESULT_BOOL(storageExistsP(storageTest, archiveLockFile), false, "archive lock file was removed");
@@ -248,14 +249,15 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("acquire lock on the same exec-id and release");
 
-        TEST_RESULT_BOOL(lockAcquire(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
+        TEST_RESULT_BOOL(lockAcquireP(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeBackup), true, "backup lock");
 
         // Make it look there is no lock
         lockFdTest = lockLocal.file[lockTypeBackup].fd;
         String *lockFileTest = strDup(lockLocal.file[lockTypeBackup].name);
         lockLocal.held = lockTypeNone;
 
-        TEST_RESULT_BOOL(lockAcquire(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock again");
+        TEST_RESULT_BOOL(
+            lockAcquireP(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeBackup), true, "backup lock again");
         TEST_RESULT_VOID(lockRelease(true), "release backup lock");
 
         // Release lock manually
@@ -282,7 +284,7 @@ testRun(void)
         const String *stanza = STRDEF("1-test");
         lockLocal.execId = STRDEF("1-test");
 
-        TEST_RESULT_BOOL(lockAcquire(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
+        TEST_RESULT_BOOL(lockAcquireP(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeBackup), true, "backup lock");
         TEST_RESULT_BOOL(storageExistsP(storageTest, lockLocal.file[lockTypeBackup].name), true, "backup lock file was created");
 
         // Overwrite backup lock file with execId of 1-test and pid of 12345
@@ -315,8 +317,7 @@ testRun(void)
         {
             HRN_FORK_CHILD_BEGIN()
             {
-                TEST_RESULT_BOOL(
-                    lockAcquire(TEST_PATH_STR, STRDEF("test"), STRDEF("test"), lockTypeBackup, 0, true), true, "acquire lock");
+                TEST_RESULT_BOOL(lockAcquireP(TEST_PATH_STR, STRDEF("test"), STRDEF("test"), lockTypeBackup), true, "acquire lock");
 
                 // Overwrite lock file with bogus data
                 THROW_ON_SYS_ERROR_FMT(
@@ -360,8 +361,7 @@ testRun(void)
         {
             HRN_FORK_CHILD_BEGIN()
             {
-                TEST_RESULT_BOOL(
-                    lockAcquire(TEST_PATH_STR, STRDEF("test"), STRDEF("test"), lockTypeBackup, 0, true), true, "acquire lock");
+                TEST_RESULT_BOOL(lockAcquireP(TEST_PATH_STR, STRDEF("test"), STRDEF("test"), lockTypeBackup), true, "acquire lock");
 
                 // Notify parent that lock has been acquired
                 HRN_FORK_CHILD_NOTIFY_PUT();

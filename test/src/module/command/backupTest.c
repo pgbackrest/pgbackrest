@@ -2127,7 +2127,7 @@ testRun(void)
         currentPercentComplete = 4567;
 
         TEST_RESULT_VOID(
-            lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), lockTypeBackup, 0, true),
+            lockAcquireP(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), lockTypeBackup),
             "acquire backup lock");
         TEST_RESULT_VOID(
             backupJobResult(

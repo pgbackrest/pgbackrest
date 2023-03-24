@@ -362,9 +362,9 @@ cmdArchivePush(void)
                 // forking the async process off more than once so track that as well.  Use an archive lock to prevent more than
                 // one async process being launched.
                 if (!pushed && !forked &&
-                    lockAcquire(
-                        cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), cfgLockType(), 0,
-                        false))
+                    lockAcquireP(
+                        cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), cfgLockType(),
+                        .returnOnNoLock = true))
                 {
                     // The async process should not output on the console at all
                     KeyValue *optionReplace = kvNew();

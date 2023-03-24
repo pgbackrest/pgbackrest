@@ -719,9 +719,9 @@ cmdArchiveGet(void)
                 // forking the async process off more than once so track that as well.  Use an archive lock to prevent forking if
                 // the async process was launched by another process.
                 if (!forked && (!found || !queueFull) &&
-                    lockAcquire(
-                        cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), cfgLockType(), 0,
-                        false))
+                    lockAcquireP(
+                        cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), cfgLockType(),
+                        .returnOnNoLock = true))
                 {
                     // Get control info
                     PgControl pgControl = pgControlFromFile(storagePg(), cfgOptionStrNull(cfgOptPgVersionForce));

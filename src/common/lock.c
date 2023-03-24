@@ -392,15 +392,16 @@ lockAcquireFile(const String *const lockFile, const TimeMSec lockTimeout, const 
 
 FN_EXTERN bool
 lockAcquire(
-    const String *lockPath, const String *stanza, const String *execId, LockType lockType, TimeMSec lockTimeout, bool failOnNoLock)
+    const String *const lockPath, const String *const stanza, const String *const execId, const LockType lockType,
+    const LockAcquireParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, lockPath);
         FUNCTION_LOG_PARAM(STRING, stanza);
         FUNCTION_LOG_PARAM(STRING, execId);
         FUNCTION_LOG_PARAM(ENUM, lockType);
-        FUNCTION_LOG_PARAM(TIMEMSEC, lockTimeout);
-        FUNCTION_LOG_PARAM(BOOL, failOnNoLock);
+        FUNCTION_LOG_PARAM(TIMEMSEC, param.timeout);
+        FUNCTION_LOG_PARAM(BOOL, param.returnOnNoLock);
     FUNCTION_LOG_END();
 
     ASSERT(lockPath != NULL);
@@ -410,7 +411,7 @@ lockAcquire(
     bool result = true;
 
     // Don't allow failures when locking more than one file.  This makes cleanup difficult and there are no known use cases.
-    ASSERT(failOnNoLock || lockType != lockTypeAll);
+    ASSERT(!param.returnOnNoLock || lockType != lockTypeAll);
 
     // Don't allow another lock if one is already held
     if (lockLocal.held != lockTypeNone)
@@ -446,7 +447,7 @@ lockAcquire(
         }
         MEM_CONTEXT_END();
 
-        lockLocal.file[lockIdx].fd = lockAcquireFile(lockLocal.file[lockIdx].name, lockTimeout, failOnNoLock);
+        lockLocal.file[lockIdx].fd = lockAcquireFile(lockLocal.file[lockIdx].name, param.timeout, !param.returnOnNoLock);
 
         if (lockLocal.file[lockIdx].fd == -1)
         {
