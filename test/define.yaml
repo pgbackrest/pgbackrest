@@ -401,6 +401,12 @@ unit:
           name: storageHelper
           shim:
             storage/helper: ~
+        harness:
+          name: lock
+          shim:
+            common/lock:
+              function:
+                - lockInit
 
         coverage:
           - common/lock

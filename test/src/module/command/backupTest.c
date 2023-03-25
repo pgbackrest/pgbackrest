@@ -2126,9 +2126,9 @@ testRun(void)
         uint64_t sizeProgress = 0;
         currentPercentComplete = 4567;
 
-        TEST_RESULT_VOID(
-            lockAcquireP(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), lockTypeBackup),
-            "acquire backup lock");
+        lockInit(TEST_PATH_STR, cfgOptionStr(cfgOptExecId), cfgOptionStr(cfgOptStanza), lockTypeBackup);
+        TEST_RESULT_VOID(lockAcquireP(), "acquire backup lock");
+
         TEST_RESULT_VOID(
             backupJobResult(
                 manifest, STRDEF("host"), storageTest, strLstNew(), job, false, 0, &sizeProgress, &currentPercentComplete),

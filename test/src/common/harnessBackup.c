@@ -29,7 +29,8 @@ hrnCmdBackup(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    lockAcquireP(STR(testPath()), cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), lockTypeBackup);
+    lockInit(STR(testPath()), cfgOptionStr(cfgOptExecId), cfgOptionStr(cfgOptStanza), lockTypeBackup);
+    lockAcquireP();
 
     TRY_BEGIN()
     {

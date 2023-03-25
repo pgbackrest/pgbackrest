@@ -718,10 +718,7 @@ cmdArchiveGet(void)
                 // If the WAL segment has not already been found then start the async process to get it.  There's no point in
                 // forking the async process off more than once so track that as well.  Use an archive lock to prevent forking if
                 // the async process was launched by another process.
-                if (!forked && (!found || !queueFull) &&
-                    lockAcquireP(
-                        cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), cfgLockType(),
-                        .returnOnNoLock = true))
+                if (!forked && (!found || !queueFull) && lockAcquireP(.returnOnNoLock = true))
                 {
                     // Get control info
                     PgControl pgControl = pgControlFromFile(storagePg(), cfgOptionStrNull(cfgOptPgVersionForce));

@@ -37,6 +37,9 @@ Constants
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Initialize lock module
+FN_EXTERN void lockInit(const String *path, const String *execId, const String *stanza, LockType type);
+
 // Acquire a lock type. This will involve locking one or more files on disk depending on the lock type.  Most operations only take a
 // single lock (archive or backup), but the stanza commands all need to lock both.
 typedef struct LockAcquireParam
@@ -46,11 +49,10 @@ typedef struct LockAcquireParam
     bool returnOnNoLock;                                            // Return when no lock acquired (rather than throw an error)
 } LockAcquireParam;
 
-#define lockAcquireP(lockPath, stanza, execId, lockType, ...)                                                                                                \
-    lockAcquire(lockPath, stanza, execId, lockType, (LockAcquireParam) {VAR_PARAM_INIT, __VA_ARGS__})
+#define lockAcquireP(...)                                                                                                          \
+    lockAcquire((LockAcquireParam) {VAR_PARAM_INIT, __VA_ARGS__})
 
-FN_EXTERN bool lockAcquire(
-    const String *lockPath, const String *stanza, const String *execId, LockType lockType, LockAcquireParam param);
+FN_EXTERN bool lockAcquire(LockAcquireParam param);
 
 // Release a lock
 FN_EXTERN bool lockRelease(bool failOnNoLock);

@@ -77,8 +77,7 @@ cmdRemote(ProtocolServer *const server)
                     lockStopTest();
 
                     // Acquire the lock
-                    lockAcquireP(
-                        cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), cfgLockType());
+                    lockAcquireP();
                 }
             }
 
