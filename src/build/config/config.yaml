@@ -1665,14 +1665,14 @@ option:
           remote: {}
       stanza-create:
         command-role:
-            remote: {}
+          remote: {}
       stanza-delete:
         command-role:
           main: {}
           remote: {}
       stanza-upgrade:
         command-role:
-            remote: {}
+          remote: {}
       start:
         command-role: {}
       stop:
