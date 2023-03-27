@@ -332,7 +332,7 @@ storageWriteGcsNew(StorageGcs *const storage, const String *const name, const si
     ASSERT(storage != NULL);
     ASSERT(name != NULL);
 
-    StorageWriteGcs *this = NULL;
+    StorageWriteGcs *this;
 
     OBJ_NEW_BEGIN(StorageWriteGcs, .childQty = MEM_CONTEXT_QTY_MAX)
     {

@@ -126,7 +126,7 @@ storageReadS3New(
     ASSERT(name != NULL);
     ASSERT(limit == NULL || varUInt64(limit) > 0);
 
-    StorageReadS3 *this = NULL;
+    StorageReadS3 *this;
 
     OBJ_NEW_BEGIN(StorageReadS3, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {

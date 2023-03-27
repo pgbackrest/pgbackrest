@@ -386,7 +386,7 @@ cipherBlockInputSame(const THIS_VOID)
 
 /**********************************************************************************************************************************/
 FN_EXTERN IoFilter *
-cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, CipherBlockNewParam param)
+cipherBlockNew(const CipherMode mode, const CipherType cipherType, const Buffer *const pass, const CipherBlockNewParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING_ID, mode);
@@ -424,13 +424,13 @@ cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, Ciphe
         THROW_FMT(AssertError, "unable to load digest '%s'", strZ(param.digest));
 
     // Allocate memory to hold process state
-    IoFilter *this = NULL;
+    CipherBlock *this;
 
     OBJ_NEW_BEGIN(CipherBlock, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        CipherBlock *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::CipherBlock);
+        this = OBJ_NEW_ALLOC();
 
-        *driver = (CipherBlock)
+        *this = (CipherBlock)
         {
             .mode = mode,
             .raw = param.raw,
@@ -440,35 +440,34 @@ cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, Ciphe
         };
 
         // Store the passphrase
-        driver->pass = memNew(driver->passSize);
-        memcpy(driver->pass, bufPtrConst(pass), driver->passSize);
-
-        // Create param list
-        Pack *paramList = NULL;
-
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            PackWrite *const packWrite = pckWriteNewP();
-
-            pckWriteU64P(packWrite, mode);
-            pckWriteU64P(packWrite, cipherType);
-            pckWriteBinP(packWrite, pass);
-            pckWriteStrP(packWrite, param.digest);
-            pckWriteBoolP(packWrite, param.raw);
-            pckWriteEndP(packWrite);
-
-            paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
-        }
-        MEM_CONTEXT_TEMP_END();
-
-        // Create filter interface
-        this = ioFilterNewP(
-            CIPHER_BLOCK_FILTER_TYPE, driver, paramList, .done = cipherBlockDone, .inOut = cipherBlockProcess,
-            .inputSame = cipherBlockInputSame);
+        this->pass = memNew(this->passSize);
+        memcpy(this->pass, bufPtrConst(pass), this->passSize);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_FILTER, this);
+    // Create param list
+    Pack *paramList;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackWrite *const packWrite = pckWriteNewP();
+
+        pckWriteU64P(packWrite, mode);
+        pckWriteU64P(packWrite, cipherType);
+        pckWriteBinP(packWrite, pass);
+        pckWriteStrP(packWrite, param.digest);
+        pckWriteBoolP(packWrite, param.raw);
+        pckWriteEndP(packWrite);
+
+        paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(
+        IO_FILTER,
+        ioFilterNewP(
+            CIPHER_BLOCK_FILTER_TYPE, this, paramList, .done = cipherBlockDone, .inOut = cipherBlockProcess,
+            .inputSame = cipherBlockInputSame));
 }
 
 FN_EXTERN IoFilter *

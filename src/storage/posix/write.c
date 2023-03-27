@@ -245,7 +245,7 @@ storageWritePosixNew(
     ASSERT(modeFile != 0);
     ASSERT(modePath != 0);
 
-    StorageWritePosix *this = NULL;
+    StorageWritePosix *this;
 
     OBJ_NEW_BEGIN(StorageWritePosix, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {

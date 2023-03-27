@@ -486,8 +486,8 @@ storageRemoteNew(
     ASSERT(modePath != 0);
     ASSERT(client != NULL);
 
-    StorageRemote *this = NULL;
-    const String *path = NULL;
+    StorageRemote *this;
+    const String *path;
 
     OBJ_NEW_BEGIN(StorageRemote, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {

@@ -32,17 +32,22 @@ ioServerNew(void *const driver, const IoServerInterface *const interface)
     ASSERT(interface->accept != NULL);
     ASSERT(interface->toLog != NULL);
 
-    IoServer *this = memNew(sizeof(IoServer));
+    IoServer *this;
 
-    *this = (IoServer)
+    OBJ_NEW_BEGIN(IoServer, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        .pub =
+        this = OBJ_NEW_ALLOC();
+
+        *this = (IoServer)
         {
-            .memContext = memContextCurrent(),
-            .driver = driver,
-            .interface = interface,
-        },
-    };
+            .pub =
+            {
+                .driver = objMoveToInterface(driver, this, memContextPrior()),
+                .interface = interface,
+            },
+        };
+    }
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_SERVER, this);
 }

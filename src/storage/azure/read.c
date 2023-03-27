@@ -123,7 +123,7 @@ storageReadAzureNew(
     ASSERT(storage != NULL);
     ASSERT(name != NULL);
 
-    StorageReadAzure *this = NULL;
+    StorageReadAzure *this;
 
     OBJ_NEW_BEGIN(StorageReadAzure, .childQty = MEM_CONTEXT_QTY_MAX)
     {

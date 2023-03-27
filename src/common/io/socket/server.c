@@ -153,13 +153,13 @@ sckServerNew(const String *const address, const unsigned int port, const TimeMSe
     ASSERT(address != NULL);
     ASSERT(port > 0);
 
-    IoServer *this = NULL;
+    SocketServer *this;
 
-    OBJ_NEW_BEGIN(SocketServer, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(SocketServer, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        SocketServer *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoServer::SocketServer);
+        this = OBJ_NEW_ALLOC();
 
-        *driver = (SocketServer)
+        *this = (SocketServer)
         {
             .address = strDup(address),
             .port = port,
@@ -168,27 +168,27 @@ sckServerNew(const String *const address, const unsigned int port, const TimeMSe
         };
 
         // Lookup address
-        struct addrinfo *addressFound = sckHostLookup(driver->address, driver->port);
+        struct addrinfo *const addressFound = sckHostLookup(this->address, this->port);
 
         TRY_BEGIN()
         {
             // Create socket
             THROW_ON_SYS_ERROR(
-                (driver->socket = socket(addressFound->ai_family, SOCK_STREAM, 0)) == -1, FileOpenError, "unable to create socket");
+                (this->socket = socket(addressFound->ai_family, SOCK_STREAM, 0)) == -1, FileOpenError, "unable to create socket");
 
             // Set the address as reusable so we can bind again quickly after a restart or crash
             int reuseAddr = 1;
 
             THROW_ON_SYS_ERROR(
-                setsockopt(driver->socket, SOL_SOCKET, SO_REUSEADDR, &reuseAddr, sizeof(reuseAddr)) == -1, ProtocolError,
+                setsockopt(this->socket, SOL_SOCKET, SO_REUSEADDR, &reuseAddr, sizeof(reuseAddr)) == -1, ProtocolError,
                 "unable to set SO_REUSEADDR");
 
             // Ensure file descriptor is closed
-            memContextCallbackSet(objMemContext(driver), sckServerFreeResource, driver);
+            memContextCallbackSet(objMemContext(this), sckServerFreeResource, this);
 
             // Bind the address
             THROW_ON_SYS_ERROR(
-                bind(driver->socket, addressFound->ai_addr, addressFound->ai_addrlen) == -1, FileOpenError,
+                bind(this->socket, addressFound->ai_addr, addressFound->ai_addrlen) == -1, FileOpenError,
                 "unable to bind socket");
         }
         FINALLY()
@@ -198,13 +198,11 @@ sckServerNew(const String *const address, const unsigned int port, const TimeMSe
         TRY_END();
 
         // Listen for client connections. It might be a good idea to make the backlog configurable but this value seems OK for now.
-        THROW_ON_SYS_ERROR(listen(driver->socket, 100) == -1, FileOpenError, "unable to listen on socket");
-
-        statInc(SOCKET_STAT_SERVER_STR);
-
-        this = ioServerNew(driver, &sckServerInterface);
+        THROW_ON_SYS_ERROR(listen(this->socket, 100) == -1, FileOpenError, "unable to listen on socket");
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_SERVER, this);
+    statInc(SOCKET_STAT_SERVER_STR);
+
+    FUNCTION_LOG_RETURN(IO_SERVER, ioServerNew(this, &sckServerInterface));
 }

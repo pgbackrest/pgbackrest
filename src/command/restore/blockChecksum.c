@@ -15,8 +15,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct BlockChecksum
 {
-    MemContext *memContext;                                         // Mem context of filter
-
     size_t blockSize;                                               // Block size for checksums
     size_t checksumSize;                                            // Checksum size
     size_t blockCurrent;                                            // Size of current block
@@ -56,12 +54,12 @@ blockChecksumProcess(THIS_VOID, const Buffer *const input)
         // Create checksum object if needed
         if (this->checksum == NULL)
         {
-            MEM_CONTEXT_BEGIN(this->memContext)
+            MEM_CONTEXT_OBJ_BEGIN(this)
             {
                 this->checksum = xxHashNew(this->checksumSize);
                 this->blockCurrent = 0;
             }
-            MEM_CONTEXT_END();
+            MEM_CONTEXT_OBJ_END();
         }
 
         // Calculate how much data to checksum and perform checksum
@@ -136,43 +134,42 @@ blockChecksumNew(const size_t blockSize, const size_t checksumSize)
     FUNCTION_LOG_END();
 
     ASSERT(blockSize != 0);
+    ASSERT(checksumSize != 0);
 
     // Allocate memory to hold process state
-    IoFilter *this = NULL;
+    BlockChecksum *this;
 
-    OBJ_NEW_BEGIN(BlockChecksum, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(BlockChecksum, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        BlockChecksum *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::BlockChecksum);
+        this = OBJ_NEW_ALLOC();
 
-        *driver = (BlockChecksum)
+        *this = (BlockChecksum)
         {
-            .memContext = memContextCurrent(),
             .blockSize = blockSize,
             .checksumSize = checksumSize,
             .list = lstNewP(checksumSize),
         };
-
-        // Create param list
-        Pack *paramList = NULL;
-
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            PackWrite *const packWrite = pckWriteNewP();
-
-            pckWriteU64P(packWrite, blockSize);
-            pckWriteU64P(packWrite, checksumSize);
-            pckWriteEndP(packWrite);
-
-            paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
-        }
-        MEM_CONTEXT_TEMP_END();
-
-        this = ioFilterNewP(
-            BLOCK_CHECKSUM_FILTER_TYPE, driver, paramList, .in = blockChecksumProcess, .result = blockChecksumResult);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_FILTER, this);
+    // Create param list
+    Pack *paramList;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackWrite *const packWrite = pckWriteNewP();
+
+        pckWriteU64P(packWrite, blockSize);
+        pckWriteU64P(packWrite, checksumSize);
+        pckWriteEndP(packWrite);
+
+        paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(
+        IO_FILTER,
+        ioFilterNewP(BLOCK_CHECKSUM_FILTER_TYPE, this, paramList, .in = blockChecksumProcess, .result = blockChecksumResult));
 }
 
 /**********************************************************************************************************************************/

@@ -42,7 +42,7 @@ storageWriteNew(void *const driver, const StorageWriteInterface *const interface
     ASSERT(driver != NULL);
     ASSERT(interface != NULL);
 
-    StorageWrite *this = NULL;
+    StorageWrite *this;
 
     OBJ_NEW_BEGIN(StorageWrite, .childQty = MEM_CONTEXT_QTY_MAX)
     {
@@ -55,7 +55,7 @@ storageWriteNew(void *const driver, const StorageWriteInterface *const interface
                 .interface = interface,
                 .io = ioWriteNew(driver, interface->ioInterface),
             },
-            .driver = objMove(driver, objMemContext(this)),
+            .driver = objMoveToInterface(driver, this, memContextPrior()),
         };
     }
     OBJ_NEW_END();

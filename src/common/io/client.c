@@ -17,7 +17,7 @@ struct IoClient
 
 /**********************************************************************************************************************************/
 FN_EXTERN IoClient *
-ioClientNew(void *driver, const IoClientInterface *interface)
+ioClientNew(void *const driver, const IoClientInterface *const interface)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM_P(VOID, driver);
@@ -31,17 +31,22 @@ ioClientNew(void *driver, const IoClientInterface *interface)
     ASSERT(interface->open != NULL);
     ASSERT(interface->toLog != NULL);
 
-    IoClient *this = memNew(sizeof(IoClient));
+    IoClient *this;
 
-    *this = (IoClient)
+    OBJ_NEW_BEGIN(IoClient, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        .pub =
+        this = OBJ_NEW_ALLOC();
+
+        *this = (IoClient)
         {
-            .memContext = memContextCurrent(),
-            .driver = driver,
-            .interface = interface,
-        },
-    };
+            .pub =
+            {
+                .driver = objMoveToInterface(driver, this, memContextPrior()),
+                .interface = interface,
+            },
+        };
+    }
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_CLIENT, this);
 }

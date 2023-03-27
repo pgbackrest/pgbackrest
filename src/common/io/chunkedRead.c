@@ -154,20 +154,18 @@ ioChunkedReadNew(IoRead *const read)
 
     ASSERT(read != NULL);
 
-    IoRead *this = NULL;
+    IoChunkedRead *this;
 
-    OBJ_NEW_BEGIN(IoChunkedRead, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(IoChunkedRead, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        IoChunkedRead *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoRead::IoChunkedRead);
+        this = OBJ_NEW_ALLOC();
 
-        *driver = (IoChunkedRead)
+        *this = (IoChunkedRead)
         {
             .read = read,
         };
-
-        this = ioReadNewP(driver, .eof = ioChunkedReadEof, .open = ioChunkedReadOpen, .read = ioChunkedRead);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_READ, this);
+    FUNCTION_LOG_RETURN(IO_READ, ioReadNewP(this, .eof = ioChunkedReadEof, .open = ioChunkedReadOpen, .read = ioChunkedRead));
 }

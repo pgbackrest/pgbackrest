@@ -94,7 +94,7 @@ Destructor
 FN_INLINE_ALWAYS void
 ioReadFree(IoRead *const this)
 {
-    objFreeContext(this);
+    objFree(this);
 }
 
 /***********************************************************************************************************************************

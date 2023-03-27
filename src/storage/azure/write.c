@@ -274,7 +274,7 @@ storageWriteAzureNew(StorageAzure *const storage, const String *const name, cons
     ASSERT(storage != NULL);
     ASSERT(name != NULL);
 
-    StorageWriteAzure *this = NULL;
+    StorageWriteAzure *this;
 
     OBJ_NEW_BEGIN(StorageWriteAzure, .childQty = MEM_CONTEXT_QTY_MAX)
     {

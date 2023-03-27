@@ -180,21 +180,21 @@ cryptoHashNew(const HashType type)
     cryptoInit();
 
     // Allocate memory to hold process state
-    IoFilter *this = NULL;
+    CryptoHash *this;
 
     OBJ_NEW_BEGIN(CryptoHash, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        CryptoHash *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::CryptoHash);
-        *driver = (CryptoHash){0};
+        this = OBJ_NEW_ALLOC();
+        *this = (CryptoHash){0};
 
         // Use local MD5 implementation since FIPS-enabled systems do not allow MD5. This is a bit misguided since there are valid
         // cases for using MD5 which do not involve, for example, password hashes. Since popular object stores, e.g. S3, require
         // MD5 for verifying payload integrity we are simply forced to provide MD5 functionality.
         if (type == hashTypeMd5)
         {
-            driver->md5Context = memNew(sizeof(MD5_CTX));
+            this->md5Context = memNew(sizeof(MD5_CTX));
 
-            MD5_Init(driver->md5Context);
+            MD5_Init(this->md5Context);
         }
         // Else use the standard OpenSSL implementation
         else
@@ -203,39 +203,37 @@ cryptoHashNew(const HashType type)
             char typeZ[STRID_MAX + 1];
             strIdToZ(type, typeZ);
 
-            if ((driver->hashType = EVP_get_digestbyname(typeZ)) == NULL)
+            if ((this->hashType = EVP_get_digestbyname(typeZ)) == NULL)
                 THROW_FMT(AssertError, "unable to load hash '%s'", typeZ);
 
             // Create context
-            cryptoError((driver->hashContext = EVP_MD_CTX_create()) == NULL, "unable to create hash context");
+            cryptoError((this->hashContext = EVP_MD_CTX_create()) == NULL, "unable to create hash context");
 
             // Set free callback to ensure hash context is freed
-            memContextCallbackSet(objMemContext(driver), cryptoHashFreeResource, driver);
+            memContextCallbackSet(objMemContext(this), cryptoHashFreeResource, this);
 
             // Initialize context
-            cryptoError(!EVP_DigestInit_ex(driver->hashContext, driver->hashType, NULL), "unable to initialize hash context");
+            cryptoError(!EVP_DigestInit_ex(this->hashContext, this->hashType, NULL), "unable to initialize hash context");
         }
-
-        // Create param list
-        Pack *paramList = NULL;
-
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            PackWrite *const packWrite = pckWriteNewP();
-
-            pckWriteStrIdP(packWrite, type);
-            pckWriteEndP(packWrite);
-
-            paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
-        }
-        MEM_CONTEXT_TEMP_END();
-
-        // Create filter interface
-        this = ioFilterNewP(CRYPTO_HASH_FILTER_TYPE, driver, paramList, .in = cryptoHashProcess, .result = cryptoHashResult);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_FILTER, this);
+    // Create param list
+    Pack *paramList;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackWrite *const packWrite = pckWriteNewP();
+
+        pckWriteStrIdP(packWrite, type);
+        pckWriteEndP(packWrite);
+
+        paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(
+        IO_FILTER, ioFilterNewP(CRYPTO_HASH_FILTER_TYPE, this, paramList, .in = cryptoHashProcess, .result = cryptoHashResult));
 }
 
 FN_EXTERN IoFilter *

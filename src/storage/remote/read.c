@@ -303,7 +303,7 @@ storageReadRemoteNew(
     ASSERT(client != NULL);
     ASSERT(name != NULL);
 
-    StorageReadRemote *this = NULL;
+    StorageReadRemote *this;
 
     OBJ_NEW_BEGIN(StorageReadRemote, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {

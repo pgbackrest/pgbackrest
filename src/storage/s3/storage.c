@@ -1130,7 +1130,7 @@ storageS3New(
     ASSERT(region != NULL);
     ASSERT(partSize != 0);
 
-    StorageS3 *this = NULL;
+    StorageS3 *this;
 
     OBJ_NEW_BEGIN(StorageS3, .childQty = MEM_CONTEXT_QTY_MAX)
     {

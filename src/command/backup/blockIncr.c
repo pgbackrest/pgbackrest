@@ -24,8 +24,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct BlockIncr
 {
-    MemContext *memContext;                                         // Mem context of filter
-
     unsigned int reference;                                         // Current backup reference
     uint64_t bundleId;                                              // Bundle id
 
@@ -390,15 +388,14 @@ blockIncrNew(
         FUNCTION_LOG_PARAM(IO_FILTER, encrypt);
     FUNCTION_LOG_END();
 
-    IoFilter *this = NULL;
+    BlockIncr *this = NULL;
 
-    OBJ_NEW_BEGIN(BlockIncr, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(BlockIncr, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        BlockIncr *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::BlockIncr);
+        this = OBJ_NEW_ALLOC();
 
-        *driver = (BlockIncr)
+        *this = (BlockIncr)
         {
-            .memContext = memContextCurrent(),
             .superBlockSize = (superBlockSize / blockSize + (superBlockSize % blockSize == 0 ? 0 : 1)) * blockSize,
             .blockSize = blockSize,
             .checksumSize = checksumSize,
@@ -413,13 +410,13 @@ blockIncrNew(
         // Duplicate compress filter
         if (compress != NULL)
         {
-            driver->compressType = ioFilterType(compress);
-            driver->compressParam = pckDup(ioFilterParamList(compress));
+            this->compressType = ioFilterType(compress);
+            this->compressParam = pckDup(ioFilterParamList(compress));
         }
 
         // Duplicate encrypt filter
         if (encrypt != NULL)
-            driver->encryptParam = pckDup(ioFilterParamList(encrypt));
+            this->encryptParam = pckDup(ioFilterParamList(encrypt));
 
         // Load prior block map
         if (blockMapPrior)
@@ -430,47 +427,47 @@ blockIncrNew(
 
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {
-                    driver->blockMapPrior = blockMapNewRead(read, blockSize, checksumSize);
+                    this->blockMapPrior = blockMapNewRead(read, blockSize, checksumSize);
                 }
                 MEM_CONTEXT_PRIOR_END();
             }
             MEM_CONTEXT_TEMP_END();
         }
-
-        // Create param list
-        Pack *paramList = NULL;
-
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            PackWrite *const packWrite = pckWriteNewP();
-
-            pckWriteU64P(packWrite, driver->superBlockSize);
-            pckWriteU64P(packWrite, blockSize);
-            pckWriteU64P(packWrite, checksumSize);
-            pckWriteU32P(packWrite, reference);
-            pckWriteU64P(packWrite, bundleId);
-            pckWriteU64P(packWrite, bundleOffset);
-            pckWriteBinP(packWrite, blockMapPrior);
-            pckWritePackP(packWrite, driver->compressParam);
-
-            if (driver->compressParam != NULL)
-                pckWriteStrIdP(packWrite, driver->compressType);
-
-            pckWritePackP(packWrite, driver->encryptParam);
-
-            pckWriteEndP(packWrite);
-
-            paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
-        }
-        MEM_CONTEXT_TEMP_END();
-
-        this = ioFilterNewP(
-            BLOCK_INCR_FILTER_TYPE, driver, paramList, .done = blockIncrDone, .inOut = blockIncrProcess,
-            .inputSame = blockIncrInputSame, .result = blockIncrResult);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_FILTER, this);
+    // Create param list
+    Pack *paramList;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackWrite *const packWrite = pckWriteNewP();
+
+        pckWriteU64P(packWrite, this->superBlockSize);
+        pckWriteU64P(packWrite, blockSize);
+        pckWriteU64P(packWrite, checksumSize);
+        pckWriteU32P(packWrite, reference);
+        pckWriteU64P(packWrite, bundleId);
+        pckWriteU64P(packWrite, bundleOffset);
+        pckWriteBinP(packWrite, blockMapPrior);
+        pckWritePackP(packWrite, this->compressParam);
+
+        if (this->compressParam != NULL)
+            pckWriteStrIdP(packWrite, this->compressType);
+
+        pckWritePackP(packWrite, this->encryptParam);
+
+        pckWriteEndP(packWrite);
+
+        paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(
+        IO_FILTER,
+        ioFilterNewP(
+            BLOCK_INCR_FILTER_TYPE, this, paramList, .done = blockIncrDone, .inOut = blockIncrProcess,
+            .inputSame = blockIncrInputSame, .result = blockIncrResult));
 }
 
 FN_EXTERN IoFilter *

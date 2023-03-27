@@ -734,7 +734,7 @@ storageAzureNew(
     ASSERT(key != NULL);
     ASSERT(blockSize != 0);
 
-    StorageAzure *this = NULL;
+    StorageAzure *this;
 
     OBJ_NEW_BEGIN(StorageAzure, .childQty = MEM_CONTEXT_QTY_MAX)
     {

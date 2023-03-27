@@ -612,7 +612,7 @@ storagePosixNewInternal(
     userInit();
 
     // Create the object
-    StoragePosix *this = NULL;
+    StoragePosix *this;
 
     OBJ_NEW_BEGIN(StoragePosix, .childQty = MEM_CONTEXT_QTY_MAX)
     {

@@ -39,7 +39,7 @@ storageReadNew(void *const driver, const StorageReadInterface *const interface)
     ASSERT(driver != NULL);
     ASSERT(interface != NULL);
 
-    StorageRead *this = NULL;
+    StorageRead *this;
 
     OBJ_NEW_BEGIN(StorageRead, .childQty = MEM_CONTEXT_QTY_MAX)
     {
@@ -52,7 +52,7 @@ storageReadNew(void *const driver, const StorageReadInterface *const interface)
                 .interface = interface,
                 .io = ioReadNew(driver, interface->ioInterface),
             },
-            .driver = objMove(driver, objMemContext(this)),
+            .driver = objMoveToInterface(driver, this, memContextPrior()),
         };
     }
     OBJ_NEW_END();

@@ -112,15 +112,13 @@ objMemContext(void *const this)
 // Move an object to a new context if this != NULL
 FN_EXTERN void *objMove(THIS_VOID, MemContext *parentNew);
 
-// Move an object to a new context if this != NULL. The mem context to move must be the first member of the object struct. This
-// pattern is typically used by interfaces.
-FN_EXTERN void *objMoveContext(THIS_VOID, MemContext *parentNew);
+// Move driver object into an interface object when required. This is the general case, but sometimes an object will expose its
+// interfaces in a different way, e.g. methods, so the object retains ownership of the interfaces. If this function is called in the
+// driver object context then the driver object will retain ownership of the interface. Otherwise, the interface object will become
+// the owner of the driver object.
+FN_EXTERN void *objMoveToInterface(THIS_VOID, void *interfaceVoid, const MemContext *current);
 
 // Free the object mem context if this != NULL
 FN_EXTERN void objFree(THIS_VOID);
-
-// Free the object mem context if not NULL. The mem context to be freed must be the first member of the object struct. This pattern
-// is typically used by interfaces.
-FN_EXTERN void objFreeContext(THIS_VOID);
 
 #endif

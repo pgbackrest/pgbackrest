@@ -11,11 +11,6 @@ typedef struct TestObject
     bool data;                                                      // Test data
 } TestObject;
 
-typedef struct TestObjectContext
-{
-    MemContext *memContext;                                         // Mem context
-} TestObjectContext;
-
 /***********************************************************************************************************************************
 Standard object methods
 ***********************************************************************************************************************************/
@@ -31,51 +26,19 @@ testObjectFree(TestObject *this)
     objFree(this);
 }
 
-static TestObjectContext *
-testObjectContextMove(TestObjectContext *this, MemContext *parentNew)
-{
-    return objMoveContext(this, parentNew);
-}
-
-static void
-testObjectContextFree(TestObjectContext *this)
-{
-    objFreeContext(this);
-}
-
 /**********************************************************************************************************************************/
 static TestObject *
 testObjectNew(void)
 {
     TestObject *this = NULL;
 
-    OBJ_NEW_BEGIN(TestObject)
+    OBJ_NEW_BEGIN(TestObject, .childQty = 1)
     {
         this = OBJ_NEW_ALLOC();
 
         *this = (TestObject)
         {
             .data = true,
-        };
-    }
-    OBJ_NEW_END();
-
-    return this;
-}
-
-/**********************************************************************************************************************************/
-static TestObjectContext *
-testObjectContextNew(void)
-{
-    TestObjectContext *this = NULL;
-
-    OBJ_NEW_BEGIN(TestObjectContext)
-    {
-        this = OBJ_NEW_ALLOC();
-
-        *this = (TestObjectContext)
-        {
-            .memContext = MEM_CONTEXT_NEW(),
         };
     }
     OBJ_NEW_END();
@@ -94,7 +57,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("OBJECT_DEFINE*()"))
     {
-        TEST_TITLE("Object with mem context and allocation together");
+        TEST_TITLE("object with mem context and allocation together");
 
         TestObject *testObject = NULL;
 
@@ -111,20 +74,16 @@ testRun(void)
         TEST_RESULT_VOID(testObjectFree(NULL), "free null object");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("Object with mem context as first member of struct");
+        TEST_TITLE("move object to interface");
 
-        TestObjectContext *testObjectContext = NULL;
+        TestObject *testInterface = NULL;
 
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            TEST_ASSIGN(testObjectContext, testObjectContextNew(), "new test object");
-            TEST_RESULT_VOID(testObjectContextMove(testObjectContext, memContextPrior()), "move object to parent context");
-            TEST_RESULT_VOID(testObjectContextMove(NULL, memContextPrior()), "move null object");
-        }
-        MEM_CONTEXT_TEMP_END();
+        TEST_ASSIGN(testInterface, testObjectNew(), "new interface object");
+        TEST_ASSIGN(testObject, testObjectNew(), "new test object");
 
-        TEST_RESULT_VOID(testObjectContextFree(testObjectContext), "free object");
-        TEST_RESULT_VOID(testObjectContextFree(NULL), "free null object");
+        // Only one of these can success since the interface only accepts one child
+        TEST_RESULT_VOID(objMoveToInterface(testObject, testInterface, objMemContext(testObject)), "no move to interface");
+        TEST_RESULT_VOID(objMoveToInterface(testObject, testInterface, memContextCurrent()), "move to interface");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

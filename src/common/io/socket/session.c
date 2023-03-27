@@ -164,7 +164,7 @@ static const IoSessionInterface sckSessionInterface =
 };
 
 FN_EXTERN IoSession *
-sckSessionNew(IoSessionRole role, int fd, const String *host, unsigned int port, TimeMSec timeout)
+sckSessionNew(const IoSessionRole role, const int fd, const String *const host, const unsigned int port, const TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING_ID, role);
@@ -177,15 +177,14 @@ sckSessionNew(IoSessionRole role, int fd, const String *host, unsigned int port,
     ASSERT(fd != -1);
     ASSERT(host != NULL);
 
-    IoSession *this = NULL;
+    SocketSession *this;
 
-    OBJ_NEW_BEGIN(SocketSession, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(SocketSession, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        SocketSession *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoSession::SocketSession);
+        this = OBJ_NEW_ALLOC();
+        String *const name = strNewFmt("%s:%u", strZ(host), port);
 
-        String *name = strNewFmt("%s:%u", strZ(host), port);
-
-        *driver = (SocketSession)
+        *this = (SocketSession)
         {
             .role = role,
             .fd = fd,
@@ -199,11 +198,9 @@ sckSessionNew(IoSessionRole role, int fd, const String *host, unsigned int port,
         strFree(name);
 
         // Ensure file descriptor is closed
-        memContextCallbackSet(objMemContext(driver), sckSessionFreeResource, driver);
-
-        this = ioSessionNew(driver, &sckSessionInterface);
+        memContextCallbackSet(objMemContext(this), sckSessionFreeResource, this);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_SESSION, this);
+    FUNCTION_LOG_RETURN(IO_SESSION, ioSessionNew(this, &sckSessionInterface));
 }
