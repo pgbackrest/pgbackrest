@@ -1856,6 +1856,7 @@ testRun(void)
     if (testBegin("restoreRecoveryWrite*()"))
     {
         const String *pgPath = STRDEF(TEST_PATH "/pg");
+        const StorageInfo fileInfo = {.user = NULL, .group = NULL, .mode = 0600};
         HRN_STORAGE_PATH_CREATE(storageTest, strZ(pgPath), .mode = 0700);
 
         const String *restoreLabel = STRDEF("LABEL");
@@ -1876,7 +1877,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(
-            restoreRecoveryWriteAutoConf(manifest, PG_VERSION_12, restoreLabel), OptionInvalidError,
+            restoreRecoveryWriteAutoConf(manifest, &fileInfo, PG_VERSION_12, restoreLabel), OptionInvalidError,
             "'standby_mode' setting is not valid for PostgreSQL >= 12\n"
             "HINT: use --type=standby instead of --recovery-option=standby_mode=on.");
 
@@ -1892,7 +1893,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptType, "none");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        restoreRecoveryWriteAutoConf(manifest, PG_VERSION_12, restoreLabel);
+        restoreRecoveryWriteAutoConf(manifest, &fileInfo, PG_VERSION_12, restoreLabel);
 
         TEST_STORAGE_GET_EMPTY(storagePg(), PG_FILE_POSTGRESQLAUTOCONF, .comment = "check postgresql.auto.conf");
         TEST_STORAGE_LIST(
@@ -1915,7 +1916,7 @@ testRun(void)
             "# DO NOT MODIFY\n"
             "\t recovery_target_action='promote'\n\n");
 
-        restoreRecoveryWriteAutoConf(manifest, PG_VERSION_12, restoreLabel);
+        restoreRecoveryWriteAutoConf(manifest, &fileInfo, PG_VERSION_12, restoreLabel);
 
         TEST_STORAGE_GET(
             storagePg(), PG_FILE_POSTGRESQLAUTOCONF,
@@ -1941,7 +1942,7 @@ testRun(void)
             "# DO NOT MODIFY\n"
             "\t recovery_target_action='promote'\n\n");
 
-        restoreRecoveryWriteAutoConf(manifest, PG_VERSION_12, restoreLabel);
+        restoreRecoveryWriteAutoConf(manifest, &fileInfo, PG_VERSION_12, restoreLabel);
 
         TEST_STORAGE_GET(
             storagePg(), PG_FILE_POSTGRESQLAUTOCONF,
@@ -1976,7 +1977,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRecoveryOption, "restore-command=my_restore_command");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        restoreRecoveryWriteAutoConf(manifest, PG_VERSION_12, restoreLabel);
+        restoreRecoveryWriteAutoConf(manifest, &fileInfo, PG_VERSION_12, restoreLabel);
 
         TEST_STORAGE_GET(
             storagePg(), PG_FILE_POSTGRESQLAUTOCONF,
@@ -2010,7 +2011,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptType, "preserve");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        restoreRecoveryWrite(manifest);
+        restoreRecoveryWrite(manifest, &fileInfo);
 
         TEST_STORAGE_GET(
             storagePg(), PG_FILE_POSTGRESQLAUTOCONF, "# DO NOT MODIFY\n", .comment = "check postgresql.auto.conf");
@@ -2033,7 +2034,7 @@ testRun(void)
         hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        restoreRecoveryWrite(manifest);
+        restoreRecoveryWrite(manifest, &fileInfo);
 
         TEST_RESULT_BOOL(
             bufEq(storageGetP(storageNewReadP(storagePg(), PG_FILE_POSTGRESQLAUTOCONF_STR)), BUFSTRDEF("# DO NOT MODIFY\n")),
