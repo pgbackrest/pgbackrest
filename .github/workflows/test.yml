@@ -57,7 +57,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: pgbackrest
 
@@ -80,12 +80,12 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: pgbackrest
 
       - name: Run Test
-        uses: uraimo/run-on-arch-action@v2.1.0
+        uses: uraimo/run-on-arch-action@v2
         id: runcmd
         with:
           arch: ${{matrix.arch}}
@@ -109,7 +109,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: pgbackrest
 
@@ -133,7 +133,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: pgbackrest
 
@@ -157,7 +157,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install Packages
         run: sudo apt-get install -y --no-install-recommends libyaml-dev
