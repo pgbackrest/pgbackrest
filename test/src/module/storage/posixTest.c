@@ -968,6 +968,12 @@ testRun(void)
         fileName = STRDEF(TEST_PATH "/sub1/testfile-abort");
         String *fileNameTmp = strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strZ(fileName));
 
+        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .user = STRDEF("root")), "new write file (defaults)");
+        TEST_ERROR(
+            ioWriteOpen(storageWriteIo(file)), FileOwnerError,
+            "unable to set ownership for '" TEST_PATH "/sub1/testfile-abort.pgbackrest.tmp' to root[0]:[none] from " TEST_USER "["
+            TEST_USER_ID_Z "]:" TEST_GROUP "[" TEST_GROUP_ID_Z "]: [1] Operation not permitted");
+
         TEST_ASSIGN(
             file, storageNewWriteP(storageTest, fileName, .user = TEST_USER_STR), "new write file (defaults)");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
@@ -981,6 +987,14 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("write file - set mode");
+
+        TEST_ASSIGN(
+            file, storageNewWriteP(storageTest, fileName, .user = TEST_USER_STR, .group = STRDEF("root")),
+            "new write file (defaults)");
+        TEST_ERROR(
+            ioWriteOpen(storageWriteIo(file)), FileOwnerError,
+            "unable to set ownership for '" TEST_PATH "/sub1/testfile-abort.pgbackrest.tmp' to " TEST_USER "[" TEST_USER_ID_Z
+            "]:root[0] from " TEST_USER "[" TEST_USER_ID_Z "]:" TEST_GROUP "[" TEST_GROUP_ID_Z "]: [1] Operation not permitted");
 
         fileName = STRDEF(TEST_PATH "/sub2/testfile");
 

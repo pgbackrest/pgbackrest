@@ -108,19 +108,30 @@ storageWritePosixOpen(THIS_VOID)
     // Update user/group owner
     if (this->interface.user != NULL || this->interface.group != NULL)
     {
+        const StorageInfo info = storageInterfaceInfoP(this->storage, this->nameTmp, storageInfoLevelDetail, .followLink = true);
+        ASSERT(info.exists);
         uid_t updateUserId = userIdFromName(this->interface.user);
-
-        if (updateUserId == userId())
-            updateUserId = (uid_t)-1;
-
         gid_t updateGroupId = groupIdFromName(this->interface.group);
 
-        if (updateGroupId == groupId())
-            updateGroupId = (gid_t)-1;
+        if (updateUserId == (uid_t)-1)
+            updateUserId = info.userId;
 
-        THROW_ON_SYS_ERROR_FMT(
-            chown(strZ(this->nameTmp), updateUserId, updateGroupId) == -1, FileOwnerError, "unable to set ownership for '%s'",
-            strZ(this->nameTmp));
+        if (updateGroupId == (gid_t)-1)
+            updateGroupId = info.groupId;
+
+        // Continue if one of the owners would be changed
+        if (updateUserId != info.userId || updateGroupId != info.groupId)
+        {
+            THROW_ON_SYS_ERROR_FMT( // {uncovered - !!!}
+                chown(strZ(this->nameTmp), updateUserId, updateGroupId) == -1, FileOwnerError,
+                "unable to set ownership for '%s' to %s%s:%s%s from %s[%u]:%s[%u]", strZ(this->nameTmp),
+                this->interface.user == NULL ? "[none]" : strZ(this->interface.user),
+                this->interface.user == NULL ? "" : zNewFmt("[%u]", updateUserId),
+                this->interface.group == NULL ? "[none]" : strZ(this->interface.group),
+                this->interface.group == NULL ? "" : zNewFmt("[%u]", updateGroupId),
+                info.user == NULL ? "[unknown]" : strZ(info.user), info.userId, info.group == NULL ? "[unknown]" : strZ(info.group),
+                info.groupId);
+        }
     }
 
     FUNCTION_LOG_RETURN_VOID();
