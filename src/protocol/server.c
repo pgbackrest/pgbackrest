@@ -40,12 +40,8 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
     ASSERT(read != NULL);
     ASSERT(write != NULL);
 
-    ProtocolServer *this = NULL;
-
     OBJ_NEW_BEGIN(ProtocolServer, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (ProtocolServer)
         {
             .read = read,

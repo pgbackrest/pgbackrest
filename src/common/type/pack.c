@@ -334,12 +334,8 @@ pckReadNewInternal(void)
 {
     FUNCTION_TEST_VOID();
 
-    PackRead *this = NULL;
-
     OBJ_NEW_BEGIN(PackRead, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (PackRead)
         {
             .tagStack = {.bottom = {.typeMap = pckTypeMapObj}},
@@ -1257,12 +1253,8 @@ pckWriteNewInternal(void)
 {
     FUNCTION_TEST_VOID();
 
-    PackWrite *this = NULL;
-
     OBJ_NEW_BEGIN(PackWrite, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (PackWrite)
         {
             .tagStack = {.bottom = {.typeMap = pckTypeMapObj}},

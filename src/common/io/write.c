@@ -39,12 +39,8 @@ ioWriteNew(void *const driver, const IoWriteInterface interface)
     ASSERT(driver != NULL);
     ASSERT(interface.write != NULL);
 
-    IoWrite *this;
-
     OBJ_NEW_BEGIN(IoWrite, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (IoWrite)
         {
             .pub =

@@ -209,12 +209,8 @@ storageWriteRemoteNew(
     ASSERT(modeFile != 0);
     ASSERT(modePath != 0);
 
-    StorageWriteRemote *this;
-
     OBJ_NEW_BEGIN(StorageWriteRemote, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = OBJ_NAME(OBJ_NEW_ALLOC(), StorageWrite::StorageWriteRemote);
-
         *this = (StorageWriteRemote)
         {
             .storage = storage,
@@ -246,7 +242,7 @@ storageWriteRemoteNew(
             },
         };
 
-        this->write = storageWriteNew(this, &this->interface);
+        this->write = storageWriteNew(OBJ_NAME(this, StorageWrite::StorageWriteRemote), &this->interface);
     }
     OBJ_NEW_END();
 

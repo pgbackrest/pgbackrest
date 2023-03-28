@@ -163,11 +163,8 @@ lz4DecompressNew(const bool raw)
         (void)raw;                                                  // Not required for decompress
     FUNCTION_LOG_END();
 
-    Lz4Decompress *this;
-
     OBJ_NEW_BEGIN(Lz4Decompress, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
         *this = (Lz4Decompress){0};
 
         // Create lz4 context

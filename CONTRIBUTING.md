@@ -132,12 +132,8 @@ myObjNew(unsigned int myData, const String *secretName)
 
     ASSERT(secretName != NULL || myData > 0);       // Development-only assertions (will be compiled out of production code)
 
-    MyObj *this = NULL;                 // Declare the object in the parent memory context: it will live only as long as the parent
-
     OBJ_NEW_BEGIN(MyObj)                // Create a long lasting memory context with the name of the object
     {
-        this = OBJ_NEW_ALLOC();         // Allocate the memory required by the object
-
         *this = (MyObj)                 // Initialize the object
         {
             .pub =

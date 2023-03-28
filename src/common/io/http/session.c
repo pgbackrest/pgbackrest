@@ -29,12 +29,8 @@ httpSessionNew(HttpClient *httpClient, IoSession *ioSession)
     ASSERT(httpClient != NULL);
     ASSERT(ioSession != NULL);
 
-    HttpSession *this = NULL;
-
     OBJ_NEW_BEGIN(HttpSession, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (HttpSession)
         {
             .httpClient = httpClient,

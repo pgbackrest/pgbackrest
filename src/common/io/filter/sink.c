@@ -52,11 +52,8 @@ ioSinkNew(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
 
-    IoSink *this;
-
     OBJ_NEW_BEGIN(IoSink)
     {
-        this = OBJ_NEW_ALLOC();
     }
     OBJ_NEW_END();
 

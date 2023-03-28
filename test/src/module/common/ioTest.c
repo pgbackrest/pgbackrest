@@ -116,11 +116,8 @@ ioTestFilterSizeResult(THIS_VOID)
 static IoFilter *
 ioTestFilterSizeNew(const StringId type)
 {
-    IoTestFilterSize *this;
-
     OBJ_NEW_BEGIN(IoTestFilterSize, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
         *this = (IoTestFilterSize){0};
     }
     OBJ_NEW_END();
@@ -219,12 +216,8 @@ ioTestFilterMultiplyInputSame(const THIS_VOID)
 static IoFilter *
 ioTestFilterMultiplyNew(const StringId type, unsigned int multiplier, unsigned int flushTotal, char flushChar)
 {
-    IoTestFilterMultiply *this;
-
     OBJ_NEW_BEGIN(IoTestFilterMultiply, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (IoTestFilterMultiply)
         {
             .bufferFilter = ioBufferNew(),

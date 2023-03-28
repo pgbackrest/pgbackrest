@@ -251,7 +251,7 @@ testRun(void)
         // Create a storage driver to test manifest build with an arbitrary number of files
         StorageTestManifestNewBuild *driver = NULL;
 
-        OBJ_NEW_BEGIN(StorageTestManifestNewBuild, .childQty = MEM_CONTEXT_QTY_MAX)
+        OBJ_NEW_BASE_BEGIN(StorageTestManifestNewBuild, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             driver = OBJ_NEW_ALLOC();
 

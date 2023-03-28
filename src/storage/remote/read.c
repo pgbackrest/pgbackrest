@@ -303,12 +303,8 @@ storageReadRemoteNew(
     ASSERT(client != NULL);
     ASSERT(name != NULL);
 
-    StorageReadRemote *this;
-
     OBJ_NEW_BEGIN(StorageReadRemote, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = OBJ_NAME(OBJ_NEW_ALLOC(), StorageRead::StorageReadRemote);
-
         *this = (StorageReadRemote)
         {
             .storage = storage,
@@ -334,7 +330,7 @@ storageReadRemoteNew(
             },
         };
 
-        this->read = storageReadNew(this, &this->interface);
+        this->read = storageReadNew(OBJ_NAME(this, StorageRead::StorageReadRemote), &this->interface);
     }
     OBJ_NEW_END();
 

@@ -152,12 +152,8 @@ gzDecompressNew(const bool raw)
         FUNCTION_LOG_PARAM(BOOL, raw);
     FUNCTION_LOG_END();
 
-    GzDecompress *this;
-
     OBJ_NEW_BEGIN(GzDecompress, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (GzDecompress)
         {
             .stream = {.zalloc = NULL},

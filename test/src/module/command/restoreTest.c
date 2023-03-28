@@ -110,7 +110,7 @@ testManifestMinimal(const String *label, unsigned int pgVersion, const String *p
 
     Manifest *result = NULL;
 
-    OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BASE_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         result = manifestNewInternal();
         result->pub.info = infoNew(NULL);
@@ -1336,7 +1336,7 @@ testRun(void)
 
         Manifest *manifest = NULL;
 
-        OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
+        OBJ_NEW_BASE_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             manifest = manifestNewInternal();
             manifest->pub.data.pgVersion = PG_VERSION_94;
@@ -2098,7 +2098,7 @@ testRun(void)
 
         Manifest *manifest = NULL;
 
-        OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
+        OBJ_NEW_BASE_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             manifest = manifestNewInternal();
             manifest->pub.info = infoNew(NULL);
@@ -2471,7 +2471,7 @@ testRun(void)
         #define TEST_PGDATA                                         MANIFEST_TARGET_PGDATA "/"
         #define TEST_REPO_PATH                                      STORAGE_REPO_BACKUP "/" TEST_LABEL "/" TEST_PGDATA
 
-        OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+        OBJ_NEW_BASE_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
         {
             manifest = manifestNewInternal();
             manifest->pub.info = infoNew(NULL);

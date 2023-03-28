@@ -162,12 +162,8 @@ zstDecompressNew(const bool raw)
         (void)raw;                                                  // Raw unsupported
     FUNCTION_LOG_END();
 
-    ZstDecompress *this;
-
     OBJ_NEW_BEGIN(ZstDecompress, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (ZstDecompress)
         {
             .context = ZSTD_createDStream(),

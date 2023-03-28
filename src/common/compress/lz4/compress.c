@@ -252,12 +252,8 @@ lz4CompressNew(const int level, const bool raw)
 
     ASSERT(level >= LZ4_COMPRESS_LEVEL_MIN && level <= LZ4_COMPRESS_LEVEL_MAX);
 
-    Lz4Compress *this;
-
     OBJ_NEW_BEGIN(Lz4Compress, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (Lz4Compress)
         {
             .prefs =

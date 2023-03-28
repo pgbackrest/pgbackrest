@@ -37,13 +37,8 @@ bufNew(size_t size)
         FUNCTION_TEST_PARAM(SIZE, size);
     FUNCTION_TEST_END();
 
-    Buffer *this = NULL;
-
     OBJ_NEW_BEGIN(Buffer, .allocQty = 1)
     {
-        // Create object
-        this = OBJ_NEW_ALLOC();
-
         *this = (Buffer)
         {
             .pub =

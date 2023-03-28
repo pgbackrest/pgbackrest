@@ -108,11 +108,8 @@ ioBufferNew(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
 
-    IoBuffer *this;
-
     OBJ_NEW_BEGIN(IoBuffer)
     {
-        this = OBJ_NEW_ALLOC();
         *this = (IoBuffer){0};
     }
     OBJ_NEW_END();

@@ -57,12 +57,8 @@ storageNew(
     ASSERT(interface.pathRemove != NULL);
     ASSERT(interface.remove != NULL);
 
-    Storage *this;
-
     OBJ_NEW_BEGIN(Storage, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (Storage)
         {
             .pub =

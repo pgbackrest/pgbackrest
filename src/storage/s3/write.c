@@ -278,12 +278,8 @@ storageWriteS3New(StorageS3 *const storage, const String *const name, const size
     ASSERT(storage != NULL);
     ASSERT(name != NULL);
 
-    StorageWriteS3 *this;
-
     OBJ_NEW_BEGIN(StorageWriteS3, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (StorageWriteS3)
         {
             .storage = storage,

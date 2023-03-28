@@ -88,12 +88,8 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
     ASSERT(read != NULL);
     ASSERT(write != NULL);
 
-    ProtocolClient *this = NULL;
-
     OBJ_NEW_BEGIN(ProtocolClient, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (ProtocolClient)
         {
             .pub =

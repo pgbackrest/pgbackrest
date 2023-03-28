@@ -177,11 +177,8 @@ sckSessionNew(const IoSessionRole role, const int fd, const String *const host, 
     ASSERT(fd != -1);
     ASSERT(host != NULL);
 
-    SocketSession *this;
-
     OBJ_NEW_BEGIN(SocketSession, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
         String *const name = strNewFmt("%s:%u", strZ(host), port);
 
         *this = (SocketSession)

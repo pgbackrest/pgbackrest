@@ -116,12 +116,8 @@ xxHashNew(const size_t size)
 
     ASSERT(size >= 1 && size <= XX_HASH_SIZE_MAX);
 
-    // Allocate memory to hold process state
-    XxHash *this;
-
     OBJ_NEW_BEGIN(XxHash, .callbackQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
         *this = (XxHash){.size = size};
 
         this->state = XXH3_createState();

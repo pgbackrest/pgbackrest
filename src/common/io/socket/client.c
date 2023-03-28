@@ -170,12 +170,8 @@ sckClientNew(const String *const host, const unsigned int port, const TimeMSec t
 
     ASSERT(host != NULL);
 
-    SocketClient *this;
-
     OBJ_NEW_BEGIN(SocketClient, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (SocketClient)
         {
             .host = strDup(host),

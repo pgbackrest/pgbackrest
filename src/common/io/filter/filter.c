@@ -39,12 +39,8 @@ ioFilterNew(const StringId type, void *const driver, Pack *const paramList, cons
     // If the filter does not produce output then it should produce a result
     ASSERT(interface.in == NULL || (interface.result != NULL && interface.done == NULL && interface.inputSame == NULL));
 
-    IoFilter *this;
-
     OBJ_NEW_BEGIN(IoFilter, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (IoFilter)
         {
             .pub =

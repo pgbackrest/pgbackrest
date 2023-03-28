@@ -179,12 +179,8 @@ cryptoHashNew(const HashType type)
     // Init crypto subsystem
     cryptoInit();
 
-    // Allocate memory to hold process state
-    CryptoHash *this;
-
     OBJ_NEW_BEGIN(CryptoHash, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
         *this = (CryptoHash){0};
 
         // Use local MD5 implementation since FIPS-enabled systems do not allow MD5. This is a bit misguided since there are valid

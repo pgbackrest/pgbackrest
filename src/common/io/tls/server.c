@@ -294,12 +294,8 @@ tlsServerNew(
     ASSERT(keyFile != NULL);
     ASSERT(certFile != NULL);
 
-    TlsServer *this;
-
     OBJ_NEW_BEGIN(TlsServer, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (TlsServer)
         {
             .host = strDup(host),

@@ -1287,9 +1287,9 @@ manifestNewBuild(
     ASSERT(storagePg != NULL);
     ASSERT(pgVersion != 0);
 
-    Manifest *this = NULL;
+    Manifest *this;
 
-    OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BASE_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = manifestNewInternal();
         this->pub.info = infoNew(NULL);
@@ -2338,9 +2338,9 @@ manifestNewLoad(IoRead *read)
 
     ASSERT(read != NULL);
 
-    Manifest *this = NULL;
+    Manifest *this;
 
-    OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BASE_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = manifestNewInternal();
 

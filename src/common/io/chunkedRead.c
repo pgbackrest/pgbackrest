@@ -154,12 +154,8 @@ ioChunkedReadNew(IoRead *const read)
 
     ASSERT(read != NULL);
 
-    IoChunkedRead *this;
-
     OBJ_NEW_BEGIN(IoChunkedRead, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (IoChunkedRead)
         {
             .read = read,

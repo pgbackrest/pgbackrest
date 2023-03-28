@@ -245,12 +245,8 @@ storageWritePosixNew(
     ASSERT(modeFile != 0);
     ASSERT(modePath != 0);
 
-    StorageWritePosix *this;
-
     OBJ_NEW_BEGIN(StorageWritePosix, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (StorageWritePosix)
         {
             .storage = storage,

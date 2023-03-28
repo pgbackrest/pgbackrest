@@ -53,12 +53,8 @@ pgClientNew(const String *host, const unsigned int port, const String *database,
     ASSERT(port >= 1 && port <= 65535);
     ASSERT(database != NULL);
 
-    PgClient *this = NULL;
-
     OBJ_NEW_BEGIN(PgClient, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (PgClient)
         {
             .pub =

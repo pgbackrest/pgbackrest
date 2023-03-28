@@ -149,11 +149,8 @@ ioChunkNew(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
 
-    IoChunk *this;
-
     OBJ_NEW_BEGIN(IoChunk)
     {
-        this = OBJ_NEW_ALLOC();
         *this = (IoChunk){0};
     }
     OBJ_NEW_END();

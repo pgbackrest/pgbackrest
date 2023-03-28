@@ -154,12 +154,8 @@ ioFdReadNew(const String *const name, const int fd, const TimeMSec timeout)
 
     ASSERT(fd != -1);
 
-    IoFdRead *this;
-
     OBJ_NEW_BEGIN(IoFdRead, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (IoFdRead)
         {
             .name = strDup(name),

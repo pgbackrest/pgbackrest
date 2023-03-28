@@ -173,12 +173,8 @@ gzCompressNew(const int level, const bool raw)
 
     ASSERT(level >= GZ_COMPRESS_LEVEL_MIN && level <= GZ_COMPRESS_LEVEL_MAX);
 
-    GzCompress *this;
-
     OBJ_NEW_BEGIN(GzCompress, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (GzCompress)
         {
             .stream = {.zalloc = NULL},

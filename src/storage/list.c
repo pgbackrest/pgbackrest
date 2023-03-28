@@ -82,13 +82,8 @@ storageLstNew(const StorageInfoLevel level)
 
     ASSERT(level != storageInfoLevelDefault);
 
-    StorageList *this = NULL;
-
     OBJ_NEW_BEGIN(StorageList, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        // Create object
-        this = OBJ_NEW_ALLOC();
-
         *this = (StorageList)
         {
             .pub =

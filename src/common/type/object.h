@@ -13,24 +13,32 @@ These macros and functions implement common object functionality.
 /***********************************************************************************************************************************
 Create a new object
 
-This is a thin wrapper on MEM_CONTEXT_NEW_*() to do object specific initialization. The general pattern
-for a new object is:
-
-MyObj *this = NULL;
+This is a thin wrapper on MEM_CONTEXT_NEW_*() to do object specific initialization. The general pattern for a new object is:
 
 OBJ_NEW_BEGIN(MyObj)
 {
-    this = OBJ_NEW_ALLOC();
-
     *this = (MyObj)
     {
         .data = ...
     };
 }
 OBJ_NEW_END();
+
+The this variable is variable is automatically created with the specified type. The BASE and EXTRA variants are available when a
+custom variable must be used or different amount of memory must be allocated.
 ***********************************************************************************************************************************/
-#define OBJ_NEW_EXTRA_BEGIN(type, extra, ...)                                                                                      \
+#define OBJ_NEW_BASE_EXTRA_BEGIN(type, extra, ...)                                                                                 \
     MEM_CONTEXT_NEW_BEGIN(type, .allocExtra = extra, __VA_ARGS__)
+
+#define OBJ_NEW_EXTRA_BEGIN(type, extra, ...)                                                                                      \
+    memContextSwitch(memContextNewP(STRINGIFY(type), .allocExtra = extra, __VA_ARGS__));                                           \
+    type *const this = OBJ_NEW_ALLOC();                                                                                            \
+                                                                                                                                   \
+    do                                                                                                                             \
+    {
+
+#define OBJ_NEW_BASE_BEGIN(type, ...)                                                                                              \
+    OBJ_NEW_BASE_EXTRA_BEGIN(type, sizeof(type), __VA_ARGS__)
 
 #define OBJ_NEW_BEGIN(type, ...)                                                                                                   \
     OBJ_NEW_EXTRA_BEGIN(type, sizeof(type), __VA_ARGS__)

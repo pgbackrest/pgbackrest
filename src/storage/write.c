@@ -42,12 +42,8 @@ storageWriteNew(void *const driver, const StorageWriteInterface *const interface
     ASSERT(driver != NULL);
     ASSERT(interface != NULL);
 
-    StorageWrite *this;
-
     OBJ_NEW_BEGIN(StorageWrite, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (StorageWrite)
         {
             .pub =

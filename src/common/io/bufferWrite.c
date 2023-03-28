@@ -56,12 +56,8 @@ ioBufferWriteNew(Buffer *const buffer)
 
     ASSERT(buffer != NULL);
 
-    IoBufferWrite *this;
-
     OBJ_NEW_BEGIN(IoBufferWrite, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (IoBufferWrite)
         {
             .write = buffer,

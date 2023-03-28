@@ -33,12 +33,8 @@ ioReadNew(void *const driver, const IoReadInterface interface)
     ASSERT(driver != NULL);
     ASSERT(interface.read != NULL);
 
-    IoRead *this = NULL;
-
     OBJ_NEW_BEGIN(IoRead, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (IoRead)
         {
             .pub =

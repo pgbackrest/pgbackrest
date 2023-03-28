@@ -166,12 +166,8 @@ bz2CompressNew(const int level, const bool raw)
 
     ASSERT(level >= BZ2_COMPRESS_LEVEL_MIN && level <= BZ2_COMPRESS_LEVEL_MAX);
 
-    Bz2Compress *this;
-
     OBJ_NEW_BEGIN(Bz2Compress, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (Bz2Compress)
         {
             .stream = {.bzalloc = NULL},

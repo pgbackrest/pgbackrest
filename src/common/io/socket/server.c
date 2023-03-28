@@ -153,12 +153,8 @@ sckServerNew(const String *const address, const unsigned int port, const TimeMSe
     ASSERT(address != NULL);
     ASSERT(port > 0);
 
-    SocketServer *this;
-
     OBJ_NEW_BEGIN(SocketServer, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (SocketServer)
         {
             .address = strDup(address),

@@ -110,12 +110,8 @@ ioFdWriteNew(const String *const name, const int fd, const TimeMSec timeout)
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
     FUNCTION_LOG_END();
 
-    IoFdWrite *this;
-
     OBJ_NEW_BEGIN(IoFdWrite, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (IoFdWrite)
         {
             .name = strDup(name),

@@ -32,12 +32,8 @@ ioServerNew(void *const driver, const IoServerInterface *const interface)
     ASSERT(interface->accept != NULL);
     ASSERT(interface->toLog != NULL);
 
-    IoServer *this;
-
     OBJ_NEW_BEGIN(IoServer, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (IoServer)
         {
             .pub =

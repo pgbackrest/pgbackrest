@@ -150,12 +150,8 @@ bz2DecompressNew(const bool raw)
         (void)raw;                                                  // Raw unsupported
     FUNCTION_LOG_END();
 
-    Bz2Decompress *this;
-
     OBJ_NEW_BEGIN(Bz2Decompress, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (Bz2Decompress)
         {
             .stream = {.bzalloc = NULL},

@@ -31,12 +31,8 @@ ioClientNew(void *const driver, const IoClientInterface *const interface)
     ASSERT(interface->open != NULL);
     ASSERT(interface->toLog != NULL);
 
-    IoClient *this;
-
     OBJ_NEW_BEGIN(IoClient, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (IoClient)
         {
             .pub =

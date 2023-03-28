@@ -423,13 +423,8 @@ cipherBlockNew(const CipherMode mode, const CipherType cipherType, const Buffer 
     if (!digest)
         THROW_FMT(AssertError, "unable to load digest '%s'", strZ(param.digest));
 
-    // Allocate memory to hold process state
-    CipherBlock *this;
-
     OBJ_NEW_BEGIN(CipherBlock, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (CipherBlock)
         {
             .mode = mode,

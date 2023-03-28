@@ -137,12 +137,8 @@ blockChecksumNew(const size_t blockSize, const size_t checksumSize)
     ASSERT(checksumSize != 0);
 
     // Allocate memory to hold process state
-    BlockChecksum *this;
-
     OBJ_NEW_BEGIN(BlockChecksum, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (BlockChecksum)
         {
             .blockSize = blockSize,

@@ -33,12 +33,8 @@ ioSessionNew(void *const driver, const IoSessionInterface *const interface)
     ASSERT(interface->role != NULL);
     ASSERT(interface->toLog != NULL);
 
-    IoSession *this;
-
     OBJ_NEW_BEGIN(IoSession, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (IoSession)
         {
             .pub =

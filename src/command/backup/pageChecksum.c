@@ -231,12 +231,8 @@ pageChecksumNew(const unsigned int segmentNo, const unsigned int segmentPageTota
         FUNCTION_LOG_PARAM(STRING, fileName);
     FUNCTION_LOG_END();
 
-    PageChecksum *this;
-
     OBJ_NEW_BEGIN(PageChecksum, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (PageChecksum)
         {
             .segmentPageTotal = segmentPageTotal,

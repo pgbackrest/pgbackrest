@@ -56,13 +56,8 @@ testBldNew(
     ASSERT(module != NULL);
     ASSERT(scale != 0);
 
-    TestBuild *this = NULL;
-
     OBJ_NEW_BEGIN(TestBuild, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        // Create object
-        this = OBJ_NEW_ALLOC();
-
         *this = (TestBuild)
         {
             .pub =

@@ -92,12 +92,8 @@ ioBufferReadNew(const Buffer *const buffer)
 
     ASSERT(buffer != NULL);
 
-    IoBufferRead *this;
-
     OBJ_NEW_BEGIN(IoBufferRead, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (IoBufferRead)
         {
             .read = buffer,

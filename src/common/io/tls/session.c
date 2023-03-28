@@ -361,16 +361,12 @@ tlsSessionNew(SSL *const session, IoSession *const ioSession, const TimeMSec tim
     ASSERT(session != NULL);
     ASSERT(ioSession != NULL);
 
-    TlsSession *this;
-
     OBJ_NEW_BEGIN(TlsSession, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (TlsSession)
         {
             .session = session,
-            .ioSession = ioSessionMove(ioSession, MEM_CONTEXT_NEW()),
+            .ioSession = ioSessionMove(ioSession, objMemContext(this)),
             .timeout = timeout,
             .shutdownOnClose = true,
         };

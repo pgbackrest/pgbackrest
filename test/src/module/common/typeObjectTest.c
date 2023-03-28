@@ -30,12 +30,8 @@ testObjectFree(TestObject *this)
 static TestObject *
 testObjectNew(void)
 {
-    TestObject *this = NULL;
-
     OBJ_NEW_BEGIN(TestObject, .childQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (TestObject)
         {
             .data = true,

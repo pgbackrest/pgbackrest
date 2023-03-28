@@ -190,12 +190,8 @@ httpRequestNew(HttpClient *client, const String *verb, const String *path, HttpR
     ASSERT(verb != NULL);
     ASSERT(path != NULL);
 
-    HttpRequest *this = NULL;
-
     OBJ_NEW_BEGIN(HttpRequest, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (HttpRequest)
         {
             .pub =

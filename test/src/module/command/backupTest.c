@@ -1961,7 +1961,7 @@ testRun(void)
 
         Manifest *manifest = NULL;
 
-        OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
+        OBJ_NEW_BASE_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             manifest = manifestNewInternal();
             manifest->pub.data.backupType = backupTypeFull;
@@ -1982,7 +1982,7 @@ testRun(void)
 
         Manifest *manifestResume = NULL;
 
-        OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
+        OBJ_NEW_BASE_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             manifestResume = manifestNewInternal();
             manifestResume->pub.info = infoNew(NULL);
@@ -2116,7 +2116,7 @@ testRun(void)
         // Create manifest with file
         Manifest *manifest = NULL;
 
-        OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
+        OBJ_NEW_BASE_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             manifest = manifestNewInternal();
             HRN_MANIFEST_FILE_ADD(manifest, .name = "pg_data/test");

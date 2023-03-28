@@ -366,15 +366,11 @@ tlsClientNew(
 
     ASSERT(ioClient != NULL);
 
-    TlsClient *this;
-
     OBJ_NEW_BEGIN(TlsClient, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (TlsClient)
         {
-            .ioClient = ioClientMove(ioClient, MEM_CONTEXT_NEW()),
+            .ioClient = ioClientMove(ioClient, objMemContext(this)),
             .host = strDup(host),
             .timeoutConnect = timeoutConnect,
             .timeoutSession = timeoutSession,

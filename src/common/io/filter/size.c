@@ -91,11 +91,8 @@ ioSizeNew(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
 
-    IoSize *this;
-
     OBJ_NEW_BEGIN(IoSize)
     {
-        this = OBJ_NEW_ALLOC();
         *this = (IoSize){0};
     }
     OBJ_NEW_END();

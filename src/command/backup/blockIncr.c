@@ -388,12 +388,8 @@ blockIncrNew(
         FUNCTION_LOG_PARAM(IO_FILTER, encrypt);
     FUNCTION_LOG_END();
 
-    BlockIncr *this = NULL;
-
     OBJ_NEW_BEGIN(BlockIncr, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (BlockIncr)
         {
             .superBlockSize = (superBlockSize / blockSize + (superBlockSize % blockSize == 0 ? 0 : 1)) * blockSize,

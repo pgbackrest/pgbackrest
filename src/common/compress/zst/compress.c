@@ -173,12 +173,8 @@ zstCompressNew(const int level, const bool raw)
 
     ASSERT(level >= ZST_COMPRESS_LEVEL_MIN && level <= ZST_COMPRESS_LEVEL_MAX);
 
-    ZstCompress *this;
-
     OBJ_NEW_BEGIN(ZstCompress, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (ZstCompress)
         {
             .context = ZSTD_createCStream(),
