@@ -93,12 +93,14 @@ xmlNodeNew(xmlNodePtr node)
 
     ASSERT(node != NULL);
 
-    XmlNode *this = memNew(sizeof(XmlNode));
-
-    *this = (XmlNode)
+    OBJ_NEW_BEGIN(XmlNode)
     {
-        .node = node,
-    };
+        *this = (XmlNode)
+        {
+            .node = node,
+        };
+    }
+    OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(XML_NODE, this);
 }
@@ -271,7 +273,7 @@ xmlDocumentNew(const String *rootName)
 
     xmlInit();
 
-    OBJ_NEW_BEGIN(XmlDocument, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(XmlDocument, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
         *this = (XmlDocument)
         {
@@ -302,7 +304,7 @@ xmlDocumentNewBuf(const Buffer *buffer)
 
     xmlInit();
 
-    OBJ_NEW_BEGIN(XmlDocument, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(XmlDocument, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
         *this = (XmlDocument){{0}};                                 // Extra braces are required for older gcc versions
 
