@@ -366,7 +366,7 @@ tlsClientNew(
 
     ASSERT(ioClient != NULL);
 
-    OBJ_NEW_BEGIN(TlsClient, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(TlsClient, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
         *this = (TlsClient)
         {

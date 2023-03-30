@@ -130,7 +130,7 @@ storageReadGcsNew(
     ASSERT(storage != NULL);
     ASSERT(name != NULL);
 
-    OBJ_NEW_BEGIN(StorageReadGcs, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(StorageReadGcs, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         *this = (StorageReadGcs)
         {

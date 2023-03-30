@@ -84,7 +84,7 @@ storageItrPathAdd(StorageIterator *const this, const String *const pathSub)
                 // Add path to top of stack
                 MEM_CONTEXT_OBJ_BEGIN(this->stack)
                 {
-                    OBJ_NEW_BASE_BEGIN(StorageIteratorInfo, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = 1)
+                    OBJ_NEW_BASE_BEGIN(StorageIteratorInfo, .childQty = MEM_CONTEXT_QTY_MAX)
                     {
                         StorageIteratorInfo *const listInfo = OBJ_NEW_ALLOC();
 
