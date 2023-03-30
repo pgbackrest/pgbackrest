@@ -705,7 +705,24 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("z*()"))
     {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("small string");
+
         TEST_RESULT_Z(zNewFmt("id=%d", 777), "id=777", "format");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("string large enough to need separate allocation");
+
+        char *format = memNew(MEM_CONTEXT_ALLOC_EXTRA_MAX + 1);
+        memset(format, 'A', MEM_CONTEXT_ALLOC_EXTRA_MAX);
+        format[MEM_CONTEXT_ALLOC_EXTRA_MAX] = '\0';
+        format[0] = '%';
+        format[1] = 's';
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+        TEST_RESULT_Z(zNewFmt(format, "%s"), format, "compare");
+#pragma GCC diagnostic pop
     }
 
     // *****************************************************************************************************************************

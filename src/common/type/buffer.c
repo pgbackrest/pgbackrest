@@ -343,7 +343,10 @@ bufUsedZero(Buffer *this)
 FN_EXTERN void
 bufToLog(const Buffer *const this, StringStatic *const debugLog)
 {
-    strStcFmt(
-        debugLog, "{used: %zu, size: %zu%s", bufUsed(this), bufSize(this),
-        bufSizeLimit(this) ? zNewFmt(", sizeAlloc: %zu}", bufSizeAlloc(this)) : "}");
+    strStcFmt(debugLog, "{used: %zu, size: %zu", bufUsed(this), bufSize(this));
+
+    if (bufSizeLimit(this))
+        strStcFmt(debugLog, ", sizeAlloc: %zu", bufSizeAlloc(this));
+
+    strStcCatChr(debugLog, '}');
 }
