@@ -39,7 +39,7 @@ typedef struct CryptoHash
 {
     const EVP_MD *hashType;                                         // Hash type (sha1, md5, etc.)
     EVP_MD_CTX *hashContext;                                        // Message hash context
-    MD5_CTX *md5Context;                                            // MD5 context (used to bypass FIPS restrictions)
+    MD5_CTX md5Context;                                             // MD5 context (used to bypass FIPS restrictions)
     Buffer *hash;                                                   // Hash in binary form
 } CryptoHash;
 
@@ -94,7 +94,7 @@ cryptoHashProcess(THIS_VOID, const Buffer *message)
     }
     // Else local MD5 implementation
     else
-        MD5_Update(this->md5Context, bufPtrConst(message), bufUsed(message));
+        MD5_Update(&this->md5Context, bufPtrConst(message), bufUsed(message));
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -125,7 +125,7 @@ cryptoHash(CryptoHash *this)
             else
             {
                 this->hash = bufNew(HASH_TYPE_M5_SIZE);
-                MD5_Final(bufPtr(this->hash), this->md5Context);
+                MD5_Final(bufPtr(this->hash), &this->md5Context);
             }
 
             bufUsedSet(this->hash, bufSize(this->hash));
@@ -179,7 +179,7 @@ cryptoHashNew(const HashType type)
     // Init crypto subsystem
     cryptoInit();
 
-    OBJ_NEW_BEGIN(CryptoHash, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(CryptoHash, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
         *this = (CryptoHash){0};
 
@@ -188,9 +188,7 @@ cryptoHashNew(const HashType type)
         // MD5 for verifying payload integrity we are simply forced to provide MD5 functionality.
         if (type == hashTypeMd5)
         {
-            this->md5Context = memNew(sizeof(MD5_CTX));
-
-            MD5_Init(this->md5Context);
+            MD5_Init(&this->md5Context);
         }
         // Else use the standard OpenSSL implementation
         else

@@ -35,8 +35,7 @@ typedef struct CipherBlock
     bool raw;                                                       // Omit header magic to save space
     bool saltDone;                                                  // Has the salt been read/generated?
     bool processDone;                                               // Has any data been processed?
-    size_t passSize;                                                // Size of passphrase in bytes
-    unsigned char *pass;                                            // Passphrase used to generate encryption key
+    const Buffer *pass;                                             // Passphrase used to generate encryption key
     size_t headerSize;                                              // Size of header read during decrypt
     unsigned char header[CIPHER_BLOCK_HEADER_SIZE];                 // Buffer to hold partial header during decrypt
     const EVP_CIPHER *cipher;                                       // Cipher object
@@ -185,8 +184,7 @@ cipherBlockProcessBlock(CipherBlock *this, const unsigned char *source, size_t s
             unsigned char key[EVP_MAX_KEY_LENGTH];
             unsigned char initVector[EVP_MAX_IV_LENGTH];
 
-            EVP_BytesToKey(
-                this->cipher, this->digest, salt, (unsigned char *)this->pass, (int)this->passSize, 1, key, initVector);
+            EVP_BytesToKey(this->cipher, this->digest, salt, bufPtrConst(this->pass), (int)bufSize(this->pass), 1, key, initVector);
 
             // Create context to track cipher
             cryptoError(!(this->cipherContext = EVP_CIPHER_CTX_new()), "unable to create context");
@@ -423,7 +421,7 @@ cipherBlockNew(const CipherMode mode, const CipherType cipherType, const Buffer 
     if (!digest)
         THROW_FMT(AssertError, "unable to load digest '%s'", strZ(param.digest));
 
-    OBJ_NEW_BEGIN(CipherBlock, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(CipherBlock, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
         *this = (CipherBlock)
         {
@@ -431,12 +429,8 @@ cipherBlockNew(const CipherMode mode, const CipherType cipherType, const Buffer 
             .raw = param.raw,
             .cipher = cipher,
             .digest = digest,
-            .passSize = bufUsed(pass),
+            .pass = bufDup(pass),
         };
-
-        // Store the passphrase
-        this->pass = memNew(this->passSize);
-        memcpy(this->pass, bufPtrConst(pass), this->passSize);
     }
     OBJ_NEW_END();
 
