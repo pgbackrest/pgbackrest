@@ -231,14 +231,14 @@ pageChecksumNew(const unsigned int segmentNo, const unsigned int segmentPageTota
         FUNCTION_LOG_PARAM(STRING, fileName);
     FUNCTION_LOG_END();
 
-    OBJ_NEW_BEGIN(PageChecksum, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(PageChecksum, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         *this = (PageChecksum)
         {
             .segmentPageTotal = segmentPageTotal,
             .pageNoOffset = segmentNo * segmentPageTotal,
             .fileName = strDup(fileName),
-            .pageBuffer = memNew(PG_PAGE_SIZE_DEFAULT),
+            .pageBuffer = bufPtr(bufNew(PG_PAGE_SIZE_DEFAULT)),
             .valid = true,
             .align = true,
         };
