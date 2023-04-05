@@ -95,7 +95,7 @@ sub new
     my $strContainer = 'test-' . testRunGet()->vmId() . "-$strName";
 
     my $self = $class->SUPER::new(
-        $strName, $strContainer, $$oParam{strImage}, $$oParam{strUser}, testRunGet()->vm(),
+        $strName, $strContainer, $$oParam{strImage}, $$oParam{strUser},
         ["${strProjectPath}:${strProjectPath}", "${strTestPath}:${strTestPath}", "${strBinPath}:${strBinPath}:ro"], undef,
         $oParam->{bTls} ?
             'server --log-level-console=debug --tls-server-ca-file=' . testRunGet()->basePath() . HOST_SERVER_CA .
