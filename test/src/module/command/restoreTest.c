@@ -2693,7 +2693,7 @@ testRun(void)
             ioWrite(write, fileUnused);
             ioWriteClose(write);
 
-            size_t fileUnusedMapSize = pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE));
+            size_t fileUnusedMapSize = (size_t)pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE));
 
             Buffer *fileUsed = bufDup(fileUnused);
             memset(bufPtr(fileUsed), 3, 8192);

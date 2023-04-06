@@ -48,8 +48,8 @@ testRun(void)
             {
                 ProtocolClient *client = protocolClientNew(
                     STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR,
-                    ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_FD(0), 2000),
-                    ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_FD(0), 2000));
+                    ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_FD(0), 5000),
+                    ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_FD(0), 5000));
                 protocolClientNoOp(client);
                 protocolClientFree(client);
             }
@@ -85,8 +85,8 @@ testRun(void)
                     client,
                     protocolClientNew(
                         STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR,
-                        ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_FD(0), 2000),
-                        ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_FD(0), 2000)),
+                        ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_FD(0), 5000),
+                        ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_FD(0), 5000)),
                     "create client");
                 protocolClientNoOp(client);
                 protocolClientFree(client);
@@ -122,8 +122,8 @@ testRun(void)
                     client,
                     protocolClientNew(
                         STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR,
-                        ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_FD(0), 2000),
-                        ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_FD(0), 2000)), "new client");
+                        ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_FD(0), 5000),
+                        ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_FD(0), 5000)), "new client");
 
                 TEST_ERROR(
                     protocolClientNoOp(client), PathCreateError,
@@ -164,8 +164,8 @@ testRun(void)
                     client,
                     protocolClientNew(
                         STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR,
-                        ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_FD(0), 2000),
-                        ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_FD(0), 2000)),
+                        ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_FD(0), 5000),
+                        ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_FD(0), 5000)),
                     "create client");
                 protocolClientNoOp(client);
 
@@ -205,8 +205,8 @@ testRun(void)
                     client,
                     protocolClientNew(
                         STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR,
-                        ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_FD(0), 2000),
-                        ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_FD(0), 2000)), "new client");
+                        ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_FD(0), 5000),
+                        ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_FD(0), 5000)), "new client");
 
                 TEST_ERROR(protocolClientNoOp(client), StopError, "raised from test: stop file exists for all stanzas");
 

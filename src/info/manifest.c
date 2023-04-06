@@ -814,7 +814,7 @@ manifestBuildBlockIncrSize(const ManifestBuildData *const buildData, const Manif
         }
     }
 
-    FUNCTION_TEST_RETURN(UINT64, result);
+    FUNCTION_TEST_RETURN(SIZE, result);
 }
 
 // Get checksum size for a block size. Since these checksums are used to determine if a block has changed (not for corruption) they
