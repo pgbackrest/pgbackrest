@@ -873,7 +873,7 @@ testRun(void)
             "P01 DETAIL: pushed WAL file '000000010000000100000001' to the archive\n"
             "P01   WARN: could not push WAL file '000000010000000100000002' to the archive (will be retried): "
             "[55] raised from local-1 shim protocol: " STORAGE_ERROR_READ_MISSING "\n"
-            "            [FileMissingError] on retry after 0ms",
+            "            [RETRY DETAIL OMITTED]",
             TEST_PATH "/pg/pg_xlog/000000010000000100000002");
 
         TEST_STORAGE_EXISTS(
