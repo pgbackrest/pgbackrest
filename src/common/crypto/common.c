@@ -11,7 +11,6 @@ Crypto Common
 
 #include "common/crypto/common.h"
 #include "common/debug.h"
-#include "common/error.h"
 #include "common/log.h"
 
 /***********************************************************************************************************************************

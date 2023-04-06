@@ -52,11 +52,11 @@ unit:
         harness:
           name: error
           shim:
-            common/error: ~
+            common/error/error: ~
 
         coverage:
-          - common/error
-          - common/error.auto: noCode
+          - common/error/error
+          - common/error/error.auto: noCode
 
         depend:
           - common/stackTrace

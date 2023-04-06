@@ -10,7 +10,6 @@ Command and Option Parse
 #include <unistd.h>
 
 #include "common/debug.h"
-#include "common/error.h"
 #include "common/ini.h"
 #include "common/io/bufferRead.h"
 #include "common/log.h"

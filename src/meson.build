@@ -27,7 +27,7 @@ configure_file(output: 'build.auto.h', configuration: configuration)
 src_common = files(
 	'common/debug.c',
 	'common/encode.c',
-	'common/error.c',
+	'common/error/error.c',
 	'common/io/filter/buffer.c',
 	'common/io/filter/filter.c',
 	'common/io/filter/group.c',

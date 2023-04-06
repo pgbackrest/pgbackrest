@@ -8,7 +8,6 @@ Fork Handler
 #include <unistd.h>
 
 #include "common/debug.h"
-#include "common/error.h"
 #include "common/log.h"
 
 /**********************************************************************************************************************************/

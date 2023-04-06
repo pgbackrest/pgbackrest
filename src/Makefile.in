@@ -10,7 +10,7 @@ SRCS_COMMON = \
 	common/compress/bz2/compress.c \
 	common/debug.c \
 	common/encode.c \
-	common/error.c \
+	common/error/error.c \
 	common/io/filter/buffer.c \
 	common/io/filter/filter.c \
 	common/io/filter/group.c \

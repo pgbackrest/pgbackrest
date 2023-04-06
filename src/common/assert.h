@@ -4,7 +4,7 @@ Assert Routines
 #ifndef COMMON_ASSERT_H
 #define COMMON_ASSERT_H
 
-#include "common/error.h"
+#include "common/error/error.h"
 
 /***********************************************************************************************************************************
 Asserts are used in test code to ensure that certain conditions are true.  They are omitted from production builds.

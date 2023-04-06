@@ -33,7 +33,7 @@ The test code is included directly so it can freely interact with the included C
 #include <unistd.h>
 
 #ifdef HRN_FEATURE_ERROR
-    #include "common/error.h"
+    #include "common/error/error.h"
     #include "common/macro.h"
 #endif
 
