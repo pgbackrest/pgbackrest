@@ -642,6 +642,19 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
         ),                                                                                                               // cmd/stop
     ),                                                                                                                   // cmd/stop
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_COMMAND                                                                                                // cmd/support
+    (                                                                                                                 // cmd/support
+        PARSE_RULE_COMMAND_NAME("support"),                                                                           // cmd/support
+        PARSE_RULE_COMMAND_LOCK_TYPE(lockTypeNone),                                                                   // cmd/support
+        PARSE_RULE_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo),                                                           // cmd/support
+                                                                                                                      // cmd/support
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST                                                                            // cmd/support
+        (                                                                                                             // cmd/support
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleMain)                                                                   // cmd/support
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)                                                                 // cmd/support
+        ),                                                                                                            // cmd/support
+    ),                                                                                                                // cmd/support
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_COMMAND                                                                                                 // cmd/verify
     (                                                                                                                  // cmd/verify
         PARSE_RULE_COMMAND_NAME("verify"),                                                                             // cmd/verify
@@ -1158,6 +1171,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                               // opt/beta
             PARSE_RULE_OPTION_COMMAND(cfgCmdStart)                                                                       // opt/beta
             PARSE_RULE_OPTION_COMMAND(cfgCmdStop)                                                                        // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                                     // opt/beta
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                                      // opt/beta
         ),                                                                                                               // opt/beta
                                                                                                                          // opt/beta
@@ -1194,6 +1208,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                                // opt/beta
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                                // opt/beta
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                               // opt/beta
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                                     // opt/beta
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                                      // opt/beta
         ),                                                                                                               // opt/beta
                                                                                                                          // opt/beta
@@ -1238,6 +1253,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                         // opt/buffer-size
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                         // opt/buffer-size
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                        // opt/buffer-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                              // opt/buffer-size
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                               // opt/buffer-size
         ),                                                                                                        // opt/buffer-size
                                                                                                                   // opt/buffer-size
@@ -1274,6 +1290,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                         // opt/buffer-size
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                         // opt/buffer-size
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                        // opt/buffer-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                              // opt/buffer-size
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                               // opt/buffer-size
         ),                                                                                                        // opt/buffer-size
                                                                                                                   // opt/buffer-size
@@ -1359,6 +1376,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                                 // opt/cmd
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                                 // opt/cmd
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                                // opt/cmd
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                                      // opt/cmd
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                                       // opt/cmd
         ),                                                                                                                // opt/cmd
                                                                                                                           // opt/cmd
@@ -1403,6 +1421,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                             // opt/cmd-ssh
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                             // opt/cmd-ssh
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                            // opt/cmd-ssh
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                                  // opt/cmd-ssh
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                                   // opt/cmd-ssh
         ),                                                                                                            // opt/cmd-ssh
                                                                                                                       // opt/cmd-ssh
@@ -1504,6 +1523,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                              // opt/compress-level-network
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                              // opt/compress-level-network
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                             // opt/compress-level-network
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                   // opt/compress-level-network
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                    // opt/compress-level-network
         ),                                                                                             // opt/compress-level-network
                                                                                                        // opt/compress-level-network
@@ -1613,6 +1633,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                             // opt/config
             PARSE_RULE_OPTION_COMMAND(cfgCmdStart)                                                                     // opt/config
             PARSE_RULE_OPTION_COMMAND(cfgCmdStop)                                                                      // opt/config
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                                   // opt/config
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                                    // opt/config
         ),                                                                                                             // opt/config
                                                                                                                        // opt/config
@@ -1649,6 +1670,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                              // opt/config
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                              // opt/config
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                             // opt/config
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                                   // opt/config
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                                    // opt/config
         ),                                                                                                             // opt/config
                                                                                                                        // opt/config
@@ -1694,6 +1716,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                // opt/config-include-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStart)                                                        // opt/config-include-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStop)                                                         // opt/config-include-path
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                      // opt/config-include-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                       // opt/config-include-path
         ),                                                                                                // opt/config-include-path
                                                                                                           // opt/config-include-path
@@ -1730,6 +1753,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                 // opt/config-include-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                 // opt/config-include-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                // opt/config-include-path
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                      // opt/config-include-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                       // opt/config-include-path
         ),                                                                                                // opt/config-include-path
                                                                                                           // opt/config-include-path
@@ -1775,6 +1799,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                        // opt/config-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStart)                                                                // opt/config-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStop)                                                                 // opt/config-path
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                              // opt/config-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                               // opt/config-path
         ),                                                                                                        // opt/config-path
                                                                                                                   // opt/config-path
@@ -1811,6 +1836,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                         // opt/config-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                         // opt/config-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                        // opt/config-path
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                              // opt/config-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                               // opt/config-path
         ),                                                                                                        // opt/config-path
                                                                                                                   // opt/config-path
@@ -1878,6 +1904,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                          // opt/db-timeout
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                          // opt/db-timeout
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                         // opt/db-timeout
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                               // opt/db-timeout
         ),                                                                                                         // opt/db-timeout
                                                                                                                    // opt/db-timeout
         PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                            // opt/db-timeout
@@ -1907,6 +1934,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                          // opt/db-timeout
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                          // opt/db-timeout
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                         // opt/db-timeout
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                               // opt/db-timeout
         ),                                                                                                         // opt/db-timeout
                                                                                                                    // opt/db-timeout
         PARSE_RULE_OPTIONAL                                                                                        // opt/db-timeout
@@ -2024,6 +2052,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                            // opt/exec-id
             PARSE_RULE_OPTION_COMMAND(cfgCmdStart)                                                                    // opt/exec-id
             PARSE_RULE_OPTION_COMMAND(cfgCmdStop)                                                                     // opt/exec-id
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                                  // opt/exec-id
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                                   // opt/exec-id
         ),                                                                                                            // opt/exec-id
                                                                                                                       // opt/exec-id
@@ -2060,6 +2089,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                             // opt/exec-id
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                             // opt/exec-id
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                            // opt/exec-id
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                                  // opt/exec-id
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                                   // opt/exec-id
         ),                                                                                                            // opt/exec-id
     ),                                                                                                                // opt/exec-id
@@ -2204,6 +2234,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                          // opt/io-timeout
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                          // opt/io-timeout
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                         // opt/io-timeout
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                               // opt/io-timeout
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                                // opt/io-timeout
         ),                                                                                                         // opt/io-timeout
                                                                                                                    // opt/io-timeout
@@ -2240,6 +2271,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                          // opt/io-timeout
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                          // opt/io-timeout
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                         // opt/io-timeout
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                               // opt/io-timeout
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                                // opt/io-timeout
         ),                                                                                                         // opt/io-timeout
                                                                                                                    // opt/io-timeout
@@ -2541,6 +2573,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                  // opt/log-level-console
             PARSE_RULE_OPTION_COMMAND(cfgCmdStart)                                                          // opt/log-level-console
             PARSE_RULE_OPTION_COMMAND(cfgCmdStop)                                                           // opt/log-level-console
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                        // opt/log-level-console
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                         // opt/log-level-console
         ),                                                                                                  // opt/log-level-console
                                                                                                             // opt/log-level-console
@@ -2577,6 +2610,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                   // opt/log-level-console
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                   // opt/log-level-console
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                  // opt/log-level-console
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                        // opt/log-level-console
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                         // opt/log-level-console
         ),                                                                                                  // opt/log-level-console
                                                                                                             // opt/log-level-console
@@ -2635,6 +2669,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                     // opt/log-level-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdStart)                                                             // opt/log-level-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdStop)                                                              // opt/log-level-file
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                           // opt/log-level-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                            // opt/log-level-file
         ),                                                                                                     // opt/log-level-file
                                                                                                                // opt/log-level-file
@@ -2671,6 +2706,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                      // opt/log-level-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                      // opt/log-level-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                     // opt/log-level-file
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                           // opt/log-level-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                            // opt/log-level-file
         ),                                                                                                     // opt/log-level-file
                                                                                                                // opt/log-level-file
@@ -2729,6 +2765,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                   // opt/log-level-stderr
             PARSE_RULE_OPTION_COMMAND(cfgCmdStart)                                                           // opt/log-level-stderr
             PARSE_RULE_OPTION_COMMAND(cfgCmdStop)                                                            // opt/log-level-stderr
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                         // opt/log-level-stderr
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                          // opt/log-level-stderr
         ),                                                                                                   // opt/log-level-stderr
                                                                                                              // opt/log-level-stderr
@@ -2765,6 +2802,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                    // opt/log-level-stderr
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                    // opt/log-level-stderr
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                   // opt/log-level-stderr
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                         // opt/log-level-stderr
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                          // opt/log-level-stderr
         ),                                                                                                   // opt/log-level-stderr
                                                                                                              // opt/log-level-stderr
@@ -2823,6 +2861,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                           // opt/log-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStart)                                                                   // opt/log-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStop)                                                                    // opt/log-path
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                                 // opt/log-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                                  // opt/log-path
         ),                                                                                                           // opt/log-path
                                                                                                                      // opt/log-path
@@ -2859,6 +2898,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                            // opt/log-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                            // opt/log-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                           // opt/log-path
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                                 // opt/log-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                                  // opt/log-path
         ),                                                                                                           // opt/log-path
                                                                                                                      // opt/log-path
@@ -2901,6 +2941,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                      // opt/log-subprocess
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                      // opt/log-subprocess
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                     // opt/log-subprocess
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                           // opt/log-subprocess
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                            // opt/log-subprocess
         ),                                                                                                     // opt/log-subprocess
                                                                                                                // opt/log-subprocess
@@ -2937,6 +2978,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                      // opt/log-subprocess
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                      // opt/log-subprocess
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                     // opt/log-subprocess
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                           // opt/log-subprocess
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                            // opt/log-subprocess
         ),                                                                                                     // opt/log-subprocess
                                                                                                                // opt/log-subprocess
@@ -2984,6 +3026,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                      // opt/log-timestamp
             PARSE_RULE_OPTION_COMMAND(cfgCmdStart)                                                              // opt/log-timestamp
             PARSE_RULE_OPTION_COMMAND(cfgCmdStop)                                                               // opt/log-timestamp
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                            // opt/log-timestamp
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                             // opt/log-timestamp
         ),                                                                                                      // opt/log-timestamp
                                                                                                                 // opt/log-timestamp
@@ -3020,6 +3063,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                       // opt/log-timestamp
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                       // opt/log-timestamp
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                      // opt/log-timestamp
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                            // opt/log-timestamp
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                             // opt/log-timestamp
         ),                                                                                                      // opt/log-timestamp
                                                                                                                 // opt/log-timestamp
@@ -3095,6 +3139,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                      // opt/neutral-umask
             PARSE_RULE_OPTION_COMMAND(cfgCmdStart)                                                              // opt/neutral-umask
             PARSE_RULE_OPTION_COMMAND(cfgCmdStop)                                                               // opt/neutral-umask
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                            // opt/neutral-umask
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                             // opt/neutral-umask
         ),                                                                                                      // opt/neutral-umask
                                                                                                                 // opt/neutral-umask
@@ -3129,6 +3174,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                       // opt/neutral-umask
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                       // opt/neutral-umask
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                      // opt/neutral-umask
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                            // opt/neutral-umask
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                             // opt/neutral-umask
         ),                                                                                                      // opt/neutral-umask
                                                                                                                 // opt/neutral-umask
@@ -3272,6 +3318,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                         // opt/pg-database
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                         // opt/pg-database
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                        // opt/pg-database
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                              // opt/pg-database
         ),                                                                                                        // opt/pg-database
                                                                                                                   // opt/pg-database
         PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                           // opt/pg-database
@@ -3286,6 +3333,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                         // opt/pg-database
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                         // opt/pg-database
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                        // opt/pg-database
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                              // opt/pg-database
         ),                                                                                                        // opt/pg-database
                                                                                                                   // opt/pg-database
         PARSE_RULE_OPTIONAL                                                                                       // opt/pg-database
@@ -3326,6 +3374,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                             // opt/pg-host
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                             // opt/pg-host
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                            // opt/pg-host
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                                  // opt/pg-host
         ),                                                                                                            // opt/pg-host
                                                                                                                       // opt/pg-host
         PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                               // opt/pg-host
@@ -3376,6 +3425,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                     // opt/pg-host-ca-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                     // opt/pg-host-ca-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                    // opt/pg-host-ca-file
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                          // opt/pg-host-ca-file
         ),                                                                                                    // opt/pg-host-ca-file
                                                                                                               // opt/pg-host-ca-file
         PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                       // opt/pg-host-ca-file
@@ -3426,6 +3476,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                     // opt/pg-host-ca-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                     // opt/pg-host-ca-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                    // opt/pg-host-ca-path
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                          // opt/pg-host-ca-path
         ),                                                                                                    // opt/pg-host-ca-path
                                                                                                               // opt/pg-host-ca-path
         PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                       // opt/pg-host-ca-path
@@ -3476,6 +3527,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                   // opt/pg-host-cert-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                   // opt/pg-host-cert-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                  // opt/pg-host-cert-file
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                        // opt/pg-host-cert-file
         ),                                                                                                  // opt/pg-host-cert-file
                                                                                                             // opt/pg-host-cert-file
         PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                     // opt/pg-host-cert-file
@@ -3523,6 +3575,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                         // opt/pg-host-cmd
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                         // opt/pg-host-cmd
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                        // opt/pg-host-cmd
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                              // opt/pg-host-cmd
         ),                                                                                                        // opt/pg-host-cmd
                                                                                                                   // opt/pg-host-cmd
         PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                           // opt/pg-host-cmd
@@ -3560,6 +3613,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                      // opt/pg-host-config
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                      // opt/pg-host-config
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                     // opt/pg-host-config
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                           // opt/pg-host-config
         ),                                                                                                     // opt/pg-host-config
                                                                                                                // opt/pg-host-config
         PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                        // opt/pg-host-config
@@ -3602,6 +3656,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                         // opt/pg-host-config-include-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                         // opt/pg-host-config-include-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                        // opt/pg-host-config-include-path
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                              // opt/pg-host-config-include-path
         ),                                                                                        // opt/pg-host-config-include-path
                                                                                                   // opt/pg-host-config-include-path
         PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                           // opt/pg-host-config-include-path
@@ -3644,6 +3699,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                 // opt/pg-host-config-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                 // opt/pg-host-config-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                // opt/pg-host-config-path
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                      // opt/pg-host-config-path
         ),                                                                                                // opt/pg-host-config-path
                                                                                                           // opt/pg-host-config-path
         PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                   // opt/pg-host-config-path
@@ -3689,6 +3745,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                    // opt/pg-host-key-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                    // opt/pg-host-key-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                   // opt/pg-host-key-file
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                         // opt/pg-host-key-file
         ),                                                                                                   // opt/pg-host-key-file
                                                                                                              // opt/pg-host-key-file
         PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                      // opt/pg-host-key-file
@@ -3736,6 +3793,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                        // opt/pg-host-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                        // opt/pg-host-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                       // opt/pg-host-port
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                             // opt/pg-host-port
         ),                                                                                                       // opt/pg-host-port
                                                                                                                  // opt/pg-host-port
         PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                          // opt/pg-host-port
@@ -3782,6 +3840,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                        // opt/pg-host-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                        // opt/pg-host-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                       // opt/pg-host-type
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                             // opt/pg-host-type
         ),                                                                                                       // opt/pg-host-type
                                                                                                                  // opt/pg-host-type
         PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                          // opt/pg-host-type
@@ -3841,6 +3900,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                        // opt/pg-host-user
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                        // opt/pg-host-user
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                       // opt/pg-host-user
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                             // opt/pg-host-user
         ),                                                                                                       // opt/pg-host-user
                                                                                                                  // opt/pg-host-user
         PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                          // opt/pg-host-user
@@ -3887,6 +3947,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                            // opt/pg-local
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                            // opt/pg-local
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                           // opt/pg-local
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                                 // opt/pg-local
         ),                                                                                                           // opt/pg-local
                                                                                                                      // opt/pg-local
         PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                              // opt/pg-local
@@ -3936,6 +3997,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                             // opt/pg-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                             // opt/pg-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                            // opt/pg-path
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                                  // opt/pg-path
         ),                                                                                                            // opt/pg-path
                                                                                                                       // opt/pg-path
         PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                               // opt/pg-path
@@ -3963,6 +4025,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                             // opt/pg-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                             // opt/pg-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                            // opt/pg-path
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                                  // opt/pg-path
         ),                                                                                                            // opt/pg-path
                                                                                                                       // opt/pg-path
         PARSE_RULE_OPTIONAL                                                                                           // opt/pg-path
@@ -3997,6 +4060,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                             // opt/pg-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                             // opt/pg-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                            // opt/pg-port
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                                  // opt/pg-port
         ),                                                                                                            // opt/pg-port
                                                                                                                       // opt/pg-port
         PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                               // opt/pg-port
@@ -4011,6 +4075,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                             // opt/pg-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                             // opt/pg-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                            // opt/pg-port
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                                  // opt/pg-port
         ),                                                                                                            // opt/pg-port
                                                                                                                       // opt/pg-port
         PARSE_RULE_OPTIONAL                                                                                           // opt/pg-port
@@ -4054,6 +4119,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                      // opt/pg-socket-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                      // opt/pg-socket-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                     // opt/pg-socket-path
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                           // opt/pg-socket-path
         ),                                                                                                     // opt/pg-socket-path
                                                                                                                // opt/pg-socket-path
         PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                        // opt/pg-socket-path
@@ -4068,6 +4134,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                      // opt/pg-socket-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                      // opt/pg-socket-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                     // opt/pg-socket-path
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                           // opt/pg-socket-path
         ),                                                                                                     // opt/pg-socket-path
                                                                                                                // opt/pg-socket-path
         PARSE_RULE_OPTIONAL                                                                                    // opt/pg-socket-path
@@ -4099,6 +4166,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                             // opt/pg-user
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                             // opt/pg-user
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                            // opt/pg-user
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                                  // opt/pg-user
         ),                                                                                                            // opt/pg-user
                                                                                                                       // opt/pg-user
         PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                               // opt/pg-user
@@ -4113,6 +4181,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                             // opt/pg-user
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                             // opt/pg-user
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                            // opt/pg-user
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                                  // opt/pg-user
         ),                                                                                                            // opt/pg-user
                                                                                                                       // opt/pg-user
         PARSE_RULE_OPTIONAL                                                                                           // opt/pg-user
@@ -4146,6 +4215,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                    // opt/pg-version-force
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                    // opt/pg-version-force
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                   // opt/pg-version-force
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                         // opt/pg-version-force
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                          // opt/pg-version-force
         ),                                                                                                   // opt/pg-version-force
                                                                                                              // opt/pg-version-force
@@ -4175,6 +4245,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                    // opt/pg-version-force
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                    // opt/pg-version-force
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                   // opt/pg-version-force
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                         // opt/pg-version-force
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                          // opt/pg-version-force
         ),                                                                                                   // opt/pg-version-force
     ),                                                                                                       // opt/pg-version-force
@@ -4213,6 +4284,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                             // opt/process
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                             // opt/process
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                            // opt/process
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                                  // opt/process
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                                   // opt/process
         ),                                                                                                            // opt/process
                                                                                                                       // opt/process
@@ -4298,6 +4370,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                    // opt/protocol-timeout
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                    // opt/protocol-timeout
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                   // opt/protocol-timeout
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                         // opt/protocol-timeout
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                          // opt/protocol-timeout
         ),                                                                                                   // opt/protocol-timeout
                                                                                                              // opt/protocol-timeout
@@ -4334,6 +4407,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                    // opt/protocol-timeout
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                    // opt/protocol-timeout
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                   // opt/protocol-timeout
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                         // opt/protocol-timeout
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                          // opt/protocol-timeout
         ),                                                                                                   // opt/protocol-timeout
                                                                                                              // opt/protocol-timeout
@@ -4486,6 +4560,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                         // opt/remote-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                         // opt/remote-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                        // opt/remote-type
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                              // opt/remote-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                               // opt/remote-type
         ),                                                                                                        // opt/remote-type
                                                                                                                   // opt/remote-type
@@ -4557,6 +4632,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                                // opt/repo
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                                // opt/repo
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                               // opt/repo
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                                     // opt/repo
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                                      // opt/repo
         ),                                                                                                               // opt/repo
                                                                                                                          // opt/repo
@@ -4603,6 +4679,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                  // opt/repo-azure-account
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                  // opt/repo-azure-account
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                 // opt/repo-azure-account
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                       // opt/repo-azure-account
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                        // opt/repo-azure-account
         ),                                                                                                 // opt/repo-azure-account
                                                                                                            // opt/repo-azure-account
@@ -4638,6 +4715,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                  // opt/repo-azure-account
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                  // opt/repo-azure-account
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                 // opt/repo-azure-account
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                       // opt/repo-azure-account
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                        // opt/repo-azure-account
         ),                                                                                                 // opt/repo-azure-account
                                                                                                            // opt/repo-azure-account
@@ -4683,6 +4761,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                // opt/repo-azure-container
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                // opt/repo-azure-container
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                               // opt/repo-azure-container
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                     // opt/repo-azure-container
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                      // opt/repo-azure-container
         ),                                                                                               // opt/repo-azure-container
                                                                                                          // opt/repo-azure-container
@@ -4718,6 +4797,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                // opt/repo-azure-container
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                // opt/repo-azure-container
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                               // opt/repo-azure-container
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                     // opt/repo-azure-container
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                      // opt/repo-azure-container
         ),                                                                                               // opt/repo-azure-container
                                                                                                          // opt/repo-azure-container
@@ -4764,6 +4844,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                 // opt/repo-azure-endpoint
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                 // opt/repo-azure-endpoint
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                // opt/repo-azure-endpoint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                      // opt/repo-azure-endpoint
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                       // opt/repo-azure-endpoint
         ),                                                                                                // opt/repo-azure-endpoint
                                                                                                           // opt/repo-azure-endpoint
@@ -4799,6 +4880,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                 // opt/repo-azure-endpoint
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                 // opt/repo-azure-endpoint
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                // opt/repo-azure-endpoint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                      // opt/repo-azure-endpoint
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                       // opt/repo-azure-endpoint
         ),                                                                                                // opt/repo-azure-endpoint
                                                                                                           // opt/repo-azure-endpoint
@@ -4850,6 +4932,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                      // opt/repo-azure-key
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                      // opt/repo-azure-key
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                     // opt/repo-azure-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                           // opt/repo-azure-key
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                            // opt/repo-azure-key
         ),                                                                                                     // opt/repo-azure-key
                                                                                                                // opt/repo-azure-key
@@ -4885,6 +4968,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                      // opt/repo-azure-key
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                      // opt/repo-azure-key
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                     // opt/repo-azure-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                           // opt/repo-azure-key
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                            // opt/repo-azure-key
         ),                                                                                                     // opt/repo-azure-key
                                                                                                                // opt/repo-azure-key
@@ -4930,6 +5014,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                 // opt/repo-azure-key-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                 // opt/repo-azure-key-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                // opt/repo-azure-key-type
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                      // opt/repo-azure-key-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                       // opt/repo-azure-key-type
         ),                                                                                                // opt/repo-azure-key-type
                                                                                                           // opt/repo-azure-key-type
@@ -4965,6 +5050,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                 // opt/repo-azure-key-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                 // opt/repo-azure-key-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                // opt/repo-azure-key-type
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                      // opt/repo-azure-key-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                       // opt/repo-azure-key-type
         ),                                                                                                // opt/repo-azure-key-type
                                                                                                           // opt/repo-azure-key-type
@@ -5022,6 +5108,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                // opt/repo-azure-uri-style
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                // opt/repo-azure-uri-style
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                               // opt/repo-azure-uri-style
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                     // opt/repo-azure-uri-style
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                      // opt/repo-azure-uri-style
         ),                                                                                               // opt/repo-azure-uri-style
                                                                                                          // opt/repo-azure-uri-style
@@ -5057,6 +5144,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                // opt/repo-azure-uri-style
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                // opt/repo-azure-uri-style
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                               // opt/repo-azure-uri-style
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                     // opt/repo-azure-uri-style
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                      // opt/repo-azure-uri-style
         ),                                                                                               // opt/repo-azure-uri-style
                                                                                                          // opt/repo-azure-uri-style
@@ -5432,6 +5520,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                    // opt/repo-cipher-pass
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                    // opt/repo-cipher-pass
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                   // opt/repo-cipher-pass
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                         // opt/repo-cipher-pass
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                          // opt/repo-cipher-pass
         ),                                                                                                   // opt/repo-cipher-pass
                                                                                                              // opt/repo-cipher-pass
@@ -5467,6 +5556,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                    // opt/repo-cipher-pass
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                    // opt/repo-cipher-pass
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                   // opt/repo-cipher-pass
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                         // opt/repo-cipher-pass
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                          // opt/repo-cipher-pass
         ),                                                                                                   // opt/repo-cipher-pass
                                                                                                              // opt/repo-cipher-pass
@@ -5513,6 +5603,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                    // opt/repo-cipher-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                    // opt/repo-cipher-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                   // opt/repo-cipher-type
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                         // opt/repo-cipher-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                          // opt/repo-cipher-type
         ),                                                                                                   // opt/repo-cipher-type
                                                                                                              // opt/repo-cipher-type
@@ -5548,6 +5639,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                    // opt/repo-cipher-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                    // opt/repo-cipher-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                   // opt/repo-cipher-type
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                         // opt/repo-cipher-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                          // opt/repo-cipher-type
         ),                                                                                                   // opt/repo-cipher-type
                                                                                                              // opt/repo-cipher-type
@@ -5599,6 +5691,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                     // opt/repo-gcs-bucket
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                     // opt/repo-gcs-bucket
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                    // opt/repo-gcs-bucket
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                          // opt/repo-gcs-bucket
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                           // opt/repo-gcs-bucket
         ),                                                                                                    // opt/repo-gcs-bucket
                                                                                                               // opt/repo-gcs-bucket
@@ -5634,6 +5727,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                     // opt/repo-gcs-bucket
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                     // opt/repo-gcs-bucket
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                    // opt/repo-gcs-bucket
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                          // opt/repo-gcs-bucket
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                           // opt/repo-gcs-bucket
         ),                                                                                                    // opt/repo-gcs-bucket
                                                                                                               // opt/repo-gcs-bucket
@@ -5678,6 +5772,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                   // opt/repo-gcs-endpoint
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                   // opt/repo-gcs-endpoint
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                  // opt/repo-gcs-endpoint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                        // opt/repo-gcs-endpoint
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                         // opt/repo-gcs-endpoint
         ),                                                                                                  // opt/repo-gcs-endpoint
                                                                                                             // opt/repo-gcs-endpoint
@@ -5713,6 +5808,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                   // opt/repo-gcs-endpoint
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                   // opt/repo-gcs-endpoint
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                  // opt/repo-gcs-endpoint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                        // opt/repo-gcs-endpoint
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                         // opt/repo-gcs-endpoint
         ),                                                                                                  // opt/repo-gcs-endpoint
                                                                                                             // opt/repo-gcs-endpoint
@@ -5763,6 +5859,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                        // opt/repo-gcs-key
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                        // opt/repo-gcs-key
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                       // opt/repo-gcs-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                             // opt/repo-gcs-key
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                              // opt/repo-gcs-key
         ),                                                                                                       // opt/repo-gcs-key
                                                                                                                  // opt/repo-gcs-key
@@ -5798,6 +5895,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                        // opt/repo-gcs-key
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                        // opt/repo-gcs-key
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                       // opt/repo-gcs-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                             // opt/repo-gcs-key
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                              // opt/repo-gcs-key
         ),                                                                                                       // opt/repo-gcs-key
                                                                                                                  // opt/repo-gcs-key
@@ -5844,6 +5942,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                   // opt/repo-gcs-key-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                   // opt/repo-gcs-key-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                  // opt/repo-gcs-key-type
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                        // opt/repo-gcs-key-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                         // opt/repo-gcs-key-type
         ),                                                                                                  // opt/repo-gcs-key-type
                                                                                                             // opt/repo-gcs-key-type
@@ -5879,6 +5978,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                   // opt/repo-gcs-key-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                   // opt/repo-gcs-key-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                  // opt/repo-gcs-key-type
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                        // opt/repo-gcs-key-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                         // opt/repo-gcs-key-type
         ),                                                                                                  // opt/repo-gcs-key-type
                                                                                                             // opt/repo-gcs-key-type
@@ -5972,6 +6072,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                           // opt/repo-host
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                           // opt/repo-host
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                          // opt/repo-host
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                                // opt/repo-host
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                                 // opt/repo-host
         ),                                                                                                          // opt/repo-host
                                                                                                                     // opt/repo-host
@@ -6032,6 +6133,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                   // opt/repo-host-ca-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                   // opt/repo-host-ca-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                  // opt/repo-host-ca-file
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                        // opt/repo-host-ca-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                         // opt/repo-host-ca-file
         ),                                                                                                  // opt/repo-host-ca-file
                                                                                                             // opt/repo-host-ca-file
@@ -6092,6 +6194,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                   // opt/repo-host-ca-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                   // opt/repo-host-ca-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                  // opt/repo-host-ca-path
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                        // opt/repo-host-ca-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                         // opt/repo-host-ca-path
         ),                                                                                                  // opt/repo-host-ca-path
                                                                                                             // opt/repo-host-ca-path
@@ -6152,6 +6255,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                 // opt/repo-host-cert-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                 // opt/repo-host-cert-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                // opt/repo-host-cert-file
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                      // opt/repo-host-cert-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                       // opt/repo-host-cert-file
         ),                                                                                                // opt/repo-host-cert-file
                                                                                                           // opt/repo-host-cert-file
@@ -6210,6 +6314,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                       // opt/repo-host-cmd
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                       // opt/repo-host-cmd
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                      // opt/repo-host-cmd
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                            // opt/repo-host-cmd
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                             // opt/repo-host-cmd
         ),                                                                                                      // opt/repo-host-cmd
                                                                                                                 // opt/repo-host-cmd
@@ -6266,6 +6371,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                    // opt/repo-host-config
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                    // opt/repo-host-config
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                   // opt/repo-host-config
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                         // opt/repo-host-config
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                          // opt/repo-host-config
         ),                                                                                                   // opt/repo-host-config
                                                                                                              // opt/repo-host-config
@@ -6327,6 +6433,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                       // opt/repo-host-config-include-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                       // opt/repo-host-config-include-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                      // opt/repo-host-config-include-path
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                            // opt/repo-host-config-include-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                             // opt/repo-host-config-include-path
         ),                                                                                      // opt/repo-host-config-include-path
                                                                                                 // opt/repo-host-config-include-path
@@ -6388,6 +6495,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                               // opt/repo-host-config-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                               // opt/repo-host-config-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                              // opt/repo-host-config-path
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                    // opt/repo-host-config-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                     // opt/repo-host-config-path
         ),                                                                                              // opt/repo-host-config-path
                                                                                                         // opt/repo-host-config-path
@@ -6451,6 +6559,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                  // opt/repo-host-key-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                  // opt/repo-host-key-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                 // opt/repo-host-key-file
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                       // opt/repo-host-key-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                        // opt/repo-host-key-file
         ),                                                                                                 // opt/repo-host-key-file
                                                                                                            // opt/repo-host-key-file
@@ -6509,6 +6618,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                      // opt/repo-host-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                      // opt/repo-host-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                     // opt/repo-host-port
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                           // opt/repo-host-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                            // opt/repo-host-port
         ),                                                                                                     // opt/repo-host-port
                                                                                                                // opt/repo-host-port
@@ -6573,6 +6683,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                      // opt/repo-host-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                      // opt/repo-host-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                     // opt/repo-host-type
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                           // opt/repo-host-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                            // opt/repo-host-type
         ),                                                                                                     // opt/repo-host-type
                                                                                                                // opt/repo-host-type
@@ -6643,6 +6754,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                      // opt/repo-host-user
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                      // opt/repo-host-user
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                     // opt/repo-host-user
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                           // opt/repo-host-user
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                            // opt/repo-host-user
         ),                                                                                                     // opt/repo-host-user
                                                                                                                // opt/repo-host-user
@@ -6707,6 +6819,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                          // opt/repo-local
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                          // opt/repo-local
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                         // opt/repo-local
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                               // opt/repo-local
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                                // opt/repo-local
         ),                                                                                                         // opt/repo-local
                                                                                                                    // opt/repo-local
@@ -6767,6 +6880,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                           // opt/repo-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                           // opt/repo-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                          // opt/repo-path
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                                // opt/repo-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                                 // opt/repo-path
         ),                                                                                                          // opt/repo-path
                                                                                                                     // opt/repo-path
@@ -6802,6 +6916,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                           // opt/repo-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                           // opt/repo-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                          // opt/repo-path
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                                // opt/repo-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                                 // opt/repo-path
         ),                                                                                                          // opt/repo-path
                                                                                                                     // opt/repo-path
@@ -7034,6 +7149,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                      // opt/repo-s3-bucket
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                      // opt/repo-s3-bucket
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                     // opt/repo-s3-bucket
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                           // opt/repo-s3-bucket
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                            // opt/repo-s3-bucket
         ),                                                                                                     // opt/repo-s3-bucket
                                                                                                                // opt/repo-s3-bucket
@@ -7069,6 +7185,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                      // opt/repo-s3-bucket
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                      // opt/repo-s3-bucket
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                     // opt/repo-s3-bucket
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                           // opt/repo-s3-bucket
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                            // opt/repo-s3-bucket
         ),                                                                                                     // opt/repo-s3-bucket
                                                                                                                // opt/repo-s3-bucket
@@ -7115,6 +7232,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                    // opt/repo-s3-endpoint
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                    // opt/repo-s3-endpoint
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                   // opt/repo-s3-endpoint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                         // opt/repo-s3-endpoint
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                          // opt/repo-s3-endpoint
         ),                                                                                                   // opt/repo-s3-endpoint
                                                                                                              // opt/repo-s3-endpoint
@@ -7150,6 +7268,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                    // opt/repo-s3-endpoint
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                    // opt/repo-s3-endpoint
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                   // opt/repo-s3-endpoint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                         // opt/repo-s3-endpoint
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                          // opt/repo-s3-endpoint
         ),                                                                                                   // opt/repo-s3-endpoint
                                                                                                              // opt/repo-s3-endpoint
@@ -7197,6 +7316,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                         // opt/repo-s3-key
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                         // opt/repo-s3-key
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                        // opt/repo-s3-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                              // opt/repo-s3-key
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                               // opt/repo-s3-key
         ),                                                                                                        // opt/repo-s3-key
                                                                                                                   // opt/repo-s3-key
@@ -7232,6 +7352,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                         // opt/repo-s3-key
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                         // opt/repo-s3-key
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                        // opt/repo-s3-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                              // opt/repo-s3-key
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                               // opt/repo-s3-key
         ),                                                                                                        // opt/repo-s3-key
                                                                                                                   // opt/repo-s3-key
@@ -7279,6 +7400,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                  // opt/repo-s3-key-secret
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                  // opt/repo-s3-key-secret
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                 // opt/repo-s3-key-secret
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                       // opt/repo-s3-key-secret
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                        // opt/repo-s3-key-secret
         ),                                                                                                 // opt/repo-s3-key-secret
                                                                                                            // opt/repo-s3-key-secret
@@ -7314,6 +7436,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                  // opt/repo-s3-key-secret
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                  // opt/repo-s3-key-secret
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                 // opt/repo-s3-key-secret
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                       // opt/repo-s3-key-secret
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                        // opt/repo-s3-key-secret
         ),                                                                                                 // opt/repo-s3-key-secret
                                                                                                            // opt/repo-s3-key-secret
@@ -7359,6 +7482,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                    // opt/repo-s3-key-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                    // opt/repo-s3-key-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                   // opt/repo-s3-key-type
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                         // opt/repo-s3-key-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                          // opt/repo-s3-key-type
         ),                                                                                                   // opt/repo-s3-key-type
                                                                                                              // opt/repo-s3-key-type
@@ -7394,6 +7518,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                    // opt/repo-s3-key-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                    // opt/repo-s3-key-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                   // opt/repo-s3-key-type
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                         // opt/repo-s3-key-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                          // opt/repo-s3-key-type
         ),                                                                                                   // opt/repo-s3-key-type
                                                                                                              // opt/repo-s3-key-type
@@ -7452,6 +7577,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                  // opt/repo-s3-kms-key-id
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                  // opt/repo-s3-kms-key-id
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                 // opt/repo-s3-kms-key-id
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                       // opt/repo-s3-kms-key-id
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                        // opt/repo-s3-kms-key-id
         ),                                                                                                 // opt/repo-s3-kms-key-id
                                                                                                            // opt/repo-s3-kms-key-id
@@ -7487,6 +7613,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                  // opt/repo-s3-kms-key-id
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                  // opt/repo-s3-kms-key-id
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                 // opt/repo-s3-kms-key-id
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                       // opt/repo-s3-kms-key-id
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                        // opt/repo-s3-kms-key-id
         ),                                                                                                 // opt/repo-s3-kms-key-id
                                                                                                            // opt/repo-s3-kms-key-id
@@ -7533,6 +7660,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                      // opt/repo-s3-region
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                      // opt/repo-s3-region
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                     // opt/repo-s3-region
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                           // opt/repo-s3-region
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                            // opt/repo-s3-region
         ),                                                                                                     // opt/repo-s3-region
                                                                                                                // opt/repo-s3-region
@@ -7568,6 +7696,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                      // opt/repo-s3-region
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                      // opt/repo-s3-region
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                     // opt/repo-s3-region
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                           // opt/repo-s3-region
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                            // opt/repo-s3-region
         ),                                                                                                     // opt/repo-s3-region
                                                                                                                // opt/repo-s3-region
@@ -7613,6 +7742,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                        // opt/repo-s3-role
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                        // opt/repo-s3-role
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                       // opt/repo-s3-role
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                             // opt/repo-s3-role
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                              // opt/repo-s3-role
         ),                                                                                                       // opt/repo-s3-role
                                                                                                                  // opt/repo-s3-role
@@ -7648,6 +7778,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                        // opt/repo-s3-role
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                        // opt/repo-s3-role
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                       // opt/repo-s3-role
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                             // opt/repo-s3-role
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                              // opt/repo-s3-role
         ),                                                                                                       // opt/repo-s3-role
                                                                                                                  // opt/repo-s3-role
@@ -7694,6 +7825,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                       // opt/repo-s3-token
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                       // opt/repo-s3-token
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                      // opt/repo-s3-token
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                            // opt/repo-s3-token
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                             // opt/repo-s3-token
         ),                                                                                                      // opt/repo-s3-token
                                                                                                                 // opt/repo-s3-token
@@ -7729,6 +7861,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                       // opt/repo-s3-token
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                       // opt/repo-s3-token
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                      // opt/repo-s3-token
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                            // opt/repo-s3-token
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                             // opt/repo-s3-token
         ),                                                                                                      // opt/repo-s3-token
                                                                                                                 // opt/repo-s3-token
@@ -7774,6 +7907,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                   // opt/repo-s3-uri-style
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                   // opt/repo-s3-uri-style
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                  // opt/repo-s3-uri-style
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                        // opt/repo-s3-uri-style
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                         // opt/repo-s3-uri-style
         ),                                                                                                  // opt/repo-s3-uri-style
                                                                                                             // opt/repo-s3-uri-style
@@ -7809,6 +7943,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                   // opt/repo-s3-uri-style
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                   // opt/repo-s3-uri-style
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                  // opt/repo-s3-uri-style
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                        // opt/repo-s3-uri-style
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                         // opt/repo-s3-uri-style
         ),                                                                                                  // opt/repo-s3-uri-style
                                                                                                             // opt/repo-s3-uri-style
@@ -7866,6 +8001,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                // opt/repo-storage-ca-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                // opt/repo-storage-ca-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                               // opt/repo-storage-ca-file
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                     // opt/repo-storage-ca-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                      // opt/repo-storage-ca-file
         ),                                                                                               // opt/repo-storage-ca-file
                                                                                                          // opt/repo-storage-ca-file
@@ -7901,6 +8037,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                // opt/repo-storage-ca-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                // opt/repo-storage-ca-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                               // opt/repo-storage-ca-file
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                     // opt/repo-storage-ca-file
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                      // opt/repo-storage-ca-file
         ),                                                                                               // opt/repo-storage-ca-file
                                                                                                          // opt/repo-storage-ca-file
@@ -7948,6 +8085,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                // opt/repo-storage-ca-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                // opt/repo-storage-ca-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                               // opt/repo-storage-ca-path
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                     // opt/repo-storage-ca-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                      // opt/repo-storage-ca-path
         ),                                                                                               // opt/repo-storage-ca-path
                                                                                                          // opt/repo-storage-ca-path
@@ -7983,6 +8121,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                // opt/repo-storage-ca-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                // opt/repo-storage-ca-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                               // opt/repo-storage-ca-path
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                     // opt/repo-storage-ca-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                      // opt/repo-storage-ca-path
         ),                                                                                               // opt/repo-storage-ca-path
                                                                                                          // opt/repo-storage-ca-path
@@ -8030,6 +8169,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                   // opt/repo-storage-host
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                   // opt/repo-storage-host
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                  // opt/repo-storage-host
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                        // opt/repo-storage-host
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                         // opt/repo-storage-host
         ),                                                                                                  // opt/repo-storage-host
                                                                                                             // opt/repo-storage-host
@@ -8065,6 +8205,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                   // opt/repo-storage-host
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                   // opt/repo-storage-host
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                  // opt/repo-storage-host
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                        // opt/repo-storage-host
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                         // opt/repo-storage-host
         ),                                                                                                  // opt/repo-storage-host
                                                                                                             // opt/repo-storage-host
@@ -8111,6 +8252,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                   // opt/repo-storage-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                   // opt/repo-storage-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                  // opt/repo-storage-port
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                        // opt/repo-storage-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                         // opt/repo-storage-port
         ),                                                                                                  // opt/repo-storage-port
                                                                                                             // opt/repo-storage-port
@@ -8146,6 +8288,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                   // opt/repo-storage-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                   // opt/repo-storage-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                  // opt/repo-storage-port
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                        // opt/repo-storage-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                         // opt/repo-storage-port
         ),                                                                                                  // opt/repo-storage-port
                                                                                                             // opt/repo-storage-port
@@ -8204,6 +8347,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                      // opt/repo-storage-upload-chunk-size
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                      // opt/repo-storage-upload-chunk-size
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                     // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                           // opt/repo-storage-upload-chunk-size
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                            // opt/repo-storage-upload-chunk-size
         ),                                                                                     // opt/repo-storage-upload-chunk-size
                                                                                                // opt/repo-storage-upload-chunk-size
@@ -8239,6 +8383,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                      // opt/repo-storage-upload-chunk-size
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                      // opt/repo-storage-upload-chunk-size
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                     // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                           // opt/repo-storage-upload-chunk-size
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                            // opt/repo-storage-upload-chunk-size
         ),                                                                                     // opt/repo-storage-upload-chunk-size
                                                                                                // opt/repo-storage-upload-chunk-size
@@ -8293,6 +8438,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                             // opt/repo-storage-verify-tls
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                             // opt/repo-storage-verify-tls
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                            // opt/repo-storage-verify-tls
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                  // opt/repo-storage-verify-tls
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                   // opt/repo-storage-verify-tls
         ),                                                                                            // opt/repo-storage-verify-tls
                                                                                                       // opt/repo-storage-verify-tls
@@ -8328,6 +8474,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                             // opt/repo-storage-verify-tls
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                             // opt/repo-storage-verify-tls
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                            // opt/repo-storage-verify-tls
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                  // opt/repo-storage-verify-tls
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                   // opt/repo-storage-verify-tls
         ),                                                                                            // opt/repo-storage-verify-tls
                                                                                                       // opt/repo-storage-verify-tls
@@ -8381,6 +8528,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                           // opt/repo-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                           // opt/repo-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                          // opt/repo-type
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                                // opt/repo-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                                 // opt/repo-type
         ),                                                                                                          // opt/repo-type
                                                                                                                     // opt/repo-type
@@ -8416,6 +8564,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                           // opt/repo-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                           // opt/repo-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                          // opt/repo-type
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                                // opt/repo-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                                 // opt/repo-type
         ),                                                                                                          // opt/repo-type
                                                                                                                     // opt/repo-type
@@ -8497,6 +8646,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                           // opt/sck-block
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                           // opt/sck-block
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                          // opt/sck-block
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                                // opt/sck-block
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                                 // opt/sck-block
         ),                                                                                                          // opt/sck-block
                                                                                                                     // opt/sck-block
@@ -8533,6 +8683,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                           // opt/sck-block
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                           // opt/sck-block
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                          // opt/sck-block
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                                // opt/sck-block
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                                 // opt/sck-block
         ),                                                                                                          // opt/sck-block
                                                                                                                     // opt/sck-block
@@ -8578,6 +8729,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                      // opt/sck-keep-alive
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                      // opt/sck-keep-alive
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                     // opt/sck-keep-alive
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                           // opt/sck-keep-alive
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                            // opt/sck-keep-alive
         ),                                                                                                     // opt/sck-keep-alive
                                                                                                                // opt/sck-keep-alive
@@ -8614,6 +8766,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                      // opt/sck-keep-alive
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                      // opt/sck-keep-alive
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                     // opt/sck-keep-alive
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                           // opt/sck-keep-alive
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                            // opt/sck-keep-alive
         ),                                                                                                     // opt/sck-keep-alive
                                                                                                                // opt/sck-keep-alive
@@ -9111,6 +9264,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                // opt/tcp-keep-alive-count
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                // opt/tcp-keep-alive-count
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                               // opt/tcp-keep-alive-count
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                     // opt/tcp-keep-alive-count
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                      // opt/tcp-keep-alive-count
         ),                                                                                               // opt/tcp-keep-alive-count
                                                                                                          // opt/tcp-keep-alive-count
@@ -9147,6 +9301,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                // opt/tcp-keep-alive-count
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                // opt/tcp-keep-alive-count
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                               // opt/tcp-keep-alive-count
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                     // opt/tcp-keep-alive-count
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                      // opt/tcp-keep-alive-count
         ),                                                                                               // opt/tcp-keep-alive-count
                                                                                                          // opt/tcp-keep-alive-count
@@ -9198,6 +9353,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                 // opt/tcp-keep-alive-idle
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                 // opt/tcp-keep-alive-idle
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                // opt/tcp-keep-alive-idle
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                      // opt/tcp-keep-alive-idle
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                       // opt/tcp-keep-alive-idle
         ),                                                                                                // opt/tcp-keep-alive-idle
                                                                                                           // opt/tcp-keep-alive-idle
@@ -9234,6 +9390,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                 // opt/tcp-keep-alive-idle
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                 // opt/tcp-keep-alive-idle
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                // opt/tcp-keep-alive-idle
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                      // opt/tcp-keep-alive-idle
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                       // opt/tcp-keep-alive-idle
         ),                                                                                                // opt/tcp-keep-alive-idle
                                                                                                           // opt/tcp-keep-alive-idle
@@ -9285,6 +9442,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                             // opt/tcp-keep-alive-interval
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                             // opt/tcp-keep-alive-interval
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                            // opt/tcp-keep-alive-interval
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                  // opt/tcp-keep-alive-interval
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                   // opt/tcp-keep-alive-interval
         ),                                                                                            // opt/tcp-keep-alive-interval
                                                                                                       // opt/tcp-keep-alive-interval
@@ -9321,6 +9479,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                             // opt/tcp-keep-alive-interval
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                             // opt/tcp-keep-alive-interval
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                            // opt/tcp-keep-alive-interval
+            PARSE_RULE_OPTION_COMMAND(cfgCmdSupport)                                                  // opt/tcp-keep-alive-interval
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                   // opt/tcp-keep-alive-interval
         ),                                                                                            // opt/tcp-keep-alive-interval
                                                                                                       // opt/tcp-keep-alive-interval

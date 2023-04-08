@@ -33,6 +33,7 @@ Main
 #include "command/stanza/create.h"
 #include "command/stanza/delete.h"
 #include "command/stanza/upgrade.h"
+#include "command/support/support.h"
 #include "command/verify/verify.h"
 #include "common/debug.h"
 #include "common/io/fdRead.h"
@@ -291,6 +292,12 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdStop:
                     cmdStop();
+                    break;
+
+                // Support command
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdSupport:
+                    cmdSupport();
                     break;
 
                 // Verify command

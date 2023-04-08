@@ -162,6 +162,11 @@ command:
 
   stop: {}
 
+  support:
+    command-role:
+      remote: {}
+    log-file: false
+
   verify:
     command-role:
       local: {}
@@ -522,6 +527,7 @@ option:
       repo-put: {}
       repo-rm: {}
       restore: {}
+      support: {}
       stanza-create: {}
       stanza-delete: {}
       stanza-upgrade: {}
@@ -554,6 +560,7 @@ option:
       stanza-create: {}
       stanza-delete: {}
       stanza-upgrade: {}
+      support: {}
       verify: {}
     command-role:
       local: {}
@@ -676,6 +683,7 @@ option:
       stanza-create: {}
       stanza-delete: {}
       stanza-upgrade: {}
+      support: {}
       verify: {}
 
   cmd:
@@ -698,6 +706,7 @@ option:
       stanza-create: {}
       stanza-delete: {}
       stanza-upgrade: {}
+      support: {}
       verify: {}
     command-role:
       async: {}
@@ -749,6 +758,7 @@ option:
       stanza-create: {}
       stanza-delete: {}
       stanza-upgrade: {}
+      support: {}
       verify: {}
     command-role:
       async: {}
@@ -788,6 +798,7 @@ option:
       stanza-create: {}
       stanza-delete: {}
       stanza-upgrade: {}
+      support: {}
 
   delta:
     section: global
@@ -871,6 +882,7 @@ option:
       stanza-upgrade: {}
       start: {}
       stop: {}
+      support: {}
       verify: {}
 
   process-max:
@@ -911,6 +923,7 @@ option:
       stanza-create: {}
       stanza-delete: {}
       stanza-upgrade: {}
+      support: {}
       verify: {}
 
   sck-block:
@@ -1069,6 +1082,7 @@ option:
       stanza-create: {}
       stanza-delete: {}
       stanza-upgrade: {}
+      support: {}
       verify: {}
 
   log-timestamp:
@@ -1377,6 +1391,7 @@ option:
       stanza-create: {}
       stanza-delete: {}
       stanza-upgrade: {}
+      support: {}
     default: postgres
     depend:
       option: pg-path
@@ -1400,6 +1415,7 @@ option:
       stanza-create: {}
       stanza-delete: {}
       stanza-upgrade: {}
+      support: {}
     command-role:
       async: {}
       main: {}
@@ -1460,6 +1476,7 @@ option:
       stanza-create: {}
       stanza-delete: {}
       stanza-upgrade: {}
+      support: {}
     command-role:
       async: {}
       main: {}
@@ -1542,6 +1559,7 @@ option:
       stanza-create: {}
       stanza-delete: {}
       stanza-upgrade: {}
+      support: {}
     deprecate:
       db-path: {}
       db?-path: {}
@@ -1580,6 +1598,7 @@ option:
       stanza-create: {}
       stanza-delete: {}
       stanza-upgrade: {}
+      support: {}
     depend:
       option: pg-path
 
@@ -1598,6 +1617,7 @@ option:
       stanza-create: {}
       stanza-delete: {}
       stanza-upgrade: {}
+      support: {}
       verify: {}
 
   # Repository options
@@ -1677,6 +1697,9 @@ option:
         command-role: {}
       stop:
         command-role: {}
+      support:
+        command-role:
+          remote: {}
       verify:
         command-role:
           main: {}
@@ -1709,6 +1732,7 @@ option:
       stanza-create: {}
       stanza-delete: {}
       stanza-upgrade: {}
+      support: {}
       verify: {}
     command-role:
       async: {}
@@ -1803,6 +1827,10 @@ option:
         command-role: {}
       stop:
         command-role: {}
+      support:
+        command-role:
+          main: {}
+          remote: {}
       verify:
         command-role:
           main: {}
@@ -2103,6 +2131,7 @@ option:
       stanza-create: {}
       stanza-delete: {}
       stanza-upgrade: {}
+      support: {}
       verify: {}
     command-role:
       async: {}

@@ -159,6 +159,7 @@ src_pgbackrest = [
 	'command/stanza/create.c',
 	'command/stanza/delete.c',
 	'command/stanza/upgrade.c',
+	'command/support/support.c',
 	'command/verify/file.c',
 	'command/verify/protocol.c',
 	'command/verify/verify.c',

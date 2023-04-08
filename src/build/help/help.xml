@@ -2590,6 +2590,14 @@
                     </option>
                 </option-list>
             </command>
+
+            <command id="support" name="Support">
+                <summary>Generate support information.</summary>
+
+                <text>
+                    <p>!!!</p>
+                </text>
+            </command>
         </command-list>
     </operation>
 </doc>
