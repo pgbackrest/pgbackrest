@@ -10,7 +10,6 @@ Command and Option Parse
 #include <unistd.h>
 
 #include "common/debug.h"
-#include "common/ini.h"
 #include "common/io/bufferRead.h"
 #include "common/log.h"
 #include "common/macro.h"
@@ -48,13 +47,18 @@ Standard config file name and old default path and name
 STRING_STATIC(PGBACKREST_CONFIG_ORIG_PATH_FILE_STR,                 PGBACKREST_CONFIG_ORIG_PATH_FILE);
 
 /***********************************************************************************************************************************
-Prefix for environment variables
+In some environments this will not be externed
 ***********************************************************************************************************************************/
-#define PGBACKREST_ENV                                              "PGBACKREST_"
-#define PGBACKREST_ENV_SIZE                                         (sizeof(PGBACKREST_ENV) - 1)
-
-// In some environments this will not be externed
 extern char **environ;
+
+/***********************************************************************************************************************************
+Mem context and local variables
+***********************************************************************************************************************************/
+static struct ConfigParseLocal
+{
+    MemContext *memContext;                                         // Mem context for locks
+    Ini *ini;                                                       // Parsed ini data
+} configParseLocal;
 
 /***********************************************************************************************************************************
 Define how a command is parsed
@@ -479,6 +483,14 @@ cfgParseCommandRoleName(const ConfigCommand commandId, const ConfigCommandRole c
         strCatFmt(result, ":%s", strZ(cfgParseCommandRoleStr(commandRoleId)));
 
     FUNCTION_TEST_RETURN(STRING, result);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN const Ini *
+cfgParseIni(void)
+{
+    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_RETURN(INI, configParseLocal.ini);
 }
 
 /***********************************************************************************************************************************
@@ -1430,6 +1442,20 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
         FUNCTION_LOG_PARAM(BOOL, resetLogLevel);
     FUNCTION_LOG_END();
 
+    // Initialize local mem context
+    if (configParseLocal.memContext == NULL)
+    {
+        MEM_CONTEXT_BEGIN(memContextTop())
+        {
+            MEM_CONTEXT_NEW_BEGIN(ConfigParse, .childQty = MEM_CONTEXT_QTY_MAX)
+            {
+                configParseLocal.memContext = MEM_CONTEXT_NEW();
+            }
+            MEM_CONTEXT_NEW_END();
+        }
+        MEM_CONTEXT_END();
+    }
+
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Create the config struct
@@ -1789,7 +1815,12 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
 
             if (configString != NULL)
             {
-                const Ini *const ini = iniNewP(ioBufferReadNew(BUFSTR(configString)), .store = true);
+                MEM_CONTEXT_BEGIN(configParseLocal.memContext)
+                {
+                    iniFree(configParseLocal.ini);
+                    configParseLocal.ini = iniNewP(ioBufferReadNew(BUFSTR(configString)), .store = true);
+                }
+                MEM_CONTEXT_END();
 
                 // Get the stanza name
                 String *stanza = NULL;
@@ -1813,7 +1844,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                 for (unsigned int sectionIdx = 0; sectionIdx < strLstSize(sectionList); sectionIdx++)
                 {
                     String *section = strLstGet(sectionList, sectionIdx);
-                    StringList *keyList = iniSectionKeyList(ini, section);
+                    StringList *keyList = iniSectionKeyList(configParseLocal.ini, section);
                     KeyValue *optionFound = kvNew();
 
                     // Loop through keys to search for options
@@ -1898,7 +1929,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                         optionValue->source = cfgSourceConfig;
 
                         // Process list
-                        if (iniSectionKeyIsList(ini, section, key))
+                        if (iniSectionKeyIsList(configParseLocal.ini, section, key))
                         {
                             // Error if the option cannot be specified multiple times
                             if (!parseRuleOption[option.id].multi)
@@ -1908,12 +1939,12 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                                     cfgParseOptionKeyIdxName(option.id, option.keyIdx));
                             }
 
-                            optionValue->valueList = iniGetList(ini, section, key);
+                            optionValue->valueList = iniGetList(configParseLocal.ini, section, key);
                         }
                         else
                         {
                             // Get the option value
-                            const String *value = iniGet(ini, section, key);
+                            const String *value = iniGet(configParseLocal.ini, section, key);
 
                             if (strSize(value) == 0)
                             {

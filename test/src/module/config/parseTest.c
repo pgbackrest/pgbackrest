@@ -1701,6 +1701,7 @@ testRun(void)
             "P00   WARN: configuration file contains invalid option 'backup-standb'\n"
             "P00   WARN: configuration file contains stanza-only option 'pg1-path' in global section 'global'");
 
+        TEST_RESULT_PTR(cfgParseIni(), configParseLocal.ini, "parsed ini");
         TEST_RESULT_STR_Z(jsonFromVar(varNewVarLst(cfgCommandJobRetry())), "[0,33000,33000]", "custom job retries");
         TEST_RESULT_BOOL(cfgOptionIdxTest(cfgOptPgHost, 0), false, "pg1-host is not set (command line reset override)");
         TEST_RESULT_BOOL(cfgOptionIdxReset(cfgOptPgHost, 0), true, "pg1-host was reset");

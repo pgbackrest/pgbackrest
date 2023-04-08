@@ -4,8 +4,15 @@ Parse Configuration
 #ifndef CONFIG_PARSE_H
 #define CONFIG_PARSE_H
 
+#include "common/ini.h"
 #include "config/config.h"
 #include "storage/storage.h"
+
+/***********************************************************************************************************************************
+Prefix for environment variables
+***********************************************************************************************************************************/
+#define PGBACKREST_ENV                                              "PGBACKREST_"
+#define PGBACKREST_ENV_SIZE                                         (sizeof(PGBACKREST_ENV) - 1)
 
 /***********************************************************************************************************************************
 Option type enum
@@ -50,6 +57,9 @@ FN_EXTERN String *cfgParseCommandRoleName(const ConfigCommand commandId, const C
 
 // Convert command role enum to String
 FN_EXTERN const String *cfgParseCommandRoleStr(ConfigCommandRole commandRole);
+
+// Return the parsed ini config
+FN_EXTERN const Ini *cfgParseIni(void);
 
 // Parse option name and return option info
 typedef struct CfgParseOptionParam
