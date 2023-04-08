@@ -1560,7 +1560,8 @@ option:
       stanza-create: {}
       stanza-delete: {}
       stanza-upgrade: {}
-      support: {}
+      support:
+        required: false
     deprecate:
       db-path: {}
       db?-path: {}

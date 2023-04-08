@@ -4036,6 +4036,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 (                                                                                                     // opt/pg-path
                     PARSE_RULE_VAL_CMD(cfgCmdArchivePush),                                                            // opt/pg-path
                     PARSE_RULE_VAL_CMD(cfgCmdManifest),                                                               // opt/pg-path
+                    PARSE_RULE_VAL_CMD(cfgCmdSupport),                                                                // opt/pg-path
                 ),                                                                                                    // opt/pg-path
                                                                                                                       // opt/pg-path
                 PARSE_RULE_OPTIONAL_NOT_REQUIRED(),                                                                   // opt/pg-path

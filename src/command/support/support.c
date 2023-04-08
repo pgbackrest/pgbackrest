@@ -63,39 +63,13 @@ cmdSupportRenderConfigEnv(JsonWrite *const json)
             jsonWriteKey(json, key);
             jsonWriteObjectBegin(json);
 
-            CfgParseOptionResult option = {.found = false};
-            const ErrorType *errType = NULL;
-            const String *errMessage = NULL;
-
-            TRY_BEGIN()
-            {
-                option = cfgParseOptionP(strReplaceChr(strLower(strNewZ(strZ(key) + PGBACKREST_ENV_SIZE)), '_', '-'));
-            }
-            CATCH_ANY()
-            {
-                errType = errorType();
-                errMessage = strNewZ(errorMessage());
-            }
-            TRY_END();
-
-            if (errType != NULL)
-            {
-                jsonWriteKeyStrId(json, STRID5("err", 0x4a450));
-                jsonWriteObjectBegin(json);
-
-                jsonWriteKeyStrId(json, STRID5("msg", 0x1e6d0));
-                jsonWriteStr(json, errMessage);
-
-                jsonWriteKeyStrId(json, STRID5("type", 0x2c3340));
-                jsonWriteZ(json, errorTypeName(errType));
-
-                jsonWriteObjectEnd(json);
-            }
+            CfgParseOptionResult option = cfgParseOptionP(
+                strReplaceChr(strLower(strNewZ(strZ(key) + PGBACKREST_ENV_SIZE)), '_', '-'));
 
             jsonWriteKeyStrId(json, STRID5("val", 0x30360));
             jsonWriteStr(json, value);
 
-            if (errType == NULL && (!option.found || option.negate || option.reset))
+            if (!option.found || option.negate || option.reset)
             {
                 jsonWriteKeyStrId(json, STRID5("warn", 0x748370));
 
@@ -145,6 +119,7 @@ cmdSupportRenderConfigFile(JsonWrite *const json)
             jsonWriteNull(json);
         // else
         // {
+        //     const StringList *const keyList = iniSectionKeyList(const Ini *this, const String *section)
         // }
     }
     MEM_CONTEXT_TEMP_END();
