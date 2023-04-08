@@ -165,6 +165,7 @@ command:
   support:
     command-role:
       remote: {}
+    internal: true
     log-file: false
 
   verify:
