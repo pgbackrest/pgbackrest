@@ -172,5 +172,7 @@ cmdSupport(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
 
+    strFree(cmdSupportRender());
+
     FUNCTION_LOG_RETURN_VOID();
 }
