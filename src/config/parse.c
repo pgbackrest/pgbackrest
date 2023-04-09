@@ -722,8 +722,9 @@ cfgParseOption(const String *const optionCandidate, const CfgParseOptionParam pa
             }
         }
 
-        // Set the beta flag
+        // Set flags
         result.beta = optionFound->beta;
+        result.multi = optionFound->multi;
 
         FUNCTION_TEST_RETURN_TYPE(CfgParseOptionResult, result);
     }
@@ -1623,7 +1624,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                     }
 
                     // Add the argument
-                    if (optionArg != NULL && parseRuleOption[option.id].multi)
+                    if (optionArg != NULL && option.multi)
                     {
                         strLstAdd(optionValue->valueList, optionArg);
                     }
@@ -1791,7 +1792,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                             THROW_FMT(OptionInvalidValueError, "environment boolean option '%s' must be 'y' or 'n'", strZ(key));
                     }
                     // Else split list/hash into separate values
-                    else if (parseRuleOption[option.id].multi)
+                    else if (option.multi)
                     {
                         optionValue->valueList = strLstNewSplitZ(value, ":");
                     }
@@ -1932,7 +1933,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                         if (iniSectionKeyIsList(configParseLocal.ini, section, key))
                         {
                             // Error if the option cannot be specified multiple times
-                            if (!parseRuleOption[option.id].multi)
+                            if (!option.multi)
                             {
                                 THROW_FMT(
                                     OptionInvalidError, "option '%s' cannot be set multiple times",

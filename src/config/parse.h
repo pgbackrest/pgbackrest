@@ -78,6 +78,7 @@ typedef struct CfgParseOptionResult
     bool reset;                                                     // Was the option reset?
     bool deprecated;                                                // Is the option deprecated?
     bool beta;                                                      // Is the option in beta?
+    bool multi;                                                     // Can the option be specified multiple times?
 } CfgParseOptionResult;
 
 #define cfgParseOptionP(optionName, ...)                                                                                            \
