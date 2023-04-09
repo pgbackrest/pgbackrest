@@ -23,7 +23,7 @@ Harness for Loading Test Configurations
 #include "common/harnessTest.h"
 
 /**********************************************************************************************************************************/
-void
+StringList *
 hrnCfgLoad(ConfigCommand commandId, const StringList *argListParam, const HrnCfgLoadParam param)
 {
     FUNCTION_HARNESS_BEGIN();
@@ -105,7 +105,7 @@ hrnCfgLoad(ConfigCommand commandId, const StringList *argListParam, const HrnCfg
     else
         hrnLockUnInit();
 
-    FUNCTION_HARNESS_RETURN_VOID();
+    FUNCTION_HARNESS_RETURN(STRING_LIST, argList);
 }
 
 /**********************************************************************************************************************************/

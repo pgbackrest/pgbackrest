@@ -8,6 +8,6 @@ Support Command
 Functions
 ***********************************************************************************************************************************/
 // Support info
-FN_EXTERN void cmdSupport(void);
+FN_EXTERN void cmdSupport(unsigned int argListSize, const char *argList[]);
 
 #endif

@@ -297,7 +297,7 @@ main(int argListSize, const char *argList[])
                 // Support command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdSupport:
-                    cmdSupport();
+                    cmdSupport((unsigned int)argListSize, argList);
                     break;
 
                 // Verify command

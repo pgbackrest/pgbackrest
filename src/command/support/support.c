@@ -7,6 +7,7 @@ Support Command
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/type/json.h"
+#include "config/config.h"
 #include "config/parse.h"
 
 /***********************************************************************************************************************************
@@ -233,11 +234,86 @@ cmdSupportRenderConfig(JsonWrite *const json)
     FUNCTION_TEST_RETURN_VOID();
 }
 
+/***********************************************************************************************************************************
+Render stanza
+***********************************************************************************************************************************/
+static StringList *
+cmdSupportRenderStanzaList(void)
+{
+    FUNCTION_TEST_VOID();
+
+    StringList *const result = strLstNew();
+
+    if (cfgParseIni() != NULL)
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            const StringList *const sectionList = strLstSort(iniSectionList(cfgParseIni()), sortOrderAsc);
+
+            for (unsigned int sectionIdx = 0; sectionIdx < strLstSize(sectionList); sectionIdx++)
+            {
+                const String *const section = strLstGet(sectionList, sectionIdx);
+
+                // Skip global sections
+                if (strEqZ(section, CFGDEF_SECTION_GLOBAL) || strBeginsWithZ(section, CFGDEF_SECTION_GLOBAL ":"))
+                    continue;
+
+                // Extract stanza
+                StringList *const sectionPart = strLstNewSplitZ(section, ":");
+                ASSERT(strLstSize(sectionPart) <= 2);
+
+                strLstAddIfMissing(result, strLstGet(sectionPart, 0));
+            }
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+
+    FUNCTION_TEST_RETURN(STRING_LIST, result);
+}
+
+static void
+cmdSupportRenderStanza(JsonWrite *const json, const unsigned int argListSize, const char *argList[])
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_WRITE, json);
+        FUNCTION_TEST_PARAM(UINT, argListSize);
+        FUNCTION_TEST_PARAM_P(VOID, argList);
+    FUNCTION_TEST_END();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const StringList *const stanzaList = cmdSupportRenderStanzaList();
+
+        jsonWriteKeyStrId(json, STRID5("stanza", 0x3a706930));
+        jsonWriteObjectBegin(json);
+
+        for (unsigned int stanzaIdx = 0; stanzaIdx < strLstSize(stanzaList); stanzaIdx++)
+        {
+            const String *const stanza = strLstGet(stanzaList, stanzaIdx);
+            jsonWriteKey(json, stanza);
+
+            jsonWriteObjectBegin(json);
+            jsonWriteObjectEnd(json);
+
+        }
+
+        jsonWriteObjectEnd(json);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    // StringList *const result = strLstNew();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 /**********************************************************************************************************************************/
 static String *
-cmdSupportRender(void)
+cmdSupportRender(const unsigned int argListSize, const char *argList[])
 {
-    FUNCTION_LOG_VOID(logLevelDebug);
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, argListSize);
+        FUNCTION_TEST_PARAM_P(VOID, argList);
+    FUNCTION_TEST_END();
 
     String *const result = strNew();
 
@@ -245,22 +321,38 @@ cmdSupportRender(void)
     {
         JsonWrite *const json = jsonWriteNewP(.json = result);
 
+        // Replace support command with check command
+        StringList *const argListUpdate = strLstNew();
+
+        for (unsigned int argListIdx = 0; argListIdx < argListSize; argListIdx++)
+        {
+            if (strcmp(argList[argListIdx], CFGCMD_SUPPORT) == 0)
+                strLstAddZ(argListUpdate, CFGCMD_CHECK);
+            else
+                strLstAddZ(argListUpdate, argList[argListIdx]);
+        }
+
+        // Render support info
         jsonWriteObjectBegin(json);
         cmdSupportRenderConfig(json);
+        cmdSupportRenderStanza(json, argListSize, strLstPtr(argListUpdate));
         jsonWriteObjectEnd(json);
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(STRING, result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-cmdSupport(void)
+cmdSupport(const unsigned int argListSize, const char *argList[])
 {
-    FUNCTION_LOG_VOID(logLevelDebug);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(UINT, argListSize);
+        FUNCTION_LOG_PARAM_P(VOID, argList);
+    FUNCTION_LOG_END();
 
-    strFree(cmdSupportRender());
+    strFree(cmdSupportRender(argListSize, argList));
 
     FUNCTION_LOG_RETURN_VOID();
 }

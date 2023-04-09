@@ -48,7 +48,7 @@ typedef struct HrnCfgLoadParam
     }                                                                                                                              \
     while (0)
 
-void hrnCfgLoad(ConfigCommand commandId, const StringList *argList, const HrnCfgLoadParam param);
+StringList *hrnCfgLoad(ConfigCommand commandId, const StringList *argList, const HrnCfgLoadParam param);
 
 /***********************************************************************************************************************************
 Configuration helper functions

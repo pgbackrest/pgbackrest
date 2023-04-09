@@ -24,6 +24,9 @@ testRun(void)
         "repo1-path=" TEST_PATH "/repo1\n"
         "repo1-block=y\n"
         "\n"
+        "[global:backup]\n"
+        "start-fast=y\n"
+        "\n"
         "[test2]\n"
         "pg1-path=" TEST_PATH "/test2-pg1\n"
         "recovery-option=key1=value1\n"
@@ -42,12 +45,14 @@ testRun(void)
         TEST_TITLE("no env, no config");
         {
             TEST_RESULT_STR_Z(
-                cmdSupportRender(),
+                cmdSupportRender(strLstSize(argListCommon), strLstPtr(argListCommon)),
                 // {uncrustify_off - indentation}
                 "{"
                     "\"cfg\":{"
                         "\"env\":{},"
                         "\"file\":null"
+                    "},"
+                    "\"stanza\":{"
                     "}"
                 "}",
                 // {uncrustify_on}
@@ -63,11 +68,10 @@ testRun(void)
             setenv(PGBACKREST_ENV "DB_INCLUDE", "db1:db2", true);
             setenv(PGBACKREST_ENV "RESET_COMPRESS_TYPE", "bogus", true);
 
-            StringList *argList = strLstDup(argListCommon);
-            HRN_CFG_LOAD(cfgCmdSupport, argList);
+            const StringList *argListFull = hrnCfgLoad(cfgCmdSupport, argListCommon, (HrnCfgLoadParam){.log = true});
 
             TEST_RESULT_STR_Z(
-                cmdSupportRender(),
+                cmdSupportRender(strLstSize(argListFull), strLstPtr(argListFull)),
                 // {uncrustify_off - indentation}
                 "{"
                     "\"cfg\":{"
@@ -102,6 +106,11 @@ testRun(void)
                                     "\"val\":\"" TEST_PATH "/repo1\""
                                 "}"
                             "},"
+                            "\"global:backup\":{"
+                                "\"start-fast\":{"
+                                    "\"val\":\"y\""
+                                "}"
+                            "},"
                             "\"test1\":{"
                                 "\"pg1-path\":{"
                                     "\"val\":\"" TEST_PATH "/test1-pg1\""
@@ -119,6 +128,12 @@ testRun(void)
                                 "}"
                             "}"
                         "}"
+                    "},"
+                    "\"stanza\":{"
+                        "\"test1\":{"
+                        "},"
+                        "\"test2\":{"
+                        "}"
                     "}"
                 "}",
                 // {uncrustify_on}
@@ -133,7 +148,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("!!!");
         {
-            TEST_RESULT_VOID(cmdSupport(), "!!!");
+            TEST_RESULT_VOID(cmdSupport(strLstSize(argListCommon), strLstPtr(argListCommon)), "!!!");
         }
     }
 
