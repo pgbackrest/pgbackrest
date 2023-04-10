@@ -272,12 +272,11 @@ cmdSupportRenderStanzaList(void)
 }
 
 static void
-cmdSupportRenderStanza(JsonWrite *const json, const unsigned int argListSize, const char *argList[])
+cmdSupportRenderStanza(JsonWrite *const json, const StringList *const argList)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(JSON_WRITE, json);
-        FUNCTION_TEST_PARAM(UINT, argListSize);
-        FUNCTION_TEST_PARAM_P(VOID, argList);
+        FUNCTION_TEST_PARAM(STRING_LIST, argList);
     FUNCTION_TEST_END();
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -293,8 +292,10 @@ cmdSupportRenderStanza(JsonWrite *const json, const unsigned int argListSize, co
             jsonWriteKey(json, stanza);
 
             jsonWriteObjectBegin(json);
-            jsonWriteObjectEnd(json);
 
+            (void)argList;
+
+            jsonWriteObjectEnd(json);
         }
 
         jsonWriteObjectEnd(json);
@@ -335,7 +336,7 @@ cmdSupportRender(const unsigned int argListSize, const char *argList[])
         // Render support info
         jsonWriteObjectBegin(json);
         cmdSupportRenderConfig(json);
-        cmdSupportRenderStanza(json, argListSize, strLstPtr(argListUpdate));
+        cmdSupportRenderStanza(json, argListUpdate);
         jsonWriteObjectEnd(json);
     }
     MEM_CONTEXT_TEMP_END();
