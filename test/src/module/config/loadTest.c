@@ -687,6 +687,10 @@ testRun(void)
         TEST_RESULT_BOOL(socketLocal.keepAlive, false, "check socketLocal.keepAlive");
         TEST_RESULT_UINT(ioTimeoutMs(), 60000, "check io timeout");
 
+        TEST_RESULT_VOID(cfgLoadStanza(STRDEF("test1")), "load config with stanza");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptStanza), "test1", "check stanza");
+        // !!! ALSO CHECK THAT EXEC-ID HAS NOT CHANGED
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("umask is reset, neutral-umask=y");
 

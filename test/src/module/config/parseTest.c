@@ -621,8 +621,8 @@ testRun(void)
         strLstAddZ(argList, TEST_BACKREST_EXE);
         strLstAddZ(argList, "-bogus");
         TEST_ERROR(
-            cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidError,
-            "option '-bogus' must begin with --");
+            cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true),
+            OptionInvalidError, "option '-bogus' must begin with --");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when option argument is invalid");
@@ -1453,6 +1453,9 @@ testRun(void)
         TEST_ERROR(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidError,
             "configuration file contains duplicate options ('db-path', 'pg1-path') in section '[db]'");
+        TEST_ERROR(
+            cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true, .noConfigLoad = true),
+            OptionInvalidError, "configuration file contains duplicate options ('db-path', 'pg1-path') in section '[db]'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("config file - option set multiple times");
@@ -1711,6 +1714,7 @@ testRun(void)
             "P00   WARN: configuration file contains invalid option 'backup-standb'\n"
             "P00   WARN: configuration file contains stanza-only option 'pg1-path' in global section 'global'");
 
+        TEST_RESULT_PTR(cfgParseIni(), configParseLocal.ini, "parsed ini");
         TEST_RESULT_STR_Z(jsonFromVar(varNewVarLst(cfgCommandJobRetry())), "[0,33000,33000]", "custom job retries");
         TEST_RESULT_BOOL(cfgOptionIdxTest(cfgOptPgHost, 0), false, "pg1-host is not set (command line reset override)");
         TEST_RESULT_BOOL(cfgOptionIdxReset(cfgOptPgHost, 0), true, "pg1-host was reset");

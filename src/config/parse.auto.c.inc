@@ -8854,6 +8854,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             (                                                                                                          // opt/stanza
                 PARSE_RULE_FILTER_CMD                                                                                  // opt/stanza
                 (                                                                                                      // opt/stanza
+                    PARSE_RULE_VAL_CMD(cfgCmdCheck),                                                                   // opt/stanza
                     PARSE_RULE_VAL_CMD(cfgCmdInfo),                                                                    // opt/stanza
                     PARSE_RULE_VAL_CMD(cfgCmdRepoCreate),                                                              // opt/stanza
                     PARSE_RULE_VAL_CMD(cfgCmdRepoGet),                                                                 // opt/stanza

@@ -44,6 +44,8 @@ typedef struct CfgParseParam
 {
     VAR_PARAM_HEADER;
     bool noResetLogLevel;                                           // Do not reset log level
+    bool noConfigLoad;                                              // Do not reload the config file
+    const String *stanza;                                           // Load config as stanza
 } CfgParseParam;
 
 #define cfgParseP(storage, argListSize, argList, ...)                                                                              \

@@ -57,6 +57,15 @@ Prefix for environment variables
 extern char **environ;
 
 /***********************************************************************************************************************************
+Mem context and local variables
+***********************************************************************************************************************************/
+static struct ConfigParseLocal
+{
+    MemContext *memContext;                                         // Mem context
+    Ini *ini;                                                       // Parsed ini data
+} configParseLocal;
+
+/***********************************************************************************************************************************
 Define how a command is parsed
 ***********************************************************************************************************************************/
 typedef struct ParseRuleCommand
@@ -479,6 +488,14 @@ cfgParseCommandRoleName(const ConfigCommand commandId, const ConfigCommandRole c
         strCatFmt(result, ":%s", strZ(cfgParseCommandRoleStr(commandRoleId)));
 
     FUNCTION_TEST_RETURN(STRING, result);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN const Ini *
+cfgParseIni(void)
+{
+    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_RETURN(INI, configParseLocal.ini);
 }
 
 /***********************************************************************************************************************************
@@ -1428,7 +1445,22 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
         FUNCTION_LOG_PARAM(UINT, argListSize);
         FUNCTION_LOG_PARAM(CHARPY, argList);
         FUNCTION_LOG_PARAM(BOOL, param.noResetLogLevel);
+        FUNCTION_LOG_PARAM(BOOL, param.noConfigLoad);
     FUNCTION_LOG_END();
+
+    // Initialize local mem context
+    if (configParseLocal.memContext == NULL)
+    {
+        MEM_CONTEXT_BEGIN(memContextTop())
+        {
+            MEM_CONTEXT_NEW_BEGIN(ConfigParse, .childQty = MEM_CONTEXT_QTY_MAX)
+            {
+                configParseLocal.memContext = MEM_CONTEXT_NEW();
+            }
+            MEM_CONTEXT_NEW_END();
+        }
+        MEM_CONTEXT_END();
+    }
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -1781,16 +1813,30 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
             // Phase 3: parse config file unless --no-config passed
             // ---------------------------------------------------------------------------------------------------------------------
             // Load the configuration file(s)
-            String *configString = cfgFileLoad(
-                storage, parseOptionList,
-                (const String *)&parseRuleValueStr[parseRuleValStrCFGOPTDEF_CONFIG_PATH_SP_QT_FS_QT_SP_PROJECT_CONFIG_FILE],
-                (const String *)&parseRuleValueStr[parseRuleValStrCFGOPTDEF_CONFIG_PATH_SP_QT_FS_QT_SP_PROJECT_CONFIG_INCLUDE_PATH],
-                PGBACKREST_CONFIG_ORIG_PATH_FILE_STR);
-
-            if (configString != NULL)
+            if (!param.noConfigLoad)
             {
-                const Ini *const ini = iniNewP(ioBufferReadNew(BUFSTR(configString)), .store = true);
+                const String *const configString = cfgFileLoad(
+                    storage, parseOptionList,
+                    (const String *)&parseRuleValueStr[parseRuleValStrCFGOPTDEF_CONFIG_PATH_SP_QT_FS_QT_SP_PROJECT_CONFIG_FILE],
+                    (const String *)&parseRuleValueStr[
+                        parseRuleValStrCFGOPTDEF_CONFIG_PATH_SP_QT_FS_QT_SP_PROJECT_CONFIG_INCLUDE_PATH],
+                    PGBACKREST_CONFIG_ORIG_PATH_FILE_STR);
 
+                iniFree(configParseLocal.ini);
+                configParseLocal.ini = NULL;
+
+                if (configString != NULL)
+                {
+                    MEM_CONTEXT_BEGIN(configParseLocal.memContext)
+                    {
+                        configParseLocal.ini = iniNewP(ioBufferReadNew(BUFSTR(configString)), .store = true);
+                    }
+                    MEM_CONTEXT_END();
+                }
+            }
+
+            if (configParseLocal.ini != NULL)
+            {
                 // Get the stanza name
                 String *stanza = NULL;
 
@@ -1813,7 +1859,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                 for (unsigned int sectionIdx = 0; sectionIdx < strLstSize(sectionList); sectionIdx++)
                 {
                     String *section = strLstGet(sectionList, sectionIdx);
-                    StringList *keyList = iniSectionKeyList(ini, section);
+                    const StringList *const keyList = iniSectionKeyList(configParseLocal.ini, section);
                     KeyValue *optionFound = kvNew();
 
                     // Loop through keys to search for options
@@ -1898,7 +1944,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                         optionValue->source = cfgSourceConfig;
 
                         // Process list
-                        if (iniSectionKeyIsList(ini, section, key))
+                        if (iniSectionKeyIsList(configParseLocal.ini, section, key))
                         {
                             // Error if the option cannot be specified multiple times
                             if (!parseRuleOption[option.id].multi)
@@ -1908,12 +1954,12 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                                     cfgParseOptionKeyIdxName(option.id, option.keyIdx));
                             }
 
-                            optionValue->valueList = iniGetList(ini, section, key);
+                            optionValue->valueList = iniGetList(configParseLocal.ini, section, key);
                         }
                         else
                         {
                             // Get the option value
-                            const String *value = iniGet(ini, section, key);
+                            const String *value = iniGet(configParseLocal.ini, section, key);
 
                             if (strSize(value) == 0)
                             {
