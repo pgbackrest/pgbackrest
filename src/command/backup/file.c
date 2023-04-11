@@ -26,7 +26,7 @@ Backup File
 Helper functions
 ***********************************************************************************************************************************/
 static unsigned int
-segmentNumber(const String *pgFile)
+segmentNumber(const String *const pgFile)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, pgFile);
@@ -60,12 +60,10 @@ backupFile(
     ASSERT(fileList != NULL && !lstEmpty(fileList));
 
     // Backup file results
-    List *result = NULL;
+    List *const result = lstNewP(sizeof(BackupFileResult));
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = lstNewP(sizeof(BackupFileResult));
-
         // Check files to determine which ones need to be copied
         for (unsigned int fileIdx = 0; fileIdx < lstSize(fileList); fileIdx++)
         {
@@ -89,7 +87,7 @@ backupFile(
                     // Generate checksum/size for the pg file. Only read as many bytes as passed in pgFileSize. If the file has
                     // grown since the manifest was built we don't need to consider the extra bytes since they will be replayed from
                     // WAL during recovery.
-                    IoRead *read = storageReadIo(
+                    IoRead *const read = storageReadIo(
                         storageNewReadP(
                             storagePg(), file->pgFile, .ignoreMissing = file->pgFileIgnoreMissing,
                             .limit = file->pgFileCopyExactSize ? VARUINT64(file->pgFileSize) : NULL));
@@ -101,7 +99,7 @@ backupFile(
                     {
                         const Buffer *const pgTestChecksum = pckReadBinP(
                             ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE));
-                        uint64_t pgTestSize = pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(read), SIZE_FILTER_TYPE));
+                        const uint64_t pgTestSize = pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(read), SIZE_FILTER_TYPE));
 
                         // Does the pg file match?
                         if (file->pgFileSize == pgTestSize && bufEq(file->pgFileChecksum, pgTestChecksum))
@@ -142,7 +140,7 @@ backupFile(
                     else if (!file->pgFileDelta || pgFileMatch)
                     {
                         // Generate checksum/size for the repo file
-                        IoRead *read = storageReadIo(storageNewReadP(storageRepo(), repoFile));
+                        IoRead *const read = storageReadIo(storageNewReadP(storageRepo(), repoFile));
                         ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
                         ioFilterGroupAdd(ioReadFilterGroup(read), ioSizeNew());
                         ioReadDrain(read);
@@ -150,7 +148,7 @@ backupFile(
                         // Test checksum/size
                         const Buffer *const pgTestChecksum = pckReadBinP(
                             ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE));
-                        uint64_t pgTestSize = pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(read), SIZE_FILTER_TYPE));
+                        const uint64_t pgTestSize = pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(read), SIZE_FILTER_TYPE));
 
                         // No need to recopy if checksum/size match. When the repo checksum is missing still compare to repo size
                         // since the repo checksum should only be missing when the repo file was not compressed/encrypted, i.e. the
@@ -198,7 +196,7 @@ backupFile(
                     // replayed from WAL during recovery.
                     bool repoChecksum = false;
 
-                    StorageRead *read = storageNewReadP(
+                    StorageRead *const read = storageNewReadP(
                         storagePg(), file->pgFile, .ignoreMissing = file->pgFileIgnoreMissing, .compressible = compressible,
                         .limit = file->pgFileCopyExactSize ? VARUINT64(file->pgFileSize) : NULL);
                     ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(hashTypeSha1));
@@ -358,8 +356,6 @@ backupFile(
         // Close the repository file if it was opened
         if (write != NULL)
             ioWriteClose(storageWriteIo(write));
-
-        lstMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 

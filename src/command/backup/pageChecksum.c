@@ -48,7 +48,7 @@ pageChecksumToLog(const PageChecksum *const this, StringStatic *const debugLog)
 Verify page checksums
 ***********************************************************************************************************************************/
 static void
-pageChecksumProcess(THIS_VOID, const Buffer *input)
+pageChecksumProcess(THIS_VOID, const Buffer *const input)
 {
     THIS(PageChecksum);
 
@@ -64,7 +64,7 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
     unsigned int pageTotal = (unsigned int)(bufUsed(input) / PG_PAGE_SIZE_DEFAULT);
 
     // If there is a partial page make sure there is enough of it to validate the checksum
-    unsigned int pageRemainder = (unsigned int)(bufUsed(input) % PG_PAGE_SIZE_DEFAULT);
+    const unsigned int pageRemainder = (unsigned int)(bufUsed(input) % PG_PAGE_SIZE_DEFAULT);
 
     if (pageRemainder != 0)
     {
@@ -190,7 +190,7 @@ pageChecksumResult(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    Pack *result = NULL;
+    Pack *result;
 
     MEM_CONTEXT_OBJ_BEGIN(this)
     {
@@ -246,7 +246,7 @@ pageChecksumNew(const unsigned int segmentNo, const unsigned int segmentPageTota
     OBJ_NEW_END();
 
     // Create param list
-    Pack *paramList = NULL;
+    Pack *paramList;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -269,7 +269,7 @@ pageChecksumNew(const unsigned int segmentNo, const unsigned int segmentPageTota
 FN_EXTERN IoFilter *
 pageChecksumNewPack(const Pack *const paramList)
 {
-    IoFilter *result = NULL;
+    IoFilter *result;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
