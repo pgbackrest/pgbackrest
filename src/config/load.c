@@ -550,7 +550,7 @@ cfgLoadStanza(const String *const stanza)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Store the exec id so it can be preserved after reload
-        const String *const execId = cfgOptionStr(cfgOptExecId);
+        const Variant *const execId = varNewStr(cfgOptionStr(cfgOptExecId));
 
         // Make a copy of the arguments and add the stanza (this assumes the stanza was not originally specified)
         StringList *const argListNew = strLstNew();
@@ -567,7 +567,7 @@ cfgLoadStanza(const String *const stanza)
         cfgLoadUpdateOption();
 
         // Set execId to prior value
-        cfgOptionSet(cfgOptExecId, cfgSourceParam, VARSTR(execId));
+        cfgOptionSet(cfgOptExecId, cfgSourceParam, execId);
     }
     MEM_CONTEXT_TEMP_END();
 

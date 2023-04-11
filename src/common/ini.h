@@ -68,6 +68,9 @@ FN_EXTERN StringList *iniGetList(const Ini *this, const String *section, const S
 // The key's value is a list
 FN_EXTERN bool iniSectionKeyIsList(const Ini *this, const String *section, const String *key);
 
+// List of sections
+FN_EXTERN StringList *iniSectionList(const Ini *const this);
+
 // List of keys for a section
 FN_EXTERN StringList *iniSectionKeyList(const Ini *this, const String *section);
 

@@ -491,11 +491,40 @@ cfgParseCommandRoleName(const ConfigCommand commandId, const ConfigCommandRole c
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN const Ini *
-cfgParseIni(void)
+FN_EXTERN StringList *
+cfgParseStanzaList(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(INI, configParseLocal.ini);
+
+    StringList *const result = strLstNew();
+
+    if (configParseLocal.ini != NULL)
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            const StringList *const sectionList = strLstSort(iniSectionList(configParseLocal.ini), sortOrderAsc);
+
+            for (unsigned int sectionIdx = 0; sectionIdx < strLstSize(sectionList); sectionIdx++)
+            {
+                const String *const section = strLstGet(sectionList, sectionIdx);
+
+                // Skip global sections
+                if (strEqZ(section, CFGDEF_SECTION_GLOBAL) || strBeginsWithZ(section, CFGDEF_SECTION_GLOBAL ":"))
+                    continue;
+
+                // Extract stanza
+                const StringList *const sectionPart = strLstNewSplitZ(section, ":");
+                ASSERT(strLstSize(sectionPart) <= 2);
+
+                // !!! CHECK THAT LAST PART IS A COMMAND
+
+                strLstAddIfMissing(result, strLstGet(sectionPart, 0));
+            }
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+
+    FUNCTION_TEST_RETURN(STRING_LIST, result);
 }
 
 /***********************************************************************************************************************************

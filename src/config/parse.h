@@ -107,6 +107,8 @@ FN_EXTERN ConfigOptionDataType cfgParseOptionDataType(ConfigOption optionId);
 // Is the option required?
 FN_EXTERN bool cfgParseOptionRequired(ConfigCommand commandId, ConfigOption optionId);
 
+FN_EXTERN StringList *cfgParseStanzaList(void);
+
 // Is the option valid for the command?
 FN_EXTERN bool cfgParseOptionValid(ConfigCommand commandId, ConfigCommandRole commandRoleId, ConfigOption optionId);
 

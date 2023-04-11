@@ -10,6 +10,8 @@ Check Command
 #include "common/log.h"
 #include "common/memContext.h"
 #include "config/config.h"
+#include "config/load.h"
+#include "config/parse.h"
 #include "db/helper.h"
 #include "info/infoArchive.h"
 #include "postgres/interface.h"
@@ -176,15 +178,37 @@ cmdCheck(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Get the primary/standby connections (standby is only required if backup from standby is enabled)
-        DbGetResult dbGroup = dbGet(false, false, false);
+        StringList *stanzaList;
+        // bool stanzaSpecified = cfgOptionTest(cfgOptStanza);
 
-        if (dbGroup.standby == NULL && dbGroup.primary == NULL)
-            THROW(ConfigError, "no database found\nHINT: check indexed pg-path/pg-host configurations");
+        // if (stanzaSpecified)
+        // {
+            stanzaList = strLstNew();
+            strLstAdd(stanzaList, cfgOptionStr(cfgOptStanza));
+        // }
+        // else
+        //     stanzaList = cfgParseStanzaList();
 
-        const unsigned int pgPathDefinedTotal = checkManifest();
-        checkStandby(dbGroup, pgPathDefinedTotal);
-        checkPrimary(dbGroup);
+        for (unsigned int stanzaIdx = 0; stanzaIdx < strLstSize(stanzaList); stanzaIdx++)
+        {
+            // if (!stanzaSpecified)
+            // {
+            //     const String *const stanza = strLstGet(stanzaList, stanzaIdx);
+
+            //     LOG_INFO_FMT("switch to stanza '%s'", strZ(stanza));
+            //     cfgLoadStanza(stanza);
+            // }
+
+            // Get the primary/standby connections (standby is only required if backup from standby is enabled)
+            DbGetResult dbGroup = dbGet(false, false, false);
+
+            if (dbGroup.standby == NULL && dbGroup.primary == NULL)
+                THROW(ConfigError, "no database found\nHINT: check indexed pg-path/pg-host configurations");
+
+            const unsigned int pgPathDefinedTotal = checkManifest();
+            checkStandby(dbGroup, pgPathDefinedTotal);
+            checkPrimary(dbGroup);
+        }
     }
     MEM_CONTEXT_TEMP_END();
 
