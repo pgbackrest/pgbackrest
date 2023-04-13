@@ -32,7 +32,7 @@ pgPageChecksum(unsigned char *page, uint32_t blockNo)
 	cpage->phdr.pd_checksum = save_checksum;
 
 	/* Mix in the block number to detect transposed pages */
-	checksum ^= blkno;
+	checksum ^= blockNo;
 
 	/*
 	 * Reduce to a uint16 (to fit in the pd_checksum field) with an offset of
