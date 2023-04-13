@@ -119,16 +119,10 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
                         continue;
                 }
 
-                // Only validate the checksum if pd_upper is non-zero to avoid an assertion from pg_checksum_page()
-                if (pdUpperValid)
-                {
-                    // Make a copy of the page since it will be modified by the page checksum function
-                    memcpy(this->pageBuffer, pageHeader, PG_PAGE_SIZE_DEFAULT);
-
-                    // Continue if the checksum matches
-                    if (pageHeader->pd_checksum == pgPageChecksum(this->pageBuffer, blockNo))
-                        continue;
-                }
+                // If pd_upper is zero but the checksum field matches we'll consider it all good; this can be the case if the
+                // pd_upper field is an encrypted part of a page so could validly be 0x0000 at this point
+                if (pageHeader->pd_checksum == pgPageChecksum(this->pageBuffer, blockNo))
+                    continue;
 
                 // On error retry the page
                 bool changed = false;
