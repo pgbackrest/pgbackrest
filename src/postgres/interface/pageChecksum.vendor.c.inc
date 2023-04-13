@@ -11,7 +11,7 @@ src/include/storage/checksum_impl.h for each new release.  Only the newest relea
 Modifications need to be made after copying:
 
 1) Remove `#include "storage/bufpage.h"`.
-2) Make pg_checksum_page() static.
+2) Make pg_checksum_page() static inline.
 ***********************************************************************************************************************************/
 
 /*-------------------------------------------------------------------------
@@ -197,7 +197,7 @@ pg_checksum_block(const PGChecksummablePage *page)
  * somehow moved to a different location), the page header (excluding the
  * checksum itself), and the page data.
  */
-static uint16
+static inline uint16
 pg_checksum_page(char *page, BlockNumber blkno)
 {
 	PGChecksummablePage *cpage = (PGChecksummablePage *) page;
