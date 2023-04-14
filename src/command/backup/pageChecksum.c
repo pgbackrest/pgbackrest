@@ -23,8 +23,6 @@ typedef struct PageChecksum
     unsigned int pageNoOffset;                                      // Page number offset for subsequent segments
     const String *fileName;                                         // Used to load the file to retry pages
 
-    unsigned char *pageBuffer;                                      // Buffer to hold a page while verifying the checksum
-
     bool valid;                                                     // Is the relation structure valid?
     bool align;                                                     // Is the relation alignment valid?
     PackWrite *error;                                               // List of checksum errors
@@ -232,7 +230,6 @@ pageChecksumNew(const unsigned int segmentNo, const unsigned int segmentPageTota
             .segmentPageTotal = segmentPageTotal,
             .pageNoOffset = segmentNo * segmentPageTotal,
             .fileName = strDup(fileName),
-            .pageBuffer = bufPtr(bufNew(PG_PAGE_SIZE_DEFAULT)),
             .valid = true,
             .align = true,
         };
