@@ -121,7 +121,7 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
 
                 // If pd_upper is zero but the checksum field matches we'll consider it all good; this can be the case if the
                 // pd_upper field is an encrypted part of a page so could validly be 0x0000 at this point
-                if (pageHeader->pd_checksum == pgPageChecksum(this->pageBuffer, blockNo))
+                if (pageHeader->pd_checksum == pgPageChecksum(pageHeader, blockNo))
                     continue;
 
                 // On error retry the page
