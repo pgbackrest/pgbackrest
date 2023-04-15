@@ -656,8 +656,8 @@ testRun(void)
 
         write = ioBufferWriteNew(bufferOut);
         ioFilterGroupAdd(
-            ioWriteFilterGroup(write), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, true,
-            storagePathP(storageTest, STRDEF("relation"))));
+            ioWriteFilterGroup(write),
+            pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, true, storagePathP(storageTest, STRDEF("relation"))));
         ioWriteOpen(write);
         ioWrite(write, buffer);
         ioWriteClose(write);
