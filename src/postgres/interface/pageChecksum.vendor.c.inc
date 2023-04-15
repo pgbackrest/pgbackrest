@@ -12,6 +12,7 @@ Modifications need to be made after copying:
 
 1) Remove `#include "storage/bufpage.h"`.
 2) Make pg_checksum_page() static.
+3) Remove Assert(!PageIsNew(&cpage->phdr)).
 ***********************************************************************************************************************************/
 
 /*-------------------------------------------------------------------------

@@ -21,7 +21,7 @@ typedef struct PageChecksum
 {
     unsigned int segmentPageTotal;                                  // Total pages in a segment
     unsigned int pageNoOffset;                                      // Page number offset for subsequent segments
-    bool headerCheck;                                               // Perform additional header checks
+    bool headerCheck;                                               // Perform additional header checks?
     const String *fileName;                                         // Used to load the file to retry pages
 
     unsigned char *pageBuffer;                                      // Buffer to hold a page while verifying the checksum
@@ -103,7 +103,7 @@ pageChecksumProcess(THIS_VOID, const Buffer *const input)
                 bool pageValid = true;
 
                 // Skip new all-zero pages. To speed this up first check pd_upper when header check is enabled or pd_checksum when
-                // header check is disabled.
+                // header check is disabled. The latter is required when the page is encrypted.
                 if ((this->headerCheck && pageHeader->pd_upper == 0) || (!this->headerCheck && pageHeader->pd_checksum == 0))
                 {
                     // Check that the entire page is zero in case pd_upper is corrupted

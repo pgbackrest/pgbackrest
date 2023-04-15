@@ -1250,10 +1250,12 @@
                     </config-key>
 
                     <config-key id="page-header-check" name="Page Header Check">
-                        <summary>!!!.</summary>
+                        <summary>Check PostgreSQL page headers.</summary>
 
                         <text>
-                            <p>!!!</p>
+                            <p>Enabled by default, this option adds page header checks.</p>
+
+                            <p>Disabling this option should be avoided except when necessary, e.g. if pages are encrypted.</p>
                         </text>
 
                         <example>n</example>
