@@ -1249,6 +1249,16 @@
                         <example>y</example>
                     </config-key>
 
+                    <config-key id="page-header-check" name="Page Header Check">
+                        <summary>!!!.</summary>
+
+                        <text>
+                            <p>!!!</p>
+                        </text>
+
+                        <example>n</example>
+                    </config-key>
+
                     <config-key id="resume" name="Resume">
                         <summary>Allow resume of failed backup.</summary>
 

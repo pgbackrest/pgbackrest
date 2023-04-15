@@ -1987,6 +1987,7 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
                 pckWriteBoolP(param, !backupProcessFilePrimary(jobData->standbyExp, file.name));
                 pckWriteBinP(param, file.checksumSha1 != NULL ? BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE) : NULL);
                 pckWriteBoolP(param, file.checksumPage);
+                pckWriteBoolP(param, cfgOptionBool(cfgOptPageHeaderCheck));
 
                 // If block incremental then provide the location of the prior map when available
                 if (blockIncr)

@@ -204,9 +204,6 @@ pg_checksum_page(char *page, BlockNumber blkno)
 	uint16		save_checksum;
 	uint32		checksum;
 
-	/* We only calculate the checksum for properly-initialized pages */
-	Assert(!PageIsNew(&cpage->phdr));
-
 	/*
 	 * Save pd_checksum and temporarily set it to zero, so that the checksum
 	 * calculation isn't affected by the old checksum stored on the page.
