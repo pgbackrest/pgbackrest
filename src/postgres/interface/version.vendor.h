@@ -158,6 +158,19 @@ Types from src/include/catalog/catversion.h
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
 
+#elif PG_VERSION >= PG_VERSION_16
+
+/*
+ * We could use anything we wanted for version numbers, but I recommend
+ * following the "YYYYMMDDN" style often used for DNS zone serial numbers.
+ * YYYYMMDD are the date of the change, and N is the number of the change
+ * on that day.  (Hopefully we'll never commit ten independent sets of
+ * catalog changes on the same day...)
+ */
+
+/*							yyyymmddN */
+#define CATALOG_VERSION_NO	202304042
+
 #elif PG_VERSION >= PG_VERSION_15
 
 /*
@@ -1707,6 +1720,10 @@ Types from src/include/access/xlog_internal.h
 // XLOG_PAGE_MAGIC define
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
+
+#elif PG_VERSION >= PG_VERSION_16
+
+#define XLOG_PAGE_MAGIC 0xD113	/* can be used as WAL version indicator */
 
 #elif PG_VERSION >= PG_VERSION_15
 
