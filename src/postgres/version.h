@@ -46,15 +46,15 @@ Version where various PostgreSQL capabilities were introduced
 /***********************************************************************************************************************************
 PostgreSQL version string constants for use in error messages
 ***********************************************************************************************************************************/
-#define PG_VERSION_93_STR                                            "9.3"
-#define PG_VERSION_94_STR                                            "9.4"
-#define PG_VERSION_95_STR                                            "9.5"
-#define PG_VERSION_96_STR                                            "9.6"
-#define PG_VERSION_10_STR                                            "10"
-#define PG_VERSION_11_STR                                            "11"
-#define PG_VERSION_12_STR                                            "12"
-#define PG_VERSION_13_STR                                            "13"
-#define PG_VERSION_14_STR                                            "14"
-#define PG_VERSION_15_STR                                            "15"
+#define PG_VERSION_93_Z                                             "9.3"
+#define PG_VERSION_94_Z                                             "9.4"
+#define PG_VERSION_95_Z                                             "9.5"
+#define PG_VERSION_96_Z                                             "9.6"
+#define PG_VERSION_10_Z                                             "10"
+#define PG_VERSION_11_Z                                             "11"
+#define PG_VERSION_12_Z                                             "12"
+#define PG_VERSION_13_Z                                             "13"
+#define PG_VERSION_14_Z                                             "14"
+#define PG_VERSION_15_Z                                             "15"
 
 #endif

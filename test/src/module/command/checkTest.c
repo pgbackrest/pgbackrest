@@ -183,8 +183,8 @@ testRun(void)
 
         TEST_ERROR(
             cmdCheck(), DbMismatchError,
-            "version '" PG_VERSION_15_STR "' and path '" TEST_PATH "' queried from cluster do not match version"
-            " '" PG_VERSION_15_STR "' and '" TEST_PATH "/pg' read from '" TEST_PATH "/pg/global/pg_control'\n"
+            "version '" PG_VERSION_15_Z "' and path '" TEST_PATH "' queried from cluster do not match version '" PG_VERSION_15_Z
+            "' and '" TEST_PATH "/pg' read from '" TEST_PATH "/pg/global/pg_control'\n"
             "HINT: the pg1-path and pg1-port settings likely reference different clusters.");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -421,8 +421,8 @@ testRun(void)
 
         TEST_ERROR(
             checkDbConfig(PG_VERSION_94, db.primaryIdx, db.primary, false), DbMismatchError,
-            "version '" PG_VERSION_11_STR "' and path '" TEST_PATH "/pg' queried from cluster do not match version '"
-            PG_VERSION_94_STR "' and '" TEST_PATH "/pg' read from '" TEST_PATH "/pg/global/pg_control'\n"
+            "version '" PG_VERSION_11_Z "' and path '" TEST_PATH "/pg' queried from cluster do not match version '"
+            PG_VERSION_94_Z "' and '" TEST_PATH "/pg' read from '" TEST_PATH "/pg/global/pg_control'\n"
             "HINT: the pg1-path and pg1-port settings likely reference different clusters.");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -430,7 +430,7 @@ testRun(void)
 
         TEST_ERROR_FMT(
             checkDbConfig(PG_VERSION_11, db.standbyIdx, db.standby, true), DbMismatchError,
-            "version '" PG_VERSION_11_STR "' and path '%s' queried from cluster do not match version '" PG_VERSION_11_STR "' and"
+            "version '" PG_VERSION_11_Z "' and path '%s' queried from cluster do not match version '" PG_VERSION_11_Z "' and"
             " '" TEST_PATH "/pg8' read from '" TEST_PATH "/pg8/global/pg_control'\n"
             "HINT: the pg8-path and pg8-port settings likely reference different clusters.",
             strZ(dbPgDataPath(db.standby)));
