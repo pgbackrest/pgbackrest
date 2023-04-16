@@ -1581,7 +1581,7 @@ restoreRecoveryOption(unsigned int pgVersion)
             {
                 THROW_FMT(
                     OptionInvalidError,
-                    "option '" CFGOPT_ARCHIVE_MODE "' is not supported on " PG_NAME " < " PG_VERSION_12_STR "\n"
+                    "option '" CFGOPT_ARCHIVE_MODE "' is not supported on " PG_NAME " < " PG_VERSION_12_Z "\n"
                     "HINT: 'archive_mode' should be manually set to 'off' in postgresql.conf.");
             }
 
