@@ -106,7 +106,7 @@ pageChecksumProcess(THIS_VOID, const Buffer *const input)
                 // header check is disabled. The latter is required when the page is encrypted.
                 if ((this->headerCheck && pageHeader->pd_upper == 0) || (!this->headerCheck && pageHeader->pd_checksum == 0))
                 {
-                    // Check that the entire page is zero in case pd_upper is corrupted
+                    // Check that the entire page is zero
                     for (unsigned int pageIdx = 0; pageIdx < PG_PAGE_SIZE_DEFAULT / sizeof(size_t); pageIdx++)
                     {
                         if (((size_t *)pageHeader)[pageIdx] != 0)
