@@ -3300,7 +3300,7 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // File with bad page checksum and header errors that will be ignored
-            Buffer *relation = bufNew(PG_PAGE_SIZE_DEFAULT * 3);
+            Buffer *relation = bufNew(PG_PAGE_SIZE_DEFAULT * 4);
             memset(bufPtr(relation), 0, bufSize(relation));
             *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0xFF};
             *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x01)) = (PageHeaderData){.pd_upper = 0x00};
@@ -3308,6 +3308,9 @@ testRun(void)
             (bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x02))[PG_PAGE_SIZE_DEFAULT - 1] = 0xFF;
             ((PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x02)))->pd_checksum = pgPageChecksum(
                 bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x02), 2);
+            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x03)) = (PageHeaderData){.pd_upper = 0x00};
+            (bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x03))[PG_PAGE_SIZE_DEFAULT - 1] = 0xEE;
+            ((PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x03)))->pd_checksum = 1;
             bufUsedSet(relation, bufSize(relation));
 
             HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/3", relation, .timeModified = backupTimeStart);
@@ -3324,8 +3327,8 @@ testRun(void)
                 "P00   INFO: check archive for segment 0000002C05DB8EB000000000\n"
                 "P00   WARN: a timeline switch has occurred since the 20191027-181320F backup, enabling delta checksum\n"
                 "            HINT: this is normal after restoring from backup or promoting a standby.\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/3 (24KB, [PCT]) checksum [SHA1]\n"
-                "P00   WARN: invalid page checksum found in file " TEST_PATH "/pg1/base/1/3 at page 0\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/3 (32KB, [PCT]) checksum [SHA1]\n"
+                "P00   WARN: invalid page checksums found in file " TEST_PATH "/pg1/base/1/3 at pages 0, 3\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/base/1/1 (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
@@ -3352,7 +3355,7 @@ testRun(void)
                     "pg_data/base {path}\n"
                     "pg_data/base/1 {path}\n"
                     "pg_data/base/1/1.gz {file, s=8192}\n"
-                    "pg_data/base/1/3.gz {file, s=24576}\n"
+                    "pg_data/base/1/3.gz {file, s=32768}\n"
                     "pg_data/global {path}\n"
                     "pg_data/global/pg_control.gz {file, s=8192}\n"
                     "pg_data/pg_tblspc {path}\n"
@@ -3378,7 +3381,7 @@ testRun(void)
                     ",\"timestamp\":1572400002}\n"
                     "pg_data/base/1/1={\"checksum\":\"0631457264ff7f8d5fb1edc2c0211992a67c73e6\",\"checksum-page\":true"
                     ",\"reference\":\"20191027-181320F\",\"size\":8192,\"timestamp\":1572200000}\n"
-                    "pg_data/base/1/3={\"checksum\":\"%s\",\"checksum-page\":false,\"checksum-page-error\":[0],\"size\":24576"
+                    "pg_data/base/1/3={\"checksum\":\"%s\",\"checksum-page\":false,\"checksum-page-error\":[0,3],\"size\":32768"
                     ",\"timestamp\":1572400000}\n"
                     "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1572400000}\n"
                     "pg_data/postgresql.conf={\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\""
