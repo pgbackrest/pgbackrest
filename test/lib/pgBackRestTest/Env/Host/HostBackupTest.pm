@@ -1278,6 +1278,27 @@ sub configCreate
             }
         }
     }
+    elsif ($oParam->{strStorage} eq SFTP)
+    {
+        my $oHostDb1 = $oHostDbPrimary;
+        my $oHostDb2 = $oHostDbStandby;
+
+        if ($self->nameTest(HOST_DB_STANDBY))
+        {
+            $oHostDb1 = $oHostDbStandby;
+            $oHostDb2 = $oHostDbPrimary;
+        }
+
+        # Set a flag so we know there's a bogus host
+        $self->{bBogusHost} = true;
+
+        # Set a valid replica to a higher index to ensure skipping indexes does not make a difference
+        $oParamHash{$strStanza}{"pg256-host"} = $oHostDb2->nameGet();
+        $oParamHash{$strStanza}{"pg256-host-user"} = $oHostDb2->userGet();
+        $oParamHash{$strStanza}{"pg256-host-cmd"} = $oHostDb2->backrestExe();
+        $oParamHash{$strStanza}{"pg256-host-config"} = $oHostDb2->backrestConfig();
+        $oParamHash{$strStanza}{"pg256-path"} = $oHostDb2->dbBasePath();
+    }
 
     # If this is a database host
     if ($self->isHostDb())

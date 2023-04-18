@@ -450,7 +450,8 @@ sub run
             {strOptionalParam => '--stop-auto --buffer-size=32768 --delta', iRepo => $iRepoTotal});
 
         # Ensure the check command runs properly with a tablespace
-        $oHostBackup->check( 'check command with tablespace', {iTimeout => 5, strOptionalParam => $strBogusReset});
+        my $iTimeoutVal = ($strStorage ne SFTP ? 5 : 15);
+        $oHostBackup->check( 'check command with tablespace', {iTimeout => $iTimeoutVal, strOptionalParam => $strBogusReset});
 
         # Setup the xid target
         #---------------------------------------------------------------------------------------------------------------------------
