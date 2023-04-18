@@ -176,10 +176,10 @@ testRun(void)
         });
 
         TEST_ERROR(
-                storageSftpNewP(
-                       TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR, .keyPriv = KEYPRIV, .keyPub = KEYPUB,
-                       .write = true, .hostkeyHashType = cipherTypeAes256Cbc),
-                   ServiceError, "requested ssh2 hostkey hash type (aes-256-cbc) not available");
+            storageSftpNewP(
+                TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR, .keyPriv = KEYPRIV, .keyPub = KEYPUB,
+                .write = true, .hostkeyHashType = cipherTypeAes256Cbc),
+            ServiceError, "requested ssh2 hostkey hash type (aes-256-cbc) not available");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("public key from file auth failure");
