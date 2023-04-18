@@ -1120,7 +1120,15 @@ sub configCreate
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{'lock-path'} = $self->lockPath();
 
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{'protocol-timeout'} = 60;
-    $oParamHash{&CFGDEF_SECTION_GLOBAL}{'db-timeout'} = 45;
+
+    if ($oParam->{strStorage} ne SFTP)
+    {
+        $oParamHash{&CFGDEF_SECTION_GLOBAL}{'db-timeout'} = 45;
+    }
+    else
+    {
+        $oParamHash{&CFGDEF_SECTION_GLOBAL}{'db-timeout'} = 60;
+    }
 
     # Set to make sure that changing the default works and to speed compression for testing
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{'compress-level'} = 3;
