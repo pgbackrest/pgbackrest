@@ -14,7 +14,7 @@ Object type
 struct StorageWrite
 {
     StorageWritePub pub;                                            // Publicly accessible variables
-    void *driver;
+    void *driver;                                                   // Driver
 };
 
 /***********************************************************************************************************************************
@@ -30,7 +30,7 @@ This object expects its context to be created in advance.  This is so the callin
 required multiple functions and contexts to make it safe.
 ***********************************************************************************************************************************/
 FN_EXTERN StorageWrite *
-storageWriteNew(void *driver, const StorageWriteInterface *interface)
+storageWriteNew(void *const driver, const StorageWriteInterface *const interface)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM_P(VOID, driver);
@@ -42,18 +42,19 @@ storageWriteNew(void *driver, const StorageWriteInterface *interface)
     ASSERT(driver != NULL);
     ASSERT(interface != NULL);
 
-    StorageWrite *this = memNew(sizeof(StorageWrite));
-
-    *this = (StorageWrite)
+    OBJ_NEW_BEGIN(StorageWrite, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        .pub =
+        *this = (StorageWrite)
         {
-            .memContext = memContextCurrent(),
-            .interface = interface,
-            .io = ioWriteNew(driver, interface->ioInterface),
-        },
-        .driver = driver,
-    };
+            .pub =
+            {
+                .interface = interface,
+                .io = ioWriteNew(driver, interface->ioInterface),
+            },
+            .driver = objMoveToInterface(driver, this, memContextPrior()),
+        };
+    }
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(STORAGE_WRITE, this);
 }

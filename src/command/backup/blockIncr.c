@@ -7,7 +7,7 @@ Block Incremental Filter
 #include "command/backup/blockMap.h"
 #include "common/compress/helper.h"
 #include "common/crypto/cipherBlock.h"
-#include "common/crypto/hash.h"
+#include "common/crypto/xxhash.h"
 #include "common/debug.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
@@ -24,8 +24,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct BlockIncr
 {
-    MemContext *memContext;                                         // Mem context of filter
-
     unsigned int reference;                                         // Current backup reference
     uint64_t bundleId;                                              // Bundle id
 
@@ -35,11 +33,17 @@ typedef struct BlockIncr
 
     unsigned int blockNo;                                           // Block number
     unsigned int blockNoLast;                                       // Last block no
+    uint64_t superBlockNo;                                          // Block no in super block
     uint64_t blockOffset;                                           // Block offset
+    uint64_t superBlockSize;                                        // Super block
     size_t blockSize;                                               // Block size
+    size_t checksumSize;                                            // Checksum size
     Buffer *block;                                                  // Block buffer
 
     Buffer *blockOut;                                               // Block output buffer
+    IoWrite *blockOutWrite;                                         // Write to the block block buffer
+    List *blockOutList;                                             // List of block map items that need an updated size
+    size_t blockOutSize;                                            // Amount written to block output (excluding block no)
     size_t blockOutOffset;                                          // Block output offset (already copied to output buffer)
 
     const BlockMap *blockMapPrior;                                  // Prior block map
@@ -57,7 +61,7 @@ Macros for function logging
 static void
 blockIncrToLog(const BlockIncr *const this, StringStatic *const debugLog)
 {
-    strStcFmt(debugLog, "{blockSize: %zu}", this->blockSize);
+    strStcFmt(debugLog, "{superBlockSize, %" PRIu64 ", blockSize: %zu}", this->superBlockSize, this->blockSize);
 }
 
 #define FUNCTION_LOG_BLOCK_INCR_TYPE                                                                                               \
@@ -88,8 +92,8 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
     // Loop until the input is consumed or there is output
     do
     {
-        // If still accumulating data in the buffer
-        if (!this->done && bufUsed(this->block) < this->blockSize)
+        // If not done and not flushing out then get more block data
+        if (!this->done && this->blockOutOffset == 0)
         {
             // If all input can be copied
             if (bufUsed(input) - this->inputOffset <= bufRemains(this->block))
@@ -113,118 +117,164 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
             }
         }
 
-        // If done or block is full
-        if (this->done || bufUsed(this->block) == this->blockSize)
+        // If done with a partial block or block is full
+        if ((this->done && bufUsed(this->block) > 0) || bufUsed(this->block) == this->blockSize)
         {
-            // The output buffer must be empty before writing the new block (if not it will be flushed below)
-            if (bufUsed(this->blockOut) == 0)
+            MEM_CONTEXT_TEMP_BEGIN()
             {
-                // Store the block when size > 0
-                if (bufUsed(this->block) > 0)
+                // Get block checksum
+                const Buffer *const checksum = xxHashOne(this->checksumSize, this->block);
+
+                // Does the block exist in the input map?
+                const BlockMapItem *const blockMapItemIn =
+                    this->blockMapPrior != NULL && this->blockNo < blockMapSize(this->blockMapPrior) ?
+                        blockMapGet(this->blockMapPrior, this->blockNo) : NULL;
+
+                // If the block is new or has changed then write it
+                if (blockMapItemIn == NULL || memcmp(blockMapItemIn->checksum, bufPtrConst(checksum), this->checksumSize) != 0)
                 {
-                    MEM_CONTEXT_TEMP_BEGIN()
+                    // Begin the super block
+                    if (this->blockOutWrite == NULL)
                     {
-                        // Get block checksum
-                        const Buffer *const checksum = cryptoHashOne(hashTypeSha1, this->block);
-
-                        // Does the block exist in the input map?
-                        const BlockMapItem *const blockMapItemIn =
-                            this->blockMapPrior != NULL && this->blockNo < blockMapSize(this->blockMapPrior) ?
-                                blockMapGet(this->blockMapPrior, this->blockNo) : NULL;
-
-                        // If the block is new or has changed then write it
-                        if (blockMapItemIn == NULL ||
-                            memcmp(blockMapItemIn->checksum, bufPtrConst(checksum), bufUsed(checksum)) != 0)
+                        MEM_CONTEXT_OBJ_BEGIN(this)
                         {
-                            IoWrite *const write = ioBufferWriteNew(this->blockOut);
-                            bool bufferRequired = true;
-
-                            // Add compress filter
-                            if (this->compressParam != NULL)
-                            {
-                                ioFilterGroupAdd(
-                                    ioWriteFilterGroup(write), compressFilterPack(this->compressType, this->compressParam));
-                                bufferRequired = false;
-                            }
-
-                            // Add encrypt filter
-                            if (this->encryptParam != NULL)
-                            {
-                                ioFilterGroupAdd(ioWriteFilterGroup(write), cipherBlockNewPack(this->encryptParam));
-                                bufferRequired = false;
-                            }
-
-                            // If no compress/encrypt then add a buffer so chunk sizes are as large as possible
-                            if (bufferRequired)
-                                ioFilterGroupAdd(ioWriteFilterGroup(write), ioBufferNew());
-
-                            // Add chunk and size filters
-                            ioFilterGroupAdd(ioWriteFilterGroup(write), ioChunkNew());
-                            ioFilterGroupAdd(ioWriteFilterGroup(write), ioSizeNew());
-                            ioWriteOpen(write);
-
-                            // Write the block no as a delta of the prior block no
-                            ioWriteVarIntU64(write, this->blockNo - this->blockNoLast);
-
-                            // Copy block data through the filters and close
-                            ioCopyP(ioBufferReadNewOpen(this->block), write);
-                            ioWriteClose(write);
-
-                            // Write to block map
-                            BlockMapItem blockMapItem =
-                            {
-                                .reference = this->reference,
-                                .bundleId = this->bundleId,
-                                .offset = this->blockOffset,
-                                .size = pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), SIZE_FILTER_TYPE)),
-                            };
-
-                            memcpy(blockMapItem.checksum, bufPtrConst(checksum), bufUsed(checksum));
-                            blockMapAdd(this->blockMapOut, &blockMapItem);
-
-                            // Increment block offset and last block no
-                            this->blockOffset += blockMapItem.size;
-                            this->blockNoLast = this->blockNo;
+                            this->blockOutWrite = ioBufferWriteNew(this->blockOut);
+                            this->blockOutList = lstNewP(sizeof(unsigned int));
                         }
-                        // Else write a reference to the block in the prior backup
-                        else
+                        MEM_CONTEXT_OBJ_END();
+
+                        bool bufferRequired = true;
+
+                        // Add compress filter
+                        if (this->compressParam != NULL)
                         {
-                            blockMapAdd(this->blockMapOut, blockMapItemIn);
-                            bufUsedZero(this->block);
+                            ioFilterGroupAdd(
+                                ioWriteFilterGroup(this->blockOutWrite),
+                                compressFilterPack(this->compressType, this->compressParam));
+                            bufferRequired = false;
                         }
 
-                        this->blockNo++;
-                    }
-                    MEM_CONTEXT_TEMP_END();
-                }
-
-                // Write the block map if done processing and at least one block was written
-                if (this->done && this->blockNo > 0)
-                {
-                    MEM_CONTEXT_TEMP_BEGIN()
-                    {
-                        // Size of block output before starting to write the map
-                        const size_t blockOutBegin = bufUsed(this->blockOut);
-
-                        // Write the map
-                        IoWrite *const write = ioBufferWriteNew(this->blockOut);
-
+                        // Add encrypt filter
                         if (this->encryptParam != NULL)
-                            ioFilterGroupAdd(ioWriteFilterGroup(write), cipherBlockNewPack(this->encryptParam));
+                        {
+                            ioFilterGroupAdd(
+                                ioWriteFilterGroup(this->blockOutWrite), cipherBlockNewPack(this->encryptParam));
+                            bufferRequired = false;
+                        }
 
-                        // Write the map
-                        ioWriteOpen(write);
-                        blockMapWrite(this->blockMapOut, write);
-                        ioWriteClose(write);
+                        // If no compress/encrypt then add a buffer so chunk sizes are as large as possible
+                        if (bufferRequired)
+                            ioFilterGroupAdd(ioWriteFilterGroup(this->blockOutWrite), ioBufferNew());
 
-                        // Get total bytes written for the map
-                        this->blockMapOutSize = bufUsed(this->blockOut) - blockOutBegin;
+                        // Add chunk and size filters
+                        ioFilterGroupAdd(ioWriteFilterGroup(this->blockOutWrite), ioChunkNew());
+                        ioFilterGroupAdd(ioWriteFilterGroup(this->blockOutWrite), ioSizeNew());
+                        ioWriteOpen(this->blockOutWrite);
                     }
-                    MEM_CONTEXT_TEMP_END();
+
+                    // Write the block no as a delta of the prior block no
+                    ioWriteVarIntU64(this->blockOutWrite, this->blockNo - this->blockNoLast);
+
+                    // Copy block data through the filters
+                    ioCopyP(ioBufferReadNewOpen(this->block), this->blockOutWrite);
+                    this->blockOutSize += bufUsed(this->block);
+                    bufUsedZero(this->block);
+
+                    // Write to block map
+                    BlockMapItem blockMapItem =
+                    {
+                        .reference = this->reference,
+                        .superBlockSize = this->superBlockSize,
+                        .bundleId = this->bundleId,
+                        .offset = this->blockOffset,
+                        .block = this->superBlockNo,
+                    };
+
+                    memcpy(blockMapItem.checksum, bufPtrConst(checksum), bufUsed(checksum));
+
+                    unsigned int blockMapItemIdx = blockMapSize(this->blockMapOut);
+                    blockMapAdd(this->blockMapOut, &blockMapItem);
+                    lstAdd(this->blockOutList, &blockMapItemIdx);
+
+                    // Set last block no
+                    this->blockNoLast = this->blockNo;
+
+                    // Increment super block no
+                    this->superBlockNo++;
                 }
+                // Else write a reference to the block in the prior backup
+                else
+                {
+                    blockMapAdd(this->blockMapOut, blockMapItemIn);
+                    bufUsedZero(this->block);
+                }
+
+                this->blockNo++;
+            }
+            MEM_CONTEXT_TEMP_END();
+        }
+
+        // Write the super block
+        if (this->blockOutWrite != NULL && (this->done || this->blockOutSize >= this->superBlockSize))
+        {
+            // Close write
+            ioWriteClose(this->blockOutWrite);
+
+            // Update size and super block size for items already added to the block map
+            const uint64_t blockOutSize = pckReadU64P(
+                ioFilterGroupResultP(ioWriteFilterGroup(this->blockOutWrite), SIZE_FILTER_TYPE));
+
+            for (unsigned int blockMapIdx = 0; blockMapIdx < lstSize(this->blockOutList); blockMapIdx++)
+            {
+                BlockMapItem *const blockMapItem = blockMapGet(
+                    this->blockMapOut, *(unsigned int *)lstGet(this->blockOutList, blockMapIdx));
+
+                blockMapItem->size = blockOutSize;
+                blockMapItem->superBlockSize = this->blockOutSize;
             }
 
-            // Copy to output buffer
+            lstFree(this->blockOutList);
+
+            // Set to NULL so the super block can be flushed
+            ioWriteFree(this->blockOutWrite);
+            this->blockOutWrite = NULL;
+
+            // Increment block offset
+            this->blockOffset += blockOutSize;
+
+            // Reset block out size and super block no
+            this->blockOutSize = 0;
+            this->superBlockNo = 0;
+        }
+
+        // Write the block map if done processing and at least one block was written
+        if (this->done && this->blockOutOffset == 0 && this->blockNo > 0)
+        {
+            MEM_CONTEXT_TEMP_BEGIN()
+            {
+                // Size of block output before starting to write the map
+                const size_t blockOutBegin = bufUsed(this->blockOut);
+
+                // Write the map
+                IoWrite *const write = ioBufferWriteNew(this->blockOut);
+
+                if (this->encryptParam != NULL)
+                    ioFilterGroupAdd(ioWriteFilterGroup(write), cipherBlockNewPack(this->encryptParam));
+
+                // Write the map
+                ioWriteOpen(write);
+                blockMapWrite(this->blockMapOut, write, this->blockSize, this->checksumSize);
+                ioWriteClose(write);
+
+                // Get total bytes written for the map
+                this->blockMapOutSize = bufUsed(this->blockOut) - blockOutBegin;
+            }
+            MEM_CONTEXT_TEMP_END();
+        }
+
+        // Copy to output buffer if output has been completely written
+        if (this->blockOutWrite == NULL)
+        {
             const size_t blockOutSize = bufUsed(this->blockOut) - this->blockOutOffset;
 
             if (blockOutSize > 0)
@@ -234,7 +284,6 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
                 {
                     bufCatSub(output, this->blockOut, this->blockOutOffset, blockOutSize);
                     bufUsedZero(this->blockOut);
-                    bufUsedZero(this->block);
 
                     this->blockOutOffset = 0;
                     this->inputSame = this->inputOffset != 0;
@@ -323,11 +372,14 @@ blockIncrInputSame(const THIS_VOID)
 /**********************************************************************************************************************************/
 FN_EXTERN IoFilter *
 blockIncrNew(
-    const size_t blockSize, const unsigned int reference, const uint64_t bundleId, const uint64_t bundleOffset,
-    const Buffer *const blockMapPrior, const IoFilter *const compress, const IoFilter *const encrypt)
+    const uint64_t superBlockSize, const size_t blockSize, const size_t checksumSize, const unsigned int reference,
+    const uint64_t bundleId, const uint64_t bundleOffset, const Buffer *const blockMapPrior, const IoFilter *const compress,
+    const IoFilter *const encrypt)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(UINT64, superBlockSize);
         FUNCTION_LOG_PARAM(SIZE, blockSize);
+        FUNCTION_LOG_PARAM(SIZE, checksumSize);
         FUNCTION_LOG_PARAM(UINT, reference);
         FUNCTION_LOG_PARAM(UINT64, bundleId);
         FUNCTION_LOG_PARAM(UINT64, bundleOffset);
@@ -336,16 +388,13 @@ blockIncrNew(
         FUNCTION_LOG_PARAM(IO_FILTER, encrypt);
     FUNCTION_LOG_END();
 
-    IoFilter *this = NULL;
-
-    OBJ_NEW_BEGIN(BlockIncr, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(BlockIncr, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        BlockIncr *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::BlockIncr);
-
-        *driver = (BlockIncr)
+        *this = (BlockIncr)
         {
-            .memContext = memContextCurrent(),
+            .superBlockSize = (superBlockSize / blockSize + (superBlockSize % blockSize == 0 ? 0 : 1)) * blockSize,
             .blockSize = blockSize,
+            .checksumSize = checksumSize,
             .reference = reference,
             .bundleId = bundleId,
             .blockOffset = bundleOffset,
@@ -357,13 +406,13 @@ blockIncrNew(
         // Duplicate compress filter
         if (compress != NULL)
         {
-            driver->compressType = ioFilterType(compress);
-            driver->compressParam = pckDup(ioFilterParamList(compress));
+            this->compressType = ioFilterType(compress);
+            this->compressParam = pckDup(ioFilterParamList(compress));
         }
 
         // Duplicate encrypt filter
         if (encrypt != NULL)
-            driver->encryptParam = pckDup(ioFilterParamList(encrypt));
+            this->encryptParam = pckDup(ioFilterParamList(encrypt));
 
         // Load prior block map
         if (blockMapPrior)
@@ -374,45 +423,47 @@ blockIncrNew(
 
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {
-                    driver->blockMapPrior = blockMapNewRead(read);
+                    this->blockMapPrior = blockMapNewRead(read, blockSize, checksumSize);
                 }
                 MEM_CONTEXT_PRIOR_END();
             }
             MEM_CONTEXT_TEMP_END();
         }
-
-        // Create param list
-        Pack *paramList = NULL;
-
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            PackWrite *const packWrite = pckWriteNewP();
-
-            pckWriteU64P(packWrite, blockSize);
-            pckWriteU32P(packWrite, reference);
-            pckWriteU64P(packWrite, bundleId);
-            pckWriteU64P(packWrite, bundleOffset);
-            pckWriteBinP(packWrite, blockMapPrior);
-            pckWritePackP(packWrite, driver->compressParam);
-
-            if (driver->compressParam != NULL)
-                pckWriteStrIdP(packWrite, driver->compressType);
-
-            pckWritePackP(packWrite, driver->encryptParam);
-
-            pckWriteEndP(packWrite);
-
-            paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
-        }
-        MEM_CONTEXT_TEMP_END();
-
-        this = ioFilterNewP(
-            BLOCK_INCR_FILTER_TYPE, driver, paramList, .done = blockIncrDone, .inOut = blockIncrProcess,
-            .inputSame = blockIncrInputSame, .result = blockIncrResult);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_FILTER, this);
+    // Create param list
+    Pack *paramList;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackWrite *const packWrite = pckWriteNewP();
+
+        pckWriteU64P(packWrite, this->superBlockSize);
+        pckWriteU64P(packWrite, blockSize);
+        pckWriteU64P(packWrite, checksumSize);
+        pckWriteU32P(packWrite, reference);
+        pckWriteU64P(packWrite, bundleId);
+        pckWriteU64P(packWrite, bundleOffset);
+        pckWriteBinP(packWrite, blockMapPrior);
+        pckWritePackP(packWrite, this->compressParam);
+
+        if (this->compressParam != NULL)
+            pckWriteStrIdP(packWrite, this->compressType);
+
+        pckWritePackP(packWrite, this->encryptParam);
+
+        pckWriteEndP(packWrite);
+
+        paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(
+        IO_FILTER,
+        ioFilterNewP(
+            BLOCK_INCR_FILTER_TYPE, this, paramList, .done = blockIncrDone, .inOut = blockIncrProcess,
+            .inputSame = blockIncrInputSame, .result = blockIncrResult));
 }
 
 FN_EXTERN IoFilter *
@@ -423,7 +474,9 @@ blockIncrNewPack(const Pack *const paramList)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         PackRead *const paramListPack = pckReadNew(paramList);
+        const uint64_t superBlockSize = pckReadU64P(paramListPack);
         const size_t blockSize = (size_t)pckReadU64P(paramListPack);
+        const size_t checksumSize = (size_t)pckReadU64P(paramListPack);
         const unsigned int reference = pckReadU32P(paramListPack);
         const uint64_t bundleId = pckReadU64P(paramListPack);
         const uint64_t bundleOffset = pckReadU64P(paramListPack);
@@ -444,7 +497,9 @@ blockIncrNewPack(const Pack *const paramList)
             encrypt = cipherBlockNewPack(encryptParam);
 
         result = ioFilterMove(
-            blockIncrNew(blockSize, reference, bundleId, bundleOffset, blockMapPrior, compress, encrypt), memContextPrior());
+            blockIncrNew(
+                superBlockSize, blockSize, checksumSize, reference, bundleId, bundleOffset, blockMapPrior, compress, encrypt),
+            memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 

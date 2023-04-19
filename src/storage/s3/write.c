@@ -268,7 +268,7 @@ storageWriteS3Close(THIS_VOID)
 
 /**********************************************************************************************************************************/
 FN_EXTERN StorageWrite *
-storageWriteS3New(StorageS3 *storage, const String *name, size_t partSize)
+storageWriteS3New(StorageS3 *const storage, const String *const name, const size_t partSize)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_S3, storage);
@@ -278,13 +278,9 @@ storageWriteS3New(StorageS3 *storage, const String *name, size_t partSize)
     ASSERT(storage != NULL);
     ASSERT(name != NULL);
 
-    StorageWrite *this = NULL;
-
-    OBJ_NEW_BEGIN(StorageWriteS3, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(StorageWriteS3, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageWriteS3 *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), StorageWrite::StorageWriteS3);
-
-        *driver = (StorageWriteS3)
+        *this = (StorageWriteS3)
         {
             .storage = storage,
             .partSize = partSize,
@@ -307,10 +303,8 @@ storageWriteS3New(StorageS3 *storage, const String *name, size_t partSize)
                 },
             },
         };
-
-        this = storageWriteNew(driver, &driver->interface);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_WRITE, this);
+    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteNew(this, &this->interface));
 }

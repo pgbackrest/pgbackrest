@@ -519,6 +519,14 @@ src/command/local/local.h:
   class: core
   type: c/h
 
+src/command/manifest/manifest.c:
+  class: core
+  type: c
+
+src/command/manifest/manifest.h:
+  class: core
+  type: c/h
+
 src/command/remote/remote.c:
   class: core
   type: c
@@ -575,11 +583,19 @@ src/command/repo/rm.h:
   class: core
   type: c/h
 
-src/command/restore/blockHash.c:
+src/command/restore/blockChecksum.c:
   class: core
   type: c
 
-src/command/restore/blockHash.h:
+src/command/restore/blockChecksum.h:
+  class: core
+  type: c/h
+
+src/command/restore/blockDelta.c:
+  class: core
+  type: c
+
+src/command/restore/blockDelta.h:
   class: core
   type: c/h
 
@@ -819,6 +835,18 @@ src/common/crypto/md5.vendor.c.inc:
   class: core/vendor
   type: c
 
+src/common/crypto/xxhash.c:
+  class: core
+  type: c
+
+src/common/crypto/xxhash.h:
+  class: core
+  type: c/h
+
+src/common/crypto/xxhash.vendor.c.inc:
+  class: core/vendor
+  type: c
+
 src/common/debug.c:
   class: core
   type: c
@@ -835,19 +863,19 @@ src/common/encode.h:
   class: core
   type: c/h
 
-src/common/error.auto.c.inc:
+src/common/error/error.auto.c.inc:
   class: core/auto
   type: c
 
-src/common/error.auto.h:
+src/common/error/error.auto.h:
   class: core/auto
   type: c/h
 
-src/common/error.c:
+src/common/error/error.c:
   class: core
   type: c
 
-src/common/error.h:
+src/common/error/error.h:
   class: core
   type: c/h
 
@@ -2420,6 +2448,10 @@ test/src/module/command/infoTest.c:
   type: c
 
 test/src/module/command/localTest.c:
+  class: test/module
+  type: c
+
+test/src/module/command/manifestTest.c:
   class: test/module
   type: c
 

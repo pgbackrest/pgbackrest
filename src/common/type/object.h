@@ -13,24 +13,32 @@ These macros and functions implement common object functionality.
 /***********************************************************************************************************************************
 Create a new object
 
-This is a thin wrapper on MEM_CONTEXT_NEW_*() to do object specific initialization. The general pattern
-for a new object is:
-
-MyObj *this = NULL;
+This is a thin wrapper on MEM_CONTEXT_NEW_*() to do object specific initialization. The general pattern for a new object is:
 
 OBJ_NEW_BEGIN(MyObj)
 {
-    this = OBJ_NEW_ALLOC();
-
     *this = (MyObj)
     {
         .data = ...
     };
 }
 OBJ_NEW_END();
+
+The this variable is variable is automatically created with the specified type. The BASE and EXTRA variants are available when a
+custom variable must be used or different amount of memory must be allocated.
 ***********************************************************************************************************************************/
-#define OBJ_NEW_EXTRA_BEGIN(type, extra, ...)                                                                                      \
+#define OBJ_NEW_BASE_EXTRA_BEGIN(type, extra, ...)                                                                                 \
     MEM_CONTEXT_NEW_BEGIN(type, .allocExtra = extra, __VA_ARGS__)
+
+#define OBJ_NEW_EXTRA_BEGIN(type, extra, ...)                                                                                      \
+    memContextSwitch(memContextNewP(STRINGIFY(type), .allocExtra = extra, __VA_ARGS__));                                           \
+    type *const this = OBJ_NEW_ALLOC();                                                                                            \
+                                                                                                                                   \
+    do                                                                                                                             \
+    {
+
+#define OBJ_NEW_BASE_BEGIN(type, ...)                                                                                              \
+    OBJ_NEW_BASE_EXTRA_BEGIN(type, sizeof(type), __VA_ARGS__)
 
 #define OBJ_NEW_BEGIN(type, ...)                                                                                                   \
     OBJ_NEW_EXTRA_BEGIN(type, sizeof(type), __VA_ARGS__)
@@ -112,15 +120,13 @@ objMemContext(void *const this)
 // Move an object to a new context if this != NULL
 FN_EXTERN void *objMove(THIS_VOID, MemContext *parentNew);
 
-// Move an object to a new context if this != NULL. The mem context to move must be the first member of the object struct. This
-// pattern is typically used by interfaces.
-FN_EXTERN void *objMoveContext(THIS_VOID, MemContext *parentNew);
+// Move driver object into an interface object when required. This is the general case, but sometimes an object will expose its
+// interfaces in a different way, e.g. methods, so the object retains ownership of the interfaces. If this function is called in the
+// driver object context then the driver object will retain ownership of the interface. Otherwise, the interface object will become
+// the owner of the driver object.
+FN_EXTERN void *objMoveToInterface(THIS_VOID, void *interfaceVoid, const MemContext *current);
 
 // Free the object mem context if this != NULL
 FN_EXTERN void objFree(THIS_VOID);
-
-// Free the object mem context if not NULL. The mem context to be freed must be the first member of the object struct. This pattern
-// is typically used by interfaces.
-FN_EXTERN void objFreeContext(THIS_VOID);
 
 #endif

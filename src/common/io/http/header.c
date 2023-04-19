@@ -23,13 +23,8 @@ httpHeaderNew(const StringList *redactList)
 {
     FUNCTION_TEST_VOID();
 
-    HttpHeader *this = NULL;
-
     OBJ_NEW_BEGIN(HttpHeader, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        // Allocate state and set context
-        this = OBJ_NEW_ALLOC();
-
         *this = (HttpHeader)
         {
             .redactList = strLstDup(redactList),
@@ -50,23 +45,18 @@ httpHeaderDup(const HttpHeader *header, const StringList *redactList)
         FUNCTION_TEST_PARAM(STRING_LIST, redactList);
     FUNCTION_TEST_END();
 
-    HttpHeader *this = NULL;
+    if (header == NULL)
+        FUNCTION_TEST_RETURN(HTTP_HEADER, NULL);
 
-    if (header != NULL)
+    OBJ_NEW_BEGIN(HttpHeader, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        OBJ_NEW_BEGIN(HttpHeader, .childQty = MEM_CONTEXT_QTY_MAX)
+        *this = (HttpHeader)
         {
-            // Allocate state and set context
-            this = OBJ_NEW_ALLOC();
-
-            *this = (HttpHeader)
-            {
-                .redactList = redactList == NULL ? strLstDup(header->redactList) : strLstDup(redactList),
-                .kv = kvDup(header->kv),
-            };
-        }
-        OBJ_NEW_END();
+            .redactList = redactList == NULL ? strLstDup(header->redactList) : strLstDup(redactList),
+            .kv = kvDup(header->kv),
+        };
     }
+    OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(HTTP_HEADER, this);
 }

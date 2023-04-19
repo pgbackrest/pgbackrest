@@ -1093,6 +1093,7 @@ sub configCreate
 
     # General options
     # ------------------------------------------------------------------------------------------------------------------------------
+    $oParamHash{&CFGDEF_SECTION_GLOBAL}{'beta'} = 'y';
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{'job-retry'} = 0;
 
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{'log-level-console'} = lc(DETAIL);
@@ -2063,17 +2064,19 @@ sub restoreCompare
                 ${$oExpectedManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strName}{size});
         }
 
-        # Remove repo-size, bno, bni, bims, bis from the manifest
+        # Remove repo-size, bn*, bi* from the manifest
         $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REPO_SIZE);
         delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{&MANIFEST_SUBKEY_REPO_SIZE});
         $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, "bni");
         delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{"bni"});
         $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, "bno");
         delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{"bno"});
-        $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, "bims");
-        delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{"bims"});
-        $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, "bis");
-        delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{"bis"});
+        $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, "bi");
+        delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{"bi"});
+        $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, "bic");
+        delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{"bic"});
+        $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, "bim");
+        delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{"bim"});
 
         if ($oActualManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) != 0)
         {
@@ -2212,6 +2215,13 @@ sub restoreCompare
             $oActualManifest->set(
                 MANIFEST_SECTION_BACKUP, 'backup-bundle', undef,
                 $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{'backup-bundle'});
+        }
+
+        if (defined($oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{'backup-bundle-raw'}))
+        {
+            $oActualManifest->set(
+                MANIFEST_SECTION_BACKUP, 'backup-bundle-raw', undef,
+                $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{'backup-bundle-raw'});
         }
 
         # Delete block incr headers since old Perl manifest code will not generate them

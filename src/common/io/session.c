@@ -17,7 +17,7 @@ struct IoSession
 
 /**********************************************************************************************************************************/
 FN_EXTERN IoSession *
-ioSessionNew(void *driver, const IoSessionInterface *interface)
+ioSessionNew(void *const driver, const IoSessionInterface *const interface)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM_P(VOID, driver);
@@ -33,17 +33,18 @@ ioSessionNew(void *driver, const IoSessionInterface *interface)
     ASSERT(interface->role != NULL);
     ASSERT(interface->toLog != NULL);
 
-    IoSession *this = memNew(sizeof(IoSession));
-
-    *this = (IoSession)
+    OBJ_NEW_BEGIN(IoSession, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        .pub =
+        *this = (IoSession)
         {
-            .memContext = memContextCurrent(),
-            .driver = driver,
-            .interface = interface,
-        },
-    };
+            .pub =
+            {
+                .driver = objMoveToInterface(driver, this, memContextPrior()),
+                .interface = interface,
+            },
+        };
+    }
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_SESSION, this);
 }
@@ -84,7 +85,7 @@ ioSessionPeerNameSet(IoSession *const this, const String *const peerName)       
         FUNCTION_TEST_PARAM(STRING, peerName);                                                                      // {vm_covered}
     FUNCTION_TEST_END();                                                                                            // {vm_covered}
 
-    MEM_CONTEXT_BEGIN(this->pub.memContext)                                                                         // {vm_covered}
+    MEM_CONTEXT_OBJ_BEGIN(this)                                                                                     // {vm_covered}
     {
         this->pub.peerName = strDup(peerName);                                                                      // {vm_covered}
     }

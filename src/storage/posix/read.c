@@ -220,13 +220,9 @@ storageReadPosixNew(
 
     ASSERT(name != NULL);
 
-    StorageRead *this = NULL;
-
-    OBJ_NEW_BEGIN(StorageReadPosix, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(StorageReadPosix, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        StorageReadPosix *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), StorageRead::StorageReadPosix);
-
-        *driver = (StorageReadPosix)
+        *this = (StorageReadPosix)
         {
             .storage = storage,
             .fd = -1,
@@ -254,10 +250,8 @@ storageReadPosixNew(
                 },
             },
         };
-
-        this = storageReadNew(driver, &driver->interface);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_READ, this);
+    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadNew(this, &this->interface));
 }

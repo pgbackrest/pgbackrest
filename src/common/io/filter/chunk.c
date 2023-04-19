@@ -13,8 +13,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct IoChunk
 {
-    MemContext *memContext;                                         // Mem context of filter
-
     const uint8_t *buffer;                                          // Internal buffer
     size_t bufferSize;                                              // Buffer size
     size_t bufferOffset;                                            // Buffer offset
@@ -151,22 +149,13 @@ ioChunkNew(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
 
-    IoFilter *this = NULL;
-
-    OBJ_NEW_BEGIN(IoChunk, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(IoChunk)
     {
-        IoChunk *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::IoChunk);
-
-        *driver = (IoChunk)
-        {
-            .memContext = memContextCurrent(),
-        };
-
-        this = ioFilterNewP(
-            CHUNK_FILTER_TYPE, driver, NULL, .done = ioChunkDone, .inOut = ioChunkProcess,
-            .inputSame = ioChunkInputSame);
+        *this = (IoChunk){0};
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_FILTER, this);
+    FUNCTION_LOG_RETURN(
+        IO_FILTER,
+        ioFilterNewP(CHUNK_FILTER_TYPE, this, NULL, .done = ioChunkDone, .inOut = ioChunkProcess, .inputSame = ioChunkInputSame));
 }

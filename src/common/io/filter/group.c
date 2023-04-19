@@ -61,12 +61,8 @@ ioFilterGroupNew(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
 
-    IoFilterGroup *this = NULL;
-
     OBJ_NEW_BEGIN(IoFilterGroup, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (IoFilterGroup)
         {
             .pub =

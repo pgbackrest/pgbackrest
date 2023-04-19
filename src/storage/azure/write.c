@@ -262,7 +262,7 @@ storageWriteAzureClose(THIS_VOID)
 
 /**********************************************************************************************************************************/
 FN_EXTERN StorageWrite *
-storageWriteAzureNew(StorageAzure *storage, const String *name, uint64_t fileId, size_t blockSize)
+storageWriteAzureNew(StorageAzure *const storage, const String *const name, const uint64_t fileId, const size_t blockSize)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_AZURE, storage);
@@ -274,13 +274,9 @@ storageWriteAzureNew(StorageAzure *storage, const String *name, uint64_t fileId,
     ASSERT(storage != NULL);
     ASSERT(name != NULL);
 
-    StorageWrite *this = NULL;
-
-    OBJ_NEW_BEGIN(StorageWriteAzure, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(StorageWriteAzure, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageWriteAzure *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), StorageWrite::StorageWriteAzure);
-
-        *driver = (StorageWriteAzure)
+        *this = (StorageWriteAzure)
         {
             .storage = storage,
             .fileId = fileId,
@@ -304,10 +300,8 @@ storageWriteAzureNew(StorageAzure *storage, const String *name, uint64_t fileId,
                 },
             },
         };
-
-        this = storageWriteNew(driver, &driver->interface);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_WRITE, this);
+    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteNew(this, &this->interface));
 }

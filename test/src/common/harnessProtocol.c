@@ -230,8 +230,8 @@ protocolRemoteExec(
             // Run server with provided handlers
             String *name = strNewFmt(PROTOCOL_SERVICE_REMOTE "-shim-%u", processId);
             ProtocolServer *server = protocolServerNew(
-                name, PROTOCOL_SERVICE_REMOTE_STR, ioFdReadNewOpen(name, pipeWrite[0], 5000),
-                ioFdWriteNewOpen(name, pipeRead[1], 5000));
+                name, PROTOCOL_SERVICE_REMOTE_STR, ioFdReadNewOpen(name, pipeWrite[0], 10000),
+                ioFdWriteNewOpen(name, pipeRead[1], 10000));
             protocolServerProcess(server, NULL, hrnProtocolStatic.remoteHandlerList, hrnProtocolStatic.remoteHandlerListSize);
 
             // Put an end message here to sync with the client to ensure that coverage data is written before exiting
@@ -248,8 +248,8 @@ protocolRemoteExec(
         // Create protocol object
         helper->client = protocolClientNew(
             strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u shim protocol", processId), PROTOCOL_SERVICE_REMOTE_STR,
-            ioFdReadNewOpen(strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u shim protocol read", processId), pipeRead[0], 5000),
-            ioFdWriteNewOpen(strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u shim protocol write", processId), pipeWrite[1], 5000));
+            ioFdReadNewOpen(strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u shim protocol read", processId), pipeRead[0], 10000),
+            ioFdWriteNewOpen(strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u shim protocol write", processId), pipeWrite[1], 10000));
 
         // Send one noop to catch any errors that might happen after the greeting
         protocolClientNoOp(helper->client);

@@ -165,7 +165,7 @@
 
             <p>Logging is used for debugging with the built-in macros <code>FUNCTION_LOG_*()</code> and <code>FUNCTION_TEST_*()</code> which are used to trace parameters passed to/returned from functions. <code>FUNCTION_LOG_*()</code> macros are used for production logging whereas <code>FUNCTION_TEST_*()</code> macros will be compiled out of production code. For functions where no parameter is valuable enough to justify the cost of debugging in production, use <code>FUNCTION_TEST_BEGIN()/FUNCTION_TEST_END()</code>, else use <code>FUNCTION_LOG_BEGIN(someLogLevel)/FUNCTION_LOG_END()</code>. See <link url="{[github-url-src-common]}/debug.h">debug.h</link> for more details and the <link section="/coding/coding-example">Coding Example</link> below.</p>
 
-            <p>Logging is also used for providing information to the user via the <code>LOG_*()</code> macros, such as <code>LOG_INFO("some informational message")</code> and <code>LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strZ(cfgOptionDisplay(cfgOptType)))</code> and also via <code>THROW_*()</code> macros for throwing an error. See <link url="{[github-url-src-common]}/log.h">log.h</link> and <link url="{[github-url-src-common]}/error.h">error.h</link> for more details and the <link section="/coding/coding-example">Coding Example</link> below.</p>
+            <p>Logging is also used for providing information to the user via the <code>LOG_*()</code> macros, such as <code>LOG_INFO("some informational message")</code> and <code>LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strZ(cfgOptionDisplay(cfgOptType)))</code> and also via <code>THROW_*()</code> macros for throwing an error. See <link url="{[github-url-src-common]}/log.h">log.h</link> and <link url="{[github-url-src-common]}/error/error.h">error.h</link> for more details and the <link section="/coding/coding-example">Coding Example</link> below.</p>
         </section>
 
         <!-- =================================================================================================================== -->
@@ -238,12 +238,8 @@ myObjNew(unsigned int myData, const String *secretName)
 
     ASSERT(secretName != NULL || myData > 0);       // Development-only assertions (will be compiled out of production code)
 
-    MyObj *this = NULL;                 // Declare the object in the parent memory context: it will live only as long as the parent
-
     OBJ_NEW_BEGIN(MyObj)                // Create a long lasting memory context with the name of the object
     {
-        this = OBJ_NEW_ALLOC();         // Allocate the memory required by the object
-
         *this = (MyObj)                 // Initialize the object
         {
             .pub =
@@ -530,9 +526,7 @@ HRN_FORK_BEGIN()
 {
     HRN_FORK_CHILD_BEGIN()
     {
-        TEST_RESULT_INT_NE(
-            lockAcquire(cfgOptionStr(cfgOptLockPath), STRDEF("stanza1"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
-            -1, "create backup/expire lock");
+        TEST_RESULT_INT_NE(lockAcquireP(), -1, "create backup/expire lock");
 
         // Notify parent that lock has been acquired
         HRN_FORK_CHILD_NOTIFY_PUT();

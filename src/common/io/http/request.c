@@ -4,6 +4,7 @@ HTTP Request
 #include "build.auto.h"
 
 #include "common/debug.h"
+#include "common/error/retry.h"
 #include "common/io/http/common.h"
 #include "common/io/http/request.h"
 #include "common/log.h"
@@ -73,6 +74,7 @@ httpRequestProcess(HttpRequest *this, bool waitForResponse, bool contentCache)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         bool retry;
+        ErrorRetry *const errRetry = errRetryNew();
         Wait *wait = waitNew(httpClientTimeout(this->client));
 
         do
@@ -151,6 +153,9 @@ httpRequestProcess(HttpRequest *this, bool waitForResponse, bool contentCache)
             }
             CATCH_ANY()
             {
+                // Add the error retry info
+                errRetryAdd(errRetry);
+
                 // Sleep and then retry unless the total wait time has expired
                 if (waitMore(wait))
                 {
@@ -160,7 +165,7 @@ httpRequestProcess(HttpRequest *this, bool waitForResponse, bool contentCache)
                     statInc(HTTP_STAT_RETRY_STR);
                 }
                 else
-                    RETHROW();
+                    THROWP(errRetryType(errRetry), strZ(errRetryMessage(errRetry)));
             }
             TRY_END();
         }
@@ -190,12 +195,8 @@ httpRequestNew(HttpClient *client, const String *verb, const String *path, HttpR
     ASSERT(verb != NULL);
     ASSERT(path != NULL);
 
-    HttpRequest *this = NULL;
-
     OBJ_NEW_BEGIN(HttpRequest, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (HttpRequest)
         {
             .pub =

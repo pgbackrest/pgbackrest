@@ -218,12 +218,8 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
     ASSERT(session != NULL);
     ASSERT(verb != NULL);
 
-    HttpResponse *this = NULL;
-
     OBJ_NEW_BEGIN(HttpResponse, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (HttpResponse)
         {
             .pub =

@@ -129,7 +129,7 @@ archivePushFile(
         // If this is a segment compare archive version and systemId to the WAL header
         if (headerCheck && isSegment)
         {
-            PgWal walInfo = pgWalFromFile(walSource, storageLocal());
+            PgWal walInfo = pgWalFromFile(walSource, storageLocal(), cfgOptionStrNull(cfgOptPgVersionForce));
 
             if (walInfo.version != pgVersion || walInfo.systemId != pgSystemId)
             {
@@ -241,7 +241,7 @@ archivePushFile(
             if (isSegment && compressType != compressTypeNone)
             {
                 compressExtCat(archiveDestination, compressType);
-                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(source)), compressFilter(compressType, compressLevel));
+                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(source)), compressFilterP(compressType, compressLevel));
                 compressible = false;
             }
 

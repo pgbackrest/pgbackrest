@@ -217,7 +217,8 @@ storageReadRemoteOpen(THIS_VOID)
         if (this->interface.compressible)
         {
             ioFilterGroupAdd(
-                ioReadFilterGroup(storageReadIo(this->read)), compressFilter(compressTypeGz, (int)this->interface.compressLevel));
+                ioReadFilterGroup(storageReadIo(this->read)),
+                compressFilterP(compressTypeGz, (int)this->interface.compressLevel, .raw = true));
         }
 
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_OPEN_READ);
@@ -246,7 +247,7 @@ storageReadRemoteOpen(THIS_VOID)
 
             // If the file is compressible add decompression filter locally
             if (this->interface.compressible)
-                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(this->read)), decompressFilter(compressTypeGz));
+                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(this->read)), decompressFilterP(compressTypeGz, .raw = true));
 
             // Set free callback to ensure the protocol is cleared on a short read
             memContextCallbackSet(objMemContext(this), storageReadRemoteFreeResource, this);
@@ -302,12 +303,8 @@ storageReadRemoteNew(
     ASSERT(client != NULL);
     ASSERT(name != NULL);
 
-    StorageReadRemote *this = NULL;
-
-    OBJ_NEW_BEGIN(StorageReadRemote, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(StorageReadRemote, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = OBJ_NAME(OBJ_NEW_ALLOC(), StorageRead::StorageReadRemote);
-
         *this = (StorageReadRemote)
         {
             .storage = storage,
@@ -333,7 +330,7 @@ storageReadRemoteNew(
             },
         };
 
-        this->read = storageReadNew(this, &this->interface);
+        this->read = storageReadNew(OBJ_NAME(this, StorageRead::StorageReadRemote), &this->interface);
     }
     OBJ_NEW_END();
 

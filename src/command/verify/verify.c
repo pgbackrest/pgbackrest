@@ -184,7 +184,7 @@ verifyFileLoad(const String *pathFileName, const String *cipherPass)
 
     // If the file is compressed, add a decompression filter
     if (compressTypeFromName(pathFileName) != compressTypeNone)
-        ioFilterGroupAdd(ioReadFilterGroup(read), decompressFilter(compressTypeFromName(pathFileName)));
+        ioFilterGroupAdd(ioReadFilterGroup(read), decompressFilterP(compressTypeFromName(pathFileName)));
 
     FUNCTION_TEST_RETURN(STORAGE_READ, result);
 }
@@ -723,7 +723,8 @@ verifyArchive(VerifyJobData *const jobData)
                                         strZ(strLstGet(jobData->walFileList, 0))),
                                     jobData->walCipherPass);
 
-                                PgWal walInfo = pgWalFromBuffer(storageGetP(walRead, .exactSize = PG_WAL_HEADER_SIZE));
+                                PgWal walInfo = pgWalFromBuffer(
+                                    storageGetP(walRead, .exactSize = PG_WAL_HEADER_SIZE), cfgOptionStrNull(cfgOptPgVersionForce));
 
                                 archiveResult->pgWalInfo.size = walInfo.size;
                                 archiveResult->pgWalInfo.version = walInfo.version;

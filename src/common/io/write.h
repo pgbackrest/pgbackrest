@@ -23,7 +23,6 @@ Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct IoWritePub
 {
-    MemContext *memContext;                                         // Mem context
     IoFilterGroup *filterGroup;                                     // IO filters
 } IoWritePub;
 
@@ -82,7 +81,7 @@ Destructor
 FN_INLINE_ALWAYS void
 ioWriteFree(IoWrite *const this)
 {
-    objFreeContext(this);
+    objFree(this);
 }
 
 /***********************************************************************************************************************************

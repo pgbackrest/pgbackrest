@@ -321,7 +321,7 @@ storageWriteGcsClose(THIS_VOID)
 
 /**********************************************************************************************************************************/
 FN_EXTERN StorageWrite *
-storageWriteGcsNew(StorageGcs *storage, const String *name, size_t chunkSize)
+storageWriteGcsNew(StorageGcs *const storage, const String *const name, const size_t chunkSize)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_GCS, storage);
@@ -332,13 +332,9 @@ storageWriteGcsNew(StorageGcs *storage, const String *name, size_t chunkSize)
     ASSERT(storage != NULL);
     ASSERT(name != NULL);
 
-    StorageWrite *this = NULL;
-
-    OBJ_NEW_BEGIN(StorageWriteGcs, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(StorageWriteGcs, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageWriteGcs *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), StorageWrite::StorageWriteGcs);
-
-        *driver = (StorageWriteGcs)
+        *this = (StorageWriteGcs)
         {
             .storage = storage,
             .chunkSize = chunkSize,
@@ -361,10 +357,8 @@ storageWriteGcsNew(StorageGcs *storage, const String *name, size_t chunkSize)
                 },
             },
         };
-
-        this = storageWriteNew(driver, &driver->interface);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_WRITE, this);
+    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteNew(this, &this->interface));
 }

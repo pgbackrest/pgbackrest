@@ -72,7 +72,7 @@ testRun(void)
         Buffer *walBuffer = bufNew((size_t)16 * 1024 * 1024);
         bufUsedSet(walBuffer, bufSize(walBuffer));
         memset(bufPtr(walBuffer), 0, bufSize(walBuffer));
-        hrnPgWalToBuffer((PgWal){.version = PG_VERSION_10}, walBuffer);
+        HRN_PG_WAL_TO_BUFFER(walBuffer, PG_VERSION_10);
 
         HRN_STORAGE_PUT(storagePgWrite(), "pg_wal/000000010000000100000002", walBuffer);
         HRN_STORAGE_PUT(storagePgWrite(), "pg_wal/000000010000000100000003", walBuffer);
@@ -301,7 +301,7 @@ testRun(void)
         Buffer *walBuffer1 = bufNew((size_t)16 * 1024 * 1024);
         bufUsedSet(walBuffer1, bufSize(walBuffer1));
         memset(bufPtr(walBuffer1), 0, bufSize(walBuffer1));
-        hrnPgWalToBuffer((PgWal){.version = PG_VERSION_10}, walBuffer1);
+        HRN_PG_WAL_TO_BUFFER(walBuffer1, PG_VERSION_10);
 
         HRN_STORAGE_PUT(storagePgWrite(), "pg_wal/000000010000000100000001", walBuffer1);
 
@@ -313,7 +313,7 @@ testRun(void)
             " match stanza version 11, system-id " HRN_PG_SYSTEMID_11_Z "");
 
         memset(bufPtr(walBuffer1), 0, bufSize(walBuffer1));
-        hrnPgWalToBuffer((PgWal){.version = PG_VERSION_11, .systemId = 1}, walBuffer1);
+        HRN_PG_WAL_TO_BUFFER(walBuffer1, PG_VERSION_11, .systemId = 1);
         const char *walBuffer1Sha1 = strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, walBuffer1)));
 
         HRN_STORAGE_PUT(storagePgWrite(), "pg_wal/000000010000000100000001", walBuffer1);
@@ -347,7 +347,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp);
 
         memset(bufPtr(walBuffer1), 0, bufSize(walBuffer1));
-        hrnPgWalToBuffer((PgWal){.version = PG_VERSION_11}, walBuffer1);
+        HRN_PG_WAL_TO_BUFFER(walBuffer1, PG_VERSION_11);
 
         HRN_STORAGE_PUT(storagePgWrite(), "pg_wal/000000010000000100000001", walBuffer1);
 
@@ -374,7 +374,7 @@ testRun(void)
         Buffer *walBuffer2 = bufNew((size_t)16 * 1024 * 1024);
         bufUsedSet(walBuffer2, bufSize(walBuffer2));
         memset(bufPtr(walBuffer2), 0xFF, bufSize(walBuffer2));
-        hrnPgWalToBuffer((PgWal){.version = PG_VERSION_11}, walBuffer2);
+        HRN_PG_WAL_TO_BUFFER(walBuffer2, PG_VERSION_11);
         const char *walBuffer2Sha1 = strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, walBuffer2)));
 
         HRN_STORAGE_PUT(storagePgWrite(), "pg_wal/000000010000000100000001", walBuffer2);
@@ -454,6 +454,41 @@ testRun(void)
             "P00   INFO: pushed WAL file '000000010000000100000002' to the archive");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("push WAL with modified control/catalog/magic using the --pg-version option");
+
+        argListTemp = strLstDup(argList);
+        strLstAddZ(argListTemp, "pg_wal/000000010000000100000003");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp);
+
+        memset(bufPtr(walBuffer1), 0, bufSize(walBuffer1));
+        HRN_PG_WAL_OVERRIDE_TO_BUFFER(walBuffer1, PG_VERSION_11, 999);
+        HRN_STORAGE_PUT(storagePgWrite(), "pg_wal/000000010000000100000003", walBuffer1);
+
+        TEST_ERROR(
+            cmdArchivePush(), VersionNotSupportedError,
+            "unexpected WAL magic 999\n"
+            "HINT: is this version of PostgreSQL supported?");
+
+        HRN_PG_CONTROL_OVERRIDE_PUT(storagePgWrite(), PG_VERSION_11, 1501, .catalogVersion = 202211111);
+
+        TEST_ERROR(
+            cmdArchivePush(), VersionNotSupportedError,
+            "unexpected control version = 1501 and catalog version = 202211111\n"
+            "HINT: is this version of PostgreSQL supported?");
+
+        argListTemp = strLstDup(argList);
+        hrnCfgArgRawZ(argListTemp, cfgOptPgVersionForce, "11");
+        strLstAddZ(argListTemp, "pg_wal/000000010000000100000003");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp);
+
+        TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment with a modified control/catalog version");
+        TEST_RESULT_LOG(
+            "P00   INFO: pushed WAL file '000000010000000100000003' to the archive");
+
+        // Reset control file
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_11);
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multiple repos, one encrypted");
 
         // Remove old repo
@@ -463,7 +498,7 @@ testRun(void)
         walBuffer2 = bufNew(1024);
         bufUsedSet(walBuffer2, bufSize(walBuffer2));
         memset(bufPtr(walBuffer2), 0xFF, bufSize(walBuffer2));
-        hrnPgWalToBuffer((PgWal){.version = PG_VERSION_11}, walBuffer2);
+        HRN_PG_WAL_TO_BUFFER(walBuffer2, PG_VERSION_11);
         walBuffer2Sha1 = strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, walBuffer2)));
         HRN_STORAGE_PUT(storageTest, "pg/pg_wal/000000010000000100000002", walBuffer2, .comment = "write WAL");
 
@@ -714,8 +749,8 @@ testRun(void)
         {
             HRN_FORK_CHILD_BEGIN()
             {
-                lockAcquire(
-                    cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), STRDEF("555-fefefefe"), cfgLockType(), 30000, true);
+                lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("555-fefefefe"), cfgOptionStr(cfgOptStanza), cfgLockType());
+                lockAcquireP(.timeout = 30000, .returnOnNoLock = true);
 
                 // Notify parent that lock has been acquired
                 HRN_FORK_CHILD_NOTIFY_PUT();
@@ -757,7 +792,7 @@ testRun(void)
         Buffer *walBuffer1 = bufNew((size_t)16 * 1024 * 1024);
         bufUsedSet(walBuffer1, bufSize(walBuffer1));
         memset(bufPtr(walBuffer1), 0xFF, bufSize(walBuffer1));
-        hrnPgWalToBuffer((PgWal){.version = PG_VERSION_94}, walBuffer1);
+        HRN_PG_WAL_TO_BUFFER(walBuffer1, PG_VERSION_94);
         const char *walBuffer1Sha1 = strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, walBuffer1)));
 
         HRN_STORAGE_PUT(storagePgWrite(),"pg_xlog/000000010000000100000001", walBuffer1);
@@ -838,7 +873,7 @@ testRun(void)
             "P01 DETAIL: pushed WAL file '000000010000000100000001' to the archive\n"
             "P01   WARN: could not push WAL file '000000010000000100000002' to the archive (will be retried): "
             "[55] raised from local-1 shim protocol: " STORAGE_ERROR_READ_MISSING "\n"
-            "            [FileMissingError] on retry after 0ms",
+            "            [RETRY DETAIL OMITTED]",
             TEST_PATH "/pg/pg_xlog/000000010000000100000002");
 
         TEST_STORAGE_EXISTS(
@@ -862,7 +897,7 @@ testRun(void)
         Buffer *walBuffer2 = bufNew((size_t)16 * 1024 * 1024);
         bufUsedSet(walBuffer2, bufSize(walBuffer2));
         memset(bufPtr(walBuffer2), 0x0C, bufSize(walBuffer2));
-        hrnPgWalToBuffer((PgWal){.version = PG_VERSION_94}, walBuffer2);
+        HRN_PG_WAL_TO_BUFFER(walBuffer2, PG_VERSION_94);
         const char *walBuffer2Sha1 = strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, walBuffer2)));
 
         HRN_STORAGE_PUT(storagePgWrite(), "pg_xlog/000000010000000100000002", walBuffer2);
@@ -911,7 +946,7 @@ testRun(void)
         Buffer *walBuffer3 = bufNew((size_t)16 * 1024 * 1024);
         bufUsedSet(walBuffer3, bufSize(walBuffer3));
         memset(bufPtr(walBuffer3), 0x44, bufSize(walBuffer3));
-        hrnPgWalToBuffer((PgWal){.version = PG_VERSION_94}, walBuffer3);
+        HRN_PG_WAL_TO_BUFFER(walBuffer3, PG_VERSION_94);
         const char *walBuffer3Sha1 = strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, walBuffer3)));
 
         HRN_STORAGE_PUT(storagePgWrite(), "pg_xlog/000000010000000100000003", walBuffer3);

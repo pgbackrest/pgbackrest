@@ -65,7 +65,7 @@ Memory is allocated inside contexts and can be long lasting (for objects) or tem
 
 Logging is used for debugging with the built-in macros `FUNCTION_LOG_*()` and `FUNCTION_TEST_*()` which are used to trace parameters passed to/returned from functions. `FUNCTION_LOG_*()` macros are used for production logging whereas `FUNCTION_TEST_*()` macros will be compiled out of production code. For functions where no parameter is valuable enough to justify the cost of debugging in production, use `FUNCTION_TEST_BEGIN()/FUNCTION_TEST_END()`, else use `FUNCTION_LOG_BEGIN(someLogLevel)/FUNCTION_LOG_END()`. See [debug.h](https://github.com/pgbackrest/pgbackrest/blob/main/src/common/debug.h) for more details and the [Coding Example](#coding-example) below.
 
-Logging is also used for providing information to the user via the `LOG_*()` macros, such as `LOG_INFO("some informational message")` and `LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strZ(cfgOptionDisplay(cfgOptType)))` and also via `THROW_*()` macros for throwing an error. See [log.h](https://github.com/pgbackrest/pgbackrest/blob/main/src/common/log.h) and [error.h](https://github.com/pgbackrest/pgbackrest/blob/main/src/common/error.h) for more details and the [Coding Example](#coding-example) below.
+Logging is also used for providing information to the user via the `LOG_*()` macros, such as `LOG_INFO("some informational message")` and `LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strZ(cfgOptionDisplay(cfgOptType)))` and also via `THROW_*()` macros for throwing an error. See [log.h](https://github.com/pgbackrest/pgbackrest/blob/main/src/common/log.h) and [error.h](https://github.com/pgbackrest/pgbackrest/blob/main/src/common/error/error.h) for more details and the [Coding Example](#coding-example) below.
 
 ### Coding Example
 
@@ -132,12 +132,8 @@ myObjNew(unsigned int myData, const String *secretName)
 
     ASSERT(secretName != NULL || myData > 0);       // Development-only assertions (will be compiled out of production code)
 
-    MyObj *this = NULL;                 // Declare the object in the parent memory context: it will live only as long as the parent
-
     OBJ_NEW_BEGIN(MyObj)                // Create a long lasting memory context with the name of the object
     {
-        this = OBJ_NEW_ALLOC();         // Allocate the memory required by the object
-
         *this = (MyObj)                 // Initialize the object
         {
             .pub =
@@ -242,12 +238,12 @@ pgbackrest/test/test.pl --vm=none --dry-run
     P00   INFO: test begin on x86_64 - log level info
     P00   INFO: clean autogenerate code
     P00   INFO: builds required: bin
---> P00   INFO: 76 tests selected
+--> P00   INFO: 77 tests selected
                 
-    P00   INFO: P1-T01/76 - vm=none, module=common, test=error
-           [filtered 73 lines of output]
-    P00   INFO: P1-T75/76 - vm=none, module=performance, test=type
-    P00   INFO: P1-T76/76 - vm=none, module=performance, test=storage
+    P00   INFO: P1-T01/77 - vm=none, module=common, test=error
+           [filtered 74 lines of output]
+    P00   INFO: P1-T76/77 - vm=none, module=performance, test=type
+    P00   INFO: P1-T77/77 - vm=none, module=performance, test=storage
 --> P00   INFO: DRY RUN COMPLETED SUCCESSFULLY
 ```
 
@@ -268,35 +264,35 @@ pgbackrest/test/test.pl --vm=none --vm-out --module=common --test=wait
                 
     P00   INFO: P1-T1/1 - vm=none, module=common, test=wait
                 
-        2023-01-30 01:43:50.109 P00   INFO: test command begin 2.44: [common/wait] --log-level=info --repo-path=/home/vagrant/test/repo --test-path=/home/vagrant/test --vm=none --vm-id=0
-        2023-01-30 01:43:52.582 P00   INFO: test command end: completed successfully (2474ms)
+        2023-03-20 00:52:17.889 P00   INFO: test command begin 2.45: [common/wait] --log-level=info --repo-path=/home/vagrant/test/repo --test-path=/home/vagrant/test --vm=none --vm-id=0
+        2023-03-20 00:52:20.376 P00   INFO: test command end: completed successfully (2487ms)
         run 1 - waitNew(), waitMore, and waitFree()
             000.009s          L0018     expect AssertError: assertion 'waitTime <= 999999000' failed
         
         run 1/1 ------------- L0021 0ms wait
-            001.806s 001.797s L0025     new wait
-            001.817s 000.011s L0026         check remaining time
-            001.819s 000.002s L0027         check wait time
-            001.820s 000.001s L0028         check sleep time
-            001.821s 000.001s L0029         check sleep prev time
-            001.821s 000.000s L0030         no wait more
-            001.827s 000.006s L0033     new wait = 0.2 sec
-            001.828s 000.001s L0034         check remaining time
-            001.829s 000.001s L0035         check wait time
-            001.830s 000.001s L0036         check sleep time
-            001.831s 000.001s L0037         check sleep prev time
-            001.832s 000.001s L0038         check begin time
-            002.030s 000.198s L0044         lower range check
-            002.031s 000.001s L0045         upper range check
-            002.032s 000.001s L0047         free wait
-            002.034s 000.002s L0052     new wait = 1.1 sec
-            002.035s 000.001s L0053         check wait time
-            002.036s 000.001s L0054         check sleep time
-            002.037s 000.001s L0055         check sleep prev time
-            002.038s 000.001s L0056         check begin time
-            003.137s 001.099s L0062         lower range check
-            003.138s 000.001s L0063         upper range check
-            003.139s 000.001s L0065         free wait
+            001.775s 001.766s L0025     new wait
+            001.785s 000.010s L0026         check remaining time
+            001.786s 000.001s L0027         check wait time
+            001.787s 000.001s L0028         check sleep time
+            001.788s 000.001s L0029         check sleep prev time
+            001.789s 000.001s L0030         no wait more
+            001.794s 000.005s L0033     new wait = 0.2 sec
+            001.795s 000.001s L0034         check remaining time
+            001.796s 000.001s L0035         check wait time
+            001.797s 000.001s L0036         check sleep time
+            001.798s 000.001s L0037         check sleep prev time
+            001.798s 000.000s L0038         check begin time
+            001.997s 000.199s L0044         lower range check
+            001.998s 000.001s L0045         upper range check
+            001.999s 000.001s L0047         free wait
+            002.000s 000.001s L0052     new wait = 1.1 sec
+            002.002s 000.002s L0053         check wait time
+            002.002s 000.000s L0054         check sleep time
+            002.003s 000.001s L0055         check sleep prev time
+            002.004s 000.001s L0056         check begin time
+            003.102s 001.098s L0062         lower range check
+            003.103s 000.001s L0063         upper range check
+            003.103s 000.000s L0065         free wait
         
         TESTS COMPLETED SUCCESSFULLY
     
@@ -463,9 +459,7 @@ HRN_FORK_BEGIN()
 {
     HRN_FORK_CHILD_BEGIN()
     {
-        TEST_RESULT_INT_NE(
-            lockAcquire(cfgOptionStr(cfgOptLockPath), STRDEF("stanza1"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
-            -1, "create backup/expire lock");
+        TEST_RESULT_INT_NE(lockAcquireP(), -1, "create backup/expire lock");
 
         // Notify parent that lock has been acquired
         HRN_FORK_CHILD_NOTIFY_PUT();

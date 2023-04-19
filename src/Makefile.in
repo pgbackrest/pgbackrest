@@ -10,7 +10,7 @@ SRCS_COMMON = \
 	common/compress/bz2/compress.c \
 	common/debug.c \
 	common/encode.c \
-	common/error.c \
+	common/error/error.c \
 	common/io/filter/buffer.c \
 	common/io/filter/filter.c \
 	common/io/filter/group.c \
@@ -76,13 +76,15 @@ SRCS = \
 	command/control/start.c \
 	command/control/stop.c \
 	command/local/local.c \
+	command/manifest/manifest.c \
 	command/repo/common.c \
 	command/repo/create.c \
 	command/repo/get.c \
 	command/repo/ls.c \
 	command/repo/put.c \
 	command/repo/rm.c \
-	command/restore/blockHash.c \
+	command/restore/blockChecksum.c \
+	command/restore/blockDelta.c \
 	command/restore/file.c \
 	command/restore/protocol.c \
 	command/restore/restore.c \
@@ -110,6 +112,8 @@ SRCS = \
 	common/crypto/cipherBlock.c \
 	common/crypto/common.c \
 	common/crypto/hash.c \
+	common/crypto/xxhash.c \
+	common/error/retry.c \
 	common/exec.c \
 	common/fork.c \
 	common/ini.c \

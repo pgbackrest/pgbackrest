@@ -34,6 +34,8 @@ typedef struct BackupFile
     const Buffer *pgFileChecksum;                                   // Expected pg file checksum
     bool pgFileChecksumPage;                                        // Validate page checksums?
     size_t blockIncrSize;                                           // Perform block incremental on this file?
+    size_t blockIncrChecksumSize;                                   // Block checksum size
+    uint64_t blockIncrSuperSize;                                    // Size of the super block
     const String *blockIncrMapPriorFile;                            // File containing prior block incremental map (NULL if none)
     uint64_t blockIncrMapPriorOffset;                               // Offset of prior block incremental map
     uint64_t blockIncrMapPriorSize;                                 // Size of prior block incremental map
@@ -58,7 +60,7 @@ typedef struct BackupFileResult
 } BackupFileResult;
 
 FN_EXTERN List *backupFile(
-    const String *repoFile, uint64_t bundleId, unsigned int blockIncrReference, CompressType repoFileCompressType,
+    const String *repoFile, uint64_t bundleId, bool bundleRaw, unsigned int blockIncrReference, CompressType repoFileCompressType,
     int repoFileCompressLevel, CipherType cipherType, const String *cipherPass, const List *fileList);
 
 #endif

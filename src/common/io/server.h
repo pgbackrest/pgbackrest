@@ -21,7 +21,6 @@ Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct IoServerPub
 {
-    MemContext *memContext;                                         // Mem context
     void *driver;                                                   // Driver object
     const IoServerInterface *interface;                             // Driver interface
 } IoServerPub;
@@ -40,7 +39,7 @@ Functions
 FN_INLINE_ALWAYS IoServer *
 ioServerMove(IoServer *const this, MemContext *const parentNew)
 {
-    return objMoveContext(this, parentNew);
+    return objMove(this, parentNew);
 }
 
 // Open session
@@ -56,7 +55,7 @@ Destructor
 FN_INLINE_ALWAYS void
 ioServerFree(IoServer *const this)
 {
-    objFreeContext(this);
+    objFree(this);
 }
 
 /***********************************************************************************************************************************

@@ -590,8 +590,8 @@ static const StorageInterface storageInterfacePosix =
 
 FN_EXTERN Storage *
 storagePosixNewInternal(
-    StringId type, const String *path, mode_t modeFile, mode_t modePath, bool write,
-    StoragePathExpressionCallback pathExpressionFunction, bool pathSync)
+    const StringId type, const String *const path, const mode_t modeFile, const mode_t modePath, const bool write,
+    StoragePathExpressionCallback pathExpressionFunction, const bool pathSync)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING_ID, type);
@@ -612,32 +612,26 @@ storagePosixNewInternal(
     userInit();
 
     // Create the object
-    Storage *this = NULL;
-
-    OBJ_NEW_BEGIN(StoragePosix, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(StoragePosix, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        StoragePosix *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), Storage::StoragePosix);
-
-        *driver = (StoragePosix)
+        *this = (StoragePosix)
         {
             .interface = storageInterfacePosix,
         };
 
         // Disable path sync when not supported
         if (!pathSync)
-            driver->interface.pathSync = NULL;
+            this->interface.pathSync = NULL;
 
         // If this is a posix driver then add link features
         if (type == STORAGE_POSIX_TYPE)
-            driver->interface.feature |=
+            this->interface.feature |=
                 1 << storageFeatureHardLink | 1 << storageFeatureSymLink | 1 << storageFeaturePathSync |
                 1 << storageFeatureInfoDetail;
-
-        this = storageNew(type, path, modeFile, modePath, write, pathExpressionFunction, driver, driver->interface);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE, this);
+    FUNCTION_LOG_RETURN(STORAGE, storageNew(type, path, modeFile, modePath, write, pathExpressionFunction, this, this->interface));
 }
 
 FN_EXTERN Storage *

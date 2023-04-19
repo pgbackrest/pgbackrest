@@ -45,12 +45,8 @@ protocolParallelNew(TimeMSec timeout, ParallelJobCallback *callbackFunction, voi
     ASSERT(callbackFunction != NULL);
     ASSERT(callbackData != NULL);
 
-    ProtocolParallel *this = NULL;
-
     OBJ_NEW_BEGIN(ProtocolParallel, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (ProtocolParallel)
         {
             .timeout = timeout,

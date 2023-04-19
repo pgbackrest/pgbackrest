@@ -27,6 +27,9 @@ STRING_DECLARE(MANIFEST_TARGET_PGDATA_STR);
 #define MANIFEST_TARGET_PGTBLSPC                                    "pg_tblspc"
 STRING_DECLARE(MANIFEST_TARGET_PGTBLSPC_STR);
 
+// Minimum size for the block incremental checksum
+#define BLOCK_INCR_CHECKSUM_SIZE_MIN                                6
+
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
@@ -56,6 +59,7 @@ typedef struct ManifestData
     time_t backupTimestampStop;                                     // When did the backup stop?
     BackupType backupType;                                          // Type of backup: full, diff, incr
     bool bundle;                                                    // Does the backup bundle files?
+    bool bundleRaw;                                                 // Use raw compress/encrypt for bundling?
     bool blockIncr;                                                 // Does the backup perform block incremental?
 
     // ??? Note that these fields are redundant and verbose since storing the start/stop lsn as a uint64 would be sufficient.
@@ -85,6 +89,40 @@ typedef struct ManifestData
     bool backupOptionOnline;                                        // Will an online backup be performed?
     const Variant *backupOptionProcessMax;                          // How many processes will be used for backup?
 } ManifestData;
+
+/***********************************************************************************************************************************
+Block incremental size maps
+***********************************************************************************************************************************/
+// Map file size to block size
+typedef struct ManifestBlockIncrSizeMap
+{
+    unsigned int fileSize;                                          // File size
+    unsigned int blockSize;                                         // Block size for files >= file size
+} ManifestBlockIncrSizeMap;
+
+// Map file age to block multiplier
+typedef struct ManifestBlockIncrAgeMap
+{
+    uint32_t fileAge;                                               // File age in seconds
+    uint32_t blockMultiplier;                                       // Block multiplier
+} ManifestBlockIncrAgeMap;
+
+// Map block size to checksum size
+typedef struct ManifestBlockIncrChecksumSizeMap
+{
+    uint32_t blockSize;
+    uint32_t checksumSize;
+} ManifestBlockIncrChecksumSizeMap;
+
+typedef struct ManifestBlockIncrMap
+{
+    const ManifestBlockIncrSizeMap *sizeMap;                        // Block size map
+    unsigned int sizeMapSize;                                       // Block size map size
+    const ManifestBlockIncrAgeMap *ageMap;                          // File age map
+    unsigned int ageMapSize;                                        // File age map size
+    const ManifestBlockIncrChecksumSizeMap *checksumSizeMap;        // Checksum size map
+    unsigned int checksumSizeMapSize;                               // Checksum size map size
+} ManifestBlockIncrMap;
 
 /***********************************************************************************************************************************
 Db type
@@ -117,6 +155,7 @@ typedef struct ManifestFile
     uint64_t bundleId;                                              // Bundle id
     uint64_t bundleOffset;                                          // Bundle offset
     size_t blockIncrSize;                                           // Size of incremental blocks
+    size_t blockIncrChecksumSize;                                   // Size of incremental block checksum
     uint64_t blockIncrMapSize;                                      // Block incremental map size
     uint64_t size;                                                  // Original size
     uint64_t sizeRepo;                                              // Size in repo
@@ -170,7 +209,8 @@ Constructors
 // Build a new manifest for a PostgreSQL data directory
 FN_EXTERN Manifest *manifestNewBuild(
     const Storage *storagePg, unsigned int pgVersion, unsigned int pgCatalogVersion, time_t timestampStart, bool online,
-    bool checksumPage, bool bundle, bool blockIncr, const StringList *excludeList, const Pack *tablespaceList);
+    bool checksumPage, bool bundle, bool blockIncr, const ManifestBlockIncrMap *blockIncrMap, const StringList *excludeList,
+    const Pack *tablespaceList);
 
 // Load a manifest from IO
 FN_EXTERN Manifest *manifestNewLoad(IoRead *read);

@@ -26,7 +26,9 @@ Backup Command
 #include "common/time.h"
 #include "common/type/convert.h"
 #include "common/type/json.h"
+#include "config/common.h"
 #include "config/config.h"
+#include "config/parse.h"
 #include "db/helper.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
@@ -213,7 +215,7 @@ backupInit(const InfoBackup *infoBackup)
     }
     // Else get pg_control info directly from the file
     else
-        pgControl = pgControlFromFile(storagePgIdx(result->pgIdxPrimary));
+        pgControl = pgControlFromFile(storagePgIdx(result->pgIdxPrimary), cfgOptionStrNull(cfgOptPgVersionForce));
 
     // Add primary info
     result->storagePrimary = storagePgIdx(result->pgIdxPrimary);
@@ -263,6 +265,223 @@ backupInit(const InfoBackup *infoBackup)
     }
 
     FUNCTION_LOG_RETURN(BACKUP_DATA, result);
+}
+
+/**********************************************************************************************************************************
+Build block incremental maps
+***********************************************************************************************************************************/
+// Size map. Block size is increased when the block map would be larger than a single block. The break can be calculated with this
+// formula: [block size in KiB] / (1024 / [block size in KiB] * [checksum size]) * 1073741824.
+static const ManifestBlockIncrSizeMap manifestBlockIncrSizeMapDefault[] =
+{
+    {.fileSize = 914 * 1024 * 1024, .blockSize = 88 * 1024},
+    {.fileSize = 740 * 1024 * 1024, .blockSize = 80 * 1024},
+    {.fileSize = 585 * 1024 * 1024, .blockSize = 72 * 1024},
+    {.fileSize = 448 * 1024 * 1024, .blockSize = 64 * 1024},
+    {.fileSize = 329 * 1024 * 1024, .blockSize = 56 * 1024},
+    {.fileSize = 228 * 1024 * 1024, .blockSize = 48 * 1024},
+    {.fileSize = 146 * 1024 * 1024, .blockSize = 40 * 1024},
+    {.fileSize = 96 * 1024 * 1024, .blockSize = 32 * 1024},
+    {.fileSize = 43 * 1024 * 1024, .blockSize = 24 * 1024},
+    {.fileSize = 11 * 1024 * 1024, .blockSize = 16 * 1024},
+    {.fileSize = 16 * 1024, .blockSize = 8 * 1024},
+};
+
+// Age map
+static const ManifestBlockIncrAgeMap manifestBlockIncrAgeMapDefault[] =
+{
+    {.fileAge = 4 * 7 * SEC_PER_DAY, .blockMultiplier = 0},
+    {.fileAge = 2 * 7 * SEC_PER_DAY, .blockMultiplier = 4},
+    {.fileAge = 7 * SEC_PER_DAY, .blockMultiplier = 2},
+};
+
+// Checksum size map
+static const ManifestBlockIncrChecksumSizeMap manifestBlockIncrChecksumSizeMapDefault[] =
+{
+    {.blockSize = 4 * 1024 * 1024, .checksumSize = BLOCK_INCR_CHECKSUM_SIZE_MIN + 6},
+    {.blockSize = 2 * 1024 * 1024, .checksumSize = BLOCK_INCR_CHECKSUM_SIZE_MIN + 5},
+    {.blockSize = 1024 * 1024, .checksumSize = BLOCK_INCR_CHECKSUM_SIZE_MIN + 4},
+    {.blockSize = 512 * 1024, .checksumSize = BLOCK_INCR_CHECKSUM_SIZE_MIN + 3},
+    {.blockSize = 128 * 1024, .checksumSize = BLOCK_INCR_CHECKSUM_SIZE_MIN + 2},
+    {.blockSize = 32 * 1024, .checksumSize = BLOCK_INCR_CHECKSUM_SIZE_MIN + 1},
+};
+
+// All maps
+static const ManifestBlockIncrMap manifestBlockIncrMap =
+{
+    .sizeMap = manifestBlockIncrSizeMapDefault,
+    .sizeMapSize = LENGTH_OF(manifestBlockIncrSizeMapDefault),
+    .ageMap = manifestBlockIncrAgeMapDefault,
+    .ageMapSize = LENGTH_OF(manifestBlockIncrAgeMapDefault),
+    .checksumSizeMap = manifestBlockIncrChecksumSizeMapDefault,
+    .checksumSizeMapSize = LENGTH_OF(manifestBlockIncrChecksumSizeMapDefault),
+};
+
+// Convert map size
+static unsigned int
+backupBlockIncrMapSize(ConfigOption optionId, unsigned int optionKeyIdx, const String *const value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+        FUNCTION_TEST_PARAM(UINT, optionKeyIdx);
+        FUNCTION_TEST_PARAM(STRING, value);
+    FUNCTION_TEST_END();
+
+    unsigned int result = 0;
+
+    TRY_BEGIN()
+    {
+        const int64_t valueI64 = cfgParseSize(value);
+
+        if (valueI64 <= UINT_MAX)
+            result = (unsigned int)valueI64;
+    }
+    CATCH_ANY()
+    {
+    }
+    TRY_END();
+
+    if (result == 0)
+    {
+        THROW_FMT(
+            OptionInvalidValueError, "'%s' is not valid for '%s' option", strZ(value),
+            cfgParseOptionKeyIdxName(optionId, optionKeyIdx));
+    }
+
+    FUNCTION_TEST_RETURN(UINT, result);
+}
+
+// Convert map checksum size
+static unsigned int
+backupBlockIncrMapChecksumSize(ConfigOption optionId, unsigned int optionKeyIdx, const Variant *const value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+        FUNCTION_TEST_PARAM(UINT, optionKeyIdx);
+        FUNCTION_TEST_PARAM(VARIANT, value);
+    FUNCTION_TEST_END();
+
+    unsigned int result = 0;
+
+    TRY_BEGIN()
+    {
+        result = varUIntForce(value);
+    }
+    CATCH_ANY()
+    {
+    }
+    TRY_END();
+
+    if (result < BLOCK_INCR_CHECKSUM_SIZE_MIN)
+    {
+        THROW_FMT(
+            OptionInvalidValueError, "'%s' is not valid for '%s' option", strZ(varStr(value)),
+            cfgParseOptionKeyIdxName(optionId, optionKeyIdx));
+    }
+
+    FUNCTION_TEST_RETURN(UINT, result);
+}
+
+static ManifestBlockIncrMap
+backupBlockIncrMap(void)
+{
+    FUNCTION_TEST_VOID();
+
+    FUNCTION_AUDIT_HELPER();
+
+    ManifestBlockIncrMap result = manifestBlockIncrMap;
+
+    if (cfgOptionBool(cfgOptRepoBlock))
+    {
+        // Build size map
+        const KeyValue *const manifestBlockIncrSizeKv = cfgOptionKvNull(cfgOptRepoBlockSizeMap);
+
+        if (manifestBlockIncrSizeKv != NULL)
+        {
+            List *const map = lstNewP(sizeof(ManifestBlockIncrSizeMap), .comparator = lstComparatorUInt);
+            const VariantList *const mapKeyList = kvKeyList(manifestBlockIncrSizeKv);
+
+            for (unsigned int mapKeyIdx = 0; mapKeyIdx < varLstSize(mapKeyList); mapKeyIdx++)
+            {
+                const Variant *mapKey = varLstGet(mapKeyList, mapKeyIdx);
+
+                ManifestBlockIncrSizeMap manifestBuildBlockIncrSizeMap =
+                {
+                    .fileSize = backupBlockIncrMapSize(
+                        cfgOptRepoBlockSizeMap, cfgOptionIdxDefault(cfgOptRepoBlockSizeMap), varStr(mapKey)),
+                    .blockSize = backupBlockIncrMapSize(
+                        cfgOptRepoBlockSizeMap, cfgOptionIdxDefault(cfgOptRepoBlockSizeMap),
+                        varStr(kvGet(manifestBlockIncrSizeKv, mapKey))),
+                };
+
+                lstAdd(map, &manifestBuildBlockIncrSizeMap);
+            }
+
+            lstSort(map, sortOrderDesc);
+
+            result.sizeMap = lstGet(map, 0);
+            result.sizeMapSize = lstSize(map);
+        }
+
+        // Build age map
+        const KeyValue *const manifestBlockIncrAgeKv = cfgOptionKvNull(cfgOptRepoBlockAgeMap);
+
+        if (manifestBlockIncrAgeKv != NULL)
+        {
+            List *const map = lstNewP(sizeof(ManifestBlockIncrAgeMap), .comparator = lstComparatorUInt);
+            const VariantList *const mapKeyList = kvKeyList(manifestBlockIncrAgeKv);
+
+            for (unsigned int mapKeyIdx = 0; mapKeyIdx < varLstSize(mapKeyList); mapKeyIdx++)
+            {
+                const Variant *mapKey = varLstGet(mapKeyList, mapKeyIdx);
+
+                ManifestBlockIncrAgeMap manifestBuildBlockIncrAgeMap =
+                {
+                    .fileAge = varUIntForce(mapKey) * (unsigned int)SEC_PER_DAY,
+                    .blockMultiplier = varUIntForce(kvGet(manifestBlockIncrAgeKv, mapKey)),
+                };
+
+                lstAdd(map, &manifestBuildBlockIncrAgeMap);
+            }
+
+            lstSort(map, sortOrderDesc);
+
+            result.ageMap = lstGet(map, 0);
+            result.ageMapSize = lstSize(map);
+        }
+
+        // Build checksum size map
+        const KeyValue *const manifestBlockIncrChecksumSizeKv = cfgOptionKvNull(cfgOptRepoBlockChecksumSizeMap);
+
+        if (manifestBlockIncrChecksumSizeKv != NULL)
+        {
+            List *const map = lstNewP(sizeof(ManifestBlockIncrChecksumSizeMap), .comparator = lstComparatorUInt);
+            const VariantList *const mapKeyList = kvKeyList(manifestBlockIncrChecksumSizeKv);
+
+            for (unsigned int mapKeyIdx = 0; mapKeyIdx < varLstSize(mapKeyList); mapKeyIdx++)
+            {
+                const Variant *mapKey = varLstGet(mapKeyList, mapKeyIdx);
+
+                ManifestBlockIncrChecksumSizeMap manifestBuildBlockIncrChecksumSizeMap =
+                {
+                    .blockSize = backupBlockIncrMapSize(
+                        cfgOptRepoBlockSizeMap, cfgOptionIdxDefault(cfgOptRepoBlockChecksumSizeMap), varStr(mapKey)),
+                    .checksumSize = backupBlockIncrMapChecksumSize(
+                        cfgOptRepoBlockSizeMap, cfgOptionIdxDefault(cfgOptRepoBlockChecksumSizeMap),
+                        kvGet(manifestBlockIncrChecksumSizeKv, mapKey)),
+                };
+
+                lstAdd(map, &manifestBuildBlockIncrChecksumSizeMap);
+            }
+
+            lstSort(map, sortOrderDesc);
+
+            result.checksumSizeMap = lstGet(map, 0);
+            result.checksumSizeMapSize = lstSize(map);
+        }
+    }
+
+    FUNCTION_TEST_RETURN_TYPE(ManifestBlockIncrMap, result);
 }
 
 /**********************************************************************************************************************************
@@ -945,7 +1164,7 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
             if (compressType != compressTypeNone)
             {
                 ioFilterGroupAdd(
-                    ioWriteFilterGroup(storageWriteIo(write)), compressFilter(compressType, cfgOptionInt(cfgOptCompressLevel)));
+                    ioWriteFilterGroup(storageWriteIo(write)), compressFilterP(compressType, cfgOptionInt(cfgOptCompressLevel)));
 
                 repoChecksum = true;
             }
@@ -1450,6 +1669,7 @@ typedef struct BackupJobData
     uint64_t bundleLimit;                                           // Limit on files to bundle
     uint64_t bundleId;                                              // Bundle id
     const bool blockIncr;                                           // Block incremental?
+    size_t blockIncrSizeSuper;                                      // Super block size
 
     List *queueList;                                                // List of processing queues
 } BackupJobData;
@@ -1731,6 +1951,7 @@ backupJobCallback(void *data, unsigned int clientIdx)
                     {
                         pckWriteStrP(param, backupFileRepoPathP(jobData->backupLabel, .bundleId = jobData->bundleId));
                         pckWriteU64P(param, jobData->bundleId);
+                        pckWriteBoolP(param, manifestData(jobData->manifest)->bundleRaw);
                     }
                     else
                     {
@@ -1768,6 +1989,8 @@ backupJobCallback(void *data, unsigned int clientIdx)
                 if (blockIncr)
                 {
                     pckWriteU64P(param, file.blockIncrSize);
+                    pckWriteU64P(param, file.blockIncrChecksumSize);
+                    pckWriteU64P(param, jobData->blockIncrSizeSuper);
 
                     if (file.blockIncrMapSize != 0)
                     {
@@ -1878,6 +2101,14 @@ backupProcess(
         {
             jobData.bundleSize = cfgOptionUInt64(cfgOptRepoBundleSize);
             jobData.bundleLimit = cfgOptionUInt64(cfgOptRepoBundleLimit);
+        }
+
+        if (jobData.blockIncr)
+        {
+            // Set super block size based on the backup type
+            jobData.blockIncrSizeSuper =
+                backupType == backupTypeFull ?
+                    (size_t)cfgOptionUInt64(cfgOptRepoBlockSizeSuperFull) : (size_t)cfgOptionUInt64(cfgOptRepoBlockSizeSuper);
         }
 
         // If this is a full backup or hard-linked and paths are supported then create all paths explicitly so that empty paths will
@@ -2123,12 +2354,12 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
                         if (archiveCompressType != backupCompressType)
                         {
                             if (archiveCompressType != compressTypeNone)
-                                ioFilterGroupAdd(filterGroup, decompressFilter(archiveCompressType));
+                                ioFilterGroupAdd(filterGroup, decompressFilterP(archiveCompressType));
 
                             if (backupCompressType != compressTypeNone)
                             {
                                 ioFilterGroupAdd(
-                                    filterGroup, compressFilter(backupCompressType, cfgOptionInt(cfgOptCompressLevel)));
+                                    filterGroup, compressFilterP(backupCompressType, cfgOptionInt(cfgOptCompressLevel)));
                             }
                         }
 
@@ -2225,7 +2456,7 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
                 STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s/%s.manifest%s", strZ(strSubN(backupLabel, 0, 4)),
                 strZ(backupLabel), strZ(compressExtStr(compressTypeGz))));
 
-        ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(manifestWrite)), compressFilter(compressTypeGz, 9));
+        ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(manifestWrite)), compressFilterP(compressTypeGz, 9));
 
         cipherBlockFilterGroupAdd(
             ioWriteFilterGroup(storageWriteIo(manifestWrite)), cfgOptionStrId(cfgOptRepoCipherType), cipherModeEncrypt,
@@ -2305,9 +2536,11 @@ cmdBackup(void)
         BackupStartResult backupStartResult = backupStart(backupData);
 
         // Build the manifest
+        const ManifestBlockIncrMap blockIncrMap = backupBlockIncrMap();
+
         Manifest *manifest = manifestNewBuild(
             backupData->storagePrimary, infoPg.version, infoPg.catalogVersion, timestampStart, cfgOptionBool(cfgOptOnline),
-            cfgOptionBool(cfgOptChecksumPage), cfgOptionBool(cfgOptRepoBundle), cfgOptionBool(cfgOptRepoBlock),
+            cfgOptionBool(cfgOptChecksumPage), cfgOptionBool(cfgOptRepoBundle), cfgOptionBool(cfgOptRepoBlock), &blockIncrMap,
             strLstNewVarLst(cfgOptionLst(cfgOptExclude)), backupStartResult.tablespaceList);
 
         // Validate the manifest using the copy start time

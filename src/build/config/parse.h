@@ -51,6 +51,8 @@ STRING_DECLARE(OPT_TYPE_TIME_STR);
 /***********************************************************************************************************************************
 Option constants
 ***********************************************************************************************************************************/
+#define OPT_BETA                                                    "beta"
+STRING_DECLARE(OPT_BETA_STR);
 #define OPT_STANZA                                                  "stanza"
 STRING_DECLARE(OPT_STANZA_STR);
 
@@ -118,6 +120,7 @@ struct BldCfgOption
     const String *type;                                             // Option type, e.g. integer
     const String *section;                                          // Option section, i.e. stanza or global
     bool internal;                                                  // Is the option internal?
+    bool beta;                                                      // Is the option beta?
     bool required;                                                  // Is the option required?
     bool negate;                                                    // Can the option be negated?
     bool reset;                                                     // Can the option be reset?

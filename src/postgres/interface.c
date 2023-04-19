@@ -38,7 +38,7 @@ STRING_STATIC(PG_PATH_PGXLOG_STR,                                   "pg_xlog");
 STRING_STATIC(PG_PATH_PGCLOG_STR,                                   "pg_clog");
 STRING_STATIC(PG_PATH_PGXACT_STR,                                   "pg_xact");
 
-// Lsn name used in functions depnding on version
+// Lsn name used in functions depending on version
 STRING_STATIC(PG_NAME_LSN_STR,                                      "lsn");
 STRING_STATIC(PG_NAME_LOCATION_STR,                                 "location");
 
@@ -111,7 +111,13 @@ pgInterfaceVersion(unsigned int pgVersion)
 
     // If the version was not found then error
     if (result == NULL)
-        THROW_FMT(AssertError, "invalid " PG_NAME " version %u", pgVersion);
+    {
+        THROW_FMT(
+            VersionNotSupportedError,
+            "invalid " PG_NAME " version %u\n"
+            "HINT: is this version of PostgreSQL supported?",
+            pgVersion);
+    }
 
     FUNCTION_TEST_RETURN_TYPE_CONST_P(PgInterface, result);
 }
@@ -172,10 +178,11 @@ pgWalSegmentSizeCheck(unsigned int pgVersion, unsigned int walSegmentSize)
 
 /**********************************************************************************************************************************/
 static PgControl
-pgControlFromBuffer(const Buffer *controlFile)
+pgControlFromBuffer(const Buffer *controlFile, const String *const pgVersionForce)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(BUFFER, controlFile);
+        FUNCTION_LOG_PARAM(STRING, pgVersionForce);
     FUNCTION_LOG_END();
 
     ASSERT(controlFile != NULL);
@@ -183,28 +190,35 @@ pgControlFromBuffer(const Buffer *controlFile)
     // Search for the version of PostgreSQL that uses this control file
     const PgInterface *interface = NULL;
 
-    for (unsigned int interfaceIdx = 0; interfaceIdx < LENGTH_OF(pgInterface); interfaceIdx++)
+    if (pgVersionForce != NULL)
+        interface = pgInterfaceVersion(pgVersionFromStr(pgVersionForce));
+    else
     {
-        if (pgInterface[interfaceIdx].controlIs(bufPtrConst(controlFile)))
+        for (unsigned int interfaceIdx = 0; interfaceIdx < LENGTH_OF(pgInterface); interfaceIdx++)
         {
-            interface = &pgInterface[interfaceIdx];
-            break;
+            if (pgInterface[interfaceIdx].controlIs(bufPtrConst(controlFile)))
+            {
+                interface = &pgInterface[interfaceIdx];
+                break;
+            }
+        }
+
+        // If the version was not found then error with the control and catalog version that were found
+        if (interface == NULL)
+        {
+            const PgControlCommon *controlCommon = (const PgControlCommon *)bufPtrConst(controlFile);
+
+            THROW_FMT(
+                VersionNotSupportedError,
+                "unexpected control version = %u and catalog version = %u\n"
+                "HINT: is this version of PostgreSQL supported?",
+                controlCommon->controlVersion, controlCommon->catalogVersion);
         }
     }
 
-    // If the version was not found then error with the control and catalog version that were found
-    if (interface == NULL)
-    {
-        const PgControlCommon *controlCommon = (const PgControlCommon *)bufPtrConst(controlFile);
-
-        THROW_FMT(
-            VersionNotSupportedError,
-            "unexpected control version = %u and catalog version = %u\n"
-            "HINT: is this version of PostgreSQL supported?",
-            controlCommon->controlVersion, controlCommon->catalogVersion);
-    }
-
     // Get info from the control file
+    ASSERT(pgVersionForce != NULL || interface->controlIs(bufPtrConst(controlFile)));
+
     PgControl result = interface->control(bufPtrConst(controlFile));
     result.version = interface->version;
 
@@ -219,10 +233,11 @@ pgControlFromBuffer(const Buffer *controlFile)
 }
 
 FN_EXTERN PgControl
-pgControlFromFile(const Storage *storage)
+pgControlFromFile(const Storage *storage, const String *const pgVersionForce)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storage);
+        FUNCTION_LOG_PARAM(STRING, pgVersionForce);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
@@ -235,7 +250,7 @@ pgControlFromFile(const Storage *storage)
         Buffer *controlFile = storageGetP(
             storageNewReadP(storage, STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)), .exactSize = PG_CONTROL_DATA_SIZE);
 
-        result = pgControlFromBuffer(controlFile);
+        result = pgControlFromBuffer(controlFile, pgVersionForce);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -267,10 +282,11 @@ typedef struct PgWalCommon
 
 /**********************************************************************************************************************************/
 FN_EXTERN PgWal
-pgWalFromBuffer(const Buffer *walBuffer)
+pgWalFromBuffer(const Buffer *walBuffer, const String *const pgVersionForce)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(BUFFER, walBuffer);
+        FUNCTION_LOG_PARAM(STRING, pgVersionForce);
     FUNCTION_LOG_END();
 
     ASSERT(walBuffer != NULL);
@@ -282,26 +298,33 @@ pgWalFromBuffer(const Buffer *walBuffer)
     // Search for the version of PostgreSQL that uses this WAL magic
     const PgInterface *interface = NULL;
 
-    for (unsigned int interfaceIdx = 0; interfaceIdx < LENGTH_OF(pgInterface); interfaceIdx++)
+    if (pgVersionForce != NULL)
+        interface = pgInterfaceVersion(pgVersionFromStr(pgVersionForce));
+    else
     {
-        if (pgInterface[interfaceIdx].walIs(bufPtrConst(walBuffer)))
+        for (unsigned int interfaceIdx = 0; interfaceIdx < LENGTH_OF(pgInterface); interfaceIdx++)
         {
-            interface = &pgInterface[interfaceIdx];
-            break;
+            if (pgInterface[interfaceIdx].walIs(bufPtrConst(walBuffer)))
+            {
+                interface = &pgInterface[interfaceIdx];
+                break;
+            }
+        }
+
+        // If the version was not found then error with the magic that was found
+        if (interface == NULL)
+        {
+            THROW_FMT(
+                VersionNotSupportedError,
+                "unexpected WAL magic %u\n"
+                "HINT: is this version of PostgreSQL supported?",
+                ((const PgWalCommon *)bufPtrConst(walBuffer))->magic);
         }
     }
 
-    // If the version was not found then error with the magic that was found
-    if (interface == NULL)
-    {
-        THROW_FMT(
-            VersionNotSupportedError,
-            "unexpected WAL magic %u\n"
-            "HINT: is this version of PostgreSQL supported?",
-            ((const PgWalCommon *)bufPtrConst(walBuffer))->magic);
-    }
-
     // Get info from the control file
+    ASSERT(pgVersionForce != NULL || interface->walIs(bufPtrConst(walBuffer)));
+
     PgWal result = interface->wal(bufPtrConst(walBuffer));
     result.version = interface->version;
 
@@ -312,10 +335,11 @@ pgWalFromBuffer(const Buffer *walBuffer)
 }
 
 FN_EXTERN PgWal
-pgWalFromFile(const String *walFile, const Storage *storage)
+pgWalFromFile(const String *walFile, const Storage *storage, const String *const pgVersionForce)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, walFile);
+        FUNCTION_LOG_PARAM(STRING, pgVersionForce);
     FUNCTION_LOG_END();
 
     ASSERT(walFile != NULL);
@@ -327,7 +351,7 @@ pgWalFromFile(const String *walFile, const Storage *storage)
         // Read WAL segment header
         Buffer *walBuffer = storageGetP(storageNewReadP(storage, walFile), .exactSize = PG_WAL_HEADER_SIZE);
 
-        result = pgWalFromBuffer(walBuffer);
+        result = pgWalFromBuffer(walBuffer, pgVersionForce);
     }
     MEM_CONTEXT_TEMP_END();
 

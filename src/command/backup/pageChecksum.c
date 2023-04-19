@@ -19,8 +19,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct PageChecksum
 {
-    MemContext *memContext;                                         // Mem context of filter
-
     unsigned int segmentPageTotal;                                  // Total pages in a segment
     unsigned int pageNoOffset;                                      // Page number offset for subsequent segments
     const String *fileName;                                         // Used to load the file to retry pages
@@ -159,12 +157,12 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
             // Create the error list if it does not exist yet
             if (this->error == NULL)
             {
-                MEM_CONTEXT_BEGIN(this->memContext)
+                MEM_CONTEXT_OBJ_BEGIN(this)
                 {
                     this->error = pckWriteNewP();
                     pckWriteArrayBeginP(this->error);
                 }
-                MEM_CONTEXT_END();
+                MEM_CONTEXT_OBJ_END();
             }
 
             // Add page number and lsn to the error list
@@ -194,7 +192,7 @@ pageChecksumResult(THIS_VOID)
 
     Pack *result = NULL;
 
-    MEM_CONTEXT_BEGIN(this->memContext)
+    MEM_CONTEXT_OBJ_BEGIN(this)
     {
         // End the error array
         if (this->error != NULL)
@@ -218,7 +216,7 @@ pageChecksumResult(THIS_VOID)
 
         result = pckMove(pckWriteResult(this->error), memContextPrior());
     }
-    MEM_CONTEXT_END();
+    MEM_CONTEXT_OBJ_END();
 
     FUNCTION_LOG_RETURN(PACK, result);
 }
@@ -233,44 +231,39 @@ pageChecksumNew(const unsigned int segmentNo, const unsigned int segmentPageTota
         FUNCTION_LOG_PARAM(STRING, fileName);
     FUNCTION_LOG_END();
 
-    IoFilter *this = NULL;
-
-    OBJ_NEW_BEGIN(PageChecksum, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(PageChecksum, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        PageChecksum *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::PageChecksum);
-
-        *driver = (PageChecksum)
+        *this = (PageChecksum)
         {
-            .memContext = memContextCurrent(),
             .segmentPageTotal = segmentPageTotal,
             .pageNoOffset = segmentNo * segmentPageTotal,
             .fileName = strDup(fileName),
-            .pageBuffer = memNew(PG_PAGE_SIZE_DEFAULT),
+            .pageBuffer = bufPtr(bufNew(PG_PAGE_SIZE_DEFAULT)),
             .valid = true,
             .align = true,
         };
-
-        // Create param list
-        Pack *paramList = NULL;
-
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            PackWrite *const packWrite = pckWriteNewP();
-
-            pckWriteU32P(packWrite, segmentNo);
-            pckWriteU32P(packWrite, segmentPageTotal);
-            pckWriteStrP(packWrite, fileName);
-            pckWriteEndP(packWrite);
-
-            paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
-        }
-        MEM_CONTEXT_TEMP_END();
-
-        this = ioFilterNewP(PAGE_CHECKSUM_FILTER_TYPE, driver, paramList, .in = pageChecksumProcess, .result = pageChecksumResult);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_FILTER, this);
+    // Create param list
+    Pack *paramList = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackWrite *const packWrite = pckWriteNewP();
+
+        pckWriteU32P(packWrite, segmentNo);
+        pckWriteU32P(packWrite, segmentPageTotal);
+        pckWriteStrP(packWrite, fileName);
+        pckWriteEndP(packWrite);
+
+        paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(
+        IO_FILTER,
+        ioFilterNewP(PAGE_CHECKSUM_FILTER_TYPE, this, paramList, .in = pageChecksumProcess, .result = pageChecksumResult));
 }
 
 FN_EXTERN IoFilter *

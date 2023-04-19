@@ -124,12 +124,12 @@
                      "P00   INFO: test begin on x86_64 - log level info",
                      "P00   INFO: clean autogenerate code",
                      "P00   INFO: builds required: bin",
-                     "P00   INFO: 76 tests selected",
+                     "P00   INFO: 77 tests selected",
                      "            ",
-                     "P00   INFO: P1-T01/76 - vm=none, module=common, test=error",
-                     "       [filtered 73 lines of output]",
-                     "P00   INFO: P1-T75/76 - vm=none, module=performance, test=type",
-                     "P00   INFO: P1-T76/76 - vm=none, module=performance, test=storage",
+                     "P00   INFO: P1-T01/77 - vm=none, module=common, test=error",
+                     "       [filtered 74 lines of output]",
+                     "P00   INFO: P1-T76/77 - vm=none, module=performance, test=type",
+                     "P00   INFO: P1-T77/77 - vm=none, module=performance, test=storage",
                      "P00   INFO: DRY RUN COMPLETED SUCCESSFULLY"
                   ]
                }
@@ -160,35 +160,35 @@
                      "            ",
                      "P00   INFO: P1-T1/1 - vm=none, module=common, test=wait",
                      "            ",
-                     "    2023-01-30 01:43:50.109 P00   INFO: test command begin 2.44: [common/wait] --log-level=info --repo-path=/home/vagrant/test/repo --test-path=/home/vagrant/test --vm=none --vm-id=0",
-                     "    2023-01-30 01:43:52.582 P00   INFO: test command end: completed successfully (2474ms)",
+                     "    2023-03-20 00:52:17.889 P00   INFO: test command begin 2.45: [common/wait] --log-level=info --repo-path=/home/vagrant/test/repo --test-path=/home/vagrant/test --vm=none --vm-id=0",
+                     "    2023-03-20 00:52:20.376 P00   INFO: test command end: completed successfully (2487ms)",
                      "    run 1 - waitNew(), waitMore, and waitFree()",
                      "        000.009s          L0018     expect AssertError: assertion 'waitTime <= 999999000' failed",
                      "    ",
                      "    run 1/1 ------------- L0021 0ms wait",
-                     "        001.806s 001.797s L0025     new wait",
-                     "        001.817s 000.011s L0026         check remaining time",
-                     "        001.819s 000.002s L0027         check wait time",
-                     "        001.820s 000.001s L0028         check sleep time",
-                     "        001.821s 000.001s L0029         check sleep prev time",
-                     "        001.821s 000.000s L0030         no wait more",
-                     "        001.827s 000.006s L0033     new wait = 0.2 sec",
-                     "        001.828s 000.001s L0034         check remaining time",
-                     "        001.829s 000.001s L0035         check wait time",
-                     "        001.830s 000.001s L0036         check sleep time",
-                     "        001.831s 000.001s L0037         check sleep prev time",
-                     "        001.832s 000.001s L0038         check begin time",
-                     "        002.030s 000.198s L0044         lower range check",
-                     "        002.031s 000.001s L0045         upper range check",
-                     "        002.032s 000.001s L0047         free wait",
-                     "        002.034s 000.002s L0052     new wait = 1.1 sec",
-                     "        002.035s 000.001s L0053         check wait time",
-                     "        002.036s 000.001s L0054         check sleep time",
-                     "        002.037s 000.001s L0055         check sleep prev time",
-                     "        002.038s 000.001s L0056         check begin time",
-                     "        003.137s 001.099s L0062         lower range check",
-                     "        003.138s 000.001s L0063         upper range check",
-                     "        003.139s 000.001s L0065         free wait",
+                     "        001.775s 001.766s L0025     new wait",
+                     "        001.785s 000.010s L0026         check remaining time",
+                     "        001.786s 000.001s L0027         check wait time",
+                     "        001.787s 000.001s L0028         check sleep time",
+                     "        001.788s 000.001s L0029         check sleep prev time",
+                     "        001.789s 000.001s L0030         no wait more",
+                     "        001.794s 000.005s L0033     new wait = 0.2 sec",
+                     "        001.795s 000.001s L0034         check remaining time",
+                     "        001.796s 000.001s L0035         check wait time",
+                     "        001.797s 000.001s L0036         check sleep time",
+                     "        001.798s 000.001s L0037         check sleep prev time",
+                     "        001.798s 000.000s L0038         check begin time",
+                     "        001.997s 000.199s L0044         lower range check",
+                     "        001.998s 000.001s L0045         upper range check",
+                     "        001.999s 000.001s L0047         free wait",
+                     "        002.000s 000.001s L0052     new wait = 1.1 sec",
+                     "        002.002s 000.002s L0053         check wait time",
+                     "        002.002s 000.000s L0054         check sleep time",
+                     "        002.003s 000.001s L0055         check sleep prev time",
+                     "        002.004s 000.001s L0056         check begin time",
+                     "        003.102s 001.098s L0062         lower range check",
+                     "        003.103s 000.001s L0063         upper range check",
+                     "        003.103s 000.000s L0065         free wait",
                      "    ",
                      "    TESTS COMPLETED SUCCESSFULLY",
                      "",
@@ -336,7 +336,7 @@
                "key" : {
                   "bash-wrap" : true,
                   "cmd" : [
-                     "sudo mkdir -p /build/pgbackrest-release-2.44"
+                     "sudo mkdir -p /build/pgbackrest-release-2.45"
                   ],
                   "host" : "build",
                   "load-env" : true,
@@ -349,7 +349,7 @@
                "key" : {
                   "bash-wrap" : true,
                   "cmd" : [
-                     "sudo cp -r /pgbackrest/src /build/pgbackrest-release-2.44"
+                     "sudo cp -r /pgbackrest/src /build/pgbackrest-release-2.45"
                   ],
                   "host" : "build",
                   "load-env" : true,
@@ -362,7 +362,7 @@
                "key" : {
                   "bash-wrap" : true,
                   "cmd" : [
-                     "sudo chown -R vagrant /build/pgbackrest-release-2.44"
+                     "sudo chown -R vagrant /build/pgbackrest-release-2.45"
                   ],
                   "host" : "build",
                   "load-env" : true,
@@ -403,7 +403,7 @@
                "key" : {
                   "bash-wrap" : true,
                   "cmd" : [
-                     "cd /build/pgbackrest-release-2.44/src && ./configure && make"
+                     "cd /build/pgbackrest-release-2.45/src && ./configure && make"
                   ],
                   "cmd-extra" : "-j 4",
                   "host" : "build",
@@ -445,7 +445,7 @@
                "key" : {
                   "bash-wrap" : true,
                   "cmd" : [
-                     "sudo scp build:/build/pgbackrest-release-2.44/src/pgbackrest /usr/bin"
+                     "sudo scp build:/build/pgbackrest-release-2.45/src/pgbackrest /usr/bin"
                   ],
                   "cmd-extra" : "2>&1",
                   "host" : "pg-primary",
@@ -573,7 +573,7 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "pgBackRest 2.44 - General help",
+                     "pgBackRest 2.45 - General help",
                      "",
                      "Usage:",
                      "    pgbackrest [options] [command]",
@@ -702,7 +702,7 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "pgBackRest 2.44 - 'backup' command - 'log-path' option help",
+                     "pgBackRest 2.45 - 'backup' command - 'log-path' option help",
                      "",
                      "Path where log files are stored.",
                      "",
@@ -962,7 +962,7 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "P00   INFO: stanza-create command begin 2.44: --exec-id=469-b3a94606 --log-level-console=info --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/postgresql/12/demo --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --stanza=demo",
+                     "P00   INFO: stanza-create command begin 2.45: --exec-id=461-20763562 --log-level-console=info --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/postgresql/12/demo --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --stanza=demo",
                      "P00   INFO: stanza-create for stanza 'demo' on repo1",
                      "P00   INFO: stanza-create command end: completed successfully"
                   ]
@@ -989,10 +989,10 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "P00   INFO: check command begin 2.44: --exec-id=480-cde66738 --log-level-console=info --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/postgresql/12/demo --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --stanza=demo",
+                     "P00   INFO: check command begin 2.45: --exec-id=470-f6bb199c --log-level-console=info --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/postgresql/12/demo --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --stanza=demo",
                      "P00   INFO: check repo1 configuration (primary)",
                      "P00   INFO: check repo1 archive for WAL (primary)",
-                     "P00   INFO: WAL segment 000000010000000000000001 successfully archived to '/var/lib/pgbackrest/archive/demo/12-1/0000000100000000/000000010000000000000001-d08eea2d2a0873b4266c8e67db82e371871d341f.gz' on repo1",
+                     "P00   INFO: WAL segment 000000010000000000000001 successfully archived to '/var/lib/pgbackrest/archive/demo/12-1/0000000100000000/000000010000000000000001-3419e8be05f6bb0af685b36c577fea3da4ff3631.gz' on repo1",
                      "P00   INFO: check command end: completed successfully"
                   ]
                }
@@ -1049,16 +1049,16 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "P00   INFO: backup command begin 2.44: --exec-id=511-ac81e5d0 --log-level-console=info --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/postgresql/12/demo --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --repo1-retention-full=2 --stanza=demo --start-fast",
+                     "P00   INFO: backup command begin 2.45: --exec-id=501-a56c6229 --log-level-console=info --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/postgresql/12/demo --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --repo1-retention-full=2 --stanza=demo --start-fast",
                      "P00   WARN: no prior backup exists, incr backup has been changed to full",
                      "P00   INFO: execute non-exclusive backup start: backup begins after the requested immediate checkpoint completes",
                      "P00   INFO: backup start archive = 000000010000000000000002, lsn = 0/2000028",
                      "       [filtered 3 lines of output]",
                      "P00   INFO: check archive for segment(s) 000000010000000000000002:000000010000000000000003",
-                     "P00   INFO: new backup label = 20230130-013750F",
+                     "P00   INFO: new backup label = 20230320-004616F",
                      "P00   INFO: full backup size = 23.4MB, file total = 976",
                      "P00   INFO: backup command end: completed successfully",
-                     "P00   INFO: expire command begin 2.44: --exec-id=511-ac81e5d0 --log-level-console=info --log-level-stderr=off --no-log-timestamp --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --repo1-retention-full=2 --stanza=demo"
+                     "P00   INFO: expire command begin 2.45: --exec-id=501-a56c6229 --log-level-console=info --log-level-stderr=off --no-log-timestamp --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --repo1-retention-full=2 --stanza=demo"
                   ]
                }
             },
@@ -1076,7 +1076,7 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "20230130-013750F"
+                     "20230320-004616F"
                   ]
                }
             },
@@ -1104,10 +1104,10 @@
                   "output" : [
                      "       [filtered 7 lines of output]",
                      "P00   INFO: check archive for segment(s) 000000010000000000000004:000000010000000000000005",
-                     "P00   INFO: new backup label = 20230130-013750F_20230130-013754D",
+                     "P00   INFO: new backup label = 20230320-004616F_20230320-004619D",
                      "P00   INFO: diff backup size = 8.3KB, file total = 976",
                      "P00   INFO: backup command end: completed successfully",
-                     "P00   INFO: expire command begin 2.44: --exec-id=540-7615dcd2 --log-level-console=info --log-level-stderr=off --no-log-timestamp --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --repo1-retention-full=2 --stanza=demo"
+                     "P00   INFO: expire command begin 2.45: --exec-id=530-b1b606e2 --log-level-console=info --log-level-stderr=off --no-log-timestamp --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --repo1-retention-full=2 --stanza=demo"
                   ]
                }
             },
@@ -1139,18 +1139,18 @@
                      "    db (current)",
                      "        wal archive min/max (12): 000000010000000000000001/000000010000000000000005",
                      "",
-                     "        full backup: 20230130-013750F",
-                     "            timestamp start/stop: 2023-01-30 01:37:50 / 2023-01-30 01:37:53",
+                     "        full backup: 20230320-004616F",
+                     "            timestamp start/stop: 2023-03-20 00:46:16 / 2023-03-20 00:46:18",
                      "            wal start/stop: 000000010000000000000002 / 000000010000000000000003",
                      "            database size: 23.4MB, database backup size: 23.4MB",
                      "            repo1: backup set size: 2.8MB, backup size: 2.8MB",
                      "",
-                     "        diff backup: 20230130-013750F_20230130-013754D",
-                     "            timestamp start/stop: 2023-01-30 01:37:54 / 2023-01-30 01:37:56",
+                     "        diff backup: 20230320-004616F_20230320-004619D",
+                     "            timestamp start/stop: 2023-03-20 00:46:19 / 2023-03-20 00:46:21",
                      "            wal start/stop: 000000010000000000000004 / 000000010000000000000005",
                      "            database size: 23.4MB, database backup size: 8.3KB",
-                     "            repo1: backup set size: 2.8MB, backup size: 496B",
-                     "            backup reference list: 20230130-013750F"
+                     "            repo1: backup set size: 2.8MB, backup size: 480B",
+                     "            backup reference list: 20230320-004616F"
                   ]
                }
             },
@@ -1403,7 +1403,7 @@
                   "output" : [
                      "  name  | last_successful_backup |    last_archived_wal     ",
                      "--------+------------------------+--------------------------",
-                     " \"demo\" | 2023-01-30 01:37:56+00 | 000000010000000000000005",
+                     " \"demo\" | 2023-03-20 00:46:21+00 | 000000010000000000000006",
                      "(1 row)"
                   ]
                }
@@ -1437,7 +1437,7 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "1675042676"
+                     "1679273181"
                   ]
                }
             },
@@ -1456,7 +1456,7 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "\"000000010000000000000005\""
+                     "\"000000010000000000000006\""
                   ]
                }
             },
@@ -1524,6 +1524,42 @@
             },
             {
                "key" : {
+                  "file" : "/etc/pgbackrest/pgbackrest.conf",
+                  "host" : "pg-primary",
+                  "option" : {
+                     "global" : {
+                        "beta" : {
+                           "value" : "y"
+                        },
+                        "repo1-block" : {
+                           "value" : "y"
+                        }
+                     }
+                  }
+               },
+               "type" : "cfg-pgbackrest",
+               "value" : {
+                  "config" : [
+                     "[demo]",
+                     "pg1-path=/var/lib/postgresql/12/demo",
+                     "",
+                     "[global]",
+                     "beta=y",
+                     "repo1-block=y",
+                     "repo1-bundle=y",
+                     "repo1-cipher-pass=zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO",
+                     "repo1-cipher-type=aes-256-cbc",
+                     "repo1-path=/var/lib/pgbackrest",
+                     "repo1-retention-full=2",
+                     "start-fast=y",
+                     "",
+                     "[global:archive-push]",
+                     "compress-level=3"
+                  ]
+               }
+            },
+            {
+               "key" : {
                   "bash-wrap" : true,
                   "cmd" : [
                      "sudo -u postgres pgbackrest --stanza=demo --annotation=source=\"demo backup\" \\",
@@ -1550,7 +1586,7 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "20230130-013814F"
+                     "20230320-004637F"
                   ]
                }
             },
@@ -1558,7 +1594,7 @@
                "key" : {
                   "bash-wrap" : true,
                   "cmd" : [
-                     "sudo -u postgres pgbackrest --stanza=demo --set=20230130-013814F info"
+                     "sudo -u postgres pgbackrest --stanza=demo --set=20230320-004637F info"
                   ],
                   "highlight" : {
                      "filter" : false,
@@ -1580,14 +1616,14 @@
                      "    cipher: aes-256-cbc",
                      "",
                      "    db (current)",
-                     "        wal archive min/max (12): 000000020000000000000007/000000020000000000000009",
+                     "        wal archive min/max (12): 000000020000000000000008/00000002000000000000000A",
                      "",
-                     "        full backup: 20230130-013814F",
-                     "            timestamp start/stop: 2023-01-30 01:38:14 / 2023-01-30 01:38:16",
-                     "            wal start/stop: 000000020000000000000008 / 000000020000000000000009",
-                     "            lsn start/stop: 0/8000028 / 0/9000050",
+                     "        full backup: 20230320-004637F",
+                     "            timestamp start/stop: 2023-03-20 00:46:37 / 2023-03-20 00:46:40",
+                     "            wal start/stop: 000000020000000000000009 / 00000002000000000000000A",
+                     "            lsn start/stop: 0/9000028 / 0/A000088",
                      "            database size: 23.4MB, database backup size: 23.4MB",
-                     "            repo1: backup set size: 2.8MB, backup size: 2.8MB",
+                     "            repo1: backup size: 2.8MB",
                      "            database list: postgres (13398)",
                      "            annotation(s)",
                      "                key: value",
@@ -1599,7 +1635,7 @@
                "key" : {
                   "bash-wrap" : true,
                   "cmd" : [
-                     "sudo -u postgres pgbackrest --stanza=demo --set=20230130-013814F \\",
+                     "sudo -u postgres pgbackrest --stanza=demo --set=20230320-004637F \\",
                      "    --annotation=key= --annotation=new_key=new_value annotate"
                   ],
                   "host" : "pg-primary",
@@ -1613,7 +1649,7 @@
                "key" : {
                   "bash-wrap" : true,
                   "cmd" : [
-                     "sudo -u postgres pgbackrest --stanza=demo --set=20230130-013814F info"
+                     "sudo -u postgres pgbackrest --stanza=demo --set=20230320-004637F info"
                   ],
                   "highlight" : {
                      "filter" : false,
@@ -1635,14 +1671,14 @@
                      "    cipher: aes-256-cbc",
                      "",
                      "    db (current)",
-                     "        wal archive min/max (12): 000000020000000000000007/000000020000000000000009",
+                     "        wal archive min/max (12): 000000020000000000000008/00000002000000000000000A",
                      "",
-                     "        full backup: 20230130-013814F",
-                     "            timestamp start/stop: 2023-01-30 01:38:14 / 2023-01-30 01:38:16",
-                     "            wal start/stop: 000000020000000000000008 / 000000020000000000000009",
-                     "            lsn start/stop: 0/8000028 / 0/9000050",
+                     "        full backup: 20230320-004637F",
+                     "            timestamp start/stop: 2023-03-20 00:46:37 / 2023-03-20 00:46:40",
+                     "            wal start/stop: 000000020000000000000009 / 00000002000000000000000A",
+                     "            lsn start/stop: 0/9000028 / 0/A000088",
                      "            database size: 23.4MB, database backup size: 23.4MB",
-                     "            repo1: backup set size: 2.8MB, backup size: 2.8MB",
+                     "            repo1: backup size: 2.8MB",
                      "            database list: postgres (13398)",
                      "            annotation(s)",
                      "                new_key: new_value",
@@ -1669,6 +1705,8 @@
                      "pg1-path=/var/lib/postgresql/12/demo",
                      "",
                      "[global]",
+                     "beta=y",
+                     "repo1-block=y",
                      "repo1-bundle=y",
                      "repo1-cipher-pass=zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO",
                      "repo1-cipher-type=aes-256-cbc",
@@ -1692,7 +1730,7 @@
                      "filter" : true,
                      "filter-context" : 2,
                      "list" : [
-                        "archive retention on backup 20230130-013750F|remove archive"
+                        "archive retention on backup 20230320-004616F|remove archive"
                      ]
                   },
                   "host" : "pg-primary",
@@ -1704,9 +1742,9 @@
                "value" : {
                   "output" : [
                      "       [filtered 988 lines of output]",
-                     "P00   INFO: repo1: remove expired backup 20230130-013810F",
-                     "P00 DETAIL: repo1: 12-1 archive retention on backup 20230130-013814F, start = 000000020000000000000008",
-                     "P00   INFO: repo1: 12-1 remove archive, start = 000000020000000000000007, stop = 000000020000000000000007",
+                     "P00   INFO: repo1: remove expired backup 20230320-004634F",
+                     "P00 DETAIL: repo1: 12-1 archive retention on backup 20230320-004637F, start = 000000020000000000000009",
+                     "P00   INFO: repo1: 12-1 remove archive, start = 000000020000000000000008, stop = 000000020000000000000008",
                      "P00   INFO: expire command end: completed successfully"
                   ]
                }
@@ -1725,7 +1763,7 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "20230130-013818F"
+                     "20230320-004642F"
                   ]
                }
             },
@@ -1740,7 +1778,7 @@
                      "filter" : true,
                      "filter-context" : 2,
                      "list" : [
-                        "expire full backup set 20230130-013750F|archive retention on backup 20230130-013818F|remove archive"
+                        "expire full backup set 20230320-004616F|archive retention on backup 20230320-004642F|remove archive"
                      ]
                   },
                   "host" : "pg-primary",
@@ -1752,9 +1790,9 @@
                "value" : {
                   "output" : [
                      "       [filtered 11 lines of output]",
-                     "P00   INFO: repo1: expire full backup 20230130-013814F",
-                     "P00   INFO: repo1: remove expired backup 20230130-013814F",
-                     "P00   INFO: repo1: 12-1 remove archive, start = 000000020000000000000008, stop = 000000020000000000000009",
+                     "P00   INFO: repo1: expire full backup 20230320-004637F",
+                     "P00   INFO: repo1: remove expired backup 20230320-004637F",
+                     "P00   INFO: repo1: 12-1 remove archive, start = 000000020000000000000009, stop = 00000002000000000000000A",
                      "P00   INFO: expire command end: completed successfully"
                   ]
                }
@@ -1778,6 +1816,8 @@
                      "pg1-path=/var/lib/postgresql/12/demo",
                      "",
                      "[global]",
+                     "beta=y",
+                     "repo1-block=y",
                      "repo1-bundle=y",
                      "repo1-cipher-pass=zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO",
                      "repo1-cipher-type=aes-256-cbc",
@@ -1818,7 +1858,7 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "20230130-013822F_20230130-013826D"
+                     "20230320-004646F_20230320-004650D"
                   ]
                }
             },
@@ -1846,7 +1886,7 @@
                      "filter" : true,
                      "filter-context" : 2,
                      "list" : [
-                        "expire diff backup set 20230130-013822F_20230130-013826D"
+                        "expire diff backup set 20230320-004646F_20230320-004650D"
                      ]
                   },
                   "host" : "pg-primary",
@@ -1859,10 +1899,10 @@
                   "output" : [
                      "       [filtered 10 lines of output]",
                      "P00   INFO: backup command end: completed successfully",
-                     "P00   INFO: expire command begin 2.44: --exec-id=1048-216e862d --log-level-console=info --log-level-stderr=off --no-log-timestamp --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --repo1-retention-diff=1 --repo1-retention-full=2 --stanza=demo",
-                     "P00   INFO: repo1: expire diff backup set 20230130-013822F_20230130-013826D, 20230130-013822F_20230130-013829I",
-                     "P00   INFO: repo1: remove expired backup 20230130-013822F_20230130-013829I",
-                     "P00   INFO: repo1: remove expired backup 20230130-013822F_20230130-013826D",
+                     "P00   INFO: expire command begin 2.45: --beta --exec-id=1064-390f525f --log-level-console=info --log-level-stderr=off --no-log-timestamp --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --repo1-retention-diff=1 --repo1-retention-full=2 --stanza=demo",
+                     "P00   INFO: repo1: expire diff backup set 20230320-004646F_20230320-004650D, 20230320-004646F_20230320-004653I",
+                     "P00   INFO: repo1: remove expired backup 20230320-004646F_20230320-004653I",
+                     "P00   INFO: repo1: remove expired backup 20230320-004646F_20230320-004650D",
                      "P00   INFO: expire command end: completed successfully"
                   ]
                }
@@ -1886,6 +1926,8 @@
                      "pg1-path=/var/lib/postgresql/12/demo",
                      "",
                      "[global]",
+                     "beta=y",
+                     "repo1-block=y",
                      "repo1-bundle=y",
                      "repo1-cipher-pass=zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO",
                      "repo1-cipher-type=aes-256-cbc",
@@ -1913,7 +1955,7 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "20230130-013822F_20230130-013832D"
+                     "20230320-004646F_20230320-004655D"
                   ]
                }
             },
@@ -1955,9 +1997,9 @@
                "value" : {
                   "output" : [
                      "       [filtered 6 lines of output]",
-                     "P00   INFO: backup stop archive = 000000020000000000000017, lsn = 0/17000050",
-                     "P00   INFO: check archive for segment(s) 000000020000000000000016:000000020000000000000017",
-                     "P00   INFO: new backup label = 20230130-013822F_20230130-013836D",
+                     "P00   INFO: backup stop archive = 000000020000000000000018, lsn = 0/18000050",
+                     "P00   INFO: check archive for segment(s) 000000020000000000000017:000000020000000000000018",
+                     "P00   INFO: new backup label = 20230320-004646F_20230320-004658D",
                      "P00   INFO: diff backup size = 8.3KB, file total = 976",
                      "P00   INFO: backup command end: completed successfully",
                      "       [filtered 2 lines of output]"
@@ -1978,7 +2020,7 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "20230130-013822F_20230130-013836D"
+                     "20230320-004646F_20230320-004658D"
                   ]
                }
             },
@@ -1993,7 +2035,7 @@
                      "filter" : true,
                      "filter-context" : 2,
                      "list" : [
-                        "archive retention on backup 20230130-013822F_20230130-013832D|remove archive"
+                        "archive retention on backup 20230320-004646F_20230320-004655D|remove archive"
                      ]
                   },
                   "host" : "pg-primary",
@@ -2004,13 +2046,13 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "P00   INFO: expire command begin 2.44: --exec-id=1137-1594a29d --log-level-console=detail --log-level-stderr=off --no-log-timestamp --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --repo1-retention-archive=1 --repo1-retention-archive-type=diff --repo1-retention-diff=2 --repo1-retention-full=2 --stanza=demo",
-                     "P00 DETAIL: repo1: 12-1 archive retention on backup 20230130-013818F, start = 00000002000000000000000A, stop = 00000002000000000000000B",
-                     "P00 DETAIL: repo1: 12-1 archive retention on backup 20230130-013822F, start = 00000002000000000000000C, stop = 00000002000000000000000D",
-                     "P00 DETAIL: repo1: 12-1 archive retention on backup 20230130-013822F_20230130-013832D, start = 000000020000000000000012, stop = 000000020000000000000013",
-                     "P00 DETAIL: repo1: 12-1 archive retention on backup 20230130-013822F_20230130-013836D, start = 000000020000000000000016",
-                     "P00   INFO: repo1: 12-1 remove archive, start = 00000002000000000000000E, stop = 000000020000000000000011",
-                     "P00   INFO: repo1: 12-1 remove archive, start = 000000020000000000000014, stop = 000000020000000000000015",
+                     "P00   INFO: expire command begin 2.45: --beta --exec-id=1154-d420cced --log-level-console=detail --log-level-stderr=off --no-log-timestamp --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --repo1-retention-archive=1 --repo1-retention-archive-type=diff --repo1-retention-diff=2 --repo1-retention-full=2 --stanza=demo",
+                     "P00 DETAIL: repo1: 12-1 archive retention on backup 20230320-004642F, start = 00000002000000000000000B, stop = 00000002000000000000000C",
+                     "P00 DETAIL: repo1: 12-1 archive retention on backup 20230320-004646F, start = 00000002000000000000000D, stop = 00000002000000000000000E",
+                     "P00 DETAIL: repo1: 12-1 archive retention on backup 20230320-004646F_20230320-004655D, start = 000000020000000000000014, stop = 000000020000000000000014",
+                     "P00 DETAIL: repo1: 12-1 archive retention on backup 20230320-004646F_20230320-004658D, start = 000000020000000000000017",
+                     "P00   INFO: repo1: 12-1 remove archive, start = 00000002000000000000000F, stop = 000000020000000000000013",
+                     "P00   INFO: repo1: 12-1 remove archive, start = 000000020000000000000015, stop = 000000020000000000000016",
                      "P00   INFO: expire command end: completed successfully"
                   ]
                }
@@ -2056,13 +2098,13 @@
                      "P00   INFO: remove invalid files/links/paths from '/var/lib/postgresql/12/demo'",
                      "P00 DETAIL: remove invalid file '/var/lib/postgresql/12/demo/backup_label.old'",
                      "P00 DETAIL: remove invalid file '/var/lib/postgresql/12/demo/base/1/pg_internal.init'",
-                     "       [filtered 780 lines of output]",
-                     "P01 DETAIL: restore file /var/lib/postgresql/12/demo/base/1/113 - exists and matches backup (bundle 20230130-013822F/1/2542304, 8KB, 84.61%) checksum 86dec5ef018cbb5c309803e5d6adcaac23a1550a",
-                     "P01 DETAIL: restore file /var/lib/postgresql/12/demo/base/1/112 - exists and matches backup (bundle 20230130-013822F/1/2542416, 8KB, 84.64%) checksum 3e866c6a5eea1caf52cf417df33f238220897dcf",
-                     "P01 DETAIL: restore file /var/lib/postgresql/12/demo/PG_VERSION - exists and matches backup (bundle 20230130-013822F/1/2542528, 3B, 84.64%) checksum ad552e6dc057d1d825bf49df79d6b98eba846ebe",
-                     "P01 DETAIL: restore file /var/lib/postgresql/12/demo/base/13398/2608_vm - exists and matches backup (bundle 20230130-013822F/1/2542576, 8KB, 84.67%) checksum ce988216f13da4831ffe894b8dbb3cde7fa1d0e4",
-                     "P01 DETAIL: restore file /var/lib/postgresql/12/demo/postgresql.auto.conf - exists and matches backup (bundle 20230130-013822F/1/2542672, 229B, 84.67%) checksum 64387f6b9cf8adbad1c08da4d5a2941e05841f5a",
-                     "       [filtered 238 lines of output]"
+                     "       [filtered 194 lines of output]",
+                     "P01 DETAIL: restore file /var/lib/postgresql/12/demo/base/1/113 - exists and matches backup (bundle 20230320-004646F/1/920781, 8KB, 27.76%) checksum 86dec5ef018cbb5c309803e5d6adcaac23a1550a",
+                     "P01 DETAIL: restore file /var/lib/postgresql/12/demo/base/1/112 - exists and matches backup (bundle 20230320-004646F/1/920869, 8KB, 27.79%) checksum 3e866c6a5eea1caf52cf417df33f238220897dcf",
+                     "P01 DETAIL: restore file /var/lib/postgresql/12/demo/PG_VERSION - exists and matches backup (bundle 20230320-004646F/1/920957, 3B, 27.79%) checksum ad552e6dc057d1d825bf49df79d6b98eba846ebe",
+                     "P01 DETAIL: restore file /var/lib/postgresql/12/demo/global/6115 - exists and matches backup (bundle 20230320-004646F/1/920981, 8KB, 27.83%) checksum 55f8977d3ef43e9987839954a5c54bd1197a05dd",
+                     "P01 DETAIL: restore file /var/lib/postgresql/12/demo/global/6114 - exists and matches backup (bundle 20230320-004646F/1/921069, 8KB, 27.86%) checksum 16a3ad209caa20287ee8f223a64a2589228a205e",
+                     "       [filtered 824 lines of output]"
                   ]
                }
             },
@@ -2229,7 +2271,7 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "20230130-013822F_20230130-013846I"
+                     "20230320-004646F_20230320-004707I"
                   ]
                }
             },
@@ -2238,7 +2280,7 @@
                   "bash-wrap" : true,
                   "cmd" : [
                      "sudo -u postgres pgbackrest --stanza=demo \\",
-                     "    --set=20230130-013822F_20230130-013846I info"
+                     "    --set=20230320-004646F_20230320-004707I info"
                   ],
                   "highlight" : {
                      "filter" : true,
@@ -2256,8 +2298,8 @@
                "value" : {
                   "output" : [
                      "       [filtered 12 lines of output]",
-                     "            repo1: backup set size: 4.7MB, backup size: 1.9MB",
-                     "            backup reference list: 20230130-013822F, 20230130-013822F_20230130-013836D",
+                     "            repo1: backup size: 1.9MB",
+                     "            backup reference list: 20230320-004646F, 20230320-004646F_20230320-004658D",
                      "            database list: postgres (13398), test1 (32768), test2 (32769)"
                   ]
                }
@@ -2501,7 +2543,7 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "2023-01-30 01:39:00.325554+00"
+                     "2023-03-20 00:47:20.278871+00"
                   ]
                }
             },
@@ -2567,7 +2609,7 @@
                   "bash-wrap" : true,
                   "cmd" : [
                      "sudo -u postgres pgbackrest --stanza=demo --delta \\",
-                     "    --type=time \"--target=2023-01-30 01:39:00.325554+00\" \\",
+                     "    --type=time \"--target=2023-03-20 00:47:20.278871+00\" \\",
                      "    --target-action=promote restore"
                   ],
                   "host" : "pg-primary",
@@ -2612,13 +2654,13 @@
                "value" : {
                   "output" : [
                      "       [filtered 11 lines of output]",
-                     "# Removed by pgBackRest restore on 2023-01-30 01:39:02 # recovery_target = 'immediate'",
-                     "# Removed by pgBackRest restore on 2023-01-30 01:39:02 # recovery_target_action = 'promote'",
-                     "# Removed by pgBackRest restore on 2023-01-30 01:39:02 # recovery_target_timeline = 'current'",
+                     "# Removed by pgBackRest restore on 2023-03-20 00:47:22 # recovery_target = 'immediate'",
+                     "# Removed by pgBackRest restore on 2023-03-20 00:47:22 # recovery_target_action = 'promote'",
+                     "# Removed by pgBackRest restore on 2023-03-20 00:47:22 # recovery_target_timeline = 'current'",
                      "",
-                     "# Recovery settings generated by pgBackRest restore on 2023-01-30 01:39:02",
+                     "# Recovery settings generated by pgBackRest restore on 2023-03-20 00:47:22",
                      "restore_command = 'pgbackrest --stanza=demo archive-get %f \"%p\"'",
-                     "recovery_target_time = '2023-01-30 01:39:00.325554+00'",
+                     "recovery_target_time = '2023-03-20 00:47:20.278871+00'",
                      "recovery_target_action = 'promote'"
                   ]
                }
@@ -2700,16 +2742,16 @@
                   "output" : [
                      "       [filtered 3 lines of output]",
                      "LOG:  listening on Unix socket \"/var/run/postgresql/.s.PGSQL.5432\"",
-                     "LOG:  database system was interrupted; last known up at 2023-01-30 01:38:56 UTC",
-                     "LOG:  starting point-in-time recovery to 2023-01-30 01:39:00.325554+00",
+                     "LOG:  database system was interrupted; last known up at 2023-03-20 00:47:17 UTC",
+                     "LOG:  starting point-in-time recovery to 2023-03-20 00:47:20.278871+00",
                      "LOG:  restored log file \"00000004.history\" from archive",
-                     "LOG:  restored log file \"00000004000000000000001A\" from archive",
+                     "LOG:  restored log file \"00000004000000000000001B\" from archive",
                      "       [filtered 2 lines of output]",
                      "LOG:  database system is ready to accept read only connections",
-                     "LOG:  restored log file \"00000004000000000000001B\" from archive",
-                     "LOG:  recovery stopping before commit of transaction 496, time 2023-01-30 01:39:01.738974+00",
-                     "LOG:  redo done at 0/1B019E88",
-                     "LOG:  last completed transaction was at log time 2023-01-30 01:38:58.960913+00",
+                     "LOG:  restored log file \"00000004000000000000001C\" from archive",
+                     "LOG:  recovery stopping before commit of transaction 496, time 2023-03-20 00:47:21.633932+00",
+                     "LOG:  redo done at 0/1C019E88",
+                     "LOG:  last completed transaction was at log time 2023-03-20 00:47:18.896381+00",
                      "LOG:  selected new timeline ID: 5",
                      "LOG:  archive recovery complete",
                      "       [filtered 2 lines of output]"
@@ -2774,7 +2816,7 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "20230130-013822F_20230130-013909I"
+                     "20230320-004646F_20230320-004728I"
                   ]
                }
             },
@@ -2788,7 +2830,7 @@
                      "filter" : false,
                      "filter-context" : 2,
                      "list" : [
-                        "20230130-013822F_20230130-013909I"
+                        "20230320-004646F_20230320-004728I"
                      ]
                   },
                   "host" : "pg-primary",
@@ -2804,47 +2846,47 @@
                      "    cipher: aes-256-cbc",
                      "",
                      "    db (current)",
-                     "        wal archive min/max (12): 00000002000000000000000A/00000005000000000000001C",
+                     "        wal archive min/max (12): 00000002000000000000000B/00000005000000000000001D",
                      "",
-                     "        full backup: 20230130-013818F",
-                     "            timestamp start/stop: 2023-01-30 01:38:18 / 2023-01-30 01:38:21",
-                     "            wal start/stop: 00000002000000000000000A / 00000002000000000000000B",
+                     "        full backup: 20230320-004642F",
+                     "            timestamp start/stop: 2023-03-20 00:46:42 / 2023-03-20 00:46:45",
+                     "            wal start/stop: 00000002000000000000000B / 00000002000000000000000C",
                      "            database size: 23.4MB, database backup size: 23.4MB",
-                     "            repo1: backup set size: 2.8MB, backup size: 2.8MB",
+                     "            repo1: backup size: 2.8MB",
                      "",
-                     "        full backup: 20230130-013822F",
-                     "            timestamp start/stop: 2023-01-30 01:38:22 / 2023-01-30 01:38:25",
-                     "            wal start/stop: 00000002000000000000000C / 00000002000000000000000D",
+                     "        full backup: 20230320-004646F",
+                     "            timestamp start/stop: 2023-03-20 00:46:46 / 2023-03-20 00:46:49",
+                     "            wal start/stop: 00000002000000000000000D / 00000002000000000000000E",
                      "            database size: 23.4MB, database backup size: 23.4MB",
-                     "            repo1: backup set size: 2.8MB, backup size: 2.8MB",
+                     "            repo1: backup size: 2.8MB",
                      "",
-                     "        diff backup: 20230130-013822F_20230130-013836D",
-                     "            timestamp start/stop: 2023-01-30 01:38:36 / 2023-01-30 01:38:38",
-                     "            wal start/stop: 000000020000000000000016 / 000000020000000000000017",
+                     "        diff backup: 20230320-004646F_20230320-004658D",
+                     "            timestamp start/stop: 2023-03-20 00:46:58 / 2023-03-20 00:46:59",
+                     "            wal start/stop: 000000020000000000000017 / 000000020000000000000018",
                      "            database size: 23.4MB, database backup size: 8.3KB",
-                     "            repo1: backup set size: 2.8MB, backup size: 512B",
-                     "            backup reference list: 20230130-013822F",
+                     "            repo1: backup size: 480B",
+                     "            backup reference list: 20230320-004646F",
                      "",
-                     "        incr backup: 20230130-013822F_20230130-013846I",
-                     "            timestamp start/stop: 2023-01-30 01:38:46 / 2023-01-30 01:38:48",
-                     "            wal start/stop: 000000030000000000000019 / 000000030000000000000019",
+                     "        incr backup: 20230320-004646F_20230320-004707I",
+                     "            timestamp start/stop: 2023-03-20 00:47:07 / 2023-03-20 00:47:08",
+                     "            wal start/stop: 00000003000000000000001A / 00000003000000000000001A",
                      "            database size: 38.7MB, database backup size: 15.8MB",
-                     "            repo1: backup set size: 4.7MB, backup size: 1.9MB",
-                     "            backup reference list: 20230130-013822F, 20230130-013822F_20230130-013836D",
+                     "            repo1: backup size: 1.9MB",
+                     "            backup reference list: 20230320-004646F, 20230320-004646F_20230320-004658D",
                      "",
-                     "        diff backup: 20230130-013822F_20230130-013856D",
-                     "            timestamp start/stop: 2023-01-30 01:38:56 / 2023-01-30 01:38:58",
-                     "            wal start/stop: 00000004000000000000001A / 00000004000000000000001A",
+                     "        diff backup: 20230320-004646F_20230320-004717D",
+                     "            timestamp start/stop: 2023-03-20 00:47:17 / 2023-03-20 00:47:18",
+                     "            wal start/stop: 00000004000000000000001B / 00000004000000000000001B",
                      "            database size: 31MB, database backup size: 8.2MB",
-                     "            repo1: backup set size: 3.8MB, backup size: 1008.6KB",
-                     "            backup reference list: 20230130-013822F",
+                     "            repo1: backup size: 972.3KB",
+                     "            backup reference list: 20230320-004646F",
                      "",
-                     "        incr backup: 20230130-013822F_20230130-013909I",
-                     "            timestamp start/stop: 2023-01-30 01:39:09 / 2023-01-30 01:39:10",
-                     "            wal start/stop: 00000005000000000000001C / 00000005000000000000001C",
+                     "        incr backup: 20230320-004646F_20230320-004728I",
+                     "            timestamp start/stop: 2023-03-20 00:47:28 / 2023-03-20 00:47:30",
+                     "            wal start/stop: 00000005000000000000001D / 00000005000000000000001D",
                      "            database size: 31MB, database backup size: 2.2MB",
-                     "            repo1: backup set size: 3.8MB, backup size: 234KB",
-                     "            backup reference list: 20230130-013822F, 20230130-013822F_20230130-013856D"
+                     "            repo1: backup size: 25KB",
+                     "            backup reference list: 20230320-004646F, 20230320-004646F_20230320-004717D"
                   ]
                }
             },
@@ -2866,8 +2908,8 @@
                   "bash-wrap" : true,
                   "cmd" : [
                      "sudo -u postgres pgbackrest --stanza=demo --delta \\",
-                     "    --set=20230130-013822F_20230130-013909I \\",
-                     "    --type=time \"--target=2023-01-30 01:39:00.325554+00\" --target-action=promote restore"
+                     "    --set=20230320-004646F_20230320-004728I \\",
+                     "    --type=time \"--target=2023-03-20 00:47:20.278871+00\" --target-action=promote restore"
                   ],
                   "host" : "pg-primary",
                   "load-env" : true,
@@ -2966,14 +3008,14 @@
                   "output" : [
                      "       [filtered 3 lines of output]",
                      "LOG:  listening on Unix socket \"/var/run/postgresql/.s.PGSQL.5432\"",
-                     "LOG:  database system was interrupted; last known up at 2023-01-30 01:39:09 UTC",
-                     "LOG:  starting point-in-time recovery to 2023-01-30 01:39:00.325554+00",
+                     "LOG:  database system was interrupted; last known up at 2023-03-20 00:47:29 UTC",
+                     "LOG:  starting point-in-time recovery to 2023-03-20 00:47:20.278871+00",
                      "LOG:  restored log file \"00000005.history\" from archive",
-                     "LOG:  restored log file \"00000005000000000000001C\" from archive",
-                     "LOG:  redo starts at 0/1C000028",
-                     "LOG:  consistent recovery state reached at 0/1C000100",
+                     "LOG:  restored log file \"00000005000000000000001D\" from archive",
+                     "LOG:  redo starts at 0/1D000028",
+                     "LOG:  consistent recovery state reached at 0/1D000100",
                      "LOG:  database system is ready to accept read only connections",
-                     "LOG:  redo done at 0/1C000100",
+                     "LOG:  redo done at 0/1D000100",
                      "       [filtered 7 lines of output]"
                   ]
                }
@@ -2996,7 +3038,7 @@
                   "bash-wrap" : true,
                   "cmd" : [
                      "sudo -u postgres pgbackrest --stanza=demo --delta \\",
-                     "    --type=time \"--target=2023-01-30 01:39:00.325554+00\" \\",
+                     "    --type=time \"--target=2023-03-20 00:47:20.278871+00\" \\",
                      "    --target-action=promote restore"
                   ],
                   "host" : "pg-primary",
@@ -3097,15 +3139,15 @@
                      "       [filtered 5 lines of output]",
                      "LOG:  restored log file \"00000005.history\" from archive",
                      "LOG:  restored log file \"00000006.history\" from archive",
-                     "LOG:  starting point-in-time recovery to 2023-01-30 01:39:00.325554+00",
+                     "LOG:  starting point-in-time recovery to 2023-03-20 00:47:20.278871+00",
                      "LOG:  restored log file \"00000006.history\" from archive",
-                     "LOG:  restored log file \"00000004000000000000001A\" from archive",
+                     "LOG:  restored log file \"00000004000000000000001B\" from archive",
                      "       [filtered 4 lines of output]",
                      "LOG:  database system is ready to accept read only connections",
-                     "LOG:  restored log file \"00000005000000000000001B\" from archive",
-                     "LOG:  recovery stopping before commit of transaction 497, time 2023-01-30 01:39:08.276669+00",
-                     "LOG:  redo done at 0/1B022530",
-                     "LOG:  last completed transaction was at log time 2023-01-30 01:38:58.960913+00",
+                     "LOG:  restored log file \"00000005000000000000001C\" from archive",
+                     "LOG:  recovery stopping before commit of transaction 497, time 2023-03-20 00:47:28.120713+00",
+                     "LOG:  redo done at 0/1C022530",
+                     "LOG:  last completed transaction was at log time 2023-03-20 00:47:18.896381+00",
                      "LOG:  selected new timeline ID: 7",
                      "LOG:  archive recovery complete",
                      "       [filtered 2 lines of output]"
@@ -3149,7 +3191,9 @@
                      "pg1-path=/var/lib/postgresql/12/demo",
                      "",
                      "[global]",
+                     "beta=y",
                      "process-max=4",
+                     "repo1-block=y",
                      "repo1-bundle=y",
                      "repo1-cipher-pass=zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO",
                      "repo1-cipher-type=aes-256-cbc",
@@ -3245,16 +3289,16 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "P00   INFO: backup command begin 2.44: --exec-id=1961-033ed258 --log-level-console=info --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/postgresql/12/demo --process-max=4 --repo=2 --repo2-azure-account=<redacted> --repo2-azure-container=demo-container --repo2-azure-key=<redacted> --repo1-bundle --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --repo2-path=/demo-repo --repo1-retention-diff=2 --repo1-retention-full=2 --repo2-retention-full=4 --repo2-type=azure --stanza=demo --start-fast",
+                     "P00   INFO: backup command begin 2.45: --beta --exec-id=1973-5c0839fc --log-level-console=info --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/postgresql/12/demo --process-max=4 --repo=2 --repo2-azure-account=<redacted> --repo2-azure-container=demo-container --repo2-azure-key=<redacted> --repo1-block --repo1-bundle --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --repo2-path=/demo-repo --repo1-retention-diff=2 --repo1-retention-full=2 --repo2-retention-full=4 --repo2-type=azure --stanza=demo --start-fast",
                      "P00   WARN: no prior backup exists, incr backup has been changed to full",
                      "P00   INFO: execute non-exclusive backup start: backup begins after the requested immediate checkpoint completes",
-                     "P00   INFO: backup start archive = 00000007000000000000001C, lsn = 0/1C000028",
+                     "P00   INFO: backup start archive = 00000007000000000000001D, lsn = 0/1D000028",
                      "       [filtered 3 lines of output]",
-                     "P00   INFO: check archive for segment(s) 00000007000000000000001C:00000007000000000000001C",
-                     "P00   INFO: new backup label = 20230130-013926F",
+                     "P00   INFO: check archive for segment(s) 00000007000000000000001D:00000007000000000000001D",
+                     "P00   INFO: new backup label = 20230320-004746F",
                      "P00   INFO: full backup size = 31MB, file total = 1282",
                      "P00   INFO: backup command end: completed successfully",
-                     "P00   INFO: expire command begin 2.44: --exec-id=1961-033ed258 --log-level-console=info --log-level-stderr=off --no-log-timestamp --repo=2 --repo2-azure-account=<redacted> --repo2-azure-container=demo-container --repo2-azure-key=<redacted> --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --repo2-path=/demo-repo --repo1-retention-diff=2 --repo1-retention-full=2 --repo2-retention-full=4 --repo2-type=azure --stanza=demo"
+                     "P00   INFO: expire command begin 2.45: --beta --exec-id=1973-5c0839fc --log-level-console=info --log-level-stderr=off --no-log-timestamp --repo=2 --repo2-azure-account=<redacted> --repo2-azure-container=demo-container --repo2-azure-key=<redacted> --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --repo2-path=/demo-repo --repo1-retention-diff=2 --repo1-retention-full=2 --repo2-retention-full=4 --repo2-type=azure --stanza=demo"
                   ]
                }
             },
@@ -3301,7 +3345,9 @@
                      "pg1-path=/var/lib/postgresql/12/demo",
                      "",
                      "[global]",
+                     "beta=y",
                      "process-max=4",
+                     "repo1-block=y",
                      "repo1-bundle=y",
                      "repo1-cipher-pass=zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO",
                      "repo1-cipher-type=aes-256-cbc",
@@ -3405,16 +3451,16 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "P00   INFO: backup command begin 2.44: --exec-id=2032-dce1abe1 --log-level-console=info --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/postgresql/12/demo --process-max=4 --repo=3 --repo2-azure-account=<redacted> --repo2-azure-container=demo-container --repo2-azure-key=<redacted> --repo1-bundle --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --repo2-path=/demo-repo --repo3-path=/demo-repo --repo1-retention-diff=2 --repo1-retention-full=2 --repo2-retention-full=4 --repo3-retention-full=4 --repo3-s3-bucket=demo-bucket --repo3-s3-endpoint=s3.us-east-1.amazonaws.com --repo3-s3-key=<redacted> --repo3-s3-key-secret=<redacted> --repo3-s3-region=us-east-1 --repo2-type=azure --repo3-type=s3 --stanza=demo --start-fast",
+                     "P00   INFO: backup command begin 2.45: --beta --exec-id=2042-9d6ca8c9 --log-level-console=info --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/postgresql/12/demo --process-max=4 --repo=3 --repo2-azure-account=<redacted> --repo2-azure-container=demo-container --repo2-azure-key=<redacted> --repo1-block --repo1-bundle --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --repo2-path=/demo-repo --repo3-path=/demo-repo --repo1-retention-diff=2 --repo1-retention-full=2 --repo2-retention-full=4 --repo3-retention-full=4 --repo3-s3-bucket=demo-bucket --repo3-s3-endpoint=s3.us-east-1.amazonaws.com --repo3-s3-key=<redacted> --repo3-s3-key-secret=<redacted> --repo3-s3-region=us-east-1 --repo2-type=azure --repo3-type=s3 --stanza=demo --start-fast",
                      "P00   WARN: no prior backup exists, incr backup has been changed to full",
                      "P00   INFO: execute non-exclusive backup start: backup begins after the requested immediate checkpoint completes",
-                     "P00   INFO: backup start archive = 00000007000000000000001E, lsn = 0/1E000028",
+                     "P00   INFO: backup start archive = 00000007000000000000001F, lsn = 0/1F000028",
                      "       [filtered 3 lines of output]",
-                     "P00   INFO: check archive for segment(s) 00000007000000000000001E:00000007000000000000001E",
-                     "P00   INFO: new backup label = 20230130-013936F",
+                     "P00   INFO: check archive for segment(s) 00000007000000000000001F:00000007000000000000001F",
+                     "P00   INFO: new backup label = 20230320-004756F",
                      "P00   INFO: full backup size = 31MB, file total = 1282",
                      "P00   INFO: backup command end: completed successfully",
-                     "P00   INFO: expire command begin 2.44: --exec-id=2032-dce1abe1 --log-level-console=info --log-level-stderr=off --no-log-timestamp --repo=3 --repo2-azure-account=<redacted> --repo2-azure-container=demo-container --repo2-azure-key=<redacted> --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --repo2-path=/demo-repo --repo3-path=/demo-repo --repo1-retention-diff=2 --repo1-retention-full=2 --repo2-retention-full=4 --repo3-retention-full=4 --repo3-s3-bucket=demo-bucket --repo3-s3-endpoint=s3.us-east-1.amazonaws.com --repo3-s3-key=<redacted> --repo3-s3-key-secret=<redacted> --repo3-s3-region=us-east-1 --repo2-type=azure --repo3-type=s3 --stanza=demo"
+                     "P00   INFO: expire command begin 2.45: --beta --exec-id=2042-9d6ca8c9 --log-level-console=info --log-level-stderr=off --no-log-timestamp --repo=3 --repo2-azure-account=<redacted> --repo2-azure-container=demo-container --repo2-azure-key=<redacted> --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --repo2-path=/demo-repo --repo3-path=/demo-repo --repo1-retention-diff=2 --repo1-retention-full=2 --repo2-retention-full=4 --repo3-retention-full=4 --repo3-s3-bucket=demo-bucket --repo3-s3-endpoint=s3.us-east-1.amazonaws.com --repo3-s3-key=<redacted> --repo3-s3-key-secret=<redacted> --repo3-s3-region=us-east-1 --repo2-type=azure --repo3-type=s3 --stanza=demo"
                   ]
                }
             },
@@ -3449,7 +3495,9 @@
                      "pg1-path=/var/lib/postgresql/12/demo",
                      "",
                      "[global]",
+                     "beta=y",
                      "process-max=4",
+                     "repo1-block=y",
                      "repo1-bundle=y",
                      "repo1-cipher-pass=zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO",
                      "repo1-cipher-type=aes-256-cbc",
@@ -3515,7 +3563,7 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "P00   INFO: stop command begin 2.44: --exec-id=2085-7741abea --log-level-console=info --log-level-stderr=off --no-log-timestamp --stanza=demo",
+                     "P00   INFO: stop command begin 2.45: --beta --exec-id=2092-54db3fa2 --log-level-console=info --log-level-stderr=off --no-log-timestamp --stanza=demo",
                      "P00   INFO: stop command end: completed successfully"
                   ]
                }
@@ -3542,7 +3590,7 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "P00   INFO: stanza-delete command begin 2.44: --exec-id=2094-b19b68b8 --log-level-console=info --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/postgresql/12/demo --repo=1 --repo2-azure-account=<redacted> --repo2-azure-container=demo-container --repo2-azure-key=<redacted> --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo4-gcs-bucket=demo-bucket --repo4-gcs-key=<redacted> --repo1-path=/var/lib/pgbackrest --repo2-path=/demo-repo --repo3-path=/demo-repo --repo4-path=/demo-repo --repo3-s3-bucket=demo-bucket --repo3-s3-endpoint=s3.us-east-1.amazonaws.com --repo3-s3-key=<redacted> --repo3-s3-key-secret=<redacted> --repo3-s3-region=us-east-1 --repo2-type=azure --repo3-type=s3 --repo4-type=gcs --stanza=demo",
+                     "P00   INFO: stanza-delete command begin 2.45: --beta --exec-id=2101-e0cbebe1 --log-level-console=info --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/postgresql/12/demo --repo=1 --repo2-azure-account=<redacted> --repo2-azure-container=demo-container --repo2-azure-key=<redacted> --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo4-gcs-bucket=demo-bucket --repo4-gcs-key=<redacted> --repo1-path=/var/lib/pgbackrest --repo2-path=/demo-repo --repo3-path=/demo-repo --repo4-path=/demo-repo --repo3-s3-bucket=demo-bucket --repo3-s3-endpoint=s3.us-east-1.amazonaws.com --repo3-s3-key=<redacted> --repo3-s3-key-secret=<redacted> --repo3-s3-region=us-east-1 --repo2-type=azure --repo3-type=s3 --repo4-type=gcs --stanza=demo",
                      "P00   INFO: stanza-delete command end: completed successfully"
                   ]
                }
@@ -3605,7 +3653,7 @@
                "key" : {
                   "bash-wrap" : true,
                   "cmd" : [
-                     "sudo scp build:/build/pgbackrest-release-2.44/src/pgbackrest /usr/bin"
+                     "sudo scp build:/build/pgbackrest-release-2.45/src/pgbackrest /usr/bin"
                   ],
                   "cmd-extra" : "2>&1",
                   "host" : "repository",
@@ -4162,17 +4210,17 @@
                      "    cipher: none",
                      "",
                      "    db (current)",
-                     "        wal archive min/max (12): 000000080000000000000024/000000080000000000000026",
+                     "        wal archive min/max (12): 000000080000000000000025/000000080000000000000027",
                      "",
-                     "        full backup: 20230130-014015F",
-                     "            timestamp start/stop: 2023-01-30 01:40:15 / 2023-01-30 01:40:20",
-                     "            wal start/stop: 000000080000000000000024 / 000000080000000000000024",
+                     "        full backup: 20230320-004833F",
+                     "            timestamp start/stop: 2023-03-20 00:48:33 / 2023-03-20 00:48:38",
+                     "            wal start/stop: 000000080000000000000025 / 000000080000000000000025",
                      "            database size: 31MB, database backup size: 31MB",
                      "            repo1: backup set size: 3.7MB, backup size: 3.7MB",
                      "",
-                     "        full backup: 20230130-014022F",
-                     "            timestamp start/stop: 2023-01-30 01:40:22 / 2023-01-30 01:40:26",
-                     "            wal start/stop: 000000080000000000000025 / 000000080000000000000026",
+                     "        full backup: 20230320-004840F",
+                     "            timestamp start/stop: 2023-03-20 00:48:40 / 2023-03-20 00:48:44",
+                     "            wal start/stop: 000000080000000000000026 / 000000080000000000000027",
                      "            database size: 31MB, database backup size: 31MB",
                      "            repo1: backup set size: 3.7MB, backup size: 3.7MB"
                   ]
@@ -4336,7 +4384,7 @@
                "key" : {
                   "bash-wrap" : true,
                   "cmd" : [
-                     "sudo scp build:/build/pgbackrest-release-2.44/src/pgbackrest /usr/bin"
+                     "sudo scp build:/build/pgbackrest-release-2.45/src/pgbackrest /usr/bin"
                   ],
                   "cmd-extra" : "2>&1",
                   "host" : "pg-standby",
@@ -4618,27 +4666,27 @@
                      "# Do not edit this file manually!",
                      "# It will be overwritten by the ALTER SYSTEM command.",
                      "",
-                     "# Recovery settings generated by pgBackRest restore on 2023-01-30 01:37:59",
+                     "# Recovery settings generated by pgBackRest restore on 2023-03-20 00:46:23",
                      "restore_command = 'pgbackrest --stanza=demo archive-get %f \"%p\"'",
                      "",
-                     "# Recovery settings generated by pgBackRest restore on 2023-01-30 01:38:39",
+                     "# Recovery settings generated by pgBackRest restore on 2023-03-20 00:47:00",
                      "restore_command = 'pgbackrest --stanza=demo archive-get %f \"%p\"'",
                      "",
-                     "# Recovery settings generated by pgBackRest restore on 2023-01-30 01:38:50",
+                     "# Recovery settings generated by pgBackRest restore on 2023-03-20 00:47:10",
                      "restore_command = 'pgbackrest --stanza=demo archive-get %f \"%p\"'",
-                     "# Removed by pgBackRest restore on 2023-01-30 01:39:18 # recovery_target = 'immediate'",
-                     "# Removed by pgBackRest restore on 2023-01-30 01:39:18 # recovery_target_action = 'promote'",
-                     "# Removed by pgBackRest restore on 2023-01-30 01:39:18 # recovery_target_timeline = 'current'",
+                     "# Removed by pgBackRest restore on 2023-03-20 00:47:38 # recovery_target = 'immediate'",
+                     "# Removed by pgBackRest restore on 2023-03-20 00:47:38 # recovery_target_action = 'promote'",
+                     "# Removed by pgBackRest restore on 2023-03-20 00:47:38 # recovery_target_timeline = 'current'",
                      "",
-                     "# Recovery settings generated by pgBackRest restore on 2023-01-30 01:39:18",
+                     "# Recovery settings generated by pgBackRest restore on 2023-03-20 00:47:38",
                      "restore_command = 'pgbackrest --stanza=demo archive-get %f \"%p\"'",
-                     "# Removed by pgBackRest restore on 2023-01-30 01:40:09 # recovery_target_time = '2023-01-30 01:39:00.325554+00'",
-                     "# Removed by pgBackRest restore on 2023-01-30 01:40:09 # recovery_target_action = 'promote'",
+                     "# Removed by pgBackRest restore on 2023-03-20 00:48:27 # recovery_target_time = '2023-03-20 00:47:20.278871+00'",
+                     "# Removed by pgBackRest restore on 2023-03-20 00:48:27 # recovery_target_action = 'promote'",
                      "",
-                     "# Recovery settings generated by pgBackRest restore on 2023-01-30 01:40:09",
+                     "# Recovery settings generated by pgBackRest restore on 2023-03-20 00:48:27",
                      "restore_command = 'pgbackrest --stanza=demo archive-get %f \"%p\"'",
                      "",
-                     "# Recovery settings generated by pgBackRest restore on 2023-01-30 01:40:43",
+                     "# Recovery settings generated by pgBackRest restore on 2023-03-20 00:49:00",
                      "restore_command = 'pgbackrest --stanza=demo archive-get %f \"%p\"'"
                   ]
                }
@@ -4751,13 +4799,13 @@
                   "output" : [
                      "       [filtered 3 lines of output]",
                      "LOG:  listening on Unix socket \"/var/run/postgresql/.s.PGSQL.5432\"",
-                     "LOG:  database system was interrupted; last known up at 2023-01-30 01:40:22 UTC",
+                     "LOG:  database system was interrupted; last known up at 2023-03-20 00:48:40 UTC",
                      "LOG:  entering standby mode",
                      "LOG:  restored log file \"00000008.history\" from archive",
-                     "LOG:  restored log file \"000000080000000000000025\" from archive",
-                     "LOG:  redo starts at 0/25000028",
                      "LOG:  restored log file \"000000080000000000000026\" from archive",
-                     "LOG:  consistent recovery state reached at 0/26000088",
+                     "LOG:  redo starts at 0/26000028",
+                     "LOG:  restored log file \"000000080000000000000027\" from archive",
+                     "LOG:  consistent recovery state reached at 0/27000088",
                      "LOG:  database system is ready to accept read only connections"
                   ]
                }
@@ -4839,7 +4887,7 @@
                   "output" : [
                      " pg_switch_wal |       current_timestamp       ",
                      "---------------+-------------------------------",
-                     " 0/270217D8    | 2023-01-30 01:40:50.780909+00",
+                     " 0/280217D8    | 2023-03-20 00:49:08.175432+00",
                      "(1 row)"
                   ]
                }
@@ -4866,9 +4914,9 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "    message     |      current_timestamp       ",
-                     "----------------+------------------------------",
-                     " Important Data | 2023-01-30 01:40:56.37037+00",
+                     "    message     |       current_timestamp       ",
+                     "----------------+-------------------------------",
+                     " Important Data | 2023-03-20 00:49:09.102645+00",
                      "(1 row)"
                   ]
                }
@@ -4894,7 +4942,7 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "P00   INFO: check command begin 2.44: --exec-id=685-80fdb216 --log-level-console=info --log-level-file=detail --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/postgresql/12/demo --repo1-host=repository --stanza=demo",
+                     "P00   INFO: check command begin 2.45: --exec-id=529-7d019347 --log-level-console=info --log-level-file=detail --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/postgresql/12/demo --repo1-host=repository --stanza=demo",
                      "P00   INFO: check repo1 (standby)",
                      "P00   INFO: switch wal not performed because this is a standby",
                      "P00   INFO: check command end: completed successfully"
@@ -5044,27 +5092,27 @@
                      "# Do not edit this file manually!",
                      "# It will be overwritten by the ALTER SYSTEM command.",
                      "",
-                     "# Recovery settings generated by pgBackRest restore on 2023-01-30 01:37:59",
+                     "# Recovery settings generated by pgBackRest restore on 2023-03-20 00:46:23",
                      "restore_command = 'pgbackrest --stanza=demo archive-get %f \"%p\"'",
                      "",
-                     "# Recovery settings generated by pgBackRest restore on 2023-01-30 01:38:39",
+                     "# Recovery settings generated by pgBackRest restore on 2023-03-20 00:47:00",
                      "restore_command = 'pgbackrest --stanza=demo archive-get %f \"%p\"'",
                      "",
-                     "# Recovery settings generated by pgBackRest restore on 2023-01-30 01:38:50",
+                     "# Recovery settings generated by pgBackRest restore on 2023-03-20 00:47:10",
                      "restore_command = 'pgbackrest --stanza=demo archive-get %f \"%p\"'",
-                     "# Removed by pgBackRest restore on 2023-01-30 01:39:18 # recovery_target = 'immediate'",
-                     "# Removed by pgBackRest restore on 2023-01-30 01:39:18 # recovery_target_action = 'promote'",
-                     "# Removed by pgBackRest restore on 2023-01-30 01:39:18 # recovery_target_timeline = 'current'",
+                     "# Removed by pgBackRest restore on 2023-03-20 00:47:38 # recovery_target = 'immediate'",
+                     "# Removed by pgBackRest restore on 2023-03-20 00:47:38 # recovery_target_action = 'promote'",
+                     "# Removed by pgBackRest restore on 2023-03-20 00:47:38 # recovery_target_timeline = 'current'",
                      "",
-                     "# Recovery settings generated by pgBackRest restore on 2023-01-30 01:39:18",
+                     "# Recovery settings generated by pgBackRest restore on 2023-03-20 00:47:38",
                      "restore_command = 'pgbackrest --stanza=demo archive-get %f \"%p\"'",
-                     "# Removed by pgBackRest restore on 2023-01-30 01:40:09 # recovery_target_time = '2023-01-30 01:39:00.325554+00'",
-                     "# Removed by pgBackRest restore on 2023-01-30 01:40:09 # recovery_target_action = 'promote'",
+                     "# Removed by pgBackRest restore on 2023-03-20 00:48:27 # recovery_target_time = '2023-03-20 00:47:20.278871+00'",
+                     "# Removed by pgBackRest restore on 2023-03-20 00:48:27 # recovery_target_action = 'promote'",
                      "",
-                     "# Recovery settings generated by pgBackRest restore on 2023-01-30 01:40:09",
+                     "# Recovery settings generated by pgBackRest restore on 2023-03-20 00:48:27",
                      "restore_command = 'pgbackrest --stanza=demo archive-get %f \"%p\"'",
                      "",
-                     "# Recovery settings generated by pgBackRest restore on 2023-01-30 01:41:00",
+                     "# Recovery settings generated by pgBackRest restore on 2023-03-20 00:49:12",
                      "primary_conninfo = 'host=172.17.0.5 port=5432 user=replicator'",
                      "restore_command = 'pgbackrest --stanza=demo archive-get %f \"%p\"'"
                   ]
@@ -5132,8 +5180,8 @@
                   "output" : [
                      "       [filtered 11 lines of output]",
                      "LOG:  database system is ready to accept read only connections",
-                     "LOG:  restored log file \"000000080000000000000027\" from archive",
-                     "LOG:  started streaming WAL from primary at 0/28000000 on timeline 8"
+                     "LOG:  restored log file \"000000080000000000000028\" from archive",
+                     "LOG:  started streaming WAL from primary at 0/29000000 on timeline 8"
                   ]
                }
             },
@@ -5165,7 +5213,7 @@
                   "output" : [
                      "    message     |       current_timestamp       ",
                      "----------------+-------------------------------",
-                     " Important Data | 2023-01-30 01:41:06.687698+00",
+                     " Important Data | 2023-03-20 00:49:19.115786+00",
                      "(1 row)"
                   ]
                }
@@ -5194,7 +5242,7 @@
                   "output" : [
                      "    message     |       current_timestamp       ",
                      "----------------+-------------------------------",
-                     " Important Data | 2023-01-30 01:41:06.990072+00",
+                     " Important Data | 2023-03-20 00:49:19.463549+00",
                      "(1 row)"
                   ]
                }
@@ -5425,10 +5473,10 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "P00   INFO: check command begin 2.44: --exec-id=2716-273344ea --log-level-console=info --log-level-file=detail --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/postgresql/12/demo --repo1-host=repository --stanza=demo",
+                     "P00   INFO: check command begin 2.45: --exec-id=2722-706e5611 --log-level-console=info --log-level-file=detail --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/postgresql/12/demo --repo1-host=repository --stanza=demo",
                      "P00   INFO: check repo1 configuration (primary)",
                      "P00   INFO: check repo1 archive for WAL (primary)",
-                     "P00   INFO: WAL segment 00000008000000000000002D successfully archived to '/var/lib/pgbackrest/archive/demo/12-1/0000000800000000/00000008000000000000002D-c196c75ab86168b9fd3e78a853f89e5015287bea.gz' on repo1",
+                     "P00   INFO: WAL segment 00000008000000000000002E successfully archived to '/var/lib/pgbackrest/archive/demo/12-1/0000000800000000/00000008000000000000002E-00c3bc658ffd39df2650ca7edd9038740861b1b9.gz' on repo1",
                      "P00   INFO: check command end: completed successfully"
                   ]
                }
@@ -5455,24 +5503,19 @@
                "value" : {
                   "output" : [
                      "-------------------PROCESS START-------------------",
-                     "P00   INFO: archive-push:async command begin 2.44: [/var/lib/postgresql/12/demo/pg_wal] --archive-async --exec-id=2700-b19ee5ea --log-level-console=off --log-level-file=detail --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/postgresql/12/demo --process-max=2 --repo1-host=repository --spool-path=/var/spool/pgbackrest --stanza=demo",
-                     "P00   INFO: push 1 WAL file(s) to archive: 000000080000000000000028",
-                     "P01 DETAIL: pushed WAL file '000000080000000000000028' to the archive",
+                     "P00   INFO: archive-push:async command begin 2.45: [/var/lib/postgresql/12/demo/pg_wal] --archive-async --exec-id=2707-82656d03 --log-level-console=off --log-level-file=detail --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/postgresql/12/demo --process-max=2 --repo1-host=repository --spool-path=/var/spool/pgbackrest --stanza=demo",
+                     "P00   INFO: push 1 WAL file(s) to archive: 000000080000000000000029",
+                     "P01 DETAIL: pushed WAL file '000000080000000000000029' to the archive",
                      "P00   INFO: archive-push:async command end: completed successfully",
                      "",
                      "-------------------PROCESS START-------------------",
-                     "P00   INFO: archive-push:async command begin 2.44: [/var/lib/postgresql/12/demo/pg_wal] --archive-async --exec-id=2719-500c355e --log-level-console=off --log-level-file=detail --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/postgresql/12/demo --process-max=2 --repo1-host=repository --spool-path=/var/spool/pgbackrest --stanza=demo",
-                     "P00   INFO: push 4 WAL file(s) to archive: 000000080000000000000029...00000008000000000000002C",
-                     "P02 DETAIL: pushed WAL file '00000008000000000000002A' to the archive",
-                     "P01 DETAIL: pushed WAL file '000000080000000000000029' to the archive",
+                     "P00   INFO: archive-push:async command begin 2.45: [/var/lib/postgresql/12/demo/pg_wal] --archive-async --exec-id=2726-98a13ea0 --log-level-console=off --log-level-file=detail --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/postgresql/12/demo --process-max=2 --repo1-host=repository --spool-path=/var/spool/pgbackrest --stanza=demo",
+                     "P00   INFO: push 5 WAL file(s) to archive: 00000008000000000000002A...00000008000000000000002E",
+                     "P01 DETAIL: pushed WAL file '00000008000000000000002A' to the archive",
                      "P02 DETAIL: pushed WAL file '00000008000000000000002B' to the archive",
                      "P01 DETAIL: pushed WAL file '00000008000000000000002C' to the archive",
-                     "P00   INFO: archive-push:async command end: completed successfully",
-                     "",
-                     "-------------------PROCESS START-------------------",
-                     "P00   INFO: archive-push:async command begin 2.44: [/var/lib/postgresql/12/demo/pg_wal] --archive-async --exec-id=2735-fb566c96 --log-level-console=off --log-level-file=detail --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/postgresql/12/demo --process-max=2 --repo1-host=repository --spool-path=/var/spool/pgbackrest --stanza=demo",
-                     "P00   INFO: push 1 WAL file(s) to archive: 00000008000000000000002D",
-                     "P01 DETAIL: pushed WAL file '00000008000000000000002D' to the archive",
+                     "P02 DETAIL: pushed WAL file '00000008000000000000002D' to the archive",
+                     "P01 DETAIL: pushed WAL file '00000008000000000000002E' to the archive",
                      "P00   INFO: archive-push:async command end: completed successfully"
                   ]
                }
@@ -5512,23 +5555,23 @@
                "value" : {
                   "output" : [
                      "-------------------PROCESS START-------------------",
-                     "P00   INFO: archive-get:async command begin 2.44: [000000080000000000000025, 000000080000000000000026, 000000080000000000000027, 000000080000000000000028, 000000080000000000000029, 00000008000000000000002A, 00000008000000000000002B, 00000008000000000000002C] --archive-async --exec-id=915-8f22761c --log-level-console=off --log-level-file=detail --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/postgresql/12/demo --process-max=2 --repo1-host=repository --spool-path=/var/spool/pgbackrest --stanza=demo",
-                     "P00   INFO: get 8 WAL file(s) from archive: 000000080000000000000025...00000008000000000000002C",
-                     "P01 DETAIL: found 000000080000000000000025 in the repo1: 12-1 archive",
-                     "P02 DETAIL: found 000000080000000000000026 in the repo1: 12-1 archive",
-                     "P01 DETAIL: found 000000080000000000000027 in the repo1: 12-1 archive",
-                     "P00 DETAIL: unable to find 000000080000000000000028 in the archive",
+                     "P00   INFO: archive-get:async command begin 2.45: [000000080000000000000026, 000000080000000000000027, 000000080000000000000028, 000000080000000000000029, 00000008000000000000002A, 00000008000000000000002B, 00000008000000000000002C, 00000008000000000000002D] --archive-async --exec-id=755-45c32bd0 --log-level-console=off --log-level-file=detail --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/postgresql/12/demo --process-max=2 --repo1-host=repository --spool-path=/var/spool/pgbackrest --stanza=demo",
+                     "P00   INFO: get 8 WAL file(s) from archive: 000000080000000000000026...00000008000000000000002D",
+                     "P01 DETAIL: found 000000080000000000000026 in the repo1: 12-1 archive",
+                     "P02 DETAIL: found 000000080000000000000027 in the repo1: 12-1 archive",
+                     "P01 DETAIL: found 000000080000000000000028 in the repo1: 12-1 archive",
+                     "P00 DETAIL: unable to find 000000080000000000000029 in the archive",
                      "P00   INFO: archive-get:async command end: completed successfully",
                      "       [filtered 14 lines of output]",
-                     "P00   INFO: archive-get:async command begin 2.44: [000000080000000000000028, 000000080000000000000029, 00000008000000000000002A, 00000008000000000000002B, 00000008000000000000002C, 00000008000000000000002D, 00000008000000000000002E, 00000008000000000000002F] --archive-async --exec-id=959-91599c4a --log-level-console=off --log-level-file=detail --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/postgresql/12/demo --process-max=2 --repo1-host=repository --spool-path=/var/spool/pgbackrest --stanza=demo",
-                     "P00   INFO: get 8 WAL file(s) from archive: 000000080000000000000028...00000008000000000000002F",
-                     "P01 DETAIL: found 000000080000000000000028 in the repo1: 12-1 archive",
-                     "P02 DETAIL: found 000000080000000000000029 in the repo1: 12-1 archive",
-                     "P01 DETAIL: found 00000008000000000000002A in the repo1: 12-1 archive",
-                     "P02 DETAIL: found 00000008000000000000002B in the repo1: 12-1 archive",
-                     "P01 DETAIL: found 00000008000000000000002C in the repo1: 12-1 archive",
+                     "P00   INFO: archive-get:async command begin 2.45: [000000080000000000000029, 00000008000000000000002A, 00000008000000000000002B, 00000008000000000000002C, 00000008000000000000002D, 00000008000000000000002E, 00000008000000000000002F, 000000080000000000000030] --archive-async --exec-id=799-e427a956 --log-level-console=off --log-level-file=detail --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/postgresql/12/demo --process-max=2 --repo1-host=repository --spool-path=/var/spool/pgbackrest --stanza=demo",
+                     "P00   INFO: get 8 WAL file(s) from archive: 000000080000000000000029...000000080000000000000030",
+                     "P01 DETAIL: found 000000080000000000000029 in the repo1: 12-1 archive",
+                     "P02 DETAIL: found 00000008000000000000002A in the repo1: 12-1 archive",
+                     "P02 DETAIL: found 00000008000000000000002C in the repo1: 12-1 archive",
+                     "P01 DETAIL: found 00000008000000000000002B in the repo1: 12-1 archive",
                      "P02 DETAIL: found 00000008000000000000002D in the repo1: 12-1 archive",
-                     "P00 DETAIL: unable to find 00000008000000000000002E in the archive",
+                     "P01 DETAIL: found 00000008000000000000002E in the repo1: 12-1 archive",
+                     "P00 DETAIL: unable to find 00000008000000000000002F in the archive",
                      "P00   INFO: archive-get:async command end: completed successfully",
                      "       [filtered 11 lines of output]"
                   ]
@@ -5613,18 +5656,15 @@
                   "output" : [
                      "       [filtered 2 lines of output]",
                      "P00   INFO: execute non-exclusive backup start: backup begins after the requested immediate checkpoint completes",
-                     "P00   INFO: backup start archive = 00000008000000000000002F, lsn = 0/2F000028",
-                     "P00   INFO: wait for replay on the standby to reach 0/2F000028",
-                     "P00   INFO: replay on the standby reached 0/2F000028",
-                     "P00   INFO: check archive for prior segment 00000008000000000000002E",
-                     "P01 DETAIL: backup file pg-primary:/var/lib/postgresql/12/demo/global/pg_control (8KB, 0.34%) checksum b46f3a7e32b9a287c913b945cbfb223b75cc0f17",
-                     "P02 DETAIL: backup file pg-standby:/var/lib/postgresql/12/demo/base/13398/2608 (456KB, 19.86%) checksum e999dc1062f36f283651a5647badcc772aec56bb",
-                     "P03 DETAIL: backup file pg-standby:/var/lib/postgresql/12/demo/base/13398/1249 (440KB, 38.69%) checksum 72935618b551143398c9db54446b9e837da8c782",
-                     "P04 DETAIL: backup file pg-standby:/var/lib/postgresql/12/demo/base/13398/2674 (344KB, 53.42%) checksum b7e1782a23e5b432ace1ef89f59e9b30fb9fbc0d",
-                     "P01 DETAIL: backup file pg-primary:/var/lib/postgresql/12/demo/pg_logical/replorigin_checkpoint (8B, 53.42%) checksum 347fc8f2df71bd4436e38bd1516ccd7ea0d46532",
-                     "P02 DETAIL: backup file pg-standby:/var/lib/postgresql/12/demo/base/13398/2673 (280KB, 65.41%) checksum b3c90dafb991ff5b8e01080e9e5d9ba48067a3bd",
-                     "P03 DETAIL: backup file pg-standby:/var/lib/postgresql/12/demo/base/13398/2658 (128KB, 70.89%) checksum facbe01a7d50c0b0337ded5a72e663995d3b0857",
-                     "       [filtered 1290 lines of output]"
+                     "P00   INFO: backup start archive = 000000080000000000000030, lsn = 0/30000028",
+                     "P00   INFO: wait for replay on the standby to reach 0/30000028",
+                     "P00   INFO: replay on the standby reached 0/30000028",
+                     "P00   INFO: check archive for prior segment 00000008000000000000002F",
+                     "P01 DETAIL: backup file pg-primary:/var/lib/postgresql/12/demo/global/pg_control (8KB, 0.34%) checksum ade6ef105574ef2adef3a8fe71413489063b317e",
+                     "P01 DETAIL: backup file pg-primary:/var/lib/postgresql/12/demo/pg_logical/replorigin_checkpoint (8B, 0.34%) checksum 347fc8f2df71bd4436e38bd1516ccd7ea0d46532",
+                     "P02 DETAIL: backup file pg-standby:/var/lib/postgresql/12/demo/base/13398/2608 (456KB, 19.86%) checksum 0c65314eecd364f4111fec0c7e04c636668c6582",
+                     "P03 DETAIL: backup file pg-standby:/var/lib/postgresql/12/demo/base/13398/1249 (440KB, 38.69%) checksum 49e448102e9359162dc2492c108bad130e64a12e",
+                     "       [filtered 1293 lines of output]"
                   ]
                }
             },
@@ -5900,7 +5940,7 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "P00   INFO: stanza-upgrade command begin 2.44: --exec-id=3167-18059d26 --log-level-console=info --log-level-file=detail --log-level-stderr=off --no-log-timestamp --no-online --pg1-path=/var/lib/postgresql/14/demo --repo1-host=repository --stanza=demo",
+                     "P00   INFO: stanza-upgrade command begin 2.45: --exec-id=3167-71bf23ad --log-level-console=info --log-level-file=detail --log-level-stderr=off --no-log-timestamp --no-online --pg1-path=/var/lib/postgresql/14/demo --repo1-host=repository --stanza=demo",
                      "P00   INFO: stanza-upgrade for stanza 'demo' on repo1",
                      "P00   INFO: stanza-upgrade command end: completed successfully"
                   ]
@@ -6169,7 +6209,7 @@
                "key" : {
                   "bash-wrap" : true,
                   "cmd" : [
-                     "sudo mkdir -p /build/pgbackrest-release-2.44"
+                     "sudo mkdir -p /build/pgbackrest-release-2.45"
                   ],
                   "host" : "build",
                   "load-env" : true,
@@ -6182,7 +6222,7 @@
                "key" : {
                   "bash-wrap" : true,
                   "cmd" : [
-                     "sudo cp -r /pgbackrest/src /build/pgbackrest-release-2.44"
+                     "sudo cp -r /pgbackrest/src /build/pgbackrest-release-2.45"
                   ],
                   "host" : "build",
                   "load-env" : true,
@@ -6195,7 +6235,7 @@
                "key" : {
                   "bash-wrap" : true,
                   "cmd" : [
-                     "sudo chown -R vagrant /build/pgbackrest-release-2.44"
+                     "sudo chown -R vagrant /build/pgbackrest-release-2.45"
                   ],
                   "host" : "build",
                   "load-env" : true,
@@ -6223,7 +6263,7 @@
                "key" : {
                   "bash-wrap" : true,
                   "cmd" : [
-                     "cd /build/pgbackrest-release-2.44/src && ./configure && make"
+                     "cd /build/pgbackrest-release-2.45/src && ./configure && make"
                   ],
                   "cmd-extra" : "-j 4",
                   "host" : "build",
@@ -6265,7 +6305,7 @@
                "key" : {
                   "bash-wrap" : true,
                   "cmd" : [
-                     "sudo scp build:/build/pgbackrest-release-2.44/src/pgbackrest /usr/bin"
+                     "sudo scp build:/build/pgbackrest-release-2.45/src/pgbackrest /usr/bin"
                   ],
                   "cmd-extra" : "2>&1",
                   "host" : "pg-primary",
@@ -6393,7 +6433,7 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "pgBackRest 2.44 - General help",
+                     "pgBackRest 2.45 - General help",
                      "",
                      "Usage:",
                      "    pgbackrest [options] [command]",
@@ -6519,7 +6559,7 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "pgBackRest 2.44 - 'backup' command - 'log-path' option help",
+                     "pgBackRest 2.45 - 'backup' command - 'log-path' option help",
                      "",
                      "Path where log files are stored.",
                      "",
@@ -6780,7 +6820,7 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "P00   INFO: stanza-create command begin 2.44: --exec-id=1093-ed9e6a91 --log-level-console=info --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/pgsql/11/data --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --stanza=demo",
+                     "P00   INFO: stanza-create command begin 2.45: --exec-id=1168-f5648d23 --log-level-console=info --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/pgsql/11/data --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --stanza=demo",
                      "P00   INFO: stanza-create for stanza 'demo' on repo1",
                      "P00   INFO: stanza-create command end: completed successfully"
                   ]
@@ -6807,10 +6847,10 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "P00   INFO: check command begin 2.44: --exec-id=1121-de0666dd --log-level-console=info --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/pgsql/11/data --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --stanza=demo",
+                     "P00   INFO: check command begin 2.45: --exec-id=1196-e4a07eca --log-level-console=info --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/pgsql/11/data --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --stanza=demo",
                      "P00   INFO: check repo1 configuration (primary)",
                      "P00   INFO: check repo1 archive for WAL (primary)",
-                     "P00   INFO: WAL segment 000000010000000000000001 successfully archived to '/var/lib/pgbackrest/archive/demo/11-1/0000000100000000/000000010000000000000001-8f97268adac08a19c0b890241257d2874e379432.gz' on repo1",
+                     "P00   INFO: WAL segment 000000010000000000000001 successfully archived to '/var/lib/pgbackrest/archive/demo/11-1/0000000100000000/000000010000000000000001-715d3d5b01dc6afb9cf62cd200998e91d53a6441.gz' on repo1",
                      "P00   INFO: check command end: completed successfully"
                   ]
                }
@@ -6867,16 +6907,16 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "P00   INFO: backup command begin 2.44: --exec-id=1194-963952a8 --log-level-console=info --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/pgsql/11/data --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --repo1-retention-full=2 --stanza=demo --start-fast",
+                     "P00   INFO: backup command begin 2.45: --exec-id=1269-e822df80 --log-level-console=info --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/pgsql/11/data --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --repo1-retention-full=2 --stanza=demo --start-fast",
                      "P00   WARN: no prior backup exists, incr backup has been changed to full",
                      "P00   INFO: execute non-exclusive backup start: backup begins after the requested immediate checkpoint completes",
                      "P00   INFO: backup start archive = 000000010000000000000002, lsn = 0/2000028",
                      "       [filtered 3 lines of output]",
                      "P00   INFO: check archive for segment(s) 000000010000000000000002:000000010000000000000003",
-                     "P00   INFO: new backup label = 20230130-013136F",
+                     "P00   INFO: new backup label = 20230320-003926F",
                      "P00   INFO: full backup size = 22.7MB, file total = 952",
                      "P00   INFO: backup command end: completed successfully",
-                     "P00   INFO: expire command begin 2.44: --exec-id=1194-963952a8 --log-level-console=info --log-level-stderr=off --no-log-timestamp --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --repo1-retention-full=2 --stanza=demo"
+                     "P00   INFO: expire command begin 2.45: --exec-id=1269-e822df80 --log-level-console=info --log-level-stderr=off --no-log-timestamp --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --repo1-retention-full=2 --stanza=demo"
                   ]
                }
             },
@@ -6894,7 +6934,7 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "20230130-013136F"
+                     "20230320-003926F"
                   ]
                }
             },
@@ -6922,10 +6962,10 @@
                   "output" : [
                      "       [filtered 7 lines of output]",
                      "P00   INFO: check archive for segment(s) 000000010000000000000004:000000010000000000000005",
-                     "P00   INFO: new backup label = 20230130-013136F_20230130-013141D",
+                     "P00   INFO: new backup label = 20230320-003926F_20230320-003931D",
                      "P00   INFO: diff backup size = 8.8KB, file total = 952",
                      "P00   INFO: backup command end: completed successfully",
-                     "P00   INFO: expire command begin 2.44: --exec-id=1257-49dc4d6b --log-level-console=info --log-level-stderr=off --no-log-timestamp --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --repo1-retention-full=2 --stanza=demo"
+                     "P00   INFO: expire command begin 2.45: --exec-id=1331-04ccff29 --log-level-console=info --log-level-stderr=off --no-log-timestamp --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --repo1-retention-full=2 --stanza=demo"
                   ]
                }
             },
@@ -6957,18 +6997,18 @@
                      "    db (current)",
                      "        wal archive min/max (11): 000000010000000000000001/000000010000000000000005",
                      "",
-                     "        full backup: 20230130-013136F",
-                     "            timestamp start/stop: 2023-01-30 01:31:36 / 2023-01-30 01:31:40",
+                     "        full backup: 20230320-003926F",
+                     "            timestamp start/stop: 2023-03-20 00:39:26 / 2023-03-20 00:39:29",
                      "            wal start/stop: 000000010000000000000002 / 000000010000000000000003",
                      "            database size: 22.7MB, database backup size: 22.7MB",
                      "            repo1: backup set size: 2.7MB, backup size: 2.7MB",
                      "",
-                     "        diff backup: 20230130-013136F_20230130-013141D",
-                     "            timestamp start/stop: 2023-01-30 01:31:41 / 2023-01-30 01:31:42",
+                     "        diff backup: 20230320-003926F_20230320-003931D",
+                     "            timestamp start/stop: 2023-03-20 00:39:31 / 2023-03-20 00:39:33",
                      "            wal start/stop: 000000010000000000000004 / 000000010000000000000005",
                      "            database size: 22.7MB, database backup size: 8.8KB",
-                     "            repo1: backup set size: 2.7MB, backup size: 720B",
-                     "            backup reference list: 20230130-013136F"
+                     "            repo1: backup set size: 2.7MB, backup size: 752B",
+                     "            backup reference list: 20230320-003926F"
                   ]
                }
             },
@@ -7035,9 +7075,9 @@
                "value" : {
                   "output" : [
                      "       [filtered 12 lines of output]",
-                     "Jan 30 01:31:43 pg-primary systemd[1]: postgresql-11.service: Main process exited, code=exited, status=2/INVALIDARGUMENT",
-                     "Jan 30 01:31:43 pg-primary systemd[1]: postgresql-11.service: Failed with result 'exit-code'.",
-                     "Jan 30 01:31:43 pg-primary systemd[1]: Failed to start PostgreSQL 11 database server."
+                     "Mar 20 00:39:34 pg-primary systemd[1]: postgresql-11.service: Main process exited, code=exited, status=2/INVALIDARGUMENT",
+                     "Mar 20 00:39:34 pg-primary systemd[1]: postgresql-11.service: Failed with result 'exit-code'.",
+                     "Mar 20 00:39:34 pg-primary systemd[1]: Failed to start PostgreSQL 11 database server."
                   ]
                }
             },
@@ -7234,7 +7274,7 @@
                   "output" : [
                      "  name  | last_successful_backup |    last_archived_wal     ",
                      "--------+------------------------+--------------------------",
-                     " \"demo\" | 2023-01-30 01:31:42+00 | 000000010000000000000005",
+                     " \"demo\" | 2023-03-20 00:39:33+00 | 000000010000000000000006",
                      "(1 row)"
                   ]
                }
@@ -7303,6 +7343,42 @@
             },
             {
                "key" : {
+                  "file" : "/etc/pgbackrest/pgbackrest.conf",
+                  "host" : "pg-primary",
+                  "option" : {
+                     "global" : {
+                        "beta" : {
+                           "value" : "y"
+                        },
+                        "repo1-block" : {
+                           "value" : "y"
+                        }
+                     }
+                  }
+               },
+               "type" : "cfg-pgbackrest",
+               "value" : {
+                  "config" : [
+                     "[demo]",
+                     "pg1-path=/var/lib/pgsql/11/data",
+                     "",
+                     "[global]",
+                     "beta=y",
+                     "repo1-block=y",
+                     "repo1-bundle=y",
+                     "repo1-cipher-pass=zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO",
+                     "repo1-cipher-type=aes-256-cbc",
+                     "repo1-path=/var/lib/pgbackrest",
+                     "repo1-retention-full=2",
+                     "start-fast=y",
+                     "",
+                     "[global:archive-push]",
+                     "compress-level=3"
+                  ]
+               }
+            },
+            {
+               "key" : {
                   "bash-wrap" : true,
                   "cmd" : [
                      "sudo -u postgres pgbackrest --stanza=demo --annotation=source=\"demo backup\" \\",
@@ -7329,7 +7405,7 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "20230130-013154F"
+                     "20230320-003945F"
                   ]
                }
             },
@@ -7337,7 +7413,7 @@
                "key" : {
                   "bash-wrap" : true,
                   "cmd" : [
-                     "sudo -u postgres pgbackrest --stanza=demo --set=20230130-013154F info"
+                     "sudo -u postgres pgbackrest --stanza=demo --set=20230320-003945F info"
                   ],
                   "highlight" : {
                      "filter" : false,
@@ -7359,14 +7435,14 @@
                      "    cipher: aes-256-cbc",
                      "",
                      "    db (current)",
-                     "        wal archive min/max (11): 000000020000000000000007/000000020000000000000009",
+                     "        wal archive min/max (11): 000000020000000000000008/00000002000000000000000A",
                      "",
-                     "        full backup: 20230130-013154F",
-                     "            timestamp start/stop: 2023-01-30 01:31:54 / 2023-01-30 01:31:57",
-                     "            wal start/stop: 000000020000000000000008 / 000000020000000000000009",
-                     "            lsn start/stop: 0/8000028 / 0/9000050",
+                     "        full backup: 20230320-003945F",
+                     "            timestamp start/stop: 2023-03-20 00:39:45 / 2023-03-20 00:39:48",
+                     "            wal start/stop: 000000020000000000000009 / 00000002000000000000000A",
+                     "            lsn start/stop: 0/9000028 / 0/A000050",
                      "            database size: 22.7MB, database backup size: 22.7MB",
-                     "            repo1: backup set size: 2.7MB, backup size: 2.7MB",
+                     "            repo1: backup size: 2.7MB",
                      "            database list: postgres (13090)",
                      "            annotation(s)",
                      "                key: value",
@@ -7378,7 +7454,7 @@
                "key" : {
                   "bash-wrap" : true,
                   "cmd" : [
-                     "sudo -u postgres pgbackrest --stanza=demo --set=20230130-013154F \\",
+                     "sudo -u postgres pgbackrest --stanza=demo --set=20230320-003945F \\",
                      "    --annotation=key= --annotation=new_key=new_value annotate"
                   ],
                   "host" : "pg-primary",
@@ -7392,7 +7468,7 @@
                "key" : {
                   "bash-wrap" : true,
                   "cmd" : [
-                     "sudo -u postgres pgbackrest --stanza=demo --set=20230130-013154F info"
+                     "sudo -u postgres pgbackrest --stanza=demo --set=20230320-003945F info"
                   ],
                   "highlight" : {
                      "filter" : false,
@@ -7414,14 +7490,14 @@
                      "    cipher: aes-256-cbc",
                      "",
                      "    db (current)",
-                     "        wal archive min/max (11): 000000020000000000000007/000000020000000000000009",
+                     "        wal archive min/max (11): 000000020000000000000008/00000002000000000000000A",
                      "",
-                     "        full backup: 20230130-013154F",
-                     "            timestamp start/stop: 2023-01-30 01:31:54 / 2023-01-30 01:31:57",
-                     "            wal start/stop: 000000020000000000000008 / 000000020000000000000009",
-                     "            lsn start/stop: 0/8000028 / 0/9000050",
+                     "        full backup: 20230320-003945F",
+                     "            timestamp start/stop: 2023-03-20 00:39:45 / 2023-03-20 00:39:48",
+                     "            wal start/stop: 000000020000000000000009 / 00000002000000000000000A",
+                     "            lsn start/stop: 0/9000028 / 0/A000050",
                      "            database size: 22.7MB, database backup size: 22.7MB",
-                     "            repo1: backup set size: 2.7MB, backup size: 2.7MB",
+                     "            repo1: backup size: 2.7MB",
                      "            database list: postgres (13090)",
                      "            annotation(s)",
                      "                new_key: new_value",
@@ -7448,6 +7524,8 @@
                      "pg1-path=/var/lib/pgsql/11/data",
                      "",
                      "[global]",
+                     "beta=y",
+                     "repo1-block=y",
                      "repo1-bundle=y",
                      "repo1-cipher-pass=zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO",
                      "repo1-cipher-type=aes-256-cbc",
@@ -7471,7 +7549,7 @@
                      "filter" : true,
                      "filter-context" : 2,
                      "list" : [
-                        "archive retention on backup 20230130-013136F|remove archive"
+                        "archive retention on backup 20230320-003926F|remove archive"
                      ]
                   },
                   "host" : "pg-primary",
@@ -7483,9 +7561,9 @@
                "value" : {
                   "output" : [
                      "       [filtered 964 lines of output]",
-                     "P00   INFO: repo1: remove expired backup 20230130-013150F",
-                     "P00 DETAIL: repo1: 11-1 archive retention on backup 20230130-013154F, start = 000000020000000000000008",
-                     "P00   INFO: repo1: 11-1 remove archive, start = 000000020000000000000007, stop = 000000020000000000000007",
+                     "P00   INFO: repo1: remove expired backup 20230320-003941F",
+                     "P00 DETAIL: repo1: 11-1 archive retention on backup 20230320-003945F, start = 000000020000000000000009",
+                     "P00   INFO: repo1: 11-1 remove archive, start = 000000020000000000000008, stop = 000000020000000000000008",
                      "P00   INFO: expire command end: completed successfully"
                   ]
                }
@@ -7504,7 +7582,7 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "20230130-013159F"
+                     "20230320-003950F"
                   ]
                }
             },
@@ -7519,7 +7597,7 @@
                      "filter" : true,
                      "filter-context" : 2,
                      "list" : [
-                        "expire full backup set 20230130-013136F|archive retention on backup 20230130-013159F|remove archive"
+                        "expire full backup set 20230320-003926F|archive retention on backup 20230320-003950F|remove archive"
                      ]
                   },
                   "host" : "pg-primary",
@@ -7531,9 +7609,9 @@
                "value" : {
                   "output" : [
                      "       [filtered 11 lines of output]",
-                     "P00   INFO: repo1: expire full backup 20230130-013154F",
-                     "P00   INFO: repo1: remove expired backup 20230130-013154F",
-                     "P00   INFO: repo1: 11-1 remove archive, start = 000000020000000000000008, stop = 000000020000000000000009",
+                     "P00   INFO: repo1: expire full backup 20230320-003945F",
+                     "P00   INFO: repo1: remove expired backup 20230320-003945F",
+                     "P00   INFO: repo1: 11-1 remove archive, start = 000000020000000000000009, stop = 00000002000000000000000A",
                      "P00   INFO: expire command end: completed successfully"
                   ]
                }
@@ -7557,6 +7635,8 @@
                      "pg1-path=/var/lib/pgsql/11/data",
                      "",
                      "[global]",
+                     "beta=y",
+                     "repo1-block=y",
                      "repo1-bundle=y",
                      "repo1-cipher-pass=zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO",
                      "repo1-cipher-type=aes-256-cbc",
@@ -7597,7 +7677,7 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "20230130-013203F_20230130-013207D"
+                     "20230320-003954F_20230320-003958D"
                   ]
                }
             },
@@ -7625,7 +7705,7 @@
                      "filter" : true,
                      "filter-context" : 2,
                      "list" : [
-                        "expire diff backup set 20230130-013203F_20230130-013207D"
+                        "expire diff backup set 20230320-003954F_20230320-003958D"
                      ]
                   },
                   "host" : "pg-primary",
@@ -7638,10 +7718,10 @@
                   "output" : [
                      "       [filtered 10 lines of output]",
                      "P00   INFO: backup command end: completed successfully",
-                     "P00   INFO: expire command begin 2.44: --exec-id=2265-a0083620 --log-level-console=info --log-level-stderr=off --no-log-timestamp --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --repo1-retention-diff=1 --repo1-retention-full=2 --stanza=demo",
-                     "P00   INFO: repo1: expire diff backup set 20230130-013203F_20230130-013207D, 20230130-013203F_20230130-013210I",
-                     "P00   INFO: repo1: remove expired backup 20230130-013203F_20230130-013210I",
-                     "P00   INFO: repo1: remove expired backup 20230130-013203F_20230130-013207D",
+                     "P00   INFO: expire command begin 2.45: --beta --exec-id=2377-4ceba337 --log-level-console=info --log-level-stderr=off --no-log-timestamp --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --repo1-retention-diff=1 --repo1-retention-full=2 --stanza=demo",
+                     "P00   INFO: repo1: expire diff backup set 20230320-003954F_20230320-003958D, 20230320-003954F_20230320-004001I",
+                     "P00   INFO: repo1: remove expired backup 20230320-003954F_20230320-004001I",
+                     "P00   INFO: repo1: remove expired backup 20230320-003954F_20230320-003958D",
                      "P00   INFO: expire command end: completed successfully"
                   ]
                }
@@ -7665,6 +7745,8 @@
                      "pg1-path=/var/lib/pgsql/11/data",
                      "",
                      "[global]",
+                     "beta=y",
+                     "repo1-block=y",
                      "repo1-bundle=y",
                      "repo1-cipher-pass=zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO",
                      "repo1-cipher-type=aes-256-cbc",
@@ -7692,7 +7774,7 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "20230130-013203F_20230130-013213D"
+                     "20230320-003954F_20230320-004004D"
                   ]
                }
             },
@@ -7734,10 +7816,10 @@
                "value" : {
                   "output" : [
                      "       [filtered 6 lines of output]",
-                     "P00   INFO: backup stop archive = 000000020000000000000017, lsn = 0/17000050",
-                     "P00   INFO: check archive for segment(s) 000000020000000000000016:000000020000000000000017",
-                     "P00   INFO: new backup label = 20230130-013203F_20230130-013217D",
-                     "P00   INFO: diff backup size = 10.9KB, file total = 952",
+                     "P00   INFO: backup stop archive = 000000020000000000000018, lsn = 0/18000050",
+                     "P00   INFO: check archive for segment(s) 000000020000000000000017:000000020000000000000018",
+                     "P00   INFO: new backup label = 20230320-003954F_20230320-004008D",
+                     "P00   INFO: diff backup size = 11.0KB, file total = 952",
                      "P00   INFO: backup command end: completed successfully",
                      "       [filtered 2 lines of output]"
                   ]
@@ -7757,7 +7839,7 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "20230130-013203F_20230130-013217D"
+                     "20230320-003954F_20230320-004008D"
                   ]
                }
             },
@@ -7772,7 +7854,7 @@
                      "filter" : true,
                      "filter-context" : 2,
                      "list" : [
-                        "archive retention on backup 20230130-013203F_20230130-013213D|remove archive"
+                        "archive retention on backup 20230320-003954F_20230320-004004D|remove archive"
                      ]
                   },
                   "host" : "pg-primary",
@@ -7783,13 +7865,13 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "P00   INFO: expire command begin 2.44: --exec-id=2465-05b5774b --log-level-console=detail --log-level-stderr=off --no-log-timestamp --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --repo1-retention-archive=1 --repo1-retention-archive-type=diff --repo1-retention-diff=2 --repo1-retention-full=2 --stanza=demo",
-                     "P00 DETAIL: repo1: 11-1 archive retention on backup 20230130-013159F, start = 00000002000000000000000A, stop = 00000002000000000000000B",
-                     "P00 DETAIL: repo1: 11-1 archive retention on backup 20230130-013203F, start = 00000002000000000000000C, stop = 00000002000000000000000D",
-                     "P00 DETAIL: repo1: 11-1 archive retention on backup 20230130-013203F_20230130-013213D, start = 000000020000000000000012, stop = 000000020000000000000013",
-                     "P00 DETAIL: repo1: 11-1 archive retention on backup 20230130-013203F_20230130-013217D, start = 000000020000000000000016",
-                     "P00   INFO: repo1: 11-1 remove archive, start = 00000002000000000000000E, stop = 000000020000000000000011",
-                     "P00   INFO: repo1: 11-1 remove archive, start = 000000020000000000000014, stop = 000000020000000000000015",
+                     "P00   INFO: expire command begin 2.45: --beta --exec-id=2574-73bd2d5b --log-level-console=detail --log-level-stderr=off --no-log-timestamp --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --repo1-retention-archive=1 --repo1-retention-archive-type=diff --repo1-retention-diff=2 --repo1-retention-full=2 --stanza=demo",
+                     "P00 DETAIL: repo1: 11-1 archive retention on backup 20230320-003950F, start = 00000002000000000000000B, stop = 00000002000000000000000C",
+                     "P00 DETAIL: repo1: 11-1 archive retention on backup 20230320-003954F, start = 00000002000000000000000D, stop = 00000002000000000000000E",
+                     "P00 DETAIL: repo1: 11-1 archive retention on backup 20230320-003954F_20230320-004004D, start = 000000020000000000000013, stop = 000000020000000000000014",
+                     "P00 DETAIL: repo1: 11-1 archive retention on backup 20230320-003954F_20230320-004008D, start = 000000020000000000000017",
+                     "P00   INFO: repo1: 11-1 remove archive, start = 00000002000000000000000F, stop = 000000020000000000000012",
+                     "P00   INFO: repo1: 11-1 remove archive, start = 000000020000000000000015, stop = 000000020000000000000016",
                      "P00   INFO: expire command end: completed successfully"
                   ]
                }
@@ -8002,7 +8084,7 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "20230130-013203F_20230130-013225I"
+                     "20230320-003954F_20230320-004017I"
                   ]
                }
             },
@@ -8011,7 +8093,7 @@
                   "bash-wrap" : true,
                   "cmd" : [
                      "sudo -u postgres pgbackrest --stanza=demo \\",
-                     "    --set=20230130-013203F_20230130-013225I info"
+                     "    --set=20230320-003954F_20230320-004017I info"
                   ],
                   "highlight" : {
                      "filter" : true,
@@ -8029,8 +8111,8 @@
                "value" : {
                   "output" : [
                      "       [filtered 12 lines of output]",
-                     "            repo1: backup set size: 4.5MB, backup size: 1.8MB",
-                     "            backup reference list: 20230130-013203F, 20230130-013203F_20230130-013217D",
+                     "            repo1: backup size: 1.8MB",
+                     "            backup reference list: 20230320-003954F, 20230320-003954F_20230320-004008D",
                      "            database list: postgres (13090), test1 (32768), test2 (32769)"
                   ]
                }
@@ -8274,7 +8356,7 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "2023-01-30 01:32:38.383368+00"
+                     "2023-03-20 00:40:30.698142+00"
                   ]
                }
             },
@@ -8340,7 +8422,7 @@
                   "bash-wrap" : true,
                   "cmd" : [
                      "sudo -u postgres pgbackrest --stanza=demo --delta \\",
-                     "    --type=time \"--target=2023-01-30 01:32:38.383368+00\" \\",
+                     "    --type=time \"--target=2023-03-20 00:40:30.698142+00\" \\",
                      "    --target-action=promote restore"
                   ],
                   "host" : "pg-primary",
@@ -8384,9 +8466,9 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "# Recovery settings generated by pgBackRest restore on 2023-01-30 01:32:40",
+                     "# Recovery settings generated by pgBackRest restore on 2023-03-20 00:40:32",
                      "restore_command = 'pgbackrest --stanza=demo archive-get %f \"%p\"'",
-                     "recovery_target_time = '2023-01-30 01:32:38.383368+00'",
+                     "recovery_target_time = '2023-03-20 00:40:30.698142+00'",
                      "recovery_target_action = 'promote'"
                   ]
                }
@@ -8466,16 +8548,16 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "LOG:  database system was interrupted; last known up at 2023-01-30 01:32:35 UTC",
-                     "LOG:  starting point-in-time recovery to 2023-01-30 01:32:38.383368+00",
+                     "LOG:  database system was interrupted; last known up at 2023-03-20 00:40:27 UTC",
+                     "LOG:  starting point-in-time recovery to 2023-03-20 00:40:30.698142+00",
                      "LOG:  restored log file \"00000004.history\" from archive",
-                     "LOG:  restored log file \"00000004000000000000001A\" from archive",
+                     "LOG:  restored log file \"00000004000000000000001B\" from archive",
                      "       [filtered 2 lines of output]",
                      "LOG:  database system is ready to accept read only connections",
-                     "LOG:  restored log file \"00000004000000000000001B\" from archive",
-                     "LOG:  recovery stopping before commit of transaction 578, time 2023-01-30 01:32:39.793949+00",
-                     "LOG:  redo done at 0/1B018B28",
-                     "LOG:  last completed transaction was at log time 2023-01-30 01:32:36.95736+00",
+                     "LOG:  restored log file \"00000004000000000000001C\" from archive",
+                     "LOG:  recovery stopping before commit of transaction 578, time 2023-03-20 00:40:32.11458+00",
+                     "LOG:  redo done at 0/1C017C50",
+                     "LOG:  last completed transaction was at log time 2023-03-20 00:40:29.267464+00",
                      "LOG:  selected new timeline ID: 5",
                      "LOG:  archive recovery complete",
                      "LOG:  database system is ready to accept connections"
@@ -8540,7 +8622,7 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "20230130-013203F_20230130-013245I"
+                     "20230320-003954F_20230320-004037I"
                   ]
                }
             },
@@ -8554,7 +8636,7 @@
                      "filter" : false,
                      "filter-context" : 2,
                      "list" : [
-                        "20230130-013203F_20230130-013245I"
+                        "20230320-003954F_20230320-004037I"
                      ]
                   },
                   "host" : "pg-primary",
@@ -8570,47 +8652,47 @@
                      "    cipher: aes-256-cbc",
                      "",
                      "    db (current)",
-                     "        wal archive min/max (11): 00000002000000000000000A/00000005000000000000001C",
+                     "        wal archive min/max (11): 00000002000000000000000B/00000005000000000000001D",
                      "",
-                     "        full backup: 20230130-013159F",
-                     "            timestamp start/stop: 2023-01-30 01:31:59 / 2023-01-30 01:32:01",
-                     "            wal start/stop: 00000002000000000000000A / 00000002000000000000000B",
+                     "        full backup: 20230320-003950F",
+                     "            timestamp start/stop: 2023-03-20 00:39:50 / 2023-03-20 00:39:53",
+                     "            wal start/stop: 00000002000000000000000B / 00000002000000000000000C",
                      "            database size: 22.7MB, database backup size: 22.7MB",
-                     "            repo1: backup set size: 2.7MB, backup size: 2.7MB",
+                     "            repo1: backup size: 2.7MB",
                      "",
-                     "        full backup: 20230130-013203F",
-                     "            timestamp start/stop: 2023-01-30 01:32:03 / 2023-01-30 01:32:05",
-                     "            wal start/stop: 00000002000000000000000C / 00000002000000000000000D",
+                     "        full backup: 20230320-003954F",
+                     "            timestamp start/stop: 2023-03-20 00:39:54 / 2023-03-20 00:39:57",
+                     "            wal start/stop: 00000002000000000000000D / 00000002000000000000000E",
                      "            database size: 22.7MB, database backup size: 22.7MB",
-                     "            repo1: backup set size: 2.7MB, backup size: 2.7MB",
+                     "            repo1: backup size: 2.7MB",
                      "",
-                     "        diff backup: 20230130-013203F_20230130-013217D",
-                     "            timestamp start/stop: 2023-01-30 01:32:17 / 2023-01-30 01:32:19",
-                     "            wal start/stop: 000000020000000000000016 / 000000020000000000000017",
-                     "            database size: 22.7MB, database backup size: 10.9KB",
-                     "            repo1: backup set size: 2.7MB, backup size: 992B",
-                     "            backup reference list: 20230130-013203F",
+                     "        diff backup: 20230320-003954F_20230320-004008D",
+                     "            timestamp start/stop: 2023-03-20 00:40:08 / 2023-03-20 00:40:10",
+                     "            wal start/stop: 000000020000000000000017 / 000000020000000000000018",
+                     "            database size: 22.7MB, database backup size: 11.0KB",
+                     "            repo1: backup size: 936B",
+                     "            backup reference list: 20230320-003954F",
                      "",
-                     "        incr backup: 20230130-013203F_20230130-013225I",
-                     "            timestamp start/stop: 2023-01-30 01:32:25 / 2023-01-30 01:32:28",
-                     "            wal start/stop: 000000030000000000000019 / 000000030000000000000019",
+                     "        incr backup: 20230320-003954F_20230320-004017I",
+                     "            timestamp start/stop: 2023-03-20 00:40:17 / 2023-03-20 00:40:20",
+                     "            wal start/stop: 00000003000000000000001A / 00000003000000000000001A",
                      "            database size: 37.5MB, database backup size: 15.3MB",
-                     "            repo1: backup set size: 4.5MB, backup size: 1.8MB",
-                     "            backup reference list: 20230130-013203F, 20230130-013203F_20230130-013217D",
+                     "            repo1: backup size: 1.8MB",
+                     "            backup reference list: 20230320-003954F, 20230320-003954F_20230320-004008D",
                      "",
-                     "        diff backup: 20230130-013203F_20230130-013234D",
-                     "            timestamp start/stop: 2023-01-30 01:32:34 / 2023-01-30 01:32:36",
-                     "            wal start/stop: 00000004000000000000001A / 00000004000000000000001A",
+                     "        diff backup: 20230320-003954F_20230320-004026D",
+                     "            timestamp start/stop: 2023-03-20 00:40:26 / 2023-03-20 00:40:28",
+                     "            wal start/stop: 00000004000000000000001B / 00000004000000000000001B",
                      "            database size: 30.1MB, database backup size: 7.9MB",
-                     "            repo1: backup set size: 3.6MB, backup size: 967.9KB",
-                     "            backup reference list: 20230130-013203F",
+                     "            repo1: backup size: 933.8KB",
+                     "            backup reference list: 20230320-003954F",
                      "",
-                     "        incr backup: 20230130-013203F_20230130-013245I",
-                     "            timestamp start/stop: 2023-01-30 01:32:45 / 2023-01-30 01:32:47",
-                     "            wal start/stop: 00000005000000000000001C / 00000005000000000000001C",
+                     "        incr backup: 20230320-003954F_20230320-004037I",
+                     "            timestamp start/stop: 2023-03-20 00:40:37 / 2023-03-20 00:40:39",
+                     "            wal start/stop: 00000005000000000000001D / 00000005000000000000001D",
                      "            database size: 30.1MB, database backup size: 2.1MB",
-                     "            repo1: backup set size: 3.6MB, backup size: 222.8KB",
-                     "            backup reference list: 20230130-013203F, 20230130-013203F_20230130-013234D"
+                     "            repo1: backup size: 26.2KB",
+                     "            backup reference list: 20230320-003954F, 20230320-003954F_20230320-004026D"
                   ]
                }
             },
@@ -8632,8 +8714,8 @@
                   "bash-wrap" : true,
                   "cmd" : [
                      "sudo -u postgres pgbackrest --stanza=demo --delta \\",
-                     "    --set=20230130-013203F_20230130-013245I \\",
-                     "    --type=time \"--target=2023-01-30 01:32:38.383368+00\" --target-action=promote restore"
+                     "    --set=20230320-003954F_20230320-004037I \\",
+                     "    --type=time \"--target=2023-03-20 00:40:30.698142+00\" --target-action=promote restore"
                   ],
                   "host" : "pg-primary",
                   "load-env" : true,
@@ -8730,14 +8812,14 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "LOG:  database system was interrupted; last known up at 2023-01-30 01:32:45 UTC",
-                     "LOG:  starting point-in-time recovery to 2023-01-30 01:32:38.383368+00",
+                     "LOG:  database system was interrupted; last known up at 2023-03-20 00:40:37 UTC",
+                     "LOG:  starting point-in-time recovery to 2023-03-20 00:40:30.698142+00",
                      "LOG:  restored log file \"00000005.history\" from archive",
-                     "LOG:  restored log file \"00000005000000000000001C\" from archive",
-                     "LOG:  redo starts at 0/1C000028",
-                     "LOG:  consistent recovery state reached at 0/1C0000F8",
+                     "LOG:  restored log file \"00000005000000000000001D\" from archive",
+                     "LOG:  redo starts at 0/1D000028",
+                     "LOG:  consistent recovery state reached at 0/1D0000F8",
                      "LOG:  database system is ready to accept read only connections",
-                     "LOG:  redo done at 0/1C0000F8",
+                     "LOG:  redo done at 0/1D0000F8",
                      "       [filtered 6 lines of output]"
                   ]
                }
@@ -8760,7 +8842,7 @@
                   "bash-wrap" : true,
                   "cmd" : [
                      "sudo -u postgres pgbackrest --stanza=demo --delta \\",
-                     "    --type=time \"--target=2023-01-30 01:32:38.383368+00\" \\",
+                     "    --type=time \"--target=2023-03-20 00:40:30.698142+00\" \\",
                      "    --target-action=promote restore"
                   ],
                   "host" : "pg-primary",
@@ -8858,16 +8940,16 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "LOG:  database system was interrupted; last known up at 2023-01-30 01:32:35 UTC",
-                     "LOG:  starting point-in-time recovery to 2023-01-30 01:32:38.383368+00",
+                     "LOG:  database system was interrupted; last known up at 2023-03-20 00:40:27 UTC",
+                     "LOG:  starting point-in-time recovery to 2023-03-20 00:40:30.698142+00",
                      "LOG:  restored log file \"00000004.history\" from archive",
-                     "LOG:  restored log file \"00000004000000000000001A\" from archive",
+                     "LOG:  restored log file \"00000004000000000000001B\" from archive",
                      "       [filtered 2 lines of output]",
                      "LOG:  database system is ready to accept read only connections",
-                     "LOG:  restored log file \"00000004000000000000001B\" from archive",
-                     "LOG:  recovery stopping before commit of transaction 578, time 2023-01-30 01:32:39.793949+00",
-                     "LOG:  redo done at 0/1B018B28",
-                     "LOG:  last completed transaction was at log time 2023-01-30 01:32:36.95736+00",
+                     "LOG:  restored log file \"00000004000000000000001C\" from archive",
+                     "LOG:  recovery stopping before commit of transaction 578, time 2023-03-20 00:40:32.11458+00",
+                     "LOG:  redo done at 0/1C017C50",
+                     "LOG:  last completed transaction was at log time 2023-03-20 00:40:29.267464+00",
                      "LOG:  restored log file \"00000005.history\" from archive",
                      "LOG:  restored log file \"00000006.history\" from archive",
                      "       [filtered 3 lines of output]"
@@ -8911,7 +8993,9 @@
                      "pg1-path=/var/lib/pgsql/11/data",
                      "",
                      "[global]",
+                     "beta=y",
                      "process-max=4",
+                     "repo1-block=y",
                      "repo1-bundle=y",
                      "repo1-cipher-pass=zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO",
                      "repo1-cipher-type=aes-256-cbc",
@@ -9007,16 +9091,16 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "P00   INFO: backup command begin 2.44: --exec-id=4243-772b8ae5 --log-level-console=info --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/pgsql/11/data --process-max=4 --repo=2 --repo2-azure-account=<redacted> --repo2-azure-container=demo-container --repo2-azure-key=<redacted> --repo1-bundle --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --repo2-path=/demo-repo --repo1-retention-diff=2 --repo1-retention-full=2 --repo2-retention-full=4 --repo2-type=azure --stanza=demo --start-fast",
+                     "P00   INFO: backup command begin 2.45: --beta --exec-id=4353-56705304 --log-level-console=info --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/pgsql/11/data --process-max=4 --repo=2 --repo2-azure-account=<redacted> --repo2-azure-container=demo-container --repo2-azure-key=<redacted> --repo1-block --repo1-bundle --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --repo2-path=/demo-repo --repo1-retention-diff=2 --repo1-retention-full=2 --repo2-retention-full=4 --repo2-type=azure --stanza=demo --start-fast",
                      "P00   WARN: no prior backup exists, incr backup has been changed to full",
                      "P00   INFO: execute non-exclusive backup start: backup begins after the requested immediate checkpoint completes",
-                     "P00   INFO: backup start archive = 00000007000000000000001C, lsn = 0/1C000028",
+                     "P00   INFO: backup start archive = 00000007000000000000001D, lsn = 0/1D000028",
                      "       [filtered 3 lines of output]",
-                     "P00   INFO: check archive for segment(s) 00000007000000000000001C:00000007000000000000001C",
-                     "P00   INFO: new backup label = 20230130-013259F",
+                     "P00   INFO: check archive for segment(s) 00000007000000000000001D:00000007000000000000001D",
+                     "P00   INFO: new backup label = 20230320-004050F",
                      "P00   INFO: full backup size = 30.1MB, file total = 1250",
                      "P00   INFO: backup command end: completed successfully",
-                     "P00   INFO: expire command begin 2.44: --exec-id=4243-772b8ae5 --log-level-console=info --log-level-stderr=off --no-log-timestamp --repo=2 --repo2-azure-account=<redacted> --repo2-azure-container=demo-container --repo2-azure-key=<redacted> --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --repo2-path=/demo-repo --repo1-retention-diff=2 --repo1-retention-full=2 --repo2-retention-full=4 --repo2-type=azure --stanza=demo"
+                     "P00   INFO: expire command begin 2.45: --beta --exec-id=4353-56705304 --log-level-console=info --log-level-stderr=off --no-log-timestamp --repo=2 --repo2-azure-account=<redacted> --repo2-azure-container=demo-container --repo2-azure-key=<redacted> --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --repo2-path=/demo-repo --repo1-retention-diff=2 --repo1-retention-full=2 --repo2-retention-full=4 --repo2-type=azure --stanza=demo"
                   ]
                }
             },
@@ -9063,7 +9147,9 @@
                      "pg1-path=/var/lib/pgsql/11/data",
                      "",
                      "[global]",
+                     "beta=y",
                      "process-max=4",
+                     "repo1-block=y",
                      "repo1-bundle=y",
                      "repo1-cipher-pass=zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO",
                      "repo1-cipher-type=aes-256-cbc",
@@ -9167,16 +9253,16 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "P00   INFO: backup command begin 2.44: --exec-id=4403-f5b530d8 --log-level-console=info --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/pgsql/11/data --process-max=4 --repo=3 --repo2-azure-account=<redacted> --repo2-azure-container=demo-container --repo2-azure-key=<redacted> --repo1-bundle --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --repo2-path=/demo-repo --repo3-path=/demo-repo --repo1-retention-diff=2 --repo1-retention-full=2 --repo2-retention-full=4 --repo3-retention-full=4 --repo3-s3-bucket=demo-bucket --repo3-s3-endpoint=s3.us-east-1.amazonaws.com --repo3-s3-key=<redacted> --repo3-s3-key-secret=<redacted> --repo3-s3-region=us-east-1 --repo2-type=azure --repo3-type=s3 --stanza=demo --start-fast",
+                     "P00   INFO: backup command begin 2.45: --beta --exec-id=4512-692b2373 --log-level-console=info --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/pgsql/11/data --process-max=4 --repo=3 --repo2-azure-account=<redacted> --repo2-azure-container=demo-container --repo2-azure-key=<redacted> --repo1-block --repo1-bundle --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --repo2-path=/demo-repo --repo3-path=/demo-repo --repo1-retention-diff=2 --repo1-retention-full=2 --repo2-retention-full=4 --repo3-retention-full=4 --repo3-s3-bucket=demo-bucket --repo3-s3-endpoint=s3.us-east-1.amazonaws.com --repo3-s3-key=<redacted> --repo3-s3-key-secret=<redacted> --repo3-s3-region=us-east-1 --repo2-type=azure --repo3-type=s3 --stanza=demo --start-fast",
                      "P00   WARN: no prior backup exists, incr backup has been changed to full",
                      "P00   INFO: execute non-exclusive backup start: backup begins after the requested immediate checkpoint completes",
-                     "P00   INFO: backup start archive = 00000007000000000000001E, lsn = 0/1E000028",
+                     "P00   INFO: backup start archive = 00000007000000000000001F, lsn = 0/1F000028",
                      "       [filtered 3 lines of output]",
-                     "P00   INFO: check archive for segment(s) 00000007000000000000001E:00000007000000000000001E",
-                     "P00   INFO: new backup label = 20230130-013310F",
+                     "P00   INFO: check archive for segment(s) 00000007000000000000001F:00000007000000000000001F",
+                     "P00   INFO: new backup label = 20230320-004100F",
                      "P00   INFO: full backup size = 30.1MB, file total = 1250",
                      "P00   INFO: backup command end: completed successfully",
-                     "P00   INFO: expire command begin 2.44: --exec-id=4403-f5b530d8 --log-level-console=info --log-level-stderr=off --no-log-timestamp --repo=3 --repo2-azure-account=<redacted> --repo2-azure-container=demo-container --repo2-azure-key=<redacted> --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --repo2-path=/demo-repo --repo3-path=/demo-repo --repo1-retention-diff=2 --repo1-retention-full=2 --repo2-retention-full=4 --repo3-retention-full=4 --repo3-s3-bucket=demo-bucket --repo3-s3-endpoint=s3.us-east-1.amazonaws.com --repo3-s3-key=<redacted> --repo3-s3-key-secret=<redacted> --repo3-s3-region=us-east-1 --repo2-type=azure --repo3-type=s3 --stanza=demo"
+                     "P00   INFO: expire command begin 2.45: --beta --exec-id=4512-692b2373 --log-level-console=info --log-level-stderr=off --no-log-timestamp --repo=3 --repo2-azure-account=<redacted> --repo2-azure-container=demo-container --repo2-azure-key=<redacted> --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/var/lib/pgbackrest --repo2-path=/demo-repo --repo3-path=/demo-repo --repo1-retention-diff=2 --repo1-retention-full=2 --repo2-retention-full=4 --repo3-retention-full=4 --repo3-s3-bucket=demo-bucket --repo3-s3-endpoint=s3.us-east-1.amazonaws.com --repo3-s3-key=<redacted> --repo3-s3-key-secret=<redacted> --repo3-s3-region=us-east-1 --repo2-type=azure --repo3-type=s3 --stanza=demo"
                   ]
                }
             },
@@ -9211,7 +9297,9 @@
                      "pg1-path=/var/lib/pgsql/11/data",
                      "",
                      "[global]",
+                     "beta=y",
                      "process-max=4",
+                     "repo1-block=y",
                      "repo1-bundle=y",
                      "repo1-cipher-pass=zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO",
                      "repo1-cipher-type=aes-256-cbc",
@@ -9277,7 +9365,7 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "P00   INFO: stop command begin 2.44: --exec-id=4516-cf9d5842 --log-level-console=info --log-level-stderr=off --no-log-timestamp --stanza=demo",
+                     "P00   INFO: stop command begin 2.45: --beta --exec-id=4625-25496c11 --log-level-console=info --log-level-stderr=off --no-log-timestamp --stanza=demo",
                      "P00   INFO: stop command end: completed successfully"
                   ]
                }
@@ -9304,7 +9392,7 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "P00   INFO: stanza-delete command begin 2.44: --exec-id=4544-415fc8b7 --log-level-console=info --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/pgsql/11/data --repo=1 --repo2-azure-account=<redacted> --repo2-azure-container=demo-container --repo2-azure-key=<redacted> --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo4-gcs-bucket=demo-bucket --repo4-gcs-key=<redacted> --repo1-path=/var/lib/pgbackrest --repo2-path=/demo-repo --repo3-path=/demo-repo --repo4-path=/demo-repo --repo3-s3-bucket=demo-bucket --repo3-s3-endpoint=s3.us-east-1.amazonaws.com --repo3-s3-key=<redacted> --repo3-s3-key-secret=<redacted> --repo3-s3-region=us-east-1 --repo2-type=azure --repo3-type=s3 --repo4-type=gcs --stanza=demo",
+                     "P00   INFO: stanza-delete command begin 2.45: --beta --exec-id=4652-8b838ec1 --log-level-console=info --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/pgsql/11/data --repo=1 --repo2-azure-account=<redacted> --repo2-azure-container=demo-container --repo2-azure-key=<redacted> --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo4-gcs-bucket=demo-bucket --repo4-gcs-key=<redacted> --repo1-path=/var/lib/pgbackrest --repo2-path=/demo-repo --repo3-path=/demo-repo --repo4-path=/demo-repo --repo3-s3-bucket=demo-bucket --repo3-s3-endpoint=s3.us-east-1.amazonaws.com --repo3-s3-key=<redacted> --repo3-s3-key-secret=<redacted> --repo3-s3-region=us-east-1 --repo2-type=azure --repo3-type=s3 --repo4-type=gcs --stanza=demo",
                      "P00   INFO: stanza-delete command end: completed successfully"
                   ]
                }
@@ -9380,7 +9468,7 @@
                "key" : {
                   "bash-wrap" : true,
                   "cmd" : [
-                     "sudo scp build:/build/pgbackrest-release-2.44/src/pgbackrest /usr/bin"
+                     "sudo scp build:/build/pgbackrest-release-2.45/src/pgbackrest /usr/bin"
                   ],
                   "cmd-extra" : "2>&1",
                   "host" : "repository",
@@ -10154,17 +10242,17 @@
                      "    cipher: none",
                      "",
                      "    db (current)",
-                     "        wal archive min/max (11): 000000080000000000000024/000000080000000000000026",
+                     "        wal archive min/max (11): 000000080000000000000025/000000080000000000000027",
                      "",
-                     "        full backup: 20230130-013405F",
-                     "            timestamp start/stop: 2023-01-30 01:34:05 / 2023-01-30 01:34:09",
-                     "            wal start/stop: 000000080000000000000024 / 000000080000000000000024",
+                     "        full backup: 20230320-004210F",
+                     "            timestamp start/stop: 2023-03-20 00:42:10 / 2023-03-20 00:42:14",
+                     "            wal start/stop: 000000080000000000000025 / 000000080000000000000025",
                      "            database size: 30.1MB, database backup size: 30.1MB",
                      "            repo1: backup set size: 3.6MB, backup size: 3.6MB",
                      "",
-                     "        full backup: 20230130-013411F",
-                     "            timestamp start/stop: 2023-01-30 01:34:11 / 2023-01-30 01:34:15",
-                     "            wal start/stop: 000000080000000000000025 / 000000080000000000000026",
+                     "        full backup: 20230320-004216F",
+                     "            timestamp start/stop: 2023-03-20 00:42:16 / 2023-03-20 00:42:19",
+                     "            wal start/stop: 000000080000000000000026 / 000000080000000000000027",
                      "            database size: 30.1MB, database backup size: 30.1MB",
                      "            repo1: backup set size: 3.6MB, backup size: 3.6MB"
                   ]
@@ -10328,7 +10416,7 @@
                "key" : {
                   "bash-wrap" : true,
                   "cmd" : [
-                     "sudo scp build:/build/pgbackrest-release-2.44/src/pgbackrest /usr/bin"
+                     "sudo scp build:/build/pgbackrest-release-2.45/src/pgbackrest /usr/bin"
                   ],
                   "cmd-extra" : "2>&1",
                   "host" : "pg-standby",
@@ -10681,7 +10769,7 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "# Recovery settings generated by pgBackRest restore on 2023-01-30 01:34:45",
+                     "# Recovery settings generated by pgBackRest restore on 2023-03-20 00:43:08",
                      "restore_command = 'pgbackrest --stanza=demo archive-get %f \"%p\"'",
                      "standby_mode = 'on'"
                   ]
@@ -10797,13 +10885,13 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "LOG:  database system was interrupted; last known up at 2023-01-30 01:34:11 UTC",
+                     "LOG:  database system was interrupted; last known up at 2023-03-20 00:42:16 UTC",
                      "LOG:  entering standby mode",
                      "LOG:  restored log file \"00000008.history\" from archive",
-                     "LOG:  restored log file \"000000080000000000000025\" from archive",
-                     "LOG:  redo starts at 0/25000028",
                      "LOG:  restored log file \"000000080000000000000026\" from archive",
-                     "LOG:  consistent recovery state reached at 0/26000050",
+                     "LOG:  redo starts at 0/26000028",
+                     "LOG:  restored log file \"000000080000000000000027\" from archive",
+                     "LOG:  consistent recovery state reached at 0/27000050",
                      "LOG:  database system is ready to accept read only connections"
                   ]
                }
@@ -10885,7 +10973,7 @@
                   "output" : [
                      " pg_switch_wal |       current_timestamp       ",
                      "---------------+-------------------------------",
-                     " 0/2701BC00    | 2023-01-30 01:34:50.595899+00",
+                     " 0/2801AD40    | 2023-03-20 00:43:13.418946+00",
                      "(1 row)"
                   ]
                }
@@ -10914,7 +11002,7 @@
                   "output" : [
                      "    message     |       current_timestamp       ",
                      "----------------+-------------------------------",
-                     " Important Data | 2023-01-30 01:34:52.654247+00",
+                     " Important Data | 2023-03-20 00:43:15.379395+00",
                      "(1 row)"
                   ]
                }
@@ -10940,7 +11028,7 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "P00   INFO: check command begin 2.44: --exec-id=1240-962eaa91 --log-level-console=info --log-level-file=detail --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/pgsql/11/data --repo1-host=repository --repo1-host-ca-file=/etc/pgbackrest/cert/ca.crt --repo1-host-cert-file=/etc/pgbackrest/cert/client.crt --repo1-host-key-file=/etc/pgbackrest/cert/client.key --repo1-host-type=tls --stanza=demo",
+                     "P00   INFO: check command begin 2.45: --exec-id=1314-f150c6bf --log-level-console=info --log-level-file=detail --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/pgsql/11/data --repo1-host=repository --repo1-host-ca-file=/etc/pgbackrest/cert/ca.crt --repo1-host-cert-file=/etc/pgbackrest/cert/client.crt --repo1-host-key-file=/etc/pgbackrest/cert/client.key --repo1-host-type=tls --stanza=demo",
                      "P00   INFO: check repo1 (standby)",
                      "P00   INFO: switch wal not performed because this is a standby",
                      "P00   INFO: check command end: completed successfully"
@@ -11096,7 +11184,7 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "# Recovery settings generated by pgBackRest restore on 2023-01-30 01:34:56",
+                     "# Recovery settings generated by pgBackRest restore on 2023-03-20 00:43:18",
                      "primary_conninfo = 'host=172.17.0.5 port=5432 user=replicator'",
                      "restore_command = 'pgbackrest --stanza=demo archive-get %f \"%p\"'",
                      "standby_mode = 'on'"
@@ -11187,8 +11275,8 @@
                   "output" : [
                      "       [filtered 7 lines of output]",
                      "LOG:  database system is ready to accept read only connections",
-                     "LOG:  restored log file \"000000080000000000000027\" from archive",
-                     "LOG:  started streaming WAL from primary at 0/28000000 on timeline 8"
+                     "LOG:  restored log file \"000000080000000000000028\" from archive",
+                     "LOG:  started streaming WAL from primary at 0/29000000 on timeline 8"
                   ]
                }
             },
@@ -11220,7 +11308,7 @@
                   "output" : [
                      "    message     |       current_timestamp       ",
                      "----------------+-------------------------------",
-                     " Important Data | 2023-01-30 01:35:00.623472+00",
+                     " Important Data | 2023-03-20 00:43:23.167124+00",
                      "(1 row)"
                   ]
                }
@@ -11249,7 +11337,7 @@
                   "output" : [
                      "    message     |       current_timestamp       ",
                      "----------------+-------------------------------",
-                     " Important Data | 2023-01-30 01:35:00.971855+00",
+                     " Important Data | 2023-03-20 00:43:23.435956+00",
                      "(1 row)"
                   ]
                }
@@ -11498,10 +11586,10 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "P00   INFO: check command begin 2.44: --exec-id=5570-1d768bf4 --log-level-console=info --log-level-file=detail --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/pgsql/11/data --repo1-host=repository --repo1-host-ca-file=/etc/pgbackrest/cert/ca.crt --repo1-host-cert-file=/etc/pgbackrest/cert/client.crt --repo1-host-key-file=/etc/pgbackrest/cert/client.key --repo1-host-type=tls --stanza=demo",
+                     "P00   INFO: check command begin 2.45: --exec-id=5686-3863f998 --log-level-console=info --log-level-file=detail --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/pgsql/11/data --repo1-host=repository --repo1-host-ca-file=/etc/pgbackrest/cert/ca.crt --repo1-host-cert-file=/etc/pgbackrest/cert/client.crt --repo1-host-key-file=/etc/pgbackrest/cert/client.key --repo1-host-type=tls --stanza=demo",
                      "P00   INFO: check repo1 configuration (primary)",
                      "P00   INFO: check repo1 archive for WAL (primary)",
-                     "P00   INFO: WAL segment 00000008000000000000002D successfully archived to '/var/lib/pgbackrest/archive/demo/11-1/0000000800000000/00000008000000000000002D-53d7930d9324a99b512223bcea7248bbb80f93ce.gz' on repo1",
+                     "P00   INFO: WAL segment 00000008000000000000002E successfully archived to '/var/lib/pgbackrest/archive/demo/11-1/0000000800000000/00000008000000000000002E-5c8d049dff0bec6ed1197632722e3da3a5bae448.gz' on repo1",
                      "P00   INFO: check command end: completed successfully"
                   ]
                }
@@ -11528,26 +11616,26 @@
                "value" : {
                   "output" : [
                      "-------------------PROCESS START-------------------",
-                     "P00   INFO: archive-push:async command begin 2.44: [/var/lib/pgsql/11/data/pg_wal] --archive-async --exec-id=5539-e06784d0 --log-level-console=off --log-level-file=detail --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/pgsql/11/data --process-max=2 --repo1-host=repository --repo1-host-ca-file=/etc/pgbackrest/cert/ca.crt --repo1-host-cert-file=/etc/pgbackrest/cert/client.crt --repo1-host-key-file=/etc/pgbackrest/cert/client.key --repo1-host-type=tls --spool-path=/var/spool/pgbackrest --stanza=demo",
-                     "P00   INFO: push 1 WAL file(s) to archive: 000000080000000000000028",
-                     "P01 DETAIL: pushed WAL file '000000080000000000000028' to the archive",
+                     "P00   INFO: archive-push:async command begin 2.45: [/var/lib/pgsql/11/data/pg_wal] --archive-async --exec-id=5655-ac1d7c8f --log-level-console=off --log-level-file=detail --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/pgsql/11/data --process-max=2 --repo1-host=repository --repo1-host-ca-file=/etc/pgbackrest/cert/ca.crt --repo1-host-cert-file=/etc/pgbackrest/cert/client.crt --repo1-host-key-file=/etc/pgbackrest/cert/client.key --repo1-host-type=tls --spool-path=/var/spool/pgbackrest --stanza=demo",
+                     "P00   INFO: push 1 WAL file(s) to archive: 000000080000000000000029",
+                     "P01 DETAIL: pushed WAL file '000000080000000000000029' to the archive",
                      "P00 DETAIL: statistics: {\"socket.client\":{\"total\":1},\"socket.session\":{\"total\":1},\"tls.client\":{\"total\":1},\"tls.session\":{\"total\":1}}",
                      "P00   INFO: archive-push:async command end: completed successfully",
                      "",
                      "-------------------PROCESS START-------------------",
-                     "P00   INFO: archive-push:async command begin 2.44: [/var/lib/pgsql/11/data/pg_wal] --archive-async --exec-id=5572-6dd89f37 --log-level-console=off --log-level-file=detail --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/pgsql/11/data --process-max=2 --repo1-host=repository --repo1-host-ca-file=/etc/pgbackrest/cert/ca.crt --repo1-host-cert-file=/etc/pgbackrest/cert/client.crt --repo1-host-key-file=/etc/pgbackrest/cert/client.key --repo1-host-type=tls --spool-path=/var/spool/pgbackrest --stanza=demo",
-                     "P00   INFO: push 4 WAL file(s) to archive: 000000080000000000000029...00000008000000000000002C",
-                     "P02 DETAIL: pushed WAL file '00000008000000000000002A' to the archive",
-                     "P01 DETAIL: pushed WAL file '000000080000000000000029' to the archive",
+                     "P00   INFO: archive-push:async command begin 2.45: [/var/lib/pgsql/11/data/pg_wal] --archive-async --exec-id=5688-5894f44b --log-level-console=off --log-level-file=detail --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/pgsql/11/data --process-max=2 --repo1-host=repository --repo1-host-ca-file=/etc/pgbackrest/cert/ca.crt --repo1-host-cert-file=/etc/pgbackrest/cert/client.crt --repo1-host-key-file=/etc/pgbackrest/cert/client.key --repo1-host-type=tls --spool-path=/var/spool/pgbackrest --stanza=demo",
+                     "P00   INFO: push 4 WAL file(s) to archive: 00000008000000000000002A...00000008000000000000002D",
+                     "P01 DETAIL: pushed WAL file '00000008000000000000002A' to the archive",
                      "P02 DETAIL: pushed WAL file '00000008000000000000002B' to the archive",
                      "P01 DETAIL: pushed WAL file '00000008000000000000002C' to the archive",
+                     "P02 DETAIL: pushed WAL file '00000008000000000000002D' to the archive",
                      "P00 DETAIL: statistics: {\"socket.client\":{\"total\":1},\"socket.session\":{\"total\":1},\"tls.client\":{\"total\":1},\"tls.session\":{\"total\":1}}",
                      "P00   INFO: archive-push:async command end: completed successfully",
                      "",
                      "-------------------PROCESS START-------------------",
-                     "P00   INFO: archive-push:async command begin 2.44: [/var/lib/pgsql/11/data/pg_wal] --archive-async --exec-id=5580-319c814c --log-level-console=off --log-level-file=detail --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/pgsql/11/data --process-max=2 --repo1-host=repository --repo1-host-ca-file=/etc/pgbackrest/cert/ca.crt --repo1-host-cert-file=/etc/pgbackrest/cert/client.crt --repo1-host-key-file=/etc/pgbackrest/cert/client.key --repo1-host-type=tls --spool-path=/var/spool/pgbackrest --stanza=demo",
-                     "P00   INFO: push 1 WAL file(s) to archive: 00000008000000000000002D",
-                     "P01 DETAIL: pushed WAL file '00000008000000000000002D' to the archive",
+                     "P00   INFO: archive-push:async command begin 2.45: [/var/lib/pgsql/11/data/pg_wal] --archive-async --exec-id=5696-41f49095 --log-level-console=off --log-level-file=detail --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/pgsql/11/data --process-max=2 --repo1-host=repository --repo1-host-ca-file=/etc/pgbackrest/cert/ca.crt --repo1-host-cert-file=/etc/pgbackrest/cert/client.crt --repo1-host-key-file=/etc/pgbackrest/cert/client.key --repo1-host-type=tls --spool-path=/var/spool/pgbackrest --stanza=demo",
+                     "P00   INFO: push 1 WAL file(s) to archive: 00000008000000000000002E",
+                     "P01 DETAIL: pushed WAL file '00000008000000000000002E' to the archive",
                      "P00 DETAIL: statistics: {\"socket.client\":{\"total\":1},\"socket.session\":{\"total\":1},\"tls.client\":{\"total\":1},\"tls.session\":{\"total\":1}}",
                      "P00   INFO: archive-push:async command end: completed successfully"
                   ]
@@ -11588,25 +11676,25 @@
                "value" : {
                   "output" : [
                      "-------------------PROCESS START-------------------",
-                     "P00   INFO: archive-get:async command begin 2.44: [000000080000000000000025, 000000080000000000000026, 000000080000000000000027, 000000080000000000000028, 000000080000000000000029, 00000008000000000000002A, 00000008000000000000002B, 00000008000000000000002C] --archive-async --exec-id=1785-e3c1bac0 --log-level-console=off --log-level-file=detail --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/pgsql/11/data --process-max=2 --repo1-host=repository --repo1-host-ca-file=/etc/pgbackrest/cert/ca.crt --repo1-host-cert-file=/etc/pgbackrest/cert/client.crt --repo1-host-key-file=/etc/pgbackrest/cert/client.key --repo1-host-type=tls --spool-path=/var/spool/pgbackrest --stanza=demo",
-                     "P00   INFO: get 8 WAL file(s) from archive: 000000080000000000000025...00000008000000000000002C",
-                     "P02 DETAIL: found 000000080000000000000026 in the repo1: 11-1 archive",
-                     "P01 DETAIL: found 000000080000000000000025 in the repo1: 11-1 archive",
+                     "P00   INFO: archive-get:async command begin 2.45: [000000080000000000000026, 000000080000000000000027, 000000080000000000000028, 000000080000000000000029, 00000008000000000000002A, 00000008000000000000002B, 00000008000000000000002C, 00000008000000000000002D] --archive-async --exec-id=1857-5f559961 --log-level-console=off --log-level-file=detail --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/pgsql/11/data --process-max=2 --repo1-host=repository --repo1-host-ca-file=/etc/pgbackrest/cert/ca.crt --repo1-host-cert-file=/etc/pgbackrest/cert/client.crt --repo1-host-key-file=/etc/pgbackrest/cert/client.key --repo1-host-type=tls --spool-path=/var/spool/pgbackrest --stanza=demo",
+                     "P00   INFO: get 8 WAL file(s) from archive: 000000080000000000000026...00000008000000000000002D",
+                     "P01 DETAIL: found 000000080000000000000026 in the repo1: 11-1 archive",
                      "P02 DETAIL: found 000000080000000000000027 in the repo1: 11-1 archive",
-                     "P00 DETAIL: unable to find 000000080000000000000028 in the archive",
+                     "P01 DETAIL: found 000000080000000000000028 in the repo1: 11-1 archive",
+                     "P00 DETAIL: unable to find 000000080000000000000029 in the archive",
                      "P00 DETAIL: statistics: {\"socket.client\":{\"total\":1},\"socket.session\":{\"total\":1},\"tls.client\":{\"total\":1},\"tls.session\":{\"total\":1}}",
                      "       [filtered 24 lines of output]",
-                     "P00   INFO: archive-get:async command begin 2.44: [000000080000000000000028, 000000080000000000000029, 00000008000000000000002A, 00000008000000000000002B, 00000008000000000000002C, 00000008000000000000002D, 00000008000000000000002E, 00000008000000000000002F] --archive-async --exec-id=1832-9cd5183f --log-level-console=off --log-level-file=detail --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/pgsql/11/data --process-max=2 --repo1-host=repository --repo1-host-ca-file=/etc/pgbackrest/cert/ca.crt --repo1-host-cert-file=/etc/pgbackrest/cert/client.crt --repo1-host-key-file=/etc/pgbackrest/cert/client.key --repo1-host-type=tls --spool-path=/var/spool/pgbackrest --stanza=demo",
-                     "P00   INFO: get 8 WAL file(s) from archive: 000000080000000000000028...00000008000000000000002F",
-                     "P01 DETAIL: found 000000080000000000000028 in the repo1: 11-1 archive",
-                     "P02 DETAIL: found 000000080000000000000029 in the repo1: 11-1 archive",
-                     "P01 DETAIL: found 00000008000000000000002A in the repo1: 11-1 archive",
-                     "P02 DETAIL: found 00000008000000000000002B in the repo1: 11-1 archive",
-                     "P02 DETAIL: found 00000008000000000000002D in the repo1: 11-1 archive",
-                     "P01 DETAIL: found 00000008000000000000002C in the repo1: 11-1 archive",
-                     "P00 DETAIL: unable to find 00000008000000000000002E in the archive",
+                     "P00   INFO: archive-get:async command begin 2.45: [000000080000000000000029, 00000008000000000000002A, 00000008000000000000002B, 00000008000000000000002C, 00000008000000000000002D, 00000008000000000000002E, 00000008000000000000002F, 000000080000000000000030] --archive-async --exec-id=1904-e26bebee --log-level-console=off --log-level-file=detail --log-level-stderr=off --no-log-timestamp --pg1-path=/var/lib/pgsql/11/data --process-max=2 --repo1-host=repository --repo1-host-ca-file=/etc/pgbackrest/cert/ca.crt --repo1-host-cert-file=/etc/pgbackrest/cert/client.crt --repo1-host-key-file=/etc/pgbackrest/cert/client.key --repo1-host-type=tls --spool-path=/var/spool/pgbackrest --stanza=demo",
+                     "P00   INFO: get 8 WAL file(s) from archive: 000000080000000000000029...000000080000000000000030",
+                     "P01 DETAIL: found 000000080000000000000029 in the repo1: 11-1 archive",
+                     "P02 DETAIL: found 00000008000000000000002A in the repo1: 11-1 archive",
+                     "P01 DETAIL: found 00000008000000000000002B in the repo1: 11-1 archive",
+                     "P02 DETAIL: found 00000008000000000000002C in the repo1: 11-1 archive",
+                     "P01 DETAIL: found 00000008000000000000002D in the repo1: 11-1 archive",
+                     "P02 DETAIL: found 00000008000000000000002E in the repo1: 11-1 archive",
+                     "P00 DETAIL: unable to find 00000008000000000000002F in the archive",
                      "P00 DETAIL: statistics: {\"socket.client\":{\"total\":1},\"socket.session\":{\"total\":1},\"tls.client\":{\"total\":1},\"tls.session\":{\"total\":1}}",
-                     "       [filtered 14 lines of output]"
+                     "       [filtered 7 lines of output]"
                   ]
                }
             },
@@ -11714,20 +11802,20 @@
                   "output" : [
                      "       [filtered 2 lines of output]",
                      "P00   INFO: execute non-exclusive backup start: backup begins after the requested immediate checkpoint completes",
-                     "P00   INFO: backup start archive = 00000008000000000000002F, lsn = 0/2F000028",
-                     "P00   INFO: wait for replay on the standby to reach 0/2F000028",
-                     "P00   INFO: replay on the standby reached 0/2F000028",
-                     "P00   INFO: check archive for prior segment 00000008000000000000002E",
-                     "P01 DETAIL: backup file pg-primary:/var/lib/pgsql/11/data/global/pg_control (8KB, 0.35%) checksum 6ad46a9021f90b1ca2735b953356ec61eb0da423",
-                     "P02 DETAIL: backup file pg-standby:/var/lib/pgsql/11/data/base/13090/2608 (448KB, 20.12%) checksum b270f264e4f53081a2ef0930b845df8b18ac6214",
-                     "P03 DETAIL: backup file pg-standby:/var/lib/pgsql/11/data/base/13090/1249 (392KB, 37.42%) checksum afbb2faeff4e0ed55551fd285f158f3ef4a97ff7",
-                     "P04 DETAIL: backup file pg-standby:/var/lib/pgsql/11/data/base/13090/2674 (368KB, 53.66%) checksum d4512e59cdde3ab22037ee1ef2cb30de33f6ae36",
-                     "P01 DETAIL: backup file pg-primary:/var/lib/pgsql/11/data/log/postgresql.log (5.6KB, 53.91%) checksum 7bde1d9b23fb97243b0a422e954ec16ee19b598b",
+                     "P00   INFO: backup start archive = 000000080000000000000030, lsn = 0/30000028",
+                     "P00   INFO: wait for replay on the standby to reach 0/30000028",
+                     "P00   INFO: replay on the standby reached 0/30000028",
+                     "P00   INFO: check archive for prior segment 00000008000000000000002F",
+                     "P01 DETAIL: backup file pg-primary:/var/lib/pgsql/11/data/global/pg_control (8KB, 0.35%) checksum bc68e59887a39b844fb2fe3bb7d3987a669fae1e",
+                     "P02 DETAIL: backup file pg-standby:/var/lib/pgsql/11/data/base/13090/2608 (448KB, 20.12%) checksum 3d3ba4b79938f34bb431f12947117447448e3fe8",
+                     "P03 DETAIL: backup file pg-standby:/var/lib/pgsql/11/data/base/13090/1249 (392KB, 37.42%) checksum 370f08256a15998b54f9454003620b4bb92b1719",
+                     "P04 DETAIL: backup file pg-standby:/var/lib/pgsql/11/data/base/13090/2674 (368KB, 53.66%) checksum f252b519694e673ddcb296c2c8cf23486fee8a33",
+                     "P01 DETAIL: backup file pg-primary:/var/lib/pgsql/11/data/log/postgresql.log (5.6KB, 53.91%) checksum 2c6947c784862525e43e37a0cd3bee0d473f3a83",
                      "P01 DETAIL: backup file pg-primary:/var/lib/pgsql/11/data/pg_hba.conf (4.2KB, 54.10%) checksum 12abee43e7eabfb3ff6239f3fc9bc3598293557d",
                      "P01 DETAIL: backup file pg-primary:/var/lib/pgsql/11/data/current_logfiles (26B, 54.10%) checksum 78a9f5c10960f0d91fcd313937469824861795a2",
                      "P01 DETAIL: backup file pg-primary:/var/lib/pgsql/11/data/pg_logical/replorigin_checkpoint (8B, 54.10%) checksum 347fc8f2df71bd4436e38bd1516ccd7ea0d46532",
-                     "P02 DETAIL: backup file pg-standby:/var/lib/pgsql/11/data/base/13090/2673 (320KB, 68.22%) checksum 821fb8ab68ddf0e03341f733e0ad37e18f6035c7",
-                     "P03 DETAIL: backup file pg-standby:/var/lib/pgsql/11/data/base/13090/2658 (112KB, 73.16%) checksum bd172b900ca54631681373d3fc873893409a8978",
+                     "P02 DETAIL: backup file pg-standby:/var/lib/pgsql/11/data/base/13090/2673 (320KB, 68.22%) checksum 2173a629dc4cfcfd04aa44ab5a33a9a0f72b3b73",
+                     "P03 DETAIL: backup file pg-standby:/var/lib/pgsql/11/data/base/13090/2658 (112KB, 73.16%) checksum 5f695dec4d61cbe6a3e0dd25daa7a5ae6caa515b",
                      "       [filtered 1257 lines of output]"
                   ]
                }
@@ -12026,7 +12114,7 @@
                "type" : "exe",
                "value" : {
                   "output" : [
-                     "P00   INFO: stanza-upgrade command begin 2.44: --exec-id=6092-fcb64c35 --log-level-console=info --log-level-file=detail --log-level-stderr=off --no-log-timestamp --no-online --pg1-path=/var/lib/pgsql/12/data --repo1-host=repository --repo1-host-ca-file=/etc/pgbackrest/cert/ca.crt --repo1-host-cert-file=/etc/pgbackrest/cert/client.crt --repo1-host-key-file=/etc/pgbackrest/cert/client.key --repo1-host-type=tls --stanza=demo",
+                     "P00   INFO: stanza-upgrade command begin 2.45: --exec-id=6209-79c041b2 --log-level-console=info --log-level-file=detail --log-level-stderr=off --no-log-timestamp --no-online --pg1-path=/var/lib/pgsql/12/data --repo1-host=repository --repo1-host-ca-file=/etc/pgbackrest/cert/ca.crt --repo1-host-cert-file=/etc/pgbackrest/cert/client.crt --repo1-host-key-file=/etc/pgbackrest/cert/client.key --repo1-host-type=tls --stanza=demo",
                      "P00   INFO: stanza-upgrade for stanza 'demo' on repo1",
                      "P00   INFO: stanza-upgrade command end: completed successfully"
                   ]

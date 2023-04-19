@@ -25,13 +25,8 @@ httpQueryNew(HttpQueryNewParam param)
         FUNCTION_TEST_PARAM(STRING_LIST, param.redactList);
     FUNCTION_TEST_END();
 
-    HttpQuery *this = NULL;
-
     OBJ_NEW_BEGIN(HttpQuery, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        // Allocate state and set context
-        this = OBJ_NEW_ALLOC();
-
         *this = (HttpQuery)
         {
             .kv = kvNew(),
@@ -53,12 +48,8 @@ httpQueryNewStr(const String *query)
 
     ASSERT(query != NULL);
 
-    HttpQuery *this = NULL;
-
     OBJ_NEW_BEGIN(HttpQuery, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (HttpQuery)
         {
             .kv = kvNew(),
@@ -104,23 +95,18 @@ httpQueryDup(const HttpQuery *query, HttpQueryDupParam param)
         FUNCTION_TEST_PARAM(STRING_LIST, param.redactList);
     FUNCTION_TEST_END();
 
-    HttpQuery *this = NULL;
+    if (query == NULL)
+        FUNCTION_TEST_RETURN(HTTP_QUERY, NULL);
 
-    if (query != NULL)
+    OBJ_NEW_BEGIN(HttpQuery, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        OBJ_NEW_BEGIN(HttpQuery, .childQty = MEM_CONTEXT_QTY_MAX)
+        *this = (HttpQuery)
         {
-            // Allocate state and set context
-            this = OBJ_NEW_ALLOC();
-
-            *this = (HttpQuery)
-            {
-                .kv = kvDup(query->kv),
-                .redactList = param.redactList != NULL ? strLstDup(param.redactList) : strLstDup(query->redactList),
-            };
-        }
-        OBJ_NEW_END();
+            .kv = kvDup(query->kv),
+            .redactList = param.redactList != NULL ? strLstDup(param.redactList) : strLstDup(query->redactList),
+        };
     }
+    OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(HTTP_QUERY, this);
 }

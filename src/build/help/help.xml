@@ -151,6 +151,16 @@
                 </text>
 
                 <config-key-list>
+                    <config-key id="beta" name="Allow Beta Features">
+                        <summary>Allow beta features.</summary>
+
+                        <text>
+                            <p>Allow beta features to be enabled but do not actually enable them. Beta features need to be separately enabled using related options.</p>
+                        </text>
+
+                        <example>2MiB</example>
+                    </config-key>
+
                     <config-key id="buffer-size" name="Buffer Size">
                         <summary>Buffer size for I/O operations.</summary>
 
@@ -520,6 +530,56 @@
                        </text>
 
                         <example>y</example>
+                    </config-key>
+
+                    <config-key id="repo-block-age-map" name="Block Incremental Age Map">
+                        <summary>Block incremental age map.</summary>
+
+                        <text>
+                            <p>Map file age (in days) to a block multiplier. Files that have not been modified recently are less likely to be modified in the future, so the block size is multiplied to reduce the map size. By default, if the file is old enough it will not be stored as a block incremental.</p>
+                       </text>
+
+                        <example>7=2|14=4</example>
+                    </config-key>
+
+                    <config-key id="repo-block-checksum-size-map" name="Block Incremental Checksum Size Map">
+                        <summary>Block incremental checksum size map.</summary>
+
+                        <text>
+                            <p>Map block size to checksum size. Smaller checksums save space in the map but may not be able to reliably detect changes in the block.</p>
+                       </text>
+
+                        <example>32KiB=7|128KiB=8</example>
+                    </config-key>
+
+                    <config-key id="repo-block-size-map" name="Block Incremental Size Map">
+                        <summary>Block incremental size map.</summary>
+
+                        <text>
+                            <p>Map file size to block size. Block size is the minimum unit that will be stored in the block incremental. Smaller sizes allow for more granular incremental backups but larger sizes mean smaller maps.</p>
+                       </text>
+
+                        <example>16KiB=8KiB|128KiB=16KiB|512KiB=32KiB</example>
+                    </config-key>
+
+                    <config-key id="repo-block-size-super" name="Block Incremental Super Block Size">
+                        <summary>Block incremental super block size.</summary>
+
+                        <text>
+                            <p>A super block contains multiple blocks to improve compression efficiency. The disadvantage is that block reads must read from the beginning of the super block.</p>
+                       </text>
+
+                        <example>2MiB</example>
+                    </config-key>
+
+                    <config-key id="repo-block-size-super-full" name="Block Incremental Full Super Block Size">
+                        <summary>Block incremental full super block size.</summary>
+
+                        <text>
+                            <p>Super block size for full backups. This is generally larger than <br-option>repo-block-size-super</br-option> because it is likely that many blocks will need to be restored from the full backup so the larger super block size is not a disadvantage.</p>
+                       </text>
+
+                        <example>8MiB</example>
                     </config-key>
 
                     <config-key id="repo-bundle" name="Repository Bundles">
@@ -1775,6 +1835,18 @@
 
                         <example>25</example>
                     </config-key>
+
+                    <config-key id="pg-version-force" name="Force PostgreSQL version">
+                        <summary>Force <postgres/> version.</summary>
+
+                        <text>
+                            <p>The specified <postgres/> version will be used instead of the version automatically detected by reading <file>pg_control</file> or WAL headers. This is mainly useful for <postgres/> forks or development versions where those values are different from the release version. The version reported by <postgres/> via `server_version_num` must match the forced version.</p>
+
+                            <admonition type="warning">Be cautious when using this option because <file>pg_control</file> and WAL headers will still be read with expected format for the specified version, i.e. the format from the official open-source version of <postgres/>. If the fork or development version changes the format of the fields that <backrest/> depends on it will lead to unexpected behavior.</admonition>
+                        </text>
+
+                        <example>15</example>
+                    </config-key>
                 </config-key-list>
             </config-section>
         </config-section-list>
@@ -2032,6 +2104,71 @@
                 </option-list>
             </command>
 
+            <command id="manifest" name="Query Manifest">
+                <summary>Query manifest.</summary>
+
+                <text>
+                    <p>Get information from a manifest including the restore strategy.</p>
+                </text>
+
+                <option-list>
+                    <option id="filter" name="Filter Output">
+                        <summary>Filter files in output.</summary>
+
+                        <text>
+                            <p>The filter currently only applies to files and must be specified relative to <id>PGDATA</id>.</p>
+                        </text>
+
+                        <example>base/13398/16397</example>
+                    </option>
+
+                    <option id="output" name="Output">
+                        <summary>Output format.</summary>
+
+                        <text>
+                            <p>The following output types are supported:</p>
+
+                            <list>
+                                <list-item><id>text</id></list-item>
+                                <list-item><id>json</id></list-item>
+                            </list>
+                        </text>
+
+                        <example>json</example>
+                    </option>
+
+                    <option id="pg" name="PostgreSQL Cluster">
+                        <summary>PostgreSQL Cluster</summary>
+
+                        <text>
+                            <p>Specify the PostgreSQL cluster to compare the manifest against.</p>
+                        </text>
+
+                        <example>1</example>
+                    </option>
+
+                    <option id="reference" name="Filter on Reference">
+                        <summary>Filter on reference.</summary>
+
+                        <text>
+                            <p>Show only files with the specified reference. Use <id>latest</id> for files that were updated in the backup specified by <br-option>--set</br-option>.</p>
+                        </text>
+
+                        <example>20150131-153358F_20150131-153401I</example>
+                    </option>
+
+                    <option id="set" name="Set">
+                        <summary>Manifest to query.</summary>
+
+                        <text>
+                            <p>When not specified the latest manifest will be queried.</p>
+                        </text>
+
+                        <example>20150131-153358F_20150131-153401I</example>
+                    </option>
+                </option-list>
+            </command>
+
             <command id="repo-create" name="Create Repository">
                 <summary>Create the repository.</summary>
 
@@ -2220,6 +2357,8 @@
                                 <list-item><id>standby</id> - add <setting>standby_mode=on</setting> to <file>recovery.conf</file> file so cluster will start in standby mode.</list-item>
                                 <list-item><id>none</id> - no <file>recovery.conf</file> file is written so <postgres/> will attempt to achieve consistency using WAL segments present in <path>pg_xlog</path>/<path>pg_wal</path>. Provide the required WAL segments or use the <setting>archive-copy</setting> setting to include them with the backup.</list-item>
                             </list>
+
+                            <p>Note that the default restore <br-option>type</br-option> for offline backups is <id>none</id> since Point-in-Time-Recovery is not possible if <setting>wal_level=minimal</setting>. If <br-option>type</br-option> is set explicitly then it will be honored since Point-in-Time-Recovery is possible from offline backups as long as <setting>wal_level > minimal</setting>.</p>
                         </text>
 
                         <example>xid</example>

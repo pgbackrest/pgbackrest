@@ -42,6 +42,7 @@ STRING_EXTERN(OPT_TYPE_TIME_STR,                                    OPT_TYPE_TIM
 /***********************************************************************************************************************************
 Option constants
 ***********************************************************************************************************************************/
+STRING_EXTERN(OPT_BETA_STR,                                         OPT_BETA);
 STRING_EXTERN(OPT_STANZA_STR,                                       OPT_STANZA);
 
 /***********************************************************************************************************************************
@@ -297,6 +298,7 @@ typedef struct BldCfgOptionRaw
     const String *type;
     const String *section;
     bool internal;
+    bool beta;
     const Variant *required;
     const Variant *negate;
     bool reset;
@@ -815,6 +817,10 @@ bldCfgParseOptionList(Yaml *const yaml, const List *const cmdList, const List *c
                     {
                         optRaw.internal = yamlBoolParse(optDefVal);
                     }
+                    else if (strEqZ(optDef.value, "beta"))
+                    {
+                        optRaw.beta = yamlBoolParse(optDefVal);
+                    }
                     else if (strEqZ(optDef.value, "negate"))
                     {
                         optRaw.negate = varNewBool(yamlBoolParse(optDefVal));
@@ -904,6 +910,7 @@ bldCfgParseOptionList(Yaml *const yaml, const List *const cmdList, const List *c
                     .type = strDup(optRaw->type),
                     .section = strDup(optRaw->section),
                     .internal = optRaw->internal,
+                    .beta = optRaw->beta,
                     .required = varBool(optRaw->required),
                     .negate = varBool(optRaw->negate),
                     .reset = optRaw->reset,

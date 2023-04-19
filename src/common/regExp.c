@@ -70,11 +70,8 @@ regExpNew(const String *expression)
 
     ASSERT(expression != NULL);
 
-    RegExp *this = NULL;
-
     OBJ_NEW_BEGIN(RegExp, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
         *this = (RegExp){{0}};                                      // Extra braces are required for older gcc versions
 
         // Compile the regexp and process errors

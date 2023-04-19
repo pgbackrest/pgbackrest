@@ -52,11 +52,11 @@ unit:
         harness:
           name: error
           shim:
-            common/error: ~
+            common/error/error: ~
 
         coverage:
-          - common/error
-          - common/error.auto: noCode
+          - common/error/error
+          - common/error/error.auto: noCode
 
         depend:
           - common/stackTrace
@@ -121,6 +121,12 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: time
         total: 3
+        harness:
+          name: time
+          shim:
+            common/time:
+              function:
+                - timeMSec
 
         coverage:
           - common/time
@@ -164,6 +170,19 @@ unit:
           - common/type/list
           - common/type/variant
           - common/type/variantList
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: error-retry
+        total: 1
+        harness:
+          name: errorRetry
+          shim:
+            common/error/retry:
+              function:
+                - errRetryAdd
+
+        coverage:
+          - common/error/retry
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-list
@@ -331,7 +350,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: crypto
-        total: 3
+        total: 4
         feature: STORAGE
         harness: storage
 
@@ -340,6 +359,7 @@ unit:
           - common/crypto/common
           - common/crypto/hash
           - common/crypto/md5.vendor: included
+          - common/crypto/xxhash
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: io-tls
@@ -406,6 +426,12 @@ unit:
           name: storageHelper
           shim:
             storage/helper: ~
+        harness:
+          name: lock
+          shim:
+            common/lock:
+              function:
+                - lockInit
 
         coverage:
           - common/lock
@@ -855,6 +881,7 @@ unit:
           - command/backup/file
           - command/backup/pageChecksum
           - command/backup/protocol
+          - command/restore/blockDelta
 
         include:
           - info/info
@@ -866,7 +893,8 @@ unit:
         total: 14
 
         coverage:
-          - command/restore/blockHash
+          - command/restore/blockChecksum
+          - command/restore/blockDelta
           - command/restore/file
           - command/restore/protocol
           - command/restore/restore
@@ -875,6 +903,13 @@ unit:
           - common/user
           - info/infoBackup
           - info/manifest
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: manifest
+        total: 1
+
+        include:
+          - command/manifest/manifest
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: repo

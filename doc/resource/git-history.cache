@@ -1,5 +1,271 @@
 [
     {
+        "commit": "6ad79d16ca638b7ccdc81b5530a39007b8e01aed",
+        "date": "2023-03-20 09:37:23 +0800",
+        "subject": "v2.45: Block Incremental Backup (BETA)"
+    },
+    {
+        "commit": "04d224b88e73194ff1c6497dbecaaff392008dfe",
+        "date": "2023-03-18 20:47:03 +0800",
+        "subject": "Add beta feature and documentation for block incremental backup."
+    },
+    {
+        "commit": "78c036efb7ebf7060949f3d2f2e6d93986734414",
+        "date": "2023-03-16 17:46:32 +0700",
+        "subject": "Updates required for new manifest command to work remotely.",
+        "body": "Additional options are required and the BlockChecksum must work remotely."
+    },
+    {
+        "commit": "505a639f1e627b506c2e5a3351e8d4aacae9ed0b",
+        "date": "2023-03-14 21:56:05 +0700",
+        "subject": "Prototype manifest command.",
+        "body": "Output a manifest in text or JSON format. Neither format is complete but they cover the basics.\n\nIn particular the manifest command outputs the complete block restore when the filter option is specified and the block delta when the pg option is also specified. This is non-destructive so it is safe to execute against a running cluster."
+    },
+    {
+        "commit": "c30d3e439b77d544477e289606d30d0c8ffe301f",
+        "date": "2023-03-14 17:48:25 +0700",
+        "subject": "Block incremental map fixes and improvements.",
+        "body": "Bug Fixes:\r\n\r\n* Remove the distinction between maps where super block size is equal to block size and maps where they are not. In practice, maps with equal blocks are now rare and most of the optimizations can be applied directly to super blocks where the blocks are equal. This fixes a bug where a map that was created with equal size blocks and then converted to differing block sizes would generate an invalid map.\r\n\r\n* Free reads during restore to avoid running out of file handles.\r\n\r\nImprovements:\r\n\r\n* Store super block sizes in the block map. This allows the final block size to be removed from the block list and provides a more optimal restore and better potential for analysis.\r\n\r\n* Always round the super block size up to the next block size. This makes the number of blocks per super block more predictable.\r\n\r\n* Allow super block sizes to be changed at will in the map. The first case for this is to store the reduced super block size required when the last super block is short but it could be used to dynamically change the super block size to optimize compression.\r\n\r\n* Store a block count rather than a list of blocks in a super block. Blocks must always be sequential, though there may be an offset to the first block in a super block. This saves 11-14% on space for checksum sizes 6-7.\r\n\r\n* In the case that all the blocks for a super block are present, and there is no offset, the block size is omitted."
+    },
+    {
+        "commit": "5c1f78d4dd62c37218285d13b09a9450eb3a588e",
+        "date": "2023-03-12 22:38:38 +0700",
+        "subject": "Fix typo in blockIncrProcess()."
+    },
+    {
+        "commit": "1281a6eaf8552232c8c9af4d7fc15c082a7794d9",
+        "date": "2023-03-12 16:21:43 +0700",
+        "subject": "Ensure no continuations when block size equals super block size.",
+        "body": "In this case each super block contains a single block so continuations are not possible."
+    },
+    {
+        "commit": "d7704a8bc837b0be5564737e491bf5f73796ca0a",
+        "date": "2023-03-11 14:04:43 +0700",
+        "subject": "Move backup pq test script generation to backup harness.",
+        "body": "This allows scripted online backups to be used by other test modules."
+    },
+    {
+        "commit": "2fffd64213b7d51b6444f61502f4225584667731",
+        "date": "2023-03-10 16:11:30 +0700",
+        "subject": "Fix error handling in build-code binary.",
+        "body": "120a49b6 improved the error handling but due to a copy/pasto errors were being handled as asserts, which tripped an assertion in the log module."
+    },
+    {
+        "commit": "19f3a1d3040df56e73f19674618eb5f447dabe8d",
+        "date": "2023-03-10 16:08:30 +0700",
+        "subject": "Add missing header."
+    },
+    {
+        "commit": "24f725212d0c1dedc0f34fe4e939e481585ff697",
+        "date": "2023-03-10 15:30:27 +0700",
+        "subject": "Add beta feature infrastructure.",
+        "body": "This allows options to be marked as beta, which will require that the --beta option be supplied to prevent accidental usage of a beta feature.\n\nThe online and command-line documentation also show warnings when options are beta."
+    },
+    {
+        "commit": "6b409d049eb935146f7996b75b97744b75c411a9",
+        "date": "2023-03-10 14:01:38 +0700",
+        "subject": "Update default block size and super block values based on testing.",
+        "body": "Block sizes are incremented when the size of the map becomes as large as a single block. This is arbitrary but it appears to give a good balance of block size vs map size.\n\nThe full backup super block size is set to minimize loss of compression efficiency since most blocks in the database will likely never be modified. For diff/incr backup super blocks, a smaller size is allowable since only modified blocks are stored. The overall savings of not storing unmodified blocks offsets the small loss in compression efficiency due to the smaller super block and allows more granular fetches during restore."
+    },
+    {
+        "commit": "1119a5353911d6d326edac325f530bb796a806ae",
+        "date": "2023-03-09 11:04:03 +0700",
+        "subject": "Rename BlockHash to BlockChecksum.",
+        "body": "Checksum is the generally used terminology in the code base, even when a hash is being used as a checksum."
+    },
+    {
+        "commit": "6252c0e4485caee362edec13302a5f735a69bff4",
+        "date": "2023-03-09 10:30:57 +0700",
+        "subject": "Exclude backup set size from info for block incremental backups.",
+        "body": "As calculated this size is not correct since it does not include the parts of prior block incrementals that are required to make the current block incremental valid. At best this could be approximated and the resulting values might be very confusing.\n\nFor now, at least, exclude this metric for block incremental backups."
+    },
+    {
+        "commit": "210bed4511ae5523b170eb193b877346d787140d",
+        "date": "2023-03-09 10:02:04 +0700",
+        "subject": "Use xxHash instead of SHA-1 for block incremental checksums.",
+        "body": "xxHash is significantly faster than SHA-1 so this helps reduce the overhead of the feature.\n\nA variable number of bytes are used from the xxHash depending on the block size with a minimum of six bytes for the smallest block size. This keeps the maps smaller while still providing enough bits to detect block changes."
+    },
+    {
+        "commit": "8b5153ad210011812c8fe6db2f2ed829a5aa543a",
+        "date": "2023-03-09 09:39:54 +0700",
+        "subject": "Block-level incremental backup super blocks.",
+        "body": "Small blocks sizes can lead to reduced compression efficiency, so allow multiple blocks to be compressed together in a super block. The disadvantage is that the super block must be read sequentially to retrieve blocks. However, different super block sizes can be used for different backup types, so the full backup super block sizes are large for compression efficiency and diff/incr are smaller for retrieval efficiency."
+    },
+    {
+        "commit": "740c2258e36613b1b4e76bab452d0e610a399e7f",
+        "date": "2023-03-09 08:23:15 +0700",
+        "subject": "Add pg-version-force option for fork integration.",
+        "body": "Forks may update pg_control version or WAL magic without affecting the structures that pgBackRest depends on.\r\n\r\nThis option forces pgBackRest to treat a cluster as the specified version when it cannot be automatically identified."
+    },
+    {
+        "commit": "2fa7e53c5d4b5a5fd79f62d39763746727a5b9be",
+        "date": "2023-03-08 19:05:23 +0700",
+        "subject": "Skip writing recovery.signal by default for restores of offline backups.",
+        "body": "When restoring an offline backup on PostgreSQL >= 12, skip writing recovery.signal by default since this will error if the backup was made with wal_level=minimal. If the user explicitly sets the type option to something other than none, then write recovery.signal as usual since it is possible to do Point-In-Time-Recovery from an offline backup as long as wal_level was not minimal."
+    },
+    {
+        "commit": "7e5adc03594a3b7a975001e80902a51df3ddd577",
+        "date": "2023-03-07 18:46:24 +0700",
+        "subject": "Use raw compression/encryption to bundling and block incremental backup.",
+        "body": "Raw encryption was already being used for block incremental. This commit adds raw compression to block incremental where possible (see da918587).\n\nRaw compression/encryption is also added to bundling for a backup set when block incremental is enabled on the full backup. This prevents a break in backward compatibility since block incremental is not backward compatible."
+    },
+    {
+        "commit": "da9185870222057b97365f5db0acf797f959ec5e",
+        "date": "2023-03-07 18:31:17 +0700",
+        "subject": "Add optional raw format for compression types.",
+        "body": "Raw format saves 12 bytes of header for gzip and 4 bytes of checksum for lz4 (plus CPU overhead). This may not seem like much, but over millions of small files or incremental blocks can really add up. Even though it may be a relatively small percentage of the overall backup size it is still objectively a large amount of data.\n\nUse raw format for protocol compression to exercise the feature.\n\nRaw compression format will be added to bundling and block incremental in a followup commit."
+    },
+    {
+        "commit": "f6e307365f5a55a8bb4eb694e0a11fb4f32fb6e7",
+        "date": "2023-03-07 11:27:41 +0700",
+        "subject": "Improve interface handling in storage module.",
+        "body": "Make the interface object the parent of the driver object rather than the interface being allocated directly in the driver object.\n\nThe prior method was more efficient when mem contexts had a much higher cost. Now mem contexts are cheap so it makes more sense to structure the objects in a way that works better with mem context auditing. This also means the mem context does not need to be stored separately since it can be extracted directly from the interface object.\n\nThere are other areas that need to get the same improvement before the specialized objMoveContext() and objFreeContext() functions can be removed."
+    },
+    {
+        "commit": "120a49b6590a549a72bfe0a6a5a22905e835b2ce",
+        "date": "2023-03-06 21:07:08 +0700",
+        "subject": "Improved error handling in build-code binary.",
+        "body": "Show a full stack trace instead of just the error."
+    },
+    {
+        "commit": "0818601c055724bde3b97d4b02d3a38b0a53899a",
+        "date": "2023-03-06 09:49:33 +0700",
+        "subject": "Set online flag in manifest in command/restore unit tests.",
+        "body": "This flag does not currently affect restore behavior but it will in an upcoming commit. Set the flag here to simplify the test diff in the upcoming commit."
+    },
+    {
+        "commit": "c656669ac2354dab504d94b604e305c3b68bb493",
+        "date": "2023-03-04 12:50:02 +0700",
+        "subject": "Allow control version and WAL magic to be overridden in test harness.",
+        "body": "This makes it easier to write tests for invalid control version/WAL magic.\n\nAlso add HRN_PG_WAL_TO_BUFFER() to simplify generation of WAL headers."
+    },
+    {
+        "commit": "1648c133d6bc1ffd0682ae6219934d00295aa580",
+        "date": "2023-03-04 12:45:08 +0700",
+        "subject": "Keep only one all-default group index.",
+        "body": "It is possible for a group index to be created for an option that is later found to not meet dependencies. In this case all values would be default leading to a phantom group, which can be quite confusing.\r\n\r\nRemove group indexes that are all default (except the final one) and make sure the key for the final all default group index is 1."
+    },
+    {
+        "commit": "439447977681ea8730935535e25a657334596942",
+        "date": "2023-02-28 08:47:51 +0700",
+        "subject": "Fix typo and remove extraneous linefeed."
+    },
+    {
+        "commit": "16ac5ee8d3b926464cd27e8f064579f1e7935f4c",
+        "date": "2023-02-26 16:13:44 +0700",
+        "subject": "Rename block incremental manifest keys.",
+        "body": "Since the keys need to be read/written in order, these keys make the logic a bit simpler."
+    },
+    {
+        "commit": "a9867cb0b8e8d7abcac9b18b76e3e490c265f3cb",
+        "date": "2023-02-26 14:49:34 +0700",
+        "subject": "Add repo-block-age-map and repo-block-size-map options.",
+        "body": "Make these options configurable. This is primarily for testing purposes so the new options will be kept internal."
+    },
+    {
+        "commit": "15d5dcdd3bb387aab28bbe7262011c38c7d6d22c",
+        "date": "2023-02-26 14:41:32 +0700",
+        "subject": "Add explicit instructions for upgrading between 2.x versions.",
+        "body": "Add an explicit statement that there is nothing special to do when upgrading between 2.x versions.\r\n\r\nLeave the previous paragraph about the default location that changed between 2.00 and 2.02, as it is more a matter of transitioning from 1.x to 2.x."
+    },
+    {
+        "commit": "dffc933384e4327e2fd52868dd19668ed9d3ed91",
+        "date": "2023-02-13 09:17:30 +0700",
+        "subject": "Rename DeltaMap to BlockHash.",
+        "body": "This more accurately describes what the object does."
+    },
+    {
+        "commit": "779efe0d7a54340141e01597279e9ab1d0bd0773",
+        "date": "2023-02-09 13:01:56 +0700",
+        "subject": "Consistently declare block incremental size as size_t.",
+        "body": "The block is often allocated in memory so size_t makes more sense than uint64_t."
+    },
+    {
+        "commit": "d520816acf9ecb01ef805cecbc9de7e8d0a9f468",
+        "date": "2023-02-09 08:11:05 +0700",
+        "subject": "Remove parameter list from deltaMapNew().",
+        "body": "Since this filter cannot be used remotely (yet) there is no reason to create a parameter list."
+    },
+    {
+        "commit": "3feed389a2199454db68e446851323498b45db20",
+        "date": "2023-02-08 22:34:23 +0700",
+        "subject": "Improve IoChunkedRead end-of-file handling.",
+        "body": "Determine end-of-file earlier to improve throughput.\n\nAlso clean up some comments and formatting."
+    },
+    {
+        "commit": "089fae035bf0a9778fff0527ea3cbb113625a403",
+        "date": "2023-02-07 14:09:50 +0700",
+        "subject": "Add block incremental to real/all test output."
+    },
+    {
+        "commit": "31cad5e09e1910fc9d36d18306524aabca3ff36b",
+        "date": "2023-02-01 12:57:04 +0700",
+        "subject": "Check for stray execute permissions in test.pl --code-format.",
+        "body": "Sometimes these can get set while updating permissions from with a VM or container.\n\nAlso fix a few permissions that were not correct."
+    },
+    {
+        "commit": "8e7e9d36a133f2ec01f4864b5b0c80344888b737",
+        "date": "2023-01-31 21:28:28 +0700",
+        "subject": "Fix contributors in release notes."
+    },
+    {
+        "commit": "c5907a2e7193ca8f79cf56dca23e0df118e686c3",
+        "date": "2023-01-31 08:28:32 +0700",
+        "subject": "Remove references to SSH made obsolete when TLS was introduced.",
+        "body": "Also remove details about SSH compression that are not helpful."
+    },
+    {
+        "commit": "9ae6b6ef0f344b49f6153bf842ac815b0fcb9ea3",
+        "date": "2023-01-31 08:04:09 +0700",
+        "subject": "Update comments missed in copy/paste."
+    },
+    {
+        "commit": "ce0ea2cfab17e6770de3897133183af891df943c",
+        "date": "2023-01-30 12:22:41 +0700",
+        "subject": "Use uncrustify for code formatting.",
+        "body": "The code is not completely reflowed yet so there are some cases that uncrustify will not catch. The formatting will be improved over time.\n\nSome block of code require special formatting so have been surrounded with the {uncrustify-off}/{uncrustify-on} markers. These exceptions should be kept to a minimum.\n\nAdd --code-format (to reformat code) and --code-format-check (to check formatting) to test.pl.\n\nAdd a CI test that will check code formatting. Code must be correctly formatted before it can be merge to integration.\n\nAdd documentation to the coding standards for code formatting."
+    },
+    {
+        "commit": "d4070c90641a61fa3cb1169f3bd53067193bab4e",
+        "date": "2023-01-30 11:55:54 +0700",
+        "subject": "Reformat code with uncrustify.",
+        "body": "uncrustify has been configured to be as close to the current format as possible but the following changes were required:\n\n* Break long struct initializiers out of function calls.\n* Bit fields get extra spacing.\n* Strings that continue from the previous line no longer indented.\n* Ternary operators that do not fit on a single line moved to the next line first.\n* Align under parens for multi-line if statements.\n* Macros in header #if blocks are no longer indented.\n* Purposeful lack of function indentation in tests has been removed.\n\nCurrently uncrustify does not completely reflow the code so there are some edge cases that might not be caught. However, this still represents a huge improvement and the formatting can be refined going forward.\n\nSupport code for uncrustify will be in a followup commit."
+    },
+    {
+        "commit": "b2202c36d9e7c4557ac37087757df80193d516b5",
+        "date": "2023-01-30 11:16:31 +0700",
+        "subject": "Fix formatting errors.",
+        "body": "Errors in our current (manually-maintained) code format discovered by uncrustify."
+    },
+    {
+        "commit": "a96837d2eda4b7497e74954b24d9323f33465c50",
+        "date": "2023-01-30 10:55:14 +0700",
+        "subject": "Refactor loop limit in removeExpiredArchive().",
+        "body": "This simplifies the formatting, which was a bit tortured. Also, there is no need to check the limit on each iteration so this is a bit more efficient."
+    },
+    {
+        "commit": "f91af305845aa1e99d830a7a6addaee058b518d1",
+        "date": "2023-01-30 10:51:48 +0700",
+        "subject": "Add FN_PRINTF() macro.",
+        "body": "Bring the format(printf) attribute in line with the FN_NO_RETURN and FN_INLINE_ALWAYS macros.\n\nThis is simpler to read and can be customized for different compilers."
+    },
+    {
+        "commit": "f8ea51bf8f4de61fe3541e2f2701b9dccb5ede70",
+        "date": "2023-01-30 10:27:17 +0700",
+        "subject": "Refactor stackTraceToZ() to avoid multiple versions of the function.",
+        "body": "stackTraceToZ() was split this way in c8264291 to allow complete coverage. 0becb6da added a shim to improve coveage but missed simplifying the function."
+    },
+    {
+        "commit": "0d8e08f69c2ece7a060bd30dff0b375d013fe2fd",
+        "date": "2023-01-30 09:29:07 +0700",
+        "subject": "Update config.guess and config.sub to latest versions."
+    },
+    {
+        "commit": "240312110c5b1c07deb200b06755a886b723485b",
+        "date": "2023-01-30 09:27:04 +0700",
+        "subject": "Begin v2.45 development."
+    },
+    {
         "commit": "053468bfb156a8ecbd5d0325d35141056c89ec52",
         "date": "2023-01-30 09:15:44 +0700",
         "subject": "v2.44: Remove PostgreSQL 9.0/9.1/9.2 Support"
