@@ -169,7 +169,7 @@ pgWalSegmentSizeCheck(unsigned int pgVersion, unsigned int walSegmentSize)
     if (pgVersion < PG_VERSION_11 && walSegmentSize != PG_WAL_SEGMENT_SIZE_DEFAULT)
     {
         THROW_FMT(
-            FormatError, "wal segment size is %u but must be %u for " PG_NAME " <= " PG_VERSION_10_STR, walSegmentSize,
+            FormatError, "wal segment size is %u but must be %u for " PG_NAME " <= " PG_VERSION_10_Z, walSegmentSize,
             PG_WAL_SEGMENT_SIZE_DEFAULT);
     }
 
