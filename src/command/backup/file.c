@@ -208,7 +208,8 @@ backupFile(
                         ioFilterGroupAdd(
                             ioReadFilterGroup(storageReadIo(read)),
                             pageChecksumNew(
-                                segmentNumber(file->pgFile), PG_SEGMENT_PAGE_DEFAULT, storagePathP(storagePg(), file->pgFile)));
+                                segmentNumber(file->pgFile), PG_SEGMENT_PAGE_DEFAULT, file->pgFilePageHeaderCheck,
+                                storagePathP(storagePg(), file->pgFile)));
                     }
 
                     // Compress filter

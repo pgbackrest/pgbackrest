@@ -96,6 +96,7 @@ Option constants
 #define CFGOPT_NEUTRAL_UMASK                                        "neutral-umask"
 #define CFGOPT_ONLINE                                               "online"
 #define CFGOPT_OUTPUT                                               "output"
+#define CFGOPT_PAGE_HEADER_CHECK                                    "page-header-check"
 #define CFGOPT_PG                                                   "pg"
 #define CFGOPT_PG_VERSION_FORCE                                     "pg-version-force"
 #define CFGOPT_PROCESS                                              "process"
@@ -134,7 +135,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
 #define CFGOPT_VERBOSE                                              "verbose"
 
-#define CFG_OPTION_TOTAL                                            166
+#define CFG_OPTION_TOTAL                                            167
 
 /***********************************************************************************************************************************
 Option value constants
@@ -416,6 +417,7 @@ typedef enum
     cfgOptNeutralUmask,
     cfgOptOnline,
     cfgOptOutput,
+    cfgOptPageHeaderCheck,
     cfgOptPg,
     cfgOptPgDatabase,
     cfgOptPgHost,

@@ -16,7 +16,8 @@ Filter type constant
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN IoFilter *pageChecksumNew(unsigned int segmentNo, unsigned int segmentPageTotal, const String *fileName);
+FN_EXTERN IoFilter *pageChecksumNew(
+    unsigned int segmentNo, unsigned int segmentPageTotal, bool headerCheck, const String *fileName);
 FN_EXTERN IoFilter *pageChecksumNewPack(const Pack *paramList);
 
 #endif
