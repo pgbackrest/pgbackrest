@@ -134,7 +134,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
 #define CFGOPT_VERBOSE                                              "verbose"
 
-#define CFG_OPTION_TOTAL                                            166
+#define CFG_OPTION_TOTAL                                            174
 
 /***********************************************************************************************************************************
 Option value constants

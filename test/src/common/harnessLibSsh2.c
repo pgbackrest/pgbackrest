@@ -362,14 +362,14 @@ int libssh2_sftp_stat_ex(
         THROW(AssertError, "attrs is NULL");
 
     attrs->flags = 0;
-    attrs->flags |= hrnLibSsh2->flags;
+    attrs->flags |= (unsigned long)hrnLibSsh2->flags;
 
     attrs->permissions = 0;
-    attrs->permissions |= hrnLibSsh2->attrPerms;
+    attrs->permissions |= (unsigned long)hrnLibSsh2->attrPerms;
 
-    attrs->mtime = hrnLibSsh2->mtime;
-    attrs->uid = hrnLibSsh2->uid;
-    attrs->gid = hrnLibSsh2->gid;
+    attrs->mtime = (unsigned long)hrnLibSsh2->mtime;
+    attrs->uid = (unsigned long)hrnLibSsh2->uid;
+    attrs->gid = (unsigned long)hrnLibSsh2->gid;
     attrs->filesize = hrnLibSsh2->filesize;
 
     return hrnLibSsh2->resultInt;
@@ -380,7 +380,7 @@ Shim for libssh2_sftp_last_error
 ***********************************************************************************************************************************/
 unsigned long libssh2_sftp_last_error(LIBSSH2_SFTP *sftp)
 {
-    return hrnLibSsh2ScriptRun(HRNLIBSSH2_SFTP_LAST_ERROR, NULL, (HrnLibSsh2 *)sftp)->resultUInt;
+    return (unsigned long)hrnLibSsh2ScriptRun(HRNLIBSSH2_SFTP_LAST_ERROR, NULL, (HrnLibSsh2 *)sftp)->resultUInt;
 }
 
 /***********************************************************************************************************************************
@@ -539,14 +539,14 @@ int libssh2_sftp_fstat_ex(LIBSSH2_SFTP_HANDLE *handle, LIBSSH2_SFTP_ATTRIBUTES *
 
     // populate attrs
     attrs->flags = 0;
-    attrs->flags |= hrnLibSsh2->flags;
+    attrs->flags |= (unsigned long)hrnLibSsh2->flags;
 
     attrs->permissions = 0;
-    attrs->permissions |= hrnLibSsh2->attrPerms;
+    attrs->permissions |= (unsigned long)hrnLibSsh2->attrPerms;
 
-    attrs->mtime = hrnLibSsh2->mtime;
-    attrs->uid = hrnLibSsh2->uid;
-    attrs->gid = hrnLibSsh2->gid;
+    attrs->mtime = (unsigned long)hrnLibSsh2->mtime;
+    attrs->uid = (unsigned long)hrnLibSsh2->uid;
+    attrs->gid = (unsigned long)hrnLibSsh2->gid;
     attrs->filesize = hrnLibSsh2->filesize;
 
     return hrnLibSsh2->resultInt;

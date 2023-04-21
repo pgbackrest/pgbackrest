@@ -61,9 +61,8 @@ sub new
     my $strTestSshPath = "${strProjectPath}/test/ssh";
 
     my $self = $class->SUPER::new(
-                #strName   strContainer                                     strImage       strUser  OS    mount  options paramd
-                HOST_SFTP, 'test-' . testRunGet()->vmId() . '-' . HOST_SFTP, 'atmoz/sftp', 'root', 'u18', ["${strTestSshPath}:/home/vagrant/.ssh"], undef, 'vagrant:pass:1000:1000:.ssh,/,/archive,/backup',
-        false);
+        HOST_SFTP, 'test-' . testRunGet()->vmId() . '-' . HOST_SFTP, 'atmoz/sftp', 'root', ["${strTestSshPath}:/home/vagrant/.ssh"],
+        undef, 'vagrant:pass:1000:1000:.ssh,/,/archive,/backup', false);
     bless $self, $class;
 
     # Return from function and log return values if any

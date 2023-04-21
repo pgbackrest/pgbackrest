@@ -419,13 +419,10 @@ storageWriteSftpNew(
     ASSERT(modeFile != 0);
     ASSERT(modePath != 0);
 
-    StorageWrite *this = NULL;
-
-    OBJ_NEW_BEGIN(StorageWriteSftp, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(StorageWriteSftp, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageWriteSftp *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), StorageWrite::StorageWriteSftp);
 
-        *driver = (StorageWriteSftp)
+        *this = (StorageWriteSftp)
         {
             .storage = storage,
             .path = strPath(name),
@@ -461,13 +458,11 @@ storageWriteSftpNew(
         };
 
         // Create temp file name
-        driver->nameTmp = atomic ? strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strZ(name)) : driver->interface.name;
-
-        this = storageWriteNew(driver, &driver->interface);
+        this->nameTmp = atomic ? strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strZ(name)) : this->interface.name;
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_WRITE, this);
+    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteNew(this, &this->interface));
 }
 
 #endif // HAVE_LIBSSH2

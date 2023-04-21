@@ -793,14 +793,11 @@ storageSftpNew(const String *const path, const String *const host, const unsigne
     userInit();
 
     // Create the object
-    Storage *this = NULL;
     Wait *wait = NULL;
 
-    OBJ_NEW_BEGIN(StorageSftp, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(StorageSftp, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        StorageSftp *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), Storage::StorageSftp);
-
-        *driver = (StorageSftp)
+        *this = (StorageSftp)
         {
             .interface = storageInterfaceSftp,
             .timeoutConnect = timeoutConnect,
@@ -810,21 +807,21 @@ storageSftpNew(const String *const path, const String *const host, const unsigne
         if (libssh2_init(0) != 0)
             THROW_FMT(ServiceError, "unable to init libssh2");
 
-        driver->ioSession = ioClientOpen(sckClientNew(host, port, timeoutConnect, timeoutSession));
+        this->ioSession = ioClientOpen(sckClientNew(host, port, timeoutConnect, timeoutSession));
 
-        driver->session = libssh2_session_init();
-        if (driver->session == NULL)
+        this->session = libssh2_session_init();
+        if (this->session == NULL)
             THROW_FMT(ServiceError, "unable to init libssh2 session");
 
         // Returns void
-        libssh2_session_set_blocking(driver->session, 0);
+        libssh2_session_set_blocking(this->session, 0);
 
         int handshakeStatus = 0;
         wait = waitNew(timeoutConnect);
 
         do
         {
-            handshakeStatus = libssh2_session_handshake(driver->session, ioSessionFd(driver->ioSession));
+            handshakeStatus = libssh2_session_handshake(this->session, ioSessionFd(this->ioSession));
         }
         while (handshakeStatus == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
 
@@ -861,10 +858,10 @@ storageSftpNew(const String *const path, const String *const host, const unsigne
                 break;
         }
 
-        const char *binaryFingerprint = libssh2_hostkey_hash(driver->session, hashType);
+        const char *binaryFingerprint = libssh2_hostkey_hash(this->session, hashType);
 
         if (binaryFingerprint == NULL)
-            THROW_FMT(ServiceError, "libssh2 hostkey hash failed: libssh2 errno [%d]", libssh2_session_last_errno(driver->session));
+            THROW_FMT(ServiceError, "libssh2 hostkey hash failed: libssh2 errno [%d]", libssh2_session_last_errno(this->session));
 
         // Compare fingerprint if provided
         if (param.hostFingerprint != NULL)
@@ -895,7 +892,7 @@ storageSftpNew(const String *const path, const String *const host, const unsigne
             do
             {
                 rc = libssh2_userauth_publickey_fromfile(
-                        driver->session, strZ(param.user), strZNull(param.keyPub) == NULL ? NULL : strZ(param.keyPub),
+                        this->session, strZ(param.user), strZNull(param.keyPub) == NULL ? NULL : strZ(param.keyPub),
                         strZ(param.keyPriv), strZNull(param.keyPassphrase) == NULL ? NULL : strZ(param.keyPassphrase));
             }
             while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
@@ -903,7 +900,7 @@ storageSftpNew(const String *const path, const String *const host, const unsigne
             if (rc)
             {
                 storageSftpEvalLibSsh2Error(
-                    rc, libssh2_sftp_last_error(driver->sftpSession), &ServiceError,
+                    rc, libssh2_sftp_last_error(this->sftpSession), &ServiceError,
                     STRDEF("public key authentication failed"),
                     STRDEF(
                         "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-keyfile and"
@@ -919,24 +916,23 @@ storageSftpNew(const String *const path, const String *const host, const unsigne
 
         do
         {
-            driver->sftpSession = libssh2_sftp_init(driver->session);
+            this->sftpSession = libssh2_sftp_init(this->session);
         }
-        while (driver->sftpSession == NULL && waitMore(wait));
+        while (this->sftpSession == NULL && waitMore(wait));
 
-        if (driver->sftpSession == NULL)
+        if (this->sftpSession == NULL)
             THROW_FMT(ServiceError, "unable to init libssh2_sftp session");
 
         // Ensure libssh2/libssh2_sftp resources freed
-        memContextCallbackSet(objMemContext(driver), storageSftpLibSsh2SessionFreeResource, driver);
+        memContextCallbackSet(objMemContext(this), storageSftpLibSsh2SessionFreeResource, this);
 
-        this = storageNew(
-            STORAGE_SFTP_TYPE, path, param.modeFile == 0 ? STORAGE_MODE_FILE_DEFAULT : param.modeFile,
-            param.modePath == 0 ? STORAGE_MODE_PATH_DEFAULT : param.modePath, param.write, param.pathExpressionFunction, driver,
-            driver->interface);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE, this);
+    FUNCTION_LOG_RETURN(STORAGE,
+            storageNew(STORAGE_SFTP_TYPE, path, param.modeFile == 0 ? STORAGE_MODE_FILE_DEFAULT : param.modeFile,
+                param.modePath == 0 ? STORAGE_MODE_PATH_DEFAULT : param.modePath, param.write, param.pathExpressionFunction, this,
+                this->interface));
 }
 
 #endif // HAVE_LIBSSH2

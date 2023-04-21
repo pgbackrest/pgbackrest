@@ -25,6 +25,7 @@ static const StringPub parseRuleValueStr[] =
     PARSE_RULE_STRPUB("2"),                                                                                               // val/str
     PARSE_RULE_STRPUB("20MiB"),                                                                                           // val/str
     PARSE_RULE_STRPUB("22"),                                                                                              // val/str
+    PARSE_RULE_STRPUB("256KiB"),                                                                                          // val/str
     PARSE_RULE_STRPUB("2MiB"),                                                                                            // val/str
     PARSE_RULE_STRPUB("3"),                                                                                               // val/str
     PARSE_RULE_STRPUB("443"),                                                                                             // val/str
@@ -74,11 +75,8 @@ typedef enum
     parseRuleValStrQT_1MiB_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_2_QT,                                                                                          // val/str/enum
     parseRuleValStrQT_20MiB_QT,                                                                                      // val/str/enum
-<<<<<<< HEAD
     parseRuleValStrQT_22_QT,                                                                                         // val/str/enum
-=======
     parseRuleValStrQT_256KiB_QT,                                                                                     // val/str/enum
->>>>>>> main
     parseRuleValStrQT_2MiB_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_3_QT,                                                                                          // val/str/enum
     parseRuleValStrQT_443_QT,                                                                                        // val/str/enum
@@ -7870,6 +7868,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                          // opt/repo-sftp-account
             PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)                                                         // opt/repo-sftp-account
             PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                                           // opt/repo-sftp-account
+            PARSE_RULE_OPTION_COMMAND(cfgCmdManifest)                                                       // opt/repo-sftp-account
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                                     // opt/repo-sftp-account
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)                                                        // opt/repo-sftp-account
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)                                                         // opt/repo-sftp-account
@@ -7904,6 +7903,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                    // opt/repo-sftp-account
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                          // opt/repo-sftp-account
             PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                                           // opt/repo-sftp-account
+            PARSE_RULE_OPTION_COMMAND(cfgCmdManifest)                                                       // opt/repo-sftp-account
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                                     // opt/repo-sftp-account
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)                                                        // opt/repo-sftp-account
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)                                                         // opt/repo-sftp-account
@@ -7948,6 +7948,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                             // opt/repo-sftp-host
             PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)                                                            // opt/repo-sftp-host
             PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                                              // opt/repo-sftp-host
+            PARSE_RULE_OPTION_COMMAND(cfgCmdManifest)                                                          // opt/repo-sftp-host
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                                        // opt/repo-sftp-host
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)                                                           // opt/repo-sftp-host
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)                                                            // opt/repo-sftp-host
@@ -7982,6 +7983,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                       // opt/repo-sftp-host
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                             // opt/repo-sftp-host
             PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                                              // opt/repo-sftp-host
+            PARSE_RULE_OPTION_COMMAND(cfgCmdManifest)                                                          // opt/repo-sftp-host
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                                        // opt/repo-sftp-host
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)                                                           // opt/repo-sftp-host
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)                                                            // opt/repo-sftp-host
@@ -8026,6 +8028,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                 // opt/repo-sftp-host-fingerprint
             PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)                                                // opt/repo-sftp-host-fingerprint
             PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                                  // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdManifest)                                              // opt/repo-sftp-host-fingerprint
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                            // opt/repo-sftp-host-fingerprint
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)                                               // opt/repo-sftp-host-fingerprint
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)                                                // opt/repo-sftp-host-fingerprint
@@ -8060,6 +8063,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                           // opt/repo-sftp-host-fingerprint
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                 // opt/repo-sftp-host-fingerprint
             PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                                  // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdManifest)                                              // opt/repo-sftp-host-fingerprint
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                            // opt/repo-sftp-host-fingerprint
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)                                               // opt/repo-sftp-host-fingerprint
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)                                                // opt/repo-sftp-host-fingerprint
@@ -8104,6 +8108,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                        // opt/repo-sftp-host-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)                                                       // opt/repo-sftp-host-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                                         // opt/repo-sftp-host-port
+            PARSE_RULE_OPTION_COMMAND(cfgCmdManifest)                                                     // opt/repo-sftp-host-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                                   // opt/repo-sftp-host-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)                                                      // opt/repo-sftp-host-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)                                                       // opt/repo-sftp-host-port
@@ -8138,6 +8143,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                  // opt/repo-sftp-host-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                        // opt/repo-sftp-host-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                                         // opt/repo-sftp-host-port
+            PARSE_RULE_OPTION_COMMAND(cfgCmdManifest)                                                     // opt/repo-sftp-host-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                                   // opt/repo-sftp-host-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)                                                      // opt/repo-sftp-host-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)                                                       // opt/repo-sftp-host-port
@@ -8194,6 +8200,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                // opt/repo-sftp-hostkey-hash-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)                                               // opt/repo-sftp-hostkey-hash-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                                 // opt/repo-sftp-hostkey-hash-type
+            PARSE_RULE_OPTION_COMMAND(cfgCmdManifest)                                             // opt/repo-sftp-hostkey-hash-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                           // opt/repo-sftp-hostkey-hash-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)                                              // opt/repo-sftp-hostkey-hash-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)                                               // opt/repo-sftp-hostkey-hash-type
@@ -8228,6 +8235,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                          // opt/repo-sftp-hostkey-hash-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                // opt/repo-sftp-hostkey-hash-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                                 // opt/repo-sftp-hostkey-hash-type
+            PARSE_RULE_OPTION_COMMAND(cfgCmdManifest)                                             // opt/repo-sftp-hostkey-hash-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                           // opt/repo-sftp-hostkey-hash-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)                                              // opt/repo-sftp-hostkey-hash-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)                                               // opt/repo-sftp-hostkey-hash-type
@@ -8280,6 +8288,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                               // opt/repo-sftp-keyfile-passphrase
             PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)                                              // opt/repo-sftp-keyfile-passphrase
             PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                                // opt/repo-sftp-keyfile-passphrase
+            PARSE_RULE_OPTION_COMMAND(cfgCmdManifest)                                            // opt/repo-sftp-keyfile-passphrase
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                          // opt/repo-sftp-keyfile-passphrase
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)                                             // opt/repo-sftp-keyfile-passphrase
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)                                              // opt/repo-sftp-keyfile-passphrase
@@ -8314,6 +8323,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                         // opt/repo-sftp-keyfile-passphrase
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                               // opt/repo-sftp-keyfile-passphrase
             PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                                // opt/repo-sftp-keyfile-passphrase
+            PARSE_RULE_OPTION_COMMAND(cfgCmdManifest)                                            // opt/repo-sftp-keyfile-passphrase
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                          // opt/repo-sftp-keyfile-passphrase
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)                                             // opt/repo-sftp-keyfile-passphrase
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)                                              // opt/repo-sftp-keyfile-passphrase
@@ -8358,6 +8368,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                  // opt/repo-sftp-private-keyfile
             PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)                                                 // opt/repo-sftp-private-keyfile
             PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                                   // opt/repo-sftp-private-keyfile
+            PARSE_RULE_OPTION_COMMAND(cfgCmdManifest)                                               // opt/repo-sftp-private-keyfile
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                             // opt/repo-sftp-private-keyfile
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)                                                // opt/repo-sftp-private-keyfile
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)                                                 // opt/repo-sftp-private-keyfile
@@ -8392,6 +8403,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                            // opt/repo-sftp-private-keyfile
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                  // opt/repo-sftp-private-keyfile
             PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                                   // opt/repo-sftp-private-keyfile
+            PARSE_RULE_OPTION_COMMAND(cfgCmdManifest)                                               // opt/repo-sftp-private-keyfile
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                             // opt/repo-sftp-private-keyfile
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)                                                // opt/repo-sftp-private-keyfile
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)                                                 // opt/repo-sftp-private-keyfile
@@ -8424,6 +8436,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                   // opt/repo-sftp-public-keyfile
             PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)                                                  // opt/repo-sftp-public-keyfile
             PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                                    // opt/repo-sftp-public-keyfile
+            PARSE_RULE_OPTION_COMMAND(cfgCmdManifest)                                                // opt/repo-sftp-public-keyfile
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                              // opt/repo-sftp-public-keyfile
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)                                                 // opt/repo-sftp-public-keyfile
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)                                                  // opt/repo-sftp-public-keyfile
@@ -8458,6 +8471,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                             // opt/repo-sftp-public-keyfile
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                   // opt/repo-sftp-public-keyfile
             PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                                    // opt/repo-sftp-public-keyfile
+            PARSE_RULE_OPTION_COMMAND(cfgCmdManifest)                                                // opt/repo-sftp-public-keyfile
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                              // opt/repo-sftp-public-keyfile
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)                                                 // opt/repo-sftp-public-keyfile
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)                                                  // opt/repo-sftp-public-keyfile
