@@ -214,7 +214,7 @@ storageWriteSftpUnlinkExisting(THIS_VOID)
     do
     {
         rc = libssh2_sftp_unlink_ex(
-                this->sftpSession, strZ(this->interface.name), (unsigned int)strSize(this->interface.name));
+            this->sftpSession, strZ(this->interface.name), (unsigned int)strSize(this->interface.name));
     }
     while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
 
@@ -248,9 +248,9 @@ storageWriteSftpRename(THIS_VOID)
     do
     {
         rc = libssh2_sftp_rename_ex(
-                this->sftpSession, strZ(this->nameTmp), (unsigned int)strSize(this->nameTmp), strZ(this->interface.name),
-                (unsigned int)strSize(this->interface.name),
-                LIBSSH2_SFTP_RENAME_OVERWRITE | LIBSSH2_SFTP_RENAME_ATOMIC | LIBSSH2_SFTP_RENAME_NATIVE);
+            this->sftpSession, strZ(this->nameTmp), (unsigned int)strSize(this->nameTmp), strZ(this->interface.name),
+            (unsigned int)strSize(this->interface.name),
+            LIBSSH2_SFTP_RENAME_OVERWRITE | LIBSSH2_SFTP_RENAME_ATOMIC | LIBSSH2_SFTP_RENAME_NATIVE);
     }
     while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
 
@@ -421,7 +421,6 @@ storageWriteSftpNew(
 
     OBJ_NEW_BEGIN(StorageWriteSftp, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-
         *this = (StorageWriteSftp)
         {
             .storage = storage,

@@ -9,8 +9,8 @@ SFTP Storage Read
 #include "common/io/session.h"
 #include "common/log.h"
 #include "common/wait.h"
-#include "storage/sftp/read.h"
 #include "storage/read.intern.h"
+#include "storage/sftp/read.h"
 
 /***********************************************************************************************************************************
 Object types
@@ -294,7 +294,6 @@ storageReadSftpNew(
                 },
             },
         };
-
     }
     OBJ_NEW_END();
 

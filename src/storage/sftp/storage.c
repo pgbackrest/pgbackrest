@@ -19,7 +19,7 @@ SFTP Storage
 Define PATH_MAX if it is not defined
 ***********************************************************************************************************************************/
 #ifndef PATH_MAX
-    #define PATH_MAX                                                (4 * 1024)
+#define PATH_MAX                                                (4 * 1024)
 #endif
 
 /***********************************************************************************************************************************
@@ -313,8 +313,8 @@ storageSftpEvalLibSsh2Error(
         msg != NULL ? strZ(strNewFmt("%s: ", strZ(msg))) : "",
         ssh2Errno,
         ssh2Errno == LIBSSH2_ERROR_SFTP_PROTOCOL ?
-            strZ(strNewFmt(": sftp error [%" PRIu64 "]", sftpErrno)) :
-            "",
+        strZ(strNewFmt(": sftp error [%" PRIu64 "]", sftpErrno)) :
+        "",
         hint != NULL ? strZ(strNewFmt("\n%s", strZ(hint))) : "");
 
     FUNCTION_LOG_RETURN_VOID();
@@ -431,11 +431,11 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
                                 storageLstAdd(
                                     result,
                                     &(StorageInfo)
-                                    {
-                                        .name = STR(filename),
-                                        .level = storageInfoLevelExists,
-                                        .exists = true,
-                                    });
+                                {
+                                    .name = STR(filename),
+                                    .level = storageInfoLevelExists,
+                                    .exists = true,
+                                });
                             }
                             else
                                 storageSftpListEntry(this, result, path, filename, level);
@@ -614,7 +614,7 @@ storageSftpPathCreate(
         {
             uint64_t sftpErrno = libssh2_sftp_last_error(this->sftpSession);
 
-           // libssh2 may return LIBSSH2_FX_FAILURE if the directory already exists
+            // libssh2 may return LIBSSH2_FX_FAILURE if the directory already exists
             if (sftpErrno == LIBSSH2_FX_FAILURE)
             {
                 // Check if the directory already exists
@@ -625,7 +625,7 @@ storageSftpPathCreate(
                 do
                 {
                     rc = libssh2_sftp_stat_ex(
-                       this->sftpSession, strZ(path), (unsigned int)strSize(path), LIBSSH2_SFTP_STAT, &attr);
+                        this->sftpSession, strZ(path), (unsigned int)strSize(path), LIBSSH2_SFTP_STAT, &attr);
                 }
                 while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
 
@@ -644,7 +644,7 @@ storageSftpPathCreate(
                 strFree(pathParent);
             }
             else if (sftpErrno != LIBSSH2_FX_FILE_ALREADY_EXISTS || errorOnExists)
-               THROW_FMT(PathCreateError, "unable to create path '%s'", strZ(path));
+                THROW_FMT(PathCreateError, "unable to create path '%s'", strZ(path));
         }
         else
             THROW_FMT(PathCreateError, "unable to create path '%s'", strZ(path));
@@ -766,8 +766,9 @@ static const StorageInterface storageInterfaceSftp =
 };
 
 FN_EXTERN Storage *
-storageSftpNew(const String *const path, const String *const host, const unsigned int port, const TimeMSec timeoutConnect,
-        const TimeMSec timeoutSession, const StorageSftpNewParam param)
+storageSftpNew(
+    const String *const path, const String *const host, const unsigned int port, const TimeMSec timeoutConnect,
+    const TimeMSec timeoutSession, const StorageSftpNewParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -892,8 +893,8 @@ storageSftpNew(const String *const path, const String *const host, const unsigne
             do
             {
                 rc = libssh2_userauth_publickey_fromfile(
-                        this->session, strZ(param.user), strZNull(param.keyPub) == NULL ? NULL : strZ(param.keyPub),
-                        strZ(param.keyPriv), strZNull(param.keyPassphrase) == NULL ? NULL : strZ(param.keyPassphrase));
+                    this->session, strZ(param.user), strZNull(param.keyPub) == NULL ? NULL : strZ(param.keyPub),
+                    strZ(param.keyPriv), strZNull(param.keyPassphrase) == NULL ? NULL : strZ(param.keyPassphrase));
             }
             while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
 
@@ -925,14 +926,13 @@ storageSftpNew(const String *const path, const String *const host, const unsigne
 
         // Ensure libssh2/libssh2_sftp resources freed
         memContextCallbackSet(objMemContext(this), storageSftpLibSsh2SessionFreeResource, this);
-
     }
     OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(STORAGE,
-            storageNew(STORAGE_SFTP_TYPE, path, param.modeFile == 0 ? STORAGE_MODE_FILE_DEFAULT : param.modeFile,
-                param.modePath == 0 ? STORAGE_MODE_PATH_DEFAULT : param.modePath, param.write, param.pathExpressionFunction, this,
-                this->interface));
+                        storageNew(STORAGE_SFTP_TYPE, path, param.modeFile == 0 ? STORAGE_MODE_FILE_DEFAULT : param.modeFile,
+                                   param.modePath == 0 ? STORAGE_MODE_PATH_DEFAULT : param.modePath, param.write, param.pathExpressionFunction, this,
+                                   this->interface));
 }
 
 #endif // HAVE_LIBSSH2
