@@ -436,7 +436,16 @@ sub clusterStart
     # works since pg_stop_backup() is marked parallel safe and will error if run in a worker.
     if ($self->pgVersion() >= PG_VERSION_96)
     {
-         $strCommand .= " -c force_parallel_mode='on' -c max_parallel_workers_per_gather=2";
+        if ($self->pgVersion() >= PG_VERSION_16)
+        {
+            $strCommand .= " -c debug_parallel_query='on'";
+        }
+        else
+        {
+            $strCommand .= " -c force_parallel_mode='on'";
+        }
+
+         $strCommand .= " -c max_parallel_workers_per_gather=2";
     }
 
     $strCommand .=
