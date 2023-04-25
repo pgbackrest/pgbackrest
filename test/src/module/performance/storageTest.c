@@ -97,7 +97,7 @@ testIoRateProcess(THIS_VOID, const Buffer *input)
 static IoFilter *
 testIoRateNew(uint64_t bytesPerSec)
 {
-    OBJ_NEW_BEGIN(TestIoRate, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(TestIoRate, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         *this = (TestIoRate)
         {

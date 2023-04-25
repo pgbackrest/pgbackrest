@@ -9,7 +9,7 @@ Error Handler
 #include <stdlib.h>
 #include <string.h>
 
-#include "common/error.h"
+#include "common/error/error.h"
 #include "common/macro.h"
 #include "common/stackTrace.h"
 
@@ -34,7 +34,7 @@ ERROR_DEFINE(1, TestError, false, RuntimeError);
 #endif
 
 // Include error type definitions
-#include "common/error.auto.c.inc"
+#include "common/error/error.auto.c.inc"
 
 /***********************************************************************************************************************************
 Maximum allowed number of nested try blocks

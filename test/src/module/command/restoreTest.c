@@ -2122,11 +2122,11 @@ testRun(void)
             HRN_MANIFEST_FILE_ADD(
                 manifest, .name = TEST_PGDATA PG_FILE_PGVERSION, .size = 4, .timestamp = 1482182860,
                 .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1");
-            HRN_STORAGE_PUT_Z(storageRepoIdxWrite(0), TEST_REPO_PATH PG_FILE_PGVERSION, PG_VERSION_94_STR "\n");
+            HRN_STORAGE_PUT_Z(storageRepoIdxWrite(0), TEST_REPO_PATH PG_FILE_PGVERSION, PG_VERSION_94_Z "\n");
 
             // Store the file also to the encrypted repo
             HRN_STORAGE_PUT_Z(
-                storageRepoIdxWrite(1), TEST_REPO_PATH PG_FILE_PGVERSION, PG_VERSION_94_STR "\n",
+                storageRepoIdxWrite(1), TEST_REPO_PATH PG_FILE_PGVERSION, PG_VERSION_94_Z "\n",
                 .cipherType = cipherTypeAes256Cbc, .cipherPass = TEST_CIPHER_PASS_ARCHIVE);
 
             // pg_tblspc
@@ -2293,7 +2293,7 @@ testRun(void)
 
             HRN_STORAGE_PUT_Z(
                 storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_LABEL "/" MANIFEST_TARGET_PGTBLSPC "/1/16384/" PG_FILE_PGVERSION,
-                PG_VERSION_94_STR "\n");
+                PG_VERSION_94_Z "\n");
 
             // Always sort
             lstSort(manifest->pub.targetList, sortOrderAsc);
@@ -2440,7 +2440,7 @@ testRun(void)
             .level = storageInfoLevelBasic, .includeDot = true);
 
         // PG_VERSION was restored by the force option
-        TEST_STORAGE_GET(storagePg(), PG_FILE_PGVERSION, PG_VERSION_94_STR "\n", .comment = "check PG_VERSION was restored");
+        TEST_STORAGE_GET(storagePg(), PG_FILE_PGVERSION, PG_VERSION_94_Z "\n", .comment = "check PG_VERSION was restored");
 
         // Remove tablespace
         HRN_STORAGE_PATH_REMOVE(storagePgWrite(), MANIFEST_TARGET_PGTBLSPC "/1/PG_9.4_201409291", .recurse = true);
@@ -2472,7 +2472,7 @@ testRun(void)
         #define TEST_PGDATA                                         MANIFEST_TARGET_PGDATA "/"
         #define TEST_REPO_PATH                                      STORAGE_REPO_BACKUP "/" TEST_LABEL "/" TEST_PGDATA
 
-        OBJ_NEW_BASE_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+        OBJ_NEW_BASE_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             manifest = manifestNewInternal();
             manifest->pub.info = infoNew(NULL);
@@ -2539,7 +2539,7 @@ testRun(void)
                 .bundleId = 1, .bundleOffset = 17, .checksumSha1 = "d7dacae2c968388960bf8970080a980ed5c5dcb7");
             HRN_STORAGE_PUT_Z(
                 storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_LABEL "/bundle/1",
-                PG_VERSION_96_STR "\n" PG_VERSION_96_STR "\nyyyxxxxxAzzA");
+                PG_VERSION_96_Z "\n" PG_VERSION_96_Z "\nyyyxxxxxAzzA");
 
             // base directory
             HRN_MANIFEST_PATH_ADD(manifest, .name = TEST_PGDATA PG_PATH_BASE);
@@ -2604,7 +2604,7 @@ testRun(void)
             HRN_MANIFEST_FILE_ADD(
                 manifest, .name = TEST_PGDATA "base/16384/" PG_FILE_PGVERSION, .size = 4, .timestamp = 1482182860,
                 .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1");
-            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "base/16384/" PG_FILE_PGVERSION, PG_VERSION_94_STR "\n");
+            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "base/16384/" PG_FILE_PGVERSION, PG_VERSION_94_Z "\n");
 
             // base/16384/16385
             fileBuffer = bufNew(16384);
@@ -2624,7 +2624,7 @@ testRun(void)
             HRN_MANIFEST_FILE_ADD(
                 manifest, .name = TEST_PGDATA "base/32768/" PG_FILE_PGVERSION, .size = 4, .timestamp = 1482182860,
                 .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1");
-            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "base/32768/" PG_FILE_PGVERSION, PG_VERSION_94_STR "\n");
+            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "base/32768/" PG_FILE_PGVERSION, PG_VERSION_94_Z "\n");
 
             // base/32768/32769
             fileBuffer = bufNew(32768);
@@ -2694,7 +2694,7 @@ testRun(void)
             ioWrite(write, fileUnused);
             ioWriteClose(write);
 
-            size_t fileUnusedMapSize = pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE));
+            size_t fileUnusedMapSize = (size_t)pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE));
 
             Buffer *fileUsed = bufDup(fileUnused);
             memset(bufPtr(fileUsed), 3, 8192);
@@ -2947,7 +2947,7 @@ testRun(void)
 
         // Enlarge a file so it gets truncated. Keep timestamp the same to prove that it gets updated after the truncate.
         HRN_STORAGE_PUT_Z(
-            storagePgWrite(), "base/16384/" PG_FILE_PGVERSION, PG_VERSION_94_STR "\n\n", .modeFile = 0600,
+            storagePgWrite(), "base/16384/" PG_FILE_PGVERSION, PG_VERSION_94_Z "\n\n", .modeFile = 0600,
             .timeModified = 1482182860);
 
         // Enlarge a zero-length file so it gets truncated
@@ -3075,7 +3075,7 @@ testRun(void)
             cmdRestore(), FileMissingError,
             "raised from local-1 shim protocol: unable to open missing file"
             " '" TEST_PATH "/repo/backup/test1/20161219-212741F_20161219-212918I/pg_data/global/pg_control' for read\n"
-            "[FileMissingError] on retry after 0ms");
+            "[RETRY DETAIL OMITTED]");
 
         // Free local processes that were not freed because of the error
         protocolFree();

@@ -21,7 +21,7 @@ testCfgLoad(const StringList *const argList)
     FUNCTION_HARNESS_END();
 
     // Parse config
-    configParse(storageLocal(), strLstSize(argList), strLstPtr(argList), false);
+    cfgParseP(storageLocal(), strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true);
 
     // Apply special option rules
     cfgLoadUpdateOption();

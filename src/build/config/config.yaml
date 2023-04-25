@@ -1210,6 +1210,15 @@ option:
     command-role:
       main: {}
 
+  page-header-check:
+    section: global
+    type: boolean
+    default: true
+    command:
+      backup: {}
+    command-role:
+      main: {}
+
   exclude:
     section: global
     type: list

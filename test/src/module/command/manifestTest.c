@@ -81,7 +81,7 @@ testRun(void)
 
             // Version file that will not be updated after the full backup
             HRN_STORAGE_PUT_Z(
-                storagePgWrite(), PG_PATH_BASE "/" PG_FILE_PGVERSION, PG_VERSION_95_STR, .timeModified = backupTimeStart);
+                storagePgWrite(), PG_PATH_BASE "/" PG_FILE_PGVERSION, PG_VERSION_95_Z, .timeModified = backupTimeStart);
 
             // Zeroed file large enough to use block incr
             Buffer *relation = bufNew(8 * 8192);

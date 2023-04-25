@@ -92,6 +92,9 @@ main(const int argListSize, const char *const argList[])
         // PostgreSQL
         if (strEqZ(STRDEF("postgres"), argList[1]))
             bldPgRender(storageBuild, bldPgParse(storageRepo));
+
+        if (strEqZ(STRDEF("postgres-version"), argList[1]))
+            bldPgVersionRender(storageBuild, bldPgParse(storageRepo));
     }
     CATCH_FATAL()
     {

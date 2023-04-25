@@ -85,8 +85,8 @@ testRun(void)
         CipherBlock *cipherBlock = (CipherBlock *)ioFilterDriver(
             cipherBlockNewP(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRZ(TEST_PASS)));
         TEST_RESULT_INT(cipherBlock->mode, cipherModeEncrypt, "mode is valid");
-        TEST_RESULT_UINT(cipherBlock->passSize, strlen(TEST_PASS), "passphrase size is valid");
-        TEST_RESULT_BOOL(memcmp(cipherBlock->pass, TEST_PASS, strlen(TEST_PASS)) == 0, true, "passphrase is valid");
+        TEST_RESULT_UINT(bufSize(cipherBlock->pass), strlen(TEST_PASS), "passphrase size is valid");
+        TEST_RESULT_BOOL(memcmp(bufPtrConst(cipherBlock->pass), TEST_PASS, strlen(TEST_PASS)) == 0, true, "passphrase is valid");
         TEST_RESULT_BOOL(cipherBlock->saltDone, false, "salt done is false");
         TEST_RESULT_BOOL(cipherBlock->processDone, false, "process done is false");
         TEST_RESULT_UINT(cipherBlock->headerSize, 0, "header size is 0");
@@ -374,7 +374,7 @@ testRun(void)
         TEST_TITLE("md5 hash - > 0x1fffffff bytes");
 
         TEST_ASSIGN(hash, cryptoHashNew(hashTypeMd5), "create md5 hash");
-        ((CryptoHash *)ioFilterDriver(hash))->md5Context->lo = 0x1fffffff;
+        ((CryptoHash *)ioFilterDriver(hash))->md5Context.lo = 0x1fffffff;
 
         TEST_RESULT_VOID(ioFilterProcessIn(hash, BUFSTRZ("1")), "add 1");
         TEST_RESULT_STR_Z(

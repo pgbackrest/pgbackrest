@@ -16,6 +16,25 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.46dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="david.christensen"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="david.christensen"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow page header checks to be skipped.</p>
+                    </release-item>
+
+                    <release-item>
+                        <commit subject="Move error modules to common/error directory."/>
+                        <commit subject="Improve retry error messages."/>
+
+                        <p>Add error retry detail for HTTP retries.</p>
+                    </release-item>
+                </release-improvement-list>
+
                 <release-development-list>
                     <release-item>
                         <commit subject="Add reference filter and output to manifest command."/>

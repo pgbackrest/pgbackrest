@@ -611,8 +611,8 @@ testRun(void)
 
         TEST_ERROR(
             pgValidate(), DbMismatchError,
-            "version '" PG_VERSION_11_STR "' and path '" TEST_PATH "/pg' queried from cluster do not match version '"
-            PG_VERSION_10_STR "' and '" TEST_PATH "/pg' read from '" TEST_PATH "/pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
+            "version '" PG_VERSION_11_Z "' and path '" TEST_PATH "/pg' queried from cluster do not match version '" PG_VERSION_10_Z
+            "' and '" TEST_PATH "/pg' read from '" TEST_PATH "/pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
             "HINT: the pg1-path and pg1-port settings likely reference different clusters.");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -629,9 +629,8 @@ testRun(void)
 
         TEST_ERROR(
             pgValidate(), DbMismatchError,
-            "version '" PG_VERSION_15_STR "' and path '" TEST_PATH "/pg2' queried from cluster do not match version"
-            " '" PG_VERSION_15_STR "' and '" TEST_PATH "/pg' read from '" TEST_PATH "/pg/" PG_PATH_GLOBAL
-            "/" PG_FILE_PGCONTROL "'\n"
+            "version '" PG_VERSION_15_Z "' and path '" TEST_PATH "/pg2' queried from cluster do not match version '" PG_VERSION_15_Z
+            "' and '" TEST_PATH "/pg' read from '" TEST_PATH "/pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
             "HINT: the pg1-path and pg1-port settings likely reference different clusters.");
 
         // -------------------------------------------------------------------------------------------------------------------------

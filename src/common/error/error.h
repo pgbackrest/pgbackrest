@@ -34,8 +34,8 @@ gcc's -Wclobbered warnings are almost entirely useless for catching such issues.
 
 IMPORTANT: Never call return from within any of the error-handling blocks.
 ***********************************************************************************************************************************/
-#ifndef COMMON_ERROR_H
-#define COMMON_ERROR_H
+#ifndef COMMON_ERROR_ERROR_H
+#define COMMON_ERROR_ERROR_H
 
 #include <errno.h>
 #include <setjmp.h>
@@ -51,7 +51,7 @@ typedef struct ErrorType ErrorType;
     VR_EXTERN_DECLARE const ErrorType name
 
 // Include error type declarations
-#include "common/error.auto.h"
+#include "common/error/error.auto.h"
 
 // Declare test error
 #ifdef DEBUG

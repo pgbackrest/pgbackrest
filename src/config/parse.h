@@ -40,7 +40,16 @@ typedef enum
 Functions
 ***********************************************************************************************************************************/
 // Parse the command-line arguments and config file to produce final config data
-FN_EXTERN void configParse(const Storage *storage, unsigned int argListSize, const char *argList[], bool resetLogLevel);
+typedef struct CfgParseParam
+{
+    VAR_PARAM_HEADER;
+    bool noResetLogLevel;                                           // Do not reset log level
+} CfgParseParam;
+
+#define cfgParseP(storage, argListSize, argList, ...)                                                                              \
+    cfgParse(storage, argListSize, argList, (CfgParseParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN void cfgParse(const Storage *storage, unsigned int argListSize, const char *argList[], CfgParseParam param);
 
 // Get command name by id
 FN_EXTERN const char *cfgParseCommandName(ConfigCommand commandId);

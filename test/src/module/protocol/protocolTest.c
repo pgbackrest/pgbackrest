@@ -702,8 +702,7 @@ testRun(void)
                 TEST_ERROR(
                     protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_ERROR), false), FormatError,
                     "raised from test client: ERR_MESSAGE\n"
-                    "[FormatError] on retry after 0ms\n"
-                    "[FormatError] on retry after 500ms: ERR_MESSAGE_RETRY");
+                    "[RETRY DETAIL OMITTED]");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("free client");

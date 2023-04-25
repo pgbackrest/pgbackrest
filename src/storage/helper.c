@@ -340,7 +340,7 @@ storageRepoPathExpression(const String *const expression, const String *const pa
     else
         THROW_FMT(AssertError, "invalid expression '%s'", strZ(expression));
 
-    ASSERT(result != 0);
+    ASSERT(result != NULL);
 
     FUNCTION_TEST_RETURN(STRING, result);
 }

@@ -488,7 +488,7 @@ storageRemoteNew(
 
     const String *path;
 
-    OBJ_NEW_BEGIN(StorageRemote, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(StorageRemote, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         *this = (StorageRemote)
         {

@@ -220,7 +220,7 @@ storageReadPosixNew(
 
     ASSERT(name != NULL);
 
-    OBJ_NEW_BEGIN(StorageReadPosix, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(StorageReadPosix, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
         *this = (StorageReadPosix)
         {

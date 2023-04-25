@@ -13,7 +13,6 @@ Server Test Harness
 #include <openssl/ssl.h>
 
 #include "common/crypto/common.h"
-#include "common/error.h"
 #include "common/io/socket/server.h"
 #include "common/io/tls/server.h"
 #include "common/io/tls/session.h"

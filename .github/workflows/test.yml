@@ -29,13 +29,13 @@ jobs:
       matrix:
         include:
           # All unit tests (without coverage) for 32-bit
-          - param: test --vm=u18 --param=no-performance --param=c-only
+          - param: test --vm=d10 --param=no-performance --param=c-only
 
           # All integration tests for 32-bit
-          - param: test --vm=u18 --param=module=mock --param=module=real
+          - param: test --vm=d10 --param=module=mock --param=module=real
 
           # Debian/Ubuntu documentation
-          - param: doc --vm=u18
+          - param: doc --vm=u20
 
           # All integration tests
           - param: test --vm=u22 --param=build-package --param=module=mock --param=module=real
@@ -57,7 +57,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: pgbackrest
 
@@ -80,12 +80,12 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: pgbackrest
 
       - name: Run Test
-        uses: uraimo/run-on-arch-action@v2.1.0
+        uses: uraimo/run-on-arch-action@v2
         id: runcmd
         with:
           arch: ${{matrix.arch}}
@@ -109,7 +109,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: pgbackrest
 
@@ -133,7 +133,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: pgbackrest
 
@@ -157,7 +157,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install Packages
         run: sudo apt-get install -y --no-install-recommends libyaml-dev

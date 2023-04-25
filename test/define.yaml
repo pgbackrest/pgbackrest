@@ -52,11 +52,11 @@ unit:
         harness:
           name: error
           shim:
-            common/error: ~
+            common/error/error: ~
 
         coverage:
-          - common/error
-          - common/error.auto: noCode
+          - common/error/error
+          - common/error/error.auto: noCode
 
         depend:
           - common/stackTrace
@@ -121,6 +121,12 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: time
         total: 3
+        harness:
+          name: time
+          shim:
+            common/time:
+              function:
+                - timeMSec
 
         coverage:
           - common/time
@@ -164,6 +170,19 @@ unit:
           - common/type/list
           - common/type/variant
           - common/type/variantList
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: error-retry
+        total: 1
+        harness:
+          name: errorRetry
+          shim:
+            common/error/retry:
+              function:
+                - errRetryAdd
+
+        coverage:
+          - common/error/retry
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-list

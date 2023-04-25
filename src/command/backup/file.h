@@ -33,6 +33,7 @@ typedef struct BackupFile
     bool pgFileCopyExactSize;                                       // Copy only pg expected size
     const Buffer *pgFileChecksum;                                   // Expected pg file checksum
     bool pgFileChecksumPage;                                        // Validate page checksums?
+    bool pgFilePageHeaderCheck;                                     // Validate page headers?
     size_t blockIncrSize;                                           // Perform block incremental on this file?
     size_t blockIncrChecksumSize;                                   // Block checksum size
     uint64_t blockIncrSuperSize;                                    // Size of the super block

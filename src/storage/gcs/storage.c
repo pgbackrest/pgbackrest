@@ -970,7 +970,7 @@ storageGcsNew(
     ASSERT(keyType == storageGcsKeyTypeAuto || key != NULL);
     ASSERT(chunkSize != 0);
 
-    OBJ_NEW_BEGIN(StorageGcs, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(StorageGcs, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         *this = (StorageGcs)
         {

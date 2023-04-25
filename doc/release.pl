@@ -248,7 +248,7 @@ eval
         }
 
         # Generate deployment docs for Debian
-        if (!defined($strVm) || $strVm eq VM_U18)
+        if (!defined($strVm) || $strVm eq VM_U20)
         {
             &log(INFO, "Generate Debian/Ubuntu documentation");
 

@@ -6,6 +6,7 @@ Protocol Server
 #include <string.h>
 
 #include "common/debug.h"
+#include "common/error/retry.h"
 #include "common/log.h"
 #include "common/time.h"
 #include "common/type/json.h"
@@ -182,9 +183,7 @@ protocolServerProcess(
                     MEM_CONTEXT_TEMP_BEGIN()
                     {
                         // Variables to store first error message and retry messages
-                        const ErrorType *errType = NULL;
-                        String *errMessage = NULL;
-                        const String *errMessageFirst = NULL;
+                        ErrorRetry *const errRetry = errRetryNew();
                         const String *errStackTrace = NULL;
 
                         // Initialize retries in case of command failure
@@ -203,27 +202,13 @@ protocolServerProcess(
                             }
                             CATCH_ANY()
                             {
-                                // On first error record the error details. Only the first error will contain a stack trace since
-                                // the first error is most likely to contain valuable information.
-                                if (errType == NULL)
-                                {
-                                    errType = errorType();
-                                    errMessage = strCatZ(strNew(), errorMessage());
-                                    errMessageFirst = strNewZ(errorMessage());
-                                    errStackTrace = strNewZ(errorStackTrace());
-                                }
-                                // Else on a retry error only record the error type and message. Retry errors are less likely to
-                                // contain valuable information but may be helpful for debugging.
-                                else
-                                {
-                                    strCatFmt(
-                                        errMessage, "\n[%s] on retry after %" PRIu64 "ms", errorTypeName(errorType()),
-                                        retrySleepMs);
+                                // Add the error retry info
+                                errRetryAdd(errRetry);
 
-                                    // Only append the message if it differs from the first message
-                                    if (!strEqZ(errMessageFirst, errorMessage()))
-                                        strCatFmt(errMessage, ": %s", errorMessage());
-                                }
+                                // On first error record the stack trace. Only the first error will contain a stack trace since
+                                // the first error is most likely to contain valuable information.
+                                if (errStackTrace == NULL)
+                                    errStackTrace = strNewZ(errorStackTrace());
 
                                 // Are there retries remaining?
                                 if (retryRemaining > 0)
@@ -249,7 +234,10 @@ protocolServerProcess(
                                 }
                                 // Else report error to the client
                                 else
-                                    protocolServerError(this, errorTypeCode(errType), errMessage, errStackTrace);
+                                {
+                                    protocolServerError(
+                                        this, errorTypeCode(errRetryType(errRetry)), errRetryMessage(errRetry), errStackTrace);
+                                }
                             }
                             TRY_END();
                         }
