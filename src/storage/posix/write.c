@@ -66,6 +66,18 @@ storageWritePosixFreeResource(THIS_VOID)
 /***********************************************************************************************************************************
 Open the file
 ***********************************************************************************************************************************/
+static const char *
+storageWritePosixOpenOwner(const String *const owner, const char *const defaultOwner)
+{
+    return owner == NULL ? defaultOwner : strZ(owner);
+}
+
+static const char *
+storageWritePosixOpenOwnerId(const String *const owner, const unsigned int ownerId)
+{
+    return owner == NULL ? "" : zNewFmt("[%u]", ownerId);
+}
+
 static void
 storageWritePosixOpen(THIS_VOID)
 {
@@ -108,19 +120,30 @@ storageWritePosixOpen(THIS_VOID)
     // Update user/group owner
     if (this->interface.user != NULL || this->interface.group != NULL)
     {
+        const StorageInfo info = storageInterfaceInfoP(this->storage, this->nameTmp, storageInfoLevelDetail, .followLink = true);
+        ASSERT(info.exists);
         uid_t updateUserId = userIdFromName(this->interface.user);
-
-        if (updateUserId == userId())
-            updateUserId = (uid_t)-1;
-
         gid_t updateGroupId = groupIdFromName(this->interface.group);
 
-        if (updateGroupId == groupId())
-            updateGroupId = (gid_t)-1;
+        if (updateUserId == (uid_t)-1)
+            updateUserId = info.userId;
 
-        THROW_ON_SYS_ERROR_FMT(
-            chown(strZ(this->nameTmp), updateUserId, updateGroupId) == -1, FileOwnerError, "unable to set ownership for '%s'",
-            strZ(this->nameTmp));
+        if (updateGroupId == (gid_t)-1)
+            updateGroupId = info.groupId;
+
+        // Continue if one of the owners would be changed
+        if (updateUserId != info.userId || updateGroupId != info.groupId)
+        {
+            THROW_ON_SYS_ERROR_FMT(
+                chown(strZ(this->nameTmp), updateUserId, updateGroupId) == -1, FileOwnerError,
+                "unable to set ownership for '%s' to %s%s:%s%s from %s[%u]:%s[%u]", strZ(this->nameTmp),
+                storageWritePosixOpenOwner(this->interface.user, "[none]"),
+                storageWritePosixOpenOwnerId(this->interface.user, updateUserId),
+                storageWritePosixOpenOwner(this->interface.group, "[none]"),
+                storageWritePosixOpenOwnerId(this->interface.group, updateGroupId),
+                storageWritePosixOpenOwner(info.user, "[unknown]"), info.userId,
+                storageWritePosixOpenOwner(info.group, "[unknown]"), info.groupId);
+        }
     }
 
     FUNCTION_LOG_RETURN_VOID();
