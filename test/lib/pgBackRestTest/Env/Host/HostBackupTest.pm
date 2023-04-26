@@ -164,7 +164,7 @@ sub new
     bless $self, $class;
 
     # If repo is on local filesystem then set the repo-path locally
-    if ($oParam->{bRepoLocal})
+    if ($oParam->{bRepoLocal} || $oParam->{strBackupDestination} eq HOST_SFTP)
     {
         $self->{strRepoPath} = $self->testRunGet()->testPath() . "/$$oParam{strBackupDestination}/" . HOST_PATH_REPO;
     }
@@ -1336,6 +1336,8 @@ sub configCreate
 
                 # At what count do we hit diminishing returns
                 $oParamHash{&CFGDEF_SECTION_GLOBAL}{'process-max'} = 8;
+
+                $oParamHash{&CFGDEF_SECTION_GLOBAL . ':backup'}{'start-fast'} = 'y';
             }
             else
             {

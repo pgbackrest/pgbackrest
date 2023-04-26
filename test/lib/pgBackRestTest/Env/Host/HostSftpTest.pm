@@ -57,12 +57,8 @@ sub new
         );
 
     # Create the host
-    my $strProjectPath = dirname(dirname(abs_path($0)));
-    my $strTestSshPath = "${strProjectPath}/test/ssh";
-
     my $self = $class->SUPER::new(
-        HOST_SFTP, 'test-' . testRunGet()->vmId() . '-' . HOST_SFTP, 'atmoz/sftp', 'root', ["${strTestSshPath}:/home/vagrant/.ssh"],
-        undef, 'vagrant:pass:1000:1000:.ssh,/,/archive,/backup', false);
+        HOST_SFTP, 'test-' . testRunGet()->vmId() . '-' . HOST_SFTP,  containerRepo() . ':' . testRunGet()->vm() . '-test', 'root');
     bless $self, $class;
 
     # Return from function and log return values if any

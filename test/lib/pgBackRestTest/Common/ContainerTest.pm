@@ -224,11 +224,14 @@ sub sshSetup
             "    echo '    ControlPersist 30' >> ${strUserPath}/.ssh/config && \\\n";
     }
 
+
     $strScript .=
+        "    sed -i 's/#UseDNS yes/UseDNS no/' /etc/ssh/sshd_config && \\\n" .
         "    cp ${strUserPath}/.ssh/authorized_keys ${strUserPath}/.ssh/id_rsa.pub && \\\n" .
         "    chown -R ${strUser}:${strGroup} ${strUserPath}/.ssh && \\\n" .
         "    chmod 700 ${strUserPath}/.ssh && \\\n" .
         "    chmod 600 ${strUserPath}/.ssh/*";
+
 
     return $strScript;
 }
@@ -318,10 +321,14 @@ sub entryPointSetup
 
     if ($oVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
     {
-        $strScript .= '/usr/sbin/sshd -D';
+        # -u0 turns off most dns lookups
+        $strScript .= '/usr/sbin/sshd -D -u0 ';
     }
     else
     {
+        # turn off most dns lookups
+        $strScript .= "sed -ie 's/^SSHD_OPTS=$/SSHD_OPTS=-u0' /etc/default/ssh && \\\n";
+
         $strScript .= 'service ssh restart && bash';
     }
 
@@ -397,7 +404,7 @@ sub containerBuild
                 "        perl perl-Digest-SHA perl-DBD-Pg perl-YAML-LibYAML openssl \\\n" .
                 "        gcc make perl-ExtUtils-MakeMaker perl-Test-Simple openssl-devel perl-ExtUtils-Embed rpm-build \\\n" .
                 "        libyaml-devel zlib-devel libxml2-devel lz4-devel lz4 bzip2-devel bzip2 perl-JSON-PP ccache meson \\\n" .
-                "        libssh2 libssh2-devel";
+                "        libssh2-devel";
         }
         else
         {
