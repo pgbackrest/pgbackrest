@@ -327,7 +327,7 @@ sub entryPointSetup
     else
     {
         # turn off most dns lookups
-        $strScript .= "sed -ie 's/^SSHD_OPTS=$/SSHD_OPTS=-u0/' /etc/default/ssh && \\\n";
+        $strScript .= "sed -ie 's/^SSHD_OPTS=\$/SSHD_OPTS=-u0/' /etc/default/ssh && \\\n";
 
         $strScript .= 'service ssh restart && bash';
     }
