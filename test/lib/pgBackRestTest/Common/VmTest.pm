@@ -262,6 +262,7 @@ my $oyVm =
             PG_VERSION_13,
             PG_VERSION_14,
             PG_VERSION_15,
+            PG_VERSION_16,
         ],
 
         &VM_DB_TEST =>
@@ -269,6 +270,7 @@ my $oyVm =
             PG_VERSION_95,
             PG_VERSION_96,
             PG_VERSION_15,
+            PG_VERSION_16,
         ],
     },
 };

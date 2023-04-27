@@ -62,6 +62,7 @@ sub run
         {pg =>  '13', dst => 'db-standby', tls => 1, stg =>   GCS, enc => 0, cmp =>  ZST, rt => 1, bnd => 1, bi => 1},
         {pg =>  '14', dst =>     'backup', tls => 0, stg => POSIX, enc => 1, cmp =>  LZ4, rt => 2, bnd => 0, bi => 0},
         {pg =>  '15', dst => 'db-standby', tls => 0, stg => AZURE, enc => 0, cmp => NONE, rt => 2, bnd => 1, bi => 1},
+        {pg =>  '16', dst => 'db-standby', tls => 0, stg =>    S3, enc => 1, cmp => NONE, rt => 1, bnd => 0, bi => 0},
     )
     {
         # Only run tests for this pg version
