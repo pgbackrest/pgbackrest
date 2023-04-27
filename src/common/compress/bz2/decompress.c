@@ -150,30 +150,24 @@ bz2DecompressNew(const bool raw)
         (void)raw;                                                  // Raw unsupported
     FUNCTION_LOG_END();
 
-    IoFilter *this = NULL;
-
-    OBJ_NEW_BEGIN(Bz2Decompress, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(Bz2Decompress, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        // Allocate state and set context
-        Bz2Decompress *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::Bz2Decompress);
-
-        *driver = (Bz2Decompress)
+        *this = (Bz2Decompress)
         {
             .stream = {.bzalloc = NULL},
         };
 
         // Create bz2 stream
-        bz2Error(driver->result = BZ2_bzDecompressInit(&driver->stream, 0, 0));
+        bz2Error(this->result = BZ2_bzDecompressInit(&this->stream, 0, 0));
 
         // Set free callback to ensure bz2 context is freed
-        memContextCallbackSet(objMemContext(driver), bz2DecompressFreeResource, driver);
-
-        // Create filter interface
-        this = ioFilterNewP(
-            BZ2_DECOMPRESS_FILTER_TYPE, driver, NULL, .done = bz2DecompressDone, .inOut = bz2DecompressProcess,
-            .inputSame = bz2DecompressInputSame);
+        memContextCallbackSet(objMemContext(this), bz2DecompressFreeResource, this);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_FILTER, this);
+    FUNCTION_LOG_RETURN(
+        IO_FILTER,
+        ioFilterNewP(
+            BZ2_DECOMPRESS_FILTER_TYPE, this, NULL, .done = bz2DecompressDone, .inOut = bz2DecompressProcess,
+            .inputSame = bz2DecompressInputSame));
 }

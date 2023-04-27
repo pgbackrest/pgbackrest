@@ -4,6 +4,7 @@ Time Management
 #ifndef COMMON_TIME_H
 #define COMMON_TIME_H
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <time.h>
 

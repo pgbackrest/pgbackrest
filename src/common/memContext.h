@@ -12,6 +12,7 @@ See the sections on memory context management and memory allocations below for m
 #ifndef COMMON_MEMCONTEXT_H
 #define COMMON_MEMCONTEXT_H
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -20,7 +21,6 @@ Memory context object
 ***********************************************************************************************************************************/
 typedef struct MemContext MemContext;
 
-#include "common/error.h"
 #include "common/type/param.h"
 
 /***********************************************************************************************************************************

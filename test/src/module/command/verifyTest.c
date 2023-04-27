@@ -1272,7 +1272,7 @@ testRun(void)
             "local-1 shim protocol: unable to open file '" TEST_PATH "/repo/archive/db"
             "/11-2/0000000200000008/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9' for read:"
             " [13] Permission denied\n"
-            "            [FileOpenError] on retry after 0ms\n"
+            "            [RETRY DETAIL OMITTED]\n"
             "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152800F/backup.manifest' for read\n"
             "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152800F/backup.manifest.copy'"
             " for read\n"
@@ -1287,7 +1287,7 @@ testRun(void)
             "P01   INFO: invalid result UNPROCESSEDBACKUP/pg_data/testother: [41] raised from local-1 shim protocol:"
             " unable to open file '" TEST_PATH "/repo/backup/db/UNPROCESSEDBACKUP/pg_data/testother' for read: [13]"
             " Permission denied\n"
-            "            [FileOpenError] on retry after 0ms\n"
+            "            [RETRY DETAIL OMITTED]\n"
             "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFD, wal stop: 000000020000000800000000\n"
             "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000800000002, wal stop: 000000020000000800000003\n"
             "P00 DETAIL: archiveId: 11-2, wal start: 000000030000000000000000, wal stop: 000000030000000000000001\n"
@@ -1824,7 +1824,7 @@ testRun(void)
         TEST_TITLE("none output, verbose, override WAL magic, with no verify failures");
 
         hrnCfgArgRawZ(argList, cfgOptVerbose, "y");
-        hrnCfgArgRawZ(argList, cfgOptPgVersionForce, PG_VERSION_11_STR);
+        hrnCfgArgRawZ(argList, cfgOptPgVersionForce, PG_VERSION_11_Z);
         HRN_CFG_LOAD(cfgCmdVerify, argList);
         TEST_RESULT_STR_Z(
             verifyProcess(cfgOptionBool(cfgOptVerbose)),

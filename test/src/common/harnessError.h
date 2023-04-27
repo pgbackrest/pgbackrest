@@ -4,7 +4,7 @@ Harness for Loading Test Configurations
 #ifndef TEST_COMMON_HARNESS_ERROR_H
 #define TEST_COMMON_HARNESS_ERROR_H
 
-#include "common/error.h"
+#include "common/error/error.h"
 #include "common/type/param.h"
 
 /***********************************************************************************************************************************

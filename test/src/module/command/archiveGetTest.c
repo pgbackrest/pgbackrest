@@ -520,7 +520,7 @@ testRun(void)
             " [FormatError] unexpected eof in compressed data\n"
             "            repo2: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"
             " [FormatError] unexpected eof in compressed data\n"
-            "            [FileReadError] on retry after 0ms");
+            "            [RETRY DETAIL OMITTED]");
 
         TEST_STORAGE_GET(
             storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000200000000.error",
@@ -530,7 +530,7 @@ testRun(void)
             " [FormatError] unexpected eof in compressed data\n"
             "repo2: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"
             " [FormatError] unexpected eof in compressed data\n"
-            "[FileReadError] on retry after 0ms\n"
+            "[RETRY DETAIL OMITTED]\n"
             "repo3: [ArchiveMismatchError] unable to retrieve the archive id for database version '10' and system-id"
             " '" HRN_PG_SYSTEMID_10_Z "'",
             .remove = true);
@@ -725,11 +725,8 @@ testRun(void)
         {
             HRN_FORK_CHILD_BEGIN()
             {
-                TEST_RESULT_VOID(
-                    lockAcquire(
-                        cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), STRDEF("999-dededede"), cfgLockType(), 30000,
-                        true),
-                    "acquire lock");
+                lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("999-dededede"), cfgOptionStr(cfgOptStanza), cfgLockType());
+                TEST_RESULT_VOID(lockAcquireP(.timeout = 30000, .returnOnNoLock = true), "acquire lock");
 
                 // Notify parent that lock has been acquired
                 HRN_FORK_CHILD_NOTIFY_PUT();

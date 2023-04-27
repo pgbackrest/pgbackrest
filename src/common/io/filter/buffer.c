@@ -108,16 +108,12 @@ ioBufferNew(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
 
-    IoFilter *this = NULL;
-
-    OBJ_NEW_BEGIN(IoBuffer, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(IoBuffer)
     {
-        IoBuffer *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::IoBuffer);
-        *driver = (IoBuffer){0};
-
-        this = ioFilterNewP(BUFFER_FILTER_TYPE, driver, NULL, .inOut = ioBufferProcess, .inputSame = ioBufferInputSame);
+        *this = (IoBuffer){0};
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_FILTER, this);
+    FUNCTION_LOG_RETURN(
+        IO_FILTER, ioFilterNewP(BUFFER_FILTER_TYPE, this, NULL, .inOut = ioBufferProcess, .inputSame = ioBufferInputSame));
 }

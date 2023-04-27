@@ -35,7 +35,6 @@ Main
 #include "command/stanza/upgrade.h"
 #include "command/verify/verify.h"
 #include "common/debug.h"
-#include "common/error.h"
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
 #include "common/stat.h"

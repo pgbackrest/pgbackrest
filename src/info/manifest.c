@@ -814,7 +814,7 @@ manifestBuildBlockIncrSize(const ManifestBuildData *const buildData, const Manif
         }
     }
 
-    FUNCTION_TEST_RETURN(UINT64, result);
+    FUNCTION_TEST_RETURN(SIZE, result);
 }
 
 // Get checksum size for a block size. Since these checksums are used to determine if a block has changed (not for corruption) they
@@ -1287,9 +1287,9 @@ manifestNewBuild(
     ASSERT(storagePg != NULL);
     ASSERT(pgVersion != 0);
 
-    Manifest *this = NULL;
+    Manifest *this;
 
-    OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BASE_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = manifestNewInternal();
         this->pub.info = infoNew(NULL);
@@ -2338,9 +2338,9 @@ manifestNewLoad(IoRead *read)
 
     ASSERT(read != NULL);
 
-    Manifest *this = NULL;
+    Manifest *this;
 
-    OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BASE_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = manifestNewInternal();
 

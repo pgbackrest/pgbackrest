@@ -7,7 +7,6 @@ Memory Context Manager
 #include <string.h>
 
 #include "common/debug.h"
-#include "common/error.h"
 #include "common/macro.h"
 #include "common/memContext.h"
 

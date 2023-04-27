@@ -236,9 +236,8 @@ testRun(void)
         {
             HRN_FORK_CHILD_BEGIN()
             {
-                TEST_RESULT_INT_NE(
-                    lockAcquire(cfgOptionStr(cfgOptLockPath), STRDEF("stanza1"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
-                    -1, "create backup/expire lock");
+                lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("999-ffffffff"), STRDEF("stanza1"), lockTypeBackup);
+                TEST_RESULT_INT_NE(lockAcquireP(), -1, "create backup/expire lock");
 
                 // Notify parent that lock has been acquired
                 HRN_FORK_CHILD_NOTIFY_PUT();
@@ -429,9 +428,8 @@ testRun(void)
         {
             HRN_FORK_CHILD_BEGIN()
             {
-                TEST_RESULT_INT_NE(
-                    lockAcquire(cfgOptionStr(cfgOptLockPath), STRDEF("stanza1"), STRDEF("777-afafafaf"), lockTypeBackup, 0, true),
-                    -1, "create backup/expire lock");
+                lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("777-afafafaf"), STRDEF("stanza1"), lockTypeBackup);
+                TEST_RESULT_INT_NE(lockAcquireP(), -1, "create backup/expire lock");
                 TEST_RESULT_VOID(lockWriteDataP(lockTypeBackup), "write lock data");
 
                 // Notify parent that lock has been acquired
@@ -1025,9 +1023,8 @@ testRun(void)
         {
             HRN_FORK_CHILD_BEGIN()
             {
-                TEST_RESULT_INT_NE(
-                    lockAcquire(cfgOptionStr(cfgOptLockPath), STRDEF("stanza2"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
-                    -1, "create backup/expire lock");
+                lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("999-ffffffff"), STRDEF("stanza2"), lockTypeBackup);
+                TEST_RESULT_INT_NE(lockAcquireP(), -1, "create backup/expire lock");
                 TEST_RESULT_VOID(lockWriteDataP(lockTypeBackup, .percentComplete = VARUINT(4545)), "write lock data");
 
                 // Notify parent that lock has been acquired
@@ -1465,9 +1462,8 @@ testRun(void)
         {
             HRN_FORK_CHILD_BEGIN()
             {
-                TEST_RESULT_INT_NE(
-                    lockAcquire(cfgOptionStr(cfgOptLockPath), STRDEF("stanza2"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
-                    -1, "create backup/expire lock");
+                lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("999-ffffffff"), STRDEF("stanza2"), lockTypeBackup);
+                TEST_RESULT_INT_NE(lockAcquireP(), -1, "create backup/expire lock");
                 TEST_RESULT_VOID(lockWriteDataP(lockTypeBackup, .percentComplete = VARUINT(5555)), "write lock data");
 
                 // Notify parent that lock has been acquired

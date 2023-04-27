@@ -173,46 +173,41 @@ zstCompressNew(const int level, const bool raw)
 
     ASSERT(level >= ZST_COMPRESS_LEVEL_MIN && level <= ZST_COMPRESS_LEVEL_MAX);
 
-    IoFilter *this = NULL;
-
-    OBJ_NEW_BEGIN(ZstCompress, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(ZstCompress, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        ZstCompress *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::ZstCompress);
-
-        *driver = (ZstCompress)
+        *this = (ZstCompress)
         {
             .context = ZSTD_createCStream(),
             .level = level,
         };
 
         // Set callback to ensure zst context is freed
-        memContextCallbackSet(objMemContext(driver), zstCompressFreeResource, driver);
+        memContextCallbackSet(objMemContext(this), zstCompressFreeResource, this);
 
         // Initialize context
-        zstError(ZSTD_initCStream(driver->context, driver->level));
-
-        // Create param list
-        Pack *paramList = NULL;
-
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            PackWrite *const packWrite = pckWriteNewP();
-
-            pckWriteI32P(packWrite, level);
-            pckWriteEndP(packWrite);
-
-            paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
-        }
-        MEM_CONTEXT_TEMP_END();
-
-        // Create filter interface
-        this = ioFilterNewP(
-            ZST_COMPRESS_FILTER_TYPE, driver, paramList, .done = zstCompressDone, .inOut = zstCompressProcess,
-            .inputSame = zstCompressInputSame);
+        zstError(ZSTD_initCStream(this->context, this->level));
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_FILTER, this);
+    // Create param list
+    Pack *paramList;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackWrite *const packWrite = pckWriteNewP();
+
+        pckWriteI32P(packWrite, level);
+        pckWriteEndP(packWrite);
+
+        paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(
+        IO_FILTER,
+        ioFilterNewP(
+            ZST_COMPRESS_FILTER_TYPE, this, paramList, .done = zstCompressDone, .inOut = zstCompressProcess,
+            .inputSame = zstCompressInputSame));
 }
 
 #endif // HAVE_LIBZST

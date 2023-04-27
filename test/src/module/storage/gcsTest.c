@@ -291,20 +291,20 @@ testRun(void)
 
         HRN_FORK_BEGIN()
         {
-            HRN_FORK_CHILD_BEGIN(.prefix = "gcs server", .timeout = 5000)
+            HRN_FORK_CHILD_BEGIN(.prefix = "gcs server", .timeout = 10000)
             {
                 TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls, .port = testPort), "gcs server run");
             }
             HRN_FORK_CHILD_END();
 
-            HRN_FORK_CHILD_BEGIN(.prefix = "auth server", .timeout = 5000)
+            HRN_FORK_CHILD_BEGIN(.prefix = "auth server", .timeout = 10000)
             {
                 TEST_RESULT_VOID(
                     hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls, .port = testPortAuth), "auth server run");
             }
             HRN_FORK_CHILD_END();
 
-            HRN_FORK_CHILD_BEGIN(.prefix = "meta server", .timeout = 15000)
+            HRN_FORK_CHILD_BEGIN(.prefix = "meta server", .timeout = 30000)
             {
                 TEST_RESULT_VOID(
                     hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolSocket, .port = testPortMeta), "meta server run");

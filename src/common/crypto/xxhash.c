@@ -116,26 +116,19 @@ xxHashNew(const size_t size)
 
     ASSERT(size >= 1 && size <= XX_HASH_SIZE_MAX);
 
-    // Allocate memory to hold process state
-    IoFilter *this = NULL;
-
-    OBJ_NEW_BEGIN(XxHash, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(XxHash, .callbackQty = 1)
     {
-        XxHash *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::XxHash);
-        *driver = (XxHash){.size = size};
+        *this = (XxHash){.size = size};
 
-        driver->state = XXH3_createState();
-        XXH3_128bits_reset(driver->state);
+        this->state = XXH3_createState();
+        XXH3_128bits_reset(this->state);
 
         // Set free callback to ensure hash context is freed
-        memContextCallbackSet(objMemContext(driver), xxHashFreeResource, driver);
-
-        // Create filter interface
-        this = ioFilterNewP(XX_HASH_FILTER_TYPE, driver, NULL, .in = xxHashProcess, .result = xxHashResult);
+        memContextCallbackSet(objMemContext(this), xxHashFreeResource, this);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_FILTER, this);
+    FUNCTION_LOG_RETURN(IO_FILTER, ioFilterNewP(XX_HASH_FILTER_TYPE, this, NULL, .in = xxHashProcess, .result = xxHashResult));
 }
 
 /**********************************************************************************************************************************/

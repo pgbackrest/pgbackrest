@@ -39,7 +39,7 @@ Destructor
 FN_INLINE_ALWAYS void
 ioFilterFree(IoFilter *const this)
 {
-    objFreeContext(this);
+    objFree(this);
 }
 
 /***********************************************************************************************************************************

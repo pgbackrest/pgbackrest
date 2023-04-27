@@ -9,7 +9,6 @@ Harness for Creating Test Backups
 #include "common/compress/helper.h"
 #include "common/crypto/common.h"
 #include "common/crypto/hash.h"
-#include "common/error.h"
 #include "common/lock.h"
 #include "config/config.h"
 #include "info/infoArchive.h"
@@ -29,7 +28,8 @@ hrnCmdBackup(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    lockAcquire(STR(testPath()), cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), lockTypeBackup, 0, true);
+    lockInit(STR(testPath()), cfgOptionStr(cfgOptExecId), cfgOptionStr(cfgOptStanza), lockTypeBackup);
+    lockAcquireP();
 
     TRY_BEGIN()
     {

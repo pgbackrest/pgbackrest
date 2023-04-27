@@ -8,7 +8,6 @@ C Test Harness
 
 #include "common/assert.h"
 #include "common/debug.h"
-#include "common/error.h"
 
 #include "common/harnessTest.intern.h"
 

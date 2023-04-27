@@ -28,12 +28,8 @@ protocolCommandNew(const StringId command)
 
     ASSERT(command != 0);
 
-    ProtocolCommand *this = NULL;
-
     OBJ_NEW_BEGIN(ProtocolCommand, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (ProtocolCommand)
         {
             .command = command,

@@ -140,3 +140,89 @@ bldPgRender(const Storage *const storageRepo, const BldPg bldPg)
 {
     bldPgRenderInterfaceAutoC(storageRepo, bldPg);
 }
+
+/***********************************************************************************************************************************
+Render version.auto.h
+***********************************************************************************************************************************/
+#define PG_VERSION_MODULE                                           "postgres-version"
+#define PG_VERSION_AUTO_COMMENT                                     "PostgreSQL Version"
+
+static void
+bldPgRenderVersionAutoH(const Storage *const storageRepo, const BldPg bldPg)
+{
+    String *const pg = strCatFmt(
+        strNew(),
+        "%s"
+        "#ifndef POSTGRES_VERSION_AUTO_H\n"
+        "#define POSTGRES_VERSION_AUTO_H\n",
+        strZ(bldHeader(PG_VERSION_MODULE, PG_VERSION_AUTO_COMMENT)));
+
+    // PostgreSQL version numbers
+    // -----------------------------------------------------------------------------------------------------------------------------
+    strCatFmt(
+        pg,
+        "\n"
+        COMMENT_BLOCK_BEGIN "\n"
+        "PostgreSQL version constants\n"
+        COMMENT_BLOCK_END "\n");
+
+    for (unsigned int pgIdx = 0; pgIdx < lstSize(bldPg.pgList); pgIdx++)
+    {
+        const BldPgVersion *const pgVersion = lstGet(bldPg.pgList, pgIdx);
+        const char *const versionNoDot = strZ(strLstJoin(strLstNewSplitZ(pgVersion->version, "."), ""));
+
+        // Generate version number
+        unsigned int versionNum;
+        const int idxStart = strChr(pgVersion->version, '.');
+
+        if (idxStart == -1)
+            versionNum = cvtZToUInt(strZ(pgVersion->version)) * 10000;
+        else
+        {
+            versionNum =
+                cvtZSubNToUInt(strZ(pgVersion->version), 0, (size_t)idxStart) * 10000 +
+                cvtZToUInt(strZ(pgVersion->version) + (size_t)idxStart + 1) * 100;
+        }
+
+        // Output version number
+        strCatFmt(pg, "%s\n", strZ(bldDefineRender(strNewFmt("PG_VERSION_%s", versionNoDot), strNewFmt("%u", versionNum))));
+
+        // Output max version
+        if (pgIdx == lstSize(bldPg.pgList) - 1)
+            strCatFmt(pg, "\n%s\n", strZ(bldDefineRender(STRDEF("PG_VERSION_MAX"), strNewFmt("PG_VERSION_%s", versionNoDot))));
+    }
+
+    // PostgreSQL version strings
+    // -----------------------------------------------------------------------------------------------------------------------------
+    strCatFmt(
+        pg,
+        "\n"
+        COMMENT_BLOCK_BEGIN "\n"
+        "PostgreSQL version string constants for use in error messages\n"
+        COMMENT_BLOCK_END "\n");
+
+    for (unsigned int pgIdx = 0; pgIdx < lstSize(bldPg.pgList); pgIdx++)
+    {
+        const BldPgVersion *const pgVersion = lstGet(bldPg.pgList, pgIdx);
+        const char *const versionNoDot = strZ(strLstJoin(strLstNewSplitZ(pgVersion->version, "."), ""));
+
+        // Output version string
+        strCatFmt(
+            pg, "%s\n",
+            strZ(bldDefineRender(strNewFmt("PG_VERSION_%s_Z", versionNoDot), strNewFmt("\"%s\"", strZ(pgVersion->version)))));
+    }
+
+    strCatZ(
+        pg,
+        "\n"
+        "#endif\n");
+
+    bldPut(storageRepo, "src/postgres/version.auto.h", BUFSTR(pg));
+}
+
+/**********************************************************************************************************************************/
+void
+bldPgVersionRender(const Storage *const storageRepo, const BldPg bldPg)
+{
+    bldPgRenderVersionAutoH(storageRepo, bldPg);
+}

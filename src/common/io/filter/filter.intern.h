@@ -61,7 +61,6 @@ Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct IoFilterPub
 {
-    MemContext *memContext;                                         // Mem context
     StringId type;                                                  // Filter type
     IoFilterInterface interface;                                    // Filter interface
     void *driver;                                                   // Filter driver
@@ -114,9 +113,9 @@ FN_EXTERN void ioFilterProcessInOut(IoFilter *this, const Buffer *input, Buffer 
 
 // Move filter to a new parent mem context
 FN_INLINE_ALWAYS IoFilter *
-ioFilterMove(IoFilter *this, MemContext *parentNew)
+ioFilterMove(IoFilter *const this, MemContext *const parentNew)
 {
-    return objMoveContext(this, parentNew);
+    return objMove(this, parentNew);
 }
 
 /***********************************************************************************************************************************

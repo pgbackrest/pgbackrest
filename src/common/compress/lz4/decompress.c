@@ -163,27 +163,23 @@ lz4DecompressNew(const bool raw)
         (void)raw;                                                  // Not required for decompress
     FUNCTION_LOG_END();
 
-    IoFilter *this = NULL;
-
-    OBJ_NEW_BEGIN(Lz4Decompress, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(Lz4Decompress, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        Lz4Decompress *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::Lz4Decompress);
-        *driver = (Lz4Decompress){0};
+        *this = (Lz4Decompress){0};
 
         // Create lz4 context
-        lz4Error(LZ4F_createDecompressionContext(&driver->context, LZ4F_VERSION));
+        lz4Error(LZ4F_createDecompressionContext(&this->context, LZ4F_VERSION));
 
         // Set callback to ensure lz4 context is freed
-        memContextCallbackSet(objMemContext(driver), lz4DecompressFreeResource, driver);
-
-        // Create filter interface
-        this = ioFilterNewP(
-            LZ4_DECOMPRESS_FILTER_TYPE, driver, NULL, .done = lz4DecompressDone, .inOut = lz4DecompressProcess,
-            .inputSame = lz4DecompressInputSame);
+        memContextCallbackSet(objMemContext(this), lz4DecompressFreeResource, this);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_FILTER, this);
+    FUNCTION_LOG_RETURN(
+        IO_FILTER,
+        ioFilterNewP(
+            LZ4_DECOMPRESS_FILTER_TYPE, this, NULL, .done = lz4DecompressDone, .inOut = lz4DecompressProcess,
+            .inputSame = lz4DecompressInputSame));
 }
 
 #endif // HAVE_LIBLZ4

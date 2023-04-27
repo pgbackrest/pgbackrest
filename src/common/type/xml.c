@@ -93,12 +93,14 @@ xmlNodeNew(xmlNodePtr node)
 
     ASSERT(node != NULL);
 
-    XmlNode *this = memNew(sizeof(XmlNode));
-
-    *this = (XmlNode)
+    OBJ_NEW_BEGIN(XmlNode)
     {
-        .node = node,
-    };
+        *this = (XmlNode)
+        {
+            .node = node,
+        };
+    }
+    OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(XML_NODE, this);
 }
@@ -271,13 +273,8 @@ xmlDocumentNew(const String *rootName)
 
     xmlInit();
 
-    // Create object
-    XmlDocument *this = NULL;
-
-    OBJ_NEW_BEGIN(XmlDocument, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(XmlDocument, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (XmlDocument)
         {
             .xml = xmlNewDoc(BAD_CAST "1.0"),
@@ -307,12 +304,8 @@ xmlDocumentNewBuf(const Buffer *buffer)
 
     xmlInit();
 
-    // Create object
-    XmlDocument *this = NULL;
-
-    OBJ_NEW_BEGIN(XmlDocument, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(XmlDocument, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
         *this = (XmlDocument){{0}};                                 // Extra braces are required for older gcc versions
 
         if ((this->xml = xmlReadMemory((const char *)bufPtrConst(buffer), (int)bufUsed(buffer), "noname.xml", NULL, 0)) == NULL)

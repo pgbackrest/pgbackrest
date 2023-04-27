@@ -65,7 +65,7 @@ Memory is allocated inside contexts and can be long lasting (for objects) or tem
 
 Logging is used for debugging with the built-in macros `FUNCTION_LOG_*()` and `FUNCTION_TEST_*()` which are used to trace parameters passed to/returned from functions. `FUNCTION_LOG_*()` macros are used for production logging whereas `FUNCTION_TEST_*()` macros will be compiled out of production code. For functions where no parameter is valuable enough to justify the cost of debugging in production, use `FUNCTION_TEST_BEGIN()/FUNCTION_TEST_END()`, else use `FUNCTION_LOG_BEGIN(someLogLevel)/FUNCTION_LOG_END()`. See [debug.h](https://github.com/pgbackrest/pgbackrest/blob/main/src/common/debug.h) for more details and the [Coding Example](#coding-example) below.
 
-Logging is also used for providing information to the user via the `LOG_*()` macros, such as `LOG_INFO("some informational message")` and `LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strZ(cfgOptionDisplay(cfgOptType)))` and also via `THROW_*()` macros for throwing an error. See [log.h](https://github.com/pgbackrest/pgbackrest/blob/main/src/common/log.h) and [error.h](https://github.com/pgbackrest/pgbackrest/blob/main/src/common/error.h) for more details and the [Coding Example](#coding-example) below.
+Logging is also used for providing information to the user via the `LOG_*()` macros, such as `LOG_INFO("some informational message")` and `LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strZ(cfgOptionDisplay(cfgOptType)))` and also via `THROW_*()` macros for throwing an error. See [log.h](https://github.com/pgbackrest/pgbackrest/blob/main/src/common/log.h) and [error.h](https://github.com/pgbackrest/pgbackrest/blob/main/src/common/error/error.h) for more details and the [Coding Example](#coding-example) below.
 
 ### Coding Example
 
@@ -132,12 +132,8 @@ myObjNew(unsigned int myData, const String *secretName)
 
     ASSERT(secretName != NULL || myData > 0);       // Development-only assertions (will be compiled out of production code)
 
-    MyObj *this = NULL;                 // Declare the object in the parent memory context: it will live only as long as the parent
-
     OBJ_NEW_BEGIN(MyObj)                // Create a long lasting memory context with the name of the object
     {
-        this = OBJ_NEW_ALLOC();         // Allocate the memory required by the object
-
         *this = (MyObj)                 // Initialize the object
         {
             .pub =
@@ -463,9 +459,7 @@ HRN_FORK_BEGIN()
 {
     HRN_FORK_CHILD_BEGIN()
     {
-        TEST_RESULT_INT_NE(
-            lockAcquire(cfgOptionStr(cfgOptLockPath), STRDEF("stanza1"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
-            -1, "create backup/expire lock");
+        TEST_RESULT_INT_NE(lockAcquireP(), -1, "create backup/expire lock");
 
         // Notify parent that lock has been acquired
         HRN_FORK_CHILD_NOTIFY_PUT();

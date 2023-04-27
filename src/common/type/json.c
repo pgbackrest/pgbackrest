@@ -90,12 +90,8 @@ jsonReadNew(const String *const json)
         FUNCTION_TEST_PARAM(STRING, json);
     FUNCTION_TEST_END();
 
-    JsonRead *this = NULL;
-
     OBJ_NEW_BEGIN(JsonRead, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (JsonRead)
         {
             .json = strZ(json),
@@ -1317,12 +1313,8 @@ jsonWriteNew(JsonWriteNewParam param)
         FUNCTION_TEST_PARAM(STRING, param.json);
     FUNCTION_TEST_END();
 
-    JsonWrite *this = NULL;
-
     OBJ_NEW_BEGIN(JsonWrite, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (JsonWrite)
         {
             .json = param.json == NULL ? strNew() : param.json,

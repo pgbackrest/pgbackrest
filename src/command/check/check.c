@@ -43,7 +43,7 @@ checkManifest(void)
 }
 
 static void
-checkStandby(const DbGetResult dbGroup, unsigned int pgPathDefinedTotal)
+checkStandby(const DbGetResult dbGroup, const unsigned int pgPathDefinedTotal)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(DB_GET_RESULT, dbGroup);
@@ -126,7 +126,7 @@ checkPrimary(const DbGetResult dbGroup)
             LOG_INFO_FMT(CFGCMD_CHECK " %s configuration (primary)", cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
 
             // Get the repo storage in case it is remote and encryption settings need to be pulled down (performed here for testing)
-            const Storage *storageRepo = storageRepoIdx(repoIdx);
+            const Storage *const storageRepo = storageRepoIdx(repoIdx);
 
             // Check that the backup and archive info files exist and are valid for the current database of the stanza
             checkStanzaInfoPg(
@@ -134,7 +134,7 @@ checkPrimary(const DbGetResult dbGroup)
                 cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
 
             // Attempt to load the archive info file and retrieve the archiveId
-            InfoArchive *archiveInfo = infoArchiveLoadFile(
+            const InfoArchive *const archiveInfo = infoArchiveLoadFile(
                 storageRepo, INFO_ARCHIVE_PATH_FILE_STR, cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
                 cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
 
@@ -142,23 +142,23 @@ checkPrimary(const DbGetResult dbGroup)
         }
 
         // Perform a WAL switch
-        const String *walSegment = dbWalSwitch(dbGroup.primary);
+        const String *const walSegment = dbWalSwitch(dbGroup.primary);
 
         // Wait for the WAL to appear in each repo
         for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
         {
             LOG_INFO_FMT(CFGCMD_CHECK " %s archive for WAL (primary)", cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
 
-            const Storage *storageRepo = storageRepoIdx(repoIdx);
-            const String *walSegmentFile = walSegmentFind(
-                storageRepo, repoArchiveId[repoIdx], walSegment, cfgOptionUInt64(cfgOptArchiveTimeout));
+            const String *const walSegmentFile = walSegmentFind(
+                storageRepoIdx(repoIdx), repoArchiveId[repoIdx], walSegment, cfgOptionUInt64(cfgOptArchiveTimeout));
 
             LOG_INFO_FMT(
                 "WAL segment %s successfully archived to '%s' on %s",
                 strZ(walSegment),
                 strZ(
                     storagePathP(
-                        storageRepo, strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(repoArchiveId[repoIdx]), strZ(walSegmentFile)))),
+                        storageRepoIdx(repoIdx),
+                        strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(repoArchiveId[repoIdx]), strZ(walSegmentFile)))),
                 cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
         }
 
@@ -182,7 +182,7 @@ cmdCheck(void)
         if (dbGroup.standby == NULL && dbGroup.primary == NULL)
             THROW(ConfigError, "no database found\nHINT: check indexed pg-path/pg-host configurations");
 
-        unsigned int pgPathDefinedTotal = checkManifest();
+        const unsigned int pgPathDefinedTotal = checkManifest();
         checkStandby(dbGroup, pgPathDefinedTotal);
         checkPrimary(dbGroup);
     }

@@ -57,18 +57,14 @@ storageNew(
     ASSERT(interface.pathRemove != NULL);
     ASSERT(interface.remove != NULL);
 
-    Storage *this = NULL;
-
     OBJ_NEW_BEGIN(Storage, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (Storage)
         {
             .pub =
             {
                 .type = type,
-                .driver = objMove(driver, objMemContext(this)),
+                .driver = objMoveToInterface(driver, this, memContextPrior()),
                 .interface = interface,
             },
             .path = strDup(path),

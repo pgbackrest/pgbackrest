@@ -7,7 +7,6 @@ Command and Option Configuration
 #include <string.h>
 
 #include "common/debug.h"
-#include "common/error.h"
 #include "common/memContext.h"
 #include "config/config.intern.h"
 #include "config/parse.h"

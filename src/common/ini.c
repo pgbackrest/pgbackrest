@@ -35,12 +35,8 @@ iniNew(IoRead *const read, const IniNewParam param)
         FUNCTION_LOG_PARAM(BOOL, param.store);
     FUNCTION_LOG_END();
 
-    Ini *this = NULL;
-
     OBJ_NEW_BEGIN(Ini, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (Ini)
         {
             .read = read,

@@ -1130,12 +1130,8 @@ storageS3New(
     ASSERT(region != NULL);
     ASSERT(partSize != 0);
 
-    StorageS3 *this = NULL;
-
     OBJ_NEW_BEGIN(StorageS3, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (StorageS3)
         {
             .interface = storageInterfaceS3,

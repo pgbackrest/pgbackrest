@@ -625,7 +625,7 @@ testRun(void)
         IoWrite *write = ioBufferWriteNew(bufferOut);
         ioFilterGroupAdd(
             ioWriteFilterGroup(write),
-            pageChecksumNewPack(ioFilterParamList(pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, STRDEF(BOGUS_STR)))));
+            pageChecksumNewPack(ioFilterParamList(pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, true, STRDEF(BOGUS_STR)))));
         ioWriteOpen(write);
         ioWrite(write, buffer);
         TEST_ERROR(ioWrite(write, buffer), AssertError, "should not be possible to see two misaligned pages in a row");
@@ -655,7 +655,8 @@ testRun(void)
 
         write = ioBufferWriteNew(bufferOut);
         ioFilterGroupAdd(
-            ioWriteFilterGroup(write), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, storagePathP(storageTest, STRDEF("relation"))));
+            ioWriteFilterGroup(write),
+            pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, true, storagePathP(storageTest, STRDEF("relation"))));
         ioWriteOpen(write);
         ioWrite(write, buffer);
         ioWriteClose(write);
@@ -1960,7 +1961,7 @@ testRun(void)
 
         Manifest *manifest = NULL;
 
-        OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
+        OBJ_NEW_BASE_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             manifest = manifestNewInternal();
             manifest->pub.data.backupType = backupTypeFull;
@@ -1981,7 +1982,7 @@ testRun(void)
 
         Manifest *manifestResume = NULL;
 
-        OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
+        OBJ_NEW_BASE_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             manifestResume = manifestNewInternal();
             manifestResume->pub.info = infoNew(NULL);
@@ -2115,7 +2116,7 @@ testRun(void)
         // Create manifest with file
         Manifest *manifest = NULL;
 
-        OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
+        OBJ_NEW_BASE_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             manifest = manifestNewInternal();
             HRN_MANIFEST_FILE_ADD(manifest, .name = "pg_data/test");
@@ -2125,9 +2126,9 @@ testRun(void)
         uint64_t sizeProgress = 0;
         currentPercentComplete = 4567;
 
-        TEST_RESULT_VOID(
-            lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), lockTypeBackup, 0, true),
-            "acquire backup lock");
+        lockInit(TEST_PATH_STR, cfgOptionStr(cfgOptExecId), cfgOptionStr(cfgOptStanza), lockTypeBackup);
+        TEST_RESULT_VOID(lockAcquireP(), "acquire backup lock");
+
         TEST_RESULT_VOID(
             backupJobResult(
                 manifest, STRDEF("host"), storageTest, strLstNew(), job, false, 0, &sizeProgress, &currentPercentComplete),
@@ -2420,7 +2421,7 @@ testRun(void)
 
             // Add files
             HRN_STORAGE_PUT_Z(storagePgWrite(), "postgresql.conf", "CONFIGSTUFF", .timeModified = backupTimeStart);
-            HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_95_STR, .timeModified = backupTimeStart);
+            HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_95_Z, .timeModified = backupTimeStart);
             HRN_STORAGE_PATH_CREATE(storagePgWrite(), strZ(pgWalPath(PG_VERSION_95)), .noParentCreate = true);
 
             // Create a backup manifest that looks like a halted backup manifest
@@ -2870,7 +2871,7 @@ testRun(void)
             HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_96);
 
             // Update version
-            HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_96_STR, .timeModified = backupTimeStart);
+            HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_96_Z, .timeModified = backupTimeStart);
 
             // Upgrade stanza
             StringList *argList = strLstNew();
@@ -3028,7 +3029,7 @@ testRun(void)
             HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_11, .pageChecksum = true, .walSegmentSize = 1024 * 1024);
 
             // Update version
-            HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_11_STR, .timeModified = backupTimeStart);
+            HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_11_Z, .timeModified = backupTimeStart);
 
             // Update wal path
             HRN_STORAGE_PATH_REMOVE(storagePgWrite(), strZ(pgWalPath(PG_VERSION_95)));
@@ -3293,8 +3294,26 @@ testRun(void)
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             hrnCfgArgRawStrId(argList, cfgOptType, backupTypeIncr);
             hrnCfgArgRawBool(argList, cfgOptDelta, true);
+            hrnCfgArgRawBool(argList, cfgOptPageHeaderCheck, false);
             hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+            // File with bad page checksum and header errors that will be ignored
+            Buffer *relation = bufNew(PG_PAGE_SIZE_DEFAULT * 4);
+            memset(bufPtr(relation), 0, bufSize(relation));
+            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0xFF};
+            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x01)) = (PageHeaderData){.pd_upper = 0x00};
+            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x02)) = (PageHeaderData){.pd_upper = 0x00};
+            (bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x02))[PG_PAGE_SIZE_DEFAULT - 1] = 0xFF;
+            ((PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x02)))->pd_checksum = pgPageChecksum(
+                bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x02), 2);
+            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x03)) = (PageHeaderData){.pd_upper = 0x00};
+            (bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x03))[PG_PAGE_SIZE_DEFAULT - 1] = 0xEE;
+            ((PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x03)))->pd_checksum = 1;
+            bufUsedSet(relation, bufSize(relation));
+
+            HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/3", relation, .timeModified = backupTimeStart);
+            const char *rel1_3Sha1 = strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, relation)));
 
             // Run backup.  Make sure that the timeline selected converts to hexdecimal that can't be interpreted as decimal.
             hrnBackupPqScriptP(PG_VERSION_11, backupTimeStart, .timeline = 0x2C, .walTotal = 2);
@@ -3307,6 +3326,8 @@ testRun(void)
                 "P00   INFO: check archive for segment 0000002C05DB8EB000000000\n"
                 "P00   WARN: a timeline switch has occurred since the 20191027-181320F backup, enabling delta checksum\n"
                 "            HINT: this is normal after restoring from backup or promoting a standby.\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/3 (32KB, [PCT]) checksum [SHA1]\n"
+                "P00   WARN: invalid page checksums found in file " TEST_PATH "/pg1/base/1/3 at pages 0, 3\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/base/1/1 (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
@@ -3321,65 +3342,73 @@ testRun(void)
                 "P00 DETAIL: wrote 'tablespace_map' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000002C05DB8EB000000000:0000002C05DB8EB000000001\n"
                 "P00   INFO: new backup label = 20191027-181320F_20191030-014640I\n"
-                "P00   INFO: incr backup size = [SIZE], file total = 7");
+                "P00   INFO: incr backup size = [SIZE], file total = 8");
 
-            TEST_RESULT_STR_Z(
+            TEST_RESULT_STR(
                 testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
-                ". {link, d=20191027-181320F_20191030-014640I}\n"
-                "pg_data {path}\n"
-                "pg_data/PG_VERSION.gz {file, s=2}\n"
-                "pg_data/backup_label.gz {file, s=17}\n"
-                "pg_data/base {path}\n"
-                "pg_data/base/1 {path}\n"
-                "pg_data/base/1/1.gz {file, s=8192}\n"
-                "pg_data/global {path}\n"
-                "pg_data/global/pg_control.gz {file, s=8192}\n"
-                "pg_data/pg_tblspc {path}\n"
-                "pg_data/pg_tblspc/32768 {link, d=../../pg_tblspc/32768}\n"
-                "pg_data/pg_wal {path}\n"
-                "pg_data/postgresql.conf.gz {file, s=11}\n"
-                "pg_data/tablespace_map.gz {file, s=19}\n"
-                "pg_tblspc {path}\n"
-                "pg_tblspc/32768 {path}\n"
-                "pg_tblspc/32768/PG_11_201809051 {path}\n"
-                "pg_tblspc/32768/PG_11_201809051/1 {path}\n"
-                "pg_tblspc/32768/PG_11_201809051/1/5.gz {file, s=0}\n"
-                "--------\n"
-                "[backup:target]\n"
-                "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n"
-                "pg_tblspc/32768={\"path\":\"../../pg1-tblspc/32768\",\"tablespace-id\":\"32768\""
-                ",\"tablespace-name\":\"tblspc32768\",\"type\":\"link\"}\n"
-                "\n"
-                "[target:file]\n"
-                "pg_data/PG_VERSION={\"checksum\":\"17ba0791499db908433b80f37c5fbc89b870084b\",\"reference\":\"20191027-181320F\""
-                ",\"size\":2,\"timestamp\":1572200000}\n"
-                "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
-                ",\"timestamp\":1572400002}\n"
-                "pg_data/base/1/1={\"checksum\":\"0631457264ff7f8d5fb1edc2c0211992a67c73e6\",\"checksum-page\":true"
-                ",\"reference\":\"20191027-181320F\",\"size\":8192,\"timestamp\":1572200000}\n"
-                "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1572400000}\n"
-                "pg_data/postgresql.conf={\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\""
-                ",\"reference\":\"20191027-181320F\",\"size\":11,\"timestamp\":1570000000}\n"
-                "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
-                ",\"timestamp\":1572400002}\n"
-                "pg_tblspc/32768/PG_11_201809051/1/5={\"checksum-page\":true,\"reference\":\"20191027-181320F\",\"size\":0"
-                ",\"timestamp\":1572200000}\n"
-                "\n"
-                "[target:link]\n"
-                "pg_data/pg_tblspc/32768={\"destination\":\"../../pg1-tblspc/32768\"}\n"
-                "\n"
-                "[target:path]\n"
-                "pg_data={}\n"
-                "pg_data/base={}\n"
-                "pg_data/base/1={}\n"
-                "pg_data/global={}\n"
-                "pg_data/pg_tblspc={}\n"
-                "pg_data/pg_wal={}\n"
-                "pg_tblspc={}\n"
-                "pg_tblspc/32768={}\n"
-                "pg_tblspc/32768/PG_11_201809051={}\n"
-                "pg_tblspc/32768/PG_11_201809051/1={}\n",
+                strNewFmt(
+                    ". {link, d=20191027-181320F_20191030-014640I}\n"
+                    "pg_data {path}\n"
+                    "pg_data/PG_VERSION.gz {file, s=2}\n"
+                    "pg_data/backup_label.gz {file, s=17}\n"
+                    "pg_data/base {path}\n"
+                    "pg_data/base/1 {path}\n"
+                    "pg_data/base/1/1.gz {file, s=8192}\n"
+                    "pg_data/base/1/3.gz {file, s=32768}\n"
+                    "pg_data/global {path}\n"
+                    "pg_data/global/pg_control.gz {file, s=8192}\n"
+                    "pg_data/pg_tblspc {path}\n"
+                    "pg_data/pg_tblspc/32768 {link, d=../../pg_tblspc/32768}\n"
+                    "pg_data/pg_wal {path}\n"
+                    "pg_data/postgresql.conf.gz {file, s=11}\n"
+                    "pg_data/tablespace_map.gz {file, s=19}\n"
+                    "pg_tblspc {path}\n"
+                    "pg_tblspc/32768 {path}\n"
+                    "pg_tblspc/32768/PG_11_201809051 {path}\n"
+                    "pg_tblspc/32768/PG_11_201809051/1 {path}\n"
+                    "pg_tblspc/32768/PG_11_201809051/1/5.gz {file, s=0}\n"
+                    "--------\n"
+                    "[backup:target]\n"
+                    "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n"
+                    "pg_tblspc/32768={\"path\":\"../../pg1-tblspc/32768\",\"tablespace-id\":\"32768\""
+                    ",\"tablespace-name\":\"tblspc32768\",\"type\":\"link\"}\n"
+                    "\n"
+                    "[target:file]\n"
+                    "pg_data/PG_VERSION={\"checksum\":\"17ba0791499db908433b80f37c5fbc89b870084b\""
+                    ",\"reference\":\"20191027-181320F\",\"size\":2,\"timestamp\":1572200000}\n"
+                    "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
+                    ",\"timestamp\":1572400002}\n"
+                    "pg_data/base/1/1={\"checksum\":\"0631457264ff7f8d5fb1edc2c0211992a67c73e6\",\"checksum-page\":true"
+                    ",\"reference\":\"20191027-181320F\",\"size\":8192,\"timestamp\":1572200000}\n"
+                    "pg_data/base/1/3={\"checksum\":\"%s\",\"checksum-page\":false,\"checksum-page-error\":[0,3],\"size\":32768"
+                    ",\"timestamp\":1572400000}\n"
+                    "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1572400000}\n"
+                    "pg_data/postgresql.conf={\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\""
+                    ",\"reference\":\"20191027-181320F\",\"size\":11,\"timestamp\":1570000000}\n"
+                    "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
+                    ",\"timestamp\":1572400002}\n"
+                    "pg_tblspc/32768/PG_11_201809051/1/5={\"checksum-page\":true,\"reference\":\"20191027-181320F\",\"size\":0"
+                    ",\"timestamp\":1572200000}\n"
+                    "\n"
+                    "[target:link]\n"
+                    "pg_data/pg_tblspc/32768={\"destination\":\"../../pg1-tblspc/32768\"}\n"
+                    "\n"
+                    "[target:path]\n"
+                    "pg_data={}\n"
+                    "pg_data/base={}\n"
+                    "pg_data/base/1={}\n"
+                    "pg_data/global={}\n"
+                    "pg_data/pg_tblspc={}\n"
+                    "pg_data/pg_wal={}\n"
+                    "pg_tblspc={}\n"
+                    "pg_tblspc/32768={}\n"
+                    "pg_tblspc/32768/PG_11_201809051={}\n"
+                    "pg_tblspc/32768/PG_11_201809051/1={}\n",
+                    rel1_3Sha1),
                 "compare file list");
+
+            // Remove test files
+            HRN_STORAGE_REMOVE(storagePgWrite(), "base/1/3", .errorOnMissing = true);
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -3550,7 +3579,7 @@ testRun(void)
             HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_11, .pageChecksum = false, .walSegmentSize = 2 * 1024 * 1024);
 
             // Update version
-            HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_11_STR, .timeModified = backupTimeStart);
+            HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_11_Z, .timeModified = backupTimeStart);
 
             // Load options
             StringList *argList = strLstNew();
@@ -3637,7 +3666,7 @@ testRun(void)
             HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_11, .pageChecksum = false, .walSegmentSize = 2 * 1024 * 1024);
 
             // Update version
-            HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_11_STR, .timeModified = backupTimeStart);
+            HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_11_Z, .timeModified = backupTimeStart);
 
             // Load options
             StringList *argList = strLstNew();

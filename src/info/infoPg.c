@@ -69,9 +69,9 @@ infoPgNew(InfoPgType type, const String *cipherPassSub)
         FUNCTION_TEST_PARAM(STRING, cipherPassSub);
     FUNCTION_LOG_END();
 
-    InfoPg *this = NULL;
+    InfoPg *this;
 
-    OBJ_NEW_BEGIN(InfoPg, .childQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BASE_BEGIN(InfoPg, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = infoPgNewInternal(type);
         this->pub.info = infoNew(cipherPassSub);
@@ -169,9 +169,9 @@ infoPgNewLoad(IoRead *read, InfoPgType type, InfoLoadNewCallback *callbackFuncti
     ASSERT(type == infoPgBackup || type == infoPgArchive);
     ASSERT((callbackFunction == NULL && callbackData == NULL) || (callbackFunction != NULL && callbackData != NULL));
 
-    InfoPg *this = NULL;
+    InfoPg *this;
 
-    OBJ_NEW_BEGIN(InfoPg, .childQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BASE_BEGIN(InfoPg, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = infoPgNewInternal(type);
 

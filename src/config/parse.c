@@ -10,7 +10,6 @@ Command and Option Parse
 #include <unistd.h>
 
 #include "common/debug.h"
-#include "common/error.h"
 #include "common/ini.h"
 #include "common/io/bufferRead.h"
 #include "common/log.h"
@@ -1422,13 +1421,13 @@ cfgFileLoad(
 logic to this critical path code.
 ***********************************************************************************************************************************/
 FN_EXTERN void
-configParse(const Storage *storage, unsigned int argListSize, const char *argList[], bool resetLogLevel)
+cfgParse(const Storage *const storage, const unsigned int argListSize, const char *argList[], const CfgParseParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE, storage);
         FUNCTION_LOG_PARAM(UINT, argListSize);
         FUNCTION_LOG_PARAM(CHARPY, argList);
-        FUNCTION_LOG_PARAM(BOOL, resetLogLevel);
+        FUNCTION_LOG_PARAM(BOOL, param.noResetLogLevel);
     FUNCTION_LOG_END();
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -1436,7 +1435,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
         // Create the config struct
         Config *config;
 
-        OBJ_NEW_BEGIN(Config, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+        OBJ_NEW_BASE_BEGIN(Config, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
         {
             config = OBJ_NEW_ALLOC();
 
@@ -1690,7 +1689,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
             THROW(ParamInvalidError, "command does not allow parameters");
 
         // Enable logging for main role so config file warnings will be output
-        if (resetLogLevel && config->commandRole == cfgCmdRoleMain)
+        if (!param.noResetLogLevel && config->commandRole == cfgCmdRoleMain)
             logInit(logLevelWarn, logLevelWarn, logLevelOff, false, 0, 1, false);
 
         // Only continue if command options need to be validated, i.e. a real command is running or we are getting help for a

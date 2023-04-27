@@ -97,23 +97,17 @@ testIoRateProcess(THIS_VOID, const Buffer *input)
 static IoFilter *
 testIoRateNew(uint64_t bytesPerSec)
 {
-    IoFilter *this = NULL;
-
-    OBJ_NEW_BEGIN(TestIoRate, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(TestIoRate, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        TestIoRate *driver = OBJ_NEW_ALLOC();
-
-        *driver = (TestIoRate)
+        *this = (TestIoRate)
         {
             .memContext = memContextCurrent(),
             .bytesPerSec = bytesPerSec,
         };
-
-        this = ioFilterNewP(STRID5("test-io-rate", 0x2d032dbd3ba4cb40), driver, NULL, .in = testIoRateProcess);
     }
     OBJ_NEW_END();
 
-    return this;
+    return ioFilterNewP(STRID5("test-io-rate", 0x2d032dbd3ba4cb40), this, NULL, .in = testIoRateProcess);
 }
 
 /***********************************************************************************************************************************
@@ -147,7 +141,7 @@ testRun(void)
                 // Create a driver to test remote performance of storageNewItrP() and inject it into storageRepo()
                 StorageTestPerfList *driver = NULL;
 
-                OBJ_NEW_BEGIN(StorageTestPerfList, .childQty = MEM_CONTEXT_QTY_MAX)
+                OBJ_NEW_BASE_BEGIN(StorageTestPerfList, .childQty = MEM_CONTEXT_QTY_MAX)
                 {
                     driver = OBJ_NEW_ALLOC();
 

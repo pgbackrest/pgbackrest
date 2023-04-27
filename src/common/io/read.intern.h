@@ -37,7 +37,6 @@ Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct IoReadPub
 {
-    MemContext *memContext;                                         // Mem context
     void *driver;                                                   // Driver object
     IoReadInterface interface;                                      // Driver interface
     IoFilterGroup *filterGroup;                                     // IO filters

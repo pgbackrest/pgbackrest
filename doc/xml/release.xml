@@ -16,6 +16,54 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.46dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-feature-list>
+                    <release-item>
+                        <github-pull-request id="2051"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p><postgres/> 16 support.</p>
+                    </release-item>
+                </release-feature-list>
+
+                <release-improvement-list>
+                    <release-item>
+                        <github-pull-request id="2045"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="david.christensen"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="david.christensen"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow page header checks to be skipped.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-issue id="2036"/>
+                        <github-pull-request id="2038"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="marcelo.henrique.neppel"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                            <release-item-reviewer id="marcelo.henrique.neppel"/>
+                        </release-item-contributor-list>
+
+                        <p>Avoid <code>chown()</code> on recovery files during restore.</p>
+                    </release-item>
+
+                    <release-item>
+                        <commit subject="Move error modules to common/error directory."/>
+                        <commit subject="Improve retry error messages."/>
+
+                        <p>Add error retry detail for HTTP retries.</p>
+                    </release-item>
+                </release-improvement-list>
+
                 <release-development-list>
                     <release-item>
                         <commit subject="Add reference filter and output to manifest command."/>
@@ -12616,6 +12664,11 @@
         <contributor id="marcel.borger">
             <contributor-name-display>Marcel Borger</contributor-name-display>
             <contributor-id type="github">m-borger</contributor-id>
+        </contributor>
+
+        <contributor id="marcelo.henrique.neppel">
+            <contributor-name-display>Marcelo Henrique Neppel</contributor-name-display>
+            <contributor-id type="github">marceloneppel</contributor-id>
         </contributor>
 
         <contributor id="marco.montagna">

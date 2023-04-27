@@ -74,12 +74,8 @@ dbNew(PgClient *client, ProtocolClient *remoteClient, const Storage *const stora
     ASSERT(storage != NULL);
     ASSERT(applicationName != NULL);
 
-    Db *this = NULL;
-
     OBJ_NEW_BEGIN(Db, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (Db)
         {
             .pub =
@@ -288,7 +284,7 @@ dbOpen(Db *this)
                     DbQueryError,
                     "unable to select some rows from pg_settings\n"
                     "HINT: is the backup running as the postgres user?\n"
-                    "HINT: is the pg_read_all_settings role assigned for " PG_NAME " >= " PG_VERSION_10_STR "?");
+                    "HINT: is the pg_read_all_settings role assigned for " PG_NAME " >= " PG_VERSION_10_Z "?");
             }
         }
 

@@ -449,7 +449,7 @@ cfgLoad(unsigned int argListSize, const char *argList[])
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Parse config from command line and config file
-        configParse(storageLocal(), argListSize, argList, true);
+        cfgParseP(storageLocal(), argListSize, argList);
 
         // Initialize dry-run mode for storage when valid for the current command
         storageHelperDryRunInit(cfgOptionValid(cfgOptDryRun) && cfgOptionBool(cfgOptDryRun));
@@ -501,11 +501,14 @@ cfgLoad(unsigned int argListSize, const char *argList[])
             // Begin the command
             cmdBegin();
 
-            // Acquire a lock if this command requires a lock
-            if (cfgLockRequired() && !cfgCommandHelp())
+            // Init lock module if this command can lock
+            if (cfgLockType() != lockTypeNone && !cfgCommandHelp())
             {
-                lockAcquire(
-                    cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), cfgLockType(), 0, true);
+                lockInit(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptExecId), cfgOptionStr(cfgOptStanza), cfgLockType());
+
+                // Acquire a lock if this command requires a lock
+                if (cfgLockRequired())
+                    lockAcquireP();
             }
 
             // Update options that have complex rules

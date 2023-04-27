@@ -33,7 +33,6 @@ Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct IoSessionPub
 {
-    MemContext *memContext;                                         // Mem context
     void *driver;                                                   // Driver object
     const IoSessionInterface *interface;                            // Driver interface
     const String *peerName;                                         // Name of peer (exact meaning depends on driver)
@@ -102,7 +101,7 @@ ioSessionClose(IoSession *const this)
 FN_INLINE_ALWAYS IoSession *
 ioSessionMove(IoSession *const this, MemContext *const parentNew)
 {
-    return objMoveContext(this, parentNew);
+    return objMove(this, parentNew);
 }
 
 /***********************************************************************************************************************************
@@ -111,7 +110,7 @@ Destructor
 FN_INLINE_ALWAYS void
 ioSessionFree(IoSession *const this)
 {
-    objFreeContext(this);
+    objFree(this);
 }
 
 /***********************************************************************************************************************************

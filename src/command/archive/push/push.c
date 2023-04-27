@@ -361,10 +361,7 @@ cmdArchivePush(void)
                 // If the WAL segment has not already been pushed then start the async process to push it.  There's no point in
                 // forking the async process off more than once so track that as well.  Use an archive lock to prevent more than
                 // one async process being launched.
-                if (!pushed && !forked &&
-                    lockAcquire(
-                        cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), cfgLockType(), 0,
-                        false))
+                if (!pushed && !forked && lockAcquireP(.returnOnNoLock = true))
                 {
                     // The async process should not output on the console at all
                     KeyValue *optionReplace = kvNew();

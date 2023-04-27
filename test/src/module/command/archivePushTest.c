@@ -749,8 +749,8 @@ testRun(void)
         {
             HRN_FORK_CHILD_BEGIN()
             {
-                lockAcquire(
-                    cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), STRDEF("555-fefefefe"), cfgLockType(), 30000, true);
+                lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("555-fefefefe"), cfgOptionStr(cfgOptStanza), cfgLockType());
+                lockAcquireP(.timeout = 30000, .returnOnNoLock = true);
 
                 // Notify parent that lock has been acquired
                 HRN_FORK_CHILD_NOTIFY_PUT();
@@ -873,7 +873,7 @@ testRun(void)
             "P01 DETAIL: pushed WAL file '000000010000000100000001' to the archive\n"
             "P01   WARN: could not push WAL file '000000010000000100000002' to the archive (will be retried): "
             "[55] raised from local-1 shim protocol: " STORAGE_ERROR_READ_MISSING "\n"
-            "            [FileMissingError] on retry after 0ms",
+            "            [RETRY DETAIL OMITTED]",
             TEST_PATH "/pg/pg_xlog/000000010000000100000002");
 
         TEST_STORAGE_EXISTS(

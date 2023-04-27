@@ -863,19 +863,19 @@ src/common/encode.h:
   class: core
   type: c/h
 
-src/common/error.auto.c.inc:
+src/common/error/error.auto.c.inc:
   class: core/auto
   type: c
 
-src/common/error.auto.h:
+src/common/error/error.auto.h:
   class: core/auto
   type: c/h
 
-src/common/error.c:
+src/common/error/error.c:
   class: core
   type: c
 
-src/common/error.h:
+src/common/error/error.h:
   class: core
   type: c/h
 

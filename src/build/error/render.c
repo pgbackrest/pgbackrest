@@ -52,8 +52,8 @@ bldErrRenderErrorAutoH(const Storage *const storageRepo, const BldErr bldErr)
     String *error = strCatFmt(
         strNew(),
         "%s"
-        "#ifndef COMMON_ERROR_AUTO_H\n"
-        "#define COMMON_ERROR_AUTO_H\n",
+        "#ifndef COMMON_ERROR_ERROR_AUTO_H\n"
+        "#define COMMON_ERROR_ERROR_AUTO_H\n",
         strZ(bldHeader(ERROR_MODULE, ERROR_AUTO_COMMENT)));
 
     // Error declarations
@@ -78,7 +78,7 @@ bldErrRenderErrorAutoH(const Storage *const storageRepo, const BldErr bldErr)
         "\n"
         "#endif\n");
 
-    bldPut(storageRepo, "src/common/error.auto.h", BUFSTR(error));
+    bldPut(storageRepo, "src/common/error/error.auto.h", BUFSTR(error));
 }
 
 /***********************************************************************************************************************************
@@ -130,7 +130,7 @@ bldErrRenderErrorAutoC(const Storage *const storageRepo, const BldErr bldErr)
         "    NULL,\n"
         "};\n");
 
-    bldPut(storageRepo, "src/common/error.auto.c.inc", BUFSTR(error));
+    bldPut(storageRepo, "src/common/error/error.auto.c.inc", BUFSTR(error));
 }
 
 /**********************************************************************************************************************************/

@@ -47,7 +47,7 @@ backupFileRepoPath(const String *const backupLabel, const BackupFileRepoPathPara
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-backupLabelFormat(BackupType type, const String *backupLabelPrior, time_t timestamp)
+backupLabelFormat(const BackupType type, const String *const backupLabelPrior, const time_t timestamp)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING_ID, type);
@@ -67,7 +67,7 @@ backupLabelFormat(BackupType type, const String *backupLabelPrior, time_t timest
         "unable to format time");
 
     // If full label
-    String *result = NULL;
+    String *result;
 
     if (type == backupTypeFull)
     {
@@ -148,7 +148,7 @@ backupRegExp(const BackupRegExpParam param)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-backupLinkLatest(const String *backupLabel, unsigned int repoIdx)
+backupLinkLatest(const String *const backupLabel, const unsigned int repoIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, backupLabel);

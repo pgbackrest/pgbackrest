@@ -85,21 +85,15 @@ ioLimitReadNew(IoRead *const read, const uint64_t limit)
 
     ASSERT(read != NULL);
 
-    IoRead *this = NULL;
-
-    OBJ_NEW_BEGIN(IoLimitRead, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(IoLimitRead, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        IoLimitRead *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoRead::IoLimitRead);
-
-        *driver = (IoLimitRead)
+        *this = (IoLimitRead)
         {
             .read = read,
             .limit = limit,
         };
-
-        this = ioReadNewP(driver, .eof = ioLimitReadEof, .read = ioLimitRead);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_READ, this);
+    FUNCTION_LOG_RETURN(IO_READ, ioReadNewP(this, .eof = ioLimitReadEof, .read = ioLimitRead));
 }

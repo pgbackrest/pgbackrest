@@ -52,14 +52,10 @@ ioSinkNew(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
 
-    IoFilter *this = NULL;
-
-    OBJ_NEW_BEGIN(IoSink, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(IoSink)
     {
-        IoSink *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::IoSink);
-        this = ioFilterNewP(SINK_FILTER_TYPE, driver, NULL, .inOut = ioSinkProcess);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_FILTER, this);
+    FUNCTION_LOG_RETURN(IO_FILTER, ioFilterNewP(SINK_FILTER_TYPE, this, NULL, .inOut = ioSinkProcess));
 }

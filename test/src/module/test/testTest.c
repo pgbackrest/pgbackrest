@@ -122,7 +122,7 @@ testRun(void)
         String *const harnessErrorC = strCat(
             strNew(), strNewBuf(storageGetP(storageNewReadP(storageRepo, STRDEF("test/src/common/harnessError.c")))));
 
-        strReplace(harnessErrorC, STRDEF("{[SHIM_MODULE]}"), STRDEF("#include \"" TEST_PATH "/repo/src/common/error.c\""));
+        strReplace(harnessErrorC, STRDEF("{[SHIM_MODULE]}"), STRDEF("#include \"" TEST_PATH "/repo/src/common/error/error.c\""));
 
         // Unit test harness
         // -------------------------------------------------------------------------------------------------------------------------
@@ -159,11 +159,11 @@ testRun(void)
             "        harness:\n"
             "          name: error\n"
             "          shim:\n"
-            "            common/error: ~\n"
+            "            common/error/error: ~\n"
             "        coverage:\n"
-            "          - common/error\n"
-            "          - common/error.auto: noCode\n"
-            "          - common/error.inc: included\n"
+            "          - common/error/error\n"
+            "          - common/error/error.auto: noCode\n"
+            "          - common/error/error.inc: included\n"
             "        depend:\n"
             "          - common/stackTrace\n"
             "          - common/type/stringStatic\n"
@@ -203,7 +203,7 @@ testRun(void)
             "          - test/common/shim\n"
             "          - test/common/shim2\n"
             "        include:\n"
-            "          - common/error\n"
+            "          - common/error/error\n"
             "          - test/common/include\n"
             "\n"
             "integration:\n"
@@ -232,10 +232,10 @@ testRun(void)
             "src/common/assert.h",
             "src/common/debug.c",
             "src/common/debug.h",
-            "src/common/error.auto.c.inc",
-            "src/common/error.auto.h",
-            "src/common/error.c",
-            "src/common/error.h",
+            "src/common/error/error.auto.c.inc",
+            "src/common/error/error.auto.h",
+            "src/common/error/error.c",
+            "src/common/error/error.h",
             "src/common/logLevel.h",
             "src/common/macro.h",
             "src/common/stackTrace.c",

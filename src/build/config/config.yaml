@@ -1210,6 +1210,15 @@ option:
     command-role:
       main: {}
 
+  page-header-check:
+    section: global
+    type: boolean
+    default: true
+    command:
+      backup: {}
+    command-role:
+      main: {}
+
   exclude:
     section: global
     type: list
@@ -1665,14 +1674,14 @@ option:
           remote: {}
       stanza-create:
         command-role:
-            remote: {}
+          remote: {}
       stanza-delete:
         command-role:
           main: {}
           remote: {}
       stanza-upgrade:
         command-role:
-            remote: {}
+          remote: {}
       start:
         command-role: {}
       stop:

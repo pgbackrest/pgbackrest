@@ -73,13 +73,8 @@ blockDeltaNew(
     ASSERT(blockSize > 0);
     ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
 
-    BlockDelta *this = NULL;
-
     OBJ_NEW_BEGIN(BlockDelta, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        // Create object
-        this = OBJ_NEW_ALLOC();
-
         *this = (BlockDelta)
         {
             .pub =

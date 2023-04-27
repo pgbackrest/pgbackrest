@@ -134,11 +134,6 @@ typedef struct
 	uint32		xrecoff;		/* low bits */
 } PageXLogRecPtr;
 
-// PageXLogRecPtrGet macro
-// ---------------------------------------------------------------------------------------------------------------------------------
-#define PageXLogRecPtrGet(val) \
-	((uint64) (val).xlogid << 32 | (val).xrecoff)
-
 // PageHeaderData type
 // ---------------------------------------------------------------------------------------------------------------------------------
 /*
@@ -204,14 +199,6 @@ typedef struct PageHeaderData
 // PageHeader type
 // ---------------------------------------------------------------------------------------------------------------------------------
 typedef PageHeaderData *PageHeader;
-
-// PageIsNew macro
-// ---------------------------------------------------------------------------------------------------------------------------------
-/*
- * PageIsNew
- *		returns true iff page has not been initialized (by PageInit)
- */
-#define PageIsNew(page) (((PageHeader) (page))->pd_upper == 0)
 
 /***********************************************************************************************************************************
 Types from src/include/access/transam.h

@@ -9,7 +9,6 @@ Exit Routines
 #include "command/command.h"
 #include "command/exit.h"
 #include "common/debug.h"
-#include "common/error.h"
 #include "common/lock.h"
 #include "common/log.h"
 #include "config/config.h"

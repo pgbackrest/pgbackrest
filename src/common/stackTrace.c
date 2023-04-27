@@ -13,7 +13,6 @@ Stack Trace Handler
 #endif
 
 #include "common/assert.h"
-#include "common/error.h"
 #include "common/macro.h"
 #include "common/stackTrace.h"
 
@@ -153,7 +152,7 @@ stackTraceParamIdx(int stackIdx)
 }
 
 FN_EXTERN const char *
-stackTraceParam()
+stackTraceParam(void)
 {
     return stackTraceParamIdx(stackTraceLocal.stackSize - 1);
 }
@@ -324,7 +323,7 @@ stackTraceBackCallback(
     {
         fileName = stackTraceTrimSrc(fileName);
 
-        if (strcmp(fileName, "common/error.c") == 0)
+        if (strcmp(fileName, "common/error/error.c") == 0)
             return false;
 
         data->result += stackTraceFmt(

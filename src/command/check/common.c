@@ -19,7 +19,7 @@ Check Common Handler
 Helper function
 ***********************************************************************************************************************************/
 static bool
-checkArchiveCommand(const String *archiveCommand)
+checkArchiveCommand(const String *const archiveCommand)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, archiveCommand);
@@ -42,7 +42,7 @@ checkArchiveCommand(const String *archiveCommand)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-checkDbConfig(const unsigned int pgVersion, const unsigned int pgIdx, const Db *dbObject, bool isStandby)
+checkDbConfig(const unsigned int pgVersion, const unsigned int pgIdx, const Db *const dbObject, const bool isStandby)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, pgVersion);
@@ -55,8 +55,8 @@ checkDbConfig(const unsigned int pgVersion, const unsigned int pgIdx, const Db *
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        unsigned int dbVersion = dbPgVersion(dbObject);
-        const String *dbPath = dbPgDataPath(dbObject);
+        const unsigned int dbVersion = dbPgVersion(dbObject);
+        const String *const dbPath = dbPgDataPath(dbObject);
 
         // Error if the version from the control file and the configured pg-path do not match the values obtained from the database
         if (pgVersion != dbVersion || strCmp(cfgOptionIdxStr(cfgOptPgPath, pgIdx), dbPath) != 0)
@@ -95,7 +95,7 @@ checkDbConfig(const unsigned int pgVersion, const unsigned int pgIdx, const Db *
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-checkStanzaInfo(const InfoPgData *archiveInfo, const InfoPgData *backupInfo)
+checkStanzaInfo(const InfoPgData *const archiveInfo, const InfoPgData *const backupInfo)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(INFO_PG_DATA, archiveInfo);
@@ -124,8 +124,8 @@ checkStanzaInfo(const InfoPgData *archiveInfo, const InfoPgData *backupInfo)
 /**********************************************************************************************************************************/
 FN_EXTERN void
 checkStanzaInfoPg(
-    const Storage *storage, const unsigned int pgVersion, const uint64_t pgSystemId, CipherType cipherType,
-    const String *cipherPass)
+    const Storage *const storage, const unsigned int pgVersion, const uint64_t pgSystemId, CipherType const cipherType,
+    const String *const cipherPass)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_LOG_PARAM(STORAGE, storage);
@@ -140,10 +140,10 @@ checkStanzaInfoPg(
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Check that the backup and archive info files exist
-        InfoArchive *infoArchive = infoArchiveLoadFile(storage, INFO_ARCHIVE_PATH_FILE_STR, cipherType, cipherPass);
-        InfoPgData archiveInfoPg = infoPgData(infoArchivePg(infoArchive), infoPgDataCurrentId(infoArchivePg(infoArchive)));
-        InfoBackup *infoBackup = infoBackupLoadFile(storage, INFO_BACKUP_PATH_FILE_STR, cipherType, cipherPass);
-        InfoPgData backupInfoPg = infoPgData(infoBackupPg(infoBackup), infoPgDataCurrentId(infoBackupPg(infoBackup)));
+        const InfoArchive *const infoArchive = infoArchiveLoadFile(storage, INFO_ARCHIVE_PATH_FILE_STR, cipherType, cipherPass);
+        const InfoPgData archiveInfoPg = infoPgData(infoArchivePg(infoArchive), infoPgDataCurrentId(infoArchivePg(infoArchive)));
+        const InfoBackup *const infoBackup = infoBackupLoadFile(storage, INFO_BACKUP_PATH_FILE_STR, cipherType, cipherPass);
+        const InfoPgData backupInfoPg = infoPgData(infoBackupPg(infoBackup), infoPgDataCurrentId(infoBackupPg(infoBackup)));
 
         // Check that the info files pg data match each other
         checkStanzaInfo(&archiveInfoPg, &backupInfoPg);
