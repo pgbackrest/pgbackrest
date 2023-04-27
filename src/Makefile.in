@@ -117,12 +117,10 @@ SRCS = \
 	common/exec.c \
 	common/fork.c \
 	common/ini.c \
-	common/io/chunkedRead.c \
 	common/io/client.c \
 	common/io/fd.c \
 	common/io/fdRead.c \
 	common/io/fdWrite.c \
-	common/io/filter/chunk.c \
 	common/io/filter/size.c \
 	common/io/http/client.c \
 	common/io/http/common.c \
@@ -132,6 +130,7 @@ SRCS = \
 	common/io/http/response.c \
 	common/io/http/session.c \
 	common/io/http/url.c \
+	common/io/limitRead.c \
 	common/io/server.c \
 	common/io/session.c \
 	common/io/socket/client.c \

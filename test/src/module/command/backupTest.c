@@ -6,7 +6,6 @@ Test Backup Command
 #include "common/crypto/hash.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
-#include "common/io/chunkedRead.h"
 #include "postgres/interface/static.vendor.h"
 #include "storage/helper.h"
 #include "storage/posix/storage.h"
@@ -1083,15 +1082,15 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             strNewEncode(encodingHex, BUF(bufPtr(destination), bufUsed(destination) - (size_t)mapSize)),
-            "020031023200",                             // block 0
+            "3132",                                     // block 0
             "block list");
 
         const Buffer *map = BUF(bufPtr(destination) + (bufUsed(destination) - (size_t)mapSize), (size_t)mapSize);
 
         TEST_RESULT_STR_Z(
             testBlockDelta(blockMapNewRead(ioBufferReadNewOpen(map), 3, 8), 3, 8),
-            "read {reference: 0, bundleId: 0, offset: 0, size: 6}\n"
-            "  super block {max: 2, size: 6}\n"
+            "read {reference: 0, bundleId: 0, offset: 0, size: 2}\n"
+            "  super block {max: 2, size: 2}\n"
             "    block {no: 0, offset: 0}\n",
             "check delta");
 
@@ -1116,21 +1115,21 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             strNewEncode(encodingHex, BUF(bufPtr(destination), bufUsed(destination) - (size_t)mapSize)),
-            "02004101424300"                              // block 0
-            "02015801595a00"                              // block 1
-            "02013101323300",                             // block 2
+            "414243"                                      // block 0
+            "58595a"                                      // block 1
+            "313233",                                     // block 2
             "block list");
 
         map = BUF(bufPtr(destination) + (bufUsed(destination) - (size_t)mapSize), (size_t)mapSize);
 
         TEST_RESULT_STR_Z(
             testBlockDelta(blockMapNewRead(ioBufferReadNewOpen(map), 3, 8), 3, 8),
-            "read {reference: 2, bundleId: 4, offset: 5, size: 21}\n"
-            "  super block {max: 3, size: 7}\n"
+            "read {reference: 2, bundleId: 4, offset: 5, size: 9}\n"
+            "  super block {max: 3, size: 3}\n"
             "    block {no: 0, offset: 0}\n"
-            "  super block {max: 3, size: 7}\n"
+            "  super block {max: 3, size: 3}\n"
             "    block {no: 0, offset: 3}\n"
-            "  super block {max: 3, size: 7}\n"
+            "  super block {max: 3, size: 3}\n"
             "    block {no: 0, offset: 6}\n",
             "check delta");
 
@@ -1156,23 +1155,23 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             strNewEncode(encodingHex, BUF(bufPtr(destination), bufUsed(destination) - (size_t)mapSize)),
-            "03004143044300"                            // block 0
-            "02034000",                                 // block 3
+            "414343"                                    // block 0
+            "40",                                       // block 3
             "block list");
 
         map = BUF(bufPtr(destination) + (bufUsed(destination) - (size_t)mapSize), (size_t)mapSize);
 
         TEST_RESULT_STR_Z(
             testBlockDelta(blockMapNewRead(ioBufferReadNewOpen(map), 3, 8), 3, 8),
-            "read {reference: 3, bundleId: 0, offset: 0, size: 11}\n"
-            "  super block {max: 3, size: 7}\n"
+            "read {reference: 3, bundleId: 0, offset: 0, size: 4}\n"
+            "  super block {max: 3, size: 3}\n"
             "    block {no: 0, offset: 0}\n"
-            "  super block {max: 1, size: 4}\n"
+            "  super block {max: 1, size: 1}\n"
             "    block {no: 0, offset: 9}\n"
-            "read {reference: 2, bundleId: 4, offset: 12, size: 14}\n"
-            "  super block {max: 3, size: 7}\n"
+            "read {reference: 2, bundleId: 4, offset: 8, size: 6}\n"
+            "  super block {max: 3, size: 3}\n"
             "    block {no: 0, offset: 3}\n"
-            "  super block {max: 3, size: 7}\n"
+            "  super block {max: 3, size: 3}\n"
             "    block {no: 0, offset: 6}\n",
             "check delta");
 
@@ -1198,20 +1197,20 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             strNewEncode(encodingHex, BUF(bufPtr(destination), bufUsed(destination) - (size_t)mapSize)),
-            "020041014243"                              // super block 0 / block 0
-            "01015801595a00"                            // super block 0 / block 1
-            "02013101323300",                           // block 2
+            "414243"                                    // super block 0 / block 0
+            "58595a"                                    // super block 0 / block 1
+            "313233",                                   // block 2
             "block list");
 
         map = BUF(bufPtr(destination) + (bufUsed(destination) - (size_t)mapSize), (size_t)mapSize);
 
         TEST_RESULT_STR_Z(
             testBlockDelta(blockMapNewRead(ioBufferReadNewOpen(map), 3, 8), 3, 8),
-            "read {reference: 2, bundleId: 4, offset: 5, size: 20}\n"
-            "  super block {max: 6, size: 13}\n"
+            "read {reference: 2, bundleId: 4, offset: 5, size: 9}\n"
+            "  super block {max: 6, size: 6}\n"
             "    block {no: 0, offset: 0}\n"
             "    block {no: 1, offset: 3}\n"
-            "  super block {max: 3, size: 7}\n"
+            "  super block {max: 3, size: 3}\n"
             "    block {no: 0, offset: 6}\n",
             "check delta");
 
@@ -3718,7 +3717,7 @@ testRun(void)
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-to-block-incr (bundle 1/0, 16.0KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/16383, 8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/24575, 16KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/40996, 2B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/40989, 2B, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DBF06000000001, lsn = 5dbf060/300000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
@@ -3829,8 +3828,8 @@ testRun(void)
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-larger (1.4MB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (128KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-to-block-incr (bundle 1/0, 16KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/16418, 8KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/24610, 16.0KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/16411, 8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/24603, 16.0KB, [PCT]) checksum [SHA1]\n"
                 "P00 DETAIL: reference pg_data/PG_VERSION to 20191103-165320F\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DC213000000001, lsn = 5dc2130/300000\n"
@@ -4035,8 +4034,8 @@ testRun(void)
                 "P00   INFO: backup start archive = 0000000105DC82D000000000, lsn = 5dc82d0/0\n"
                 "P00   INFO: check archive for segment 0000000105DC82D000000000\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-age-multiplier (bundle 1/0, 32KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/130, 8KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (bundle 1/218, 48KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/128, 8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (bundle 1/216, 48KB, [PCT]) checksum [SHA1]\n"
                 "P00 DETAIL: reference pg_data/PG_VERSION to 20191108-080000F\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DC82D000000001, lsn = 5dc82d0/300000\n"

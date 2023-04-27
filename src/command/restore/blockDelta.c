@@ -7,7 +7,7 @@ Block Restore
 #include "command/restore/blockDelta.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
-#include "common/io/chunkedRead.h"
+#include "common/io/limitRead.h"
 #include "common/log.h"
 
 /***********************************************************************************************************************************
@@ -38,7 +38,7 @@ struct BlockDelta
 
     const BlockDeltaSuperBlock *superBlockData;                     // Current super block data
     unsigned int superBlockIdx;                                     // Current super block index
-    IoRead *chunkedRead;                                            // Chunked read for current super block
+    IoRead *limitRead;                                              // Limit read for current super block
     const BlockDeltaBlock *blockData;                               // Current block data
     unsigned int blockIdx;                                          // Current block index
     unsigned int blockTotal;                                        // Block total for super block
@@ -227,27 +227,27 @@ blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, Io
         // If the super block read has not begun yet
         if (this->superBlockData == NULL)
         {
-            // Free prior chunked read and create chunked read for current super block
-            ioReadFree(this->chunkedRead);
+            // Free prior limit read and create limit read for current super block
+            ioReadFree(this->limitRead);
             this->superBlockData = lstGet(readDelta->superBlockList, this->superBlockIdx);
 
             MEM_CONTEXT_OBJ_BEGIN(this)
             {
-                this->chunkedRead = ioChunkedReadNew(readIo);
+                this->limitRead = ioLimitReadNew(readIo, this->superBlockData->size);
             }
             MEM_CONTEXT_OBJ_END();
 
             if (this->cipherType != cipherTypeNone)
             {
                 ioFilterGroupAdd(
-                    ioReadFilterGroup(this->chunkedRead),
+                    ioReadFilterGroup(this->limitRead),
                     cipherBlockNewP(cipherModeDecrypt, this->cipherType, BUFSTR(this->cipherPass), .raw = true));
             }
 
             if (this->compressType != compressTypeNone)
-                ioFilterGroupAdd(ioReadFilterGroup(this->chunkedRead), decompressFilterP(this->compressType, .raw = true));
+                ioFilterGroupAdd(ioReadFilterGroup(this->limitRead), decompressFilterP(this->compressType, .raw = true));
 
-            ioReadOpen(this->chunkedRead);
+            ioReadOpen(this->limitRead);
 
             // Set block info
             this->blockIdx = 0;
@@ -261,18 +261,11 @@ blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, Io
         // Find required blocks in the super block
         while (this->blockIdx < this->blockTotal)
         {
-            // Read encoded info about the block, which is not used here
-            ioReadVarIntU64(this->chunkedRead);
+            // Clear buffer and read block
+            bufUsedZero(this->write.block);
+            bufLimitClear(this->write.block);
 
-            // Apply block size limit if required and read the block
-            bufUsedSet(this->write.block, 0);
-
-            if (this->blockIdx == this->blockTotal - 1 && this->superBlockData->superBlockSize % this->blockSize != 0)
-                bufLimitSet(this->write.block, (size_t)(this->superBlockData->superBlockSize % this->blockSize));
-            else
-                bufLimitClear(this->write.block);
-
-            ioRead(this->chunkedRead, this->write.block);
+            ioRead(this->limitRead, this->write.block);
 
             // If the block matches the block we are expecting
             if (this->blockIdx == this->blockData->no)
