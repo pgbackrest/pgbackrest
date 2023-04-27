@@ -159,7 +159,6 @@ bldPgRenderVersionAutoH(const Storage *const storageRepo, const BldPg bldPg)
 
     // PostgreSQL version numbers
     // -----------------------------------------------------------------------------------------------------------------------------
-
     strCatFmt(
         pg,
         "\n"
