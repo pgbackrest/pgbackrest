@@ -1580,8 +1580,6 @@
         <section id="block">
             <title>Block Incremental</title>
 
-            <admonition type="important">This feature is in beta release and should not be used in production. The on-disk format will change before the GA release. The <br-option>beta</br-option> option must be enabled to prevent accidental usage of beta features.</admonition>
-
             <p>Block incremental backups save space by only storing the parts of a file that have changed since the prior backup rather than storing the entire file.</p>
 
             <p>The block incremental feature is enabled with the <br-option>repo-block</br-option> option and it works best when enabled for all backup types. File bundling must also be enabled.</p>
@@ -1589,11 +1587,8 @@
             <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
                 <title>Configure <br-option>repo1-block</br-option></title>
 
-                <backrest-config-option section="global" key="beta">y</backrest-config-option>
                 <backrest-config-option section="global" key="repo1-block">y</backrest-config-option>
             </backrest-config>
-
-            <p>The <br-option>repo-block-size-map</br-option>, <br-option>repo-block-size-super</br-option>, <br-option>repo-block-size-super-full</br-option>, <br-option>repo-block-age-map</br-option>, and <br-option>repo-block-checksum-size-map</br-option> options can be used for tuning, though the defaults should be optimal in most cases. Note that these options may not be be available after the beta since they are primarily intended to allow experimentation to find the optimal values.</p>
         </section>
 
         <!-- =================================================================================================================== -->
