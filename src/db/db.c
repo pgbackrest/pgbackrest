@@ -284,7 +284,7 @@ dbOpen(Db *this)
                     DbQueryError,
                     "unable to select some rows from pg_settings\n"
                     "HINT: is the backup running as the postgres user?\n"
-                    "HINT: is the pg_read_all_settings role assigned for " PG_NAME " >= " PG_VERSION_10_STR "?");
+                    "HINT: is the pg_read_all_settings role assigned for " PG_NAME " >= " PG_VERSION_10_Z "?");
             }
         }
 

@@ -1581,7 +1581,7 @@ restoreRecoveryOption(unsigned int pgVersion)
             {
                 THROW_FMT(
                     OptionInvalidError,
-                    "option '" CFGOPT_ARCHIVE_MODE "' is not supported on " PG_NAME " < " PG_VERSION_12_STR "\n"
+                    "option '" CFGOPT_ARCHIVE_MODE "' is not supported on " PG_NAME " < " PG_VERSION_12_Z "\n"
                     "HINT: 'archive_mode' should be manually set to 'off' in postgresql.conf.");
             }
 
@@ -1731,10 +1731,13 @@ restoreRecoveryConf(const unsigned int pgVersion, const String *const restoreLab
 
 // Helper to write recovery options into recovery.conf
 static void
-restoreRecoveryWriteConf(const Manifest *const manifest, const unsigned int pgVersion, const String *const restoreLabel)
+restoreRecoveryWriteConf(
+    const Manifest *const manifest, const StorageInfo *const fileInfo, const unsigned int pgVersion,
+    const String *const restoreLabel)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
+        FUNCTION_LOG_PARAM(STORAGE_INFO, fileInfo);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(STRING, restoreLabel);
     FUNCTION_LOG_END();
@@ -1746,15 +1749,11 @@ restoreRecoveryWriteConf(const Manifest *const manifest, const unsigned int pgVe
         {
             LOG_INFO_FMT("write %s", strZ(storagePathP(storagePg(), PG_FILE_RECOVERYCONF_STR)));
 
-            // Use the data directory to set permissions and ownership for recovery file
-            const ManifestPath *const dataPath = manifestPathFind(manifest, MANIFEST_TARGET_PGDATA_STR);
-            const mode_t recoveryFileMode = dataPath->mode & (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-
             // Write recovery.conf
             storagePutP(
                 storageNewWriteP(
-                    storagePgWrite(), PG_FILE_RECOVERYCONF_STR, .noCreatePath = true, .modeFile = recoveryFileMode,
-                    .noAtomic = true, .noSyncPath = true, .user = dataPath->user, .group = dataPath->group),
+                    storagePgWrite(), PG_FILE_RECOVERYCONF_STR, .noCreatePath = true, .modeFile = fileInfo->mode, .noAtomic = true,
+                    .noSyncPath = true, .user = fileInfo->user, .group = fileInfo->group),
                 BUFSTR(restoreRecoveryConf(pgVersion, restoreLabel)));
         }
         MEM_CONTEXT_TEMP_END();
@@ -1765,10 +1764,13 @@ restoreRecoveryWriteConf(const Manifest *const manifest, const unsigned int pgVe
 
 // Helper to write recovery options into postgresql.auto.conf
 static void
-restoreRecoveryWriteAutoConf(const Manifest *const manifest, const unsigned int pgVersion, const String *const restoreLabel)
+restoreRecoveryWriteAutoConf(
+    const Manifest *const manifest, const StorageInfo *const fileInfo, const unsigned int pgVersion,
+    const String *const restoreLabel)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
+        FUNCTION_LOG_PARAM(STORAGE_INFO, fileInfo);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(STRING, restoreLabel);
     FUNCTION_LOG_END();
@@ -1860,15 +1862,11 @@ restoreRecoveryWriteAutoConf(const Manifest *const manifest, const unsigned int 
         LOG_INFO_FMT(
             "write %s%s", autoConf == NULL ? "" : "updated ", strZ(storagePathP(storagePg(), PG_FILE_POSTGRESQLAUTOCONF_STR)));
 
-        // Use the data directory to set permissions and ownership for recovery file
-        const StorageInfo dataPath = storageInfoP(storagePg(), NULL);
-        mode_t recoveryFileMode = dataPath.mode & (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-
         // Write postgresql.auto.conf
         storagePutP(
             storageNewWriteP(
-                storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF_STR, .noCreatePath = true, .modeFile = recoveryFileMode,
-                .noAtomic = true, .noSyncPath = true, .user = dataPath.user, .group = dataPath.group),
+                storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF_STR, .noCreatePath = true, .modeFile = fileInfo->mode,
+                .noAtomic = true, .noSyncPath = true, .user = fileInfo->user, .group = fileInfo->group),
             BUFSTR(content));
 
         // The standby.signal file is required for standby mode
@@ -1876,8 +1874,8 @@ restoreRecoveryWriteAutoConf(const Manifest *const manifest, const unsigned int 
         {
             storagePutP(
                 storageNewWriteP(
-                    storagePgWrite(), PG_FILE_STANDBYSIGNAL_STR, .noCreatePath = true, .modeFile = recoveryFileMode,
-                    .noAtomic = true, .noSyncPath = true, .user = dataPath.user, .group = dataPath.group),
+                    storagePgWrite(), PG_FILE_STANDBYSIGNAL_STR, .noCreatePath = true, .modeFile = fileInfo->mode,
+                    .noAtomic = true, .noSyncPath = true, .user = fileInfo->user, .group = fileInfo->group),
                 NULL);
         }
         // Else the recovery.signal file is required for targeted recovery. Skip writing this file if the backup was offline and
@@ -1886,8 +1884,8 @@ restoreRecoveryWriteAutoConf(const Manifest *const manifest, const unsigned int 
         {
             storagePutP(
                 storageNewWriteP(
-                    storagePgWrite(), PG_FILE_RECOVERYSIGNAL_STR, .noCreatePath = true, .modeFile = recoveryFileMode,
-                    .noAtomic = true, .noSyncPath = true, .user = dataPath.user, .group = dataPath.group),
+                    storagePgWrite(), PG_FILE_RECOVERYSIGNAL_STR, .noCreatePath = true, .modeFile = fileInfo->mode,
+                    .noAtomic = true, .noSyncPath = true, .user = fileInfo->user, .group = fileInfo->group),
                 NULL);
         }
     }
@@ -1897,10 +1895,11 @@ restoreRecoveryWriteAutoConf(const Manifest *const manifest, const unsigned int 
 }
 
 static void
-restoreRecoveryWrite(const Manifest *manifest)
+restoreRecoveryWrite(const Manifest *const manifest, const StorageInfo *const fileInfo)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
+        FUNCTION_LOG_PARAM(STORAGE_INFO, fileInfo);
     FUNCTION_LOG_END();
 
     // Get PostgreSQL version to write recovery for
@@ -1935,9 +1934,9 @@ restoreRecoveryWrite(const Manifest *manifest)
 
             // Write recovery file based on PostgreSQL version
             if (pgVersion >= PG_VERSION_RECOVERY_GUC)
-                restoreRecoveryWriteAutoConf(manifest, pgVersion, restoreLabel);
+                restoreRecoveryWriteAutoConf(manifest, fileInfo, pgVersion, restoreLabel);
             else
-                restoreRecoveryWriteConf(manifest, pgVersion, restoreLabel);
+                restoreRecoveryWriteConf(manifest, fileInfo, pgVersion, restoreLabel);
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -2542,8 +2541,13 @@ cmdRestore(void)
         }
         MEM_CONTEXT_TEMP_END();
 
-        // Write recovery settings
-        restoreRecoveryWrite(jobData.manifest);
+        // Write recovery settings. Use the data directory to set permissions and ownership for recovery files.
+        StorageInfo fileInfo = storageInfoP(storagePg(), NULL);
+        fileInfo.user = restoreManifestOwnerReplace(fileInfo.user, jobData.rootReplaceUser);
+        fileInfo.group = restoreManifestOwnerReplace(fileInfo.group, jobData.rootReplaceGroup);
+        fileInfo.mode = fileInfo.mode & (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+
+        restoreRecoveryWrite(jobData.manifest, &fileInfo);
 
         // Remove backup.manifest
         storageRemoveP(storagePgWrite(), BACKUP_MANIFEST_FILE_STR);

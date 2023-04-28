@@ -1824,7 +1824,7 @@ testRun(void)
         TEST_TITLE("none output, verbose, override WAL magic, with no verify failures");
 
         hrnCfgArgRawZ(argList, cfgOptVerbose, "y");
-        hrnCfgArgRawZ(argList, cfgOptPgVersionForce, PG_VERSION_11_STR);
+        hrnCfgArgRawZ(argList, cfgOptPgVersionForce, PG_VERSION_11_Z);
         HRN_CFG_LOAD(cfgCmdVerify, argList);
         TEST_RESULT_STR_Z(
             verifyProcess(cfgOptionBool(cfgOptVerbose)),
