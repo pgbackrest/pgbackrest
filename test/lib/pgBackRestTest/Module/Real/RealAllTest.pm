@@ -155,7 +155,7 @@ sub run
         # --------------------------------------------------------------------------------------------------------------------------
         my $strComment = 'verify check command runs successfully';
 
-        $oHostDbPrimary->check($strComment, {iTimeout => 5});
+        $oHostDbPrimary->check($strComment, {iTimeout => 5, bStanza => false});
 
         # Also run check on the backup host when present
         if ($bHostBackup)

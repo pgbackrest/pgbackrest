@@ -85,7 +85,7 @@ hrnCfgLoad(ConfigCommand commandId, const StringList *argListParam, const HrnCfg
     // Free objects in storage helper
     storageHelperFree();
 
-    // !!!
+    // Store config so it can be reloaded with a stanza
     configLoadLocal.argListSize = strLstSize(argList);
     configLoadLocal.argList = strLstPtr(argList);
 

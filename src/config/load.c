@@ -549,9 +549,6 @@ cfgLoadStanza(const String *const stanza)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // !!!
-        storageHelperFree();
-
         // Store the exec id so it can be preserved after reload
         const Variant *const execId = varNewStr(cfgOptionStr(cfgOptExecId));
 

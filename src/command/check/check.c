@@ -196,8 +196,13 @@ cmdCheck(void)
             if (!stanzaSpecified)
             {
                 const String *const stanza = strLstGet(stanzaList, stanzaIdx);
-
                 LOG_INFO_FMT("check stanza '%s'", strZ(stanza));
+
+                // Free storage and protocol cache
+                storageHelperFree();
+                protocolFree();
+
+                // Reload config with new stanza
                 cfgLoadStanza(stanza);
             }
 
