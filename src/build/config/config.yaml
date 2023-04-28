@@ -1545,7 +1545,8 @@ option:
       archive-push:
         required: false
       backup: {}
-      check: {}
+      check:
+        required: false
       manifest:
         required: false
       restore: {}

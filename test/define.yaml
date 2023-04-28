@@ -414,11 +414,10 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: lock
         total: 3
-        harness: config
         harness:
-          name: storageHelper
+          name: config
           shim:
-            storage/helper: ~
+            config/load: ~
         harness:
           name: lock
           shim:

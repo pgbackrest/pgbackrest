@@ -178,26 +178,28 @@ cmdCheck(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Build stanza list based on whether a stanza was specified or not
         StringList *stanzaList;
-        // bool stanzaSpecified = cfgOptionTest(cfgOptStanza);
+        bool stanzaSpecified = cfgOptionTest(cfgOptStanza);
 
-        // if (stanzaSpecified)
-        // {
+        if (stanzaSpecified)
+        {
             stanzaList = strLstNew();
             strLstAdd(stanzaList, cfgOptionStr(cfgOptStanza));
-        // }
-        // else
-        //     stanzaList = cfgParseStanzaList();
+        }
+        else
+            stanzaList = cfgParseStanzaList();
 
         for (unsigned int stanzaIdx = 0; stanzaIdx < strLstSize(stanzaList); stanzaIdx++)
         {
-            // if (!stanzaSpecified)
-            // {
-            //     const String *const stanza = strLstGet(stanzaList, stanzaIdx);
+            // Switch stanza if required
+            if (!stanzaSpecified)
+            {
+                const String *const stanza = strLstGet(stanzaList, stanzaIdx);
 
-            //     LOG_INFO_FMT("switch to stanza '%s'", strZ(stanza));
-            //     cfgLoadStanza(stanza);
-            // }
+                LOG_INFO_FMT("check stanza '%s'", strZ(stanza));
+                cfgLoadStanza(stanza);
+            }
 
             // Get the primary/standby connections (standby is only required if backup from standby is enabled)
             DbGetResult dbGroup = dbGet(false, false, false);

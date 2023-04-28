@@ -549,6 +549,9 @@ cfgLoadStanza(const String *const stanza)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // !!!
+        storageHelperFree();
+
         // Store the exec id so it can be preserved after reload
         const Variant *const execId = varNewStr(cfgOptionStr(cfgOptExecId));
 
@@ -561,7 +564,7 @@ cfgLoadStanza(const String *const stanza)
         strLstAddFmt(argListNew, "--" CFGOPT_STANZA "=%s", strZ(stanza));
 
         // Parse config from command line and config file
-        cfgParseP(storageLocal(), strLstSize(argListNew), strLstPtr(argListNew), .noConfigLoad = true);
+        cfgParseP(storageLocal(), strLstSize(argListNew), strLstPtr(argListNew), .noConfigLoad = true, .noResetLogLevel = true);
 
         // Update options that have complex rules
         cfgLoadUpdateOption();
