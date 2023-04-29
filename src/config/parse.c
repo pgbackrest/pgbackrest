@@ -516,8 +516,6 @@ cfgParseStanzaList(void)
                 const StringList *const sectionPart = strLstNewSplitZ(section, ":");
                 ASSERT(strLstSize(sectionPart) <= 2);
 
-                // !!! CHECK THAT LAST PART IS A COMMAND
-
                 strLstAddIfMissing(result, strLstGet(sectionPart, 0));
             }
         }
