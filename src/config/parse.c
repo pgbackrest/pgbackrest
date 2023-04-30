@@ -2199,7 +2199,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                             // Get depend option id and name
                             ConfigOption dependId = pckReadU32P(filter);
                             const String *dependOptionName = STR(
-                                    cfgParseOptionKeyIdxName(dependId, parseRuleOption[dependId].group ? optionKeyIdx : 0));
+                                cfgParseOptionKeyIdxName(dependId, parseRuleOption[dependId].group ? optionKeyIdx : 0));
 
                             // If depend value is not set
                             ASSERT(config->option[dependId].index != NULL);
