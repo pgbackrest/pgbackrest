@@ -395,7 +395,7 @@ testRun(void)
             "-o\nLogLevel=error\n-o\nCompression=no\n-o\nPasswordAuthentication=no\n-p\n444\nrepo-host-user@repo-host\n"
             TEST_PROJECT_EXE " --config=/path/pgbackrest.conf --config-include-path=/path/include --config-path=/path/config"
             " --exec-id=1-test --log-level-console=off --log-level-file=info --log-level-stderr=error --log-subprocess"
-            " --process=0 --remote-type=repo --repo=1 --stanza=test1 check:remote\n",
+            " --pg1-path=/unused --process=0 --remote-type=repo --repo=1 --stanza=test1 check:remote\n",
             "check config");
 
         // -------------------------------------------------------------------------------------------------------------------------
