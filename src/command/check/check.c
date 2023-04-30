@@ -188,7 +188,16 @@ cmdCheck(void)
             strLstAdd(stanzaList, cfgOptionStr(cfgOptStanza));
         }
         else
+        {
             stanzaList = cfgParseStanzaList();
+
+            if (strLstSize(stanzaList) == 0)
+            {
+                LOG_WARN(
+                    "no stanzas found to check\n"
+                    "HINT: are there non-empty stanza sections in the configuration?");
+            }
+        }
 
         for (unsigned int stanzaIdx = 0; stanzaIdx < strLstSize(stanzaList); stanzaIdx++)
         {

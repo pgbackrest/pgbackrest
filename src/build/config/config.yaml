@@ -1546,7 +1546,8 @@ option:
         required: false
       backup: {}
       check:
-        required: false
+        depend:
+          option: stanza
       manifest:
         required: false
       restore: {}

@@ -1090,7 +1090,8 @@ cfgParseOptionalFilterDepend(PackRead *const filter, const Config *const config,
     // Get the depend option value
     const ConfigOption dependId = (ConfigOption)pckReadU32P(filter);
     ASSERT(config->option[dependId].index != NULL);
-    const ConfigOptionValue *const dependValue = &config->option[dependId].index[optionListIdx];
+    const ConfigOptionValue *const dependValue =
+        &config->option[dependId].index[parseRuleOption[dependId].group ? optionListIdx : 0];
 
     // Is the dependency resolved?
     if (dependValue->set)
@@ -2197,7 +2198,8 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
 
                             // Get depend option id and name
                             ConfigOption dependId = pckReadU32P(filter);
-                            const String *dependOptionName = STR(cfgParseOptionKeyIdxName(dependId, optionKeyIdx));
+                            const String *dependOptionName = STR(
+                                    cfgParseOptionKeyIdxName(dependId, parseRuleOption[dependId].group ? optionKeyIdx : 0));
 
                             // If depend value is not set
                             ASSERT(config->option[dependId].index != NULL);

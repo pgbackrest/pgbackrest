@@ -335,6 +335,19 @@ testRun(void)
             "P00   INFO: check repo1 archive for WAL (primary)");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("no stanzas in config file");
+
+        HRN_STORAGE_PUT_Z(
+            storageTest, "pgbackrest.conf",
+            "[test1]\n");
+        HRN_CFG_LOAD(cfgCmdCheck, argList);
+
+        TEST_RESULT_VOID(cmdCheck(), "check");
+        TEST_RESULT_LOG(
+            "P00   WARN: no stanzas found to check\n"
+            "            HINT: are there non-empty stanza sections in the configuration?");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo - WAL segment switch performed once for all repos");
 
         argList = strLstNew();

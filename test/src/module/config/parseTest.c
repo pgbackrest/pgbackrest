@@ -1267,6 +1267,17 @@ testRun(void)
             "option 'target-exclusive' not valid without option 'type' in ('lsn', 'time', 'xid')");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("dependent option missing (indexed option depends on non-indexed option");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/db");
+        strLstAddZ(argList, CFGCMD_CHECK);
+        TEST_ERROR(
+            cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidError,
+            "option 'pg1-path' not valid without option 'stanza'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("option invalid for command");
 
         argList = strLstNew();

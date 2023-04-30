@@ -3998,11 +3998,23 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_FILTER_CMD                                                                                 // opt/pg-path
                 (                                                                                                     // opt/pg-path
                     PARSE_RULE_VAL_CMD(cfgCmdArchivePush),                                                            // opt/pg-path
-                    PARSE_RULE_VAL_CMD(cfgCmdCheck),                                                                  // opt/pg-path
                     PARSE_RULE_VAL_CMD(cfgCmdManifest),                                                               // opt/pg-path
                 ),                                                                                                    // opt/pg-path
                                                                                                                       // opt/pg-path
                 PARSE_RULE_OPTIONAL_NOT_REQUIRED(),                                                                   // opt/pg-path
+            ),                                                                                                        // opt/pg-path
+                                                                                                                      // opt/pg-path
+            PARSE_RULE_OPTIONAL_GROUP                                                                                 // opt/pg-path
+            (                                                                                                         // opt/pg-path
+                PARSE_RULE_FILTER_CMD                                                                                 // opt/pg-path
+                (                                                                                                     // opt/pg-path
+                    PARSE_RULE_VAL_CMD(cfgCmdCheck),                                                                  // opt/pg-path
+                ),                                                                                                    // opt/pg-path
+                                                                                                                      // opt/pg-path
+                PARSE_RULE_OPTIONAL_DEPEND                                                                            // opt/pg-path
+                (                                                                                                     // opt/pg-path
+                    PARSE_RULE_VAL_OPT(cfgOptStanza),                                                                 // opt/pg-path
+                ),                                                                                                    // opt/pg-path
             ),                                                                                                        // opt/pg-path
         ),                                                                                                            // opt/pg-path
     ),                                                                                                                // opt/pg-path
