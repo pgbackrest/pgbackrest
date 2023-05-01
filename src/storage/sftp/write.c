@@ -33,15 +33,10 @@ typedef struct StorageWriteSftp
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_STORAGE_WRITE_SFTP_TYPE                                                                                      \
+#define FUNCTION_LOG_STORAGE_WRITE_SFTP_TYPE                                                                                       \
     StorageWriteSftp *
-#define FUNCTION_LOG_STORAGE_WRITE_SFTP_FORMAT(value, buffer, bufferSize)                                                         \
+#define FUNCTION_LOG_STORAGE_WRITE_SFTP_FORMAT(value, buffer, bufferSize)                                                          \
     objNameToLog(value, "StorageWriteSftp", buffer, bufferSize)
-
-/***********************************************************************************************************************************
-File open constants
-***********************************************************************************************************************************/
-#define FILE_OPEN_PURPOSE                                           "write"
 
 /***********************************************************************************************************************************
 Open the file

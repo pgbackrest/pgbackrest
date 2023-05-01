@@ -224,7 +224,6 @@ sub sshSetup
             "    echo '    ControlPersist 30' >> ${strUserPath}/.ssh/config && \\\n";
     }
 
-
     $strScript .=
         "    sed -i 's/#UseDNS yes/UseDNS no/' /etc/ssh/sshd_config && \\\n" .
         "    cp ${strUserPath}/.ssh/authorized_keys ${strUserPath}/.ssh/id_rsa.pub && \\\n" .

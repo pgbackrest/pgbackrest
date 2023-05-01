@@ -644,10 +644,10 @@ storageSftpPathCreate(
                 strFree(pathParent);
             }
             else if (sftpErrno != LIBSSH2_FX_FILE_ALREADY_EXISTS || errorOnExists)
-                THROW_FMT(PathCreateError, "unable to create path '%s'", strZ(path));
+                THROW_FMT(PathCreateError, "sftp error unable to create path '%s'", strZ(path));
         }
         else
-            THROW_FMT(PathCreateError, "unable to create path '%s'", strZ(path));
+            THROW_FMT(PathCreateError, "ssh2 error [%d] unable to create path '%s'", rc, strZ(path));
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -929,10 +929,12 @@ storageSftpNew(
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE,
-                        storageNew(STORAGE_SFTP_TYPE, path, param.modeFile == 0 ? STORAGE_MODE_FILE_DEFAULT : param.modeFile,
-                                   param.modePath == 0 ? STORAGE_MODE_PATH_DEFAULT : param.modePath, param.write, param.pathExpressionFunction, this,
-                                   this->interface));
+    FUNCTION_LOG_RETURN(
+        STORAGE,
+        storageNew(
+            STORAGE_SFTP_TYPE, path, param.modeFile == 0 ? STORAGE_MODE_FILE_DEFAULT : param.modeFile,
+            param.modePath == 0 ? STORAGE_MODE_PATH_DEFAULT : param.modePath, param.write, param.pathExpressionFunction,
+            this, this->interface));
 }
 
 #endif // HAVE_LIBSSH2

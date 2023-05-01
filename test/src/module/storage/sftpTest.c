@@ -94,8 +94,9 @@ testRun(void)
         });
 
         TEST_ERROR(
-            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, 5, 5, .user = TEST_USER_STR, .keyPriv = KEYPRIV,
-                            .keyPub = KEYPUB, .hostkeyHashType = hashTypeSha1),
+            storageSftpNewP(
+                TEST_PATH_STR, STRDEF("localhost"), 22, 5, 5, .user = TEST_USER_STR, .keyPriv = KEYPRIV, .keyPub = KEYPUB,
+                .hostkeyHashType = hashTypeSha1),
             ServiceError, "unable to init libssh2");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -2255,12 +2256,13 @@ testRun(void)
 
         TEST_ERROR(
             storagePathCreateP(storageTest, STRDEF("sub3/sub4"), .noParentCreate = true), PathCreateError,
-            "unable to create path '" TEST_PATH "/sub3/sub4'");
+            "sftp error unable to create path '" TEST_PATH "/sub3/sub4'");
         TEST_RESULT_VOID(storagePathCreateP(storageTest, STRDEF("sub3/sub4")), "create sub3/sub4");
 
         // LIBSSH2_ERROR_EAGAIN timeout fail
         TEST_ERROR(
-            storagePathCreateP(storageTest, STRDEF("subfail")), PathCreateError, "unable to create path '" TEST_PATH "/subfail'");
+            storagePathCreateP(storageTest, STRDEF("subfail")), PathCreateError,
+            "ssh2 error [-37] unable to create path '" TEST_PATH "/subfail'");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
@@ -2301,11 +2303,11 @@ testRun(void)
         TEST_RESULT_VOID(storagePathCreateP(storageTest, STRDEF("subfail")), "timeout success");
         TEST_ERROR(
             storagePathCreateP(storageTest, STRDEF("subfail"), .noParentCreate = true), PathCreateError,
-            "unable to create path '" TEST_PATH "/subfail'");
+            "sftp error unable to create path '" TEST_PATH "/subfail'");
         TEST_RESULT_VOID(storagePathCreateP(storageTest, STRDEF("subfail")), "do not throw error on already exists");
         TEST_ERROR(
             storagePathCreateP(storageTest, STRDEF("subfail"), .errorOnExists = true), PathCreateError,
-            "unable to create path '" TEST_PATH "/subfail'");
+            "sftp error unable to create path '" TEST_PATH "/subfail'");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
     }
