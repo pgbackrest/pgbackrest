@@ -4,6 +4,7 @@ S3 Storage
 #include "build.auto.h"
 
 #include <string.h>
+#include <stdlib.h>
 
 #include "common/crypto/hash.h"
 #include "common/debug.h"
@@ -385,7 +386,7 @@ Automatically get credentials for an associated web identity service account
 
 Documentation is found at: https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRoleWithWebIdentity.html
 ***********************************************************************************************************************************/
-STRING_STATIC(S3_STS_HOST_STR,                                      "sts.amazonaws.com");
+#define S3_STS_REGIONAL_ENDPOINTS                                   "AWS_STS_REGIONAL_ENDPOINTS"
 #define S3_STS_PORT                                                 443
 
 static void
@@ -1180,11 +1181,21 @@ storageS3New(
             {
                 ASSERT(accessKey == NULL && secretAccessKey == NULL && securityToken == NULL);
                 ASSERT(credRole != NULL);
+                ASSERT(region != NULL);
                 ASSERT(webIdToken != NULL);
+
+                const char *const regionalSTS = getenv(S3_STS_REGIONAL_ENDPOINTS);
+                const String *stsEndpoint;
+
+                if (regionalSTS == NULL || (strcmp(regionalSTS, "legacy") == 0 )) {
+                    stsEndpoint = strNewZ("sts.amazonaws.com");
+                } else {
+                    stsEndpoint = strNewFmt("sts.%s.amazonaws.com", strZ(region));
+                }
 
                 this->credRole = strDup(credRole);
                 this->webIdToken = strDup(webIdToken);
-                this->credHost = S3_STS_HOST_STR;
+                this->credHost = stsEndpoint;
                 this->credExpirationTime = time(NULL);
                 this->credHttpClient = httpClientNew(
                     tlsClientNewP(
