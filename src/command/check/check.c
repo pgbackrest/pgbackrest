@@ -199,6 +199,7 @@ cmdCheck(void)
             }
         }
 
+        // Iterate stanzas
         for (unsigned int stanzaIdx = 0; stanzaIdx < strLstSize(stanzaList); stanzaIdx++)
         {
             // Switch stanza if required
