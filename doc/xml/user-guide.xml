@@ -3335,11 +3335,11 @@
                 <backrest-config-option if="{[protocol-tls]}" section="global" key="repo1-host-cert-file">/etc/pgbackrest/cert/client.crt</backrest-config-option>
                 <backrest-config-option if="{[protocol-tls]}" section="global" key="repo1-host-key-file">/etc/pgbackrest/cert/client.key</backrest-config-option>
 
-                <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-auth">pgbackrest-client=demo</backrest-config-option>
-                <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-address">*</backrest-config-option>
-                <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-ca-file">/etc/pgbackrest/cert/ca.crt</backrest-config-option>
-                <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-cert-file">/etc/pgbackrest/cert/server.crt</backrest-config-option>
-                <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-key-file">/etc/pgbackrest/cert/server.key</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-auth">pgbackrest-client=demo-alt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-address">*</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-ca-file">/etc/pgbackrest/cert/ca.crt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-cert-file">/etc/pgbackrest/cert/server.crt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-key-file">/etc/pgbackrest/cert/server.key</backrest-config-option>
 
                 <backrest-config-option section="global" key="log-level-file">detail</backrest-config-option>
 
@@ -3358,7 +3358,7 @@
                 <backrest-config-option if="{[protocol-tls]}" section="demo-alt" key="pg1-host-cert-file">/etc/pgbackrest/cert/client.crt</backrest-config-option>
                 <backrest-config-option if="{[protocol-tls]}" section="demo-alt" key="pg1-host-key-file">/etc/pgbackrest/cert/client.key</backrest-config-option>
 
-                <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-auth">pgbackrest-client=*</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-auth">pgbackrest-client=demo-alt</backrest-config-option>
             </backrest-config>
 
             <block if="{[protocol-tls]}" id="setup-tls">
