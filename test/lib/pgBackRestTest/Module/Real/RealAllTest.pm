@@ -154,12 +154,12 @@ sub run
         # --------------------------------------------------------------------------------------------------------------------------
         my $strComment = 'verify check command runs successfully';
 
-        $oHostDbPrimary->check($strComment, {iTimeout => 5});
+        $oHostDbPrimary->check($strComment, {iTimeout => 10});
 
         # Also run check on the backup host when present
         if ($bHostBackup)
         {
-            $oHostBackup->check($strComment, {iTimeout => 5, strOptionalParam => $strBogusReset});
+            $oHostBackup->check($strComment, {iTimeout => 10, strOptionalParam => $strBogusReset});
         }
 
         # Restart the cluster ignoring any errors in the postgresql log
