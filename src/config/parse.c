@@ -522,6 +522,8 @@ cfgParseStanzaList(void)
         MEM_CONTEXT_TEMP_END();
     }
 
+    strLstSort(result, sortOrderAsc);
+
     FUNCTION_TEST_RETURN(STRING_LIST, result);
 }
 
