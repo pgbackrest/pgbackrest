@@ -21,6 +21,9 @@
                         <commit subject="Removing chunking and block numbers from incremental block list.">
                             <github-pull-request id="2029"/>
                         </commit>
+                        <commit subject="Finalize block incremental feature.">
+                            <github-pull-request id="2053"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
