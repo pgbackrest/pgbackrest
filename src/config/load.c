@@ -451,7 +451,7 @@ cfgLoad(unsigned int argListSize, const char *argList[])
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Parse config from command line and config file
-        configParse(storageLocal(), argListSize, argList, true);
+        cfgParseP(storageLocal(), argListSize, argList);
 
         // Initialize dry-run mode for storage when valid for the current command
         storageHelperDryRunInit(cfgOptionValid(cfgOptDryRun) && cfgOptionBool(cfgOptDryRun));

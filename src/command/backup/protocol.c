@@ -29,7 +29,7 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
     {
         // Backup options that apply to all files
         const String *const repoFile = pckReadStrP(param);
-        uint64_t bundleId = pckReadU64P(param);
+        const uint64_t bundleId = pckReadU64P(param);
         const bool bundleRaw = bundleId != 0 ? pckReadBoolP(param) : false;
         const unsigned int blockIncrReference = (unsigned int)pckReadU64P(param);
         const CompressType repoFileCompressType = (CompressType)pckReadU32P(param);
@@ -38,7 +38,7 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
         const String *const cipherPass = pckReadStrP(param);
 
         // Build the file list
-        List *fileList = lstNewP(sizeof(BackupFile));
+        List *const fileList = lstNewP(sizeof(BackupFile));
 
         while (!pckReadNullP(param))
         {
@@ -49,6 +49,7 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
             file.pgFileCopyExactSize = pckReadBoolP(param);
             file.pgFileChecksum = pckReadBinP(param);
             file.pgFileChecksumPage = pckReadBoolP(param);
+            file.pgFilePageHeaderCheck = pckReadBoolP(param);
             file.blockIncrSize = (size_t)pckReadU64P(param);
 
             if (file.blockIncrSize > 0)

@@ -3237,6 +3237,32 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                             // opt/output
     ),                                                                                                                 // opt/output
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                       // opt/page-header-check
+    (                                                                                                       // opt/page-header-check
+        PARSE_RULE_OPTION_NAME("page-header-check"),                                                        // opt/page-header-check
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),                                                          // opt/page-header-check
+        PARSE_RULE_OPTION_NEGATE(true),                                                                     // opt/page-header-check
+        PARSE_RULE_OPTION_RESET(true),                                                                      // opt/page-header-check
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                   // opt/page-header-check
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),                                                        // opt/page-header-check
+                                                                                                            // opt/page-header-check
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                      // opt/page-header-check
+        (                                                                                                   // opt/page-header-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                         // opt/page-header-check
+        ),                                                                                                  // opt/page-header-check
+                                                                                                            // opt/page-header-check
+        PARSE_RULE_OPTIONAL                                                                                 // opt/page-header-check
+        (                                                                                                   // opt/page-header-check
+            PARSE_RULE_OPTIONAL_GROUP                                                                       // opt/page-header-check
+            (                                                                                               // opt/page-header-check
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                 // opt/page-header-check
+                (                                                                                           // opt/page-header-check
+                    PARSE_RULE_VAL_BOOL_TRUE,                                                               // opt/page-header-check
+                ),                                                                                          // opt/page-header-check
+            ),                                                                                              // opt/page-header-check
+        ),                                                                                                  // opt/page-header-check
+    ),                                                                                                      // opt/page-header-check
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                                      // opt/pg
     (                                                                                                                      // opt/pg
         PARSE_RULE_OPTION_NAME("pg"),                                                                                      // opt/pg
@@ -5101,7 +5127,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (                                                                                                              // opt/repo-block
         PARSE_RULE_OPTION_NAME("repo-block"),                                                                      // opt/repo-block
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),                                                                 // opt/repo-block
-        PARSE_RULE_OPTION_BETA(true),                                                                              // opt/repo-block
         PARSE_RULE_OPTION_NEGATE(true),                                                                            // opt/repo-block
         PARSE_RULE_OPTION_RESET(true),                                                                             // opt/repo-block
         PARSE_RULE_OPTION_REQUIRED(true),                                                                          // opt/repo-block
@@ -5137,7 +5162,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (                                                                                                      // opt/repo-block-age-map
         PARSE_RULE_OPTION_NAME("repo-block-age-map"),                                                      // opt/repo-block-age-map
         PARSE_RULE_OPTION_TYPE(cfgOptTypeHash),                                                            // opt/repo-block-age-map
-        PARSE_RULE_OPTION_BETA(true),                                                                      // opt/repo-block-age-map
         PARSE_RULE_OPTION_RESET(true),                                                                     // opt/repo-block-age-map
         PARSE_RULE_OPTION_REQUIRED(false),                                                                 // opt/repo-block-age-map
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),                                                       // opt/repo-block-age-map
@@ -5167,7 +5191,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (                                                                                            // opt/repo-block-checksum-size-map
         PARSE_RULE_OPTION_NAME("repo-block-checksum-size-map"),                                  // opt/repo-block-checksum-size-map
         PARSE_RULE_OPTION_TYPE(cfgOptTypeHash),                                                  // opt/repo-block-checksum-size-map
-        PARSE_RULE_OPTION_BETA(true),                                                            // opt/repo-block-checksum-size-map
         PARSE_RULE_OPTION_RESET(true),                                                           // opt/repo-block-checksum-size-map
         PARSE_RULE_OPTION_REQUIRED(false),                                                       // opt/repo-block-checksum-size-map
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),                                             // opt/repo-block-checksum-size-map
@@ -5197,7 +5220,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (                                                                                                     // opt/repo-block-size-map
         PARSE_RULE_OPTION_NAME("repo-block-size-map"),                                                    // opt/repo-block-size-map
         PARSE_RULE_OPTION_TYPE(cfgOptTypeHash),                                                           // opt/repo-block-size-map
-        PARSE_RULE_OPTION_BETA(true),                                                                     // opt/repo-block-size-map
         PARSE_RULE_OPTION_RESET(true),                                                                    // opt/repo-block-size-map
         PARSE_RULE_OPTION_REQUIRED(false),                                                                // opt/repo-block-size-map
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),                                                      // opt/repo-block-size-map
@@ -5227,7 +5249,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (                                                                                                   // opt/repo-block-size-super
         PARSE_RULE_OPTION_NAME("repo-block-size-super"),                                                // opt/repo-block-size-super
         PARSE_RULE_OPTION_TYPE(cfgOptTypeSize),                                                         // opt/repo-block-size-super
-        PARSE_RULE_OPTION_BETA(true),                                                                   // opt/repo-block-size-super
         PARSE_RULE_OPTION_RESET(true),                                                                  // opt/repo-block-size-super
         PARSE_RULE_OPTION_REQUIRED(true),                                                               // opt/repo-block-size-super
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),                                                    // opt/repo-block-size-super
@@ -5268,7 +5289,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (                                                                                              // opt/repo-block-size-super-full
         PARSE_RULE_OPTION_NAME("repo-block-size-super-full"),                                      // opt/repo-block-size-super-full
         PARSE_RULE_OPTION_TYPE(cfgOptTypeSize),                                                    // opt/repo-block-size-super-full
-        PARSE_RULE_OPTION_BETA(true),                                                              // opt/repo-block-size-super-full
         PARSE_RULE_OPTION_RESET(true),                                                             // opt/repo-block-size-super-full
         PARSE_RULE_OPTION_REQUIRED(true),                                                          // opt/repo-block-size-super-full
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),                                               // opt/repo-block-size-super-full
@@ -10524,6 +10544,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptNeutralUmask,                                                                                         // opt-resolve-order
     cfgOptOnline,                                                                                               // opt-resolve-order
     cfgOptOutput,                                                                                               // opt-resolve-order
+    cfgOptPageHeaderCheck,                                                                                      // opt-resolve-order
     cfgOptPg,                                                                                                   // opt-resolve-order
     cfgOptPgLocal,                                                                                              // opt-resolve-order
     cfgOptPgPath,                                                                                               // opt-resolve-order

@@ -81,7 +81,7 @@ testRun(void)
 
             // Version file that will not be updated after the full backup
             HRN_STORAGE_PUT_Z(
-                storagePgWrite(), PG_PATH_BASE "/" PG_FILE_PGVERSION, PG_VERSION_95_STR, .timeModified = backupTimeStart);
+                storagePgWrite(), PG_PATH_BASE "/" PG_FILE_PGVERSION, PG_VERSION_95_Z, .timeModified = backupTimeStart);
 
             // Zeroed file large enough to use block incr
             Buffer *relation = bufNew(8 * 8192);
@@ -215,7 +215,7 @@ testRun(void)
                             "\"size\":65536,"
                             "\"checksum\":\"1adc95bebe9eea8c112d40cd04ab7a8d75c4f961\","
                             "\"repo\":{"
-                                "\"size\":65610"
+                                "\"size\":65594"
                             "},"
                             "\"bundle\":{"
                                 "\"id\":1,"
@@ -230,7 +230,7 @@ testRun(void)
                                             "\"reference\":0,"
                                             "\"read\":{"
                                                 "\"total\":1,"
-                                                "\"size\":65552"
+                                                "\"size\":65536"
                                             "},"
                                             "\"superBlock\":{"
                                                 "\"total\":2,"
@@ -271,7 +271,7 @@ testRun(void)
                 "\n"
                 "file list:\n"
                 "  - pg_data/base/1/2\n"
-                "      size: 96KB, repo 64.1KB\n"
+                "      size: 96KB, repo 64KB\n"
                 "      checksum: d4976e362696a43fb09e7d4e780d7d9352a2ec2e\n"
                 "      bundle: 1\n"
                 "      block: size 8KB, map size 99B, checksum size 6B\n"
@@ -376,7 +376,7 @@ testRun(void)
                 "\n"
                 "file list:\n"
                 "  - pg_data/base/1/2\n"
-                "      size: 96KB, repo 64.1KB\n"
+                "      size: 96KB, repo 64KB\n"
                 "      checksum: d4976e362696a43fb09e7d4e780d7d9352a2ec2e\n"
                 "      bundle: 1\n"
                 "      block: size 8KB, map size 99B, checksum size 6B\n"
@@ -417,7 +417,7 @@ testRun(void)
                             "\"size\":98304,"
                             "\"checksum\":\"d4976e362696a43fb09e7d4e780d7d9352a2ec2e\","
                             "\"repo\":{"
-                                "\"size\":65647"
+                                "\"size\":65635"
                             "},"
                             "\"bundle\":{"
                                 "\"id\":1,"
@@ -470,7 +470,7 @@ testRun(void)
                 "\n"
                 "file list:\n"
                 "  - pg_data/base/1/2\n"
-                "      size: 96KB, repo 64.1KB\n"
+                "      size: 96KB, repo 64KB\n"
                 "      checksum: d4976e362696a43fb09e7d4e780d7d9352a2ec2e\n"
                 "      bundle: 1\n"
                 "      block: size 8KB, map size 99B, checksum size 6B\n"
@@ -538,7 +538,7 @@ testRun(void)
                             "\"size\":98304,"
                             "\"checksum\":\"d4976e362696a43fb09e7d4e780d7d9352a2ec2e\","
                             "\"repo\":{"
-                                "\"size\":65668"
+                                "\"size\":65664"
                             "},"
                             "\"bundle\":{"
                                 "\"id\":1,"

@@ -21,6 +21,7 @@ typedef struct PageChecksum
 {
     unsigned int segmentPageTotal;                                  // Total pages in a segment
     unsigned int pageNoOffset;                                      // Page number offset for subsequent segments
+    bool headerCheck;                                               // Perform additional header checks?
     const String *fileName;                                         // Used to load the file to retry pages
 
     unsigned char *pageBuffer;                                      // Buffer to hold a page while verifying the checksum
@@ -48,7 +49,7 @@ pageChecksumToLog(const PageChecksum *const this, StringStatic *const debugLog)
 Verify page checksums
 ***********************************************************************************************************************************/
 static void
-pageChecksumProcess(THIS_VOID, const Buffer *input)
+pageChecksumProcess(THIS_VOID, const Buffer *const input)
 {
     THIS(PageChecksum);
 
@@ -64,7 +65,7 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
     unsigned int pageTotal = (unsigned int)(bufUsed(input) / PG_PAGE_SIZE_DEFAULT);
 
     // If there is a partial page make sure there is enough of it to validate the checksum
-    unsigned int pageRemainder = (unsigned int)(bufUsed(input) % PG_PAGE_SIZE_DEFAULT);
+    const unsigned int pageRemainder = (unsigned int)(bufUsed(input) % PG_PAGE_SIZE_DEFAULT);
 
     if (pageRemainder != 0)
     {
@@ -99,28 +100,29 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
             // Only validate page checksum if the page is complete
             if (this->align || pageIdx < pageTotal - 1)
             {
-                // Skip new pages indicated by pd_upper == 0
-                bool pdUpperValid = true;
+                bool pageValid = true;
 
-                if (pageHeader->pd_upper == 0)
+                // Skip new all-zero pages. To speed this up first check pd_upper when header check is enabled or pd_checksum when
+                // header check is disabled. The latter is required when the page is encrypted.
+                if ((this->headerCheck && pageHeader->pd_upper == 0) || (!this->headerCheck && pageHeader->pd_checksum == 0))
                 {
-                    // Check that the entire page is zero in case pd_upper is corrupted
+                    // Check that the entire page is zero
                     for (unsigned int pageIdx = 0; pageIdx < PG_PAGE_SIZE_DEFAULT / sizeof(size_t); pageIdx++)
                     {
                         if (((size_t *)pageHeader)[pageIdx] != 0)
                         {
-                            pdUpperValid = false;
+                            pageValid = false;
                             break;
                         }
                     }
 
                     // If the entire page is zero it is valid
-                    if (pdUpperValid)
+                    if (pageValid)
                         continue;
                 }
 
-                // Only validate the checksum if pd_upper is non-zero to avoid an assertion from pg_checksum_page()
-                if (pdUpperValid)
+                // Only validate the checksum if the page is valid
+                if (pageValid)
                 {
                     // Make a copy of the page since it will be modified by the page checksum function
                     memcpy(this->pageBuffer, pageHeader, PG_PAGE_SIZE_DEFAULT);
@@ -190,7 +192,7 @@ pageChecksumResult(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    Pack *result = NULL;
+    Pack *result;
 
     MEM_CONTEXT_OBJ_BEGIN(this)
     {
@@ -223,11 +225,13 @@ pageChecksumResult(THIS_VOID)
 
 /**********************************************************************************************************************************/
 FN_EXTERN IoFilter *
-pageChecksumNew(const unsigned int segmentNo, const unsigned int segmentPageTotal, const String *const fileName)
+pageChecksumNew(
+    const unsigned int segmentNo, const unsigned int segmentPageTotal, const bool headerCheck, const String *const fileName)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(UINT, segmentNo);
         FUNCTION_LOG_PARAM(UINT, segmentPageTotal);
+        FUNCTION_LOG_PARAM(BOOL, headerCheck);
         FUNCTION_LOG_PARAM(STRING, fileName);
     FUNCTION_LOG_END();
 
@@ -237,6 +241,7 @@ pageChecksumNew(const unsigned int segmentNo, const unsigned int segmentPageTota
         {
             .segmentPageTotal = segmentPageTotal,
             .pageNoOffset = segmentNo * segmentPageTotal,
+            .headerCheck = headerCheck,
             .fileName = strDup(fileName),
             .pageBuffer = bufPtr(bufNew(PG_PAGE_SIZE_DEFAULT)),
             .valid = true,
@@ -246,7 +251,7 @@ pageChecksumNew(const unsigned int segmentNo, const unsigned int segmentPageTota
     OBJ_NEW_END();
 
     // Create param list
-    Pack *paramList = NULL;
+    Pack *paramList;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -254,6 +259,7 @@ pageChecksumNew(const unsigned int segmentNo, const unsigned int segmentPageTota
 
         pckWriteU32P(packWrite, segmentNo);
         pckWriteU32P(packWrite, segmentPageTotal);
+        pckWriteBoolP(packWrite, headerCheck);
         pckWriteStrP(packWrite, fileName);
         pckWriteEndP(packWrite);
 
@@ -269,16 +275,17 @@ pageChecksumNew(const unsigned int segmentNo, const unsigned int segmentPageTota
 FN_EXTERN IoFilter *
 pageChecksumNewPack(const Pack *const paramList)
 {
-    IoFilter *result = NULL;
+    IoFilter *result;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         PackRead *const paramListPack = pckReadNew(paramList);
         const unsigned int segmentNo = pckReadU32P(paramListPack);
         const unsigned int segmentPageTotal = pckReadU32P(paramListPack);
+        const bool headerCheck = pckReadBoolP(paramListPack);
         const String *const fileName = pckReadStrP(paramListPack);
 
-        result = ioFilterMove(pageChecksumNew(segmentNo, segmentPageTotal, fileName), memContextPrior());
+        result = ioFilterMove(pageChecksumNew(segmentNo, segmentPageTotal, headerCheck, fileName), memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 

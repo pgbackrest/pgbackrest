@@ -160,7 +160,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("recurse");
 
-        cfgOptionSet(cfgOptRecurse, cfgSourceParam, VARBOOL(true));
+        cfgOptionSet(cfgOptRecurse, cfgSourceParam, BOOL_TRUE_VAR);
 
         output = bufNew(0);
         cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_TEXT));

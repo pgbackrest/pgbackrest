@@ -589,6 +589,7 @@ eval
             "ninja -C ${strBuildPath} src/build-code test/src/test-pgbackrest" .
             ($bMinGen ? '' : " && \\\n${strBuildPath}/src/build-code config ${strBackRestBase}/src") .
             ($bMinGen ? '' : " && \\\n${strBuildPath}/src/build-code error ${strBackRestBase}/src") .
+            ($bMinGen ? '' : " && \\\n${strBuildPath}/src/build-code postgres-version ${strBackRestBase}/src") .
             " && \\\n${strBuildPath}/src/build-code postgres ${strBackRestBase}/src ${strRepoCachePath}";
 
         if (!-e $strBuildNinja)

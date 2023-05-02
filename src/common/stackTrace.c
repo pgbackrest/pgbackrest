@@ -152,7 +152,7 @@ stackTraceParamIdx(int stackIdx)
 }
 
 FN_EXTERN const char *
-stackTraceParam()
+stackTraceParam(void)
 {
     return stackTraceParamIdx(stackTraceLocal.stackSize - 1);
 }

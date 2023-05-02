@@ -1210,6 +1210,15 @@ option:
     command-role:
       main: {}
 
+  page-header-check:
+    section: global
+    type: boolean
+    default: true
+    command:
+      backup: {}
+    command-role:
+      main: {}
+
   exclude:
     section: global
     type: list
@@ -1890,7 +1899,6 @@ option:
     section: global
     group: repo
     type: boolean
-    beta: true
     default: false
     command:
       backup: {}
@@ -1907,7 +1915,7 @@ option:
     group: repo
     type: hash
     required: false
-    beta: true
+    internal: true
     command: repo-block
     command-role:
       main: {}
@@ -1928,7 +1936,7 @@ option:
     type: size
     default: 256KiB
     allow-range: [32KiB, 16MiB]
-    beta: true
+    internal: true
     command: repo-block
     command-role:
       main: {}

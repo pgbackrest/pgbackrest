@@ -82,7 +82,7 @@ hrnCfgLoad(ConfigCommand commandId, const StringList *argListParam, const HrnCfg
     hrnStorageHelperFree();
 
     // Parse config
-    configParse(storageLocal(), strLstSize(argList), strLstPtr(argList), false);
+    cfgParseP(storageLocal(), strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true);
 
     // Set dry-run mode for storage and logging
     harnessLogDryRunSet(cfgOptionValid(cfgOptDryRun) && cfgOptionBool(cfgOptDryRun));

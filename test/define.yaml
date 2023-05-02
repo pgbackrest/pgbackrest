@@ -295,17 +295,16 @@ unit:
         coverage:
           - common/io/bufferRead
           - common/io/bufferWrite
-          - common/io/chunkedRead
           - common/io/fd
           - common/io/fdRead
           - common/io/fdWrite
           - common/io/filter/buffer
-          - common/io/filter/chunk
           - common/io/filter/filter
           - common/io/filter/group
           - common/io/filter/sink
           - common/io/filter/size
           - common/io/io
+          - common/io/limitRead
           - common/io/read
           - common/io/write
 
