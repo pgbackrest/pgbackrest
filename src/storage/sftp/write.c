@@ -208,8 +208,7 @@ storageWriteSftpUnlinkExisting(THIS_VOID)
 
     do
     {
-        rc = libssh2_sftp_unlink_ex(
-            this->sftpSession, strZ(this->interface.name), (unsigned int)strSize(this->interface.name));
+        rc = libssh2_sftp_unlink_ex(this->sftpSession, strZ(this->interface.name), (unsigned int)strSize(this->interface.name));
     }
     while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
 

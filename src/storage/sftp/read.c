@@ -120,8 +120,8 @@ storageReadSftp(THIS_VOID, Buffer *const buffer, const bool block)
 
         if (this->current + expectedBytes > this->limit)
             expectedBytes = (size_t)(this->limit - this->current);
-        bufLimitSet(buffer, expectedBytes);
 
+        bufLimitSet(buffer, expectedBytes);
         ssize_t rc = 0;
 
         // Read until EOF or buffer is full
@@ -156,7 +156,7 @@ storageReadSftp(THIS_VOID, Buffer *const buffer, const bool block)
             {
                 uint64_t sftpErr = 0;
 
-                // This is extremely hacky. libssh2 sftp lseek seems to return LIBSSH2_FX_BAD_MESSAGE on a seek too far
+                // libssh2 sftp lseek seems to return LIBSSH2_FX_BAD_MESSAGE on a seek too far
                 if ((sftpErr = libssh2_sftp_last_error(this->sftpSession)) == LIBSSH2_FX_BAD_MESSAGE && this->interface.offset > 0)
                     THROW_FMT(FileOpenError, STORAGE_ERROR_READ_SEEK, this->interface.offset, strZ(this->interface.name));
                 else

@@ -203,8 +203,7 @@ storageSftpLibSsh2SessionFreeResource(THIS_VOID)
         if (rc)
         {
             THROW_FMT(
-                ServiceError, "failed to free resource sftpHandle: libssh2 errno [%d]%s", rc,
-                rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
+                ServiceError, "failed to free resource sftpHandle: libssh2 errno [%d]%s", rc, rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
                 strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
         }
     }
@@ -220,8 +219,7 @@ storageSftpLibSsh2SessionFreeResource(THIS_VOID)
         if (rc)
         {
             THROW_FMT(
-                ServiceError, "failed to free resource sftpSession: libssh2 errno [%d]%s", rc,
-                rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
+                ServiceError, "failed to free resource sftpSession: libssh2 errno [%d]%s", rc, rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
                 strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
         }
     }
@@ -312,9 +310,7 @@ storageSftpEvalLibSsh2Error(
         "%slibssh2 error [%d]%s%s",
         msg != NULL ? strZ(strNewFmt("%s: ", strZ(msg))) : "",
         ssh2Errno,
-        ssh2Errno == LIBSSH2_ERROR_SFTP_PROTOCOL ?
-        strZ(strNewFmt(": sftp error [%" PRIu64 "]", sftpErrno)) :
-        "",
+        ssh2Errno == LIBSSH2_ERROR_SFTP_PROTOCOL ? strZ(strNewFmt(": sftp error [%" PRIu64 "]", sftpErrno)) : "",
         hint != NULL ? strZ(strNewFmt("\n%s", strZ(hint))) : "");
 
     FUNCTION_LOG_RETURN_VOID();
@@ -379,8 +375,7 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
 
     do
     {
-        sftpHandle = libssh2_sftp_open_ex(
-            this->sftpSession, strZ(path), (unsigned int)strSize(path), 0, 0, LIBSSH2_SFTP_OPENDIR);
+        sftpHandle = libssh2_sftp_open_ex(this->sftpSession, strZ(path), (unsigned int)strSize(path), 0, 0, LIBSSH2_SFTP_OPENDIR);
     }
     while (sftpHandle == NULL && libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
 
@@ -428,14 +423,14 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
                         {
                             if (level == storageInfoLevelExists)
                             {
-                                storageLstAdd(
-                                    result,
-                                    &(StorageInfo)
+                                const StorageInfo storageInfo =
                                 {
                                     .name = STR(filename),
                                     .level = storageInfoLevelExists,
                                     .exists = true,
-                                });
+                                };
+
+                                storageLstAdd(result, &storageInfo);
                             }
                             else
                                 storageSftpListEntry(this, result, path, filename, level);
