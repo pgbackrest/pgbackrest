@@ -1,8 +1,8 @@
 /***********************************************************************************************************************************
 Pq Test Harness
 
-Scripted testing for PostgreSQL libpq so exact results can be returned for unit testing.  See PostgreSQL client unit tests for
-usage examples.
+Scripted testing for PostgreSQL libpq so exact results can be returned for unit testing. See PostgreSQL client unit tests for usage
+examples.
 ***********************************************************************************************************************************/
 #ifndef TEST_COMMON_HARNESS_PQ_H
 #define TEST_COMMON_HARNESS_PQ_H
@@ -617,8 +617,8 @@ Functions
 ***********************************************************************************************************************************/
 void harnessPqScriptSet(HarnessPq *harnessPqScriptParam);
 
-// Are we strict about requiring PQfinish()?  Strict is a good idea for low-level testing of Pq code but is a nuissance for
-// higher-level testing since it can mask other errors.  When not strict, PGfinish() is allowed at any time and does not need to be
+// Are we strict about requiring PQfinish()? Strict is a good idea for low-level testing of Pq code but is a nuisance for
+// higher-level testing since it can mask other errors. When not strict, PGfinish() is allowed at any time and does not need to be
 // scripted.
 void harnessPqScriptStrictSet(bool strict);
 

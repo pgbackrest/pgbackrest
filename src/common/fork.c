@@ -35,7 +35,7 @@ forkDetach(void)
     // The process should never receive a SIGHUP but ignore it just in case
     signal(SIGHUP, SIG_IGN);
 
-    // There should be no way the child process can exit first (after the next fork) but just in case ignore SIGCHLD.  This means
+    // There should be no way the child process can exit first (after the next fork) but just in case ignore SIGCHLD. This means
     // that the child process will automatically be reaped by the kernel should it finish first rather than becoming defunct.
     signal(SIGCHLD, SIG_IGN);
 

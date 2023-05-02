@@ -264,7 +264,7 @@ varBoolForce(const Variant *this)
 
         case varTypeString:
         {
-            // List of false/true boolean string values.  Note that false/true values must be equal.
+            // List of false/true boolean string values. Note that false/true values must be equal.
             static const char *const boolString[] =
             {
                 "n", "f", "0",  "no", FALSE_Z, "off",

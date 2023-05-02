@@ -20,7 +20,7 @@ Developed against version r131 using the documentation in https://github.com/lz4
 #include "common/type/pack.h"
 
 /***********************************************************************************************************************************
-Older versions of lz4 do not define the max header size.  This seems to be the max for any version.
+Older versions of lz4 do not define the max header size. This seems to be the max for any version.
 ***********************************************************************************************************************************/
 #ifndef LZ4F_HEADER_SIZE_MAX
 #define LZ4F_HEADER_SIZE_MAX                                        19
@@ -79,9 +79,9 @@ lz4CompressFreeResource(THIS_VOID)
 /***********************************************************************************************************************************
 Compress data
 ***********************************************************************************************************************************/
-// Helper to return a buffer where output will be written.  If there is enough space in the provided output buffer then use it,
-// otherwise allocate an internal buffer to hold the compressed data.  Once we start using the internal buffer we'll need to
-// continue using it until it is completely flushed.
+// Helper to return a buffer where output will be written. If there is enough space in the provided output buffer then use it,
+// otherwise allocate an internal buffer to hold the compressed data. Once we start using the internal buffer we'll need to continue
+// using it until it is completely flushed.
 static Buffer *
 lz4CompressBuffer(Lz4Compress *this, size_t required, Buffer *output)
 {

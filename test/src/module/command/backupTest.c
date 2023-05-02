@@ -1307,7 +1307,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("test pagechecksum while db file grows");
 
-        // Increase the file size but most of the following tests will still treat the file as size 9.  This tests the common case
+        // Increase the file size but most of the following tests will still treat the file as size 9. This tests the common case
         // where a file grows while a backup is running.
         HRN_STORAGE_PUT_Z(storagePgWrite(), strZ(pgFile), "atestfile###");
 
@@ -2907,13 +2907,13 @@ testRun(void)
             HRN_STORAGE_PUT_Z(storagePgIdxWrite(1), PG_PATH_BASE "/1/1", "1234");
 
             // Create file to copy from the standby. This file will be smaller on the primary than the standby and have no common
-            // data in the bytes that exist on primary and standby.  If the file is copied from the primary instead of the standby
+            // data in the bytes that exist on primary and standby. If the file is copied from the primary instead of the standby
             // the checksum will change but not the size.
             HRN_STORAGE_PUT_Z(storagePgIdxWrite(0), PG_PATH_BASE "/1/2", "DA", .timeModified = backupTimeStart);
             HRN_STORAGE_PUT_Z(storagePgIdxWrite(1), PG_PATH_BASE "/1/2", "5678");
 
             // Create file to copy from the standby. This file will be larger on the primary than the standby and have no common
-            // data in the bytes that exist on primary and standby.  If the file is copied from the primary instead of the standby
+            // data in the bytes that exist on primary and standby. If the file is copied from the primary instead of the standby
             // the checksum and size will change.
             HRN_STORAGE_PUT_Z(storagePgIdxWrite(0), PG_PATH_BASE "/1/3", "TEST", .timeModified = backupTimeStart);
             HRN_STORAGE_PUT_Z(storagePgIdxWrite(1), PG_PATH_BASE "/1/3", "ABC");
@@ -3315,7 +3315,7 @@ testRun(void)
             HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/3", relation, .timeModified = backupTimeStart);
             const char *rel1_3Sha1 = strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, relation)));
 
-            // Run backup.  Make sure that the timeline selected converts to hexdecimal that can't be interpreted as decimal.
+            // Run backup. Make sure that the timeline selected converts to hexdecimal that can't be interpreted as decimal.
             hrnBackupPqScriptP(PG_VERSION_11, backupTimeStart, .timeline = 0x2C, .walTotal = 2);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 

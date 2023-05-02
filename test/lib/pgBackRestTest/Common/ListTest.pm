@@ -113,7 +113,7 @@ sub testListGet
                         # Skip this test if it is performance and no performance is specified
                         next if ($bNoPerformance && $hTest->{&TESTDEF_TYPE} eq TESTDEF_PERFORMANCE);
 
-                        # Skip this test if it is not C and vm=none.  Perl tests require Docker which is not supported.
+                        # Skip this test if it is not C and vm=none. Perl tests require Docker which is not supported.
                         next if ($strVm eq VM_NONE && !$hTest->{&TESTDEF_C});
 
                         # Skip this test if a container is required and vm=none.
@@ -128,7 +128,7 @@ sub testListGet
                                 ($strDbVersion ne 'all' &&
                                     $strDbVersion eq ${$$oyVm{$strTestOS}{&VM_DB_TEST}}[$iDbVersionIdx]))
                             {
-                                # Individual tests will be each be run in a separate container.  This is the default.
+                                # Individual tests will be each be run in a separate container. This is the default.
                                 my $bTestIndividual =
                                     !defined($hTest->{&TESTDEF_INDIVIDUAL}) || $hTest->{&TESTDEF_INDIVIDUAL} ? true : false;
 

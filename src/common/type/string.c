@@ -770,8 +770,8 @@ strPathAbsolute(const String *this, const String *base)
     {
         result = strDup(this);
     }
-    // Else we'll need to construct the absolute path.  You would hope we could use realpath() here but it is so broken in the
-    // Posix spec that is seems best avoided.
+    // Else we'll need to construct the absolute path. You would hope we could use realpath() here but it is so broken in the Posix
+    // spec that is seems best avoided.
     else
     {
         ASSERT(base != NULL);

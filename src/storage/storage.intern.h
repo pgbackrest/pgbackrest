@@ -76,7 +76,7 @@ typedef struct StorageInterfaceInfoParam
 {
     VAR_PARAM_HEADER;
 
-    // Should symlinks be followed?  Only required on storage that supports symlinks.
+    // Should symlinks be followed? Only required on storage that supports symlinks.
     bool followLink;
 } StorageInterfaceInfoParam;
 
@@ -104,7 +104,7 @@ typedef void StorageInterfaceLinkCreate(
         (StorageInterfaceLinkCreateParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 // ---------------------------------------------------------------------------------------------------------------------------------
-// Create a file read object.  The file should not be opened immediately -- open() will be called on the IoRead interface when the
+// Create a file read object. The file should not be opened immediately -- open() will be called on the IoRead interface when the
 // file needs to be opened.
 typedef struct StorageInterfaceNewReadParam
 {
@@ -128,13 +128,13 @@ typedef StorageRead *StorageInterfaceNewRead(
         thisVoid, file, ignoreMissing, (StorageInterfaceNewReadParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 // ---------------------------------------------------------------------------------------------------------------------------------
-// Create a file write object.  The file should not be opened immediately -- open() will be called on the IoWrite interface when the
+// Create a file write object. The file should not be opened immediately -- open() will be called on the IoWrite interface when the
 // file needs to be opened.
 typedef struct StorageInterfaceNewWriteParam
 {
     VAR_PARAM_HEADER;
 
-    // File/path mode for storage that supports Posix-style permissions.  modePath is only used in conjunction with createPath.
+    // File/path mode for storage that supports Posix-style permissions. modePath is only used in conjunction with createPath.
     mode_t modeFile;
     mode_t modePath;
 
@@ -160,7 +160,7 @@ typedef struct StorageInterfaceNewWriteParam
     // which should always be the exception and shows functionality that should be added to the storage interface.
     bool truncate;
 
-    // Is the file compressible?  This is used when the file must be moved across a network and temporary compression is helpful.
+    // Is the file compressible? This is used when the file must be moved across a network and temporary compression is helpful.
     bool compressible;
 } StorageInterfaceNewWriteParam;
 

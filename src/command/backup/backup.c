@@ -106,11 +106,11 @@ backupLabelCreate(const BackupType type, const String *const backupLabelPrior, c
 
         if (backupLabelLatest != NULL && strCmp(result, backupLabelLatest) <= 0)
         {
-            // If that didn't give us a later label then add one second.  It's possible that two backups (they would need to be
+            // If that didn't give us a later label then add one second. It's possible that two backups (they would need to be
             // offline or halted online) have run very close together.
             result = backupLabelFormat(type, backupLabelPrior, timestamp + 1);
 
-            // If the label is still not latest then error.  There is probably a timezone change or massive clock skew.
+            // If the label is still not latest then error. There is probably a timezone change or massive clock skew.
             if (strCmp(result, backupLabelLatest) <= 0)
             {
                 THROW_FMT(
@@ -243,7 +243,7 @@ backupInit(const InfoBackup *const infoBackup)
         {
             cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, VARBOOL(pgControl.pageChecksum));
         }
-        // Else set to false.  An offline cluster is likely to have false positives so better if the user enables manually.
+        // Else set to false. An offline cluster is likely to have false positives so better if the user enables manually.
         else
             cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, BOOL_FALSE_VAR);
     }
@@ -596,8 +596,8 @@ backupBuildIncrPrior(const InfoBackup *const infoBackup)
                         "%s backup cannot alter " CFGOPT_COMPRESS_TYPE " option to '%s', reset to value in %s",
                         strZ(cfgOptionDisplay(cfgOptType)), strZ(cfgOptionDisplay(cfgOptCompressType)), strZ(backupLabelPrior));
 
-                    // Set the compression type back to whatever was in the prior backup.  This is not strictly needed since we
-                    // could store compression type on a per file basis, but it seems simplest and safest for now.
+                    // Set the compression type back to whatever was in the prior backup. This is not strictly needed since we could
+                    // store compression type on a per file basis, but it seems simplest and safest for now.
                     cfgOptionSet(
                         cfgOptCompressType, cfgSourceParam, VARSTR(compressTypeStr(manifestPriorData->backupOptionCompressType)));
 
@@ -614,14 +614,14 @@ backupBuildIncrPrior(const InfoBackup *const infoBackup)
                         cfgOptCompressLevel, cfgSourceParam, VARINT64(varUInt(manifestPriorData->backupOptionCompressLevel)));
                 }
 
-                // If not defined this backup was done in a version prior to page checksums being introduced.  Just set
-                // checksum-page to false and move on without a warning.  Page checksums will start on the next full backup.
+                // If not defined this backup was done in a version prior to page checksums being introduced. Just set checksum-page
+                // to false and move on without a warning. Page checksums will start on the next full backup.
                 if (manifestData(result)->backupOptionChecksumPage == NULL)
                 {
                     cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, BOOL_FALSE_VAR);
                 }
-                // Don't allow the checksum-page option to change in a diff or incr backup.  This could be confusing as only
-                // certain files would be checksummed and the list could be incomplete during reporting.
+                // Don't allow the checksum-page option to change in a diff or incr backup. This could be confusing as only certain
+                // files would be checksummed and the list could be incomplete during reporting.
                 else
                 {
                     const bool checksumPagePrior = varBool(manifestData(result)->backupOptionChecksumPage);
@@ -1850,7 +1850,7 @@ backupProcessQueue(const BackupData *const backupData, Manifest *const manifest,
                 "HINT: is something wrong with the clock or filesystem timestamps?");
         }
 
-        // If there are no files to backup then we'll exit with an error.  This could happen if the database is down and backup is
+        // If there are no files to backup then we'll exit with an error. This could happen if the database is down and backup is
         // called with --no-online twice in a row.
         if (fileTotal == 0)
             THROW(FileMissingError, "no files have changed since the last backup - this seems unlikely");
@@ -1911,7 +1911,7 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
         // Get a new job if there are any left
         BackupJobData *const jobData = data;
 
-        // Determine where to begin scanning the queue (we'll stop when we get back here).  When copying from the primary during
+        // Determine where to begin scanning the queue (we'll stop when we get back here). When copying from the primary during
         // backup from standby only queue 0 will be used.
         const unsigned int queueOffset = jobData->backupStandby && clientIdx > 0 ? 1 : 0;
         int queueIdx =
@@ -2162,7 +2162,7 @@ backupProcess(
         // First client is always on the primary
         protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypePg, backupData->pgIdxPrimary, 1));
 
-        // Create the rest of the clients on the primary or standby depending on the value of backup-standby.  Note that standby
+        // Create the rest of the clients on the primary or standby depending on the value of backup-standby. Note that standby
         // backups don't count the primary client in process-max.
         const unsigned int processMax = cfgOptionUInt(cfgOptProcessMax) + (backupStandby ? 1 : 0);
         const unsigned int pgIdx = backupStandby ? backupData->pgIdxStandby : backupData->pgIdxPrimary;
@@ -2230,7 +2230,7 @@ backupProcess(
             ASSERT(lstEmpty(*(List **)lstGet(jobData.queueList, queueIdx)));
 #endif
 
-        // Remove files from the manifest that were removed during the backup.  This must happen after processing to avoid
+        // Remove files from the manifest that were removed during the backup. This must happen after processing to avoid
         // invalidating pointers by deleting items from the list.
         for (unsigned int fileRemoveIdx = 0; fileRemoveIdx < strLstSize(fileRemove); fileRemoveIdx++)
             manifestFileRemove(manifest, strLstGet(fileRemove, fileRemoveIdx));
@@ -2299,8 +2299,8 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
 
     ASSERT(manifest != NULL);
 
-    // If archive logs are required to complete the backup, then check them.  This is the default, but can be overridden if the
-    // archive logs are going to a different server.  Be careful of disabling this option because there is no way to verify that the
+    // If archive logs are required to complete the backup, then check them. This is the default, but can be overridden if the
+    // archive logs are going to a different server. Be careful of disabling this option because there is no way to verify that the
     // backup will be consistent - at least not here.
     if (cfgOptionBool(cfgOptArchiveCheck))
     {
@@ -2431,7 +2431,7 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
     {
         const String *const backupLabel = manifestData(manifest)->backupLabel;
 
-        // Validation and final save of the backup manifest.  Validate in strict mode to catch as many potential issues as possible.
+        // Validation and final save of the backup manifest. Validate in strict mode to catch as many potential issues as possible.
         // -------------------------------------------------------------------------------------------------------------------------
         manifestValidate(manifest, true);
 
@@ -2444,7 +2444,7 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
                 storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel))));
 
         // Copy a compressed version of the manifest to history. If the repo is encrypted then the passphrase to open the manifest
-        // is required.  We can't just do a straight copy since the destination needs to be compressed and that must happen before
+        // is required. We can't just do a straight copy since the destination needs to be compressed and that must happen before
         // encryption in order to be efficient. Compression will always be gz for compatibility and since it is always available.
         // -------------------------------------------------------------------------------------------------------------------------
         StorageRead *const manifestRead = storageNewReadP(
@@ -2472,8 +2472,8 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
         if (storageFeature(storageRepoWrite(), storageFeaturePathSync))
             storagePathSyncP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY));
 
-        // Create a symlink to the most recent backup if supported.  This link is purely informational for the user and is never
-        // used by us since symlinks are not supported on all storage types.
+        // Create a symlink to the most recent backup if supported. This link is purely informational for the user and is never used
+        // by us since symlinks are not supported on all storage types.
         // -------------------------------------------------------------------------------------------------------------------------
         backupLinkLatest(backupLabel, cfgOptionGroupIdxDefault(cfgOptGrpRepo));
 

@@ -475,7 +475,7 @@ sub build
             $oNode->paramSet('depend-default', $strDependPrev);
         }
 
-        # Set log to true if this section has an execute list.  This helps reduce the info logging by only showing sections that are
+        # Set log to true if this section has an execute list. This helps reduce the info logging by only showing sections that are
         # likely to take a log time.
         $oNode->paramSet('log', $self->{bExe} && $oNode->nodeList('execute-list', false) > 0 ? true : false);
 

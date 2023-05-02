@@ -3,7 +3,7 @@ HTTP Client
 
 A robust HTTP client with connection reuse and automatic retries.
 
-Using a single object to make multiple requests is more efficient because connections are reused whenever possible.  Requests are
+Using a single object to make multiple requests is more efficient because connections are reused whenever possible. Requests are
 automatically retried when the connection has been closed by the server. Any 5xx response is also retried.
 
 Only the HTTPS protocol is currently supported.

@@ -145,7 +145,7 @@ httpResponseRead(THIS_VOID, Buffer *buffer, bool block)
                     if (this->contentRemaining > 0)
                     {
                         // If the buffer is larger than the content that needs to be read then limit the buffer size so the read
-                        // won't block or read too far.  Casting to size_t is safe on 32-bit because we know the max buffer size is
+                        // won't block or read too far. Casting to size_t is safe on 32-bit because we know the max buffer size is
                         // defined as less than 2^32 so content remaining can't be more than that.
                         if (bufRemains(buffer) > this->contentRemaining)
                             bufLimitSet(buffer, bufSize(buffer) - (bufRemains(buffer) - (size_t)this->contentRemaining));
@@ -310,7 +310,7 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
                     this->contentRemaining = this->contentSize;
                 }
 
-                // If the server notified of a closed connection then close the client connection after reading content.  This
+                // If the server notified of a closed connection then close the client connection after reading content. This
                 // prevents doing a retry on the next request when using the closed connection.
                 if (strEq(headerKey, HTTP_HEADER_CONNECTION_STR) && strEq(strLower(headerValue), HTTP_VALUE_CONNECTION_CLOSE_STR))
                     this->closeOnContentEof = true;
@@ -328,12 +328,12 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
                     HTTP_HEADER_CONTENT_LENGTH);
             }
 
-            // Was content returned in the response?  HEAD will report content but not actually return any.
+            // Was content returned in the response? HEAD will report content but not actually return any.
             this->contentExists =
                 (this->contentChunked || this->contentSize > 0 || this->closeOnContentEof) && !strEq(verb, HTTP_VERB_HEAD_STR);
             this->contentEof = !this->contentExists;
 
-            // Create an io object, even if there is no content.  This makes the logic for readers easier -- they can just check eof
+            // Create an io object, even if there is no content. This makes the logic for readers easier -- they can just check eof
             // rather than also checking if the io object exists.
             MEM_CONTEXT_OBJ_BEGIN(this)
             {

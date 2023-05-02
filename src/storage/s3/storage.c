@@ -205,8 +205,8 @@ storageS3Auth(
             AWS4_HMAC_SHA256 "\n%s\n%s/%s/" S3 "/" AWS4_REQUEST "\n%s", strZ(dateTime), strZ(date), strZ(this->region),
             strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha256, BUFSTR(canonicalRequest)))));
 
-        // Generate signing key.  This key only needs to be regenerated every seven days but we'll do it once a day to keep the
-        // logic simple.  It's a relatively expensive operation so we'd rather not do it for every request.
+        // Generate signing key. This key only needs to be regenerated every seven days but we'll do it once a day to keep the
+        // logic simple. It's a relatively expensive operation so we'd rather not do it for every request.
         // If the cached signing key has expired (or has none been generated) then regenerate it
         if (!strEq(date, this->signingKeyDate))
         {

@@ -855,12 +855,12 @@ sub build
             $strManifestType = MANIFEST_VALUE_PATH;
         }
 
-        # Skip wal directory when doing an online backup.  WAL will be restored from the archive or stored in the wal directory at
+        # Skip wal directory when doing an online backup. WAL will be restored from the archive or stored in the wal directory at
         # the end of the backup if the archive-copy option is set.
         next if ($bOnline && $strFile =~ (qw{^} . MANIFEST_TARGET_PGDATA . qw{/} . $self->walPath() . '\/') &&
                  $strFile !~ ('^' . MANIFEST_TARGET_PGDATA . qw{/} . $self->walPath() . qw{/} . DB_PATH_ARCHIVESTATUS . '$'));
 
-        # Skip all directories and files that start with pgsql_tmp.  The files are removed when the server is restarted and the
+        # Skip all directories and files that start with pgsql_tmp. The files are removed when the server is restarted and the
         # directories are recreated.
         next if $strName =~ ('(^|\/)' . DB_FILE_PREFIX_TMP);
 
@@ -1090,9 +1090,9 @@ sub build
     {
         my $bTimeInFuture = false;
 
-        # Wait for the remainder of the second when doing online backups.  This is done because most filesystems only have a one
+        # Wait for the remainder of the second when doing online backups. This is done because most filesystems only have a one
         # second resolution and Postgres will still be modifying files during the second that the manifest is built and this could
-        # lead to an invalid diff/incr backup later when using timestamps to determine which files have changed.  Offline backups do
+        # lead to an invalid diff/incr backup later when using timestamps to determine which files have changed. Offline backups do
         # not wait because it makes testing much faster and Postgres should not be running (if it is the backup will not be
         # consistent anyway and the one-second resolution problem is the least of our worries).
         my $lTimeBegin = waitRemainder($bOnline);
@@ -1223,7 +1223,7 @@ sub build
 # fileAdd
 #
 # Add files to the manifest that were generated after the initial manifest build, e.g. backup_label, tablespace_map, and copied WAL
-# files.  Since the files were not in the original cluster the user, group, and mode must be defaulted.
+# files. Since the files were not in the original cluster the user, group, and mode must be defaulted.
 ####################################################################################################################################
 sub fileAdd
 {
@@ -1352,7 +1352,7 @@ sub validate
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . 'validate');
 
-    # Make sure that all files have size and checksum (when size > 0).  Since these values are removed before the backup file copy
+    # Make sure that all files have size and checksum (when size > 0). Since these values are removed before the backup file copy
     # starts this ensures that all files had results stored in the manifest during the file copy.
     foreach my $strFile ($self->keys(MANIFEST_SECTION_TARGET_FILE))
     {

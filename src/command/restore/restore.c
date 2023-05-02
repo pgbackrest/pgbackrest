@@ -803,9 +803,9 @@ restoreManifestOwner(const Manifest *const manifest, const String **const rootRe
                 MEM_CONTEXT_PRIOR_END();
             }
         }
-        // Else set owners to NULL.  This means we won't make any attempt to update ownership and will just leave it as written by
-        // the current user/group.  If there are existing files that are not owned by the current user/group then we will attempt
-        // to update them, which will generally cause an error, though some systems allow updates to the group ownership.
+        // Else set owners to NULL. This means we won't make any attempt to update ownership and will just leave it as written by
+        // the current user/group. If there are existing files that are not owned by the current user/group then we will attempt to
+        // update them, which will generally cause an error, though some systems allow updates to the group ownership.
         // -------------------------------------------------------------------------------------------------------------------------
         else
         {
@@ -942,7 +942,7 @@ restoreCleanBuildRecurse(StorageIterator *const storageItr, const RestoreCleanCa
             if (cleanData->basePath && info.type == storageTypeFile && strLstExists(cleanData->fileIgnore, info.name))
                 continue;
 
-            // If this is not a delta then error because the directory is expected to be empty.  Ignore the . path.
+            // If this is not a delta then error because the directory is expected to be empty. Ignore the . path.
             if (!cleanData->delta)
             {
                 THROW_FMT(
@@ -1127,9 +1127,9 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
 
             strLstSort(cleanData->fileIgnore, sortOrderAsc);
 
-            // Check that the path exists.  If not, there's no need to do any cleaning and we'll attempt to create it later.
-            // Don't log check for the same path twice.  There can be multiple links to files in the same path, but logging it more
-            // than once makes the logs noisy and looks like a bug.
+            // Check that the path exists. If not, there's no need to do any cleaning and we'll attempt to create it later. Don't
+            // log check for the same path twice. There can be multiple links to files in the same path, but logging it more than
+            // once makes the logs noisy and looks like a bug.
             if (!strLstExists(pathChecked, cleanData->targetPath))
                 LOG_DETAIL_FMT("check '%s' exists", strZ(cleanData->targetPath));
 
@@ -1201,8 +1201,8 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
 
         // Step 2: Clean target directories
         // -------------------------------------------------------------------------------------------------------------------------
-        // Delete the pg_control file (if it exists) so the cluster cannot be started if restore does not complete.  Sync the path
-        // so the file does not return, zombie-like, in the case of a host crash.
+        // Delete the pg_control file (if it exists) so the cluster cannot be started if restore does not complete. Sync the path so
+        // the file does not return, zombie-like, in the case of a host crash.
         if (storageExistsP(storagePg(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)))
         {
             LOG_DETAIL_FMT(
@@ -1218,10 +1218,10 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
             // Only clean if the target exists
             if (cleanData->exists)
             {
-                // Don't clean file links.  It doesn't matter whether the file exists or not since we know it is in the manifest.
+                // Don't clean file links. It doesn't matter whether the file exists or not since we know it is in the manifest.
                 if (cleanData->target->file == NULL)
                 {
-                    // Only log when doing a delta restore because otherwise the targets should be empty.  We'll still run the clean
+                    // Only log when doing a delta restore because otherwise the targets should be empty. We'll still run the clean
                     // to fix permissions/ownership on the target paths.
                     if (delta)
                         LOG_INFO_FMT("remove invalid files/links/paths from '%s'", strZ(cleanData->targetPath));
@@ -1268,12 +1268,12 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
         {
             const ManifestPath *path = manifestPath(manifest, pathIdx);
 
-            // Skip the pg_tblspc path because it only maps to the manifest.  We should remove this in a future release but not much
+            // Skip the pg_tblspc path because it only maps to the manifest. We should remove this in a future release but not much
             // can be done about it for now.
             if (strEq(path->name, MANIFEST_TARGET_PGTBLSPC_STR))
                 continue;
 
-            // If this path has been mapped as a link then create a link.  The path has already been created as part of target
+            // If this path has been mapped as a link then create a link. The path has already been created as part of target
             // creation (or it might have already existed).
             const ManifestLink *link = manifestLinkFindDefault(
                 manifest,
@@ -1286,7 +1286,7 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
                 const String *pgPath = storagePathP(storagePg(), manifestPathPg(link->name));
                 StorageInfo linkInfo = storageInfoP(storagePg(), pgPath, .ignoreMissing = true);
 
-                // Create the link if it is missing.  If it exists it should already have the correct ownership and destination.
+                // Create the link if it is missing. If it exists it should already have the correct ownership and destination.
                 if (!linkInfo.exists)
                 {
                     LOG_DETAIL_FMT("create symlink '%s' to '%s'", strZ(pgPath), strZ(link->destination));
@@ -1315,7 +1315,7 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
             }
         }
 
-        // Step 4: Create file links.  These don't get created during path creation because they do not have a matching path entry.
+        // Step 4: Create file links. These don't get created during path creation because they do not have a matching path entry.
         // -------------------------------------------------------------------------------------------------------------------------
         for (unsigned int linkIdx = 0; linkIdx < manifestLinkTotal(manifest); linkIdx++)
         {
@@ -1324,7 +1324,7 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
             const String *pgPath = storagePathP(storagePg(), manifestPathPg(link->name));
             StorageInfo linkInfo = storageInfoP(storagePg(), pgPath, .ignoreMissing = true);
 
-            // Create the link if it is missing.  If it exists it should already have the correct ownership and destination.
+            // Create the link if it is missing. If it exists it should already have the correct ownership and destination.
             if (!linkInfo.exists)
             {
                 LOG_DETAIL_FMT("create symlink '%s' to '%s'", strZ(pgPath), strZ(link->destination));
@@ -1565,7 +1565,7 @@ restoreRecoveryOption(unsigned int pgVersion)
                 String *key = strLstGet(recoveryOptionKey, keyIdx);
                 const String *value = varStr(kvGet(recoveryOption, VARSTR(key)));
 
-                // Replace - in key with _.  Since we use - users naturally will as well.
+                // Replace - in key with _. Since we use - users naturally will as well.
                 strReplaceChr(key, '-', '_');
 
                 kvPut(result, VARSTR(key), VARSTR(value));
@@ -1595,9 +1595,9 @@ restoreRecoveryOption(unsigned int pgVersion)
         // Write restore_command
         if (!strLstExists(recoveryOptionKey, RESTORE_COMMAND_STR))
         {
-            // Null out options that it does not make sense to pass from the restore command to archive-get.  All of these have
-            // reasonable defaults so there is no danger of an error -- they just might not be optimal.  In any case, it seems
-            // better than, for example, passing --process-max=32 to archive-get because it was specified for restore.
+            // Null out options that it does not make sense to pass from the restore command to archive-get. All of these have
+            // reasonable defaults so there is no danger of an error -- they just might not be optimal. In any case, it seems better
+            // than, for example, passing --process-max=32 to archive-get because it was specified for restore.
             KeyValue *optionReplace = kvNew();
 
             kvPut(optionReplace, VARSTRDEF(CFGOPT_EXEC_ID), NULL);
@@ -1829,7 +1829,7 @@ restoreRecoveryWriteAutoConf(
         // If recovery was requested then write the recovery options
         if (cfgOptionStrId(cfgOptType) != CFGOPTVAL_TYPE_NONE)
         {
-            // If the user specified standby_mode as a recovery option then error.  It's tempting to just set type=standby in this
+            // If the user specified standby_mode as a recovery option then error. It's tempting to just set type=standby in this
             // case but since config parsing has already happened the target options could be in an invalid state.
             if (cfgOptionTest(cfgOptRecoveryOption))
             {
@@ -1841,7 +1841,7 @@ restoreRecoveryWriteAutoConf(
                     // Get the key and value
                     String *key = strLstGet(recoveryOptionKey, keyIdx);
 
-                    // Replace - in key with _.  Since we use - users naturally will as well.
+                    // Replace - in key with _. Since we use - users naturally will as well.
                     strReplaceChr(key, '-', '_');
 
                     if (strEq(key, STANDBY_MODE_STR))
@@ -2464,7 +2464,7 @@ cmdRestore(void)
         if (!manifestData(jobData.manifest)->backupOptionOnline && cfgOptionSource(cfgOptType) == cfgSourceDefault)
             cfgOptionSet(cfgOptType, cfgSourceParam, VARUINT64(CFGOPTVAL_TYPE_NONE));
 
-        // Validate manifest.  Don't use strict mode because we'd rather ignore problems that won't affect a restore.
+        // Validate manifest. Don't use strict mode because we'd rather ignore problems that won't affect a restore.
         manifestValidate(jobData.manifest, false);
 
         // Get the cipher subpass used to decrypt files in the backup
@@ -2563,7 +2563,7 @@ cmdRestore(void)
             {
                 const String *pgPath = manifestTargetPath(jobData.manifest, target);
 
-                // Don't sync the same path twice.  There can be multiple links to files in the same path, but syncing it more than
+                // Don't sync the same path twice. There can be multiple links to files in the same path, but syncing it more than
                 // once makes the logs noisy and looks like a bug even though it doesn't hurt anything or realistically affect
                 // performance.
                 if (strLstExists(pathSynced, pgPath))
@@ -2582,7 +2582,7 @@ cmdRestore(void)
         {
             const String *manifestName = manifestPath(jobData.manifest, pathIdx)->name;
 
-            // Skip the pg_tblspc path because it only maps to the manifest.  We should remove this in a future release but not much
+            // Skip the pg_tblspc path because it only maps to the manifest. We should remove this in a future release but not much
             // can be done about it for now.
             if (strEqZ(manifestName, MANIFEST_TARGET_PGTBLSPC))
                 continue;

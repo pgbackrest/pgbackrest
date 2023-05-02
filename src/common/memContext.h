@@ -1,10 +1,10 @@
 /***********************************************************************************************************************************
 Memory Context Manager
 
-Memory is allocated inside contexts and all allocations (and child memory contexts) are freed when the context is freed.  The goal
+Memory is allocated inside contexts and all allocations (and child memory contexts) are freed when the context is freed. The goal
 is to make memory management both easier and more performant.
 
-Memory context management is encapsulated in macros so there is rarely any need to call the functions directly.  Memory allocations
+Memory context management is encapsulated in macros so there is rarely any need to call the functions directly. Memory allocations
 are mostly performed in the constructors of objects and reallocated as needed.
 
 See the sections on memory context management and memory allocations below for more details.
@@ -26,15 +26,15 @@ typedef struct MemContext MemContext;
 /***********************************************************************************************************************************
 Define initial number of memory contexts
 
-No space is reserved for child contexts when a new context is created because most contexts will be leaves.  When a child context is
-requested then space will be reserved for this many child contexts initially.  When more space is needed the size will be doubled.
+No space is reserved for child contexts when a new context is created because most contexts will be leaves. When a child context is
+requested then space will be reserved for this many child contexts initially. When more space is needed the size will be doubled.
 ***********************************************************************************************************************************/
 #define MEM_CONTEXT_INITIAL_SIZE                                    4
 
 /***********************************************************************************************************************************
 Define initial number of memory allocations
 
-Space is reserved for this many allocations when a context is created.  When more space is needed the size will be doubled.
+Space is reserved for this many allocations when a context is created. When more space is needed the size will be doubled.
 ***********************************************************************************************************************************/
 #define MEM_CONTEXT_ALLOC_INITIAL_SIZE                              4
 
@@ -78,7 +78,7 @@ FN_EXTERN void *memNew(size_t size);
 // Allocate requested number of pointers and initialize them to NULL
 FN_EXTERN void *memNewPtrArray(size_t size);
 
-// Reallocate to the new size.  Original buffer pointer is undefined on return.
+// Reallocate to the new size. Original buffer pointer is undefined on return.
 FN_EXTERN void *memResize(const void *buffer, size_t size);
 
 // Free memory allocation
@@ -221,7 +221,7 @@ memContextSwitchBack();
 <The memory context must now be kept or discarded>
 memContextKeep()/memContextDiscard();
 
-There is no need to implement any error handling.  The mem context system will automatically clean up any mem contexts that were
+There is no need to implement any error handling. The mem context system will automatically clean up any mem contexts that were
 created but not marked as keep when an error occurs and reset the current mem context to whatever it was at the beginning of the
 nearest try block.
 
@@ -283,8 +283,8 @@ FN_EXTERN void memContextMove(MemContext *this, MemContext *parentNew);
 // Set a function that will be called when this mem context is freed
 FN_EXTERN void memContextCallbackSet(MemContext *this, void (*callbackFunction)(void *), void *);
 
-// Clear the callback function so it won't be called when the mem context is freed.  This is usually done in the object free method
-// after resources have been freed but before memContextFree() is called.  The goal is to prevent the object free method from being
+// Clear the callback function so it won't be called when the mem context is freed. This is usually done in the object free method
+// after resources have been freed but before memContextFree() is called. The goal is to prevent the object free method from being
 // called more than once.
 FN_EXTERN void memContextCallbackClear(MemContext *this);
 
@@ -306,8 +306,8 @@ FN_EXTERN MemContext *memContextCurrent(void);
 // Prior context, i.e. the context that was current before the last memContextSwitch()
 FN_EXTERN MemContext *memContextPrior(void);
 
-// "top" context.  This context is created at initialization and is always present, i.e. it is never freed.  The top context is a
-// good place to put long-lived mem contexts since they won't be automatically freed until the program exits.
+// "top" context. This context is created at initialization and is always present, i.e. it is never freed. The top context is a good
+// place to put long-lived mem contexts since they won't be automatically freed until the program exits.
 FN_EXTERN MemContext *memContextTop(void);
 
 // Get total size of mem context and all children
@@ -326,7 +326,7 @@ Macros for function logging
 /***********************************************************************************************************************************
 Internal functions
 ***********************************************************************************************************************************/
-// Clean up mem contexts after an error.  Should only be called from error handling routines.
+// Clean up mem contexts after an error. Should only be called from error handling routines.
 FN_EXTERN void memContextClean(unsigned int tryDepth, bool fatal);
 
 #endif

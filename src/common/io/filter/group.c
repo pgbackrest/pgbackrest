@@ -174,7 +174,7 @@ ioFilterGroupOpen(IoFilterGroup *this)
 
     MEM_CONTEXT_OBJ_BEGIN(this)
     {
-        // If the last filter is not an output filter then add a filter to buffer/copy data.  Input filters won't copy to an output
+        // If the last filter is not an output filter then add a filter to buffer/copy data. Input filters won't copy to an output
         // buffer so we need some way to get the data to the output buffer.
         if (ioFilterGroupSize(this) == 0 ||
             !ioFilterOutput((ioFilterGroupGet(this, ioFilterGroupSize(this) - 1))->filter))
@@ -182,7 +182,7 @@ ioFilterGroupOpen(IoFilterGroup *this)
             ioFilterGroupAdd(this, ioBufferNew());
         }
 
-        // Create filter input/output buffers.  Input filters do not get an output buffer since they don't produce output.
+        // Create filter input/output buffers. Input filters do not get an output buffer since they don't produce output.
         Buffer **lastOutputBuffer = NULL;
 
         for (unsigned int filterIdx = 0; filterIdx < ioFilterGroupSize(this); filterIdx++)
@@ -198,13 +198,13 @@ ioFilterGroupOpen(IoFilterGroup *this)
             else
             {
                 // This cast is required because the compiler can't guarantee the const-ness of this object, i.e. it could be
-                // modified in other parts of the code.  This is actually expected and the only reason we need this const is to
-                // match the const-ness of the input buffer provided by the caller.
+                // modified in other parts of the code. This is actually expected and the only reason we need this const is to match
+                // the const-ness of the input buffer provided by the caller.
                 filterData->input = (const Buffer **)lastOutputBuffer;
                 filterData->inputLocal = *lastOutputBuffer;
             }
 
-            // If this is not the last output filter then create a new output buffer for it.  The output buffer for the last filter
+            // If this is not the last output filter then create a new output buffer for it. The output buffer for the last filter
             // will be provided to the process function.
             if (ioFilterOutput(filterData->filter) && filterIdx < ioFilterGroupSize(this) - 1)
             {
@@ -256,8 +256,8 @@ ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *output)
         // Start from the first filter by default
         unsigned int filterIdx = 0;
 
-        // Search from the end of the list for a filter that needs the same input.  This indicates that the filter was not able to
-        // empty the input buffer on the last call.  Maybe it won't this time either -- we can but try.
+        // Search from the end of the list for a filter that needs the same input. This indicates that the filter was not able to
+        // empty the input buffer on the last call. Maybe it won't this time either -- we can but try.
         if (ioFilterGroupInputSame(this))
         {
             this->pub.inputSame = false;
@@ -275,13 +275,13 @@ ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *output)
             }
             while (filterIdx != 0);
 
-            // If no filter is found that needs the same input that means we are done with the current input.  So end the loop and
+            // If no filter is found that needs the same input that means we are done with the current input. So end the loop and
             // get some more input.
             if (!ioFilterGroupInputSame(this))
                 break;
         }
 
-        // Process forward from the filter that has input to process.  This may be a filter that needs the same input or it may be
+        // Process forward from the filter that has input to process. This may be a filter that needs the same input or it may be
         // new input for the first filter.
         for (; filterIdx < ioFilterGroupSize(this); filterIdx++)
         {
@@ -301,7 +301,7 @@ ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *output)
                     {
                         this->pub.inputSame = true;
                     }
-                    // Else clear the buffer if it was locally allocated.  If the input buffer was passed in then the caller is
+                    // Else clear the buffer if it was locally allocated. If the input buffer was passed in then the caller is
                     // responsible for clearing it.
                     else if (filterData->inputLocal != NULL)
                         bufUsedZero(filterData->inputLocal);
@@ -315,7 +315,7 @@ ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *output)
                     ioFilterProcessIn(filterData->filter, *filterData->input);
             }
 
-            // If the filter is done and has no more output then null the output buffer.  Downstream filters have a pointer to this
+            // If the filter is done and has no more output then null the output buffer. Downstream filters have a pointer to this
             // buffer so their inputs will also change to null and they'll flush.
             if (filterData->output != NULL && ioFilterDone(filterData->filter) && bufUsed(filterData->output) == 0)
                 filterData->output = NULL;

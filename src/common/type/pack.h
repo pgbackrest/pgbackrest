@@ -19,7 +19,7 @@ incurs extra cost, but depending on the field type larger gaps may require addit
 
 The standard default is the C default for that type (e.g. bool = false, int = 0) but can be changed with the .defaultValue
 parameter. For example, pckWriteBoolP(write, false, .defaultWrite = true) will write a 0 (i.e. false) with a field ID into the pack,
-but pckWriteBoolP(write, false) will not write to the pack, it will simply skip the ID.  Note that
+but pckWriteBoolP(write, false) will not write to the pack, it will simply skip the ID. Note that
 pckWriteStrP(packWrite, NULL, .defaultWrite = true) is not valid since there is no way to explicitly write a NULL.
 
 NULLs are not stored in a pack and are therefore not typed. A NULL is essentially just a gap in the field IDs. Fields that are

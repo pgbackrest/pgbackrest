@@ -290,7 +290,7 @@ pgClientQuery(PgClient *const this, const String *const query, const PgClientQue
                         // Else convert the value to a variant
                         else
                         {
-                            // Convert column type.  Not all PostgreSQL types are supported but these should suffice.
+                            // Convert column type. Not all PostgreSQL types are supported but these should suffice.
                             switch (columnType[columnIdx])
                             {
                                 // Boolean type

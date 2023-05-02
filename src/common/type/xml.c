@@ -38,10 +38,10 @@ struct XmlDocument
 /***********************************************************************************************************************************
 Error handler
 
-For now this is a noop until more detailed error messages are needed.  The function is called multiple times per error, so the
+For now this is a noop until more detailed error messages are needed. The function is called multiple times per error, so the
 messages need to be accumulated and then returned together.
 
-This empty function is required because without it libxml2 will dump errors to stdout.  Really.
+This empty function is required because without it libxml2 will dump errors to stdout. Really.
 ***********************************************************************************************************************************/
 static void
 xmlErrorHandler(void *ctx, const char *format, ...)

@@ -3,8 +3,8 @@ IO Filter Interface
 
 Filters can modify an i/o stream (e.g. GzCompress, GzDecompress), generate a result (e.g. IoSize, CryptoHash), or even do both.
 
-A filter is created using a constructor implemented by each filter (e.g. ioBufferNew).  Filter processing is managed by
-IoFilterGroup so the only user facing functions are ioFilterResult() and ioFilterType().
+A filter is created using a constructor implemented by each filter (e.g. ioBufferNew). Filter processing is managed by IoFilterGroup
+so the only user facing functions are ioFilterResult() and ioFilterType().
 
 Information on implementing a filter is in filter.internal.h.
 ***********************************************************************************************************************************/

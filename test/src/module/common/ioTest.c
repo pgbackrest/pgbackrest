@@ -126,7 +126,7 @@ ioTestFilterSizeNew(const StringId type)
 }
 
 /***********************************************************************************************************************************
-Test filter to multiply input to the output.  It can also flush out a variable number of bytes at the end.
+Test filter to multiply input to the output. It can also flush out a variable number of bytes at the end.
 ***********************************************************************************************************************************/
 typedef struct IoTestFilterMultiply
 {
@@ -393,7 +393,7 @@ testRun(void)
         filterGroup->pub.closed = true;
         TEST_RESULT_UINT(pckReadU64P(ioFilterGroupResultP(filterGroup, STRID5("test", 0xa4cb40))), 777, "    check filter result");
 
-        // Read a zero-size buffer to ensure filters are still processed even when there is no input.  Some filters (e.g. encryption
+        // Read a zero-size buffer to ensure filters are still processed even when there is no input. Some filters (e.g. encryption
         // and compression) will produce output even if there is no input.
         // -------------------------------------------------------------------------------------------------------------------------
         ioBufferSizeSet(1024);

@@ -2192,7 +2192,7 @@ testRun(void)
                 "P00   INFO: restore size = 4B, file total = 1",
                 TEST_PATH, TEST_PATH, TEST_PATH, TEST_PATH));
 
-        // Remove recovery.conf before file comparison since it will have a new timestamp.  Make sure it existed, though.
+        // Remove recovery.conf before file comparison since it will have a new timestamp. Make sure it existed, though.
         HRN_STORAGE_REMOVE(storagePgWrite(), PG_FILE_RECOVERYCONF, .errorOnMissing = true);
 
         TEST_STORAGE_LIST(
