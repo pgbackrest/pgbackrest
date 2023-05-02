@@ -3,8 +3,8 @@
 #
 # Contains definitions for all unit and integration tests.
 #
-# The definitions consist of modules and tests.  Modules group together tests that are related and allow common settings for all the
-# tests.  Every module and test must have a name.  Tests must also have a total.  If this total does not match the actual number of
+# The definitions consist of modules and tests. Modules group together tests that are related and allow common settings for all the
+# tests. Every module and test must have a name. Tests must also have a total. If this total does not match the actual number of
 # runs in a test then an error will be thrown.
 #
 # Most options can be set for modules and tests (test option will override module option if both are set):
@@ -897,7 +897,7 @@ unit:
           - command/repo/rm
 
         include:
-          # command/repo/create is currently for testing purposes only so coverage is not provided except in integration.  In the
+          # command/repo/create is currently for testing purposes only so coverage is not provided except in integration. In the
           # future this will probably be rolled into a custom object store server implementation.
           - command/repo/create
 
@@ -942,8 +942,8 @@ unit:
 # **********************************************************************************************************************************
 # Integration tests
 #
-# Integration tests are not run in a container.  They are expected to create their own containers since most integration runs will
-# create more than one.  For this reason each run is executed individually.
+# Integration tests are not run in a container. They are expected to create their own containers since most integration runs will
+# create more than one. For this reason each run is executed individually.
 # **********************************************************************************************************************************
 integration:
 

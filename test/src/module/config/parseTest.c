@@ -2011,7 +2011,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cfgOptionSet() and cfgOptionIdxSet()");
 
-        TEST_RESULT_VOID(cfgOptionSet(cfgOptForce, cfgSourceParam, VARBOOL(false)), "set boolean");
+        TEST_RESULT_VOID(cfgOptionSet(cfgOptForce, cfgSourceParam, BOOL_FALSE_VAR), "set boolean");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptForce), false, "check boolean");
 
         TEST_RESULT_VOID(cfgOptionSet(cfgOptProtocolTimeout, cfgSourceParam, VARINT64(1000)), "set protocol-timeout to 1");

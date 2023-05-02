@@ -33,7 +33,7 @@
 
         <p><backrest/> aims to be a reliable, easy-to-use backup and restore solution that can seamlessly scale up to the largest databases and workloads by utilizing algorithms that are optimized for database-specific requirements.</p>
 
-        <p><backrest/> <link url="{[github-url-base]}/releases/tag/release/{[version-stable]}">v{[version-stable]}</link> is the current stable release.  Release notes are on the <link page="{[backrest-page-release]}">Releases</link> page.</p>
+        <p><backrest/> <link url="{[github-url-base]}/releases/tag/release/{[version-stable]}">v{[version-stable]}</link> is the current stable release. Release notes are on the <link page="{[backrest-page-release]}">Releases</link> page.</p>
 
         <p>Please find us on <link url="{[github-url-base]}">GitHub</link> and give us a star if you like <backrest/>!</p>
     </section>
@@ -92,7 +92,7 @@
         <section id="page-checksum">
             <title>Page Checksums</title>
 
-            <p><postgres/> has supported page-level checksums since 9.3.  If page checksums are enabled <backrest/> will validate the checksums for every file that is copied during a backup.  All page checksums are validated during a full backup and checksums in files that have changed are validated during differential and incremental backups.</p>
+            <p><postgres/> has supported page-level checksums since 9.3. If page checksums are enabled <backrest/> will validate the checksums for every file that is copied during a backup. All page checksums are validated during a full backup and checksums in files that have changed are validated during differential and incremental backups.</p>
 
             <p>Validation failures do not stop the backup process, but warnings with details of exactly which pages have failed validation are output to the console and file log.</p>
 
@@ -126,22 +126,22 @@
         <section id="parallel-archiving">
             <title>Parallel, Asynchronous WAL Push &amp; Get</title>
 
-            <p>Dedicated commands are included for pushing WAL to the archive and getting WAL from the archive.  Both commands support parallelism to accelerate processing and run asynchronously to provide the fastest possible response time to <postgres/>.</p>
+            <p>Dedicated commands are included for pushing WAL to the archive and getting WAL from the archive. Both commands support parallelism to accelerate processing and run asynchronously to provide the fastest possible response time to <postgres/>.</p>
 
-            <p>WAL push automatically detects WAL segments that are pushed multiple times and de-duplicates when the segment is identical, otherwise an error is raised.  Asynchronous WAL push allows transfer to be offloaded to another process which compresses WAL segments in parallel for maximum throughput.  This can be a critical feature for databases with extremely high write volume.</p>
+            <p>WAL push automatically detects WAL segments that are pushed multiple times and de-duplicates when the segment is identical, otherwise an error is raised. Asynchronous WAL push allows transfer to be offloaded to another process which compresses WAL segments in parallel for maximum throughput. This can be a critical feature for databases with extremely high write volume.</p>
 
-            <p>Asynchronous WAL get maintains a local queue of WAL segments that are decompressed and ready for replay.  This reduces the time needed to provide WAL to <postgres/> which maximizes replay speed.  Higher-latency connections and storage (such as <proper>S3</proper>) benefit the most.</p>
+            <p>Asynchronous WAL get maintains a local queue of WAL segments that are decompressed and ready for replay. This reduces the time needed to provide WAL to <postgres/> which maximizes replay speed. Higher-latency connections and storage (such as <proper>S3</proper>) benefit the most.</p>
 
-            <p>The push and get commands both ensure that the database and repository match by comparing <postgres/> versions and system identifiers.  This virtually eliminates the possibility of misconfiguring the WAL archive location.</p>
+            <p>The push and get commands both ensure that the database and repository match by comparing <postgres/> versions and system identifiers. This virtually eliminates the possibility of misconfiguring the WAL archive location.</p>
         </section>
 
         <!-- =================================================================================================================== -->
         <section id="tablespace-link-support">
             <title>Tablespace &amp; Link Support</title>
 
-            <p>Tablespaces are fully supported and on restore tablespaces can be remapped to any location.  It is also possible to remap all tablespaces to one location with a single command which is useful for development restores.</p>
+            <p>Tablespaces are fully supported and on restore tablespaces can be remapped to any location. It is also possible to remap all tablespaces to one location with a single command which is useful for development restores.</p>
 
-            <p>File and directory links are supported for any file or directory in the <postgres/> cluster.  When restoring it is possible to restore all links to their original locations, remap some or all links, or restore some or all links as normal files or directories within the cluster directory.</p>
+            <p>File and directory links are supported for any file or directory in the <postgres/> cluster. When restoring it is possible to restore all links to their original locations, remap some or all links, or restore some or all links as normal files or directories within the cluster directory.</p>
         </section>
 
         <!-- =================================================================================================================== -->

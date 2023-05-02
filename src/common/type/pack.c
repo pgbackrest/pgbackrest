@@ -45,7 +45,7 @@ Integer types (packTypeMapData[type].valueMultiBit) when an unsigned value is > 
 
   Example: 5e021f
     5 = signed int 64 type
-    e = tag byte low bits:  1 1 1 0 meaning:
+    e = tag byte low bits: 1 1 1 0 meaning:
         "more value indicator bit set to 1" - the actual value is < -1 or > 0
         "more ID delta indicator bit" - there exists a gap (i.e. NULLs are not stored so there is a gap between the stored IDs)
         "ID delta low order bits" - here the bit 1 is set to 1 and bit 0 is not so the ID delta has the second low order bit set but
@@ -63,7 +63,7 @@ String, binary types, and boolean (packTypeMapData[type].valueSingleBit):
 
   Example: 8c090673616d706c65
     8 = string type
-    c = tag byte low bits:  1 1 0 0 meaning:
+    c = tag byte low bits: 1 1 0 0 meaning:
         "value bit" - there is data
         "more ID delta indicator bit" - there exists a gap (i.e. NULLs are not stored so there is a gap between the stored IDs)
     09 = since neither "ID delta low order bits" is set in the tag, they are both 0, so shifting 9 left by 2, the 2 low order bits

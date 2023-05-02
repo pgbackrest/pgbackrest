@@ -23,14 +23,14 @@ push @EXPORT, qw(PROJECT_CONF);
 
 # Project Version Number
 #
-# Defines the current version of the BackRest executable.  The version number is used to track features but does not affect what
+# Defines the current version of the BackRest executable. The version number is used to track features but does not affect what
 # repositories or manifests can be read - that's the job of the format number.
 #-----------------------------------------------------------------------------------------------------------------------------------
 push @EXPORT, qw(PROJECT_VERSION);
 
 # Repository Format Number
 #
-# Defines format for info and manifest files as well as on-disk structure.  If this number changes then the repository will be
+# Defines format for info and manifest files as well as on-disk structure. If this number changes then the repository will be
 # invalid unless migration functions are written.
 #-----------------------------------------------------------------------------------------------------------------------------------
 push @EXPORT, qw(REPOSITORY_FORMAT);

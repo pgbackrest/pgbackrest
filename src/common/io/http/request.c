@@ -139,9 +139,9 @@ httpRequestProcess(HttpRequest *this, bool waitForResponse, bool contentCache)
                     {
                         result = httpResponseNew(session, httpRequestVerb(this), contentCache);
 
-                        // Retry when response code is 5xx.  These errors generally represent a server error for a request that
-                        // looks valid. There are a few errors that might be permanently fatal but they are rare and it seems best
-                        // not to try and pick and choose errors in this class to retry.
+                        // Retry when response code is 5xx. These errors generally represent a server error for a request that looks
+                        // valid. There are a few errors that might be permanently fatal but they are rare and it seems best not to
+                        // try and pick and choose errors in this class to retry.
                         if (httpResponseCode(result) / 100 == HTTP_RESPONSE_CODE_RETRY_CLASS)
                             THROW_FMT(ServiceError, "[%u] %s", httpResponseCode(result), strZ(httpResponseReason(result)));
 

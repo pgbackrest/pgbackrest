@@ -697,7 +697,7 @@ sub owner
         my $iUserId;
         my $iGroupId;
 
-        # If the user or group is not defined then get it by stat'ing the file.  This is because the chown function requires that
+        # If the user or group is not defined then get it by stat'ing the file. This is because the chown function requires that
         # both user and group be set.
         my $oStat = $self->info($strFilePath);
 

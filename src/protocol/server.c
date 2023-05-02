@@ -265,7 +265,7 @@ protocolServerProcess(
                 }
 
                 // Send keep-alive to remotes. When a local process is doing work that does not involve the remote it is important
-                // that the remote does not timeout.  This will send a keep alive once per unit of work that is performed by the
+                // that the remote does not timeout. This will send a keep alive once per unit of work that is performed by the
                 // local process.
                 protocolKeepAlive();
             }

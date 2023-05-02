@@ -75,13 +75,13 @@ path-close: 97
 # Unable to get info for a file
 file-info: 98
 
-# Invalid JSON format.  Eventually this should be a child of format error and share the same code
+# Invalid JSON format. Eventually this should be a child of format error and share the same code
 json-format: 99
 
-# An error from the kernel that there's nothing we can do about.  It should always be fatal.
+# An error from the kernel that there's nothing we can do about. It should always be fatal.
 kernel: 100
 
-# An error from a service that is not our fault, e.g. 5xx errors from an http server.  These may be retried.
+# An error from a service that is not our fault, e.g. 5xx errors from an http server. These may be retried.
 service: 101
 
 # An error while attempting to execute a binary

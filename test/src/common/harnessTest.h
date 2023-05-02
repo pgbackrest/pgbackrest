@@ -63,7 +63,7 @@ const char *testExe(void);
 // Is this test running in a container?
 bool testContainer(void);
 
-// Get the 0-based index of the test.  Useful for modifying resources like port numbers to avoid conflicts when running tests in
+// Get the 0-based index of the test. Useful for modifying resources like port numbers to avoid conflicts when running tests in
 // parallel.
 unsigned int testIdx(void);
 
@@ -377,7 +377,7 @@ Test title macro
     } while (0)
 
 /***********************************************************************************************************************************
-Is this a 64-bit system?  If not then it is 32-bit since 16-bit systems are not supported.
+Is this a 64-bit system? If not then it is 32-bit since 16-bit systems are not supported.
 ***********************************************************************************************************************************/
 #define TEST_64BIT()                                                                                                               \
     (sizeof(size_t) == 8)

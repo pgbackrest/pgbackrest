@@ -157,8 +157,8 @@ backupLinkLatest(const String *const backupLabel, const unsigned int repoIdx)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Create a symlink to the most recent backup if supported.  This link is purely informational for the user and is never
-        // used by us since symlinks are not supported on all storage types.
+        // Create a symlink to the most recent backup if supported. This link is purely informational for the user and is never used
+        // by us since symlinks are not supported on all storage types.
         // -------------------------------------------------------------------------------------------------------------------------
         const String *const latestLink = storagePathP(storageRepoIdx(repoIdx), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_LINK_LATEST));
 

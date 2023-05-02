@@ -354,7 +354,7 @@ sub process
                 }
             }
 
-            # If the option did not come from the command also store in global option list.  This prevents duplication of commonly
+            # If the option did not come from the command also store in global option list. This prevents duplication of commonly
             # used options.
             if ($strOptionSource ne CONFIG_HELP_SOURCE_COMMAND)
             {

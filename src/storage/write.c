@@ -26,7 +26,7 @@ Macros for function logging
     objNameToLog(&value, "StorageWriteInterface", buffer, bufferSize)
 
 /***********************************************************************************************************************************
-This object expects its context to be created in advance.  This is so the calling function can add whatever data it wants without
+This object expects its context to be created in advance. This is so the calling function can add whatever data it wants without
 required multiple functions and contexts to make it safe.
 ***********************************************************************************************************************************/
 FN_EXTERN StorageWrite *

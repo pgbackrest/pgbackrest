@@ -18,7 +18,7 @@ Block Cipher
 /***********************************************************************************************************************************
 Header constants and sizes
 ***********************************************************************************************************************************/
-// Magic constant for salted encrypt.  Only salted encrypt is done here, but this constant is required for compatibility with the
+// Magic constant for salted encrypt. Only salted encrypt is done here, but this constant is required for compatibility with the
 // openssl command-line tool.
 #define CIPHER_BLOCK_MAGIC                                          "Salted__"
 #define CIPHER_BLOCK_MAGIC_SIZE                                     (sizeof(CIPHER_BLOCK_MAGIC) - 1)
@@ -161,8 +161,8 @@ cipherBlockProcessBlock(CipherBlock *this, const unsigned char *source, size_t s
                 source += headerExpected - this->headerSize;
                 sourceSize -= headerExpected - this->headerSize;
 
-                // The first bytes of the file to decrypt should be equal to the magic.  If not then this is not an
-                // encrypted file, or at least not in a format we recognize.
+                // The first bytes of the file to decrypt should be equal to the magic. If not then this is not an encrypted file,
+                // or at least not in a format we recognize.
                 if (!this->raw && memcmp(this->header, CIPHER_BLOCK_MAGIC, CIPHER_BLOCK_MAGIC_SIZE) != 0)
                     THROW(CryptoError, "cipher header invalid");
             }
@@ -321,8 +321,8 @@ cipherBlockProcess(THIS_VOID, const Buffer *source, Buffer *destination)
 
         if (source == NULL)
         {
-            // If salt was not generated it means that process() was never called with any data.  It's OK to encrypt a zero byte
-            // file but we need to call process to generate the header.
+            // If salt was not generated it means that process() was never called with any data. It's OK to encrypt a zero byte file
+            // but we need to call process to generate the header.
             if (!this->saltDone)
             {
                 destinationSizeActual = cipherBlockProcessBlock(this, NULL, 0, bufRemainsPtr(outputActual));
@@ -400,8 +400,8 @@ cipherBlockNew(const CipherMode mode, const CipherType cipherType, const Buffer 
     // Init crypto subsystem
     cryptoInit();
 
-    // Lookup cipher by name.  This means the ciphers passed in must exactly match a name expected by OpenSSL.  This is a good
-    // thing since the name required by the openssl command-line tool will match what is used by pgBackRest.
+    // Lookup cipher by name. This means the ciphers passed in must exactly match a name expected by OpenSSL. This is a good thing
+    // since the name required by the openssl command-line tool will match what is used by pgBackRest.
     String *const cipherTypeStr = strIdToStr(cipherType);
     const EVP_CIPHER *cipher = EVP_get_cipherbyname(strZ(cipherTypeStr));
 
@@ -410,7 +410,7 @@ cipherBlockNew(const CipherMode mode, const CipherType cipherType, const Buffer 
 
     strFree(cipherTypeStr);
 
-    // Lookup digest.  If not defined it will be set to sha1.
+    // Lookup digest. If not defined it will be set to sha1.
     const EVP_MD *digest = NULL;
 
     if (param.digest)

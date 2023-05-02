@@ -31,7 +31,7 @@ to:
 pgbackrest/test/test.pl --code-count
 ```
 
-## Build release documentation.  Be sure to install latex using the instructions from the Vagrantfile before running this step.
+## Build release documentation. Be sure to install latex using the instructions from the Vagrantfile before running this step.
 ```
 pgbackrest/doc/release.pl --build
 ```
@@ -133,7 +133,7 @@ v2.14: Bug Fix and Improvements
 - Add user guide for Debian.
 ```
 
-The first line will be the release title and the rest will be the body.  The tag field should be updated with the current version so a tag is created from main. **Be sure to select the release commit explicitly rather than auto-tagging the last commit in main!**
+The first line will be the release title and the rest will be the body. The tag field should be updated with the current version so a tag is created from main. **Be sure to select the release commit explicitly rather than auto-tagging the last commit in main!**
 
 ## Push web documentation to main and deploy
 ```

@@ -108,8 +108,8 @@ ioFilterProcessInOut(IoFilter *this, const Buffer *input, Buffer *output)
 }
 
 /***********************************************************************************************************************************
-If done is not defined by the filter then check inputSame.  If inputSame is true then the filter is not done.  Even if the filter
-is done the interface will not report done until the interface is flushing.
+If done is not defined by the filter then check inputSame. If inputSame is true then the filter is not done. Even if the filter is
+done the interface will not report done until the interface is flushing.
 ***********************************************************************************************************************************/
 FN_EXTERN bool
 ioFilterDone(const IoFilter *this)

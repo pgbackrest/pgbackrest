@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Database Client
 
-Implements the required PostgreSQL queries and commands.  Notice that there is no general purpose query function -- all queries are
+Implements the required PostgreSQL queries and commands. Notice that there is no general purpose query function -- all queries are
 expected to be embedded in this object.
 ***********************************************************************************************************************************/
 #ifndef DB_DB_H

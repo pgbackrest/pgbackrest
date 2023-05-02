@@ -24,7 +24,7 @@ testCompress(IoFilter *compress, Buffer *decompressed, size_t inputSize, size_t 
     // Compress input data
     while (inputTotal < bufSize(decompressed))
     {
-        // Generate the input buffer based on input size.  This breaks the data up into chunks as it would be in a real scenario.
+        // Generate the input buffer based on input size. This breaks the data up into chunks as it would be in a real scenario.
         Buffer *input = bufNewC(
             bufPtr(decompressed) + inputTotal,
             inputSize > bufSize(decompressed) - inputTotal ? bufSize(decompressed) - inputTotal : inputSize);
