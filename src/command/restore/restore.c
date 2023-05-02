@@ -84,8 +84,8 @@ restorePathValidate(void)
                 strZ(cfgOptionDisplay(cfgOptPgPath)));
 
             // Disable delta and force so restore will fail if the directories are not empty
-            cfgOptionSet(cfgOptDelta, cfgSourceDefault, VARBOOL(false));
-            cfgOptionSet(cfgOptForce, cfgSourceDefault, VARBOOL(false));
+            cfgOptionSet(cfgOptDelta, cfgSourceDefault, BOOL_FALSE_VAR);
+            cfgOptionSet(cfgOptForce, cfgSourceDefault, BOOL_FALSE_VAR);
         }
     }
     MEM_CONTEXT_TEMP_END();
