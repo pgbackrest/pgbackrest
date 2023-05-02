@@ -79,8 +79,8 @@ restorePathValidate(void)
         {
             LOG_WARN_FMT(
                 "--delta or --force specified but unable to find '" PG_FILE_PGVERSION "' or '" BACKUP_MANIFEST_FILE "' in '%s' to"
-                " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
-                " exist in the destination directories the restore will be aborted.",
+                " confirm that this is a valid $PGDATA directory. --delta and --force have been disabled and if any files exist"
+                " in the destination directories the restore will be aborted.",
                 strZ(cfgOptionDisplay(cfgOptPgPath)));
 
             // Disable delta and force so restore will fail if the directories are not empty
