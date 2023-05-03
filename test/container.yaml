@@ -1,8 +1,8 @@
 # **********************************************************************************************************************************
 # Container Cache
 #
-# Contains hashes for containers that are available on Docker hub.  If present, the container can be pulled instead of being built
-# locally which saves a lot of time.  Note: these are hashes of the Dockerfile not the actual binary image.
+# Contains hashes for containers that are available on Docker hub. If present, the container can be pulled instead of being built
+# locally which saves a lot of time. Note: these are hashes of the Dockerfile not the actual binary image.
 #
 # To build a new image:
 # - if Dockerfile has changed, just build as usual

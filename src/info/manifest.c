@@ -46,7 +46,7 @@ struct Manifest
 /***********************************************************************************************************************************
 Internal functions to add types to their lists
 ***********************************************************************************************************************************/
-// Helper to add owner to the owner list if it is not there already and return the pointer.  This saves a lot of space.
+// Helper to add owner to the owner list if it is not there already and return the pointer. This saves a lot of space.
 static const String *
 manifestOwnerCache(Manifest *this, const String *owner)
 {
@@ -865,7 +865,7 @@ manifestBuildInfo(
     ASSERT(pgPath != NULL);
     ASSERT(info != NULL);
 
-    // Skip any path/file/link that begins with pgsql_tmp.  The files are removed when the server is restarted and the directories
+    // Skip any path/file/link that begins with pgsql_tmp. The files are removed when the server is restarted and the directories
     // are recreated.
     if (strBeginsWithZ(info->name, PG_PREFIX_PGSQLTMP))
         FUNCTION_TEST_RETURN_VOID();
@@ -997,9 +997,9 @@ manifestBuildInfo(
                     strZ(manifestName));
             }
 
-            // Skip pg_internal.init since it is recreated on startup.  It's also possible, (though unlikely) that a temp file with
-            // the creating process id as the extension can exist so skip that as well.  This seems to be a bug in PostgreSQL since
-            // the temp file should be removed on startup.  Use regExpMatchOne() here instead of preparing a regexp in advance since
+            // Skip pg_internal.init since it is recreated on startup. It's also possible, (though unlikely) that a temp file with
+            // the creating process id as the extension can exist so skip that as well. This seems to be a bug in PostgreSQL since
+            // the temp file should be removed on startup. Use regExpMatchOne() here instead of preparing a regexp in advance since
             // the likelihood of needing the regexp should be very small.
             if (dbPath && strBeginsWithZ(info->name, PG_FILE_PGINTERNALINIT) &&
                 (strSize(info->name) == sizeof(PG_FILE_PGINTERNALINIT) - 1 ||
@@ -1086,8 +1086,8 @@ manifestBuildInfo(
         // -------------------------------------------------------------------------------------------------------------------------
         case storageTypeLink:
         {
-            // If the destination is another link then error.  In the future we'll allow this by following the link chain to the
-            // eventual destination but for now we are trying to maintain compatibility during the migration.  To do this check we
+            // If the destination is another link then error. In the future we'll allow this by following the link chain to the
+            // eventual destination but for now we are trying to maintain compatibility during the migration. To do this check we
             // need to read outside of the data directory but it is a read-only operation so is considered safe.
             const String *linkDestinationAbsolute = strPathAbsolute(info->linkDestination, pgPath);
 
@@ -1122,7 +1122,7 @@ manifestBuildInfo(
             // Is this a tablespace?
             if (strEq(manifestParentName, STRDEF(MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC)))
             {
-                // Strip pg_data off the manifest name so it begins with pg_tblspc instead.  This reflects how the files are stored
+                // Strip pg_data off the manifest name so it begins with pg_tblspc instead. This reflects how the files are stored
                 // in the backup directory.
                 manifestName = strSub(manifestName, sizeof(MANIFEST_TARGET_PGDATA));
 
@@ -1146,7 +1146,7 @@ manifestBuildInfo(
                         pckReadArrayEndP(read);
                     }
 
-                    // Error if the tablespace could not be found.  ??? This seems excessive, perhaps just warn here?
+                    // Error if the tablespace could not be found. ??? This seems excessive, perhaps just warn here?
                     if (target.tablespaceName == NULL)
                     {
                         THROW_FMT(
@@ -1161,7 +1161,7 @@ manifestBuildInfo(
                 if (target.tablespaceName == NULL)
                     target.tablespaceName = strNewFmt("ts%s", strZ(info->name));
 
-                // Add a dummy pg_tblspc path entry if it does not already exist.  This entry will be ignored by restore but it is
+                // Add a dummy pg_tblspc path entry if it does not already exist. This entry will be ignored by restore but it is
                 // part of the original manifest format so we need to have it.
                 lstSort(buildData->manifest->pub.pathList, sortOrderAsc);
                 const ManifestPath *pathBase = manifestPathFind(buildData->manifest, MANIFEST_TARGET_PGDATA_STR);
@@ -1226,8 +1226,8 @@ manifestBuildInfo(
                     target.file = strBase(info->linkDestination);
                 }
             }
-            // Else dummy up the target with a destination so manifestLinkCheck() can be run.  This is so errors about links with
-            // destinations in PGDATA will take precedence over missing a destination.  We will probably simplify this once the
+            // Else dummy up the target with a destination so manifestLinkCheck() can be run. This is so errors about links with
+            // destinations in PGDATA will take precedence over missing a destination. We will probably simplify this once the
             // migration is done and it doesn't matter which error takes precedence.
             else
                 target.path = info->linkDestination;
@@ -1416,8 +1416,8 @@ manifestNewBuild(
             lstSort(this->pub.pathList, sortOrderAsc);
             lstSort(this->pub.targetList, sortOrderAsc);
 
-            // Remove unlogged relations from the manifest.  This can't be done during the initial build because of the requirement
-            // to check for _init files which will sort after the vast majority of the relation files.  We could check storage for
+            // Remove unlogged relations from the manifest. This can't be done during the initial build because of the requirement
+            // to check for _init files which will sort after the vast majority of the relation files. We could check storage for
             // each _init file but that would be expensive.
             // -------------------------------------------------------------------------------------------------------------------------
             RegExp *relationExp = regExpNew(strNewFmt("^" DB_PATH_EXP "/" RELATION_EXP "$", strZ(buildData.tablespaceId)));
@@ -1432,7 +1432,7 @@ manifestNewBuild(
 
             while (fileIdx < manifestFileTotal(this))
             {
-                // If this file looks like a relation.  Note that this never matches on _init forks.
+                // If this file looks like a relation. Note that this never matches on _init forks.
                 const String *const filePathName = manifestFileNameGet(this, fileIdx);
 
                 if (regExpMatch(relationExp, filePathName))
@@ -1510,12 +1510,12 @@ manifestBuildValidate(Manifest *this, bool delta, time_t copyStart, CompressType
 
     MEM_CONTEXT_BEGIN(this->pub.memContext)
     {
-        // Store the delta option.  If true we can skip checks that automatically enable delta.
+        // Store the delta option. If true we can skip checks that automatically enable delta.
         this->pub.data.backupOptionDelta = varNewBool(delta);
 
         // If online then add one second to the copy start time to allow for database updates during the last second that the
-        // manifest was being built.  It's up to the caller to actually wait the remainder of the second, but for comparison
-        // purposes we want the time when the waiting started.
+        // manifest was being built. It's up to the caller to actually wait the remainder of the second, but for comparison purposes
+        // we want the time when the waiting started.
         this->pub.data.backupTimestampCopyStart = copyStart + (this->pub.data.backupOptionOnline ? 1 : 0);
 
         // This value is not needed in this function, but it is needed for resumed manifests and this is last place to set it before
@@ -1608,7 +1608,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
             this->pub.data.backupOptionDelta = BOOL_TRUE_VAR;
         }
 
-        // Check for anomalies between manifests if delta is not already enabled.  This can't be combined with the main comparison
+        // Check for anomalies between manifests if delta is not already enabled. This can't be combined with the main comparison
         // loop below because delta changes the behavior of that loop.
         if (!varBool(this->pub.data.backupOptionDelta))
         {
@@ -1903,8 +1903,8 @@ typedef struct ManifestLoadData
     const Variant *pathUserDefault;                                 // Path default user
 } ManifestLoadData;
 
-// Helper to transform a variant that could be boolean or string into a string.  If the boolean is false return NULL else return
-// the string.  The boolean cannot be true.
+// Helper to transform a variant that could be boolean or string into a string. If the boolean is false return NULL else return the
+// string. The boolean cannot be true.
 static const String *
 manifestOwnerGet(const Variant *owner)
 {
@@ -1914,7 +1914,7 @@ manifestOwnerGet(const Variant *owner)
 
     ASSERT(owner != NULL);
 
-    // If bool then it should be false.  This indicates that the owner could not be mapped to a name during the backup.
+    // If bool then it should be false. This indicates that the owner could not be mapped to a name during the backup.
     if (varType(owner) == varTypeBool)
     {
         CHECK(FormatError, !varBool(owner), "owner bool must be false");
@@ -2298,8 +2298,8 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
             // Historically this option meant to add gz compression
             else if (strEqZ(key, MANIFEST_KEY_OPTION_COMPRESS))
                 manifest->pub.data.backupOptionCompressType = varBool(jsonToVar(value)) ? compressTypeGz : compressTypeNone;
-            // This new option allows any type of compression to be specified.  It must be parsed after the option above so the
-            // value does not get overwritten.  Since options are stored in alpha order this should always be true.
+            // This new option allows any type of compression to be specified. It must be parsed after the option above so the value
+            // does not get overwritten. Since options are stored in alpha order this should always be true.
             else if (strEqZ(key, MANIFEST_KEY_OPTION_COMPRESS_TYPE))
                 manifest->pub.data.backupOptionCompressType = compressTypeEnum(strIdFromStr(varStr(jsonToVar(value))));
             else if (strEqZ(key, MANIFEST_KEY_OPTION_HARDLINK))
@@ -2402,7 +2402,7 @@ manifestNewLoad(IoRead *read)
                 path->user = manifestOwnerCache(this, manifestOwnerGet(loadData.pathUserDefault));
         }
 
-        // Sort the lists.  They should already be sorted in the file but it is possible that this system has a different collation
+        // Sort the lists. They should already be sorted in the file but it is possible that this system has a different collation
         // that renders that sort useless.
         //
         // This must happen *after* the default processing because found lists are in natural file order and it is not worth writing
@@ -2435,7 +2435,7 @@ typedef struct ManifestSaveData
     mode_t pathModeDefault;                                         // Path default mode
 } ManifestSaveData;
 
-// Helper to convert the owner MCV to a default.  If the input is NULL boolean false should be returned, else the owner string.
+// Helper to convert the owner MCV to a default. If the input is NULL boolean false should be returned, else the owner string.
 static const Variant *
 manifestOwnerVar(const String *ownerDefault)
 {
@@ -2590,7 +2590,7 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
                 jsonFromVar(manifest->pub.data.backupOptionChecksumPage));
         }
 
-        // Set the option when compression is turned on.  In older versions this also implied gz compression but in newer versions
+        // Set the option when compression is turned on. In older versions this also implied gz compression but in newer versions
         // the type option must also be set if compression is not gz.
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_OPTION_COMPRESS,
@@ -2610,7 +2610,7 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
                 jsonFromVar(manifest->pub.data.backupOptionCompressLevelNetwork));
         }
 
-        // Set the compression type.  Older versions will ignore this and assume gz compression if the compress option is set.
+        // Set the compression type. Older versions will ignore this and assume gz compression if the compress option is set.
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_OPTION_COMPRESS_TYPE,
             jsonFromVar(VARSTR(compressTypeStr(manifest->pub.data.backupOptionCompressType))));
@@ -2734,8 +2734,8 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
                         jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_BUNDLE_OFFSET), file.bundleOffset);
                 }
 
-                // Save if the file size is not zero and the checksum exists.  The checksum might not exist if this is a partial
-                // save performed during a backup.
+                // Save if the file size is not zero and the checksum exists. The checksum might not exist if this is a partial save
+                // performed during a backup.
                 if (file.size != 0 && file.checksumSha1 != NULL)
                 {
                     jsonWriteStr(

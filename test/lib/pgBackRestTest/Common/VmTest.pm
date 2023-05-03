@@ -344,7 +344,7 @@ sub vmValid
 push @EXPORT, qw(vmValid);
 
 ####################################################################################################################################
-# Which vm to use for the test matrix.  If one of the standard four, then use that, else use VM4.
+# Which vm to use for the test matrix. If one of the standard four, then use that, else use VM4.
 ####################################################################################################################################
 sub vmTest
 {

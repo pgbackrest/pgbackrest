@@ -233,7 +233,7 @@ yamlScalarCheck(const YamlEvent event, const String *const value)
     if (event.type != yamlEventTypeScalar)
     {
         THROW_FMT(
-            FormatError, "expected scalar '%s' but got event  type '%s' at line %zu, column %zu", strZ(value),
+            FormatError, "expected scalar '%s' but got event type '%s' at line %zu, column %zu", strZ(value),
             strZ(strIdToStr(event.type)), event.line, event.column);
     }
 

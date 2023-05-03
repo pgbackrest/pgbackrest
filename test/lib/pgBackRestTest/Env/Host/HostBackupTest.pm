@@ -467,7 +467,7 @@ sub backupEnd
                     }
                 }
             }
-            # Else there should not be a tablespace directory at all.  This is only valid for storage that supports links.
+            # Else there should not be a tablespace directory at all. This is only valid for storage that supports links.
             elsif (storageRepo()->capability(STORAGE_CAPABILITY_LINK) &&
                    storageTest()->pathExists(
                        $self->repoBackupPath("${strBackup}/" . MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC)))
@@ -1261,7 +1261,7 @@ sub configCreate
                 $oParamHash{$strStanza}{'pg256-host-key-file'} = testRunGet()->basePath() . HOST_CLIENT_KEY;
             }
 
-            # Only test explicit ports on the backup server.  This is so locally configured ports are also tested.
+            # Only test explicit ports on the backup server. This is so locally configured ports are also tested.
             if (!$self->synthetic() && $self->nameTest(HOST_BACKUP))
             {
                 $oParamHash{$strStanza}{"pg256-port"} = $oHostDb2->pgPort();
@@ -1414,8 +1414,8 @@ sub configUpdate
 ####################################################################################################################################
 # manifestMunge
 #
-# Allows for munging of the manifest while making it appear to be valid.  This is used to create various error conditions that
-# should be caught by the unit tests.
+# Allows for munging of the manifest while making it appear to be valid. This is used to create various error conditions that should
+# be caught by the unit tests.
 ####################################################################################################################################
 sub manifestMunge
 {

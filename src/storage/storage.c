@@ -424,8 +424,8 @@ storageMove(const Storage *this, StorageRead *source, StorageWrite *destination)
             // Remove the source file
             storageInterfaceRemoveP(storageDriver(this), storageReadName(source));
 
-            // Sync source path if the destination path was synced.  We know the source and destination paths are different because
-            // the move did not succeed.  This will need updating when drivers other than Posix/CIFS are implemented because there's
+            // Sync source path if the destination path was synced. We know the source and destination paths are different because
+            // the move did not succeed. This will need updating when drivers other than Posix/CIFS are implemented because there's
             // no way to get coverage on it now.
             if (storageWriteSyncPath(destination))
                 storageInterfacePathSyncP(storageDriver(this), strPath(storageReadName(source)));

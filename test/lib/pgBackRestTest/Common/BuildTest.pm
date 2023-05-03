@@ -25,7 +25,7 @@ use constant BUILD_AUTO_H                                           => 'build.au
     push @EXPORT, qw(BUILD_AUTO_H);
 
 ####################################################################################################################################
-# Save contents to a file if the file is missing or the contents are different.  This saves write IO and prevents the timestamp from
+# Save contents to a file if the file is missing or the contents are different. This saves write IO and prevents the timestamp from
 # changing.
 ####################################################################################################################################
 sub buildPutDiffers

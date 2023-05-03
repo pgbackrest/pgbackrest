@@ -198,7 +198,7 @@ expireDiffBackup(InfoBackup *infoBackup, unsigned int repoIdx)
             {
                 for (unsigned int diffIdx = 0; diffIdx < strLstSize(currentBackupList) - differentialRetention; diffIdx++)
                 {
-                    // Skip if this is a full backup.  Full backups only count as differential when deciding which differential
+                    // Skip if this is a full backup. Full backups only count as differential when deciding which differential
                     // backups to expire.
                     if (regExpMatchOne(backupRegExpP(.full = true), strLstGet(currentBackupList, diffIdx)))
                         continue;
@@ -586,7 +586,7 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
 
                         if (archiveRetentionBackup.backupArchiveStart != NULL)
                         {
-                            // Get archive ranges to preserve.  Because archive retention can be less than total retention it is
+                            // Get archive ranges to preserve. Because archive retention can be less than total retention it is
                             // important to preserve archive that is required to make the older backups consistent even though they
                             // cannot be played any further forward with PITR.
                             String *archiveExpireMax = NULL;
@@ -669,7 +669,7 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
                                     archiveExpire.stop = strDup(walPath);
                                 }
                                 // Else delete individual files instead if the major path is less than or equal to the most recent
-                                // retention backup.  This optimization prevents scanning though major paths that could not possibly
+                                // retention backup. This optimization prevents scanning though major paths that could not possibly
                                 // have anything to expire.
                                 else if (strCmp(walPath, strSubN(archiveExpireMax, 0, 16)) <= 0)
                                 {

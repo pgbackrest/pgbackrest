@@ -58,7 +58,7 @@ Ubuntu 16.04:
 ```
 RHEL 7:
 ```bash
-./doc.pl --out=html --include=user-guide --no-cache --var=os-type=rhel --var=os-image=centos:7  --var=package=test/package/pgbackrest-2.08-1.el7.x86_64.rpm
+./doc.pl --out=html --include=user-guide --no-cache --var=os-type=rhel --var=os-image=centos:7 --var=package=test/package/pgbackrest-2.08-1.el7.x86_64.rpm
 ```
 RHEL 8:
 ```bash

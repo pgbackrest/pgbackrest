@@ -9,7 +9,7 @@ AC_CONFIG_AUX_DIR(build)
 # ----------------------------------------------------------------------------------------------------------------------------------
 : ${CFLAGS=""}
 
-# Build C standard based on the host type.  C99 is required and other flags are added depending on the host.
+# Build C standard based on the host type. C99 is required and other flags are added depending on the host.
 # ----------------------------------------------------------------------------------------------------------------------------------
 AC_PROG_CC
 AC_CANONICAL_HOST

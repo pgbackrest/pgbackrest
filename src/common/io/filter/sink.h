@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 IO Sink Filter
 
-Consume all bytes sent to the filter without passing any on.  This filter is useful when running size/hash filters on a remote when
+Consume all bytes sent to the filter without passing any on. This filter is useful when running size/hash filters on a remote when
 no data should be returned.
 ***********************************************************************************************************************************/
 #ifndef COMMON_IO_FILTER_SINK_H

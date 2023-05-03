@@ -107,7 +107,7 @@
             </execute>
         </execute-list>
 
-        <p>Some unit tests and all the integration tests require <proper>Docker</proper>.  Running in containers allows us to simulate multiple hosts, test on different distributions and versions of <postgres/>, and use sudo without affecting the host system.</p>
+        <p>Some unit tests and all the integration tests require <proper>Docker</proper>. Running in containers allows us to simulate multiple hosts, test on different distributions and versions of <postgres/>, and use sudo without affecting the host system.</p>
 
         <execute-list host="{[host-contrib]}">
             <title>Install Docker</title>
@@ -131,7 +131,7 @@
             </execute>
         </execute-list>
 
-        <p>This clone of the <backrest/> repository is sufficient for experimentation.  For development, create a fork and clone that instead.</p>
+        <p>This clone of the <backrest/> repository is sufficient for experimentation. For development, create a fork and clone that instead.</p>
 
         <execute-list host="{[host-contrib]}">
             <title>Clone <backrest/> repository</title>
@@ -180,7 +180,7 @@
 
                 <code-block type="c">
 /*
- *  HEADER FILE - see db.h for a complete implementation example
+ * HEADER FILE - see db.h for a complete implementation example
  */
 
 // Typedef the object declared in the C file
@@ -738,7 +738,7 @@ run 8/1 ------------- L2285 no current backups
 &lt;option id="force" name="Force"&gt;
     &lt;summary&gt;Force a restore.&lt;/summary&gt;
 
-    &lt;text&gt;By itself this option forces the &lt;postgres/&gt; data and tablespace paths to be completely overwritten.  In combination with &lt;br-option&gt;--delta&lt;/br-option&gt; a timestamp/size delta will be performed instead of using checksums.&lt;/text&gt;
+    &lt;text&gt;By itself this option forces the &lt;postgres/&gt; data and tablespace paths to be completely overwritten. In combination with &lt;br-option&gt;--delta&lt;/br-option&gt; a timestamp/size delta will be performed instead of using checksums.&lt;/text&gt;
 
     &lt;example>y&lt;/example&gt;
 &lt;/option&gt;
@@ -789,7 +789,7 @@ pgbackrest/doc/doc.pl --out=html --no-exe
 pgbackrest/doc/doc.pl --out=html --include=user-guide --require=/quickstart --var=encrypt=n --no-cache --pre
             </code-block>
 
-            <p>The resulting Docker containers can be listed with <code>docker ps</code> and the container can be entered with <code>docker exec doc-pg-primary bash</code>.  Additionally, the <code>-u</code> option can be added for entering the container as a specific user (e.g. <code>postgres</code>).</p>
+            <p>The resulting Docker containers can be listed with <code>docker ps</code> and the container can be entered with <code>docker exec doc-pg-primary bash</code>. Additionally, the <code>-u</code> option can be added for entering the container as a specific user (e.g. <code>postgres</code>).</p>
         </section>
     </section>
 

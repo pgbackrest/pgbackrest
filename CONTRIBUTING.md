@@ -74,7 +74,7 @@ The example below is not structured like an actual implementation and is intende
 #### Example: hypothetical basic object construction
 ```c
 /*
- *  HEADER FILE - see db.h for a complete implementation example
+ * HEADER FILE - see db.h for a complete implementation example
  */
 
 // Typedef the object declared in the C file
@@ -646,7 +646,7 @@ To add an option, add the following to the `<option-list>` section; if it does n
 <option id="force" name="Force">
     <summary>Force a restore.</summary>
 
-    <text>By itself this option forces the <postgres/> data and tablespace paths to be completely overwritten.  In combination with <br-option>--delta</br-option> a timestamp/size delta will be performed instead of using checksums.</text>
+    <text>By itself this option forces the <postgres/> data and tablespace paths to be completely overwritten. In combination with <br-option>--delta</br-option> a timestamp/size delta will be performed instead of using checksums.</text>
 
     <example>y</example>
 </option>

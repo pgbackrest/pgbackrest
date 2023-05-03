@@ -295,8 +295,8 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptDelta), false, "--delta set to false");
         TEST_RESULT_LOG(
             "P00   WARN: --delta or --force specified but unable to find 'PG_VERSION' or 'backup.manifest' in '" TEST_PATH "/pg' to"
-            " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
-            " exist in the destination directories the restore will be aborted.");
+            " confirm that this is a valid $PGDATA directory. --delta and --force have been disabled and if any files exist in the"
+            " destination directories the restore will be aborted.");
 
         HRN_CFG_LOAD(cfgCmdRestore, argList);
         HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "backup.manifest");
@@ -317,8 +317,8 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptForce), false, "--force set to false");
         TEST_RESULT_LOG(
             "P00   WARN: --delta or --force specified but unable to find 'PG_VERSION' or 'backup.manifest' in '" TEST_PATH "/pg' to"
-            " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
-            " exist in the destination directories the restore will be aborted.");
+            " confirm that this is a valid $PGDATA directory. --delta and --force have been disabled and if any files exist in the"
+            " destination directories the restore will be aborted.");
 
         HRN_CFG_LOAD(cfgCmdRestore, argList);
         HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_PGVERSION);
@@ -2192,7 +2192,7 @@ testRun(void)
                 "P00   INFO: restore size = 4B, file total = 1",
                 TEST_PATH, TEST_PATH, TEST_PATH, TEST_PATH));
 
-        // Remove recovery.conf before file comparison since it will have a new timestamp.  Make sure it existed, though.
+        // Remove recovery.conf before file comparison since it will have a new timestamp. Make sure it existed, though.
         HRN_STORAGE_REMOVE(storagePgWrite(), PG_FILE_RECOVERYCONF, .errorOnMissing = true);
 
         TEST_STORAGE_LIST(

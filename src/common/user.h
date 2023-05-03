@@ -11,31 +11,31 @@ System User/Group Management
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Call this initializer before using any of the functions below.  Safe to call more than once.
+// Call this initializer before using any of the functions below. Safe to call more than once.
 FN_EXTERN void userInit(void);
 
 // Get the primary group id of the current user
 FN_EXTERN gid_t groupId(void);
 
-// Get the id of the specified group.  Returns (gid_t)-1 if not found.
+// Get the id of the specified group. Returns (gid_t)-1 if not found.
 FN_EXTERN gid_t groupIdFromName(const String *groupName);
 
-// Get the primary group name of the current user.  Returns NULL if there is no mapping.
+// Get the primary group name of the current user. Returns NULL if there is no mapping.
 FN_EXTERN const String *groupName(void);
 
-// Get the group name from a group id.  Returns NULL if the group id is invalid or there is no mapping.
+// Get the group name from a group id. Returns NULL if the group id is invalid or there is no mapping.
 FN_EXTERN String *groupNameFromId(gid_t groupId);
 
 // Get the id of the current user
 FN_EXTERN uid_t userId(void);
 
-// Get the id of the specified user.  Returns (uid_t)-1 if not found.
+// Get the id of the specified user. Returns (uid_t)-1 if not found.
 FN_EXTERN uid_t userIdFromName(const String *userName);
 
-// Get the name of the current user.  Returns NULL if there is no mapping.
+// Get the name of the current user. Returns NULL if there is no mapping.
 FN_EXTERN const String *userName(void);
 
-// Get the user name from a user id.  Returns NULL if the user id is invalid or there is no mapping.
+// Get the user name from a user id. Returns NULL if the user id is invalid or there is no mapping.
 FN_EXTERN String *userNameFromId(uid_t userId);
 
 // Is the current user the root user?

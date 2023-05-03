@@ -1417,7 +1417,7 @@ cfgFileLoad(
 }
 
 /***********************************************************************************************************************************
-??? Add validation of section names and check all sections for invalid options in the check command.  It's too expensive to add the
+??? Add validation of section names and check all sections for invalid options in the check command. It's too expensive to add the
 logic to this critical path code.
 ***********************************************************************************************************************************/
 FN_EXTERN void
@@ -2057,7 +2057,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
 
             for (unsigned int optionOrderIdx = 0; optionOrderIdx < CFG_OPTION_TOTAL; optionOrderIdx++)
             {
-                // Validate options based on the option resolve order.  This allows resolving all options in a single pass.
+                // Validate options based on the option resolve order. This allows resolving all options in a single pass.
                 ConfigOption optionId = optionResolveOrder[optionOrderIdx];
 
                 // Skip this option if it is not valid

@@ -134,9 +134,9 @@ archivePushReadyList(const String *walPath)
 /***********************************************************************************************************************************
 Determine which WAL files need to be pushed to the archive when in async mode
 
-This is the heart of the "look ahead" functionality in async archiving.  Any files in the out directory that do not end in ok are
+This is the heart of the "look ahead" functionality in async archiving. Any files in the out directory that do not end in ok are
 removed and any ok files that do not have a corresponding ready file in archive_status (meaning it has been acknowledged by
-PostgreSQL) are removed.  Then all ready files that do not have a corresponding ok file (meaning it has already been processed) are
+PostgreSQL) are removed. Then all ready files that do not have a corresponding ok file (meaning it has already been processed) are
 returned for processing.
 ***********************************************************************************************************************************/
 static StringList *
@@ -200,7 +200,7 @@ archivePushProcessList(const String *walPath)
 /***********************************************************************************************************************************
 Check that pg_control and archive.info match and get the archive id and archive cipher passphrase (if present)
 
-As much information as possible is collected here so that async archiving has as little work as possible to do for each file.  Sync
+As much information as possible is collected here so that async archiving has as little work as possible to do for each file. Sync
 archiving does not benefit but it makes sense to use the same function.
 ***********************************************************************************************************************************/
 typedef struct ArchivePushCheckResult
@@ -354,13 +354,13 @@ cmdArchivePush(void)
 
             do
             {
-                // Check if the WAL segment has been pushed.  Errors will not be thrown on the first try to allow the async process
+                // Check if the WAL segment has been pushed. Errors will not be thrown on the first try to allow the async process
                 // a chance to fix them.
                 pushed = archiveAsyncStatus(archiveModePush, archiveFile, throwOnError, true);
 
-                // If the WAL segment has not already been pushed then start the async process to push it.  There's no point in
-                // forking the async process off more than once so track that as well.  Use an archive lock to prevent more than
-                // one async process being launched.
+                // If the WAL segment has not already been pushed then start the async process to push it. There's no point in
+                // forking the async process off more than once so track that as well. Use an archive lock to prevent more than one
+                // async process being launched.
                 if (!pushed && !forked && lockAcquireP(.returnOnNoLock = true))
                 {
                     // The async process should not output on the console at all
@@ -383,7 +383,7 @@ cmdArchivePush(void)
                     // Execute the async process
                     archiveAsyncExec(archiveModePush, commandExec);
 
-                    // Mark the async process as forked so it doesn't get forked again.  A single run of the async process should be
+                    // Mark the async process as forked so it doesn't get forked again. A single run of the async process should be
                     // enough to do the job, running it again won't help anything.
                     forked = true;
                 }

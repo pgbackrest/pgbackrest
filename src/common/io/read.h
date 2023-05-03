@@ -1,10 +1,10 @@
 /***********************************************************************************************************************************
 IO Read Interface
 
-Objects that read from some IO source (file, socket, etc.) are implemented using this interface.  All objects are required to
-implement IoReadProcess and can optionally implement IoReadOpen, IoReadClose, or IoReadEof.  IoReadOpen and IoReadClose can be used
-to allocate/open or deallocate/free resources.  If IoReadEof is not implemented then ioReadEof() will always return false.  An
-example of an IoRead object is IoBufferRead.
+Objects that read from some IO source (file, socket, etc.) are implemented using this interface. All objects are required to
+implement IoReadProcess and can optionally implement IoReadOpen, IoReadClose, or IoReadEof. IoReadOpen and IoReadClose can be used
+to allocate/open or deallocate/free resources. If IoReadEof is not implemented then ioReadEof() will always return false. An example
+of an IoRead object is IoBufferRead.
 ***********************************************************************************************************************************/
 #ifndef COMMON_IO_READ_H
 #define COMMON_IO_READ_H

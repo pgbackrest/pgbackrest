@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE doc SYSTEM "manifest.dtd">
 <doc>
-    <!-- System-wide variables  -->
+    <!-- System-wide variables -->
     <variable-list>
         <variable key="project">pgBackRest</variable>
         <variable key="project-tagline">Reliable PostgreSQL Backup &amp; Restore</variable>
@@ -57,15 +57,15 @@
             $stryMonth[$month] . ' ' . $mday . ', ' . $year;
         </variable>
 
-        <!-- HTML variables  -->
+        <!-- HTML variables -->
         <variable key="html-footer" eval='y'>
             'Copyright &amp;copy; 2015' . '-' . substr('{[release-date]}', length('{[release-date]}') - 4) .
-            ', The PostgreSQL Global Development Group, &lt;a href="{[github-url-license]}">MIT License&lt;/a>.  Updated ' .
+            ', The PostgreSQL Global Development Group, &lt;a href="{[github-url-license]}">MIT License&lt;/a>. Updated ' .
             '{[release-date]}';
         </variable>
         <!-- <variable key="html-logo">&lt;img src=&quot;{[project-logo]}&quot;&gt;</variable> -->
 
-        <!-- PDF variables  -->
+        <!-- PDF variables -->
         <variable key="pdf-logo">{[doc-path]}/output/latex/logo</variable>
 
         <variable key="pdf-title1">{[project]} User Guide</variable>
@@ -117,10 +117,9 @@
 
             <!--
                 Building the contributing document has some special requirements because it runs Docker in Docker so the repo path
-                must align on the host and all Docker containers.  Run `pgbackrest/doc/doc.pl` from within the home directory of
-                the user that will do the doc build, e.g. `home/vagrant`.  If the repo is not located directly in the home
-                directory, e.g. `/home/vagrant/pgbackrest`, then a symlink may be used,
-                e.g. `ln -s /path/to/repo /home/vagrant/pgbackrest`.
+                must align on the host and all Docker containers. Run `pgbackrest/doc/doc.pl` from within the home directory of the
+                user that will do the doc build, e.g. `home/vagrant`. If the repo is not located directly in the home directory,
+                e.g. `/home/vagrant/pgbackrest`, then a symlink may be used, e.g. `ln -s /path/to/repo /home/vagrant/pgbackrest`.
             -->
             <render-source key="contributing" file="../../../CONTRIBUTING.md"/>
             <render-source key="documentation" file="../../README.md"/>

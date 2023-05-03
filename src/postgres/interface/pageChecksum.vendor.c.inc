@@ -1,12 +1,12 @@
 /***********************************************************************************************************************************
 PostgreSQL Page Checksum Algorithm
 
-For each supported release of PostgreSQL check the code in this file to see if it has changed.  The easiest way to do this is to
-copy and paste in place and check git to see if there are any diffs.  Tabs should be copied as is to make this process easy even
+For each supported release of PostgreSQL check the code in this file to see if it has changed. The easiest way to do this is to
+copy and paste in place and check git to see if there are any diffs. Tabs should be copied as is to make this process easy even
 though the pgBackRest project does not use tabs elsewhere.
 
 Since the checksum implementation and page format do not (yet) change between versions this code should be copied verbatim from
-src/include/storage/checksum_impl.h for each new release.  Only the newest released version of the code should be used.
+src/include/storage/checksum_impl.h for each new release. Only the newest released version of the code should be used.
 
 Modifications need to be made after copying:
 

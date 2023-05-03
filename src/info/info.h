@@ -24,9 +24,9 @@ Constants
 /***********************************************************************************************************************************
 Function types for loading and saving
 ***********************************************************************************************************************************/
-// The purpose of this callback is to attempt a load (from file or otherwise).  Return true when the load is successful or throw an
-// error.  Return false when there are no more loads to try, but always make at least one load attempt.  The try parameter will
-// start at 0 and be incremented on each call.
+// The purpose of this callback is to attempt a load (from file or otherwise). Return true when the load is successful or throw an
+// error. Return false when there are no more loads to try, but always make at least one load attempt. The try parameter will start
+// at 0 and be incremented on each call.
 // {uncrustify_off - uncrustify unable to parse this statement}
 typedef bool InfoLoadCallback(void *data, unsigned int try);
 // {uncrustify_on}

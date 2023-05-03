@@ -3,7 +3,7 @@
 ####################################################################################################################################
 
 ####################################################################################################################################
-# List of required source files.  main.c should always be listed last and the rest in alpha order.
+# List of required source files. main.c should always be listed last and the rest in alpha order.
 ####################################################################################################################################
 SRCS_COMMON = \
 	common/compress/bz2/common.c \
@@ -253,14 +253,14 @@ postgres/interface.auto.c.inc: build-code
 	./build-code postgres $(VPATH)
 
 ####################################################################################################################################
-# Installation.  DESTDIR can be used to modify the install location.
+# Installation. DESTDIR can be used to modify the install location.
 ####################################################################################################################################
 install: pgbackrest
 	install -d $(DESTDIR)$(bindir)
 	install -m 755 pgbackrest $(DESTDIR)$(bindir)
 
 ####################################################################################################################################
-# Uninstallation.  DESTDIR should be set to the same value as when installed.
+# Uninstallation. DESTDIR should be set to the same value as when installed.
 ####################################################################################################################################
 uninstall:
 	rm -f $(DESTDIR)$(bindir)/pgbackrest

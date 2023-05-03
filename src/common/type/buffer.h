@@ -157,8 +157,8 @@ Macros for constant buffers
 
 Frequently used constant buffers can be declared with these macros at compile time rather than dynamically at run time.
 
-Note that buffers created in this way are declared as const so can't be modified or freed by the buf*() methods.  Casting to
-Buffer * will result in a segfault.
+Note that buffers created in this way are declared as const so can't be modified or freed by the buf*() methods. Casting to Buffer *
+will result in a segfault.
 
 By convention all buffer constant identifiers are appended with _BUF.
 ***********************************************************************************************************************************/

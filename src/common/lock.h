@@ -40,7 +40,7 @@ Functions
 // Initialize lock module
 FN_EXTERN void lockInit(const String *path, const String *execId, const String *stanza, LockType type);
 
-// Acquire a lock type. This will involve locking one or more files on disk depending on the lock type.  Most operations only take a
+// Acquire a lock type. This will involve locking one or more files on disk depending on the lock type. Most operations only take a
 // single lock (archive or backup), but the stanza commands all need to lock both.
 typedef struct LockAcquireParam
 {

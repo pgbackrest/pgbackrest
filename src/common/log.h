@@ -49,8 +49,8 @@ call site by supplying commonly-used values.
 Note that it's possible that not all the macros below will appear in the code. In particular the ERROR and ASSERT macros should not
 be used directly. They are included for completeness and future usage.
 ***********************************************************************************************************************************/
-// Define a macro to test logAny() that can be removed when performing coverage testing.  Checking logAny() saves a function call
-// for logging calls that won't be output anywhere, but since the macro contains a branch it causes coverage problems.
+// Define a macro to test logAny() that can be removed when performing coverage testing. Checking logAny() saves a function call for
+// logging calls that won't be output anywhere, but since the macro contains a branch it causes coverage problems.
 #ifdef DEBUG_COVERAGE
 #define IF_LOG_ANY(logLevel)
 #else

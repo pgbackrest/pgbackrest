@@ -457,8 +457,8 @@ sub coverageGenerate
                     $strFile = substr($strLine, 3);
                     $rhCoverage->{$strFile} = undef;
 
-                    # Generate a random anchor so new reports will not show links as already followed.  This is also an easy way
-                    # to create valid, disambiguos links.
+                    # Generate a random anchor so new reports will not show links as already followed. This is also an easy way to
+                    # create valid, disambiguos links.
                     $rhCoverage->{$strFile}{anchor} = sha1_hex(rand(16));
                 }
                 # Mark functions as initially covered
