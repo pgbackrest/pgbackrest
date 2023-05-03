@@ -50,7 +50,7 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    // install shim to return defined fd
+    // Install shim to return defined fd
     hrnSckClientOpenShimInstall();
 
     // Directory and file that cannot be accessed to test permissions errors
@@ -422,7 +422,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("sftp session init success timeout");
 
-        // shim sets FD for tests.
+        // Shim sets FD for tests.
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
@@ -501,16 +501,15 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storageExists() and storagePathExists()"))
     {
-        // mimic creation of /noperm/noperm for permission denied
+        // Mimic creation of /noperm/noperm for permission denied
         // drwx------ 2 root root 3 Dec  5 15:30 noperm
         // noperm/:
         // total 1
         // -rw------- 1 root root 0 Dec  5 15:30 noperm
-
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
-            // file missing
+            // File missing
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/missing\",0]",
              .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
@@ -520,20 +519,20 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/missing\",0]",
              .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
-            // path missing
+            // Path missing
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/missing\",0]",
              .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "\",0]",
              .attrPerms = LIBSSH2_SFTP_S_IFDIR, .resultInt = LIBSSH2_ERROR_NONE},
-            // permission denied
+            // Permission denied
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/noperm/noperm\",0]",
              .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_PERMISSION_DENIED},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/noperm/noperm\",0]",
              .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_PERMISSION_DENIED},
-            // file and path
+            // File and path
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/exists\",0]",
              .attrPerms = LIBSSH2_SFTP_S_IFREG, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pathExists\",0]",
@@ -542,7 +541,7 @@ testRun(void)
              .attrPerms = LIBSSH2_SFTP_S_IFREG, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pathExists\",0]",
              .attrPerms = LIBSSH2_SFTP_S_IFDIR, .resultInt = LIBSSH2_ERROR_NONE},
-            // file exists after wait
+            // File exists after wait
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/exists\",0]",
              .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL, .sleep = 25},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
@@ -602,7 +601,7 @@ testRun(void)
             {
                 sleepMSec(250);
 
-                // mimic HRN_SYSTEM_FMT("touch %s", strZ(fileExists));
+                // Mimic HRN_SYSTEM_FMT("touch %s", strZ(fileExists));
             }
             HRN_FORK_CHILD_END();
 
@@ -684,39 +683,39 @@ testRun(void)
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
-            // file does not exist
+            // File does not exist
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/fileinfo\",1]",
              .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/fileinfo\",1]",
              .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
-            // info out of base path - first test libssh2_sftp_stat_ex throws error before reaching libssh2 code
-            // second test libssh2_sftp_stat_stat_ex reaches libssh2 code
+            // Info out of base path - first test libssh2_sftp_stat_ex throws error before reaching libssh2 code second test
+            // libssh2_sftp_stat_stat_ex reaches libssh2 code
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"/etc\",1]", .resultInt = LIBSSH2_ERROR_NONE},
-            // info - path
+            // Info - path
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "\",1]",
              .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
              .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
              .mtime = 1555160000, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
-            // info - path exists only
+            // Info - path exists only
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "\",1]",
              .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
              .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
              .mtime = 1555160000, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
-            // info basic - path
+            // Info basic - path
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "\",1]",
              .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
              .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
              .mtime = 1555160000, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
-            // info - file
+            // Info - file
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/fileinfo\",1]",
              .resultInt = LIBSSH2_ERROR_NONE,
              .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
              .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                       LIBSSH2_SFTP_ATTR_SIZE,
              .mtime = 1555155555, .uid = 99999, .gid = 99999, .filesize = 8},
-            // info - link
+            // Info - link
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/testlink\",1]",
              .resultInt = LIBSSH2_ERROR_NONE,
              .attrPerms = LIBSSH2_SFTP_S_IFLNK | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG | LIBSSH2_SFTP_S_IRWXO,
@@ -724,23 +723,23 @@ testRun(void)
              .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"" TEST_PATH "/testlink\",\"\",1]",
              .resultInt = LIBSSH2_ERROR_NONE, .symlinkExTarget = STRDEF("/tmp")},
-            // info - link .followLink = true
+            // Info - link .followLink = true
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/testlink\",0]", .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/testlink\",0]", .resultInt = LIBSSH2_ERROR_NONE,
              .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG | LIBSSH2_SFTP_S_IRWXO,
              .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
              .uid = 0, .gid = 0},
-            // info - link .followLink = true, timeout EAGAIN in followLink
+            // Info - link .followLink = true, timeout EAGAIN in followLink
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/testlink\",0]", .resultInt = LIBSSH2_ERROR_EAGAIN,
              .sleep = 23},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/testlink\",0]", .resultInt = LIBSSH2_ERROR_EAGAIN,
              .sleep = 1},
-            // info - link .followLink = false, timeout EAGAIN
+            // Info - link .followLink = false, timeout EAGAIN
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/testlink\",1]", .resultInt = LIBSSH2_ERROR_EAGAIN,
              .sleep = 23},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/testlink\",1]", .resultInt = LIBSSH2_ERROR_EAGAIN,
              .sleep = 1},
-            // info - link .followLink = false, libssh2_sftp_symlink_ex link destination size timeout
+            // Info - link .followLink = false, libssh2_sftp_symlink_ex link destination size timeout
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/testlink\",1]", .resultInt = LIBSSH2_ERROR_NONE,
              .attrPerms = LIBSSH2_SFTP_S_IFLNK | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG | LIBSSH2_SFTP_S_IRWXO,
              .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
@@ -749,7 +748,7 @@ testRun(void)
              .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 18},
             {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"" TEST_PATH "/testlink\",\"\",1]",
              .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 5},
-            // info - pipe
+            // Info - pipe
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/testpipe\",1]", .resultInt = LIBSSH2_ERROR_NONE,
              .attrPerms = LIBSSH2_SFTP_S_IFIFO | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
                           LIBSSH2_SFTP_S_IWGRP | LIBSSH2_SFTP_S_IROTH | LIBSSH2_SFTP_S_IWOTH,
@@ -831,8 +830,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("info - file");
 
-        // mimic file chown'd 99999:99999, timestamp 1555155555, containing "TESTFILE"
-
+        // Mimic file chown'd 99999:99999, timestamp 1555155555, containing "TESTFILE"
         TEST_ASSIGN(info, storageInfoP(storageTest, fileName), "get file info");
         TEST_RESULT_STR(info.name, NULL, "name is not set");
         TEST_RESULT_BOOL(info.exists, true, "check exists");
@@ -848,8 +846,8 @@ testRun(void)
         TEST_TITLE("info - link");
 
         const String *linkName = STRDEF(TEST_PATH "/testlink");
-        // mimic link testlink to /tmp
 
+        // Mimic link testlink to /tmp
         TEST_ASSIGN(info, storageInfoP(storageTest, linkName), "get link info");
         TEST_RESULT_STR(info.name, NULL, "name is not set");
         TEST_RESULT_BOOL(info.exists, true, "check exists");
@@ -870,7 +868,7 @@ testRun(void)
         TEST_RESULT_STR_Z(info.user, "root", "check user");
         TEST_RESULT_STR_Z(info.group, strEqZ(info.group, "wheel") ? "wheel" : "root", "check group");
 
-        // exercise paths/branches
+        // Exercise paths/branches
         // libssh2_sftp_stat_ex timeout EAGAIN followLink true
         TEST_ERROR_FMT(
             storageInfoP(storageTest, linkName, .followLink = true), FileOpenError,
@@ -890,8 +888,8 @@ testRun(void)
         TEST_TITLE("info - pipe");
 
         const String *pipeName = STRDEF(TEST_PATH "/testpipe");
-        // mimic pipe "/testpipe" with mode 0666
 
+        // Mimic pipe "/testpipe" with mode 0666
         TEST_ASSIGN(info, storageInfoP(storageTest, pipeName), "get info from pipe (special file)");
         TEST_RESULT_STR(info.name, NULL, "name is not set");
         TEST_RESULT_BOOL(info.exists, true, "check exists");
@@ -908,38 +906,37 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storageNewItrP()"))
     {
-        // mimic creation of /noperm/noperm
-
+        // Mimic creation of /noperm/noperm
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
-            // path missing errorOnMissing true
+            // Path missing errorOnMissing true
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/BOGUS\",0,0,1]", .resultNull = true},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/BOGUS\",0,0,1]", .resultNull = true},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
-            // ignore missing dir
+            // Ignore missing dir
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/BOGUS\",0,0,1]", .resultNull = true},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
-            // path no perm
+            // Path no perm
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/noperm\",0,0,1]", .resultNull = true},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_PERMISSION_DENIED},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_PERMISSION_DENIED},
-            // path no perm ignore missing
+            // Path no perm ignore missing
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/noperm\",0,0,1]", .resultNull = true},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_PERMISSION_DENIED},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_PERMISSION_DENIED},
-            // helper function storageSftpListEntry()
+            // Helper function storageSftpListEntry()
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"pg/missing\",1]", .resultNull = true},
-            // path with only dot
+            // Path with only dot
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg\",0]", .resultInt = LIBSSH2_ERROR_NONE,
              .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                           LIBSSH2_SFTP_S_IROTH | LIBSSH2_SFTP_S_IWOTH,
@@ -956,7 +953,7 @@ testRun(void)
                           LIBSSH2_SFTP_S_IROTH | LIBSSH2_SFTP_S_IWOTH,
              .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
              .mtime = 1555160000, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
-            // path with file, link, pipe, dot dotdot
+            // Path with file, link, pipe, dot dotdot
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg\",0]", .resultInt = LIBSSH2_ERROR_NONE,
              .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                           LIBSSH2_SFTP_S_IROTH | LIBSSH2_SFTP_S_IWOTH,
@@ -1042,7 +1039,7 @@ testRun(void)
              .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .symlinkExTarget = STRDEF("../file")},
             {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"" TEST_PATH "/pg/link\",\"\",1]",
              .resultInt = LIBSSH2_ERROR_NONE, .symlinkExTarget = STRDEF("../file")},
-            // helper function - storageSftpListEntry() info doesn't exist
+            // Helper function - storageSftpListEntry() info doesn't exist
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"pg/missing\",1]", .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"pg/missing\",1]", .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
@@ -1084,7 +1081,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path with only dot");
 
-        // mimic creation of TEST_PATH "/pg" mode 0766
+        // Mimic creation of TEST_PATH "/pg" mode 0766
 
         // NOTE: if operating against an actual sftp server, a neutral umask is required to get the proper permissions.
         // Without the neutral umask, permissions were 0764.
@@ -1096,11 +1093,10 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path with file, link, pipe");
 
-        // mimic creation of TEST_PATH "/pg/.include" mode 0755 chown'd 77777:77777
-        // mimic creation of TEST_PATH "pg/file" mode 0660 timemodified 1656433838 containing "TESTDATA"
-        // mimic creation of TEST_PATH "/pg/link" linked to "../file"
-        // mimic creation of TEST_PATH "/pg/pipe" mode 777
-
+        // Mimic creation of TEST_PATH "/pg/.include" mode 0755 chown'd 77777:77777
+        // Mimic creation of TEST_PATH "pg/file" mode 0660 timemodified 1656433838 containing "TESTDATA"
+        // Mimic creation of TEST_PATH "/pg/link" linked to "../file"
+        // Mimic creation of TEST_PATH "/pg/pipe" mode 777
         TEST_STORAGE_LIST(
             storageTest, "pg",
             "./ {u=" TEST_USER ", g=" TEST_GROUP ", m=0766}\n"
@@ -1199,9 +1195,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path - recurse desc");
 
-        // mimic creation of "pg/path" mode 0700
-        // mimic creation of "pg/path/file" mode 0600 timemodified 1656434296 containing "TESTDATA"
-
+        // Mimic creation of "pg/path" mode 0700
+        // Mimic creation of "pg/path/file" mode 0600 timemodified 1656434296 containing "TESTDATA"
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
@@ -1261,7 +1256,7 @@ testRun(void)
              .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
              .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
-            // recurse readdir path
+            // Recurse readdir path
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg/path\",0,0,1]"},
             // readdir returns file
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("file"),
@@ -1316,8 +1311,7 @@ testRun(void)
         TEST_TITLE("path - recurse asc");
 
         // Create a path with a subpath that will always be last to make sure lists are not freed too early in the iterator
-        // mimic creation of "pg/zzz/yyy" mode 0700
-
+        // Mimic creation of "pg/zzz/yyy" mode 0700
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
@@ -1389,7 +1383,7 @@ testRun(void)
              .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
              .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
-            // recurse readdir path
+            // Recurse readdir path
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg/path\",0,0,1]"},
             // readdir returns file
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("file"),
@@ -1408,7 +1402,7 @@ testRun(void)
              .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
              .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
-            // recurse zzz
+            // Recurse zzz
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg/zzz\",0,0,1]"},
             // readdir returns yyy
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("yyy"),
@@ -1426,7 +1420,7 @@ testRun(void)
              .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
              .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
-            // recurse yyy
+            // Recurse yyy
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg/zzz/yyy\",0,0,1]"},
             // readdir returns empty
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF(""),
@@ -1542,7 +1536,7 @@ testRun(void)
              .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
              .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
-            // recurse zzz
+            // Recurse zzz
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg/zzz\",0,0,1]"},
             // readdir returns yyy
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("yyy"),
@@ -1560,7 +1554,7 @@ testRun(void)
              .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
              .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
-            // recurse yyy
+            // Recurse yyy
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg/zzz/yyy\",0,0,1]"},
             // readdir returns empty
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF(""),
@@ -1568,7 +1562,7 @@ testRun(void)
              .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
              .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
-            // recurse path
+            // Recurse path
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg/path\",0,0,1]"},
             // readdir returns file
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("file"),
@@ -1628,8 +1622,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("empty path - filter");
 
-        // mimic "pg/empty" mode 0700
-
+        // Mimic "pg/empty" mode 0700
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
@@ -1711,14 +1704,14 @@ testRun(void)
              .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
              .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
-            // recurse empty
+            // Recurse empty
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg/empty\",0,0,1]"},
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF(""),
              .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
              .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
              .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
-            // recurse path
+            // Recurse path
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg/path\",0,0,1]"},
             // readdir returns file
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("file"),
@@ -1737,7 +1730,7 @@ testRun(void)
              .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
              .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
-            // recurse zzz
+            // Recurse zzz
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg/zzz\",0,0,1]"},
             // readdir returns yyy
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("yyy"),
@@ -1755,7 +1748,7 @@ testRun(void)
              .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
              .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
-            // recurse yyy
+            // Recurse yyy
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg/zzz/yyy\",0,0,1]"},
             // readdir returns empty
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF(""),
@@ -1851,7 +1844,7 @@ testRun(void)
              .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
              .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
-            // recurse path
+            // Recurse path
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg/path\",0,0,1]"},
             // readdir returns file
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("file"),
@@ -1870,7 +1863,7 @@ testRun(void)
              .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
              .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
-            // recurse zzz
+            // Recurse zzz
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg/zzz\",0,0,1]"},
             // readdir returns yyy
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("yyy"),
@@ -1888,7 +1881,7 @@ testRun(void)
              .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
              .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
-            // recurse yyy
+            // Recurse yyy
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg/zzz/yyy\",0,0,1]"},
             // readdir returns empty
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF(""),
@@ -1915,8 +1908,6 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storageList()"))
     {
-        // mimic creation of /noperm/noperm
-
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path missing");
 
@@ -1931,12 +1922,12 @@ testRun(void)
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
-            // empty list
+            // Empty list
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/BOGUS\",0,0,1]", .resultNull = true},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
-            // timeout on sftp_open_ex
+            // Timeout on sftp_open_ex
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/BOGUS\",0,0,1]", .resultNull = true,
              .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 23},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_EAGAIN},
@@ -1945,13 +1936,13 @@ testRun(void)
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 4},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 4},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_OK},
-            // error on missing, regardless of errorOnMissing setting
+            // Error on missing, regardless of errorOnMissing setting
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/noperm\",0,0,1]", .resultNull = true},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_PERMISSION_DENIED},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_PERMISSION_DENIED},
-            // ignore missing
+            // Ignore missing
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/noperm\",0,0,1]", .resultNull = true},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
@@ -1972,7 +1963,7 @@ testRun(void)
         TEST_RESULT_PTR(storageListP(storageTest, STRDEF(BOGUS_STR), .nullOnMissing = true), NULL, "null for missing dir");
         TEST_RESULT_UINT(strLstSize(storageListP(storageTest, STRDEF(BOGUS_STR))), 0, "empty list for missing dir");
 
-        // timeout on sftp_open_ex
+        // Timeout on sftp_open_ex
         TEST_ERROR_FMT(
             storageListP(storageTest, STRDEF(BOGUS_STR), .errorOnMissing = true), PathOpenError,
             STORAGE_ERROR_LIST_INFO ": libssh2 error [-37]", TEST_PATH "/BOGUS");
@@ -2057,12 +2048,12 @@ testRun(void)
              .resultInt = LIBSSH2_ERROR_NONE, .uid = 0, .gid = 0},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
-            // path with only dot, readdir timeout EAGAIN
+            // Path with only dot, readdir timeout EAGAIN
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "\",0,0,1]"},
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .resultInt = LIBSSH2_ERROR_EAGAIN, .param = "[\"\",4095,null,0]", .sleep = 18},
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .resultInt = LIBSSH2_ERROR_EAGAIN, .param = "[\"\",4095,null,0]", .sleep = 6},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
-            // fail to close path after listing
+            // Fail to close path after listing
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "\",0,0,1]"},
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("."),
              .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
@@ -2183,7 +2174,7 @@ testRun(void)
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
-            // create /sub1
+            // Create /sub1
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"" TEST_PATH "/sub1\",488]", .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"" TEST_PATH "/sub1\",488]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/sub1\",1]", .resultInt = LIBSSH2_ERROR_NONE,
@@ -2191,7 +2182,7 @@ testRun(void)
              .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                       LIBSSH2_SFTP_ATTR_SIZE,
              .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
-            // create again
+            // reate again
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"" TEST_PATH "/sub1\",488]",
              .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_FAILURE},
@@ -2272,22 +2263,22 @@ testRun(void)
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
-            // timeout success
+            // Timeout success
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"" TEST_PATH "/subfail\",488]",
              .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_FAILURE},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/subfail\",0]", .resultInt = LIBSSH2_ERROR_EAGAIN,
              .sleep = 30},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/subfail\",0]", .resultInt = LIBSSH2_ERROR_EAGAIN},
-            // error other than no such file && no parent create LIBSSH2_FX_PERMISSION_DENIED}
+            // Error other than no such file && no parent create LIBSSH2_FX_PERMISSION_DENIED}
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"" TEST_PATH "/subfail\",488]",
              .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_PERMISSION_DENIED},
-            // no error on already exists
+            // No error on already exists
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"" TEST_PATH "/subfail\",488]",
              .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_FILE_ALREADY_EXISTS},
-            // error on already exists
+            // Error on already exists
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"" TEST_PATH "/subfail\",488]",
              .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_FILE_ALREADY_EXISTS},
@@ -2320,12 +2311,12 @@ testRun(void)
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
-            // path remove missing errorOnMissing
+            // Path remove missing errorOnMissing
             {.function = HRNLIBSSH2_SFTP_RMDIR_EX, .param = "[\"" TEST_PATH "/remove1\"]", .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = HRNLIBSSH2_SFTP_RMDIR_EX, .param = "[\"" TEST_PATH "/remove1\"]",
              .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
-            // recurse - ignore missing path
+            // Recurse - ignore missing path
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/remove1\",0,0,1]", .resultNull = true},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
@@ -2333,11 +2324,11 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_RMDIR_EX, .param = "[\"" TEST_PATH "/remove1\"]",
              .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
-            // recurse parent/subpath permission denied
+            // Recurse parent/subpath permission denied
             {.function = HRNLIBSSH2_SFTP_RMDIR_EX, .param = "[\"" TEST_PATH "/remove1/remove2\"]",
              .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_PERMISSION_DENIED},
-            // recurse subpath permission denied
+            // Recurse subpath permission denied
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/remove1/remove2\",0,0,1]", .resultNull = true},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
@@ -2348,7 +2339,7 @@ testRun(void)
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_PERMISSION_DENIED},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_PERMISSION_DENIED},
-            // path remove - file in subpath, permission denied
+            // Path remove - file in subpath, permission denied
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/remove1\",0,0,1]"},
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("remove2"),
              .resultInt = 7, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU,
@@ -2388,7 +2379,7 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"" TEST_PATH "/remove1/remove2/remove.txt\"]",
              .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_PERMISSION_DENIED},
-            // path remove - path with subpath and file removed
+            // Path remove - path with subpath and file removed
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/remove1\",0,0,1]"},
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("remove2"), .resultInt = 7,
              .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG| LIBSSH2_SFTP_S_IRWXO,
@@ -2449,8 +2440,8 @@ testRun(void)
         TEST_TITLE("path remove - parent/subpath permission denied");
 
         String *pathRemove2 = strNewFmt("%s/remove2", strZ(pathRemove1));
-        // mimic creation of pathRemove2 mode 700
 
+        // Mimic creation of pathRemove2 mode 700
         TEST_ERROR_FMT(storagePathRemoveP(storageTest, pathRemove2), PathRemoveError, STORAGE_ERROR_PATH_REMOVE, strZ(pathRemove2));
         TEST_ERROR_FMT(
             storagePathRemoveP(storageTest, pathRemove2, .recurse = true), PathOpenError,
@@ -2459,8 +2450,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path remove - subpath permission denied");
 
-        // mimic chmod 777 pathRemove1
-
+        // Mimic chmod 777 pathRemove1
         TEST_ERROR_FMT(
             storagePathRemoveP(storageTest, pathRemove2, .recurse = true), PathOpenError,
             STORAGE_ERROR_LIST_INFO ": libssh2 error [-31]: sftp error [3]", strZ(pathRemove2));
@@ -2470,8 +2460,7 @@ testRun(void)
 
         String *fileRemove = strNewFmt("%s/remove.txt", strZ(pathRemove2));
 
-        // mimic "sudo chmod 755 %s && sudo touch %s && sudo chmod 777 %s", strZ(pathRemove2), strZ(fileRemove), strZ(fileRemove));
-
+        // Mimic "sudo chmod 755 %s && sudo touch %s && sudo chmod 777 %s", strZ(pathRemove2), strZ(fileRemove), strZ(fileRemove));
         TEST_ERROR_FMT(
             storagePathRemoveP(storageTest, pathRemove1, .recurse = true), PathRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE,
             strZ(fileRemove));
@@ -2479,14 +2468,14 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path remove - path with subpath and file removed");
 
-        // mimic chmod 777 pathRemove2
-
+        // Mimic chmod 777 pathRemove2
         TEST_RESULT_VOID(storagePathRemoveP(storageTest, pathRemove1, .recurse = true), "remove path");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path remove - unlink LIBSSH2_ERROR_EAGAIN timeout");
+
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
@@ -2577,14 +2566,14 @@ testRun(void)
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
-            // create path to link to
+            // Create path to link to
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"" TEST_PATH "/20181119-152138F\",488]"},
-            // create symlink
+            // Create symlink
             {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"20181119-152138F\",\"" TEST_PATH "/latest\",0]",
              .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"20181119-152138F\",\"" TEST_PATH "/latest\",0]",
              .symlinkExTarget = STRDEF(TEST_PATH "/latest")},
-            // get link info
+            // Get link info
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/latest\",1]", .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/latest\",1]", .resultInt = LIBSSH2_ERROR_NONE,
              .attrPerms = LIBSSH2_SFTP_S_IFLNK | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IXGRP,
@@ -2593,7 +2582,7 @@ testRun(void)
              .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .symlinkExTarget = STRDEF("20181119-152138F")},
             {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"" TEST_PATH "/latest\",\"\",1]",
              .symlinkExTarget = STRDEF("20181119-152138F")},
-            // assert failure - asserts before libssh2 call
+            // Assert failure - asserts before libssh2 call
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
 
@@ -2655,33 +2644,33 @@ testRun(void)
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
-            // create symlink
+            // Create symlink
             {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"20181119-152138F\",\"" TEST_PATH "/latest\",0]",
              .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
-            // unlink symlink
+            // Unlink symlink
             {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"" TEST_PATH "/latest\"]", .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"" TEST_PATH "/latest\"]", .resultInt = LIBSSH2_ERROR_NONE},
-            // unlink symlink no error on missing
+            // Unlink symlink no error on missing
             {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"" TEST_PATH "/latest\"]", .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"" TEST_PATH "/latest\"]",
              .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
-            // unlink symlink error on missing
+            // Unlink symlink error on missing
             {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"" TEST_PATH "/latest\"]",
              .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
-            // unlink symlink no error on missing, not no such file
+            // Unlink symlink no error on missing, not no such file
             {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"" TEST_PATH "/latest\"]",
              .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_PERMISSION_DENIED},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_PERMISSION_DENIED},
-            // unlink symlink not an sftp error, error on missing
+            // Unlink symlink not an sftp error, error on missing
             {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"" TEST_PATH "/latest\"]",
              .resultInt = LIBSSH2_ERROR_METHOD_NOT_SUPPORTED},
-            // unlink symlink not an sftp error, no error on missing
+            // Unlink symlink not an sftp error, no error on missing
             {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"" TEST_PATH "/latest\"]",
              .resultInt = LIBSSH2_ERROR_METHOD_NOT_SUPPORTED},
-            // unlink symlink error on missing, timeout
+            // Unlink symlink error on missing, timeout
             {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"" TEST_PATH "/latest\"]", .resultInt = LIBSSH2_ERROR_EAGAIN,
              .sleep = 30},
             {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"" TEST_PATH "/latest\"]", .resultInt = LIBSSH2_ERROR_EAGAIN,
@@ -2702,28 +2691,28 @@ testRun(void)
         TEST_RESULT_VOID(storageRemoveP(storageTest, latestLabel), "remove symlink");
         TEST_RESULT_VOID(storageRemoveP(storageTest, latestLabel), "remove symlink - no error on missing");
 
-        // exercise paths/branches
-        // error on missing
+        // Exercise paths/branches
+        // Error on missing
         TEST_ERROR_FMT(
             storageRemoveP(storageTest, latestLabel, .errorOnMissing = true), FileRemoveError,
             "unable to remove '" TEST_PATH "/latest': libssh2 error [-31]: sftp error [2]");
-        // no error on missing, not no such file
+        // No error on missing, not no such file
         TEST_ERROR_FMT(
             storageRemoveP(storageTest, latestLabel, .errorOnMissing = false), FileRemoveError,
             "unable to remove '" TEST_PATH "/latest': libssh2 error [-31]: sftp error [3]");
-        // error on missing, not an sftp error
+        // Error on missing, not an sftp error
         TEST_ERROR_FMT(
             storageRemoveP(storageTest, latestLabel, .errorOnMissing = true), FileRemoveError,
             "unable to remove '" TEST_PATH "/latest'");
-        // no error on missing, not an sftp error
+        // No error on missing, not an sftp error
         TEST_RESULT_VOID(
             storageRemoveP(storageTest, latestLabel), "remove symlink, no sftp error, no error on missing");
-        // error on missing, timeout
+        // Error on missing, timeout
         TEST_ERROR_FMT(
             storageRemoveP(storageTest, latestLabel, .errorOnMissing = true), FileRemoveError,
             "unable to remove '" TEST_PATH "/latest'");
 
-        // cover what should be an unreachable branch - linkType = storageLinkHard
+        // Cover what should be an unreachable branch - linkType = storageLinkHard
         StorageSftp *storageSftp = (StorageSftp *)storageDriver(storageTest);
         StorageInterfaceLinkCreateParam param = {.linkType = storageLinkHard};
 
@@ -2744,27 +2733,27 @@ testRun(void)
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
-            // missing sftp error no such file
+            // Missing sftp error no such file
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/readtest.txt\",1,0,0]", .resultNull = true,
              .sleep = 23},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/readtest.txt\",1,0,0]", .resultNull = true,
              .sleep = 5},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
-            // timeout EAGAIN
+            // Timeout EAGAIN
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/readtest.txt\",1,0,0]", .resultNull = true,
              .sleep = 23},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/readtest.txt\",1,0,0]", .resultNull = true,
              .sleep = 5},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_OK},
-            // error not sftp, not EAGAIN
+            // Error not sftp, not EAGAIN
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/readtest.txt\",1,0,0]", .resultNull = true,
              .sleep = 23},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/readtest.txt\",1,0,0]", .resultNull = true,
              .sleep = 5},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_METHOD_NOT_SUPPORTED},
-            // read success
+            // Read success
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/readtest.txt\",1,0,0]"},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             HRNLIBSSH2_MACRO_SHUTDOWN()
@@ -2782,20 +2771,19 @@ testRun(void)
 
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
 
-        // missing no such file
+        // Missing no such file
         TEST_ERROR_FMT(ioReadOpen(storageReadIo(file)), FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(fileName));
 
-        // missing EAGAIN timeout
+        // Missing EAGAIN timeout
         TEST_ERROR_FMT(ioReadOpen(storageReadIo(file)), FileOpenError, STORAGE_ERROR_READ_OPEN, strZ(fileName));
 
-        // missing not sftp, not EAGAIN
+        // Missing not sftp, not EAGAIN
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), false, "not sftp, not EAGAIN");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read success");
 
-        // mimic creation of TEST_PATH "/readtest.txt"
-
+        // Mimic creation of TEST_PATH "/readtest.txt"
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
         TEST_RESULT_INT(ioReadFd(storageReadIo(file)), -1, "check read fd");
         TEST_RESULT_VOID(ioReadClose(storageReadIo(file)), "close file");
@@ -2825,8 +2813,8 @@ testRun(void)
 
         StorageRead *file = NULL;
         const String *fileName = STRDEF(TEST_PATH "/readtest.txt");
-        // mimic creation of fileName
 
+        // Mimic creation of fileName
         Buffer *outBuffer = bufNew(2);
 
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
@@ -2965,12 +2953,11 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("permission denied");
 
-        // mimic creation of /noperm/noperm
-
+        // Mimic creation of /noperm/noperm
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
-            // permission denied
+            // Permission denied
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/noperm/noperm\",26,416,0]", .resultNull = true,
              .sleep = 18},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_EAGAIN},
@@ -3000,7 +2987,7 @@ testRun(void)
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
-            // timeout
+            // Timeout
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/noperm/noperm\",26,416,0]", .resultNull = true,
              .sleep = 18},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_EAGAIN},
@@ -3028,7 +3015,7 @@ testRun(void)
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
-            // missing
+            // Missing
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/missing\",26,416,0]", .resultNull = true,
              .sleep = 18},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
@@ -3468,7 +3455,7 @@ testRun(void)
             TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR, .keyPriv = KEYPRIV, .keyPub = KEYPUB,
             .write = true, .hostkeyHashType = hashTypeSha1);
 
-        // make interface.pathSync != NULL
+        // Make interface.pathSync != NULL
         ((StorageSftp *)storageDriver(storageTest))->interface.pathSync = malloc(1);
 
         TEST_ASSIGN(
@@ -3513,7 +3500,7 @@ testRun(void)
             TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR, .keyPriv = KEYPRIV, .keyPub = KEYPUB,
             .write = true, .hostkeyHashType = hashTypeSha1);
 
-        // make interface.pathSync != NULL
+        // Make interface.pathSync != NULL
         ((StorageSftp *)storageDriver(storageTest))->interface.pathSync = malloc(1);
 
         TEST_ASSIGN(
@@ -3605,7 +3592,7 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
         TEST_RESULT_INT(ioWriteFd(storageWriteIo(file)), -1, "check write fd");
 
-        // make sftpHandle NULL
+        // Make sftpHandle NULL
         ((StorageWriteSftp *)file->driver)->sftpHandle = NULL;
 
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close file");
@@ -3799,7 +3786,7 @@ testRun(void)
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/test.txt.pgbackrest.tmp\",26,416,0]"},
-            // not passing buffer param, see shim function, initial passed buffer contains random data
+            // Not passing buffer param, see shim function, initial passed buffer contains random data
             {.function = HRNLIBSSH2_SFTP_WRITE, .param = "[2]", .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 18},
             {.function = HRNLIBSSH2_SFTP_WRITE, .param = "[2]", .resultInt = 2, .sleep = 5},
             {.function = HRNLIBSSH2_SFTP_WRITE, .param = "[2]", .resultInt = 2},
@@ -3878,7 +3865,7 @@ testRun(void)
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/test.txt\",1,0,0]"},
-            // not passing buffer param, see shim function, initial passed buffer contains random data
+            // Not passing buffer param, see shim function, initial passed buffer contains random data
             {.function = HRNLIBSSH2_SFTP_READ, .param = "[65536]", .resultInt = 9, .readBuffer = STRDEF("TESTFILE\n")},
             {.function = HRNLIBSSH2_SFTP_READ, .param = "[65527]", .resultInt = 0},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE},
@@ -4052,7 +4039,7 @@ testRun(void)
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/test.txt\",1,0,0]"},
             {.function = HRNLIBSSH2_SFTP_SEEK64, .param = "[4]"},
-            // simulate seeking offset 4
+            // Simulate seeking offset 4
             {.function = HRNLIBSSH2_SFTP_READ, .param = "[2]", .resultInt = 2, .readBuffer = STRDEF("FI")},
             {.function = HRNLIBSSH2_SFTP_READ, .param = "[2]", .resultInt = 2, .readBuffer = STRDEF("LE")},
             {.function = HRNLIBSSH2_SFTP_READ, .param = "[2]", .resultInt = 1, .readBuffer = STRDEF("\n")},
@@ -4097,8 +4084,6 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storageRemove()"))
     {
-        // mimic creation of /noperm/noperm
-
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("remove - file missing");
 
@@ -4198,23 +4183,23 @@ testRun(void)
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
-            // ignore missing - file with no permission to read
-            // new read file, check ignore missing, check name require no libssh2 calls
-            // permission denied
+            // Ignore missing - file with no permission to read
+            // New read file, check ignore missing, check name require no libssh2 calls
+            // Permission denied
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/noperm/noperm\",1,0,0]", .resultNull = true,
              .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL, .sleep = 18},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/noperm/noperm\",1,0,0]", .resultNull = true,
              .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL, .sleep = 8},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_PERMISSION_DENIED},
-            // file missing
+            // File missing
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/test.file\",1,0,0]", .resultNull = true,
              .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL, .sleep = 18},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/test.file\",1,0,0]", .resultNull = true,
              .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL, .sleep = 8},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
-            // ignore missing
+            // Ignore missing
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/test.file\",1,0,0]", .resultNull = true,
              .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL, .sleep = 18},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/test.file\",1,0,0]", .resultNull = true,
@@ -4231,8 +4216,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("ignore missing - file with no permission to read");
 
-        // mimic creation of /noperm/noperm
-
+        // Mimic creation of /noperm/noperm
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileNoPerm, .ignoreMissing = true), "new read file");
         TEST_RESULT_BOOL(storageReadIgnoreMissing(file), true, "check ignore missing");
         TEST_RESULT_STR(storageReadName(file), fileNoPerm, "check name");
@@ -4265,10 +4249,10 @@ testRun(void)
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
-            // open file
+            // Open file
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/test.file\",1,0,0]",
              .resultInt = LIBSSH2_ERROR_NONE},
-            // check file name, check file type, check offset, check limit require no libssh2 calls
+            // Check file name, check file type, check offset, check limit require no libssh2 calls
             {.function = HRNLIBSSH2_SFTP_READ, .param = "[2]", .resultInt = 2, .readBuffer = STRDEF("TE")},
             {.function = HRNLIBSSH2_SFTP_READ, .param = "[2]", .resultInt = 2, .readBuffer = STRDEF("ST")},
             {.function = HRNLIBSSH2_SFTP_READ, .param = "[2]", .resultInt = 2, .readBuffer = STRDEF("FI")},
@@ -4383,7 +4367,6 @@ testRun(void)
         TEST_TITLE("permission denied");
 
         // mimic creation of /noperm/noperm
-
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = 0},
@@ -4394,7 +4377,7 @@ testRun(void)
              .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",\"" KEYPUB_CSTR "\",\"" KEYPRIV_CSTR "\",null]",
              .resultInt = 0},
             {.function = HRNLIBSSH2_SFTP_INIT},
-            // permission denied
+            // Permission denied
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/noperm/noperm\",26,416,0]", .resultNull = true,
              .sleep = 18},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_EAGAIN},
@@ -4438,7 +4421,7 @@ testRun(void)
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
              .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",\"" KEYPUB_CSTR "\",\"" KEYPRIV_CSTR "\",null]", .resultInt = 0},
             {.function = HRNLIBSSH2_SFTP_INIT},
-            // missing
+            // Missing
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/sub1/test.file\",26,416,0]", .resultNull = true,
              .sleep = 18},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_EAGAIN},
@@ -4482,37 +4465,37 @@ testRun(void)
              .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",\"" KEYPUB_CSTR "\",\"" KEYPRIV_CSTR "\",null]",
              .resultInt = 0},
             {.function = HRNLIBSSH2_SFTP_INIT},
-            // open file
+            // Open file
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/sub1/test.file.pgbackrest.tmp\",26,416,0]"},
-            // write null and zero size buffers are noops
-            // write filled buffer to file
+            // Write null and zero size buffers are noops
+            // Write filled buffer to file
             {.function = HRNLIBSSH2_SFTP_WRITE, .param = "[9]", .resultInt = 9},
-            // close file
+            // Close file
             {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_RENAME_EX,
              .param = "[\"" TEST_PATH "/sub1/test.file.pgbackrest.tmp\",\"" TEST_PATH "/sub1/test.file\",7]",
              .resultInt = LIBSSH2_ERROR_NONE},
-            // move context
-            // open file
+            // Move context
+            // Open file
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/sub1/test.file\",1,0,0]"},
-            // read file
+            // Read file
             {.function = HRNLIBSSH2_SFTP_READ, .param = "[65536]", .resultInt = 9, .readBuffer = STRDEF("TESTFILE\n")},
             {.function = HRNLIBSSH2_SFTP_READ, .param = "[65527]", .resultInt = 0},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE},
-            // check path mode
+            // Check path mode
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/sub1\",1]", .resultInt = LIBSSH2_ERROR_NONE,
              .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IXGRP,
              .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                       LIBSSH2_SFTP_ATTR_SIZE,
              .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
-            // check file mode
+            // Check file mode
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/sub1/test.file\",1]",
              .fileName = STRDEF("test.file"), .resultInt = LIBSSH2_ERROR_NONE,
              .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
              .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
              .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
-            // remove filename
+            // Remove filename
             {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"" TEST_PATH "/sub1/test.file\"]",
              .resultInt = LIBSSH2_ERROR_NONE},
             HRNLIBSSH2_MACRO_SHUTDOWN()
@@ -4553,30 +4536,30 @@ testRun(void)
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
-            // open file
+            // Open file
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/sub2/test.file\",26,384,0]"},
-            // write filled buffer to file
+            // Write filled buffer to file
             {.function = HRNLIBSSH2_SFTP_WRITE, .param = "[9]", .resultInt = 9},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE},
-            // open file
+            // Open file
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/sub2/test.file\",1,0,0]"},
-            // read file
+            // Read file
             {.function = HRNLIBSSH2_SFTP_READ, .param = "[65536]", .resultInt = 9, .readBuffer = STRDEF("TESTFILE\n")},
             {.function = HRNLIBSSH2_SFTP_READ, .param = "[65527]", .resultInt = 0},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE},
-            // check path mode
+            // Check path mode
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/sub2\",1]", .resultInt = LIBSSH2_ERROR_NONE,
              .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU,
              .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                       LIBSSH2_SFTP_ATTR_SIZE,
              .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
-            // check file mode
+            // Check file mode
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/sub2/test.file\",1]",
              .fileName = STRDEF("test.file"), .resultInt = LIBSSH2_ERROR_NONE,
              .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR,
              .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
              .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
-            // remove filename
+            // Remove filename
             {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"" TEST_PATH "/sub2/test.file\"]",
              .resultInt = LIBSSH2_ERROR_NONE},
             HRNLIBSSH2_MACRO_SHUTDOWN()
@@ -4608,12 +4591,11 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("no truncate");
 
-        // mimic creating file no-truncate mode 0600 contents ABC
-
+        // Mimic creating file no-truncate mode 0600 contents ABC
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
-            // open file
+            // Open file
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/no-truncate\",10,432,0]"},
             {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_NONE,
@@ -4622,13 +4604,13 @@ testRun(void)
                       LIBSSH2_SFTP_ATTR_SIZE,
              .mtime = 77777, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 3},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE},
-            // open file
+            // Open file
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/no-truncate\",1,0,0]"},
-            // read file
+            // Read file
             {.function = HRNLIBSSH2_SFTP_READ, .param = "[65536]", .resultInt = 3, .readBuffer = STRDEF("ABC")},
             {.function = HRNLIBSSH2_SFTP_READ, .param = "[65533]", .resultInt = 0},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE},
-            // check path mode
+            // Check path mode
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/no-truncate\",1]", .resultInt = LIBSSH2_ERROR_NONE,
              .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR,
              .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
