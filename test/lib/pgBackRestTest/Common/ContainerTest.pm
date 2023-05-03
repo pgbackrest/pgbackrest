@@ -220,7 +220,6 @@ sub sshSetup
         "    chmod 700 ${strUserPath}/.ssh && \\\n" .
         "    chmod 600 ${strUserPath}/.ssh/*";
 
-
     return $strScript;
 }
 
@@ -309,7 +308,7 @@ sub entryPointSetup
 
     if ($oVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
     {
-        $strScript .= '/usr/sbin/sshd -D ';
+        $strScript .= '/usr/sbin/sshd -D';
     }
     else
     {
