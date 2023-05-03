@@ -37,6 +37,104 @@ struct StorageSftp
     TimeMSec timeoutSession;                                        // Socket connection timeout
 };
 
+/***********************************************************************************************************************************
+Free libssh2 resources
+***********************************************************************************************************************************/
+static void
+storageSftpLibSsh2SessionFreeResource(THIS_VOID)
+{
+    THIS(StorageSftp);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_SFTP, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    int rc;
+
+    if (this->sftpHandle != NULL)
+    {
+        do
+        {
+            rc = libssh2_sftp_close(this->sftpHandle);
+        }
+        while (rc == LIBSSH2_ERROR_EAGAIN);
+
+        if (rc != 0)
+        {
+            THROW_FMT(
+                ServiceError, "failed to free resource sftpHandle: libssh2 errno [%d]%s", rc, rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
+                strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
+        }
+    }
+
+    if (this->sftpSession != NULL)
+    {
+        do
+        {
+            rc = libssh2_sftp_shutdown(this->sftpSession);
+        }
+        while (rc == LIBSSH2_ERROR_EAGAIN);
+
+        if (rc != 0)
+        {
+            THROW_FMT(
+                ServiceError, "failed to free resource sftpSession: libssh2 errno [%d]%s", rc, rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
+                strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
+        }
+    }
+
+    if (this->session != NULL)
+    {
+        do
+        {
+            rc = libssh2_session_disconnect_ex(this->session, SSH_DISCONNECT_BY_APPLICATION, "pgbackrest instance shutdown", "");
+        }
+        while (rc == LIBSSH2_ERROR_EAGAIN);
+
+        if (rc != 0)
+            THROW_FMT(ServiceError, "failed to disconnect libssh2 session: libssh2 errno [%d]", rc);
+
+        do
+        {
+            rc = libssh2_session_free(this->session);
+        }
+        while (rc == LIBSSH2_ERROR_EAGAIN);
+
+        if (rc != 0)
+            THROW_FMT(ServiceError, "failed to free libssh2 session: libssh2 errno [%d]", rc);
+    }
+
+    libssh2_exit();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN FN_NO_RETURN void
+storageSftpEvalLibSsh2Error(
+    const int ssh2Errno, const uint64_t sftpErrno, const ErrorType *const errorType, const String *const message,
+    const String *const hint)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INT, ssh2Errno);
+        FUNCTION_TEST_PARAM(UINT64, sftpErrno);
+        FUNCTION_TEST_PARAM(ERROR_TYPE, errorType);
+        FUNCTION_TEST_PARAM(STRING, message);
+        FUNCTION_TEST_PARAM(STRING, hint);
+    FUNCTION_TEST_END();
+
+    ASSERT(errorType != NULL);
+
+    THROWP_FMT(
+        errorType, "%slibssh2 error [%d]%s%s", message != NULL ? zNewFmt("%s: ", strZ(message)) : "", ssh2Errno,
+        ssh2Errno == LIBSSH2_ERROR_SFTP_PROTOCOL ? zNewFmt(": sftp error [%" PRIu64 "]", sftpErrno) : "",
+        hint != NULL ? zNewFmt("\n%s", strZ(hint)) : "");
+
+    FUNCTION_TEST_NO_RETURN();
+}
+
 /**********************************************************************************************************************************/
 static bool
 storageSftpLibSsh2FxNoSuchFile(THIS_VOID, const int rc)
@@ -164,80 +262,6 @@ storageSftpInfo(THIS_VOID, const String *const file, const StorageInfoLevel leve
     FUNCTION_LOG_RETURN(STORAGE_INFO, result);
 }
 
-/***********************************************************************************************************************************
-Free libssh2 resources
-***********************************************************************************************************************************/
-static void
-storageSftpLibSsh2SessionFreeResource(THIS_VOID)
-{
-    THIS(StorageSftp);
-
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_SFTP, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    int rc;
-
-    if (this->sftpHandle != NULL)
-    {
-        do
-        {
-            rc = libssh2_sftp_close(this->sftpHandle);
-        }
-        while (rc == LIBSSH2_ERROR_EAGAIN);
-
-        if (rc != 0)
-        {
-            THROW_FMT(
-                ServiceError, "failed to free resource sftpHandle: libssh2 errno [%d]%s", rc, rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
-                strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
-        }
-    }
-
-    if (this->sftpSession != NULL)
-    {
-        do
-        {
-            rc = libssh2_sftp_shutdown(this->sftpSession);
-        }
-        while (rc == LIBSSH2_ERROR_EAGAIN);
-
-        if (rc != 0)
-        {
-            THROW_FMT(
-                ServiceError, "failed to free resource sftpSession: libssh2 errno [%d]%s", rc, rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
-                strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
-        }
-    }
-
-    if (this->session != NULL)
-    {
-        do
-        {
-            rc = libssh2_session_disconnect_ex(this->session, SSH_DISCONNECT_BY_APPLICATION, "pgbackrest instance shutdown", "");
-        }
-        while (rc == LIBSSH2_ERROR_EAGAIN);
-
-        if (rc != 0)
-            THROW_FMT(ServiceError, "failed to disconnect libssh2 session: libssh2 errno [%d]", rc);
-
-        do
-        {
-            rc = libssh2_session_free(this->session);
-        }
-        while (rc == LIBSSH2_ERROR_EAGAIN);
-
-        if (rc != 0)
-            THROW_FMT(ServiceError, "failed to free libssh2 session: libssh2 errno [%d]", rc);
-    }
-
-    libssh2_exit();
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
 /**********************************************************************************************************************************/
 static void
 storageSftpLinkCreate(
@@ -275,30 +299,6 @@ storageSftpLinkCreate(
     }
 
     FUNCTION_LOG_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-FN_EXTERN FN_NO_RETURN void
-storageSftpEvalLibSsh2Error(
-    const int ssh2Errno, const uint64_t sftpErrno, const ErrorType *const errorType, const String *const message,
-    const String *const hint)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INT, ssh2Errno);
-        FUNCTION_TEST_PARAM(UINT64, sftpErrno);
-        FUNCTION_TEST_PARAM(ERROR_TYPE, errorType);
-        FUNCTION_TEST_PARAM(STRING, message);
-        FUNCTION_TEST_PARAM(STRING, hint);
-    FUNCTION_TEST_END();
-
-    ASSERT(errorType != NULL);
-
-    THROWP_FMT(
-        errorType, "%slibssh2 error [%d]%s%s", message != NULL ? zNewFmt("%s: ", strZ(message)) : "", ssh2Errno,
-        ssh2Errno == LIBSSH2_ERROR_SFTP_PROTOCOL ? zNewFmt(": sftp error [%" PRIu64 "]", sftpErrno) : "",
-        hint != NULL ? zNewFmt("\n%s", strZ(hint)) : "");
-
-    FUNCTION_TEST_NO_RETURN();
 }
 
 /**********************************************************************************************************************************/
