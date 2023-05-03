@@ -2062,7 +2062,7 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .resultInt = LIBSSH2_ERROR_EAGAIN, .param = "[\"\",4095,null,0]", .sleep = 18},
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .resultInt = LIBSSH2_ERROR_EAGAIN, .param = "[\"\",4095,null,0]", .sleep = 6},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
-            //  fail to close path after listing
+            // fail to close path after listing
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "\",0,0,1]"},
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("."),
              .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
