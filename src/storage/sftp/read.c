@@ -55,7 +55,7 @@ storageReadSftpOpen(THIS_VOID)
     ASSERT(this != NULL);
 
     // Open the file
-    Wait *wait = waitNew(this->timeoutConnect);
+    Wait *const wait = waitNew(this->timeoutConnect);
 
     do
     {
@@ -146,7 +146,7 @@ storageReadSftp(THIS_VOID, Buffer *const buffer, const bool block)
         }
         while (!bufFull(buffer));
 
-        // The total bytes read into the buffer
+        // Total bytes read into the buffer
         actualBytes = (ssize_t)bufUsed(buffer);
 
         // Error occurred during read
@@ -242,8 +242,8 @@ storageReadSftpEof(THIS_VOID)
 FN_EXTERN StorageRead *
 storageReadSftpNew(
     StorageSftp *const storage, const String *const name, const bool ignoreMissing, IoSession *const ioSession,
-    LIBSSH2_SESSION *const session, LIBSSH2_SFTP *const sftpSession, LIBSSH2_SFTP_HANDLE *const sftpHandle, TimeMSec timeoutSession,
-    TimeMSec timeoutConnect, const uint64_t offset, const Variant *const limit)
+    LIBSSH2_SESSION *const session, LIBSSH2_SFTP *const sftpSession, LIBSSH2_SFTP_HANDLE *const sftpHandle,
+    const TimeMSec timeoutSession, const TimeMSec timeoutConnect, const uint64_t offset, const Variant *const limit)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, name);

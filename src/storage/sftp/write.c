@@ -87,7 +87,7 @@ storageWriteSftpOpen(THIS_VOID)
     // Handle error
     if (this->sftpHandle == NULL)
     {
-        int rc = libssh2_session_last_errno(this->session);
+        const int rc = libssh2_session_last_errno(this->session);
 
         if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL)
         {
@@ -123,7 +123,7 @@ storageWriteSftpOpen(THIS_VOID)
 
         wait = waitNew(this->timeoutConnect);
 
-        int rc = 0;
+        int rc;
 
         do
         {
@@ -203,8 +203,8 @@ storageWriteSftpUnlinkExisting(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    int rc = 0;
-    Wait *wait = waitNew(this->timeoutConnect);
+    int rc;
+    Wait *const wait = waitNew(this->timeoutConnect);
 
     do
     {
@@ -277,7 +277,7 @@ storageWriteSftpClose(THIS_VOID)
     // Close if the file has not already been closed
     if (this->sftpHandle != NULL)
     {
-        int rc = 0;
+        int rc;
         char *libSsh2ErrMsg;
         int errMsgLen;
         int libSsh2ErrNo;

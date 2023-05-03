@@ -14,7 +14,6 @@ Storage Helper
 #include "storage/helper.h"
 #include "storage/posix/storage.h"
 #include "storage/remote/storage.h"
-#include "storage/sftp/storage.h"
 
 /***********************************************************************************************************************************
 Storage path constants
