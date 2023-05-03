@@ -70,8 +70,6 @@ use constant SSH_PRIVATE_KEY                                        => SSH_KEY_P
     push @EXPORT, qw(SSH_PRIVATE_KEY);
 use constant SSH_PUBLIC_KEY                                         => SSH_KEY_PATH . 'id_rsa.pub';
     push @EXPORT, qw(SSH_PUBLIC_KEY);
-use constant SSH_AUTHORIZED_KEYS                                    => SSH_KEY_PATH . 'authorized_keys';
-    push @EXPORT, qw(SSH_AUTHORIZED_KEYS);
 
 ####################################################################################################################################
 # new

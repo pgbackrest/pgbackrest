@@ -1177,17 +1177,6 @@ sub configCreate
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-gcs-endpoint'} = HOST_GCS . ':' . HOST_GCS_PORT;
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-storage-verify-tls'} = 'n';
         }
-        elsif ($oParam->{strStorage} eq SFTP)
-        {
-            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-path'} = $self->repoPath() . "archive";
-            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-type'} = SFTP;
-            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-account'} = HOST_SFTP_ACCOUNT;
-            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-host'} = HOST_SFTP;
-            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-hostkey-hash-type'} = HOST_SFTP_HOSTKEY_HASH_TYPE;
-            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-public-keyfile'} = TEST_USER_PUBLIC_KEY;
-            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-private-keyfile'} = TEST_USER_PRIVATE_KEY;
-            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'process-max'} = 8;
-        }
 
         if ($iRepoTotal == 2)
         {
@@ -1330,8 +1319,8 @@ sub configCreate
                 $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-account'} = TEST_USER;
                 $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-hostkey-hash-type'} = "sha1";
                 $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-host'} = HOST_SFTP;
-                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-private-keyfile'} = "/home/" . TEST_USER . "/.ssh/id_rsa";
-                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-public-keyfile'} = "/home/" . TEST_USER . "/.ssh/id_rsa.pub";
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-private-keyfile'} = testRunGet()->basePath() . SSH_PRIVATE_KEY;
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-public-keyfile'} = testRunGet()->basePath() . SSH_PUBLIC_KEY;
                 $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-path'} = $self->repoPath();
 
                 # At what count do we hit diminishing returns

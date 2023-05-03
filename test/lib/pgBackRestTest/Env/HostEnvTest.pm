@@ -199,7 +199,7 @@ sub setup
     }
 
     # Create object storage
-    if (defined($oHostObject) && ($oConfigParam->{strStorage} ne SFTP))
+    if (defined($oHostObject))
     {
         storageRepo()->create();
     }
