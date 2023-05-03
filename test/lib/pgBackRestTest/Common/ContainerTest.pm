@@ -615,6 +615,13 @@ sub containerBuild
                 "    echo '***********************************************' >> /etc/issue.net && \\\n" .
                 "    echo 'Banner /etc/issue.net'                           >> /etc/ssh/sshd_config";
 
+            if ($oVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
+            {
+                $strScript .= sectionHeader() .
+                    "# Add PubkeyAcceptedAlgorithms for Debian\n" .
+                    "    echo 'PubkeyAcceptedAlgorithms=ssh-rsa'                >> /etc/ssh/sshd_config";
+            }
+
             $strScript .= sectionHeader() .
                 "# Create test user\n" .
                 '    ' . groupCreate($strOS, TEST_GROUP, TEST_GROUP_ID) . " && \\\n" .
