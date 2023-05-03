@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 libssh2 Test Harness
 
-Scripted testing for libssh2 so exact results can be returned for unit testing.  See sftp unit tests for usage examples.
+Scripted testing for libssh2 so exact results can be returned for unit testing. See sftp unit tests for usage examples.
 ***********************************************************************************************************************************/
 #ifndef TEST_COMMON_HARNESS_LIBSSH2_H
 #define TEST_COMMON_HARNESS_LIBSSH2_H

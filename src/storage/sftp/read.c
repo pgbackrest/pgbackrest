@@ -169,8 +169,8 @@ storageReadSftp(THIS_VOID, Buffer *const buffer, const bool block)
         // Update amount of buffer used
         this->current += (uint64_t)actualBytes;
 
-        // If less data than expected was read or the limit has been reached then EOF.  The file may not actually be EOF but we are
-        // not concerned with files that are growing.  Just read up to the point where the file is being extended.
+        // If less data than expected was read or the limit has been reached then EOF. The file may not actually be EOF but we are
+        // not concerned with files that are growing. Just read up to the point where the file is being extended.
         if ((size_t)actualBytes != expectedBytes || this->current == this->limit)
             this->eof = true;
     }
@@ -272,7 +272,7 @@ storageReadSftpNew(
             .timeoutSession = timeoutSession,
             .timeoutConnect = timeoutConnect,
 
-            // Rather than enable/disable limit checking just use a big number when there is no limit.  We can feel pretty confident
+            // Rather than enable/disable limit checking just use a big number when there is no limit. We can feel pretty confident
             // that no files will be > UINT64_MAX in size. This is a copy of the interface limit but it simplifies the code during
             // read so it seems worthwhile.
             .limit = limit == NULL ? UINT64_MAX : varUInt64(limit),
