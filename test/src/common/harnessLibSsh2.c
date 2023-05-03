@@ -157,7 +157,8 @@ hrnLibSsh2ScriptRun(const char *const function, const VariantList *const param, 
 /***********************************************************************************************************************************
 Shim for libssh2_init
 ***********************************************************************************************************************************/
-int libssh2_init(int flags)
+int
+libssh2_init(int flags)
 {
     HrnLibSsh2 *hrnLibSsh2 = hrnLibSsh2ScriptRun(HRNLIBSSH2_INIT, varLstAdd(varLstNew(), varNewInt(flags)), NULL);
 
@@ -167,7 +168,8 @@ int libssh2_init(int flags)
 /***********************************************************************************************************************************
 Shim for libssh2_session_init
 ***********************************************************************************************************************************/
-LIBSSH2_SESSION *libssh2_session_init_ex(
+LIBSSH2_SESSION *
+libssh2_session_init_ex(
     LIBSSH2_ALLOC_FUNC((*myalloc)), LIBSSH2_FREE_FUNC((*myfree)), LIBSSH2_REALLOC_FUNC((*myrealloc)), void *abstract)
 {
     // All of these should always be the default NULL
@@ -180,16 +182,16 @@ LIBSSH2_SESSION *libssh2_session_init_ex(
     }
 
     HrnLibSsh2 *hrnLibSsh2 = hrnLibSsh2ScriptRun(
-            HRNLIBSSH2_SESSION_INIT_EX,
+        HRNLIBSSH2_SESSION_INIT_EX,
+        varLstAdd(
             varLstAdd(
                 varLstAdd(
                     varLstAdd(
-                        varLstAdd(
-                            varLstNew(), varNewStr(NULL)),
+                        varLstNew(), varNewStr(NULL)),
                     varNewStr(NULL)),
                 varNewStr(NULL)),
             varNewStr(NULL)),
-            NULL);
+        NULL);
 
     return hrnLibSsh2->resultNull ? NULL : (LIBSSH2_SESSION *)hrnLibSsh2;
 }
@@ -197,7 +199,8 @@ LIBSSH2_SESSION *libssh2_session_init_ex(
 /***********************************************************************************************************************************
 Shim for libssh2_session_set_blocking
 ***********************************************************************************************************************************/
-void libssh2_session_set_blocking(LIBSSH2_SESSION* session, int blocking)
+void
+libssh2_session_set_blocking(LIBSSH2_SESSION *session, int blocking)
 {
     if (session == NULL)
     {
@@ -221,16 +224,18 @@ void libssh2_session_set_blocking(LIBSSH2_SESSION* session, int blocking)
 /***********************************************************************************************************************************
 Shim for libssh2_session_handshake
 ***********************************************************************************************************************************/
-int libssh2_session_handshake(LIBSSH2_SESSION *session, libssh2_socket_t sock)
+int
+libssh2_session_handshake(LIBSSH2_SESSION *session, libssh2_socket_t sock)
 {
     return hrnLibSsh2ScriptRun(
-            HRNLIBSSH2_SESSION_HANDSHAKE, varLstAdd(varLstNew(), varNewInt(sock)), (HrnLibSsh2 *)session)->resultInt;
+        HRNLIBSSH2_SESSION_HANDSHAKE, varLstAdd(varLstNew(), varNewInt(sock)), (HrnLibSsh2 *)session)->resultInt;
 }
 
 /***********************************************************************************************************************************
 Shim for libssh2_hostkey_hash
 ***********************************************************************************************************************************/
-const char *libssh2_hostkey_hash(LIBSSH2_SESSION *session, int hash_type)
+const char *
+libssh2_hostkey_hash(LIBSSH2_SESSION *session, int hash_type)
 {
     HrnLibSsh2 *hrnLibSsh2 = NULL;
 
@@ -247,7 +252,8 @@ const char *libssh2_hostkey_hash(LIBSSH2_SESSION *session, int hash_type)
 /***********************************************************************************************************************************
 Shim for libssh2_userauth_publickey_fromfile_ex
 ***********************************************************************************************************************************/
-int libssh2_userauth_publickey_fromfile_ex(
+int
+libssh2_userauth_publickey_fromfile_ex(
     LIBSSH2_SESSION *session, const char *username, unsigned int ousername_len, const char *publickey, const char *privatekey,
     const char *passphrase)
 {
@@ -263,10 +269,10 @@ int libssh2_userauth_publickey_fromfile_ex(
                         varLstAdd(
                             varLstAdd(
                                 varLstNew(), varNewStrZ(username)),
-                        varNewUInt(ousername_len)),
-                    varNewStrZ(publickey)),
-                varNewStrZ(privatekey)),
-            varNewStrZ(passphrase)),
+                            varNewUInt(ousername_len)),
+                        varNewStrZ(publickey)),
+                    varNewStrZ(privatekey)),
+                varNewStrZ(passphrase)),
             (HrnLibSsh2 *)session);
     }
     MEM_CONTEXT_TEMP_END();
@@ -277,7 +283,8 @@ int libssh2_userauth_publickey_fromfile_ex(
 /***********************************************************************************************************************************
 Shim for libssh2_sftp_init
 ***********************************************************************************************************************************/
-LIBSSH2_SFTP *libssh2_sftp_init(LIBSSH2_SESSION *session)
+LIBSSH2_SFTP *
+libssh2_sftp_init(LIBSSH2_SESSION *session)
 {
     HrnLibSsh2 *hrnLibSsh2 = hrnLibSsh2ScriptRun(HRNLIBSSH2_SFTP_INIT, NULL, (HrnLibSsh2 *)session);
 
@@ -287,7 +294,8 @@ LIBSSH2_SFTP *libssh2_sftp_init(LIBSSH2_SESSION *session)
 /***********************************************************************************************************************************
 Shim for libssh2_sftp_close_handle
 ***********************************************************************************************************************************/
-int libssh2_sftp_close_handle(LIBSSH2_SFTP_HANDLE *handle)
+int
+libssh2_sftp_close_handle(LIBSSH2_SFTP_HANDLE *handle)
 {
     return hrnLibSsh2ScriptRun(HRNLIBSSH2_SFTP_CLOSE_HANDLE, NULL, (HrnLibSsh2 *)handle)->resultInt;
 }
@@ -295,7 +303,8 @@ int libssh2_sftp_close_handle(LIBSSH2_SFTP_HANDLE *handle)
 /***********************************************************************************************************************************
 Shim for libssh2_sftp_shutdown
 ***********************************************************************************************************************************/
-int libssh2_sftp_shutdown(LIBSSH2_SFTP *sftp)
+int
+libssh2_sftp_shutdown(LIBSSH2_SFTP *sftp)
 {
     return hrnLibSsh2ScriptRun(HRNLIBSSH2_SFTP_SHUTDOWN, NULL, (HrnLibSsh2 *)sftp)->resultInt;
 }
@@ -303,7 +312,8 @@ int libssh2_sftp_shutdown(LIBSSH2_SFTP *sftp)
 /***********************************************************************************************************************************
 Shim for libssh2_session_disconnect_ex
 ***********************************************************************************************************************************/
-int libssh2_session_disconnect_ex(LIBSSH2_SESSION *session, int reason, const char *description, const char *lang)
+int
+libssh2_session_disconnect_ex(LIBSSH2_SESSION *session, int reason, const char *description, const char *lang)
 {
     HrnLibSsh2 *hrnLibSsh2 = NULL;
 
@@ -315,8 +325,8 @@ int libssh2_session_disconnect_ex(LIBSSH2_SESSION *session, int reason, const ch
                 varLstAdd(
                     varLstAdd(
                         varLstNew(), varNewInt(reason)),
-                varNewStrZ(description)),
-            varNewStrZ(lang)),
+                    varNewStrZ(description)),
+                varNewStrZ(lang)),
             (HrnLibSsh2 *)session);
     }
     MEM_CONTEXT_TEMP_END();
@@ -327,7 +337,8 @@ int libssh2_session_disconnect_ex(LIBSSH2_SESSION *session, int reason, const ch
 /***********************************************************************************************************************************
 Shim for int libssh2_session_free
 ***********************************************************************************************************************************/
-int libssh2_session_free(LIBSSH2_SESSION *session)
+int
+libssh2_session_free(LIBSSH2_SESSION *session)
 {
     return hrnLibSsh2ScriptRun(HRNLIBSSH2_SESSION_FREE, NULL, (HrnLibSsh2 *)session)->resultInt;
 }
@@ -335,14 +346,15 @@ int libssh2_session_free(LIBSSH2_SESSION *session)
 /***********************************************************************************************************************************
 Shim for libssh2_sftp_stat_ex
 ***********************************************************************************************************************************/
-int libssh2_sftp_stat_ex(
+int
+libssh2_sftp_stat_ex(
     LIBSSH2_SFTP *sftp, const char *path, unsigned int path_len, int stat_type, LIBSSH2_SFTP_ATTRIBUTES *attrs)
 {
     // Avoid compiler complaining of unused param. Not passing to hrnLibSsh2ScriptRun, as parameter will vary depending on where
     // tests are being run.
     //
     // Could we utilize test.c/build.c to calculate/define this and other length params?
-   (void)path_len;
+    (void)path_len;
 
     HrnLibSsh2 *hrnLibSsh2 = NULL;
 
@@ -353,7 +365,7 @@ int libssh2_sftp_stat_ex(
             varLstAdd(
                 varLstAdd(
                     varLstNew(), varNewStrZ(path)),
-            varNewInt(stat_type)),
+                varNewInt(stat_type)),
             (HrnLibSsh2 *)sftp);
     }
     MEM_CONTEXT_TEMP_END();
@@ -378,7 +390,8 @@ int libssh2_sftp_stat_ex(
 /***********************************************************************************************************************************
 Shim for libssh2_sftp_last_error
 ***********************************************************************************************************************************/
-unsigned long libssh2_sftp_last_error(LIBSSH2_SFTP *sftp)
+unsigned long
+libssh2_sftp_last_error(LIBSSH2_SFTP *sftp)
 {
     return (unsigned long)hrnLibSsh2ScriptRun(HRNLIBSSH2_SFTP_LAST_ERROR, NULL, (HrnLibSsh2 *)sftp)->resultUInt;
 }
@@ -386,7 +399,8 @@ unsigned long libssh2_sftp_last_error(LIBSSH2_SFTP *sftp)
 /***********************************************************************************************************************************
 Shim for libssh2_sftp_symlink_ex
 ***********************************************************************************************************************************/
-int libssh2_sftp_symlink_ex(
+int
+libssh2_sftp_symlink_ex(
     LIBSSH2_SFTP *sftp, const char *path, unsigned int path_len, char *target, unsigned int target_len, int link_type)
 {
     // Avoid compiler complaining of unused param. Not passing to hrnLibSsh2ScriptRun, as parameter will vary depending on where
@@ -404,8 +418,8 @@ int libssh2_sftp_symlink_ex(
                 varLstAdd(
                     varLstAdd(
                         varLstNew(), varNewStrZ(path)),
-                varNewStrZ(target)),
-            varNewInt(link_type)),
+                    varNewStrZ(target)),
+                varNewInt(link_type)),
             (HrnLibSsh2 *)sftp);
     }
     MEM_CONTEXT_TEMP_END();
@@ -450,7 +464,8 @@ int libssh2_sftp_symlink_ex(
 /***********************************************************************************************************************************
 Shim for libssh2_sftp_open_ex
 ***********************************************************************************************************************************/
-LIBSSH2_SFTP_HANDLE * libssh2_sftp_open_ex(
+LIBSSH2_SFTP_HANDLE *
+libssh2_sftp_open_ex(
     LIBSSH2_SFTP *sftp, const char *filename, unsigned int filename_len, unsigned long flags, long mode, int open_type)
 {
     // To avoid compiler complaining of unused param. Not passing to hrnLibSsh2ScriptRun, as parameter will vary depending on where
@@ -468,9 +483,9 @@ LIBSSH2_SFTP_HANDLE * libssh2_sftp_open_ex(
                     varLstAdd(
                         varLstAdd(
                             varLstNew(), varNewStrZ(filename)),
-                    varNewUInt64(flags)),
-                varNewInt64(mode)),
-            varNewInt(open_type)),
+                        varNewUInt64(flags)),
+                    varNewInt64(mode)),
+                varNewInt(open_type)),
             (HrnLibSsh2 *)sftp);
     }
     MEM_CONTEXT_TEMP_END();
@@ -481,7 +496,8 @@ LIBSSH2_SFTP_HANDLE * libssh2_sftp_open_ex(
 /***********************************************************************************************************************************
 Shim for libssh2_sftp_readdir_ex
 ***********************************************************************************************************************************/
-int libssh2_sftp_readdir_ex(
+int
+libssh2_sftp_readdir_ex(
     LIBSSH2_SFTP_HANDLE *handle, char *buffer, size_t buffer_maxlen, char *longentry, size_t longentry_maxlen,
     LIBSSH2_SFTP_ATTRIBUTES *attrs)
 {
@@ -499,9 +515,9 @@ int libssh2_sftp_readdir_ex(
                     varLstAdd(
                         varLstAdd(
                             varLstNew(), varNewStrZ(buffer)),
-                    varNewUInt64(buffer_maxlen)),
-                varNewStrZ(longentry)),
-            varNewUInt64(longentry_maxlen)),
+                        varNewUInt64(buffer_maxlen)),
+                    varNewStrZ(longentry)),
+                varNewUInt64(longentry_maxlen)),
             (HrnLibSsh2 *)handle);
     }
     MEM_CONTEXT_TEMP_END();
@@ -515,7 +531,8 @@ int libssh2_sftp_readdir_ex(
 /***********************************************************************************************************************************
 Shim for libssh2_session_last_errno
 ***********************************************************************************************************************************/
-int libssh2_session_last_errno(LIBSSH2_SESSION *session)
+int
+libssh2_session_last_errno(LIBSSH2_SESSION *session)
 {
     return hrnLibSsh2ScriptRun(HRNLIBSSH2_SESSION_LAST_ERRNO, NULL, (HrnLibSsh2 *)session)->resultInt;
 }
@@ -523,7 +540,8 @@ int libssh2_session_last_errno(LIBSSH2_SESSION *session)
 /***********************************************************************************************************************************
 Shim for libssh2_sftp_fstat_ex
 ***********************************************************************************************************************************/
-int libssh2_sftp_fstat_ex(LIBSSH2_SFTP_HANDLE *handle, LIBSSH2_SFTP_ATTRIBUTES *attrs, int setstat)
+int
+libssh2_sftp_fstat_ex(LIBSSH2_SFTP_HANDLE *handle, LIBSSH2_SFTP_ATTRIBUTES *attrs, int setstat)
 {
     if (attrs == NULL)
         THROW_FMT(AssertError, "attrs is NULL");
@@ -555,7 +573,8 @@ int libssh2_sftp_fstat_ex(LIBSSH2_SFTP_HANDLE *handle, LIBSSH2_SFTP_ATTRIBUTES *
 /***********************************************************************************************************************************
 Shim for libssh2_sftp_fsync
 ***********************************************************************************************************************************/
-int libssh2_sftp_fsync(LIBSSH2_SFTP_HANDLE *handle)
+int
+libssh2_sftp_fsync(LIBSSH2_SFTP_HANDLE *handle)
 {
     return hrnLibSsh2ScriptRun(HRNLIBSSH2_SFTP_FSYNC, NULL, (HrnLibSsh2 *)handle)->resultInt;
 }
@@ -563,7 +582,8 @@ int libssh2_sftp_fsync(LIBSSH2_SFTP_HANDLE *handle)
 /***********************************************************************************************************************************
 Shim for libssh2_sftp_mkdir_ex
 ***********************************************************************************************************************************/
-int libssh2_sftp_mkdir_ex(LIBSSH2_SFTP *sftp, const char *path, unsigned int path_len, long mode)
+int
+libssh2_sftp_mkdir_ex(LIBSSH2_SFTP *sftp, const char *path, unsigned int path_len, long mode)
 {
     // To avoid compiler complaining of unused param. Not passing to hrnLibSsh2ScriptRun, as parameter will vary depending on where
     // tests are being run.
@@ -578,7 +598,7 @@ int libssh2_sftp_mkdir_ex(LIBSSH2_SFTP *sftp, const char *path, unsigned int pat
             varLstAdd(
                 varLstAdd(
                     varLstNew(), varNewStrZ(path)),
-            varNewInt64(mode)),
+                varNewInt64(mode)),
             (HrnLibSsh2 *)sftp);
     }
     MEM_CONTEXT_TEMP_END();
@@ -589,7 +609,8 @@ int libssh2_sftp_mkdir_ex(LIBSSH2_SFTP *sftp, const char *path, unsigned int pat
 /***********************************************************************************************************************************
 Shim for libssh2_sftp_read
 ***********************************************************************************************************************************/
-ssize_t libssh2_sftp_read(LIBSSH2_SFTP_HANDLE *handle, char *buffer, size_t buffer_maxlen)
+ssize_t
+libssh2_sftp_read(LIBSSH2_SFTP_HANDLE *handle, char *buffer, size_t buffer_maxlen)
 {
     // We don't pass buffer to hrnLibSsh2ScriptRun. The first call for each invocation passes buffer with random data, which is
     // an issue for sftpTest.c.
@@ -616,7 +637,8 @@ ssize_t libssh2_sftp_read(LIBSSH2_SFTP_HANDLE *handle, char *buffer, size_t buff
 /***********************************************************************************************************************************
 Shim for libssh2_sftp_rename_ex
 ***********************************************************************************************************************************/
-int libssh2_sftp_rename_ex(
+int
+libssh2_sftp_rename_ex(
     LIBSSH2_SFTP *sftp, const char *source_filename, unsigned int source_filename_len, const char *dest_filename,
     unsigned int dest_filename_len, long flags)
 {
@@ -635,8 +657,8 @@ int libssh2_sftp_rename_ex(
                 varLstAdd(
                     varLstAdd(
                         varLstNew(), varNewStrZ(source_filename)),
-                varNewStrZ(dest_filename)),
-            varNewInt64(flags)),
+                    varNewStrZ(dest_filename)),
+                varNewInt64(flags)),
             (HrnLibSsh2 *)sftp);
     }
     MEM_CONTEXT_TEMP_END();
@@ -647,7 +669,8 @@ int libssh2_sftp_rename_ex(
 /***********************************************************************************************************************************
 Shim for libssh2_sftp_rmdir_ex
 ***********************************************************************************************************************************/
-int libssh2_sftp_rmdir_ex(LIBSSH2_SFTP *sftp, const char *path, unsigned int path_len)
+int
+libssh2_sftp_rmdir_ex(LIBSSH2_SFTP *sftp, const char *path, unsigned int path_len)
 {
     // Avoid compiler complaining of unused param. Not passing to hrnLibSsh2ScriptRun, as parameter will vary depending on where
     // tests are being run.
@@ -671,7 +694,8 @@ int libssh2_sftp_rmdir_ex(LIBSSH2_SFTP *sftp, const char *path, unsigned int pat
 /***********************************************************************************************************************************
 Shim for libssh2_sftp_seek64
 ***********************************************************************************************************************************/
-void libssh2_sftp_seek64(LIBSSH2_SFTP_HANDLE *handle, libssh2_uint64_t offset)
+void
+libssh2_sftp_seek64(LIBSSH2_SFTP_HANDLE *handle, libssh2_uint64_t offset)
 {
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -689,7 +713,8 @@ void libssh2_sftp_seek64(LIBSSH2_SFTP_HANDLE *handle, libssh2_uint64_t offset)
 /***********************************************************************************************************************************
 Shim for libssh2_sftp_unlink_ex
 ***********************************************************************************************************************************/
-int libssh2_sftp_unlink_ex(LIBSSH2_SFTP *sftp, const char *filename, unsigned int filename_len)
+int
+libssh2_sftp_unlink_ex(LIBSSH2_SFTP *sftp, const char *filename, unsigned int filename_len)
 {
     // Avoid compiler complaining of unused param. Not passing to hrnLibSsh2ScriptRun, as parameter will vary depending on where
     // tests are being run.
@@ -713,7 +738,8 @@ int libssh2_sftp_unlink_ex(LIBSSH2_SFTP *sftp, const char *filename, unsigned in
 /***********************************************************************************************************************************
 Shim for libssh2_sftp_write
 ***********************************************************************************************************************************/
-ssize_t libssh2_sftp_write(LIBSSH2_SFTP_HANDLE *handle, const char *buffer, size_t count)
+ssize_t
+libssh2_sftp_write(LIBSSH2_SFTP_HANDLE *handle, const char *buffer, size_t count)
 {
     // We don't pass buffer to hrnLibSsh2ScriptRun. The first call for each invocation passes buffer with random data, which is
     // an issue for sftpTest.c.
