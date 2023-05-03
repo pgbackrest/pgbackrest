@@ -632,9 +632,9 @@ run 8/1 ------------- L2285 no current backups
 
             <p><b>run 8/1 ------------- L2285 no current backups</b> - this is the first test (1) in run 8 which is the <code>TEST_TITLE("no current backups");</code> at line number 2285.</p>
 
-            <p><b>000.002s          L2298     empty backup.info</b> -  the first number, 000.002s, is the time in seconds that the test started from the beginning of the run. L2298 is the line number of the test and <code>empty backup.info</code> is the test comment.</p>
+            <p><b>000.002s          L2298     empty backup.info</b> - the first number, 000.002s, is the time in seconds that the test started from the beginning of the run. L2298 is the line number of the test and <code>empty backup.info</code> is the test comment.</p>
 
-            <p><b>000.009s 000.007s L2300     no backups to expire</b> -  again, 000.009s, is the time in seconds that the test started from the beginning of the run. The second number, 000.007s, is the run time of the <b>previous</b> test (i.e. <code>empty backup.info</code> test took 000.007 seconds to execute). L2300 is the line number of the test and <code>no backups to expire</code> is the test comment.</p>
+            <p><b>000.009s 000.007s L2300     no backups to expire</b> - again, 000.009s, is the time in seconds that the test started from the beginning of the run. The second number, 000.007s, is the run time of the <b>previous</b> test (i.e. <code>empty backup.info</code> test took 000.007 seconds to execute). L2300 is the line number of the test and <code>no backups to expire</code> is the test comment.</p>
         </section>
     </section>
 
