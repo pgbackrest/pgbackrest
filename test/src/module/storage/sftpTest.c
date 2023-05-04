@@ -131,7 +131,7 @@ testRun(void)
             storageSftpNewP(
                 TEST_PATH_STR, STRDEF("localhost"), 22, 1000, 1000, .user = TEST_USER_STR, .keyPriv = KEYPRIV, .keyPub = KEYPUB,
                 .hostkeyHashType = hashTypeSha1),
-            ServiceError, "libssh2 handshake failed");
+            ServiceError, "libssh2 handshake failed [-1]");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("handshake failure");
@@ -149,7 +149,7 @@ testRun(void)
             storageSftpNewP(
                 TEST_PATH_STR, STRDEF("localhost"), 22, 1000, 1000, .user = TEST_USER_STR, .keyPriv = KEYPRIV, .keyPub = KEYPUB,
                 .hostkeyHashType = hashTypeSha1),
-            ServiceError, "libssh2 handshake failed");
+            ServiceError, "libssh2 handshake failed [-37]");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("hostkey hash fail");

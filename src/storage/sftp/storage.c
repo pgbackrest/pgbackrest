@@ -817,7 +817,7 @@ storageSftpNew(
         waitFree(wait);
 
         if (handshakeStatus != 0)
-            THROW_FMT(ServiceError, "libssh2 handshake failed");
+            THROW_FMT(ServiceError, "libssh2 handshake failed [%d]", handshakeStatus);
 
         int hashType = LIBSSH2_HOSTKEY_HASH_SHA1;
         size_t hashSize = 0;
