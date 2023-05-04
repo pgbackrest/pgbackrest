@@ -615,7 +615,7 @@ sub containerBuild
                 "    echo '***********************************************' >> /etc/issue.net && \\\n" .
                 "    echo 'Banner /etc/issue.net'                           >> /etc/ssh/sshd_config";
 
-            if ($oVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
+            if ($strOS eq VM_U22)
             {
                 $strScript .= sectionHeader() .
                     "# Add PubkeyAcceptedAlgorithms (required for SFTP)\n" .
