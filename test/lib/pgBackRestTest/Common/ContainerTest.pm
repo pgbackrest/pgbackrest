@@ -618,8 +618,8 @@ sub containerBuild
             if ($oVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
             {
                 $strScript .= sectionHeader() .
-                    "# Add PubkeyAcceptedAlgorithms for Debian\n" .
-                    "    echo 'PubkeyAcceptedAlgorithms=ssh-rsa'                >> /etc/ssh/sshd_config";
+                    "# Add PubkeyAcceptedAlgorithms (required for SFTP)\n" .
+                    "    echo 'PubkeyAcceptedAlgorithms=+ssh-rsa'               >> /etc/ssh/sshd_config";
             }
 
             $strScript .= sectionHeader() .
