@@ -36,7 +36,7 @@
         <variable key="os-type-is-rhel">'{[os-type]}' eq '{[os-rhel]}'</variable>
 
         <!-- Defines the container image that will be used to build the host -->
-        <variable key="os-image" if="{[os-type-is-debian]}">ubuntu:18.04</variable>
+        <variable key="os-image" if="{[os-type-is-debian]}">ubuntu:20.04</variable>
         <variable key="os-image" if="{[os-type-is-rhel]}">rockylinux/rockylinux:8</variable>
 
         <variable key="user-guide-subtitle" if="{[os-type-is-debian]}">{[os-debian-title]}</variable>
@@ -2441,11 +2441,46 @@
     </section>
 
     <!-- ======================================================================================================================= -->
+    <section id="sftp-support" if="!{[object-any-all]}" depend="/quickstart/configure-archiving">
+        <title>SFTP Support</title>
+
+        <block id="sftp-setup">
+            <block-variable-replace key="sftp-setup-repo-id">4</block-variable-replace>
+            <block-variable-replace key="sftp-setup-host">{[host-pg1]}</block-variable-replace>
+            <block-variable-replace key="sftp-setup-user">postgres</block-variable-replace>
+            <block-variable-replace key="sftp-setup-config-owner">postgres:postgres</block-variable-replace>
+        </block>
+
+        <p>Commands are run exactly as if the repository were stored on a local disk.</p>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Create the stanza</title>
+
+            <execute user="postgres" output="y">
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info stanza-create</exe-cmd>
+                <exe-highlight>completed successfully</exe-highlight>
+            </execute>
+        </execute-list>
+
+        <p>SFTP file transfer is relatively slow so commands benefit by increasing <br-option>process-max</br-option> to parallelize file creation.</p>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Backup the {[postgres-cluster-demo]} cluster</title>
+
+            <execute user="postgres" output="y">
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --repo=4
+                    --log-level-console=info backup</exe-cmd>
+                <exe-highlight>no prior backup exists|full backup size</exe-highlight>
+            </execute>
+        </execute-list>
+    </section>
+
+    <!-- ======================================================================================================================= -->
     <section id="gcs-support" if="!{[object-any-all]}" depend="/quickstart/configure-archiving">
         <title>GCS-Compatible Object Store Support</title>
 
         <block id="gcs-setup">
-            <block-variable-replace key="gcs-setup-repo-id">4</block-variable-replace>
+            <block-variable-replace key="gcs-setup-repo-id">5</block-variable-replace>
             <block-variable-replace key="gcs-setup-host">{[host-pg1]}</block-variable-replace>
             <block-variable-replace key="gcs-setup-user">postgres</block-variable-replace>
             <block-variable-replace key="gcs-setup-config-owner">postgres:postgres</block-variable-replace>
@@ -2454,22 +2489,6 @@
         <p>Commands are run exactly as if the repository were stored on a local disk.</p>
 
         <p>File creation time in object stores is relatively slow so commands benefit by increasing <br-option>process-max</br-option> to parallelize file creation.</p>
-    </section>
-
-    <!-- ======================================================================================================================= -->
-    <section id="sftp-support" if="!{[object-any-all]}" depend="/quickstart/configure-archiving">
-        <title>SFTP Support</title>
-
-        <block id="sftp-setup">
-            <block-variable-replace key="sftp-setup-repo-id">5</block-variable-replace>
-            <block-variable-replace key="sftp-setup-host">{[host-pg1]}</block-variable-replace>
-            <block-variable-replace key="sftp-setup-user">postgres</block-variable-replace>
-            <block-variable-replace key="sftp-setup-config-owner">postgres:postgres</block-variable-replace>
-        </block>
-
-        <p>Commands are run exactly as if the repository were stored on a local disk.</p>
-
-        <p>SFTP file transfer is relatively slow so commands benefit by increasing <br-option>process-max</br-option> to parallelize file creation.</p>
     </section>
 
     <!-- ======================================================================================================================= -->
