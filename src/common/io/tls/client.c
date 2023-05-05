@@ -3,7 +3,6 @@ TLS Client
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#define _GNU_SOURCE              /* for inet_aton() */
 #include <arpa/inet.h>
 #include <strings.h>
 
@@ -148,8 +147,10 @@ tlsClientHostVerifyIPAddr(const String *host, const String *name)
    size_t      iplen = strSize(name);
    bool        result = false;
 
+   const char *ipdata = strZ(name);
+
    if (!(host && strSize(host) > 0))
-       return false;
+       FUNCTION_LOG_RETURN(BOOL, false);
 
    /*
     * The data from the certificate is in network byte order. Convert our
@@ -163,34 +164,23 @@ tlsClientHostVerifyIPAddr(const String *host, const String *name)
        /* IPv4 */
        struct in_addr addr;
 
-       /*
-        * The use of inet_aton() is deliberate; we accept alternative IPv4
-        * address notations that are accepted by inet_aton() but not
-        * inet_pton() as server addresses.
-        */
-       if (inet_aton(strZ(host), &addr))
+       if (inet_pton(AF_INET, strZ(host), &addr) == 1)
        {
-           if (memcmp(strZ(name), &addr.s_addr, iplen) == 0)
-               return true;
+           if (memcmp(ipdata, &addr.s_addr, iplen) == 0)
+               result = true;
        }
    }
-   /*
-    * If they don't have inet_pton(), skip this.  Then, an IPv6 address in a
-    * certificate will cause an error.
-    */
-#ifdef HAVE_INET_PTON
    else if (iplen == 16)
    {
        /* IPv6 */
        struct in6_addr addr;
 
-       if (inet_pton(AF_INET6, host, &addr) == 1)
+       if (inet_pton(AF_INET6, strZ(host), &addr) == 1)
        {
            if (memcmp(ipdata, &addr.s6_addr, iplen) == 0)
                result = true;
        }
    }
-#endif
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }
