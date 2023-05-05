@@ -313,7 +313,7 @@
             rm /etc/apt/apt.conf.d/70debconf &amp;&amp; \
             apt-get update &amp;&amp; \
             apt-get install -y --no-install-recommends sudo ssh wget vim gnupg lsb-release iputils-ping ca-certificates \
-                    tzdata locales 2>&amp;1
+                    tzdata locales libssh2-1-dev 2>&amp;1
 
         {[sudo-disable-core-dump]}
 
@@ -369,7 +369,7 @@
         VOLUME [ "/sys/fs/cgroup" ]
 
         # Install packages
-        RUN yum install -y openssh-server openssh-clients sudo wget vim openssl findutils dnf-plugins-core 2>&amp;1
+        RUN yum install -y openssh-server openssh-clients sudo wget vim openssl findutils dnf-plugins-core libssh2-devel"; 2>&amp;1
 
         # Enable PowerTools repository (only available on RHEL8)
         RUN dnf config-manager --set-enabled powertools || true
