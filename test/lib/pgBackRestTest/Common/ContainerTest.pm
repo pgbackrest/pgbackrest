@@ -618,8 +618,9 @@ sub containerBuild
             if ($strOS eq VM_U22)
             {
                 $strScript .= sectionHeader() .
-                    "# Add PubkeyAcceptedAlgorithms (required for SFTP)\n" .
-                    "    echo 'PubkeyAcceptedAlgorithms=+ssh-rsa'               >> /etc/ssh/sshd_config";
+                    "    echo '# Add PubkeyAcceptedAlgorithms (required for SFTP)'              >> /etc/ssh/sshd_config && \\\n" .
+                    "    echo 'HostKeyAlgorithms=ssh-rsa,ssh-rsa-cert-v01\@openssh.com'         >> /etc/ssh/sshd_config && \\\n" .
+                    "    echo 'PubkeyAcceptedAlgorithms=+ssh-rsa,ssh-rsa-cert-v01\@openssh.com' >> /etc/ssh/sshd_config";
             }
 
             $strScript .= sectionHeader() .
