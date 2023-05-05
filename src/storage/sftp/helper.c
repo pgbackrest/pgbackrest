@@ -26,24 +26,17 @@ storageSftpHelper(const unsigned int repoIdx, const bool write, StoragePathExpre
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        StorageSftpNewParam param;
-        param.write = write;
-        param.pathExpressionFunction = pathExpressionCallback;
-        param.user = strDup(cfgOptionIdxStrNull(cfgOptRepoSftpAccount, repoIdx));
-        param.keyPub = strDup(cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyfile, repoIdx));
-        param.keyPriv = strDup(cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyfile, repoIdx));
-        param.keyPassphrase = strDup(cfgOptionIdxStrNull(cfgOptRepoSftpKeyfilePassphrase, repoIdx));
-        param.hostkeyHashType = cfgOptionIdxStrId(cfgOptRepoSftpHostkeyHashType, repoIdx);
-        param.hostFingerprint = strDup(cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx));
-        param.modeFile = STORAGE_MODE_FILE_DEFAULT;
-        param.modePath = STORAGE_MODE_PATH_DEFAULT;
-
         MEM_CONTEXT_PRIOR_BEGIN()
         {
-            result = storageSftpNew(
+            result = storageSftpNewP(
                 cfgOptionIdxStr(cfgOptRepoPath, repoIdx), cfgOptionIdxStr(cfgOptRepoSftpHost, repoIdx),
-                cfgOptionIdxUInt(cfgOptRepoSftpHostPort, repoIdx), cfgOptionUInt64(cfgOptIoTimeout),
-                cfgOptionUInt64(cfgOptIoTimeout), param);
+                cfgOptionIdxUInt(cfgOptRepoSftpHostPort, repoIdx), cfgOptionIdxStr(cfgOptRepoSftpAccount, repoIdx),
+                cfgOptionUInt64(cfgOptIoTimeout), cfgOptionUInt64(cfgOptIoTimeout),
+                cfgOptionIdxStr(cfgOptRepoSftpPrivateKeyfile, repoIdx), cfgOptionIdxStrId(cfgOptRepoSftpHostkeyHashType, repoIdx),
+                .write = write, .pathExpressionFunction = pathExpressionCallback, .modeFile = STORAGE_MODE_FILE_DEFAULT,
+                .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyfile, repoIdx),
+                .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpKeyfilePassphrase, repoIdx),
+                .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx));
         }
         MEM_CONTEXT_PRIOR_END();
     }

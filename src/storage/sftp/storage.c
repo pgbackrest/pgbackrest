@@ -757,21 +757,22 @@ static const StorageInterface storageInterfaceSftp =
 
 FN_EXTERN Storage *
 storageSftpNew(
-    const String *const path, const String *const host, const unsigned int port, const TimeMSec timeoutConnect,
-    const TimeMSec timeoutSession, const StorageSftpNewParam param)
+    const String *const path, const String *const host, const unsigned int port, const String *const user,
+    const TimeMSec timeoutConnect, const TimeMSec timeoutSession, const String *const keyPriv, const StringId hostKeyHashType,
+    const StorageSftpNewParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(STRING, host);
         FUNCTION_LOG_PARAM(UINT, port);
+        FUNCTION_LOG_PARAM(STRING, user);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeoutConnect);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeoutSession);
-        FUNCTION_LOG_PARAM(STRING, param.user);
+        FUNCTION_LOG_PARAM(STRING, keyPriv);
+        FUNCTION_LOG_PARAM(STRING_ID, hostKeyHashType);
         FUNCTION_LOG_PARAM(STRING, param.keyPub);
-        FUNCTION_LOG_PARAM(STRING, param.keyPriv);
         FUNCTION_LOG_PARAM(STRING, param.keyPassphrase);
         FUNCTION_LOG_PARAM(STRING, param.hostFingerprint);
-        FUNCTION_LOG_PARAM(STRING_ID, param.hostkeyHashType);
         FUNCTION_LOG_PARAM(MODE, param.modeFile);
         FUNCTION_LOG_PARAM(MODE, param.modePath);
         FUNCTION_LOG_PARAM(BOOL, param.write);
@@ -779,6 +780,11 @@ storageSftpNew(
     FUNCTION_LOG_END();
 
     ASSERT(path != NULL);
+    ASSERT(host != NULL);
+    ASSERT(port != 0);
+    ASSERT(user != NULL);
+    ASSERT(keyPriv != NULL);
+    ASSERT(hostKeyHashType != 0);
 
     // Initialize user module
     userInit();
@@ -822,9 +828,8 @@ storageSftpNew(
         int hashType = LIBSSH2_HOSTKEY_HASH_SHA1;
         size_t hashSize = 0;
 
-        // Verify that the fingerprint[N] buffer declared below is large enough
-        // when adding a new hashType
-        switch (param.hostkeyHashType)
+        // Verify that the fingerprint[N] buffer declared below is large enough when adding a new hashType
+        switch (hostKeyHashType)
         {
             case hashTypeMd5:
                 hashType = LIBSSH2_HOSTKEY_HASH_MD5;
@@ -845,7 +850,7 @@ storageSftpNew(
 
             default:
                 THROW_FMT(
-                    ServiceError, "requested ssh2 hostkey hash type (%s) not available", strZ(strIdToStr(param.hostkeyHashType)));
+                    ServiceError, "requested ssh2 hostkey hash type (%s) not available", strZ(strIdToStr(hostKeyHashType)));
                 break;
         }
 
@@ -871,37 +876,32 @@ storageSftpNew(
             }
         }
 
-        if (strZNull(param.user) != NULL && strZNull(param.keyPriv) != NULL)
+        LOG_DEBUG_FMT("attempting public key authentication");
+
+        int rc;
+        wait = waitNew(timeoutConnect);
+
+        do
         {
-            LOG_DEBUG_FMT("attempting public key authentication");
-
-            int rc;
-            Wait *const wait = waitNew(timeoutConnect);
-
-            do
-            {
-                rc = libssh2_userauth_publickey_fromfile(
-                    this->session, strZ(param.user), strZNull(param.keyPub) == NULL ? NULL : strZ(param.keyPub),
-                    strZ(param.keyPriv), strZNull(param.keyPassphrase) == NULL ? NULL : strZ(param.keyPassphrase));
-            }
-            while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
-
-            waitFree(wait);
-
-            if (rc != 0)
-            {
-                storageSftpEvalLibSsh2Error(
-                    rc, libssh2_sftp_last_error(this->sftpSession), &ServiceError,
-                    STRDEF("public key authentication failed"),
-                    STRDEF(
-                        "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-keyfile and"
-                        " --repo-sftp-public-keyfile to be provided\n"
-                        "HINT: libssh2 versions before 1.9.0 expect a PEM format keypair, try ssh-keygen -m PEM -t rsa -P \"\" to"
-                        " generate the keypair"));
-            }
+            rc = libssh2_userauth_publickey_fromfile(
+                this->session, strZ(user), param.keyPub == NULL ? NULL : strZ(param.keyPub), strZ(keyPriv),
+                param.keyPassphrase == NULL ? NULL : strZ(param.keyPassphrase));
         }
-        else
-            THROW_FMT(ParamRequiredError, "user and private key required");
+        while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
+
+        waitFree(wait);
+
+        if (rc != 0)
+        {
+            storageSftpEvalLibSsh2Error(
+                rc, libssh2_sftp_last_error(this->sftpSession), &ServiceError,
+                STRDEF("public key authentication failed"),
+                STRDEF(
+                    "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-keyfile and"
+                    " --repo-sftp-public-keyfile to be provided\n"
+                    "HINT: libssh2 versions before 1.9.0 expect a PEM format keypair, try ssh-keygen -m PEM -t rsa -P \"\" to"
+                    " generate the keypair"));
+        }
 
         wait = waitNew(timeoutConnect);
 

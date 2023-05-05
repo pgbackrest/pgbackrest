@@ -2366,10 +2366,7 @@ option:
     group: repo
     type: string
     command: repo-type
-    depend:
-      option: repo-type
-      list:
-        - sftp
+    depend: repo-sftp-account
 
   repo-sftp-host-fingerprint:
     section: global
@@ -2377,10 +2374,7 @@ option:
     type: string
     required: false
     command: repo-type
-    depend:
-      option: repo-type
-      list:
-        - sftp
+    depend: repo-sftp-account
 
   repo-sftp-hostkey-hash-type:
     section: global
@@ -2391,10 +2385,7 @@ option:
       - sha1
       - sha256
     command: repo-type
-    depend:
-      option: repo-type
-      list:
-        - sftp
+    depend: repo-sftp-account
 
   repo-sftp-host-port:
     section: global
@@ -2403,10 +2394,7 @@ option:
     default: 22
     allow-range: [1, 65535]
     command: repo-type
-    depend:
-      option: repo-type
-      list:
-        - sftp
+    depend: repo-sftp-account
 
   repo-sftp-keyfile-passphrase:
     section: global
@@ -2415,17 +2403,14 @@ option:
     group: repo
     secure: true
     command: repo-type
-    depend:
-      option: repo-type
-      list:
-        - sftp
+    depend: repo-sftp-account
 
   repo-sftp-private-keyfile:
     section: global
     group: repo
     type: string
-    required: false
     command: repo-type
+    depend: repo-sftp-account
 
   repo-sftp-public-keyfile:
     section: global
@@ -2433,6 +2418,7 @@ option:
     type: string
     required: false
     command: repo-type
+    depend: repo-sftp-account
 
   repo-storage-verify-tls:
     section: global

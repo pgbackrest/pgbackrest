@@ -8374,7 +8374,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_NAME("repo-sftp-private-keyfile"),                                        // opt/repo-sftp-private-keyfile
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),                                                   // opt/repo-sftp-private-keyfile
         PARSE_RULE_OPTION_RESET(true),                                                              // opt/repo-sftp-private-keyfile
-        PARSE_RULE_OPTION_REQUIRED(false),                                                          // opt/repo-sftp-private-keyfile
+        PARSE_RULE_OPTION_REQUIRED(true),                                                           // opt/repo-sftp-private-keyfile
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),                                                // opt/repo-sftp-private-keyfile
         PARSE_RULE_OPTION_GROUP_MEMBER(true),                                                       // opt/repo-sftp-private-keyfile
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),                                                  // opt/repo-sftp-private-keyfile
@@ -8434,6 +8434,18 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                           // opt/repo-sftp-private-keyfile
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                          // opt/repo-sftp-private-keyfile
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                 // opt/repo-sftp-private-keyfile
+        ),                                                                                          // opt/repo-sftp-private-keyfile
+                                                                                                    // opt/repo-sftp-private-keyfile
+        PARSE_RULE_OPTIONAL                                                                         // opt/repo-sftp-private-keyfile
+        (                                                                                           // opt/repo-sftp-private-keyfile
+            PARSE_RULE_OPTIONAL_GROUP                                                               // opt/repo-sftp-private-keyfile
+            (                                                                                       // opt/repo-sftp-private-keyfile
+                PARSE_RULE_OPTIONAL_DEPEND                                                          // opt/repo-sftp-private-keyfile
+                (                                                                                   // opt/repo-sftp-private-keyfile
+                    PARSE_RULE_VAL_OPT(cfgOptRepoType),                                             // opt/repo-sftp-private-keyfile
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdSftp),                                    // opt/repo-sftp-private-keyfile
+                ),                                                                                  // opt/repo-sftp-private-keyfile
+            ),                                                                                      // opt/repo-sftp-private-keyfile
         ),                                                                                          // opt/repo-sftp-private-keyfile
     ),                                                                                              // opt/repo-sftp-private-keyfile
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -8502,6 +8514,18 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                            // opt/repo-sftp-public-keyfile
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                           // opt/repo-sftp-public-keyfile
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                  // opt/repo-sftp-public-keyfile
+        ),                                                                                           // opt/repo-sftp-public-keyfile
+                                                                                                     // opt/repo-sftp-public-keyfile
+        PARSE_RULE_OPTIONAL                                                                          // opt/repo-sftp-public-keyfile
+        (                                                                                            // opt/repo-sftp-public-keyfile
+            PARSE_RULE_OPTIONAL_GROUP                                                                // opt/repo-sftp-public-keyfile
+            (                                                                                        // opt/repo-sftp-public-keyfile
+                PARSE_RULE_OPTIONAL_DEPEND                                                           // opt/repo-sftp-public-keyfile
+                (                                                                                    // opt/repo-sftp-public-keyfile
+                    PARSE_RULE_VAL_OPT(cfgOptRepoType),                                              // opt/repo-sftp-public-keyfile
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdSftp),                                     // opt/repo-sftp-public-keyfile
+                ),                                                                                   // opt/repo-sftp-public-keyfile
+            ),                                                                                       // opt/repo-sftp-public-keyfile
         ),                                                                                           // opt/repo-sftp-public-keyfile
     ),                                                                                               // opt/repo-sftp-public-keyfile
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -10573,8 +10597,6 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoRetentionFull,                                                                                    // opt-resolve-order
     cfgOptRepoRetentionFullType,                                                                                // opt-resolve-order
     cfgOptRepoRetentionHistory,                                                                                 // opt-resolve-order
-    cfgOptRepoSftpPrivateKeyfile,                                                                               // opt-resolve-order
-    cfgOptRepoSftpPublicKeyfile,                                                                                // opt-resolve-order
     cfgOptRepoType,                                                                                             // opt-resolve-order
     cfgOptResume,                                                                                               // opt-resolve-order
     cfgOptSckBlock,                                                                                             // opt-resolve-order
@@ -10647,6 +10669,8 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoSftpHostPort,                                                                                     // opt-resolve-order
     cfgOptRepoSftpHostkeyHashType,                                                                              // opt-resolve-order
     cfgOptRepoSftpKeyfilePassphrase,                                                                            // opt-resolve-order
+    cfgOptRepoSftpPrivateKeyfile,                                                                               // opt-resolve-order
+    cfgOptRepoSftpPublicKeyfile,                                                                                // opt-resolve-order
     cfgOptRepoStorageCaFile,                                                                                    // opt-resolve-order
     cfgOptRepoStorageCaPath,                                                                                    // opt-resolve-order
     cfgOptRepoStorageHost,                                                                                      // opt-resolve-order
