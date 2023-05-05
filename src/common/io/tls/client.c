@@ -3,9 +3,11 @@ TLS Client
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include <arpa/inet.h>
-#include <netinet/in.h>
+// {uncrustify_off - sorted headers}
 #include <netinet/in_systm.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+// {uncrustify_on}
 #include <strings.h>
 
 #include "common/crypto/common.h"
