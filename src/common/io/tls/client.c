@@ -3,9 +3,9 @@ TLS Client
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include <netinet/in_systm.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
 #include <strings.h>
 
 #include "common/crypto/common.h"
@@ -146,43 +146,43 @@ tlsClientHostVerifyIPAddr(const String *host, const String *name)
     ASSERT(host != NULL);
     ASSERT(name != NULL);
 
-   size_t      iplen = strSize(name);
-   bool        result = false;
+    size_t iplen = strSize(name);
+    bool result = false;
 
-   const char *ipdata = strZ(name);
+    const char *ipdata = strZ(name);
 
-   if (!(host && strSize(host) > 0))
-       FUNCTION_LOG_RETURN(BOOL, false);
+    if (!(host && strSize(host) > 0))
+        FUNCTION_LOG_RETURN(BOOL, false);
 
-   /*
-    * The data from the certificate is in network byte order. Convert our
-    * host string to network-ordered bytes as well, for comparison. (The host
-    * string isn't guaranteed to actually be an IP address, so if this
-    * conversion fails we need to consider it a mismatch rather than an
-    * error.)
-    */
-   else if (iplen == 4)
-   {
-       /* IPv4 */
-       struct in_addr addr;
+    /*
+     * The data from the certificate is in network byte order. Convert our
+     * host string to network-ordered bytes as well, for comparison. (The host
+     * string isn't guaranteed to actually be an IP address, so if this
+     * conversion fails we need to consider it a mismatch rather than an
+     * error.)
+     */
+    else if (iplen == 4)
+    {
+        /* IPv4 */
+        struct in_addr addr;
 
-       if (inet_pton(AF_INET, strZ(host), &addr) == 1)
-       {
-           if (memcmp(ipdata, &addr.s_addr, iplen) == 0)
-               result = true;
-       }
-   }
-   else if (iplen == 16)
-   {
-       /* IPv6 */
-       struct in6_addr addr;
+        if (inet_pton(AF_INET, strZ(host), &addr) == 1)
+        {
+            if (memcmp(ipdata, &addr.s_addr, iplen) == 0)
+                result = true;
+        }
+    }
+    else if (iplen == 16)
+    {
+        /* IPv6 */
+        struct in6_addr addr;
 
-       if (inet_pton(AF_INET6, strZ(host), &addr) == 1)
-       {
-           if (memcmp(ipdata, &addr.s6_addr, iplen) == 0)
-               result = true;
-       }
-   }
+        if (inet_pton(AF_INET6, strZ(host), &addr) == 1)
+        {
+            if (memcmp(ipdata, &addr.s6_addr, iplen) == 0)
+                result = true;
+        }
+    }
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }
