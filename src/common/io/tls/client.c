@@ -5,6 +5,7 @@ TLS Client
 
 // {uncrustify_off - sorted headers}
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
