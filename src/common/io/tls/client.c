@@ -3,6 +3,8 @@ TLS Client
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <netinet/in_systm.h>
+#include <netinet/in.h>
 #include <arpa/inet.h>
 #include <strings.h>
 
