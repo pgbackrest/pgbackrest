@@ -173,8 +173,8 @@
         <variable key="sftp-all">n</variable>                        <!-- Build all the documentation with SFTP? -->
         <variable key="sftp-repo">demo-repo</variable>
         <variable key="sftp-hostkey-hash-type">sha1</variable>
-        <variable key="sftp-private-keyfile">{[br-home-path]}/.ssh/id_rsa</variable>
-        <variable key="sftp-public-keyfile">{[br-home-path]}/.ssh/id_rsa.pub</variable>
+        <variable key="sftp-private-keyfile">{[pg-home-path]}/.ssh/id_rsa_sftp</variable>
+        <variable key="sftp-public-keyfile">{[pg-home-path]}/.ssh/id_rsa_sftp.pub</variable>
 
         <!-- Is any object store being used to build all the documentation? -->
         <variable key="object-any-all">('{[azure-all]}' eq 'y' || '{[gcs-all]}' eq 'y' || '{[s3-all]}' eq 'y' || '{[sftp-all]}' eq 'y')</variable>
@@ -198,6 +198,12 @@
 
         <variable key="host-s3-id">s3</variable>
         <variable key="host-s3">s3-server</variable>
+
+        <variable key="host-sftp-id">sftp</variable>
+        <variable key="host-sftp">sftp-server</variable>
+        <variable key="host-sftp-user">{[host-user]}</variable>
+        <variable key="host-sftp-image">{[host-image]}</variable>
+        <variable key="host-sftp-mount">{[host-mount]}</variable>
 
         <variable key="host-pg1-id">pg1</variable>
         <variable key="host-pg1">pg-primary</variable>
@@ -784,13 +790,15 @@
     <block-define id="sftp-setup">
         <p><backrest/> supports locating repositories on <proper>SFTP</proper> stores.</p>
 
+        <p>SFTP file transfer is relatively slow so commands benefit by increasing <br-option>process-max</br-option> to parallelize file transfer.</p>
+
         <backrest-config host="{[sftp-setup-host]}" file="{[backrest-config-demo]}" owner="{[sftp-setup-config-owner]}">
             <title>Configure <proper>SFTP</proper></title>
 
             <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-type">sftp</backrest-config-option>
             <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-path">/{[sftp-repo]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-account">{[br-user]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-host">{[host-repo1]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-account">{[sftp-setup-user]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-host">{[host-sftp]}</backrest-config-option>
             <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-hostkey-hash-type">{[sftp-hostkey-hash-type]}</backrest-config-option>
             <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-private-keyfile">{[sftp-private-keyfile]}</backrest-config-option>
             <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-public-keyfile">{[sftp-public-keyfile]}</backrest-config-option>
@@ -798,6 +806,43 @@
         </backrest-config>
 
         <p>When utilizing <proper>SFTP</proper>, if libssh2 is compiled against OpenSSH then <br-option>repo{[sftp-setup-repo-id]}-sftp-public-keyfile</br-option> is optional.</p>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Generate ssh keypair for sftp backup</title>
+
+            <execute user="{[sftp-setup-user]}">
+                <exe-cmd>ssh-keygen -f {[pg-home-path]}/.ssh/id_rsa_sftp
+                    -t rsa -b 4096 -N "" -m PEM</exe-cmd>
+            </execute>
+        </execute-list>
+
+            <!--
+            <execute user="{[sftp-setup-user]}">
+                <exe-cmd>mkdir -m 750 -p {[pg-home-path]}/.ssh</exe-cmd>
+            </execute>
+            <execute user="root" err-suppress="y" user-force="y">
+            -->
+
+        <execute-list host="{[host-sftp]}">
+            <title>Copy <host>{[host-pg1]}</host> sftp backup public key to <host>{[host-sftp]}</host></title>
+
+            <execute user="{[sftp-setup-user]}">
+                <exe-cmd>mkdir -m 750 -p {[pg-home-path]}/.ssh</exe-cmd>
+            </execute>
+
+            <execute user="root" err-suppress="n" user-force="y">
+                <exe-cmd>
+                        mkdir -m 750 -p /{[sftp-repo]} &amp;&amp; chown {[sftp-setup-user]}:{[pg-group]} /{[sftp-repo]}
+                </exe-cmd>
+            </execute>
+
+            <execute user="root" err-suppress="y" user-force="y">
+                <exe-cmd>
+                    (sudo ssh root@{[host-pg1]} cat {[pg-home-path]}/.ssh/id_rsa_sftp.pub) |
+                    sudo -u {[sftp-setup-user]} tee -a {[pg-home-path]}/.ssh/authorized_keys
+                </exe-cmd>
+            </execute>
+        </execute-list>
     </block-define>
 
     <!-- ======================================================================================================================= -->
@@ -809,6 +854,9 @@
 
         <!-- Create S3 server first to allow it time to boot before being used -->
         <host-add if="'{[s3-local]}' eq 'y'" id="{[host-s3-id]}" name="{[host-s3]}" user="root" image="{[s3-image]}" os="{[os-type]}" option="-v {[fake-cert-path]}/s3-server.crt:/root/.minio/certs/public.crt:ro -v {[fake-cert-path]}/s3-server.key:/root/.minio/certs/private.key:ro -e MINIO_REGION={[s3-region]} -e MINIO_DOMAIN={[s3-endpoint]} -e MINIO_BROWSER=off -e MINIO_ACCESS_KEY={[s3-key]} -e MINIO_SECRET_KEY={[s3-key-secret]}" param="server /data --address :443" update-hosts="n"/>
+
+        <!-- Create sftp server first to allow it time to boot before being used -->
+        <host-add id="{[host-sftp-id]}" name="{[host-sftp]}" user="{[host-sftp-user]}" image="{[host-sftp-image]}" os="{[os-type]}" mount="{[host-sftp-mount]}" option="{[host-mem]} {[host-option]}"/>
 
         <p>This user guide is intended to be followed sequentially from beginning to end &amp;mdash; each section depends on the last. For example, the <link section="/restore">Restore</link> section relies on setup that is performed in the <link section="/quickstart">Quick Start</link> section. Once <backrest/> is up and running then skipping around is possible but following the user guide in order is recommended the first time through.</p>
 
@@ -1183,6 +1231,7 @@
                 <block-variable-replace key="sftp-setup-host">{[host-pg1]}</block-variable-replace>
                 <block-variable-replace key="sftp-setup-user">postgres</block-variable-replace>
                 <block-variable-replace key="sftp-setup-config-owner">postgres:postgres</block-variable-replace>
+                <block-variable-replace key="sftp-setup-user-home-path">{[pg-home-path]}</block-variable-replace>
             </block>
         </section>
 
@@ -2461,8 +2510,6 @@
                 <exe-highlight>completed successfully</exe-highlight>
             </execute>
         </execute-list>
-
-        <p>SFTP file transfer is relatively slow so commands benefit by increasing <br-option>process-max</br-option> to parallelize file creation.</p>
 
         <execute-list host="{[host-pg1]}">
             <title>Backup the {[postgres-cluster-demo]} cluster</title>
