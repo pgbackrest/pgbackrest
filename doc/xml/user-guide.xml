@@ -36,7 +36,7 @@
         <variable key="os-type-is-rhel">'{[os-type]}' eq '{[os-rhel]}'</variable>
 
         <!-- Defines the container image that will be used to build the host -->
-        <variable key="os-image" if="{[os-type-is-debian]}">ubuntu:18.04</variable>
+        <variable key="os-image" if="{[os-type-is-debian]}">ubuntu:20.04</variable>
         <variable key="os-image" if="{[os-type-is-rhel]}">rockylinux/rockylinux:8</variable>
 
         <variable key="user-guide-subtitle" if="{[os-type-is-debian]}">{[os-debian-title]}</variable>
