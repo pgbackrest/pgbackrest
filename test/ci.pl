@@ -137,7 +137,8 @@ eval
     processBegin('install common packages');
     processExec('sudo apt-get -qq update', {bSuppressStdErr => true, bSuppressError => true});
     processExec(
-        'sudo DEBIAN_FRONTEND=noninteractive apt-get install -y libxml-checker-perl libyaml-perl', {bSuppressStdErr => true});
+        'sudo DEBIAN_FRONTEND=noninteractive apt-get install -y libxml-checker-perl libyaml-perl libssh2-1-dev',
+        {bSuppressStdErr => true});
     processEnd();
 
     if (!$bNoTempFs)
@@ -189,7 +190,7 @@ eval
         # Build list of packages that need to be installed
         my $strPackage =
             "make gcc ccache meson python3-pip git rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config" .
-            " uncrustify libssh2-1-dev";
+            " uncrustify";
 
         # Add lcov when testing coverage
         if (vmCoverageC($strVm))
