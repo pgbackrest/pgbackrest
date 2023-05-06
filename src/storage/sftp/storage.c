@@ -5,7 +5,7 @@ SFTP Storage
 
 #ifdef HAVE_LIBSSH2
 
-#include "common/crypto/common.h"
+#include "common/crypto/hash.h"
 #include "common/debug.h"
 #include "common/io/socket/client.h"
 #include "common/log.h"
@@ -771,7 +771,7 @@ storageSftpNew(
         FUNCTION_LOG_PARAM(STRING, keyPriv);
         FUNCTION_LOG_PARAM(STRING_ID, hostKeyHashType);
         FUNCTION_LOG_PARAM(STRING, param.keyPub);
-        FUNCTION_LOG_PARAM(STRING, param.keyPassphrase);
+        FUNCTION_TEST_PARAM(STRING, param.keyPassphrase);
         FUNCTION_LOG_PARAM(STRING, param.hostFingerprint);
         FUNCTION_LOG_PARAM(MODE, param.modeFile);
         FUNCTION_LOG_PARAM(MODE, param.modePath);
@@ -833,18 +833,18 @@ storageSftpNew(
         {
             case hashTypeMd5:
                 hashType = LIBSSH2_HOSTKEY_HASH_MD5;
-                hashSize = 16;
+                hashSize = HASH_TYPE_M5_SIZE;
                 break;
 
             case hashTypeSha1:
                 hashType = LIBSSH2_HOSTKEY_HASH_SHA1;
-                hashSize = 20;
+                hashSize = HASH_TYPE_SHA1_SIZE;
                 break;
 
 #ifdef LIBSSH2_HOSTKEY_HASH_SHA256
             case hashTypeSha256:
                 hashType = LIBSSH2_HOSTKEY_HASH_SHA256;
-                hashSize = 32;
+                hashSize = HASH_TYPE_SHA256_SIZE;
                 break;
 #endif // LIBSSH2_HOSTKEY_HASH_SHA256
 
@@ -884,8 +884,7 @@ storageSftpNew(
         do
         {
             rc = libssh2_userauth_publickey_fromfile(
-                this->session, strZ(user), param.keyPub == NULL ? NULL : strZ(param.keyPub), strZ(keyPriv),
-                param.keyPassphrase == NULL ? NULL : strZ(param.keyPassphrase));
+                this->session, strZ(user), strZNull(param.keyPub), strZ(keyPriv), strZNull(param.keyPassphrase));
         }
         while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
 

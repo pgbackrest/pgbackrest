@@ -2391,8 +2391,8 @@ option:
 
   repo-sftp-host-user:
     section: global
-    type: string
     group: repo
+    type: string
     command: repo-type
     depend: repo-sftp-host
 
@@ -2405,9 +2405,9 @@ option:
 
   repo-sftp-private-key-passphrase:
     section: global
+    group: repo
     type: string
     required: false
-    group: repo
     secure: true
     command: repo-type
     depend: repo-sftp-host
