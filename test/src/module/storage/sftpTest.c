@@ -622,7 +622,7 @@ testRun(void)
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageRootNoPath)));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("directory does not exists");
+        TEST_TITLE("directory does not exist");
 
         const String *fileName = STRDEF(TEST_PATH "/fileinfo");
 
@@ -711,7 +711,7 @@ testRun(void)
         TEST_ERROR_FMT(storageInfoP(storageTest, fileName), FileOpenError, STORAGE_ERROR_INFO_MISSING, strZ(fileName));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("file does not exists");
+        TEST_TITLE("file does not exist");
 
         StorageInfo info = {0};
         TEST_ASSIGN(info, storageInfoP(storageTest, fileName, .ignoreMissing = true), "get file info (missing)");
