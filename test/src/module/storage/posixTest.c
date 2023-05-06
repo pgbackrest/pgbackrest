@@ -207,7 +207,7 @@ testRun(void)
         TEST_RESULT_BOOL(storageInfoP(storageRootNoPath, NULL, .ignoreMissing = true).exists, false, "no info for /");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("directory does not exists");
+        TEST_TITLE("directory does not exist");
 
         const String *fileName = STRDEF(TEST_PATH "/fileinfo");
 
@@ -216,7 +216,7 @@ testRun(void)
             strZ(fileName));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("file does not exists");
+        TEST_TITLE("file does not exist");
 
         StorageInfo info = {0};
         TEST_ASSIGN(info, storageInfoP(storageTest, fileName, .ignoreMissing = true), "get file info (missing)");
