@@ -897,8 +897,8 @@ storageSftpNew(
                 rc, libssh2_sftp_last_error(this->sftpSession), &ServiceError,
                 STRDEF("public key authentication failed"),
                 STRDEF(
-                    "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-keyfile and"
-                    " --repo-sftp-public-keyfile to be provided\n"
+                    "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-key-file and"
+                    " --repo-sftp-public-key-file to be provided\n"
                     "HINT: libssh2 versions before 1.9.0 expect a PEM format keypair, try ssh-keygen -m PEM -t rsa -P \"\" to"
                     " generate the keypair"));
         }

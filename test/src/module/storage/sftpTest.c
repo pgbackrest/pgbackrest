@@ -201,8 +201,8 @@ testRun(void)
                 .hostFingerprint = STRDEF("3132333435363738393039383736353433323130")),
             ServiceError,
             "public key authentication failed: libssh2 error [-16]\n"
-            "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-keyfile and"
-            " --repo-sftp-public-keyfile to be provided\n"
+            "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-key-file and"
+            " --repo-sftp-public-key-file to be provided\n"
             "HINT: libssh2 versions before 1.9.0 expect a PEM format keypair, try ssh-keygen -m PEM -t rsa -P \"\" to generate the"
             " keypair");
 
@@ -245,8 +245,8 @@ testRun(void)
             storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, 1000, KEYPRIV, hashTypeSha1),
             ServiceError,
             "public key authentication failed: libssh2 error [-16]\n"
-            "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-keyfile and"
-            " --repo-sftp-public-keyfile to be provided\n"
+            "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-key-file and"
+            " --repo-sftp-public-key-file to be provided\n"
             "HINT: libssh2 versions before 1.9.0 expect a PEM format keypair, try ssh-keygen -m PEM -t rsa -P \"\" to generate the"
             " keypair");
 
@@ -272,8 +272,8 @@ testRun(void)
                 .keyPassphrase = STRDEF("keyPassphrase")),
             ServiceError,
             "public key authentication failed: libssh2 error [-16]\n"
-            "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-keyfile and"
-            " --repo-sftp-public-keyfile to be provided\n"
+            "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-key-file and"
+            " --repo-sftp-public-key-file to be provided\n"
             "HINT: libssh2 versions before 1.9.0 expect a PEM format keypair, try ssh-keygen -m PEM -t rsa -P \"\" to generate the"
             " keypair");
 
@@ -301,8 +301,8 @@ testRun(void)
                 TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, 1000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
             ServiceError,
             "public key authentication failed: libssh2 error [-37]\n"
-            "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-keyfile and"
-            " --repo-sftp-public-keyfile to be provided\n"
+            "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-key-file and"
+            " --repo-sftp-public-key-file to be provided\n"
             "HINT: libssh2 versions before 1.9.0 expect a PEM format keypair, try ssh-keygen -m PEM -t rsa -P \"\" to generate the"
             " keypair");
 
@@ -4540,12 +4540,12 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH);
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpAccount, TEST_USER);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostUser, TEST_USER);
         hrnCfgArgRawZ(argList, cfgOptRepoType, "sftp");
         hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostkeyHashType, "sha1");
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyfile, KEYPRIV_CSTR);
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyfile, KEYPUB_CSTR);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, KEYPRIV_CSTR);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyFile, KEYPUB_CSTR);
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         const Storage *storage = NULL;
@@ -4600,12 +4600,12 @@ testRun(void)
         // Change the stanza to NULL with the stanzaInit flag still true, make sure helper does not fail when stanza option not set
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH);
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpAccount, TEST_USER);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostUser, TEST_USER);
         hrnCfgArgRawZ(argList, cfgOptRepoType, "sftp");
         hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostkeyHashType, "sha1");
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyfile, KEYPRIV_CSTR);
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyfile, KEYPUB_CSTR);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, KEYPRIV_CSTR);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyFile, KEYPUB_CSTR);
         HRN_CFG_LOAD(cfgCmdInfo, argList);
 
         TEST_ASSIGN(storage, storageRepo(), "new repo storage no stanza");
@@ -4658,12 +4658,12 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH);
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpAccount, TEST_USER);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostUser, TEST_USER);
         hrnCfgArgRawZ(argList, cfgOptRepoType, "sftp");
         hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostkeyHashType, "sha1");
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyfile, KEYPRIV_CSTR);
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyfile, KEYPUB_CSTR);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, KEYPRIV_CSTR);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyFile, KEYPUB_CSTR);
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------

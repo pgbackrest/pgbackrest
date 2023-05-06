@@ -1324,11 +1324,11 @@ sub configCreate
             if ($oHostBackup->nameGet() eq HOST_SFTP)
             {
                 $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-type'} = "sftp";
-                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-account'} = TEST_USER;
-                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-hostkey-hash-type'} = "sha1";
                 $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-host'} = HOST_SFTP;
-                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-private-keyfile'} = testRunGet()->basePath() . SSH_PRIVATE_KEY;
-                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-public-keyfile'} = testRunGet()->basePath() . SSH_PUBLIC_KEY;
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-host-key-hash-type'} = "sha1";
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-host-user'} = TEST_USER;
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-private-key-file'} = testRunGet()->basePath() . SSH_PRIVATE_KEY;
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-public-key-file'} = testRunGet()->basePath() . SSH_PUBLIC_KEY;
                 $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-path'} = $self->repoPath();
 
                 # At what count do we hit diminishing returns

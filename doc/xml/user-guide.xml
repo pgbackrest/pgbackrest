@@ -172,9 +172,9 @@
         <!-- SFTP Settings -->
         <variable key="sftp-all">n</variable>                        <!-- Build all the documentation with SFTP? -->
         <variable key="sftp-repo">demo-repo</variable>
-        <variable key="sftp-hostkey-hash-type">sha1</variable>
-        <variable key="sftp-private-keyfile">{[pg-home-path]}/.ssh/id_rsa_sftp</variable>
-        <variable key="sftp-public-keyfile">{[pg-home-path]}/.ssh/id_rsa_sftp.pub</variable>
+        <variable key="sftp-host-key-hash-type">sha1</variable>
+        <variable key="sftp-private-key-file">{[pg-home-path]}/.ssh/id_rsa_sftp</variable>
+        <variable key="sftp-public-key-file">{[pg-home-path]}/.ssh/id_rsa_sftp.pub</variable>
 
         <!-- Is any object store being used to build all the documentation? -->
         <variable key="object-any-all">('{[azure-all]}' eq 'y' || '{[gcs-all]}' eq 'y' || '{[s3-all]}' eq 'y' || '{[sftp-all]}' eq 'y')</variable>
@@ -801,15 +801,15 @@
 
             <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-type">sftp</backrest-config-option>
             <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-path">/{[sftp-repo]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-account">{[sftp-setup-user]}</backrest-config-option>
             <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-host">{[host-sftp]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-hostkey-hash-type">{[sftp-hostkey-hash-type]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-private-keyfile">{[sftp-private-keyfile]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-public-keyfile">{[sftp-public-keyfile]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-host-key-hash-type">{[sftp-host-key-hash-type]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-host-user">{[sftp-setup-user]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-private-key-file">{[sftp-private-key-file]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-public-key-file">{[sftp-public-key-file]}</backrest-config-option>
             <backrest-config-option section="global" key="process-max">4</backrest-config-option>
         </backrest-config>
 
-        <p>When utilizing <proper>SFTP</proper>, if libssh2 is compiled against OpenSSH then <br-option>repo{[sftp-setup-repo-id]}-sftp-public-keyfile</br-option> is optional.</p>
+        <p>When utilizing <proper>SFTP</proper>, if libssh2 is compiled against OpenSSH then <br-option>repo{[sftp-setup-repo-id]}-sftp-public-key-file</br-option> is optional.</p>
 
         <execute-list host="{[host-pg1]}">
             <title>Generate ssh keypair for sftp backup</title>

@@ -1005,16 +1005,6 @@
                         <example>path</example>
                     </config-key>
 
-                    <config-key id="repo-sftp-account" name="SFTP Repository Account">
-                        <summary>SFTP repository account.</summary>
-
-                        <text>
-                            <p>Account used to store the repository.</p>
-                        </text>
-
-                        <example>pg-backup</example>
-                    </config-key>
-
                     <config-key id="repo-sftp-host" name="SFTP Repository Host">
                         <summary>SFTP repository host.</summary>
 
@@ -1029,17 +1019,17 @@
                         <summary>SFTP repository host fingerprint.</summary>
 
                         <text>
-                            <p>SFTP repository host fingerprint generation should match the <setting>repo-sftp-hostkey-hash-type</setting>. Generate the fingeprint via <code>awk '{print $2}' ssh_host_xxx_key.pub | base64 -d | (md5sum or sha1sum) -b</code>. The ssh host keys are normally found in the /etc/ssh/ directory.</p>
+                            <p>SFTP repository host fingerprint generation should match the <setting>repo-sftp-host-key-hash-type</setting>. Generate the fingeprint via <code>awk '{print $2}' ssh_host_xxx_key.pub | base64 -d | (md5sum or sha1sum) -b</code>. The ssh host keys are normally found in the /etc/ssh/ directory.</p>
                         </text>
 
                         <example>f84e172dfead7aeeeae6c1fdfb5aa8cf</example>
                     </config-key>
 
-                    <config-key id="repo-sftp-hostkey-hash-type" name="SFTP Repository Hostkey Hash Type">
-                        <summary>SFTP repository hostkey hash type.</summary>
+                    <config-key id="repo-sftp-host-key-hash-type" name="SFTP Repository Host Key Hash Type">
+                        <summary>SFTP repository host key hash type.</summary>
 
                         <text>
-                            <p>SFTP repository hostkey hash type. Declares the hash type to be used to compute the digest of the remote system's hostkey on libssh2 startup. Newer versions of libssh2 support sha256 in addition to md5 and sha1.</p>
+                            <p>SFTP repository host key hash type. Declares the hash type to be used to compute the digest of the remote system's hostkey on libssh2 startup. Newer versions of libssh2 support sha256 in addition to md5 and sha1.</p>
                         </text>
 
                         <example>sha256</example>
@@ -1055,31 +1045,41 @@
                         <example>22</example>
                     </config-key>
 
-                    <config-key id="repo-sftp-keyfile-passphrase" name="SFTP Repository Private Keyfile Passphrase">
-                        <summary>SFTP private keyfile passphrase.</summary>
+                    <config-key id="repo-sftp-host-user" name="SFTP Repository Host User">
+                        <summary>SFTP repository host user.</summary>
 
                         <text>
-                            <p>Passphrase used to access private keyfile. This is an optional feature when creating a SSH public/private keypair.</p>
+                            <p>User on the host used to store the repository.</p>
                         </text>
 
-                        <example>BeSureToGenerateAndUseASecurePassphrase</example>
+                        <example>pg-backup</example>
                     </config-key>
 
-                    <config-key id="repo-sftp-private-keyfile" name="SFTP Repository Private Keyfile">
-                        <summary>SFTP private keyfile.</summary>
+                    <config-key id="repo-sftp-private-key-file" name="SFTP Repository Private Key File">
+                        <summary>SFTP private key file.</summary>
 
                         <text>
-                            <p>SFTP private keyfile used for authentication.</p>
+                            <p>SFTP private key file used for authentication.</p>
                         </text>
 
                         <example>~/.ssh/id_ed25519</example>
                     </config-key>
 
-                    <config-key id="repo-sftp-public-keyfile" name="SFTP Repository Public Keyfile">
-                        <summary>SFTP public keyfile.</summary>
+                    <config-key id="repo-sftp-private-key-passphrase" name="SFTP Repository Private Key Passphrase">
+                        <summary>SFTP private key passphrase.</summary>
 
                         <text>
-                            <p>SFTP public keyfile used for authentication. Optional if compiled against OpenSSL, required if compiled against a different library.</p>
+                            <p>Passphrase used to access the private key. This is an optional feature when creating a SSH public/private key pair.</p>
+                        </text>
+
+                        <example>BeSureToGenerateAndUseASecurePassphrase</example>
+                    </config-key>
+
+                    <config-key id="repo-sftp-public-key-file" name="SFTP Repository Public Key File">
+                        <summary>SFTP public key file.</summary>
+
+                        <text>
+                            <p>SFTP public key file used for authentication. Optional if compiled against OpenSSL, required if compiled against a different library.</p>
                         </text>
 
                         <example>~/.ssh/id_ed25519.pub</example>

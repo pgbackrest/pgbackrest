@@ -2351,22 +2351,15 @@ option:
     command: repo-type
     depend: repo-s3-bucket
 
-  repo-sftp-account:
-    section: global
-    type: string
-    group: repo
-    command: repo-type
-    depend:
-      option: repo-type
-      list:
-        - sftp
-
   repo-sftp-host:
     section: global
     group: repo
     type: string
     command: repo-type
-    depend: repo-sftp-account
+    depend:
+      option: repo-type
+      list:
+        - sftp
 
   repo-sftp-host-fingerprint:
     section: global
@@ -2374,9 +2367,9 @@ option:
     type: string
     required: false
     command: repo-type
-    depend: repo-sftp-account
+    depend: repo-sftp-host
 
-  repo-sftp-hostkey-hash-type:
+  repo-sftp-host-key-hash-type:
     section: global
     group: repo
     type: string-id
@@ -2385,7 +2378,7 @@ option:
       - sha1
       - sha256
     command: repo-type
-    depend: repo-sftp-account
+    depend: repo-sftp-host
 
   repo-sftp-host-port:
     section: global
@@ -2394,31 +2387,38 @@ option:
     default: 22
     allow-range: [1, 65535]
     command: repo-type
-    depend: repo-sftp-account
+    depend: repo-sftp-host
 
-  repo-sftp-keyfile-passphrase:
+  repo-sftp-host-user:
+    section: global
+    type: string
+    group: repo
+    command: repo-type
+    depend: repo-sftp-host
+
+  repo-sftp-private-key-file:
+    section: global
+    group: repo
+    type: string
+    command: repo-type
+    depend: repo-sftp-host
+
+  repo-sftp-private-key-passphrase:
     section: global
     type: string
     required: false
     group: repo
     secure: true
     command: repo-type
-    depend: repo-sftp-account
+    depend: repo-sftp-host
 
-  repo-sftp-private-keyfile:
-    section: global
-    group: repo
-    type: string
-    command: repo-type
-    depend: repo-sftp-account
-
-  repo-sftp-public-keyfile:
+  repo-sftp-public-key-file:
     section: global
     group: repo
     type: string
     required: false
     command: repo-type
-    depend: repo-sftp-account
+    depend: repo-sftp-host
 
   repo-storage-verify-tls:
     section: global
