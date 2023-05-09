@@ -741,9 +741,9 @@ testRun(void)
         TEST_RESULT_INT(info.timeModified, 1555160000, "check mod time");
         TEST_RESULT_STR(info.linkDestination, NULL, "no link destination");
         TEST_RESULT_UINT(info.userId, TEST_USER_ID, "check user id");
-        TEST_RESULT_STR(info.user, TEST_USER_STR, "check user");
+        TEST_RESULT_STR(info.user, NULL, "check user");
         TEST_RESULT_UINT(info.groupId, TEST_GROUP_ID, "check group id");
-        TEST_RESULT_STR(info.group, TEST_GROUP_STR, "check group");
+        TEST_RESULT_STR(info.group, NULL, "check group");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("info - path existence only");
@@ -801,8 +801,8 @@ testRun(void)
         TEST_RESULT_UINT(info.size, 0, "check size");
         TEST_RESULT_INT(info.mode, 0777, "check mode");
         TEST_RESULT_STR_Z(info.linkDestination, "/tmp", "check link destination");
-        TEST_RESULT_STR(info.user, TEST_USER_STR, "check user");
-        TEST_RESULT_STR(info.group, TEST_GROUP_STR, "check group");
+        TEST_RESULT_STR(info.user, NULL, "check user");
+        TEST_RESULT_STR(info.group, NULL, "check group");
 
         TEST_ASSIGN(info, storageInfoP(storageTest, linkName, .followLink = true), "get info from path pointed to by link");
         TEST_RESULT_STR(info.name, NULL, "name is not set");
@@ -811,8 +811,8 @@ testRun(void)
         TEST_RESULT_UINT(info.size, 0, "check size");
         TEST_RESULT_INT(info.mode, 0777, "check mode");
         TEST_RESULT_STR(info.linkDestination, NULL, "check link destination");
-        TEST_RESULT_STR_Z(info.user, "root", "check user");
-        TEST_RESULT_STR_Z(info.group, strEqZ(info.group, "wheel") ? "wheel" : "root", "check group");
+        TEST_RESULT_STR_Z(info.user, NULL, "check user");
+        TEST_RESULT_STR_Z(info.group, NULL, "check group");
 
         // Exercise paths/branches
         // libssh2_sftp_stat_ex timeout EAGAIN followLink true
@@ -843,8 +843,8 @@ testRun(void)
         TEST_RESULT_UINT(info.size, 0, "check size");
         TEST_RESULT_INT(info.mode, 0666, "check mode");
         TEST_RESULT_STR(info.linkDestination, NULL, "check link destination");
-        TEST_RESULT_STR(info.user, TEST_USER_STR, "check user");
-        TEST_RESULT_STR(info.group, TEST_GROUP_STR, "check group");
+        TEST_RESULT_STR(info.user, NULL, "check user");
+        TEST_RESULT_STR(info.group, NULL, "check group");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
     }
@@ -1032,7 +1032,7 @@ testRun(void)
         // Without the neutral umask, permissions were 0764.
         TEST_STORAGE_LIST(
             storageTest, "pg",
-            "./ {u=" TEST_USER ", g=" TEST_GROUP ", m=0766}\n",
+            "./ {u=" TEST_USER_ID_Z ", g=" TEST_GROUP_ID_Z ", m=0766}\n",
             .level = storageInfoLevelDetail, .includeDot = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1044,10 +1044,10 @@ testRun(void)
         // Mimic creation of TEST_PATH "/pg/pipe" mode 777
         TEST_STORAGE_LIST(
             storageTest, "pg",
-            "./ {u=" TEST_USER ", g=" TEST_GROUP ", m=0766}\n"
+            "./ {u=" TEST_USER_ID_Z ", g=" TEST_GROUP_ID_Z ", m=0766}\n"
             ".include/ {u=77777, g=77777, m=0755}\n"
-            "file {s=8, t=1656433838, u=" TEST_USER ", g=" TEST_GROUP ", m=0660}\n"
-            "link> {d=../file, u=" TEST_USER ", g=" TEST_GROUP "}\n"
+            "file {s=8, t=1656433838, u=" TEST_USER_ID_Z ", g=" TEST_GROUP_ID_Z ", m=0660}\n"
+            "link> {d=../file, u=" TEST_USER_ID_Z ", g=" TEST_GROUP_ID_Z "}\n"
             "pipe*\n",
             .level = storageInfoLevelDetail, .includeDot = true);
 
@@ -2492,174 +2492,6 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("storageLinkCreate()"))
-    {
-        Storage *storageTest = NULL;
-        StorageInfo info = {0};
-        const String *backupLabel = STRDEF("20181119-152138F");
-        const String *latestLabel = strNewFmt("%s%s", TEST_PATH, "/latest");
-
-        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
-        {
-            HRNLIBSSH2_MACRO_STARTUP(),
-            // Create path to link to
-            {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"" TEST_PATH "/20181119-152138F\",488]"},
-            // Create symlink
-            {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"20181119-152138F\",\"" TEST_PATH "/latest\",0]",
-             .resultInt = LIBSSH2_ERROR_EAGAIN},
-            {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"20181119-152138F\",\"" TEST_PATH "/latest\",0]",
-             .symlinkExTarget = STRDEF(TEST_PATH "/latest")},
-            // Get link info
-            {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/latest\",1]", .resultInt = LIBSSH2_ERROR_EAGAIN},
-            {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/latest\",1]", .resultInt = LIBSSH2_ERROR_NONE,
-             .attrPerms = LIBSSH2_SFTP_S_IFLNK | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IXGRP,
-             .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
-                      LIBSSH2_SFTP_ATTR_SIZE,
-             .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .symlinkExTarget = STRDEF("20181119-152138F")},
-            {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"" TEST_PATH "/latest\",\"\",1]",
-             .symlinkExTarget = STRDEF("20181119-152138F")},
-            // Assert failure - asserts before libssh2 call
-            HRNLIBSSH2_MACRO_SHUTDOWN()
-        });
-
-        TEST_ASSIGN(
-            storageTest,
-            storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 25, 25, KEYPRIV, hashTypeSha1, .write = true,
-                .keyPub = KEYPUB),
-            "new storage /");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("create symbolic link to BACKUPLABEL");
-
-        TEST_RESULT_VOID(storagePathCreateP(storageTest, backupLabel), "create path to link to");
-        TEST_RESULT_VOID(storageLinkCreateP(storageTest, backupLabel, latestLabel), "create symlink");
-        TEST_ASSIGN(info, storageInfoP(storageTest, latestLabel, .ignoreMissing = false), "get link info");
-        TEST_RESULT_STR(info.linkDestination, backupLabel, "match link destination");
-        TEST_ERROR_FMT(
-            storageLinkCreateP(storageTest, backupLabel, latestLabel, .linkType = storageLinkHard), AssertError,
-            "assertion '(param.linkType == storageLinkSym && storageFeature(this, storageFeatureSymLink)) ||"
-            " (param.linkType == storageLinkHard && storageFeature(this, storageFeatureHardLink))' failed");
-
-        memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("create symbolic link timeout");
-
-        backupLabel = STRDEF("20181119-152138F");
-        latestLabel = strNewFmt("%s%s", TEST_PATH, "/latest");
-
-        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
-        {
-            HRNLIBSSH2_MACRO_STARTUP(),
-            {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"20181119-152138F\",\"" TEST_PATH "/latest\",0]",
-             .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 24},
-            {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"20181119-152138F\",\"" TEST_PATH "/latest\",0]",
-             .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 3},
-            HRNLIBSSH2_MACRO_SHUTDOWN()
-        });
-
-        TEST_ASSIGN(
-            storageTest,
-            storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 25, 25, KEYPRIV, hashTypeSha1, .write = true,
-                .keyPub = KEYPUB),
-            "new storage /");
-        TEST_ERROR_FMT(
-            storageLinkCreateP(storageTest, backupLabel, latestLabel), FileOpenError,
-            "unable to create symlink '" TEST_PATH "/latest' to '20181119-152138F'");
-
-        memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("remove symbolic link");
-
-        backupLabel = STRDEF("20181119-152138F");
-        latestLabel = strNewFmt("%s%s", TEST_PATH, "/latest");
-
-        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
-        {
-            HRNLIBSSH2_MACRO_STARTUP(),
-            // Create symlink
-            {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"20181119-152138F\",\"" TEST_PATH "/latest\",0]",
-             .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
-            // Unlink symlink
-            {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"" TEST_PATH "/latest\"]", .resultInt = LIBSSH2_ERROR_EAGAIN},
-            {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"" TEST_PATH "/latest\"]", .resultInt = LIBSSH2_ERROR_NONE},
-            // Unlink symlink no error on missing
-            {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"" TEST_PATH "/latest\"]", .resultInt = LIBSSH2_ERROR_EAGAIN},
-            {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"" TEST_PATH "/latest\"]",
-             .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
-            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
-            // Unlink symlink error on missing
-            {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"" TEST_PATH "/latest\"]",
-             .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
-            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
-            // Unlink symlink no error on missing, not no such file
-            {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"" TEST_PATH "/latest\"]",
-             .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
-            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_PERMISSION_DENIED},
-            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_PERMISSION_DENIED},
-            // Unlink symlink not an sftp error, error on missing
-            {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"" TEST_PATH "/latest\"]",
-             .resultInt = LIBSSH2_ERROR_METHOD_NOT_SUPPORTED},
-            // Unlink symlink not an sftp error, no error on missing
-            {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"" TEST_PATH "/latest\"]",
-             .resultInt = LIBSSH2_ERROR_METHOD_NOT_SUPPORTED},
-            // Unlink symlink error on missing, timeout
-            {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"" TEST_PATH "/latest\"]", .resultInt = LIBSSH2_ERROR_EAGAIN,
-             .sleep = 30},
-            {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"" TEST_PATH "/latest\"]", .resultInt = LIBSSH2_ERROR_EAGAIN,
-             .sleep = 1},
-            HRNLIBSSH2_MACRO_SHUTDOWN()
-        });
-
-        TEST_ASSIGN(
-            storageTest,
-            storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 25, 25, KEYPRIV, hashTypeSha1, .write = true,
-                .keyPub = KEYPUB),
-            "new storage /");
-        TEST_ERROR(
-            storageLinkCreateP(storageTest, backupLabel, latestLabel),
-            FileOpenError,
-            "unable to create symlink '" TEST_PATH "/latest' to '20181119-152138F'");
-        TEST_RESULT_VOID(storageRemoveP(storageTest, latestLabel), "remove symlink");
-        TEST_RESULT_VOID(storageRemoveP(storageTest, latestLabel), "remove symlink - no error on missing");
-
-        // Exercise paths/branches
-        // Error on missing
-        TEST_ERROR_FMT(
-            storageRemoveP(storageTest, latestLabel, .errorOnMissing = true), FileRemoveError,
-            "unable to remove '" TEST_PATH "/latest': libssh2 error [-31]: sftp error [2]");
-        // No error on missing, not no such file
-        TEST_ERROR_FMT(
-            storageRemoveP(storageTest, latestLabel, .errorOnMissing = false), FileRemoveError,
-            "unable to remove '" TEST_PATH "/latest': libssh2 error [-31]: sftp error [3]");
-        // Error on missing, not an sftp error
-        TEST_ERROR_FMT(
-            storageRemoveP(storageTest, latestLabel, .errorOnMissing = true), FileRemoveError,
-            "unable to remove '" TEST_PATH "/latest'");
-        // No error on missing, not an sftp error
-        TEST_RESULT_VOID(
-            storageRemoveP(storageTest, latestLabel), "remove symlink, no sftp error, no error on missing");
-        // Error on missing, timeout
-        TEST_ERROR_FMT(
-            storageRemoveP(storageTest, latestLabel, .errorOnMissing = true), FileRemoveError,
-            "unable to remove '" TEST_PATH "/latest'");
-
-        // Cover what should be an unreachable branch - linkType = storageLinkHard
-        StorageSftp *storageSftp = (StorageSftp *)storageDriver(storageTest);
-        StorageInterfaceLinkCreateParam param = {.linkType = storageLinkHard};
-
-        TEST_RESULT_VOID(
-            storageSftpLinkCreate(storageSftp, STRDEF(TEST_PATH "/path/to/file"), STRDEF(TEST_PATH "/path/to/link"), param),
-            "noop - force param.linkType = storageLinkHard");
-
-        memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
-    }
-
-    // *****************************************************************************************************************************
     if (testBegin("storageNewRead()"))
     {
         Storage *storageTest = NULL;
@@ -2896,14 +2728,15 @@ testRun(void)
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_PERMISSION_DENIED},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_PERMISSION_DENIED},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
 
         Storage *storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
-        TEST_ASSIGN(
-            file, storageNewWriteP(storageTest, fileNoPerm, .noAtomic = true, .noCreatePath = true), "new write file");
+        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileNoPerm, .noAtomic = true, .noCreatePath = false), "new write file");
         TEST_ERROR_FMT(
             ioWriteOpen(storageWriteIo(file)), FileOpenError,
             STORAGE_ERROR_WRITE_OPEN ": libssh2 error [-31]: sftp error [3]", strZ(fileNoPerm));
@@ -2921,7 +2754,8 @@ testRun(void)
              .sleep = 18},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/noperm/noperm\",26,416,0]", .resultNull = true,
-             .sleep = 18, .resultInt = LIBSSH2_ERROR_EAGAIN},
+             .sleep = 18},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_EAGAIN},
             HRNLIBSSH2_MACRO_SHUTDOWN()
@@ -2930,9 +2764,7 @@ testRun(void)
         storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
-        TEST_ASSIGN(
-            file,
-            storageNewWriteP(storageTest, fileNoPerm, .noAtomic = true, .noCreatePath = true), "new write file");
+        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileNoPerm, .noAtomic = true, .noCreatePath = false), "new write file");
         TEST_ERROR_FMT(ioWriteOpen(storageWriteIo(file)), FileOpenError, STORAGE_ERROR_WRITE_OPEN, strZ(fileNoPerm));
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
@@ -2949,6 +2781,11 @@ testRun(void)
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
+            {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"" TEST_PATH "\",488]", .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/missing\",26,416,0]", .resultNull = true, .sleep = 18},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
 
@@ -2956,8 +2793,7 @@ testRun(void)
             TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ASSIGN(
-            file,
-            storageNewWriteP(storageTest, STRDEF("missing"), .noAtomic = true, .noCreatePath = true), "new write file");
+            file, storageNewWriteP(storageTest, STRDEF("missing"), .noAtomic = true, .noCreatePath = false), "new write file");
         TEST_ERROR_FMT(ioWriteOpen(storageWriteIo(file)), FileMissingError, STORAGE_ERROR_WRITE_MISSING, TEST_PATH "/missing");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
@@ -2971,20 +2807,12 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true, .sleep = 18,
              .param = "[\"" TEST_PATH "/sub1/testfile.pgbackrest.tmp\",26,416,0]"},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"" TEST_PATH "/sub1\",488]"},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/sub1/testfile.pgbackrest.tmp\",26,416,0]"},
-            {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_NONE,
-             .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
-             .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
-                      LIBSSH2_SFTP_ATTR_SIZE,
-             .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_NONE},
-            {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_NONE,
-             .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
-             .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
-                      LIBSSH2_SFTP_ATTR_SIZE,
-             .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_RENAME_EX,
              .param = "[\"" TEST_PATH "/sub1/testfile.pgbackrest.tmp\",\"" TEST_PATH "/sub1/testfile\",7]",
@@ -2995,10 +2823,7 @@ testRun(void)
         storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
-        TEST_ASSIGN(
-            file,
-            storageNewWriteP(storageTest, fileName, .user = TEST_USER_STR, .group = TEST_GROUP_STR, .timeModified = 1),
-            "new write file (defaults)");
+        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName), "new write file (defaults)");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
         TEST_RESULT_INT(ioWriteFd(storageWriteIo(file)), -1, "check write fd");
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close file");
@@ -3014,13 +2839,10 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true, .sleep = 18,
              .param = "[\"" TEST_PATH "/sub1/testfile.pgbackrest.tmp\",26,416,0]"},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"" TEST_PATH "/sub1\",488]"},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/sub1/testfile.pgbackrest.tmp\",26,416,0]"},
-            {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_NONE,
-             .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
-             .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
-                      LIBSSH2_SFTP_ATTR_SIZE,
-             .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 20},
             {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 7},
             HRNLIBSSH2_MACRO_SHUTDOWN()
@@ -3031,10 +2853,7 @@ testRun(void)
 
         const String *fileNameTmp = STRDEF(TEST_PATH "/sub1/testfile.pgbackrest.tmp");
 
-        TEST_ASSIGN(
-            file,
-            storageNewWriteP(storageTest, fileName, .user = TEST_USER_STR, .group = TEST_GROUP_STR, .timeModified = 1),
-            "new write file (defaults)");
+        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName), "new write file (defaults)");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
         TEST_RESULT_INT(ioWriteFd(storageWriteIo(file)), -1, "check write fd");
         TEST_ERROR_FMT(ioWriteClose(storageWriteIo(file)), FileSyncError, STORAGE_ERROR_WRITE_SYNC, strZ(fileNameTmp));
@@ -3050,19 +2869,11 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true, .sleep = 18,
              .param = "[\"" TEST_PATH "/sub1/testfile.pgbackrest.tmp\",26,416,0]"},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"" TEST_PATH "/sub1\",488]"},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/sub1/testfile.pgbackrest.tmp\",26,416,0]"},
-            {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_NONE,
-             .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
-             .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
-                      LIBSSH2_SFTP_ATTR_SIZE,
-             .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_NONE},
-            {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_NONE,
-             .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
-             .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
-                      LIBSSH2_SFTP_ATTR_SIZE,
-             .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_RENAME_EX,
              .param = "[\"" TEST_PATH "/sub1/testfile.pgbackrest.tmp\",\"" TEST_PATH "/sub1/testfile\",7]",
@@ -3077,10 +2888,7 @@ testRun(void)
         storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
-        TEST_ASSIGN(
-            file,
-            storageNewWriteP(storageTest, fileName, .user = TEST_USER_STR, .group = TEST_GROUP_STR, .timeModified = 1),
-            "new write file (defaults)");
+        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName), "new write file (defaults)");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
         TEST_RESULT_INT(ioWriteFd(storageWriteIo(file)), -1, "check write fd");
         TEST_ERROR_FMT(
@@ -3098,19 +2906,11 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true, .sleep = 18,
              .param = "[\"" TEST_PATH "/sub1/testfile.pgbackrest.tmp\",26,416,0]"},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"" TEST_PATH "/sub1\",488]"},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/sub1/testfile.pgbackrest.tmp\",26,416,0]"},
-            {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_NONE,
-             .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
-             .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
-                      LIBSSH2_SFTP_ATTR_SIZE,
-             .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_NONE},
-            {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_NONE,
-             .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
-             .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
-                      LIBSSH2_SFTP_ATTR_SIZE,
-             .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_RENAME_EX,
              .param = "[\"" TEST_PATH "/sub1/testfile.pgbackrest.tmp\",\"" TEST_PATH "/sub1/testfile\",7]",
@@ -3123,140 +2923,12 @@ testRun(void)
         storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
-        TEST_ASSIGN(
-            file,
-            storageNewWriteP(storageTest, fileName, .user = TEST_USER_STR, .group = TEST_GROUP_STR, .timeModified = 1),
-            "new write file (defaults)");
+        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName), "new write file (defaults)");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
         TEST_RESULT_INT(ioWriteFd(storageWriteIo(file)), -1, "check write fd");
         TEST_ERROR_FMT(
             ioWriteClose(storageWriteIo(file)), FileCloseError,
             "unable to move '%s' to '%s': libssh2 error [-31]: sftp error [7]", strZ(fileNameTmp), strZ(fileName));
-
-        memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("unable to set ownership storageWriteSftpOpen");
-
-        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
-        {
-            HRNLIBSSH2_MACRO_STARTUP(),
-            {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true, .sleep = 18,
-             .param = "[\"" TEST_PATH "/sub1/testfile.pgbackrest.tmp\",26,416,0]"},
-            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
-            {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"" TEST_PATH "/sub1\",488]"},
-            {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/sub1/testfile.pgbackrest.tmp\",26,416,0]"},
-            {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 23},
-            {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 4},
-            HRNLIBSSH2_MACRO_SHUTDOWN()
-        });
-
-        storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
-
-        fileNameTmp = STRDEF(TEST_PATH "/sub1/testfile.pgbackrest.tmp");
-
-        TEST_ASSIGN(
-            file,
-            storageNewWriteP(
-                storageTest, fileName, .user = TEST_USER_STR, .group = TEST_GROUP_STR, .timeModified = 1, .noSyncFile = true),
-            "new write file");
-        TEST_ERROR_FMT(ioWriteOpen(storageWriteIo(file)), FileOwnerError, "unable to set ownership for '%s'", strZ(fileNameTmp));
-
-        memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("storageWriteSftpOpen group NULL");
-
-        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
-        {
-            HRNLIBSSH2_MACRO_STARTUP(),
-            {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true, .sleep = 18,
-             .param = "[\"" TEST_PATH "/sub1/testfile.pgbackrest.tmp\",26,416,0]"},
-            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
-            {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"" TEST_PATH "/sub1\",488]"},
-            {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/sub1/testfile.pgbackrest.tmp\",26,416,0]"},
-            {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_NONE},
-            HRNLIBSSH2_MACRO_SHUTDOWN()
-        });
-
-        storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
-
-        fileNameTmp = STRDEF(TEST_PATH "/sub1/testfile.pgbackrest.tmp");
-
-        TEST_ASSIGN(
-            file,
-            storageNewWriteP(
-                storageTest, fileName, .user = TEST_USER_STR, .group = NULL, .timeModified = 1, .noSyncFile = true),
-            "new write file");
-        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
-
-        memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("storageWriteSftpOpen user NULL");
-
-        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
-        {
-            HRNLIBSSH2_MACRO_STARTUP(),
-            {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true, .sleep = 18,
-             .param = "[\"" TEST_PATH "/sub1/testfile.pgbackrest.tmp\",26,416,0]"},
-            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
-            {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"" TEST_PATH "/sub1\",488]"},
-            {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/sub1/testfile.pgbackrest.tmp\",26,416,0]"},
-            {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_NONE},
-            HRNLIBSSH2_MACRO_SHUTDOWN()
-        });
-
-        storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
-
-        fileNameTmp = STRDEF(TEST_PATH "/sub1/testfile.pgbackrest.tmp");
-
-        TEST_ASSIGN(
-            file,
-            storageNewWriteP(storageTest, fileName, .user = NULL, .group = TEST_GROUP_STR, .timeModified = 1, .noSyncFile = true),
-            "new write file");
-        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
-
-        memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("storageWriteSftpClose timeout EAGAIN libssh2_sftp_fsetstat");
-
-        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
-        {
-            HRNLIBSSH2_MACRO_STARTUP(),
-            {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true, .sleep = 18,
-             .param = "[\"" TEST_PATH "/sub1/testfile.pgbackrest.tmp\",26,416,0]"},
-            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
-            {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"" TEST_PATH "/sub1\",488]"},
-            {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/sub1/testfile.pgbackrest.tmp\",26,416,0]"},
-            {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_NONE,
-             .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
-             .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
-                      LIBSSH2_SFTP_ATTR_SIZE,
-             .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
-            {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_EAGAIN},
-            {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_NONE},
-            {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 18},
-            {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 5},
-            HRNLIBSSH2_MACRO_SHUTDOWN()
-        });
-
-        storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
-
-        TEST_ASSIGN(
-            file,
-            storageNewWriteP(storageTest, fileName, .user = TEST_USER_STR, .group = TEST_GROUP_STR, .timeModified = 1),
-            "new write file (defaults)");
-        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
-        TEST_RESULT_INT(ioWriteFd(storageWriteIo(file)), -1, "check write fd");
-        TEST_ERROR_FMT(
-            ioWriteClose(storageWriteIo(file)), FileInfoError,
-            "unable to set time for '%s': libssh2 error [0] ", strZ(fileNameTmp));
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
@@ -3269,20 +2941,12 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true, .sleep = 18,
              .param = "[\"" TEST_PATH "/sub1/testfile.pgbackrest.tmp\",26,416,0]"},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"" TEST_PATH "/sub1\",488]"},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/sub1/testfile.pgbackrest.tmp\",26,416,0]"},
-            {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_NONE,
-             .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
-             .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
-                      LIBSSH2_SFTP_ATTR_SIZE,
-             .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_NONE},
-            {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_NONE,
-             .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
-             .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
-                      LIBSSH2_SFTP_ATTR_SIZE,
-             .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 18},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 5},
             HRNLIBSSH2_MACRO_SHUTDOWN()
@@ -3291,10 +2955,7 @@ testRun(void)
         storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
-        TEST_ASSIGN(
-            file,
-            storageNewWriteP(storageTest, fileName, .user = TEST_USER_STR, .group = TEST_GROUP_STR, .timeModified = 1),
-            "new write file (defaults)");
+        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName), "new write file (defaults)");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
         TEST_RESULT_INT(ioWriteFd(storageWriteIo(file)), -1, "check write fd");
         TEST_ERROR_FMT(
@@ -3312,19 +2973,11 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true,
              .param = "[\"" TEST_PATH "/sub1/testfile\",26,416,0]"},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"" TEST_PATH "/sub1\",488]"},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/sub1/testfile\",26,416,0]"},
-            {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_NONE,
-             .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
-             .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
-                      LIBSSH2_SFTP_ATTR_SIZE,
-             .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_NONE},
-            {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_NONE,
-             .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
-             .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
-                      LIBSSH2_SFTP_ATTR_SIZE,
-             .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
@@ -3332,11 +2985,7 @@ testRun(void)
         storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
-        TEST_ASSIGN(
-            file,
-            storageNewWriteP(
-                storageTest, fileName, .user = TEST_USER_STR, .noAtomic = true, .group = TEST_GROUP_STR, .timeModified = 1),
-            "new write file (defaults)");
+        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .noAtomic = true), "new write file (defaults)");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
         TEST_RESULT_INT(ioWriteFd(storageWriteIo(file)), -1, "check write fd");
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close file");
@@ -3351,19 +3000,11 @@ testRun(void)
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true, .param = "[\"" TEST_PATH "/sub1/testfile\",26,416,0]"},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"" TEST_PATH "/sub1\",488]"},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/sub1/testfile\",26,416,0]"},
-            {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_NONE,
-             .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
-             .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
-                      LIBSSH2_SFTP_ATTR_SIZE,
-             .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_NONE},
-            {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_NONE,
-             .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
-             .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
-                      LIBSSH2_SFTP_ATTR_SIZE,
-             .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
@@ -3375,10 +3016,7 @@ testRun(void)
         ((StorageSftp *)storageDriver(storageTest))->interface.pathSync = malloc(1);
 
         TEST_ASSIGN(
-            file,
-            storageNewWriteP(storageTest, fileName, .user = TEST_USER_STR, .noAtomic = true, .group = TEST_GROUP_STR,
-                             .timeModified = 1, .noSyncPath = true),
-            "new write file (defaults)");
+            file, storageNewWriteP(storageTest, fileName, .noAtomic = true, .noSyncPath = true), "new write file (defaults)");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
         TEST_RESULT_INT(ioWriteFd(storageWriteIo(file)), -1, "check write fd");
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close file");
@@ -3395,19 +3033,11 @@ testRun(void)
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true, .param = "[\"" TEST_PATH "/sub1/testfile\",26,416,0]"},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"" TEST_PATH "/sub1\",488]"},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/sub1/testfile\",26,416,0]"},
-            {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_NONE,
-             .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
-             .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
-                      LIBSSH2_SFTP_ATTR_SIZE,
-             .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_NONE},
-            {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_NONE,
-             .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
-             .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
-                      LIBSSH2_SFTP_ATTR_SIZE,
-             .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
@@ -3418,12 +3048,7 @@ testRun(void)
         // Make interface.pathSync != NULL
         ((StorageSftp *)storageDriver(storageTest))->interface.pathSync = malloc(1);
 
-        TEST_ASSIGN(
-            file,
-            storageNewWriteP(
-                storageTest, fileName, .user = TEST_USER_STR, .noAtomic = true, .group = TEST_GROUP_STR, .timeModified = 1,
-                .noSyncPath = false),
-            "new write file");
+        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .noAtomic = true, .noSyncPath = false), "new write file");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
         TEST_RESULT_INT(ioWriteFd(storageWriteIo(file)), -1, "check write fd");
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close file");
@@ -3440,18 +3065,10 @@ testRun(void)
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true, .param = "[\"" TEST_PATH "/sub1/testfile\",26,416,0]"},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"" TEST_PATH "/sub1\",488]"},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/sub1/testfile\",26,416,0]"},
-            {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_NONE,
-             .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
-             .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
-                      LIBSSH2_SFTP_ATTR_SIZE,
-             .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
-            {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_NONE,
-             .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
-             .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
-                      LIBSSH2_SFTP_ATTR_SIZE,
-             .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
@@ -3461,11 +3078,7 @@ testRun(void)
 
         ((StorageSftp *)storageDriver(storageTest))->interface.pathSync = malloc(1);
 
-        TEST_ASSIGN(
-            file,
-            storageNewWriteP(storageTest, fileName, .user = TEST_USER_STR, .noAtomic = true, .group = TEST_GROUP_STR,
-                             .timeModified = 1, .noSyncPath = false),
-            "new write file");
+        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .noAtomic = true, .noSyncPath = false), "new write file");
         ((StorageWriteSftp *)file->driver)->interface.syncFile = false;
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
         TEST_RESULT_INT(ioWriteFd(storageWriteIo(file)), -1, "check write fd");
@@ -3481,27 +3094,19 @@ testRun(void)
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
-            {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true, .param = "[\"" TEST_PATH "/sub1/testfile\",10,416,0]"},
+            {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true, .param = "[\"" TEST_PATH "/sub1/testfile\",26,416,0]"},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"" TEST_PATH "/sub1\",488]"},
-            {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/sub1/testfile\",10,416,0]"},
-            {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_NONE,
-             .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
-             .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
-                      LIBSSH2_SFTP_ATTR_SIZE,
-             .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
+            {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/sub1/testfile\",26,416,0]"},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
 
         storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
-        TEST_ASSIGN(
-            file,
-            storageNewWriteP(
-                storageTest, fileName, .user = TEST_USER_STR, .noAtomic = true, .group = TEST_GROUP_STR, .timeModified = 1,
-                .noSyncPath = false, .noTruncate = true),
-            "new write file");
+        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .noAtomic = true, .noSyncPath = false), "new write file");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
         TEST_RESULT_INT(ioWriteFd(storageWriteIo(file)), -1, "check write fd");
 
@@ -3999,6 +3604,91 @@ testRun(void)
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("remove - file missing, .errorOnMissing = true, sftp error LIBSSH2_FX_NO_SUCH_FILE");
+
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
+        {
+            HRNLIBSSH2_MACRO_STARTUP(),
+            {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"/missing\"]", .resultInt = LIBSSH2_ERROR_EAGAIN},
+            {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"/missing\"]", .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
+            HRNLIBSSH2_MACRO_SHUTDOWN()
+        });
+
+        storageTest = storageSftpNewP(
+            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+
+        TEST_ERROR(storageRemoveP(storageTest, STRDEF("missing"), .errorOnMissing = true), FileRemoveError,
+                   "unable to remove '/missing': libssh2 error [-31]: sftp error [2]");
+
+        memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("remove - file missing, sftp error other than LIBSSH2_FX_NO_SUCH_FILE");
+
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
+        {
+            HRNLIBSSH2_MACRO_STARTUP(),
+            {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"/missing\"]", .resultInt = LIBSSH2_ERROR_EAGAIN},
+            {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"/missing\"]", .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_CONNECTION_LOST},
+            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_CONNECTION_LOST},
+            HRNLIBSSH2_MACRO_SHUTDOWN()
+        });
+
+        storageTest = storageSftpNewP(
+            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+
+        TEST_ERROR(storageRemoveP(storageTest, STRDEF("missing")), FileRemoveError,
+                   "unable to remove '/missing': libssh2 error [-31]: sftp error [7]");
+
+        memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("remove - file missing, ssh error, .errorOnMissing = true");
+
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
+        {
+            HRNLIBSSH2_MACRO_STARTUP(),
+            {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"/missing\"]", .resultInt = LIBSSH2_ERROR_EAGAIN},
+            {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"/missing\"]", .resultInt = LIBSSH2_ERROR_BAD_SOCKET},
+            HRNLIBSSH2_MACRO_SHUTDOWN()
+        });
+
+        storageTest = storageSftpNewP(
+            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+
+        TEST_ERROR(storageRemoveP(storageTest, STRDEF("missing"), .errorOnMissing = true), FileRemoveError,
+                   "unable to remove '/missing'");
+
+        memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("remove - LIBSSH2_ERROR_EAGAIN");
+
+        const String *fileRemove1 = STRDEF(TEST_PATH "/remove.txt");
+
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
+        {
+            HRNLIBSSH2_MACRO_STARTUP(),
+            {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"" TEST_PATH "/remove.txt\"]",
+             .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 15},
+            {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"" TEST_PATH "/remove.txt\"]",
+             .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 15},
+            HRNLIBSSH2_MACRO_SHUTDOWN()
+        });
+
+        TEST_ASSIGN(
+            storageTest,
+            storageSftpNewP(
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .write = true,
+                .keyPub = KEYPUB),
+            "new storage /");
+        TEST_RESULT_VOID(storageRemoveP(storageTest, fileRemove1), "remove file");
+
+        memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("storageWriteSftpOpen libssh2_sftp_open_ex timeout EAGAIN");
 
         StorageWrite *file = NULL;
@@ -4010,6 +3700,8 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true, .sleep = 18,
              .param = "[\"" TEST_PATH "/sub1/testfile.pgbackrest.tmp\",26,416,0]"},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"" TEST_PATH "/sub1\",488]"},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true, .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 18,
              .param = "[\"" TEST_PATH "/sub1/testfile.pgbackrest.tmp\",26,416,0]"},
@@ -4024,11 +3716,7 @@ testRun(void)
         storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
-        TEST_ASSIGN(
-            file,
-            storageNewWriteP(
-                storageTest, fileName, .user = TEST_USER_STR, .group = TEST_GROUP_STR, .timeModified = 1, .noSyncFile = true),
-            "storageWriteSftpOpen timeout EAGAIN");
+        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .noSyncFile = true), "storageWriteSftpOpen timeout EAGAIN");
         TEST_ERROR_FMT(ioWriteOpen(storageWriteIo(file)), FileOpenError, STORAGE_ERROR_WRITE_OPEN, strZ(fileName));
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
@@ -4042,6 +3730,8 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true, .sleep = 18,
              .param = "[\"" TEST_PATH "/sub1/testfile.pgbackrest.tmp\",26,416,0]"},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"" TEST_PATH "/sub1\",488]"},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL, .sleep = 18,
              .param = "[\"" TEST_PATH "/sub1/testfile.pgbackrest.tmp\",26,416,0]"},
@@ -4054,11 +3744,7 @@ testRun(void)
         storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
-        TEST_ASSIGN(
-            file,
-            storageNewWriteP(
-                storageTest, fileName, .user = TEST_USER_STR, .group = TEST_GROUP_STR, .timeModified = 1, .noSyncFile = true),
-            "storageWriteSftpOpen sftp error");
+        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .noSyncFile = true), "storageWriteSftpOpen sftp error");
         TEST_ERROR_FMT(
             ioWriteOpen(storageWriteIo(file)), FileOpenError,
             STORAGE_ERROR_WRITE_OPEN ": libssh2 error [-31]: sftp error [3]", strZ(fileName));
@@ -4238,11 +3924,11 @@ testRun(void)
         TEST_ASSIGN(
             file,
             storageNewWriteP(
-                storageTest, fileNoPerm, .modeFile = 0444, .modePath = 0555, .noCreatePath = true, .noSyncFile = true,
-                .noSyncPath = true, .noAtomic = true),
+                storageTest, fileNoPerm, .modeFile = 0444, .modePath = 0555, .noSyncFile = true, .noSyncPath = true,
+                .noAtomic = true),
             "new write file");
         TEST_RESULT_BOOL(storageWriteAtomic(file), false, "check atomic");
-        TEST_RESULT_BOOL(storageWriteCreatePath(file), false, "check create path");
+        TEST_RESULT_BOOL(storageWriteCreatePath(file), true, "check create path");
         TEST_RESULT_INT(storageWriteModeFile(file), 0444, "check mode file");
         TEST_RESULT_INT(storageWriteModePath(file), 0555, "check mode path");
         TEST_RESULT_STR(storageWriteName(file), fileNoPerm, "check name");
@@ -4275,6 +3961,8 @@ testRun(void)
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_PERMISSION_DENIED},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_PERMISSION_DENIED},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
 
@@ -4287,8 +3975,7 @@ testRun(void)
 #endif
             .keyPub = KEYPUB, .write = true);
 
-        TEST_ASSIGN(
-            file, storageNewWriteP(storageTest, fileNoPerm, .noAtomic = true, .noCreatePath = true), "new write file");
+        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileNoPerm, .noAtomic = true), "new write file");
         TEST_ERROR_FMT(
             ioWriteOpen(storageWriteIo(file)),
             FileOpenError, STORAGE_ERROR_WRITE_OPEN ": libssh2 error [-31]: sftp error [3]", strZ(fileNoPerm));
@@ -4318,6 +4005,12 @@ testRun(void)
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
+            {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"" TEST_PATH "/sub1\",488]"},
+            {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/sub1/test.file\",26,416,0]", .resultNull = true,
+             .sleep = 18, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
 
@@ -4330,7 +4023,7 @@ testRun(void)
 #endif
             .keyPub = KEYPUB, .write = true);
 
-        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .noCreatePath = true, .noAtomic = true), "new write file");
+        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .noAtomic = true), "new write file");
         TEST_ERROR_FMT(ioWriteOpen(storageWriteIo(file)), FileMissingError, STORAGE_ERROR_WRITE_MISSING, strZ(fileName));
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
@@ -4470,58 +4163,6 @@ testRun(void)
         TEST_RESULT_INT(storageInfoP(storageTest, fileName).mode, 0600, "check file mode");
 
         storageRemoveP(storageTest, fileName, .errorOnMissing = true);
-
-        memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("no truncate");
-
-        // Mimic creating file no-truncate mode 0600 contents ABC
-        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
-        {
-            HRNLIBSSH2_MACRO_STARTUP(),
-            // Open file
-            {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/no-truncate\",10,432,0]"},
-            {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_NONE},
-            {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_NONE,
-             .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR,
-             .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
-                      LIBSSH2_SFTP_ATTR_SIZE,
-             .mtime = 77777, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 3},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE},
-            // Open file
-            {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/no-truncate\",1,0,0]"},
-            // Read file
-            {.function = HRNLIBSSH2_SFTP_READ, .param = "[65536]", .resultInt = 3, .readBuffer = STRDEF("ABC")},
-            {.function = HRNLIBSSH2_SFTP_READ, .param = "[65533]", .resultInt = 0},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE},
-            // Check path mode
-            {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/no-truncate\",1]", .resultInt = LIBSSH2_ERROR_NONE,
-             .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR,
-             .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
-                      LIBSSH2_SFTP_ATTR_SIZE,
-             .mtime = 77777, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
-            {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/no-truncate\",1]", .resultInt = LIBSSH2_ERROR_NONE,
-             .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR,
-             .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
-                      LIBSSH2_SFTP_ATTR_SIZE,
-             .mtime = 77777, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
-            HRNLIBSSH2_MACRO_SHUTDOWN()
-        });
-
-        storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
-
-        TEST_ASSIGN(
-            file, storageNewWriteP(storageTest, STRDEF("no-truncate"), .modeFile = 0660, .timeModified = 77777, .noAtomic = true,
-                                   .noTruncate = true), "new write file");
-        TEST_RESULT_BOOL(storageWriteTruncate(file), false, "file will not be truncated");
-        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
-        TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close file");
-
-        TEST_STORAGE_GET(storageTest, "no-truncate", "ABC");
-        TEST_RESULT_UINT(storageInfoP(storageTest, STRDEF("no-truncate")).mode, 0600, "check mode");
-        TEST_RESULT_INT(storageInfoP(storageTest, STRDEF("no-truncate")).timeModified, 77777, "check time");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
     }

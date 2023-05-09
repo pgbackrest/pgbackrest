@@ -53,7 +53,7 @@ storageWriteSftpOpen(THIS_VOID)
     ASSERT(this != NULL);
     ASSERT(this->sftpSession != NULL);
 
-    const unsigned long int flags = LIBSSH2_FXF_CREAT | LIBSSH2_FXF_WRITE | (this->interface.truncate ? LIBSSH2_FXF_TRUNC : 0);
+    const unsigned long int flags = LIBSSH2_FXF_CREAT | LIBSSH2_FXF_WRITE | LIBSSH2_FXF_TRUNC;
 
     // Open the file
     Wait *wait = waitNew(this->timeoutConnect);
@@ -67,7 +67,8 @@ storageWriteSftpOpen(THIS_VOID)
     while (this->sftpHandle == NULL && libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
 
     // Attempt to create the path if it is missing
-    if (this->sftpHandle == NULL && this->interface.createPath)
+    if (this->sftpHandle == NULL && libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL &&
+        libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_NO_SUCH_FILE)
     {
         // Create the path
         storageInterfacePathCreateP(this->storage, this->path, false, false, this->interface.modePath);
@@ -103,36 +104,6 @@ storageWriteSftpOpen(THIS_VOID)
         }
         else
             THROW_FMT(FileOpenError, STORAGE_ERROR_WRITE_OPEN, strZ(this->interface.name));
-    }
-
-    // Update user/group owner
-    if (this->interface.user != NULL || this->interface.group != NULL)
-    {
-        LIBSSH2_SFTP_ATTRIBUTES attr;
-
-        attr.flags = LIBSSH2_SFTP_ATTR_UIDGID;
-        attr.uid = userIdFromName(this->interface.user);
-
-        if (attr.uid == userId())
-            attr.uid = (uid_t)-1;
-
-        attr.gid = groupIdFromName(this->interface.group);
-
-        if (attr.gid == groupId())
-            attr.gid = (gid_t)-1;
-
-        wait = waitNew(this->timeoutConnect);
-
-        int rc;
-
-        do
-        {
-            rc = libssh2_sftp_fsetstat(this->sftpHandle, &attr);
-        }
-        while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
-
-        if (rc)
-            THROW_FMT(FileOwnerError, "unable to set ownership for '%s'", strZ(this->nameTmp));
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -294,33 +265,6 @@ storageWriteSftpClose(THIS_VOID)
 
             if (rc)
                 THROW_FMT(FileSyncError, STORAGE_ERROR_WRITE_SYNC, strZ(this->nameTmp));
-        }
-
-        // Update modified time
-        if (this->interface.timeModified != 0)
-        {
-            LIBSSH2_SFTP_ATTRIBUTES attr;
-
-            attr.flags = LIBSSH2_SFTP_ATTR_ACMODTIME;
-            attr.atime = (unsigned int)this->interface.timeModified;
-            attr.mtime = (unsigned int)this->interface.timeModified;
-
-            wait = waitNew(this->timeoutConnect);
-
-            do
-            {
-                rc = libssh2_sftp_fsetstat(this->sftpHandle, &attr);
-            }
-            while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
-
-            if (rc)
-            {
-                libSsh2ErrNo = libssh2_session_last_error(this->session, &libSsh2ErrMsg, &errMsgLen, 0);
-
-                THROW_FMT(
-                    FileInfoError,
-                    "unable to set time for '%s': libssh2 error [%d] %s", strZ(this->nameTmp), libSsh2ErrNo, libSsh2ErrMsg);
-            }
         }
 
         // Close the file

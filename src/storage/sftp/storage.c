@@ -66,7 +66,7 @@ storageSftpLibSsh2SessionFreeResource(THIS_VOID)
             THROW_FMT(
                 ServiceError, "failed to free resource sftpHandle: libssh2 errno [%d]%s", rc,
                 rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
-                    strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
+                strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
         }
     }
 
@@ -83,7 +83,7 @@ storageSftpLibSsh2SessionFreeResource(THIS_VOID)
             THROW_FMT(
                 ServiceError, "failed to free resource sftpSession: libssh2 errno [%d]%s", rc,
                 rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
-                    strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
+                strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
         }
     }
 
@@ -228,9 +228,7 @@ storageSftpInfo(THIS_VOID, const String *const file, const StorageInfoLevel leve
             if ((attr.flags & LIBSSH2_SFTP_ATTR_UIDGID) != 0)
             {
                 result.groupId = (unsigned int)attr.gid;
-                result.group = groupNameFromId(result.groupId);
                 result.userId = (unsigned int)attr.uid;
-                result.user = userNameFromId(result.userId);
             }
 
             if ((attr.flags & LIBSSH2_SFTP_ATTR_PERMISSIONS) != 0)
@@ -262,45 +260,6 @@ storageSftpInfo(THIS_VOID, const String *const file, const StorageInfoLevel leve
     }
 
     FUNCTION_LOG_RETURN(STORAGE_INFO, result);
-}
-
-/**********************************************************************************************************************************/
-static void
-storageSftpLinkCreate(
-    THIS_VOID, const String *const target, const String *const linkPath, const StorageInterfaceLinkCreateParam param)
-{
-    THIS(StorageSftp);
-
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_SFTP, this);
-        FUNCTION_LOG_PARAM(STRING, target);
-        FUNCTION_LOG_PARAM(STRING, linkPath);
-        FUNCTION_LOG_PARAM(ENUM, param.linkType);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(target != NULL);
-    ASSERT(linkPath != NULL);
-
-    // Create symlink
-    if (param.linkType == storageLinkSym)
-    {
-        ssize_t rc;
-        Wait *const wait = waitNew(this->timeoutConnect);
-
-        do
-        {
-            rc = libssh2_sftp_symlink_ex(
-                this->sftpSession, strZ(target), (unsigned int)strSize(target), (char *)strZ(linkPath),
-                (unsigned int)strSize(linkPath), LIBSSH2_SFTP_SYMLINK);
-        }
-        while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
-
-        if (rc != 0)
-            THROW_FMT(FileOpenError, "unable to create symlink '%s' to '%s'", strZ(linkPath), strZ(target));
-    }
-
-    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -552,6 +511,11 @@ storageSftpNewWrite(THIS_VOID, const String *const file, const StorageInterfaceN
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
+    ASSERT(param.createPath);
+    ASSERT(param.truncate);
+    ASSERT(param.user == NULL);
+    ASSERT(param.group == NULL);
+    ASSERT(param.timeModified == 0);
 
     FUNCTION_LOG_RETURN(
         STORAGE_WRITE,
@@ -743,10 +707,9 @@ storageSftpPathRemove(THIS_VOID, const String *const path, const bool recurse, c
 /**********************************************************************************************************************************/
 static const StorageInterface storageInterfaceSftp =
 {
-    .feature = 1 << storageFeaturePath | 1 << storageFeatureSymLink | 1 << storageFeatureInfoDetail,
+    .feature = 1 << storageFeaturePath | 1 << storageFeatureInfoDetail,
 
     .info = storageSftpInfo,
-    .linkCreate = storageSftpLinkCreate,
     .list = storageSftpList,
     .newRead = storageSftpNewRead,
     .newWrite = storageSftpNewWrite,
@@ -771,7 +734,7 @@ storageSftpNew(
         FUNCTION_LOG_PARAM(STRING, keyPriv);
         FUNCTION_LOG_PARAM(STRING_ID, hostKeyHashType);
         FUNCTION_LOG_PARAM(STRING, param.keyPub);
-        FUNCTION_TEST_PARAM(STRING, param.keyPassphrase);
+        FUNCTION_LOG_PARAM(STRING, param.keyPassphrase);
         FUNCTION_LOG_PARAM(STRING, param.hostFingerprint);
         FUNCTION_LOG_PARAM(MODE, param.modeFile);
         FUNCTION_LOG_PARAM(MODE, param.modePath);
