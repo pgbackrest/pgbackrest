@@ -39,7 +39,6 @@ Function constants
 #define HRNLIBSSH2_SESSION_LAST_ERROR                               "libssh2_session_last_error"
 #define HRNLIBSSH2_SESSION_SET_BLOCKING                             "libssh2_session_set_blocking"
 #define HRNLIBSSH2_SFTP_CLOSE_HANDLE                                "libssh2_sftp_close_handle"
-#define HRNLIBSSH2_SFTP_FSTAT_EX                                    "libssh2_sftp_fstat_ex"
 #define HRNLIBSSH2_SFTP_FSYNC                                       "libssh2_sftp_fsync"
 #define HRNLIBSSH2_SFTP_INIT                                        "libssh2_sftp_init"
 #define HRNLIBSSH2_SFTP_LAST_ERROR                                  "libssh2_sftp_last_error"

@@ -441,18 +441,6 @@ libssh2_sftp_symlink_ex(
             rc = hrnLibSsh2->resultInt != 0 ? hrnLibSsh2->resultInt : (int)strSize(hrnLibSsh2->symlinkExTarget);
             break;
 
-        case LIBSSH2_SFTP_SYMLINK:
-            if (hrnLibSsh2->symlinkExTarget != NULL)
-            {
-                if (strSize(hrnLibSsh2->symlinkExTarget) < PATH_MAX)
-                    strncpy(target, strZ(hrnLibSsh2->symlinkExTarget), strSize(hrnLibSsh2->symlinkExTarget));
-                else
-                    THROW_FMT(AssertError, "symlinkExTarget too large for target buffer");
-            }
-
-            rc = hrnLibSsh2->resultInt;
-            break;
-
         default:
             THROW_FMT(AssertError, "UNKNOWN link_type");
             break;
@@ -535,39 +523,6 @@ int
 libssh2_session_last_errno(LIBSSH2_SESSION *session)
 {
     return hrnLibSsh2ScriptRun(HRNLIBSSH2_SESSION_LAST_ERRNO, NULL, (HrnLibSsh2 *)session)->resultInt;
-}
-
-/***********************************************************************************************************************************
-Shim for libssh2_sftp_fstat_ex
-***********************************************************************************************************************************/
-int
-libssh2_sftp_fstat_ex(LIBSSH2_SFTP_HANDLE *handle, LIBSSH2_SFTP_ATTRIBUTES *attrs, int setstat)
-{
-    if (attrs == NULL)
-        THROW_FMT(AssertError, "attrs is NULL");
-
-    HrnLibSsh2 *hrnLibSsh2 = NULL;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        hrnLibSsh2 = hrnLibSsh2ScriptRun(
-            HRNLIBSSH2_SFTP_FSTAT_EX, varLstAdd(varLstNew(), varNewInt(setstat)), (HrnLibSsh2 *)handle);
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    // populate attrs
-    attrs->flags = 0;
-    attrs->flags |= (unsigned long)hrnLibSsh2->flags;
-
-    attrs->permissions = 0;
-    attrs->permissions |= (unsigned long)hrnLibSsh2->attrPerms;
-
-    attrs->mtime = (unsigned long)hrnLibSsh2->mtime;
-    attrs->uid = (unsigned long)hrnLibSsh2->uid;
-    attrs->gid = (unsigned long)hrnLibSsh2->gid;
-    attrs->filesize = hrnLibSsh2->filesize;
-
-    return hrnLibSsh2->resultInt;
 }
 
 /***********************************************************************************************************************************
