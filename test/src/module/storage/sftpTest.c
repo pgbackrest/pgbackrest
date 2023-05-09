@@ -3674,14 +3674,14 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"" TEST_PATH "/remove.txt\"]",
              .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 15},
             {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"" TEST_PATH "/remove.txt\"]",
-             .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 15},
+             .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 3},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
 
         TEST_ASSIGN(
             storageTest,
             storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .write = true,
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 10, 10, KEYPRIV, hashTypeSha1, .write = true,
                 .keyPub = KEYPUB),
             "new storage /");
         TEST_RESULT_VOID(storageRemoveP(storageTest, fileRemove1), "remove file");
