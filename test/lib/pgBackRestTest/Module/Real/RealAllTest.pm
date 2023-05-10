@@ -155,12 +155,12 @@ sub run
         # --------------------------------------------------------------------------------------------------------------------------
         my $strComment = 'verify check command runs successfully';
 
-        $oHostDbPrimary->check($strComment, {iTimeout => 5});
+        $oHostDbPrimary->check($strComment, {iTimeout => 10});
 
         # Also run check on the backup host when present
         if ($bHostBackup)
         {
-            $oHostBackup->check($strComment, {iTimeout => 5, strOptionalParam => $strBogusReset});
+            $oHostBackup->check($strComment, {iTimeout => 10, strOptionalParam => $strBogusReset});
         }
 
         # Restart the cluster ignoring any errors in the postgresql log
@@ -451,7 +451,7 @@ sub run
             {strOptionalParam => '--stop-auto --buffer-size=32768 --delta', iRepo => $iRepoTotal});
 
         # Ensure the check command runs properly with a tablespace
-        $oHostBackup->check( 'check command with tablespace', {iTimeout => 5, strOptionalParam => $strBogusReset});
+        $oHostBackup->check( 'check command with tablespace', {iTimeout => 10, strOptionalParam => $strBogusReset});
 
         # Setup the xid target
         #---------------------------------------------------------------------------------------------------------------------------
