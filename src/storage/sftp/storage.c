@@ -66,7 +66,7 @@ storageSftpLibSsh2SessionFreeResource(THIS_VOID)
             THROW_FMT(
                 ServiceError, "failed to free resource sftpHandle: libssh2 errno [%d]%s", rc,
                 rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
-                strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
+                    strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
         }
     }
 
@@ -83,7 +83,7 @@ storageSftpLibSsh2SessionFreeResource(THIS_VOID)
             THROW_FMT(
                 ServiceError, "failed to free resource sftpSession: libssh2 errno [%d]%s", rc,
                 rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
-                strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
+                    strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
         }
     }
 

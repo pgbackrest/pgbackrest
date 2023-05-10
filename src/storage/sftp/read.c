@@ -212,7 +212,7 @@ storageReadSftpClose(THIS_VOID)
                 FileCloseError,
                 STORAGE_ERROR_READ_CLOSE ": libssh2 errno [%d]%s", strZ(this->interface.name), rc,
                 rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
-                strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
+                    strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
         }
     }
 
