@@ -64,7 +64,7 @@ use constant HOST_SERVER_KEY                                        => HOST_CERT
 ####################################################################################################################################
 # SFTP key constants
 ####################################################################################################################################
-use constant SSH_KEY_PATH                                           => '/test/ssh/';
+use constant SSH_KEY_PATH                                           => '/test/certificate/ssh/';
 
 use constant SSH_PRIVATE_KEY                                        => SSH_KEY_PATH . 'id_rsa';
     push @EXPORT, qw(SSH_PRIVATE_KEY);
