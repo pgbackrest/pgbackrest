@@ -792,15 +792,14 @@
 
     <!-- ======================================================================================================================= -->
     <block-define id="sftp-setup">
-        <p><backrest/> supports locating repositories on <proper>SFTP</proper> stores.</p>
-
-        <p>SFTP file transfer is relatively slow so commands benefit by increasing <br-option>process-max</br-option> to parallelize file transfer.</p>
+        <p><backrest/> supports locating repositories on <proper>SFTP</proper> hosts. SFTP file transfer is relatively slow so commands benefit by increasing <br-option>process-max</br-option> to parallelize file transfer.</p>
 
         <backrest-config host="{[sftp-setup-host]}" file="{[backrest-config-demo]}" owner="{[sftp-setup-config-owner]}">
             <title>Configure <proper>SFTP</proper></title>
 
             <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-type">sftp</backrest-config-option>
             <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-path">/{[sftp-repo]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-bundle">sftp</backrest-config-option>
             <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-host">{[host-sftp]}</backrest-config-option>
             <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-host-key-hash-type">{[sftp-host-key-hash-type]}</backrest-config-option>
             <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-host-user">{[sftp-setup-user]}</backrest-config-option>
@@ -819,13 +818,6 @@
                     -t rsa -b 4096 -N "" -m PEM</exe-cmd>
             </execute>
         </execute-list>
-
-            <!--
-            <execute user="{[sftp-setup-user]}">
-                <exe-cmd>mkdir -m 750 -p {[pg-home-path]}/.ssh</exe-cmd>
-            </execute>
-            <execute user="root" err-suppress="y" user-force="y">
-            -->
 
         <execute-list host="{[host-sftp]}">
             <title>Copy <host>{[host-pg1]}</host> sftp backup public key to <host>{[host-sftp]}</host></title>

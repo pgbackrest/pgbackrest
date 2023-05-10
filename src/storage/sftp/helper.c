@@ -22,27 +22,17 @@ storageSftpHelper(const unsigned int repoIdx, const bool write, StoragePathExpre
 
     ASSERT(cfgOptionIdxStrId(cfgOptRepoType, repoIdx) == STORAGE_SFTP_TYPE);
 
-    Storage *result = NULL;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        MEM_CONTEXT_PRIOR_BEGIN()
-        {
-            result = storageSftpNewP(
-                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), cfgOptionIdxStr(cfgOptRepoSftpHost, repoIdx),
-                cfgOptionIdxUInt(cfgOptRepoSftpHostPort, repoIdx), cfgOptionIdxStr(cfgOptRepoSftpHostUser, repoIdx),
-                cfgOptionUInt64(cfgOptIoTimeout), cfgOptionUInt64(cfgOptIoTimeout),
-                cfgOptionIdxStr(cfgOptRepoSftpPrivateKeyFile, repoIdx), cfgOptionIdxStrId(cfgOptRepoSftpHostKeyHashType, repoIdx),
-                .write = write, .pathExpressionFunction = pathExpressionCallback, .modeFile = STORAGE_MODE_FILE_DEFAULT,
-                .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
-                .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
-                .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx));
-        }
-        MEM_CONTEXT_PRIOR_END();
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN(STORAGE, result);
+    FUNCTION_LOG_RETURN(
+        STORAGE,
+        storageSftpNewP(
+            cfgOptionIdxStr(cfgOptRepoPath, repoIdx), cfgOptionIdxStr(cfgOptRepoSftpHost, repoIdx),
+            cfgOptionIdxUInt(cfgOptRepoSftpHostPort, repoIdx), cfgOptionIdxStr(cfgOptRepoSftpHostUser, repoIdx),
+            cfgOptionUInt64(cfgOptIoTimeout), cfgOptionUInt64(cfgOptIoTimeout),
+            cfgOptionIdxStr(cfgOptRepoSftpPrivateKeyFile, repoIdx), cfgOptionIdxStrId(cfgOptRepoSftpHostKeyHashType, repoIdx),
+            .write = write, .pathExpressionFunction = pathExpressionCallback, .modeFile = STORAGE_MODE_FILE_DEFAULT,
+            .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
+            .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
+            .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx)));
 }
 
 #endif // HAVE_LIBSSH2
