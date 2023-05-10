@@ -799,7 +799,7 @@
 
             <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-type">sftp</backrest-config-option>
             <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-path">/{[sftp-repo]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-bundle">sftp</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-bundle">y</backrest-config-option>
             <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-host">{[host-sftp]}</backrest-config-option>
             <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-host-key-hash-type">{[sftp-host-key-hash-type]}</backrest-config-option>
             <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-host-user">{[sftp-setup-user]}</backrest-config-option>
