@@ -734,7 +734,7 @@ storageSftpNew(
         FUNCTION_LOG_PARAM(STRING, keyPriv);
         FUNCTION_LOG_PARAM(STRING_ID, hostKeyHashType);
         FUNCTION_LOG_PARAM(STRING, param.keyPub);
-        FUNCTION_LOG_PARAM(STRING, param.keyPassphrase);
+        FUNCTION_TEST_PARAM(STRING, param.keyPassphrase);
         FUNCTION_LOG_PARAM(STRING, param.hostFingerprint);
         FUNCTION_LOG_PARAM(MODE, param.modeFile);
         FUNCTION_LOG_PARAM(MODE, param.modePath);
