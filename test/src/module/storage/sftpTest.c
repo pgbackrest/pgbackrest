@@ -135,14 +135,14 @@ testRun(void)
         {
             {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
-            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 1000},
+            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 100},
             {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = NULL}
         });
 
         TEST_ERROR(
             storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, 1000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 100, 100, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
             ServiceError, "libssh2 handshake failed [-37]");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -288,7 +288,7 @@ testRun(void)
             {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "12345678910123456789"},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
              .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",\"" KEYPUB_CSTR "\",\"" KEYPRIV_CSTR "\",null]",
-             .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 1000},
+             .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 100},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
              .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",\"" KEYPUB_CSTR "\",\"" KEYPRIV_CSTR "\",null]",
              .resultInt = LIBSSH2_ERROR_EAGAIN},
@@ -298,7 +298,7 @@ testRun(void)
 
         TEST_ERROR(
             storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, 1000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 100, 100, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
             ServiceError,
             "public key authentication failed: libssh2 error [-37]\n"
             "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-key-file and"
@@ -339,14 +339,14 @@ testRun(void)
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
              .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",\"" KEYPUB_CSTR "\",\"" KEYPRIV_CSTR "\",null]",
              .resultInt = LIBSSH2_ERROR_NONE},
-            {.function = HRNLIBSSH2_SFTP_INIT, .resultNull = true, .sleep = 1000},
-            {.function = HRNLIBSSH2_SFTP_INIT, .resultNull = true, .sleep = 200},
+            {.function = HRNLIBSSH2_SFTP_INIT, .resultNull = true, .sleep = 100},
+            {.function = HRNLIBSSH2_SFTP_INIT, .resultNull = true, .sleep = 20},
             {.function = NULL}
         });
 
         TEST_ERROR(
             storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, 1000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 100, 100, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
             ServiceError, "unable to init libssh2_sftp session");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -382,14 +382,14 @@ testRun(void)
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
              .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",\"" KEYPUB_CSTR "\",\"" KEYPRIV_CSTR "\",null]",
              .resultInt = LIBSSH2_ERROR_NONE},
-            {.function = HRNLIBSSH2_SFTP_INIT, .resultInt = LIBSSH2_ERROR_NONE, .sleep = 1000},
+            {.function = HRNLIBSSH2_SFTP_INIT, .resultInt = LIBSSH2_ERROR_NONE, .sleep = 100},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
 
         TEST_ASSIGN(
             storageTest,
             storageSftpNewP(
-                STRDEF("/tmp"), STRDEF("localhost"), 22, TEST_USER_STR, 1000, 1000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
+                STRDEF("/tmp"), STRDEF("localhost"), 22, TEST_USER_STR, 100, 100, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
             "new storage (defaults)");
         TEST_RESULT_BOOL(storageTest->write, false, "check write");
 
@@ -463,7 +463,7 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/missing\",0]",
              .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
-            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE, .sleep = 1000},
+            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE, .sleep = 100},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/missing\",0]",
              .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
@@ -508,14 +508,14 @@ testRun(void)
         });
 
         Storage *storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 2000, 2000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB,
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 200, 200, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB,
             .write = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("file");
 
         TEST_RESULT_BOOL(storageExistsP(storageTest, STRDEF("missing")), false, "file does not exist");
-        TEST_RESULT_BOOL(storageExistsP(storageTest, STRDEF("missing"), .timeout = 1000), false, "file does not exist");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, STRDEF("missing"), .timeout = 100), false, "file does not exist");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path");
@@ -555,7 +555,7 @@ testRun(void)
 
             HRN_FORK_PARENT_BEGIN()
             {
-                TEST_RESULT_BOOL(storageExistsP(storageTest, fileExists, .timeout = 10000), true, "file exists after wait");
+                TEST_RESULT_BOOL(storageExistsP(storageTest, fileExists, .timeout = 1000), true, "file exists after wait");
             }
             HRN_FORK_PARENT_END();
         }
