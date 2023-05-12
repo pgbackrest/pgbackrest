@@ -94,6 +94,18 @@
                     </release-item>
                 </release-development-list>
             </release-core-list>
+
+            <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add note about running <cmd>stanza-create</cmd> on already-created repositories.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-doc-list>
         </release>
 
         <release date="2023-03-20" version="2.45" title="Block Incremental Backup (BETA)">

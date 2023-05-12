@@ -2519,7 +2519,9 @@
                 <summary>Create the required stanza data.</summary>
 
                 <text>
-                    <p>The <cmd>stanza-create</cmd> command must be run after the stanza has been configured in <file>pgbackrest.conf</file>. If there is more than one repository configured, the stanza will be created on each. See <link page="user-guide" section="/quickstart/create-stanza">Create the Stanza</link> for more information and an example.</p>
+                    <p>The <cmd>stanza-create</cmd> command must be run after the stanza has been configured in <file>pgbackrest.conf</file>. If there is more than one repository configured, the stanza will be created on each. Stanzas that have already been created will be skipped so it is always safe to run <cmd>stanza-create</cmd>, even when a new repository has been configured.</p>
+
+                    <p>See <link page="user-guide" section="/quickstart/create-stanza">Create the Stanza</link> for more information and an example.</p>
                 </text>
 
                 <option-list>
