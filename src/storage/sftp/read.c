@@ -197,7 +197,7 @@ storageReadSftpClose(THIS_VOID)
         int rc = 0;
         Wait *const wait = waitNew(this->timeoutConnect);
 
-        // Close the libssh2 sftpHandle
+        // Close the file
         do
         {
             rc = libssh2_sftp_close(this->sftpHandle);

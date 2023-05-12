@@ -1019,7 +1019,7 @@
                         <summary>SFTP repository host fingerprint.</summary>
 
                         <text>
-                            <p>SFTP repository host fingerprint generation should match the <setting>repo-sftp-host-key-hash-type</setting>. Generate the fingeprint via <code>awk '{print $2}' ssh_host_xxx_key.pub | base64 -d | (md5sum or sha1sum) -b</code>. The ssh host keys are normally found in the /etc/ssh/ directory.</p>
+                            <p>SFTP repository host fingerprint generation should match the <setting>repo-sftp-host-key-hash-type</setting>. Generate the fingeprint via <code>awk '{print $2}' ssh_host_xxx_key.pub | base64 -d | (md5sum or sha1sum) -b</code>. The ssh host keys are normally found in the <path>/etc/ssh</path> directory.</p>
                         </text>
 
                         <example>f84e172dfead7aeeeae6c1fdfb5aa8cf</example>
@@ -1029,7 +1029,7 @@
                         <summary>SFTP repository host key hash type.</summary>
 
                         <text>
-                            <p>SFTP repository host key hash type. Declares the hash type to be used to compute the digest of the remote system's hostkey on libssh2 startup. Newer versions of libssh2 support sha256 in addition to md5 and sha1.</p>
+                            <p>SFTP repository host key hash type. Declares the hash type to be used to compute the digest of the remote system's host key on SSH startup. Newer versions of libssh2 support <id>sha256</id> in addition to md5 and sha1.</p>
                         </text>
 
                         <example>sha256</example>
@@ -1069,7 +1069,7 @@
                         <summary>SFTP private key passphrase.</summary>
 
                         <text>
-                            <p>Passphrase used to access the private key. This is an optional feature when creating a SSH public/private key pair.</p>
+                            <p>Passphrase used to access the private key. This is an optional feature when creating an SSH public/private key pair.</p>
                         </text>
 
                         <example>BeSureToGenerateAndUseASecurePassphrase</example>
