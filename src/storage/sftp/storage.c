@@ -449,10 +449,11 @@ storageSftpRemove(THIS_VOID, const String *const file, const StorageInterfaceRem
         if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL)
         {
             if (param.errorOnMissing || !storageSftpLibSsh2FxNoSuchFile(this, rc))
+            {
                 storageSftpEvalLibSsh2Error(
                     rc, libssh2_sftp_last_error(this->sftpSession), &FileRemoveError,
-                    strNewFmt("unable to remove '%s'", strZ(file)),
-                    NULL);
+                    strNewFmt("unable to remove '%s'", strZ(file)), NULL);
+            }
         }
         else
         {

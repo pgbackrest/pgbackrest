@@ -56,7 +56,7 @@ storageWriteSftpOpen(THIS_VOID)
     const unsigned long int flags = LIBSSH2_FXF_CREAT | LIBSSH2_FXF_WRITE | LIBSSH2_FXF_TRUNC;
 
     // Open the file
-    Wait *wait = waitNew(this->timeoutConnect);
+    Wait *const wait = waitNew(this->timeoutConnect);
 
     do
     {
@@ -66,6 +66,8 @@ storageWriteSftpOpen(THIS_VOID)
     }
     while (this->sftpHandle == NULL && libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
 
+    waitFree(wait);
+
     // Attempt to create the path if it is missing
     if (this->sftpHandle == NULL && libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL &&
         libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_NO_SUCH_FILE)
@@ -74,7 +76,7 @@ storageWriteSftpOpen(THIS_VOID)
         storageInterfacePathCreateP(this->storage, this->path, false, false, this->interface.modePath);
 
         // Open file again
-        wait = waitNew(this->timeoutConnect);
+        Wait *const wait = waitNew(this->timeoutConnect);
 
         do
         {
@@ -83,6 +85,8 @@ storageWriteSftpOpen(THIS_VOID)
                 LIBSSH2_SFTP_OPENFILE);
         }
         while (this->sftpHandle == NULL && (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_EAGAIN && waitMore(wait)));
+
+        waitFree(wait);
     }
 
     // Handle error
@@ -126,33 +130,34 @@ storageWriteSftp(THIS_VOID, const Buffer *const buffer)
     ASSERT(buffer != NULL);
     ASSERT(this->sftpHandle != NULL);
 
-    ssize_t rc = 0;
-    size_t nwrite = bufUsed(buffer);                                // Amount to write
-    int shift = 0;                                                  // Amount to shift into the buffer
-    Wait *wait = waitNew(this->timeoutConnect);
+    ssize_t rc;
+    size_t remains = bufUsed(buffer);                               // Amount left to write
+    size_t offset = 0;                                              // Offset into the buffer
 
     // Loop until all the data is written
     do
     {
+        Wait *const wait = waitNew(this->timeoutConnect);
+
         do
         {
-            rc = libssh2_sftp_write(this->sftpHandle, (const char *)bufPtrConst(buffer) + shift, nwrite);
+            rc = libssh2_sftp_write(this->sftpHandle, (const char *)bufPtrConst(buffer) + offset, remains);
         }
         while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
 
-        // Break on error. Error will be thrown below the loop
+        waitFree(wait);
+
+        // Break on error. Error will be thrown below the loop.
         if (rc < 0)
             break;
 
-        wait = waitNew(this->timeoutConnect);
-
-        // Shift for next write start point
-        shift += (int)rc;
+        // Offset for next write start point
+        offset += (size_t)rc;
 
         // Update amount left to write
-        nwrite -= (size_t)rc;
+        remains -= (size_t)rc;
     }
-    while (nwrite);
+    while (remains);
 
     if (rc < 0)
         THROW_FMT(FileWriteError, "unable to write '%s'", strZ(this->nameTmp));
@@ -183,6 +188,8 @@ storageWriteSftpUnlinkExisting(THIS_VOID)
     }
     while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
 
+    waitFree(wait);
+
     if (rc)
     {
         storageSftpEvalLibSsh2Error(
@@ -207,8 +214,8 @@ storageWriteSftpRename(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    int rc = 0;
-    Wait *wait = waitNew(this->timeoutConnect);
+    int rc;
+    Wait *const wait = waitNew(this->timeoutConnect);
 
     do
     {
@@ -218,6 +225,8 @@ storageWriteSftpRename(THIS_VOID)
             LIBSSH2_SFTP_RENAME_OVERWRITE | LIBSSH2_SFTP_RENAME_ATOMIC | LIBSSH2_SFTP_RENAME_NATIVE);
     }
     while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
+
+    waitFree(wait);
 
     if (rc)
     {
@@ -243,8 +252,6 @@ storageWriteSftpClose(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    Wait *wait = NULL;
-
     // Close if the file has not already been closed
     if (this->sftpHandle != NULL)
     {
@@ -255,7 +262,7 @@ storageWriteSftpClose(THIS_VOID)
 
         if (this->interface.syncFile)
         {
-            wait = waitNew(this->timeoutConnect);
+            Wait *const wait = waitNew(this->timeoutConnect);
 
             do
             {
@@ -263,18 +270,22 @@ storageWriteSftpClose(THIS_VOID)
             }
             while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
 
+            waitFree(wait);
+
             if (rc)
                 THROW_FMT(FileSyncError, STORAGE_ERROR_WRITE_SYNC, strZ(this->nameTmp));
         }
 
         // Close the file
-        wait = waitNew(this->timeoutConnect);
+        Wait *const wait = waitNew(this->timeoutConnect);
 
         do
         {
             rc = libssh2_sftp_close(this->sftpHandle);
         }
         while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
+
+        waitFree(wait);
 
         if (rc != 0)
         {
@@ -290,7 +301,7 @@ storageWriteSftpClose(THIS_VOID)
         // Rename from temp file
         if (this->interface.atomic)
         {
-            wait = waitNew(this->timeoutConnect);
+            Wait *const wait = waitNew(this->timeoutConnect);
 
             do
             {
@@ -300,6 +311,8 @@ storageWriteSftpClose(THIS_VOID)
                     LIBSSH2_SFTP_RENAME_OVERWRITE | LIBSSH2_SFTP_RENAME_ATOMIC | LIBSSH2_SFTP_RENAME_NATIVE);
             }
             while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
+
+            waitFree(wait);
 
             if (rc)
             {
