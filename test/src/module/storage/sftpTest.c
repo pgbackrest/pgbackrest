@@ -345,7 +345,7 @@ testRun(void)
         TEST_ERROR(
             storageSftpNewP(
                 TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 100, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB), ServiceError,
-                "unable to init libssh2_sftp session");
+            "unable to init libssh2_sftp session");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("sftp session init success");
