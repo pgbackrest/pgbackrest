@@ -365,6 +365,12 @@ unit:
         total: 5
         feature: SOCKET
         harness: server
+        harness:
+          name: socket
+          shim:
+            common/io/socket/client:
+              function:
+                - sckClientOpen
 
         coverage:
           - common/io/client
@@ -595,6 +601,23 @@ unit:
 
         include:
           - storage/helper
+          - storage/storage
+          - storage/write
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: sftp
+        total: 20
+        harness: libSsh2
+
+        coverage:
+          - storage/sftp/helper
+          - storage/sftp/read
+          - storage/sftp/storage
+          - storage/sftp/write
+
+        include:
+          - storage/helper
+          - storage/read
           - storage/storage
           - storage/write
 

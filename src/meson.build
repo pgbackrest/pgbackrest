@@ -253,6 +253,10 @@ src_pgbackrest = [
 	'storage/s3/read.c',
 	'storage/s3/storage.c',
 	'storage/s3/write.c',
+	'storage/sftp/helper.c',
+	'storage/sftp/read.c',
+	'storage/sftp/storage.c',
+	'storage/sftp/write.c',
     'main.c',
 ]
 
@@ -268,6 +272,7 @@ executable(
         lib_openssl,
         lib_lz4,
         lib_pq,
+        lib_ssh2,
         lib_xml,
         lib_z,
         lib_zstd,

@@ -23,6 +23,7 @@ Configuration Load
 #include "storage/cifs/storage.h"
 #include "storage/helper.h"
 #include "storage/posix/storage.h"
+#include "storage/sftp/storage.h"
 
 /***********************************************************************************************************************************
 Load log settings
@@ -86,9 +87,10 @@ cfgLoadUpdateOption(void)
     {
         for (unsigned int optionIdx = 0; optionIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); optionIdx++)
         {
-            // If the repo is local and either posix or cifs
+            // If the repo is local and either posix, cifs or sftp
             if (!cfgOptionIdxTest(cfgOptRepoHost, optionIdx) &&
                 (cfgOptionIdxStrId(cfgOptRepoType, optionIdx) == STORAGE_POSIX_TYPE ||
+                 cfgOptionIdxStrId(cfgOptRepoType, optionIdx) == STORAGE_SFTP_TYPE ||
                  cfgOptionIdxStrId(cfgOptRepoType, optionIdx) == STORAGE_CIFS_TYPE))
             {
                 // Ensure a local repo does not have the same path as another local repo of the same type

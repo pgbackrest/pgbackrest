@@ -135,7 +135,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
 #define CFGOPT_VERBOSE                                              "verbose"
 
-#define CFG_OPTION_TOTAL                                            167
+#define CFG_OPTION_TOTAL                                            175
 
 /***********************************************************************************************************************************
 Option value constants
@@ -269,6 +269,13 @@ Option value constants
 #define CFGOPTVAL_REPO_S3_URI_STYLE_PATH                            STRID5("path", 0x450300)
 #define CFGOPTVAL_REPO_S3_URI_STYLE_PATH_Z                          "path"
 
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_HASH_TYPE_MD5                  STRID5("md5", 0x748d0)
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_HASH_TYPE_MD5_Z                "md5"
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_HASH_TYPE_SHA1                 STRID6("sha1", 0x7412131)
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_HASH_TYPE_SHA1_Z               "sha1"
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_HASH_TYPE_SHA256               STRID5("sha256", 0x3dde05130)
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_HASH_TYPE_SHA256_Z             "sha256"
+
 #define CFGOPTVAL_REPO_TYPE_AZURE                                   STRID5("azure", 0x5957410)
 #define CFGOPTVAL_REPO_TYPE_AZURE_Z                                 "azure"
 #define CFGOPTVAL_REPO_TYPE_CIFS                                    STRID5("cifs", 0x999230)
@@ -279,6 +286,8 @@ Option value constants
 #define CFGOPTVAL_REPO_TYPE_POSIX_Z                                 "posix"
 #define CFGOPTVAL_REPO_TYPE_S3                                      STRID6("s3", 0x7d31)
 #define CFGOPTVAL_REPO_TYPE_S3_Z                                    "s3"
+#define CFGOPTVAL_REPO_TYPE_SFTP                                    STRID5("sftp", 0x850d30)
+#define CFGOPTVAL_REPO_TYPE_SFTP_Z                                  "sftp"
 
 #define CFGOPTVAL_SORT_ASC                                          STRID5("asc", 0xe610)
 #define CFGOPTVAL_SORT_ASC_Z                                        "asc"
@@ -499,6 +508,14 @@ typedef enum
     cfgOptRepoS3Role,
     cfgOptRepoS3Token,
     cfgOptRepoS3UriStyle,
+    cfgOptRepoSftpHost,
+    cfgOptRepoSftpHostFingerprint,
+    cfgOptRepoSftpHostKeyHashType,
+    cfgOptRepoSftpHostPort,
+    cfgOptRepoSftpHostUser,
+    cfgOptRepoSftpPrivateKeyFile,
+    cfgOptRepoSftpPrivateKeyPassphrase,
+    cfgOptRepoSftpPublicKeyFile,
     cfgOptRepoStorageCaFile,
     cfgOptRepoStorageCaPath,
     cfgOptRepoStorageHost,
