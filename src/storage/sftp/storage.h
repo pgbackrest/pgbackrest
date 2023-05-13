@@ -28,14 +28,12 @@ typedef struct StorageSftpNewParam
     const String *hostFingerprint;
 } StorageSftpNewParam;
 
-#define storageSftpNewP(path, host, port, user, timeoutConnect, timeoutSession, keyPriv, hostKeyHashType, ...)                     \
-    storageSftpNew(                                                                                                                \
-        path, host, port, user, timeoutConnect, timeoutSession, keyPriv, hostKeyHashType,                                          \
-        (StorageSftpNewParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define storageSftpNewP(path, host, port, user, timeout, keyPriv, hostKeyHashType, ...)                                            \
+    storageSftpNew(path, host, port, user, timeout, keyPriv, hostKeyHashType, (StorageSftpNewParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 FN_EXTERN Storage *storageSftpNew(
-    const String *path, const String *host, unsigned int port, const String *user, TimeMSec timeoutConnect, TimeMSec timeoutSession,
-    const String *keyPriv, StringId hostkeyHashType, const StorageSftpNewParam param);
+    const String *path, const String *host, unsigned int port, const String *user, TimeMSec timeout, const String *keyPriv,
+    StringId hostKeyHashType, const StorageSftpNewParam param);
 
 #endif // HAVE_LIBSSH2
 

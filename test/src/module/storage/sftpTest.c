@@ -94,7 +94,7 @@ testRun(void)
         });
 
         TEST_ERROR(
-            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 5, 5, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
+            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 5, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
             ServiceError, "unable to init libssh2");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -108,7 +108,7 @@ testRun(void)
         });
 
         TEST_ERROR(
-            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 5, 5, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
+            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 5, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
             ServiceError, "unable to init libssh2 session");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -125,7 +125,7 @@ testRun(void)
 
         TEST_ERROR(
             storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, 1000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
             ServiceError, "libssh2 handshake failed [-1]");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -142,7 +142,7 @@ testRun(void)
 
         TEST_ERROR(
             storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 100, 100, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 100, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
             ServiceError, "libssh2 handshake failed [-37]");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -160,7 +160,7 @@ testRun(void)
 
         TEST_ERROR(
             storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, 1000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
             ServiceError, "libssh2 hostkey hash failed: libssh2 errno [-14]");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -176,7 +176,7 @@ testRun(void)
 
         TEST_ERROR(
             storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, cipherTypeAes256Cbc, .keyPub = KEYPUB,
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, cipherTypeAes256Cbc, .keyPub = KEYPUB,
                 .write = true),
             ServiceError, "requested ssh2 hostkey hash type (aes-256-cbc) not available");
 
@@ -197,7 +197,7 @@ testRun(void)
 
         TEST_ERROR(
             storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, 1000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB,
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB,
                 .hostFingerprint = STRDEF("3132333435363738393039383736353433323130")),
             ServiceError,
             "public key authentication failed: libssh2 error [-16]\n"
@@ -220,7 +220,7 @@ testRun(void)
 
         TEST_ERROR(
             storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, 1000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB,
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB,
                 .hostFingerprint = STRDEF("9132333435363738393039383736353433323130")),
             ServiceError,
             "host [3132333435363738393039383736353433323130] and configured fingerprint (repo-sftp-host-fingerprint)"
@@ -242,8 +242,7 @@ testRun(void)
         });
 
         TEST_ERROR(
-            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, 1000, KEYPRIV, hashTypeSha1),
-            ServiceError,
+            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1), ServiceError,
             "public key authentication failed: libssh2 error [-16]\n"
             "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-key-file and"
             " --repo-sftp-public-key-file to be provided\n"
@@ -268,7 +267,7 @@ testRun(void)
 
         TEST_ERROR(
             storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, 1000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB,
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB,
                 .keyPassphrase = STRDEF("keyPassphrase")),
             ServiceError,
             "public key authentication failed: libssh2 error [-16]\n"
@@ -298,8 +297,7 @@ testRun(void)
 
         TEST_ERROR(
             storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 100, 100, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
-            ServiceError,
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 100, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB), ServiceError,
             "public key authentication failed: libssh2 error [-37]\n"
             "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-key-file and"
             " --repo-sftp-public-key-file to be provided\n"
@@ -324,8 +322,8 @@ testRun(void)
 
         TEST_ERROR(
             storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1, 1, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
-            ServiceError, "unable to init libssh2_sftp session");
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB), ServiceError,
+            "unable to init libssh2_sftp session");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("sftp session init fail && timeout");
@@ -346,8 +344,8 @@ testRun(void)
 
         TEST_ERROR(
             storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 100, 100, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
-            ServiceError, "unable to init libssh2_sftp session");
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 100, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB), ServiceError,
+                "unable to init libssh2_sftp session");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("sftp session init success");
@@ -362,7 +360,7 @@ testRun(void)
 
         TEST_ASSIGN(
             storageTest,
-            storageSftpNewP(STRDEF("/tmp"), STRDEF("localhost"), 22, TEST_USER_STR, 5, 5, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
+            storageSftpNewP(STRDEF("/tmp"), STRDEF("localhost"), 22, TEST_USER_STR, 5, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
             "new storage (defaults)");
         TEST_RESULT_BOOL(storageTest->write, false, "check write");
 
@@ -389,7 +387,7 @@ testRun(void)
         TEST_ASSIGN(
             storageTest,
             storageSftpNewP(
-                STRDEF("/tmp"), STRDEF("localhost"), 22, TEST_USER_STR, 100, 100, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
+                STRDEF("/tmp"), STRDEF("localhost"), 22, TEST_USER_STR, 100, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
             "new storage (defaults)");
         TEST_RESULT_BOOL(storageTest->write, false, "check write");
 
@@ -406,8 +404,7 @@ testRun(void)
 
         TEST_ASSIGN(
             storageTest,
-            storageSftpNewP(
-                STRDEF("/tmp"), STRDEF("localhost"), 22, TEST_USER_STR, 1000, 1000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
+            storageSftpNewP(STRDEF("/tmp"), STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
             "new storage (defaults)");
         TEST_RESULT_STR_Z(storageTest->path, "/tmp", "check path");
         TEST_RESULT_INT(storageTest->modeFile, 0640, "check file mode");
@@ -429,8 +426,8 @@ testRun(void)
         TEST_ASSIGN(
             storageTest,
             storageSftpNewP(
-                STRDEF("/path/to"), STRDEF("localhost"), 22, TEST_USER_STR, 1000, 1000, KEYPRIV, hashTypeSha1,
-                .keyPub = KEYPUB, .modeFile = 0600, .modePath = 0700, .write = true),
+                STRDEF("/path/to"), STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB,
+                .modeFile = 0600, .modePath = 0700, .write = true),
             "new storage (non-default)");
         TEST_RESULT_STR_Z(storageTest->path, "/path/to", "check path");
         TEST_RESULT_INT(storageTest->modeFile, 0600, "check file mode");
@@ -508,8 +505,7 @@ testRun(void)
         });
 
         Storage *storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 200, 200, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB,
-            .write = true);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 200, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("file");
@@ -579,8 +575,7 @@ testRun(void)
 
         // Create storage object for testing
         Storage *storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 4000, 4000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB,
-            .write = true);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 4000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ERROR_FMT(storageInfoP(storageTest, fileNoPerm), FileOpenError, STORAGE_ERROR_INFO, strZ(fileNoPerm));
 
@@ -598,7 +593,7 @@ testRun(void)
 
         // Create storage object for testing
         storageTest = storageSftpNewP(
-            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, 1000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB);
+            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB);
 
         TEST_RESULT_BOOL(storageInfoP(storageTest, NULL).exists, true, "info for /");
 
@@ -614,7 +609,7 @@ testRun(void)
         });
 
         Storage *storageRootNoPath = storageSftpNewP(
-            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, 1000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB);
+            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB);
         storageRootNoPath->pub.interface.feature ^= 1 << storageFeaturePath;
 
         TEST_RESULT_BOOL(storageInfoP(storageRootNoPath, NULL, .ignoreMissing = true).exists, false, "no info for /");
@@ -705,8 +700,7 @@ testRun(void)
 
         // Create storage object for testing
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB,
-            .write = true);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ERROR_FMT(storageInfoP(storageTest, fileName), FileOpenError, STORAGE_ERROR_INFO_MISSING, strZ(fileName));
 
@@ -994,7 +988,7 @@ testRun(void)
 
         // Create storage object for testing
         Storage *storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path missing");
@@ -1128,7 +1122,7 @@ testRun(void)
 
         // Create storage object for testing
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 4000, 4000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 4000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB);
 
         TEST_ASSIGN(storageItr, storageNewItrP(storageTest, STRDEF("pg")), "new iterator");
         TEST_RESULT_BOOL(storageItrMore(storageItr), true, "check more");
@@ -1236,7 +1230,7 @@ testRun(void)
 
         // Create storage object for testing
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 4000, 4000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 4000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB);
 
         TEST_STORAGE_LIST(
             storageTest, "pg",
@@ -1388,7 +1382,7 @@ testRun(void)
 
         // Create storage object for testing
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 4000, 4000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 4000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB);
 
         TEST_STORAGE_LIST(
             storageTest, "pg",
@@ -1540,7 +1534,7 @@ testRun(void)
 
         // Create storage object for testing
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 4000, 4000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 4000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB);
 
         storageTest->pub.interface.feature ^= 1 << storageFeatureInfoDetail;
 
@@ -1702,7 +1696,7 @@ testRun(void)
 
         // Create storage object for testing
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 4000, 4000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 4000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB);
 
         TEST_STORAGE_LIST(storageTest, "pg",
                           "empty/\n",
@@ -1834,7 +1828,7 @@ testRun(void)
 
         // Create storage object for testing
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 4000, 4000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 4000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB);
 
         TEST_STORAGE_LIST(
             storageTest, "pg",
@@ -1892,7 +1886,7 @@ testRun(void)
 
         // Create storage object for testing
         Storage *storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 25, 25, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 25, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB);
 
         TEST_ERROR_FMT(
             storageListP(storageTest, STRDEF(BOGUS_STR), .errorOnMissing = true), PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING,
@@ -2004,7 +1998,7 @@ testRun(void)
 
         // Create storage object for testing
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageTest, STRDEF(".aaa.txt")), BUFSTRDEF("aaaaaaaaaaaaaa")), "write aaa.text");
@@ -2044,8 +2038,7 @@ testRun(void)
 
         TEST_ASSIGN(
             storageTest,
-            storageSftpNewP(
-                FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, 1000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
+            storageSftpNewP(FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
             "new storage /");
         TEST_RESULT_STR_Z(storagePathP(storageTest, NULL), "/", "root dir");
         TEST_RESULT_STR_Z(storagePathP(storageTest, STRDEF("/")), "/", "same as root dir");
@@ -2068,8 +2061,8 @@ testRun(void)
         TEST_ASSIGN(
             storageTest,
             storageSftpNewP(
-                STRDEF("/path/to"), STRDEF("localhost"), 22, TEST_USER_STR, 1000, 1000, KEYPRIV, hashTypeSha1,
-                .keyPub = KEYPUB, .pathExpressionFunction = storageTestPathExpression),
+                STRDEF("/path/to"), STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB,
+                .pathExpressionFunction = storageTestPathExpression),
             "new storage /path/to");
         TEST_RESULT_STR_Z(storagePathP(storageTest, NULL), "/path/to", "root dir");
         TEST_RESULT_STR_Z(storagePathP(storageTest, STRDEF("/path/to")), "/path/to", "absolute root dir");
@@ -2166,8 +2159,7 @@ testRun(void)
         TEST_ASSIGN(
             storageTest,
             storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 25, 25, KEYPRIV, hashTypeSha1, .write = true,
-                .keyPub = KEYPUB),
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 25, KEYPRIV, hashTypeSha1, .write = true, .keyPub = KEYPUB),
             "new storage /");
         TEST_RESULT_VOID(storagePathCreateP(storageTest, STRDEF("sub1")), "create sub1");
         TEST_RESULT_INT(storageInfoP(storageTest, STRDEF("sub1")).mode, 0750, "check sub1 dir mode");
@@ -2224,8 +2216,7 @@ testRun(void)
         TEST_ASSIGN(
             storageTest,
             storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 25, 25, KEYPRIV, hashTypeSha1, .write = true,
-                .keyPub = KEYPUB),
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 25, KEYPRIV, hashTypeSha1, .write = true, .keyPub = KEYPUB),
             "new storage /");
         TEST_RESULT_VOID(storagePathCreateP(storageTest, STRDEF("subfail")), "timeout success");
         TEST_ERROR(
@@ -2358,8 +2349,7 @@ testRun(void)
         TEST_ASSIGN(
             storageTest,
             storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 250, 250, KEYPRIV, hashTypeSha1, .write = true,
-                .keyPub = KEYPUB),
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 250, KEYPRIV, hashTypeSha1, .write = true, .keyPub = KEYPUB),
             "new storage /");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -2453,8 +2443,7 @@ testRun(void)
         TEST_ASSIGN(
             storageTest,
             storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 25, 25, KEYPRIV, hashTypeSha1, .write = true,
-                .keyPub = KEYPUB),
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 25, KEYPRIV, hashTypeSha1, .write = true, .keyPub = KEYPUB),
             "new storage /");
         TEST_ERROR_FMT(
             storagePathRemoveP(storageTest, pathRemove1, .recurse = true), PathRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE,
@@ -2481,8 +2470,7 @@ testRun(void)
         TEST_ASSIGN(
             storageTest,
             storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 25, 25, KEYPRIV, hashTypeSha1, .write = true,
-                .keyPub = KEYPUB),
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 25, KEYPRIV, hashTypeSha1, .write = true, .keyPub = KEYPUB),
             "new storage /");
         TEST_ERROR_FMT(
             storagePathRemoveP(storageTest, pathRemove1, .recurse = true), PathRemoveError, STORAGE_ERROR_PATH_REMOVE,
@@ -2530,8 +2518,7 @@ testRun(void)
         TEST_ASSIGN(
             storageTest,
             storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 25, 25, KEYPRIV, hashTypeSha1, .write = true,
-                .keyPub = KEYPUB),
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 25, KEYPRIV, hashTypeSha1, .write = true, .keyPub = KEYPUB),
             "new storage /");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -2576,7 +2563,7 @@ testRun(void)
         });
 
         Storage *storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 25, 25, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 25, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         StorageRead *file = NULL;
         const String *fileName = STRDEF(TEST_PATH "/readtest.txt");
@@ -2602,7 +2589,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 25, 25, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 25, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
@@ -2622,7 +2609,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 25, 25, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 25, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
@@ -2646,7 +2633,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 25, 25, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 25, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
@@ -2671,7 +2658,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 25, 25, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 25, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
@@ -2695,7 +2682,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
@@ -2734,7 +2721,7 @@ testRun(void)
         });
 
         Storage *storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileNoPerm, .noAtomic = true, .noCreatePath = false), "new write file");
         TEST_ERROR_FMT(
@@ -2762,7 +2749,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileNoPerm, .noAtomic = true, .noCreatePath = false), "new write file");
         TEST_ERROR_FMT(ioWriteOpen(storageWriteIo(file)), FileOpenError, STORAGE_ERROR_WRITE_OPEN, strZ(fileNoPerm));
@@ -2790,7 +2777,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ASSIGN(
             file, storageNewWriteP(storageTest, STRDEF("missing"), .noAtomic = true, .noCreatePath = false), "new write file");
@@ -2821,7 +2808,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName), "new write file (defaults)");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
@@ -2849,7 +2836,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         const String *fileNameTmp = STRDEF(TEST_PATH "/sub1/testfile.pgbackrest.tmp");
 
@@ -2886,7 +2873,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName), "new write file (defaults)");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
@@ -2921,7 +2908,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName), "new write file (defaults)");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
@@ -2953,7 +2940,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName), "new write file (defaults)");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
@@ -2983,7 +2970,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .noAtomic = true), "new write file (defaults)");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
@@ -3010,7 +2997,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         // Make interface.pathSync != NULL
         ((StorageSftp *)storageDriver(storageTest))->interface.pathSync = malloc(1);
@@ -3043,7 +3030,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         // Make interface.pathSync != NULL
         ((StorageSftp *)storageDriver(storageTest))->interface.pathSync = malloc(1);
@@ -3074,7 +3061,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         ((StorageSftp *)storageDriver(storageTest))->interface.pathSync = malloc(1);
 
@@ -3104,7 +3091,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .noAtomic = true, .noSyncPath = false), "new write file");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
@@ -3134,7 +3121,7 @@ testRun(void)
         });
 
         Storage *storageTest = storageSftpNewP(
-            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get error - attempt to get directory");
@@ -3161,7 +3148,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         const String *emptyFile = STRDEF(TEST_PATH "/test.empty");
         TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, emptyFile), NULL), "put empty file");
@@ -3190,7 +3177,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ERROR(
             storagePutP(storageNewWriteP(storageTest, emptyFile), NULL), FileRemoveError,
@@ -3226,7 +3213,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ERROR(
             storagePutP(storageNewWriteP(storageTest, emptyFile), NULL), FileRemoveError,
@@ -3256,7 +3243,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ERROR(
             storagePutP(storageNewWriteP(storageTest, emptyFile), NULL), FileRemoveError,
@@ -3281,7 +3268,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ERROR(
             storagePutP(storageNewWriteP(storageTest, STRDEF(TEST_PATH "/test.txt")), failBuffer), FileWriteError,
@@ -3315,7 +3302,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, STRDEF(TEST_PATH "/test.txt")), buffer), "put test file");
 
@@ -3335,7 +3322,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_RESULT_PTR(
             storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/" BOGUS_STR), .ignoreMissing = true)), NULL,
@@ -3356,7 +3343,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ASSIGN(buffer, storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.empty"))), "get empty");
         TEST_RESULT_UINT(bufSize(buffer), 0, "size is 0");
@@ -3382,7 +3369,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ASSIGN(outBuffer, storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"))), "get text");
         TEST_RESULT_UINT(bufSize(outBuffer), 9, "check size");
@@ -3406,7 +3393,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ASSIGN(buffer, storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt")), .exactSize = 4), "get exact");
         TEST_RESULT_UINT(bufSize(buffer), 4, "check size");
@@ -3430,7 +3417,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ERROR(
             storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt")), .exactSize = 64), FileReadError,
@@ -3458,7 +3445,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ASSIGN(buffer, storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"))), "get text");
         TEST_RESULT_UINT(bufSize(buffer), 9, "check size");
@@ -3480,7 +3467,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ERROR(
             storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .offset = UINT64_MAX)), FileOpenError,
@@ -3501,7 +3488,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ERROR(
             storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"))), FileReadError,
@@ -3525,7 +3512,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ASSIGN(buffer, storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .limit = VARUINT64(7))), "get");
         TEST_RESULT_UINT(bufSize(buffer), 7, "check size");
@@ -3551,7 +3538,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ASSIGN(buffer, storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .offset = 4)), "get");
         TEST_RESULT_UINT(bufSize(buffer), 5, "check size");
@@ -3572,7 +3559,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ERROR(
             storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"))), FileReadError,
@@ -3597,7 +3584,7 @@ testRun(void)
         });
 
         Storage *storageTest = storageSftpNewP(
-            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_RESULT_VOID(storageRemoveP(storageTest, STRDEF("missing")), "remove missing file");
 
@@ -3616,7 +3603,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ERROR(storageRemoveP(storageTest, STRDEF("missing"), .errorOnMissing = true), FileRemoveError,
                    "unable to remove '/missing': libssh2 error [-31]: sftp error [2]");
@@ -3637,7 +3624,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ERROR(storageRemoveP(storageTest, STRDEF("missing")), FileRemoveError,
                    "unable to remove '/missing': libssh2 error [-31]: sftp error [7]");
@@ -3656,7 +3643,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ERROR(storageRemoveP(storageTest, STRDEF("missing"), .errorOnMissing = true), FileRemoveError,
                    "unable to remove '/missing'");
@@ -3681,8 +3668,7 @@ testRun(void)
         TEST_ASSIGN(
             storageTest,
             storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 10, 10, KEYPRIV, hashTypeSha1, .write = true,
-                .keyPub = KEYPUB),
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 10, KEYPRIV, hashTypeSha1, .write = true, .keyPub = KEYPUB),
             "new storage /");
         TEST_RESULT_VOID(storageRemoveP(storageTest, fileRemove1), "remove file");
 
@@ -3714,7 +3700,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .noSyncFile = true), "storageWriteSftpOpen timeout EAGAIN");
         TEST_ERROR_FMT(ioWriteOpen(storageWriteIo(file)), FileOpenError, STORAGE_ERROR_WRITE_OPEN, strZ(fileName));
@@ -3742,7 +3728,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .noSyncFile = true), "storageWriteSftpOpen sftp error");
         TEST_ERROR_FMT(
@@ -3788,7 +3774,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("ignore missing - file with no permission to read");
@@ -3841,7 +3827,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 5000, 5000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            FSLASH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 5000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         Buffer *buffer = bufNew(0);
         Buffer *outBuffer = bufNew(2);
@@ -3919,7 +3905,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ASSIGN(
             file,
@@ -3967,7 +3953,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV,
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV,
 #ifdef LIBSSH2_HOSTKEY_HASH_SHA256
             hashTypeSha256,
 #else
@@ -4015,7 +4001,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV,
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV,
 #ifdef LIBSSH2_HOSTKEY_HASH_SHA256
             hashTypeSha256,
 #else
@@ -4082,7 +4068,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeMd5, .keyPub = KEYPUB, .write = true);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeMd5, .keyPub = KEYPUB, .write = true);
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
@@ -4145,7 +4131,7 @@ testRun(void)
         });
 
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
+            TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB, .write = true);
 
         TEST_ASSIGN(
             file,
@@ -4374,7 +4360,7 @@ testRun(void)
 
         TEST_ASSIGN(
             storageTest,
-            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
+            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
             "new storage (defaults)");
         TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
 
@@ -4396,7 +4382,7 @@ testRun(void)
 
         TEST_ASSIGN(
             storageTest,
-            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
+            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
             "new storage (defaults)");
         TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
 
@@ -4419,7 +4405,7 @@ testRun(void)
 
         TEST_ASSIGN(
             storageTest,
-            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
+            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
             "new storage (defaults)");
         TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
 
@@ -4446,7 +4432,7 @@ testRun(void)
 
         TEST_ASSIGN(
             storageTest,
-            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
+            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
             "new storage (defaults)");
         TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
 
@@ -4471,7 +4457,7 @@ testRun(void)
 
         TEST_ASSIGN(
             storageTest,
-            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
+            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
             "new storage (defaults)");
         TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
         TEST_ERROR_FMT(
@@ -4491,7 +4477,7 @@ testRun(void)
 
         TEST_ASSIGN(
             storageTest,
-            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
+            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
             "new storage (defaults)");
         TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
         TEST_ERROR_FMT(
@@ -4512,7 +4498,7 @@ testRun(void)
 
         TEST_ASSIGN(
             storageTest,
-            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
+            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
             "new storage (defaults)");
         TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
         TEST_ERROR_FMT(
@@ -4534,7 +4520,7 @@ testRun(void)
 
         TEST_ASSIGN(
             storageTest,
-            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
+            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 20, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
             "new storage (defaults)");
         TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
         TEST_ERROR_FMT(

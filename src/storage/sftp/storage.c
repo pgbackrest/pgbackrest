@@ -33,8 +33,7 @@ struct StorageSftp
     LIBSSH2_SESSION *session;                                       // LibSsh2 session
     LIBSSH2_SFTP *sftpSession;                                      // LibSsh2 session sftp session
     LIBSSH2_SFTP_HANDLE *sftpHandle;                                // LibSsh2 session sftp handle
-    TimeMSec timeoutConnect;                                        // Socket session timeout
-    TimeMSec timeoutSession;                                        // Socket connection timeout
+    TimeMSec timeout;                                               // Session timeout
 };
 
 /***********************************************************************************************************************************
@@ -177,7 +176,7 @@ storageSftpInfo(THIS_VOID, const String *const file, const StorageInfoLevel leve
     // Stat the file to check if it exists
     LIBSSH2_SFTP_ATTRIBUTES attr;
     int rc;
-    Wait *const wait = waitNew(this->timeoutConnect);
+    Wait *const wait = waitNew(this->timeout);
 
     do
     {
@@ -239,7 +238,7 @@ storageSftpInfo(THIS_VOID, const String *const file, const StorageInfoLevel leve
                 char linkDestination[PATH_MAX] = {0};
                 ssize_t linkDestinationSize = 0;
 
-                Wait *const wait = waitNew(this->timeoutConnect);
+                Wait *const wait = waitNew(this->timeout);
 
                 do
                 {
@@ -316,7 +315,7 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
 
     // Open the directory for read
     LIBSSH2_SFTP_HANDLE *sftpHandle;
-    Wait *const wait = waitNew(this->timeoutConnect);
+    Wait *const wait = waitNew(this->timeout);
 
     do
     {
@@ -352,7 +351,7 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
                 char filename[PATH_MAX] = {0};
                 int len;
 
-                Wait *wait = waitNew(this->timeoutConnect);
+                Wait *wait = waitNew(this->timeout);
 
                 // Read the directory entries
                 do
@@ -386,7 +385,7 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
 
                         // Reset the timeout so we don't timeout before reading all entries
                         waitFree(wait);
-                        wait = waitNew(this->timeoutConnect);
+                        wait = waitNew(this->timeout);
                     }
                 }
                 while (len > 0 || (len == LIBSSH2_ERROR_EAGAIN && waitMore(wait)));
@@ -398,7 +397,7 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
         FINALLY()
         {
             int rc;
-            Wait *const wait = waitNew(this->timeoutConnect);
+            Wait *const wait = waitNew(this->timeout);
 
             do
             {
@@ -436,7 +435,7 @@ storageSftpRemove(THIS_VOID, const String *const file, const StorageInterfaceRem
 
     // Attempt to unlink the file
     int rc;
-    Wait *const wait = waitNew(this->timeoutConnect);
+    Wait *const wait = waitNew(this->timeout);
 
     do
     {
@@ -485,8 +484,8 @@ storageSftpNewRead(THIS_VOID, const String *const file, const bool ignoreMissing
     FUNCTION_LOG_RETURN(
         STORAGE_READ,
         storageReadSftpNew(
-            this, file, ignoreMissing, this->ioSession, this->session, this->sftpSession, this->sftpHandle, this->timeoutSession,
-            this->timeoutConnect, param.offset, param.limit));
+            this, file, ignoreMissing, this->ioSession, this->session, this->sftpSession, this->sftpHandle, this->timeout,
+            param.offset, param.limit));
 }
 
 /**********************************************************************************************************************************/
@@ -521,9 +520,9 @@ storageSftpNewWrite(THIS_VOID, const String *const file, const StorageInterfaceN
     FUNCTION_LOG_RETURN(
         STORAGE_WRITE,
         storageWriteSftpNew(
-            this, file, this->ioSession, this->session, this->sftpSession, this->sftpHandle, this->timeoutConnect,
-            this->timeoutSession, param.modeFile, param.modePath, param.user, param.group, param.timeModified, param.createPath,
-            param.syncFile, this->interface.pathSync != NULL ? param.syncPath : false, param.atomic, param.truncate));
+            this, file, this->ioSession, this->session, this->sftpSession, this->sftpHandle, this->timeout, param.modeFile,
+            param.modePath, param.user, param.group, param.timeModified, param.createPath, param.syncFile,
+            this->interface.pathSync != NULL ? param.syncPath : false, param.atomic, param.truncate));
 }
 
 /**********************************************************************************************************************************/
@@ -547,7 +546,7 @@ storageSftpPathCreate(
     ASSERT(path != NULL);
 
     int rc;
-    Wait *const wait = waitNew(this->timeoutConnect);
+    Wait *const wait = waitNew(this->timeout);
 
     // Attempt to create the directory
     do
@@ -570,7 +569,7 @@ storageSftpPathCreate(
                 // Check if the directory already exists
                 LIBSSH2_SFTP_ATTRIBUTES attr;
 
-                Wait *const wait = waitNew(this->timeoutConnect);
+                Wait *const wait = waitNew(this->timeout);
 
                 do
                 {
@@ -639,7 +638,7 @@ storageSftpPathRemove(THIS_VOID, const String *const path, const bool recurse, c
 
                         // Rather than stat the file to discover what type it is, just try to unlink it and see what happens
                         int rc;
-                        Wait *const wait = waitNew(this->timeoutConnect);
+                        Wait *const wait = waitNew(this->timeout);
 
                         do
                         {
@@ -671,7 +670,7 @@ storageSftpPathRemove(THIS_VOID, const String *const path, const bool recurse, c
 
         // Delete the path
         int rc;
-        Wait *const wait = waitNew(this->timeoutConnect);
+        Wait *const wait = waitNew(this->timeout);
 
         do
         {
@@ -722,16 +721,14 @@ static const StorageInterface storageInterfaceSftp =
 FN_EXTERN Storage *
 storageSftpNew(
     const String *const path, const String *const host, const unsigned int port, const String *const user,
-    const TimeMSec timeoutConnect, const TimeMSec timeoutSession, const String *const keyPriv, const StringId hostKeyHashType,
-    const StorageSftpNewParam param)
+    const TimeMSec timeout, const String *const keyPriv, const StringId hostKeyHashType, const StorageSftpNewParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(STRING, host);
         FUNCTION_LOG_PARAM(UINT, port);
         FUNCTION_LOG_PARAM(STRING, user);
-        FUNCTION_LOG_PARAM(TIME_MSEC, timeoutConnect);
-        FUNCTION_LOG_PARAM(TIME_MSEC, timeoutSession);
+        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
         FUNCTION_LOG_PARAM(STRING, keyPriv);
         FUNCTION_LOG_PARAM(STRING_ID, hostKeyHashType);
         FUNCTION_LOG_PARAM(STRING, param.keyPub);
@@ -759,14 +756,13 @@ storageSftpNew(
         *this = (StorageSftp)
         {
             .interface = storageInterfaceSftp,
-            .timeoutConnect = timeoutConnect,
-            .timeoutSession = timeoutSession,
+            .timeout = timeout,
         };
 
         if (libssh2_init(0) != 0)
             THROW_FMT(ServiceError, "unable to init libssh2");
 
-        this->ioSession = ioClientOpen(sckClientNew(host, port, timeoutConnect, timeoutSession));
+        this->ioSession = ioClientOpen(sckClientNew(host, port, timeout, timeout));
 
         this->session = libssh2_session_init();
         if (this->session == NULL)
@@ -776,7 +772,7 @@ storageSftpNew(
         libssh2_session_set_blocking(this->session, 0);
 
         int handshakeStatus = 0;
-        Wait *wait = waitNew(timeoutConnect);
+        Wait *wait = waitNew(timeout);
 
         do
         {
@@ -843,7 +839,7 @@ storageSftpNew(
         LOG_DEBUG_FMT("attempting public key authentication");
 
         int rc;
-        wait = waitNew(timeoutConnect);
+        wait = waitNew(timeout);
 
         do
         {
@@ -866,7 +862,7 @@ storageSftpNew(
                     " generate the keypair"));
         }
 
-        wait = waitNew(timeoutConnect);
+        wait = waitNew(timeout);
 
         do
         {

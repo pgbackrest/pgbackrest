@@ -26,8 +26,7 @@ typedef struct StorageWriteSftp
     LIBSSH2_SESSION *session;                                       // LibSsh2 session
     LIBSSH2_SFTP *sftpSession;                                      // LibSsh2 session sftp session
     LIBSSH2_SFTP_HANDLE *sftpHandle;                                // LibSsh2 session sftp handle
-    TimeMSec timeoutConnect;                                        // Socket session timeout
-    TimeMSec timeoutSession;                                        // Socket connection timeout
+    TimeMSec timeout;                                               // Session timeout
 } StorageWriteSftp;
 
 /***********************************************************************************************************************************
@@ -56,7 +55,7 @@ storageWriteSftpOpen(THIS_VOID)
     const unsigned long int flags = LIBSSH2_FXF_CREAT | LIBSSH2_FXF_WRITE | LIBSSH2_FXF_TRUNC;
 
     // Open the file
-    Wait *const wait = waitNew(this->timeoutConnect);
+    Wait *const wait = waitNew(this->timeout);
 
     do
     {
@@ -76,7 +75,7 @@ storageWriteSftpOpen(THIS_VOID)
         storageInterfacePathCreateP(this->storage, this->path, false, false, this->interface.modePath);
 
         // Open file again
-        Wait *const wait = waitNew(this->timeoutConnect);
+        Wait *const wait = waitNew(this->timeout);
 
         do
         {
@@ -137,7 +136,7 @@ storageWriteSftp(THIS_VOID, const Buffer *const buffer)
     // Loop until all the data is written
     do
     {
-        Wait *const wait = waitNew(this->timeoutConnect);
+        Wait *const wait = waitNew(this->timeout);
 
         do
         {
@@ -180,7 +179,7 @@ storageWriteSftpUnlinkExisting(THIS_VOID)
     ASSERT(this != NULL);
 
     int rc;
-    Wait *const wait = waitNew(this->timeoutConnect);
+    Wait *const wait = waitNew(this->timeout);
 
     do
     {
@@ -215,7 +214,7 @@ storageWriteSftpRename(THIS_VOID)
     ASSERT(this != NULL);
 
     int rc;
-    Wait *const wait = waitNew(this->timeoutConnect);
+    Wait *const wait = waitNew(this->timeout);
 
     do
     {
@@ -262,7 +261,7 @@ storageWriteSftpClose(THIS_VOID)
 
         if (this->interface.syncFile)
         {
-            Wait *const wait = waitNew(this->timeoutConnect);
+            Wait *const wait = waitNew(this->timeout);
 
             do
             {
@@ -277,7 +276,7 @@ storageWriteSftpClose(THIS_VOID)
         }
 
         // Close the file
-        Wait *const wait = waitNew(this->timeoutConnect);
+        Wait *const wait = waitNew(this->timeout);
 
         do
         {
@@ -301,7 +300,7 @@ storageWriteSftpClose(THIS_VOID)
         // Rename from temp file
         if (this->interface.atomic)
         {
-            Wait *const wait = waitNew(this->timeoutConnect);
+            Wait *const wait = waitNew(this->timeout);
 
             do
             {
@@ -340,10 +339,9 @@ storageWriteSftpClose(THIS_VOID)
 FN_EXTERN StorageWrite *
 storageWriteSftpNew(
     StorageSftp *const storage, const String *const name, IoSession *const ioSession, LIBSSH2_SESSION *const session,
-    LIBSSH2_SFTP *const sftpSession, LIBSSH2_SFTP_HANDLE *const sftpHandle, const TimeMSec timeoutConnect,
-    const TimeMSec timeoutSession, const mode_t modeFile, const mode_t modePath, const String *const user,
-    const String *const group, const time_t timeModified, const bool createPath, const bool syncFile, const bool syncPath,
-    const bool atomic, const bool truncate)
+    LIBSSH2_SFTP *const sftpSession, LIBSSH2_SFTP_HANDLE *const sftpHandle, const TimeMSec timeout, const mode_t modeFile,
+    const mode_t modePath, const String *const user, const String *const group, const time_t timeModified, const bool createPath,
+    const bool syncFile, const bool syncPath, const bool atomic, const bool truncate)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_SFTP, storage);
@@ -351,8 +349,7 @@ storageWriteSftpNew(
         FUNCTION_LOG_PARAM_P(VOID, session);
         FUNCTION_LOG_PARAM_P(VOID, sftpSession);
         FUNCTION_LOG_PARAM_P(VOID, sftpHandle);
-        FUNCTION_LOG_PARAM(TIME_MSEC, timeoutConnect);
-        FUNCTION_LOG_PARAM(TIME_MSEC, timeoutSession);
+        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
         FUNCTION_LOG_PARAM(MODE, modeFile);
         FUNCTION_LOG_PARAM(MODE, modePath);
         FUNCTION_LOG_PARAM(STRING, user);
@@ -380,8 +377,7 @@ storageWriteSftpNew(
             .session = session,
             .sftpSession = sftpSession,
             .sftpHandle = sftpHandle,
-            .timeoutConnect = timeoutConnect,
-            .timeoutSession = timeoutSession,
+            .timeout = timeout,
 
             .interface = (StorageWriteInterface)
             {

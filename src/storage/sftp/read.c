@@ -28,8 +28,7 @@ typedef struct StorageReadSftp
     uint64_t current;                                               // Current bytes read from file
     uint64_t limit;                                                 // Limit bytes to be read from file (UINT64_MAX for no limit)
     bool eof;                                                       // Did we reach end of file
-    TimeMSec timeoutSession;                                        // Socket session timeout
-    TimeMSec timeoutConnect;                                        // Socket connection timeout
+    TimeMSec timeout;                                               // Session timeout
 } StorageReadSftp;
 
 /***********************************************************************************************************************************
@@ -55,7 +54,7 @@ storageReadSftpOpen(THIS_VOID)
     ASSERT(this != NULL);
 
     // Open the file
-    Wait *const wait = waitNew(this->timeoutConnect);
+    Wait *const wait = waitNew(this->timeout);
 
     do
     {
@@ -127,7 +126,7 @@ storageReadSftp(THIS_VOID, Buffer *const buffer, const bool block)
         // Read until EOF or buffer is full
         do
         {
-            Wait *const wait = waitNew(this->timeoutConnect);
+            Wait *const wait = waitNew(this->timeout);
 
             do
             {
@@ -195,7 +194,7 @@ storageReadSftpClose(THIS_VOID)
     if (this->sftpHandle != NULL)
     {
         int rc = 0;
-        Wait *const wait = waitNew(this->timeoutConnect);
+        Wait *const wait = waitNew(this->timeout);
 
         // Close the file
         do
@@ -243,7 +242,7 @@ FN_EXTERN StorageRead *
 storageReadSftpNew(
     StorageSftp *const storage, const String *const name, const bool ignoreMissing, IoSession *const ioSession,
     LIBSSH2_SESSION *const session, LIBSSH2_SFTP *const sftpSession, LIBSSH2_SFTP_HANDLE *const sftpHandle,
-    const TimeMSec timeoutSession, const TimeMSec timeoutConnect, const uint64_t offset, const Variant *const limit)
+    const TimeMSec timeout, const uint64_t offset, const Variant *const limit)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, name);
@@ -252,8 +251,7 @@ storageReadSftpNew(
         FUNCTION_LOG_PARAM_P(VOID, session);
         FUNCTION_LOG_PARAM_P(VOID, sftpSession);
         FUNCTION_LOG_PARAM_P(VOID, sftpHandle);
-        FUNCTION_LOG_PARAM(TIME_MSEC, timeoutSession);
-        FUNCTION_LOG_PARAM(TIME_MSEC, timeoutConnect);
+        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
         FUNCTION_LOG_PARAM(UINT64, offset);
         FUNCTION_LOG_PARAM(VARIANT, limit);
     FUNCTION_LOG_END();
@@ -269,8 +267,7 @@ storageReadSftpNew(
             .session = session,
             .sftpSession = sftpSession,
             .sftpHandle = sftpHandle,
-            .timeoutSession = timeoutSession,
-            .timeoutConnect = timeoutConnect,
+            .timeout = timeout,
 
             // Rather than enable/disable limit checking just use a big number when there is no limit. We can feel pretty confident
             // that no files will be > UINT64_MAX in size. This is a copy of the interface limit but it simplifies the code during
