@@ -842,6 +842,30 @@
     </block-define>
 
     <!-- ======================================================================================================================= -->
+    <block-define id="stress-update-incr">
+        <execute-list host="{[host-pg1]}">
+            <title>Database updates {[stress-update-incr-count]}</title>
+
+            <execute user="postgres" output="n">
+                <exe-cmd>{[pg-bin-path]}/pgbench -n -b simple-update -t {[stress-scale-data]}</exe-cmd>
+                <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
+            </execute>
+        </execute-list>
+
+        <execute-list host="{[host-repo1]}">
+            <title>Incr backup {[stress-update-incr-count]}</title>
+
+            <execute user="{[br-user]}" output="n">
+                <exe-cmd>
+                    pgbackrest --stanza=demo --type=incr --repo1-bundle
+                    --repo1-block --log-level-console=info backup
+                </exe-cmd>
+                <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
+            </execute>
+        </execute-list>
+    </block-define>
+
+    <!-- ======================================================================================================================= -->
     <section id="introduction">
         <title>Introduction</title>
 
@@ -3765,15 +3789,24 @@
 
             <!-- =============================================================================================================== -->
             <section id="backup-diff-delta">
-                <title>Diff Backup with Delta</title>
+                <title>Diff Backup with Delta and Block Incremental</title>
+
+                <execute-list host="{[host-pg1]}">
+                    <title>Database updates</title>
+
+                    <execute user="postgres">
+                        <exe-cmd>{[pg-bin-path]}/pgbench -n -b simple-update -t {[stress-scale-data]}</exe-cmd>
+                        <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
+                    </execute>
+                </execute-list>
 
                 <execute-list host="{[host-repo1]}">
                     <title>Diff backup</title>
 
                     <execute user="{[br-user]}" output="y" filter="n">
                         <exe-cmd>
-                            pgbackrest --stanza=demo --type=diff --delta
-                            --log-level-console=info --log-level-file=detail backup
+                            pgbackrest --stanza=demo --type=diff --delta --repo1-bundle
+                            --repo1-block --log-level-console=info --log-level-file=detail backup
                         </exe-cmd>
                         <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
                     </execute>
@@ -3781,8 +3814,53 @@
             </section>
 
             <!-- =============================================================================================================== -->
+            <section id="backup-incr">
+                <title>Incr Backup with Block Incremental</title>
+
+                <block id="stress-update-incr">
+                    <block-variable-replace key="stress-update-incr-count">1</block-variable-replace>
+                </block>
+                <block id="stress-update-incr">
+                    <block-variable-replace key="stress-update-incr-count">2</block-variable-replace>
+                </block>
+                <block id="stress-update-incr">
+                    <block-variable-replace key="stress-update-incr-count">3</block-variable-replace>
+                </block>
+                <block id="stress-update-incr">
+                    <block-variable-replace key="stress-update-incr-count">4</block-variable-replace>
+                </block>
+                <block id="stress-update-incr">
+                    <block-variable-replace key="stress-update-incr-count">5</block-variable-replace>
+                </block>
+                <block id="stress-update-incr">
+                    <block-variable-replace key="stress-update-incr-count">6</block-variable-replace>
+                </block>
+                <block id="stress-update-incr">
+                    <block-variable-replace key="stress-update-incr-count">7</block-variable-replace>
+                </block>
+                <block id="stress-update-incr">
+                    <block-variable-replace key="stress-update-incr-count">8</block-variable-replace>
+                </block>
+                <block id="stress-update-incr">
+                    <block-variable-replace key="stress-update-incr-count">9</block-variable-replace>
+                </block>
+                <block id="stress-update-incr">
+                    <block-variable-replace key="stress-update-incr-count">10</block-variable-replace>
+                </block>
+            </section>
+
+            <!-- =============================================================================================================== -->
             <section id="restore-delta">
                 <title>Restore with Delta</title>
+
+                <execute-list host="{[host-pg1]}">
+                    <title>Database updates so delta has something to restore</title>
+
+                    <execute user="postgres">
+                        <exe-cmd>{[pg-bin-path]}/pgbench -n -b simple-update -t {[stress-scale-data]}</exe-cmd>
+                        <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
+                    </execute>
+                </execute-list>
 
                 <execute-list host="{[host-pg2]}">
                     <title>Stop <postgres/></title>
