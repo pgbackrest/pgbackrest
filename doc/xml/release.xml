@@ -110,6 +110,18 @@
             <release-doc-list>
                 <release-improvement-list>
                     <release-item>
+                        <github-issue id="2062"/>
+                        <github-pull-request id="2069"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Add warning about using recovery <br-option>type=none</br-option>.</p>
+                    </release-item>
+
+                    <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
                         </release-item-contributor-list>
