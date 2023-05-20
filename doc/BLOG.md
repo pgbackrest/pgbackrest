@@ -1,6 +1,5 @@
 # pgBackRest File Bundling and Block Incremental Backup
 
-```
 !!!SETUP
 docker exec -it -u postgres doc-pg-primary bash
 rm -rf /var/lib/pgbackrest/*
@@ -78,10 +77,10 @@ To demonstrate this, we !!!
 <...>
 INFO: backup command end: completed successfully (12525ms)
 ```
+
 ```
-pgbackrest --stanza=demo --repo=1 info
-```
-```
+> pgbackrest --stanza=demo --repo=1 info
+
 full backup: 20230520-082323F
     timestamp start/stop: 2023-05-20 08:23:23 / 2023-05-20 08:23:35
     wal start/stop: 0000000100000002000000A7 / 0000000100000002000000A7
@@ -95,16 +94,17 @@ diff backup: 20230520-082323F_20230520-082934D
     repo1: backup set size: 55.5MB, backup size: 52.8MB
     backup reference list: 20230520-082323F```
 ```
-pgbackrest --stanza=demo --type=diff --repo=2 backup
+
 ```
-```
+> pgbackrest --stanza=demo --type=diff --repo=2 backup
+
 <...>
 INFO: backup command end: completed successfully (3589ms)
 ```
+
 ```
-pgbackrest --stanza=demo --repo=2 info
-```
-```
+> pgbackrest --stanza=demo --repo=2 info
+
 full backup: 20230520-082438F
     database size: 995.7MB, database backup size: 995.7MB
     repo2: backup size: 56MB
