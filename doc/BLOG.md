@@ -44,6 +44,7 @@ $ pgbackrest --stanza=demo --type=full --repo=1 backup
 Now we check the number of files in repo1 for the latest backup:
 ```
 $ find /var/lib/pgbackrest/1/backup/demo/latest/ -type f | wc -l
+
 991
 ```
 This is pretty normal for a small database without bundling enabled since each file is stored separately. There are also a few metadata files that pgBackRest uses to track the backup.
@@ -52,6 +53,7 @@ Now we'll perform the same actions on repo2:
 ```
 $ pgbackrest --stanza=demo --type=full --repo=2 backup
 $ find /var/lib/pgbackrest/2/backup/demo/latest/ -type f | wc -l
+
 7
 ```
 This time there are far fewer files. The small files have been bundled together and zero-length files are stored only in the manifest.
@@ -72,29 +74,29 @@ $ /usr/lib/postgresql/12/bin/pgbench -n -b simple-update -t 100
 
 ```
 $ pgbackrest --stanza=demo --type=diff --repo=1 backup
+
 <...>
 INFO: backup command end: completed successfully (12525ms)
 ```
 
 ```
 > pgbackrest --stanza=demo --repo=1 info
+
 <...>
 full backup: 20230520-082323F
     timestamp start/stop: 2023-05-20 08:23:23 / 2023-05-20 08:23:35
-    wal start/stop: 0000000100000002000000A7 / 0000000100000002000000A7
     database size: 995.7MB, database backup size: 995.7MB
-    repo1: backup set size: 55.5MB, backup size: 55.5MB
+    repo1: backup size: 55.5MB
 
 diff backup: 20230520-082323F_20230520-082934D
     timestamp start/stop: 2023-05-20 08:29:34 / 2023-05-20 08:29:45
-    wal start/stop: 0000000100000002000000AB / 0000000100000002000000AB
     database size: 995.7MB, database backup size: 972.8MB
-    repo1: backup set size: 55.5MB, backup size: 52.8MB
-    backup reference list: 20230520-082323F```
+    repo1: backup size: 52.8MB
 ```
 
 ```
 > pgbackrest --stanza=demo --type=diff --repo=2 backup
+
 <...>
 INFO: backup command end: completed successfully (3589ms)
 ```
@@ -102,6 +104,7 @@ INFO: backup command end: completed successfully (3589ms)
 ```
 > pgbackrest --stanza=demo --repo=2 info
 
+<...abbreviated output...>
 full backup: 20230520-082438F
     database size: 995.7MB, database backup size: 995.7MB
     repo2: backup size: 56MB
