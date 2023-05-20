@@ -25,12 +25,12 @@ pg1-path=/var/lib/postgresql/12/demo
 ```
 
 ```
-> pgbackrest --stanza=demo stanza-create
+$ pgbackrest --stanza=demo stanza-create
 ```
 
 Create some data:
 ```
-> /usr/lib/postgresql/12/bin/pgbench -i -s 65
+$ /usr/lib/postgresql/12/bin/pgbench -i -s 65
 ```
 
 ## File Bundling
@@ -39,23 +39,22 @@ File bundling stores files more efficiently in the repository by combining small
 
 To demonstrate this we'll make a backup on repo1, which does not have bundling enabled:
 ```
-> pgbackrest --stanza=demo --type=full --repo=1 backup
+$ pgbackrest --stanza=demo --type=full --repo=1 backup
 ```
 Now we check the number of files in repo1 for the latest backup:
 ```
-> find /var/lib/pgbackrest/1/backup/demo/latest/ -type f | wc -l
+$ find /var/lib/pgbackrest/1/backup/demo/latest/ -type f | wc -l
 991
 ```
 This is pretty normal for a small database without bundling enabled since each file is stored separately. There are also a few metadata files that pgBackRest uses to track the backup.
 
 Now we'll perform the same actions on repo2:
 ```
-> pgbackrest --stanza=demo --type=full --repo=2 backup
-> find /var/lib/pgbackrest/2/backup/demo/latest/ -type f | wc -l
+$ pgbackrest --stanza=demo --type=full --repo=2 backup
+$ find /var/lib/pgbackrest/2/backup/demo/latest/ -type f | wc -l
 7
 ```
 This time there are far fewer files. The small files have been bundled together and zero-length files are stored only in the manifest.
-
 
 To enable file bundling simply add `repo-bundle=y` to your configuration, making sure to add the key for the repository you want to bundle, e.g. `repo1-bundle=y`
 
@@ -68,19 +67,18 @@ Block incremental backup saves space in the repository by storing only the parts
 
 To demonstrate this, we !!!
 ```
-> /usr/lib/postgresql/12/bin/pgbench -n -b simple-update -t 100
+$ /usr/lib/postgresql/12/bin/pgbench -n -b simple-update -t 100
 ```
 
 ```
-> pgbackrest --stanza=demo --type=diff --repo=1 backup
-
+$ pgbackrest --stanza=demo --type=diff --repo=1 backup
 <...>
 INFO: backup command end: completed successfully (12525ms)
 ```
 
 ```
 > pgbackrest --stanza=demo --repo=1 info
-
+<...>
 full backup: 20230520-082323F
     timestamp start/stop: 2023-05-20 08:23:23 / 2023-05-20 08:23:35
     wal start/stop: 0000000100000002000000A7 / 0000000100000002000000A7
@@ -97,7 +95,6 @@ diff backup: 20230520-082323F_20230520-082934D
 
 ```
 > pgbackrest --stanza=demo --type=diff --repo=2 backup
-
 <...>
 INFO: backup command end: completed successfully (3589ms)
 ```
@@ -111,7 +108,6 @@ full backup: 20230520-082438F
 
 diff backup: 20230520-082438F_20230520-083027D
     timestamp start/stop: 2023-05-20 08:30:27 / 2023-05-20 08:30:30
-    wal start/stop: 0000000100000002000000AD / 0000000100000002000000AD
     database size: 995.7MB, database backup size: 972.8MB
     repo2: backup size: 943.3KB
     backup reference list: 20230520-082438F
