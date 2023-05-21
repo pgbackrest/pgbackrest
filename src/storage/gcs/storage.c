@@ -89,8 +89,7 @@ struct StorageGcs
     size_t chunkSize;                                               // Block size for resumable upload
 
     StorageGcsKeyType keyType;                                      // Auth key type
-    const String *credential;                                       // Credential (client email)
-    const String *privateKey;                                       // Private key in PEM format
+    const String *key;                                              // Key (value depends on key type)
     String *token;                                                  // Token
     time_t tokenTimeExpire;                                         // Token expiration time (if service auth)
     HttpUrl *authUrl;                                               // URL for authentication server
@@ -177,6 +176,13 @@ storageGcsAuthJwt(StorageGcs *this, time_t timeBegin)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Load credential and private key
+        KeyValue *const kvKey = varKv(jsonToVar(strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), this->key)))));
+        const String *const credential = varStr(kvGet(kvKey, GCS_JSON_CLIENT_EMAIL_VAR));
+        const String *const privateKeyRaw = varStr(kvGet(kvKey, GCS_JSON_PRIVATE_KEY_VAR));
+
+        CHECK(FormatError, credential != NULL && privateKeyRaw != NULL, "credentials missing");
+
         // Add claim
         strCatEncode(
             result, encodingBase64Url,
@@ -184,7 +190,7 @@ storageGcsAuthJwt(StorageGcs *this, time_t timeBegin)
                 strNewFmt(
                     "{\"iss\":\"%s\",\"scope\":\"https://www.googleapis.com/auth/devstorage.read%s\",\"aud\":\"%s\""
                     ",\"exp\":%" PRIu64 ",\"iat\":%" PRIu64 "}",
-                    strZ(this->credential), this->write ? "_write" : "_only", strZ(httpUrl(this->authUrl)),
+                    strZ(credential), this->write ? "_write" : "_only", strZ(httpUrl(this->authUrl)),
                     (uint64_t)timeBegin + 3600, (uint64_t)timeBegin)));
 
         // Sign with RSA key
@@ -198,7 +204,7 @@ storageGcsAuthJwt(StorageGcs *this, time_t timeBegin)
         {
             // Load key
             bio = BIO_new(BIO_s_mem());
-            BIO_write((BIO *)bio, strZ(this->privateKey), (int)strSize(this->privateKey));
+            BIO_write((BIO *)bio, strZ(privateKeyRaw), (int)strSize(privateKeyRaw));
 
             privateKey = PEM_read_bio_PrivateKey((BIO *)bio, NULL, NULL, NULL);
             cryptoError(privateKey == NULL, "unable to read PEM");
@@ -999,15 +1005,13 @@ storageGcsNew(
             // Read data from file for service keys
             case storageGcsKeyTypeService:
             {
-                KeyValue *kvKey = varKv(jsonToVar(strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), key)))));
-                this->credential = varStr(kvGet(kvKey, GCS_JSON_CLIENT_EMAIL_VAR));
-                this->privateKey = varStr(kvGet(kvKey, GCS_JSON_PRIVATE_KEY_VAR));
+                const KeyValue *const kvKey = varKv(
+                    jsonToVar(strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), key)))));
                 const String *const uri = varStr(kvGet(kvKey, GCS_JSON_TOKEN_URI_VAR));
+                CHECK(FormatError, uri != NULL, "uri missing");
 
-                CHECK(FormatError, this->credential != NULL && this->privateKey != NULL && uri != NULL, "credentials missing");
-
+                this->key = strDup(key);
                 this->authUrl = httpUrlNewParseP(uri, .type = httpProtocolTypeHttps);
-
                 this->authClient = httpClientNew(
                     tlsClientNewP(
                         sckClientNew(httpUrlHost(this->authUrl), httpUrlPort(this->authUrl), timeout, timeout),
