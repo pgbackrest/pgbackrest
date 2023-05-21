@@ -1,12 +1,16 @@
 # pgBackRest File Bundling and Block Incremental Backup
 
+Efficiently storing backups is a major priority for the pgBackRest project but this also needs to be tempered by restore speed. Two recent features help in this area: file bundling and block incremental backup.
+
 !!!SETUP
 docker exec -it -u postgres doc-pg-primary bash
 rm -rf /var/lib/pgbackrest/*
 mkdir /var/lib/pgbackrest/1
 mkdir /var/lib/pgbackrest/2
 vi /etc/pgbackrest/pgbackrest.conf
+!!!SETUP
 
+To demonstrate these features we will create two repositories. The first repository will use the defaults and the second will have file bundling and block incremental backup enabled in the following config.
 ```
 [global]
 log-level-console=info
@@ -24,18 +28,19 @@ repo2-block=y
 pg1-path=/var/lib/postgresql/12/demo
 ```
 
+Create the stanza on both repositories:
 ```
 $ pgbackrest --stanza=demo stanza-create
 ```
 
-Create some data:
+The block incremental backup feature is best demonstrated with a larger dataset:
 ```
 $ /usr/lib/postgresql/12/bin/pgbench -i -s 65
 ```
 
 ## File Bundling
 
-File bundling stores files more efficiently in the repository by combining smaller files together. This results in fewer files overall in the backup which improves the speed of all repository operations, especially on object stores like S3, Azure, and GCS. There may also be cost savings on repositories that have a cost per operation since there will be fewer lists, deletes, etc. Another advantage of file bundling is that zero-length files are only stored in the manifest.
+File bundling stores files more efficiently in the repository by combining smaller files together. This results in fewer files overall in the backup which improves the speed of all repository operations, especially on object stores like S3, Azure, and GCS. There may also be cost savings on repositories that have a cost per operation since there will be fewer lists, deletes, etc.
 
 To demonstrate this we'll make a backup on repo1, which does not have bundling enabled:
 ```
@@ -49,7 +54,7 @@ $ find /var/lib/pgbackrest/1/backup/demo/latest/ -type f | wc -l
 ```
 This is pretty normal for a small database without bundling enabled since each file is stored separately. There are also a few metadata files that pgBackRest uses to track the backup.
 
-Now we'll perform the same actions on repo2:
+Now we'll perform the same actions on repo2, which has file bundling enabled:
 ```
 $ pgbackrest --stanza=demo --type=full --repo=2 backup
 $ find /var/lib/pgbackrest/2/backup/demo/latest/ -type f | wc -l
@@ -58,16 +63,14 @@ $ find /var/lib/pgbackrest/2/backup/demo/latest/ -type f | wc -l
 ```
 This time there are far fewer files. The small files have been bundled together and zero-length files are stored only in the manifest.
 
-To enable file bundling simply add `repo-bundle=y` to your configuration, making sure to add the key for the repository you want to bundle, e.g. `repo1-bundle=y`
-
 The `repo-bundle-size` option can be used to control the maximum size of bundles before compression and other operations are applied.
 The `repo-bundle-limit` option limits the files that will be added to bundles. It is not a good idea to set these options too large because any failure in the bundle on backup or restore will require the entire bundle to be retried. The goal of file bundling is to combine small files -- there is very seldom any benefit in combining larger files.
 
 ## Block Incremental Backup
 
-Block incremental backup saves space in the repository by storing only the parts of the file that have changed since the last backup. The block size depends the file size and when the file was last modified, i.e. larger, older files will get larger block sizes. Blocks are compressed and encrypted into super blocks that can be retrieved independently to make restore more efficient. Block incremental backup is enabled by adding `repo-block=y` to your configuration and it should be enabled for all backup types.
+Block incremental backup saves space in the repository by storing only the parts of the file that have changed since the last backup. The block size depends the file size and when the file was last modified, i.e. larger, older files will get larger block sizes. Blocks are compressed and encrypted into super blocks that can be retrieved independently to make restore more efficient.
 
-To demonstrate this, we !!!
+!!!
 ```
 $ /usr/lib/postgresql/12/bin/pgbench -n -b simple-update -t 100
 ```
