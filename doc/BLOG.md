@@ -13,10 +13,10 @@ log-level-console=info
 start-fast=y
 
 repo1-path=/var/lib/pgbackrest/1
-repo1-retention-full=1
+repo1-retention-full=2
 
 repo2-path=/var/lib/pgbackrest/2
-repo2-retention-full=1
+repo2-retention-full=2
 repo2-bundle=y
 repo2-block=y
 
@@ -82,14 +82,11 @@ INFO: backup command end: completed successfully (12525ms)
 ```
 > pgbackrest --stanza=demo --repo=1 info
 
-<...>
 full backup: 20230520-082323F
-    timestamp start/stop: 2023-05-20 08:23:23 / 2023-05-20 08:23:35
     database size: 995.7MB, database backup size: 995.7MB
     repo1: backup size: 55.5MB
 
 diff backup: 20230520-082323F_20230520-082934D
-    timestamp start/stop: 2023-05-20 08:29:34 / 2023-05-20 08:29:45
     database size: 995.7MB, database backup size: 972.8MB
     repo1: backup size: 52.8MB
 ```
@@ -104,15 +101,19 @@ INFO: backup command end: completed successfully (3589ms)
 ```
 > pgbackrest --stanza=demo --repo=2 info
 
-<...abbreviated output...>
 full backup: 20230520-082438F
     database size: 995.7MB, database backup size: 995.7MB
     repo2: backup size: 56MB
 
 diff backup: 20230520-082438F_20230520-083027D
-    timestamp start/stop: 2023-05-20 08:30:27 / 2023-05-20 08:30:30
     database size: 995.7MB, database backup size: 972.8MB
     repo2: backup size: 943.3KB
-    backup reference list: 20230520-082438F
 ```
 !!! Avoid long chains of incrementals
+
+pg_data/base/13427/16501
+    size: 832.5MB, repo 30.4MB
+    block: size 80KB, map size 74.0KB, checksum size 7B
+    block delta:
+    reference: 20230520-082438F/pg_data/base/13427/16501.pgbi, read: 86/3.5MB, superBlock: 95/96.2MB, block: 100/7.8MB
+    total read: 86/3.5MB, superBlock: 95/96.2MB, block: 100/7.8MB
