@@ -176,12 +176,12 @@ storageGcsAuthJwt(StorageGcs *this, time_t timeBegin)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Load credential and private key
+        // Load client email and private key
         KeyValue *const kvKey = varKv(jsonToVar(strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), this->key)))));
-        const String *const credential = varStr(kvGet(kvKey, GCS_JSON_CLIENT_EMAIL_VAR));
+        const String *const clientEmail = varStr(kvGet(kvKey, GCS_JSON_CLIENT_EMAIL_VAR));
         const String *const privateKeyRaw = varStr(kvGet(kvKey, GCS_JSON_PRIVATE_KEY_VAR));
 
-        CHECK(FormatError, credential != NULL && privateKeyRaw != NULL, "credentials missing");
+        CHECK(FormatError, clientEmail != NULL && privateKeyRaw != NULL, "credentials missing");
 
         // Add claim
         strCatEncode(
@@ -190,7 +190,7 @@ storageGcsAuthJwt(StorageGcs *this, time_t timeBegin)
                 strNewFmt(
                     "{\"iss\":\"%s\",\"scope\":\"https://www.googleapis.com/auth/devstorage.read%s\",\"aud\":\"%s\""
                     ",\"exp\":%" PRIu64 ",\"iat\":%" PRIu64 "}",
-                    strZ(credential), this->write ? "_write" : "_only", strZ(httpUrl(this->authUrl)),
+                    strZ(clientEmail), this->write ? "_write" : "_only", strZ(httpUrl(this->authUrl)),
                     (uint64_t)timeBegin + 3600, (uint64_t)timeBegin)));
 
         // Sign with RSA key
