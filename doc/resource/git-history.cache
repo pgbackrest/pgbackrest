@@ -1,5 +1,10 @@
 [
     {
+        "commit": "b461f7c6f884dba8056858464d1b571e708dad77",
+        "date": "2023-05-22 11:13:13 +0300",
+        "subject": "v2.46: Block Incremental Backup and SFTP Storage"
+    },
+    {
         "commit": "a28b72c62431bcf9df02791219d9d6f5d0e60b54",
         "date": "2023-05-18 09:32:44 +0300",
         "subject": "Add warning about using recovery type=none."
