@@ -351,8 +351,6 @@ testRun(void)
 
         TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(decompress, lz4DecompressToLog, buffer, sizeof(buffer)), "lz4DecompressToLog");
         TEST_RESULT_Z(buffer, "{inputSame: true, inputOffset: 999, frameDone false, done: true}", "check log");
-#else
-        TEST_ERROR(compressTypePresent(compressTypeLz4), OptionInvalidValueError, "pgBackRest not compiled with lz4 support");
 #endif // HAVE_LIBLZ4
     }
 
@@ -398,8 +396,6 @@ testRun(void)
 
         TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(decompress, zstDecompressToLog, buffer, sizeof(buffer)), "zstDecompressToLog");
         TEST_RESULT_Z(buffer, "{inputSame: true, inputOffset: 999, frameDone false, done: true}", "check log");
-#else
-        TEST_ERROR(compressTypePresent(compressTypeZst), OptionInvalidValueError, "pgBackRest not compiled with zst support");
 #endif // HAVE_LIBZST
     }
 
@@ -417,12 +413,6 @@ testRun(void)
         TEST_TITLE("compressTypeStr()");
 
         TEST_RESULT_STR_Z(compressTypeStr(compressTypeGz), "gz", "gz str");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("compressTypePresent()");
-
-        TEST_RESULT_VOID(compressTypePresent(compressTypeNone), "type none always present");
-        TEST_ERROR(compressTypePresent(compressTypeXz), OptionInvalidValueError, "pgBackRest not compiled with xz support");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("compressTypeFromName()");

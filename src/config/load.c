@@ -358,10 +358,6 @@ cfgLoadUpdateOption(void)
         cfgOptionSet(cfgOptCompress, cfgSourceDefault, NULL);
     }
 
-    // Check that selected compress type has been compiled into this binary
-    if (cfgOptionValid(cfgOptCompressType))
-        compressTypePresent(compressTypeEnum(cfgOptionStrId(cfgOptCompressType)));
-
     // Update compress-level default based on the compression type. Also check that level range is valid per compression type.
     if (cfgOptionValid(cfgOptCompressLevel))
     {

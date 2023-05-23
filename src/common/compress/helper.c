@@ -136,22 +136,6 @@ compressTypeEnum(const StringId type)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN void
-compressTypePresent(CompressType type)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, type);
-    FUNCTION_TEST_END();
-
-    ASSERT(type < LENGTH_OF(compressHelperLocal));
-
-    if (type != compressTypeNone && compressHelperLocal[type].compressNew == NULL)
-        THROW_FMT(OptionInvalidValueError, PROJECT_NAME " not compiled with %s support", strZ(compressHelperLocal[type].type));
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
 FN_EXTERN const String *
 compressTypeStr(CompressType type)
 {
@@ -195,7 +179,7 @@ compressLevelDefault(CompressType type)
     FUNCTION_TEST_END();
 
     ASSERT(type < LENGTH_OF(compressHelperLocal));
-    compressTypePresent(type);
+    ASSERT(compressHelperLocal[type].compressType != 0);
 
     FUNCTION_TEST_RETURN(INT, compressHelperLocal[type].levelDefault);
 }
@@ -209,7 +193,7 @@ compressLevelMin(CompressType type)
     FUNCTION_TEST_END();
 
     ASSERT(type < LENGTH_OF(compressHelperLocal));
-    compressTypePresent(type);
+    ASSERT(compressHelperLocal[type].compressType != 0);
 
     FUNCTION_TEST_RETURN(INT, compressHelperLocal[type].levelMin);
 }
@@ -223,7 +207,7 @@ compressLevelMax(CompressType type)
     FUNCTION_TEST_END();
 
     ASSERT(type < LENGTH_OF(compressHelperLocal));
-    compressTypePresent(type);
+    ASSERT(compressHelperLocal[type].compressType != 0);
 
     FUNCTION_TEST_RETURN(INT, compressHelperLocal[type].levelMax);
 }
@@ -240,7 +224,7 @@ compressFilter(const CompressType type, const int level, const CompressFilterPar
 
     ASSERT(type < LENGTH_OF(compressHelperLocal));
     ASSERT(type != compressTypeNone);
-    compressTypePresent(type);
+    ASSERT(compressHelperLocal[type].compressNew != NULL);
 
     FUNCTION_TEST_RETURN(IO_FILTER, compressHelperLocal[type].compressNew(level, param.raw));
 }
@@ -298,7 +282,7 @@ decompressFilter(const CompressType type, const DecompressFilterParam param)
 
     ASSERT(type < LENGTH_OF(compressHelperLocal));
     ASSERT(type != compressTypeNone);
-    compressTypePresent(type);
+    ASSERT(compressHelperLocal[type].decompressNew != NULL);
 
     FUNCTION_TEST_RETURN(IO_FILTER, compressHelperLocal[type].decompressNew(param.raw));
 }

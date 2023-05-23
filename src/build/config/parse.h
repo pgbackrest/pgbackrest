@@ -110,9 +110,15 @@ typedef struct BldCfgOptionCommand
     bool required;                                                  // Is the option required?
     const String *defaultValue;                                     // Default value, if any
     const BldCfgOptionDepend *depend;                               // Dependency, if any
-    const StringList *allowList;                                    // Allowed value list
+    const List *allowList;                                          // Allowed value list
     const StringList *roleList;                                     // Roles valid for the command
 } BldCfgOptionCommand;
+
+typedef struct BldCfgOptionValue
+{
+    const String *value;                                            // Option value
+    const String *condition;                                        // Is the option conditionally compiled?
+} BldCfgOptionValue;
 
 struct BldCfgOption
 {
@@ -129,7 +135,7 @@ struct BldCfgOption
     const String *group;                                            // Option group, if any
     bool secure;                                                    // Does the option contain a secret?
     const BldCfgOptionDepend *depend;                               // Dependency, if any
-    const StringList *allowList;                                    // Allowed value list
+    const List *allowList;                                          // Allowed value list
     const String *allowRangeMin;                                    // Allow range min, if any
     const String *allowRangeMax;                                    // Allow range max, if any
     const List *cmdList;                                            // Command override list
