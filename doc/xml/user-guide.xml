@@ -172,9 +172,6 @@
         <!-- SFTP Settings -->
         <variable key="sftp-all">n</variable>                        <!-- Build all the documentation with SFTP? -->
         <variable key="sftp-repo">demo-repo</variable>
-        <variable key="sftp-host-key-hash-type">sha1</variable>
-        <variable key="sftp-private-key-file">{[pg-home-path]}/.ssh/id_rsa_sftp</variable>
-        <variable key="sftp-public-key-file">{[pg-home-path]}/.ssh/id_rsa_sftp.pub</variable>
 
         <!-- Is any object store being used to build all the documentation? -->
         <variable key="object-any-all">('{[azure-all]}' eq 'y' || '{[gcs-all]}' eq 'y' || '{[s3-all]}' eq 'y' || '{[sftp-all]}' eq 'y')</variable>
@@ -801,44 +798,48 @@
             <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-path">/{[sftp-repo]}</backrest-config-option>
             <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-bundle">y</backrest-config-option>
             <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-host">{[host-sftp]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-host-key-hash-type">{[sftp-host-key-hash-type]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-host-user">{[sftp-setup-user]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-private-key-file">{[sftp-private-key-file]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-public-key-file">{[sftp-public-key-file]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-host-key-hash-type">sha1</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-host-user">{[br-user]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-private-key-file">{[sftp-setup-user-home-path]}/.ssh/id_rsa_sftp</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-public-key-file">{[sftp-setup-user-home-path]}/.ssh/id_rsa_sftp.pub</backrest-config-option>
             <backrest-config-option section="global" key="process-max">4</backrest-config-option>
         </backrest-config>
 
         <p>When utilizing <proper>SFTP</proper>, if libssh2 is compiled against OpenSSH then <br-option>repo{[sftp-setup-repo-id]}-sftp-public-key-file</br-option> is optional.</p>
 
-        <execute-list host="{[host-pg1]}">
-            <title>Generate ssh keypair for sftp backup</title>
+        <execute-list host="{[sftp-setup-host]}">
+            <title>Generate SSH keypair for SFTP backup</title>
 
             <execute user="{[sftp-setup-user]}">
-                <exe-cmd>mkdir -m 750 {[pg-home-path]}/.ssh</exe-cmd>
+                <exe-cmd>mkdir -m 750 -p {[sftp-setup-user-home-path]}/.ssh</exe-cmd>
             </execute>
             <execute user="{[sftp-setup-user]}">
-                <exe-cmd>ssh-keygen -f {[pg-home-path]}/.ssh/id_rsa_sftp
+                <exe-cmd>ssh-keygen -f {[sftp-setup-user-home-path]}/.ssh/id_rsa_sftp
                     -t rsa -b 4096 -N "" -m PEM</exe-cmd>
             </execute>
         </execute-list>
 
         <execute-list host="{[host-sftp]}">
-            <title>Copy <host>{[host-pg1]}</host> sftp backup public key to <host>{[host-sftp]}</host></title>
+            <title>Copy <host>{[host-pg1]}</host> SFTP backup public key to <host>{[host-sftp]}</host></title>
 
-            <execute user="{[sftp-setup-user]}">
-                <exe-cmd>mkdir -m 750 -p {[pg-home-path]}/.ssh</exe-cmd>
+            <!-- There is no need to show creation of the user and repo path -->
+            <execute if="{[os-type-is-debian]}" user="root" user-force="y" show="n">
+                <exe-cmd>id -u {[br-user]} > /dev/null 2>&amp;1 || adduser --disabled-password --gecos "" {[br-user]}</exe-cmd>
+            </execute>
+            <execute if="{[os-type-is-rhel]}" user="root" user-force="y" show="n">
+                <exe-cmd>id -u {[br-user]} > /dev/null 2>&amp;1 || adduser -n {[br-user]}</exe-cmd>
+            </execute>
+            <execute user="root" user-force="y" show="n">
+                <exe-cmd>mkdir -m 750 -p /{[sftp-repo]} &amp;&amp; chown {[br-user]} /{[sftp-repo]}</exe-cmd>
             </execute>
 
-            <execute user="root" err-suppress="n" user-force="y">
-                <exe-cmd>
-                        mkdir -m 750 -p /{[sftp-repo]} &amp;&amp; chown {[sftp-setup-user]}:{[pg-group]} /{[sftp-repo]}
-                </exe-cmd>
+            <execute user="{[br-user]}">
+                <exe-cmd>mkdir -m 750 -p {[br-home-path]}/.ssh</exe-cmd>
             </execute>
-
             <execute user="root" err-suppress="y" user-force="y">
                 <exe-cmd>
-                    (sudo ssh root@{[host-pg1]} cat {[pg-home-path]}/.ssh/id_rsa_sftp.pub) |
-                    sudo -u {[sftp-setup-user]} tee -a {[pg-home-path]}/.ssh/authorized_keys
+                    (sudo ssh root@{[sftp-setup-host]} cat {[sftp-setup-user-home-path]}/.ssh/id_rsa_sftp.pub) |
+                    sudo -u {[br-user]} tee -a {[br-home-path]}/.ssh/authorized_keys
                 </exe-cmd>
             </execute>
         </execute-list>
@@ -2521,6 +2522,7 @@
             <block-variable-replace key="sftp-setup-host">{[host-pg1]}</block-variable-replace>
             <block-variable-replace key="sftp-setup-user">postgres</block-variable-replace>
             <block-variable-replace key="sftp-setup-config-owner">postgres:postgres</block-variable-replace>
+            <block-variable-replace key="sftp-setup-user-home-path">{[pg-home-path]}</block-variable-replace>
         </block>
 
         <p>Commands are run exactly as if the repository were stored on a local disk.</p>
@@ -2807,6 +2809,7 @@
                 <block-variable-replace key="sftp-setup-host">{[host-repo1]}</block-variable-replace>
                 <block-variable-replace key="sftp-setup-user">{[br-user]}</block-variable-replace>
                 <block-variable-replace key="sftp-setup-config-owner">{[br-user]}:{[br-group]}</block-variable-replace>
+                <block-variable-replace key="sftp-setup-user-home-path">{[br-home-path]}</block-variable-replace>
             </block>
         </section>
 
