@@ -2395,7 +2395,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                                         {
                                             allowListFound =
                                                 parseRuleValueStrId[pckReadU32P(allowList)] ==
-                                                    configOptionValue->value.stringId;
+                                                configOptionValue->value.stringId;
                                         }
                                         else
                                         {
