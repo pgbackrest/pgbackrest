@@ -227,11 +227,11 @@ pgbackrest/doc/doc.pl --help
 
 #### Without Docker
 
-If Docker is not installed, then the available tests can be listed using `--vm=none`, and each test must then be run with `--vm=none`.
+If Docker is not installed, then the available tests can be listed using `--dry-run`. Some tests require containers and will only be available when Docker is installed.
 
 pgbackrest-dev => List tests that don't require a container
 ```
-pgbackrest/test/test.pl --vm=none --dry-run
+pgbackrest/test/test.pl --dry-run
 
 --- output ---
 
@@ -249,7 +249,7 @@ pgbackrest/test/test.pl --vm=none --dry-run
 
 pgbackrest-dev => Run a test
 ```
-pgbackrest/test/test.pl --vm=none --vm-out --module=common --test=wait
+pgbackrest/test/test.pl --vm-out --module=common --test=wait
 
 --- output ---
 
@@ -306,7 +306,7 @@ An entire module can be run by using only the `--module` option.
 
 pgbackrest-dev => Run a module
 ```
-pgbackrest/test/test.pl --vm=none --module=postgres
+pgbackrest/test/test.pl --module=postgres
 
 --- output ---
 
@@ -661,7 +661,7 @@ pgbackrest/test/test.pl --module=command --test=help --vm-out
 ```
 To verify the `help` command output, build the pgBackRest executable:
 ```
-pgbackrest/test/test.pl --vm=none --build-only
+pgbackrest/test/test.pl --build-only
 ```
 Use the pgBackRest executable to test the help output:
 ```
