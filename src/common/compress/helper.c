@@ -179,7 +179,7 @@ compressLevelDefault(CompressType type)
     FUNCTION_TEST_END();
 
     ASSERT(type < LENGTH_OF(compressHelperLocal));
-    ASSERT(compressHelperLocal[type].compressType != 0);
+    ASSERT(type == compressTypeNone || compressHelperLocal[type].compressType != 0);
 
     FUNCTION_TEST_RETURN(INT, compressHelperLocal[type].levelDefault);
 }

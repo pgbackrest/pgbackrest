@@ -519,7 +519,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
         TEST_RESULT_UINT(cfgOptionStrId(cfgOptCompressType), CFGOPTVAL_COMPRESS_TYPE_NONE, "compress-type=none");
-        TEST_RESULT_BOOL(cfgOptionTest(cfgOptCompressLevel), false, "compress-level is not set");
+        TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 0, "compress-level=0");
         TEST_RESULT_BOOL(cfgOptionValid(cfgOptCompress), false, "compress is not valid");
 
         // -------------------------------------------------------------------------------------------------------------------------
