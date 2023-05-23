@@ -264,35 +264,35 @@ pgbackrest/test/test.pl --vm=none --vm-out --module=common --test=wait
                 
     P00   INFO: P1-T1/1 - vm=none, module=common, test=wait
                 
-        2023-05-22 07:25:58.199 P00   INFO: test command begin 2.46: [common/wait] --log-level=info --repo-path=/home/vagrant/test/repo --test-path=/home/vagrant/test --vm=none --vm-id=0
-        2023-05-22 07:26:00.824 P00   INFO: test command end: completed successfully (2625ms)
+        P00   INFO: test command begin 2.47dev: [common/wait] --log-level=info --no-log-timestamp --repo-path=/home/vagrant/test/repo --test-path=/home/vagrant/test --vm=none --vm-id=0
+        P00   INFO: test command end: completed successfully
         run 1 - waitNew(), waitMore, and waitFree()
-            000.009s          L0018     expect AssertError: assertion 'waitTime <= 999999000' failed
+                      L0018     expect AssertError: assertion 'waitTime <= 999999000' failed
         
-        run 1/1 ------------- L0021 0ms wait
-            001.799s 001.790s L0025     new wait
-            001.810s 000.011s L0026         check remaining time
-            001.811s 000.001s L0027         check wait time
-            001.812s 000.001s L0028         check sleep time
-            001.813s 000.001s L0029         check sleep prev time
-            001.814s 000.001s L0030         no wait more
-            001.820s 000.006s L0033     new wait = 0.2 sec
-            001.822s 000.002s L0034         check remaining time
-            001.823s 000.001s L0035         check wait time
-            001.824s 000.001s L0036         check sleep time
-            001.824s 000.000s L0037         check sleep prev time
-            001.825s 000.001s L0038         check begin time
-            002.022s 000.197s L0044         lower range check
-            002.023s 000.001s L0045         upper range check
-            002.024s 000.001s L0047         free wait
-            002.026s 000.002s L0052     new wait = 1.1 sec
-            002.027s 000.001s L0053         check wait time
-            002.028s 000.001s L0054         check sleep time
-            002.029s 000.001s L0055         check sleep prev time
-            002.030s 000.001s L0056         check begin time
-            003.128s 001.098s L0062         lower range check
-            003.129s 000.001s L0063         upper range check
-            003.130s 000.001s L0065         free wait
+        run 1/1 ----- L0021 0ms wait
+                      L0025     new wait
+                      L0026         check remaining time
+                      L0027         check wait time
+                      L0028         check sleep time
+                      L0029         check sleep prev time
+                      L0030         no wait more
+                      L0033     new wait = 0.2 sec
+                      L0034         check remaining time
+                      L0035         check wait time
+                      L0036         check sleep time
+                      L0037         check sleep prev time
+                      L0038         check begin time
+                      L0044         lower range check
+                      L0045         upper range check
+                      L0047         free wait
+                      L0052     new wait = 1.1 sec
+                      L0053         check wait time
+                      L0054         check sleep time
+                      L0055         check sleep prev time
+                      L0056         check begin time
+                      L0062         lower range check
+                      L0063         upper range check
+                      L0065         free wait
         
         TESTS COMPLETED SUCCESSFULLY
     
