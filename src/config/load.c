@@ -363,14 +363,12 @@ cfgLoadUpdateOption(void)
     {
         const CompressType compressType = compressTypeEnum(cfgOptionStrId(cfgOptCompressType));
 
-        if (cfgOptionSource(cfgOptCompressLevel) == cfgSourceDefault)
+        if (compressType != compressTypeNone)
         {
-            cfgOptionSet(cfgOptCompressLevel, cfgSourceDefault, VARINT64(compressLevelDefault(compressType)));
-        }
-        else if (compressType != compressTypeNone)
-        {
-            if (cfgOptionInt(cfgOptCompressLevel) < compressLevelMin(compressType) ||
-                cfgOptionInt(cfgOptCompressLevel) > compressLevelMax(compressType))
+            if (cfgOptionSource(cfgOptCompressLevel) == cfgSourceDefault)
+                cfgOptionSet(cfgOptCompressLevel, cfgSourceDefault, VARINT64(compressLevelDefault(compressType)));
+            else if (cfgOptionInt(cfgOptCompressLevel) < compressLevelMin(compressType) ||
+                     cfgOptionInt(cfgOptCompressLevel) > compressLevelMax(compressType))
             {
                 THROW_FMT(
                     OptionInvalidValueError,
