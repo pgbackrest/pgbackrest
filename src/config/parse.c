@@ -1446,7 +1446,7 @@ cfgParseOptionValueCondition(
             THROW_FMT(
                 OptionInvalidValueError,
                 PROJECT_NAME " was not built with '%s=%s' support\n"
-                "HINT: if " PROJECT_NAME " was installed from a package, does the package include support for this feature?\n"
+                "HINT: if " PROJECT_NAME " was installed from a package, does the package support this feature?\n"
                 "HINT: if " PROJECT_NAME " was built from source, were the required development packages installed?",
                 cfgParseOptionKeyIdxName(optionId, optionKeyIdx), strZ(valueAllow));
         }
