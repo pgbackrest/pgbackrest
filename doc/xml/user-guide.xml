@@ -814,6 +814,9 @@
             <title>Generate ssh keypair for sftp backup</title>
 
             <execute user="{[sftp-setup-user]}">
+                <exe-cmd>mkdir -m 750 {[pg-home-path]}/.ssh</exe-cmd>
+            </execute>
+            <execute user="{[sftp-setup-user]}">
                 <exe-cmd>ssh-keygen -f {[pg-home-path]}/.ssh/id_rsa_sftp
                     -t rsa -b 4096 -N "" -m PEM</exe-cmd>
             </execute>
