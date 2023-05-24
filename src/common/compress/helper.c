@@ -136,7 +136,7 @@ compressTypeEnum(const StringId type)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN void
+static void
 compressTypePresent(CompressType type)
 {
     FUNCTION_TEST_BEGIN();
@@ -146,7 +146,7 @@ compressTypePresent(CompressType type)
     ASSERT(type < LENGTH_OF(compressHelperLocal));
 
     if (type != compressTypeNone && compressHelperLocal[type].compressNew == NULL)
-        THROW_FMT(OptionInvalidValueError, PROJECT_NAME " not compiled with %s support", strZ(compressHelperLocal[type].type));
+        THROW_FMT(OptionInvalidValueError, PROJECT_NAME " not built with %s support", strZ(compressHelperLocal[type].type));
 
     FUNCTION_TEST_RETURN_VOID();
 }
