@@ -2156,7 +2156,7 @@ testRun(void)
 
             TEST_ERROR(
                 cfgParseOptionValueCondition(true, packRead, true, cfgOptCompressType, 0, STRDEF("lz4")), OptionInvalidValueError,
-                "pgBackRest was not built with 'compress-type=lz4' support\n"
+                "pgBackRest not built with 'compress-type=lz4' support\n"
                 "HINT: if pgBackRest was installed from a package, does the package support this feature?\n"
                 "HINT: if pgBackRest was built from source, were the required development packages installed?");
         }
