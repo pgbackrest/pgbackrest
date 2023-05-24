@@ -763,8 +763,8 @@ option:
       - none
       - bz2
       - gz
-      - lz4
-      - zst
+      - lz4: HAVE_LIBLZ4
+      - zst: HAVE_LIBZST
     command: compress
     command-role:
       async: {}
@@ -1735,7 +1735,7 @@ option:
       - gcs
       - posix
       - s3
-      - sftp
+      - sftp: HAVE_LIBSSH2
     command:
       annotate:
         command-role:

@@ -134,8 +134,8 @@ bldCfgRenderConfigAutoH(const Storage *const storageRepo, const BldCfg bldCfg)
 
             if (opt->allowList != NULL)
             {
-                for (unsigned int allowListIdx = 0; allowListIdx < strLstSize(opt->allowList); allowListIdx++)
-                    strLstAddIfMissing(allowList, strLstGet(opt->allowList, allowListIdx));
+                for (unsigned int allowListIdx = 0; allowListIdx < lstSize(opt->allowList); allowListIdx++)
+                    strLstAddIfMissing(allowList, ((const BldCfgOptionValue *)lstGet(opt->allowList, allowListIdx))->value);
             }
 
             for (unsigned int optCmdListIdx = 0; optCmdListIdx < lstSize(opt->cmdList); optCmdListIdx++)
@@ -144,8 +144,8 @@ bldCfgRenderConfigAutoH(const Storage *const storageRepo, const BldCfg bldCfg)
 
                 if (optCmd->allowList != NULL)
                 {
-                    for (unsigned int allowListIdx = 0; allowListIdx < strLstSize(optCmd->allowList); allowListIdx++)
-                        strLstAddIfMissing(allowList, strLstGet(optCmd->allowList, allowListIdx));
+                    for (unsigned int allowListIdx = 0; allowListIdx < lstSize(optCmd->allowList); allowListIdx++)
+                        strLstAddIfMissing(allowList, ((const BldCfgOptionValue *)lstGet(optCmd->allowList, allowListIdx))->value);
                 }
             }
 
@@ -466,7 +466,7 @@ bldCfgRenderAllowRange(const String *const allowRangeMin, const String *const al
 
 // Helper to render allow list
 static String *
-bldCfgRenderAllowList(const StringList *const allowList, const String *const optType)
+bldCfgRenderAllowList(const List *const allowList, const String *const optType)
 {
     ASSERT(allowList != NULL);
     ASSERT(optType != NULL);
@@ -478,11 +478,21 @@ bldCfgRenderAllowList(const StringList *const allowList, const String *const opt
         "                PARSE_RULE_OPTIONAL_ALLOW_LIST\n"
         "                (\n");
 
-    for (unsigned int allowIdx = 0; allowIdx < strLstSize(allowList); allowIdx++)
+    for (unsigned int allowIdx = 0; allowIdx < lstSize(allowList); allowIdx++)
     {
-        const String *const value = strLstGet(allowList, allowIdx);
+        const BldCfgOptionValue *const allow = lstGet(allowList, allowIdx);
 
-        strCatFmt(result, "                    %s,\n", strZ(bldCfgRenderScalar(value, optType)));
+        strCatFmt(result, "                    %s,\n", strZ(bldCfgRenderScalar(allow->value, optType)));
+
+        if (allow->condition != NULL)
+        {
+            strCatFmt(
+                result,
+                "#ifndef %s\n"
+                "                        PARSE_RULE_BOOL_FALSE,\n"
+                "#endif\n",
+                strZ(allow->condition));
+        }
     }
 
     strCatZ(result, "                )");
@@ -814,8 +824,11 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
         {
             kvAdd(optionalDefaultRule, ruleAllowList, VARSTR(bldCfgRenderAllowList(opt->allowList, opt->type)));
 
-            for (unsigned int allowIdx = 0; allowIdx < strLstSize(opt->allowList); allowIdx++)
-                bldCfgRenderValueAdd(opt->type, strLstGet(opt->allowList, allowIdx), ruleDataList, NULL);
+            for (unsigned int allowIdx = 0; allowIdx < lstSize(opt->allowList); allowIdx++)
+            {
+                bldCfgRenderValueAdd(
+                    opt->type, ((const BldCfgOptionValue *)lstGet(opt->allowList, allowIdx))->value, ruleDataList, NULL);
+            }
         }
 
         if (opt->defaultValue != NULL)
@@ -843,8 +856,11 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
             {
                 kvAdd(optionalCmdRuleType, ruleAllowList, VARSTR(bldCfgRenderAllowList(optCmd->allowList, opt->type)));
 
-                for (unsigned int allowIdx = 0; allowIdx < strLstSize(optCmd->allowList); allowIdx++)
-                    bldCfgRenderValueAdd(opt->type, strLstGet(optCmd->allowList, allowIdx), ruleDataList, NULL);
+                for (unsigned int allowIdx = 0; allowIdx < lstSize(optCmd->allowList); allowIdx++)
+                {
+                    bldCfgRenderValueAdd(
+                        opt->type, ((const BldCfgOptionValue *)lstGet(optCmd->allowList, allowIdx))->value, ruleDataList, NULL);
+                }
             }
 
             // Defaults

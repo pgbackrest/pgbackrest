@@ -1420,6 +1420,46 @@ cfgFileLoad(
 ??? Add validation of section names and check all sections for invalid options in the check command. It's too expensive to add the
 logic to this critical path code.
 ***********************************************************************************************************************************/
+// Helper to check that option values are valid for conditional builds. This is a bit tricky since the distros used for unit testing
+// have all possible features enabled, so this is split out to allow it to be tested independently. The loop variable is
+// intentionally integrated into this function to make it obvious if it is omitted from the caller.
+FN_EXTERN bool
+cfgParseOptionValueCondition(
+    bool more, PackRead *const allowList, const bool allowListFound, const unsigned int optionId, const unsigned int optionKeyIdx,
+    const String *const valueAllow)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BOOL, more);
+        FUNCTION_TEST_PARAM(PACK_READ, allowList);
+        FUNCTION_TEST_PARAM(BOOL, allowListFound);
+        FUNCTION_TEST_PARAM(UINT, optionId);
+        FUNCTION_TEST_PARAM(UINT, optionKeyIdx);
+        FUNCTION_TEST_PARAM(STRING, valueAllow);
+    FUNCTION_TEST_END();
+
+    ASSERT(allowList != NULL);
+    ASSERT(valueAllow != NULL);
+
+    if (more && pckReadType(allowList) == pckTypeBool)
+    {
+        pckReadBoolP(allowList);
+
+        if (allowListFound)
+        {
+            THROW_FMT(
+                OptionInvalidValueError,
+                PROJECT_NAME " not built with '%s=%s' support\n"
+                "HINT: if " PROJECT_NAME " was installed from a package, does the package support this feature?\n"
+                "HINT: if " PROJECT_NAME " was built from source, were the required development packages installed?",
+                cfgParseOptionKeyIdxName(optionId, optionKeyIdx), strZ(valueAllow));
+        }
+
+        more = pckReadNext(allowList);
+    }
+
+    FUNCTION_TEST_RETURN(BOOL, more);
+}
+
 FN_EXTERN void
 cfgParse(const Storage *const storage, const unsigned int argListSize, const char *argList[], const CfgParseParam param)
 {
@@ -2351,28 +2391,35 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                                     PackRead *const allowList = pckReadNewC(optionalRules.allowList, optionalRules.allowListSize);
                                     bool allowListFound = false;
 
-                                    if (parseRuleOption[optionId].type == cfgOptTypeStringId)
+                                    pckReadNext(allowList);
+
+                                    while (true)
                                     {
-                                        while (pckReadNext(allowList))
+                                        // Compare based on option type
+                                        const unsigned int valueIdx = pckReadU32P(allowList);
+
+                                        switch (parseRuleOption[optionId].type)
                                         {
-                                            if (parseRuleValueStrId[pckReadU32P(allowList)] == configOptionValue->value.stringId)
+                                            case cfgOptTypeStringId:
+                                                allowListFound = parseRuleValueStrId[valueIdx] == configOptionValue->value.stringId;
+                                                break;
+
+                                            default:
                                             {
-                                                allowListFound = true;
+                                                ASSERT(parseRuleOption[optionId].type == cfgOptTypeSize);
+
+                                                allowListFound = parseRuleValueInt[valueIdx] == configOptionValue->value.integer;
                                                 break;
                                             }
                                         }
-                                    }
-                                    else
-                                    {
-                                        ASSERT(parseRuleOption[optionId].type == cfgOptTypeSize);
 
-                                        while (pckReadNext(allowList))
+                                        // Stop when allow list is exhausted or value is found
+                                        if (!cfgParseOptionValueCondition(
+                                                pckReadNext(allowList), allowList, allowListFound, optionId, optionKeyIdx,
+                                                valueAllow) ||
+                                            allowListFound)
                                         {
-                                            if (parseRuleValueInt[pckReadU32P(allowList)] == configOptionValue->value.integer)
-                                            {
-                                                allowListFound = true;
-                                                break;
-                                            }
+                                            break;
                                         }
                                     }
 

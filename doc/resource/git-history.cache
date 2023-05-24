@@ -1,5 +1,293 @@
 [
     {
+        "commit": "b461f7c6f884dba8056858464d1b571e708dad77",
+        "date": "2023-05-22 11:13:13 +0300",
+        "subject": "v2.46: Block Incremental Backup and SFTP Storage"
+    },
+    {
+        "commit": "a28b72c62431bcf9df02791219d9d6f5d0e60b54",
+        "date": "2023-05-18 09:32:44 +0300",
+        "subject": "Add warning about using recovery type=none."
+    },
+    {
+        "commit": "c61115e8adccd17d8afb6bd527fb6a396ec6b72a",
+        "date": "2023-05-15 17:46:41 +0300",
+        "subject": "Add bundling and block incremental to stress testing.",
+        "body": "This makes the stress testing more robust and provides additional testing for important features."
+    },
+    {
+        "commit": "87087fac231d2110160b3219daee3f9fb91aec02",
+        "date": "2023-05-13 19:16:16 +0300",
+        "subject": "SFTP support for repository storage."
+    },
+    {
+        "commit": "0c1f823e7a3abf1cadb44de3832ec1ddb2da7ec8",
+        "date": "2023-05-12 15:46:04 +0300",
+        "subject": "Add note about running stanza-create on already-created repositories."
+    },
+    {
+        "commit": "c7ac17330405510e56243e967d108b8d3b387ce0",
+        "date": "2023-05-10 09:22:26 +0300",
+        "subject": "Increase check timeouts in real/all integration tests.",
+        "body": "The prior timeouts were a bit aggressive and were causing timeouts in the Azure tests. There have also been occasional timeouts in other storage drivers.\n\nThe performance of CI environments is pretty variable so increased timeouts should make the tests more stable."
+    },
+    {
+        "commit": "2fc641383709ce1f91f35bb1edf4e7c1ab0f4eb3",
+        "date": "2023-05-06 12:16:58 +0300",
+        "subject": "Fix typos in test titles."
+    },
+    {
+        "commit": "6f250bf6860054397181f5678220faaa6574993e",
+        "date": "2023-05-06 12:15:21 +0300",
+        "subject": "Fix groupId type in StorageInfo.",
+        "body": "gid_t is the correct type but there was no bug because uid_t and gid_t have the same underlying type."
+    },
+    {
+        "commit": "ad9196cb49ce86cef678e453046803fb2be2cf70",
+        "date": "2023-05-05 10:08:49 +0300",
+        "subject": "Update Debian user guide to build on Ubuntu 20.04.",
+        "body": "Ubuntu 18.04 will be EOL at the end of the month so update to a newer version."
+    },
+    {
+        "commit": "023d3c99d8d00497501b21fb20b07f71ea49ee40",
+        "date": "2023-05-04 08:52:31 +0300",
+        "subject": "Fix incorrect commit hash in 2f322e2a."
+    },
+    {
+        "commit": "2f322e2a49f20ff3036db6382363efb40246922e",
+        "date": "2023-05-03 09:49:24 +0300",
+        "subject": "Add efac3474 (remove double spacing) to .git-blame-ignore-revs."
+    },
+    {
+        "commit": "d49907239eb37c3e4e905f97543824181a1bd406",
+        "date": "2023-05-03 09:37:59 +0300",
+        "subject": "Remove double spaces missed in 1bd5530a."
+    },
+    {
+        "commit": "efac3474cffc4f01154c13cc358601c4c98bcd42",
+        "date": "2023-05-02 12:59:20 +0300",
+        "subject": "Add 1bd5530a (remove double spacing) to .git-blame-ignore-revs."
+    },
+    {
+        "commit": "1bd5530a59cd8ddbabc279802d1ede4f8fbd5314",
+        "date": "2023-05-02 12:57:12 +0300",
+        "subject": "Remove double spaces from comments and documentation.",
+        "body": "Double spaces have fallen out of favor in recent years because they no longer contribute to readability.\n\nWe have been using single spaces and editing related paragraphs for some time, but now it seems best to update the remaining instances to avoid churn in unrelated commits and to make it clearer what spacing contributors should use."
+    },
+    {
+        "commit": "5ea7b91bf9ab57a29778d2332c0971e84f14c4c6",
+        "date": "2023-05-02 12:07:28 +0300",
+        "subject": "Remove extraneous space from error messages."
+    },
+    {
+        "commit": "9637d9449091632f158f8e2be8afbad4bda200fc",
+        "date": "2023-05-02 09:37:42 +0300",
+        "subject": "Use boolean variant constants where possible instead of redeclaring."
+    },
+    {
+        "commit": "822f2a584260a012b833455a7a2bd1c8487e3010",
+        "date": "2023-05-01 19:26:48 +0300",
+        "subject": "Finalize block incremental feature.",
+        "body": "Remove beta status and update documentation to remove beta references and warnings.\r\n\r\nThe repo-block-* sub-options have been marked internal. Most users will be best off with the default behavior and we may still decide to change these options for remove them in the future."
+    },
+    {
+        "commit": "c510046dd77c40487d2d6c659834927a3bab1106",
+        "date": "2023-05-01 14:27:56 +0300",
+        "subject": "Remove extraneous spaces in user guide."
+    },
+    {
+        "commit": "dd4e52679ecdc43539bd038b5aa9bd4ff9055cbf",
+        "date": "2023-04-27 23:29:12 +0300",
+        "subject": "Removing chunking and block numbers from incremental block list.",
+        "body": "These were intended to allow the block list to be scanned without reading the map but were never utilized. They were left in \"just in case\" and because they did not seem to be doing any harm.\r\n\r\nIn fact, it is better not to have the block numbers because this allows us set the block size at a future time as long as it is a factor of the super block size. One way this could be useful is to store older files without super blocks or a map in the full backup and then build a map for them if the file gets modified in a diff/incr backup. This would require reading the file from the full backup to build the map but it would be more space efficient and we could make more intelligent decisions about block size. It would also be possible to change the block size even if one had already been selected in a prior backup.\r\n\r\nOmitting the block numbers makes the chunking unnecessary since there is now no way to make sense of the block list without the map. Also, we might want to build maps for unchunked block lists, i.e. files that were copied normally."
+    },
+    {
+        "commit": "3fc3690dd77ef5fa032abb006558184164db53ec",
+        "date": "2023-04-27 10:30:50 +0300",
+        "subject": "PostgreSQL 16 support.",
+        "body": "Add catalog version and WAL magic for PostgreSQL 16.\r\n\r\nThe GUC to force parallel mode has be renamed so update that in the tests."
+    },
+    {
+        "commit": "39059dc4e7a74e6473099eefeed4e9e0efe65e60",
+        "date": "2023-04-26 15:00:36 +0300",
+        "subject": "Remove extra linefeed."
+    },
+    {
+        "commit": "3ff88ffbb495fd669e9a361478e60192930ee0a1",
+        "date": "2023-04-25 11:52:28 +0300",
+        "subject": "Avoid chown() on recovery files during restore.",
+        "body": "The chown() was already skipped on the files restored from the repository but the same logic was not applied to the generated recovery files, probably because chown'ing a few recovery files does not have performance implications. Use the same logic for recovery files to determined if they need to be chown'd.\r\n\r\nUltimately this behavior is pretty hard to test, so add a fail safe into the Posix driver that will skip chown if the permissions are already as required."
+    },
+    {
+        "commit": "750ab8e55c276fa0127d19961a59fec254e24c61",
+        "date": "2023-04-21 16:21:10 +0300",
+        "subject": "Add MacOS back to CirrusCI.",
+        "body": "9e29c01 removed MacOS testing due to breaking changes in the update to arm on the platform.\n\nUpdate the scripts to correctly work with the version of Homebrew deployed with the arm images."
+    },
+    {
+        "commit": "23d7d67d4961c9bb38d73ef1c409369303276846",
+        "date": "2023-04-21 15:08:59 +0300",
+        "subject": "Fix missing void parameter."
+    },
+    {
+        "commit": "f5e6bc26983396ec51c6579aade37db39807f3a5",
+        "date": "2023-04-20 13:24:12 +0300",
+        "subject": "Allow page header checks to be skipped.",
+        "body": "These checks cause false negatives for page checksum verification when the page is encrypted because pd_upper might end up as 0 in the encrypted data. This issue is rare but reproducible given a large enough cluster.\r\n\r\nMake these checks optional, but leave them enabled by default."
+    },
+    {
+        "commit": "8240eb5da57d2950ebbd3492c163b4e0151d3cb7",
+        "date": "2023-04-16 17:41:27 +0300",
+        "subject": "Autogenerate PostgreSQL versions.",
+        "body": "This will make adding/removing versions of PostgreSQL more reliable."
+    },
+    {
+        "commit": "a05bf6bb15ba7f7e4b610dbb84e87ebcd359dd38",
+        "date": "2023-04-16 17:32:24 +0300",
+        "subject": "Rename PG_VERSION_*_STR constants to PG_VERSION_*_Z.",
+        "body": "This is more consistent with other zero-terminated string constants and also has the benefit of being shorter."
+    },
+    {
+        "commit": "75254c9285e70913920af9ab6e9f362bc4d11d7d",
+        "date": "2023-04-11 16:28:29 +0400",
+        "subject": "Parameterize configLoad() as cfgLoadP().",
+        "body": "There is one existing optional parameter and there are more to come."
+    },
+    {
+        "commit": "d6cb3de17afff0a9c57f312455a5ca3cf202cba6",
+        "date": "2023-04-11 14:50:59 +0400",
+        "subject": "Update command/check module to recent coding standards.",
+        "body": "Add const as appropriate and remove an unneeded declaration."
+    },
+    {
+        "commit": "a9c5cd9749f6b5ae1005453b1039d91f37fb245b",
+        "date": "2023-04-11 12:46:00 +0400",
+        "subject": "Update command/backup module to recent coding standards.",
+        "body": "Add const as appropriate and avoid setting results to NULL if the result will definitely be set later on."
+    },
+    {
+        "commit": "f33e1cfb1600643820a1ae76bdeb15c62ac1fcc7",
+        "date": "2023-04-06 11:38:18 +0400",
+        "subject": "Add error retry detail for HTTP retries.",
+        "body": "This should make it clearer when retries have happened and for how long."
+    },
+    {
+        "commit": "df419b34b55a15a902ff5cc1912aaebc7e023738",
+        "date": "2023-04-06 11:03:46 +0400",
+        "subject": "Improve retry error messages.",
+        "body": "Centralize the code to allow it to be used in more places and update the protocol/server module to use the new code.\n\nSince the time measurements make testing difficult, also add time and errorRetry harnesses to allow specific data to be used for testing. In the case of errorRetry, the production behavior is turned off by default during testing and only enabled for the errorRetry test module."
+    },
+    {
+        "commit": "801e396dace2a4d9f4125ef0e751c90dc0cc644a",
+        "date": "2023-04-06 10:38:49 +0400",
+        "subject": "Move error modules to common/error directory.",
+        "body": "There are already enough files to warrant a separate directory and more are coming.\n\nAlso remove extraneous includes."
+    },
+    {
+        "commit": "ff98636e41b8ad14babe1e9fa1fdc15aad2244cd",
+        "date": "2023-04-06 08:22:14 +0400",
+        "subject": "Update 32-bit CI host to Debian 10 from Ubuntu 18.04.",
+        "body": "Ubuntu 18.04 will be EOL before the next release, so update to the oldest available Debian version.\n\nAlso fix one incorrect return value type, a test cast, and adjust some test timeouts."
+    },
+    {
+        "commit": "a9f39857cf7d8c0eda9f5f19f3d4c9497d4d47f2",
+        "date": "2023-04-05 11:24:53 +0400",
+        "subject": "Remove unused strOS parameter in Common::HostTest."
+    },
+    {
+        "commit": "8f7f73e4af916bf1bc6a0cb72be35b7061b297df",
+        "date": "2023-03-30 17:46:25 +0500",
+        "subject": "Sleep using nanosleep() instead of select().",
+        "body": "This is a safer way to sleep due to select's not-portable interaction with signals.\n\nBased on https://git.postgresql.org/gitweb/?p=postgresql.git;a=commitdiff;h=a948e49e2ef11815be0b211723bfc5b53b7f75a8 from the PostgreSQL project."
+    },
+    {
+        "commit": "2cfbee903a0a16d1fdeca52dbf6e775cdcddcc74",
+        "date": "2023-03-30 15:43:37 +0500",
+        "subject": "Use Buffer object for page buffer in PageChecksum filter.",
+        "body": "This avoids the object needing to support allocations."
+    },
+    {
+        "commit": "3dbf518c3a9df538ca110039758fbfe161e3f714",
+        "date": "2023-03-30 14:50:46 +0500",
+        "subject": "Convert XmlNode from allocation to object.",
+        "body": "This makes memory accounting more accurate and objects that use Xml no longer need to allow allocations."
+    },
+    {
+        "commit": "047472144b5fd92425225700aa11b351044244e5",
+        "date": "2023-03-30 14:42:20 +0500",
+        "subject": "Remove allocations from common crypto module.",
+        "body": "The allocations are better done with a struct and Buffer object."
+    },
+    {
+        "commit": "84ca7b9b2713b6d36d15d592e78942d8e1ac8a35",
+        "date": "2023-03-30 11:42:22 +0500",
+        "subject": "Cleanup for objects that do not require allocations.",
+        "body": "A lot of these are left over from when object interfaces required allocations (changed in f6e30736 and 9ca9c8e4). Others are likely copy/paste errors.\n\nThis saves some space in the mem context and makes it clear that no allocations will be made."
+    },
+    {
+        "commit": "fe0fd71be2e9754491cbbdcde79e7a7cc87f2e7b",
+        "date": "2023-03-30 10:00:58 +0500",
+        "subject": "Convert the result of zNewFmt() into an object.",
+        "body": "The result is not intended to be freed directly so this makes memory tracking more accurate. Fix a few places where memory was leaking after a call to zNewFmt().\n\nAlso update an assert to make it clearer."
+    },
+    {
+        "commit": "295b53e8453b4ac4889b62bc1c7f1d6b78b09421",
+        "date": "2023-03-28 16:24:43 +0600",
+        "subject": "Update Github actions to new versions.",
+        "body": "These updates remove various deprecation warnings."
+    },
+    {
+        "commit": "b111599badccb1c196a224e3d6ac8657b8d172a2",
+        "date": "2023-03-28 15:05:18 +0600",
+        "subject": "Simplify object creation with OBJ_NEW_BEGIN() macro.",
+        "body": "Eliminate the boilerplate of declaring this and assigning memory to it, which is the same for the vast majority of object creations.\n\nKeep the old version of the macro as OBJ_NEW_BASE_BEGIN() for a few exceptions in the core code and (mostly) in the tests."
+    },
+    {
+        "commit": "91f9301b9d0026ee72875d943e0ed01b14ec887b",
+        "date": "2023-03-27 16:42:35 +0600",
+        "subject": "Fix command/manifest unit test title."
+    },
+    {
+        "commit": "9ca9c8e4c97b60a4cceef1c6f9fcb93e413e15d7",
+        "date": "2023-03-27 14:32:37 +0600",
+        "subject": "Improve interface handling in remaining modules.",
+        "body": "As in f6e30736, make the interface object the parent of the driver object rather than the interface being allocated directly in the driver object. Allow exceptions to this general rule for objects that need to retain ownership of their interfaces."
+    },
+    {
+        "commit": "5f001248cce08137a601ce5671aa67d26bfdd366",
+        "date": "2023-03-25 14:59:47 +0700",
+        "subject": "Fix indentation in config.yaml."
+    },
+    {
+        "commit": "8ff956ad7e8608dd7582825521105c289b249810",
+        "date": "2023-03-25 14:07:31 +0700",
+        "subject": "Add lock module initialization.",
+        "body": "Each call to lockAcquireP() passed enough information to initialize the lock system. This was somewhat inefficient and as locks become more complicated it will lead to more code duplication. Since a process can only take one type of lock it makes sense to do most of the initialization up front.\n\nAlso reduce the log level of lockRelease() since it is only called at exit and the lock will be released in any case."
+    },
+    {
+        "commit": "f1caecc4ff38557cf81314738ac83d420d8bcf23",
+        "date": "2023-03-24 10:34:42 +0800",
+        "subject": "Convert lockAcquire() to lockAcquireP().",
+        "body": "This makes a few current parameters optional and allows for more optional parameters with less code churn."
+    },
+    {
+        "commit": "c8ec114c8cb392d227fa267c62d11cc6b4fb9677",
+        "date": "2023-03-21 12:29:45 +0800",
+        "subject": "Add reference filter and output to manifest command.",
+        "body": "This allows the file list to be filtered by reference. The reference is output when it is not the default reference for the backup."
+    },
+    {
+        "commit": "1807bfcff5550bb40fa4f92dee1e15580a0b752d",
+        "date": "2023-03-21 12:22:47 +0800",
+        "subject": "Clear buffer limit when buffer is limited to allocated size.",
+        "body": "This minor optimization automatically clears the limit flag when limit is set to allocated size. This has no impact on the current code but will simplify a future commit where a conditional bufLimitClear() is being used."
+    },
+    {
+        "commit": "5b5786c082b698e637bd44b9f06fbca5e4e4cc21",
+        "date": "2023-03-20 10:25:44 +0800",
+        "subject": "Begin v2.46 development."
+    },
+    {
         "commit": "6ad79d16ca638b7ccdc81b5530a39007b8e01aed",
         "date": "2023-03-20 09:37:23 +0800",
         "subject": "v2.45: Block Incremental Backup (BETA)"
