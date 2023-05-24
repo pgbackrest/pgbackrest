@@ -1437,6 +1437,9 @@ cfgParseOptionValueCondition(
         FUNCTION_TEST_PARAM(STRING, valueAllow);
     FUNCTION_TEST_END();
 
+    ASSERT(allowList != NULL);
+    ASSERT(valueAllow != NULL);
+
     if (more && pckReadType(allowList) == pckTypeBool)
     {
         pckReadBoolP(allowList);
