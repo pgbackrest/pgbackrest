@@ -16,6 +16,21 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.47dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <github-issue id="2062"/>
+                        <github-pull-request id="2070"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="t.anastacio"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Skip <file>recovery.signal</file> for <postgres/> &gt;= 12 when recovery <br-option>type=none</br-option>.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-improvement-list>
                     <release-item>
                         <commit subject="Refactor allow list processing in config/parse module."/>
@@ -12978,6 +12993,11 @@
         <contributor id="stephen.frost">
             <contributor-name-display>Stephen Frost</contributor-name-display>
             <contributor-id type="github">sfrost</contributor-id>
+        </contributor>
+
+        <contributor id="t.anastacio">
+            <contributor-name-display>T.Anastacio</contributor-name-display>
+            <contributor-id type="github">Tiago-Anastacio</contributor-id>
         </contributor>
 
         <contributor id="tim.garton">
