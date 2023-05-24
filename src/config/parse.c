@@ -2390,29 +2390,37 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                                 {
                                     PackRead *const allowList = pckReadNewC(optionalRules.allowList, optionalRules.allowListSize);
                                     bool allowListFound = false;
-                                    bool more = pckReadNext(allowList);
 
-                                    while (more)
+                                    pckReadNext(allowList);
+
+                                    while (true)
                                     {
-                                        if (parseRuleOption[optionId].type == cfgOptTypeStringId)
+                                        // Compare based on option type
+                                        const unsigned int valueIdx = pckReadU32P(allowList);
+
+                                        switch (parseRuleOption[optionId].type)
                                         {
-                                            allowListFound =
-                                                parseRuleValueStrId[pckReadU32P(allowList)] ==
-                                                configOptionValue->value.stringId;
+                                            case cfgOptTypeStringId:
+                                                allowListFound = parseRuleValueStrId[valueIdx] == configOptionValue->value.stringId;
+                                                break;
+
+                                            default:
+                                            {
+                                                ASSERT(parseRuleOption[optionId].type == cfgOptTypeSize);
+
+                                                allowListFound = parseRuleValueInt[valueIdx] == configOptionValue->value.integer;
+                                                break;
+                                            }
                                         }
-                                        else
+
+                                        // Stop when allow list is exhausted or value is found
+                                        if (!cfgParseOptionValueCondition(
+                                                pckReadNext(allowList), allowList, allowListFound, optionId, optionKeyIdx,
+                                                valueAllow) ||
+                                            allowListFound)
                                         {
-                                            ASSERT(parseRuleOption[optionId].type == cfgOptTypeSize);
-
-                                            allowListFound =
-                                                parseRuleValueInt[pckReadU32P(allowList)] == configOptionValue->value.integer;
-                                        }
-
-                                        more = cfgParseOptionValueCondition(
-                                            pckReadNext(allowList), allowList, allowListFound, optionId, optionKeyIdx, valueAllow);
-
-                                        if (allowListFound)
                                             break;
+                                        }
                                     }
 
                                     pckReadFree(allowList);
