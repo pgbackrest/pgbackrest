@@ -91,7 +91,7 @@ INFO: backup command end: completed successfully (12525ms)
 
 Here we can see that the differential backup is nearly as large as the full backup, 52.8MB vs 55.5MB. This is expected since the bulk of the database is contained in a single file.
 ```
-> pgbackrest --stanza=demo --repo=1 info
+$ pgbackrest --stanza=demo --repo=1 info
 
 full backup: 20230520-082323F
     database size: 995.7MB, database backup size: 995.7MB
@@ -104,7 +104,7 @@ diff backup: 20230520-082323F_20230520-082934D
 
 However, on repo2 with block incremental enabled, the backup is significantly faster.
 ```
-> pgbackrest --stanza=demo --type=diff --repo=2 backup
+$ pgbackrest --stanza=demo --type=diff --repo=2 backup
 
 <...>
 INFO: backup command end: completed successfully (3589ms)
@@ -112,7 +112,7 @@ INFO: backup command end: completed successfully (3589ms)
 
 And also much smaller, 943KB vs 52.8MB on the repo without block incremental enabled. This is more than 50x improvement in backup size!
 ```
-> pgbackrest --stanza=demo --repo=2 info
+$ pgbackrest --stanza=demo --repo=2 info
 
 full backup: 20230520-082438F
     database size: 995.7MB, database backup size: 995.7MB
