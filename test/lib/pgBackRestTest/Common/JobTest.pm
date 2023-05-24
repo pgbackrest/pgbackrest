@@ -263,6 +263,7 @@ sub run
                         ' --repo-path=' . $self->{strTestPath} . '/repo' . ' --test-path=' . $self->{strTestPath} .
                         " --log-level=$self->{strLogLevel}" . ' --vm=' . $self->{oTest}->{&TEST_VM} .
                         ' --vm-id=' . $self->{iVmIdx} . ($self->{bProfile} ? ' --profile' : '') .
+                        ($self->{bLogTimestamp} ? '' : ' --no-log-timestamp') .
                         ($self->{bBackTraceUnit} ? '' : ' --no-back-trace') . ($bCoverage ? '' : ' --no-coverage') . ' test ' .
                         $self->{oTest}->{&TEST_MODULE} . '/' . $self->{oTest}->{&TEST_NAME} . " && \\\n" .
                     # Allow stderr to be copied to stderr and stdout

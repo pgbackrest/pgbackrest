@@ -2,7 +2,7 @@
     <table-cell>build/common</table-cell>
     <table-cell>17/17 (100.0%)</table-cell>
     <table-cell>38/38 (100.0%)</table-cell>
-    <table-cell>208/208 (100.0%)</table-cell>
+    <table-cell>206/206 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
@@ -28,9 +28,9 @@
 
 <table-row>
     <table-cell>build/postgres</table-cell>
-    <table-cell>6/6 (100.0%)</table-cell>
-    <table-cell>52/52 (100.0%)</table-cell>
-    <table-cell>123/123 (100.0%)</table-cell>
+    <table-cell>8/8 (100.0%)</table-cell>
+    <table-cell>60/60 (100.0%)</table-cell>
+    <table-cell>151/151 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
@@ -58,28 +58,28 @@
     <table-cell>command/archive/get</table-cell>
     <table-cell>9/9 (100.0%)</table-cell>
     <table-cell>196/196 (100.0%)</table-cell>
-    <table-cell>469/469 (100.0%)</table-cell>
+    <table-cell>468/468 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
     <table-cell>command/archive/push</table-cell>
     <table-cell>12/12 (100.0%)</table-cell>
     <table-cell>132/132 (100.0%)</table-cell>
-    <table-cell>411/411 (100.0%)</table-cell>
+    <table-cell>410/410 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
     <table-cell>command/backup</table-cell>
     <table-cell>50/50 (100.0%)</table-cell>
-    <table-cell>754/754 (100.0%)</table-cell>
-    <table-cell>1851/1851 (100.0%)</table-cell>
+    <table-cell>758/758 (100.0%)</table-cell>
+    <table-cell>1834/1834 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
     <table-cell>command/check</table-cell>
     <table-cell>8/8 (100.0%)</table-cell>
     <table-cell>62/62 (100.0%)</table-cell>
-    <table-cell>137/137 (100.0%)</table-cell>
+    <table-cell>136/136 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
@@ -133,9 +133,9 @@
 
 <table-row>
     <table-cell>command/restore</table-cell>
-    <table-cell>33/33 (100.0%)</table-cell>
-    <table-cell>688/688 (100.0%)</table-cell>
-    <table-cell>1419/1419 (100.0%)</table-cell>
+    <table-cell>34/34 (100.0%)</table-cell>
+    <table-cell>684/684 (100.0%)</table-cell>
+    <table-cell>1430/1430 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
@@ -161,9 +161,9 @@
 
 <table-row>
     <table-cell>common</table-cell>
-    <table-cell>183/183 (100.0%)</table-cell>
-    <table-cell>692/692 (100.0%)</table-cell>
-    <table-cell>2117/2117 (100.0%)</table-cell>
+    <table-cell>154/154 (100.0%)</table-cell>
+    <table-cell>640/640 (100.0%)</table-cell>
+    <table-cell>1972/1972 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
@@ -177,105 +177,112 @@
     <table-cell>common/compress/bz2</table-cell>
     <table-cell>13/13 (100.0%)</table-cell>
     <table-cell>20/20 (100.0%)</table-cell>
-    <table-cell>180/180 (100.0%)</table-cell>
+    <table-cell>173/173 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
     <table-cell>common/compress/gz</table-cell>
     <table-cell>13/13 (100.0%)</table-cell>
     <table-cell>26/26 (100.0%)</table-cell>
-    <table-cell>182/182 (100.0%)</table-cell>
+    <table-cell>174/174 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
     <table-cell>common/compress/lz4</table-cell>
     <table-cell>15/15 (100.0%)</table-cell>
     <table-cell>24/24 (100.0%)</table-cell>
-    <table-cell>186/186 (100.0%)</table-cell>
+    <table-cell>179/179 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
     <table-cell>common/compress/zst</table-cell>
     <table-cell>13/13 (100.0%)</table-cell>
     <table-cell>12/12 (100.0%)</table-cell>
-    <table-cell>153/153 (100.0%)</table-cell>
+    <table-cell>146/146 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
     <table-cell>common/crypto</table-cell>
     <table-cell>32/32 (100.0%)</table-cell>
     <table-cell>88/88 (100.0%)</table-cell>
-    <table-cell>555/555 (100.0%)</table-cell>
+    <table-cell>540/540 (100.0%)</table-cell>
+</table-row>
+
+<table-row>
+    <table-cell>common/error</table-cell>
+    <table-cell>32/32 (100.0%)</table-cell>
+    <table-cell>54/54 (100.0%)</table-cell>
+    <table-cell>166/166 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
     <table-cell>common/io</table-cell>
-    <table-cell>60/60 (100.0%)</table-cell>
-    <table-cell>182/182 (100.0%)</table-cell>
-    <table-cell>768/768 (100.0%)</table-cell>
+    <table-cell>58/58 (100.0%)</table-cell>
+    <table-cell>174/174 (100.0%)</table-cell>
+    <table-cell>724/724 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
     <table-cell>common/io/filter</table-cell>
-    <table-cell>35/35 (100.0%)</table-cell>
-    <table-cell>106/106 (100.0%)</table-cell>
-    <table-cell>453/453 (100.0%)</table-cell>
+    <table-cell>31/31 (100.0%)</table-cell>
+    <table-cell>92/92 (100.0%)</table-cell>
+    <table-cell>385/385 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
     <table-cell>common/io/http</table-cell>
     <table-cell>47/47 (100.0%)</table-cell>
     <table-cell>248/248 (100.0%)</table-cell>
-    <table-cell>722/722 (100.0%)</table-cell>
+    <table-cell>706/706 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
     <table-cell>common/io/socket</table-cell>
     <table-cell>22/22 (100.0%)</table-cell>
     <table-cell>34/34 (100.0%)</table-cell>
-    <table-cell>291/291 (100.0%)</table-cell>
+    <table-cell>282/282 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
     <table-cell>common/io/tls</table-cell>
     <table-cell>34/34 (100.0%)</table-cell>
     <table-cell>98/98 (100.0%)</table-cell>
-    <table-cell>518/518 (100.0%)</table-cell>
+    <table-cell>509/509 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
     <table-cell>common/type</table-cell>
-    <table-cell>321/321 (100.0%)</table-cell>
-    <table-cell>844/844 (100.0%)</table-cell>
-    <table-cell>4179/4179 (100.0%)</table-cell>
+    <table-cell>320/320 (100.0%)</table-cell>
+    <table-cell>846/846 (100.0%)</table-cell>
+    <table-cell>4136/4136 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
     <table-cell>config</table-cell>
     <table-cell>86/86 (100.0%)</table-cell>
-    <table-cell>930/930 (100.0%)</table-cell>
-    <table-cell>1772/1772 (100.0%)</table-cell>
+    <table-cell>934/934 (100.0%)</table-cell>
+    <table-cell>1775/1775 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
     <table-cell>db</table-cell>
     <table-cell>24/24 (100.0%)</table-cell>
     <table-cell>116/116 (100.0%)</table-cell>
-    <table-cell>444/444 (100.0%)</table-cell>
+    <table-cell>442/442 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
     <table-cell>info</table-cell>
     <table-cell>92/92 (100.0%)</table-cell>
     <table-cell>932/932 (100.0%)</table-cell>
-    <table-cell>2482/2482 (100.0%)</table-cell>
+    <table-cell>2470/2470 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
     <table-cell>postgres</table-cell>
     <table-cell>32/32 (100.0%)</table-cell>
     <table-cell>110/110 (100.0%)</table-cell>
-    <table-cell>394/394 (100.0%)</table-cell>
+    <table-cell>392/392 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
@@ -288,22 +295,22 @@
 <table-row>
     <table-cell>protocol</table-cell>
     <table-cell>55/55 (100.0%)</table-cell>
-    <table-cell>230/230 (100.0%)</table-cell>
-    <table-cell>979/979 (100.0%)</table-cell>
+    <table-cell>228/228 (100.0%)</table-cell>
+    <table-cell>962/962 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
     <table-cell>storage</table-cell>
     <table-cell>53/53 (100.0%)</table-cell>
     <table-cell>226/226 (100.0%)</table-cell>
-    <table-cell>813/813 (100.0%)</table-cell>
+    <table-cell>805/805 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
     <table-cell>storage/azure</table-cell>
     <table-cell>25/25 (100.0%)</table-cell>
     <table-cell>110/110 (100.0%)</table-cell>
-    <table-cell>531/531 (100.0%)</table-cell>
+    <table-cell>525/525 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
@@ -317,33 +324,40 @@
     <table-cell>storage/gcs</table-cell>
     <table-cell>32/32 (100.0%)</table-cell>
     <table-cell>116/116 (100.0%)</table-cell>
-    <table-cell>659/659 (100.0%)</table-cell>
+    <table-cell>653/653 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
     <table-cell>storage/posix</table-cell>
-    <table-cell>26/26 (100.0%)</table-cell>
-    <table-cell>159/160 (99.38%)</table-cell>
-    <table-cell>482/482 (100.0%)</table-cell>
+    <table-cell>28/28 (100.0%)</table-cell>
+    <table-cell>167/168 (99.40%)</table-cell>
+    <table-cell>483/483 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
     <table-cell>storage/remote</table-cell>
     <table-cell>35/35 (100.0%)</table-cell>
     <table-cell>118/118 (100.0%)</table-cell>
-    <table-cell>809/809 (100.0%)</table-cell>
+    <table-cell>802/802 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
     <table-cell>storage/s3</table-cell>
     <table-cell>30/30 (100.0%)</table-cell>
     <table-cell>142/142 (100.0%)</table-cell>
-    <table-cell>724/724 (100.0%)</table-cell>
+    <table-cell>718/718 (100.0%)</table-cell>
+</table-row>
+
+<table-row>
+    <table-cell>storage/sftp</table-cell>
+    <table-cell>24/24 (100.0%)</table-cell>
+    <table-cell>336/336 (100.0%)</table-cell>
+    <table-cell>621/621 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
     <table-cell>TOTAL</table-cell>
-    <table-cell>1574/1574 (100.0%)</table-cell>
-    <table-cell>9575/9576 (99.99%)</table-cell>
-    <table-cell>29471/29471 (100.0%)</table-cell>
+    <table-cell>1599/1599 (100.0%)</table-cell>
+    <table-cell>9911/9912 (99.99%)</table-cell>
+    <table-cell>29835/29835 (100.0%)</table-cell>
 </table-row>

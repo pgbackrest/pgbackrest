@@ -14,7 +14,42 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.46dev" title="UNDER DEVELOPMENT">
+        <release date="XXXX-XX-XX" version="2.47dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <github-issue id="2062"/>
+                        <github-pull-request id="2070"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="t.anastacio"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Skip <file>recovery.signal</file> for <postgres/> &gt;= 12 when recovery <br-option>type=none</br-option>.</p>
+                    </release-item>
+                </release-bug-list>
+
+                <release-improvement-list>
+                    <release-item>
+                        <commit subject="Refactor allow list processing in config/parse module."/>
+                        <commit subject="Centralize error handling for unsupported features.">
+                            <github-pull-request id="2075"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Centralize error handling for unsupported features.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-core-list>
+        </release>
+
+        <release date="2023-05-22" version="2.46" title="Block Incremental Backup and SFTP Storage">
             <release-core-list>
                 <release-feature-list>
                     <release-item>
@@ -12958,6 +12993,11 @@
         <contributor id="stephen.frost">
             <contributor-name-display>Stephen Frost</contributor-name-display>
             <contributor-id type="github">sfrost</contributor-id>
+        </contributor>
+
+        <contributor id="t.anastacio">
+            <contributor-name-display>T.Anastacio</contributor-name-display>
+            <contributor-id type="github">Tiago-Anastacio</contributor-id>
         </contributor>
 
         <contributor id="tim.garton">

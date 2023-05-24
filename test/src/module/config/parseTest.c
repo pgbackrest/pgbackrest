@@ -2123,6 +2123,43 @@ testRun(void)
         TEST_RESULT_UINT(cfgOptionGroupIdxToKey(cfgOptGrpRepo, 0), 1, "check repo1 key");
         TEST_RESULT_Z(cfgOptionGroupName(cfgOptGrpRepo, 0), "repo1", "check repo1 name");
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoPath, 0), "/var/lib/pgbackrest", "check repo1-path");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("conditional option value -- value not found and no next value");
+        {
+            PackWrite *packWrite = pckWriteNewP();
+            pckWriteBoolP(packWrite, false, .defaultWrite = true);
+            pckWriteEndP(packWrite);
+
+            PackRead *packRead = pckReadNew(pckWriteResult(packWrite));
+            pckReadNext(packRead);
+
+            TEST_RESULT_BOOL(cfgParseOptionValueCondition(true, packRead, false, 0, 0, STRDEF("")), false, "check condition");
+        }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("conditional option value -- value found");
+        {
+            argList = strLstNew();
+            hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+            hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
+            hrnCfgEnvKeyRawZ(cfgOptRepoRetentionFull, 1, "1");
+            hrnCfgEnvRawZ(cfgOptCompressType, "lz4");
+            HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+            PackWrite *packWrite = pckWriteNewP();
+            pckWriteBoolP(packWrite, false, .defaultWrite = true);
+            pckWriteEndP(packWrite);
+
+            PackRead *packRead = pckReadNew(pckWriteResult(packWrite));
+            pckReadNext(packRead);
+
+            TEST_ERROR(
+                cfgParseOptionValueCondition(true, packRead, true, cfgOptCompressType, 0, STRDEF("lz4")), OptionInvalidValueError,
+                "pgBackRest not built with 'compress-type=lz4' support\n"
+                "HINT: if pgBackRest was installed from a package, does the package support this feature?\n"
+                "HINT: if pgBackRest was built from source, were the required development packages installed?");
+        }
     }
 
     // *****************************************************************************************************************************

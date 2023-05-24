@@ -100,8 +100,8 @@ jobs:
 
           run: |
             git config --global --add safe.directory ${GITHUB_WORKSPACE?}/pgbackrest
-            ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=none --min-gen --no-valgrind --no-coverage --no-optimize --build-max=2 --module=command --test=backup
-            ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=none --min-gen --no-valgrind --no-coverage --no-optimize --build-max=2 --module=postgres --test=interface
+            ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --min-gen --no-valgrind --no-coverage --no-optimize --build-max=2 --module=command --test=backup
+            ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --min-gen --no-valgrind --no-coverage --no-optimize --build-max=2 --module=postgres --test=interface
 
   # Run meson unity build to check for errors, unused functions, and externed functions
   unity:
@@ -139,7 +139,7 @@ jobs:
 
       - name: Check
         run: |
-          cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.pl test --vm=none --param=code-format-check
+          cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.pl test --param=code-format-check
 
   codeql:
     runs-on: ubuntu-latest

@@ -42,9 +42,6 @@ Functions
 // Get enum from a compression type string
 FN_EXTERN CompressType compressTypeEnum(StringId type);
 
-// Check that a valid compress type is compiled into this binary. Errors when the compress type is not present.
-FN_EXTERN void compressTypePresent(CompressType type);
-
 // Get string representation of a compression type. This is the extension without the period.
 FN_EXTERN const String *compressTypeStr(CompressType type);
 

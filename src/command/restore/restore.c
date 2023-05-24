@@ -1880,7 +1880,7 @@ restoreRecoveryWriteAutoConf(
         }
         // Else the recovery.signal file is required for targeted recovery. Skip writing this file if the backup was offline and
         // recovery type is none since PostgreSQL will error in this case when wal_level=minimal.
-        else if (cfgOptionStrId(cfgOptType) != CFGOPTVAL_TYPE_NONE || manifestData(manifest)->backupOptionOnline)
+        else if (cfgOptionStrId(cfgOptType) != CFGOPTVAL_TYPE_NONE)
         {
             storagePutP(
                 storageNewWriteP(
