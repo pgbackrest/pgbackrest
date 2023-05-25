@@ -1,14 +1,6 @@
 # pgBackRest File Bundling and Block Incremental Backup
 
-Efficiently storing backups is a major priority for the pgBackRest project but this goal must be tempered by restore speed. Two recent features help in this area: file bundling and block incremental backup.
-
-!!!SETUP
-docker exec -it -u postgres doc-pg-primary bash
-rm -rf /var/lib/pgbackrest/*
-mkdir /var/lib/pgbackrest/1
-mkdir /var/lib/pgbackrest/2
-vi /etc/pgbackrest/pgbackrest.conf
-!!!SETUP
+Efficiently storing backups is a major priority for the pgBackRest project but we also strive to balance this goal with restore performance. Two recent features help in this area: file bundling and block incremental backup.
 
 To demonstrate these features we will create two repositories. The first repository will use defaults and the second will have file bundling and block incremental backup enabled.
 
@@ -36,14 +28,14 @@ $ pgbackrest --stanza=demo stanza-create
 ```
 
 The block incremental backup feature is best demonstrated with a larger dataset. In particular, we would prefer to have at least one
-file that is near the maximum segment size of 1GB. This can be accomplished with `pgbench`:
+file that is near the maximum segment size of 1GB. This can be accomplished by creating data with `pgbench`:
 ```
 $ /usr/lib/postgresql/12/bin/pgbench -i -s 65
 ```
 
 ## File Bundling
 
-File bundling stores files more efficiently in the repository by combining smaller files together. This results in fewer files overall in the backup which improves the speed of all repository operations, especially on object stores like S3, Azure, and GCS. There may also be cost savings on repositories that have a cost per operation since there will be fewer lists, deletes, etc.
+File bundling stores data in the repository more efficiently by combining smaller files together. This results in fewer files overall in the backup which improves the speed of all repository operations, especially on object stores like S3, Azure, and GCS. There may also be cost savings on repositories that have a cost per operation since there will be fewer lists, deletes, etc.
 
 To demonstrate this we'll make a backup on repo1, which does not have bundling enabled:
 ```
@@ -122,15 +114,27 @@ diff backup: 20230520-082438F_20230520-083027D
     database size: 995.7MB, database backup size: 972.8MB
     repo2: backup size: 943.3KB
 ```
-Block incremental also improves the efficiency of the restore command . On repo1 restoring the full backup would require reading the entire 30MB (compressed) `pg_data/base/13427/16501` file, but with block incremental, only 3.MB of blocks are required to restore the file to the full backup.
+Block incremental also improves the efficiency of the restore command. For example, on repo1 restoring the full backup would require reading the entire 30.4MB (compressed) `base/13427/16501` file, but with block incremental only 3.MB of blocks are required to restore the file from the full backup.
 
-!!! Avoid long chains of incrementals
+It is best to avoid long chains of incremental backups since they can have a negative impact on restore performance. In this case pgBackRest may be forced to pull from many backups to restore a file.
 
+# Conclusion
+
+Block incremental and file bundling both help make backup and restore more efficient and they are a powerful combination when used together. In general you should consider enabling both on all your repositories, with the caveat that these features are not backward compatible with older versions of pgBackRest.
+
+# !!! NOTES -- IGNORE FOR REVIEW
+
+!!!SETUP:
+docker exec -it -u postgres doc-pg-primary bash
+rm -rf /var/lib/pgbackrest/*
+mkdir /var/lib/pgbackrest/1
+mkdir /var/lib/pgbackrest/2
+vi /etc/pgbackrest/pgbackrest.conf
+
+!!!BLOCK DELTA:
 pg_data/base/13427/16501
     size: 832.5MB, repo 30.4MB
     block: size 80KB, map size 74.0KB, checksum size 7B
     block delta:
     reference: 20230520-082438F/pg_data/base/13427/16501.pgbi, read: 86/3.5MB, superBlock: 95/96.2MB, block: 100/7.8MB
     total read: 86/3.5MB, superBlock: 95/96.2MB, block: 100/7.8MB
-
-# Conclusion
