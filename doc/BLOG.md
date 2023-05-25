@@ -1,6 +1,6 @@
 # pgBackRest File Bundling and Block Incremental Backup
 
-Efficiently storing backups is a major priority for the pgBackRest project but we also strive to balance this goal with restore performance. Two recent features help in this area: file bundling and block incremental backup.
+Efficiently storing backups is a major priority for the pgBackRest project but we also strive to balance this goal with restore performance. Two recent features help with both efficiency and performance: file bundling and block incremental backup.
 
 To demonstrate these features we will create two repositories. The first repository will use defaults and the second will have file bundling and block incremental backup enabled.
 
@@ -66,22 +66,22 @@ The `repo-bundle-limit` option limits the files that will be added to bundles. I
 
 ## Block Incremental Backup
 
-Block incremental backup saves space in the repository by storing only the parts of the file that have changed since the last backup. The block size depends the file size and when the file was last modified, i.e. larger, older files will get larger block sizes. Blocks are compressed and encrypted into super blocks that can be retrieved independently to make restore more efficient.
+Block incremental backup saves space in the repository by storing only the parts of the file that have changed since the last backup. The block size depends on the file size and when the file was last modified, i.e. larger, older files will get larger block sizes. Blocks are compressed and encrypted into super blocks that can be retrieved independently to make restore more efficient.
 
 To demonstrate block incremental we need to make some changes to the database. With `pgbench` we can update 100 random rows in the main table, which is about 1GB in size.
 ```
 $ /usr/lib/postgresql/12/bin/pgbench -n -b simple-update -t 100
 ```
 
-On repo1 the time to make a differential backup is very similar to making a full backup. That's because most of the data is contained in a single table, so when the table is updated it must be copied in full.
+On repo1 the time to make a incremental backup is very similar to making a full backup. That's because most of the data is contained in a single table, so when the table is updated it must be copied in full.
 ```
-$ pgbackrest --stanza=demo --type=diff --repo=1 backup
+$ pgbackrest --stanza=demo --type=incr --repo=1 backup
 
 <...>
 INFO: backup command end: completed successfully (12525ms)
 ```
 
-Here we can see that the differential backup is nearly as large as the full backup, 52.8MB vs 55.5MB. This is expected since the bulk of the database is contained in a single file.
+Here we can see that the incremental backup is nearly as large as the full backup, 52.8MB vs 55.5MB. This is expected since the bulk of the database is contained in a single file.
 ```
 $ pgbackrest --stanza=demo --repo=1 info
 
@@ -89,20 +89,20 @@ full backup: 20230520-082323F
     database size: 995.7MB, database backup size: 995.7MB
     repo1: backup size: 55.5MB
 
-diff backup: 20230520-082323F_20230520-082934D
+incr backup: 20230520-082323F_20230520-082934I
     database size: 995.7MB, database backup size: 972.8MB
     repo1: backup size: 52.8MB
 ```
 
 However, on repo2 with block incremental enabled, the backup is significantly faster.
 ```
-$ pgbackrest --stanza=demo --type=diff --repo=2 backup
+$ pgbackrest --stanza=demo --type=incr --repo=2 backup
 
 <...>
 INFO: backup command end: completed successfully (3589ms)
 ```
 
-And also much smaller, 943KB vs 52.8MB on the repo without block incremental enabled. This is more than 50x improvement in backup size!
+And also much smaller, 943KB vs 52.8MB on the repo without block incremental enabled. This is more than 50x improvement in backup size! Note that block incremental backup also works with differential backups.
 ```
 $ pgbackrest --stanza=demo --repo=2 info
 
@@ -110,7 +110,7 @@ full backup: 20230520-082438F
     database size: 995.7MB, database backup size: 995.7MB
     repo2: backup size: 56MB
 
-diff backup: 20230520-082438F_20230520-083027D
+incr backup: 20230520-082438F_20230520-083027I
     database size: 995.7MB, database backup size: 972.8MB
     repo2: backup size: 943.3KB
 ```
