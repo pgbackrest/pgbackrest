@@ -28,10 +28,12 @@ $ pgbackrest --stanza=demo stanza-create
 ```
 
 The block incremental backup feature is best demonstrated with a larger dataset. In particular, we would prefer to have at least one
-file that is near the maximum segment size of 1GB. This can be accomplished by creating data with `pgbench`:
+table that is near the maximum segment size of 1GB. This can be accomplished by creating data with `pgbench`:
 ```
 $ /usr/lib/postgresql/12/bin/pgbench -i -s 65
 ```
+
+PostgreSQL splits tables into segment files of 1GB each, so the one large table that `pgbench` created above will be contained in a single segment file. The format PostgreSQL uses to store tables on disk will be important in the examples below.
 
 ## File Bundling
 
@@ -73,7 +75,7 @@ To demonstrate block incremental we need to make some changes to the database. W
 $ /usr/lib/postgresql/12/bin/pgbench -n -b simple-update -t 100
 ```
 
-On repo1 the time to make a incremental backup is very similar to making a full backup. That's because most of the data is contained in a single table, so when the table is updated it must be copied in full.
+On repo1 the time to make a incremental backup is very similar to making a full backup. As previously discussed, PostgreSQL breaks tables up into 1GB segments so in our case the large table data consists of a single file (since we kept the table size below 1GB).
 ```
 $ pgbackrest --stanza=demo --type=incr --repo=1 backup
 
@@ -81,7 +83,7 @@ $ pgbackrest --stanza=demo --type=incr --repo=1 backup
 INFO: backup command end: completed successfully (12525ms)
 ```
 
-Here we can see that the incremental backup is nearly as large as the full backup, 52.8MB vs 55.5MB. This is expected since the bulk of the database is contained in a single file.
+Here we can see that the incremental backup is nearly as large as the full backup, 52.8MB vs 55.5MB. This is expected since the bulk of the database is contained in a single file and by default incremental backups copy the entire file if any part of the file has changed.
 ```
 $ pgbackrest --stanza=demo --repo=1 info
 
@@ -102,7 +104,7 @@ $ pgbackrest --stanza=demo --type=incr --repo=2 backup
 INFO: backup command end: completed successfully (3589ms)
 ```
 
-And also much smaller, 943KB vs 52.8MB on the repo without block incremental enabled. This is more than 50x improvement in backup size! Note that block incremental backup also works with differential backups.
+And also much smaller, 943KB vs 52.8MB on the repo without block incremental enabled. This is more than 50x improvement in backup size! Note that the block incremental backup feature also works with differential backups.
 ```
 $ pgbackrest --stanza=demo --repo=2 info
 
@@ -114,9 +116,32 @@ incr backup: 20230520-082438F_20230520-083027I
     database size: 995.7MB, database backup size: 972.8MB
     repo2: backup size: 943.3KB
 ```
-Block incremental also improves the efficiency of the restore command. For example, on repo1 restoring the full backup would require reading the entire 30.4MB (compressed) `base/13427/16501` file, but with block incremental only 3.MB of blocks are required to restore the file from the full backup.
 
-It is best to avoid long chains of incremental backups since they can have a negative impact on restore performance. In this case pgBackRest may be forced to pull from many backups to restore a file.
+Block incremental also improves the efficiency of the delta restore command. Here we stop the cluster and perform a delta restore back to the full backup in repo 1:
+```
+$ pg_ctlcluster 12 demo stop
+$ pgbackrest --stanza=demo --delta --repo=1 --set=20230526-053458F restore
+
+<...>
+INFO: restore command end: completed successfully (3697ms)
+```
+As we saw above most of the database is contained in a single segment file, so the restore must copy and decompress the entire file from repo 1 (compressed size 30.4MB) because it was changed since the full backup.
+
+To test the full backup restore in repo 2 we need to first restore the cluster to the most recent backup in repo 2:
+```
+pgbackrest --stanza=demo --delta --repo=2 restore
+```
+
+And then perform a delta restore back to the full backup in repo 2:
+```
+pgbackrest --stanza=demo --delta --repo=2 --set=20230526-053406F restore
+
+<...>
+INFO: restore command end: completed successfully (1536ms)
+```
+This is noticeably faster even on the fairly small demo database. When storage latency is high (e.g. S3) the performance improvement will be more pronounced. With block incremental enabled delta restore only had to copy 3.5MB of the largest file from repo 2, as compared to 30.4MB from repo 1.
+
+It is best to avoid long chains of block incremental backups since they can have a negative impact on restore performance. In this case pgBackRest may be forced to pull from many backups to restore a file.
 
 # Conclusion
 
@@ -125,6 +150,7 @@ Block incremental and file bundling both help make backup and restore more effic
 # !!! NOTES -- IGNORE FOR REVIEW
 
 !!!SETUP:
+pgbackrest/doc/doc.pl --out=html --include=user-guide --pre --no-cache --var=host-mem-limit=n --require=/quickstart/check-configuration
 docker exec -it -u postgres doc-pg-primary bash
 rm -rf /var/lib/pgbackrest/*
 mkdir /var/lib/pgbackrest/1
