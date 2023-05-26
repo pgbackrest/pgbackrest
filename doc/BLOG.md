@@ -33,7 +33,7 @@ table that is near the maximum segment size of 1GB. This can be accomplished by 
 $ /usr/lib/postgresql/12/bin/pgbench -i -s 65
 ```
 
-PostgreSQL splits tables into segment files of 1GB each, so the one large table that `pgbench` created above will be contained in a single segment file. The format PostgreSQL uses to store tables on disk will be important in the examples below.
+PostgreSQL splits tables into segment files of 1GB each, so the main table that `pgbench` created above will be contained in a single file. The format PostgreSQL uses to store tables on disk will be important in the examples below.
 
 ## File Bundling
 
@@ -75,7 +75,7 @@ To demonstrate block incremental we need to make some changes to the database. W
 $ /usr/lib/postgresql/12/bin/pgbench -n -b simple-update -t 100
 ```
 
-On repo1 the time to make a incremental backup is very similar to making a full backup. As previously discussed, PostgreSQL breaks tables up into 1GB segments so in our case the large table data consists of a single file (since we kept the table size below 1GB).
+On repo1 the time to make a incremental backup is very similar to making a full backup. As previously discussed, PostgreSQL breaks tables up into 1GB segments so in our case the main table consists of a single file (since we kept the table size below 1GB).
 ```
 $ pgbackrest --stanza=demo --type=incr --repo=1 backup
 
@@ -125,7 +125,7 @@ $ pgbackrest --stanza=demo --delta --repo=1 --set=20230526-053458F restore
 <...>
 INFO: restore command end: completed successfully (3697ms)
 ```
-As we saw above most of the database is contained in a single segment file, so the restore must copy and decompress the entire file from repo 1 (compressed size 30.4MB) because it was changed since the full backup.
+As we saw above the main table is contained in a single file, so the restore must copy and decompress the entire file from repo 1 (compressed size 30.4MB) because it was changed since the full backup.
 
 To test the full backup restore in repo 2 we need to first restore the cluster to the most recent backup in repo 2:
 ```
@@ -139,7 +139,7 @@ pgbackrest --stanza=demo --delta --repo=2 --set=20230526-053406F restore
 <...>
 INFO: restore command end: completed successfully (1536ms)
 ```
-This is noticeably faster even on the fairly small demo database. When storage latency is high (e.g. S3) the performance improvement will be more pronounced. With block incremental enabled delta restore only had to copy 3.5MB of the largest file from repo 2, as compared to 30.4MB from repo 1.
+This is noticeably faster even on our fairly small demo database. When storage latency is high (e.g. S3) the performance improvement will be more pronounced. With block incremental enabled delta restore only had to copy 3.5MB of the main table file from repo 2, as compared to 30.4MB from repo 1.
 
 It is best to avoid long chains of block incremental backups since they can have a negative impact on restore performance. In this case pgBackRest may be forced to pull from many backups to restore a file.
 
