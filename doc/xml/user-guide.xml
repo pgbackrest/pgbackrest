@@ -2368,6 +2368,47 @@
     </section>
 
     <!-- ======================================================================================================================= -->
+    <!-- This section must be before any of the additional drivers are tested because slow drivers can cause shutdown to fail. -->
+    <section id="delete-stanza" if="!{[object-any-all]}" depend="/quickstart">
+        <title>Delete a Stanza</title>
+
+        <cmd-description key="stanza-delete"/>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Stop <postgres/> cluster to be removed</title>
+
+            <execute user="root">
+                <exe-cmd>{[pg-cluster-stop]}</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Stop <backrest/> for the stanza</title>
+
+            <execute user="postgres" output="y">
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info stop</exe-cmd>
+                <exe-highlight>completed successfully</exe-highlight>
+            </execute>
+        </execute-list>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Delete the stanza from one repository</title>
+
+            <execute user="postgres" output="y">
+                <exe-cmd>
+                    {[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --repo=1
+                    {[dash]}-log-level-console=info stanza-delete
+                </exe-cmd>
+                <exe-highlight>completed successfully</exe-highlight>
+            </execute>
+
+            <execute user="root" show="n">
+                <exe-cmd>{[pg-cluster-start]}</exe-cmd>
+            </execute>
+        </execute-list>
+    </section>
+
+    <!-- ======================================================================================================================= -->
     <section id="multi-repo" if="!{[object-any-all]}">
         <title>Multiple Repositories</title>
 
@@ -2548,6 +2589,7 @@
     </section>
 
     <!-- ======================================================================================================================= -->
+    <!-- This section must be last of all drivers tested since there is no GCS server to make it work. -->
     <section id="gcs-support" if="!{[object-any-all]}" depend="/quickstart/configure-archiving">
         <title>GCS-Compatible Object Store Support</title>
 
@@ -2561,46 +2603,6 @@
         <p>Commands are run exactly as if the repository were stored on a local disk.</p>
 
         <p>File creation time in object stores is relatively slow so commands benefit by increasing <br-option>process-max</br-option> to parallelize file creation.</p>
-    </section>
-
-    <!-- ======================================================================================================================= -->
-    <section id="delete-stanza" if="!{[object-any-all]}" depend="/quickstart">
-        <title>Delete a Stanza</title>
-
-        <cmd-description key="stanza-delete"/>
-
-        <execute-list host="{[host-pg1]}">
-            <title>Stop <postgres/> cluster to be removed</title>
-
-            <execute user="root">
-                <exe-cmd>{[pg-cluster-stop]}</exe-cmd>
-            </execute>
-        </execute-list>
-
-        <execute-list host="{[host-pg1]}">
-            <title>Stop <backrest/> for the stanza</title>
-
-            <execute user="postgres" output="y">
-                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info stop</exe-cmd>
-                <exe-highlight>completed successfully</exe-highlight>
-            </execute>
-        </execute-list>
-
-        <execute-list host="{[host-pg1]}">
-            <title>Delete the stanza from one repository</title>
-
-            <execute user="postgres" output="y">
-                <exe-cmd>
-                    {[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --repo=1
-                    {[dash]}-log-level-console=info stanza-delete
-                </exe-cmd>
-                <exe-highlight>completed successfully</exe-highlight>
-            </execute>
-
-            <execute user="root" show="n">
-                <exe-cmd>{[pg-cluster-start]}</exe-cmd>
-            </execute>
-        </execute-list>
     </section>
 
     <!-- ======================================================================================================================= -->
