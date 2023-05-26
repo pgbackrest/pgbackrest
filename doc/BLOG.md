@@ -75,7 +75,7 @@ To demonstrate block incremental we need to make some changes to the database. W
 $ /usr/lib/postgresql/12/bin/pgbench -n -b simple-update -t 100
 ```
 
-On repo1 the time to make a incremental backup is very similar to making a full backup. As previously discussed, PostgreSQL breaks tables up into 1GB segments so in our case the main table consists of a single file (since we kept the table size below 1GB).
+On repo1 the time to make a incremental backup is very similar to making a full backup. As previously discussed, PostgreSQL breaks tables up into 1GB segments so in our case the main table consists of a single file that contains most of the data in our database.
 ```
 $ pgbackrest --stanza=demo --type=incr --repo=1 backup
 
