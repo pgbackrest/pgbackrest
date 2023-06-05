@@ -129,12 +129,12 @@ As we saw above the main table is contained in a single file, so the restore mus
 
 To test a delta restore of the full backup in repo 2 we need to first restore the cluster to the most recent backup in repo 2:
 ```
-pgbackrest --stanza=demo --delta --repo=2 restore
+$ pgbackrest --stanza=demo --delta --repo=2 restore
 ```
 
 And then perform a delta restore back to the full backup in repo 2:
 ```
-pgbackrest --stanza=demo --delta --repo=2 --set=20230526-053406F restore
+$ pgbackrest --stanza=demo --delta --repo=2 --set=20230526-053406F restore
 
 <...>
 INFO: restore command end: completed successfully (1536ms)
