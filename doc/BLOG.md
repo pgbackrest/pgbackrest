@@ -139,7 +139,7 @@ pgbackrest --stanza=demo --delta --repo=2 --set=20230526-053406F restore
 <...>
 INFO: restore command end: completed successfully (1536ms)
 ```
-This is noticeably faster even on our fairly small demo database. When storage latency is high (e.g. S3) the performance improvement will be more pronounced. With block incremental enabled delta restore only had to copy 3.5MB of the main table file from repo 2, as compared to 30.4MB from repo 1.
+This is noticeably faster even on our fairly small demo database. When storage latency is high (e.g. S3) the performance improvement will be more pronounced. With block incremental enabled, delta restore only had to copy 3.5MB of the main table file from repo 2, as compared to 30.4MB from repo 1.
 
 It is best to avoid long chains of block incremental backups since they can have a negative impact on restore performance. In this case pgBackRest may be forced to pull from many backups to restore a file.
 
