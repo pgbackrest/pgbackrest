@@ -146,21 +146,3 @@ It is best to avoid long chains of block incremental backups since they can have
 # Conclusion
 
 Block incremental and file bundling both help make backup and restore more efficient and they are a powerful combination when used together. In general you should consider enabling both on all your repositories, with the caveat that these features are not backward compatible with older versions of pgBackRest.
-
-# !!! NOTES -- IGNORE FOR REVIEW
-
-!!!SETUP:
-pgbackrest/doc/doc.pl --out=html --include=user-guide --pre --no-cache --var=host-mem-limit=n --require=/quickstart/check-configuration
-docker exec -it -u postgres doc-pg-primary bash
-rm -rf /var/lib/pgbackrest/*
-mkdir /var/lib/pgbackrest/1
-mkdir /var/lib/pgbackrest/2
-vi /etc/pgbackrest/pgbackrest.conf
-
-!!!BLOCK DELTA:
-pg_data/base/13427/16501
-    size: 832.5MB, repo 30.4MB
-    block: size 80KB, map size 74.0KB, checksum size 7B
-    block delta:
-    reference: 20230520-082438F/pg_data/base/13427/16501.pgbi, read: 86/3.5MB, superBlock: 95/96.2MB, block: 100/7.8MB
-    total read: 86/3.5MB, superBlock: 95/96.2MB, block: 100/7.8MB
