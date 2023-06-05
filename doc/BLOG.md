@@ -127,7 +127,7 @@ INFO: restore command end: completed successfully (3697ms)
 ```
 As we saw above the main table is contained in a single file, so the restore must copy and decompress the entire file from repo 1 (compressed size 30.4MB) because it was changed since the full backup.
 
-To test the full backup restore in repo 2 we need to first restore the cluster to the most recent backup in repo 2:
+To test a delta restore of the full backup in repo 2 we need to first restore the cluster to the most recent backup in repo 2:
 ```
 pgbackrest --stanza=demo --delta --repo=2 restore
 ```
