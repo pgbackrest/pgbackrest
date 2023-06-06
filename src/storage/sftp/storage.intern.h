@@ -20,6 +20,9 @@ Functions
 FN_EXTERN void storageSftpEvalLibSsh2Error(
     int ssh2Errno, uint64_t sftpErrno, const ErrorType *errorType, const String *msg, const String *hint);
 
+FN_EXTERN bool storageSftpWaitFd(
+    StorageSftp *this);
+
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
