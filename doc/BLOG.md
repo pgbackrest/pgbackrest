@@ -1,8 +1,22 @@
 # pgBackRest File Bundling and Block Incremental Backup
 
-Efficiently storing backups is a major priority for the pgBackRest project but we also strive to balance this goal with restore performance. Two recent features help with both efficiency and performance: file bundling and block incremental backup.
+[pgBackRest](https://github.com/pgbackrest/) recently released v2.46 with support for block incremental backup, which saves space in the repository by storing only changed parts of files. File bundling, released in v2.39, combines smaller files together for speed and cost savings, especially on object stores.
 
-To demonstrate these features we will create two repositories. The first repository will use defaults and the second will have file bundling and block incremental backup enabled.
+Efficiently storing backups is a major priority for the pgBackRest project but we also strive to balance this goal with backup and restore performance. The file bundling and block incremental backup features improve backup and, in many cases, restore performance while also saving space in the repository.
+
+In this blog we will provide working examples to help you get started with these exciting features.
+
+#### File bundling
+* combines smaller files together
+* improves speed on object stores like S3, Azure, GCS
+
+#### Block incremental backup
+* saves space by storing only changed file parts
+* improves efficiency of delta restore
+
+## Sample repository set up
+
+To demonstrate these features we will create two repositories. The first repository will use defaults. The second will have file bundling and block incremental backup enabled.
 
 Configure both repositories:
 ```
@@ -35,7 +49,7 @@ $ /usr/lib/postgresql/12/bin/pgbench -i -s 65
 
 PostgreSQL splits tables into segment files of 1GB each, so the main table that `pgbench` created above will be contained in a single file. The format PostgreSQL uses to store tables on disk will be important in the examples below.
 
-## File Bundling
+## File bundling
 
 File bundling stores data in the repository more efficiently by combining smaller files together. This results in fewer files overall in the backup which improves the speed of all repository operations, especially on object stores like S3, Azure, and GCS. There may also be cost savings on repositories that have a cost per operation since there will be fewer lists, deletes, etc.
 
@@ -66,7 +80,7 @@ This time there are far fewer files. The small files have been bundled together 
 The `repo-bundle-size` option can be used to control the maximum size of bundles before compression and other operations are applied.
 The `repo-bundle-limit` option limits the files that will be added to bundles. It is not a good idea to set these options too large because any failure in the bundle on backup or restore will require the entire bundle to be retried. The goal of file bundling is to combine small files -- there is very seldom any benefit in combining larger files.
 
-## Block Incremental Backup
+## Block incremental backup
 
 Block incremental backup saves space in the repository by storing only the parts of the file that have changed since the last backup. The block size depends on the file size and when the file was last modified, i.e. larger, older files will get larger block sizes. Blocks are compressed and encrypted into super blocks that can be retrieved independently to make restore more efficient.
 
