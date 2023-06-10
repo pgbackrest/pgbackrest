@@ -58,7 +58,9 @@ storageWriteSftpOpen(THIS_VOID)
             this->sftpSession, strZ(this->nameTmp), (unsigned int)strSize(this->nameTmp), flags, (int)this->interface.modeFile,
             LIBSSH2_SFTP_OPENFILE);
     }
-    while (this->sftpHandle == NULL && libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_EAGAIN && storageSftpWaitFd(this->storage));
+    while (
+        this->sftpHandle == NULL && libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_EAGAIN &&
+        storageSftpWaitFd(this->storage));
 
     // Attempt to create the path if it is missing
     if (this->sftpHandle == NULL && libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL &&
@@ -74,7 +76,9 @@ storageWriteSftpOpen(THIS_VOID)
                 this->sftpSession, strZ(this->nameTmp), (unsigned int)strSize(this->nameTmp), flags, (int)this->interface.modeFile,
                 LIBSSH2_SFTP_OPENFILE);
         }
-        while (this->sftpHandle == NULL && libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_EAGAIN && storageSftpWaitFd(this->storage));
+        while (
+            this->sftpHandle == NULL && libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_EAGAIN &&
+            storageSftpWaitFd(this->storage));
     }
 
     // Handle error
@@ -329,10 +333,10 @@ storageWriteSftpClose(THIS_VOID)
 /**********************************************************************************************************************************/
 FN_EXTERN StorageWrite *
 storageWriteSftpNew(
-    StorageSftp *const storage, const String *const name, LIBSSH2_SESSION *const session,
-    LIBSSH2_SFTP *const sftpSession, LIBSSH2_SFTP_HANDLE *const sftpHandle, const mode_t modeFile,
-    const mode_t modePath, const String *const user, const String *const group, const time_t timeModified, const bool createPath,
-    const bool syncFile, const bool syncPath, const bool atomic, const bool truncate)
+    StorageSftp *const storage, const String *const name, LIBSSH2_SESSION *const session, LIBSSH2_SFTP *const sftpSession,
+    LIBSSH2_SFTP_HANDLE *const sftpHandle, const mode_t modeFile, const mode_t modePath, const String *const user,
+    const String *const group, const time_t timeModified, const bool createPath, const bool syncFile, const bool syncPath,
+    const bool atomic, const bool truncate)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_SFTP, storage);

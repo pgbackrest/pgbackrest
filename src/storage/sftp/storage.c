@@ -156,14 +156,13 @@ storageSftpEvalLibSsh2Error(
 
 /**********************************************************************************************************************************/
 FN_EXTERN bool
-storageSftpWaitFd(StorageSftp *this)
+storageSftpWaitFd(StorageSftp *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_SFTP, this);
     FUNCTION_LOG_END();
 
-    int dir = libssh2_session_block_directions(this->session);
-
+    const int dir = libssh2_session_block_directions(this->session);
     const bool waitingRead = dir & LIBSSH2_SESSION_BLOCK_INBOUND;
     const bool waitingWrite = dir & LIBSSH2_SESSION_BLOCK_OUTBOUND;
 
@@ -899,7 +898,9 @@ storageSftpNew(
         {
             this->sftpSession = libssh2_sftp_init(this->session);
         }
-        while (this->sftpSession == NULL && libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_EAGAIN && storageSftpWaitFd(this));
+        while (
+            this->sftpSession == NULL && libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_EAGAIN &&
+            storageSftpWaitFd(this));
 
         if (this->sftpSession == NULL)
         {

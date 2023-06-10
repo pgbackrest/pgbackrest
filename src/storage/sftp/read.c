@@ -56,7 +56,9 @@ storageReadSftpOpen(THIS_VOID)
             this->sftpSession, strZ(this->interface.name), (unsigned int)strSize(this->interface.name), LIBSSH2_FXF_READ, 0,
             LIBSSH2_SFTP_OPENFILE);
     }
-    while (this->sftpHandle == NULL && libssh2_session_last_error(this->session, NULL, NULL, 0) == LIBSSH2_ERROR_EAGAIN && storageSftpWaitFd(this->storage));
+    while (
+        this->sftpHandle == NULL && libssh2_session_last_error(this->session, NULL, NULL, 0) == LIBSSH2_ERROR_EAGAIN &&
+        storageSftpWaitFd(this->storage));
 
     if (this->sftpHandle == NULL)
     {
@@ -230,9 +232,8 @@ storageReadSftpEof(THIS_VOID)
 /**********************************************************************************************************************************/
 FN_EXTERN StorageRead *
 storageReadSftpNew(
-    StorageSftp *const storage, const String *const name, const bool ignoreMissing,
-    LIBSSH2_SESSION *const session, LIBSSH2_SFTP *const sftpSession, LIBSSH2_SFTP_HANDLE *const sftpHandle,
-    const uint64_t offset, const Variant *const limit)
+    StorageSftp *const storage, const String *const name, const bool ignoreMissing, LIBSSH2_SESSION *const session,
+    LIBSSH2_SFTP *const sftpSession, LIBSSH2_SFTP_HANDLE *const sftpHandle, const uint64_t offset, const Variant *const limit)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, name);
