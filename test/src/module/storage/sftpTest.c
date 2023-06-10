@@ -2593,7 +2593,7 @@ testRun(void)
 
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
-        close(ioSessionFd(((StorageReadSftp *)file->driver)->ioSession));
+        close(ioSessionFd(((StorageReadSftp *)file->driver)->storage->ioSession));
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
