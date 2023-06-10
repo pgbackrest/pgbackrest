@@ -58,7 +58,7 @@ storageSftpLibSsh2SessionFreeResource(THIS_VOID)
         {
             rc = libssh2_sftp_close(this->sftpHandle);
         }
-        while (rc == LIBSSH2_ERROR_EAGAIN && storageSftpWaitFd(this));
+        while (storageSftpWaitFd(this, rc));
 
         if (rc)
         {
@@ -79,7 +79,7 @@ storageSftpLibSsh2SessionFreeResource(THIS_VOID)
         {
             rc = libssh2_sftp_shutdown(this->sftpSession);
         }
-        while (rc == LIBSSH2_ERROR_EAGAIN && storageSftpWaitFd(this));
+        while (storageSftpWaitFd(this, rc));
 
         if (rc)
         {
@@ -100,7 +100,7 @@ storageSftpLibSsh2SessionFreeResource(THIS_VOID)
         {
             rc = libssh2_session_disconnect_ex(this->session, SSH_DISCONNECT_BY_APPLICATION, "pgbackrest instance shutdown", "");
         }
-        while (rc == LIBSSH2_ERROR_EAGAIN && storageSftpWaitFd(this));
+        while (storageSftpWaitFd(this, rc));
 
         if (rc)
         {
@@ -114,7 +114,7 @@ storageSftpLibSsh2SessionFreeResource(THIS_VOID)
         {
             rc = libssh2_session_free(this->session);
         }
-        while (rc == LIBSSH2_ERROR_EAGAIN && storageSftpWaitFd(this));
+        while (storageSftpWaitFd(this, rc));
 
         if (rc)
         {
@@ -156,11 +156,14 @@ storageSftpEvalLibSsh2Error(
 
 /**********************************************************************************************************************************/
 FN_EXTERN bool
-storageSftpWaitFd(StorageSftp *const this)
+storageSftpWaitFd(StorageSftp *const this, const int64_t rc)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_SFTP, this);
     FUNCTION_TEST_END();
+
+    if (rc != LIBSSH2_ERROR_EAGAIN)
+        FUNCTION_TEST_RETURN(BOOL, false);
 
     const int dir = libssh2_session_block_directions(this->session);
     const bool waitingRead = dir & LIBSSH2_SESSION_BLOCK_INBOUND;
@@ -219,7 +222,7 @@ storageSftpInfo(THIS_VOID, const String *const file, const StorageInfoLevel leve
             this->sftpSession, strZ(file), (unsigned int)strSize(file), param.followLink ? LIBSSH2_SFTP_STAT : LIBSSH2_SFTP_LSTAT,
             &attr);
     }
-    while (rc == LIBSSH2_ERROR_EAGAIN && storageSftpWaitFd(this));
+    while (storageSftpWaitFd(this, rc));
 
     if (rc)
     {
@@ -280,7 +283,7 @@ storageSftpInfo(THIS_VOID, const String *const file, const StorageInfoLevel leve
                         this->sftpSession, strZ(file), (unsigned int)strSize(file), linkDestination, PATH_MAX - 1,
                         LIBSSH2_SFTP_READLINK);
                 }
-                while (linkDestinationSize == LIBSSH2_ERROR_EAGAIN && storageSftpWaitFd(this));
+                while (storageSftpWaitFd(this, linkDestinationSize));
 
                 if (linkDestinationSize == LIBSSH2_ERROR_EAGAIN)
                     THROW_FMT(FileReadError, "timeout getting destination for link '%s'", strZ(file));
@@ -355,7 +358,7 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
     {
         sftpHandle = libssh2_sftp_open_ex(this->sftpSession, strZ(path), (unsigned int)strSize(path), 0, 0, LIBSSH2_SFTP_OPENDIR);
     }
-    while (sftpHandle == NULL && libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_EAGAIN && storageSftpWaitFd(this));
+    while (sftpHandle == NULL && storageSftpWaitFd(this, libssh2_session_last_errno(this->session)));
 
     // If the directory could not be opened process errors and report missing directories
     if (sftpHandle == NULL)
@@ -417,7 +420,7 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
                         MEM_CONTEXT_TEMP_RESET(1000);
                     }
                 }
-                while (len > 0 || (len == LIBSSH2_ERROR_EAGAIN && storageSftpWaitFd(this)));
+                while (len > 0 || storageSftpWaitFd(this, len));
             }
             MEM_CONTEXT_TEMP_END();
         }
@@ -429,7 +432,7 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
             {
                 rc = libssh2_sftp_closedir(sftpHandle);
             }
-            while (rc == LIBSSH2_ERROR_EAGAIN && storageSftpWaitFd(this));
+            while (storageSftpWaitFd(this, rc));
 
             if (rc)
             {
@@ -469,7 +472,7 @@ storageSftpRemove(THIS_VOID, const String *const file, const StorageInterfaceRem
     {
         rc = libssh2_sftp_unlink_ex(this->sftpSession, strZ(file), (unsigned int)strSize(file));
     }
-    while (rc == LIBSSH2_ERROR_EAGAIN && storageSftpWaitFd(this));
+    while (storageSftpWaitFd(this, rc));
 
     if (rc)
     {
@@ -583,7 +586,7 @@ storageSftpPathCreate(
     {
         rc = libssh2_sftp_mkdir_ex(this->sftpSession, strZ(path), (unsigned int)strSize(path), (int)mode);
     }
-    while (rc == LIBSSH2_ERROR_EAGAIN && storageSftpWaitFd(this));
+    while (storageSftpWaitFd(this, rc));
 
     if (rc)
     {
@@ -605,7 +608,7 @@ storageSftpPathCreate(
                     rc = libssh2_sftp_stat_ex(
                         this->sftpSession, strZ(path), (unsigned int)strSize(path), LIBSSH2_SFTP_STAT, &attr);
                 }
-                while (rc == LIBSSH2_ERROR_EAGAIN && storageSftpWaitFd(this));
+                while (storageSftpWaitFd(this, rc));
 
                 if (rc == LIBSSH2_ERROR_EAGAIN)
                     THROW_FMT(PathCreateError, "timeout stating path '%s'", strZ(path));
@@ -673,7 +676,7 @@ storageSftpPathRemove(THIS_VOID, const String *const path, const bool recurse, c
                         {
                             rc = libssh2_sftp_unlink_ex(this->sftpSession, strZ(file), (unsigned int)strSize(file));
                         }
-                        while (rc == LIBSSH2_ERROR_EAGAIN && storageSftpWaitFd(this));
+                        while (storageSftpWaitFd(this, rc));
 
                         if (rc)
                         {
@@ -705,7 +708,7 @@ storageSftpPathRemove(THIS_VOID, const String *const path, const bool recurse, c
         {
             rc = libssh2_sftp_rmdir_ex(this->sftpSession, strZ(path), (unsigned int)strSize(path));
         }
-        while (rc == LIBSSH2_ERROR_EAGAIN && storageSftpWaitFd(this));
+        while (storageSftpWaitFd(this, rc));
 
         if (rc)
         {
@@ -807,7 +810,7 @@ storageSftpNew(
         {
             handshakeStatus = libssh2_session_handshake(this->session, ioSessionFd(this->ioSession));
         }
-        while (handshakeStatus == LIBSSH2_ERROR_EAGAIN && storageSftpWaitFd(this));
+        while (storageSftpWaitFd(this, handshakeStatus));
 
         if (handshakeStatus == LIBSSH2_ERROR_EAGAIN)
             THROW_FMT(ServiceError, "timeout during libssh2 handshake [%d]", handshakeStatus);
@@ -875,7 +878,7 @@ storageSftpNew(
             rc = libssh2_userauth_publickey_fromfile(
                 this->session, strZ(user), strZNull(param.keyPub), strZ(keyPriv), strZNull(param.keyPassphrase));
         }
-        while (rc == LIBSSH2_ERROR_EAGAIN && storageSftpWaitFd(this));
+        while (storageSftpWaitFd(this, rc));
 
         if (rc)
         {
@@ -896,9 +899,7 @@ storageSftpNew(
         {
             this->sftpSession = libssh2_sftp_init(this->session);
         }
-        while (
-            this->sftpSession == NULL && libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_EAGAIN &&
-            storageSftpWaitFd(this));
+        while (this->sftpSession == NULL && storageSftpWaitFd(this, libssh2_session_last_errno(this->session)));
 
         if (this->sftpSession == NULL)
         {

@@ -58,9 +58,7 @@ storageWriteSftpOpen(THIS_VOID)
             this->sftpSession, strZ(this->nameTmp), (unsigned int)strSize(this->nameTmp), flags, (int)this->interface.modeFile,
             LIBSSH2_SFTP_OPENFILE);
     }
-    while (
-        this->sftpHandle == NULL && libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_EAGAIN &&
-        storageSftpWaitFd(this->storage));
+    while (this->sftpHandle == NULL && storageSftpWaitFd(this->storage, libssh2_session_last_errno(this->session)));
 
     // Attempt to create the path if it is missing
     if (this->sftpHandle == NULL && libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL &&
@@ -76,9 +74,7 @@ storageWriteSftpOpen(THIS_VOID)
                 this->sftpSession, strZ(this->nameTmp), (unsigned int)strSize(this->nameTmp), flags, (int)this->interface.modeFile,
                 LIBSSH2_SFTP_OPENFILE);
         }
-        while (
-            this->sftpHandle == NULL && libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_EAGAIN &&
-            storageSftpWaitFd(this->storage));
+        while (this->sftpHandle == NULL && storageSftpWaitFd(this->storage, libssh2_session_last_errno(this->session)));
     }
 
     // Handle error
@@ -136,7 +132,7 @@ storageWriteSftp(THIS_VOID, const Buffer *const buffer)
         {
             rc = libssh2_sftp_write(this->sftpHandle, (const char *)bufPtrConst(buffer) + offset, remains);
         }
-        while (rc == LIBSSH2_ERROR_EAGAIN && storageSftpWaitFd(this->storage));
+        while (storageSftpWaitFd(this->storage, rc));
 
         // Break on error. Error will be thrown below the loop.
         if (rc < 0)
@@ -179,7 +175,7 @@ storageWriteSftpUnlinkExisting(THIS_VOID)
     {
         rc = libssh2_sftp_unlink_ex(this->sftpSession, strZ(this->interface.name), (unsigned int)strSize(this->interface.name));
     }
-    while (rc == LIBSSH2_ERROR_EAGAIN && storageSftpWaitFd(this->storage));
+    while (storageSftpWaitFd(this->storage, rc));
 
     if (rc)
     {
@@ -218,7 +214,7 @@ storageWriteSftpRename(THIS_VOID)
             (unsigned int)strSize(this->interface.name),
             LIBSSH2_SFTP_RENAME_OVERWRITE | LIBSSH2_SFTP_RENAME_ATOMIC | LIBSSH2_SFTP_RENAME_NATIVE);
     }
-    while (rc == LIBSSH2_ERROR_EAGAIN && storageSftpWaitFd(this->storage));
+    while (storageSftpWaitFd(this->storage, rc));
 
     if (rc)
     {
@@ -261,7 +257,7 @@ storageWriteSftpClose(THIS_VOID)
             {
                 rc = libssh2_sftp_fsync(this->sftpHandle);
             }
-            while (rc == LIBSSH2_ERROR_EAGAIN && storageSftpWaitFd(this->storage));
+            while (storageSftpWaitFd(this->storage, rc));
 
             if (rc)
             {
@@ -277,7 +273,7 @@ storageWriteSftpClose(THIS_VOID)
         {
             rc = libssh2_sftp_close(this->sftpHandle);
         }
-        while (rc == LIBSSH2_ERROR_EAGAIN && storageSftpWaitFd(this->storage));
+        while (storageSftpWaitFd(this->storage, rc));
 
         if (rc)
         {
@@ -303,7 +299,7 @@ storageWriteSftpClose(THIS_VOID)
                     (unsigned int)strSize(this->interface.name),
                     LIBSSH2_SFTP_RENAME_OVERWRITE | LIBSSH2_SFTP_RENAME_ATOMIC | LIBSSH2_SFTP_RENAME_NATIVE);
             }
-            while (rc == LIBSSH2_ERROR_EAGAIN && storageSftpWaitFd(this->storage));
+            while (storageSftpWaitFd(this->storage, rc));
 
             if (rc)
             {

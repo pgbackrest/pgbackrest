@@ -56,9 +56,7 @@ storageReadSftpOpen(THIS_VOID)
             this->sftpSession, strZ(this->interface.name), (unsigned int)strSize(this->interface.name), LIBSSH2_FXF_READ, 0,
             LIBSSH2_SFTP_OPENFILE);
     }
-    while (
-        this->sftpHandle == NULL && libssh2_session_last_error(this->session, NULL, NULL, 0) == LIBSSH2_ERROR_EAGAIN &&
-        storageSftpWaitFd(this->storage));
+    while (this->sftpHandle == NULL && storageSftpWaitFd(this->storage, libssh2_session_last_error(this->session, NULL, NULL, 0)));
 
     if (this->sftpHandle == NULL)
     {
@@ -124,7 +122,7 @@ storageReadSftp(THIS_VOID, Buffer *const buffer, const bool block)
             {
                 rc = libssh2_sftp_read(this->sftpHandle, (char *)bufRemainsPtr(buffer), bufRemains(buffer));
             }
-            while (rc == LIBSSH2_ERROR_EAGAIN && storageSftpWaitFd(this->storage));
+            while (storageSftpWaitFd(this->storage, rc));
 
             // Break on EOF or error
             if (rc <= 0)
@@ -192,7 +190,7 @@ storageReadSftpClose(THIS_VOID)
         {
             rc = libssh2_sftp_close(this->sftpHandle);
         }
-        while (rc == LIBSSH2_ERROR_EAGAIN && storageSftpWaitFd(this->storage));
+        while (storageSftpWaitFd(this->storage, rc));
 
         if (rc)
         {
