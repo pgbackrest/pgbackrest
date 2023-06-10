@@ -158,20 +158,18 @@ storageSftpEvalLibSsh2Error(
 FN_EXTERN bool
 storageSftpWaitFd(StorageSftp *const this)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_SFTP, this);
-    FUNCTION_LOG_END();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_SFTP, this);
+    FUNCTION_TEST_END();
 
     const int dir = libssh2_session_block_directions(this->session);
     const bool waitingRead = dir & LIBSSH2_SESSION_BLOCK_INBOUND;
     const bool waitingWrite = dir & LIBSSH2_SESSION_BLOCK_OUTBOUND;
 
     if (!waitingRead && !waitingWrite)
-        return true;
+        FUNCTION_TEST_RETURN(BOOL, true);
 
-    bool result = fdReady(ioSessionFd(this->ioSession), waitingRead, waitingWrite, this->timeout);
-
-    FUNCTION_LOG_RETURN(BOOL, result);
+    FUNCTION_TEST_RETURN(BOOL, fdReady(ioSessionFd(this->ioSession), waitingRead, waitingWrite, this->timeout));
 }
 
 /**********************************************************************************************************************************/
