@@ -564,7 +564,7 @@
 
         <p if="{[os-type-is-rhel]}">{[user-guide-os]} packages for <backrest/> are available from <link url="{[crunchy-url-base]}">Crunchy Data</link> or <link url="http://yum.postgresql.org">yum.postgresql.org</link>.</p>
 
-        <p>If packages are not provided for your distribution/version then you can <link section="/build">build from source</link> and then install manually as shown here.</p>
+        <p>If packages are not provided for your distribution/version you can <link section="/build">build from source</link> and then install manually as shown here.</p>
 
         <execute-list host="{[br-install-host]}">
             <title>Install dependencies</title>
