@@ -1,54 +1,34 @@
-!!! NOT READY FOR REVIEW YET !!!
+**June 12, 2023**: [Crunchy Data](https://www.crunchydata.com) is pleased to announce the release of [pgBackRest](https://pgbackrest.org/) 2.46, the latest version of the reliable, easy-to-use backup and restore solution that can seamlessly scale up to the largest databases and workloads.
 
-**May !!!, 2023**: [Crunchy Data](https://www.crunchydata.com) is pleased to announce the release of [pgBackRest](https://pgbackrest.org/) 2.46, the latest version of the reliable, easy-to-use backup and restore solution that can seamlessly scale up to the largest databases and workloads.
+Over the last year pgBackRest has introduced many exciting new features including block incremental backup, file bundling, repository verification, backup annotations, and SFTP repository storage.
 
-Over the last year pgBackRest has introduced many exciting new features including repository verification, backup annotations, SFTP repository storage, file bundling, and block incremental backup.
+IMPORTANT NOTE: pgBackRest 2.44 is the last version to support PostgreSQL 9.0/9.1/9.2.
 
-IMPORTANT NOTE: pgBackRest 2.37 is the last version to support PostgreSQL 8.3/8.4.
+pgBackRest supports a robust set of features for managing your backup and recovery infrastructure, including: parallel backup/restore, full/differential/incremental backups, block incremental backup, multiple repositories, delta restore, parallel asynchronous archiving, per-file checksums, page checksums (when enabled) validated during backup, multiple compression types, encryption, partial/failed backup resume, backup from standby, tablespace and link support, S3/Azure/GCS/SFTP support, backup expiration, local/remote operation via SSH or TLS, flexible configuration, and more.
 
-pgBackRest supports a robust set of features for managing your backup and recovery infrastructure, including: parallel backup/restore, full/differential/incremental backups, multiple repositories, delta restore, parallel asynchronous archiving, per-file checksums, page checksums (when enabled) validated during backup, multiple compression types, encryption, partial/failed backup resume, backup from standby, tablespace and link support, S3/Azure/GCS/SFTP support, backup expiration, local/remote operation via SSH or TLS, flexible configuration, and more.
-
-You can install pgBackRest from the [PostgreSQL Yum Repository](https://yum.postgresql.org/) or the [PostgreSQL APT Repository](https://apt.postgresql.org). Source code can be downloaded from [releases](https://github.com/pgbackrest/pgbackrest/releases).
+pgBackRest can be installed from the [PostgreSQL Yum Repository](https://yum.postgresql.org/) or the [PostgreSQL APT Repository](https://apt.postgresql.org). Source code can be downloaded from [releases](https://github.com/pgbackrest/pgbackrest/releases).
 
 ## Major New Features
 
-!!! Block Incremental Backup
+### Block Incremental Backup
 
-!!! File Bundling
+Block incremental backup saves space in the repository by only storing file parts that have changed since the prior backup. In addition to space savings, this feature makes backup faster since there is less data to compress and transfer. Delta restore is also improved because less data from the repository is required to restore files. See [User Guide](https://pgbackrest.org/user-guide-rhel.html#backup/block) and [pgBackRest File Bundling and Block Incremental Backup](https://www.crunchydata.com/blog/pgbackrest-file-bundling-and-block-incremental-backup).
 
-!!! Verify
+### File Bundling
 
-!!! Backup key/value annotations
+File bundling combines smaller files to improve the efficiency of repository reads and writes, especially on object stores such as S3, Azure, and GCS. Zero-length files are stored only in the manifest. See [User Guide](https://pgbackrest.org/user-guide-rhel.html#backup/bundle) and [pgBackRest File Bundling and Block Incremental Backup](https://www.crunchydata.com/blog/pgbackrest-file-bundling-and-block-incremental-backup).
 
-!!! SFTP repository storage
+### Verify
 
-### TLS Server
+The `verify` command checks that files in the repository have not been lost or corrupted and generates a report when problems are found. See [Command Reference](https://pgbackrest.org/command.html#command-verify).
 
-The TLS server provides an alternative to SSH for remote operations such as backup. Containers benefit because pgBackRest can be used as the entry point without any need for SSH. In addition, performance tests have shown TLS to be significantly faster than SSH. See [User Guide](https://pgbackrest.org/user-guide-rhel.html#repo-host/setup-tls).
+### Backup Key/Value Annotations
 
-### Binary Protocol
+Backup annotations allow custom annotations to be stored with a backup and queried with the `info` command. See [User Guide](https://pgbackrest.org/user-guide-rhel.html#backup/annotate).
 
-The binary protocol provides a faster and more memory efficient way for pgBackRest to communicate with local and remote processes while maintaining the ability to communicate between different architectures.
+### SFTP Repository Storage
 
-### New Authentication Methods
-
-The GCS storage driver now supports automatic authentication on GCE instances and the S3 storage driver supports WebIdentity authentication. See [Config Reference](https://pgbackrest.org/configuration.html#section-repository/option-repo-gcs-key-type).
-
-### Additional Backup Integrity Checks
-
-A number of integrity checks were added to ensure the backup is valid or errors are detected as early as possible, including: loop while waiting for checkpoint LSN to reach replay LSN, check archive immediately after backup start, timeline and checkpoint checks before backup, check that clusters are alive and correctly configured during a backup, and warn when checkpoint_timeout exceeds db-timeout.
-
-### Increase Maximum Index Allowed for PG/REPO Options to 256
-
-Up to 256 PostgreSQL clusters and repositories may now be configured.
-
-### Restore Enhancements
-
-The restore command has a number of new features, including: db-exclude option (see [Config Reference](https://pgbackrest.org/configuration.html#section-restore/option-db-exclude)), link-map option can create new links (see [Config Reference](https://pgbackrest.org/configuration.html#section-restore/option-link-map)), automatically create data directory, restore --type=lsn (See [Command Reference](https://pgbackrest.org/command.html#command-restore/category-command/option-type)), and error when restore is unable to find a backup to match the time target.
-
-### Backup History Retention
-
-The backup manifest history can now be expired. See [Config Reference](https://pgbackrest.org/configuration.html#section-repository/option-repo-retention-history).
+Repositories can now be stored on an SFTP server. See [User Guide](https://pgbackrest.org/user-guide-rhel.html#sftp-support).
 
 ## Links
 - [Website](https://pgbackrest.org)
