@@ -558,7 +558,13 @@
 
     <!-- ======================================================================================================================= -->
     <block-define if="'{[package]}' eq 'none'" id="br-install">
-        <p><backrest/> needs to be installed from a package or installed manually as shown here.</p>
+        <p>Installing <backrest/> from a package is preferable to building from source. When installing from a package the rest of the instructions in this section are generally not required, but it is possible that a package will skip creating one of the directories or apply incorrect permissions. In that case it may be necessary to manually create directories or update permissions.</p>
+
+        <p if="{[os-type-is-debian]}">{[user-guide-os]} packages for <backrest/> are available at <link url="https://www.postgresql.org/download/linux/ubuntu/">apt.postgresql.org</link>.</p>
+
+        <p if="{[os-type-is-rhel]}">{[user-guide-os]} packages for <backrest/> are available from <link url="{[crunchy-url-base]}">Crunchy Data</link> or <link url="http://yum.postgresql.org">yum.postgresql.org</link>.</p>
+
+        <p>If packages are not provided for your distribution/version then you can <link section="/build">build from source</link> and then install manually as shown here.</p>
 
         <execute-list host="{[br-install-host]}">
             <title>Install dependencies</title>
@@ -978,9 +984,7 @@
     <section if="'{[package]}' eq 'none'" id="build">
         <title>Build</title>
 
-        <p if="{[os-type-is-debian]}">{[user-guide-os]} packages for <backrest/> are available at <link url="https://www.postgresql.org/download/linux/ubuntu/">apt.postgresql.org</link>. If they are not provided for your distribution/version it is easy to download the source and install manually.</p>
-
-        <p if="{[os-type-is-rhel]}">{[user-guide-os]} packages for <backrest/> are available from <link url="{[crunchy-url-base]}">Crunchy Data</link> or <link url="http://yum.postgresql.org">yum.postgresql.org</link>, but it is also easy to download the source and install manually.</p>
+        <p>Installing <backrest/> from a package is preferable to building from source. See <link section="/installation">Installation</link> for more information about packages.</p>
 
         <host-add id="{[host-build-id]}" name="{[host-build]}" user="{[host-build-user]}" image="{[host-build-image]}" os="{[os-type]}" mount="{[host-build-mount]}" option="{[host-option]}"/>
 
