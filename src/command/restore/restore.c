@@ -2300,7 +2300,7 @@ restoreJobCallback(void *data, unsigned int clientIdx)
         RestoreJobData *jobData = data;
 
         // Determine where to begin scanning the queue (we'll stop when we get back here)
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_RESTORE_FILE);
+        ProtocolCommand *command = protocolCommandNewP(PROTOCOL_COMMAND_RESTORE_FILE);
         PackWrite *param = NULL;
         int queueIdx = (int)(clientIdx % lstSize(jobData->queueList));
         int queueEnd = queueIdx;

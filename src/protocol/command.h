@@ -13,9 +13,28 @@ typedef struct ProtocolCommand ProtocolCommand;
 #include "common/type/pack.h"
 
 /***********************************************************************************************************************************
+Command types
+***********************************************************************************************************************************/
+typedef enum
+{
+    protocolCommandTypeOpen,                                        // Open command for processing
+    protocolCommandTypeProcess,                                     // Process command
+    protocolCommandTypeClose,                                       // Close command
+} ProtocolCommandType;
+
+/***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN ProtocolCommand *protocolCommandNew(const StringId command);
+typedef struct ProtocolCommandNewParam
+{
+    VAR_PARAM_HEADER;
+    ProtocolCommandType type;                                       // Command type (defaults to protocolCommandTypeProcess)
+} ProtocolCommandNewParam;
+
+#define protocolCommandNewP(command, ...)                                                                                          \
+    protocolCommandNew(command, (ProtocolCommandNewParam){__VA_ARGS__})
+
+FN_EXTERN ProtocolCommand *protocolCommandNew(const StringId command, ProtocolCommandNewParam param);
 
 /***********************************************************************************************************************************
 Functions

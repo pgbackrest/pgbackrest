@@ -15,15 +15,17 @@ Object type
 struct ProtocolCommand
 {
     StringId command;
+    ProtocolCommandType type;
     PackWrite *pack;
 };
 
 /**********************************************************************************************************************************/
 FN_EXTERN ProtocolCommand *
-protocolCommandNew(const StringId command)
+protocolCommandNew(const StringId command, const ProtocolCommandNewParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING_ID, command);
+        FUNCTION_TEST_PARAM(STRING_ID, param.type);
     FUNCTION_TEST_END();
 
     ASSERT(command != 0);
@@ -33,6 +35,7 @@ protocolCommandNew(const StringId command)
         *this = (ProtocolCommand)
         {
             .command = command,
+            .type = param.type == 0 ? protocolCommandTypeProcess : param.type, // {uncovered - !!!}
         };
     }
     OBJ_NEW_END();

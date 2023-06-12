@@ -694,9 +694,9 @@ testRun(void)
     // protocolClientFreeResource() will not be called and send another exit. protocolFree() is still required to free the client
     // objects.
     memContextCallbackClear(objMemContext(protocolRemoteGet(protocolStorageTypeRepo, 0)));
-    protocolClientExecute(protocolRemoteGet(protocolStorageTypeRepo, 0), protocolCommandNew(PROTOCOL_COMMAND_EXIT), false);
+    protocolClientExecute(protocolRemoteGet(protocolStorageTypeRepo, 0), protocolCommandNewP(PROTOCOL_COMMAND_EXIT), false);
     memContextCallbackClear(objMemContext(protocolRemoteGet(protocolStorageTypePg, 1)));
-    protocolClientExecute(protocolRemoteGet(protocolStorageTypePg, 1), protocolCommandNew(PROTOCOL_COMMAND_EXIT), false);
+    protocolClientExecute(protocolRemoteGet(protocolStorageTypePg, 1), protocolCommandNewP(PROTOCOL_COMMAND_EXIT), false);
     protocolFree();
 
     FUNCTION_HARNESS_RETURN_VOID();

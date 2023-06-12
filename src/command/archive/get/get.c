@@ -864,7 +864,7 @@ archiveGetAsyncCallback(void *const data, const unsigned int clientIdx)
             const ArchiveFileMap *archiveFileMap = lstGet(jobData->archiveFileMapList, jobData->archiveFileIdx);
             jobData->archiveFileIdx++;
 
-            ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_GET_FILE);
+            ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_ARCHIVE_GET_FILE);
             PackWrite *const param = protocolCommandParam(command);
 
             pckWriteStrP(param, archiveFileMap->request);

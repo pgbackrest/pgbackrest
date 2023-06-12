@@ -50,7 +50,7 @@ dbFreeResource(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_DB_CLOSE);
+    ProtocolCommand *command = protocolCommandNewP(PROTOCOL_COMMAND_DB_CLOSE);
     pckWriteU32P(protocolCommandParam(command), this->remoteIdx);
 
     protocolClientExecute(this->remoteClient, command, false);
@@ -117,7 +117,7 @@ dbQuery(Db *this, const PgClientQueryResult resultType, const String *const quer
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_DB_QUERY);
+            ProtocolCommand *command = protocolCommandNewP(PROTOCOL_COMMAND_DB_QUERY);
             PackWrite *const param = protocolCommandParam(command);
 
             pckWriteU32P(param, this->remoteIdx);
@@ -240,7 +240,7 @@ dbOpen(Db *this)
         // Open the connection
         if (this->remoteClient != NULL)
         {
-            ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_DB_OPEN);
+            ProtocolCommand *command = protocolCommandNewP(PROTOCOL_COMMAND_DB_OPEN);
             this->remoteIdx = pckReadU32P(protocolClientExecute(this->remoteClient, command, true));
 
             // Set a callback to notify the remote when a connection is closed

@@ -2087,7 +2087,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("report job error");
 
-        ProtocolParallelJob *job = protocolParallelJobNew(VARSTRDEF("key"), protocolCommandNew(strIdFromZ("x")));
+        ProtocolParallelJob *job = protocolParallelJobNew(VARSTRDEF("key"), protocolCommandNewP(strIdFromZ("x")));
         protocolParallelJobErrorSet(job, errorTypeCode(&AssertError), STRDEF("error message"));
 
         unsigned int currentPercentComplete = 0;
@@ -2100,7 +2100,7 @@ testRun(void)
         TEST_TITLE("report host/100% progress on noop result");
 
         // Create job that skips file
-        job = protocolParallelJobNew(VARSTRDEF("pg_data/test"), protocolCommandNew(strIdFromZ("x")));
+        job = protocolParallelJobNew(VARSTRDEF("pg_data/test"), protocolCommandNewP(strIdFromZ("x")));
 
         PackWrite *const resultPack = protocolPackNew();
         pckWriteStrP(resultPack, STRDEF("pg_data/test"));

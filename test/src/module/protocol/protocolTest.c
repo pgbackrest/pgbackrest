@@ -615,7 +615,7 @@ testRun(void)
                 TEST_TITLE("invalid command");
 
                 TEST_ERROR(
-                    protocolClientExecute(client, protocolCommandNew(strIdFromZ("BOGUS")), false), ProtocolError,
+                    protocolClientExecute(client, protocolCommandNewP(strIdFromZ("BOGUS")), false), ProtocolError,
                     "raised from test client: invalid command 'BOGUS' (0x38eacd271)");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -623,7 +623,7 @@ testRun(void)
 
                 TRY_BEGIN()
                 {
-                    protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_ASSERT), false);
+                    protocolClientExecute(client, protocolCommandNewP(TEST_PROTOCOL_COMMAND_ASSERT), false);
                     THROW(TestError, "error was expected");
                 }
                 CATCH_FATAL()
@@ -646,7 +646,7 @@ testRun(void)
                 TEST_TITLE("simple command");
 
                 TEST_RESULT_STR_Z(
-                    pckReadStrP(protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_SIMPLE), true)), "output",
+                    pckReadStrP(protocolClientExecute(client, protocolCommandNewP(TEST_PROTOCOL_COMMAND_SIMPLE), true)), "output",
                     "execute");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -654,7 +654,7 @@ testRun(void)
 
                 // Put the command to the server
                 ProtocolCommand *command = NULL;
-                TEST_ASSIGN(command, protocolCommandNew(TEST_PROTOCOL_COMMAND_COMPLEX), "command");
+                TEST_ASSIGN(command, protocolCommandNewP(TEST_PROTOCOL_COMMAND_COMPLEX), "command");
                 TEST_RESULT_VOID(pckWriteU32P(protocolCommandParam(command), 87), "param");
                 TEST_RESULT_VOID(pckWriteStrP(protocolCommandParam(command), STRDEF("data")), "param");
                 TEST_RESULT_VOID(protocolClientCommandPut(client, command, true), "command put");
@@ -693,14 +693,14 @@ testRun(void)
                 TEST_TITLE("command with retry");
 
                 TEST_RESULT_BOOL(
-                    pckReadBoolP(protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_RETRY), true)), true,
+                    pckReadBoolP(protocolClientExecute(client, protocolCommandNewP(TEST_PROTOCOL_COMMAND_RETRY), true)), true,
                     "execute");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("command throws assert with retry messages");
 
                 TEST_ERROR(
-                    protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_ERROR), false), FormatError,
+                    protocolClientExecute(client, protocolCommandNewP(TEST_PROTOCOL_COMMAND_ERROR), false), FormatError,
                     "raised from test client: ERR_MESSAGE\n"
                     "[RETRY DETAIL OMITTED]");
 
@@ -904,7 +904,7 @@ testRun(void)
         {
             TEST_ASSIGN(
                 job,
-                protocolParallelJobNew(VARSTRDEF("test"), protocolCommandNew(strIdFromZ("c"))), "new job");
+                protocolParallelJobNew(VARSTRDEF("test"), protocolCommandNewP(strIdFromZ("c"))), "new job");
             TEST_RESULT_PTR(protocolParallelJobMove(job, memContextPrior()), job, "move job");
             TEST_RESULT_PTR(protocolParallelJobMove(NULL, memContextPrior()), NULL, "move null job");
         }
@@ -1016,20 +1016,20 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("add jobs");
 
-                ProtocolCommand *command = protocolCommandNew(strIdFromZ("c-one"));
+                ProtocolCommand *command = protocolCommandNewP(strIdFromZ("c-one"));
                 pckWriteStrP(protocolCommandParam(command), STRDEF("param1"));
                 pckWriteStrP(protocolCommandParam(command), STRDEF("param2"));
 
                 ProtocolParallelJob *job = protocolParallelJobNew(varNewStr(STRDEF("job1")), command);
                 TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");
 
-                command = protocolCommandNew(strIdFromZ("c2"));
+                command = protocolCommandNewP(strIdFromZ("c2"));
                 pckWriteStrP(protocolCommandParam(command), STRDEF("param1"));
 
                 job = protocolParallelJobNew(varNewStr(STRDEF("job2")), command);
                 TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");
 
-                command = protocolCommandNew(strIdFromZ("c-three"));
+                command = protocolCommandNewP(strIdFromZ("c-three"));
                 pckWriteStrP(protocolCommandParam(command), STRDEF("param1"));
 
                 job = protocolParallelJobNew(varNewStr(STRDEF("job3")), command);

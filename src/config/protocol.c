@@ -57,7 +57,7 @@ configOptionRemote(ProtocolClient *client, const VariantList *paramList)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_CONFIG_OPTION);
+        ProtocolCommand *command = protocolCommandNewP(PROTOCOL_COMMAND_CONFIG_OPTION);
         PackWrite *const param = protocolCommandParam(command);
 
         for (unsigned int paramIdx = 0; paramIdx < varLstSize(paramList); paramIdx++)

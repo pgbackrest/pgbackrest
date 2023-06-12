@@ -221,7 +221,7 @@ storageReadRemoteOpen(THIS_VOID)
                 compressFilterP(compressTypeGz, (int)this->interface.compressLevel, .raw = true));
         }
 
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_OPEN_READ);
+        ProtocolCommand *command = protocolCommandNewP(PROTOCOL_COMMAND_STORAGE_OPEN_READ);
         PackWrite *const param = protocolCommandParam(command);
 
         pckWriteStrP(param, this->interface.name);

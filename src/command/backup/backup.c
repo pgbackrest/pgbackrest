@@ -1919,7 +1919,7 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
         const int queueEnd = queueIdx;
 
         // Create backup job
-        ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_BACKUP_FILE);
+        ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_BACKUP_FILE);
         PackWrite *param = NULL;
         uint64_t fileTotal = 0;
         uint64_t fileSize = 0;

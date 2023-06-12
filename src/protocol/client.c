@@ -66,7 +66,7 @@ protocolClientFreeResource(THIS_VOID)
     // Send an exit command but don't wait to see if it succeeds
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        protocolClientCommandPut(this, protocolCommandNew(PROTOCOL_COMMAND_EXIT), false);
+        protocolClientCommandPut(this, protocolCommandNewP(PROTOCOL_COMMAND_EXIT), false);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -391,7 +391,7 @@ protocolClientNoOp(ProtocolClient *this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        protocolClientExecute(this, protocolCommandNew(PROTOCOL_COMMAND_NOOP), false);
+        protocolClientExecute(this, protocolCommandNewP(PROTOCOL_COMMAND_NOOP), false);
     }
     MEM_CONTEXT_TEMP_END();
 
