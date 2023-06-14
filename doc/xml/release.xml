@@ -47,6 +47,20 @@
                     </release-item>
                 </release-improvement-list>
             </release-core-list>
+
+            <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="dr-kd"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Clarify preference to install from packages in the user guide.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-doc-list>
         </release>
 
         <release date="2023-05-22" version="2.46" title="Block Incremental Backup and SFTP Storage">
@@ -12406,6 +12420,11 @@
         <contributor id="douglas.j.hunley">
             <contributor-name-display>Douglas J Hunley</contributor-name-display>
             <contributor-id type="github">hunleyd</contributor-id>
+        </contributor>
+
+        <contributor id="dr-kd">
+            <contributor-name-display>dr-kd</contributor-name-display>
+            <contributor-id type="github">dr-kd</contributor-id>
         </contributor>
 
         <contributor id="efremov.egor">
