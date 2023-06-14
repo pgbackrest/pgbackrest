@@ -2122,7 +2122,8 @@ restoreFileZeroed(const String *manifestName, RegExp *zeroExp)
         zeroExp == NULL ? false : regExpMatch(zeroExp, manifestName) && !strEndsWith(manifestName, STRDEF("/" PG_FILE_PGVERSION)));
 }
 
-// Helper function to construct the absolute pg path for any file
+// Helper function to construct the absolute pg path for any file. Add a temp extension to pg_control so a partially restored
+// cluster cannot be started.
 static String *
 restoreFilePgPath(const Manifest *const manifest, const String *const manifestName)
 {
@@ -2597,7 +2598,8 @@ cmdRestore(void)
             storagePathSyncP(storagePgWrite(), pgPath);
         }
 
-        // Rename pg_control
+        // Rename pg_control to remove the temp extension. This is done last to prevent a partially restored (or unsynced) cluster
+        // from being started.
         if (storageExistsP(storagePg(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "." STORAGE_FILE_TEMP_EXT)))
         {
             LOG_INFO(
@@ -2611,7 +2613,8 @@ cmdRestore(void)
         else
             LOG_WARN("backup does not contain '" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "' -- cluster will not start");
 
-        // Sync global path
+        // Sync global path to persist pg_control rename. If this fails or if the system crashes before it can complete, then
+        // pg_control should retain the temp extension, which will prevent the cluster from being started.
         LOG_DETAIL_FMT("sync path '%s'", strZ(storagePathP(storagePg(), PG_PATH_GLOBAL_STR)));
         storagePathSyncP(storagePgWrite(), PG_PATH_GLOBAL_STR);
 
