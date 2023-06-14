@@ -23,8 +23,8 @@ Protocol commands for ProtocolServerHandler arrays passed to protocolServerProce
 #define PROTOCOL_COMMAND_DB_CLOSE                                   STRID5("db-c", 0x1ec440)
 
 #define PROTOCOL_SERVER_HANDLER_DB_LIST                                                                                            \
-    {.command = PROTOCOL_COMMAND_DB_OPEN, .handler = dbOpenProtocol},                                                              \
-    {.command = PROTOCOL_COMMAND_DB_QUERY, .handler = dbQueryProtocol},                                                            \
-    {.command = PROTOCOL_COMMAND_DB_CLOSE, .handler = dbCloseProtocol},
+    {.command = PROTOCOL_COMMAND_DB_OPEN, .process = dbOpenProtocol},                                                              \
+    {.command = PROTOCOL_COMMAND_DB_QUERY, .process = dbQueryProtocol},                                                            \
+    {.command = PROTOCOL_COMMAND_DB_CLOSE, .process = dbCloseProtocol},
 
 #endif

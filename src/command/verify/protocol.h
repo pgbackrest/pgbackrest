@@ -19,6 +19,6 @@ Protocol commands for ProtocolServerHandler arrays passed to protocolServerProce
 #define PROTOCOL_COMMAND_VERIFY_FILE                                STRID5("vf-f", 0x36cd60)
 
 #define PROTOCOL_SERVER_HANDLER_VERIFY_LIST                                                                                        \
-    {.command = PROTOCOL_COMMAND_VERIFY_FILE, .handler = verifyFileProtocol},
+    {.command = PROTOCOL_COMMAND_VERIFY_FILE, .process = verifyFileProtocol},
 
 #endif

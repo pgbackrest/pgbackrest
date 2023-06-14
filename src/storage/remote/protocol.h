@@ -37,16 +37,16 @@ Protocol commands for ProtocolServerHandler arrays passed to protocolServerProce
 #define PROTOCOL_COMMAND_STORAGE_PATH_SYNC                          STRID5("s-ps", 0x9c3730)
 
 #define PROTOCOL_SERVER_HANDLER_STORAGE_REMOTE_LIST                                                                                \
-    {.command = PROTOCOL_COMMAND_STORAGE_FEATURE, .handler = storageRemoteFeatureProtocol},                                        \
-    {.command = PROTOCOL_COMMAND_STORAGE_INFO, .handler = storageRemoteInfoProtocol},                                              \
-    {.command = PROTOCOL_COMMAND_STORAGE_LINK_CREATE, .handler = storageRemoteLinkCreateProtocol},                                 \
-    {.command = PROTOCOL_COMMAND_STORAGE_LIST, .handler = storageRemoteListProtocol},                                              \
-    {.command = PROTOCOL_COMMAND_STORAGE_OPEN_READ, .handler = storageRemoteOpenReadProtocol},                                     \
-    {.command = PROTOCOL_COMMAND_STORAGE_OPEN_WRITE, .handler = storageRemoteOpenWriteProtocol},                                   \
-    {.command = PROTOCOL_COMMAND_STORAGE_PATH_CREATE, .handler = storageRemotePathCreateProtocol},                                 \
-    {.command = PROTOCOL_COMMAND_STORAGE_PATH_REMOVE, .handler = storageRemotePathRemoveProtocol},                                 \
-    {.command = PROTOCOL_COMMAND_STORAGE_PATH_SYNC, .handler = storageRemotePathSyncProtocol},                                     \
-    {.command = PROTOCOL_COMMAND_STORAGE_REMOVE, .handler = storageRemoteRemoveProtocol},
+    {.command = PROTOCOL_COMMAND_STORAGE_FEATURE, .process = storageRemoteFeatureProtocol},                                        \
+    {.command = PROTOCOL_COMMAND_STORAGE_INFO, .process = storageRemoteInfoProtocol},                                              \
+    {.command = PROTOCOL_COMMAND_STORAGE_LINK_CREATE, .process = storageRemoteLinkCreateProtocol},                                 \
+    {.command = PROTOCOL_COMMAND_STORAGE_LIST, .process = storageRemoteListProtocol},                                              \
+    {.command = PROTOCOL_COMMAND_STORAGE_OPEN_READ, .process = storageRemoteOpenReadProtocol},                                     \
+    {.command = PROTOCOL_COMMAND_STORAGE_OPEN_WRITE, .process = storageRemoteOpenWriteProtocol},                                   \
+    {.command = PROTOCOL_COMMAND_STORAGE_PATH_CREATE, .process = storageRemotePathCreateProtocol},                                 \
+    {.command = PROTOCOL_COMMAND_STORAGE_PATH_REMOVE, .process = storageRemotePathRemoveProtocol},                                 \
+    {.command = PROTOCOL_COMMAND_STORAGE_PATH_SYNC, .process = storageRemotePathSyncProtocol},                                     \
+    {.command = PROTOCOL_COMMAND_STORAGE_REMOVE, .process = storageRemoteRemoveProtocol},
 
 /***********************************************************************************************************************************
 Filters that may be passed to a remote

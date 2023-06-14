@@ -22,12 +22,12 @@ Protocol command handler type and structure
 An array of this struct must be passed to protocolServerProcess() for the server to process commands. Each command handler should
 implement a single command, as defined by the command string.
 ***********************************************************************************************************************************/
-typedef void (*ProtocolServerCommandHandler)(PackRead *param, ProtocolServer *server);
+typedef void (*ProtocolServerCommandProcessHandler)(PackRead *param, ProtocolServer *server);
 
 typedef struct ProtocolServerHandler
 {
     StringId command;                                               // 5-bit StringId that identifies the protocol command
-    ProtocolServerCommandHandler handler;                           // Function that handles the protocol command
+    ProtocolServerCommandProcessHandler process;                    // Function that processes the protocol command
 } ProtocolServerHandler;
 
 /***********************************************************************************************************************************

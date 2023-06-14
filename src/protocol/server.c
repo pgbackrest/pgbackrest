@@ -165,13 +165,13 @@ protocolServerProcess(
                 ProtocolServerCommandGetResult command = protocolServerCommandGet(this);
 
                 // Find the handler
-                ProtocolServerCommandHandler handler = NULL;
+                const ProtocolServerHandler *handler = NULL;
 
                 for (unsigned int handlerIdx = 0; handlerIdx < handlerListSize; handlerIdx++)
                 {
                     if (command.id == handlerList[handlerIdx].command)
                     {
-                        handler = handlerList[handlerIdx].handler;
+                        handler = &handlerList[handlerIdx];
                         break;
                     }
                 }
@@ -198,7 +198,7 @@ protocolServerProcess(
 
                             TRY_BEGIN()
                             {
-                                handler(pckReadNew(command.param), this);
+                                handler->process(pckReadNew(command.param), this);
                             }
                             CATCH_ANY()
                             {

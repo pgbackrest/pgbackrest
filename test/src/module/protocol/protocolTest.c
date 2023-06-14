@@ -146,11 +146,11 @@ testCommandRetryProtocol(PackRead *const param, ProtocolServer *const server)
 }
 
 #define TEST_PROTOCOL_SERVER_HANDLER_LIST                                                                                          \
-    {.command = TEST_PROTOCOL_COMMAND_ASSERT, .handler = testCommandAssertProtocol},                                               \
-    {.command = TEST_PROTOCOL_COMMAND_ERROR, .handler = testCommandErrorProtocol},                                                 \
-    {.command = TEST_PROTOCOL_COMMAND_SIMPLE, .handler = testCommandRequestSimpleProtocol},                                        \
-    {.command = TEST_PROTOCOL_COMMAND_COMPLEX, .handler = testCommandRequestComplexProtocol},                                      \
-    {.command = TEST_PROTOCOL_COMMAND_RETRY, .handler = testCommandRetryProtocol},
+    {.command = TEST_PROTOCOL_COMMAND_ASSERT, .process = testCommandAssertProtocol},                                               \
+    {.command = TEST_PROTOCOL_COMMAND_ERROR, .process = testCommandErrorProtocol},                                                 \
+    {.command = TEST_PROTOCOL_COMMAND_SIMPLE, .process = testCommandRequestSimpleProtocol},                                        \
+    {.command = TEST_PROTOCOL_COMMAND_COMPLEX, .process = testCommandRequestComplexProtocol},                                      \
+    {.command = TEST_PROTOCOL_COMMAND_RETRY, .process = testCommandRetryProtocol},
 
 /***********************************************************************************************************************************
 Test ParallelJobCallback

@@ -19,6 +19,6 @@ Protocol commands for ProtocolServerHandler arrays passed to protocolServerProce
 #define PROTOCOL_COMMAND_RESTORE_FILE                               STRID5("rs-f", 0x36e720)
 
 #define PROTOCOL_SERVER_HANDLER_RESTORE_LIST                                                                                       \
-    {.command = PROTOCOL_COMMAND_RESTORE_FILE, .handler = restoreFileProtocol},
+    {.command = PROTOCOL_COMMAND_RESTORE_FILE, .process = restoreFileProtocol},
 
 #endif
