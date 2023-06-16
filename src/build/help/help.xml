@@ -2634,7 +2634,7 @@
                 <summary>Upgrade a stanza.</summary>
 
                 <text>
-                    <p>Immediately after upgrading <postgres/> to a newer major version, the <br-option>pg-path</br-option> for all <backrest/> configurations must be set to the new database location and the <cmd>stanza-upgrade</cmd> command run. If there is more than one repository configured on the host, the stanza will be created on each. If the database is offline use the <br-option>--no-online</br-option> option.</p>
+                    <p>Immediately after upgrading <postgres/> to a newer major version, the <br-option>pg-path</br-option> for all <backrest/> configurations must be set to the new database location and the <cmd>stanza-upgrade</cmd> command run. If there is more than one repository configured on the host, the stanza will be upgraded on each. If the database is offline use the <br-option>--no-online</br-option> option.</p>
 
                     <!-- Note, linking to the User Guide is limited since it can cause a cyclical reference -->
                 </text>
