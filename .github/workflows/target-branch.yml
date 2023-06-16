@@ -14,7 +14,7 @@ jobs:
   check:
     # Only run this job on the main pgBackRest repository. Forks can do what
     # they want with branches.
-    if: github.repository == 'pgbackrest/pgbackrest'
+    if: github.repository == 'pgmasters/pgbackrest'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
