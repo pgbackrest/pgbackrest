@@ -38,8 +38,9 @@ freebsd_12_task:
   install_script: pkg update && pkg upgrade -y libiconv && pkg install -y bash git postgresql-libpqxx pkgconf libxml2 gmake perl5 libyaml p5-YAML-LibYAML rsync meson
 
   script:
-    - cd .. && perl ${CIRRUS_WORKING_DIR}/test/test.pl --min-gen --make-cmd=gmake --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup
-    - cd .. && perl ${CIRRUS_WORKING_DIR}/test/test.pl --min-gen --make-cmd=gmake --vm-max=2 --no-coverage --no-valgrind --module=command --test=info
+    - cd ..
+    - perl ${CIRRUS_WORKING_DIR}/test/test.pl --min-gen --make-cmd=gmake --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup
+    - perl ${CIRRUS_WORKING_DIR}/test/test.pl --min-gen --make-cmd=gmake --vm-max=2 --no-coverage --no-valgrind --module=command --test=info
 
   debug_script:
     - ls -lah ${CIRRUS_WORKING_DIR}
@@ -55,9 +56,8 @@ freebsd_13_task:
   install_script: pkg update && pkg upgrade -y libiconv && pkg install -y bash git postgresql-libpqxx pkgconf libxml2 gmake perl5 libyaml p5-YAML-LibYAML rsync meson
 
   script:
-    - rsync --version
-    - cd .. && perl ${CIRRUS_WORKING_DIR}/test/test.pl --min-gen --make-cmd=gmake --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup
-    - cd .. && perl ${CIRRUS_WORKING_DIR}/test/test.pl --min-gen --make-cmd=gmake --vm-max=2 --no-coverage --no-valgrind --module=command --test=info
+    - cd ..
+    - perl ${CIRRUS_WORKING_DIR}/test/test.pl --min-gen --make-cmd=gmake --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup --test=info
 
   debug_script:
     - ls -lah ${CIRRUS_WORKING_DIR}
@@ -78,8 +78,8 @@ macos_ventura_task:
      - brew install -q pkg-config openssl@1.1 libpq libxml2 libyaml meson
 
   script:
-    - cd .. && ${CIRRUS_WORKING_DIR}/test/test.pl --min-gen --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup
-    - cd .. && ${CIRRUS_WORKING_DIR}/test/test.pl --min-gen --vm-max=2 --no-coverage --no-valgrind --module=command --test=info
+    - cd ..
+    - ${CIRRUS_WORKING_DIR}/test/test.pl --min-gen --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup --test=info
 
   debug_script:
     - ls -lah ${CIRRUS_WORKING_DIR}

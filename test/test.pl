@@ -1036,7 +1036,7 @@ eval
 
         # Perform static source code analysis
         #---------------------------------------------------------------------------------------------------------------------------
-        if (!$bDryRun && cwd() ne '/')
+        if (!$bDryRun)
         {
             logFileSet($oStorageTest, cwd() . "/test");
         }
