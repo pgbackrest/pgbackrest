@@ -39,6 +39,7 @@ freebsd_12_task:
 
   script:
     - cd .. && perl ${CIRRUS_WORKING_DIR}/test/test.pl --min-gen --make-cmd=gmake --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup
+    - cd .. && perl ${CIRRUS_WORKING_DIR}/test/test.pl --min-gen --make-cmd=gmake --vm-max=2 --no-coverage --no-valgrind --module=command --test=info
 
   debug_script:
     - ls -lah ${CIRRUS_WORKING_DIR}
@@ -56,6 +57,7 @@ freebsd_13_task:
   script:
     - rsync --version
     - cd .. && perl ${CIRRUS_WORKING_DIR}/test/test.pl --min-gen --make-cmd=gmake --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup
+    - cd .. && perl ${CIRRUS_WORKING_DIR}/test/test.pl --min-gen --make-cmd=gmake --vm-max=2 --no-coverage --no-valgrind --module=command --test=info
 
   debug_script:
     - ls -lah ${CIRRUS_WORKING_DIR}
@@ -77,6 +79,7 @@ macos_ventura_task:
 
   script:
     - cd .. && ${CIRRUS_WORKING_DIR}/test/test.pl --min-gen --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup
+    - cd .. && ${CIRRUS_WORKING_DIR}/test/test.pl --min-gen --vm-max=2 --no-coverage --no-valgrind --module=command --test=info
 
   debug_script:
     - ls -lah ${CIRRUS_WORKING_DIR}
