@@ -837,6 +837,8 @@ formatTextBackupDateTime(const time_t epoch)
 
     gmtime_r(&epoch, &timePartGm);
 
+    timePart.tm_isdst = -1;
+    timePartGm.tm_isdst = -1;
     time_t offset = mktime(&timePart) - mktime(&timePartGm);
 
     if (offset >= 0)

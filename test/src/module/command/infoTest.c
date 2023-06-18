@@ -2056,7 +2056,7 @@ testRun(void)
             "        wal archive min/max (9.4): 000000010000000000000002/000000020000000000000003\n"
             "\n"
             "        incr backup: 20181119-152138F_20181119-152155I\n"
-            "            timestamp start/stop: 2018-11-20 05:06:55+12:45 / 2018-11-20 05:06:57+12:45\n"
+            "            timestamp start/stop: 2018-11-20 05:06:55+13:45 / 2018-11-20 05:06:57+13:45\n"
             "            wal start/stop: n/a\n"
             "            lsn start/stop: 285/89000028 / 285/89001F88\n"
             "            database size: 19.2MB, database backup size: 8.2KB\n"
@@ -2715,7 +2715,7 @@ testRun(void)
             "20210112-192538F={\"backrest-format\":5,\"backrest-version\":\"2.25\","
             "\"backup-archive-start\":\"000000010000000000000006\",\"backup-archive-stop\":\"000000010000000000000006\","
             "\"backup-info-repo-size\":3159000,\"backup-info-repo-size-delta\":3100,\"backup-info-size\":26897000,"
-            "\"backup-info-size-delta\":26897020,\"backup-timestamp-start\":1610479538,\"backup-timestamp-stop\":1610479540,"
+            "\"backup-info-size-delta\":26897020,\"backup-timestamp-start\":1687010984,\"backup-timestamp-stop\":1687011000,"
             "\"backup-type\":\"full\",\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":true,"
             "\"option-backup-standby\":true,\"option-checksum-page\":false,\"option-compress\":false,\"option-hardlink\":true,"
             "\"option-online\":true}\n"
@@ -2738,6 +2738,9 @@ testRun(void)
             storageRepoIdxWrite(0), STORAGE_REPO_ARCHIVE
             "/9.5-2/0000000100000000/000000010000000000000006-47dff2b7552a9d66e4bae1a762488a6885e7082c.gz");
 
+        // Switch to America/New_York to test + timezone offset without minutes
+        setenv("TZ", "America/New_York", true);
+
         TEST_RESULT_STR_Z(
             infoRender(),
             "stanza: stanza3\n"
@@ -2752,13 +2755,13 @@ testRun(void)
             "        wal archive min/max (9.4): 000000010000000000000001/000000010000000000000003\n"
             "\n"
             "        full backup: 20201110-100000F\n"
-            "            timestamp start/stop: 2020-11-10 10:00:00+00 / 2020-11-10 10:00:02+00\n"
+            "            timestamp start/stop: 2020-11-10 05:00:00-05 / 2020-11-10 05:00:02-05\n"
             "            wal start/stop: 000000010000000000000001 / 000000010000000000000002\n"
             "            database size: 25.7MB, database backup size: 25.7MB\n"
             "            repo2: backup set size: 3MB, backup size: 3KB\n"
             "\n"
             "        full backup: 20201212-192538F\n"
-            "            timestamp start/stop: 2020-12-12 19:25:38+00 / 2020-12-12 19:25:40+00\n"
+            "            timestamp start/stop: 2020-12-12 14:25:38-05 / 2020-12-12 14:25:40-05\n"
             "            wal start/stop: 000000010000000000000002 / 000000010000000000000003\n"
             "            database size: 25.7MB, database backup size: 25.7MB\n"
             "            repo1: backup set size: 3MB, backup size: 3KB\n"
@@ -2767,11 +2770,14 @@ testRun(void)
             "        wal archive min/max (9.5): 000000010000000000000006/000000010000000000000006\n"
             "\n"
             "        full backup: 20210112-192538F\n"
-            "            timestamp start/stop: 2021-01-12 19:25:38+00 / 2021-01-12 19:25:40+00\n"
+            "            timestamp start/stop: 2023-06-17 10:09:44-04 / 2023-06-17 10:10:00-04\n"
             "            wal start/stop: 000000010000000000000006 / 000000010000000000000006\n"
             "            database size: 25.7MB, database backup size: 25.7MB\n"
             "            repo1: backup set size: 3MB, backup size: 3KB\n",
             "text - multi-repo, database mismatch, repo2 stanza-upgrade needed");
+
+        // Reset timezone
+        setenv("TZ", "UTC", true);
 
         hrnCfgArgRawZ(argList2, cfgOptOutput, "json");
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
