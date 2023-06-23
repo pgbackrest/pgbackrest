@@ -213,6 +213,7 @@ protocolServerProcess(
                                 // Process command type
                                 switch (command.type)
                                 {
+                                    // Open a protocol session
                                     case protocolCommandTypeOpen:
                                     {
                                         ASSERT(command.sessionId == 0);
@@ -230,6 +231,7 @@ protocolServerProcess(
                                         break;
                                     }
 
+                                    // Process or close protocol session
                                     default:
                                     {
                                         ASSERT(command.type == protocolCommandTypeProcess || protocolCommandTypeClose);
@@ -245,7 +247,10 @@ protocolServerProcess(
                                                 ProtocolServerSession *const session = lstGet(this->sessionList, sessionListIdx);
 
                                                 if (session->id == command.sessionId)
+                                                {
                                                     sessionData = session->data;
+                                                    break;
+                                                }
                                             }
 
                                             if (sessionData == NULL)
@@ -255,13 +260,15 @@ protocolServerProcess(
                                         // Process command type
                                         switch (command.type)
                                         {
+                                            // Process protocol session (with data with available)
                                             case protocolCommandTypeProcess:
                                                 handler->process(pckReadNew(command.param), this, sessionData);
                                                 break;
 
+                                            // Close protocol session
                                             default:
                                             {
-                                                ASSERT(protocolCommandTypeClose);
+                                                ASSERT(command.type == protocolCommandTypeClose);
 
                                                 handler->close(pckReadNew(command.param), this, sessionData);
 

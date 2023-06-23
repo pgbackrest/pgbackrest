@@ -41,7 +41,7 @@ dbOpenProtocol(PackRead *const param, ProtocolServer *const server, const uint64
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN_P(VOID, result);
+    FUNCTION_LOG_RETURN(PG_CLIENT, result);
 }
 
 /**********************************************************************************************************************************/

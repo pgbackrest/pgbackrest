@@ -15,11 +15,11 @@ typedef struct ProtocolCommand ProtocolCommand;
 /***********************************************************************************************************************************
 Command types
 ***********************************************************************************************************************************/
-typedef enum
+typedef enum // !!! MAKE THESE STRID
 {
-    protocolCommandTypeOpen,                                        // Open command for processing
-    protocolCommandTypeProcess,                                     // Process command
-    protocolCommandTypeClose,                                       // Close command
+    protocolCommandTypeOpen = 1,                                        // Open command for processing
+    protocolCommandTypeProcess = 2,                                     // Process command
+    protocolCommandTypeClose = 3,                                       // Close command
 } ProtocolCommandType;
 
 /***********************************************************************************************************************************
