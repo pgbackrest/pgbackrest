@@ -14,8 +14,8 @@ typedef struct ProtocolServer ProtocolServer;
 #include "common/type/object.h"
 #include "common/type/pack.h"
 #include "common/type/stringId.h"
-#include "protocol/command.h"
 #include "protocol/client.h"
+#include "protocol/command.h"
 
 /***********************************************************************************************************************************
 Protocol command handler type and structure

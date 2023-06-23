@@ -134,7 +134,7 @@ protocolServerCommandGet(ProtocolServer *const this)
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result.id = pckReadStrIdP(command);
-            result.type = pckReadU32P(command);
+            result.type = (ProtocolCommandType)pckReadStrIdP(command);
             result.sessionId = pckReadU64P(command);
             result.param = pckReadPackP(command);
         }
@@ -236,7 +236,7 @@ protocolServerProcess(
                                     {
                                         ASSERT(command.type == protocolCommandTypeProcess || protocolCommandTypeClose);
 
-                                        // Find session data (if any)
+                                        // Find session data
                                         void *sessionData = NULL;
                                         unsigned int sessionListIdx = 0;
 
@@ -253,8 +253,14 @@ protocolServerProcess(
                                                 }
                                             }
 
+                                            // Error when session not found
                                             if (sessionData == NULL)
-                                                THROW(ProtocolError, "unable to find session"); // !!! IMPROVE THIS ERROR
+                                            {
+                                                THROW_FMT(
+                                                    ProtocolError, "unable to find session id %" PRIu64 " for command %s:%s",
+                                                    command.sessionId, strZ(strIdToStr(command.id)),
+                                                    strZ(strIdToStr(command.type)));
+                                            }
                                         }
 
                                         // Process command type
@@ -268,7 +274,9 @@ protocolServerProcess(
                                             // Close protocol session
                                             default:
                                             {
-                                                ASSERT(command.type == protocolCommandTypeClose);
+                                                CHECK_FMT(
+                                                    ProtocolError, command.type == protocolCommandTypeClose,
+                                                    "unknown command type '%s'", strZ(strIdToStr(command.type)));
 
                                                 handler->close(pckReadNew(command.param), this, sessionData);
 
@@ -280,7 +288,6 @@ protocolServerProcess(
                                         }
                                     }
                                 }
-
                             }
                             CATCH_ANY()
                             {

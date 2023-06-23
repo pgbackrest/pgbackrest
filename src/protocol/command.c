@@ -62,7 +62,7 @@ protocolCommandPut(ProtocolCommand *const this, IoWrite *const write)
         PackWrite *const commandPack = pckWriteNewIo(write);
         pckWriteU32P(commandPack, protocolMessageTypeCommand, .defaultWrite = true);
         pckWriteStrIdP(commandPack, this->command);
-        pckWriteU32P(commandPack, this->type);
+        pckWriteStrIdP(commandPack, this->type);
         pckWriteU64P(commandPack, this->sessionId);
 
         // Write parameters
