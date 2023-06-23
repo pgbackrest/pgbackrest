@@ -16,6 +16,7 @@ struct ProtocolCommand
 {
     StringId command;
     ProtocolCommandType type;
+    uint64_t sessionId;
     PackWrite *pack;
 };
 
@@ -36,6 +37,7 @@ protocolCommandNew(const StringId command, const ProtocolCommandNewParam param)
         {
             .command = command,
             .type = param.type == 0 ? protocolCommandTypeProcess : param.type, // {uncovered - !!!}
+            .sessionId = param.sessionId,
         };
     }
     OBJ_NEW_END();
@@ -57,9 +59,11 @@ protocolCommandPut(ProtocolCommand *const this, IoWrite *const write)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Write the command
-        PackWrite *commandPack = pckWriteNewIo(write);
+        PackWrite *const commandPack = pckWriteNewIo(write);
         pckWriteU32P(commandPack, protocolMessageTypeCommand, .defaultWrite = true);
         pckWriteStrIdP(commandPack, this->command);
+        pckWriteU32P(commandPack, this->type);
+        pckWriteU64P(commandPack, this->sessionId);
 
         // Write parameters
         if (this->pack != NULL)

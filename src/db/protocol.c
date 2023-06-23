@@ -14,78 +14,55 @@ Db Protocol Handler
 #include "postgres/client.h"
 #include "postgres/interface.h"
 
-/***********************************************************************************************************************************
-Local variables
-***********************************************************************************************************************************/
-static struct
-{
-    List *pgClientList;                                             // List of db objects
-} dbProtocolLocal;
-
 /**********************************************************************************************************************************/
-FN_EXTERN void
-dbOpenProtocol(PackRead *const param, ProtocolServer *const server)
+FN_EXTERN void *
+dbOpenProtocol(PackRead *const param, ProtocolServer *const server, const uint64_t sessionId)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PACK_READ, param);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
+        FUNCTION_LOG_PARAM(UINT64, sessionId);
     FUNCTION_LOG_END();
 
     ASSERT(param == NULL);
     ASSERT(server != NULL);
+    ASSERT(sessionId != 0);
+
+    PgClient *const result = pgClientNew(
+        cfgOptionStrNull(cfgOptPgSocketPath), cfgOptionUInt(cfgOptPgPort), cfgOptionStr(cfgOptPgDatabase),
+        cfgOptionStrNull(cfgOptPgUser), cfgOptionUInt64(cfgOptDbTimeout));
+    pgClientOpen(result);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // If the db list does not exist then create it in the top context
-        if (dbProtocolLocal.pgClientList == NULL)
-        {
-            MEM_CONTEXT_BEGIN(memContextTop())
-            {
-                dbProtocolLocal.pgClientList = lstNewP(sizeof(PgClient *));
-            }
-            MEM_CONTEXT_END();
-        }
-
-        // Add db to the list
-        MEM_CONTEXT_BEGIN(lstMemContext(dbProtocolLocal.pgClientList))
-        {
-            // Only a single db is passed to the remote
-            PgClient *pgClient = pgClientNew(
-                cfgOptionStrNull(cfgOptPgSocketPath), cfgOptionUInt(cfgOptPgPort), cfgOptionStr(cfgOptPgDatabase),
-                cfgOptionStrNull(cfgOptPgUser), cfgOptionUInt64(cfgOptDbTimeout));
-            pgClientOpen(pgClient);
-
-            lstAdd(dbProtocolLocal.pgClientList, &pgClient);
-        }
-        MEM_CONTEXT_END();
-
-        // Return db index which should be included in subsequent calls
-        protocolServerDataPut(server, pckWriteU32P(protocolPackNew(), lstSize(dbProtocolLocal.pgClientList) - 1));
+        // Return session id which should be included in subsequent calls
+        protocolServerDataPut(server, pckWriteU64P(protocolPackNew(), sessionId));
         protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN_P(VOID, result);
 }
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-dbQueryProtocol(PackRead *const param, ProtocolServer *const server)
+dbQueryProtocol(PackRead *const param, ProtocolServer *const server, void *const pgClient)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PACK_READ, param);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
+        FUNCTION_LOG_PARAM(PG_CLIENT, pgClient);
     FUNCTION_LOG_END();
 
     ASSERT(param != NULL);
     ASSERT(server != NULL);
+    ASSERT(pgClient != NULL);
+
+    const PgClientQueryResult resultType = (PgClientQueryResult)pckReadStrIdP(param);
+    const String *const query = pckReadStrP(param);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        PgClient *const pgClient = *(PgClient **)lstGet(dbProtocolLocal.pgClientList, pckReadU32P(param));
-        const PgClientQueryResult resultType = (PgClientQueryResult)pckReadStrIdP(param);
-        const String *const query = pckReadStrP(param);
-
         protocolServerDataPut(server, pckWritePackP(protocolPackNew(), pgClientQuery(pgClient, query, resultType)));
         protocolServerDataEndPut(server);
     }
@@ -96,22 +73,20 @@ dbQueryProtocol(PackRead *const param, ProtocolServer *const server)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-dbCloseProtocol(PackRead *const param, ProtocolServer *const server)
+dbCloseProtocol(PackRead *const param, ProtocolServer *const server, void *const pgClient)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PACK_READ, param);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
+        FUNCTION_LOG_PARAM(PG_CLIENT, pgClient);
     FUNCTION_LOG_END();
 
-    ASSERT(param != NULL);
+    ASSERT(param == NULL);
     ASSERT(server != NULL);
+    ASSERT(pgClient != NULL);
 
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        pgClientClose(*(PgClient **)lstGet(dbProtocolLocal.pgClientList, pckReadU32P(param)));
-        protocolServerDataEndPut(server);
-    }
-    MEM_CONTEXT_TEMP_END();
+    pgClientClose(pgClient);
+    protocolServerDataEndPut(server);
 
     FUNCTION_LOG_RETURN_VOID();
 }

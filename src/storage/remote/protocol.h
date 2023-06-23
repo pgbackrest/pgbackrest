@@ -11,16 +11,16 @@ Remote Storage Protocol Handler
 Functions
 ***********************************************************************************************************************************/
 // Process storage protocol requests
-FN_EXTERN void storageRemoteFeatureProtocol(PackRead *param, ProtocolServer *server);
-FN_EXTERN void storageRemoteInfoProtocol(PackRead *param, ProtocolServer *server);
-FN_EXTERN void storageRemoteLinkCreateProtocol(PackRead *param, ProtocolServer *server);
-FN_EXTERN void storageRemoteListProtocol(PackRead *param, ProtocolServer *server);
-FN_EXTERN void storageRemoteOpenReadProtocol(PackRead *param, ProtocolServer *server);
-FN_EXTERN void storageRemoteOpenWriteProtocol(PackRead *param, ProtocolServer *server);
-FN_EXTERN void storageRemotePathCreateProtocol(PackRead *param, ProtocolServer *server);
-FN_EXTERN void storageRemotePathRemoveProtocol(PackRead *param, ProtocolServer *server);
-FN_EXTERN void storageRemotePathSyncProtocol(PackRead *param, ProtocolServer *server);
-FN_EXTERN void storageRemoteRemoveProtocol(PackRead *param, ProtocolServer *server);
+FN_EXTERN void storageRemoteFeatureProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
+FN_EXTERN void storageRemoteInfoProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
+FN_EXTERN void storageRemoteLinkCreateProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
+FN_EXTERN void storageRemoteListProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
+FN_EXTERN void storageRemoteOpenReadProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
+FN_EXTERN void storageRemoteOpenWriteProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
+FN_EXTERN void storageRemotePathCreateProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
+FN_EXTERN void storageRemotePathRemoveProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
+FN_EXTERN void storageRemotePathSyncProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
+FN_EXTERN void storageRemoteRemoveProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
 
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()

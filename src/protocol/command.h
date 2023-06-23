@@ -29,6 +29,7 @@ typedef struct ProtocolCommandNewParam
 {
     VAR_PARAM_HEADER;
     ProtocolCommandType type;                                       // Command type (defaults to protocolCommandTypeProcess)
+    uint64_t sessionId;                                             // Session id
 } ProtocolCommandNewParam;
 
 #define protocolCommandNewP(command, ...)                                                                                          \

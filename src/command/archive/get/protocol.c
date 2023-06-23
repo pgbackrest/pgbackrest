@@ -15,15 +15,17 @@ Archive Get Protocol Handler
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-archiveGetFileProtocol(PackRead *const param, ProtocolServer *const server)
+archiveGetFileProtocol(PackRead *const param, ProtocolServer *const server, void *const sessionData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PACK_READ, param);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
+        (void)sessionData;                                          // Unused
     FUNCTION_LOG_END();
 
     ASSERT(param != NULL);
     ASSERT(server != NULL);
+    ASSERT(sessionData == NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {

@@ -14,6 +14,7 @@ typedef struct ProtocolServer ProtocolServer;
 #include "common/type/object.h"
 #include "common/type/pack.h"
 #include "common/type/stringId.h"
+#include "protocol/command.h"
 #include "protocol/client.h"
 
 /***********************************************************************************************************************************
@@ -22,12 +23,16 @@ Protocol command handler type and structure
 An array of this struct must be passed to protocolServerProcess() for the server to process commands. Each command handler should
 implement a single command, as defined by the command string.
 ***********************************************************************************************************************************/
-typedef void (*ProtocolServerCommandProcessHandler)(PackRead *param, ProtocolServer *server);
+typedef void *(*ProtocolServerCommandOpenHandler)(PackRead *param, ProtocolServer *server, uint64_t sessionId);
+typedef void (*ProtocolServerCommandProcessHandler)(PackRead *param, ProtocolServer *server, void *sessionData);
+typedef void (*ProtocolServerCommandCloseHandler)(PackRead *param, ProtocolServer *server, void *sessionData);
 
 typedef struct ProtocolServerHandler
 {
     StringId command;                                               // 5-bit StringId that identifies the protocol command
+    ProtocolServerCommandOpenHandler open;                          // Function that opens the protocol session
     ProtocolServerCommandProcessHandler process;                    // Function that processes the protocol command
+    ProtocolServerCommandCloseHandler close;                        // Function that closes the protocol session
 } ProtocolServerHandler;
 
 /***********************************************************************************************************************************
@@ -43,6 +48,8 @@ Functions
 typedef struct ProtocolServerCommandGetResult
 {
     StringId id;                                                    // Command identifier
+    ProtocolCommandType type;                                       // Command type
+    uint64_t sessionId;                                             // Session id
     Pack *param;                                                    // Parameter pack
 } ProtocolServerCommandGetResult;
 

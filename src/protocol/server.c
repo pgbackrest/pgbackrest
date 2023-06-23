@@ -24,7 +24,16 @@ struct ProtocolServer
     IoRead *read;                                                   // Read interface
     IoWrite *write;                                                 // Write interface
     const String *name;                                             // Name displayed in logging
+    List *sessionList;                                              // List of active sessions
+    uint64_t sessionTotal;                                          // Total sessions (used to generate session ids);
 };
+
+// Track server sessions
+typedef struct ProtocolServerSession
+{
+    uint64_t id;                                                    // Session id
+    void *data;                                                     // Data for the session
+} ProtocolServerSession;
 
 /**********************************************************************************************************************************/
 FN_EXTERN ProtocolServer *
@@ -48,6 +57,7 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
             .read = read,
             .write = write,
             .name = strDup(name),
+            .sessionList = lstNewP(sizeof(ProtocolServerSession)),
         };
 
         // Send the protocol greeting
@@ -124,6 +134,8 @@ protocolServerCommandGet(ProtocolServer *const this)
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result.id = pckReadStrIdP(command);
+            result.type = pckReadU32P(command);
+            result.sessionId = pckReadU64P(command);
             result.param = pckReadPackP(command);
         }
         MEM_CONTEXT_PRIOR_END();
@@ -198,7 +210,70 @@ protocolServerProcess(
 
                             TRY_BEGIN()
                             {
-                                handler->process(pckReadNew(command.param), this);
+                                // Process command type
+                                switch (command.type)
+                                {
+                                    case protocolCommandTypeOpen:
+                                    {
+                                        ASSERT(command.sessionId == 0);
+
+                                        ProtocolServerSession session = {.id = ++this->sessionTotal};
+
+                                        MEM_CONTEXT_OBJ_BEGIN(this->sessionList)
+                                        {
+                                            session.data = handler->open(pckReadNew(command.param), this, session.id);
+                                        }
+                                        MEM_CONTEXT_OBJ_END();
+
+                                        lstAdd(this->sessionList, &session);
+
+                                        break;
+                                    }
+
+                                    default:
+                                    {
+                                        ASSERT(command.type == protocolCommandTypeProcess || protocolCommandTypeClose);
+
+                                        // Find session data (if any)
+                                        void *sessionData = NULL;
+                                        unsigned int sessionListIdx = 0;
+
+                                        if (command.sessionId != 0)
+                                        {
+                                            for (; sessionListIdx < lstSize(this->sessionList); sessionListIdx++)
+                                            {
+                                                ProtocolServerSession *const session = lstGet(this->sessionList, sessionListIdx);
+
+                                                if (session->id == command.sessionId)
+                                                    sessionData = session->data;
+                                            }
+
+                                            if (sessionData == NULL)
+                                                THROW(ProtocolError, "unable to find session"); // !!! IMPROVE THIS ERROR
+                                        }
+
+                                        // Process command type
+                                        switch (command.type)
+                                        {
+                                            case protocolCommandTypeProcess:
+                                                handler->process(pckReadNew(command.param), this, sessionData);
+                                                break;
+
+                                            default:
+                                            {
+                                                ASSERT(protocolCommandTypeClose);
+
+                                                handler->close(pckReadNew(command.param), this, sessionData);
+
+                                                objFree(sessionData);
+                                                lstRemoveIdx(this->sessionList, sessionListIdx);
+
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+
                             }
                             CATCH_ANY()
                             {
