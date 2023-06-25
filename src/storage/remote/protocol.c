@@ -408,7 +408,7 @@ storageRemoteReadOpenProtocol(PackRead *const param, ProtocolServer *const serve
         const Pack *const filter = pckReadPackP(param);
 
         // Create the read object
-        StorageRead *const fileRead =  storageInterfaceNewReadP(
+        StorageRead *const fileRead = storageInterfaceNewReadP(
             storageRemoteProtocolLocal.driver, file, ignoreMissing, .offset = offset, .limit = limit);
 
         // Set filter group based on passed filters
@@ -437,7 +437,6 @@ storageRemoteReadOpenProtocol(PackRead *const param, ProtocolServer *const serve
             protocolServerDataPut(server, packWrite);
             protocolServerDataEndPut(server);
         }
-
     }
     MEM_CONTEXT_TEMP_END();
 

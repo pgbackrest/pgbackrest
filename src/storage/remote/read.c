@@ -102,13 +102,13 @@ storageReadRemote(THIS_VOID, Buffer *buffer, bool block)
             // If no bytes remaining then read a new block
             if (this->remaining == 0)
             {
-                fprintf(stdout, "!!!IN REMAINS LOOP\n");fflush(stdout);
+                // fprintf(stdout, "!!!IN REMAINS LOOP\n");fflush(stdout);
 
                 MEM_CONTEXT_TEMP_BEGIN()
                 {
                     if (this->process)
                     {
-                        fprintf(stdout, "!!!PUT PROCESS\n");fflush(stdout);
+                        // fprintf(stdout, "!!!PUT PROCESS\n");fflush(stdout);
                         protocolClientCommandPut(
                             this->client, protocolCommandNewP(PROTOCOL_COMMAND_STORAGE_READ, .sessionId = this->sessionId), false);
                     }
@@ -125,7 +125,7 @@ storageReadRemote(THIS_VOID, Buffer *buffer, bool block)
                             this->block = pckReadBinP(read);
                             this->remaining = bufUsed(this->block);
 
-                            fprintf(stdout, "!!!FOUND BLOCK %zu\n", this->remaining);fflush(stdout);
+                            // fprintf(stdout, "!!!FOUND BLOCK %zu\n", this->remaining);fflush(stdout);
                         }
                         MEM_CONTEXT_OBJ_END();
                     }
@@ -140,7 +140,7 @@ storageReadRemote(THIS_VOID, Buffer *buffer, bool block)
                         if (this->remaining == 0)
                             this->eof = true;
 
-                        fprintf(stdout, "!!!FOUND EOF\n");fflush(stdout);
+                        // fprintf(stdout, "!!!FOUND EOF\n");fflush(stdout);
                     }
 
                     protocolClientDataEndGet(this->client);

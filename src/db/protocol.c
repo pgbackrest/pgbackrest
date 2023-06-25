@@ -58,11 +58,11 @@ dbQueryProtocol(PackRead *const param, ProtocolServer *const server, void *const
     ASSERT(server != NULL);
     ASSERT(pgClient != NULL);
 
-    const PgClientQueryResult resultType = (PgClientQueryResult)pckReadStrIdP(param);
-    const String *const query = pckReadStrP(param);
-
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        const PgClientQueryResult resultType = (PgClientQueryResult)pckReadStrIdP(param);
+        const String *const query = pckReadStrP(param);
+
         protocolServerDataPut(server, pckWritePackP(protocolPackNew(), pgClientQuery(pgClient, query, resultType)));
         protocolServerDataEndPut(server);
     }
