@@ -443,6 +443,8 @@ storageSftpRemove(THIS_VOID, const String *const file, const StorageInterfaceRem
     }
     while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
 
+    waitFree(wait);
+
     if (rc != 0)
     {
         if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL)
