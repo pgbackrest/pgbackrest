@@ -13,7 +13,7 @@ Restore Protocol Handler
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
-FN_EXTERN void
+FN_EXTERN bool
 restoreFileProtocol(PackRead *const param, ProtocolServer *const server, void *const sessionData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -94,5 +94,5 @@ restoreFileProtocol(PackRead *const param, ProtocolServer *const server, void *c
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(BOOL, false);
 }

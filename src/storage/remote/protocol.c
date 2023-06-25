@@ -124,7 +124,7 @@ storageRemoteFilterGroup(IoFilterGroup *const filterGroup, const Pack *const fil
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN void
+FN_EXTERN bool
 storageRemoteFeatureProtocol(PackRead *const param, ProtocolServer *const server, void *const sessionData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -170,7 +170,7 @@ storageRemoteFeatureProtocol(PackRead *const param, ProtocolServer *const server
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(BOOL, false);
 }
 
 /**********************************************************************************************************************************/
@@ -266,7 +266,7 @@ storageRemoteInfoProtocolPut(
     FUNCTION_TEST_RETURN_VOID();
 }
 
-FN_EXTERN void
+FN_EXTERN bool
 storageRemoteInfoProtocol(PackRead *const param, ProtocolServer *const server, void *const sessionData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -301,11 +301,11 @@ storageRemoteInfoProtocol(PackRead *const param, ProtocolServer *const server, v
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(BOOL, false);
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN void
+FN_EXTERN bool
 storageRemoteLinkCreateProtocol(PackRead *const param, ProtocolServer *const server, void *const sessionData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -330,11 +330,11 @@ storageRemoteLinkCreateProtocol(PackRead *const param, ProtocolServer *const ser
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(BOOL, false);
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN void
+FN_EXTERN bool
 storageRemoteListProtocol(PackRead *const param, ProtocolServer *const server, void *const sessionData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -379,23 +379,25 @@ storageRemoteListProtocol(PackRead *const param, ProtocolServer *const server, v
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(BOOL, false);
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN void
-storageRemoteOpenReadProtocol(PackRead *const param, ProtocolServer *const server, void *const sessionData)
+FN_EXTERN void *
+storageRemoteReadOpenProtocol(PackRead *const param, ProtocolServer *const server, const uint64_t sessionId)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PACK_READ, param);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
-        (void)sessionData;                                          // Unused
+        FUNCTION_LOG_PARAM(UINT64, sessionId);
     FUNCTION_LOG_END();
 
     ASSERT(param != NULL);
     ASSERT(server != NULL);
-    ASSERT(sessionData == NULL);
+    ASSERT(sessionId != 0);
     ASSERT(storageRemoteProtocolLocal.driver != NULL);
+
+    StorageRead *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -406,56 +408,96 @@ storageRemoteOpenReadProtocol(PackRead *const param, ProtocolServer *const serve
         const Pack *const filter = pckReadPackP(param);
 
         // Create the read object
-        IoRead *fileRead = storageReadIo(
-            storageInterfaceNewReadP(storageRemoteProtocolLocal.driver, file, ignoreMissing, .offset = offset, .limit = limit));
+        StorageRead *const fileRead =  storageInterfaceNewReadP(
+            storageRemoteProtocolLocal.driver, file, ignoreMissing, .offset = offset, .limit = limit);
 
         // Set filter group based on passed filters
-        storageRemoteFilterGroup(ioReadFilterGroup(fileRead), filter);
+        storageRemoteFilterGroup(ioReadFilterGroup(storageReadIo(fileRead)), filter);
 
-        // Check if the file exists
-        bool exists = ioReadOpen(fileRead);
-        protocolServerDataPut(server, pckWriteBoolP(protocolPackNew(), exists, .defaultWrite = true));
+        // Determine if file exists
+        const bool exists = ioReadOpen(storageReadIo(fileRead));
+        PackWrite *const packWrite = protocolPackNew();
 
-        // Transfer the file if it exists
+        pckWriteBoolP(packWrite, exists, .defaultWrite = true);
+
+        // If the file exists
         if (exists)
         {
-            Buffer *buffer = bufNew(ioBufferSize());
+            // Send session id to client
+            pckWriteU64P(packWrite, sessionId);
+            protocolServerDataPut(server, packWrite);
 
-            // Write file out to protocol layer
-            do
-            {
-                ioRead(fileRead, buffer);
-
-                if (!bufEmpty(buffer))
-                {
-                    MEM_CONTEXT_TEMP_BEGIN()
-                    {
-                        PackWrite *write = pckWriteNewP(.size = ioBufferSize() + PROTOCOL_PACK_DEFAULT_SIZE);
-                        pckWriteBinP(write, buffer);
-                        protocolServerDataPut(server, write);
-                    }
-                    MEM_CONTEXT_TEMP_END();
-
-                    bufUsedZero(buffer);
-                }
-            }
-            while (!ioReadEof(fileRead));
-
-            ioReadClose(fileRead);
-
-            // Write filter results
-            protocolServerDataPut(server, pckWritePackP(protocolPackNew(), ioFilterGroupResultAll(ioReadFilterGroup(fileRead))));
+            // If there is more to read then store IoRead in the session
+            if (storageRemoteReadProtocol(NULL, server, fileRead))
+                result = storageReadMove(fileRead, memContextPrior());
+        }
+        // Else notify client that file does not exist
+        else
+        {
+            protocolServerDataPut(server, packWrite);
+            protocolServerDataEndPut(server);
         }
 
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(STORAGE_READ, result);
+}
+
+FN_EXTERN bool
+storageRemoteReadProtocol(PackRead *const param, ProtocolServer *const server, void *const fileRead)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(PACK_READ, param);
+        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
+        FUNCTION_LOG_PARAM(STORAGE_READ, fileRead);
+    FUNCTION_LOG_END();
+
+    ASSERT(param == NULL);
+    ASSERT(server != NULL);
+    ASSERT(fileRead != NULL);
+    ASSERT(storageRemoteProtocolLocal.driver != NULL);
+
+    bool result = true;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        Buffer *const buffer = bufNew(ioBufferSize());
+        PackWrite *const write = pckWriteNewP(.size = ioBufferSize() + PROTOCOL_PACK_DEFAULT_SIZE);
+
+        // Read block and send to client
+        ioRead(storageReadIo(fileRead), buffer);
+
+        pckWriteBoolP(write, bufEmpty(buffer));
+
+        if (!bufEmpty(buffer))
+            pckWriteBinP(write, buffer);
+
+        // On eof
+        pckWriteBoolP(write, ioReadEof(storageReadIo(fileRead)));
+
+        if (ioReadEof(storageReadIo(fileRead)))
+        {
+            // Close file (needed to get filter results)
+            ioReadClose(storageReadIo(fileRead));
+
+            // Write filter results
+            pckWritePackP(write, ioFilterGroupResultAll(ioReadFilterGroup(storageReadIo(fileRead))));
+
+            // Let the server know to close the session
+            result = false;
+        }
+
+        protocolServerDataPut(server, write);
         protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(BOOL, result);
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN void
+FN_EXTERN bool
 storageRemoteOpenWriteProtocol(PackRead *const param, ProtocolServer *const server, void *const sessionData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -540,11 +582,11 @@ storageRemoteOpenWriteProtocol(PackRead *const param, ProtocolServer *const serv
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(BOOL, false);
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN void
+FN_EXTERN bool
 storageRemotePathCreateProtocol(PackRead *const param, ProtocolServer *const server, void *const sessionData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -570,11 +612,11 @@ storageRemotePathCreateProtocol(PackRead *const param, ProtocolServer *const ser
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(BOOL, false);
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN void
+FN_EXTERN bool
 storageRemotePathRemoveProtocol(PackRead *const param, ProtocolServer *const server, void *const sessionData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -599,11 +641,11 @@ storageRemotePathRemoveProtocol(PackRead *const param, ProtocolServer *const ser
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(BOOL, false);
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN void
+FN_EXTERN bool
 storageRemotePathSyncProtocol(PackRead *const param, ProtocolServer *const server, void *const sessionData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -625,11 +667,11 @@ storageRemotePathSyncProtocol(PackRead *const param, ProtocolServer *const serve
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(BOOL, false);
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN void
+FN_EXTERN bool
 storageRemoteRemoveProtocol(PackRead *const param, ProtocolServer *const server, void *const sessionData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -652,5 +694,5 @@ storageRemoteRemoveProtocol(PackRead *const param, ProtocolServer *const server,
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(BOOL, false);
 }

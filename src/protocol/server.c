@@ -217,6 +217,7 @@ protocolServerProcess(
                                     case protocolCommandTypeOpen:
                                     {
                                         ASSERT(command.sessionId == 0);
+                                        ASSERT(handler->open != NULL);
 
                                         ProtocolServerSession session = {.id = ++this->sessionTotal};
 
@@ -226,7 +227,9 @@ protocolServerProcess(
                                         }
                                         MEM_CONTEXT_OBJ_END();
 
-                                        lstAdd(this->sessionList, &session);
+                                        // Create session if open returned session data
+                                        if (session.data != NULL)
+                                            lstAdd(this->sessionList, &session);
 
                                         break;
                                     }
@@ -268,8 +271,22 @@ protocolServerProcess(
                                         {
                                             // Process protocol session (with data with available)
                                             case protocolCommandTypeProcess:
-                                                handler->process(pckReadNew(command.param), this, sessionData);
+                                            {
+                                                ASSERT(handler->process != NULL);
+
+                                                // If there is no longer data to process
+                                                if (!handler->process(pckReadNew(command.param), this, sessionData))
+                                                {
+                                                    // Free session if exists
+                                                    if (sessionData != NULL)
+                                                    {
+                                                        objFree(sessionData);
+                                                        lstRemoveIdx(this->sessionList, sessionListIdx);
+                                                    }
+                                                }
+
                                                 break;
+                                            }
 
                                             // Close protocol session
                                             default:
@@ -278,8 +295,16 @@ protocolServerProcess(
                                                     ProtocolError, command.type == protocolCommandTypeClose,
                                                     "unknown command type '%s'", strZ(strIdToStr(command.type)));
 
-                                                handler->close(pckReadNew(command.param), this, sessionData);
+                                                // If there is a close handler then call it
+                                                if (handler->close != NULL)
+                                                {
+                                                    handler->close(pckReadNew(command.param), this, sessionData);
+                                                }
+                                                // Else send default end of data
+                                                else
+                                                    protocolServerDataEndPut(this);
 
+                                                // Free the session
                                                 objFree(sessionData);
                                                 lstRemoveIdx(this->sessionList, sessionListIdx);
 

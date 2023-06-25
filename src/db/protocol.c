@@ -45,7 +45,7 @@ dbOpenProtocol(PackRead *const param, ProtocolServer *const server, const uint64
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN void
+FN_EXTERN bool
 dbQueryProtocol(PackRead *const param, ProtocolServer *const server, void *const pgClient)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -68,7 +68,7 @@ dbQueryProtocol(PackRead *const param, ProtocolServer *const server, void *const
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(BOOL, true);
 }
 
 /**********************************************************************************************************************************/

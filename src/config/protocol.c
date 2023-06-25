@@ -13,7 +13,7 @@ Configuration Protocol Handler
 #include "config/protocol.h"
 
 /**********************************************************************************************************************************/
-FN_EXTERN void
+FN_EXTERN bool
 configOptionProtocol(PackRead *const param, ProtocolServer *const server, void *const sessionData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -43,7 +43,7 @@ configOptionProtocol(PackRead *const param, ProtocolServer *const server, void *
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(BOOL, false);
 }
 
 /**********************************************************************************************************************************/

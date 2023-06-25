@@ -30,6 +30,9 @@ typedef struct StorageReadRemote
     size_t remaining;                                               // Bytes remaining to be read in block
     Buffer *block;                                                  // Block currently being read
     bool eof;                                                       // Has the file reached eof?
+    bool eofFound;                                                  // Eof found but a block is remaining to be read
+    bool process;                                                   // Does process need to be called?
+    uint64_t sessionId;                                             // Session id for subsequent commands
 
 #ifdef DEBUG
     uint64_t protocolReadBytes;                                     // How many bytes were read from the protocol layer?
@@ -59,33 +62,14 @@ storageReadRemoteFreeResource(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    // Read if eof has not been reached
-    if (!this->eof)
+    if (!this->eofFound)
     {
-        do
-        {
-            MEM_CONTEXT_TEMP_BEGIN()
-            {
-                PackRead *const read = protocolClientDataGet(this->client);
-                pckReadNext(read);
+        ProtocolCommand *const command = protocolCommandNewP(
+            PROTOCOL_COMMAND_STORAGE_READ, .type = protocolCommandTypeClose, .sessionId = this->sessionId);
 
-                // If binary then discard
-                if (pckReadType(read) == pckTypeBin)
-                {
-                    pckReadBinP(read);
-                }
-                // Else read is complete so discard the filter list
-                else
-                {
-                    pckReadPackP(read);
-                    protocolClientDataEndGet(this->client);
-
-                    this->eof = true;
-                }
-            }
-            MEM_CONTEXT_TEMP_END();
-        }
-        while (!this->eof);
+        protocolClientCommandPut(this->client, command, false);
+        protocolClientDataEndGet(this->client);
+        protocolCommandFree(command);
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -118,31 +102,48 @@ storageReadRemote(THIS_VOID, Buffer *buffer, bool block)
             // If no bytes remaining then read a new block
             if (this->remaining == 0)
             {
+                fprintf(stdout, "!!!IN REMAINS LOOP\n");fflush(stdout);
+
                 MEM_CONTEXT_TEMP_BEGIN()
                 {
-                    PackRead *const read = protocolClientDataGet(this->client);
-                    pckReadNext(read);
+                    if (this->process)
+                    {
+                        fprintf(stdout, "!!!PUT PROCESS\n");fflush(stdout);
+                        protocolClientCommandPut(
+                            this->client, protocolCommandNewP(PROTOCOL_COMMAND_STORAGE_READ, .sessionId = this->sessionId), false);
+                    }
+                    else
+                        this->process = true;
 
-                    // If binary then read the next block
-                    if (pckReadType(read) == pckTypeBin)
+                    PackRead *const read = protocolClientDataGet(this->client);
+
+                    // If not done then read the next block
+                    if (!pckReadBoolP(read))
                     {
                         MEM_CONTEXT_OBJ_BEGIN(this)
                         {
                             this->block = pckReadBinP(read);
                             this->remaining = bufUsed(this->block);
+
+                            fprintf(stdout, "!!!FOUND BLOCK %zu\n", this->remaining);fflush(stdout);
                         }
                         MEM_CONTEXT_OBJ_END();
                     }
-                    // Else read is complete and get the filter list
-                    else
+
+                    // If eof then get results
+                    if (pckReadBoolP(read))
                     {
-                        bufFree(this->block);
-
                         ioFilterGroupResultAllSet(ioReadFilterGroup(storageReadIo(this->read)), pckReadPackP(read));
-                        this->eof = true;
 
-                        protocolClientDataEndGet(this->client);
+                        this->eofFound = true;
+
+                        if (this->remaining == 0)
+                            this->eof = true;
+
+                        fprintf(stdout, "!!!FOUND EOF\n");fflush(stdout);
                     }
+
+                    protocolClientDataEndGet(this->client);
 
 #ifdef DEBUG
                     this->protocolReadBytes += this->remaining;
@@ -162,6 +163,9 @@ storageReadRemote(THIS_VOID, Buffer *buffer, bool block)
                     this->remaining = 0;
                     bufFree(this->block);
                     this->block = NULL;
+
+                    if (this->eofFound)
+                        this->eof = true;
                 }
                 // Else read what we can
                 else
@@ -221,7 +225,7 @@ storageReadRemoteOpen(THIS_VOID)
                 compressFilterP(compressTypeGz, (int)this->interface.compressLevel, .raw = true));
         }
 
-        ProtocolCommand *command = protocolCommandNewP(PROTOCOL_COMMAND_STORAGE_OPEN_READ);
+        ProtocolCommand *command = protocolCommandNewP(PROTOCOL_COMMAND_STORAGE_READ, .type = protocolCommandTypeOpen);
         PackWrite *const param = protocolCommandParam(command);
 
         pckWriteStrP(param, this->interface.name);
@@ -238,10 +242,14 @@ storageReadRemoteOpen(THIS_VOID)
         protocolClientCommandPut(this->client, command, false);
 
         // If the file exists
-        result = pckReadBoolP(protocolClientDataGet(this->client));
+        PackRead *const data = protocolClientDataGet(this->client);
+        result = pckReadBoolP(data);
 
         if (result)
         {
+            // Store session id
+            this->sessionId = pckReadU64P(data);
+
             // Clear filters since they will be run on the remote side
             ioFilterGroupClear(ioReadFilterGroup(storageReadIo(this->read)));
 

@@ -24,7 +24,7 @@ An array of this struct must be passed to protocolServerProcess() for the server
 implement a single command, as defined by the command string.
 ***********************************************************************************************************************************/
 typedef void *(*ProtocolServerCommandOpenHandler)(PackRead *param, ProtocolServer *server, uint64_t sessionId);
-typedef void (*ProtocolServerCommandProcessHandler)(PackRead *param, ProtocolServer *server, void *sessionData);
+typedef bool (*ProtocolServerCommandProcessHandler)(PackRead *param, ProtocolServer *server, void *sessionData);
 typedef void (*ProtocolServerCommandCloseHandler)(PackRead *param, ProtocolServer *server, void *sessionData);
 
 typedef struct ProtocolServerHandler

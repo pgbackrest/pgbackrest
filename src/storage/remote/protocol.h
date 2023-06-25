@@ -11,16 +11,17 @@ Remote Storage Protocol Handler
 Functions
 ***********************************************************************************************************************************/
 // Process storage protocol requests
-FN_EXTERN void storageRemoteFeatureProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
-FN_EXTERN void storageRemoteInfoProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
-FN_EXTERN void storageRemoteLinkCreateProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
-FN_EXTERN void storageRemoteListProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
-FN_EXTERN void storageRemoteOpenReadProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
-FN_EXTERN void storageRemoteOpenWriteProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
-FN_EXTERN void storageRemotePathCreateProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
-FN_EXTERN void storageRemotePathRemoveProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
-FN_EXTERN void storageRemotePathSyncProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
-FN_EXTERN void storageRemoteRemoveProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
+FN_EXTERN bool storageRemoteFeatureProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
+FN_EXTERN bool storageRemoteInfoProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
+FN_EXTERN bool storageRemoteLinkCreateProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
+FN_EXTERN bool storageRemoteListProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
+FN_EXTERN bool storageRemoteOpenWriteProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
+FN_EXTERN bool storageRemotePathCreateProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
+FN_EXTERN bool storageRemotePathRemoveProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
+FN_EXTERN bool storageRemotePathSyncProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
+FN_EXTERN void *storageRemoteReadOpenProtocol(PackRead *param, ProtocolServer *server, uint64_t sessionId);
+FN_EXTERN bool storageRemoteReadProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
+FN_EXTERN bool storageRemoteRemoveProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
 
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()
@@ -29,8 +30,8 @@ Protocol commands for ProtocolServerHandler arrays passed to protocolServerProce
 #define PROTOCOL_COMMAND_STORAGE_INFO                               STRID5("s-i", 0x27730)
 #define PROTOCOL_COMMAND_STORAGE_LINK_CREATE                        STRID5("s-lc", 0x1b3730)
 #define PROTOCOL_COMMAND_STORAGE_LIST                               STRID5("s-l", 0x33730)
-#define PROTOCOL_COMMAND_STORAGE_OPEN_READ                          STRID5("s-or", 0x93f730)
-#define PROTOCOL_COMMAND_STORAGE_OPEN_WRITE                         STRID5("s-ow", 0xbbf730)
+#define PROTOCOL_COMMAND_STORAGE_READ                               STRID5("s-rd", 0x24b730)
+#define PROTOCOL_COMMAND_STORAGE_OPEN_WRITE                         STRID5("s-wr", 0x95f730)
 #define PROTOCOL_COMMAND_STORAGE_PATH_CREATE                        STRID5("s-pc", 0x1c3730)
 #define PROTOCOL_COMMAND_STORAGE_REMOVE                             STRID5("s-r", 0x4b730)
 #define PROTOCOL_COMMAND_STORAGE_PATH_REMOVE                        STRID5("s-pr", 0x943730)
@@ -41,7 +42,7 @@ Protocol commands for ProtocolServerHandler arrays passed to protocolServerProce
     {.command = PROTOCOL_COMMAND_STORAGE_INFO, .process = storageRemoteInfoProtocol},                                              \
     {.command = PROTOCOL_COMMAND_STORAGE_LINK_CREATE, .process = storageRemoteLinkCreateProtocol},                                 \
     {.command = PROTOCOL_COMMAND_STORAGE_LIST, .process = storageRemoteListProtocol},                                              \
-    {.command = PROTOCOL_COMMAND_STORAGE_OPEN_READ, .process = storageRemoteOpenReadProtocol},                                     \
+    {.command = PROTOCOL_COMMAND_STORAGE_READ, .open = storageRemoteReadOpenProtocol, .process = storageRemoteReadProtocol},       \
     {.command = PROTOCOL_COMMAND_STORAGE_OPEN_WRITE, .process = storageRemoteOpenWriteProtocol},                                   \
     {.command = PROTOCOL_COMMAND_STORAGE_PATH_CREATE, .process = storageRemotePathCreateProtocol},                                 \
     {.command = PROTOCOL_COMMAND_STORAGE_PATH_REMOVE, .process = storageRemotePathRemoveProtocol},                                 \
