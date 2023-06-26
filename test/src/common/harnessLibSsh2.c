@@ -232,6 +232,15 @@ libssh2_session_handshake(LIBSSH2_SESSION *session, libssh2_socket_t sock)
 }
 
 /***********************************************************************************************************************************
+Shim for libssh2_session_block_directions
+***********************************************************************************************************************************/
+int
+libssh2_session_block_directions(LIBSSH2_SESSION *session)
+{
+    return hrnLibSsh2ScriptRun(HRNLIBSSH2_SESSION_BLOCK_DIRECTIONS, NULL, (HrnLibSsh2 *)session)->resultInt;
+}
+
+/***********************************************************************************************************************************
 Shim for libssh2_hostkey_hash
 ***********************************************************************************************************************************/
 const char *

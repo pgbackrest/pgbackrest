@@ -56,7 +56,7 @@ storageReadSftpOpen(THIS_VOID)
             this->sftpSession, strZ(this->interface.name), (unsigned int)strSize(this->interface.name), LIBSSH2_FXF_READ, 0,
             LIBSSH2_SFTP_OPENFILE);
     }
-    while (this->sftpHandle == NULL && storageSftpWaitFd(this->storage, libssh2_session_last_error(this->session, NULL, NULL, 0)));
+    while (this->sftpHandle == NULL && storageSftpWaitFd(this->storage, libssh2_session_last_errno(this->session)));
 
     if (this->sftpHandle == NULL)
     {

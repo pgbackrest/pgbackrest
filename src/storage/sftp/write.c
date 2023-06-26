@@ -247,9 +247,6 @@ storageWriteSftpClose(THIS_VOID)
     if (this->sftpHandle != NULL)
     {
         int rc;
-        char *libSsh2ErrMsg;
-        int errMsgLen;
-        int libSsh2ErrNo;
 
         if (this->interface.syncFile)
         {
@@ -280,11 +277,9 @@ storageWriteSftpClose(THIS_VOID)
             if (rc == LIBSSH2_ERROR_EAGAIN)
                 THROW_FMT(FileCloseError, "timeout closing file '%s'", strZ(this->nameTmp));
 
-            libSsh2ErrNo = libssh2_session_last_error(this->session, &libSsh2ErrMsg, &errMsgLen, 0);
-
-            THROW_FMT(
-                FileCloseError,
-                STORAGE_ERROR_WRITE_CLOSE ": libssh2 error [%d] %s", strZ(this->nameTmp), libSsh2ErrNo, libSsh2ErrMsg);
+            storageSftpEvalLibSsh2Error(
+                rc, libssh2_sftp_last_error(this->sftpSession), &FileCloseError,
+                strNewFmt(STORAGE_ERROR_WRITE_CLOSE, strZ(this->nameTmp)), NULL);
         }
 
         this->sftpHandle = NULL;
