@@ -53,12 +53,12 @@ protocolCommandPut(ProtocolCommand *const this, IoWrite *const write)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Write the command and flush to be sure the command gets sent immediately
+        // Write the command
         PackWrite *commandPack = pckWriteNewIo(write);
         pckWriteU32P(commandPack, protocolMessageTypeCommand, .defaultWrite = true);
         pckWriteStrIdP(commandPack, this->command);
 
-        // Only write params if there were any
+        // Write parameters
         if (this->pack != NULL)
         {
             pckWriteEndP(this->pack);
