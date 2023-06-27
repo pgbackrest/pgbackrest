@@ -64,7 +64,7 @@ FN_EXTERN PackRead *protocolServerDataGet(ProtocolServer *this);
 FN_EXTERN void protocolServerDataPut(ProtocolServer *this, PackWrite *data);
 
 // Put data end to the client. This ends command processing and no more data should be sent.
-FN_EXTERN void protocolServerDataEndPut(ProtocolServer *this);
+FN_EXTERN void protocolServerDataEndPut(ProtocolServer *this); // !!! HOPEFULLY THIS CAN BE REMOVED
 
 // Return an error
 FN_EXTERN void protocolServerError(ProtocolServer *this, int code, const String *message, const String *stack);

@@ -278,14 +278,15 @@ protocolServerProcess(
                                                 // Process session
                                                 if (handler->processSession != NULL)
                                                 {
-                                                    ASSERT(command.sessionId != 0);
+                                                    ASSERT(handler->process == NULL);
+                                                    CHECK_FMT(ProtocolError, command.sessionId != 0, "command is %s:%s", strZ(strIdToStr(command.id)),
+                                                    strZ(strIdToStr(command.type)));
 
                                                     if (!handler->processSession(pckReadNew(command.param), this, sessionData))
                                                     {
                                                         objFree(sessionData);
                                                         lstRemoveIdx(this->sessionList, sessionListIdx);
                                                     }
-
                                                 }
                                                 // Standalone process
                                                 else
@@ -300,12 +301,8 @@ protocolServerProcess(
                                             }
 
                                             // Close protocol session
-                                            default:
+                                            case protocolCommandTypeClose:
                                             {
-                                                CHECK_FMT(
-                                                    ProtocolError, command.type == protocolCommandTypeClose,
-                                                    "unknown command type '%s'", strZ(strIdToStr(command.type)));
-
                                                 // If there is a close handler then call it
                                                 if (handler->close != NULL)
                                                 {
@@ -314,6 +311,23 @@ protocolServerProcess(
                                                 // Else send default end of data
                                                 else
                                                     protocolServerDataEndPut(this);
+
+                                                // Free the session
+                                                objFree(sessionData);
+                                                lstRemoveIdx(this->sessionList, sessionListIdx);
+
+                                                break;
+                                            }
+
+                                            // Cancel protocol session
+                                            default:
+                                            {
+                                                CHECK_FMT(
+                                                    ProtocolError, command.type == protocolCommandTypeCancel,
+                                                    "unknown command type '%s'", strZ(strIdToStr(command.type)));
+
+                                                // Send end of data
+                                                protocolServerDataEndPut(this);
 
                                                 // Free the session
                                                 objFree(sessionData);

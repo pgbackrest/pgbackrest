@@ -20,6 +20,7 @@ typedef enum
     protocolCommandTypeOpen = STRID5("opn", 0x3a0f0),               // Open command for processing
     protocolCommandTypeProcess = STRID5("prc", 0xe500),             // Process command
     protocolCommandTypeClose = STRID5("cls", 0x4d830),              // Close command
+    protocolCommandTypeCancel = STRID5("cnc", 0xdc30),              // Cancel command
 } ProtocolCommandType;
 
 /***********************************************************************************************************************************
