@@ -11,17 +11,17 @@ Remote Storage Protocol Handler
 Functions
 ***********************************************************************************************************************************/
 // Process storage protocol requests
-FN_EXTERN bool storageRemoteFeatureProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
-FN_EXTERN bool storageRemoteInfoProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
-FN_EXTERN bool storageRemoteLinkCreateProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
-FN_EXTERN bool storageRemoteListProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
-FN_EXTERN bool storageRemoteOpenWriteProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
-FN_EXTERN bool storageRemotePathCreateProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
-FN_EXTERN bool storageRemotePathRemoveProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
-FN_EXTERN bool storageRemotePathSyncProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
+FN_EXTERN void storageRemoteFeatureProtocol(PackRead *param, ProtocolServer *server);
+FN_EXTERN void storageRemoteInfoProtocol(PackRead *param, ProtocolServer *server);
+FN_EXTERN void storageRemoteLinkCreateProtocol(PackRead *param, ProtocolServer *server);
+FN_EXTERN void storageRemoteListProtocol(PackRead *param, ProtocolServer *server);
+FN_EXTERN void storageRemoteOpenWriteProtocol(PackRead *param, ProtocolServer *server);
+FN_EXTERN void storageRemotePathCreateProtocol(PackRead *param, ProtocolServer *server);
+FN_EXTERN void storageRemotePathRemoveProtocol(PackRead *param, ProtocolServer *server);
+FN_EXTERN void storageRemotePathSyncProtocol(PackRead *param, ProtocolServer *server);
 FN_EXTERN void *storageRemoteReadOpenProtocol(PackRead *param, ProtocolServer *server, uint64_t sessionId);
 FN_EXTERN bool storageRemoteReadProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
-FN_EXTERN bool storageRemoteRemoveProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
+FN_EXTERN void storageRemoteRemoveProtocol(PackRead *param, ProtocolServer *server);
 
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()
@@ -42,7 +42,7 @@ Protocol commands for ProtocolServerHandler arrays passed to protocolServerProce
     {.command = PROTOCOL_COMMAND_STORAGE_INFO, .process = storageRemoteInfoProtocol},                                              \
     {.command = PROTOCOL_COMMAND_STORAGE_LINK_CREATE, .process = storageRemoteLinkCreateProtocol},                                 \
     {.command = PROTOCOL_COMMAND_STORAGE_LIST, .process = storageRemoteListProtocol},                                              \
-    {.command = PROTOCOL_COMMAND_STORAGE_READ, .open = storageRemoteReadOpenProtocol, .process = storageRemoteReadProtocol},       \
+    {.command = PROTOCOL_COMMAND_STORAGE_READ, .open = storageRemoteReadOpenProtocol, .processSession = storageRemoteReadProtocol},\
     {.command = PROTOCOL_COMMAND_STORAGE_OPEN_WRITE, .process = storageRemoteOpenWriteProtocol},                                   \
     {.command = PROTOCOL_COMMAND_STORAGE_PATH_CREATE, .process = storageRemotePathCreateProtocol},                                 \
     {.command = PROTOCOL_COMMAND_STORAGE_PATH_REMOVE, .process = storageRemotePathRemoveProtocol},                                 \

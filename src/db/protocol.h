@@ -21,6 +21,6 @@ Protocol commands for ProtocolServerHandler arrays passed to protocolServerProce
 #define PROTOCOL_COMMAND_DB                                         STRID5("db", 0x440)
 
 #define PROTOCOL_SERVER_HANDLER_DB_LIST                                                                                            \
-    {.command = PROTOCOL_COMMAND_DB, .open = dbOpenProtocol, .process = dbQueryProtocol, .close = dbCloseProtocol},
+    {.command = PROTOCOL_COMMAND_DB, .open = dbOpenProtocol, .processSession = dbQueryProtocol, .close = dbCloseProtocol},
 
 #endif

@@ -13,18 +13,16 @@ Archive Push Protocol Handler
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
-FN_EXTERN bool
-archivePushFileProtocol(PackRead *const param, ProtocolServer *const server, void *const sessionData)
+FN_EXTERN void
+archivePushFileProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PACK_READ, param);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
-        (void)sessionData;                                          // Unused
     FUNCTION_LOG_END();
 
     ASSERT(param != NULL);
     ASSERT(server != NULL);
-    ASSERT(sessionData == NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -70,5 +68,5 @@ archivePushFileProtocol(PackRead *const param, ProtocolServer *const server, voi
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(BOOL, false);
+    FUNCTION_LOG_RETURN_VOID();
 }

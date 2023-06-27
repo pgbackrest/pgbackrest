@@ -13,18 +13,16 @@ Configuration Protocol Handler
 #include "config/protocol.h"
 
 /**********************************************************************************************************************************/
-FN_EXTERN bool
-configOptionProtocol(PackRead *const param, ProtocolServer *const server, void *const sessionData)
+FN_EXTERN void
+configOptionProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PACK_READ, param);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
-        (void)sessionData;                                          // Unused
     FUNCTION_LOG_END();
 
     ASSERT(param != NULL);
     ASSERT(server != NULL);
-    ASSERT(sessionData == NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -43,7 +41,7 @@ configOptionProtocol(PackRead *const param, ProtocolServer *const server, void *
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(BOOL, false);
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -59,7 +57,7 @@ configOptionRemote(ProtocolClient *client, const VariantList *paramList)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ProtocolCommand *command = protocolCommandNewP(PROTOCOL_COMMAND_CONFIG_OPTION);
+        ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_CONFIG_OPTION);
         PackWrite *const param = protocolCommandParam(command);
 
         for (unsigned int paramIdx = 0; paramIdx < varLstSize(paramList); paramIdx++)

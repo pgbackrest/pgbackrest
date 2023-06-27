@@ -239,7 +239,7 @@ dbOpen(Db *this)
         // Open the connection
         if (this->remoteClient != NULL)
         {
-            ProtocolCommand *command = protocolCommandNewP(PROTOCOL_COMMAND_DB, .type = protocolCommandTypeOpen);
+            ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_DB, .type = protocolCommandTypeOpen);
             this->sessionId = pckReadU64P(protocolClientExecute(this->remoteClient, command, true));
 
             // Set a callback to notify the remote when a connection is closed

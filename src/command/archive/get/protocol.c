@@ -14,18 +14,16 @@ Archive Get Protocol Handler
 #include "storage/write.intern.h"
 
 /**********************************************************************************************************************************/
-FN_EXTERN bool
-archiveGetFileProtocol(PackRead *const param, ProtocolServer *const server, void *const sessionData)
+FN_EXTERN void
+archiveGetFileProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PACK_READ, param);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
-        (void)sessionData;                                          // Unused
     FUNCTION_LOG_END();
 
     ASSERT(param != NULL);
     ASSERT(server != NULL);
-    ASSERT(sessionData == NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -61,5 +59,5 @@ archiveGetFileProtocol(PackRead *const param, ProtocolServer *const server, void
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(BOOL, false);
+    FUNCTION_LOG_RETURN_VOID();
 }

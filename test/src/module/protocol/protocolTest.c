@@ -21,8 +21,8 @@ Test protocol server command handlers
 ***********************************************************************************************************************************/
 #define TEST_PROTOCOL_COMMAND_ASSERT                                STRID5("assert", 0x2922ce610)
 
-__attribute__((__noreturn__)) static bool
-testCommandAssertProtocol(PackRead *const param, ProtocolServer *const server, void *const sessionData)
+__attribute__((__noreturn__)) static void
+testCommandAssertProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(PACK_READ, param);
@@ -31,7 +31,6 @@ testCommandAssertProtocol(PackRead *const param, ProtocolServer *const server, v
 
     ASSERT(param == NULL);
     ASSERT(server != NULL);
-    ASSERT(sessionData == NULL);
 
     hrnErrorThrowP();
 
@@ -42,8 +41,8 @@ testCommandAssertProtocol(PackRead *const param, ProtocolServer *const server, v
 
 static unsigned int testCommandErrorProtocolTotal = 0;
 
-__attribute__((__noreturn__)) static bool
-testCommandErrorProtocol(PackRead *const param, ProtocolServer *const server, void *const sessionData)
+__attribute__((__noreturn__)) static void
+testCommandErrorProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(PACK_READ, param);
@@ -52,7 +51,6 @@ testCommandErrorProtocol(PackRead *const param, ProtocolServer *const server, vo
 
     ASSERT(param == NULL);
     ASSERT(server != NULL);
-    ASSERT(sessionData == NULL);
 
     testCommandErrorProtocolTotal++;
     hrnErrorThrowP(.errorType = &FormatError, .message = testCommandErrorProtocolTotal <= 2 ? NULL : "ERR_MESSAGE_RETRY");
@@ -62,8 +60,8 @@ testCommandErrorProtocol(PackRead *const param, ProtocolServer *const server, vo
 
 #define TEST_PROTOCOL_COMMAND_SIMPLE                                STRID5("c-simple", 0x2b20d4cf630)
 
-static bool
-testCommandRequestSimpleProtocol(PackRead *const param, ProtocolServer *const server, void *const sessionData)
+static void
+testCommandRequestSimpleProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(PACK_READ, param);
@@ -72,7 +70,6 @@ testCommandRequestSimpleProtocol(PackRead *const param, ProtocolServer *const se
 
     ASSERT(param == NULL);
     ASSERT(server != NULL);
-    ASSERT(sessionData == NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -81,13 +78,13 @@ testCommandRequestSimpleProtocol(PackRead *const param, ProtocolServer *const se
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_HARNESS_RETURN(BOOL, false);
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 #define TEST_PROTOCOL_COMMAND_COMPLEX                               STRID5("c-complex", 0x182b20d78f630)
 
-static bool
-testCommandRequestComplexProtocol(PackRead *const param, ProtocolServer *const server, void *const sessionData)
+static void
+testCommandRequestComplexProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(PACK_READ, param);
@@ -96,7 +93,6 @@ testCommandRequestComplexProtocol(PackRead *const param, ProtocolServer *const s
 
     ASSERT(param != NULL);
     ASSERT(server != NULL);
-    ASSERT(sessionData == NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -115,15 +111,15 @@ testCommandRequestComplexProtocol(PackRead *const param, ProtocolServer *const s
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_HARNESS_RETURN(BOOL, false);
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 #define TEST_PROTOCOL_COMMAND_RETRY                                 STRID5("retry", 0x19950b20)
 
 static unsigned int testCommandRetryTotal = 1;
 
-static bool
-testCommandRetryProtocol(PackRead *const param, ProtocolServer *const server, void *const sessionData)
+static void
+testCommandRetryProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(PACK_READ, param);
@@ -132,7 +128,6 @@ testCommandRetryProtocol(PackRead *const param, ProtocolServer *const server, vo
 
     ASSERT(param == NULL);
     ASSERT(server != NULL);
-    ASSERT(sessionData == NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -147,7 +142,7 @@ testCommandRetryProtocol(PackRead *const param, ProtocolServer *const server, vo
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_HARNESS_RETURN(BOOL, false);
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 #define TEST_PROTOCOL_SERVER_HANDLER_LIST                                                                                          \

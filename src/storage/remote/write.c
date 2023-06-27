@@ -80,7 +80,7 @@ storageWriteRemoteOpen(THIS_VOID)
         if (this->interface.compressible)
             ioFilterGroupInsert(ioWriteFilterGroup(storageWriteIo(this->write)), 0, decompressFilterP(compressTypeGz));
 
-        ProtocolCommand *command = protocolCommandNewP(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE);
+        ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE);
         PackWrite *const param = protocolCommandParam(command);
 
         pckWriteStrP(param, this->interface.name);

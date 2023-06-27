@@ -245,6 +245,9 @@ protocolServerProcess(
 
                                         if (command.sessionId != 0)
                                         {
+                                            ASSERT(handler->processSession != NULL);
+                                            ASSERT(handler->process == NULL);
+
                                             for (; sessionListIdx < lstSize(this->sessionList); sessionListIdx++)
                                             {
                                                 ProtocolServerSession *const session = lstGet(this->sessionList, sessionListIdx);
@@ -269,20 +272,28 @@ protocolServerProcess(
                                         // Process command type
                                         switch (command.type)
                                         {
-                                            // Process protocol session (with data with available)
+                                            // Process command
                                             case protocolCommandTypeProcess:
                                             {
-                                                ASSERT(handler->process != NULL);
-
-                                                // If there is no longer data to process
-                                                if (!handler->process(pckReadNew(command.param), this, sessionData))
+                                                // Process session
+                                                if (handler->processSession != NULL)
                                                 {
-                                                    // Free session if exists
-                                                    if (sessionData != NULL)
+                                                    ASSERT(command.sessionId != 0);
+
+                                                    if (!handler->processSession(pckReadNew(command.param), this, sessionData))
                                                     {
                                                         objFree(sessionData);
                                                         lstRemoveIdx(this->sessionList, sessionListIdx);
                                                     }
+
+                                                }
+                                                // Standalone process
+                                                else
+                                                {
+                                                    ASSERT(handler->process != NULL);
+                                                    ASSERT(command.sessionId == 0);
+
+                                                    handler->process(pckReadNew(command.param), this);
                                                 }
 
                                                 break;
