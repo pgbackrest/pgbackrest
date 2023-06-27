@@ -280,7 +280,7 @@ protocolServerProcess(
                                                 {
                                                     ASSERT(handler->process == NULL);
                                                     CHECK_FMT(ProtocolError, command.sessionId != 0, "command is %s:%s", strZ(strIdToStr(command.id)),
-                                                    strZ(strIdToStr(command.type)));
+                                                              strZ(strIdToStr(command.type)));
 
                                                     if (!handler->processSession(pckReadNew(command.param), this, sessionData))
                                                     {

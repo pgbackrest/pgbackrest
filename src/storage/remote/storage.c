@@ -144,7 +144,7 @@ storageRemoteInfo(THIS_VOID, const String *file, StorageInfoLevel level, Storage
         pckWriteBoolP(commandParam, param.followLink);
 
         // Put command
-        protocolClientCommandPut(this->client, command, false);
+        protocolClientCommandPut(this->client, command);
 
         // Read info from protocol
         PackRead *read = protocolClientDataGet(this->client);
@@ -231,7 +231,7 @@ storageRemoteList(THIS_VOID, const String *const path, const StorageInfoLevel le
         pckWriteU32P(commandParam, level);
 
         // Put command
-        protocolClientCommandPut(this->client, command, false);
+        protocolClientCommandPut(this->client, command);
 
         // Read list
         StorageRemoteInfoData parseData = {.memContext = memContextCurrent()};

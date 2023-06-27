@@ -551,22 +551,16 @@ storageRemoteWriteProtocol(PackRead *const param, ProtocolServer *const server, 
         FUNCTION_LOG_PARAM(STORAGE_READ, fileWrite);
     FUNCTION_LOG_END();
 
-    ASSERT(param == NULL);
+    ASSERT(param != NULL);
     ASSERT(server != NULL);
     ASSERT(fileWrite != NULL);
     ASSERT(storageRemoteProtocolLocal.driver != NULL);
 
-    // !!! THIS SLOWS THINGS DOWN
-    protocolServerDataPut(server, NULL);
-
-    PackRead *const read = protocolServerDataGet(server);
-    Buffer *const buffer = pckReadBinP(read);
+    Buffer *const buffer = pckReadBinP(param);
 
     ioWrite(storageWriteIo(fileWrite), buffer);
     bufFree(buffer);
-    pckReadFree(read);
 
-    protocolServerDataGet(server); // !!! WASTEFUL
     protocolServerDataEndPut(server);
 
     FUNCTION_LOG_RETURN(BOOL, true);

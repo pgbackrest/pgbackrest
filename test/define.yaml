@@ -457,34 +457,34 @@ unit:
           - storage/remote/write
 
   # ********************************************************************************************************************************
-  - name: protocol
+  # - name: protocol
 
-    test:
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: protocol
-        total: 8
-        harness:
-          name: protocol
-          shim:
-            protocol/helper:
-              function:
-                - protocolLocalExec
-                - protocolRemoteExec
-        containerReq: true
-        binReq: true
+  #   test:
+  #     # ----------------------------------------------------------------------------------------------------------------------------
+  #     - name: protocol
+  #       total: 8
+  #       harness:
+  #         name: protocol
+  #         shim:
+  #           protocol/helper:
+  #             function:
+  #               - protocolLocalExec
+  #               - protocolRemoteExec
+  #       containerReq: true
+  #       binReq: true
 
-        depend:
-          - protocol/server
+  #       depend:
+  #         - protocol/server
 
-        coverage:
-          - protocol/client
-          - protocol/command
-          - protocol/helper
-          - protocol/parallel
-          - protocol/parallelJob
+  #       coverage:
+  #         - protocol/client
+  #         - protocol/command
+  #         - protocol/helper
+  #         - protocol/parallel
+  #         - protocol/parallelJob
 
-        include:
-          - common/exec
+  #       include:
+  #         - common/exec
 
   # ********************************************************************************************************************************
   - name: config

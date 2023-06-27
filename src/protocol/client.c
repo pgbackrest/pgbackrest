@@ -23,12 +23,6 @@ typedef enum
     // Command put is in progress
     protocolClientStateCommandPut = STRID5("cmd-put", 0x52b0d91a30),
 
-    // Waiting for command data from server. Only used when dataPut is true in protocolClientCommandPut().
-    protocolClientStateCommandDataGet = STRID5("cmd-data-get", 0xa14fb0d024d91a30),
-
-    // Putting data to server. Only used when dataPut is true in protocolClientCommandPut().
-    protocolClientStateDataPut = STRID5("data-put", 0xa561b0d0240),
-
     // Getting data from server
     protocolClientStateDataGet = STRID5("data-get", 0xa14fb0d0240),
 } ProtocolClientState;
@@ -66,7 +60,7 @@ protocolClientFreeResource(THIS_VOID)
     // Send an exit command but don't wait to see if it succeeds
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        protocolClientCommandPut(this, protocolCommandNewP(PROTOCOL_COMMAND_EXIT), false);
+        protocolClientCommandPut(this, protocolCommandNewP(PROTOCOL_COMMAND_EXIT));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -171,46 +165,6 @@ protocolClientStateExpect(const ProtocolClient *const this, const ProtocolClient
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN void
-protocolClientDataPut(ProtocolClient *const this, PackWrite *const data)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
-        FUNCTION_LOG_PARAM(PACK_WRITE, data);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    // Expect data-put state before data put
-    protocolClientStateExpect(this, protocolClientStateDataPut);
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        // End the pack
-        if (data != NULL)
-            pckWriteEndP(data);
-
-        // Write the data
-        PackWrite *dataMessage = pckWriteNewIo(this->write);
-        pckWriteU32P(dataMessage, protocolMessageTypeData, .defaultWrite = true);
-        pckWritePackP(dataMessage, pckWriteResult(data));
-        pckWriteEndP(dataMessage);
-
-        // Flush when there is no more data to put
-        if (data == NULL)
-        {
-            ioWriteFlush(this->write);
-
-            // Switch state to data-get after successful data end put
-            this->state = protocolClientStateDataGet;
-        }
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
 // Helper to process errors
 static void
 protocolClientError(ProtocolClient *const this, const ProtocolMessageType type, PackRead *const error)
@@ -257,8 +211,7 @@ protocolClientDataGet(ProtocolClient *const this)
     ASSERT(this != NULL);
 
     // Expect data-get state before data get
-    protocolClientStateExpect(
-        this, this->state == protocolClientStateCommandDataGet ? protocolClientStateCommandDataGet : protocolClientStateDataGet);
+    protocolClientStateExpect(this, protocolClientStateDataGet);
 
     PackRead *result = NULL;
 
@@ -278,10 +231,6 @@ protocolClientDataGet(ProtocolClient *const this)
         MEM_CONTEXT_PRIOR_END();
 
         pckReadEndP(response);
-
-        // Switch state to data-put after successful command data get
-        if (this->state == protocolClientStateCommandDataGet)
-            this->state = protocolClientStateDataPut;
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -322,12 +271,11 @@ protocolClientDataEndGet(ProtocolClient *const this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-protocolClientCommandPut(ProtocolClient *const this, ProtocolCommand *const command, const bool dataPut)
+protocolClientCommandPut(ProtocolClient *const this, ProtocolCommand *const command)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
         FUNCTION_LOG_PARAM(PROTOCOL_COMMAND, command);
-        FUNCTION_LOG_PARAM(BOOL, dataPut);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -337,13 +285,13 @@ protocolClientCommandPut(ProtocolClient *const this, ProtocolCommand *const comm
     protocolClientStateExpect(this, protocolClientStateIdle);
 
     // Switch state to cmd-put
-    this->state = protocolClientStateDataPut;
+    this->state = protocolClientStateCommandPut;
 
     // Put command
     protocolCommandPut(command, this->write);
 
-    // Switch state to data-get/data-put after successful command put
-    this->state = dataPut ? protocolClientStateCommandDataGet : protocolClientStateDataGet;
+    // Switch state to data-get after successful command put
+    this->state = protocolClientStateDataGet;
 
     // Reset the keep alive time
     this->keepAliveTime = timeMSec();
@@ -365,7 +313,7 @@ protocolClientExecute(ProtocolClient *const this, ProtocolCommand *const command
     ASSERT(command != NULL);
 
     // Put command
-    protocolClientCommandPut(this, command, false);
+    protocolClientCommandPut(this, command);
 
     // Read result if required
     PackRead *result = NULL;

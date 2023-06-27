@@ -67,7 +67,7 @@ storageReadRemoteFreeResource(THIS_VOID)
         ProtocolCommand *const command = protocolCommandNewP(
             PROTOCOL_COMMAND_STORAGE_READ, .type = protocolCommandTypeClose, .sessionId = this->sessionId);
 
-        protocolClientCommandPut(this->client, command, false);
+        protocolClientCommandPut(this->client, command);
         protocolClientDataEndGet(this->client);
         protocolCommandFree(command);
     }
@@ -110,7 +110,7 @@ storageReadRemote(THIS_VOID, Buffer *buffer, bool block)
                     {
                         // fprintf(stdout, "!!!PUT PROCESS\n");fflush(stdout);
                         protocolClientCommandPut(
-                            this->client, protocolCommandNewP(PROTOCOL_COMMAND_STORAGE_READ, .sessionId = this->sessionId), false);
+                            this->client, protocolCommandNewP(PROTOCOL_COMMAND_STORAGE_READ, .sessionId = this->sessionId));
                     }
                     else
                         this->process = true;
@@ -239,7 +239,7 @@ storageReadRemoteOpen(THIS_VOID)
 
         pckWritePackP(param, ioFilterGroupParamAll(ioReadFilterGroup(storageReadIo(this->read))));
 
-        protocolClientCommandPut(this->client, command, false);
+        protocolClientCommandPut(this->client, command);
 
         // If the file exists
         PackRead *const data = protocolClientDataGet(this->client);

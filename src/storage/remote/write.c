@@ -53,7 +53,7 @@ storageWriteRemoteFreeResource(THIS_VOID)
 
     ProtocolCommand *const command = protocolCommandNewP(
         PROTOCOL_COMMAND_STORAGE_WRITE, .type = protocolCommandTypeCancel, .sessionId = this->sessionId);
-    protocolClientCommandPut(this->client, command, false);
+    protocolClientCommandPut(this->client, command);
     protocolCommandFree(command);
 
     protocolClientDataEndGet(this->client);
@@ -96,7 +96,7 @@ storageWriteRemoteOpen(THIS_VOID)
         pckWriteBoolP(param, this->interface.atomic);
         pckWritePackP(param, ioFilterGroupParamAll(ioWriteFilterGroup(storageWriteIo(this->write))));
 
-        protocolClientCommandPut(this->client, command, false);
+        protocolClientCommandPut(this->client, command);
 
         // Get session id
         this->sessionId = pckReadU64P(protocolClientDataGet(this->client));
@@ -140,12 +140,11 @@ storageWriteRemote(THIS_VOID, const Buffer *const buffer)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_STORAGE_WRITE, .sessionId = this->sessionId);
-        protocolClientCommandPut(this->client, command, true);
-        protocolClientDataGet(this->client); // !!! THIS SLOWS THINGS DOWN
+        PackWrite *const param = protocolCommandParam(command); // !!! NEED EXTRA PARAM HERE
 
-        protocolClientDataPut(
-            this->client, pckWriteBinP(pckWriteNewP(.size = bufUsed(buffer) + PROTOCOL_PACK_DEFAULT_SIZE), buffer));
-        protocolClientDataPut(this->client, NULL); // !!! WASTEFUL
+        pckWriteBinP(param, buffer);
+
+        protocolClientCommandPut(this->client, command);
         protocolClientDataEndGet(this->client);
     }
     MEM_CONTEXT_TEMP_END();
@@ -178,7 +177,7 @@ storageWriteRemoteClose(THIS_VOID)
         {
             ProtocolCommand *const command = protocolCommandNewP(
                 PROTOCOL_COMMAND_STORAGE_WRITE, .type = protocolCommandTypeClose, .sessionId = this->sessionId);
-            protocolClientCommandPut(this->client, command, false);
+            protocolClientCommandPut(this->client, command);
 
             ioFilterGroupResultAllSet(
                 ioWriteFilterGroup(storageWriteIo(this->write)), pckReadPackP(protocolClientDataGet(this->client)));

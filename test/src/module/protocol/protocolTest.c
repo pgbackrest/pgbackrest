@@ -657,7 +657,7 @@ testRun(void)
                 TEST_ASSIGN(command, protocolCommandNewP(TEST_PROTOCOL_COMMAND_COMPLEX), "command");
                 TEST_RESULT_VOID(pckWriteU32P(protocolCommandParam(command), 87), "param");
                 TEST_RESULT_VOID(pckWriteStrP(protocolCommandParam(command), STRDEF("data")), "param");
-                TEST_RESULT_VOID(protocolClientCommandPut(client, command, true), "command put");
+                TEST_RESULT_VOID(protocolClientCommandPut(client, command), "command put");
 
                 TEST_ERROR(
                     protocolClientStateExpect(client, protocolClientStateIdle), ProtocolError,
