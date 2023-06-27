@@ -106,9 +106,6 @@ FN_EXTERN void protocolClientDataEndGet(ProtocolClient *this); // !!! SHOULD BE 
 // Put command to the server !!! Should be able to return session id from here
 FN_EXTERN void protocolClientCommandPut(ProtocolClient *this, ProtocolCommand *command);
 
-// Put data to the server
-FN_EXTERN void protocolClientDataPut(ProtocolClient *this, PackWrite *data);
-
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
