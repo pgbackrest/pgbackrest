@@ -57,9 +57,6 @@ typedef struct ProtocolServerCommandGetResult
 
 FN_EXTERN ProtocolServerCommandGetResult protocolServerCommandGet(ProtocolServer *this);
 
-// Get data from the client
-FN_EXTERN PackRead *protocolServerDataGet(ProtocolServer *this);
-
 // Put data to the client
 FN_EXTERN void protocolServerDataPut(ProtocolServer *this, PackWrite *data);
 

@@ -426,36 +426,6 @@ protocolServerProcess(
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN PackRead *
-protocolServerDataGet(ProtocolServer *const this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
-    FUNCTION_LOG_END();
-
-    PackRead *result = NULL;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        PackRead *data = pckReadNewIo(this->read);
-        ProtocolMessageType type = (ProtocolMessageType)pckReadU32P(data);
-
-        CHECK(FormatError, type == protocolMessageTypeData, "expected data message");
-
-        MEM_CONTEXT_PRIOR_BEGIN()
-        {
-            result = pckReadPackReadP(data);
-        }
-        MEM_CONTEXT_PRIOR_END();
-
-        pckReadEndP(data);
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN(PACK_READ, result);
-}
-
-/**********************************************************************************************************************************/
 FN_EXTERN void
 protocolServerDataPut(ProtocolServer *const this, PackWrite *const data)
 {
