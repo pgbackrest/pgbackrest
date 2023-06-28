@@ -76,7 +76,7 @@ backupLabelFormat(const BackupType type, const String *const backupLabelPrior, c
     else
     {
         // Get the full backup portion of the prior backup label and append the diff/incr timestamp
-        result = strNewFmt("%.*s_%s%s", DATE_TIME_LEN + 1 /*F*/, strZ(backupLabelPrior), buffer, type == backupTypeDiff ? "D" : "I");
+        result = strNewFmt("%.*s_%s%s", DATE_TIME_LEN + 1, strZ(backupLabelPrior), buffer, type == backupTypeDiff ? "D" : "I");
     }
 
     FUNCTION_LOG_RETURN(STRING, result);
