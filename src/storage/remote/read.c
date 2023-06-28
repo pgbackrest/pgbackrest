@@ -239,7 +239,7 @@ storageReadRemoteOpen(THIS_VOID)
 
         pckWritePackP(param, ioFilterGroupParamAll(ioReadFilterGroup(storageReadIo(this->read))));
 
-        protocolClientCommandPut(this->client, command);
+        this->sessionId = protocolClientCommandPut(this->client, command);
 
         // If the file exists
         PackRead *const data = protocolClientDataGet(this->client);
@@ -247,9 +247,6 @@ storageReadRemoteOpen(THIS_VOID)
 
         if (result)
         {
-            // Store session id
-            this->sessionId = pckReadU64P(data);
-
             // Clear filters since they will be run on the remote side
             ioFilterGroupClear(ioReadFilterGroup(storageReadIo(this->read)));
 

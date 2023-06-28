@@ -103,8 +103,8 @@ FN_EXTERN void protocolClientNoOp(ProtocolClient *this);
 FN_EXTERN PackRead *protocolClientDataGet(ProtocolClient *this);
 FN_EXTERN void protocolClientDataEndGet(ProtocolClient *this); // !!! SHOULD BE ABLE TO GET RID OF?
 
-// Put command to the server !!! Should be able to return session id from here
-FN_EXTERN void protocolClientCommandPut(ProtocolClient *this, ProtocolCommand *command);
+// Put command to the server, returns session id when command type is open
+FN_EXTERN uint64_t protocolClientCommandPut(ProtocolClient *this, ProtocolCommand *command);
 
 /***********************************************************************************************************************************
 Destructor

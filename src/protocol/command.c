@@ -14,8 +14,8 @@ Object type
 ***********************************************************************************************************************************/
 struct ProtocolCommand
 {
+    ProtocolCommandPub pub;                                         // Publicly accessible variables
     StringId command;
-    ProtocolCommandType type;
     uint64_t sessionId;
     PackWrite *pack;
 };
@@ -35,8 +35,11 @@ protocolCommandNew(const StringId command, const ProtocolCommandNewParam param)
     {
         *this = (ProtocolCommand)
         {
+            .pub =
+            {
+                .type = param.type == 0 ? protocolCommandTypeProcess : param.type,
+            },
             .command = command,
-            .type = param.type == 0 ? protocolCommandTypeProcess : param.type, // {uncovered - !!!}
             .sessionId = param.sessionId,
         };
     }
@@ -62,7 +65,7 @@ protocolCommandPut(ProtocolCommand *const this, IoWrite *const write)
         PackWrite *const commandPack = pckWriteNewIo(write);
         pckWriteU32P(commandPack, protocolMessageTypeCommand, .defaultWrite = true);
         pckWriteStrIdP(commandPack, this->command);
-        pckWriteStrIdP(commandPack, this->type);
+        pckWriteStrIdP(commandPack, this->pub.type);
         pckWriteU64P(commandPack, this->sessionId);
 
         // Write parameters

@@ -475,10 +475,10 @@ unit:
 
         depend:
           - protocol/client
+          - protocol/command
           - protocol/server
 
         coverage:
-          - protocol/command
           - protocol/helper
           - protocol/parallel
           - protocol/parallelJob

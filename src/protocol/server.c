@@ -221,6 +221,11 @@ protocolServerProcess(
 
                                         ProtocolServerSession session = {.id = ++this->sessionTotal};
 
+                                        // Return session id to client
+                                        protocolServerDataPut(this, pckWriteU64P(protocolPackNew(), session.id));
+//                                        protocolServerDataEndPut(this); //
+
+                                        // Call open handler
                                         MEM_CONTEXT_OBJ_BEGIN(this->sessionList)
                                         {
                                             session.data = handler->open(pckReadNew(command.param), this, session.id);

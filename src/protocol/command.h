@@ -39,6 +39,21 @@ typedef struct ProtocolCommandNewParam
 FN_EXTERN ProtocolCommand *protocolCommandNew(const StringId command, ProtocolCommandNewParam param);
 
 /***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+typedef struct ProtocolCommandPub
+{
+    ProtocolCommandType type;                                       // Command type
+} ProtocolCommandPub;
+
+// Read file descriptor
+FN_INLINE_ALWAYS ProtocolCommandType
+protocolCommandType(const ProtocolCommand *const this)
+{
+    return THIS_PUB(ProtocolCommand)->type;
+}
+
+/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Move to a new parent mem context

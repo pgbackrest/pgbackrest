@@ -33,13 +33,8 @@ dbOpenProtocol(PackRead *const param, ProtocolServer *const server, const uint64
         cfgOptionStrNull(cfgOptPgUser), cfgOptionUInt64(cfgOptDbTimeout));
     pgClientOpen(result);
 
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        // Return session id which should be included in subsequent calls
-        protocolServerDataPut(server, pckWriteU64P(protocolPackNew(), sessionId));
-        protocolServerDataEndPut(server);
-    }
-    MEM_CONTEXT_TEMP_END();
+    protocolServerDataPut(server, NULL);
+    protocolServerDataEndPut(server);
 
     FUNCTION_LOG_RETURN(PG_CLIENT, result);
 }

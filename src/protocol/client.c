@@ -270,7 +270,7 @@ protocolClientDataEndGet(ProtocolClient *const this)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN void
+FN_EXTERN uint64_t
 protocolClientCommandPut(ProtocolClient *const this, ProtocolCommand *const command)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -280,6 +280,9 @@ protocolClientCommandPut(ProtocolClient *const this, ProtocolCommand *const comm
 
     ASSERT(this != NULL);
     ASSERT(command != NULL);
+
+    // Most command types do not return a session id
+    uint64_t result = 0;
 
     // Expect idle state before command put
     protocolClientStateExpect(this, protocolClientStateIdle);
@@ -293,10 +296,21 @@ protocolClientCommandPut(ProtocolClient *const this, ProtocolCommand *const comm
     // Switch state to data-get after successful command put
     this->state = protocolClientStateDataGet;
 
+    // If command type is open then get the session id
+    if (protocolCommandType(command) == protocolCommandTypeOpen)
+    {
+        PackRead *const read = protocolClientDataGet(this);
+
+        result = pckReadU64P(read);
+
+        pckReadFree(read);
+        // protocolClientDataEndGet(this); !!!
+    }
+
     // Reset the keep alive time
     this->keepAliveTime = timeMSec();
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(UINT64, result);
 }
 
 /**********************************************************************************************************************************/

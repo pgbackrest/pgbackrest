@@ -411,24 +411,18 @@ storageRemoteReadOpenProtocol(PackRead *const param, ProtocolServer *const serve
         PackWrite *const packWrite = protocolPackNew();
 
         pckWriteBoolP(packWrite, exists, .defaultWrite = true);
+        protocolServerDataPut(server, packWrite);
 
         // If the file exists
         if (exists)
         {
-            // Send session id to client
-            pckWriteU64P(packWrite, sessionId);
-            protocolServerDataPut(server, packWrite);
-
             // If there is more to read then store IoRead in the session
             if (storageRemoteReadProtocol(NULL, server, fileRead))
                 result = storageReadMove(fileRead, memContextPrior());
         }
         // Else notify client that file does not exist
         else
-        {
-            protocolServerDataPut(server, packWrite);
             protocolServerDataEndPut(server);
-        }
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -530,8 +524,7 @@ storageRemoteWriteOpenProtocol(PackRead *const param, ProtocolServer *const serv
         // Open file
         ioWriteOpen(storageWriteIo(fileWrite));
 
-        // Send session id to client
-        protocolServerDataPut(server, pckWriteU64P(protocolPackNew(), sessionId));
+        // Notify client that open is complete
         protocolServerDataEndPut(server);
 
         // Move file to calling context
