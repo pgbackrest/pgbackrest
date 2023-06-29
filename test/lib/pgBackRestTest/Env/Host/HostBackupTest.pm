@@ -1288,14 +1288,7 @@ sub configCreate
         $oParamHash{$strStanza}{"pg256-host-cmd"} = $oHostDb2->backrestExe();
         $oParamHash{$strStanza}{"pg256-host-config"} = $oHostDb2->backrestConfig();
         $oParamHash{$strStanza}{"pg256-path"} = $oHostDb2->dbBasePath();
-
-
-        # !!! is this needed???
-        # Only test explicit ports on the backup server. This is so locally configured ports are also tested.
-        if (!$self->synthetic())
-        {
-            $oParamHash{$strStanza}{"pg256-port"} = $oHostDb2->pgPort();
-        }
+        $oParamHash{$strStanza}{"pg256-port"} = $oHostDb2->pgPort();
     }
 
     # If this is a database host
