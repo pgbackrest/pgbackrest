@@ -137,7 +137,7 @@ storageRemoteInfo(THIS_VOID, const String *file, StorageInfoLevel level, Storage
     MEM_CONTEXT_TEMP_BEGIN()
     {
         ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_STORAGE_INFO);
-        PackWrite *const commandParam = protocolCommandParam(command);
+        PackWrite *const commandParam = protocolCommandParamP(command);
 
         pckWriteStrP(commandParam, file);
         pckWriteU32P(commandParam, level);
@@ -191,7 +191,7 @@ storageRemoteLinkCreate(
     MEM_CONTEXT_TEMP_BEGIN()
     {
         ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_STORAGE_LINK_CREATE);
-        PackWrite *const commandParam = protocolCommandParam(command);
+        PackWrite *const commandParam = protocolCommandParamP(command);
 
         pckWriteStrP(commandParam, target);
         pckWriteStrP(commandParam, linkPath);
@@ -225,7 +225,7 @@ storageRemoteList(THIS_VOID, const String *const path, const StorageInfoLevel le
     MEM_CONTEXT_TEMP_BEGIN()
     {
         ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_STORAGE_LIST);
-        PackWrite *const commandParam = protocolCommandParam(command);
+        PackWrite *const commandParam = protocolCommandParamP(command);
 
         pckWriteStrP(commandParam, path);
         pckWriteU32P(commandParam, level);
@@ -350,7 +350,7 @@ storageRemotePathCreate(
     MEM_CONTEXT_TEMP_BEGIN()
     {
         ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_STORAGE_PATH_CREATE);
-        PackWrite *const commandParam = protocolCommandParam(command);
+        PackWrite *const commandParam = protocolCommandParamP(command);
 
         pckWriteStrP(commandParam, path);
         pckWriteBoolP(commandParam, errorOnExists);
@@ -385,7 +385,7 @@ storageRemotePathRemove(THIS_VOID, const String *path, bool recurse, StorageInte
     MEM_CONTEXT_TEMP_BEGIN()
     {
         ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_STORAGE_PATH_REMOVE);
-        PackWrite *const commandParam = protocolCommandParam(command);
+        PackWrite *const commandParam = protocolCommandParamP(command);
 
         pckWriteStrP(commandParam, path);
         pckWriteBoolP(commandParam, recurse);
@@ -415,7 +415,7 @@ storageRemotePathSync(THIS_VOID, const String *path, StorageInterfacePathSyncPar
     MEM_CONTEXT_TEMP_BEGIN()
     {
         ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_STORAGE_PATH_SYNC);
-        pckWriteStrP(protocolCommandParam(command), path);
+        pckWriteStrP(protocolCommandParamP(command), path);
 
         protocolClientExecute(this->client, command, false);
     }
@@ -442,7 +442,7 @@ storageRemoteRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam p
     MEM_CONTEXT_TEMP_BEGIN()
     {
         ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_STORAGE_REMOVE);
-        PackWrite *const commandParam = protocolCommandParam(command);
+        PackWrite *const commandParam = protocolCommandParamP(command);
 
         pckWriteStrP(commandParam, file);
         pckWriteBoolP(commandParam, param.errorOnMissing);

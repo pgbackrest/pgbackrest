@@ -118,7 +118,7 @@ dbQuery(Db *this, const PgClientQueryResult resultType, const String *const quer
         MEM_CONTEXT_TEMP_BEGIN()
         {
             ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_DB, .sessionId = this->sessionId);
-            PackWrite *const param = protocolCommandParam(command);
+            PackWrite *const param = protocolCommandParamP(command);
 
             pckWriteStrIdP(param, resultType);
             pckWriteStrP(param, query);

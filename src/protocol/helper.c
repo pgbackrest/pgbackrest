@@ -768,7 +768,7 @@ protocolRemoteExec(
                 {
                     // Pass parameters to server
                     ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_CONFIG);
-                    pckWriteStrLstP(protocolCommandParam(command), protocolRemoteParam(protocolStorageType, hostIdx));
+                    pckWriteStrLstP(protocolCommandParamP(command), protocolRemoteParam(protocolStorageType, hostIdx));
                     protocolClientExecute(helper->client, command, false);
                     protocolCommandFree(command);
                 }

@@ -751,7 +751,7 @@ verifyArchive(VerifyJobData *const jobData)
 
                         // Set up the job
                         ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_VERIFY_FILE);
-                        PackWrite *const param = protocolCommandParam(command);
+                        PackWrite *const param = protocolCommandParamP(command);
 
                         pckWriteStrP(param, filePathName);
                         pckWriteBoolP(param, false);
@@ -976,7 +976,7 @@ verifyBackup(VerifyJobData *const jobData)
                         {
                             // Set up the job
                             ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_VERIFY_FILE);
-                            PackWrite *const param = protocolCommandParam(command);
+                            PackWrite *const param = protocolCommandParamP(command);
 
                             const String *const filePathName = strNewFmt(
                                 STORAGE_REPO_BACKUP "/%s/%s%s", strZ(fileBackupLabel), strZ(fileData.name),

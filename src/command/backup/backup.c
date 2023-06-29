@@ -1953,7 +1953,7 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
                 // Add common parameters before first file
                 if (param == NULL)
                 {
-                    param = protocolCommandParam(command);
+                    param = protocolCommandParamP(command);
 
                     if (bundle && file.size <= jobData->bundleLimit)
                     {

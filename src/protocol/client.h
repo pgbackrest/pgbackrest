@@ -9,7 +9,7 @@ Message types used by the protocol
 ***********************************************************************************************************************************/
 typedef enum
 {
-    // Data passed between client and server in either direction. This can be used as many times as needed.
+    // Data passed from client to server. This can be used as many times as needed.
     protocolMessageTypeData = 0,
 
     // Indicates no more data for the server to return to the client and ends the command

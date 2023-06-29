@@ -82,7 +82,7 @@ storageWriteRemoteOpen(THIS_VOID)
             ioFilterGroupInsert(ioWriteFilterGroup(storageWriteIo(this->write)), 0, decompressFilterP(compressTypeGz));
 
         ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_STORAGE_WRITE, .type = protocolCommandTypeOpen);
-        PackWrite *const param = protocolCommandParam(command);
+        PackWrite *const param = protocolCommandParamP(command);
 
         pckWriteStrP(param, this->interface.name);
         pckWriteModeP(param, this->interface.modeFile);
@@ -138,7 +138,7 @@ storageWriteRemote(THIS_VOID, const Buffer *const buffer)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_STORAGE_WRITE, .sessionId = this->sessionId);
-        PackWrite *const param = protocolCommandParam(command); // !!! NEED EXTRA PARAM HERE
+        PackWrite *const param = protocolCommandParamP(command, .extra = bufUsed(buffer));
 
         pckWriteBinP(param, buffer);
 

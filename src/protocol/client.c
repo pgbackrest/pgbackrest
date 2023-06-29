@@ -304,7 +304,6 @@ protocolClientCommandPut(ProtocolClient *const this, ProtocolCommand *const comm
         result = pckReadU64P(read);
 
         pckReadFree(read);
-        // protocolClientDataEndGet(this); !!!
     }
 
     // Reset the keep alive time

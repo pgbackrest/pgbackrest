@@ -64,7 +64,16 @@ protocolCommandMove(ProtocolCommand *const this, MemContext *const parentNew)
 }
 
 // Read the command output
-FN_EXTERN PackWrite *protocolCommandParam(ProtocolCommand *this);
+typedef struct ProtocolCommandParamParam
+{
+    VAR_PARAM_HEADER;
+    size_t extra;                                                   // Extra bytes to allocate for pack
+} ProtocolCommandParamParam;
+
+#define protocolCommandParamP(this, ...)                                                                                           \
+    protocolCommandParam(this, (ProtocolCommandParamParam){__VA_ARGS__})
+
+FN_EXTERN PackWrite *protocolCommandParam(ProtocolCommand *this, ProtocolCommandParamParam param);
 
 // Write protocol command
 FN_EXTERN void protocolCommandPut(ProtocolCommand *this, IoWrite *write);

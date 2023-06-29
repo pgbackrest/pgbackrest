@@ -65,23 +65,3 @@ dbQueryProtocol(PackRead *const param, ProtocolServer *const server, void *const
 
     FUNCTION_LOG_RETURN(BOOL, true);
 }
-
-/**********************************************************************************************************************************/
-FN_EXTERN void
-dbCloseProtocol(PackRead *const param, ProtocolServer *const server, void *const pgClient)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(PACK_READ, param);
-        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
-        FUNCTION_LOG_PARAM(PG_CLIENT, pgClient);
-    FUNCTION_LOG_END();
-
-    ASSERT(param == NULL);
-    ASSERT(server != NULL);
-    ASSERT(pgClient != NULL);
-
-    pgClientClose(pgClient);
-    protocolServerDataEndPut(server);
-
-    FUNCTION_LOG_RETURN_VOID();
-}

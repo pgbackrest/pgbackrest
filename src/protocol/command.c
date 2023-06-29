@@ -87,10 +87,11 @@ protocolCommandPut(ProtocolCommand *const this, IoWrite *const write)
 
 /**********************************************************************************************************************************/
 FN_EXTERN PackWrite *
-protocolCommandParam(ProtocolCommand *this)
+protocolCommandParam(ProtocolCommand *const this, const ProtocolCommandParamParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PROTOCOL_COMMAND, this);
+        FUNCTION_TEST_PARAM(SIZE, param.extra);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -99,7 +100,7 @@ protocolCommandParam(ProtocolCommand *this)
     {
         MEM_CONTEXT_OBJ_BEGIN(this)
         {
-            this->pack = protocolPackNew();
+            this->pack = pckWriteNewP(.size = PROTOCOL_PACK_DEFAULT_SIZE + param.extra);
         }
         MEM_CONTEXT_OBJ_END();
     }

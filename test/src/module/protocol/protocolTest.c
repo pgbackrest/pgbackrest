@@ -655,8 +655,8 @@ testRun(void)
                 // // Put the command to the server
                 // ProtocolCommand *command = NULL;
                 // TEST_ASSIGN(command, protocolCommandNewP(TEST_PROTOCOL_COMMAND_COMPLEX), "command");
-                // TEST_RESULT_VOID(pckWriteU32P(protocolCommandParam(command), 87), "param");
-                // TEST_RESULT_VOID(pckWriteStrP(protocolCommandParam(command), STRDEF("data")), "param");
+                // TEST_RESULT_VOID(pckWriteU32P(protocolCommandParamP(command), 87), "param");
+                // TEST_RESULT_VOID(pckWriteStrP(protocolCommandParamP(command), STRDEF("data")), "param");
                 // TEST_RESULT_VOID(protocolClientCommandPut(client, command), "command put");
 
                 // TEST_ERROR(
@@ -1017,20 +1017,20 @@ testRun(void)
                 TEST_TITLE("add jobs");
 
                 ProtocolCommand *command = protocolCommandNewP(strIdFromZ("c-one"));
-                pckWriteStrP(protocolCommandParam(command), STRDEF("param1"));
-                pckWriteStrP(protocolCommandParam(command), STRDEF("param2"));
+                pckWriteStrP(protocolCommandParamP(command), STRDEF("param1"));
+                pckWriteStrP(protocolCommandParamP(command), STRDEF("param2"));
 
                 ProtocolParallelJob *job = protocolParallelJobNew(varNewStr(STRDEF("job1")), command);
                 TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");
 
                 command = protocolCommandNewP(strIdFromZ("c2"));
-                pckWriteStrP(protocolCommandParam(command), STRDEF("param1"));
+                pckWriteStrP(protocolCommandParamP(command), STRDEF("param1"));
 
                 job = protocolParallelJobNew(varNewStr(STRDEF("job2")), command);
                 TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");
 
                 command = protocolCommandNewP(strIdFromZ("c-three"));
-                pckWriteStrP(protocolCommandParam(command), STRDEF("param1"));
+                pckWriteStrP(protocolCommandParamP(command), STRDEF("param1"));
 
                 job = protocolParallelJobNew(varNewStr(STRDEF("job3")), command);
                 TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");
