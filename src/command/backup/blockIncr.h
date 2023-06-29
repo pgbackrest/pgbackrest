@@ -9,21 +9,11 @@ Super blocks contain a list of blocks that may or may not be contiguous. The adv
 together which leads to better compression. The disadvantage is that the super block must be read sequentially to get at any block
 in the super block. For large block sizes the block size will usually equal the super block size to negate the read penalty.
 
-The map is duplicated in each backup where the file has changed so the block map only needs to be retrieved from the most recent
-backup. However, the block map may reference super block lists (or parts thereof) in any prior (or the current) backup.
-
-A super block consists of a series of blocks stored as chunks (see IoChunk filter) to make the format more flexible. Each block
-consists of the following, compressed and encrypted as required:
-
-- A varint-128 encoded block number stored as a delta of the prior block and left shifted by BLOCK_INCR_BLOCK_SHIFT. So, if the
-  first block is 138 it would be stored as 138 and if the second block is 139 it would be stored as 1. Block numbers are only needed
-  when the block list is being read sequentially, e.g. during verification. If blocks are accessed from the map then the block
-  number is already known and the delta can be ignored.
-
-- Block data.
-
 The super block list is followed by the block map, which is encrypted separately when required but not compressed. The return value
 of the filter is the stored block map size. Combined with the repo size this allows the block map to be read separately.
+
+The map is duplicated in each backup where the file has changed so the block map only needs to be retrieved from the most recent
+backup. However, the block map may reference super block lists (or parts thereof) in any prior (or the current) backup.
 
 The block incremental should be read using BlockDelta since reconstructing the delta is quite involved.
 
