@@ -118,6 +118,25 @@ testRun(void)
             "local repo1 and repo2 paths are both '/var/lib/pgbackrest' but must be different");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("local default repo paths for sftp repo type must be different");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoType, 1, STORAGE_SFTP_TYPE);
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoType, 2, STORAGE_SFTP_TYPE);
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpHostUser, 1, "user1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpHostUser, 2, "user2");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpHost, 1, "host1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpHost, 2, "host2");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpHostKeyHashType, 1, "sha1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpHostKeyHashType, 2, "md5");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpPrivateKeyFile, 1, "/keyfile1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpPrivateKeyFile, 2, "/keyfile2");
+        TEST_ERROR(
+            hrnCfgLoadP(cfgCmdInfo, argList), OptionInvalidValueError,
+            "local repo1 and repo2 paths are both '/var/lib/pgbackrest' but must be different");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("local repo paths same but types different");
 
         argList = strLstNew();

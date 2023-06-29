@@ -82,8 +82,8 @@ use constant VM_RH7                                                 => 'rh7';
     push @EXPORT, qw(VM_RH7);
 use constant VM_RH8                                                 => 'rh8';
     push @EXPORT, qw(VM_RH8);
-use constant VM_F36                                                 => 'f36';
-    push @EXPORT, qw(VM_F36);
+use constant VM_F38                                                 => 'f38';
+    push @EXPORT, qw(VM_F38);
 use constant VM_U20                                                 => 'u20';
     push @EXPORT, qw(VM_U20);
 use constant VM_U22                                                 => 'u22';
@@ -162,16 +162,15 @@ my $oyVm =
 
         &VM_DB =>
         [
-            PG_VERSION_10,
             PG_VERSION_11,
             PG_VERSION_12,
             PG_VERSION_13,
             PG_VERSION_14,
+            PG_VERSION_15,
         ],
 
         &VM_DB_TEST =>
         [
-            PG_VERSION_10,
             PG_VERSION_11,
             PG_VERSION_12,
             PG_VERSION_13,
@@ -179,8 +178,8 @@ my $oyVm =
         ],
     },
 
-    # Fedora 36
-    &VM_F36 =>
+    # Fedora 38
+    &VM_F38 =>
     {
         &VM_OS_BASE => VM_OS_BASE_RHEL,
         &VM_IMAGE => 'fedora:36',
@@ -193,16 +192,15 @@ my $oyVm =
 
         &VM_DB =>
         [
-            PG_VERSION_10,
-            PG_VERSION_11,
             PG_VERSION_12,
             PG_VERSION_13,
             PG_VERSION_14,
+            PG_VERSION_15,
         ],
 
         &VM_DB_TEST =>
         [
-            PG_VERSION_12,
+            PG_VERSION_15,
         ],
     },
 
@@ -269,6 +267,7 @@ my $oyVm =
         [
             PG_VERSION_95,
             PG_VERSION_96,
+            PG_VERSION_10,
             PG_VERSION_15,
             PG_VERSION_16,
         ],

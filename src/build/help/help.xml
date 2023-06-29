@@ -1005,6 +1005,86 @@
                         <example>path</example>
                     </config-key>
 
+                    <config-key id="repo-sftp-host" name="SFTP Repository Host">
+                        <summary>SFTP repository host.</summary>
+
+                        <text>
+                            <p>The SFTP host containing the repository.</p>
+                        </text>
+
+                        <example>sftprepo.domain</example>
+                    </config-key>
+
+                    <config-key id="repo-sftp-host-fingerprint" name="SFTP Repository Host Fingerprint">
+                        <summary>SFTP repository host fingerprint.</summary>
+
+                        <text>
+                            <p>SFTP repository host fingerprint generation should match the <setting>repo-sftp-host-key-hash-type</setting>. Generate the fingeprint via <code>awk '{print $2}' ssh_host_xxx_key.pub | base64 -d | (md5sum or sha1sum) -b</code>. The ssh host keys are normally found in the <path>/etc/ssh</path> directory.</p>
+                        </text>
+
+                        <example>f84e172dfead7aeeeae6c1fdfb5aa8cf</example>
+                    </config-key>
+
+                    <config-key id="repo-sftp-host-key-hash-type" name="SFTP Repository Host Key Hash Type">
+                        <summary>SFTP repository host key hash type.</summary>
+
+                        <text>
+                            <p>SFTP repository host key hash type. Declares the hash type to be used to compute the digest of the remote system's host key on SSH startup. Newer versions of libssh2 support <id>sha256</id> in addition to md5 and sha1.</p>
+                        </text>
+
+                        <example>sha256</example>
+                    </config-key>
+
+                    <config-key id="repo-sftp-host-port" name="SFTP Repository Host Port">
+                        <summary>SFTP repository host port.</summary>
+
+                        <text>
+                            <p>SFTP repository host port.</p>
+                        </text>
+
+                        <example>22</example>
+                    </config-key>
+
+                    <config-key id="repo-sftp-host-user" name="SFTP Repository Host User">
+                        <summary>SFTP repository host user.</summary>
+
+                        <text>
+                            <p>User on the host used to store the repository.</p>
+                        </text>
+
+                        <example>pg-backup</example>
+                    </config-key>
+
+                    <config-key id="repo-sftp-private-key-file" name="SFTP Repository Private Key File">
+                        <summary>SFTP private key file.</summary>
+
+                        <text>
+                            <p>SFTP private key file used for authentication.</p>
+                        </text>
+
+                        <example>~/.ssh/id_ed25519</example>
+                    </config-key>
+
+                    <config-key id="repo-sftp-private-key-passphrase" name="SFTP Repository Private Key Passphrase">
+                        <summary>SFTP private key passphrase.</summary>
+
+                        <text>
+                            <p>Passphrase used to access the private key. This is an optional feature when creating an SSH public/private key pair.</p>
+                        </text>
+
+                        <example>BeSureToGenerateAndUseASecurePassphrase</example>
+                    </config-key>
+
+                    <config-key id="repo-sftp-public-key-file" name="SFTP Repository Public Key File">
+                        <summary>SFTP public key file.</summary>
+
+                        <text>
+                            <p>SFTP public key file used for authentication. Optional if compiled against OpenSSL, required if compiled against a different library.</p>
+                        </text>
+
+                        <example>~/.ssh/id_ed25519.pub</example>
+                    </config-key>
+
                     <config-key id="repo-storage-ca-file" name="Repository Storage CA File">
                         <summary>Repository storage CA file.</summary>
 
@@ -1089,6 +1169,7 @@
                                 <list-item><id>gcs</id> - Google Cloud Storage</list-item>
                                 <list-item><id>posix</id> - Posix-compliant file systems</list-item>
                                 <list-item><id>s3</id> - AWS Simple Storage Service</list-item>
+                                <list-item><id>sftp</id> - Secure File Transfer Protocol</list-item>
                             </list>
 
                             <p>When an <proper>NFS</proper> mount is used as a <id>posix</id> repository, the same rules apply to <backrest/> as described in the <postgres/> documentation: <link url="https://www.postgresql.org/docs/current/creating-cluster.html#CREATING-CLUSTER-FILESYSTEM">Creating a Database Cluster - File Systems</link>.</p>
@@ -2289,6 +2370,8 @@
                                 <list-item><id>none</id> - no <file>recovery.conf</file> file is written so <postgres/> will attempt to achieve consistency using WAL segments present in <path>pg_xlog</path>/<path>pg_wal</path>. Provide the required WAL segments or use the <setting>archive-copy</setting> setting to include them with the backup.</list-item>
                             </list>
 
+                            <admonition type="warning">Recovery <br-option>type=none</br-option> should be avoided because the timeline will not be incremented at the end of recovery. This can lead to, for example, <postgres/> attempting to archive duplicate WAL, which will be rejected, and may cause the disk to fill up and result in a <postgres/> panic. In addition, tools like <id>pg_rewind</id> may not work correctly or may cause corruption.</admonition>
+
                             <p>Note that the default restore <br-option>type</br-option> for offline backups is <id>none</id> since Point-in-Time-Recovery is not possible if <setting>wal_level=minimal</setting>. If <br-option>type</br-option> is set explicitly then it will be honored since Point-in-Time-Recovery is possible from offline backups as long as <setting>wal_level > minimal</setting>.</p>
                         </text>
 
@@ -2519,7 +2602,9 @@
                 <summary>Create the required stanza data.</summary>
 
                 <text>
-                    <p>The <cmd>stanza-create</cmd> command must be run after the stanza has been configured in <file>pgbackrest.conf</file>. If there is more than one repository configured, the stanza will be created on each. See <link page="user-guide" section="/quickstart/create-stanza">Create the Stanza</link> for more information and an example.</p>
+                    <p>The <cmd>stanza-create</cmd> command must be run after the stanza has been configured in <file>pgbackrest.conf</file>. If there is more than one repository configured, the stanza will be created on each. Stanzas that have already been created will be skipped so it is always safe to run <cmd>stanza-create</cmd>, even when a new repository has been configured.</p>
+
+                    <p>See <link page="user-guide" section="/quickstart/create-stanza">Create the Stanza</link> for more information and an example.</p>
                 </text>
 
                 <option-list>
@@ -2549,7 +2634,7 @@
                 <summary>Upgrade a stanza.</summary>
 
                 <text>
-                    <p>Immediately after upgrading <postgres/> to a newer major version, the <br-option>pg-path</br-option> for all <backrest/> configurations must be set to the new database location and the <cmd>stanza-upgrade</cmd> command run. If there is more than one repository configured on the host, the stanza will be created on each. If the database is offline use the <br-option>--no-online</br-option> option.</p>
+                    <p>Immediately after upgrading <postgres/> to a newer major version, the <br-option>pg-path</br-option> for all <backrest/> configurations must be set to the new database location and the <cmd>stanza-upgrade</cmd> command run. If there is more than one repository configured on the host, the stanza will be upgraded on each. If the database is offline use the <br-option>--no-online</br-option> option.</p>
 
                     <!-- Note, linking to the User Guide is limited since it can cause a cyclical reference -->
                 </text>

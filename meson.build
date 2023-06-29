@@ -4,7 +4,7 @@
 project(
     'pgbackrest',
     ['c'],
-    version: '2.46dev',
+    version: '2.47dev',
     license: 'MIT',
     meson_version: '>=0.45',
     default_options: [
@@ -164,6 +164,13 @@ lib_yaml = dependency('yaml-0.1')
 
 # Find required gz library
 lib_z = dependency('zlib')
+
+# Find optional libssh2 library
+lib_ssh2 = dependency('libssh2', required: false)
+
+if lib_ssh2.found()
+    configuration.set('HAVE_LIBSSH2', true, description: 'Is libssh2 present?')
+endif
 
 # Find optional zstd library
 lib_zstd = dependency('libzstd', version: '>=1.0', required: false)

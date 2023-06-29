@@ -65,9 +65,8 @@ xmlInit(void)
     {
         LIBXML_TEST_VERSION;
 
-        // It's a pretty weird that we can't just pass a handler function but instead have to assign it to a var...
-        static xmlGenericErrorFunc xmlErrorHandlerFunc = xmlErrorHandler;
-        initGenericErrorDefaultFunc(&xmlErrorHandlerFunc);
+        // Set error handler
+        xmlSetGenericErrorFunc(NULL, xmlErrorHandler);
 
         xmlInit = true;
     }

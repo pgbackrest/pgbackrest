@@ -23,6 +23,7 @@ Configuration Load
 #include "storage/cifs/storage.h"
 #include "storage/helper.h"
 #include "storage/posix/storage.h"
+#include "storage/sftp/storage.h"
 
 /***********************************************************************************************************************************
 Local variables
@@ -95,9 +96,10 @@ cfgLoadUpdateOption(void)
     {
         for (unsigned int optionIdx = 0; optionIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); optionIdx++)
         {
-            // If the repo is local and either posix or cifs
+            // If the repo is local and either posix, cifs or sftp
             if (!cfgOptionIdxTest(cfgOptRepoHost, optionIdx) &&
                 (cfgOptionIdxStrId(cfgOptRepoType, optionIdx) == STORAGE_POSIX_TYPE ||
+                 cfgOptionIdxStrId(cfgOptRepoType, optionIdx) == STORAGE_SFTP_TYPE ||
                  cfgOptionIdxStrId(cfgOptRepoType, optionIdx) == STORAGE_CIFS_TYPE))
             {
                 // Ensure a local repo does not have the same path as another local repo of the same type
@@ -364,10 +366,6 @@ cfgLoadUpdateOption(void)
         cfgOptionInvalidate(cfgOptCompress);
         cfgOptionSet(cfgOptCompress, cfgSourceDefault, NULL);
     }
-
-    // Check that selected compress type has been compiled into this binary
-    if (cfgOptionValid(cfgOptCompressType))
-        compressTypePresent(compressTypeEnum(cfgOptionStrId(cfgOptCompressType)));
 
     // Update compress-level default based on the compression type. Also check that level range is valid per compression type.
     if (cfgOptionValid(cfgOptCompressLevel))

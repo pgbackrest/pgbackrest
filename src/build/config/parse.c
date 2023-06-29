@@ -288,7 +288,7 @@ typedef struct BldCfgOptionCommandRaw
     const Variant *required;
     const String *defaultValue;
     const BldCfgOptionDependRaw *depend;
-    const StringList *allowList;
+    const List *allowList;
     const StringList *roleList;
 } BldCfgOptionCommandRaw;
 
@@ -307,7 +307,7 @@ typedef struct BldCfgOptionRaw
     const String *group;
     bool secure;
     const BldCfgOptionDependRaw *depend;
-    const StringList *allowList;
+    const List *allowList;
     const String *allowRangeMin;
     const String *allowRangeMax;
     const List *cmdList;
@@ -316,10 +316,35 @@ typedef struct BldCfgOptionRaw
 } BldCfgOptionRaw;
 
 // Helper to parse allow list
-static const StringList *
+static List *
+bldCfgParseAllowListDup(const List *const allowList)
+{
+    List *result = NULL;
+
+    if (allowList != NULL)
+    {
+        result = lstNewP(sizeof(BldCfgOptionValue));
+
+        for (unsigned int valueIdx = 0; valueIdx < lstSize(allowList); valueIdx++)
+        {
+            const BldCfgOptionValue *const bldCfgOptionValue = lstGet(allowList, valueIdx);
+            const BldCfgOptionValue bldCfgOptionValueCopy =
+            {
+                .value = strDup(bldCfgOptionValue->value),
+                .condition = strDup(bldCfgOptionValue->condition),
+            };
+
+            lstAdd(result, &bldCfgOptionValueCopy);
+        }
+    }
+
+    return result;
+}
+
+static const List *
 bldCfgParseAllowList(Yaml *const yaml, const List *const optList)
 {
-    StringList *result = NULL;
+    List *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -332,14 +357,30 @@ bldCfgParseAllowList(Yaml *const yaml, const List *const optList)
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {
-                result = strLstNew();
+                result = lstNewP(sizeof(BldCfgOptionValue));
             }
             MEM_CONTEXT_PRIOR_END();
 
             do
             {
-                yamlEventCheck(allowListVal, yamlEventTypeScalar);
-                strLstAdd(result, allowListVal.value);
+                BldCfgOptionValue bldCfgOptionValue;
+
+                if (allowListVal.type == yamlEventTypeScalar)
+                {
+                    bldCfgOptionValue.value = allowListVal.value;
+                    bldCfgOptionValue.condition = NULL;
+                }
+                else
+                {
+                    yamlEventCheck(allowListVal, yamlEventTypeMapBegin);
+
+                    bldCfgOptionValue.value = yamlEventNextCheck(yaml, yamlEventTypeScalar).value;
+                    bldCfgOptionValue.condition = yamlEventNextCheck(yaml, yamlEventTypeScalar).value;
+
+                    yamlEventNextCheck(yaml, yamlEventTypeMapEnd);
+                }
+
+                lstAdd(result, &bldCfgOptionValue);
 
                 allowListVal = yamlEventNext(yaml);
             }
@@ -356,7 +397,7 @@ bldCfgParseAllowList(Yaml *const yaml, const List *const optList)
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {
-                result = strLstDup(optInherit->allowList);
+                result = bldCfgParseAllowListDup(optInherit->allowList);
             }
             MEM_CONTEXT_PRIOR_END();
         }
@@ -687,7 +728,7 @@ bldCfgParseOptionCommandList(Yaml *const yaml, const List *const optList)
                         .required = varDup(optCmdRaw.required),
                         .defaultValue = strDup(optCmdRaw.defaultValue),
                         .depend = optCmdRaw.depend,
-                        .allowList = strLstDup(optCmdRaw.allowList),
+                        .allowList = bldCfgParseAllowListDup(optCmdRaw.allowList),
                         .roleList = strLstDup(optCmdRaw.roleList),
                     };
 
@@ -918,7 +959,7 @@ bldCfgParseOptionList(Yaml *const yaml, const List *const cmdList, const List *c
                     .defaultLiteral = optRaw->defaultLiteral,
                     .group = strDup(optRaw->group),
                     .secure = optRaw->secure,
-                    .allowList = strLstDup(optRaw->allowList),
+                    .allowList = bldCfgParseAllowListDup(optRaw->allowList),
                     .allowRangeMin = strDup(optRaw->allowRangeMin),
                     .allowRangeMax = strDup(optRaw->allowRangeMax),
                     .deprecateList = bldCfgParseOptionDeprecateReconcile(optRaw->deprecateList),
@@ -993,7 +1034,7 @@ bldCfgParseOptionList(Yaml *const yaml, const List *const cmdList, const List *c
                         .required = varBool(optCmd.required),
                         .defaultValue = strDup(optCmd.defaultValue),
                         .depend = bldCfgParseDependReconcile(optRaw, optCmd.depend, result),
-                        .allowList = strLstDup(optCmd.allowList),
+                        .allowList = bldCfgParseAllowListDup(optCmd.allowList),
                         .roleList = strLstDup(optCmd.roleList),
                     };
 

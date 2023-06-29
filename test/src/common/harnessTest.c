@@ -323,7 +323,7 @@ hrnTestLogTitle(int lineNo)
     printf("\nrun %s ", buffer);
 
     // Output dashes
-    for (int dashIdx = 0; dashIdx < 16 - bufferSize; dashIdx++)
+    for (int dashIdx = 0; dashIdx < (testTiming ? 16 : 8) - bufferSize; dashIdx++)
         putchar('-');
 
     // Output line number
@@ -366,6 +366,8 @@ hrnTestLogPrefix(const int lineNo)
 
         harnessTestLocal.logLastBeginTime = currentTime;
     }
+    else
+        printf("          ");
 
     // Store line number for
     harnessTestLocal.logLastLineNo = lineNo;

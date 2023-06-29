@@ -879,6 +879,14 @@ src/common/error/error.h:
   class: core
   type: c/h
 
+src/common/error/retry.c:
+  class: core
+  type: c
+
+src/common/error/retry.h:
+  class: core
+  type: c/h
+
 src/common/exec.c:
   class: core
   type: c
@@ -1579,6 +1587,10 @@ src/postgres/meson.build:
   class: build
   type: meson
 
+src/postgres/version.auto.h:
+  class: core/auto
+  type: c/h
+
 src/postgres/version.h:
   class: core
   type: c/h
@@ -1859,6 +1871,42 @@ src/storage/s3/write.h:
   class: core
   type: c/h
 
+src/storage/sftp/helper.c:
+  class: core
+  type: c
+
+src/storage/sftp/helper.h:
+  class: core
+  type: c/h
+
+src/storage/sftp/read.c:
+  class: core
+  type: c
+
+src/storage/sftp/read.h:
+  class: core
+  type: c/h
+
+src/storage/sftp/storage.c:
+  class: core
+  type: c
+
+src/storage/sftp/storage.h:
+  class: core
+  type: c/h
+
+src/storage/sftp/storage.intern.h:
+  class: core
+  type: c/h
+
+src/storage/sftp/write.c:
+  class: core
+  type: c
+
+src/storage/sftp/write.h:
+  class: core
+  type: c/h
+
 src/storage/storage.c:
   class: core
   type: c
@@ -2047,6 +2095,10 @@ test/lib/pgBackRestTest/Env/Host/HostS3Test.pm:
   class: test/harness
   type: perl
 
+test/lib/pgBackRestTest/Env/Host/HostSftpTest.pm:
+  class: test/harness
+  type: perl
+
 test/lib/pgBackRestTest/Env/HostEnvTest.pm:
   class: test/harness
   type: perl
@@ -2151,6 +2203,14 @@ test/src/common/harnessError.h:
   class: test/harness
   type: c/h
 
+test/src/common/harnessErrorRetry.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessErrorRetry.h:
+  class: test/harness
+  type: c/h
+
 test/src/common/harnessFork.h:
   class: test/harness
   type: c/h
@@ -2160,6 +2220,22 @@ test/src/common/harnessInfo.c:
   type: c
 
 test/src/common/harnessInfo.h:
+  class: test/harness
+  type: c/h
+
+test/src/common/harnessLibSsh2.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessLibSsh2.h:
+  class: test/harness
+  type: c/h
+
+test/src/common/harnessLock.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessLock.h:
   class: test/harness
   type: c/h
 
@@ -2235,6 +2311,10 @@ test/src/common/harnessPostgres/harness150.c:
   class: test/harness
   type: c
 
+test/src/common/harnessPostgres/harness160.c:
+  class: test/harness
+  type: c
+
 test/src/common/harnessPostgres/harnessVersion.intern.h:
   class: test/harness
   type: c/h
@@ -2260,6 +2340,14 @@ test/src/common/harnessServer.c:
   type: c
 
 test/src/common/harnessServer.h:
+  class: test/harness
+  type: c/h
+
+test/src/common/harnessSocket.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessSocket.h:
   class: test/harness
   type: c/h
 
@@ -2292,6 +2380,14 @@ test/src/common/harnessTest.h:
   type: c/h
 
 test/src/common/harnessTest.intern.h:
+  class: test/harness
+  type: c/h
+
+test/src/common/harnessTime.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessTime.h:
   class: test/harness
   type: c/h
 
@@ -2440,6 +2536,10 @@ test/src/module/common/debugOnTest.c:
   type: c
 
 test/src/module/common/encodeTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/errorRetryTest.c:
   class: test/module
   type: c
 
@@ -2632,6 +2732,10 @@ test/src/module/storage/remoteTest.c:
   type: c
 
 test/src/module/storage/s3Test.c:
+  class: test/module
+  type: c
+
+test/src/module/storage/sftpTest.c:
   class: test/module
   type: c
 

@@ -1897,10 +1897,7 @@ testRun(void)
 
         TEST_STORAGE_GET_EMPTY(storagePg(), PG_FILE_POSTGRESQLAUTOCONF, .comment = "check postgresql.auto.conf");
         TEST_STORAGE_LIST(
-            storagePg(), NULL,
-            PG_FILE_POSTGRESQLAUTOCONF "\n"
-            PG_FILE_RECOVERYSIGNAL "\n",
-            .comment = "recovery.signal exists, standby.signal missing");
+            storagePg(), NULL, PG_FILE_POSTGRESQLAUTOCONF "\n", .comment = "recovery.signal exists, standby.signal missing");
 
         TEST_RESULT_LOG(
             "P00   WARN: postgresql.auto.conf does not exist -- creating to contain recovery settings\n"
@@ -1924,10 +1921,7 @@ testRun(void)
             RECOVERY_SETTING_PREFIX "\t recovery_target_action='promote'\n\n",
             .comment = "check postgresql.auto.conf");
         TEST_STORAGE_LIST(
-            storagePg(), NULL,
-            PG_FILE_POSTGRESQLAUTOCONF "\n"
-            PG_FILE_RECOVERYSIGNAL "\n",
-            .comment = "recovery.signal exists, standby.signal missing");
+            storagePg(), NULL, PG_FILE_POSTGRESQLAUTOCONF "\n", .comment = "recovery.signal exists, standby.signal missing");
 
         TEST_RESULT_LOG("P00   INFO: write updated " TEST_PATH "/pg/postgresql.auto.conf");
 

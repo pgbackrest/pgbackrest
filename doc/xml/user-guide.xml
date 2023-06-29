@@ -36,7 +36,7 @@
         <variable key="os-type-is-rhel">'{[os-type]}' eq '{[os-rhel]}'</variable>
 
         <!-- Defines the container image that will be used to build the host -->
-        <variable key="os-image" if="{[os-type-is-debian]}">ubuntu:18.04</variable>
+        <variable key="os-image" if="{[os-type-is-debian]}">ubuntu:20.04</variable>
         <variable key="os-image" if="{[os-type-is-rhel]}">rockylinux/rockylinux:8</variable>
 
         <variable key="user-guide-subtitle" if="{[os-type-is-debian]}">{[os-debian-title]}</variable>
@@ -169,8 +169,12 @@
         <variable key="s3-key">accessKey1</variable>
         <variable key="s3-key-secret">verySecretKey1</variable>
 
+        <!-- SFTP Settings -->
+        <variable key="sftp-all">n</variable>                        <!-- Build all the documentation with SFTP? -->
+        <variable key="sftp-repo">demo-repo</variable>
+
         <!-- Is any object store being used to build all the documentation? -->
-        <variable key="object-any-all">('{[azure-all]}' eq 'y' || '{[gcs-all]}' eq 'y' || '{[s3-all]}' eq 'y')</variable>
+        <variable key="object-any-all">('{[azure-all]}' eq 'y' || '{[gcs-all]}' eq 'y' || '{[s3-all]}' eq 'y' || '{[sftp-all]}' eq 'y')</variable>
 
         <!-- Hosts -->
         <variable key="host-image">pgbackrest/doc:{[os-type]}</variable>
@@ -191,6 +195,12 @@
 
         <variable key="host-s3-id">s3</variable>
         <variable key="host-s3">s3-server</variable>
+
+        <variable key="host-sftp-id">sftp</variable>
+        <variable key="host-sftp">sftp-server</variable>
+        <variable key="host-sftp-user">{[host-user]}</variable>
+        <variable key="host-sftp-image">{[host-image]}</variable>
+        <variable key="host-sftp-mount">{[host-mount]}</variable>
 
         <variable key="host-pg1-id">pg1</variable>
         <variable key="host-pg1">pg-primary</variable>
@@ -306,7 +316,7 @@
             rm /etc/apt/apt.conf.d/70debconf &amp;&amp; \
             apt-get update &amp;&amp; \
             apt-get install -y --no-install-recommends sudo ssh wget vim gnupg lsb-release iputils-ping ca-certificates \
-                    tzdata locales 2>&amp;1
+                    tzdata locales libssh2-1-dev 2>&amp;1
 
         {[sudo-disable-core-dump]}
 
@@ -366,6 +376,10 @@
 
         # Enable PowerTools repository (only available on RHEL8)
         RUN dnf config-manager --set-enabled powertools || true
+
+        # Install and enable epel repository
+        RUN dnf -y install epel-release
+        RUN crb enable
 
         # Install CA certificate
         RUN update-ca-trust extract
@@ -550,20 +564,26 @@
 
     <!-- ======================================================================================================================= -->
     <block-define if="'{[package]}' eq 'none'" id="br-install">
-        <p><backrest/> needs to be installed from a package or installed manually as shown here.</p>
+        <p>Installing <backrest/> from a package is preferable to building from source. When installing from a package the rest of the instructions in this section are generally not required, but it is possible that a package will skip creating one of the directories or apply incorrect permissions. In that case it may be necessary to manually create directories or update permissions.</p>
+
+        <p if="{[os-type-is-debian]}">{[user-guide-os]} packages for <backrest/> are available at <link url="https://www.postgresql.org/download/linux/ubuntu/">apt.postgresql.org</link>.</p>
+
+        <p if="{[os-type-is-rhel]}">{[user-guide-os]} packages for <backrest/> are available from <link url="{[crunchy-url-base]}">Crunchy Data</link> or <link url="http://yum.postgresql.org">yum.postgresql.org</link>.</p>
+
+        <p>If packages are not provided for your distribution/version you can <link section="/build">build from source</link> and then install manually as shown here.</p>
 
         <execute-list host="{[br-install-host]}">
             <title>Install dependencies</title>
 
             <execute if="{[os-type-is-debian]}" user="root" pre="y">
                 <exe-cmd>
-                    apt-get install postgresql-client libxml2</exe-cmd>
+                    apt-get install postgresql-client libxml2 libssh2-1</exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
             <execute if="{[os-type-is-rhel]}" user="root" pre="y">
                 <exe-cmd>
-                    yum install postgresql-libs
+                    yum install postgresql-libs libssh2
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
@@ -780,6 +800,88 @@
     </block-define>
 
     <!-- ======================================================================================================================= -->
+    <block-define id="sftp-setup">
+        <p><backrest/> supports locating repositories on <proper>SFTP</proper> hosts. SFTP file transfer is relatively slow so commands benefit by increasing <br-option>process-max</br-option> to parallelize file transfer.</p>
+
+        <backrest-config host="{[sftp-setup-host]}" file="{[backrest-config-demo]}" owner="{[sftp-setup-config-owner]}">
+            <title>Configure <proper>SFTP</proper></title>
+
+            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-type">sftp</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-path">/{[sftp-repo]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-bundle">y</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-host">{[host-sftp]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-host-key-hash-type">sha1</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-host-user">{[br-user]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-private-key-file">{[sftp-setup-user-home-path]}/.ssh/id_rsa_sftp</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-public-key-file">{[sftp-setup-user-home-path]}/.ssh/id_rsa_sftp.pub</backrest-config-option>
+            <backrest-config-option section="global" key="process-max">4</backrest-config-option>
+        </backrest-config>
+
+        <p>When utilizing <proper>SFTP</proper>, if libssh2 is compiled against OpenSSH then <br-option>repo{[sftp-setup-repo-id]}-sftp-public-key-file</br-option> is optional.</p>
+
+        <execute-list host="{[sftp-setup-host]}">
+            <title>Generate SSH keypair for SFTP backup</title>
+
+            <execute user="{[sftp-setup-user]}">
+                <exe-cmd>mkdir -m 750 -p {[sftp-setup-user-home-path]}/.ssh</exe-cmd>
+            </execute>
+            <execute user="{[sftp-setup-user]}">
+                <exe-cmd>ssh-keygen -f {[sftp-setup-user-home-path]}/.ssh/id_rsa_sftp
+                    -t rsa -b 4096 -N "" -m PEM</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <execute-list host="{[host-sftp]}">
+            <title>Copy <host>{[host-pg1]}</host> SFTP backup public key to <host>{[host-sftp]}</host></title>
+
+            <!-- There is no need to show creation of the user and repo path -->
+            <execute if="{[os-type-is-debian]}" user="root" user-force="y" show="n">
+                <exe-cmd>id -u {[br-user]} > /dev/null 2>&amp;1 || adduser --disabled-password --gecos "" {[br-user]}</exe-cmd>
+            </execute>
+            <execute if="{[os-type-is-rhel]}" user="root" user-force="y" show="n">
+                <exe-cmd>id -u {[br-user]} > /dev/null 2>&amp;1 || adduser -n {[br-user]}</exe-cmd>
+            </execute>
+            <execute user="root" user-force="y" show="n">
+                <exe-cmd>mkdir -m 750 -p /{[sftp-repo]} &amp;&amp; chown {[br-user]} /{[sftp-repo]}</exe-cmd>
+            </execute>
+
+            <execute user="{[br-user]}">
+                <exe-cmd>mkdir -m 750 -p {[br-home-path]}/.ssh</exe-cmd>
+            </execute>
+            <execute user="root" err-suppress="y" user-force="y">
+                <exe-cmd>
+                    (sudo ssh root@{[sftp-setup-host]} cat {[sftp-setup-user-home-path]}/.ssh/id_rsa_sftp.pub) |
+                    sudo -u {[br-user]} tee -a {[br-home-path]}/.ssh/authorized_keys
+                </exe-cmd>
+            </execute>
+        </execute-list>
+    </block-define>
+
+    <!-- ======================================================================================================================= -->
+    <block-define id="stress-update-incr">
+        <execute-list host="{[host-pg1]}">
+            <title>Database updates {[stress-update-incr-count]}</title>
+
+            <execute user="postgres" output="n">
+                <exe-cmd>{[pg-bin-path]}/pgbench -n -b simple-update -t {[stress-scale-data]}</exe-cmd>
+                <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
+            </execute>
+        </execute-list>
+
+        <execute-list host="{[host-repo1]}">
+            <title>Incr backup {[stress-update-incr-count]}</title>
+
+            <execute user="{[br-user]}" output="n">
+                <exe-cmd>
+                    pgbackrest --stanza=demo --type=incr --repo1-bundle
+                    --repo1-block --log-level-console=info backup
+                </exe-cmd>
+                <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
+            </execute>
+        </execute-list>
+    </block-define>
+
+    <!-- ======================================================================================================================= -->
     <section id="introduction">
         <title>Introduction</title>
 
@@ -788,6 +890,9 @@
 
         <!-- Create S3 server first to allow it time to boot before being used -->
         <host-add if="'{[s3-local]}' eq 'y'" id="{[host-s3-id]}" name="{[host-s3]}" user="root" image="{[s3-image]}" os="{[os-type]}" option="-v {[fake-cert-path]}/s3-server.crt:/root/.minio/certs/public.crt:ro -v {[fake-cert-path]}/s3-server.key:/root/.minio/certs/private.key:ro -e MINIO_REGION={[s3-region]} -e MINIO_DOMAIN={[s3-endpoint]} -e MINIO_BROWSER=off -e MINIO_ACCESS_KEY={[s3-key]} -e MINIO_SECRET_KEY={[s3-key-secret]}" param="server /data --address :443" update-hosts="n"/>
+
+        <!-- Create SFTP server first to allow it time to boot before being used -->
+        <host-add id="{[host-sftp-id]}" name="{[host-sftp]}" user="{[host-sftp-user]}" image="{[host-sftp-image]}" os="{[os-type]}" mount="{[host-sftp-mount]}" option="{[host-mem]} {[host-option]}"/>
 
         <p>This user guide is intended to be followed sequentially from beginning to end &amp;mdash; each section depends on the last. For example, the <link section="/restore">Restore</link> section relies on setup that is performed in the <link section="/quickstart">Quick Start</link> section. Once <backrest/> is up and running then skipping around is possible but following the user guide in order is recommended the first time through.</p>
 
@@ -885,9 +990,7 @@
     <section if="'{[package]}' eq 'none'" id="build">
         <title>Build</title>
 
-        <p if="{[os-type-is-debian]}">{[user-guide-os]} packages for <backrest/> are available at <link url="https://www.postgresql.org/download/linux/ubuntu/">apt.postgresql.org</link>. If they are not provided for your distribution/version it is easy to download the source and install manually.</p>
-
-        <p if="{[os-type-is-rhel]}">{[user-guide-os]} packages for <backrest/> are available from <link url="{[crunchy-url-base]}">Crunchy Data</link> or <link url="http://yum.postgresql.org">yum.postgresql.org</link>, but it is also easy to download the source and install manually.</p>
+        <p>Installing <backrest/> from a package is preferable to building from source. See <link section="/installation">Installation</link> for more information about packages.</p>
 
         <host-add id="{[host-build-id]}" name="{[host-build]}" user="{[host-build-user]}" image="{[host-build-image]}" os="{[os-type]}" mount="{[host-build-mount]}" option="{[host-option]}"/>
 
@@ -931,15 +1034,15 @@
             <execute if="{[os-type-is-debian]}" user="root" pre="y">
                 <exe-cmd>
                     apt-get install make gcc libpq-dev libssl-dev libxml2-dev pkg-config
-                    liblz4-dev libzstd-dev libbz2-dev libz-dev libyaml-dev
+                    liblz4-dev libzstd-dev libbz2-dev libz-dev libyaml-dev libssh2-1-dev
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
             <execute if="{[os-type-is-rhel]}" user="root" pre="y">
                 <exe-cmd>
-                    yum install make gcc postgresql{[pg-version-nodot]}-devel
-                    openssl-devel libxml2-devel lz4-devel libzstd-devel bzip2-devel libyaml-devel
+                    yum install make gcc postgresql{[pg-version-nodot]}-devel openssl-devel
+                    libxml2-devel lz4-devel libzstd-devel bzip2-devel libyaml-devel libssh2-devel
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
@@ -1150,6 +1253,19 @@
                 <block-variable-replace key="s3-setup-user">postgres</block-variable-replace>
                 <block-variable-replace key="s3-setup-config-owner">postgres:postgres</block-variable-replace>
                 <block-variable-replace key="s3-setup-create-bucket">y</block-variable-replace>
+            </block>
+        </section>
+
+        <!-- =================================================================================================================== -->
+        <section id="sftp-support" if="'{[sftp-all]}' eq 'y'">
+            <title>SFTP Storage Support</title>
+
+            <block id="sftp-setup">
+                <block-variable-replace key="sftp-setup-repo-id">1</block-variable-replace>
+                <block-variable-replace key="sftp-setup-host">{[host-pg1]}</block-variable-replace>
+                <block-variable-replace key="sftp-setup-user">postgres</block-variable-replace>
+                <block-variable-replace key="sftp-setup-config-owner">postgres:postgres</block-variable-replace>
+                <block-variable-replace key="sftp-setup-user-home-path">{[pg-home-path]}</block-variable-replace>
             </block>
         </section>
 
@@ -2262,6 +2378,47 @@
     </section>
 
     <!-- ======================================================================================================================= -->
+    <!-- This section must be before any of the additional drivers are tested because slow drivers can cause shutdown to fail. -->
+    <section id="delete-stanza" if="!{[object-any-all]}" depend="/quickstart">
+        <title>Delete a Stanza</title>
+
+        <cmd-description key="stanza-delete"/>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Stop <postgres/> cluster to be removed</title>
+
+            <execute user="root">
+                <exe-cmd>{[pg-cluster-stop]}</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Stop <backrest/> for the stanza</title>
+
+            <execute user="postgres" output="y">
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info stop</exe-cmd>
+                <exe-highlight>completed successfully</exe-highlight>
+            </execute>
+        </execute-list>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Delete the stanza from one repository</title>
+
+            <execute user="postgres" output="y">
+                <exe-cmd>
+                    {[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --repo=1
+                    {[dash]}-log-level-console=info stanza-delete
+                </exe-cmd>
+                <exe-highlight>completed successfully</exe-highlight>
+            </execute>
+
+            <execute user="root" show="n">
+                <exe-cmd>{[pg-cluster-start]}</exe-cmd>
+            </execute>
+        </execute-list>
+    </section>
+
+    <!-- ======================================================================================================================= -->
     <section id="multi-repo" if="!{[object-any-all]}">
         <title>Multiple Repositories</title>
 
@@ -2408,11 +2565,46 @@
     </section>
 
     <!-- ======================================================================================================================= -->
+    <section id="sftp-support" if="!{[object-any-all]}" depend="/quickstart/configure-archiving">
+        <title>SFTP Support</title>
+
+        <block id="sftp-setup">
+            <block-variable-replace key="sftp-setup-repo-id">4</block-variable-replace>
+            <block-variable-replace key="sftp-setup-host">{[host-pg1]}</block-variable-replace>
+            <block-variable-replace key="sftp-setup-user">postgres</block-variable-replace>
+            <block-variable-replace key="sftp-setup-config-owner">postgres:postgres</block-variable-replace>
+            <block-variable-replace key="sftp-setup-user-home-path">{[pg-home-path]}</block-variable-replace>
+        </block>
+
+        <p>Commands are run exactly as if the repository were stored on a local disk.</p>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Create the stanza</title>
+
+            <execute user="postgres" output="y">
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info stanza-create</exe-cmd>
+                <exe-highlight>completed successfully</exe-highlight>
+            </execute>
+        </execute-list>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Backup the {[postgres-cluster-demo]} cluster</title>
+
+            <execute user="postgres" output="y">
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --repo=4
+                    --log-level-console=info backup</exe-cmd>
+                <exe-highlight>no prior backup exists|full backup size</exe-highlight>
+            </execute>
+        </execute-list>
+    </section>
+
+    <!-- ======================================================================================================================= -->
+    <!-- This section must be last of all drivers tested since there is no GCS server to make it work. -->
     <section id="gcs-support" if="!{[object-any-all]}" depend="/quickstart/configure-archiving">
         <title>GCS-Compatible Object Store Support</title>
 
         <block id="gcs-setup">
-            <block-variable-replace key="gcs-setup-repo-id">4</block-variable-replace>
+            <block-variable-replace key="gcs-setup-repo-id">5</block-variable-replace>
             <block-variable-replace key="gcs-setup-host">{[host-pg1]}</block-variable-replace>
             <block-variable-replace key="gcs-setup-user">postgres</block-variable-replace>
             <block-variable-replace key="gcs-setup-config-owner">postgres:postgres</block-variable-replace>
@@ -2421,46 +2613,6 @@
         <p>Commands are run exactly as if the repository were stored on a local disk.</p>
 
         <p>File creation time in object stores is relatively slow so commands benefit by increasing <br-option>process-max</br-option> to parallelize file creation.</p>
-    </section>
-
-    <!-- ======================================================================================================================= -->
-    <section id="delete-stanza" if="!{[object-any-all]}" depend="/quickstart">
-        <title>Delete a Stanza</title>
-
-        <cmd-description key="stanza-delete"/>
-
-        <execute-list host="{[host-pg1]}">
-            <title>Stop <postgres/> cluster to be removed</title>
-
-            <execute user="root">
-                <exe-cmd>{[pg-cluster-stop]}</exe-cmd>
-            </execute>
-        </execute-list>
-
-        <execute-list host="{[host-pg1]}">
-            <title>Stop <backrest/> for the stanza</title>
-
-            <execute user="postgres" output="y">
-                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info stop</exe-cmd>
-                <exe-highlight>completed successfully</exe-highlight>
-            </execute>
-        </execute-list>
-
-        <execute-list host="{[host-pg1]}">
-            <title>Delete the stanza from one repository</title>
-
-            <execute user="postgres" output="y">
-                <exe-cmd>
-                    {[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --repo=1
-                    {[dash]}-log-level-console=info stanza-delete
-                </exe-cmd>
-                <exe-highlight>completed successfully</exe-highlight>
-            </execute>
-
-            <execute user="root" show="n">
-                <exe-cmd>{[pg-cluster-start]}</exe-cmd>
-            </execute>
-        </execute-list>
     </section>
 
     <!-- ======================================================================================================================= -->
@@ -2660,6 +2812,16 @@
                 <block-variable-replace key="s3-setup-user">{[br-user]}</block-variable-replace>
                 <block-variable-replace key="s3-setup-config-owner">{[br-user]}:{[br-group]}</block-variable-replace>
                 <block-variable-replace key="s3-setup-create-bucket">n</block-variable-replace>
+            </block>
+
+            <p if="'{[sftp-all]}' eq 'y'">Configure SFTP storage if required.</p>
+
+            <block id="sftp-setup" if="'{[sftp-all]}' eq 'y'">
+                <block-variable-replace key="sftp-setup-repo-id">1</block-variable-replace>
+                <block-variable-replace key="sftp-setup-host">{[host-repo1]}</block-variable-replace>
+                <block-variable-replace key="sftp-setup-user">{[br-user]}</block-variable-replace>
+                <block-variable-replace key="sftp-setup-config-owner">{[br-user]}:{[br-group]}</block-variable-replace>
+                <block-variable-replace key="sftp-setup-user-home-path">{[br-home-path]}</block-variable-replace>
             </block>
         </section>
 
@@ -3810,15 +3972,24 @@
 
             <!-- =============================================================================================================== -->
             <section id="backup-diff-delta">
-                <title>Diff Backup with Delta</title>
+                <title>Diff Backup with Delta and Block Incremental</title>
+
+                <execute-list host="{[host-pg1]}">
+                    <title>Database updates</title>
+
+                    <execute user="postgres">
+                        <exe-cmd>{[pg-bin-path]}/pgbench -n -b simple-update -t {[stress-scale-data]}</exe-cmd>
+                        <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
+                    </execute>
+                </execute-list>
 
                 <execute-list host="{[host-repo1]}">
                     <title>Diff backup</title>
 
                     <execute user="{[br-user]}" output="y" filter="n">
                         <exe-cmd>
-                            pgbackrest --stanza=demo --type=diff --delta
-                            --log-level-console=info --log-level-file=detail backup
+                            pgbackrest --stanza=demo --type=diff --delta --repo1-bundle
+                            --repo1-block --log-level-console=info --log-level-file=detail backup
                         </exe-cmd>
                         <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
                     </execute>
@@ -3826,8 +3997,53 @@
             </section>
 
             <!-- =============================================================================================================== -->
+            <section id="backup-incr">
+                <title>Incr Backup with Block Incremental</title>
+
+                <block id="stress-update-incr">
+                    <block-variable-replace key="stress-update-incr-count">1</block-variable-replace>
+                </block>
+                <block id="stress-update-incr">
+                    <block-variable-replace key="stress-update-incr-count">2</block-variable-replace>
+                </block>
+                <block id="stress-update-incr">
+                    <block-variable-replace key="stress-update-incr-count">3</block-variable-replace>
+                </block>
+                <block id="stress-update-incr">
+                    <block-variable-replace key="stress-update-incr-count">4</block-variable-replace>
+                </block>
+                <block id="stress-update-incr">
+                    <block-variable-replace key="stress-update-incr-count">5</block-variable-replace>
+                </block>
+                <block id="stress-update-incr">
+                    <block-variable-replace key="stress-update-incr-count">6</block-variable-replace>
+                </block>
+                <block id="stress-update-incr">
+                    <block-variable-replace key="stress-update-incr-count">7</block-variable-replace>
+                </block>
+                <block id="stress-update-incr">
+                    <block-variable-replace key="stress-update-incr-count">8</block-variable-replace>
+                </block>
+                <block id="stress-update-incr">
+                    <block-variable-replace key="stress-update-incr-count">9</block-variable-replace>
+                </block>
+                <block id="stress-update-incr">
+                    <block-variable-replace key="stress-update-incr-count">10</block-variable-replace>
+                </block>
+            </section>
+
+            <!-- =============================================================================================================== -->
             <section id="restore-delta">
                 <title>Restore with Delta</title>
+
+                <execute-list host="{[host-pg1]}">
+                    <title>Database updates so delta has something to restore</title>
+
+                    <execute user="postgres">
+                        <exe-cmd>{[pg-bin-path]}/pgbench -n -b simple-update -t {[stress-scale-data]}</exe-cmd>
+                        <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
+                    </execute>
+                </execute-list>
 
                 <execute-list host="{[host-pg2]}">
                     <title>Stop <postgres/></title>
