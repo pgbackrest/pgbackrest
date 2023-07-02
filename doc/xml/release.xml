@@ -29,6 +29,18 @@
 
                         <p>Skip <file>recovery.signal</file> for <postgres/> &gt;= 12 when recovery <br-option>type=none</br-option>.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-issue id="1873"/>
+                        <github-pull-request id="2104"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="andrey.sokolov"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix unique label generation for diff/incr backup.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-improvement-list>
@@ -61,6 +73,19 @@
                     </release-item>
                 </release-improvement-list>
             </release-doc-list>
+
+            <release-test-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="chris.bandy"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Error when pull request target branch is not integration.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-test-list>
         </release>
 
         <release date="2023-05-22" version="2.46" title="Block Incremental Backup and SFTP Storage">

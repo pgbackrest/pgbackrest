@@ -1948,6 +1948,7 @@ testRun(void)
                 "[global:restore]\n"
                 "recovery-option=f=g\n"
                 "recovery-option=hijk=l\n"
+                "recovery-option=hijk=override\n"                   // Overrides prior value of hijk
                 "\n"
                 "[db]\n"
                 "pg1-path=/path/to/db\n"));
@@ -1958,7 +1959,7 @@ testRun(void)
 
         TEST_ASSIGN(recoveryKv, cfgOptionKv(cfgOptRecoveryOption), "get recovery options");
         TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, VARSTRDEF("f"))), "g", "check recovery option");
-        TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, VARSTRDEF("hijk"))), "l", "check recovery option");
+        TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, VARSTRDEF("hijk"))), "override", "check recovery option");
         TEST_RESULT_UINT(varLstSize(cfgOptionLst(cfgOptDbInclude)), 0, "check db include option size");
 
         // -------------------------------------------------------------------------------------------------------------------------

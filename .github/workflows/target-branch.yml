@@ -1,20 +1,22 @@
 name: target-branch
 
-# Run this workflow *in the context of the main branch* when a pull request is
-# opened or reopened targeting the main branch.
+# Run this workflow *in the context of the target branch* when a pull request
+# is opened, reopened, or the target branch is changed to anything other than
+# the integration branch.
 #
 # NOTE: Pull requests that change this file do not run those changes during the
 # "pull_request_target" event.
 on:
   pull_request_target:
-    branches:
-      - main
+    types: [synchronize, opened, reopened, edited]
+    branches-ignore:
+      - integration
 
 jobs:
   check:
     # Only run this job on the main pgBackRest repository. Forks can do what
     # they want with branches.
-    #if: github.repository == 'pgbackrest/pgbackrest'
+    if: github.repository == 'pgbackrest/pgbackrest'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
