@@ -346,6 +346,10 @@ storageRemoteListProtocol(PackRead *const param, ProtocolServer *const server)
         const StorageInfoLevel level = (StorageInfoLevel)pckReadU32P(param);
         StorageRemoteInfoProtocolWriteData writeData = {0};
         StorageList *const list = storageInterfaceListP(storageRemoteProtocolLocal.driver, path, level);
+        PackWrite *const write = protocolPackNew();
+
+        // Indicate whether or not the path was found
+        pckWriteBoolP(write, list != NULL, .defaultWrite = true);
 
         // Put list
         if (list != NULL)
@@ -354,19 +358,14 @@ storageRemoteListProtocol(PackRead *const param, ProtocolServer *const server)
             {
                 const StorageInfo info = storageLstGet(list, listIdx);
 
-                PackWrite *const write = protocolPackNew();
+                pckWriteObjBeginP(write);
                 pckWriteStrP(write, info.name);
                 storageRemoteInfoProtocolPut(&writeData, write, &info);
-                protocolServerDataPut(server, write);
-                pckWriteFree(write);
+                pckWriteObjEndP(write);
             }
         }
 
-        // Indicate whether or not the path was found
-        PackWrite *write = protocolPackNew();
-        pckWriteBoolP(write, list != NULL, .defaultWrite = true);
         protocolServerDataPut(server, write);
-
         protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();

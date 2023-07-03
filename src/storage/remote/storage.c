@@ -235,34 +235,34 @@ storageRemoteList(THIS_VOID, const String *const path, const StorageInfoLevel le
 
         // Read list
         StorageRemoteInfoData parseData = {.memContext = memContextCurrent()};
-        result = storageLstNew(level);
+        PackRead *const read = protocolClientDataGet(this->client);
 
-        MEM_CONTEXT_TEMP_RESET_BEGIN()
+        if (pckReadBoolP(read))
         {
-            PackRead *read = protocolClientDataGet(this->client);
-            pckReadNext(read);
+            result = storageLstNew(level);
 
-            while (pckReadType(read) == pckTypeStr)
+            MEM_CONTEXT_TEMP_RESET_BEGIN()
             {
-                StorageInfo info = {.exists = true, .level = level, .name = pckReadStrP(read)};
+                while (pckReadNext(read))
+                {
+                    pckReadObjBeginP(read);
 
-                storageRemoteInfoGet(&parseData, read, &info);
-                storageLstAdd(result, &info);
+                    StorageInfo info = {.exists = true, .level = level, .name = pckReadStrP(read)};
 
-                // Reset the memory context occasionally so we don't use too much memory or slow down processing
-                MEM_CONTEXT_TEMP_RESET(1000);
+                    storageRemoteInfoGet(&parseData, read, &info);
+                    storageLstAdd(result, &info);
+                    pckReadObjEndP(read);
 
-                read = protocolClientDataGet(this->client);
-                pckReadNext(read);
+                    // Reset the memory context occasionally so we don't use too much memory or slow down processing
+                    MEM_CONTEXT_TEMP_RESET(1000);
+                }
             }
+            MEM_CONTEXT_TEMP_END();
 
-            if (!pckReadBoolP(read))
-                result = NULL;
+            storageLstMove(result, memContextPrior());
         }
-        MEM_CONTEXT_TEMP_END();
 
         protocolClientDataEndGet(this->client);
-        storageLstMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
