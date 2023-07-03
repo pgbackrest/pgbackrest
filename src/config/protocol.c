@@ -37,7 +37,6 @@ configOptionProtocol(PackRead *const param, ProtocolServer *const server)
         }
 
         protocolServerDataPut(server, pckWriteStrP(protocolPackNew(), jsonFromVar(varNewVarLst(optionList))));
-        protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -63,7 +62,7 @@ configOptionRemote(ProtocolClient *client, const VariantList *paramList)
         for (unsigned int paramIdx = 0; paramIdx < varLstSize(paramList); paramIdx++)
             pckWriteStrP(param, varStr(varLstGet(paramList, paramIdx)));
 
-        const VariantList *const list = varVarLst(jsonToVar(pckReadStrP(protocolClientExecute(client, command, true))));
+        const VariantList *const list = varVarLst(jsonToVar(pckReadStrP(protocolClientExecute(client, command))));
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {

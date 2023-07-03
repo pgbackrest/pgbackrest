@@ -223,7 +223,6 @@ protocolServerProcess(
 
                                         // Return session id to client
                                         protocolServerDataPut(this, pckWriteU64P(protocolPackNew(), session.id));
-//                                        protocolServerDataEndPut(this); //
 
                                         // Call open handler
                                         MEM_CONTEXT_OBJ_BEGIN(this->sessionList)
@@ -313,9 +312,9 @@ protocolServerProcess(
                                                 {
                                                     handler->close(pckReadNew(command.param), this, sessionData);
                                                 }
-                                                // Else send default end of data
+                                                // Else send default NULL data
                                                 else
-                                                    protocolServerDataEndPut(this);
+                                                    protocolServerDataPut(this, NULL);
 
                                                 // Free the session
                                                 objFree(sessionData);
@@ -331,8 +330,8 @@ protocolServerProcess(
                                                     ProtocolError, command.type == protocolCommandTypeCancel,
                                                     "unknown command type '%s'", strZ(strIdToStr(command.type)));
 
-                                                // Send end of data
-                                                protocolServerDataEndPut(this);
+                                                // Send NULL data
+                                                protocolServerDataPut(this, NULL);
 
                                                 // Free the session
                                                 objFree(sessionData);
@@ -399,7 +398,7 @@ protocolServerProcess(
                             break;
 
                         case PROTOCOL_COMMAND_NOOP:
-                            protocolServerDataEndPut(this);
+                            protocolServerDataPut(this, NULL);
                             break;
 
                         default:
@@ -446,38 +445,14 @@ protocolServerDataPut(ProtocolServer *const this, PackWrite *const data)
             pckWriteEndP(data);
 
         // Write the result
-        PackWrite *resultMessage = pckWriteNewIo(this->write);
+        PackWrite *const resultMessage = pckWriteNewIo(this->write);
+
         pckWriteU32P(resultMessage, protocolMessageTypeData, .defaultWrite = true);
         pckWritePackP(resultMessage, pckWriteResult(data));
         pckWriteEndP(resultMessage);
-
-        // Flush on NULL result since it might be used to synchronize
-        if (data == NULL)
-            ioWriteFlush(this->write);
+        ioWriteFlush(this->write);
     }
     MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-FN_EXTERN void
-protocolServerDataEndPut(ProtocolServer *const this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
-    FUNCTION_LOG_END();
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        // Write the response and flush to be sure it gets sent immediately
-        PackWrite *response = pckWriteNewIo(this->write);
-        pckWriteU32P(response, protocolMessageTypeDataEnd, .defaultWrite = true);
-        pckWriteEndP(response);
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    ioWriteFlush(this->write);
 
     FUNCTION_LOG_RETURN_VOID();
 }

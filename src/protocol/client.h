@@ -12,14 +12,11 @@ typedef enum
     // Data passed from client to server. This can be used as many times as needed.
     protocolMessageTypeData = 0,
 
-    // Indicates no more data for the server to return to the client and ends the command
-    protocolMessageTypeDataEnd = 1,
-
     // Command sent from the client to the server
-    protocolMessageTypeCommand = 2,
+    protocolMessageTypeCommand = 1,
 
-    // An error occurred on the server and the command ended abnormally. protocolMessageTypeDataEnd will not be sent to the client.
-    protocolMessageTypeError = 3,
+    // An error occurred on the server and the command ended abnormally. protocolMessageTypeData will not be sent to the client.
+    protocolMessageTypeError = 2,
 } ProtocolMessageType;
 
 /***********************************************************************************************************************************
@@ -80,7 +77,7 @@ protocolClientIoReadFd(ProtocolClient *const this)
 Functions
 ***********************************************************************************************************************************/
 // Execute a command and get the result
-FN_EXTERN PackRead *protocolClientExecute(ProtocolClient *this, ProtocolCommand *command, bool resultRequired);
+FN_EXTERN PackRead *protocolClientExecute(ProtocolClient *this, ProtocolCommand *command);
 
 // Move to a new parent mem context
 FN_INLINE_ALWAYS ProtocolClient *
@@ -101,7 +98,6 @@ FN_EXTERN void protocolClientNoOp(ProtocolClient *this);
 
 // Get data put by the server
 FN_EXTERN PackRead *protocolClientDataGet(ProtocolClient *this);
-FN_EXTERN void protocolClientDataEndGet(ProtocolClient *this); // !!! SHOULD BE ABLE TO GET RID OF?
 
 // Put command to the server, returns session id when command type is open
 FN_EXTERN uint64_t protocolClientCommandPut(ProtocolClient *this, ProtocolCommand *command);

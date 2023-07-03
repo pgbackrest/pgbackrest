@@ -53,7 +53,7 @@ dbFreeResource(THIS_VOID)
     ProtocolCommand *const command = protocolCommandNewP(
         PROTOCOL_COMMAND_DB, .type = protocolCommandTypeClose, .sessionId = this->sessionId);
 
-    protocolClientExecute(this->remoteClient, command, false);
+    protocolClientExecute(this->remoteClient, command);
     protocolCommandFree(command);
 
     FUNCTION_LOG_RETURN_VOID();
@@ -123,7 +123,7 @@ dbQuery(Db *this, const PgClientQueryResult resultType, const String *const quer
             pckWriteStrIdP(param, resultType);
             pckWriteStrP(param, query);
 
-            PackRead *const read = protocolClientExecute(this->remoteClient, command, true);
+            PackRead *const read = protocolClientExecute(this->remoteClient, command);
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {
@@ -243,7 +243,6 @@ dbOpen(Db *this)
                 this->remoteClient, protocolCommandNewP(PROTOCOL_COMMAND_DB, .type = protocolCommandTypeOpen));
 
             protocolClientDataGet(this->remoteClient);
-            protocolClientDataEndGet(this->remoteClient);
 
             // Set a callback to notify the remote when a connection is closed
             memContextCallbackSet(this->pub.memContext, dbFreeResource, this);

@@ -234,39 +234,10 @@ protocolClientDataGet(ProtocolClient *const this)
     }
     MEM_CONTEXT_TEMP_END();
 
+    // Switch state to idle after successful data get
+    this->state = protocolClientStateIdle;
+
     FUNCTION_LOG_RETURN(PACK_READ, result);
-}
-
-/**********************************************************************************************************************************/
-FN_EXTERN void
-protocolClientDataEndGet(ProtocolClient *const this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    // Expect data-get state before data end get
-    protocolClientStateExpect(this, protocolClientStateDataGet);
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        PackRead *response = pckReadNewIo(this->pub.read);
-        ProtocolMessageType type = (ProtocolMessageType)pckReadU32P(response);
-
-        protocolClientError(this, type, response);
-
-        CHECK(FormatError, type == protocolMessageTypeDataEnd, "expected data end message");
-
-        pckReadEndP(response);
-
-        // Switch state to idle after successful data end get
-        this->state = protocolClientStateIdle;
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -304,6 +275,9 @@ protocolClientCommandPut(ProtocolClient *const this, ProtocolCommand *const comm
         result = pckReadU64P(read);
 
         pckReadFree(read);
+
+        // Switch state to data-get after getting the session id so the command can return its own data
+        this->state = protocolClientStateDataGet;
     }
 
     // Reset the keep alive time
@@ -314,12 +288,11 @@ protocolClientCommandPut(ProtocolClient *const this, ProtocolCommand *const comm
 
 /**********************************************************************************************************************************/
 FN_EXTERN PackRead *
-protocolClientExecute(ProtocolClient *const this, ProtocolCommand *const command, const bool resultRequired)
+protocolClientExecute(ProtocolClient *const this, ProtocolCommand *const command)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
         FUNCTION_LOG_PARAM(PROTOCOL_COMMAND, command);
-        FUNCTION_LOG_PARAM(BOOL, resultRequired);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -328,16 +301,7 @@ protocolClientExecute(ProtocolClient *const this, ProtocolCommand *const command
     // Put command
     protocolClientCommandPut(this, command);
 
-    // Read result if required
-    PackRead *result = NULL;
-
-    if (resultRequired)
-        result = protocolClientDataGet(this);
-
-    // Read response
-    protocolClientDataEndGet(this);
-
-    FUNCTION_LOG_RETURN(PACK_READ, result);
+    FUNCTION_LOG_RETURN(PACK_READ, protocolClientDataGet(this));
 }
 
 /**********************************************************************************************************************************/
@@ -352,7 +316,7 @@ protocolClientNoOp(ProtocolClient *this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        protocolClientExecute(this, protocolCommandNewP(PROTOCOL_COMMAND_NOOP), false);
+        protocolClientExecute(this, protocolCommandNewP(PROTOCOL_COMMAND_NOOP));
     }
     MEM_CONTEXT_TEMP_END();
 

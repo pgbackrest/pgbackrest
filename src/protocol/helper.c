@@ -442,7 +442,7 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
             TRY_END();
 
             // Ack the config command
-            protocolServerDataEndPut(result);
+            protocolServerDataPut(result, NULL);
 
             // Move result to prior context and move session into result so there is only one return value
             protocolServerMove(result, memContextPrior());
@@ -452,7 +452,7 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
         else
         {
             // Send a data end message and return a NULL server. Do not waste time looking at what the client wrote.
-            protocolServerDataEndPut(result);
+            protocolServerDataPut(result, NULL);
 
             // Set result to NULL so there is no server for the caller to use. The TLS session will be freed when the temp mem
             // context ends.
@@ -769,7 +769,7 @@ protocolRemoteExec(
                     // Pass parameters to server
                     ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_CONFIG);
                     pckWriteStrLstP(protocolCommandParamP(command), protocolRemoteParam(protocolStorageType, hostIdx));
-                    protocolClientExecute(helper->client, command, false);
+                    protocolClientExecute(helper->client, command);
                     protocolCommandFree(command);
                 }
                 CATCH_ANY()

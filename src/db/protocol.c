@@ -34,7 +34,6 @@ dbOpenProtocol(PackRead *const param, ProtocolServer *const server, const uint64
     pgClientOpen(result);
 
     protocolServerDataPut(server, NULL);
-    protocolServerDataEndPut(server);
 
     FUNCTION_LOG_RETURN(PG_CLIENT, result);
 }
@@ -59,7 +58,6 @@ dbQueryProtocol(PackRead *const param, ProtocolServer *const server, void *const
         const String *const query = pckReadStrP(param);
 
         protocolServerDataPut(server, pckWritePackP(protocolPackNew(), pgClientQuery(pgClient, query, resultType)));
-        protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 

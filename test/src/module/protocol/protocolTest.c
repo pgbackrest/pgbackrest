@@ -74,7 +74,6 @@ testCommandRequestSimpleProtocol(PackRead *const param, ProtocolServer *const se
     MEM_CONTEXT_TEMP_BEGIN()
     {
         protocolServerDataPut(server, pckWriteStrP(protocolPackNew(), STRDEF("output")));
-        protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -107,7 +106,6 @@ testCommandRequestComplexProtocol(PackRead *const param, ProtocolServer *const s
 
         TEST_RESULT_VOID(protocolServerDataPut(server, pckWriteBoolP(protocolPackNew(), true)), "data put");
         TEST_RESULT_VOID(protocolServerDataPut(server, pckWriteI32P(protocolPackNew(), -1)), "data put");
-        TEST_RESULT_VOID(protocolServerDataEndPut(server), "data end put");
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -138,7 +136,6 @@ testCommandRetryProtocol(PackRead *const param, ProtocolServer *const server)
         }
 
         protocolServerDataPut(server, pckWriteBoolP(protocolPackNew(), true));
-        protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -615,7 +612,7 @@ testRun(void)
                 TEST_TITLE("invalid command");
 
                 TEST_ERROR(
-                    protocolClientExecute(client, protocolCommandNewP(strIdFromZ("BOGUS")), false), ProtocolError,
+                    protocolClientExecute(client, protocolCommandNewP(strIdFromZ("BOGUS"))), ProtocolError,
                     "raised from test client: invalid command 'BOGUS' (0x38eacd271)");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -623,7 +620,7 @@ testRun(void)
 
                 TRY_BEGIN()
                 {
-                    protocolClientExecute(client, protocolCommandNewP(TEST_PROTOCOL_COMMAND_ASSERT), false);
+                    protocolClientExecute(client, protocolCommandNewP(TEST_PROTOCOL_COMMAND_ASSERT));
                     THROW(TestError, "error was expected");
                 }
                 CATCH_FATAL()
@@ -646,7 +643,7 @@ testRun(void)
                 TEST_TITLE("simple command");
 
                 TEST_RESULT_STR_Z(
-                    pckReadStrP(protocolClientExecute(client, protocolCommandNewP(TEST_PROTOCOL_COMMAND_SIMPLE), true)), "output",
+                    pckReadStrP(protocolClientExecute(client, protocolCommandNewP(TEST_PROTOCOL_COMMAND_SIMPLE))), "output",
                     "execute");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -674,7 +671,6 @@ testRun(void)
                 // // Get data from the server
                 // TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client)), true, "data get");
                 // TEST_RESULT_INT(pckReadI32P(protocolClientDataGet(client)), -1, "data get");
-                // TEST_RESULT_VOID(protocolClientDataEndGet(client), "data end get");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("free client");
@@ -693,14 +689,14 @@ testRun(void)
                 TEST_TITLE("command with retry");
 
                 TEST_RESULT_BOOL(
-                    pckReadBoolP(protocolClientExecute(client, protocolCommandNewP(TEST_PROTOCOL_COMMAND_RETRY), true)), true,
+                    pckReadBoolP(protocolClientExecute(client, protocolCommandNewP(TEST_PROTOCOL_COMMAND_RETRY))), true,
                     "execute");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("command throws assert with retry messages");
 
                 TEST_ERROR(
-                    protocolClientExecute(client, protocolCommandNewP(TEST_PROTOCOL_COMMAND_ERROR), false), FormatError,
+                    protocolClientExecute(client, protocolCommandNewP(TEST_PROTOCOL_COMMAND_ERROR)), FormatError,
                     "raised from test client: ERR_MESSAGE\n"
                     "[RETRY DETAIL OMITTED]");
 
@@ -942,7 +938,6 @@ testRun(void)
                 HRN_FORK_CHILD_NOTIFY_GET();
 
                 TEST_RESULT_VOID(protocolServerDataPut(server, pckWriteU32P(protocolPackNew(), 1)), "data end put");
-                TEST_RESULT_VOID(protocolServerDataEndPut(server), "data end put");
 
                 // Wait for exit
                 TEST_RESULT_UINT(protocolServerCommandGet(server).id, PROTOCOL_COMMAND_EXIT, "noop command get");
@@ -965,7 +960,6 @@ testRun(void)
                 HRN_FORK_CHILD_NOTIFY_GET();
 
                 TEST_RESULT_VOID(protocolServerDataPut(server, pckWriteU32P(protocolPackNew(), 2)), "data end put");
-                TEST_RESULT_VOID(protocolServerDataEndPut(server), "data end put");
 
                 // Command with error
                 TEST_RESULT_UINT(protocolServerCommandGet(server).id, strIdFromZ("c-three"), "c-three command get");

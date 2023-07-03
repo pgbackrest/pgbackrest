@@ -56,7 +56,7 @@ storageWriteRemoteFreeResource(THIS_VOID)
     protocolClientCommandPut(this->client, command);
     protocolCommandFree(command);
 
-    protocolClientDataEndGet(this->client);
+    protocolClientDataGet(this->client);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -98,7 +98,7 @@ storageWriteRemoteOpen(THIS_VOID)
 
         this->sessionId = protocolClientCommandPut(this->client, command);
 
-        protocolClientDataEndGet(this->client);
+        protocolClientDataGet(this->client);
 
         // Clear filters since they will be run on the remote side
         ioFilterGroupClear(ioWriteFilterGroup(storageWriteIo(this->write)));
@@ -143,7 +143,7 @@ storageWriteRemote(THIS_VOID, const Buffer *const buffer)
         pckWriteBinP(param, buffer);
 
         protocolClientCommandPut(this->client, command);
-        protocolClientDataEndGet(this->client);
+        protocolClientDataGet(this->client);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -179,7 +179,6 @@ storageWriteRemoteClose(THIS_VOID)
 
             ioFilterGroupResultAllSet(
                 ioWriteFilterGroup(storageWriteIo(this->write)), pckReadPackP(protocolClientDataGet(this->client)));
-            protocolClientDataEndGet(this->client);
         }
         MEM_CONTEXT_TEMP_END();
 

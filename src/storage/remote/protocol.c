@@ -159,12 +159,11 @@ storageRemoteFeatureProtocol(PackRead *const param, ProtocolServer *const server
         }
 
         // Return storage features
-        PackWrite *result = protocolPackNew();
+        PackWrite *const result = protocolPackNew();
+
         pckWriteStrP(result, storagePathP(storage, NULL));
         pckWriteU64P(result, storageInterface(storage).feature);
-
         protocolServerDataPut(server, result);
-        protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -293,7 +292,6 @@ storageRemoteInfoProtocol(PackRead *const param, ProtocolServer *const server)
             storageRemoteInfoProtocolPut(&(StorageRemoteInfoProtocolWriteData){0}, write, &info);
 
         protocolServerDataPut(server, write);
-        protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -320,7 +318,7 @@ storageRemoteLinkCreateProtocol(PackRead *const param, ProtocolServer *const ser
         const StorageLinkType linkType = (StorageLinkType)pckReadU32P(param);
 
         storageInterfaceLinkCreateP(storageRemoteProtocolLocal.driver, target, linkPath, .linkType = linkType);
-        protocolServerDataEndPut(server);
+        protocolServerDataPut(server, NULL);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -366,7 +364,6 @@ storageRemoteListProtocol(PackRead *const param, ProtocolServer *const server)
         }
 
         protocolServerDataPut(server, write);
-        protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -466,7 +463,6 @@ storageRemoteReadOpenProtocol(PackRead *const param, ProtocolServer *const serve
         }
 
         protocolServerDataPut(server, packWrite);
-        protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -491,7 +487,6 @@ storageRemoteReadProtocol(PackRead *const param, ProtocolServer *const server, v
     const bool result = storageRemoteReadInternal(fileRead, packWrite);
 
     protocolServerDataPut(server, packWrite);
-    protocolServerDataEndPut(server);
     pckWriteFree(packWrite);
 
     FUNCTION_LOG_RETURN(BOOL, result);
@@ -541,7 +536,7 @@ storageRemoteWriteOpenProtocol(PackRead *const param, ProtocolServer *const serv
         ioWriteOpen(storageWriteIo(fileWrite));
 
         // Notify client that open is complete
-        protocolServerDataEndPut(server);
+        protocolServerDataPut(server, NULL);
 
         // Move file to calling context
         result = storageWriteMove(fileWrite, memContextPrior());
@@ -570,7 +565,7 @@ storageRemoteWriteProtocol(PackRead *const param, ProtocolServer *const server, 
     ioWrite(storageWriteIo(fileWrite), buffer);
     bufFree(buffer);
 
-    protocolServerDataEndPut(server);
+    protocolServerDataPut(server, NULL);
 
     FUNCTION_LOG_RETURN(BOOL, true);
 }
@@ -595,7 +590,6 @@ storageRemoteWriteCloseProtocol(PackRead *const param, ProtocolServer *const ser
         // Send filter results
         protocolServerDataPut(
             server, pckWritePackP(protocolPackNew(), ioFilterGroupResultAll(ioWriteFilterGroup(storageWriteIo(fileWrite)))));
-        protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -623,7 +617,7 @@ storageRemotePathCreateProtocol(PackRead *const param, ProtocolServer *const ser
         mode_t mode = pckReadModeP(param);
 
         storageInterfacePathCreateP(storageRemoteProtocolLocal.driver, path, errorOnExists, noParentCreate, mode);
-        protocolServerDataEndPut(server);
+        protocolServerDataPut(server, NULL);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -651,7 +645,6 @@ storageRemotePathRemoveProtocol(PackRead *const param, ProtocolServer *const ser
         const bool result = storageInterfacePathRemoveP(storageRemoteProtocolLocal.driver, path, recurse);
 
         protocolServerDataPut(server, pckWriteBoolP(protocolPackNew(), result, .defaultWrite = true));
-        protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -676,7 +669,7 @@ storageRemotePathSyncProtocol(PackRead *const param, ProtocolServer *const serve
         const String *path = pckReadStrP(param);
 
         storageInterfacePathSyncP(storageRemoteProtocolLocal.driver, path);
-        protocolServerDataEndPut(server);
+        protocolServerDataPut(server, NULL);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -702,7 +695,7 @@ storageRemoteRemoveProtocol(PackRead *const param, ProtocolServer *const server)
         bool errorOnMissing = pckReadBoolP(param);
 
         storageInterfaceRemoveP(storageRemoteProtocolLocal.driver, file, .errorOnMissing = errorOnMissing);
-        protocolServerDataEndPut(server);
+        protocolServerDataPut(server, NULL);
     }
     MEM_CONTEXT_TEMP_END();
 

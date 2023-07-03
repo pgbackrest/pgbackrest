@@ -82,7 +82,7 @@ cmdRemote(ProtocolServer *const server)
             }
 
             // Notify the client of success
-            protocolServerDataEndPut(server);
+            protocolServerDataPut(server, NULL);
             success = true;
         }
         CATCH_ANY()

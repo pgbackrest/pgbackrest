@@ -67,7 +67,7 @@ storageReadRemoteFreeResource(THIS_VOID)
             PROTOCOL_COMMAND_STORAGE_READ, .type = protocolCommandTypeClose, .sessionId = this->sessionId);
 
         protocolClientCommandPut(this->client, command);
-        protocolClientDataEndGet(this->client);
+        protocolClientDataGet(this->client);
         protocolCommandFree(command);
     }
 
@@ -152,7 +152,6 @@ storageReadRemote(THIS_VOID, Buffer *buffer, bool block)
                 PackRead *const packRead = protocolClientDataGet(this->client);
 
                 storageReadRemoteInternal(this, packRead);
-                protocolClientDataEndGet(this->client);
                 pckReadFree(packRead);
             }
 
@@ -264,8 +263,6 @@ storageReadRemoteOpen(THIS_VOID)
             // Read the first block or eof
             storageReadRemoteInternal(this, packRead);
         }
-
-        protocolClientDataEndGet(this->client);
     }
     MEM_CONTEXT_TEMP_END();
 

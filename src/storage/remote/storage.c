@@ -162,8 +162,6 @@ storageRemoteInfo(THIS_VOID, const String *file, StorageInfoLevel level, Storage
             }
             MEM_CONTEXT_PRIOR_END();
         }
-
-        protocolClientDataEndGet(this->client);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -197,7 +195,7 @@ storageRemoteLinkCreate(
         pckWriteStrP(commandParam, linkPath);
         pckWriteU32P(commandParam, param.linkType);
 
-        protocolClientExecute(this->client, command, false);
+        protocolClientExecute(this->client, command);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -261,8 +259,6 @@ storageRemoteList(THIS_VOID, const String *const path, const StorageInfoLevel le
 
             storageLstMove(result, memContextPrior());
         }
-
-        protocolClientDataEndGet(this->client);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -357,7 +353,7 @@ storageRemotePathCreate(
         pckWriteBoolP(commandParam, noParentCreate);
         pckWriteModeP(commandParam, mode);
 
-        protocolClientExecute(this->client, command, false);
+        protocolClientExecute(this->client, command);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -390,7 +386,7 @@ storageRemotePathRemove(THIS_VOID, const String *path, bool recurse, StorageInte
         pckWriteStrP(commandParam, path);
         pckWriteBoolP(commandParam, recurse);
 
-        result = pckReadBoolP(protocolClientExecute(this->client, command, true));
+        result = pckReadBoolP(protocolClientExecute(this->client, command));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -417,7 +413,7 @@ storageRemotePathSync(THIS_VOID, const String *path, StorageInterfacePathSyncPar
         ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_STORAGE_PATH_SYNC);
         pckWriteStrP(protocolCommandParamP(command), path);
 
-        protocolClientExecute(this->client, command, false);
+        protocolClientExecute(this->client, command);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -447,7 +443,7 @@ storageRemoteRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam p
         pckWriteStrP(commandParam, file);
         pckWriteBoolP(commandParam, param.errorOnMissing);
 
-        protocolClientExecute(this->client, command, false);
+        protocolClientExecute(this->client, command);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -501,7 +497,7 @@ storageRemoteNew(
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Execute command and get result
-            PackRead *result = protocolClientExecute(this->client, protocolCommandNewP(PROTOCOL_COMMAND_STORAGE_FEATURE), true);
+            PackRead *const result = protocolClientExecute(this->client, protocolCommandNewP(PROTOCOL_COMMAND_STORAGE_FEATURE));
 
             // Get path in parent context
             MEM_CONTEXT_PRIOR_BEGIN()
