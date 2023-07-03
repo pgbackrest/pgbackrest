@@ -375,6 +375,52 @@ storageRemoteListProtocol(PackRead *const param, ProtocolServer *const server)
 }
 
 /**********************************************************************************************************************************/
+static bool
+storageRemoteReadInternal(StorageRead *const fileRead, PackWrite *const packWrite)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_READ, fileRead);
+        FUNCTION_LOG_PARAM(PACK_WRITE, packWrite);
+    FUNCTION_LOG_END();
+
+    ASSERT(fileRead != NULL);
+    ASSERT(packWrite != NULL);
+
+    // Read block and send to client
+    Buffer *const buffer = bufNew(ioBufferSize());
+
+    ioRead(storageReadIo(fileRead), buffer);
+    pckWriteBoolP(packWrite, bufEmpty(buffer));
+
+    if (!bufEmpty(buffer))
+        pckWriteBinP(packWrite, buffer);
+
+    // On eof
+    bool result = true;
+
+    pckWriteBoolP(packWrite, ioReadEof(storageReadIo(fileRead)));
+
+    if (ioReadEof(storageReadIo(fileRead)))
+    {
+        // Close file (needed to get filter results)
+        ioReadClose(storageReadIo(fileRead));
+
+        // Write filter results
+        Pack *const filterData = ioFilterGroupResultAll(ioReadFilterGroup(storageReadIo(fileRead)));
+
+        pckWritePackP(packWrite, filterData);
+        pckFree(filterData);
+
+        // Let the server know to close the session
+        result = false;
+    }
+
+    // Free read buffer
+    bufFree(buffer);
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
 FN_EXTERN void *
 storageRemoteReadOpenProtocol(PackRead *const param, ProtocolServer *const server, const uint64_t sessionId)
 {
@@ -411,18 +457,17 @@ storageRemoteReadOpenProtocol(PackRead *const param, ProtocolServer *const serve
         PackWrite *const packWrite = protocolPackNew();
 
         pckWriteBoolP(packWrite, exists, .defaultWrite = true);
-        protocolServerDataPut(server, packWrite);
 
         // If the file exists
         if (exists)
         {
             // If there is more to read then store IoRead in the session
-            if (storageRemoteReadProtocol(NULL, server, fileRead))
+            if (storageRemoteReadInternal(fileRead, packWrite))
                 result = storageReadMove(fileRead, memContextPrior());
         }
-        // Else notify client that file does not exist
-        else
-            protocolServerDataEndPut(server);
+
+        protocolServerDataPut(server, packWrite);
+        protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -443,40 +488,12 @@ storageRemoteReadProtocol(PackRead *const param, ProtocolServer *const server, v
     ASSERT(fileRead != NULL);
     ASSERT(storageRemoteProtocolLocal.driver != NULL);
 
-    bool result = true;
+    PackWrite *const packWrite = pckWriteNewP(.size = ioBufferSize() + PROTOCOL_PACK_DEFAULT_SIZE);
+    const bool result = storageRemoteReadInternal(fileRead, packWrite);
 
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        Buffer *const buffer = bufNew(ioBufferSize());
-        PackWrite *const write = pckWriteNewP(.size = ioBufferSize() + PROTOCOL_PACK_DEFAULT_SIZE);
-
-        // Read block and send to client
-        ioRead(storageReadIo(fileRead), buffer);
-
-        pckWriteBoolP(write, bufEmpty(buffer));
-
-        if (!bufEmpty(buffer))
-            pckWriteBinP(write, buffer);
-
-        // On eof
-        pckWriteBoolP(write, ioReadEof(storageReadIo(fileRead)));
-
-        if (ioReadEof(storageReadIo(fileRead)))
-        {
-            // Close file (needed to get filter results)
-            ioReadClose(storageReadIo(fileRead));
-
-            // Write filter results
-            pckWritePackP(write, ioFilterGroupResultAll(ioReadFilterGroup(storageReadIo(fileRead))));
-
-            // Let the server know to close the session
-            result = false;
-        }
-
-        protocolServerDataPut(server, write);
-        protocolServerDataEndPut(server);
-    }
-    MEM_CONTEXT_TEMP_END();
+    protocolServerDataPut(server, packWrite);
+    protocolServerDataEndPut(server);
+    pckWriteFree(packWrite);
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }
