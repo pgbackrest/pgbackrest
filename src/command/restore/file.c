@@ -230,29 +230,24 @@ restoreFile(
                             ASSERT(varUInt64(file->limit) != 0);
                             repoFileLimit = varUInt64(file->limit);
 
-                            // Multiple files cannot be read when the file to read is a block incremental. This is because the
-                            // remote protocol does not support multiple open files at once.
-                            if (file->blockIncrMapSize == 0)
+                            // Determine how many files can be copied with one read
+                            for (unsigned int fileNextIdx = fileIdx + 1; fileNextIdx < lstSize(fileList); fileNextIdx++)
                             {
-                                // Determine how many files can be copied with one read
-                                for (unsigned int fileNextIdx = fileIdx + 1; fileNextIdx < lstSize(fileList); fileNextIdx++)
+                                // Only files that are being copied are considered
+                                if (((const RestoreFileResult *)lstGet(result, fileNextIdx))->result == restoreResultCopy)
                                 {
-                                    // Only files that are being copied are considered
-                                    if (((const RestoreFileResult *)lstGet(result, fileNextIdx))->result == restoreResultCopy)
-                                    {
-                                        const RestoreFile *const fileNext = lstGet(fileList, fileNextIdx);
-                                        ASSERT(fileNext->limit != NULL && varUInt64(fileNext->limit) != 0);
+                                    const RestoreFile *const fileNext = lstGet(fileList, fileNextIdx);
+                                    ASSERT(fileNext->limit != NULL && varUInt64(fileNext->limit) != 0);
 
-                                        // Break if the offset is not the first file's offset + limit of all additional files so far
-                                        if (fileNext->offset != file->offset + repoFileLimit)
-                                            break;
-
-                                        repoFileLimit += varUInt64(fileNext->limit);
-                                    }
-                                    // Else if the file was not copied then there is a gap so break
-                                    else
+                                    // Break if the offset is not the first file's offset + limit of all additional files so far
+                                    if (fileNext->offset != file->offset + repoFileLimit)
                                         break;
+
+                                    repoFileLimit += varUInt64(fileNext->limit);
                                 }
+                                // Else if the file was not copied then there is a gap so break
+                                else
+                                    break;
                             }
                         }
 
@@ -296,9 +291,6 @@ restoreFile(
                         // blocks need to be fetched from the repository. If we got here there must be at least one block to fetch.
                         const BlockMap *const blockMap = blockMapNewRead(
                             storageReadIo(repoFileRead), file->blockIncrSize, file->blockIncrChecksumSize);
-
-                        // The repo file needs to be closed so that block lists can be read from the remote protocol
-                        ioReadClose(storageReadIo(repoFileRead));
 
                         // Open file to write
                         ioWriteOpen(storageWriteIo(pgFileWrite));
