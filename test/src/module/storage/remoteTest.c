@@ -307,16 +307,30 @@ testRun(void)
         ioBufferSizeSet(bufferOld);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("read partial file then free");
+        TEST_TITLE("read partial file then free (interleaved with normal read)");
 
         buffer = bufNew(6);
+        Buffer *buffer2 = bufNew(7);
 
+        StorageRead *fileRead2 = NULL;
         TEST_ASSIGN(fileRead, storageNewReadP(storageRepo, STRDEF("test.txt")), "get file");
+        TEST_ASSIGN(fileRead2, storageNewReadP(storageRepo, STRDEF("test.txt"), .limit = VARUINT64(11)), "get file");
+
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(fileRead)), true, "open read");
+        TEST_RESULT_BOOL(ioReadOpen(storageReadIo(fileRead2)), true, "open read file 2");
+
         TEST_RESULT_UINT(ioRead(storageReadIo(fileRead), buffer), 6, "partial read");
         TEST_RESULT_STR_Z(strNewBuf(buffer), "BABABA", "check contents");
         TEST_RESULT_BOOL(ioReadEof(storageReadIo(fileRead)), false, "no eof");
+
+        TEST_RESULT_UINT(ioRead(storageReadIo(fileRead2), buffer2), 7, "partial read file 2");
+        TEST_RESULT_STR_Z(strNewBuf(buffer2), "BABABAB", "check contents");
+        bufUsedZero(buffer2);
+        TEST_RESULT_UINT(ioRead(storageReadIo(fileRead2), buffer2), 4, "partial read file 2");
+        TEST_RESULT_STR_Z(strNewBuf(buffer2), "ABAB", "check contents");
+
         TEST_RESULT_VOID(storageReadFree(fileRead), "free");
+        TEST_RESULT_VOID(ioReadClose(storageReadIo(fileRead2)), "close");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read file with compression");
@@ -434,17 +448,24 @@ testRun(void)
         ((StorageRemote *)storageDriver(storageRepoWrite))->compressLevel = 3;
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("write file, free before close, make sure the .tmp file remains");
+        TEST_TITLE("write file, free before close, make sure the .tmp file remains (interleave with normal write)");
 
+        StorageWrite *write3 = NULL;
         TEST_ASSIGN(write, storageNewWriteP(storageRepoWrite, STRDEF("test2.txt")), "new write file");
+        TEST_ASSIGN(write3, storageNewWriteP(storageRepoWrite, STRDEF("test3.txt")), "new write file");
 
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(write)), "open file");
+        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(write3)), "open file 3");
+
         TEST_RESULT_VOID(ioWrite(storageWriteIo(write), contentBuf), "write bytes");
+        TEST_RESULT_VOID(ioWrite(storageWriteIo(write3), contentBuf), "write bytes to file 3");
 
         TEST_RESULT_VOID(storageWriteFree(write), "free file");
+        TEST_RESULT_VOID(ioWriteClose(storageWriteIo(write3)), "close file 3");
 
         TEST_RESULT_UINT(
             storageInfoP(storageTest, STRDEF("repo128/test2.txt.pgbackrest.tmp")).size, 16384, "file exists and is partial");
+        TEST_RESULT_BOOL(bufEq(storageGetP(storageNewReadP(storageRepo, STRDEF("test3.txt"))), contentBuf), true, "check file 3");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("write the file again with protocol compression");

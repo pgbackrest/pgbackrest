@@ -238,7 +238,7 @@ protocolServerProcess(
                                         break;
                                     }
 
-                                    // Process or close protocol session
+                                    // Process or close/cancel protocol session
                                     default:
                                     {
                                         ASSERT(command.type == protocolCommandTypeProcess || protocolCommandTypeClose);
@@ -287,6 +287,8 @@ protocolServerProcess(
                                                         ProtocolError, command.sessionId != 0, "no session id for command %s:%s",
                                                         strZ(strIdToStr(command.id)), strZ(strIdToStr(command.type)));
 
+                                                    // Free session when process returns false. This optimization allows an explicit
+                                                    // close to be skipped.
                                                     if (!handler->processSession(pckReadNew(command.param), this, sessionData))
                                                     {
                                                         objFree(sessionData);

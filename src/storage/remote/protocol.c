@@ -344,7 +344,7 @@ storageRemoteListProtocol(PackRead *const param, ProtocolServer *const server)
         const StorageInfoLevel level = (StorageInfoLevel)pckReadU32P(param);
         StorageRemoteInfoProtocolWriteData writeData = {0};
         StorageList *const list = storageInterfaceListP(storageRemoteProtocolLocal.driver, path, level);
-        PackWrite *const write = protocolPackNew();
+        PackWrite *const write = pckWriteNewP(.size = ioBufferSize());
 
         // Indicate whether or not the path was found
         pckWriteBoolP(write, list != NULL, .defaultWrite = true);

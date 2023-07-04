@@ -728,7 +728,6 @@ testRun(void)
                     protocolClientDataGet(client), ProtocolError,
                     "raised from test client: unable to find session id 999 for command c-complex:prc");
 
-
                 ProtocolCommand *commandProcess = NULL;
                 TEST_ASSIGN(commandProcess, protocolCommandNewP(TEST_PROTOCOL_COMMAND_COMPLEX, .sessionId = sessionId), "process");
                 TEST_RESULT_UINT(protocolClientCommandPut(client, commandProcess), 0, "process put");
@@ -792,8 +791,8 @@ testRun(void)
 
                 TEST_RESULT_UINT(
                     protocolClientCommandPut(client,
-                        protocolCommandNewP(
-                            TEST_PROTOCOL_COMMAND_COMPLEX_CLOSE, .type = protocolCommandTypeCancel, .sessionId = sessionId)),
+                                             protocolCommandNewP(
+                                                 TEST_PROTOCOL_COMMAND_COMPLEX_CLOSE, .type = protocolCommandTypeCancel, .sessionId = sessionId)),
                     0, "cancel put");
                 TEST_RESULT_PTR(protocolClientDataGet(client), NULL, "cancel result");
 

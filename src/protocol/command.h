@@ -46,7 +46,7 @@ typedef struct ProtocolCommandPub
     ProtocolCommandType type;                                       // Command type
 } ProtocolCommandPub;
 
-// Read file descriptor
+// Command type
 FN_INLINE_ALWAYS ProtocolCommandType
 protocolCommandType(const ProtocolCommand *const this)
 {
