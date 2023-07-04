@@ -241,7 +241,6 @@ dbOpen(Db *this)
         {
             this->sessionId = protocolClientCommandPut(
                 this->remoteClient, protocolCommandNewP(PROTOCOL_COMMAND_DB, .type = protocolCommandTypeOpen));
-
             protocolClientDataGet(this->remoteClient);
 
             // Set a callback to notify the remote when a connection is closed

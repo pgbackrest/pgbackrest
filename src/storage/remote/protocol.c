@@ -418,17 +418,15 @@ storageRemoteReadInternal(StorageRead *const fileRead, PackWrite *const packWrit
 }
 
 FN_EXTERN void *
-storageRemoteReadOpenProtocol(PackRead *const param, ProtocolServer *const server, const uint64_t sessionId)
+storageRemoteReadOpenProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PACK_READ, param);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
-        FUNCTION_LOG_PARAM(UINT64, sessionId);
     FUNCTION_LOG_END();
 
     ASSERT(param != NULL);
     ASSERT(server != NULL);
-    ASSERT(sessionId != 0);
     ASSERT(storageRemoteProtocolLocal.driver != NULL);
 
     StorageRead *result = NULL;
@@ -494,17 +492,15 @@ storageRemoteReadProtocol(PackRead *const param, ProtocolServer *const server, v
 
 /**********************************************************************************************************************************/
 FN_EXTERN void *
-storageRemoteWriteOpenProtocol(PackRead *const param, ProtocolServer *const server, const uint64_t sessionId)
+storageRemoteWriteOpenProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PACK_READ, param);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
-        FUNCTION_LOG_PARAM(UINT64, sessionId);
     FUNCTION_LOG_END();
 
     ASSERT(param != NULL);
     ASSERT(server != NULL);
-    ASSERT(sessionId != 0);
     ASSERT(storageRemoteProtocolLocal.driver != NULL);
 
     StorageWrite *result = NULL;

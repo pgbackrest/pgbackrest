@@ -18,10 +18,10 @@ FN_EXTERN void storageRemoteListProtocol(PackRead *param, ProtocolServer *server
 FN_EXTERN void storageRemotePathCreateProtocol(PackRead *param, ProtocolServer *server);
 FN_EXTERN void storageRemotePathRemoveProtocol(PackRead *param, ProtocolServer *server);
 FN_EXTERN void storageRemotePathSyncProtocol(PackRead *param, ProtocolServer *server);
-FN_EXTERN void *storageRemoteReadOpenProtocol(PackRead *param, ProtocolServer *server, uint64_t sessionId);
+FN_EXTERN void *storageRemoteReadOpenProtocol(PackRead *param, ProtocolServer *server);
 FN_EXTERN bool storageRemoteReadProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
 FN_EXTERN void storageRemoteRemoveProtocol(PackRead *param, ProtocolServer *server);
-FN_EXTERN void *storageRemoteWriteOpenProtocol(PackRead *param, ProtocolServer *server, uint64_t sessionId);
+FN_EXTERN void *storageRemoteWriteOpenProtocol(PackRead *param, ProtocolServer *server);
 FN_EXTERN bool storageRemoteWriteProtocol(PackRead *param, ProtocolServer *server, void *fileWrite);
 FN_EXTERN void storageRemoteWriteCloseProtocol(PackRead *param, ProtocolServer *server, void *fileWrite);
 

@@ -473,18 +473,15 @@ unit:
         containerReq: true
         binReq: true
 
-        depend:
+        coverage:
           - protocol/client
           - protocol/command
-          - protocol/server
-
-        coverage:
           - protocol/helper
           - protocol/parallel
           - protocol/parallelJob
+          - protocol/server
 
         include:
-          - protocol/client
           - common/exec
 
   # ********************************************************************************************************************************

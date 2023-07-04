@@ -11,7 +11,7 @@ Db Protocol Handler
 Functions
 ***********************************************************************************************************************************/
 // Process db protocol requests
-FN_EXTERN void *dbOpenProtocol(PackRead *param, ProtocolServer *server, uint64_t sessionId);
+FN_EXTERN void *dbOpenProtocol(PackRead *param, ProtocolServer *server);
 FN_EXTERN bool dbQueryProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
 
 /***********************************************************************************************************************************

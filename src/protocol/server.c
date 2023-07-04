@@ -227,7 +227,7 @@ protocolServerProcess(
                                         // Call open handler
                                         MEM_CONTEXT_OBJ_BEGIN(this->sessionList)
                                         {
-                                            session.data = handler->open(pckReadNew(command.param), this, session.id);
+                                            session.data = handler->open(pckReadNew(command.param), this);
                                         }
                                         MEM_CONTEXT_OBJ_END();
 
@@ -283,8 +283,9 @@ protocolServerProcess(
                                                 if (handler->processSession != NULL)
                                                 {
                                                     ASSERT(handler->process == NULL);
-                                                    CHECK_FMT(ProtocolError, command.sessionId != 0, "command is %s:%s", strZ(strIdToStr(command.id)),
-                                                              strZ(strIdToStr(command.type)));
+                                                    CHECK_FMT(
+                                                        ProtocolError, command.sessionId != 0, "no session id for command %s:%s",
+                                                        strZ(strIdToStr(command.id)), strZ(strIdToStr(command.type)));
 
                                                     if (!handler->processSession(pckReadNew(command.param), this, sessionData))
                                                     {

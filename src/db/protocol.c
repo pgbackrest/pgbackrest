@@ -16,17 +16,15 @@ Db Protocol Handler
 
 /**********************************************************************************************************************************/
 FN_EXTERN void *
-dbOpenProtocol(PackRead *const param, ProtocolServer *const server, const uint64_t sessionId)
+dbOpenProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PACK_READ, param);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
-        FUNCTION_LOG_PARAM(UINT64, sessionId);
     FUNCTION_LOG_END();
 
     ASSERT(param == NULL);
     ASSERT(server != NULL);
-    ASSERT(sessionId != 0);
 
     PgClient *const result = pgClientNew(
         cfgOptionStrNull(cfgOptPgSocketPath), cfgOptionUInt(cfgOptPgPort), cfgOptionStr(cfgOptPgDatabase),
