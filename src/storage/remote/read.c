@@ -88,6 +88,8 @@ storageReadRemoteInternal(StorageReadRemote *const this, PackRead *const packRea
     ASSERT(this != NULL);
     ASSERT(packRead != NULL);
 
+    FUNCTION_AUDIT_HELPER();
+
     // If not done then read the next block
     if (!pckReadBoolP(packRead))
     {
@@ -102,10 +104,7 @@ storageReadRemoteInternal(StorageReadRemote *const this, PackRead *const packRea
     // If eof then get results
     if (pckReadBoolP(packRead))
     {
-        Pack *const filterResult = pckReadPackP(packRead);
-
-        ioFilterGroupResultAllSet(ioReadFilterGroup(storageReadIo(this->read)), filterResult);
-        pckFree(filterResult);
+        ioFilterGroupResultAllSet(ioReadFilterGroup(storageReadIo(this->read)), pckReadPackP(packRead));
 
         this->eofFound = true;
 
@@ -144,15 +143,16 @@ storageReadRemote(THIS_VOID, Buffer *buffer, bool block)
             // If no bytes remaining then read a new block
             if (this->remaining == 0)
             {
-                ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_STORAGE_READ, .sessionId = this->sessionId);
+                MEM_CONTEXT_TEMP_BEGIN()
+                {
+                    protocolClientCommandPut(
+                        this->client, protocolCommandNewP(PROTOCOL_COMMAND_STORAGE_READ, .sessionId = this->sessionId));
 
-                protocolClientCommandPut(this->client, command);
-                protocolCommandFree(command);
+                    PackRead *const packRead = protocolClientDataGet(this->client);
 
-                PackRead *const packRead = protocolClientDataGet(this->client);
-
-                storageReadRemoteInternal(this, packRead);
-                pckReadFree(packRead);
+                    storageReadRemoteInternal(this, packRead);
+                }
+                MEM_CONTEXT_TEMP_END();
             }
 
             // Read if not eof

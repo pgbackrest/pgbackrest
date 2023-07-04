@@ -382,6 +382,8 @@ storageRemoteReadInternal(StorageRead *const fileRead, PackWrite *const packWrit
     ASSERT(fileRead != NULL);
     ASSERT(packWrite != NULL);
 
+    FUNCTION_AUDIT_HELPER();
+
     // Read block and send to client
     Buffer *const buffer = bufNew(ioBufferSize());
 
@@ -402,17 +404,11 @@ storageRemoteReadInternal(StorageRead *const fileRead, PackWrite *const packWrit
         ioReadClose(storageReadIo(fileRead));
 
         // Write filter results
-        Pack *const filterData = ioFilterGroupResultAll(ioReadFilterGroup(storageReadIo(fileRead)));
-
-        pckWritePackP(packWrite, filterData);
-        pckFree(filterData);
+        pckWritePackP(packWrite, ioFilterGroupResultAll(ioReadFilterGroup(storageReadIo(fileRead))));
 
         // Let the server know to close the session
         result = false;
     }
-
-    // Free read buffer
-    bufFree(buffer);
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }
@@ -481,11 +477,16 @@ storageRemoteReadProtocol(PackRead *const param, ProtocolServer *const server, v
     ASSERT(fileRead != NULL);
     ASSERT(storageRemoteProtocolLocal.driver != NULL);
 
-    PackWrite *const packWrite = pckWriteNewP(.size = ioBufferSize() + PROTOCOL_PACK_DEFAULT_SIZE);
-    const bool result = storageRemoteReadInternal(fileRead, packWrite);
+    bool result;
 
-    protocolServerDataPut(server, packWrite);
-    pckWriteFree(packWrite);
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackWrite *const packWrite = pckWriteNewP(.size = ioBufferSize() + PROTOCOL_PACK_DEFAULT_SIZE);
+        result = storageRemoteReadInternal(fileRead, packWrite);
+
+        protocolServerDataPut(server, packWrite);
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }
@@ -556,12 +557,14 @@ storageRemoteWriteProtocol(PackRead *const param, ProtocolServer *const server, 
     ASSERT(fileWrite != NULL);
     ASSERT(storageRemoteProtocolLocal.driver != NULL);
 
-    Buffer *const buffer = pckReadBinP(param);
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        Buffer *const buffer = pckReadBinP(param);
 
-    ioWrite(storageWriteIo(fileWrite), buffer);
-    bufFree(buffer);
-
-    protocolServerDataPut(server, NULL);
+        ioWrite(storageWriteIo(fileWrite), buffer);
+        protocolServerDataPut(server, NULL);
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(BOOL, true);
 }

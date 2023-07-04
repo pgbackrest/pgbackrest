@@ -26,12 +26,20 @@ dbOpenProtocol(PackRead *const param, ProtocolServer *const server)
     ASSERT(param == NULL);
     ASSERT(server != NULL);
 
-    PgClient *const result = pgClientNew(
-        cfgOptionStrNull(cfgOptPgSocketPath), cfgOptionUInt(cfgOptPgPort), cfgOptionStr(cfgOptPgDatabase),
-        cfgOptionStrNull(cfgOptPgUser), cfgOptionUInt64(cfgOptDbTimeout));
-    pgClientOpen(result);
+    PgClient *result;
 
-    protocolServerDataPut(server, NULL);
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        result = pgClientNew(
+            cfgOptionStrNull(cfgOptPgSocketPath), cfgOptionUInt(cfgOptPgPort), cfgOptionStr(cfgOptPgDatabase),
+            cfgOptionStrNull(cfgOptPgUser), cfgOptionUInt64(cfgOptDbTimeout));
+        pgClientOpen(result);
+
+        protocolServerDataPut(server, NULL);
+
+        pgClientMove(result, memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(PG_CLIENT, result);
 }
