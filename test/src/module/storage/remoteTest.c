@@ -448,7 +448,7 @@ testRun(void)
         ((StorageRemote *)storageDriver(storageRepoWrite))->compressLevel = 3;
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("write file, free before close, make sure the .tmp file remains (interleave with normal write)");
+        TEST_TITLE("write file, free before close, make sure the .tmp file remains (interleaved with normal write)");
 
         StorageWrite *write3 = NULL;
         TEST_ASSIGN(write, storageNewWriteP(storageRepoWrite, STRDEF("test2.txt")), "new write file");

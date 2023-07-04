@@ -241,7 +241,8 @@ protocolServerProcess(
                                     // Process or close/cancel protocol session
                                     default:
                                     {
-                                        ASSERT(command.type == protocolCommandTypeProcess || protocolCommandTypeClose);
+                                        ASSERT(
+                                            command.type == protocolCommandTypeProcess || command.type == protocolCommandTypeClose);
 
                                         // Find session data
                                         void *sessionData = NULL;
