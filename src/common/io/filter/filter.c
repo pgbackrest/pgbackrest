@@ -39,19 +39,20 @@ ioFilterNew(const StringId type, void *const driver, Pack *const paramList, cons
     // If the filter does not produce output then it should produce a result
     ASSERT(interface.in == NULL || (interface.result != NULL && interface.done == NULL && interface.inputSame == NULL));
 
-    IoFilter *this = memNew(sizeof(IoFilter));
-
-    *this = (IoFilter)
+    OBJ_NEW_BEGIN(IoFilter, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        .pub =
+        *this = (IoFilter)
         {
-            .memContext = memContextCurrent(),
-            .type = type,
-            .driver = driver,
-            .paramList = paramList,
-            .interface = interface,
-        },
-    };
+            .pub =
+            {
+                .type = type,
+                .driver = objMoveToInterface(driver, this, memContextPrior()),
+                .paramList = pckMove(paramList, objMemContext(this)),
+                .interface = interface,
+            },
+        };
+    }
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_FILTER, this);
 }
@@ -107,8 +108,8 @@ ioFilterProcessInOut(IoFilter *this, const Buffer *input, Buffer *output)
 }
 
 /***********************************************************************************************************************************
-If done is not defined by the filter then check inputSame.  If inputSame is true then the filter is not done.  Even if the filter
-is done the interface will not report done until the interface is flushing.
+If done is not defined by the filter then check inputSame. If inputSame is true then the filter is not done. Even if the filter is
+done the interface will not report done until the interface is flushing.
 ***********************************************************************************************************************************/
 FN_EXTERN bool
 ioFilterDone(const IoFilter *this)

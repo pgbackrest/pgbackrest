@@ -5,7 +5,7 @@
 
     <intro>
         <text>
-            <p><backrest/> release numbers consist of two parts, major and minor.  A major release <i>may</i> break compatibility with the prior major release, but <proper>v2</proper> releases are fully compatible with <proper>v1</proper> repositories and will accept all <proper>v1</proper> options.  Minor releases can include bug fixes and features but do not change the repository format and strive to avoid changing options and naming.</p>
+            <p><backrest/> release numbers consist of two parts, major and minor. A major release <i>may</i> break compatibility with the prior major release, but <proper>v2</proper> releases are fully compatible with <proper>v1</proper> repositories and will accept all <proper>v1</proper> options. Minor releases can include bug fixes and features but do not change the repository format and strive to avoid changing options and naming.</p>
 
             <p>Documentation for the <proper>v1</proper> release can be found <link url="{[backrest-url-base]}/1">here</link>.</p>
 
@@ -14,8 +14,205 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.45dev" title="UNDER DEVELOPMENT">
+        <release date="XXXX-XX-XX" version="2.47dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <github-issue id="2062"/>
+                        <github-pull-request id="2070"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="t.anastacio"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Skip <file>recovery.signal</file> for <postgres/> &gt;= 12 when recovery <br-option>type=none</br-option>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-issue id="1873"/>
+                        <github-pull-request id="2104"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="andrey.sokolov"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix unique label generation for diff/incr backup.</p>
+                    </release-item>
+                </release-bug-list>
+
+                <release-improvement-list>
+                    <release-item>
+                        <commit subject="Refactor allow list processing in config/parse module."/>
+                        <commit subject="Centralize error handling for unsupported features.">
+                            <github-pull-request id="2075"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Centralize error handling for unsupported features.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-core-list>
+
+            <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="dr-kd"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Clarify preference to install from packages in the user guide.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-doc-list>
+        </release>
+
+        <release date="2023-05-22" version="2.46" title="Block Incremental Backup and SFTP Storage">
+            <release-core-list>
+                <release-feature-list>
+                    <release-item>
+                        <commit subject="Removing chunking and block numbers from incremental block list.">
+                            <github-pull-request id="2029"/>
+                        </commit>
+                        <commit subject="Finalize block incremental feature.">
+                            <github-pull-request id="2053"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="john.morris"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Block incremental backup.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1959"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="reid.thompson"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p><proper>SFTP</proper> support for repository storage.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="2051"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p><postgres/> 16 support.</p>
+                    </release-item>
+                </release-feature-list>
+
+                <release-improvement-list>
+                    <release-item>
+                        <github-pull-request id="2045"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="david.christensen"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="david.christensen"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow page header checks to be skipped.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-issue id="2036"/>
+                        <github-pull-request id="2038"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="marcelo.henrique.neppel"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                            <release-item-reviewer id="marcelo.henrique.neppel"/>
+                        </release-item-contributor-list>
+
+                        <p>Avoid <code>chown()</code> on recovery files during restore.</p>
+                    </release-item>
+
+                    <release-item>
+                        <commit subject="Move error modules to common/error directory."/>
+                        <commit subject="Improve retry error messages."/>
+
+                        <p>Add error retry detail for HTTP retries.</p>
+                    </release-item>
+                </release-improvement-list>
+
+                <release-development-list>
+                    <release-item>
+                        <commit subject="Add reference filter and output to manifest command."/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve internal <cmd>manifest</cmd> command.</p>
+                    </release-item>
+                </release-development-list>
+            </release-core-list>
+
+            <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <github-issue id="2062"/>
+                        <github-pull-request id="2069"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Add warning about using recovery <br-option>type=none</br-option>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add note about running <cmd>stanza-create</cmd> on already-created repositories.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-doc-list>
+        </release>
+
+        <release date="2023-03-20" version="2.45" title="Block Incremental Backup (BETA)">
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <commit subject="Set online flag in manifest in command/restore unit tests."/>
+                        <commit subject="Skip writing recovery.signal by default for restores of offline backups.">
+                            <github-issue id="2018"/>
+                            <github-pull-request id="2019"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="marcel.borger"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Skip writing <file>recovery.signal</file> by default for restores of offline backups.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-feature-list>
                     <release-item>
                         <commit subject="Add block incremental to real/all test output."/>
@@ -25,12 +222,30 @@
                         <commit subject="Rename DeltaMap to BlockHash."/>
                         <commit subject="Add repo-block-age-map and repo-block-size-map options."/>
                         <commit subject="Rename block incremental manifest keys."/>
+                        <commit subject="Add optional raw format for compression types."/>
+                        <commit subject="Use raw compression/encryption to bundling and block incremental backup."/>
+                        <commit subject="Block-level incremental backup super blocks.">
+                            <github-pull-request id="2011"/>
+                        </commit>
+                        <commit subject="Use xxHash instead of SHA-1 for block incremental checksums."/>
+                        <commit subject="Exclude backup set size from info for block incremental backups."/>
+                        <commit subject="Rename BlockHash to BlockChecksum."/>
+                        <commit subject="Update default block size and super block values based on testing."/>
+                        <commit subject="Ensure no continuations when block size equals super block size."/>
+                        <commit subject="Fix typo in blockIncrProcess()."/>
+                        <commit subject="Block incremental map fixes and improvements.">
+                            <github-pull-request id="2026"/>
+                        </commit>
+                        <commit subject="Add beta feature and documentation for block incremental backup."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="john.morris"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                            <release-item-reviewer id="stefan.fercot"/>
                         </release-item-contributor-list>
 
-                        <p>Block-level incremental backup.</p>
+                        <p>Block incremental backup (BETA).</p>
                     </release-item>
                 </release-feature-list>
 
@@ -46,6 +261,22 @@
                         <p>Keep only one all-default group index.</p>
                     </release-item>
                 </release-improvement-list>
+
+                <release-development-list>
+                    <release-item>
+                        <commit subject="Allow control version and WAL magic to be overridden in test harness."/>
+                        <commit subject="Add pg-version-force option for fork integration.">
+                            <github-pull-request id="2012"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="stefan.fercot"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <br-option>pg-version-force</br-option> option for fork integration.</p>
+                    </release-item>
+                </release-development-list>
             </release-core-list>
 
             <release-doc-list>
@@ -4254,7 +4485,7 @@
 
                         <p>Fix resume when the resumable backup was created by <proper>Perl</proper>.</p>
 
-                        <p>In this case the resumable backup should be ignored, but the <proper>C</proper> code was not able to load the partial manifest written by <proper>Perl</proper> since the format differs slightly.  Add validations to catch this case and continue gracefully.</p>
+                        <p>In this case the resumable backup should be ignored, but the <proper>C</proper> code was not able to load the partial manifest written by <proper>Perl</proper> since the format differs slightly. Add validations to catch this case and continue gracefully.</p>
                     </release-item>
                 </release-bug-list>
 
@@ -4317,7 +4548,7 @@
 
                         <p>Fix missing files corrupting the manifest.</p>
 
-                        <p>If a file was removed by <postgres/> during the backup (or was missing from the standby) then the next file might not be copied and updated in the manifest.  If this happened then the backup would error when restored.</p>
+                        <p>If a file was removed by <postgres/> during the backup (or was missing from the standby) then the next file might not be copied and updated in the manifest. If this happened then the backup would error when restored.</p>
                     </release-item>
                 </release-bug-list>
 
@@ -4355,7 +4586,7 @@
 
                         <p>Fix error in timeline conversion.</p>
 
-                        <p>The timeline is required to verify WAL segments in the archive after a backup.  The conversion was performed base <id>10</id> instead of <id>16</id>, which led to errors when the timeline was &amp;ge; <id>0xA</id>.</p>
+                        <p>The timeline is required to verify WAL segments in the archive after a backup. The conversion was performed base <id>10</id> instead of <id>16</id>, which led to errors when the timeline was &amp;ge; <id>0xA</id>.</p>
                     </release-item>
                 </release-bug-list>
             </release-core-list>
@@ -4394,7 +4625,7 @@
 
                         <p>Add <br-option>pg-user</br-option> option.</p>
 
-                        <p>Specifies the database user name when connecting to <postgres/>.  If not specified <backrest/> will connect with the local OS user or <id>PGUSER</id>, which was the previous behavior.</p>
+                        <p>Specifies the database user name when connecting to <postgres/>. If not specified <backrest/> will connect with the local OS user or <id>PGUSER</id>, which was the previous behavior.</p>
                     </release-item>
 
                     <release-item>
@@ -4451,7 +4682,7 @@
 
                         <p>Fix archive-push/archive-get when <path>PGDATA</path> is symlinked.</p>
 
-                        <p>These commands tried to use <code>cwd()</code> as <path>PGDATA</path> but this would disagree with the path configured in pgBackRest if <path>PGDATA</path> was symlinked.  If <code>cwd()</code> does not match the <backrest/> path then <code>chdir()</code> to the path and make sure the next <code>cwd()</code> matches the result from the first call.</p>
+                        <p>These commands tried to use <code>cwd()</code> as <path>PGDATA</path> but this would disagree with the path configured in pgBackRest if <path>PGDATA</path> was symlinked. If <code>cwd()</code> does not match the <backrest/> path then <code>chdir()</code> to the path and make sure the next <code>cwd()</code> matches the result from the first call.</p>
                     </release-item>
 
                     <release-item>
@@ -4494,7 +4725,7 @@
 
                         <p>Fix remote timeout in delta restore.</p>
 
-                        <p>When performing a delta restore on a largely unchanged cluster the remote could timeout if no files were fetched from the repository within <br-option>protocol-timeout</br-option>.  Add keep-alives to prevent remote timeout.</p>
+                        <p>When performing a delta restore on a largely unchanged cluster the remote could timeout if no files were fetched from the repository within <br-option>protocol-timeout</br-option>. Add keep-alives to prevent remote timeout.</p>
                     </release-item>
 
                     <release-item>
@@ -4890,7 +5121,7 @@
                     <release-item>
                         <p>Rename <br-option>repo-s3-verify-ssl</br-option> option to <br-option>repo-s3-verify-tls</br-option>.</p>
 
-                        <p>The new name is preferred because pgBackRest does not support any SSL protocol versions (they are all considered to be insecure).  The old name will continue to be accepted.</p>
+                        <p>The new name is preferred because pgBackRest does not support any SSL protocol versions (they are all considered to be insecure). The old name will continue to be accepted.</p>
                     </release-item>
                 </release-improvement-list>
 
@@ -4971,7 +5202,7 @@
 
                 <release-development-list>
                     <release-item>
-                        <p>Filter improvements.  Only process next filter in <code>IoFilterGroup</code> when input buffer is full or flushing.  Improve filter's notion of <quote>done</quote> to optimize filter processing.</p>
+                        <p>Filter improvements. Only process next filter in <code>IoFilterGroup</code> when input buffer is full or flushing. Improve filter's notion of <quote>done</quote> to optimize filter processing.</p>
                     </release-item>
 
                     <release-item>
@@ -5253,7 +5484,7 @@
         <release date="2019-04-11" version="2.12" title="C Implementation of Archive Push">
             <release-core-list>
                 <text>
-                    <p><b>IMPORTANT NOTE</b>: The new <proper>TLS</proper>/<proper>SSL</proper> implementation forbids dots in <proper>S3</proper> bucket names per RFC-2818.  This security fix is required for compliant hostname verification.</p>
+                    <p><b>IMPORTANT NOTE</b>: The new <proper>TLS</proper>/<proper>SSL</proper> implementation forbids dots in <proper>S3</proper> bucket names per RFC-2818. This security fix is required for compliant hostname verification.</p>
                 </text>
 
                 <release-bug-list>
@@ -5312,7 +5543,7 @@
                     </release-item>
 
                     <release-item>
-                        <p><code>CryptoHash</code> improvements and fixes. Fix incorrect buffer size used in <code>cryptoHashOne()</code>.  Add missing <code>const</code> to <code>cryptoHashOne()</code> and <code>cryptoHashOneStr()</code>.  Add hash size constants.  Extern hash type constant.</p>
+                        <p><code>CryptoHash</code> improvements and fixes. Fix incorrect buffer size used in <code>cryptoHashOne()</code>. Add missing <code>const</code> to <code>cryptoHashOne()</code> and <code>cryptoHashOneStr()</code>. Add hash size constants. Extern hash type constant.</p>
                     </release-item>
 
                     <release-item>
@@ -5348,7 +5579,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Logging improvements.  Allow three-digit process IDs in logging.  Allow process id in C logging.</p>
+                        <p>Logging improvements. Allow three-digit process IDs in logging. Allow process id in C logging.</p>
                     </release-item>
 
                     <release-item>
@@ -5570,7 +5801,7 @@
                     </release-item>
 
                     <release-item>
-                        <p><code>MemContext</code> improvements.  Improve performance of context and memory allocations. Use <code>contextTop</code>/<code>contextCurrent</code> instead of <code>memContextTop()</code>/<code>memContextCurrent()</code>.  Don't make a copy of the context name.</p>
+                        <p><code>MemContext</code> improvements. Improve performance of context and memory allocations. Use <code>contextTop</code>/<code>contextCurrent</code> instead of <code>memContextTop()</code>/<code>memContextCurrent()</code>. Don't make a copy of the context name.</p>
                     </release-item>
 
                     <release-item>
@@ -5702,7 +5933,7 @@
 
                 <release-development-list>
                     <release-item>
-                        <p>JSON improvements.  Optimize parser implementation.  Make the renderer more null tolerant.</p>
+                        <p>JSON improvements. Optimize parser implementation. Make the renderer more null tolerant.</p>
                     </release-item>
 
                     <release-item>
@@ -5796,7 +6027,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Function log macro improvements.  Rename FUNCTION_DEBUG_* and consolidate ASSERT_* macros for consistency. Improve <code>CONST</code> and <code>P</code>/<code>PP</code> type macro handling. Move <code>MACRO_TO_STR()</code> to <file>common/debug.h</file>. Remove unused type parameter from <code>FUNCTION_TEST_RETURN()</code>.</p>
+                        <p>Function log macro improvements. Rename FUNCTION_DEBUG_* and consolidate ASSERT_* macros for consistency. Improve <code>CONST</code> and <code>P</code>/<code>PP</code> type macro handling. Move <code>MACRO_TO_STR()</code> to <file>common/debug.h</file>. Remove unused type parameter from <code>FUNCTION_TEST_RETURN()</code>.</p>
                     </release-item>
 
                     <release-item>
@@ -5812,7 +6043,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>JSON improvements.  Allow empty arrays in JSON parser.  Fix null output in JSON renderer.  Fix escaping in JSON string parser/renderer.</p>
+                        <p>JSON improvements. Allow empty arrays in JSON parser. Fix null output in JSON renderer. Fix escaping in JSON string parser/renderer.</p>
                     </release-item>
 
                     <release-item>
@@ -6032,7 +6263,7 @@
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
-                        <p>Storage helper improvements.  Allow <code>NULL</code> stanza in storage helper.  Add path expression for repository backup.</p>
+                        <p>Storage helper improvements. Allow <code>NULL</code> stanza in storage helper. Add path expression for repository backup.</p>
                     </release-item>
 
                     <release-item>
@@ -6040,7 +6271,7 @@
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
-                        <p>Info module improvements.  Rename constants in <code>Info</code> module for consistency.  Remove <code>#define</code> statements in the <code>InfoPg</code> module to conform with newly-adopted coding standards.  Use cast to make for loop more readable in <code>InfoPg</code> module.  Add <code>infoArchiveIdHistoryMatch()</code> to the <code>InfoArchive</code> object.</p>
+                        <p>Info module improvements. Rename constants in <code>Info</code> module for consistency. Remove <code>#define</code> statements in the <code>InfoPg</code> module to conform with newly-adopted coding standards. Use cast to make for loop more readable in <code>InfoPg</code> module. Add <code>infoArchiveIdHistoryMatch()</code> to the <code>InfoArchive</code> object.</p>
                     </release-item>
 
                     <release-item>
@@ -6432,11 +6663,11 @@
             <release-test-list>
                 <release-development-list>
                     <release-item>
-                        <p>New test containers.  Add libxml2 library needed for S3 development.  Include new minor version upgrades for <postgres/>.  Remove <postgres/> 11 beta/rc repository.</p>
+                        <p>New test containers. Add libxml2 library needed for S3 development. Include new minor version upgrades for <postgres/>. Remove <postgres/> 11 beta/rc repository.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Test speed improvements.  Mount <id>tmpfs</id> in <file>Vagrantfile</file> instead <file>test.pl</file>.  Preserve contents of C unit test build directory between <file>test.pl</file> executions.  Improve efficiency of code generation.</p>
+                        <p>Test speed improvements. Mount <id>tmpfs</id> in <file>Vagrantfile</file> instead <file>test.pl</file>. Preserve contents of C unit test build directory between <file>test.pl</file> executions. Improve efficiency of code generation.</p>
                     </release-item>
 
                     <release-item>
@@ -6539,7 +6770,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Storage refactoring.  Posix file functions now differentiate between open and missing errors.  Don't use negations in objects below Storage.  Rename posix driver files/functions for consistency.  Full abstraction of storage driver interface.  Merge protocol storage helper into storage helper.  Add CIFS driver to storage helper for read-only repositories.</p>
+                        <p>Storage refactoring. Posix file functions now differentiate between open and missing errors. Don't use negations in objects below Storage. Rename posix driver files/functions for consistency. Full abstraction of storage driver interface. Merge protocol storage helper into storage helper. Add CIFS driver to storage helper for read-only repositories.</p>
                     </release-item>
 
                     <release-item>
@@ -6668,7 +6899,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Make Valgrind return an error even when a non-fatal issue is detected.  Update some minor issues discovered in the tests as a result.</p>
+                        <p>Make Valgrind return an error even when a non-fatal issue is detected. Update some minor issues discovered in the tests as a result.</p>
                     </release-item>
 
                     <release-item>
@@ -6770,7 +7001,7 @@
 
                         <p>Exclude temporary and unlogged relation (table/index) files from backup.</p>
 
-                        <p>Implemented using the same logic as the patches adding this feature to <postgres/>, <link url="https://git.postgresql.org/pg/commitdiff/8694cc96b52a967a49725f32be7aa77fd3b6ac25">8694cc96</link> and <link url="https://git.postgresql.org/pg/commitdiff/920a5e500a119b03356fb1fb64a677eb1aa5fc6f">920a5e50</link>.  Temporary relation exclusion is enabled in <postgres/> &amp;ge; <id>9.0</id>.  Unlogged relation exclusion is enabled in <postgres/> &amp;ge; <id>9.1</id>, where the feature was introduced.</p>
+                        <p>Implemented using the same logic as the patches adding this feature to <postgres/>, <link url="https://git.postgresql.org/pg/commitdiff/8694cc96b52a967a49725f32be7aa77fd3b6ac25">8694cc96</link> and <link url="https://git.postgresql.org/pg/commitdiff/920a5e500a119b03356fb1fb64a677eb1aa5fc6f">920a5e50</link>. Temporary relation exclusion is enabled in <postgres/> &amp;ge; <id>9.0</id>. Unlogged relation exclusion is enabled in <postgres/> &amp;ge; <id>9.1</id>, where the feature was introduced.</p>
                     </release-item>
 
                     <release-item>
@@ -6820,7 +7051,7 @@
 
                 <release-development-list>
                     <release-item>
-                        <p>Validate configuration options in a single pass.  By pre-calculating and storing the option dependencies in <file>parse.auto.c</file> validation can be completed in a single pass, which is both simpler and faster.</p>
+                        <p>Validate configuration options in a single pass. By pre-calculating and storing the option dependencies in <file>parse.auto.c</file> validation can be completed in a single pass, which is both simpler and faster.</p>
                     </release-item>
 
                     <release-item>
@@ -6833,7 +7064,7 @@
                             <release-item-reviewer id="stephen.frost"/>
                         </release-item-contributor-list>
 
-                        <p>Improve performance of string to int conversion.  Use <code>strtoll()</code> instead of <code>sprintf()</code> for conversion.  Also use available integer min/max constants rather than hard-coded values.</p>
+                        <p>Improve performance of string to int conversion. Use <code>strtoll()</code> instead of <code>sprintf()</code> for conversion. Also use available integer min/max constants rather than hard-coded values.</p>
                     </release-item>
 
                     <release-item>
@@ -6858,7 +7089,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Allow <code>Buffer</code> object <quote>used size</quote> to be different than <quote>allocated size</quote>.  Add functions to manage used size and remaining size and update automatically when possible.</p>
+                        <p>Allow <code>Buffer</code> object <quote>used size</quote> to be different than <quote>allocated size</quote>. Add functions to manage used size and remaining size and update automatically when possible.</p>
                     </release-item>
 
                     <release-item>
@@ -6866,11 +7097,11 @@
                             <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
-                        <p>Abstract IO layer out of the storage layer.  This allows the routines to be used for IO objects that do not have a storage representation.  Implement buffer read and write IO objects.  Implement filters and update <code>cryptoHash</code> to use the new interface.  Implement size and buffer filters.</p>
+                        <p>Abstract IO layer out of the storage layer. This allows the routines to be used for IO objects that do not have a storage representation. Implement buffer read and write IO objects. Implement filters and update <code>cryptoHash</code> to use the new interface. Implement size and buffer filters.</p>
                     </release-item>
 
                     <release-item>
-                        <p><code>storageFileRead()</code> accepts a buffer for output rather than creating one.  This is more efficient overall and allows the caller to specify how many bytes will be read on each call.  Reads are appended if the buffer already contains data but the buffer size will never increase.</p>
+                        <p><code>storageFileRead()</code> accepts a buffer for output rather than creating one. This is more efficient overall and allows the caller to specify how many bytes will be read on each call. Reads are appended if the buffer already contains data but the buffer size will never increase.</p>
                     </release-item>
 
                     <release-item>
@@ -6887,7 +7118,7 @@
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
-                        <p>Manifest improvements.  Require <postgres/> catalog version when instantiating a <code>Manifest</code> object (and not loading it from disk).  Prevent manifest from being built more than once.  Limit manifest build recursion (i.e. links followed) to sixteen levels to detect link loops.</p>
+                        <p>Manifest improvements. Require <postgres/> catalog version when instantiating a <code>Manifest</code> object (and not loading it from disk). Prevent manifest from being built more than once. Limit manifest build recursion (i.e. links followed) to sixteen levels to detect link loops.</p>
                     </release-item>
 
                     <release-item>
@@ -6963,17 +7194,17 @@
 
                         <p>Stop trying to arrange contributors in <file>release.xml</file> by last/first name.</p>
 
-                        <p>Contributor names have always been presented in the release notes exactly as given, but we tried to assign internal IDs based on last/first name which can be hard to determine and ultimately doesn't make sense.  Inspired by Christophe's <proper>PostgresOpen 2017</proper> talk, <quote>Human Beings Do Not Have a Primary Key</quote>.</p>
+                        <p>Contributor names have always been presented in the release notes exactly as given, but we tried to assign internal IDs based on last/first name which can be hard to determine and ultimately doesn't make sense. Inspired by Christophe's <proper>PostgresOpen 2017</proper> talk, <quote>Human Beings Do Not Have a Primary Key</quote>.</p>
                     </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
                     <release-item>
-                        <p>Allow containers to be defined in a document.  The defined containers are built before the document build begins which allows them to be reused.</p>
+                        <p>Allow containers to be defined in a document. The defined containers are built before the document build begins which allows them to be reused.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Move most host setup to containers defined in the documentation.  This includes <postgres/> installation which had previously been included in the documentation.  This way produces faster builds and there is no need for us to document <postgres/> installation.</p>
+                        <p>Move most host setup to containers defined in the documentation. This includes <postgres/> installation which had previously been included in the documentation. This way produces faster builds and there is no need for us to document <postgres/> installation.</p>
                     </release-item>
                 </release-development-list>
             </release-doc-list>
@@ -6989,15 +7220,15 @@
 
                 <release-development-list>
                     <release-item>
-                        <p>Use pre-built images from Docker Hub when the container definition has not changed.  Downloading an image is quite a bit faster than building a new image from scratch and saves minutes per test run in CI.</p>
+                        <p>Use pre-built images from Docker Hub when the container definition has not changed. Downloading an image is quite a bit faster than building a new image from scratch and saves minutes per test run in CI.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Refactor the <code>common/log</code> tests to not depend on <code>common/harnessLog</code>.  <code>common/harnessLog</code> was not ideally suited for general testing and made all the tests quite awkward.  Instead, move all code used to test the <code>common/log</code> module into the <code>logTest</code> module and repurpose <code>common/harnessLog</code> to do log expect testing for all other tests in a cleaner way. Add a few exceptions for config testing since the log levels are reset by default in <code>config/parse</code>.</p>
+                        <p>Refactor the <code>common/log</code> tests to not depend on <code>common/harnessLog</code>. <code>common/harnessLog</code> was not ideally suited for general testing and made all the tests quite awkward. Instead, move all code used to test the <code>common/log</code> module into the <code>logTest</code> module and repurpose <code>common/harnessLog</code> to do log expect testing for all other tests in a cleaner way. Add a few exceptions for config testing since the log levels are reset by default in <code>config/parse</code>.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Add <setting>--log-level-test</setting> option.  This allows setting the test log level independently from the general test harness setting, but current only works for the C tests.  It is useful for seeing log output from functions on the console while a test is running.</p>
+                        <p>Add <setting>--log-level-test</setting> option. This allows setting the test log level independently from the general test harness setting, but current only works for the C tests. It is useful for seeing log output from functions on the console while a test is running.</p>
                     </release-item>
 
                     <release-item>
@@ -7082,7 +7313,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Split log levels into separate header file.  Many modules that use <code>debug.h</code> do not need to do logging so this reduces dependencies for those modules.</p>
+                        <p>Split log levels into separate header file. Many modules that use <code>debug.h</code> do not need to do logging so this reduces dependencies for those modules.</p>
                     </release-item>
 
                     <release-item>
@@ -7137,11 +7368,11 @@
                     </release-item>
 
                     <release-item>
-                        <p>Build containers from scratch for more accurate testing.  Use a prebuilt s3 server container.</p>
+                        <p>Build containers from scratch for more accurate testing. Use a prebuilt s3 server container.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Document generator improvements.  Allow parameters to be passed when a container is created.  Allow <file>/etc/hosts</file> update to be skipped (for containers without bash).  Allow environment load to be skipped.  Allow bash wrapping to be skipped.  Allow forcing a command to run as a user without sudo.  Allow an entire execute list to be hidden.</p>
+                        <p>Document generator improvements. Allow parameters to be passed when a container is created. Allow <file>/etc/hosts</file> update to be skipped (for containers without bash). Allow environment load to be skipped. Allow bash wrapping to be skipped. Allow forcing a command to run as a user without sudo. Allow an entire execute list to be hidden.</p>
                     </release-item>
                 </release-development-list>
             </release-doc-list>
@@ -7215,11 +7446,11 @@
 
                 <release-development-list>
                     <release-item>
-                        <p>Add stack trace macros to all functions.  Low-level functions only include stack trace in test builds while higher-level functions ship with stack trace built-in.  Stack traces include all parameters passed to the function but production builds only create the parameter list when the log level is set high enough, i.e. <id>debug</id> or <id>trace</id> depending on the function.</p>
+                        <p>Add stack trace macros to all functions. Low-level functions only include stack trace in test builds while higher-level functions ship with stack trace built-in. Stack traces include all parameters passed to the function but production builds only create the parameter list when the log level is set high enough, i.e. <id>debug</id> or <id>trace</id> depending on the function.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Build <path>libc</path> using links rather than referencing the C files in <path>src</path> directly.  The C library builds with different options which should not be reused for the C binary or vice versa.</p>
+                        <p>Build <path>libc</path> using links rather than referencing the C files in <path>src</path> directly. The C library builds with different options which should not be reused for the C binary or vice versa.</p>
                     </release-item>
                 </release-development-list>
             </release-core-list>
@@ -7227,7 +7458,7 @@
             <release-test-list>
                 <release-development-list>
                     <release-item>
-                        <p>Test harness improvements.  Allow more than one test to provide coverage for the same module.  Add option to disable valgrind.  Add option to disabled coverage.  Add option to disable debug build.  Add option to disable compiler optimization.  Add <id>--dev-test</id> mode.</p>
+                        <p>Test harness improvements. Allow more than one test to provide coverage for the same module. Add option to disable valgrind. Add option to disabled coverage. Add option to disable debug build. Add option to disable compiler optimization. Add <id>--dev-test</id> mode.</p>
                     </release-item>
 
                     <release-item>
@@ -7235,7 +7466,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Set <br-option>log-timestamp=n</br-option> for integration tests.  This means less filtering of logs needs to be done and new timestamps can be added without adding new filters.</p>
+                        <p>Set <br-option>log-timestamp=n</br-option> for integration tests. This means less filtering of logs needs to be done and new timestamps can be added without adding new filters.</p>
                     </release-item>
                 </release-development-list>
             </release-test-list>
@@ -7322,7 +7553,7 @@
                     <release-item>
                         <p>Make backup/restore path sync more efficient.</p>
 
-                        <p>Scanning the entire directory can be very expensive if there are a lot of small tables.  The backup manifest contains the path list so use it to perform syncs instead of scanning the backup/restore path.</p>
+                        <p>Scanning the entire directory can be very expensive if there are a lot of small tables. The backup manifest contains the path list so use it to perform syncs instead of scanning the backup/restore path.</p>
                     </release-item>
 
                     <release-item>
@@ -7338,19 +7569,19 @@
 
                 <release-development-list>
                     <release-item>
-                        <p>Make <path>backup.history</path> sync more efficient.  Only the <path>backup.history/[year]</path> directory was being synced, so check if the <path>backup.history</path> is newly created and sync it as well.</p>
+                        <p>Make <path>backup.history</path> sync more efficient. Only the <path>backup.history/[year]</path> directory was being synced, so check if the <path>backup.history</path> is newly created and sync it as well.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Move async forking and more error handling to C. The Perl process was exiting directly when called but that interfered with proper locking for the forked async process.  Now Perl returns results to the C process which handles all errors, including signals.</p>
+                        <p>Move async forking and more error handling to C. The Perl process was exiting directly when called but that interfered with proper locking for the forked async process. Now Perl returns results to the C process which handles all errors, including signals.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Improved lock implementation written in C.  Now only two types of locks can be taken: <id>archive</id> and <id>backup</id>.  Most commands use one or the other but the <cmd>stanza-*</cmd> commands acquire both locks.  This provides better protection than the old command-based locking scheme.</p>
+                        <p>Improved lock implementation written in C. Now only two types of locks can be taken: <id>archive</id> and <id>backup</id>. Most commands use one or the other but the <cmd>stanza-*</cmd> commands acquire both locks. This provides better protection than the old command-based locking scheme.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Storage object improvements.  Convert all functions to variadic functions.  Enforce read-only storage. Add <code>storageLocalWrite()</code> helper function.  Add <code>storageCopy()</code>, <code>storageExists()</code>, <code>storageMove()</code>, <code>storageNewRead()</code>/<code>storageNewWrite()</code>, <code>storagePathCreate()</code>, <code>storagePathRemove()</code>, <code>storagePathSync()</code>, and <code>storageRemove()</code>.  Add <code>StorageFileRead</code> and <code>StorageFileWrite</code> objects.  Abstract Posix driver code into a separate module. Call <code>storagePathRemove()</code> from the Perl Posix driver.</p>
+                        <p>Storage object improvements. Convert all functions to variadic functions. Enforce read-only storage. Add <code>storageLocalWrite()</code> helper function. Add <code>storageCopy()</code>, <code>storageExists()</code>, <code>storageMove()</code>, <code>storageNewRead()</code>/<code>storageNewWrite()</code>, <code>storagePathCreate()</code>, <code>storagePathRemove()</code>, <code>storagePathSync()</code>, and <code>storageRemove()</code>. Add <code>StorageFileRead</code> and <code>StorageFileWrite</code> objects. Abstract Posix driver code into a separate module. Call <code>storagePathRemove()</code> from the Perl Posix driver.</p>
                     </release-item>
 
                     <release-item>
@@ -7359,11 +7590,11 @@
                             <release-item-contributor id="david.steele"/>
                         </release-item-contributor-list>
 
-                        <p>Improve <code>String</code> and <code>StringList</code> objects.  Add <code>strUpper()</code>, <code>strLower()</code>, <code>strLstExists()</code>, <code>strLstExistsZ()</code>, <code>strChr()</code>, <code>strSub()</code>, <code>strSubN()</code>, and <code>strTrunc()</code>.</p>
+                        <p>Improve <code>String</code> and <code>StringList</code> objects. Add <code>strUpper()</code>, <code>strLower()</code>, <code>strLstExists()</code>, <code>strLstExistsZ()</code>, <code>strChr()</code>, <code>strSub()</code>, <code>strSubN()</code>, and <code>strTrunc()</code>.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Improve <code>Buffer</code> object.  Add <code>bufNewC()</code>, <code>bufEq()</code> and <code>bufCat()</code>.  Only reallocate buffer when the size has changed.</p>
+                        <p>Improve <code>Buffer</code> object. Add <code>bufNewC()</code>, <code>bufEq()</code> and <code>bufCat()</code>. Only reallocate buffer when the size has changed.</p>
                     </release-item>
 
                     <release-item>
@@ -7375,15 +7606,15 @@
                     </release-item>
 
                     <release-item>
-                        <p>Error handling improvements.  Add <code>THROWP_</code>* macro variants for error handling.  These macros allow an <code>ErrorType</code> pointer to be passed and are required for functions that may return different errors based on a parameter.  Add <code>_FMT</code> variants for all <code>THROW</code> macros so format types are checked by the compiler.</p>
+                        <p>Error handling improvements. Add <code>THROWP_</code>* macro variants for error handling. These macros allow an <code>ErrorType</code> pointer to be passed and are required for functions that may return different errors based on a parameter. Add <code>_FMT</code> variants for all <code>THROW</code> macros so format types are checked by the compiler.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Split <code>cfgLoad()</code> into multiple functions to make testing easier.  Mainly this helps with unit tests that need to do log expect testing.</p>
+                        <p>Split <code>cfgLoad()</code> into multiple functions to make testing easier. Mainly this helps with unit tests that need to do log expect testing.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Allow <code>MemContext</code> objects to be copied to a new parent.  This makes it easier to create objects and then copy them to another context when they are complete without having to worry about freeing them on error.  Update <code>List</code>, <code>StringList</code>, and <code>Buffer</code> to allow moves.  Update <code>Ini</code> and <code>Storage</code> to take advantage of moves.</p>
+                        <p>Allow <code>MemContext</code> objects to be copied to a new parent. This makes it easier to create objects and then copy them to another context when they are complete without having to worry about freeing them on error. Update <code>List</code>, <code>StringList</code>, and <code>Buffer</code> to allow moves. Update <code>Ini</code> and <code>Storage</code> to take advantage of moves.</p>
                     </release-item>
 
                     <release-item>
@@ -7391,11 +7622,11 @@
                     </release-item>
 
                     <release-item>
-                        <p>Refactor <id>usec</id> to <id>msec</id> in <code>common/time.c</code>.  The implementation provides <id>usec</id> resolution but this is not needed in practice and it makes the interface more complicated due to the extra zeros.</p>
+                        <p>Refactor <id>usec</id> to <id>msec</id> in <code>common/time.c</code>. The implementation provides <id>usec</id> resolution but this is not needed in practice and it makes the interface more complicated due to the extra zeros.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Replace <code>THROW_ON_SYS_ERROR()</code> with <code>THROW_SYS_ERROR()</code>.  The former macro was hiding missing branch coverage for critical error handling.</p>
+                        <p>Replace <code>THROW_ON_SYS_ERROR()</code> with <code>THROW_SYS_ERROR()</code>. The former macro was hiding missing branch coverage for critical error handling.</p>
                     </release-item>
 
                     <release-item>
@@ -7407,11 +7638,11 @@
                     </release-item>
 
                     <release-item>
-                        <p>Split debug and assert code into separate headers.  Assert can be used earlier because it only depends on the error-handler and not logging.  Add <code>ASSERT()</code> macro which is preserved in production builds.</p>
+                        <p>Split debug and assert code into separate headers. Assert can be used earlier because it only depends on the error-handler and not logging. Add <code>ASSERT()</code> macro which is preserved in production builds.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Cleanup C types.  Remove <code>typec.h</code>. Order all typdefs above local includes.</p>
+                        <p>Cleanup C types. Remove <code>typec.h</code>. Order all typdefs above local includes.</p>
                     </release-item>
 
                     <release-item>
@@ -7466,7 +7697,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Document build improvements.  Perform <code>apt-get update</code> to ensure packages are up to date before installing.  Add <id>-p</id> to the repository <file>mkdir</file> so it won't fail if the directory already exists, handy for testing packages.</p>
+                        <p>Document build improvements. Perform <code>apt-get update</code> to ensure packages are up to date before installing. Add <id>-p</id> to the repository <file>mkdir</file> so it won't fail if the directory already exists, handy for testing packages.</p>
                     </release-item>
                 </release-development-list>
             </release-doc-list>
@@ -7476,21 +7707,21 @@
                     <release-item>
                         <p>Use <proper>lcov</proper> for C unit test coverage reporting.</p>
 
-                        <p>Switch from <proper>Devel::Cover</proper> because it would not report on branch coverage for reports converted from <proper>gcov</proper>.  Incomplete branch coverage for a module now generates an error.  Coverage of unit tests is not displayed in the report unless they are incomplete for either statement or branch coverage.</p>
+                        <p>Switch from <proper>Devel::Cover</proper> because it would not report on branch coverage for reports converted from <proper>gcov</proper>. Incomplete branch coverage for a module now generates an error. Coverage of unit tests is not displayed in the report unless they are incomplete for either statement or branch coverage.</p>
                     </release-item>
                 </release-feature-list>
 
                 <release-development-list>
                     <release-item>
-                        <p>Move test definitions to <file>test/define.yaml</file>.  The location is better because it is no longer buried in the Perl test libs.  Also, the data can be easily accessed from C.</p>
+                        <p>Move test definitions to <file>test/define.yaml</file>. The location is better because it is no longer buried in the Perl test libs. Also, the data can be easily accessed from C.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Move help/version integration tests to <id>mock/all</id>.  Help and version are covered by unit tests, so we really just to need to make sure there is output when called from the command line.</p>
+                        <p>Move help/version integration tests to <id>mock/all</id>. Help and version are covered by unit tests, so we really just to need to make sure there is output when called from the command line.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Move <id>archive-stop</id> and <id>expire</id> tests to the <id>mock</id> module.  These are mock integration tests so they should be grouped with the other mock integration tests.</p>
+                        <p>Move <id>archive-stop</id> and <id>expire</id> tests to the <id>mock</id> module. These are mock integration tests so they should be grouped with the other mock integration tests.</p>
                     </release-item>
 
                     <release-item>
@@ -7498,7 +7729,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Add <code>HARNESS_FORK</code> macros for tests that require fork().  A standard pattern for tests makes fork() easier to use and should help prevent some common mistakes.</p>
+                        <p>Add <code>HARNESS_FORK</code> macros for tests that require fork(). A standard pattern for tests makes fork() easier to use and should help prevent some common mistakes.</p>
                     </release-item>
 
                     <release-item>
@@ -7506,7 +7737,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Generate code counts for all source files.  The source files are also classified by type and purpose.</p>
+                        <p>Generate code counts for all source files. The source files are also classified by type and purpose.</p>
                     </release-item>
 
                     <release-item>
@@ -7514,11 +7745,11 @@
                     </release-item>
 
                     <release-item>
-                        <p>Improve logic for smart builds to include version changes.  Skip version checks when testing in <setting>--dev</setting> mode.</p>
+                        <p>Improve logic for smart builds to include version changes. Skip version checks when testing in <setting>--dev</setting> mode.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Use <proper>pip 9.03</proper> in test VMs.  <proper>pip 10</proper> drops support for <proper>Python 2.6</proper> which is still used by the older test VMs.</p>
+                        <p>Use <proper>pip 9.03</proper> in test VMs. <proper>pip 10</proper> drops support for <proper>Python 2.6</proper> which is still used by the older test VMs.</p>
                     </release-item>
 
                     <release-item>
@@ -7530,7 +7761,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Divide tests into three types (<id>unit</id>, <id>integration</id>, <id>performance</id>).  Many options that were set per test can instead be inferred from the types, i.e. <id>container</id>, <id>c</id>, <id>expect</id>, and <id>individual</id>.</p>
+                        <p>Divide tests into three types (<id>unit</id>, <id>integration</id>, <id>performance</id>). Many options that were set per test can instead be inferred from the types, i.e. <id>container</id>, <id>c</id>, <id>expect</id>, and <id>individual</id>.</p>
                     </release-item>
 
                     <release-item>
@@ -7558,7 +7789,7 @@
 
                         <p>Immediately error when a secure option (e.g. <br-option>repo1-s3-key</br-option>) is passed on the command line.</p>
 
-                        <p>Since <backrest/> would not pass secure options on to sub-processes an obscure error was thrown.  The new error is much clearer and provides hints about how to fix the problem.  Update command documentation to omit secure options that cannot be specified on the command-line.</p>
+                        <p>Since <backrest/> would not pass secure options on to sub-processes an obscure error was thrown. The new error is much clearer and provides hints about how to fix the problem. Update command documentation to omit secure options that cannot be specified on the command-line.</p>
                     </release-item>
 
                     <release-item>
@@ -7609,11 +7840,11 @@
 
                 <release-development-list>
                     <release-item>
-                        <p>Improve Perl configuration. Set config before <code>Main::main()</code> call to avoid secrets being exposed in a stack trace.  Move logic for setting defaults to C.</p>
+                        <p>Improve Perl configuration. Set config before <code>Main::main()</code> call to avoid secrets being exposed in a stack trace. Move logic for setting defaults to C.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Improve logging.  Move command begin to C except when it must be called after another command in Perl (e.g. <cmd>expire</cmd> after <cmd>backup</cmd>).  Command begin logs correctly for complex data types like hash and list.  Specify which commands will log to file immediately and set the default log level for log messages that are common to all commands.  File logging is initiated from C.</p>
+                        <p>Improve logging. Move command begin to C except when it must be called after another command in Perl (e.g. <cmd>expire</cmd> after <cmd>backup</cmd>). Command begin logs correctly for complex data types like hash and list. Specify which commands will log to file immediately and set the default log level for log messages that are common to all commands. File logging is initiated from C.</p>
                     </release-item>
 
                     <release-item>
@@ -7641,7 +7872,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Improve debugging.  Add <code>ASSERT_DEBUG()</code> macro for debugging and replace all current <code>assert()</code> calls except in tests that can't use the debug code.  Replace remaining NDEBUG blocks with the more granular DEBUG_UNIT.  Remove some debug <code>memset()</code> calls in <code>MemContext</code> since valgrind is more useful for these checks.</p>
+                        <p>Improve debugging. Add <code>ASSERT_DEBUG()</code> macro for debugging and replace all current <code>assert()</code> calls except in tests that can't use the debug code. Replace remaining NDEBUG blocks with the more granular DEBUG_UNIT. Remove some debug <code>memset()</code> calls in <code>MemContext</code> since valgrind is more useful for these checks.</p>
                     </release-item>
 
                     <release-item>
@@ -7657,11 +7888,11 @@
                     </release-item>
 
                     <release-item>
-                        <p>Check <code>int</code> size in <code>common/type.h</code>.  This ensures that integers are at least 32-bits without having to run the test suite.</p>
+                        <p>Check <code>int</code> size in <code>common/type.h</code>. This ensures that integers are at least 32-bits without having to run the test suite.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Improve conversion of C exceptions to <code>Exception</code> objects.  Colons in the message would prevent all of the message from being loaded into the <code>Exception</code> object.</p>
+                        <p>Improve conversion of C exceptions to <code>Exception</code> objects. Colons in the message would prevent all of the message from being loaded into the <code>Exception</code> object.</p>
                     </release-item>
                 </release-development-list>
             </release-core-list>
@@ -7705,7 +7936,7 @@
 
                 <release-development-list>
                     <release-item>
-                        <p>Build performance improvements.  Improve bin and libc build performance.  Improve code generation performance.</p>
+                        <p>Build performance improvements. Improve bin and libc build performance. Improve code generation performance.</p>
                     </release-item>
 
                     <release-item>
@@ -7725,7 +7956,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Remove <setting>--smart</setting> from <setting>--expect</setting> tests.  This ensures that new binaries are built before running the tests.</p>
+                        <p>Remove <setting>--smart</setting> from <setting>--expect</setting> tests. This ensures that new binaries are built before running the tests.</p>
                     </release-item>
 
                     <release-item>
@@ -7757,15 +7988,15 @@
                     </release-item>
 
                     <release-item>
-                        <p>Improve performance of HTTPS client.  Buffering now takes the <code>pending</code> bytes on the socket into account (when present) rather than relying entirely on <code>select()</code>.  In some instances the final bytes would not be flushed until the connection was closed.</p>
+                        <p>Improve performance of HTTPS client. Buffering now takes the <code>pending</code> bytes on the socket into account (when present) rather than relying entirely on <code>select()</code>. In some instances the final bytes would not be flushed until the connection was closed.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Improve S3 delete performance.  The constant <id>S3_BATCH_MAX</id> had been replaced with a hard-coded value of 2, probably during testing.</p>
+                        <p>Improve S3 delete performance. The constant <id>S3_BATCH_MAX</id> had been replaced with a hard-coded value of 2, probably during testing.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Allow any non-command-line option to be reset to default on the command-line.  This allows options in <file>pgbackrest.conf</file> to be reset to default which reduces the need to write new configuration files for specific needs.</p>
+                        <p>Allow any non-command-line option to be reset to default on the command-line. This allows options in <file>pgbackrest.conf</file> to be reset to default which reduces the need to write new configuration files for specific needs.</p>
                     </release-item>
 
                     <release-item>
@@ -7777,7 +8008,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Rename <id>db-*</id> options to <id>pg-*</id> and <id>backup-*</id> options to <id>repo-*</id> to improve consistency.  <id>repo-*</id> options are now indexed although currently only one is allowed.</p>
+                        <p>Rename <id>db-*</id> options to <id>pg-*</id> and <id>backup-*</id> options to <id>repo-*</id> to improve consistency. <id>repo-*</id> options are now indexed although currently only one is allowed.</p>
                     </release-item>
                 </release-improvement-list>
 
@@ -7811,15 +8042,15 @@
                     </release-item>
 
                     <release-item>
-                        <p>Improve <code>MemContext</code> module.  Add temporary context blocks and refactor allocation arrays to include allocation size.</p>
+                        <p>Improve <code>MemContext</code> module. Add temporary context blocks and refactor allocation arrays to include allocation size.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Improve <code>error</code> module.  Add functions to convert error codes to C errors and handle system errors.</p>
+                        <p>Improve <code>error</code> module. Add functions to convert error codes to C errors and handle system errors.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Create a master list of errors in <file>build/error.yaml</file>.  The C and Perl errors lists are created automatically by <code>Build.pm</code> so they stay up to date.</p>
+                        <p>Create a master list of errors in <file>build/error.yaml</file>. The C and Perl errors lists are created automatically by <code>Build.pm</code> so they stay up to date.</p>
                     </release-item>
 
                     <release-item>
@@ -7827,15 +8058,15 @@
                     </release-item>
 
                     <release-item>
-                        <p>Add 30 second wait loop to lockAcquire() when fail on no lock enabled.  This should help prevent processes that are shutting down from interfering with processes that are starting up.</p>
+                        <p>Add 30 second wait loop to lockAcquire() when fail on no lock enabled. This should help prevent processes that are shutting down from interfering with processes that are starting up.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Replace <code>cfgCommandTotal()</code>/<code>cfgOptionTotal()</code> functions with constants.  The constants are applicable in more cases and allow the compiler to optimize certain loops more efficiently.</p>
+                        <p>Replace <code>cfgCommandTotal()</code>/<code>cfgOptionTotal()</code> functions with constants. The constants are applicable in more cases and allow the compiler to optimize certain loops more efficiently.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Cleanup usage of internal options.  Apply internal to options that need to be read to determine locality but should not appear in the help.</p>
+                        <p>Cleanup usage of internal options. Apply internal to options that need to be read to determine locality but should not appear in the help.</p>
                     </release-item>
 
                     <release-item>
@@ -7879,11 +8110,11 @@
                     </release-item>
 
                     <release-item>
-                        <p>Improve section source feature to not require a title or content.  The title will be pulled from the source document.</p>
+                        <p>Improve section source feature to not require a title or content. The title will be pulled from the source document.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Allow code blocks to have a type.  Currently this is only rendered in Markdown.</p>
+                        <p>Allow code blocks to have a type. Currently this is only rendered in Markdown.</p>
                     </release-item>
 
                     <release-item>
@@ -7895,11 +8126,11 @@
                     </release-item>
 
                     <release-item>
-                        <p>PDF rendering improvements.  Check both <path>doc-path</path> and <path>bin-path</path> for logo.  Allow PDF to be output to a location other than the <path>output</path> directory. Use PDF-specific version variable for more flexible formatting.  Allow sections to be excluded from table of contents.  More flexible replacements for titles and footers.  Fill is now the default for table columns.  Column width is specified as a percentage rather that using latex-specific notation.  Fix missing variable replace for <code>code-block</code> title.</p>
+                        <p>PDF rendering improvements. Check both <path>doc-path</path> and <path>bin-path</path> for logo. Allow PDF to be output to a location other than the <path>output</path> directory. Use PDF-specific version variable for more flexible formatting. Allow sections to be excluded from table of contents. More flexible replacements for titles and footers. Fill is now the default for table columns. Column width is specified as a percentage rather that using latex-specific notation. Fix missing variable replace for <code>code-block</code> title.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Add <id>id</id> param for hosts created with <code>host-add</code>.  The <id>host-*-ip</id> variable is created from the <id>id</id> param so the <id>name</id> param can be changed without affecting the <id>host-*-ip</id> variable.  If <id>id</id> is not specified then it is copied from <id>name</id>.</p>
+                        <p>Add <id>id</id> param for hosts created with <code>host-add</code>. The <id>host-*-ip</id> variable is created from the <id>id</id> param so the <id>name</id> param can be changed without affecting the <id>host-*-ip</id> variable. If <id>id</id> is not specified then it is copied from <id>name</id>.</p>
                     </release-item>
 
                     <release-item>
@@ -7919,11 +8150,11 @@
                     </release-item>
 
                     <release-item>
-                        <p>Improve speed of C unit tests.  Preserve object files between tests and use a Makefile to avoid rebuilding object files.</p>
+                        <p>Improve speed of C unit tests. Preserve object files between tests and use a Makefile to avoid rebuilding object files.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Report coverage errors via the console.  This helps with debugging coverage issues on remote services like Travis.</p>
+                        <p>Report coverage errors via the console. This helps with debugging coverage issues on remote services like Travis.</p>
                     </release-item>
 
                     <release-item>
@@ -7955,7 +8186,7 @@
                             <release-item-ideator id="stephen.frost"/>
                         </release-item-contributor-list>
 
-                        <p>Fix critical bug in resume that resulted in inconsistent backups.  A regression in <id>v0.82</id> removed the timestamp comparison when deciding which files from the aborted backup to keep on resume. See note above for more details.</p>
+                        <p>Fix critical bug in resume that resulted in inconsistent backups. A regression in <id>v0.82</id> removed the timestamp comparison when deciding which files from the aborted backup to keep on resume. See note above for more details.</p>
                     </release-item>
 
                     <release-item>
@@ -7963,7 +8194,7 @@
                             <release-item-contributor id="andrew.schwartz"/>
                         </release-item-contributor-list>
 
-                        <p>Fix non-compliant ISO-8601 timestamp format in S3 authorization headers.  AWS and some gateways were tolerant of space rather than zero-padded hours while others were not.</p>
+                        <p>Fix non-compliant ISO-8601 timestamp format in S3 authorization headers. AWS and some gateways were tolerant of space rather than zero-padded hours while others were not.</p>
                     </release-item>
 
                     <release-item>
@@ -8019,25 +8250,25 @@
                             <release-item-ideator id="adam.k.sumner"/>
                         </release-item-contributor-list>
 
-                        <p>Improve the HTTP client to set <id>content-length</id> to 0 when not specified by the server.  S3 (and gateways) always set <id>content-length</id> or <id>transfer-encoding</id> but <id>HTTP 1.1</id> does not require it and proxies (e.g. <proper>HAProxy</proper>) may not include either.</p>
+                        <p>Improve the HTTP client to set <id>content-length</id> to 0 when not specified by the server. S3 (and gateways) always set <id>content-length</id> or <id>transfer-encoding</id> but <id>HTTP 1.1</id> does not require it and proxies (e.g. <proper>HAProxy</proper>) may not include either.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Improve performance of HTTPS client.  Buffering now takes the <code>pending</code> bytes on the socket into account (when present) rather than relying entirely on <code>select()</code>.  In some instances the final bytes would not be flushed until the connection was closed.</p>
+                        <p>Improve performance of HTTPS client. Buffering now takes the <code>pending</code> bytes on the socket into account (when present) rather than relying entirely on <code>select()</code>. In some instances the final bytes would not be flushed until the connection was closed.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Improve S3 delete performance.  The constant <id>S3_BATCH_MAX</id> had been replaced with a hard-coded value of 2, probably during testing.</p>
+                        <p>Improve S3 delete performance. The constant <id>S3_BATCH_MAX</id> had been replaced with a hard-coded value of 2, probably during testing.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Make backup/restore path sync more efficient.  Scanning the entire directory can be very expensive if there are a lot of small tables.  The backup manifest contains the path list so use it to perform syncs instead of scanning the backup/restore path.  Remove recursive path sync functionality since it is no longer used.</p>
+                        <p>Make backup/restore path sync more efficient. Scanning the entire directory can be very expensive if there are a lot of small tables. The backup manifest contains the path list so use it to perform syncs instead of scanning the backup/restore path. Remove recursive path sync functionality since it is no longer used.</p>
                     </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
                     <release-item>
-                        <p>Make <path>backup.history</path> sync more efficient.  Only the <path>backup.history/[year]</path> directory was being synced, so check if the <path>backup.history</path> is newly created and sync it as well.</p>
+                        <p>Make <path>backup.history</path> sync more efficient. Only the <path>backup.history/[year]</path> directory was being synced, so check if the <path>backup.history</path> is newly created and sync it as well.</p>
                     </release-item>
 
                     <release-item>
@@ -8089,7 +8320,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Disable package build tests since <id>v1</id> will no longer be packaged.  Users installing packages should update to <id>v2</id>. <id>v1</id> builds are intended for users installing from source.</p>
+                        <p>Disable package build tests since <id>v1</id> will no longer be packaged. Users installing packages should update to <id>v2</id>. <id>v1</id> builds are intended for users installing from source.</p>
                     </release-item>
 
                     <release-item>
@@ -8129,7 +8360,7 @@
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
-                        <p>Ensure latest <id>db-id</id> is selected on when matching <file>archive.info</file> to <file>backup.info</file>.  This provides correct matching in the event there are <id>system-id</id> and <id>db-version</id> duplicates (e.g. after reverting a <id>pg_upgrade</id>).</p>
+                        <p>Ensure latest <id>db-id</id> is selected on when matching <file>archive.info</file> to <file>backup.info</file>. This provides correct matching in the event there are <id>system-id</id> and <id>db-version</id> duplicates (e.g. after reverting a <id>pg_upgrade</id>).</p>
                     </release-item>
 
                     <release-item>
@@ -8215,7 +8446,7 @@
                             <release-item-ideator id="sebastien.lardiere"/>
                         </release-item-contributor-list>
 
-                        <p>Fixed an issue that suppressed locality errors for <cmd>backup</cmd> and <cmd>restore</cmd>.  When a backup host is present, backups should only be allowed on the backup host and restores should only be allowed on the database host unless an alternate configuration is created that ignores the remote host.</p>
+                        <p>Fixed an issue that suppressed locality errors for <cmd>backup</cmd> and <cmd>restore</cmd>. When a backup host is present, backups should only be allowed on the backup host and restores should only be allowed on the database host unless an alternate configuration is created that ignores the remote host.</p>
                     </release-item>
 
                     <release-item>
@@ -8223,11 +8454,11 @@
                             <release-item-ideator id="adam.brusselback"/>
                         </release-item-contributor-list>
 
-                        <p>Fixed an issue where WAL was not expired on <postgres/> 10.  This was caused by a faulty regex that expected all <postgres/> major versions to be X.X.</p>
+                        <p>Fixed an issue where WAL was not expired on <postgres/> 10. This was caused by a faulty regex that expected all <postgres/> major versions to be X.X.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Fixed an issue where the <br-option>--no-config</br-option> option was not passed to child processes.  This meant the child processes would still read the local config file and possibly cause unexpected behaviors.</p>
+                        <p>Fixed an issue where the <br-option>--no-config</br-option> option was not passed to child processes. This meant the child processes would still read the local config file and possibly cause unexpected behaviors.</p>
                     </release-item>
 
                     <release-item>
@@ -8268,11 +8499,11 @@
                     </release-item>
 
                     <release-item>
-                        <p>Split <quote>refactor</quote> sections into <quote>improvements</quote> and <quote>development</quote> in the release notes.  Many development notes are not relevant to users and simply clutter the release notes, so they are no longer shown on the website.</p>
+                        <p>Split <quote>refactor</quote> sections into <quote>improvements</quote> and <quote>development</quote> in the release notes. Many development notes are not relevant to users and simply clutter the release notes, so they are no longer shown on the website.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Allow internal options that do not show up in the documentation.  Used for test options initially but other use cases are on the horizon.</p>
+                        <p>Allow internal options that do not show up in the documentation. Used for test options initially but other use cases are on the horizon.</p>
                     </release-item>
                 </release-development-list>
             </release-doc-list>
@@ -8288,7 +8519,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Move restore test infrastructure to <code>HostBackup.pm</code>.  Required to test restores on the backup server, a fairly common scenario.  Improve the restore function to accept optional parameters rather than a long list of parameters. In passing, clean up extraneous use of <code>strType</code> and <code>strComment</code> variables.</p>
+                        <p>Move restore test infrastructure to <code>HostBackup.pm</code>. Required to test restores on the backup server, a fairly common scenario. Improve the restore function to accept optional parameters rather than a long list of parameters. In passing, clean up extraneous use of <code>strType</code> and <code>strComment</code> variables.</p>
                     </release-item>
 
                     <release-item>
@@ -8323,7 +8554,7 @@
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
-                        <p>Fixed an issue retrieving WAL for old database versions.  After a <cmd>stanza-upgrade</cmd> it should still be possible to restore backups from the previous version and perform recovery with <cmd>archive-get</cmd>.  However, archive-get only checked the most recent db version/id and failed.  Also clean up some issues when the same db version/id appears multiple times in the history.</p>
+                        <p>Fixed an issue retrieving WAL for old database versions. After a <cmd>stanza-upgrade</cmd> it should still be possible to restore backups from the previous version and perform recovery with <cmd>archive-get</cmd>. However, archive-get only checked the most recent db version/id and failed. Also clean up some issues when the same db version/id appears multiple times in the history.</p>
                     </release-item>
 
                     <release-item>
@@ -8331,7 +8562,7 @@
                             <release-item-ideator id="jeff.mccormick"/>
                         </release-item-contributor-list>
 
-                        <p>Fixed an issue with invalid backup groups being set correctly on restore.  If the backup cannot map a group to a name it stores the group in the manifest as <id>false</id> then uses either the owner of $PGDATA to set the group during restore or failing that the group of the current user.  This logic was not working correctly because the selected group was overwriting the user on restore leaving the group undefined and the user incorrectly set to the group.</p>
+                        <p>Fixed an issue with invalid backup groups being set correctly on restore. If the backup cannot map a group to a name it stores the group in the manifest as <id>false</id> then uses either the owner of $PGDATA to set the group during restore or failing that the group of the current user. This logic was not working correctly because the selected group was overwriting the user on restore leaving the group undefined and the user incorrectly set to the group.</p>
                     </release-item>
 
                     <release-item>
@@ -8339,7 +8570,7 @@
                             <release-item-ideator id="uspen"/>
                         </release-item-contributor-list>
 
-                        <p>Fixed an issue passing parameters to remotes.  When more than one db was specified the path, port, and socket path would for db1 were passed no matter which db was actually being addressed.</p>
+                        <p>Fixed an issue passing parameters to remotes. When more than one db was specified the path, port, and socket path would for db1 were passed no matter which db was actually being addressed.</p>
                     </release-item>
                 </release-bug-list>
 
@@ -8356,7 +8587,7 @@
 
                 <release-improvement-list>
                     <release-item>
-                        <p>Disable gzip filter when <br-option>--compress-level-network=0</br-option>.  The filter was used with compress level set to 0 which added overhead without any benefit.</p>
+                        <p>Disable gzip filter when <br-option>--compress-level-network=0</br-option>. The filter was used with compress level set to 0 which added overhead without any benefit.</p>
                     </release-item>
 
                     <release-item>
@@ -8366,15 +8597,15 @@
 
                 <release-development-list>
                     <release-item>
-                        <p>Refactor protocol param generation into a new function.  This allows the code to be tested more precisely and doesn't require executing a remote process.</p>
+                        <p>Refactor protocol param generation into a new function. This allows the code to be tested more precisely and doesn't require executing a remote process.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Add <id>list</id> type for options.  The <id>hash</id> type was being used for lists with an additional flag (`value-hash`) to indicate that it was not really a hash.</p>
+                        <p>Add <id>list</id> type for options. The <id>hash</id> type was being used for lists with an additional flag (`value-hash`) to indicate that it was not really a hash.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Remove configurable option hints. <br-option>db-path</br-option> was the only option with a hint so the feature seemed wasteful.  All missing stanza options now output the same hint without needing configuration.</p>
+                        <p>Remove configurable option hints. <br-option>db-path</br-option> was the only option with a hint so the feature seemed wasteful. All missing stanza options now output the same hint without needing configuration.</p>
                     </release-item>
 
                     <release-item>
@@ -8390,11 +8621,11 @@
                     </release-item>
 
                     <release-item>
-                        <p>Simplify try..catch..finally names.  Also wrap in a do...while loop to make sure that no random else is attached to the main if block.</p>
+                        <p>Simplify try..catch..finally names. Also wrap in a do...while loop to make sure that no random else is attached to the main if block.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Improve base64 implementation.  Different encoded strings could be generated based on compiler optimizations. Even though decoding was still successful the encoded strings did not match the standard.</p>
+                        <p>Improve base64 implementation. Different encoded strings could be generated based on compiler optimizations. Even though decoding was still successful the encoded strings did not match the standard.</p>
                     </release-item>
 
                     <release-item>
@@ -8449,19 +8680,19 @@
                     </release-item>
 
                     <release-item>
-                        <p>Only check expect logs on CentOS 7.  Variations in distros cause false negatives in tests but don't add much value.</p>
+                        <p>Only check expect logs on CentOS 7. Variations in distros cause false negatives in tests but don't add much value.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Fix flapping protocol timeout test.  It only matters that the correct error code is returned, so disable logging to prevent message ordering from failing the expect test.</p>
+                        <p>Fix flapping protocol timeout test. It only matters that the correct error code is returned, so disable logging to prevent message ordering from failing the expect test.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Designate a single distro (Ubuntu 16.04) for coverage testing.  Running coverage testing on multiple distros takes time but doesn't add significant value.  Also ensure that the distro designated to run coverage tests is one of the default test distros.  For C tests, enable optimizations on the distros that don't do coverage testing.</p>
+                        <p>Designate a single distro (Ubuntu 16.04) for coverage testing. Running coverage testing on multiple distros takes time but doesn't add significant value. Also ensure that the distro designated to run coverage tests is one of the default test distros. For C tests, enable optimizations on the distros that don't do coverage testing.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Automate generation of WAL and <file>pg_control</file> test files.  The existing static files would not work with 32-bit or big-endian systems so create functions to generate these files dynamically rather than creating a bunch of new static files.</p>
+                        <p>Automate generation of WAL and <file>pg_control</file> test files. The existing static files would not work with 32-bit or big-endian systems so create functions to generate these files dynamically rather than creating a bunch of new static files.</p>
                     </release-item>
 
                     <release-item>
@@ -8491,7 +8722,7 @@
                             <release-item-ideator id="benoit.lobréau"/>
                         </release-item-contributor-list>
 
-                        <p>Remove error when overlapping timelines are detected.  Overlapping timelines are valid in many Point-in-Time-Recovery (PITR) scenarios.</p>
+                        <p>Remove error when overlapping timelines are detected. Overlapping timelines are valid in many Point-in-Time-Recovery (PITR) scenarios.</p>
                     </release-item>
 
                     <release-item>
@@ -8510,17 +8741,17 @@
                             <release-item-ideator id="mihail.shvein"/>
                         </release-item-contributor-list>
 
-                        <p>Improve performance of list requests on S3.  Any beginning literal portion of a filter expression is used to generate a search prefix which often helps keep the request small enough to avoid rate limiting.</p>
+                        <p>Improve performance of list requests on S3. Any beginning literal portion of a filter expression is used to generate a search prefix which often helps keep the request small enough to avoid rate limiting.</p>
                     </release-item>
                 </release-feature-list>
 
                 <release-development-list>
                     <release-item>
-                        <p>Improve protocol error handling.  In particular, <quote>stop</quote> errors are no longer reported as <quote>unexpected</quote>.</p>
+                        <p>Improve protocol error handling. In particular, <quote>stop</quote> errors are no longer reported as <quote>unexpected</quote>.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Allow functions with sensitive options to be logged at debug level with redactions.  Previously, functions with sensitive options had to be logged at trace level to avoid exposing them.  Trace level logging may still expose secrets so use with caution.</p>
+                        <p>Allow functions with sensitive options to be logged at debug level with redactions. Previously, functions with sensitive options had to be logged at trace level to avoid exposing them. Trace level logging may still expose secrets so use with caution.</p>
                     </release-item>
 
                     <release-item>
@@ -8926,7 +9157,7 @@
         <release date="2017-06-27" version="1.20" title="Critical 8.3/8.4 Bug Fix">
             <release-core-list>
                 <text>
-                    <p><b>IMPORTANT NOTE</b>: <postgres/> <proper>8.3</proper> and <proper>8.4</proper> installations utilizing tablespaces should upgrade immediately from any <proper>v1</proper> release and run a full backup.  A bug prevented tablespaces from being backed up on these versions only.  <postgres/> &amp;ge; <proper>9.0</proper>
+                    <p><b>IMPORTANT NOTE</b>: <postgres/> <proper>8.3</proper> and <proper>8.4</proper> installations utilizing tablespaces should upgrade immediately from any <proper>v1</proper> release and run a full backup. A bug prevented tablespaces from being backed up on these versions only. <postgres/> &amp;ge; <proper>9.0</proper>
                     is not affected.</p>
                 </text>
 
@@ -9050,7 +9281,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Add <id>deprecated</id> state for containers.  Deprecated containers may only be used to build packages.</p>
+                        <p>Add <id>deprecated</id> state for containers. Deprecated containers may only be used to build packages.</p>
                     </release-item>
 
                     <release-item>
@@ -9062,7 +9293,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Remove <setting>process-max</setting> option.  Parallelism is now tested in a more targeted manner and the high level option is no longer needed.</p>
+                        <p>Remove <setting>process-max</setting> option. Parallelism is now tested in a more targeted manner and the high level option is no longer needed.</p>
                     </release-item>
 
                     <release-item>
@@ -9218,11 +9449,11 @@
 
                 <release-improvement-list>
                     <release-item>
-                        <p>Simplify locking scheme.  Now, only the master process will hold write locks (for <cmd>archive-push</cmd> and <cmd>backup</cmd> commands) and not all local and remote worker processes as before.</p>
+                        <p>Simplify locking scheme. Now, only the master process will hold write locks (for <cmd>archive-push</cmd> and <cmd>backup</cmd> commands) and not all local and remote worker processes as before.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Do not set timestamps of files in the backup directories to match timestamps in the cluster directory.  This was originally done to enable backup resume, but that process is now implemented with checksums.</p>
+                        <p>Do not set timestamps of files in the backup directories to match timestamps in the cluster directory. This was originally done to enable backup resume, but that process is now implemented with checksums.</p>
                     </release-item>
 
                     <release-item>
@@ -9248,7 +9479,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>The <cmd>backup</cmd> and <cmd>restore</cmd> commands no longer copy via temp files.  In both cases the files are checksummed on resume so there's no danger of partial copies.</p>
+                        <p>The <cmd>backup</cmd> and <cmd>restore</cmd> commands no longer copy via temp files. In both cases the files are checksummed on resume so there's no danger of partial copies.</p>
                     </release-item>
 
                     <release-item>
@@ -9280,7 +9511,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Ignore clock skew in container libc/package builds using make.  It is common for containers to have clock skew so the build process takes care of this issue independently.</p>
+                        <p>Ignore clock skew in container libc/package builds using make. It is common for containers to have clock skew so the build process takes care of this issue independently.</p>
                     </release-item>
                 </release-development-list>
             </release-doc-list>
@@ -9525,9 +9756,9 @@
                 <text>
                     <p><b>IMPORTANT NOTE</b>: The new implementation of asynchronous archiving no longer copies WAL to a separate queue. If there is any WAL left over in the old queue after upgrading to <id>1.13</id>, it will be abandoned and <b>not</b> pushed to the repository.</p>
 
-                    <p>To prevent this outcome, stop archiving by setting <setting>archive_command = false</setting>. Next, drain the async queue by running <code>pgbackrest --stanza=[stanza-name] archive-push</code> and wait for the process to complete.  Check that the queue in <path>[spool-path]/archive/[stanza-name]/out</path> is empty. Finally, install <code>1.13</code> and restore the original <setting>archive_command</setting>.</p>
+                    <p>To prevent this outcome, stop archiving by setting <setting>archive_command = false</setting>. Next, drain the async queue by running <code>pgbackrest --stanza=[stanza-name] archive-push</code> and wait for the process to complete. Check that the queue in <path>[spool-path]/archive/[stanza-name]/out</path> is empty. Finally, install <code>1.13</code> and restore the original <setting>archive_command</setting>.</p>
 
-                    <p><b>IMPORTANT NOTE</b>: The <cmd>stanza-create</cmd> command is not longer optional and must be executed before backup or archiving can be performed on a <b>new</b> stanza.  Pre-existing stanzas do not require <cmd>stanza-create</cmd> to be executed.</p>
+                    <p><b>IMPORTANT NOTE</b>: The <cmd>stanza-create</cmd> command is not longer optional and must be executed before backup or archiving can be performed on a <b>new</b> stanza. Pre-existing stanzas do not require <cmd>stanza-create</cmd> to be executed.</p>
                 </text>
 
                 <release-bug-list>
@@ -9624,11 +9855,11 @@
                     </release-item>
 
                     <release-item>
-                        <p>Remove <br-option>--lock</br-option> option.  This option was introduced before the lock directory could be located outside the repository and is now obsolete.</p>
+                        <p>Remove <br-option>--lock</br-option> option. This option was introduced before the lock directory could be located outside the repository and is now obsolete.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Added <br-option>--log-timestamp</br-option> option to allow timestamps to be suppressed in logging.  This is primarily used to avoid filters in the automated documentation.</p>
+                        <p>Added <br-option>--log-timestamp</br-option> option to allow timestamps to be suppressed in logging. This is primarily used to avoid filters in the automated documentation.</p>
                     </release-item>
 
                     <release-item>
@@ -9744,7 +9975,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Split test modules into separate files to make the code more maintainable.  Tests are dynamically loaded by name rather than requiring an if-else block.</p>
+                        <p>Split test modules into separate files to make the code more maintainable. Tests are dynamically loaded by name rather than requiring an if-else block.</p>
                     </release-item>
 
                     <release-item>
@@ -9765,7 +9996,7 @@
         <release date="2016-12-12" version="1.12" title="Page Checksums, Configuration, and Bug Fixes">
             <release-core-list>
                 <text>
-                    <p><b>IMPORTANT NOTE</b>: In prior releases it was possible to specify options on the command-line that were invalid for the current command without getting an error.  An error will now be generated for invalid options so it is important to carefully check command-line options in your environment to prevent disruption.</p>
+                    <p><b>IMPORTANT NOTE</b>: In prior releases it was possible to specify options on the command-line that were invalid for the current command without getting an error. An error will now be generated for invalid options so it is important to carefully check command-line options in your environment to prevent disruption.</p>
                 </text>
 
                 <release-bug-list>
@@ -9774,11 +10005,11 @@
                             <release-item-ideator id="nikhilchandra.kulkarni"/>
                         </release-item-contributor-list>
 
-                        <p>Fixed an issue where options that were invalid for the specified command could be provided on the command-line without generating an error.  The options were ignored and did not cause any change in behavior, but it did lead to some confusion.  Invalid options will now generate an error.</p>
+                        <p>Fixed an issue where options that were invalid for the specified command could be provided on the command-line without generating an error. The options were ignored and did not cause any change in behavior, but it did lead to some confusion. Invalid options will now generate an error.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Fixed an issue where internal symlinks were not being created for tablespaces in the repository.  This issue was only apparent when trying to bring up clusters in-place manually using filesystem snapshots and did not affect normal backup and restore.</p>
+                        <p>Fixed an issue where internal symlinks were not being created for tablespaces in the repository. This issue was only apparent when trying to bring up clusters in-place manually using filesystem snapshots and did not affect normal backup and restore.</p>
                     </release-item>
 
                     <release-item>
@@ -9804,11 +10035,11 @@
                             <release-item-ideator id="stephen.frost"/>
                         </release-item-contributor-list>
 
-                        <p>Added the <br-option>--checksum-page</br-option> option to allow pgBackRest to validate page checksums in data files when checksums are enabled on <postgres/> >= 9.3.  Note that this functionality requires a C library which may not initially be available in OS packages.  The option will automatically be enabled when the library is present and checksums are enabled on the cluster.</p>
+                        <p>Added the <br-option>--checksum-page</br-option> option to allow pgBackRest to validate page checksums in data files when checksums are enabled on <postgres/> >= 9.3. Note that this functionality requires a C library which may not initially be available in OS packages. The option will automatically be enabled when the library is present and checksums are enabled on the cluster.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Added the <br-option>--repo-link</br-option> option to allow internal symlinks to be suppressed when the repository is located on a filesystem that does not support symlinks.  This does not affect any <backrest/> functionality, but the convenience link <path>latest</path> will not be created and neither will internal tablespace symlinks, which will affect the ability to bring up clusters in-place manually using filesystem snapshots.</p>
+                        <p>Added the <br-option>--repo-link</br-option> option to allow internal symlinks to be suppressed when the repository is located on a filesystem that does not support symlinks. This does not affect any <backrest/> functionality, but the convenience link <path>latest</path> will not be created and neither will internal tablespace symlinks, which will affect the ability to bring up clusters in-place manually using filesystem snapshots.</p>
                     </release-item>
 
                     <release-item>
@@ -9826,7 +10057,7 @@
 
                 <release-improvement-list>
                     <release-item>
-                        <p>For simplicity, the <file>pg_control</file> file is now copied with the rest of the files instead of by itself of at the end of the process.  The <cmd>backup</cmd> command does not require this behavior and the <cmd>restore</cmd> copies to a temporary file which is renamed at the end of the restore.</p>
+                        <p>For simplicity, the <file>pg_control</file> file is now copied with the rest of the files instead of by itself of at the end of the process. The <cmd>backup</cmd> command does not require this behavior and the <cmd>restore</cmd> copies to a temporary file which is renamed at the end of the restore.</p>
                     </release-item>
                 </release-improvement-list>
 
@@ -9974,7 +10205,7 @@
                             <release-item-ideator id="stephen.frost"/>
                         </release-item-contributor-list>
 
-                        <p>Fixed an issue where asynchronous archiving was transferring one file per execution instead of transferring files in batches.  This regression was introduced in <proper>v1.09</proper> and affected efficiency only, all WAL segments were correctly archived in asynchronous mode.</p>
+                        <p>Fixed an issue where asynchronous archiving was transferring one file per execution instead of transferring files in batches. This regression was introduced in <proper>v1.09</proper> and affected efficiency only, all WAL segments were correctly archived in asynchronous mode.</p>
                     </release-item>
                 </release-bug-list>
             </release-core-list>
@@ -10078,7 +10309,7 @@
                             <release-item-ideator id="jens.wilke"/>
                         </release-item-contributor-list>
 
-                        <p>Fixed an issue where the async archiver would not be started if <cmd>archive-push</cmd> did not have enough space to queue a new WAL segment.  This meant that the queue would never be cleared without manual intervention (such as calling <cmd>archive-push</cmd> directly).  <postgres/> now receives errors when there is not enough space to store new WAL segments but the async process will still be started so that space is eventually freed.</p>
+                        <p>Fixed an issue where the async archiver would not be started if <cmd>archive-push</cmd> did not have enough space to queue a new WAL segment. This meant that the queue would never be cleared without manual intervention (such as calling <cmd>archive-push</cmd> directly). <postgres/> now receives errors when there is not enough space to store new WAL segments but the async process will still be started so that space is eventually freed.</p>
                     </release-item>
 
                     <release-item>
@@ -10108,7 +10339,7 @@
                             <release-item-ideator id="sascha.biberhofer"/>
                         </release-item-contributor-list>
 
-                        <p>Added the <br-option>log-level-stderr</br-option> option to control whether console log messages are sent to <id>stderr</id> or <id>stdout</id>.  By default this is set to <setting>warn</setting> which represents a change in behavior from previous versions, even though it may be more intuitive.  Setting <br-option>log-level-stderr=off</br-option> will preserve the old behavior.</p>
+                        <p>Added the <br-option>log-level-stderr</br-option> option to control whether console log messages are sent to <id>stderr</id> or <id>stdout</id>. By default this is set to <setting>warn</setting> which represents a change in behavior from previous versions, even though it may be more intuitive. Setting <br-option>log-level-stderr=off</br-option> will preserve the old behavior.</p>
                     </release-item>
 
                     <release-item>
@@ -10288,7 +10519,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Experimental support for non-exclusive backups in <postgres/> 9.6 rc1.  Changes to the control/catalog/WAL versions in subsequent release candidates may break compatibility but <backrest/> will be updated with each release to keep pace.</p>
+                        <p>Experimental support for non-exclusive backups in <postgres/> 9.6 rc1. Changes to the control/catalog/WAL versions in subsequent release candidates may break compatibility but <backrest/> will be updated with each release to keep pace.</p>
                     </release-item>
                 </release-feature-list>
 
@@ -10374,19 +10605,19 @@
 
                 <release-feature-list>
                     <release-item>
-                        <p>Backup from a standby cluster.  A connection to the primary cluster is still required to start/stop the backup and copy files that are not replicated, but the vast majority of files are copied from the standby in order to reduce load on the primary.</p>
+                        <p>Backup from a standby cluster. A connection to the primary cluster is still required to start/stop the backup and copy files that are not replicated, but the vast majority of files are copied from the standby in order to reduce load on the primary.</p>
                     </release-item>
 
                     <release-item>
-                        <p>More flexible configuration for databases.  Master and standby can both be configured on the backup server and <backrest/> will automatically determine which is the primary.  This means no configuration changes for backup are required after failing over from a primary to standby when a separate backup server is used.</p>
+                        <p>More flexible configuration for databases. Master and standby can both be configured on the backup server and <backrest/> will automatically determine which is the primary. This means no configuration changes for backup are required after failing over from a primary to standby when a separate backup server is used.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Exclude directories during backup that are cleaned, recreated, or zeroed by <postgres/> at startup.  These include <path>pgsql_tmp</path> and <path>pg_stat_tmp</path>.  The <file>postgresql.auto.conf.tmp</file> file is now excluded in addition to files that were already excluded: <file>backup_label.old</file>, <file>postmaster.opts</file>, <file>postmaster.pid</file>, <file>recovery.conf</file>, <file>recovery.done</file>.</p>
+                        <p>Exclude directories during backup that are cleaned, recreated, or zeroed by <postgres/> at startup. These include <path>pgsql_tmp</path> and <path>pg_stat_tmp</path>. The <file>postgresql.auto.conf.tmp</file> file is now excluded in addition to files that were already excluded: <file>backup_label.old</file>, <file>postmaster.opts</file>, <file>postmaster.pid</file>, <file>recovery.conf</file>, <file>recovery.done</file>.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Experimental support for non-exclusive backups in <postgres/> 9.6 beta4.  Changes to the control/catalog/WAL versions in subsequent betas may break compatibility but <backrest/> will be updated with each release to keep pace.</p>
+                        <p>Experimental support for non-exclusive backups in <postgres/> 9.6 beta4. Changes to the control/catalog/WAL versions in subsequent betas may break compatibility but <backrest/> will be updated with each release to keep pace.</p>
                     </release-item>
                 </release-feature-list>
 
@@ -10448,7 +10679,7 @@
                             <release-item-ideator id="chris.fort"/>
                         </release-item-contributor-list>
 
-                        <p>Fixed an issue where tablespace paths that had $PGDATA as a substring would be identified as a subdirectories of $PGDATA even when they were not.  Also hardened relative path checking a bit.</p>
+                        <p>Fixed an issue where tablespace paths that had $PGDATA as a substring would be identified as a subdirectories of $PGDATA even when they were not. Also hardened relative path checking a bit.</p>
                     </release-item>
                 </release-bug-list>
             </release-core-list>
@@ -10520,7 +10751,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Fixed an issue where the contents of <path>pg_xlog</path> were being backed up if the directory was symlinked.  This didn't cause any issues during restore but was a waste of space.</p>
+                        <p>Fixed an issue where the contents of <path>pg_xlog</path> were being backed up if the directory was symlinked. This didn't cause any issues during restore but was a waste of space.</p>
                     </release-item>
 
                     <release-item>
@@ -10530,7 +10761,7 @@
 
                 <release-feature-list>
                     <release-item>
-                        <p>Experimental support for non-exclusive backups in <postgres/> 9.6 beta3.  Changes to the control/catalog/WAL versions in subsequent betas may break compatibility but <backrest/> will be updated with each release to keep pace.</p>
+                        <p>Experimental support for non-exclusive backups in <postgres/> 9.6 beta3. Changes to the control/catalog/WAL versions in subsequent betas may break compatibility but <backrest/> will be updated with each release to keep pace.</p>
                     </release-item>
                 </release-feature-list>
 
@@ -10544,7 +10775,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>All remote types now take locks.  The exceptions date to when the test harness and <backrest/> were running in the same VM and no longer apply.</p>
+                        <p>All remote types now take locks. The exceptions date to when the test harness and <backrest/> were running in the same VM and no longer apply.</p>
                     </release-item>
                 </release-improvement-list>
 
@@ -10592,7 +10823,7 @@
 
                 <release-development-list>
                     <release-item>
-                        <p>Added <file>release.pl</file> to make releases reproducible.  For now this only includes building and deploying documentation.</p>
+                        <p>Added <file>release.pl</file> to make releases reproducible. For now this only includes building and deploying documentation.</p>
                     </release-item>
 
                     <release-item>
@@ -10636,7 +10867,7 @@
                             <release-item-ideator id="chris.barber"/>
                         </release-item-contributor-list>
 
-                        <p>Fixed an issue where <id>keep-alives</id> could be starved out by lots of small files during multi-threaded <cmd>backup</cmd>.  They were also completely absent from single/multi-threaded <cmd>backup</cmd> resume and <cmd>restore</cmd> checksumming.</p>
+                        <p>Fixed an issue where <id>keep-alives</id> could be starved out by lots of small files during multi-threaded <cmd>backup</cmd>. They were also completely absent from single/multi-threaded <cmd>backup</cmd> resume and <cmd>restore</cmd> checksumming.</p>
                     </release-item>
 
                     <release-item>
@@ -10644,7 +10875,7 @@
                             <release-item-ideator id="chris.barber"/>
                         </release-item-contributor-list>
 
-                        <p>Fixed an issue where the <cmd>expire</cmd> command would refuse to run when explicitly called from the command line if the <br-option>db-host</br-option> option was set.  This was not an issue when <cmd>expire</cmd> was run automatically after a <cmd>backup</cmd></p>
+                        <p>Fixed an issue where the <cmd>expire</cmd> command would refuse to run when explicitly called from the command line if the <br-option>db-host</br-option> option was set. This was not an issue when <cmd>expire</cmd> was run automatically after a <cmd>backup</cmd></p>
                     </release-item>
 
                     <release-item>
@@ -10664,35 +10895,35 @@
                     </release-item>
 
                     <release-item>
-                        <p>Added the <br-option>protocol-timeout</br-option> option.  Previously <br-option>protocol-timeout</br-option> was set as <br-option>db-timeout</br-option> + 30 seconds.</p>
+                        <p>Added the <br-option>protocol-timeout</br-option> option. Previously <br-option>protocol-timeout</br-option> was set as <br-option>db-timeout</br-option> + 30 seconds.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Failure to shutdown remotes at the end of the backup no longer throws an exception.  Instead a warning is generated that recommends a higher <br-option>protocol-timeout</br-option>.</p>
+                        <p>Failure to shutdown remotes at the end of the backup no longer throws an exception. Instead a warning is generated that recommends a higher <br-option>protocol-timeout</br-option>.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Experimental support for non-exclusive backups in <postgres/> 9.6 beta2.  Changes to the control/catalog/WAL versions in subsequent betas may break compatibility but <backrest/> will be updated with each release to keep pace.</p>
+                        <p>Experimental support for non-exclusive backups in <postgres/> 9.6 beta2. Changes to the control/catalog/WAL versions in subsequent betas may break compatibility but <backrest/> will be updated with each release to keep pace.</p>
                     </release-item>
                 </release-feature-list>
 
                 <release-improvement-list>
                     <release-item>
-                        <p>Improved handling of users/groups captured during backup that do not exist on the restore host.  Also explicitly handle the case where user/group is not mapped to a name.</p>
+                        <p>Improved handling of users/groups captured during backup that do not exist on the restore host. Also explicitly handle the case where user/group is not mapped to a name.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Option handling is now far more strict.  Previously it was possible for a command to use an option that was not explicitly assigned to it.  This was especially true for the <br-option>backup-host</br-option> and <br-option>db-host</br-option> options which are used to determine locality.</p>
+                        <p>Option handling is now far more strict. Previously it was possible for a command to use an option that was not explicitly assigned to it. This was especially true for the <br-option>backup-host</br-option> and <br-option>db-host</br-option> options which are used to determine locality.</p>
                     </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
                     <release-item>
-                        <p>The <code>pg_xlogfile_name()</code> function is no longer used to construct WAL filenames from LSNs. While this function is convenient it is not available on a standby.  Instead, the archive is searched for the LSN in order to find the timeline.  If due to some misadventure the LSN appears on multiple timelines then an error will be thrown, whereas before this condition would have passed unnoticed.</p>
+                        <p>The <code>pg_xlogfile_name()</code> function is no longer used to construct WAL filenames from LSNs. While this function is convenient it is not available on a standby. Instead, the archive is searched for the LSN in order to find the timeline. If due to some misadventure the LSN appears on multiple timelines then an error will be thrown, whereas before this condition would have passed unnoticed.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Changed version variable to a constant.  It had originally been designed to play nice with a specific packaging tool but that tool was never used.</p>
+                        <p>Changed version variable to a constant. It had originally been designed to play nice with a specific packaging tool but that tool was never used.</p>
                     </release-item>
                 </release-development-list>
             </release-core-list>
@@ -10744,7 +10975,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Allow hidden options to be added to a command.  This allows certain commands (like <id>apt-get</id>) to be forced during the build without making that a part of the documentation.</p>
+                        <p>Allow hidden options to be added to a command. This allows certain commands (like <id>apt-get</id>) to be forced during the build without making that a part of the documentation.</p>
                     </release-item>
 
                     <release-item>
@@ -10772,11 +11003,11 @@
                     </release-item>
 
                     <release-item>
-                        <p>Major refactor of the test suite to make it more modular and object-oriented.  Multiple Docker containers can now be created for a single test to simulate more realistic environments.  Tests paths have been renamed for clarity.</p>
+                        <p>Major refactor of the test suite to make it more modular and object-oriented. Multiple Docker containers can now be created for a single test to simulate more realistic environments. Tests paths have been renamed for clarity.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Greatly reduced the quantity of Docker containers built by default.  Containers are only built for <postgres/> versions specified in <id>db-minimal</id> and those required to build documentation. Additional containers can be built with <br-option>--db-version=all</br-option> or by specifying a version, e.g. <br-option>--db-version=9.4</br-option>.</p>
+                        <p>Greatly reduced the quantity of Docker containers built by default. Containers are only built for <postgres/> versions specified in <id>db-minimal</id> and those required to build documentation. Additional containers can be built with <br-option>--db-version=all</br-option> or by specifying a version, e.g. <br-option>--db-version=9.4</br-option>.</p>
                     </release-item>
                 </release-development-list>
             </release-test-list>
@@ -10825,7 +11056,7 @@
 
                 <release-feature-list>
                     <release-item>
-                        <p>Release notes are now broken into sections so that bugs, features, and refactors are clearly delineated.  An <quote>Additional Notes</quote> section has been added for changes to documentation and the test suite that do not affect the core code.</p>
+                        <p>Release notes are now broken into sections so that bugs, features, and refactors are clearly delineated. An <quote>Additional Notes</quote> section has been added for changes to documentation and the test suite that do not affect the core code.</p>
                     </release-item>
 
                     <release-item>
@@ -10844,17 +11075,17 @@
                             <release-item-reviewer id="david.steele"/>
                         </release-item-contributor-list>
 
-                        <p>The change log was the last piece of documentation to be rendered in Markdown only.  Wrote a converter so the document can be output by the standard renderers.  The change log will now be located on the website and has been renamed to <quote>Releases</quote>.</p>
+                        <p>The change log was the last piece of documentation to be rendered in Markdown only. Wrote a converter so the document can be output by the standard renderers. The change log will now be located on the website and has been renamed to <quote>Releases</quote>.</p>
                     </release-item>
                 </release-feature-list>
 
                 <release-development-list>
                     <release-item>
-                        <p>Added an execution cache so that documentation can be generated without setting up the full container environment.  This is useful for packaging, keeps the documentation consistent for a release, and speeds up generation when no changes are made in the execution list.</p>
+                        <p>Added an execution cache so that documentation can be generated without setting up the full container environment. This is useful for packaging, keeps the documentation consistent for a release, and speeds up generation when no changes are made in the execution list.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Remove function constants and pass strings directly to logDebugParam().  The function names were only used once so creating constants for them was wasteful.</p>
+                        <p>Remove function constants and pass strings directly to logDebugParam(). The function names were only used once so creating constants for them was wasteful.</p>
                     </release-item>
 
                     <release-item>
@@ -10874,7 +11105,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Upgraded doc/test VM to Ubuntu 16.04.  This will help catch Perl errors in the doc code since it is not run across multiple distributions like the core and test code. It is also to be hoped that a newer kernel will make Docker more stable.</p>
+                        <p>Upgraded doc/test VM to Ubuntu 16.04. This will help catch Perl errors in the doc code since it is not run across multiple distributions like the core and test code. It is also to be hoped that a newer kernel will make Docker more stable.</p>
                     </release-item>
 
                     <release-item>
@@ -10906,7 +11137,7 @@
                             <release-item-reviewer id="stephen.frost"/>
                         </release-item-contributor-list>
 
-                        <p>Allow selective restore of databases from a cluster backup.  This feature can result in major space and time savings when only specific databases are restored.  Unrestored databases will not be accessible but must be manually dropped before they will be removed from the shared catalogue.</p>
+                        <p>Allow selective restore of databases from a cluster backup. This feature can result in major space and time savings when only specific databases are restored. Unrestored databases will not be accessible but must be manually dropped before they will be removed from the shared catalogue.</p>
                     </release-item>
 
                     <release-item>
@@ -10915,7 +11146,7 @@
                             <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
-                        <p>Experimental support for non-exclusive backups in <postgres/> 9.6 beta1.  Changes to the control/catalog/WAL versions in subsequent betas may break compatibility but <backrest/> will be updated with each release to keep pace.</p>
+                        <p>Experimental support for non-exclusive backups in <postgres/> 9.6 beta1. Changes to the control/catalog/WAL versions in subsequent betas may break compatibility but <backrest/> will be updated with each release to keep pace.</p>
                     </release-item>
                 </release-feature-list>
             </release-core-list>
@@ -10924,7 +11155,7 @@
         <release date="2016-04-14" version="1.00" title="New Repository Format and Configuration Scheme, Link Support">
             <release-core-list>
                 <text>
-                    <p><b>IMPORTANT NOTE</b>: This flag day release breaks compatibility with older versions of <backrest/>.  The manifest format, on-disk structure, configuration scheme, and the exe/path names have all changed.  You must create a new repository to hold backups for this version of <backrest/> and keep your older repository for a time in case you need to do a restore.  Restores from the prior repository will require the prior version of <backrest/> but because of name changes it is possible to have <id>1.00</id> and a prior version of <backrest/> installed at the same time.  See the notes below for more detailed information on what has changed.</p>
+                    <p><b>IMPORTANT NOTE</b>: This flag day release breaks compatibility with older versions of <backrest/>. The manifest format, on-disk structure, configuration scheme, and the exe/path names have all changed. You must create a new repository to hold backups for this version of <backrest/> and keep your older repository for a time in case you need to do a restore. Restores from the prior repository will require the prior version of <backrest/> but because of name changes it is possible to have <id>1.00</id> and a prior version of <backrest/> installed at the same time. See the notes below for more detailed information on what has changed.</p>
                 </text>
 
                 <release-feature-list>
@@ -10934,11 +11165,11 @@
                             <!-- <release-item-contributor id="david.steele"/> -->
                         </release-item-contributor-list>
 
-                        <p>Implemented a new configuration scheme which should be far simpler to use.  See the User Guide and Configuration Reference for details but for a simple configuration all options can now be placed in the <setting>stanza</setting> section. Options that are shared between stanzas can be placed in the <setting>[global]</setting> section.  More complex configurations can still make use of command sections though this should be a rare use case.</p>
+                        <p>Implemented a new configuration scheme which should be far simpler to use. See the User Guide and Configuration Reference for details but for a simple configuration all options can now be placed in the <setting>stanza</setting> section. Options that are shared between stanzas can be placed in the <setting>[global]</setting> section. More complex configurations can still make use of command sections though this should be a rare use case.</p>
                     </release-item>
 
                     <release-item>
-                        <p>The <setting>repo-path</setting> option now always refers to the repository where backups and archive are stored, whether local or remote, so the <setting>repo-remote-path</setting> option has been removed.  The new <setting>spool-path</setting> option can be used to define a location for queueing WAL segments when archiving asynchronously.  A local repository is no longer required.</p>
+                        <p>The <setting>repo-path</setting> option now always refers to the repository where backups and archive are stored, whether local or remote, so the <setting>repo-remote-path</setting> option has been removed. The new <setting>spool-path</setting> option can be used to define a location for queueing WAL segments when archiving asynchronously. A local repository is no longer required.</p>
                     </release-item>
 
                     <release-item>
@@ -10948,7 +11179,7 @@
                             <!-- <release-item-contributor id="david.steele"/> -->
                         </release-item-contributor-list>
 
-                        <p>The default configuration filename is now <file>pgbackrest.conf</file> instead of <file>pg_backrest.conf</file>.  This was done for consistency with other naming changes but also to prevent old config files from being loaded accidentally when migrating to <id>1.00</id>.</p>
+                        <p>The default configuration filename is now <file>pgbackrest.conf</file> instead of <file>pg_backrest.conf</file>. This was done for consistency with other naming changes but also to prevent old config files from being loaded accidentally when migrating to <id>1.00</id>.</p>
                     </release-item>
 
                     <release-item>
@@ -10966,7 +11197,7 @@
                             <release-item-contributor id="david.steele"/>
                         </release-item-contributor-list> -->
 
-                        <p>Lock files are now stored in <path>/tmp/pgbackrest</path> by default. These days <path>/run/pgbackrest</path> is the preferred location but that would require init scripts which are not part of this release.  The <setting>lock-path</setting> option can be used to configure the lock directory.</p>
+                        <p>Lock files are now stored in <path>/tmp/pgbackrest</path> by default. These days <path>/run/pgbackrest</path> is the preferred location but that would require init scripts which are not part of this release. The <setting>lock-path</setting> option can be used to configure the lock directory.</p>
                     </release-item>
 
                     <release-item>
@@ -10975,7 +11206,7 @@
                             <!-- <release-item-contributor id="david.steele"/> -->
                         </release-item-contributor-list>
 
-                        <p>Log files are now stored in <path>/var/log/pgbackrest</path> by default and no longer have the date appended so they can be managed with <id>logrotate</id>.  The <setting>log-path</setting> option can be used to configure the log directory.</p>
+                        <p>Log files are now stored in <path>/var/log/pgbackrest</path> by default and no longer have the date appended so they can be managed with <id>logrotate</id>. The <setting>log-path</setting> option can be used to configure the log directory.</p>
                     </release-item>
 
                     <release-item>
@@ -10989,7 +11220,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>All files and directories linked from PGDATA are now included in the backup.  By default links will be restored directly into PGDATA as files or directories.  The <setting>{[dash]}-link-all</setting> option can be used to restore all links to their original locations.  The <setting>{[dash]}-link-map</setting> option can be used to remap a link to a new location.</p>
+                        <p>All files and directories linked from PGDATA are now included in the backup. By default links will be restored directly into PGDATA as files or directories. The <setting>{[dash]}-link-all</setting> option can be used to restore all links to their original locations. The <setting>{[dash]}-link-map</setting> option can be used to remap a link to a new location.</p>
                     </release-item>
 
                     <release-item>
@@ -11011,7 +11242,7 @@
                             <release-item-ideator id="jan.wieck"/>
                         </release-item-contributor-list>
 
-                        <p>Fixed an issue where the master process was passing <setting>{[dash]}-repo-remote-path</setting> instead of <setting>{[dash]}-repo-path</setting> to the remote and causing the lock files to be created in the default repository directory (<path>/var/lib/backup</path>), generally ending in failure.  This was only an issue when <setting>{[dash]}-repo-remote-path</setting> was defined on the command line rather than in <file>pg_backrest.conf</file>.</p>
+                        <p>Fixed an issue where the master process was passing <setting>{[dash]}-repo-remote-path</setting> instead of <setting>{[dash]}-repo-path</setting> to the remote and causing the lock files to be created in the default repository directory (<path>/var/lib/backup</path>), generally ending in failure. This was only an issue when <setting>{[dash]}-repo-remote-path</setting> was defined on the command line rather than in <file>pg_backrest.conf</file>.</p>
                     </release-item>
                 </release-bug-list>
             </release-core-list>
@@ -11020,7 +11251,7 @@
         <release date="2016-03-22" version="0.91" title="Tablespace Bug Fix and Minor Enhancements">
             <release-core-list>
                 <text>
-                    <p><b>IMPORTANT BUG FIX FOR TABLESPACES</b>: A change to the repository format was accidentally introduced in 0.90 which means the on-disk backup was no longer a valid <postgres/> cluster when the backup contained tablespaces.  This only affected users who directly copied the backups to restore <postgres/> clusters rather than using the restore command.  However, the fix breaks compatibility with older backups that contain tablespaces no matter how they are being restored (<backrest/> will throw errors and refuse to restore).  New full backups should be taken immediately after installing version 0.91 for any clusters that contain tablespaces.  If older backups need to be restored then use a version of <backrest/> that matches the backup version.</p>
+                    <p><b>IMPORTANT BUG FIX FOR TABLESPACES</b>: A change to the repository format was accidentally introduced in 0.90 which means the on-disk backup was no longer a valid <postgres/> cluster when the backup contained tablespaces. This only affected users who directly copied the backups to restore <postgres/> clusters rather than using the restore command. However, the fix breaks compatibility with older backups that contain tablespaces no matter how they are being restored (<backrest/> will throw errors and refuse to restore). New full backups should be taken immediately after installing version 0.91 for any clusters that contain tablespaces. If older backups need to be restored then use a version of <backrest/> that matches the backup version.</p>
                 </text>
 
                 <release-bug-list>
@@ -11073,13 +11304,13 @@
                     </release-item>
 
                     <release-item>
-                        <p>The <setting>retention-archive</setting> option can now be be safely set to less than backup retention (<setting>retention-full</setting> or <setting>retention-diff</setting>) without also specifying <setting>archive-copy=n</setting>.  The WAL required to make the backups that fall outside of archive retention consistent will be preserved in the archive.  However, in this case PITR will not be possible for the backups that fall outside of archive retention.</p>
+                        <p>The <setting>retention-archive</setting> option can now be be safely set to less than backup retention (<setting>retention-full</setting> or <setting>retention-diff</setting>) without also specifying <setting>archive-copy=n</setting>. The WAL required to make the backups that fall outside of archive retention consistent will be preserved in the archive. However, in this case PITR will not be possible for the backups that fall outside of archive retention.</p>
                     </release-item>
                 </release-bug-list>
 
                 <release-feature-list>
                     <release-item>
-                        <p>When backing up and restoring tablespaces <backrest/> only operates on the subdirectory created for the version of <postgres/> being run against.  Since multiple versions can live in a tablespace (especially during a binary upgrade) this prevents too many files from being copied during a backup and other versions possibly being wiped out during a restore.  This only applies to <postgres/> >= 9.0 &amp;mdash; prior versions of <postgres/> could not share a tablespace directory.</p>
+                        <p>When backing up and restoring tablespaces <backrest/> only operates on the subdirectory created for the version of <postgres/> being run against. Since multiple versions can live in a tablespace (especially during a binary upgrade) this prevents too many files from being copied during a backup and other versions possibly being wiped out during a restore. This only applies to <postgres/> >= 9.0 &amp;mdash; prior versions of <postgres/> could not share a tablespace directory.</p>
                     </release-item>
 
                     <release-item>
@@ -11096,7 +11327,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Added checks for <setting>{[dash]}-delta</setting> and <setting>{[dash]}-force</setting> restore options to ensure that the destination is a valid $PGDATA directory.  <backrest/> will check for the presence of <file>PG_VERSION</file> or <file>backup.manifest</file> (left over from an aborted restore).  If neither file is found then <setting>{[dash]}-delta</setting> and <setting>{[dash]}-force</setting> will be disabled but the restore will proceed unless there are files in the $PGDATA directory (or any tablespace directories) in which case the operation will be aborted.</p>
+                        <p>Added checks for <setting>{[dash]}-delta</setting> and <setting>{[dash]}-force</setting> restore options to ensure that the destination is a valid $PGDATA directory. <backrest/> will check for the presence of <file>PG_VERSION</file> or <file>backup.manifest</file> (left over from an aborted restore). If neither file is found then <setting>{[dash]}-delta</setting> and <setting>{[dash]}-force</setting> will be disabled but the restore will proceed unless there are files in the $PGDATA directory (or any tablespace directories) in which case the operation will be aborted.</p>
                     </release-item>
 
                     <release-item>
@@ -11124,7 +11355,7 @@
                             <release-item-ideator id="john.harvey"/>
                         </release-item-contributor-list>
 
-                        <p>Fixed an issue where document generation failed because some OSs are not tolerant of having multiple installed versions of <postgres/>.  A separate VM is now created for each version.  Also added a sleep after database starts during document generation to ensure the database is running before the next command runs.</p>
+                        <p>Fixed an issue where document generation failed because some OSs are not tolerant of having multiple installed versions of <postgres/>. A separate VM is now created for each version. Also added a sleep after database starts during document generation to ensure the database is running before the next command runs.</p>
                     </release-item>
                 </release-development-list>
             </release-doc-list>
@@ -11138,13 +11369,13 @@
                             <release-item-ideator id="stephen.frost"/>
                         </release-item-contributor-list>
 
-                        <p>Fixed an issue where longer-running backups/restores would timeout when remote and threaded.  Keepalives are now used to make sure the remote for the main process does not timeout while the thread remotes do all the work.  The error message for timeouts was also improved to make debugging easier.</p>
+                        <p>Fixed an issue where longer-running backups/restores would timeout when remote and threaded. Keepalives are now used to make sure the remote for the main process does not timeout while the thread remotes do all the work. The error message for timeouts was also improved to make debugging easier.</p>
                     </release-item>
                 </release-bug-list>
 
                 <release-feature-list>
                     <release-item>
-                        <p>Allow restores to be performed on a read-only repository by using <setting>{[dash]}-no-lock</setting> and <setting>{[dash]}-log-level-file=off</setting>.  The <setting>{[dash]}-no-lock</setting> option can only be used with restores.</p>
+                        <p>Allow restores to be performed on a read-only repository by using <setting>{[dash]}-no-lock</setting> and <setting>{[dash]}-log-level-file=off</setting>. The <setting>{[dash]}-no-lock</setting> option can only be used with restores.</p>
                     </release-item>
                 </release-feature-list>
             </release-core-list>
@@ -11160,7 +11391,7 @@
             <release-test-list>
                 <release-development-list>
                     <release-item>
-                        <p>The dev branch has been renamed to master and for the time being the master branch has renamed to release, though it will probably be removed at some point {[dash]}- thus ends the gitflow experiment for <backrest/>.  It is recommended that any forks get re-forked and clones get re-cloned.</p>
+                        <p>The dev branch has been renamed to master and for the time being the master branch has renamed to release, though it will probably be removed at some point {[dash]}- thus ends the gitflow experiment for <backrest/>. It is recommended that any forks get re-forked and clones get re-cloned.</p>
                     </release-item>
                 </release-development-list>
             </release-test-list>
@@ -11197,11 +11428,11 @@
                             <release-item-ideator id="stephen.frost"/>
                         </release-item-contributor-list>
 
-                        <p>Symlinks are no longer created in backup directories in the repository.  These symlinks could point virtually anywhere and potentially be dangerous.  Symlinks are still recreated during a restore.</p>
+                        <p>Symlinks are no longer created in backup directories in the repository. These symlinks could point virtually anywhere and potentially be dangerous. Symlinks are still recreated during a restore.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Added better messaging for backup expiration.  Full and differential backup expirations are logged on a single line along with a list of all dependent backups expired.</p>
+                        <p>Added better messaging for backup expiration. Full and differential backup expirations are logged on a single line along with a list of all dependent backups expired.</p>
                     </release-item>
 
                     <release-item>
@@ -11240,7 +11471,7 @@
                             <release-item-reviewer id="dmitry.didovicher"/>
                         </release-item-contributor-list>
 
-                        <p>Added a new user guide that covers <backrest/> basics and some advanced topics including PITR.  Much more to come, but it's a start.</p>
+                        <p>Added a new user guide that covers <backrest/> basics and some advanced topics including PITR. Much more to come, but it's a start.</p>
                     </release-item>
                 </release-feature-list>
 
@@ -11260,7 +11491,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Fixed an issue where a resume would fail if temp files were left in the root backup directory when the backup failed.  This scenario was likely if the backup process got terminated during the copy phase.</p>
+                        <p>Fixed an issue where a resume would fail if temp files were left in the root backup directory when the backup failed. This scenario was likely if the backup process got terminated during the copy phase.</p>
                     </release-item>
                 </release-bug-list>
 
@@ -11270,7 +11501,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Experimental support for <postgres/> 9.5 beta1.  This may break when the control version or WAL magic changes in future versions but will be updated in each <backrest/> release to keep pace.  All regression tests pass except for <setting>{[dash]}-target-resume</setting> tests (this functionality has changed in 9.5) and there is no testing yet for <file>.partial</file> WAL segments.</p>
+                        <p>Experimental support for <postgres/> 9.5 beta1. This may break when the control version or WAL magic changes in future versions but will be updated in each <backrest/> release to keep pace. All regression tests pass except for <setting>{[dash]}-target-resume</setting> tests (this functionality has changed in 9.5) and there is no testing yet for <file>.partial</file> WAL segments.</p>
                     </release-item>
                 </release-feature-list>
 
@@ -11324,7 +11555,7 @@
 
                 <release-feature-list>
                     <release-item>
-                        <p>Experimental support for <postgres/> 9.5 alpha2.  This may break when the control version or WAL magic changes in future versions but will be updated in each <backrest/> release to keep pace.  All regression tests pass except for <setting>{[dash]}-target-resume</setting> tests (this functionality has changed in 9.5) and there is no testing yet for <file>.partial</file> WAL segments.</p>
+                        <p>Experimental support for <postgres/> 9.5 alpha2. This may break when the control version or WAL magic changes in future versions but will be updated in each <backrest/> release to keep pace. All regression tests pass except for <setting>{[dash]}-target-resume</setting> tests (this functionality has changed in 9.5) and there is no testing yet for <file>.partial</file> WAL segments.</p>
                     </release-item>
                 </release-feature-list>
 
@@ -11356,7 +11587,7 @@
             <release-test-list>
                 <release-development-list>
                     <release-item>
-                        <p>Expiration tests are now synthetic rather than based on actual backups.  This will allow development of more advanced expiration features.</p>
+                        <p>Expiration tests are now synthetic rather than based on actual backups. This will allow development of more advanced expiration features.</p>
                     </release-item>
                 </release-development-list>
             </release-test-list>
@@ -11370,7 +11601,7 @@
                             <release-item-ideator id="michael.renner"/>
                         </release-item-contributor-list>
 
-                        <p>Fixed an issue that caused the formatted timestamp for both the oldest and newest backups to be reported as the current time by the <cmd>info</cmd> command.  Only <id>text</id> output was affected {[dash]}- <id>json</id> output reported the correct epoch values.</p>
+                        <p>Fixed an issue that caused the formatted timestamp for both the oldest and newest backups to be reported as the current time by the <cmd>info</cmd> command. Only <id>text</id> output was affected {[dash]}- <id>json</id> output reported the correct epoch values.</p>
                     </release-item>
 
                     <release-item>
@@ -11384,7 +11615,7 @@
                             <release-item-ideator id="cynthia.shang"/>
                         </release-item-contributor-list>
 
-                        <p>The repository is now created and updated with consistent directory and file modes.  By default <id>umask</id> is set to <id>0000</id> but this can be disabled with the <setting>neutral-umask</setting> setting.</p>
+                        <p>The repository is now created and updated with consistent directory and file modes. By default <id>umask</id> is set to <id>0000</id> but this can be disabled with the <setting>neutral-umask</setting> setting.</p>
                     </release-item>
 
                     <release-item>
@@ -11396,21 +11627,21 @@
                     </release-item>
 
                     <release-item>
-                        <p>Remove <file>pg_control</file> file at the beginning of the restore and copy it back at the very end.  This prevents the possibility that a partial restore can be started by <postgres/>.</p>
+                        <p>Remove <file>pg_control</file> file at the beginning of the restore and copy it back at the very end. This prevents the possibility that a partial restore can be started by <postgres/>.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Added checks to be sure the <setting>db-path</setting> setting is consistent with <setting>db-port</setting> by comparing the <setting>data_directory</setting> as reported by the cluster against the <setting>db-path</setting> setting and the version as reported by the cluster against the value read from <file>pg_control</file>.  The <setting>db-socket-path</setting> setting is checked to be sure it is an absolute path.</p>
+                        <p>Added checks to be sure the <setting>db-path</setting> setting is consistent with <setting>db-port</setting> by comparing the <setting>data_directory</setting> as reported by the cluster against the <setting>db-path</setting> setting and the version as reported by the cluster against the value read from <file>pg_control</file>. The <setting>db-socket-path</setting> setting is checked to be sure it is an absolute path.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Experimental support for <postgres/> 9.5 alpha1.  This may break when the control version or WAL magic changes in future versions but will be updated in each <backrest/> release to keep pace.  All regression tests pass except for <setting>{[dash]}-target-resume</setting> tests (this functionality has changed in 9.5) and there is no testing yet for <file>.partial</file> WAL segments.</p>
+                        <p>Experimental support for <postgres/> 9.5 alpha1. This may break when the control version or WAL magic changes in future versions but will be updated in each <backrest/> release to keep pace. All regression tests pass except for <setting>{[dash]}-target-resume</setting> tests (this functionality has changed in 9.5) and there is no testing yet for <file>.partial</file> WAL segments.</p>
                     </release-item>
                 </release-feature-list>
 
                 <release-improvement-list>
                     <release-item>
-                        <p>Now using Perl <code>DBI</code> and <code>DBD::Pg</code> for connections to <postgres/> rather than <cmd>psql</cmd>.  The <setting>cmd-psql</setting> and <setting>cmd-psql-option</setting> settings have been removed and replaced with <setting>db-port</setting> and <setting>db-socket-path</setting>.  Follow the instructions in the Installation Guide to install <code>DBD::Pg</code> on your operating system.</p>
+                        <p>Now using Perl <code>DBI</code> and <code>DBD::Pg</code> for connections to <postgres/> rather than <cmd>psql</cmd>. The <setting>cmd-psql</setting> and <setting>cmd-psql-option</setting> settings have been removed and replaced with <setting>db-port</setting> and <setting>db-socket-path</setting>. Follow the instructions in the Installation Guide to install <code>DBD::Pg</code> on your operating system.</p>
                     </release-item>
                 </release-improvement-list>
 
@@ -11424,7 +11655,7 @@
             <release-doc-list>
                 <release-development-list>
                     <release-item>
-                        <p>Split most of <file>README.md</file> out into <file>USERGUIDE.md</file> and <file>CHANGELOG.md</file> because it was becoming unwieldy.  Changed most references to <quote>database</quote> in the user guide to <quote>database cluster</quote> for clarity.</p>
+                        <p>Split most of <file>README.md</file> out into <file>USERGUIDE.md</file> and <file>CHANGELOG.md</file> because it was becoming unwieldy. Changed most references to <quote>database</quote> in the user guide to <quote>database cluster</quote> for clarity.</p>
                     </release-item>
 
                     <release-item>
@@ -11446,10 +11677,10 @@
             <release-core-list>
                 <release-improvement-list>
                     <release-item>
-                        <p>Removed dependency on CPAN packages for multi-threaded operation.  While it might not be a bad idea to update the <code>threads</code> and <code>Thread::Queue</code> packages, it is no longer necessary.</p>
+                        <p>Removed dependency on CPAN packages for multi-threaded operation. While it might not be a bad idea to update the <code>threads</code> and <code>Thread::Queue</code> packages, it is no longer necessary.</p>
                     </release-item>
                     <release-item>
-                        <p>Modified wait backoff to use a Fibonacci rather than geometric sequence.  This will make wait time grow less aggressively while still giving reasonable values.</p>
+                        <p>Modified wait backoff to use a Fibonacci rather than geometric sequence. This will make wait time grow less aggressively while still giving reasonable values.</p>
                     </release-item>
                 </release-improvement-list>
             </release-core-list>
@@ -11520,7 +11751,7 @@
         <release date="2015-06-14" version="0.75" title="New Repository Format, Info Command and Experimental 9.5 Support">
             <release-core-list>
                 <text>
-                    <p><b>IMPORTANT NOTE</b>: This flag day release breaks compatibility with older versions of <backrest/>.  The manifest format, on-disk structure, and the binary names have all changed.  You must create a new repository to hold backups for this version of <backrest/> and keep your older repository for a time in case you need to do a restore.  The <file>pg_backrest.conf</file> file has not changed but you'll need to change any references to <file>pg_backrest.pl</file> in cron (or elsewhere) to <file>pg_backrest</file> (without the <file>.pl</file> extension).</p>
+                    <p><b>IMPORTANT NOTE</b>: This flag day release breaks compatibility with older versions of <backrest/>. The manifest format, on-disk structure, and the binary names have all changed. You must create a new repository to hold backups for this version of <backrest/> and keep your older repository for a time in case you need to do a restore. The <file>pg_backrest.conf</file> file has not changed but you'll need to change any references to <file>pg_backrest.pl</file> in cron (or elsewhere) to <file>pg_backrest</file> (without the <file>.pl</file> extension).</p>
                 </text>
 
                 <release-feature-list>
@@ -11533,17 +11764,17 @@
                             <release-item-ideator id="michael.renner"/>
                         </release-item-contributor-list>
 
-                        <p>Logging now uses unbuffered output.  This should make log files that are being written by multiple threads less chaotic.</p>
+                        <p>Logging now uses unbuffered output. This should make log files that are being written by multiple threads less chaotic.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Experimental support for <postgres/> 9.5.  This may break when the control version or WAL magic changes but will be updated in each release.</p>
+                        <p>Experimental support for <postgres/> 9.5. This may break when the control version or WAL magic changes but will be updated in each release.</p>
                     </release-item>
                 </release-feature-list>
 
                 <release-improvement-list>
                     <release-item>
-                        <p>More efficient file ordering for <cmd>backup</cmd>.  Files are copied in descending size order so a single thread does not end up copying a large file at the end.  This had already been implemented for <cmd>restore</cmd>.</p>
+                        <p>More efficient file ordering for <cmd>backup</cmd>. Files are copied in descending size order so a single thread does not end up copying a large file at the end. This had already been implemented for <cmd>restore</cmd>.</p>
                     </release-item>
                 </release-improvement-list>
             </release-core-list>
@@ -11557,7 +11788,7 @@
                             <release-item-ideator id="michael.renner"/>
                         </release-item-contributor-list>
 
-                        <p>Fixed an issue where <cmd>archive-copy</cmd> would fail on an incr/diff backup when <setting>hardlink=n</setting>.  In this case the <path>pg_xlog</path> path does not already exist and must be created.</p>
+                        <p>Fixed an issue where <cmd>archive-copy</cmd> would fail on an incr/diff backup when <setting>hardlink=n</setting>. In this case the <path>pg_xlog</path> path does not already exist and must be created.</p>
                     </release-item>
 
                     <release-item>
@@ -11565,7 +11796,7 @@
                             <release-item-ideator id="michael.renner"/>
                         </release-item-contributor-list>
 
-                        <p>Fixed an issue in async archiving where <cmd>archive-push</cmd> was not properly returning 0 when <setting>archive-max-mb</setting> was reached and moved the async check after transfer to avoid having to remove the stop file twice.  Also added unit tests for this case and improved error messages to make it clearer to the user what went wrong.</p>
+                        <p>Fixed an issue in async archiving where <cmd>archive-push</cmd> was not properly returning 0 when <setting>archive-max-mb</setting> was reached and moved the async check after transfer to avoid having to remove the stop file twice. Also added unit tests for this case and improved error messages to make it clearer to the user what went wrong.</p>
                     </release-item>
 
                     <release-item>
@@ -11573,13 +11804,13 @@
                             <release-item-ideator id="michael.renner"/>
                         </release-item-contributor-list>
 
-                        <p>Fixed a locking issue that could allow multiple operations of the same type against a single stanza.  This appeared to be benign in terms of data integrity but caused spurious errors while archiving and could lead to errors in backup/restore.</p>
+                        <p>Fixed a locking issue that could allow multiple operations of the same type against a single stanza. This appeared to be benign in terms of data integrity but caused spurious errors while archiving and could lead to errors in backup/restore.</p>
                     </release-item>
                 </release-bug-list>
 
                 <release-feature-list>
                     <release-item>
-                        <p>Allow duplicate WAL segments to be archived when the checksum matches.  This is necessary for some recovery scenarios.</p>
+                        <p>Allow duplicate WAL segments to be archived when the checksum matches. This is necessary for some recovery scenarios.</p>
                     </release-item>
 
                     <release-item>
@@ -11639,19 +11870,19 @@
 
                 <release-feature-list>
                     <release-item>
-                        <p>Better resume support.  Resumed files are checked to be sure they have not been modified and the manifest is saved more often to preserve checksums as the backup progresses.  More unit tests to verify each resume case.</p>
+                        <p>Better resume support. Resumed files are checked to be sure they have not been modified and the manifest is saved more often to preserve checksums as the backup progresses. More unit tests to verify each resume case.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Resume is now optional.  Use the <setting>resume</setting> setting or <setting>{[dash]}-no-resume</setting> from the command line to disable.</p>
+                        <p>Resume is now optional. Use the <setting>resume</setting> setting or <setting>{[dash]}-no-resume</setting> from the command line to disable.</p>
                     </release-item>
 
                     <release-item>
-                        <p>More info messages during restore.  Previously, most of the restore messages were debug level so not a lot was output in the log.</p>
+                        <p>More info messages during restore. Previously, most of the restore messages were debug level so not a lot was output in the log.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Added <setting>tablespace</setting> setting to allow tablespaces to be restored into the <path>pg_tblspc</path> path.  This produces compact restores that are convenient for development, staging, etc.  Currently these restores cannot be backed up as <backrest/> expects only links in the <path>pg_tblspc</path> path.</p>
+                        <p>Added <setting>tablespace</setting> setting to allow tablespaces to be restored into the <path>pg_tblspc</path> path. This produces compact restores that are convenient for development, staging, etc. Currently these restores cannot be backed up as <backrest/> expects only links in the <path>pg_tblspc</path> path.</p>
                     </release-item>
                 </release-feature-list>
             </release-core-list>
@@ -11661,7 +11892,7 @@
             <release-core-list>
                 <release-bug-list>
                     <release-item>
-                        <p>Fixed a buffering error that could occur on large, highly-compressible files when copying to an uncompressed remote destination.  The error was detected in the decompression code and resulted in a failed backup rather than corruption so it should not affect successful backups made with previous versions.</p>
+                        <p>Fixed a buffering error that could occur on large, highly-compressible files when copying to an uncompressed remote destination. The error was detected in the decompression code and resulted in a failed backup rather than corruption so it should not affect successful backups made with previous versions.</p>
                     </release-item>
                 </release-bug-list>
             </release-core-list>
@@ -11671,13 +11902,13 @@
             <release-core-list>
                 <release-bug-list>
                     <release-item>
-                        <p>Pushing duplicate WAL now generates an error.  This worked before only if checksums were disabled.</p>
+                        <p>Pushing duplicate WAL now generates an error. This worked before only if checksums were disabled.</p>
                     </release-item>
                 </release-bug-list>
 
                 <release-feature-list>
                     <release-item>
-                        <p>Database System IDs are used to make sure that all WAL in an archive matches up.  This should help prevent misconfigurations that send WAL from multiple clusters to the same archive.</p>
+                        <p>Database System IDs are used to make sure that all WAL in an archive matches up. This should help prevent misconfigurations that send WAL from multiple clusters to the same archive.</p>
                     </release-item>
                 </release-feature-list>
 
@@ -11701,7 +11932,7 @@
             <release-core-list>
                 <release-bug-list>
                     <release-item>
-                        <p>Fixed broken checksums and now they work with normal and resumed backups.  Finally realized that checksums and checksum deltas should be functionally separated and this simplified a number of things.  Issue #28 has been created for checksum deltas.</p>
+                        <p>Fixed broken checksums and now they work with normal and resumed backups. Finally realized that checksums and checksum deltas should be functionally separated and this simplified a number of things. Issue #28 has been created for checksum deltas.</p>
                     </release-item>
 
                     <release-item>
@@ -11719,11 +11950,11 @@
                     </release-item>
 
                     <release-item>
-                        <p>De/compression is now performed without threads and checksum/size is calculated in stream.  That means file checksums are no longer optional.</p>
+                        <p>De/compression is now performed without threads and checksum/size is calculated in stream. That means file checksums are no longer optional.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Added option <setting>{[dash]}-no-start-stop</setting> to allow backups when Postgres is shut down.  If <file>postmaster.pid</file> is present then <setting>{[dash]}-force</setting> is required to make the backup run (though if Postgres is running an inconsistent backup will likely be created).  This option was added primarily for the purpose of unit testing, but there may be applications in the real world as well.</p>
+                        <p>Added option <setting>{[dash]}-no-start-stop</setting> to allow backups when Postgres is shut down. If <file>postmaster.pid</file> is present then <setting>{[dash]}-force</setting> is required to make the backup run (though if Postgres is running an inconsistent backup will likely be created). This option was added primarily for the purpose of unit testing, but there may be applications in the real world as well.</p>
                     </release-item>
 
                     <release-item>
@@ -11731,13 +11962,13 @@
                     </release-item>
 
                     <release-item>
-                        <p>Link <path>latest</path> always points to the last backup.  This has been added for convenience and to make restores simpler.</p>
+                        <p>Link <path>latest</path> always points to the last backup. This has been added for convenience and to make restores simpler.</p>
                     </release-item>
                 </release-feature-list>
 
                 <release-development-list>
                     <release-item>
-                        <p>Removed dependency on <code>Moose</code>.  It wasn't being used extensively and makes for longer startup times.</p>
+                        <p>Removed dependency on <code>Moose</code>. It wasn't being used extensively and makes for longer startup times.</p>
                     </release-item>
                 </release-development-list>
             </release-core-list>
@@ -11755,7 +11986,7 @@
             <release-core-list>
                 <release-development-list>
                     <release-item>
-                        <p>Complete rewrite of <code>BackRest::File</code> module to use a custom protocol for remote operations and Perl native GZIP and SHA operations.  Compression is performed in threads rather than forked processes.</p>
+                        <p>Complete rewrite of <code>BackRest::File</code> module to use a custom protocol for remote operations and Perl native GZIP and SHA operations. Compression is performed in threads rather than forked processes.</p>
                     </release-item>
 
                     <release-item>
@@ -11779,7 +12010,7 @@
             <release-test-list>
                 <release-feature-list>
                     <release-item>
-                        <p>Fairly comprehensive unit tests for all the basic operations.  More work to be done here for sure, but then there is always more work to be done on unit tests.</p>
+                        <p>Fairly comprehensive unit tests for all the basic operations. More work to be done here for sure, but then there is always more work to be done on unit tests.</p>
                     </release-item>
                 </release-feature-list>
             </release-test-list>
@@ -11789,13 +12020,13 @@
             <release-core-list>
                 <release-bug-list>
                     <release-item>
-                        <p>Found and squashed a nasty bug where <code>file_copy()</code> was defaulted to ignore errors.  There was also an issue in <code>file_exists()</code> that was causing the test to fail when the file actually did exist.  Together they could have resulted in a corrupt backup with no errors, though it is very unlikely.</p>
+                        <p>Found and squashed a nasty bug where <code>file_copy()</code> was defaulted to ignore errors. There was also an issue in <code>file_exists()</code> that was causing the test to fail when the file actually did exist. Together they could have resulted in a corrupt backup with no errors, though it is very unlikely.</p>
                     </release-item>
                 </release-bug-list>
 
                 <release-development-list>
                     <release-item>
-                        <p>Worked on improving error handling in the <code>File</code> object.  This is not complete, but works well enough to find a few errors that have been causing us problems (notably, find is occasionally failing building the archive async manifest when system is under load).</p>
+                        <p>Worked on improving error handling in the <code>File</code> object. This is not complete, but works well enough to find a few errors that have been causing us problems (notably, find is occasionally failing building the archive async manifest when system is under load).</p>
                     </release-item>
                 </release-development-list>
             </release-core-list>
@@ -11819,7 +12050,7 @@
             <release-core-list>
                 <release-bug-list>
                     <release-item>
-                        <p>If an archive directory which should be empty could not be deleted backrest was throwing an error.  There's a good fix for that coming, but for the time being it has been changed to a warning so processing can continue.  This was impacting backups as sometimes the final archive file would not get pushed if the first archive file had been in a different directory (plus some bad luck).</p>
+                        <p>If an archive directory which should be empty could not be deleted backrest was throwing an error. There's a good fix for that coming, but for the time being it has been changed to a warning so processing can continue. This was impacting backups as sometimes the final archive file would not get pushed if the first archive file had been in a different directory (plus some bad luck).</p>
                     </release-item>
                 </release-bug-list>
             </release-core-list>
@@ -11829,7 +12060,7 @@
             <release-core-list>
                 <release-bug-list>
                     <release-item>
-                        <p>Added <setting>RequestTTY=yes</setting> to ssh sessions.  Hoping this will prevent random lockups.</p>
+                        <p>Added <setting>RequestTTY=yes</setting> to ssh sessions. Hoping this will prevent random lockups.</p>
                     </release-item>
                 </release-bug-list>
             </release-core-list>
@@ -11857,11 +12088,11 @@
                             <release-item-ideator id="stephen.frost"/>
                         </release-item-contributor-list>
 
-                        <p>Removed <setting>master_stderr_discard</setting> option on database SSH connections.  There have been occasional lockups and they could be related to issues originally seen in the file code.</p>
+                        <p>Removed <setting>master_stderr_discard</setting> option on database SSH connections. There have been occasional lockups and they could be related to issues originally seen in the file code.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Changed lock file conflicts on <cmd>backup</cmd> and <cmd>expire</cmd> commands to <id>ERROR</id>.  They were set to <id>DEBUG</id> due to a copy-and-paste from the archive locks.</p>
+                        <p>Changed lock file conflicts on <cmd>backup</cmd> and <cmd>expire</cmd> commands to <id>ERROR</id>. They were set to <id>DEBUG</id> due to a copy-and-paste from the archive locks.</p>
                     </release-item>
                 </release-bug-list>
             </release-core-list>
@@ -11871,23 +12102,23 @@
             <release-core-list>
                 <release-feature-list>
                     <release-item>
-                        <p>No restore functionality, but the backup directories are consistent <postgres/> data directories.  You'll need to either uncompress the files or turn off compression in the backup.  Uncompressed backups on a ZFS (or similar) filesystem are a good option because backups can be restored locally via a snapshot to create logical backups or do spot data recovery.</p>
+                        <p>No restore functionality, but the backup directories are consistent <postgres/> data directories. You'll need to either uncompress the files or turn off compression in the backup. Uncompressed backups on a ZFS (or similar) filesystem are a good option because backups can be restored locally via a snapshot to create logical backups or do spot data recovery.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Archiving is single-threaded.  This has not posed an issue on our multi-terabyte databases with heavy write volume.  Recommend a large WAL volume or to use the async option with a large volume nearby.</p>
+                        <p>Archiving is single-threaded. This has not posed an issue on our multi-terabyte databases with heavy write volume. Recommend a large WAL volume or to use the async option with a large volume nearby.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Backups are multi-threaded, but the <code>Net::OpenSSH</code> library does not appear to be 100% thread-safe so it will very occasionally lock up on a thread.  There is an overall process timeout that resolves this issue by killing the process.  Yes, very ugly.</p>
+                        <p>Backups are multi-threaded, but the <code>Net::OpenSSH</code> library does not appear to be 100% thread-safe so it will very occasionally lock up on a thread. There is an overall process timeout that resolves this issue by killing the process. Yes, very ugly.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Checksums are lost on any resumed backup. Only the final backup will record checksum on multiple resumes.  Checksums from previous backups are correctly recorded and a full backup will reset everything.</p>
+                        <p>Checksums are lost on any resumed backup. Only the final backup will record checksum on multiple resumes. Checksums from previous backups are correctly recorded and a full backup will reset everything.</p>
                     </release-item>
 
                     <release-item>
-                        <p>The <file>backup.manifest</file> is being written as <code>Storable</code> because <code>Config::IniFile</code> does not seem to handle large files well.  Would definitely like to save these as human-readable text.</p>
+                        <p>The <file>backup.manifest</file> is being written as <code>Storable</code> because <code>Config::IniFile</code> does not seem to handle large files well. Would definitely like to save these as human-readable text.</p>
                     </release-item>
                 </release-feature-list>
             </release-core-list>
@@ -11895,7 +12126,7 @@
             <release-doc-list>
                 <release-feature-list>
                     <release-item>
-                        <p>Absolutely no documentation (outside the code).  Well, excepting these release notes.</p>
+                        <p>Absolutely no documentation (outside the code). Well, excepting these release notes.</p>
                     </release-item>
                 </release-feature-list>
             </release-doc-list>
@@ -12201,6 +12432,11 @@
         <contributor id="douglas.j.hunley">
             <contributor-name-display>Douglas J Hunley</contributor-name-display>
             <contributor-id type="github">hunleyd</contributor-id>
+        </contributor>
+
+        <contributor id="dr-kd">
+            <contributor-name-display>dr-kd</contributor-name-display>
+            <contributor-id type="github">dr-kd</contributor-id>
         </contributor>
 
         <contributor id="efremov.egor">
@@ -12550,6 +12786,11 @@
             <contributor-id type="github">m-borger</contributor-id>
         </contributor>
 
+        <contributor id="marcelo.henrique.neppel">
+            <contributor-name-display>Marcelo Henrique Neppel</contributor-name-display>
+            <contributor-id type="github">marceloneppel</contributor-id>
+        </contributor>
+
         <contributor id="marco.montagna">
             <contributor-name-display>Marco Montagna</contributor-name-display>
             <contributor-id type="github">mmontagna</contributor-id>
@@ -12783,6 +13024,11 @@
         <contributor id="stephen.frost">
             <contributor-name-display>Stephen Frost</contributor-name-display>
             <contributor-id type="github">sfrost</contributor-id>
+        </contributor>
+
+        <contributor id="t.anastacio">
+            <contributor-name-display>T.Anastacio</contributor-name-display>
+            <contributor-id type="github">Tiago-Anastacio</contributor-id>
         </contributor>
 
         <contributor id="tim.garton">

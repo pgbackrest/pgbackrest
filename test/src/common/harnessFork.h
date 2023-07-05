@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Harness for Testing Using Fork
 
-Sometimes it is useful to use a child process for testing.  This can be to test interaction with another process or to avoid
+Sometimes it is useful to use a child process for testing. This can be to test interaction with another process or to avoid
 polluting memory in the main process with something that can't easily be undone.
 
 The general form of the fork harness is:
@@ -144,7 +144,7 @@ Get/put notify messages. These macros allow the parent and child process to sync
 #endif
 
 /***********************************************************************************************************************************
-At the end of the HRN_FORK block the parent will wait for the child to exit.  By default an exit code of 0 is expected but that can
+At the end of the HRN_FORK block the parent will wait for the child to exit. By default an exit code of 0 is expected but that can
 be modified when the child begins.
 ***********************************************************************************************************************************/
 #define HRN_FORK_CHILD_EXPECTED_EXIT_STATUS(processIdx)                                                                            \

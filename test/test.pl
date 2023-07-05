@@ -589,6 +589,7 @@ eval
             "ninja -C ${strBuildPath} src/build-code test/src/test-pgbackrest" .
             ($bMinGen ? '' : " && \\\n${strBuildPath}/src/build-code config ${strBackRestBase}/src") .
             ($bMinGen ? '' : " && \\\n${strBuildPath}/src/build-code error ${strBackRestBase}/src") .
+            ($bMinGen ? '' : " && \\\n${strBuildPath}/src/build-code postgres-version ${strBackRestBase}/src") .
             " && \\\n${strBuildPath}/src/build-code postgres ${strBackRestBase}/src ${strRepoCachePath}";
 
         if (!-e $strBuildNinja)
@@ -1049,7 +1050,7 @@ eval
 
         &log(INFO, @{$oyTestRun} . ' test' . (@{$oyTestRun} > 1 ? 's': '') . " selected\n");
 
-        # Don't allow --no-cleanup when more than one test will run.  How would the prior results be preserved?
+        # Don't allow --no-cleanup when more than one test will run. How would the prior results be preserved?
         if ($bNoCleanup && @{$oyTestRun} > 1)
         {
             confess &log(ERROR, '--no-cleanup is not valid when more than one test will run')
@@ -1061,7 +1062,7 @@ eval
             $strLogLevelTestFile = lc(OFF);
         }
 
-        # Don't allow --no-cleanup when more than one test will run.  How would the prior results be preserved?
+        # Don't allow --no-cleanup when more than one test will run. How would the prior results be preserved?
 
         # Only use one vm for dry run so results are printed in order
         if ($bDryRun)
@@ -1113,7 +1114,7 @@ eval
                     }
                 }
 
-                # Only wait when all VMs are running or all tests have been assigned.  Otherwise, there is something to do.
+                # Only wait when all VMs are running or all tests have been assigned. Otherwise, there is something to do.
                 if ($iVmTotal == $iVmMax || $iTestIdx == @{$oyTestRun})
                 {
                     waitHiRes(.05);

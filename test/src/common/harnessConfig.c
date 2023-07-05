@@ -17,6 +17,7 @@ Harness for Loading Test Configurations
 
 #include "common/harnessConfig.h"
 #include "common/harnessDebug.h"
+#include "common/harnessLock.h"
 #include "common/harnessLog.h"
 #include "common/harnessStorageHelper.h"
 #include "common/harnessTest.h"
@@ -42,6 +43,10 @@ hrnCfgLoad(ConfigCommand commandId, const StringList *argListParam, const HrnCfg
     // Add standard options needed in most cases
     if (!param.noStd)
     {
+        // Enable beta features
+        if (cfgParseOptionValid(commandId, param.role, cfgOptBeta))
+            strLstInsert(argList, 0, STRDEF("--" CFGOPT_BETA));
+
         // Set job retry to 0 if it is valid
         if (cfgParseOptionValid(commandId, param.role, cfgOptJobRetry))
             strLstInsert(argList, 0, strNewFmt("--" CFGOPT_JOB_RETRY "=%u", param.jobRetry));
@@ -77,7 +82,7 @@ hrnCfgLoad(ConfigCommand commandId, const StringList *argListParam, const HrnCfg
     hrnStorageHelperFree();
 
     // Parse config
-    configParse(storageLocal(), strLstSize(argList), strLstPtr(argList), false);
+    cfgParseP(storageLocal(), strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true);
 
     // Set dry-run mode for storage and logging
     harnessLogDryRunSet(cfgOptionValid(cfgOptDryRun) && cfgOptionBool(cfgOptDryRun));
@@ -94,6 +99,11 @@ hrnCfgLoad(ConfigCommand commandId, const StringList *argListParam, const HrnCfg
     // Use a static exec-id for testing if it is not set explicitly
     if (cfgOptionValid(cfgOptExecId) && !cfgOptionTest(cfgOptExecId))
         cfgOptionSet(cfgOptExecId, cfgSourceParam, VARSTRDEF("1-test"));
+
+    if (cfgOptionTest(cfgOptExecId) && cfgOptionTest(cfgOptLockPath) && cfgOptionTest(cfgOptStanza))
+        lockInit(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptExecId), cfgOptionStr(cfgOptStanza), cfgLockType());
+    else
+        hrnLockUnInit();
 
     FUNCTION_HARNESS_RETURN_VOID();
 }

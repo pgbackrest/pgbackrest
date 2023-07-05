@@ -8,6 +8,7 @@ Zero-Terminated String Handler
 
 #include "common/debug.h"
 #include "common/memContext.h"
+#include "common/type/object.h"
 #include "common/type/stringZ.h"
 
 /**********************************************************************************************************************************/
@@ -20,12 +21,21 @@ zNewFmt(const char *const format, ...)
 
     ASSERT(format != NULL);
 
-    // Determine how long the allocated string needs to be and create object
+    // Determine how long the allocated string needs to be
     va_list argumentList;
     va_start(argumentList, format);
     const size_t size = (size_t)vsnprintf(NULL, 0, format, argumentList) + 1;
-    char *const result = memNew(size);
     va_end(argumentList);
+
+    // Allocate the string as extra or a separate allocation based on how large it is
+    char *result;
+
+    OBJ_NEW_BASE_EXTRA_BEGIN(
+        char *, size > MEM_CONTEXT_ALLOC_EXTRA_MAX ? 0 : (uint16_t)size, .allocQty = size > MEM_CONTEXT_ALLOC_EXTRA_MAX ? 1 : 0)
+    {
+        result = size > MEM_CONTEXT_ALLOC_EXTRA_MAX ? memNew(size) : OBJ_NEW_ALLOC();
+    }
+    OBJ_NEW_END();
 
     // Format string
     va_start(argumentList, format);

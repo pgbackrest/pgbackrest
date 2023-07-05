@@ -73,9 +73,9 @@ cmdOption(void)
                 // Loop though options and add the ones that are interesting
                 for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
                 {
-                    // Skip the option if not valid for this command.  Generally only one command runs at a time, but sometimes
+                    // Skip the option if not valid for this command. Generally only one command runs at a time, but sometimes
                     // commands are chained together (e.g. backup and expire) and the second command may not use all the options of
-                    // the first command.  Displaying them is harmless but might cause confusion.
+                    // the first command. Displaying them is harmless but might cause confusion.
                     if (!cfgOptionValid(optionId) || !cfgParseOptionValid(cfgCommand(), cfgCommandRole(), optionId))
                         continue;
 
@@ -199,7 +199,7 @@ cmdEnd(int code, const String *errorMessage)
 
     ASSERT(cfgCommand() != cfgCmdNone);
 
-    // Skip this log message if it won't be output.  It's not too expensive but since we skipped cmdBegin(), may as well.
+    // Skip this log message if it won't be output. It's not too expensive but since we skipped cmdBegin(), may as well.
     if (logAny(cfgLogLevelDefault()))
     {
         MEM_CONTEXT_TEMP_BEGIN()

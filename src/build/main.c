@@ -92,11 +92,15 @@ main(const int argListSize, const char *const argList[])
         // PostgreSQL
         if (strEqZ(STRDEF("postgres"), argList[1]))
             bldPgRender(storageBuild, bldPgParse(storageRepo));
+
+        if (strEqZ(STRDEF("postgres-version"), argList[1]))
+            bldPgVersionRender(storageBuild, bldPgParse(storageRepo));
     }
     CATCH_FATAL()
     {
         LOG_FMT(
-            errorTypeCode(&AssertError) ? logLevelAssert : logLevelError, errorCode(), "%s\n%s", errorMessage(), errorStackTrace());
+            errorCode() == errorTypeCode(&AssertError) ? logLevelAssert : logLevelError, errorCode(), "%s\n%s", errorMessage(),
+            errorStackTrace());
 
         result = errorCode();
     }

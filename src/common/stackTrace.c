@@ -13,7 +13,6 @@ Stack Trace Handler
 #endif
 
 #include "common/assert.h"
-#include "common/error.h"
 #include "common/macro.h"
 #include "common/stackTrace.h"
 
@@ -153,7 +152,7 @@ stackTraceParamIdx(int stackIdx)
 }
 
 FN_EXTERN const char *
-stackTraceParam()
+stackTraceParam(void)
 {
     return stackTraceParamIdx(stackTraceLocal.stackSize - 1);
 }
@@ -175,7 +174,7 @@ stackTraceParamBuffer(const char *paramName)
         data->paramOverflow = true;
 
         // There's no way to stop the parameter from being formatted so we reserve a space at the end where the format can safely
-        // take place and not disturb the rest of the buffer.  Hopefully overflows just won't happen but we need to be prepared in
+        // take place and not disturb the rest of the buffer. Hopefully overflows just won't happen but we need to be prepared in
         // case of runaway recursion or some other issue that fills the buffer because we don't want a segfault.
         return stackTraceLocal.functionParamBuffer + sizeof(stackTraceLocal.functionParamBuffer) - STACK_TRACE_PARAM_MAX;
     }
@@ -324,7 +323,7 @@ stackTraceBackCallback(
     {
         fileName = stackTraceTrimSrc(fileName);
 
-        if (strcmp(fileName, "common/error.c") == 0)
+        if (strcmp(fileName, "common/error/error.c") == 0)
             return false;
 
         data->result += stackTraceFmt(

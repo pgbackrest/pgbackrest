@@ -11,8 +11,8 @@ IO Functions
 /***********************************************************************************************************************************
 Buffer size
 
-This buffer size will be used for all IO operations that require buffers not passed by the caller.  Initially it is set to a
-conservative default with the expectation that it will be changed to a new value after options have been loaded.  In general callers
+This buffer size will be used for all IO operations that require buffers not passed by the caller. Initially it is set to a
+conservative default with the expectation that it will be changed to a new value after options have been loaded. In general callers
 should set their buffer size using ioBufferSize() but there may be cases where an alternative buffer size makes sense.
 ***********************************************************************************************************************************/
 #define IO_BUFFER_BLOCK_SIZE                                        (8 * 1024)

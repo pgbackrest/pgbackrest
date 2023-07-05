@@ -376,7 +376,7 @@ archiveGetCheck(const StringList *archiveRequestList)
         StringList *warnList = strLstNew();
 
         // Get pg control info
-        PgControl controlInfo = pgControlFromFile(storagePg());
+        PgControl controlInfo = pgControlFromFile(storagePg(), cfgOptionStrNull(cfgOptPgVersionForce));
 
         // Build list of repos/archiveIds where WAL may be found
         List *cacheRepoList = lstNewP(sizeof(ArchiveGetFindCacheRepo));
@@ -540,13 +540,12 @@ queueNeed(const String *walSegment, bool found, uint64_t queueSize, size_t walSe
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Determine the first WAL segment for the async process to get.  If the WAL segment requested by
-        // PostgreSQL was not found then use that.  If the segment was found but the queue is not full then
-        // start with the next segment.
+        // Determine the first WAL segment for the async process to get. If the WAL segment requested by PostgreSQL was not found
+        // then use that. If the segment was found but the queue is not full then start with the next segment.
         const String *walSegmentFirst =
             found ? walSegmentNext(walSegment, walSegmentSize, pgVersion) : walSegment;
 
-        // Determine how many WAL segments should be in the queue.  The queue total must be at least 2 or it doesn't make sense to
+        // Determine how many WAL segments should be in the queue. The queue total must be at least 2 or it doesn't make sense to
         // have async turned on at all.
         unsigned int walSegmentQueueTotal = (unsigned int)(queueSize / walSegmentSize);
 
@@ -715,16 +714,13 @@ cmdArchiveGet(void)
                     }
                 }
 
-                // If the WAL segment has not already been found then start the async process to get it.  There's no point in
-                // forking the async process off more than once so track that as well.  Use an archive lock to prevent forking if
-                // the async process was launched by another process.
-                if (!forked && (!found || !queueFull) &&
-                    lockAcquire(
-                        cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), cfgLockType(), 0,
-                        false))
+                // If the WAL segment has not already been found then start the async process to get it. There's no point in forking
+                // the async process off more than once so track that as well. Use an archive lock to prevent forking if the async
+                // process was launched by another process.
+                if (!forked && (!found || !queueFull) && lockAcquireP(.returnOnNoLock = true))
                 {
                     // Get control info
-                    PgControl pgControl = pgControlFromFile(storagePg());
+                    PgControl pgControl = pgControlFromFile(storagePg(), cfgOptionStrNull(cfgOptPgVersionForce));
 
                     // Create the queue
                     storagePathCreateP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN_STR);
@@ -739,8 +735,8 @@ cmdArchiveGet(void)
                     StringList *commandExec = cfgExecParam(cfgCmdArchiveGet, cfgCmdRoleAsync, optionReplace, true, false);
                     strLstInsert(commandExec, 0, cfgExe());
 
-                    // Clean the current queue using the list of WAL that we ideally want in the queue.  queueNeed()
-                    // will return the list of WAL needed to fill the queue and this will be passed to the async process.
+                    // Clean the current queue using the list of WAL that we ideally want in the queue. queueNeed() will return the
+                    // list of WAL needed to fill the queue and this will be passed to the async process.
                     const StringList *queue = queueNeed(
                         walSegment, found, cfgOptionUInt64(cfgOptArchiveGetQueueMax), pgControl.walSegmentSize,
                         pgControl.version);
@@ -757,7 +753,7 @@ cmdArchiveGet(void)
                     // Execute the async process
                     archiveAsyncExec(archiveModeGet, commandExec);
 
-                    // Mark the async process as forked so it doesn't get forked again.  A single run of the async process should be
+                    // Mark the async process as forked so it doesn't get forked again. A single run of the async process should be
                     // enough to do the job, running it again won't help anything.
                     forked = true;
                 }

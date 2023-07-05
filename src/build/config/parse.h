@@ -51,6 +51,8 @@ STRING_DECLARE(OPT_TYPE_TIME_STR);
 /***********************************************************************************************************************************
 Option constants
 ***********************************************************************************************************************************/
+#define OPT_BETA                                                    "beta"
+STRING_DECLARE(OPT_BETA_STR);
 #define OPT_STANZA                                                  "stanza"
 STRING_DECLARE(OPT_STANZA_STR);
 
@@ -108,9 +110,15 @@ typedef struct BldCfgOptionCommand
     bool required;                                                  // Is the option required?
     const String *defaultValue;                                     // Default value, if any
     const BldCfgOptionDepend *depend;                               // Dependency, if any
-    const StringList *allowList;                                    // Allowed value list
+    const List *allowList;                                          // Allowed value list
     const StringList *roleList;                                     // Roles valid for the command
 } BldCfgOptionCommand;
+
+typedef struct BldCfgOptionValue
+{
+    const String *value;                                            // Option value
+    const String *condition;                                        // Is the option conditionally compiled?
+} BldCfgOptionValue;
 
 struct BldCfgOption
 {
@@ -118,6 +126,7 @@ struct BldCfgOption
     const String *type;                                             // Option type, e.g. integer
     const String *section;                                          // Option section, i.e. stanza or global
     bool internal;                                                  // Is the option internal?
+    bool beta;                                                      // Is the option beta?
     bool required;                                                  // Is the option required?
     bool negate;                                                    // Can the option be negated?
     bool reset;                                                     // Can the option be reset?
@@ -126,7 +135,7 @@ struct BldCfgOption
     const String *group;                                            // Option group, if any
     bool secure;                                                    // Does the option contain a secret?
     const BldCfgOptionDepend *depend;                               // Dependency, if any
-    const StringList *allowList;                                    // Allowed value list
+    const List *allowList;                                          // Allowed value list
     const String *allowRangeMin;                                    // Allow range min, if any
     const String *allowRangeMax;                                    // Allow range max, if any
     const List *cmdList;                                            // Command override list

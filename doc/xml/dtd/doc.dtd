@@ -53,7 +53,7 @@
     <!ATTLIST execute-list host CDATA #REQUIRED>
     <!ATTLIST execute-list if CDATA "">
     <!ATTLIST execute-list show CDATA "">
-<!ELEMENT execute (exe-cmd, exe-cmd-extra?, exe-user?,  exe-var?, exe-retry?, exe-output?, (exe-highlight-type?, exe-highlight)?,
+<!ELEMENT execute (exe-cmd, exe-cmd-extra?, exe-user?, exe-var?, exe-retry?, exe-output?, (exe-highlight-type?, exe-highlight)?,
                    exe-err-expect?, exe-err-suppress?, exe-err-suppress-stderr?)>
     <!ATTLIST execute if CDATA "">
     <!ATTLIST execute pre CDATA "">

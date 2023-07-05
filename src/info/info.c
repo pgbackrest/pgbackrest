@@ -100,11 +100,8 @@ infoNew(const String *cipherPass)
         FUNCTION_TEST_PARAM(STRING, cipherPass);                 // Use FUNCTION_TEST so cipher is not logged
     FUNCTION_LOG_END();
 
-    Info *this = NULL;
-
     OBJ_NEW_BEGIN(Info, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
         *this = (Info){};
 
         // Cipher used to encrypt/decrypt subsequent dependent files. Value may be NULL.
@@ -137,11 +134,8 @@ infoNewLoad(IoRead *const read, InfoLoadNewCallback *const callbackFunction, voi
     ASSERT(callbackFunction != NULL);
     ASSERT(callbackData != NULL);
 
-    Info *this = NULL;
-
     OBJ_NEW_BEGIN(Info, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
         *this = (Info){};
 
         MEM_CONTEXT_TEMP_BEGIN()

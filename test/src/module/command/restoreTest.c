@@ -110,7 +110,7 @@ testManifestMinimal(const String *label, unsigned int pgVersion, const String *p
 
     Manifest *result = NULL;
 
-    OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BASE_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         result = manifestNewInternal();
         result->pub.info = infoNew(NULL);
@@ -157,14 +157,14 @@ testRun(void)
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     // *****************************************************************************************************************************
-    if (testBegin("BlockHash"))
+    if (testBegin("BlockChecksum"))
     {
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("too large for one buffer");
 
         Buffer *output = bufNew(0);
         IoWrite *write = ioBufferWriteNew(output);
-        ioFilterGroupAdd(ioWriteFilterGroup(write), blockHashNew(3));
+        ioFilterGroupAdd(ioWriteFilterGroup(write), blockChecksumNewPack(ioFilterParamList(blockChecksumNew(3, 8))));
         ioWriteOpen(write);
 
         TEST_RESULT_VOID(ioWrite(write, BUFSTRDEF("ABCDEF")), "write");
@@ -172,18 +172,20 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteClose(write), "close");
 
         TEST_RESULT_STR_Z(
-            strNewEncode(encodingHex, pckReadBinP(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_HASH_FILTER_TYPE))),
-            "3c01bdbb26f358bab27f267924aa2c9a03fcfdb8"
-            "6dae29c06c5f04601445c493156d10fe1be23b6d"
-            "3c01bdbb26f358bab27f267924aa2c9a03fcfdb8",
-            "block hash list");
+            strNewEncode(encodingHex, pckReadBinP(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_CHECKSUM_FILTER_TYPE))),
+            "9e947f00ecd6acb2"
+            "cb221327e5a387af"
+            "9e947f00ecd6acb2",
+            "block checksum list");
+
+        ioWriteFree(write);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("buffer smaller than block and remainder");
 
         output = bufNew(0);
         write = ioBufferWriteNew(output);
-        ioFilterGroupAdd(ioWriteFilterGroup(write), blockHashNew(3));
+        ioFilterGroupAdd(ioWriteFilterGroup(write), blockChecksumNew(3, 8));
         ioWriteOpen(write);
 
         TEST_RESULT_VOID(ioWrite(write, BUFSTRDEF("DE")), "write");
@@ -194,12 +196,14 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteClose(write), "close");
 
         TEST_RESULT_STR_Z(
-            strNewEncode(encodingHex, pckReadBinP(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_HASH_FILTER_TYPE))),
-            "6dae29c06c5f04601445c493156d10fe1be23b6d"
-            "3c01bdbb26f358bab27f267924aa2c9a03fcfdb8"
-            "3c01bdbb26f358bab27f267924aa2c9a03fcfdb8"
-            "c032adc1ff629c9b66f22749ad667e6beadf144b",
-            "block hash list");
+            strNewEncode(encodingHex, pckReadBinP(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_CHECKSUM_FILTER_TYPE))),
+            "cb221327e5a387af"
+            "9e947f00ecd6acb2"
+            "9e947f00ecd6acb2"
+            "92c3453969207870",
+            "block checksum list");
+
+        ioWriteFree(write);
     }
 
     // *****************************************************************************************************************************
@@ -246,7 +250,7 @@ testRun(void)
         TEST_ERROR(
             restoreFile(
                 strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, compressTypeGz,
-                0, false, false, STRDEF("badpass"), NULL, fileList),
+                0, false, false, false, STRDEF("badpass"), NULL, fileList),
             ChecksumError,
             "error restoring 'normal': actual checksum 'd1cd8a7d11daa26814b93eb604e1d49ab4b43770' does not match expected checksum"
             " 'ffffffffffffffffffffffffffffffffffffffff'");
@@ -291,8 +295,8 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptDelta), false, "--delta set to false");
         TEST_RESULT_LOG(
             "P00   WARN: --delta or --force specified but unable to find 'PG_VERSION' or 'backup.manifest' in '" TEST_PATH "/pg' to"
-            " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
-            " exist in the destination directories the restore will be aborted.");
+            " confirm that this is a valid $PGDATA directory. --delta and --force have been disabled and if any files exist in the"
+            " destination directories the restore will be aborted.");
 
         HRN_CFG_LOAD(cfgCmdRestore, argList);
         HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "backup.manifest");
@@ -313,8 +317,8 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptForce), false, "--force set to false");
         TEST_RESULT_LOG(
             "P00   WARN: --delta or --force specified but unable to find 'PG_VERSION' or 'backup.manifest' in '" TEST_PATH "/pg' to"
-            " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
-            " exist in the destination directories the restore will be aborted.");
+            " confirm that this is a valid $PGDATA directory. --delta and --force have been disabled and if any files exist in the"
+            " destination directories the restore will be aborted.");
 
         HRN_CFG_LOAD(cfgCmdRestore, argList);
         HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_PGVERSION);
@@ -1332,7 +1336,7 @@ testRun(void)
 
         Manifest *manifest = NULL;
 
-        OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
+        OBJ_NEW_BASE_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             manifest = manifestNewInternal();
             manifest->pub.data.pgVersion = PG_VERSION_94;
@@ -1630,7 +1634,7 @@ testRun(void)
             RECOVERY_SETTING_HEADER
             "a_setting = 'a'\n"
             "b_setting = 'b'\n"
-            "restore_command = '" TEST_PROJECT_EXE " --lock-path=" HRN_PATH "/lock --log-path=" HRN_PATH " --pg1-path=/pg"
+            "restore_command = '" TEST_PROJECT_EXE " --beta --lock-path=" HRN_PATH "/lock --log-path=" HRN_PATH " --pg1-path=/pg"
             " --repo1-path=/repo --stanza=test1 archive-get %f \"%p\"'\n",
             "check recovery options");
 
@@ -1644,8 +1648,8 @@ testRun(void)
         TEST_RESULT_STR_Z(
             restoreRecoveryConf(PG_VERSION_94, restoreLabel),
             RECOVERY_SETTING_HEADER
-            "restore_command = '/usr/local/bin/pg_wrapper.sh --lock-path=" HRN_PATH "/lock --log-path=" HRN_PATH " --pg1-path=/pg"
-            " --repo1-path=/repo --stanza=test1 archive-get %f \"%p\"'\n",
+            "restore_command = '/usr/local/bin/pg_wrapper.sh --beta --lock-path=" HRN_PATH "/lock --log-path=" HRN_PATH
+            " --pg1-path=/pg --repo1-path=/repo --stanza=test1 archive-get %f \"%p\"'\n",
             "restore_command invokes /usr/local/bin/pg_wrapper.sh per --cmd option");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1852,6 +1856,7 @@ testRun(void)
     if (testBegin("restoreRecoveryWrite*()"))
     {
         const String *pgPath = STRDEF(TEST_PATH "/pg");
+        const StorageInfo fileInfo = {.user = NULL, .group = NULL, .mode = 0600};
         HRN_STORAGE_PATH_CREATE(storageTest, strZ(pgPath), .mode = 0700);
 
         const String *restoreLabel = STRDEF("LABEL");
@@ -1872,7 +1877,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(
-            restoreRecoveryWriteAutoConf(PG_VERSION_12, restoreLabel), OptionInvalidError,
+            restoreRecoveryWriteAutoConf(manifest, &fileInfo, PG_VERSION_12, restoreLabel), OptionInvalidError,
             "'standby_mode' setting is not valid for PostgreSQL >= 12\n"
             "HINT: use --type=standby instead of --recovery-option=standby_mode=on.");
 
@@ -1888,14 +1893,11 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptType, "none");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        restoreRecoveryWriteAutoConf(PG_VERSION_12, restoreLabel);
+        restoreRecoveryWriteAutoConf(manifest, &fileInfo, PG_VERSION_12, restoreLabel);
 
         TEST_STORAGE_GET_EMPTY(storagePg(), PG_FILE_POSTGRESQLAUTOCONF, .comment = "check postgresql.auto.conf");
         TEST_STORAGE_LIST(
-            storagePg(), NULL,
-            PG_FILE_POSTGRESQLAUTOCONF "\n"
-            PG_FILE_RECOVERYSIGNAL "\n",
-            .comment = "recovery.signal exists, standby.signal missing");
+            storagePg(), NULL, PG_FILE_POSTGRESQLAUTOCONF "\n", .comment = "recovery.signal exists, standby.signal missing");
 
         TEST_RESULT_LOG(
             "P00   WARN: postgresql.auto.conf does not exist -- creating to contain recovery settings\n"
@@ -1911,7 +1913,30 @@ testRun(void)
             "# DO NOT MODIFY\n"
             "\t recovery_target_action='promote'\n\n");
 
-        restoreRecoveryWriteAutoConf(PG_VERSION_12, restoreLabel);
+        restoreRecoveryWriteAutoConf(manifest, &fileInfo, PG_VERSION_12, restoreLabel);
+
+        TEST_STORAGE_GET(
+            storagePg(), PG_FILE_POSTGRESQLAUTOCONF,
+            "# DO NOT MODIFY\n"
+            RECOVERY_SETTING_PREFIX "\t recovery_target_action='promote'\n\n",
+            .comment = "check postgresql.auto.conf");
+        TEST_STORAGE_LIST(
+            storagePg(), NULL, PG_FILE_POSTGRESQLAUTOCONF "\n", .comment = "recovery.signal exists, standby.signal missing");
+
+        TEST_RESULT_LOG("P00   INFO: write updated " TEST_PATH "/pg/postgresql.auto.conf");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("PG12 restore type none and offline");
+
+        manifest->pub.data.backupOptionOnline = false;
+        HRN_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
+
+        HRN_STORAGE_PUT_Z(
+            storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF,
+            "# DO NOT MODIFY\n"
+            "\t recovery_target_action='promote'\n\n");
+
+        restoreRecoveryWriteAutoConf(manifest, &fileInfo, PG_VERSION_12, restoreLabel);
 
         TEST_STORAGE_GET(
             storagePg(), PG_FILE_POSTGRESQLAUTOCONF,
@@ -1920,11 +1945,12 @@ testRun(void)
             .comment = "check postgresql.auto.conf");
         TEST_STORAGE_LIST(
             storagePg(), NULL,
-            PG_FILE_POSTGRESQLAUTOCONF "\n"
-            PG_FILE_RECOVERYSIGNAL "\n",
-            .comment = "recovery.signal exists, standby.signal missing");
+            PG_FILE_POSTGRESQLAUTOCONF "\n",
+            .comment = "recovery.signal missing, standby.signal missing");
 
         TEST_RESULT_LOG("P00   INFO: write updated " TEST_PATH "/pg/postgresql.auto.conf");
+
+        manifest->pub.data.backupOptionOnline = true;
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("PG12 restore type standby and remove existing recovery settings");
@@ -1945,7 +1971,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRecoveryOption, "restore-command=my_restore_command");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        restoreRecoveryWriteAutoConf(PG_VERSION_12, restoreLabel);
+        restoreRecoveryWriteAutoConf(manifest, &fileInfo, PG_VERSION_12, restoreLabel);
 
         TEST_STORAGE_GET(
             storagePg(), PG_FILE_POSTGRESQLAUTOCONF,
@@ -1979,7 +2005,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptType, "preserve");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        restoreRecoveryWrite(manifest);
+        restoreRecoveryWrite(manifest, &fileInfo);
 
         TEST_STORAGE_GET(
             storagePg(), PG_FILE_POSTGRESQLAUTOCONF, "# DO NOT MODIFY\n", .comment = "check postgresql.auto.conf");
@@ -2002,7 +2028,7 @@ testRun(void)
         hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        restoreRecoveryWrite(manifest);
+        restoreRecoveryWrite(manifest, &fileInfo);
 
         TEST_RESULT_BOOL(
             bufEq(storageGetP(storageNewReadP(storagePg(), PG_FILE_POSTGRESQLAUTOCONF_STR)), BUFSTRDEF("# DO NOT MODIFY\n")),
@@ -2067,7 +2093,7 @@ testRun(void)
 
         Manifest *manifest = NULL;
 
-        OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
+        OBJ_NEW_BASE_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             manifest = manifestNewInternal();
             manifest->pub.info = infoNew(NULL);
@@ -2090,11 +2116,11 @@ testRun(void)
             HRN_MANIFEST_FILE_ADD(
                 manifest, .name = TEST_PGDATA PG_FILE_PGVERSION, .size = 4, .timestamp = 1482182860,
                 .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1");
-            HRN_STORAGE_PUT_Z(storageRepoIdxWrite(0), TEST_REPO_PATH PG_FILE_PGVERSION, PG_VERSION_94_STR "\n");
+            HRN_STORAGE_PUT_Z(storageRepoIdxWrite(0), TEST_REPO_PATH PG_FILE_PGVERSION, PG_VERSION_94_Z "\n");
 
             // Store the file also to the encrypted repo
             HRN_STORAGE_PUT_Z(
-                storageRepoIdxWrite(1), TEST_REPO_PATH PG_FILE_PGVERSION, PG_VERSION_94_STR "\n",
+                storageRepoIdxWrite(1), TEST_REPO_PATH PG_FILE_PGVERSION, PG_VERSION_94_Z "\n",
                 .cipherType = cipherTypeAes256Cbc, .cipherPass = TEST_CIPHER_PASS_ARCHIVE);
 
             // pg_tblspc
@@ -2160,7 +2186,7 @@ testRun(void)
                 "P00   INFO: restore size = 4B, file total = 1",
                 TEST_PATH, TEST_PATH, TEST_PATH, TEST_PATH));
 
-        // Remove recovery.conf before file comparison since it will have a new timestamp.  Make sure it existed, though.
+        // Remove recovery.conf before file comparison since it will have a new timestamp. Make sure it existed, though.
         HRN_STORAGE_REMOVE(storagePgWrite(), PG_FILE_RECOVERYCONF, .errorOnMissing = true);
 
         TEST_STORAGE_LIST(
@@ -2261,7 +2287,7 @@ testRun(void)
 
             HRN_STORAGE_PUT_Z(
                 storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_LABEL "/" MANIFEST_TARGET_PGTBLSPC "/1/16384/" PG_FILE_PGVERSION,
-                PG_VERSION_94_STR "\n");
+                PG_VERSION_94_Z "\n");
 
             // Always sort
             lstSort(manifest->pub.targetList, sortOrderAsc);
@@ -2408,7 +2434,7 @@ testRun(void)
             .level = storageInfoLevelBasic, .includeDot = true);
 
         // PG_VERSION was restored by the force option
-        TEST_STORAGE_GET(storagePg(), PG_FILE_PGVERSION, PG_VERSION_94_STR "\n", .comment = "check PG_VERSION was restored");
+        TEST_STORAGE_GET(storagePg(), PG_FILE_PGVERSION, PG_VERSION_94_Z "\n", .comment = "check PG_VERSION was restored");
 
         // Remove tablespace
         HRN_STORAGE_PATH_REMOVE(storagePgWrite(), MANIFEST_TARGET_PGTBLSPC "/1/PG_9.4_201409291", .recurse = true);
@@ -2440,7 +2466,7 @@ testRun(void)
         #define TEST_PGDATA                                         MANIFEST_TARGET_PGDATA "/"
         #define TEST_REPO_PATH                                      STORAGE_REPO_BACKUP "/" TEST_LABEL "/" TEST_PGDATA
 
-        OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+        OBJ_NEW_BASE_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             manifest = manifestNewInternal();
             manifest->pub.info = infoNew(NULL);
@@ -2507,7 +2533,7 @@ testRun(void)
                 .bundleId = 1, .bundleOffset = 17, .checksumSha1 = "d7dacae2c968388960bf8970080a980ed5c5dcb7");
             HRN_STORAGE_PUT_Z(
                 storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_LABEL "/bundle/1",
-                PG_VERSION_96_STR "\n" PG_VERSION_96_STR "\nyyyxxxxxAzzA");
+                PG_VERSION_96_Z "\n" PG_VERSION_96_Z "\nyyyxxxxxAzzA");
 
             // base directory
             HRN_MANIFEST_PATH_ADD(manifest, .name = TEST_PGDATA PG_PATH_BASE);
@@ -2572,7 +2598,7 @@ testRun(void)
             HRN_MANIFEST_FILE_ADD(
                 manifest, .name = TEST_PGDATA "base/16384/" PG_FILE_PGVERSION, .size = 4, .timestamp = 1482182860,
                 .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1");
-            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "base/16384/" PG_FILE_PGVERSION, PG_VERSION_94_STR "\n");
+            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "base/16384/" PG_FILE_PGVERSION, PG_VERSION_94_Z "\n");
 
             // base/16384/16385
             fileBuffer = bufNew(16384);
@@ -2592,7 +2618,7 @@ testRun(void)
             HRN_MANIFEST_FILE_ADD(
                 manifest, .name = TEST_PGDATA "base/32768/" PG_FILE_PGVERSION, .size = 4, .timestamp = 1482182860,
                 .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1");
-            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "base/32768/" PG_FILE_PGVERSION, PG_VERSION_94_STR "\n");
+            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "base/32768/" PG_FILE_PGVERSION, PG_VERSION_94_Z "\n");
 
             // base/32768/32769
             fileBuffer = bufNew(32768);
@@ -2634,7 +2660,7 @@ testRun(void)
             bufUsedSet(fileBuffer, bufSize(fileBuffer));
 
             IoWrite *write = storageWriteIo(storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/1/bi-no-ref.pgbi")));
-            ioFilterGroupAdd(ioWriteFilterGroup(write), blockIncrNew(8192, 3, 0, 0, NULL, NULL, NULL));
+            ioFilterGroupAdd(ioWriteFilterGroup(write), blockIncrNew(8192, 8192, 11, 3, 0, 0, NULL, NULL, NULL));
             ioFilterGroupAdd(ioWriteFilterGroup(write), ioSizeNew());
 
             ioWriteOpen(write);
@@ -2646,7 +2672,7 @@ testRun(void)
 
             HRN_MANIFEST_FILE_ADD(
                 manifest, .name = TEST_PGDATA "base/1/bi-no-ref", .size = bufUsed(fileBuffer), .sizeRepo = repoSize,
-                .blockIncrSize = 8192, .blockIncrMapSize = blockIncrMapSize, .timestamp = 1482182860,
+                .blockIncrSize = 8192, .blockIncrChecksumSize = 11, .blockIncrMapSize = blockIncrMapSize, .timestamp = 1482182860,
                 .checksumSha1 = "953cdcc904c5d4135d96fc0833f121bf3033c74c");
 
             // Block incremental with a broken reference to show that unneeded references will not be used
@@ -2656,13 +2682,13 @@ testRun(void)
 
             Buffer *fileUnusedMap = bufNew(0);
             write = ioBufferWriteNew(fileUnusedMap);
-            ioFilterGroupAdd(ioWriteFilterGroup(write), blockIncrNew(8192, 0, 0, 0, NULL, NULL, NULL));
+            ioFilterGroupAdd(ioWriteFilterGroup(write), blockIncrNew(8192, 8192, 11, 0, 0, 0, NULL, NULL, NULL));
 
             ioWriteOpen(write);
             ioWrite(write, fileUnused);
             ioWriteClose(write);
 
-            size_t fileUnusedMapSize = pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE));
+            size_t fileUnusedMapSize = (size_t)pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE));
 
             Buffer *fileUsed = bufDup(fileUnused);
             memset(bufPtr(fileUsed), 3, 8192);
@@ -2675,8 +2701,8 @@ testRun(void)
             ioFilterGroupAdd(
                 ioWriteFilterGroup(write),
                 blockIncrNew(
-                    8192, 3, 0, 0, BUF(bufPtr(fileUnusedMap) + bufUsed(fileUnusedMap) - fileUnusedMapSize, fileUnusedMapSize),
-                    NULL, NULL));
+                    8192, 8192, 11, 3, 0, 0,
+                    BUF(bufPtr(fileUnusedMap) + bufUsed(fileUnusedMap) - fileUnusedMapSize, fileUnusedMapSize), NULL, NULL));
             ioFilterGroupAdd(ioWriteFilterGroup(write), ioSizeNew());
 
             ioWriteOpen(write);
@@ -2690,7 +2716,7 @@ testRun(void)
 
             HRN_MANIFEST_FILE_ADD(
                 manifest, .name = TEST_PGDATA "base/1/bi-unused-ref", .size = bufUsed(fileUsed), .sizeRepo = fileUsedRepoSize,
-                .blockIncrSize = 8192, .blockIncrMapSize = fileUsedMapSize, .timestamp = 1482182860,
+                .blockIncrSize = 8192, .blockIncrChecksumSize = 11, .blockIncrMapSize = fileUsedMapSize, .timestamp = 1482182860,
                 .checksumSha1 = "febd680181d4cd315dce942348862c25fbd731f3");
 
             memset(bufPtr(fileUnused) + (8192 * 4), 3, 8192);
@@ -2915,7 +2941,7 @@ testRun(void)
 
         // Enlarge a file so it gets truncated. Keep timestamp the same to prove that it gets updated after the truncate.
         HRN_STORAGE_PUT_Z(
-            storagePgWrite(), "base/16384/" PG_FILE_PGVERSION, PG_VERSION_94_STR "\n\n", .modeFile = 0600,
+            storagePgWrite(), "base/16384/" PG_FILE_PGVERSION, PG_VERSION_94_Z "\n\n", .modeFile = 0600,
             .timeModified = 1482182860);
 
         // Enlarge a zero-length file so it gets truncated
@@ -3043,7 +3069,7 @@ testRun(void)
             cmdRestore(), FileMissingError,
             "raised from local-1 shim protocol: unable to open missing file"
             " '" TEST_PATH "/repo/backup/test1/20161219-212741F_20161219-212918I/pg_data/global/pg_control' for read\n"
-            "[FileMissingError] on retry after 0ms");
+            "[RETRY DETAIL OMITTED]");
 
         // Free local processes that were not freed because of the error
         protocolFree();
@@ -3124,8 +3150,7 @@ testRun(void)
             "base/1/2\n"
             "global/\n"
             "global/pg_control\n"
-            "postgresql.auto.conf\n"
-            "recovery.signal\n",
+            "postgresql.auto.conf\n",
             .level = storageInfoLevelType);
     }
 

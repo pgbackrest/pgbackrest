@@ -19,10 +19,9 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct PageChecksum
 {
-    MemContext *memContext;                                         // Mem context of filter
-
     unsigned int segmentPageTotal;                                  // Total pages in a segment
     unsigned int pageNoOffset;                                      // Page number offset for subsequent segments
+    bool headerCheck;                                               // Perform additional header checks?
     const String *fileName;                                         // Used to load the file to retry pages
 
     unsigned char *pageBuffer;                                      // Buffer to hold a page while verifying the checksum
@@ -50,7 +49,7 @@ pageChecksumToLog(const PageChecksum *const this, StringStatic *const debugLog)
 Verify page checksums
 ***********************************************************************************************************************************/
 static void
-pageChecksumProcess(THIS_VOID, const Buffer *input)
+pageChecksumProcess(THIS_VOID, const Buffer *const input)
 {
     THIS(PageChecksum);
 
@@ -66,7 +65,7 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
     unsigned int pageTotal = (unsigned int)(bufUsed(input) / PG_PAGE_SIZE_DEFAULT);
 
     // If there is a partial page make sure there is enough of it to validate the checksum
-    unsigned int pageRemainder = (unsigned int)(bufUsed(input) % PG_PAGE_SIZE_DEFAULT);
+    const unsigned int pageRemainder = (unsigned int)(bufUsed(input) % PG_PAGE_SIZE_DEFAULT);
 
     if (pageRemainder != 0)
     {
@@ -101,28 +100,29 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
             // Only validate page checksum if the page is complete
             if (this->align || pageIdx < pageTotal - 1)
             {
-                // Skip new pages indicated by pd_upper == 0
-                bool pdUpperValid = true;
+                bool pageValid = true;
 
-                if (pageHeader->pd_upper == 0)
+                // Skip new all-zero pages. To speed this up first check pd_upper when header check is enabled or pd_checksum when
+                // header check is disabled. The latter is required when the page is encrypted.
+                if ((this->headerCheck && pageHeader->pd_upper == 0) || (!this->headerCheck && pageHeader->pd_checksum == 0))
                 {
-                    // Check that the entire page is zero in case pd_upper is corrupted
+                    // Check that the entire page is zero
                     for (unsigned int pageIdx = 0; pageIdx < PG_PAGE_SIZE_DEFAULT / sizeof(size_t); pageIdx++)
                     {
                         if (((size_t *)pageHeader)[pageIdx] != 0)
                         {
-                            pdUpperValid = false;
+                            pageValid = false;
                             break;
                         }
                     }
 
                     // If the entire page is zero it is valid
-                    if (pdUpperValid)
+                    if (pageValid)
                         continue;
                 }
 
-                // Only validate the checksum if pd_upper is non-zero to avoid an assertion from pg_checksum_page()
-                if (pdUpperValid)
+                // Only validate the checksum if the page is valid
+                if (pageValid)
                 {
                     // Make a copy of the page since it will be modified by the page checksum function
                     memcpy(this->pageBuffer, pageHeader, PG_PAGE_SIZE_DEFAULT);
@@ -159,12 +159,12 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
             // Create the error list if it does not exist yet
             if (this->error == NULL)
             {
-                MEM_CONTEXT_BEGIN(this->memContext)
+                MEM_CONTEXT_OBJ_BEGIN(this)
                 {
                     this->error = pckWriteNewP();
                     pckWriteArrayBeginP(this->error);
                 }
-                MEM_CONTEXT_END();
+                MEM_CONTEXT_OBJ_END();
             }
 
             // Add page number and lsn to the error list
@@ -192,9 +192,9 @@ pageChecksumResult(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    Pack *result = NULL;
+    Pack *result;
 
-    MEM_CONTEXT_BEGIN(this->memContext)
+    MEM_CONTEXT_OBJ_BEGIN(this)
     {
         // End the error array
         if (this->error != NULL)
@@ -218,74 +218,74 @@ pageChecksumResult(THIS_VOID)
 
         result = pckMove(pckWriteResult(this->error), memContextPrior());
     }
-    MEM_CONTEXT_END();
+    MEM_CONTEXT_OBJ_END();
 
     FUNCTION_LOG_RETURN(PACK, result);
 }
 
 /**********************************************************************************************************************************/
 FN_EXTERN IoFilter *
-pageChecksumNew(const unsigned int segmentNo, const unsigned int segmentPageTotal, const String *const fileName)
+pageChecksumNew(
+    const unsigned int segmentNo, const unsigned int segmentPageTotal, const bool headerCheck, const String *const fileName)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(UINT, segmentNo);
         FUNCTION_LOG_PARAM(UINT, segmentPageTotal);
+        FUNCTION_LOG_PARAM(BOOL, headerCheck);
         FUNCTION_LOG_PARAM(STRING, fileName);
     FUNCTION_LOG_END();
 
-    IoFilter *this = NULL;
-
-    OBJ_NEW_BEGIN(PageChecksum, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(PageChecksum, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        PageChecksum *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::PageChecksum);
-
-        *driver = (PageChecksum)
+        *this = (PageChecksum)
         {
-            .memContext = memContextCurrent(),
             .segmentPageTotal = segmentPageTotal,
             .pageNoOffset = segmentNo * segmentPageTotal,
+            .headerCheck = headerCheck,
             .fileName = strDup(fileName),
-            .pageBuffer = memNew(PG_PAGE_SIZE_DEFAULT),
+            .pageBuffer = bufPtr(bufNew(PG_PAGE_SIZE_DEFAULT)),
             .valid = true,
             .align = true,
         };
-
-        // Create param list
-        Pack *paramList = NULL;
-
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            PackWrite *const packWrite = pckWriteNewP();
-
-            pckWriteU32P(packWrite, segmentNo);
-            pckWriteU32P(packWrite, segmentPageTotal);
-            pckWriteStrP(packWrite, fileName);
-            pckWriteEndP(packWrite);
-
-            paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
-        }
-        MEM_CONTEXT_TEMP_END();
-
-        this = ioFilterNewP(PAGE_CHECKSUM_FILTER_TYPE, driver, paramList, .in = pageChecksumProcess, .result = pageChecksumResult);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_FILTER, this);
+    // Create param list
+    Pack *paramList;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackWrite *const packWrite = pckWriteNewP();
+
+        pckWriteU32P(packWrite, segmentNo);
+        pckWriteU32P(packWrite, segmentPageTotal);
+        pckWriteBoolP(packWrite, headerCheck);
+        pckWriteStrP(packWrite, fileName);
+        pckWriteEndP(packWrite);
+
+        paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(
+        IO_FILTER,
+        ioFilterNewP(PAGE_CHECKSUM_FILTER_TYPE, this, paramList, .in = pageChecksumProcess, .result = pageChecksumResult));
 }
 
 FN_EXTERN IoFilter *
 pageChecksumNewPack(const Pack *const paramList)
 {
-    IoFilter *result = NULL;
+    IoFilter *result;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         PackRead *const paramListPack = pckReadNew(paramList);
         const unsigned int segmentNo = pckReadU32P(paramListPack);
         const unsigned int segmentPageTotal = pckReadU32P(paramListPack);
+        const bool headerCheck = pckReadBoolP(paramListPack);
         const String *const fileName = pckReadStrP(paramListPack);
 
-        result = ioFilterMove(pageChecksumNew(segmentNo, segmentPageTotal, fileName), memContextPrior());
+        result = ioFilterMove(pageChecksumNew(segmentNo, segmentPageTotal, headerCheck, fileName), memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 

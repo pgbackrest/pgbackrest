@@ -8,6 +8,7 @@ Remote Command
 #include "command/backup/blockIncr.h"
 #include "command/backup/pageChecksum.h"
 #include "command/control/common.h"
+#include "command/restore/blockChecksum.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
@@ -36,6 +37,7 @@ Filter handlers
 ***********************************************************************************************************************************/
 static const StorageRemoteFilterHandler storageRemoteFilterHandlerList[] =
 {
+    {.type = BLOCK_CHECKSUM_FILTER_TYPE, .handlerParam = blockChecksumNewPack},
     {.type = BLOCK_INCR_FILTER_TYPE, .handlerParam = blockIncrNewPack},
     {.type = CIPHER_BLOCK_FILTER_TYPE, .handlerParam = cipherBlockNewPack},
     {.type = CRYPTO_HASH_FILTER_TYPE, .handlerParam = cryptoHashNewPack},
@@ -55,8 +57,8 @@ cmdRemote(ProtocolServer *const server)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Acquire a lock if this command needs one.  We'll use the noop that is always sent from the client right after the
-        // handshake to return an error.  We can't take a lock earlier than this because we want the error to go back through the
+        // Acquire a lock if this command needs one. We'll use the noop that is always sent from the client right after the
+        // handshake to return an error. We can't take a lock earlier than this because we want the error to go back through the
         // protocol layer.
         volatile bool success = false;
 
@@ -75,9 +77,7 @@ cmdRemote(ProtocolServer *const server)
                     lockStopTest();
 
                     // Acquire the lock
-                    lockAcquire(
-                        cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), cfgLockType(), 0,
-                        true);
+                    lockAcquireP();
                 }
             }
 

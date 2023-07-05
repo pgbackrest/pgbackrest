@@ -84,7 +84,7 @@ ioBufferReadEof(THIS_VOID)
 
 /**********************************************************************************************************************************/
 FN_EXTERN IoRead *
-ioBufferReadNew(const Buffer *buffer)
+ioBufferReadNew(const Buffer *const buffer)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(BUFFER, buffer);
@@ -92,20 +92,14 @@ ioBufferReadNew(const Buffer *buffer)
 
     ASSERT(buffer != NULL);
 
-    IoRead *this = NULL;
-
-    OBJ_NEW_BEGIN(IoBufferRead, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(IoBufferRead, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        IoBufferRead *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoRead::IoBufferRead);
-
-        *driver = (IoBufferRead)
+        *this = (IoBufferRead)
         {
             .read = buffer,
         };
-
-        this = ioReadNewP(driver, .eof = ioBufferReadEof, .read = ioBufferRead);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_READ, this);
+    FUNCTION_LOG_RETURN(IO_READ, ioReadNewP(this, .eof = ioBufferReadEof, .read = ioBufferRead));
 }

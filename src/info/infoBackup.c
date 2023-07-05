@@ -76,9 +76,9 @@ infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalo
 
     ASSERT(pgVersion > 0 && pgSystemId > 0 && pgCatalogVersion > 0);
 
-    InfoBackup *this = NULL;
+    InfoBackup *this;
 
-    OBJ_NEW_BEGIN(InfoBackup, .childQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BASE_BEGIN(InfoBackup, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = infoBackupNewInternal();
 
@@ -239,9 +239,9 @@ infoBackupNewLoad(IoRead *read)
 
     ASSERT(read != NULL);
 
-    InfoBackup *this = NULL;
+    InfoBackup *this;
 
-    OBJ_NEW_BEGIN(InfoBackup, .childQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BASE_BEGIN(InfoBackup, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = infoBackupNewInternal();
         this->pub.infoPg = infoPgNewLoad(read, infoPgBackup, infoBackupLoadCallback, this);

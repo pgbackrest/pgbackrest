@@ -6,6 +6,7 @@
     <operation>
         <operation-general>
             <option-list>
+                <option id="beta"><summary></summary><text><p></p></text></option>
                 <option id="config"><summary></summary><text><p></p></text></option>
                 <option id="config-path"><summary></summary><text><p></p></text></option>
                 <option id="config-include-path"><summary></summary><text><p></p></text></option>

@@ -346,8 +346,8 @@ testRun(void)
         ioFilterGroupAdd(filterGroup, cryptoHashNew(hashTypeSha1));
         ioFilterGroupAdd(filterGroup, cipherBlockNewP(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRZ("x")));
         ioFilterGroupAdd(filterGroup, cipherBlockNewP(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTRZ("x")));
-        ioFilterGroupAdd(filterGroup, compressFilter(compressTypeGz, 3));
-        ioFilterGroupAdd(filterGroup, decompressFilter(compressTypeGz));
+        ioFilterGroupAdd(filterGroup, compressFilterP(compressTypeGz, 3));
+        ioFilterGroupAdd(filterGroup, decompressFilterP(compressTypeGz));
 
         TEST_RESULT_STR_Z(strNewBuf(storageGetP(fileRead)), "TESTDATA", "check contents");
 

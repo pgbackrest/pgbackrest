@@ -65,8 +65,8 @@ STRING_DECLARE(WAL_TIMELINE_HISTORY_REGEXP_STR);
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Remove errors for an archive file.  This should be done before forking the async process to prevent a race condition where an
-// old error may be reported rather than waiting for the async process to succeed or fail.
+// Remove errors for an archive file. This should be done before forking the async process to prevent a race condition where an old
+// error may be reported rather than waiting for the async process to succeed or fail.
 FN_EXTERN void archiveAsyncErrorClear(ArchiveMode archiveMode, const String *archiveFile);
 
 // Check for ok/error status files in the spool in/out directory. throwOnError determines whether an error will be thrown when an

@@ -54,7 +54,7 @@ static struct StorageHelperLocal
 
     String *stanza;                                                 // Stanza for storage
     bool stanzaInit;                                                // Has the stanza been initialized?
-    bool dryRunInit;                                                // Has dryRun been initialized?  If not disallow writes.
+    bool dryRunInit;                                                // Has dryRun been initialized? If not disallow writes.
     bool dryRun;                                                    // Disallow writes in dry-run mode.
     RegExp *walRegExp;                                              // Regular expression for identifying wal files
 } storageHelper;
@@ -340,7 +340,7 @@ storageRepoPathExpression(const String *const expression, const String *const pa
     else
         THROW_FMT(AssertError, "invalid expression '%s'", strZ(expression));
 
-    ASSERT(result != 0);
+    ASSERT(result != NULL);
 
     FUNCTION_TEST_RETURN(STRING, result);
 }

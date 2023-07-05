@@ -88,12 +88,12 @@ cfgLoad(unsigned int argListSize, const char *argList[])
         // Parse config from command line
         TRY_BEGIN()
         {
-            configParse(storagePosixNewP(FSLASH_STR), strLstSize(argListNew), strLstPtr(argListNew), true);
+            cfgParseP(storagePosixNewP(FSLASH_STR), strLstSize(argListNew), strLstPtr(argListNew));
         }
         CATCH(CommandRequiredError)
         {
             strLstAddZ(argListNew, CFGCMD_TEST);
-            configParse(storagePosixNewP(FSLASH_STR), strLstSize(argListNew), strLstPtr(argListNew), true);
+            cfgParseP(storagePosixNewP(FSLASH_STR), strLstSize(argListNew), strLstPtr(argListNew));
         }
         TRY_END();
 

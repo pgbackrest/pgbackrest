@@ -33,6 +33,7 @@ use pgBackRestTest::Env::Host::HostAzureTest;
 use pgBackRestTest::Env::Host::HostGcsTest;
 use pgBackRestTest::Env::Host::HostBaseTest;
 use pgBackRestTest::Env::Host::HostS3Test;
+use pgBackRestTest::Env::Host::HostSftpTest;
 use pgBackRestTest::Env::Manifest;
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;
@@ -92,6 +93,8 @@ use constant POSIX                                                  => STORAGE_P
     push @EXPORT, qw(POSIX);
 use constant S3                                                     => 's3';
     push @EXPORT, qw(S3);
+use constant SFTP                                                   => 'sftp';
+    push @EXPORT, qw(SFTP);
 
 use constant CFGOPTVAL_RESTORE_TYPE_DEFAULT                         => 'default';
     push @EXPORT, qw(CFGOPTVAL_RESTORE_TYPE_DEFAULT);
@@ -161,7 +164,7 @@ sub new
     bless $self, $class;
 
     # If repo is on local filesystem then set the repo-path locally
-    if ($oParam->{bRepoLocal})
+    if ($oParam->{bRepoLocal} || $oParam->{strBackupDestination} eq HOST_SFTP)
     {
         $self->{strRepoPath} = $self->testRunGet()->testPath() . "/$$oParam{strBackupDestination}/" . HOST_PATH_REPO;
     }
@@ -464,7 +467,7 @@ sub backupEnd
                     }
                 }
             }
-            # Else there should not be a tablespace directory at all.  This is only valid for storage that supports links.
+            # Else there should not be a tablespace directory at all. This is only valid for storage that supports links.
             elsif (storageRepo()->capability(STORAGE_CAPABILITY_LINK) &&
                    storageTest()->pathExists(
                        $self->repoBackupPath("${strBackup}/" . MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC)))
@@ -1090,6 +1093,7 @@ sub configCreate
 
     # General options
     # ------------------------------------------------------------------------------------------------------------------------------
+    $oParamHash{&CFGDEF_SECTION_GLOBAL}{'beta'} = 'y';
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{'job-retry'} = 0;
 
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{'log-level-console'} = lc(DETAIL);
@@ -1257,12 +1261,34 @@ sub configCreate
                 $oParamHash{$strStanza}{'pg256-host-key-file'} = testRunGet()->basePath() . HOST_CLIENT_KEY;
             }
 
-            # Only test explicit ports on the backup server.  This is so locally configured ports are also tested.
+            # Only test explicit ports on the backup server. This is so locally configured ports are also tested.
             if (!$self->synthetic() && $self->nameTest(HOST_BACKUP))
             {
                 $oParamHash{$strStanza}{"pg256-port"} = $oHostDb2->pgPort();
             }
         }
+    }
+    elsif ($oParam->{strStorage} eq SFTP)
+    {
+        my $oHostDb1 = $oHostDbPrimary;
+        my $oHostDb2 = $oHostDbStandby;
+
+        if ($self->nameTest(HOST_DB_STANDBY))
+        {
+            $oHostDb1 = $oHostDbStandby;
+            $oHostDb2 = $oHostDbPrimary;
+        }
+
+        # Set a flag so we know there's a bogus host
+        $self->{bBogusHost} = true;
+
+        # Set a valid replica to a higher index to ensure skipping indexes does not make a difference
+        $oParamHash{$strStanza}{"pg256-host"} = $oHostDb2->nameGet();
+        $oParamHash{$strStanza}{"pg256-host-user"} = $oHostDb2->userGet();
+        $oParamHash{$strStanza}{"pg256-host-cmd"} = $oHostDb2->backrestExe();
+        $oParamHash{$strStanza}{"pg256-host-config"} = $oHostDb2->backrestConfig();
+        $oParamHash{$strStanza}{"pg256-path"} = $oHostDb2->dbBasePath();
+        $oParamHash{$strStanza}{"pg256-port"} = $oHostDb2->pgPort();
     }
 
     # If this is a database host
@@ -1286,10 +1312,29 @@ sub configCreate
         # If the backup host is remote
         if (!$self->isHostBackup())
         {
-            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host'} = $oHostBackup->nameGet();
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-user'} = $oHostBackup->userGet();
-            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-cmd'} = $oHostBackup->backrestExe();
-            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-config'} = $oHostBackup->backrestConfig();
+
+            if ($oHostBackup->nameGet() eq HOST_SFTP)
+            {
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-type'} = "sftp";
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-host'} = HOST_SFTP;
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-host-key-hash-type'} = "sha1";
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-host-user'} = TEST_USER;
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-private-key-file'} = testRunGet()->basePath() . SSH_PRIVATE_KEY;
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-public-key-file'} = testRunGet()->basePath() . SSH_PUBLIC_KEY;
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-path'} = $self->repoPath();
+
+                # At what count do we hit diminishing returns
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'process-max'} = 8;
+
+                $oParamHash{&CFGDEF_SECTION_GLOBAL . ':backup'}{'start-fast'} = 'y';
+            }
+            else
+            {
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host'} = $oHostBackup->nameGet();
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-cmd'} = $oHostBackup->backrestExe();
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-config'} = $oHostBackup->backrestConfig();
+            }
 
             if ($oParam->{bTls})
             {
@@ -1370,8 +1415,8 @@ sub configUpdate
 ####################################################################################################################################
 # manifestMunge
 #
-# Allows for munging of the manifest while making it appear to be valid.  This is used to create various error conditions that
-# should be caught by the unit tests.
+# Allows for munging of the manifest while making it appear to be valid. This is used to create various error conditions that should
+# be caught by the unit tests.
 ####################################################################################################################################
 sub manifestMunge
 {
@@ -2020,6 +2065,8 @@ sub restoreCompare
         delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{"bno"});
         $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, "bi");
         delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{"bi"});
+        $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, "bic");
+        delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{"bic"});
         $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, "bim");
         delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{"bim"});
 
@@ -2160,6 +2207,13 @@ sub restoreCompare
             $oActualManifest->set(
                 MANIFEST_SECTION_BACKUP, 'backup-bundle', undef,
                 $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{'backup-bundle'});
+        }
+
+        if (defined($oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{'backup-bundle-raw'}))
+        {
+            $oActualManifest->set(
+                MANIFEST_SECTION_BACKUP, 'backup-bundle-raw', undef,
+                $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{'backup-bundle-raw'});
         }
 
         # Delete block incr headers since old Perl manifest code will not generate them

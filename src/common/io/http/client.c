@@ -41,12 +41,8 @@ httpClientNew(IoClient *ioClient, TimeMSec timeout)
 
     ASSERT(ioClient != NULL);
 
-    HttpClient *this = NULL;
-
     OBJ_NEW_BEGIN(HttpClient, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (HttpClient)
         {
             .pub =

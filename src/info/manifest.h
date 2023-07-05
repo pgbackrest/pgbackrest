@@ -2,10 +2,10 @@
 Backup Manifest Handler
 
 The backup manifest stores a complete list of all files, links, and paths in a backup along with metadata such as checksums, sizes,
-timestamps, etc.  A list of databases is also included for selective restore.
+timestamps, etc. A list of databases is also included for selective restore.
 
 The purpose of the manifest is to allow the restore command to confidently reconstruct the PostgreSQL data directory and ensure that
-nothing is missing or corrupt.  It is also useful for reporting, e.g. size of backup, backup time, etc.
+nothing is missing or corrupt. It is also useful for reporting, e.g. size of backup, backup time, etc.
 ***********************************************************************************************************************************/
 #ifndef INFO_MANIFEST_H
 #define INFO_MANIFEST_H
@@ -26,6 +26,9 @@ STRING_DECLARE(MANIFEST_PATH_BUNDLE_STR);
 STRING_DECLARE(MANIFEST_TARGET_PGDATA_STR);
 #define MANIFEST_TARGET_PGTBLSPC                                    "pg_tblspc"
 STRING_DECLARE(MANIFEST_TARGET_PGTBLSPC_STR);
+
+// Minimum size for the block incremental checksum
+#define BLOCK_INCR_CHECKSUM_SIZE_MIN                                6
 
 /***********************************************************************************************************************************
 Object type
@@ -56,6 +59,7 @@ typedef struct ManifestData
     time_t backupTimestampStop;                                     // When did the backup stop?
     BackupType backupType;                                          // Type of backup: full, diff, incr
     bool bundle;                                                    // Does the backup bundle files?
+    bool bundleRaw;                                                 // Use raw compress/encrypt for bundling?
     bool blockIncr;                                                 // Does the backup perform block incremental?
 
     // ??? Note that these fields are redundant and verbose since storing the start/stop lsn as a uint64 would be sufficient.
@@ -103,12 +107,21 @@ typedef struct ManifestBlockIncrAgeMap
     uint32_t blockMultiplier;                                       // Block multiplier
 } ManifestBlockIncrAgeMap;
 
+// Map block size to checksum size
+typedef struct ManifestBlockIncrChecksumSizeMap
+{
+    uint32_t blockSize;
+    uint32_t checksumSize;
+} ManifestBlockIncrChecksumSizeMap;
+
 typedef struct ManifestBlockIncrMap
 {
     const ManifestBlockIncrSizeMap *sizeMap;                        // Block size map
     unsigned int sizeMapSize;                                       // Block size map size
     const ManifestBlockIncrAgeMap *ageMap;                          // File age map
     unsigned int ageMapSize;                                        // File age map size
+    const ManifestBlockIncrChecksumSizeMap *checksumSizeMap;        // Checksum size map
+    unsigned int checksumSizeMapSize;                               // Checksum size map size
 } ManifestBlockIncrMap;
 
 /***********************************************************************************************************************************
@@ -142,6 +155,7 @@ typedef struct ManifestFile
     uint64_t bundleId;                                              // Bundle id
     uint64_t bundleOffset;                                          // Bundle offset
     size_t blockIncrSize;                                           // Size of incremental blocks
+    size_t blockIncrChecksumSize;                                   // Size of incremental block checksum
     uint64_t blockIncrMapSize;                                      // Block incremental map size
     uint64_t size;                                                  // Original size
     uint64_t sizeRepo;                                              // Size in repo
@@ -279,7 +293,7 @@ manifestMove(Manifest *const this, MemContext *const parentNew)
 // Manifest save
 FN_EXTERN void manifestSave(Manifest *this, IoWrite *write);
 
-// Validate a completed manifest.  Use strict mode only when saving the manifest after a backup.
+// Validate a completed manifest. Use strict mode only when saving the manifest after a backup.
 FN_EXTERN void manifestValidate(Manifest *this, bool strict);
 
 /***********************************************************************************************************************************

@@ -11,5 +11,6 @@ Functions
 ***********************************************************************************************************************************/
 // Render auto-generated PostgreSQL files
 void bldPgRender(const Storage *const storageRepo, const BldPg bldPg);
+void bldPgVersionRender(const Storage *const storageRepo, const BldPg bldPg);
 
 #endif

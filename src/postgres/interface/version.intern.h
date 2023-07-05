@@ -61,7 +61,6 @@ Read the version specific pg_control into a general data structure
     pgInterfaceControl##version(const unsigned char *controlFile)                                                                  \
     {                                                                                                                              \
         ASSERT(controlFile != NULL);                                                                                               \
-        ASSERT(pgInterfaceControlIs##version(controlFile));                                                                        \
                                                                                                                                    \
         return (PgControl)                                                                                                         \
         {                                                                                                                          \
@@ -123,7 +122,6 @@ Read the version specific WAL header into a general data structure
     pgInterfaceWal##version(const unsigned char *walFile)                                                                          \
     {                                                                                                                              \
         ASSERT(walFile != NULL);                                                                                                   \
-        ASSERT(pgInterfaceWalIs##version(walFile));                                                                                \
                                                                                                                                    \
         return (PgWal)                                                                                                             \
         {                                                                                                                          \

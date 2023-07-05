@@ -263,7 +263,7 @@ archiveAsyncExec(ArchiveMode archiveMode, const StringList *commandExec)
         for (int fd = 3; fd < 1024; fd++)
             close(fd);
 
-        // Execute the binary.  This statement will not return if it is successful.
+        // Execute the binary. This statement will not return if it is successful.
         THROW_ON_SYS_ERROR_FMT(
             execvp(strZ(strLstGet(commandExec, 0)), (char **const)strLstPtr(commandExec)) == -1, ExecuteError,
             "unable to execute asynchronous '%s'", archiveMode == archiveModeGet ? CFGCMD_ARCHIVE_GET : CFGCMD_ARCHIVE_PUSH);
@@ -279,12 +279,12 @@ archiveAsyncExec(ArchiveMode archiveMode, const StringList *commandExec)
 
     THROW_ON_SYS_ERROR(waitpid(pid, &processStatus, 0) == -1, ExecuteError, "unable to wait for forked process");
 
-    // The first fork should exit with success.  If not, something went wrong during the second fork.
+    // The first fork should exit with success. If not, something went wrong during the second fork.
     CHECK(ExecuteError, WIFEXITED(processStatus) && WEXITSTATUS(processStatus) == 0, "error on first fork");
 
 #ifdef DEBUG_EXEC_TIME
-    // If the process does not exit immediately then something probably went wrong with the double fork.  It's possible that this
-    // test will fail on very slow systems so it may need to be tuned.  The idea is to make sure that the waitpid() above is not
+    // If the process does not exit immediately then something probably went wrong with the double fork. It's possible that this
+    // test will fail on very slow systems so it may need to be tuned. The idea is to make sure that the waitpid() above is not
     // waiting on the async process.
     CHECK(AssertError, timeMSec() - timeBegin < 10, "the process does not exit immediately");
 #endif

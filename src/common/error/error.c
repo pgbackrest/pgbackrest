@@ -9,7 +9,7 @@ Error Handler
 #include <stdlib.h>
 #include <string.h>
 
-#include "common/error.h"
+#include "common/error/error.h"
 #include "common/macro.h"
 #include "common/stackTrace.h"
 
@@ -34,7 +34,7 @@ ERROR_DEFINE(1, TestError, false, RuntimeError);
 #endif
 
 // Include error type definitions
-#include "common/error.auto.c.inc"
+#include "common/error/error.auto.c.inc"
 
 /***********************************************************************************************************************************
 Maximum allowed number of nested try blocks
@@ -84,7 +84,7 @@ static struct
 /***********************************************************************************************************************************
 Message buffer and buffer size
 
-The message buffer is statically allocated so there is some space to store error messages.  Not being able to allocate such a small
+The message buffer is statically allocated so there is some space to store error messages. Not being able to allocate such a small
 amount of memory seems pretty unlikely so just keep the code simple and let the loader deal with massively constrained memory
 situations.
 

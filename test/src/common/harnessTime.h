@@ -1,16 +1,15 @@
 /***********************************************************************************************************************************
-Read Chunked I/O
-
-Read data that has been chunked with the IoChunk filter.
+Time Harness
 ***********************************************************************************************************************************/
-#ifndef COMMON_IO_CHUNKEDREAD_H
-#define COMMON_IO_CHUNKEDREAD_H
+#ifndef TEST_COMMON_HARNESS_TIME_H
+#define TEST_COMMON_HARNESS_TIME_H
 
-#include "common/io/read.h"
+#include "common/time.h"
 
 /***********************************************************************************************************************************
-Constructors
+Functions
 ***********************************************************************************************************************************/
-FN_EXTERN IoRead *ioChunkedReadNew(IoRead *read);
+// Set times to be returned from timeMSec()
+void hrnTimeMSecSet(const TimeMSec *timeList, size_t timeListSize);
 
 #endif

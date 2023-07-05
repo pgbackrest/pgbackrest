@@ -4,10 +4,10 @@ Assert Routines
 #ifndef COMMON_ASSERT_H
 #define COMMON_ASSERT_H
 
-#include "common/error.h"
+#include "common/error/error.h"
 
 /***********************************************************************************************************************************
-Asserts are used in test code to ensure that certain conditions are true.  They are omitted from production builds.
+Asserts are used in test code to ensure that certain conditions are true. They are omitted from production builds.
 ***********************************************************************************************************************************/
 #ifdef DEBUG
 
@@ -58,7 +58,7 @@ Asserts are used in test code to ensure that certain conditions are true.  They 
 #endif
 
 /***********************************************************************************************************************************
-Checks are used in production builds to test very important conditions.  Be sure to limit use to the most critical cases.
+Checks are used in production builds to test very important conditions. Be sure to limit use to the most critical cases.
 ***********************************************************************************************************************************/
 #define CHECK(type, condition, message)                                                                                            \
     do                                                                                                                             \

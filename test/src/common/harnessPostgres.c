@@ -51,6 +51,10 @@ uint32_t hrnPgInterfaceCatalogVersion150(void);
 void hrnPgInterfaceControl150(unsigned int controlVersion, PgControl pgControl, unsigned char *buffer);
 void hrnPgInterfaceWal150(unsigned int magic, PgWal pgWal, unsigned char *buffer);
 
+uint32_t hrnPgInterfaceCatalogVersion160(void);
+void hrnPgInterfaceControl160(unsigned int controlVersion, PgControl pgControl, unsigned char *buffer);
+void hrnPgInterfaceWal160(unsigned int magic, PgWal pgWal, unsigned char *buffer);
+
 typedef struct HrnPgInterface
 {
     // Version of PostgreSQL supported by this interface
@@ -68,6 +72,13 @@ typedef struct HrnPgInterface
 
 static const HrnPgInterface hrnPgInterface[] =
 {
+    {
+        .version = PG_VERSION_16,
+
+        .catalogVersion = hrnPgInterfaceCatalogVersion160,
+        .control = hrnPgInterfaceControl160,
+        .wal = hrnPgInterfaceWal160,
+    },
     {
         .version = PG_VERSION_15,
 

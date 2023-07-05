@@ -33,13 +33,8 @@ lstNew(size_t itemSize, ListParam param)
         FUNCTION_TEST_PARAM(FUNCTIONP, param.comparator);
     FUNCTION_TEST_END();
 
-    List *this = NULL;
-
     OBJ_NEW_BEGIN(List, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        // Create object
-        this = OBJ_NEW_ALLOC();
-
         *this = (List)
         {
             .itemSize = itemSize,

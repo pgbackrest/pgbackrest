@@ -65,7 +65,7 @@ Memory is allocated inside contexts and can be long lasting (for objects) or tem
 
 Logging is used for debugging with the built-in macros `FUNCTION_LOG_*()` and `FUNCTION_TEST_*()` which are used to trace parameters passed to/returned from functions. `FUNCTION_LOG_*()` macros are used for production logging whereas `FUNCTION_TEST_*()` macros will be compiled out of production code. For functions where no parameter is valuable enough to justify the cost of debugging in production, use `FUNCTION_TEST_BEGIN()/FUNCTION_TEST_END()`, else use `FUNCTION_LOG_BEGIN(someLogLevel)/FUNCTION_LOG_END()`. See [debug.h](https://github.com/pgbackrest/pgbackrest/blob/main/src/common/debug.h) for more details and the [Coding Example](#coding-example) below.
 
-Logging is also used for providing information to the user via the `LOG_*()` macros, such as `LOG_INFO("some informational message")` and `LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strZ(cfgOptionDisplay(cfgOptType)))` and also via `THROW_*()` macros for throwing an error. See [log.h](https://github.com/pgbackrest/pgbackrest/blob/main/src/common/log.h) and [error.h](https://github.com/pgbackrest/pgbackrest/blob/main/src/common/error.h) for more details and the [Coding Example](#coding-example) below.
+Logging is also used for providing information to the user via the `LOG_*()` macros, such as `LOG_INFO("some informational message")` and `LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strZ(cfgOptionDisplay(cfgOptType)))` and also via `THROW_*()` macros for throwing an error. See [log.h](https://github.com/pgbackrest/pgbackrest/blob/main/src/common/log.h) and [error.h](https://github.com/pgbackrest/pgbackrest/blob/main/src/common/error/error.h) for more details and the [Coding Example](#coding-example) below.
 
 ### Coding Example
 
@@ -74,7 +74,7 @@ The example below is not structured like an actual implementation and is intende
 #### Example: hypothetical basic object construction
 ```c
 /*
- *  HEADER FILE - see db.h for a complete implementation example
+ * HEADER FILE - see db.h for a complete implementation example
  */
 
 // Typedef the object declared in the C file
@@ -132,12 +132,8 @@ myObjNew(unsigned int myData, const String *secretName)
 
     ASSERT(secretName != NULL || myData > 0);       // Development-only assertions (will be compiled out of production code)
 
-    MyObj *this = NULL;                 // Declare the object in the parent memory context: it will live only as long as the parent
-
     OBJ_NEW_BEGIN(MyObj)                // Create a long lasting memory context with the name of the object
     {
-        this = OBJ_NEW_ALLOC();         // Allocate the memory required by the object
-
         *this = (MyObj)                 // Initialize the object
         {
             .pub =
@@ -231,29 +227,29 @@ pgbackrest/doc/doc.pl --help
 
 #### Without Docker
 
-If Docker is not installed, then the available tests can be listed using `--vm=none`, and each test must then be run with `--vm=none`.
+If Docker is not installed, then the available tests can be listed using `--dry-run`. Some tests require containers and will only be available when Docker is installed.
 
 pgbackrest-dev => List tests that don't require a container
 ```
-pgbackrest/test/test.pl --vm=none --dry-run
+pgbackrest/test/test.pl --dry-run
 
 --- output ---
 
     P00   INFO: test begin on x86_64 - log level info
     P00   INFO: clean autogenerate code
     P00   INFO: builds required: bin
---> P00   INFO: 76 tests selected
+--> P00   INFO: 79 tests selected
                 
-    P00   INFO: P1-T01/76 - vm=none, module=common, test=error
-           [filtered 73 lines of output]
-    P00   INFO: P1-T75/76 - vm=none, module=performance, test=type
-    P00   INFO: P1-T76/76 - vm=none, module=performance, test=storage
+    P00   INFO: P1-T01/79 - vm=none, module=common, test=error
+           [filtered 76 lines of output]
+    P00   INFO: P1-T78/79 - vm=none, module=performance, test=type
+    P00   INFO: P1-T79/79 - vm=none, module=performance, test=storage
 --> P00   INFO: DRY RUN COMPLETED SUCCESSFULLY
 ```
 
 pgbackrest-dev => Run a test
 ```
-pgbackrest/test/test.pl --vm=none --vm-out --module=common --test=wait
+pgbackrest/test/test.pl --vm-out --module=common --test=wait
 
 --- output ---
 
@@ -268,35 +264,35 @@ pgbackrest/test/test.pl --vm=none --vm-out --module=common --test=wait
                 
     P00   INFO: P1-T1/1 - vm=none, module=common, test=wait
                 
-        2023-01-30 01:43:50.109 P00   INFO: test command begin 2.44: [common/wait] --log-level=info --repo-path=/home/vagrant/test/repo --test-path=/home/vagrant/test --vm=none --vm-id=0
-        2023-01-30 01:43:52.582 P00   INFO: test command end: completed successfully (2474ms)
+        P00   INFO: test command begin 2.47dev: [common/wait] --log-level=info --no-log-timestamp --repo-path=/home/vagrant/test/repo --test-path=/home/vagrant/test --vm=none --vm-id=0
+        P00   INFO: test command end: completed successfully
         run 1 - waitNew(), waitMore, and waitFree()
-            000.009s          L0018     expect AssertError: assertion 'waitTime <= 999999000' failed
+                      L0018     expect AssertError: assertion 'waitTime <= 999999000' failed
         
-        run 1/1 ------------- L0021 0ms wait
-            001.806s 001.797s L0025     new wait
-            001.817s 000.011s L0026         check remaining time
-            001.819s 000.002s L0027         check wait time
-            001.820s 000.001s L0028         check sleep time
-            001.821s 000.001s L0029         check sleep prev time
-            001.821s 000.000s L0030         no wait more
-            001.827s 000.006s L0033     new wait = 0.2 sec
-            001.828s 000.001s L0034         check remaining time
-            001.829s 000.001s L0035         check wait time
-            001.830s 000.001s L0036         check sleep time
-            001.831s 000.001s L0037         check sleep prev time
-            001.832s 000.001s L0038         check begin time
-            002.030s 000.198s L0044         lower range check
-            002.031s 000.001s L0045         upper range check
-            002.032s 000.001s L0047         free wait
-            002.034s 000.002s L0052     new wait = 1.1 sec
-            002.035s 000.001s L0053         check wait time
-            002.036s 000.001s L0054         check sleep time
-            002.037s 000.001s L0055         check sleep prev time
-            002.038s 000.001s L0056         check begin time
-            003.137s 001.099s L0062         lower range check
-            003.138s 000.001s L0063         upper range check
-            003.139s 000.001s L0065         free wait
+        run 1/1 ----- L0021 0ms wait
+                      L0025     new wait
+                      L0026         check remaining time
+                      L0027         check wait time
+                      L0028         check sleep time
+                      L0029         check sleep prev time
+                      L0030         no wait more
+                      L0033     new wait = 0.2 sec
+                      L0034         check remaining time
+                      L0035         check wait time
+                      L0036         check sleep time
+                      L0037         check sleep prev time
+                      L0038         check begin time
+                      L0044         lower range check
+                      L0045         upper range check
+                      L0047         free wait
+                      L0052     new wait = 1.1 sec
+                      L0053         check wait time
+                      L0054         check sleep time
+                      L0055         check sleep prev time
+                      L0056         check begin time
+                      L0062         lower range check
+                      L0063         upper range check
+                      L0065         free wait
         
         TESTS COMPLETED SUCCESSFULLY
     
@@ -310,7 +306,7 @@ An entire module can be run by using only the `--module` option.
 
 pgbackrest-dev => Run a module
 ```
-pgbackrest/test/test.pl --vm=none --module=postgres
+pgbackrest/test/test.pl --module=postgres
 
 --- output ---
 
@@ -341,7 +337,7 @@ pgbackrest/test/test.pl --vm-build --vm=u20
 --- output ---
 
     P00   INFO: test begin on x86_64 - log level info
-    P00   INFO: Using cached pgbackrest/test:u20-base-20221220A image (2db467d873c0aff06335592c8a22b8441b5c6440) ...
+    P00   INFO: Using cached pgbackrest/test:u20-base-20230523A image (31c2124ab0db03d97eb6324e12e22eb64eb4a3b8) ...
     P00   INFO: Building pgbackrest/test:u20-test image ...
     P00   INFO: Build Complete
 ```
@@ -463,9 +459,7 @@ HRN_FORK_BEGIN()
 {
     HRN_FORK_CHILD_BEGIN()
     {
-        TEST_RESULT_INT_NE(
-            lockAcquire(cfgOptionStr(cfgOptLockPath), STRDEF("stanza1"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
-            -1, "create backup/expire lock");
+        TEST_RESULT_INT_NE(lockAcquireP(), -1, "create backup/expire lock");
 
         // Notify parent that lock has been acquired
         HRN_FORK_CHILD_NOTIFY_PUT();
@@ -652,7 +646,7 @@ To add an option, add the following to the `<option-list>` section; if it does n
 <option id="force" name="Force">
     <summary>Force a restore.</summary>
 
-    <text>By itself this option forces the <postgres/> data and tablespace paths to be completely overwritten.  In combination with <br-option>--delta</br-option> a timestamp/size delta will be performed instead of using checksums.</text>
+    <text>By itself this option forces the <postgres/> data and tablespace paths to be completely overwritten. In combination with <br-option>--delta</br-option> a timestamp/size delta will be performed instead of using checksums.</text>
 
     <example>y</example>
 </option>
@@ -667,7 +661,7 @@ pgbackrest/test/test.pl --module=command --test=help --vm-out
 ```
 To verify the `help` command output, build the pgBackRest executable:
 ```
-pgbackrest/test/test.pl --vm=none --build-only
+pgbackrest/test/test.pl --build-only
 ```
 Use the pgBackRest executable to test the help output:
 ```

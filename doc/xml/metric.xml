@@ -11,7 +11,7 @@
 
         <p>Function/line coverage is complete with no exceptions.</p>
 
-        <p>Branch coverage excludes branches inside macros and <code>assert()</code> calls.  Macros have their own unit tests so they do not need to be tested everywhere they appear.  Asserts are not expected to have complete branch coverage since they test cases that should always be true.</p>
+        <p>Branch coverage excludes branches inside macros and <code>assert()</code> calls. Macros have their own unit tests so they do not need to be tested everywhere they appear. Asserts are not expected to have complete branch coverage since they test cases that should always be true.</p>
 
         <table>
             <table-header>

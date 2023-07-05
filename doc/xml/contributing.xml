@@ -107,7 +107,7 @@
             </execute>
         </execute-list>
 
-        <p>Some unit tests and all the integration tests require <proper>Docker</proper>.  Running in containers allows us to simulate multiple hosts, test on different distributions and versions of <postgres/>, and use sudo without affecting the host system.</p>
+        <p>Some unit tests and all the integration tests require <proper>Docker</proper>. Running in containers allows us to simulate multiple hosts, test on different distributions and versions of <postgres/>, and use sudo without affecting the host system.</p>
 
         <execute-list host="{[host-contrib]}">
             <title>Install Docker</title>
@@ -131,7 +131,7 @@
             </execute>
         </execute-list>
 
-        <p>This clone of the <backrest/> repository is sufficient for experimentation.  For development, create a fork and clone that instead.</p>
+        <p>This clone of the <backrest/> repository is sufficient for experimentation. For development, create a fork and clone that instead.</p>
 
         <execute-list host="{[host-contrib]}">
             <title>Clone <backrest/> repository</title>
@@ -165,7 +165,7 @@
 
             <p>Logging is used for debugging with the built-in macros <code>FUNCTION_LOG_*()</code> and <code>FUNCTION_TEST_*()</code> which are used to trace parameters passed to/returned from functions. <code>FUNCTION_LOG_*()</code> macros are used for production logging whereas <code>FUNCTION_TEST_*()</code> macros will be compiled out of production code. For functions where no parameter is valuable enough to justify the cost of debugging in production, use <code>FUNCTION_TEST_BEGIN()/FUNCTION_TEST_END()</code>, else use <code>FUNCTION_LOG_BEGIN(someLogLevel)/FUNCTION_LOG_END()</code>. See <link url="{[github-url-src-common]}/debug.h">debug.h</link> for more details and the <link section="/coding/coding-example">Coding Example</link> below.</p>
 
-            <p>Logging is also used for providing information to the user via the <code>LOG_*()</code> macros, such as <code>LOG_INFO("some informational message")</code> and <code>LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strZ(cfgOptionDisplay(cfgOptType)))</code> and also via <code>THROW_*()</code> macros for throwing an error. See <link url="{[github-url-src-common]}/log.h">log.h</link> and <link url="{[github-url-src-common]}/error.h">error.h</link> for more details and the <link section="/coding/coding-example">Coding Example</link> below.</p>
+            <p>Logging is also used for providing information to the user via the <code>LOG_*()</code> macros, such as <code>LOG_INFO("some informational message")</code> and <code>LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strZ(cfgOptionDisplay(cfgOptType)))</code> and also via <code>THROW_*()</code> macros for throwing an error. See <link url="{[github-url-src-common]}/log.h">log.h</link> and <link url="{[github-url-src-common]}/error/error.h">error.h</link> for more details and the <link section="/coding/coding-example">Coding Example</link> below.</p>
         </section>
 
         <!-- =================================================================================================================== -->
@@ -180,7 +180,7 @@
 
                 <code-block type="c">
 /*
- *  HEADER FILE - see db.h for a complete implementation example
+ * HEADER FILE - see db.h for a complete implementation example
  */
 
 // Typedef the object declared in the C file
@@ -238,12 +238,8 @@ myObjNew(unsigned int myData, const String *secretName)
 
     ASSERT(secretName != NULL || myData > 0);       // Development-only assertions (will be compiled out of production code)
 
-    MyObj *this = NULL;                 // Declare the object in the parent memory context: it will live only as long as the parent
-
     OBJ_NEW_BEGIN(MyObj)                // Create a long lasting memory context with the name of the object
     {
-        this = OBJ_NEW_ALLOC();         // Allocate the memory required by the object
-
         *this = (MyObj)                 // Initialize the object
         {
             .pub =
@@ -348,13 +344,13 @@ pgbackrest/doc/doc.pl --help
             <section id="without-docker">
                 <title>Without Docker</title>
 
-                <p>If <proper>Docker</proper> is not installed, then the available tests can be listed using <setting>--vm=none</setting>, and each test must then be run with <setting>--vm=none</setting>.</p>
+                <p>If <proper>Docker</proper> is not installed, then the available tests can be listed using <setting>--dry-run</setting>. Some tests require containers and will only be available when Docker is installed.</p>
 
                 <execute-list host="{[host-contrib]}">
                     <title>List tests that don't require a container</title>
 
                     <execute output="y">
-                        <exe-cmd>pgbackrest/test/test.pl --vm=none --dry-run</exe-cmd>
+                        <exe-cmd>pgbackrest/test/test.pl --dry-run</exe-cmd>
                         <exe-cmd-extra>{[test-cmd-extra]}</exe-cmd-extra>
                         <exe-highlight>[0-9]+ tests selected|DRY RUN COMPLETED SUCCESSFULLY</exe-highlight>
                     </execute>
@@ -364,7 +360,7 @@ pgbackrest/doc/doc.pl --help
                     <title>Run a test</title>
 
                     <execute output="y">
-                        <exe-cmd>pgbackrest/test/test.pl --vm=none --vm-out --module=common --test=wait</exe-cmd>
+                        <exe-cmd>pgbackrest/test/test.pl --vm-out --module=common --test=wait</exe-cmd>
                         <exe-cmd-extra>{[test-cmd-extra]}</exe-cmd-extra>
                     </execute>
                 </execute-list>
@@ -375,7 +371,7 @@ pgbackrest/doc/doc.pl --help
                     <title>Run a module</title>
 
                     <execute output="y">
-                        <exe-cmd>pgbackrest/test/test.pl --vm=none --module=postgres</exe-cmd>
+                        <exe-cmd>pgbackrest/test/test.pl --module=postgres</exe-cmd>
                         <exe-cmd-extra>{[test-cmd-extra]}</exe-cmd-extra>
                     </execute>
                 </execute-list>
@@ -530,9 +526,7 @@ HRN_FORK_BEGIN()
 {
     HRN_FORK_CHILD_BEGIN()
     {
-        TEST_RESULT_INT_NE(
-            lockAcquire(cfgOptionStr(cfgOptLockPath), STRDEF("stanza1"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
-            -1, "create backup/expire lock");
+        TEST_RESULT_INT_NE(lockAcquireP(), -1, "create backup/expire lock");
 
         // Notify parent that lock has been acquired
         HRN_FORK_CHILD_NOTIFY_PUT();
@@ -638,9 +632,9 @@ run 8/1 ------------- L2285 no current backups
 
             <p><b>run 8/1 ------------- L2285 no current backups</b> - this is the first test (1) in run 8 which is the <code>TEST_TITLE("no current backups");</code> at line number 2285.</p>
 
-            <p><b>000.002s          L2298     empty backup.info</b> -  the first number, 000.002s, is the time in seconds that the test started from the beginning of the run. L2298 is the line number of the test and <code>empty backup.info</code> is the test comment.</p>
+            <p><b>000.002s          L2298     empty backup.info</b> - the first number, 000.002s, is the time in seconds that the test started from the beginning of the run. L2298 is the line number of the test and <code>empty backup.info</code> is the test comment.</p>
 
-            <p><b>000.009s 000.007s L2300     no backups to expire</b> -  again, 000.009s, is the time in seconds that the test started from the beginning of the run. The second number, 000.007s, is the run time of the <b>previous</b> test (i.e. <code>empty backup.info</code> test took 000.007 seconds to execute). L2300 is the line number of the test and <code>no backups to expire</code> is the test comment.</p>
+            <p><b>000.009s 000.007s L2300     no backups to expire</b> - again, 000.009s, is the time in seconds that the test started from the beginning of the run. The second number, 000.007s, is the run time of the <b>previous</b> test (i.e. <code>empty backup.info</code> test took 000.007 seconds to execute). L2300 is the line number of the test and <code>no backups to expire</code> is the test comment.</p>
         </section>
     </section>
 
@@ -744,7 +738,7 @@ run 8/1 ------------- L2285 no current backups
 &lt;option id="force" name="Force"&gt;
     &lt;summary&gt;Force a restore.&lt;/summary&gt;
 
-    &lt;text&gt;By itself this option forces the &lt;postgres/&gt; data and tablespace paths to be completely overwritten.  In combination with &lt;br-option&gt;--delta&lt;/br-option&gt; a timestamp/size delta will be performed instead of using checksums.&lt;/text&gt;
+    &lt;text&gt;By itself this option forces the &lt;postgres/&gt; data and tablespace paths to be completely overwritten. In combination with &lt;br-option&gt;--delta&lt;/br-option&gt; a timestamp/size delta will be performed instead of using checksums.&lt;/text&gt;
 
     &lt;example>y&lt;/example&gt;
 &lt;/option&gt;
@@ -765,7 +759,7 @@ pgbackrest/test/test.pl --module=command --test=help --vm-out
             <p>To verify the <cmd>help</cmd> command output, build the <backrest/> executable:</p>
 
             <code-block>
-pgbackrest/test/test.pl --vm=none --build-only
+pgbackrest/test/test.pl --build-only
             </code-block>
 
             <p>Use the <backrest/> executable to test the help output:</p>
@@ -795,7 +789,7 @@ pgbackrest/doc/doc.pl --out=html --no-exe
 pgbackrest/doc/doc.pl --out=html --include=user-guide --require=/quickstart --var=encrypt=n --no-cache --pre
             </code-block>
 
-            <p>The resulting Docker containers can be listed with <code>docker ps</code> and the container can be entered with <code>docker exec doc-pg-primary bash</code>.  Additionally, the <code>-u</code> option can be added for entering the container as a specific user (e.g. <code>postgres</code>).</p>
+            <p>The resulting Docker containers can be listed with <code>docker ps</code> and the container can be entered with <code>docker exec doc-pg-primary bash</code>. Additionally, the <code>-u</code> option can be added for entering the container as a specific user (e.g. <code>postgres</code>).</p>
         </section>
     </section>
 

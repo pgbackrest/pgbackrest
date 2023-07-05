@@ -366,15 +366,11 @@ tlsClientNew(
 
     ASSERT(ioClient != NULL);
 
-    IoClient *this = NULL;
-
-    OBJ_NEW_BEGIN(TlsClient, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(TlsClient, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        TlsClient *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoClient::TlsClient);
-
-        *driver = (TlsClient)
+        *this = (TlsClient)
         {
-            .ioClient = ioClientMove(ioClient, MEM_CONTEXT_NEW()),
+            .ioClient = ioClientMove(ioClient, objMemContext(this)),
             .host = strDup(host),
             .timeoutConnect = timeoutConnect,
             .timeoutSession = timeoutSession,
@@ -383,40 +379,36 @@ tlsClientNew(
         };
 
         // Set callback to free context
-        memContextCallbackSet(objMemContext(driver), tlsClientFreeResource, driver);
+        memContextCallbackSet(objMemContext(this), tlsClientFreeResource, this);
 
         // Enable safe compatibility options
-        SSL_CTX_set_options(driver->context, SSL_OP_ALL);
+        SSL_CTX_set_options(this->context, SSL_OP_ALL);
 
         // Set location of CA certificates if the server certificate will be verified
-        if (driver->verifyPeer)
+        if (this->verifyPeer)
         {
             // If the user specified a location
             if (param.caFile != NULL || param.caPath != NULL)                                                       // {vm_covered}
             {
                 cryptoError(                                                                                        // {vm_covered}
                     SSL_CTX_load_verify_locations(                                                                  // {vm_covered}
-                        driver->context, strZNull(param.caFile), strZNull(param.caPath)) != 1,                      // {vm_covered}
+                        this->context, strZNull(param.caFile), strZNull(param.caPath)) != 1,                        // {vm_covered}
                     "unable to set user-defined CA certificate location");                                          // {vm_covered}
             }
             // Else use the defaults
             else
             {
                 cryptoError(
-                    SSL_CTX_set_default_verify_paths(driver->context) != 1, "unable to set default CA certificate location");
+                    SSL_CTX_set_default_verify_paths(this->context) != 1, "unable to set default CA certificate location");
             }
         }
 
         // Load certificate and key, if specified
-        tlsCertKeyLoad(driver->context, param.certFile, param.keyFile);
-
-        // Increment stat
-        statInc(TLS_STAT_CLIENT_STR);
-
-        // Create client interface
-        this = ioClientNew(driver, &tlsClientInterface);
+        tlsCertKeyLoad(this->context, param.certFile, param.keyFile);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_CLIENT, this);
+    statInc(TLS_STAT_CLIENT_STR);
+
+    FUNCTION_LOG_RETURN(IO_CLIENT, ioClientNew(this, &tlsClientInterface));
 }

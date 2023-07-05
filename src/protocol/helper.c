@@ -818,7 +818,7 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx)
         MEM_CONTEXT_END();
     }
 
-    // Determine protocol id for the remote.  If the process option is set then use that since we want the remote protocol id to
+    // Determine protocol id for the remote. If the process option is set then use that since we want the remote protocol id to
     // match the local protocol id. Otherwise set to 0 since the remote is being started from a main process and there should only
     // be one remote per host.
     unsigned int processId = 0;

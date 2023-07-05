@@ -54,14 +54,15 @@ sub run
     (
         {pg => '9.3', dst =>     'backup', tls => 0, stg => AZURE, enc => 0, cmp => NONE, rt => 2, bnd => 0, bi => 0},
         {pg => '9.4', dst => 'db-standby', tls => 0, stg => POSIX, enc => 1, cmp =>  LZ4, rt => 1, bnd => 1, bi => 0},
-        {pg => '9.5', dst =>     'backup', tls => 1, stg =>    S3, enc => 0, cmp =>  BZ2, rt => 1, bnd => 0, bi => 1},
+        {pg => '9.5', dst =>     'backup', tls => 1, stg =>   GCS, enc => 0, cmp =>  BZ2, rt => 1, bnd => 0, bi => 1},
         {pg => '9.6', dst =>     'backup', tls => 0, stg => POSIX, enc => 0, cmp => NONE, rt => 2, bnd => 1, bi => 1},
-        {pg =>  '10', dst => 'db-standby', tls => 1, stg =>   GCS, enc => 1, cmp =>   GZ, rt => 2, bnd => 0, bi => 0},
-        {pg =>  '11', dst =>     'backup', tls => 1, stg => AZURE, enc => 0, cmp =>  ZST, rt => 2, bnd => 1, bi => 0},
+        {pg =>  '10', dst =>  'sftp-srvr', tls => 0, stg =>  SFTP, enc => 1, cmp =>   GZ, rt => 1, bnd => 1, bi => 0},
+        {pg =>  '11', dst =>     'backup', tls => 1, stg => AZURE, enc => 0, cmp =>  ZST, rt => 2, bnd => 0, bi => 0},
         {pg =>  '12', dst =>     'backup', tls => 0, stg =>    S3, enc => 1, cmp =>  LZ4, rt => 1, bnd => 0, bi => 1},
         {pg =>  '13', dst => 'db-standby', tls => 1, stg =>   GCS, enc => 0, cmp =>  ZST, rt => 1, bnd => 1, bi => 1},
-        {pg =>  '14', dst =>     'backup', tls => 0, stg => POSIX, enc => 1, cmp =>  LZ4, rt => 2, bnd => 0, bi => 0},
+        {pg =>  '14', dst =>  'sftp-srvr', tls => 0, stg =>  SFTP, enc => 0, cmp =>  LZ4, rt => 1, bnd => 1, bi => 0},
         {pg =>  '15', dst => 'db-standby', tls => 0, stg => AZURE, enc => 0, cmp => NONE, rt => 2, bnd => 1, bi => 1},
+        {pg =>  '16', dst => 'db-standby', tls => 0, stg =>    S3, enc => 1, cmp => NONE, rt => 1, bnd => 0, bi => 0},
     )
     {
         # Only run tests for this pg version
@@ -100,7 +101,7 @@ sub run
                 ' --reset-pg2-path' :
             '';
 
-        # If S3 set process max to 2.  This seems like the best place for parallel testing since it will help speed S3 processing
+        # If S3 set process max to 2. This seems like the best place for parallel testing since it will help speed S3 processing
         # without slowing down the other tests too much.
         if ($strStorage eq S3)
         {
@@ -154,12 +155,12 @@ sub run
         # --------------------------------------------------------------------------------------------------------------------------
         my $strComment = 'verify check command runs successfully';
 
-        $oHostDbPrimary->check($strComment, {iTimeout => 5});
+        $oHostDbPrimary->check($strComment, {iTimeout => 10});
 
         # Also run check on the backup host when present
         if ($bHostBackup)
         {
-            $oHostBackup->check($strComment, {iTimeout => 5, strOptionalParam => $strBogusReset});
+            $oHostBackup->check($strComment, {iTimeout => 10, strOptionalParam => $strBogusReset});
         }
 
         # Restart the cluster ignoring any errors in the postgresql log
@@ -232,8 +233,8 @@ sub run
         # Enabled async archiving
         $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {'archive-async' => 'y'}});
 
-        # Kick out a bunch of archive logs to exercise async archiving.  Only do this when compressed and remote to slow it
-        # down enough to make it evident that the async process is working.
+        # Kick out a bunch of archive logs to exercise async archiving. Only do this when compressed and remote to slow it down
+        # enough to make it evident that the async process is working.
         if ($strCompressType ne NONE && $strBackupDestination eq HOST_BACKUP)
         {
             &log(INFO, '    multiple wal switches to exercise async archiving');
@@ -416,8 +417,8 @@ sub run
             'insert into test1_zeroed values (1);',
             {strDb => 'test1', bAutoCommit => true});
 
-        # Start a backup so the next backup has to restart it.  This test is not required for PostgreSQL >= 9.6 since backups
-        # are run in non-exclusive mode.
+        # Start a backup so the next backup has to restart it. This test is not required for PostgreSQL >= 9.6 since backups are run
+        # in non-exclusive mode.
         if ($oHostDbPrimary->pgVersion() >= PG_VERSION_93 && $oHostDbPrimary->pgVersion() < PG_VERSION_96)
         {
             $oHostDbPrimary->sqlSelectOne("select pg_start_backup('test backup that will cause an error', true)");
@@ -450,7 +451,7 @@ sub run
             {strOptionalParam => '--stop-auto --buffer-size=32768 --delta', iRepo => $iRepoTotal});
 
         # Ensure the check command runs properly with a tablespace
-        $oHostBackup->check( 'check command with tablespace', {iTimeout => 5, strOptionalParam => $strBogusReset});
+        $oHostBackup->check( 'check command with tablespace', {iTimeout => 10, strOptionalParam => $strBogusReset});
 
         # Setup the xid target
         #---------------------------------------------------------------------------------------------------------------------------
@@ -520,8 +521,8 @@ sub run
         # Test that the first database has not been restored since --db-include did not include test1
         my ($strSHA1, $lSize) = storageTest()->hashSize($strDb1TablePath);
 
-        # Create a zeroed sparse file in the test directory that is the same size as the filenode.map.  We need to use the
-        # posix driver directly to do this because handles cannot be passed back from the C code.
+        # Create a zeroed sparse file in the test directory that is the same size as the filenode.map. We need to use the posix
+        # driver directly to do this because handles cannot be passed back from the C code.
         my $oStorageTrunc = new pgBackRestTest::Common::Storage($self->testPath(), new pgBackRestTest::Common::StoragePosix());
 
         my $strTestTable = $self->testPath() . "/testtable";
@@ -574,8 +575,8 @@ sub run
             confess &log(ASSERT, "no files found in tablespace path '${strTablespacePath}'");
         }
 
-        # This table should exist to prove that the tablespace was restored.  It has not been updated since it was created so it
-        # should not be created by any full page writes.  Once it is verified to exist it can be dropped.
+        # This table should exist to prove that the tablespace was restored. It has not been updated since it was created so it
+        # should not be created by any full page writes. Once it is verified to exist it can be dropped.
         $oHostDbPrimary->sqlSelectOneTest("select count(*) from test_exists", 0);
         $oHostDbPrimary->sqlExecute('drop table test_exists');
 
@@ -712,9 +713,9 @@ sub run
 
         $oHostDbPrimary->clusterStop();
 
-        # The timeline to use for this test is subject to change based on tests being added or removed above.  The best thing
-        # would be to automatically grab the timeline after the restore, but since this test has been stable for a long time
-        # it does not seem worth the effort to automate.
+        # The timeline to use for this test is subject to change based on tests being added or removed above. The best thing would
+        # be to automatically grab the timeline after the restore, but since this test has been stable for a long time it does not
+        # seem worth the effort to automate.
         $oHostDbPrimary->restore(
             undef, $strIncrBackup,
             {bDelta => true, strType => CFGOPTVAL_RESTORE_TYPE_STANDBY, strTargetTimeline => 4, iRepo => $iRepoTotal});

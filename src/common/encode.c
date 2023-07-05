@@ -8,7 +8,6 @@ Binary to String Encode/Decode
 
 #include "common/debug.h"
 #include "common/encode.h"
-#include "common/error.h"
 
 /***********************************************************************************************************************************
 Assert that encoding type is valid. This needs to be kept up to date with the last item in the enum.

@@ -170,13 +170,9 @@ sckClientNew(const String *const host, const unsigned int port, const TimeMSec t
 
     ASSERT(host != NULL);
 
-    IoClient *this = NULL;
-
-    OBJ_NEW_BEGIN(SocketClient, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(SocketClient, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        SocketClient *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoClient::SocketClient);
-
-        *driver = (SocketClient)
+        *this = (SocketClient)
         {
             .host = strDup(host),
             .port = port,
@@ -184,12 +180,10 @@ sckClientNew(const String *const host, const unsigned int port, const TimeMSec t
             .timeoutConnect = timeoutConnect,
             .timeoutSession = timeoutSession,
         };
-
-        statInc(SOCKET_STAT_CLIENT_STR);
-
-        this = ioClientNew(driver, &sckClientInterface);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_CLIENT, this);
+    statInc(SOCKET_STAT_CLIENT_STR);
+
+    FUNCTION_LOG_RETURN(IO_CLIENT, ioClientNew(this, &sckClientInterface));
 }

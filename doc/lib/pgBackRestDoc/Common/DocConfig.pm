@@ -19,6 +19,7 @@ use pgBackRestDoc::ProjectInfo;
 ####################################################################################################################################
 # Help types
 ####################################################################################################################################
+use constant CONFIG_HELP_BETA                                       => 'beta';
 use constant CONFIG_HELP_COMMAND                                    => 'command';
     push @EXPORT, qw(CONFIG_HELP_COMMAND);
 use constant CONFIG_HELP_CURRENT                                    => 'current';
@@ -319,6 +320,7 @@ sub process
             $$oCommandOption{&CONFIG_HELP_EXAMPLE} = $oOptionDoc->fieldGet('example');
             $oCommandOption->{&CONFIG_HELP_INTERNAL} =
                 cfgDefineCommand()->{$strCommand}{&CFGDEF_INTERNAL} ? true : $oOptionDefine->{$strOption}{&CFGDEF_INTERNAL};
+            $oCommandOption->{&CONFIG_HELP_BETA} = $oOptionDefine->{$strOption}{&CFGDEF_BETA};
 
             # If internal is defined for the option/command it overrides everthing else
             if (defined($oOptionDefine->{$strOption}{&CFGDEF_COMMAND}{$strCommand}{&CFGDEF_INTERNAL}))
@@ -352,7 +354,7 @@ sub process
                 }
             }
 
-            # If the option did not come from the command also store in global option list.  This prevents duplication of commonly
+            # If the option did not come from the command also store in global option list. This prevents duplication of commonly
             # used options.
             if ($strOptionSource ne CONFIG_HELP_SOURCE_COMMAND)
             {
@@ -370,6 +372,7 @@ sub process
                 $$oOption{&CONFIG_HELP_DESCRIPTION} = $$oCommandOption{&CONFIG_HELP_DESCRIPTION};
                 $$oOption{&CONFIG_HELP_EXAMPLE} = $oOptionDoc->fieldGet('example');
                 $oOption->{&CONFIG_HELP_INTERNAL} = $oOptionDefine->{$strOption}{&CFGDEF_INTERNAL};
+                $oOption->{&CONFIG_HELP_BETA} = $oOptionDefine->{$strOption}{&CFGDEF_BETA};
             }
         }
     }
@@ -819,6 +822,12 @@ sub helpOptionGet
     $oOptionElement->
         nodeAdd('p')->textSet($$oOptionHash{&CONFIG_HELP_SUMMARY});
 
+    # Add beta warning
+    if ($$oOptionHash{&CONFIG_HELP_BETA})
+    {
+        $oOptionElement->nodeAdd('p')->textSet({name => 'text', children => ['FOR BETA TESTING ONLY. DO NOT USE IN PRODUCTION.']});
+    }
+
     $oOptionElement->
         nodeAdd('p')->textSet($$oOptionHash{&CONFIG_HELP_DESCRIPTION});
 
@@ -862,32 +871,38 @@ sub helpOptionGet
     }
 
     # Get the example
-    my $strExample;
+    my $strExample = '';
 
     my $strOptionPrefix = $rhConfigDefine->{$strOption}{&CFGDEF_GROUP};
     my $strOptionIndex = defined($strOptionPrefix) ?
         "${strOptionPrefix}1-" . substr($strOption, length($strOptionPrefix) + 1) : $strOption;
 
-    if (defined($strCommand))
+    if (defined($strCommand) && docConfigOptionTypeTest($strOption, CFGDEF_TYPE_BOOLEAN))
     {
-        if (docConfigOptionTypeTest($strOption, CFGDEF_TYPE_BOOLEAN))
+        if ($$oOptionHash{&CONFIG_HELP_EXAMPLE} ne 'n' && $$oOptionHash{&CONFIG_HELP_EXAMPLE} ne 'y')
         {
-            if ($$oOptionHash{&CONFIG_HELP_EXAMPLE} ne 'n' && $$oOptionHash{&CONFIG_HELP_EXAMPLE} ne 'y')
-            {
-                confess &log(ERROR, "option ${strOption} example should be boolean but value is: " .
-                             $$oOptionHash{&CONFIG_HELP_EXAMPLE});
-            }
+            confess &log(ERROR, "option ${strOption} example should be boolean but value is: " .
+                            $$oOptionHash{&CONFIG_HELP_EXAMPLE});
+        }
 
-            $strExample = '--' . ($$oOptionHash{&CONFIG_HELP_EXAMPLE} eq 'n' ? 'no-' : '') . $strOptionIndex;
-        }
-        else
-        {
-            $strExample = "--${strOptionIndex}=" . $$oOptionHash{&CONFIG_HELP_EXAMPLE};
-        }
+        $strExample = '--' . ($$oOptionHash{&CONFIG_HELP_EXAMPLE} eq 'n' ? 'no-' : '') . $strOptionIndex;
     }
     else
     {
-        $strExample = "${strOptionIndex}=" . $$oOptionHash{&CONFIG_HELP_EXAMPLE};
+        foreach my $strLine (split('\\|', $$oOptionHash{&CONFIG_HELP_EXAMPLE}))
+        {
+            if ($strExample ne '')
+            {
+                $strExample .= ' ';
+            }
+
+            if (defined($strCommand))
+            {
+                $strExample .= '--';
+            }
+
+            $strExample .= "${strOptionIndex}=${strLine}";
+        }
     }
 
     $strCodeBlock .= (defined($strCodeBlock) ? "\n" : '') . "example: ${strExample}";

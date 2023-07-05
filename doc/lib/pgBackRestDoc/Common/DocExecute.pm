@@ -1051,7 +1051,7 @@ sub sectionChildProcess
                 }
 
                 my $oHost = new pgBackRestTest::Common::HostTest(
-                    $$hCacheKey{name}, "doc-$$hCacheKey{name}", $strImage, $strHostUser, $$hCacheKey{os},
+                    $$hCacheKey{name}, "doc-$$hCacheKey{name}", $strImage, $strHostUser,
                     defined($strMount) ? [$strMount] : undef, $strOption, $$hCacheKey{param}, $$hCacheKey{'update-hosts'});
 
                 $self->{host}{$$hCacheKey{name}} = $oHost;

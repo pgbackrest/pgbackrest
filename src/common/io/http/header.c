@@ -23,13 +23,8 @@ httpHeaderNew(const StringList *redactList)
 {
     FUNCTION_TEST_VOID();
 
-    HttpHeader *this = NULL;
-
     OBJ_NEW_BEGIN(HttpHeader, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        // Allocate state and set context
-        this = OBJ_NEW_ALLOC();
-
         *this = (HttpHeader)
         {
             .redactList = strLstDup(redactList),
@@ -50,23 +45,18 @@ httpHeaderDup(const HttpHeader *header, const StringList *redactList)
         FUNCTION_TEST_PARAM(STRING_LIST, redactList);
     FUNCTION_TEST_END();
 
-    HttpHeader *this = NULL;
+    if (header == NULL)
+        FUNCTION_TEST_RETURN(HTTP_HEADER, NULL);
 
-    if (header != NULL)
+    OBJ_NEW_BEGIN(HttpHeader, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        OBJ_NEW_BEGIN(HttpHeader, .childQty = MEM_CONTEXT_QTY_MAX)
+        *this = (HttpHeader)
         {
-            // Allocate state and set context
-            this = OBJ_NEW_ALLOC();
-
-            *this = (HttpHeader)
-            {
-                .redactList = redactList == NULL ? strLstDup(header->redactList) : strLstDup(redactList),
-                .kv = kvDup(header->kv),
-            };
-        }
-        OBJ_NEW_END();
+            .redactList = redactList == NULL ? strLstDup(header->redactList) : strLstDup(redactList),
+            .kv = kvDup(header->kv),
+        };
     }
+    OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(HTTP_HEADER, this);
 }
@@ -89,8 +79,8 @@ httpHeaderAdd(HttpHeader *this, const String *key, const String *value)
     const Variant *keyVar = VARSTR(key);
     const Variant *valueVar = kvGet(this->kv, keyVar);
 
-    // If the key exists then append the new value.  The HTTP spec (RFC 2616, Section 4.2) says that if a header appears more than
-    // once then it is equivalent to a single comma-separated header.  There appear to be a few exceptions such as Set-Cookie, but
+    // If the key exists then append the new value. The HTTP spec (RFC 2616, Section 4.2) says that if a header appears more than
+    // once then it is equivalent to a single comma-separated header. There appear to be a few exceptions such as Set-Cookie, but
     // they should not be of concern to us here.
     if (valueVar != NULL)
     {

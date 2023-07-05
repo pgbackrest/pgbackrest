@@ -335,6 +335,7 @@ Macros to return function results (or void)
 #define FUNCTION_LOG_RETURN_VOID()                                                                                                 \
     do                                                                                                                             \
     {                                                                                                                              \
+        FUNCTION_TEST_MEM_CONTEXT_AUDIT_END("void");                                                                               \
         STACK_TRACE_POP(false);                                                                                                    \
                                                                                                                                    \
         LOG(FUNCTION_LOG_LEVEL(), 0, "=> void");                                                                                   \
@@ -445,8 +446,8 @@ Ignore DEBUG_TEST_TRACE_MACRO if DEBUG is not defined because the underlying fun
     {                                                                                                                              \
         (void)FUNCTION_TEST_BEGIN_exists; /* CHECK for presence of FUNCTION_TEST_BEGIN*() */                                       \
                                                                                                                                    \
-        STACK_TRACE_POP(true);                                                                                                     \
         FUNCTION_TEST_MEM_CONTEXT_AUDIT_END("void");                                                                               \
+        STACK_TRACE_POP(true);                                                                                                     \
         return;                                                                                                                    \
     }                                                                                                                              \
     while (0)

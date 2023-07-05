@@ -57,18 +57,14 @@ storageNew(
     ASSERT(interface.pathRemove != NULL);
     ASSERT(interface.remove != NULL);
 
-    Storage *this = NULL;
-
     OBJ_NEW_BEGIN(Storage, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (Storage)
         {
             .pub =
             {
                 .type = type,
-                .driver = objMove(driver, objMemContext(this)),
+                .driver = objMoveToInterface(driver, this, memContextPrior()),
                 .interface = interface,
             },
             .path = strDup(path),
@@ -428,8 +424,8 @@ storageMove(const Storage *this, StorageRead *source, StorageWrite *destination)
             // Remove the source file
             storageInterfaceRemoveP(storageDriver(this), storageReadName(source));
 
-            // Sync source path if the destination path was synced.  We know the source and destination paths are different because
-            // the move did not succeed.  This will need updating when drivers other than Posix/CIFS are implemented because there's
+            // Sync source path if the destination path was synced. We know the source and destination paths are different because
+            // the move did not succeed. This will need updating when drivers other than Posix/CIFS are implemented because there's
             // no way to get coverage on it now.
             if (storageWriteSyncPath(destination))
                 storageInterfacePathSyncP(storageDriver(this), strPath(storageReadName(source)));

@@ -453,7 +453,9 @@ backupListAdd(
     // info:repository section
     KeyValue *repoInfo = kvPutKv(infoInfo, INFO_KEY_REPOSITORY_VAR);
 
-    kvPut(repoInfo, KEY_SIZE_VAR, VARUINT64(backupData->backupInfoRepoSize));
+    if (backupData->backupInfoRepoSizeMap == NULL)
+        kvPut(repoInfo, KEY_SIZE_VAR, VARUINT64(backupData->backupInfoRepoSize));
+
     kvPut(repoInfo, KEY_DELTA_VAR, VARUINT64(backupData->backupInfoRepoSizeDelta));
 
     if (outputJson && backupData->backupInfoRepoSizeMap != NULL)
@@ -885,12 +887,14 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr)
             strZ(strSizeFormat(varUInt64Force(kvGet(info, KEY_DELTA_VAR)))));
 
         KeyValue *repoInfo = varKv(kvGet(info, INFO_KEY_REPOSITORY_VAR));
+        const Variant *const repoSizeInfo = kvGet(repoInfo, KEY_SIZE_VAR);
 
-        strCatFmt(
-            resultStr, "            repo%u: backup set size: %s, backup size: %s\n",
-            varUInt(kvGet(varKv(kvGet(backupInfo, KEY_DATABASE_VAR)), KEY_REPO_KEY_VAR)),
-            strZ(strSizeFormat(varUInt64Force(kvGet(repoInfo, KEY_SIZE_VAR)))),
-            strZ(strSizeFormat(varUInt64Force(kvGet(repoInfo, KEY_DELTA_VAR)))));
+        strCatFmt(resultStr, "            repo%u: ", varUInt(kvGet(varKv(kvGet(backupInfo, KEY_DATABASE_VAR)), KEY_REPO_KEY_VAR)));
+
+        if (repoSizeInfo != NULL)
+            strCatFmt(resultStr, "backup set size: %s, ", strZ(strSizeFormat(varUInt64Force(kvGet(repoInfo, KEY_SIZE_VAR)))));
+
+        strCatFmt(resultStr, "backup size: %s\n", strZ(strSizeFormat(varUInt64Force(kvGet(repoInfo, KEY_DELTA_VAR)))));
 
         if (kvGet(backupInfo, BACKUP_KEY_REFERENCE_VAR) != NULL)
         {

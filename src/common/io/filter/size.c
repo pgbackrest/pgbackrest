@@ -17,7 +17,7 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct IoSize
 {
-    uint64_t size;                                                  // Total size of al input
+    uint64_t size;                                                  // Total size of all input
 } IoSize;
 
 /***********************************************************************************************************************************
@@ -91,16 +91,11 @@ ioSizeNew(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
 
-    IoFilter *this = NULL;
-
-    OBJ_NEW_BEGIN(IoSize, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(IoSize)
     {
-        IoSize *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::IoSize);
-        *driver = (IoSize){0};
-
-        this = ioFilterNewP(SIZE_FILTER_TYPE, driver, NULL, .in = ioSizeProcess, .result = ioSizeResult);
+        *this = (IoSize){0};
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_FILTER, this);
+    FUNCTION_LOG_RETURN(IO_FILTER, ioFilterNewP(SIZE_FILTER_TYPE, this, NULL, .in = ioSizeProcess, .result = ioSizeResult));
 }

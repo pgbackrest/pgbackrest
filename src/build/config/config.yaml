@@ -86,6 +86,13 @@ command:
     log-file: false
     log-level-default: DEBUG
 
+  manifest:
+    command-role:
+      remote: {}
+    internal: true
+    log-file: false
+    log-level-default: DEBUG
+
   repo-create:
     command-role:
       remote: {}
@@ -313,6 +320,7 @@ option:
     command:
       info: {}
       repo-ls: {}
+      manifest: {}
       verify:
         default: none
         allow-list:
@@ -321,6 +329,14 @@ option:
     allow-list:
       - text
       - json
+    command-role:
+      main: {}
+
+  reference:
+    type: string
+    required: false
+    command:
+      manifest: {}
     command-role:
       main: {}
 
@@ -334,6 +350,9 @@ option:
       info:
         depend:
           option: stanza
+      manifest:
+        default: latest
+        required: true
       restore:
         default: latest
         required: true
@@ -353,6 +372,7 @@ option:
       expire: {}
       info:
         required: false
+      manifest: {}
       repo-create:
         required: false
       repo-get:
@@ -495,6 +515,7 @@ option:
       backup: {}
       check: {}
       info: {}
+      manifest: {}
       repo-create: {}
       repo-get: {}
       repo-ls: {}
@@ -523,6 +544,7 @@ option:
       backup: {}
       check: {}
       info: {}
+      manifest: {}
       repo-create: {}
       repo-get: {}
       repo-ls: {}
@@ -553,6 +575,7 @@ option:
     type: string
     required: false
     command:
+      manifest: {}
       repo-ls: {}
     command-role:
       main: {}
@@ -610,6 +633,13 @@ option:
     command-role:
       main: {}
 
+  beta:
+    section: global
+    type: boolean
+    default: false
+    internal: true
+    beta: true
+
   buffer-size:
     section: global
     type: size
@@ -634,6 +664,7 @@ option:
       check: {}
       expire: {}
       info: {}
+      manifest: {}
       repo-create: {}
       repo-get: {}
       repo-ls: {}
@@ -657,6 +688,7 @@ option:
       backup: {}
       check: {}
       info: {}
+      manifest: {}
       repo-create: {}
       repo-get: {}
       repo-ls: {}
@@ -709,6 +741,7 @@ option:
       backup: {}
       check: {}
       info: {}
+      manifest: {}
       repo-get: {}
       repo-ls: {}
       repo-put: {}
@@ -730,8 +763,8 @@ option:
       - none
       - bz2
       - gz
-      - lz4
-      - zst
+      - lz4: HAVE_LIBLZ4
+      - zst: HAVE_LIBZST
     command: compress
     command-role:
       async: {}
@@ -867,6 +900,7 @@ option:
       backup: {}
       check: {}
       info: {}
+      manifest: {}
       repo-create: {}
       repo-get: {}
       repo-ls: {}
@@ -1025,6 +1059,7 @@ option:
       backup: {}
       check: {}
       info: {}
+      manifest: {}
       repo-create: {}
       repo-get: {}
       repo-ls: {}
@@ -1170,6 +1205,15 @@ option:
     section: global
     type: boolean
     required: false
+    command:
+      backup: {}
+    command-role:
+      main: {}
+
+  page-header-check:
+    section: global
+    type: boolean
+    default: true
     command:
       backup: {}
     command-role:
@@ -1328,6 +1372,9 @@ option:
       backup:
         command-role:
           local: {}
+      manifest:
+        command-role:
+          main: {}
 
   pg-database:
     section: stanza
@@ -1356,6 +1403,7 @@ option:
         internal: true
       backup: {}
       check: {}
+      manifest: {}
       restore:
         internal: true
       stanza-create: {}
@@ -1417,6 +1465,7 @@ option:
     command:
       backup: {}
       check: {}
+      manifest: {}
       stanza-create: {}
       stanza-delete: {}
       stanza-upgrade: {}
@@ -1496,6 +1545,8 @@ option:
         required: false
       backup: {}
       check: {}
+      manifest:
+        required: false
       restore: {}
       stanza-create: {}
       stanza-delete: {}
@@ -1541,6 +1592,23 @@ option:
     depend:
       option: pg-path
 
+  pg-version-force:
+    section: stanza
+    type: string
+    internal: true
+    required: false
+    command:
+      archive-get: {}
+      archive-push: {}
+      backup: {}
+      check: {}
+      manifest: {}
+      restore: {}
+      stanza-create: {}
+      stanza-delete: {}
+      stanza-upgrade: {}
+      verify: {}
+
   # Repository options
   #---------------------------------------------------------------------------------------------------------------------------------
   repo:
@@ -1575,6 +1643,10 @@ option:
         command-role:
           main: {}
           remote: {}
+      manifest:
+        command-role:
+          main: {}
+          remote: {}
       repo-create:
         command-role:
           main: {}
@@ -1602,14 +1674,14 @@ option:
           remote: {}
       stanza-create:
         command-role:
-            remote: {}
+          remote: {}
       stanza-delete:
         command-role:
           main: {}
           remote: {}
       stanza-upgrade:
         command-role:
-            remote: {}
+          remote: {}
       start:
         command-role: {}
       stop:
@@ -1636,6 +1708,7 @@ option:
       expire:
         internal: true
       info: {}
+      manifest: {}
       repo-create: {}
       repo-get: {}
       repo-ls: {}
@@ -1662,6 +1735,7 @@ option:
       - gcs
       - posix
       - s3
+      - sftp: HAVE_LIBSSH2
     command:
       annotate:
         command-role:
@@ -1691,6 +1765,10 @@ option:
         command-role:
           main: {}
       info:
+        command-role:
+          main: {}
+          remote: {}
+      manifest:
         command-role:
           main: {}
           remote: {}
@@ -1821,7 +1899,6 @@ option:
     section: global
     group: repo
     type: boolean
-    internal: true
     default: false
     command:
       backup: {}
@@ -1849,6 +1926,28 @@ option:
 
   repo-block-age-map:
     inherit: repo-block-size-map
+
+  repo-block-checksum-size-map:
+    inherit: repo-block-size-map
+
+  repo-block-size-super:
+    section: global
+    group: repo
+    type: size
+    default: 256KiB
+    allow-range: [32KiB, 16MiB]
+    internal: true
+    command: repo-block
+    command-role:
+      main: {}
+    depend:
+      option: repo-block
+      list:
+        - true
+
+  repo-block-size-super-full:
+    inherit: repo-block-size-super
+    default: 1MiB
 
   repo-cipher-pass:
     section: global
@@ -2003,6 +2102,7 @@ option:
       archive-push: {}
       check: {}
       info: {}
+      manifest: {}
       repo-create: {}
       repo-get: {}
       repo-ls: {}
@@ -2250,6 +2350,75 @@ option:
       - path
     command: repo-type
     depend: repo-s3-bucket
+
+  repo-sftp-host:
+    section: global
+    group: repo
+    type: string
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - sftp
+
+  repo-sftp-host-fingerprint:
+    section: global
+    group: repo
+    type: string
+    required: false
+    command: repo-type
+    depend: repo-sftp-host
+
+  repo-sftp-host-key-hash-type:
+    section: global
+    group: repo
+    type: string-id
+    allow-list:
+      - md5
+      - sha1
+      - sha256
+    command: repo-type
+    depend: repo-sftp-host
+
+  repo-sftp-host-port:
+    section: global
+    group: repo
+    type: integer
+    default: 22
+    allow-range: [1, 65535]
+    command: repo-type
+    depend: repo-sftp-host
+
+  repo-sftp-host-user:
+    section: global
+    group: repo
+    type: string
+    command: repo-type
+    depend: repo-sftp-host
+
+  repo-sftp-private-key-file:
+    section: global
+    group: repo
+    type: string
+    command: repo-type
+    depend: repo-sftp-host
+
+  repo-sftp-private-key-passphrase:
+    section: global
+    group: repo
+    type: string
+    required: false
+    secure: true
+    command: repo-type
+    depend: repo-sftp-host
+
+  repo-sftp-public-key-file:
+    section: global
+    group: repo
+    type: string
+    required: false
+    command: repo-type
+    depend: repo-sftp-host
 
   repo-storage-verify-tls:
     section: global

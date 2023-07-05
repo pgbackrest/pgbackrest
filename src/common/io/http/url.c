@@ -60,13 +60,8 @@ httpUrlNewParse(const String *const url, HttpUrlNewParseParam param)
 
     ASSERT(url != NULL);
 
-    HttpUrl *this = NULL;
-
     OBJ_NEW_BEGIN(HttpUrl, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        // Allocate state and set context
-        this = OBJ_NEW_ALLOC();
-
         *this = (HttpUrl)
         {
             .pub =

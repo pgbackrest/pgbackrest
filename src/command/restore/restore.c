@@ -79,13 +79,13 @@ restorePathValidate(void)
         {
             LOG_WARN_FMT(
                 "--delta or --force specified but unable to find '" PG_FILE_PGVERSION "' or '" BACKUP_MANIFEST_FILE "' in '%s' to"
-                " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
-                " exist in the destination directories the restore will be aborted.",
+                " confirm that this is a valid $PGDATA directory. --delta and --force have been disabled and if any files exist"
+                " in the destination directories the restore will be aborted.",
                 strZ(cfgOptionDisplay(cfgOptPgPath)));
 
             // Disable delta and force so restore will fail if the directories are not empty
-            cfgOptionSet(cfgOptDelta, cfgSourceDefault, VARBOOL(false));
-            cfgOptionSet(cfgOptForce, cfgSourceDefault, VARBOOL(false));
+            cfgOptionSet(cfgOptDelta, cfgSourceDefault, BOOL_FALSE_VAR);
+            cfgOptionSet(cfgOptForce, cfgSourceDefault, BOOL_FALSE_VAR);
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -803,9 +803,9 @@ restoreManifestOwner(const Manifest *const manifest, const String **const rootRe
                 MEM_CONTEXT_PRIOR_END();
             }
         }
-        // Else set owners to NULL.  This means we won't make any attempt to update ownership and will just leave it as written by
-        // the current user/group.  If there are existing files that are not owned by the current user/group then we will attempt
-        // to update them, which will generally cause an error, though some systems allow updates to the group ownership.
+        // Else set owners to NULL. This means we won't make any attempt to update ownership and will just leave it as written by
+        // the current user/group. If there are existing files that are not owned by the current user/group then we will attempt to
+        // update them, which will generally cause an error, though some systems allow updates to the group ownership.
         // -------------------------------------------------------------------------------------------------------------------------
         else
         {
@@ -942,7 +942,7 @@ restoreCleanBuildRecurse(StorageIterator *const storageItr, const RestoreCleanCa
             if (cleanData->basePath && info.type == storageTypeFile && strLstExists(cleanData->fileIgnore, info.name))
                 continue;
 
-            // If this is not a delta then error because the directory is expected to be empty.  Ignore the . path.
+            // If this is not a delta then error because the directory is expected to be empty. Ignore the . path.
             if (!cleanData->delta)
             {
                 THROW_FMT(
@@ -1127,9 +1127,9 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
 
             strLstSort(cleanData->fileIgnore, sortOrderAsc);
 
-            // Check that the path exists.  If not, there's no need to do any cleaning and we'll attempt to create it later.
-            // Don't log check for the same path twice.  There can be multiple links to files in the same path, but logging it more
-            // than once makes the logs noisy and looks like a bug.
+            // Check that the path exists. If not, there's no need to do any cleaning and we'll attempt to create it later. Don't
+            // log check for the same path twice. There can be multiple links to files in the same path, but logging it more than
+            // once makes the logs noisy and looks like a bug.
             if (!strLstExists(pathChecked, cleanData->targetPath))
                 LOG_DETAIL_FMT("check '%s' exists", strZ(cleanData->targetPath));
 
@@ -1201,8 +1201,8 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
 
         // Step 2: Clean target directories
         // -------------------------------------------------------------------------------------------------------------------------
-        // Delete the pg_control file (if it exists) so the cluster cannot be started if restore does not complete.  Sync the path
-        // so the file does not return, zombie-like, in the case of a host crash.
+        // Delete the pg_control file (if it exists) so the cluster cannot be started if restore does not complete. Sync the path so
+        // the file does not return, zombie-like, in the case of a host crash.
         if (storageExistsP(storagePg(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)))
         {
             LOG_DETAIL_FMT(
@@ -1218,10 +1218,10 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
             // Only clean if the target exists
             if (cleanData->exists)
             {
-                // Don't clean file links.  It doesn't matter whether the file exists or not since we know it is in the manifest.
+                // Don't clean file links. It doesn't matter whether the file exists or not since we know it is in the manifest.
                 if (cleanData->target->file == NULL)
                 {
-                    // Only log when doing a delta restore because otherwise the targets should be empty.  We'll still run the clean
+                    // Only log when doing a delta restore because otherwise the targets should be empty. We'll still run the clean
                     // to fix permissions/ownership on the target paths.
                     if (delta)
                         LOG_INFO_FMT("remove invalid files/links/paths from '%s'", strZ(cleanData->targetPath));
@@ -1268,12 +1268,12 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
         {
             const ManifestPath *path = manifestPath(manifest, pathIdx);
 
-            // Skip the pg_tblspc path because it only maps to the manifest.  We should remove this in a future release but not much
+            // Skip the pg_tblspc path because it only maps to the manifest. We should remove this in a future release but not much
             // can be done about it for now.
             if (strEq(path->name, MANIFEST_TARGET_PGTBLSPC_STR))
                 continue;
 
-            // If this path has been mapped as a link then create a link.  The path has already been created as part of target
+            // If this path has been mapped as a link then create a link. The path has already been created as part of target
             // creation (or it might have already existed).
             const ManifestLink *link = manifestLinkFindDefault(
                 manifest,
@@ -1286,7 +1286,7 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
                 const String *pgPath = storagePathP(storagePg(), manifestPathPg(link->name));
                 StorageInfo linkInfo = storageInfoP(storagePg(), pgPath, .ignoreMissing = true);
 
-                // Create the link if it is missing.  If it exists it should already have the correct ownership and destination.
+                // Create the link if it is missing. If it exists it should already have the correct ownership and destination.
                 if (!linkInfo.exists)
                 {
                     LOG_DETAIL_FMT("create symlink '%s' to '%s'", strZ(pgPath), strZ(link->destination));
@@ -1315,7 +1315,7 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
             }
         }
 
-        // Step 4: Create file links.  These don't get created during path creation because they do not have a matching path entry.
+        // Step 4: Create file links. These don't get created during path creation because they do not have a matching path entry.
         // -------------------------------------------------------------------------------------------------------------------------
         for (unsigned int linkIdx = 0; linkIdx < manifestLinkTotal(manifest); linkIdx++)
         {
@@ -1324,7 +1324,7 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
             const String *pgPath = storagePathP(storagePg(), manifestPathPg(link->name));
             StorageInfo linkInfo = storageInfoP(storagePg(), pgPath, .ignoreMissing = true);
 
-            // Create the link if it is missing.  If it exists it should already have the correct ownership and destination.
+            // Create the link if it is missing. If it exists it should already have the correct ownership and destination.
             if (!linkInfo.exists)
             {
                 LOG_DETAIL_FMT("create symlink '%s' to '%s'", strZ(pgPath), strZ(link->destination));
@@ -1565,7 +1565,7 @@ restoreRecoveryOption(unsigned int pgVersion)
                 String *key = strLstGet(recoveryOptionKey, keyIdx);
                 const String *value = varStr(kvGet(recoveryOption, VARSTR(key)));
 
-                // Replace - in key with _.  Since we use - users naturally will as well.
+                // Replace - in key with _. Since we use - users naturally will as well.
                 strReplaceChr(key, '-', '_');
 
                 kvPut(result, VARSTR(key), VARSTR(value));
@@ -1581,7 +1581,7 @@ restoreRecoveryOption(unsigned int pgVersion)
             {
                 THROW_FMT(
                     OptionInvalidError,
-                    "option '" CFGOPT_ARCHIVE_MODE "' is not supported on " PG_NAME " < " PG_VERSION_12_STR "\n"
+                    "option '" CFGOPT_ARCHIVE_MODE "' is not supported on " PG_NAME " < " PG_VERSION_12_Z "\n"
                     "HINT: 'archive_mode' should be manually set to 'off' in postgresql.conf.");
             }
 
@@ -1595,9 +1595,9 @@ restoreRecoveryOption(unsigned int pgVersion)
         // Write restore_command
         if (!strLstExists(recoveryOptionKey, RESTORE_COMMAND_STR))
         {
-            // Null out options that it does not make sense to pass from the restore command to archive-get.  All of these have
-            // reasonable defaults so there is no danger of an error -- they just might not be optimal.  In any case, it seems
-            // better than, for example, passing --process-max=32 to archive-get because it was specified for restore.
+            // Null out options that it does not make sense to pass from the restore command to archive-get. All of these have
+            // reasonable defaults so there is no danger of an error -- they just might not be optimal. In any case, it seems better
+            // than, for example, passing --process-max=32 to archive-get because it was specified for restore.
             KeyValue *optionReplace = kvNew();
 
             kvPut(optionReplace, VARSTRDEF(CFGOPT_EXEC_ID), NULL);
@@ -1731,10 +1731,13 @@ restoreRecoveryConf(const unsigned int pgVersion, const String *const restoreLab
 
 // Helper to write recovery options into recovery.conf
 static void
-restoreRecoveryWriteConf(const Manifest *const manifest, const unsigned int pgVersion, const String *const restoreLabel)
+restoreRecoveryWriteConf(
+    const Manifest *const manifest, const StorageInfo *const fileInfo, const unsigned int pgVersion,
+    const String *const restoreLabel)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
+        FUNCTION_LOG_PARAM(STORAGE_INFO, fileInfo);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(STRING, restoreLabel);
     FUNCTION_LOG_END();
@@ -1746,15 +1749,11 @@ restoreRecoveryWriteConf(const Manifest *const manifest, const unsigned int pgVe
         {
             LOG_INFO_FMT("write %s", strZ(storagePathP(storagePg(), PG_FILE_RECOVERYCONF_STR)));
 
-            // Use the data directory to set permissions and ownership for recovery file
-            const ManifestPath *const dataPath = manifestPathFind(manifest, MANIFEST_TARGET_PGDATA_STR);
-            const mode_t recoveryFileMode = dataPath->mode & (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-
             // Write recovery.conf
             storagePutP(
                 storageNewWriteP(
-                    storagePgWrite(), PG_FILE_RECOVERYCONF_STR, .noCreatePath = true, .modeFile = recoveryFileMode,
-                    .noAtomic = true, .noSyncPath = true, .user = dataPath->user, .group = dataPath->group),
+                    storagePgWrite(), PG_FILE_RECOVERYCONF_STR, .noCreatePath = true, .modeFile = fileInfo->mode, .noAtomic = true,
+                    .noSyncPath = true, .user = fileInfo->user, .group = fileInfo->group),
                 BUFSTR(restoreRecoveryConf(pgVersion, restoreLabel)));
         }
         MEM_CONTEXT_TEMP_END();
@@ -1765,9 +1764,13 @@ restoreRecoveryWriteConf(const Manifest *const manifest, const unsigned int pgVe
 
 // Helper to write recovery options into postgresql.auto.conf
 static void
-restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
+restoreRecoveryWriteAutoConf(
+    const Manifest *const manifest, const StorageInfo *const fileInfo, const unsigned int pgVersion,
+    const String *const restoreLabel)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(MANIFEST, manifest);
+        FUNCTION_LOG_PARAM(STORAGE_INFO, fileInfo);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(STRING, restoreLabel);
     FUNCTION_LOG_END();
@@ -1826,7 +1829,7 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
         // If recovery was requested then write the recovery options
         if (cfgOptionStrId(cfgOptType) != CFGOPTVAL_TYPE_NONE)
         {
-            // If the user specified standby_mode as a recovery option then error.  It's tempting to just set type=standby in this
+            // If the user specified standby_mode as a recovery option then error. It's tempting to just set type=standby in this
             // case but since config parsing has already happened the target options could be in an invalid state.
             if (cfgOptionTest(cfgOptRecoveryOption))
             {
@@ -1838,7 +1841,7 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
                     // Get the key and value
                     String *key = strLstGet(recoveryOptionKey, keyIdx);
 
-                    // Replace - in key with _.  Since we use - users naturally will as well.
+                    // Replace - in key with _. Since we use - users naturally will as well.
                     strReplaceChr(key, '-', '_');
 
                     if (strEq(key, STANDBY_MODE_STR))
@@ -1859,15 +1862,11 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
         LOG_INFO_FMT(
             "write %s%s", autoConf == NULL ? "" : "updated ", strZ(storagePathP(storagePg(), PG_FILE_POSTGRESQLAUTOCONF_STR)));
 
-        // Use the data directory to set permissions and ownership for recovery file
-        const StorageInfo dataPath = storageInfoP(storagePg(), NULL);
-        mode_t recoveryFileMode = dataPath.mode & (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-
         // Write postgresql.auto.conf
         storagePutP(
             storageNewWriteP(
-                storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF_STR, .noCreatePath = true, .modeFile = recoveryFileMode,
-                .noAtomic = true, .noSyncPath = true, .user = dataPath.user, .group = dataPath.group),
+                storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF_STR, .noCreatePath = true, .modeFile = fileInfo->mode,
+                .noAtomic = true, .noSyncPath = true, .user = fileInfo->user, .group = fileInfo->group),
             BUFSTR(content));
 
         // The standby.signal file is required for standby mode
@@ -1875,17 +1874,18 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
         {
             storagePutP(
                 storageNewWriteP(
-                    storagePgWrite(), PG_FILE_STANDBYSIGNAL_STR, .noCreatePath = true, .modeFile = recoveryFileMode,
-                    .noAtomic = true, .noSyncPath = true, .user = dataPath.user, .group = dataPath.group),
+                    storagePgWrite(), PG_FILE_STANDBYSIGNAL_STR, .noCreatePath = true, .modeFile = fileInfo->mode,
+                    .noAtomic = true, .noSyncPath = true, .user = fileInfo->user, .group = fileInfo->group),
                 NULL);
         }
-        // Else the recovery.signal file is required for targeted recovery
-        else
+        // Else the recovery.signal file is required for targeted recovery. Skip writing this file if the backup was offline and
+        // recovery type is none since PostgreSQL will error in this case when wal_level=minimal.
+        else if (cfgOptionStrId(cfgOptType) != CFGOPTVAL_TYPE_NONE)
         {
             storagePutP(
                 storageNewWriteP(
-                    storagePgWrite(), PG_FILE_RECOVERYSIGNAL_STR, .noCreatePath = true, .modeFile = recoveryFileMode,
-                    .noAtomic = true, .noSyncPath = true, .user = dataPath.user, .group = dataPath.group),
+                    storagePgWrite(), PG_FILE_RECOVERYSIGNAL_STR, .noCreatePath = true, .modeFile = fileInfo->mode,
+                    .noAtomic = true, .noSyncPath = true, .user = fileInfo->user, .group = fileInfo->group),
                 NULL);
         }
     }
@@ -1895,10 +1895,11 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
 }
 
 static void
-restoreRecoveryWrite(const Manifest *manifest)
+restoreRecoveryWrite(const Manifest *const manifest, const StorageInfo *const fileInfo)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
+        FUNCTION_LOG_PARAM(STORAGE_INFO, fileInfo);
     FUNCTION_LOG_END();
 
     // Get PostgreSQL version to write recovery for
@@ -1933,9 +1934,9 @@ restoreRecoveryWrite(const Manifest *manifest)
 
             // Write recovery file based on PostgreSQL version
             if (pgVersion >= PG_VERSION_RECOVERY_GUC)
-                restoreRecoveryWriteAutoConf(pgVersion, restoreLabel);
+                restoreRecoveryWriteAutoConf(manifest, fileInfo, pgVersion, restoreLabel);
             else
-                restoreRecoveryWriteConf(manifest, pgVersion, restoreLabel);
+                restoreRecoveryWriteConf(manifest, fileInfo, pgVersion, restoreLabel);
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -2121,7 +2122,8 @@ restoreFileZeroed(const String *manifestName, RegExp *zeroExp)
         zeroExp == NULL ? false : regExpMatch(zeroExp, manifestName) && !strEndsWith(manifestName, STRDEF("/" PG_FILE_PGVERSION)));
 }
 
-// Helper function to construct the absolute pg path for any file
+// Helper function to construct the absolute pg path for any file. Add a temp extension to pg_control so a partially restored
+// cluster cannot be started.
 static String *
 restoreFilePgPath(const Manifest *const manifest, const String *const manifestName)
 {
@@ -2346,6 +2348,7 @@ restoreJobCallback(void *data, unsigned int clientIdx)
                     pckWriteTimeP(param, manifestData(jobData->manifest)->backupTimestampCopyStart);
                     pckWriteBoolP(param, cfgOptionBool(cfgOptDelta));
                     pckWriteBoolP(param, cfgOptionBool(cfgOptDelta) && cfgOptionBool(cfgOptForce));
+                    pckWriteBoolP(param, file.bundleId != 0 && manifestData(jobData->manifest)->bundleRaw);
                     pckWriteStrP(param, jobData->cipherSubPass);
                     pckWriteStrLstP(param, manifestReferenceList(jobData->manifest));
 
@@ -2383,7 +2386,10 @@ restoreJobCallback(void *data, unsigned int clientIdx)
                 pckWriteU64P(param, file.blockIncrMapSize);
 
                 if (file.blockIncrMapSize != 0)
+                {
                     pckWriteU64P(param, file.blockIncrSize);
+                    pckWriteU64P(param, file.blockIncrChecksumSize);
+                }
 
                 pckWriteStrP(param, file.name);
 
@@ -2452,7 +2458,14 @@ cmdRestore(void)
         // Remotes (if any) are no longer needed since the rest of the repository reads will be done by the local processes
         protocolFree();
 
-        // Validate manifest.  Don't use strict mode because we'd rather ignore problems that won't affect a restore.
+        // If the backup was made offline and no restore type was specified then set to none. This prevents recovery.signal from
+        // being generated by default for PostgreSQL >= 12. Offline backups created with wal_level=minimal will error in this case
+        // so this should be a good default. However, if the user explicitly sets type and it does not equal none then they will get
+        // an error if wal_level=minimal.
+        if (!manifestData(jobData.manifest)->backupOptionOnline && cfgOptionSource(cfgOptType) == cfgSourceDefault)
+            cfgOptionSet(cfgOptType, cfgSourceParam, VARUINT64(CFGOPTVAL_TYPE_NONE));
+
+        // Validate manifest. Don't use strict mode because we'd rather ignore problems that won't affect a restore.
         manifestValidate(jobData.manifest, false);
 
         // Get the cipher subpass used to decrypt files in the backup
@@ -2529,8 +2542,13 @@ cmdRestore(void)
         }
         MEM_CONTEXT_TEMP_END();
 
-        // Write recovery settings
-        restoreRecoveryWrite(jobData.manifest);
+        // Write recovery settings. Use the data directory to set permissions and ownership for recovery files.
+        StorageInfo fileInfo = storageInfoP(storagePg(), NULL);
+        fileInfo.user = restoreManifestOwnerReplace(fileInfo.user, jobData.rootReplaceUser);
+        fileInfo.group = restoreManifestOwnerReplace(fileInfo.group, jobData.rootReplaceGroup);
+        fileInfo.mode = fileInfo.mode & (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+
+        restoreRecoveryWrite(jobData.manifest, &fileInfo);
 
         // Remove backup.manifest
         storageRemoveP(storagePgWrite(), BACKUP_MANIFEST_FILE_STR);
@@ -2546,7 +2564,7 @@ cmdRestore(void)
             {
                 const String *pgPath = manifestTargetPath(jobData.manifest, target);
 
-                // Don't sync the same path twice.  There can be multiple links to files in the same path, but syncing it more than
+                // Don't sync the same path twice. There can be multiple links to files in the same path, but syncing it more than
                 // once makes the logs noisy and looks like a bug even though it doesn't hurt anything or realistically affect
                 // performance.
                 if (strLstExists(pathSynced, pgPath))
@@ -2565,7 +2583,7 @@ cmdRestore(void)
         {
             const String *manifestName = manifestPath(jobData.manifest, pathIdx)->name;
 
-            // Skip the pg_tblspc path because it only maps to the manifest.  We should remove this in a future release but not much
+            // Skip the pg_tblspc path because it only maps to the manifest. We should remove this in a future release but not much
             // can be done about it for now.
             if (strEqZ(manifestName, MANIFEST_TARGET_PGTBLSPC))
                 continue;
@@ -2580,7 +2598,8 @@ cmdRestore(void)
             storagePathSyncP(storagePgWrite(), pgPath);
         }
 
-        // Rename pg_control
+        // Rename pg_control to remove the temp extension. This is done last to prevent a partially restored (or unsynced) cluster
+        // from being started.
         if (storageExistsP(storagePg(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "." STORAGE_FILE_TEMP_EXT)))
         {
             LOG_INFO(
@@ -2594,7 +2613,8 @@ cmdRestore(void)
         else
             LOG_WARN("backup does not contain '" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "' -- cluster will not start");
 
-        // Sync global path
+        // Sync global path to persist pg_control rename. If this fails or if the system crashes before it can complete, then
+        // pg_control should retain the temp extension, which will prevent the cluster from being started.
         LOG_DETAIL_FMT("sync path '%s'", strZ(storagePathP(storagePg(), PG_PATH_GLOBAL_STR)));
         storagePathSyncP(storagePgWrite(), PG_PATH_GLOBAL_STR);
 

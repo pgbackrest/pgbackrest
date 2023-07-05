@@ -26,7 +26,7 @@ Macros for function logging
     objNameToLog(&value, "StorageWriteInterface", buffer, bufferSize)
 
 /***********************************************************************************************************************************
-This object expects its context to be created in advance.  This is so the calling function can add whatever data it wants without
+This object expects its context to be created in advance. This is so the calling function can add whatever data it wants without
 required multiple functions and contexts to make it safe.
 ***********************************************************************************************************************************/
 FN_EXTERN StorageWrite *
@@ -42,12 +42,8 @@ storageWriteNew(void *const driver, const StorageWriteInterface *const interface
     ASSERT(driver != NULL);
     ASSERT(interface != NULL);
 
-    StorageWrite *this = NULL;
-
     OBJ_NEW_BEGIN(StorageWrite, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (StorageWrite)
         {
             .pub =
@@ -55,7 +51,7 @@ storageWriteNew(void *const driver, const StorageWriteInterface *const interface
                 .interface = interface,
                 .io = ioWriteNew(driver, interface->ioInterface),
             },
-            .driver = objMove(driver, objMemContext(this)),
+            .driver = objMoveToInterface(driver, this, memContextPrior()),
         };
     }
     OBJ_NEW_END();

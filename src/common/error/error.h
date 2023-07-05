@@ -25,17 +25,17 @@ FINALLY()
 }
 TRY_END();
 
-The CATCH() and FINALLY() blocks are optional but at least one must be specified.  There is no need for a TRY block by itself
+The CATCH() and FINALLY() blocks are optional but at least one must be specified. There is no need for a TRY block by itself
 because errors will automatically be propagated to the nearest try block in the call stack.
 
 IMPORTANT: If a local variable of the function containing a TRY block is modified in the TRY_BEGIN() block and used later in the
-function after an error is thrown, that variable must be declared "volatile" if the preserving the value is important.  Beware that
+function after an error is thrown, that variable must be declared "volatile" if the preserving the value is important. Beware that
 gcc's -Wclobbered warnings are almost entirely useless for catching such issues.
 
 IMPORTANT: Never call return from within any of the error-handling blocks.
 ***********************************************************************************************************************************/
-#ifndef COMMON_ERROR_H
-#define COMMON_ERROR_H
+#ifndef COMMON_ERROR_ERROR_H
+#define COMMON_ERROR_ERROR_H
 
 #include <errno.h>
 #include <setjmp.h>
@@ -51,7 +51,7 @@ typedef struct ErrorType ErrorType;
     VR_EXTERN_DECLARE const ErrorType name
 
 // Include error type declarations
-#include "common/error.auto.h"
+#include "common/error/error.auto.h"
 
 // Declare test error
 #ifdef DEBUG

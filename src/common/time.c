@@ -28,7 +28,7 @@ timeMSec(void)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-sleepMSec(TimeMSec sleepMSec)
+sleepMSec(const TimeMSec sleepMSec)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT64, sleepMSec);
@@ -36,10 +36,13 @@ sleepMSec(TimeMSec sleepMSec)
 
     if (sleepMSec > 0)
     {
-        struct timeval delay;
-        delay.tv_sec = (time_t)(sleepMSec / MSEC_PER_SEC);
-        delay.tv_usec = (suseconds_t)(sleepMSec % MSEC_PER_SEC * 1000);
-        select(0, NULL, NULL, NULL, &delay);
+        const struct timespec delay =
+        {
+            .tv_sec = (time_t)(sleepMSec / MSEC_PER_SEC),
+            .tv_nsec = (long)(sleepMSec % MSEC_PER_SEC * 1000000),
+        };
+
+        nanosleep(&delay, NULL);
     }
 
     FUNCTION_TEST_RETURN_VOID();

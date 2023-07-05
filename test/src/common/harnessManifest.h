@@ -43,6 +43,7 @@ typedef struct HrnManifestFile
     uint64_t bundleId;
     uint64_t bundleOffset;
     size_t blockIncrSize;
+    size_t blockIncrChecksumSize;
     uint64_t blockIncrMapSize;
     uint64_t size;
     uint64_t sizeRepo;

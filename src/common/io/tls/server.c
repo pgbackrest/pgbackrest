@@ -294,13 +294,9 @@ tlsServerNew(
     ASSERT(keyFile != NULL);
     ASSERT(certFile != NULL);
 
-    IoServer *this = NULL;
-
-    OBJ_NEW_BEGIN(TlsServer, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(TlsServer, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        TlsServer *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoServer::TlsServer);
-
-        *driver = (TlsServer)
+        *this = (TlsServer)
         {
             .host = strDup(host),
             .context = tlsContext(),
@@ -308,11 +304,11 @@ tlsServerNew(
         };
 
         // Set callback to free context
-        memContextCallbackSet(objMemContext(driver), tlsServerFreeResource, driver);
+        memContextCallbackSet(objMemContext(this), tlsServerFreeResource, this);
 
         // Set options
         SSL_CTX_set_options(
-            driver->context,
+            this->context,
             // Disable SSL and TLS v1/v1.1
             SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 |
             // Let server set cipher order
@@ -326,14 +322,14 @@ tlsServerNew(
             SSL_OP_NO_TICKET);
 
         // Disable session caching
-        SSL_CTX_set_session_cache_mode(driver->context, SSL_SESS_CACHE_OFF);
+        SSL_CTX_set_session_cache_mode(this->context, SSL_SESS_CACHE_OFF);
 
         // Setup ephemeral DH and ECDH keys
-        tlsServerDh(driver->context);
-        tlsServerEcdh(driver->context);
+        tlsServerDh(this->context);
+        tlsServerEcdh(this->context);
 
         // Load certificate and key
-        tlsCertKeyLoad(driver->context, certFile, keyFile);
+        tlsCertKeyLoad(this->context, certFile, keyFile);
 
         // If a CA store is specified then client certificates will be verified
         // -------------------------------------------------------------------------------------------------------------------------
@@ -341,7 +337,7 @@ tlsServerNew(
         {
             // Load CA store
             cryptoError(                                                                                            // {vm_covered}
-                SSL_CTX_load_verify_locations(driver->context, strZ(caFile), NULL) != 1,                            // {vm_covered}
+                SSL_CTX_load_verify_locations(this->context, strZ(caFile), NULL) != 1,                              // {vm_covered}
                 zNewFmt("unable to load CA file '%s'", strZ(caFile)));                                              // {vm_covered}
 
             // Tell OpenSSL to send the list of root certs we trust to clients in CertificateRequests. This lets a client with a
@@ -350,22 +346,20 @@ tlsServerNew(
             STACK_OF(X509_NAME) *rootCertList = SSL_load_client_CA_file(strZ(caFile));                              // {vm_covered}
             cryptoError(rootCertList == NULL, zNewFmt("unable to generate CA list from '%s'", strZ(caFile)));       // {vm_covered}
 
-            SSL_CTX_set_client_CA_list(driver->context, rootCertList);                                              // {vm_covered}
+            SSL_CTX_set_client_CA_list(this->context, rootCertList);                                                // {vm_covered}
 
             // Always ask for SSL client cert, but don't fail when not presented. In this case the server will disconnect after
             // sending a data end message to the client. The client can use this to verify that the server is running without the
             // need to authenticate.
-            SSL_CTX_set_verify(driver->context, SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE, NULL);                    // {vm_covered}
+            SSL_CTX_set_verify(this->context, SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE, NULL);                      // {vm_covered}
 
             // Set a flag so the client cert will be checked later
-            driver->verifyPeer = true;                                                                              // {vm_covered}
+            this->verifyPeer = true;                                                                                // {vm_covered}
         }
-
-        statInc(TLS_STAT_SERVER_STR);
-
-        this = ioServerNew(driver, &tlsServerInterface);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_SERVER, this);
+    statInc(TLS_STAT_SERVER_STR);
+
+    FUNCTION_LOG_RETURN(IO_SERVER, ioServerNew(this, &tlsServerInterface));
 }

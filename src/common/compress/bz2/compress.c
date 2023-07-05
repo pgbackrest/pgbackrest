@@ -157,51 +157,47 @@ bz2CompressInputSame(const THIS_VOID)
 
 /**********************************************************************************************************************************/
 FN_EXTERN IoFilter *
-bz2CompressNew(int level)
+bz2CompressNew(const int level, const bool raw)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(INT, level);
+        (void)raw;                                                  // Raw unsupported
     FUNCTION_LOG_END();
 
     ASSERT(level >= BZ2_COMPRESS_LEVEL_MIN && level <= BZ2_COMPRESS_LEVEL_MAX);
 
-    IoFilter *this = NULL;
-
-    OBJ_NEW_BEGIN(Bz2Compress, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(Bz2Compress, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        Bz2Compress *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::Bz2Compress);
-
-        *driver = (Bz2Compress)
+        *this = (Bz2Compress)
         {
             .stream = {.bzalloc = NULL},
         };
 
         // Initialize context
-        bz2Error(BZ2_bzCompressInit(&driver->stream, level, 0, 0));
+        bz2Error(BZ2_bzCompressInit(&this->stream, level, 0, 0));
 
         // Set callback to ensure bz2 stream is freed
-        memContextCallbackSet(objMemContext(driver), bz2CompressFreeResource, driver);
-
-        // Create param list
-        Pack *paramList = NULL;
-
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            PackWrite *const packWrite = pckWriteNewP();
-
-            pckWriteI32P(packWrite, level);
-            pckWriteEndP(packWrite);
-
-            paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
-        }
-        MEM_CONTEXT_TEMP_END();
-
-        // Create filter interface
-        this = ioFilterNewP(
-            BZ2_COMPRESS_FILTER_TYPE, driver, paramList, .done = bz2CompressDone, .inOut = bz2CompressProcess,
-            .inputSame = bz2CompressInputSame);
+        memContextCallbackSet(objMemContext(this), bz2CompressFreeResource, this);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_FILTER, this);
+    // Create param list
+    Pack *paramList;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackWrite *const packWrite = pckWriteNewP();
+
+        pckWriteI32P(packWrite, level);
+        pckWriteEndP(packWrite);
+
+        paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(
+        IO_FILTER,
+        ioFilterNewP(
+            BZ2_COMPRESS_FILTER_TYPE, this, paramList, .done = bz2CompressDone, .inOut = bz2CompressProcess,
+            .inputSame = bz2CompressInputSame));
 }

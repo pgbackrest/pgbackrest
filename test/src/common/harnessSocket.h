@@ -1,21 +1,16 @@
 /***********************************************************************************************************************************
-Chunk Filter
-
-Split data up into chunks so it can be written (and later read) without knowing the eventual size of the data.
+Harness for Io Testing
 ***********************************************************************************************************************************/
-#ifndef COMMON_IO_FILTER_CHUNK_H
-#define COMMON_IO_FILTER_CHUNK_H
-
-#include "common/io/filter/filter.h"
 
 /***********************************************************************************************************************************
-Filter type constant
+Constants
 ***********************************************************************************************************************************/
-#define CHUNK_FILTER_TYPE                                           STRID5("chunk", 0xb755030)
+// Arbitrary value for the shimmed socket file descriptor
+#define HRN_SCK_FILE_DESCRIPTOR                                     1163581
 
 /***********************************************************************************************************************************
-Constructors
+Functions
 ***********************************************************************************************************************************/
-FN_EXTERN IoFilter *ioChunkNew(void);
-
-#endif
+// Install/uninstall the shims for testing
+void hrnSckClientOpenShimInstall(void);
+void hrnSckClientOpenShimUninstall(void);

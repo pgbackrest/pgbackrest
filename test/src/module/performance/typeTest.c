@@ -1,11 +1,11 @@
 /***********************************************************************************************************************************
 Test Type Performance
 
-Test the performance of various types and data structures.  Generally speaking, the starting values should be high enough to "blow
+Test the performance of various types and data structures. Generally speaking, the starting values should be high enough to "blow
 up" in terms of execution time if there are performance problems without taking very long if everything is running smoothly.
 
-These starting values can then be scaled up for profiling and stress testing as needed.  In general we hope to scale to 1000 without
-running out of memory on the test systems or taking an undue amount of time.  It should be noted that in this context scaling to
+These starting values can then be scaled up for profiling and stress testing as needed. In general we hope to scale to 1000 without
+running out of memory on the test systems or taking an undue amount of time. It should be noted that in this context scaling to
 1000 is nowhere near turning it up to 11.
 ***********************************************************************************************************************************/
 #include <unistd.h>
@@ -251,7 +251,7 @@ testRun(void)
         // Create a storage driver to test manifest build with an arbitrary number of files
         StorageTestManifestNewBuild *driver = NULL;
 
-        OBJ_NEW_BEGIN(StorageTestManifestNewBuild, .childQty = MEM_CONTEXT_QTY_MAX)
+        OBJ_NEW_BASE_BEGIN(StorageTestManifestNewBuild, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             driver = OBJ_NEW_ALLOC();
 

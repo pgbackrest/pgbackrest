@@ -37,7 +37,7 @@ struct Db
 };
 
 /***********************************************************************************************************************************
-Close protocol connection.  No need to close a locally created PgClient since it has its own destructor.
+Close protocol connection. No need to close a locally created PgClient since it has its own destructor.
 ***********************************************************************************************************************************/
 static void
 dbFreeResource(THIS_VOID)
@@ -74,12 +74,8 @@ dbNew(PgClient *client, ProtocolClient *remoteClient, const Storage *const stora
     ASSERT(storage != NULL);
     ASSERT(applicationName != NULL);
 
-    Db *this = NULL;
-
     OBJ_NEW_BEGIN(Db, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (Db)
         {
             .pub =
@@ -260,11 +256,11 @@ dbOpen(Db *this)
             this->pub.dbTimeout = cfgOptionUInt64(cfgOptDbTimeout);
         }
 
-        // Set search_path to prevent overrides of the functions we expect to call.  All queries should also be schema-qualified,
+        // Set search_path to prevent overrides of the functions we expect to call. All queries should also be schema-qualified,
         // but this is an extra level protection.
         dbExec(this, STRDEF("set search_path = 'pg_catalog'"));
 
-        // Set client encoding to UTF8.  This is the only encoding (other than ASCII) that we can safely work with.
+        // Set client encoding to UTF8. This is the only encoding (other than ASCII) that we can safely work with.
         dbExec(this, STRDEF("set client_encoding = 'UTF8'"));
 
         // Query the version and data_directory. Be sure the update the total in the null check below when adding/removing columns.
@@ -288,14 +284,14 @@ dbOpen(Db *this)
                     DbQueryError,
                     "unable to select some rows from pg_settings\n"
                     "HINT: is the backup running as the postgres user?\n"
-                    "HINT: is the pg_read_all_settings role assigned for " PG_NAME " >= " PG_VERSION_10_STR "?");
+                    "HINT: is the pg_read_all_settings role assigned for " PG_NAME " >= " PG_VERSION_10_Z "?");
             }
         }
 
         // Restart the read to get the data
         read = pckReadNew(row);
 
-        // Strip the minor version off since we don't need it.  In the future it might be a good idea to warn users when they are
+        // Strip the minor version off since we don't need it. In the future it might be a good idea to warn users when they are
         // running an old minor version.
         this->pub.pgVersion = (unsigned int)pckReadI32P(read) / 100 * 100;
 
@@ -323,7 +319,7 @@ dbOpen(Db *this)
         this->pub.standby = dbIsInRecovery(this);
 
         // Get control file
-        this->pub.pgControl = pgControlFromFile(this->storage);
+        this->pub.pgControl = pgControlFromFile(this->storage, cfgOptionStrNull(cfgOptPgVersionForce));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -386,7 +382,7 @@ dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const b
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Acquire the backup advisory lock to make sure that backups are not running from multiple backup servers against the same
-        // database cluster.  This lock helps make the stop-auto option safe.
+        // database cluster. This lock helps make the stop-auto option safe.
         if (!pckReadBoolP(dbQueryColumn(this, STRDEF("select pg_catalog.pg_try_advisory_lock(" PG_BACKUP_ADVISORY_LOCK ")::bool"))))
         {
             THROW(
@@ -441,7 +437,7 @@ dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const b
 
         // Make sure the backup start checkpoint was written to pg_control. This helps ensure that we have a consistent view of the
         // storage with PostgreSQL.
-        const PgControl pgControl = pgControlFromFile(this->storage);
+        const PgControl pgControl = pgControlFromFile(this->storage, cfgOptionStrNull(cfgOptPgVersionForce));
         const String *const lsnStart = pckReadStrP(read);
 
         if (pgControl.checkpoint < pgLsnFromStr(lsnStart))
@@ -663,7 +659,7 @@ dbReplayWait(Db *const this, const String *const targetLsn, const uint32_t targe
             PackRead *read = dbQueryRow(this, query);
             replayLsn = pckReadStrP(read);
 
-            // Error when replayLsn is null which indicates that this is not a standby.  This should have been sorted out before we
+            // Error when replayLsn is null which indicates that this is not a standby. This should have been sorted out before we
             // connected but it's possible that the standby was promoted in the meantime.
             if (replayLsn == NULL)
             {
@@ -733,7 +729,7 @@ dbReplayWait(Db *const this, const String *const targetLsn, const uint32_t targe
         }
 
         // Reload pg_control in case timeline was updated by the checkpoint
-        this->pub.pgControl = pgControlFromFile(this->storage);
+        this->pub.pgControl = pgControlFromFile(this->storage, cfgOptionStrNull(cfgOptPgVersionForce));
 
         // Check that the timeline matches the primary
         if (dbPgControl(this).timeline != targetTimeline)

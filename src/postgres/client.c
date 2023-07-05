@@ -53,12 +53,8 @@ pgClientNew(const String *host, const unsigned int port, const String *database,
     ASSERT(port >= 1 && port <= 65535);
     ASSERT(database != NULL);
 
-    PgClient *this = NULL;
-
     OBJ_NEW_BEGIN(PgClient, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (PgClient)
         {
             .pub =
@@ -294,7 +290,7 @@ pgClientQuery(PgClient *const this, const String *const query, const PgClientQue
                         // Else convert the value to a variant
                         else
                         {
-                            // Convert column type.  Not all PostgreSQL types are supported but these should suffice.
+                            // Convert column type. Not all PostgreSQL types are supported but these should suffice.
                             switch (columnType[columnIdx])
                             {
                                 // Boolean type

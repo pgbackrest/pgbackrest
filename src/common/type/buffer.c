@@ -37,13 +37,8 @@ bufNew(size_t size)
         FUNCTION_TEST_PARAM(SIZE, size);
     FUNCTION_TEST_END();
 
-    Buffer *this = NULL;
-
     OBJ_NEW_BEGIN(Buffer, .allocQty = 1)
     {
-        // Create object
-        this = OBJ_NEW_ALLOC();
-
         *this = (Buffer)
         {
             .pub =
@@ -292,7 +287,7 @@ bufLimitSet(Buffer *this, size_t limit)
     ASSERT(limit >= bufUsed(this));
 
     this->pub.size = limit;
-    this->pub.sizeLimit = true;
+    this->pub.sizeLimit = limit != bufSizeAlloc(this);
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -348,7 +343,10 @@ bufUsedZero(Buffer *this)
 FN_EXTERN void
 bufToLog(const Buffer *const this, StringStatic *const debugLog)
 {
-    strStcFmt(
-        debugLog, "{used: %zu, size: %zu%s", bufUsed(this), bufSize(this),
-        bufSizeLimit(this) ? zNewFmt(", sizeAlloc: %zu}", bufSizeAlloc(this)) : "}");
+    strStcFmt(debugLog, "{used: %zu, size: %zu", bufUsed(this), bufSize(this));
+
+    if (bufSizeLimit(this))
+        strStcFmt(debugLog, ", sizeAlloc: %zu", bufSizeAlloc(this));
+
+    strStcCatChr(debugLog, '}');
 }

@@ -207,12 +207,8 @@ storageReadNew(void *driver, StorageReadInterface *const interface)
     ASSERT(driver != NULL);
     ASSERT(interface != NULL);
 
-    StorageRead *this = NULL;
-
     OBJ_NEW_BEGIN(StorageRead, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (StorageRead)
         {
             .pub =
@@ -223,7 +219,7 @@ storageReadNew(void *driver, StorageReadInterface *const interface)
                 .limit = varDup(interface->limit),
                 .ignoreMissing = interface->ignoreMissing,
             },
-            .driver = objMove(driver, objMemContext(this)),
+            .driver = objMoveToInterface(driver, this, memContextPrior()),
         };
     }
     OBJ_NEW_END();

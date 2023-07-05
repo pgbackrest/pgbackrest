@@ -1,17 +1,18 @@
 /***********************************************************************************************************************************
 PostgreSQL Page Checksum Algorithm
 
-For each supported release of PostgreSQL check the code in this file to see if it has changed.  The easiest way to do this is to
-copy and paste in place and check git to see if there are any diffs.  Tabs should be copied as is to make this process easy even
+For each supported release of PostgreSQL check the code in this file to see if it has changed. The easiest way to do this is to
+copy and paste in place and check git to see if there are any diffs. Tabs should be copied as is to make this process easy even
 though the pgBackRest project does not use tabs elsewhere.
 
 Since the checksum implementation and page format do not (yet) change between versions this code should be copied verbatim from
-src/include/storage/checksum_impl.h for each new release.  Only the newest released version of the code should be used.
+src/include/storage/checksum_impl.h for each new release. Only the newest released version of the code should be used.
 
 Modifications need to be made after copying:
 
 1) Remove `#include "storage/bufpage.h"`.
 2) Make pg_checksum_page() static.
+3) Remove Assert(!PageIsNew(&cpage->phdr)).
 ***********************************************************************************************************************************/
 
 /*-------------------------------------------------------------------------
@@ -203,9 +204,6 @@ pg_checksum_page(char *page, BlockNumber blkno)
 	PGChecksummablePage *cpage = (PGChecksummablePage *) page;
 	uint16		save_checksum;
 	uint32		checksum;
-
-	/* We only calculate the checksum for properly-initialized pages */
-	Assert(!PageIsNew(&cpage->phdr));
 
 	/*
 	 * Save pd_checksum and temporarily set it to zero, so that the checksum
