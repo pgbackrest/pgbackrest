@@ -154,7 +154,15 @@ storageSftpEvalLibSsh2Error(
     FUNCTION_TEST_NO_RETURN();
 }
 
-/**********************************************************************************************************************************/
+/**********************************************************************************************************************************
+Check which direction we are currently blocking on (reading, writing, or both) and wait for the fd to be ready accordingly.
+
+Call in a loop whenever a libssh2 call might return LIBSSH2_ERROR_EAGAIN.  We handle checking the rc from the libssh2 call here
+and will immediately exit out if it isn't LIBSSH2_ERROR_EAGAIN.
+
+Note that LIBSSH2_ERROR_EAGAIN can still be set after this call- if that happens then there was a timeout while waiting for the
+fd to be ready.
+***********************************************************************************************************************************/
 FN_EXTERN bool
 storageSftpWaitFd(StorageSftp *const this, const int64_t rc)
 {
