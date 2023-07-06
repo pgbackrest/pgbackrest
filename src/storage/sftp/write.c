@@ -189,7 +189,7 @@ storageWriteSftpUnlinkExisting(THIS_VOID)
 
     waitFree(wait);
 
-    if (rc)
+    if (rc != 0)
     {
         storageSftpEvalLibSsh2Error(
             rc, libssh2_sftp_last_error(this->sftpSession), &FileRemoveError,
@@ -227,7 +227,7 @@ storageWriteSftpRename(THIS_VOID)
 
     waitFree(wait);
 
-    if (rc)
+    if (rc != 0)
     {
         storageSftpEvalLibSsh2Error(
             rc, libssh2_sftp_last_error(this->sftpSession), &FileRemoveError,
@@ -271,7 +271,7 @@ storageWriteSftpClose(THIS_VOID)
 
             waitFree(wait);
 
-            if (rc)
+            if (rc != 0)
                 THROW_FMT(FileSyncError, STORAGE_ERROR_WRITE_SYNC, strZ(this->nameTmp));
         }
 
@@ -313,7 +313,7 @@ storageWriteSftpClose(THIS_VOID)
 
             waitFree(wait);
 
-            if (rc)
+            if (rc != 0)
             {
                 // Some/most sftp servers will not rename over an existing file, in testing this returned LIBSSH2_FX_FAILURE
                 if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL && libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_FAILURE)
