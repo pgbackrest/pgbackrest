@@ -17,14 +17,13 @@ Shim install state
 ***********************************************************************************************************************************/
 static struct
 {
-    // Local process shims
-    bool localShimFdReady;
+    bool localShimFdReady;                                          // Is shim installed?
 } hrnFdStatic;
 
 /***********************************************************************************************************************************
 Shim fdReady()
 ***********************************************************************************************************************************/
-bool
+static bool
 fdReady(int fd, bool read, bool write, TimeMSec timeout)
 {
     FUNCTION_HARNESS_BEGIN();
@@ -34,14 +33,12 @@ fdReady(int fd, bool read, bool write, TimeMSec timeout)
         FUNCTION_HARNESS_PARAM(TIME_MSEC, timeout);
     FUNCTION_HARNESS_END();
 
-    bool result = true;
+    bool result;
 
     if (hrnFdStatic.localShimFdReady)
     {
-        // When shim is installed return false if read and write are both passed in as true otherwise return true
-        // TBD: Determine if we can set properties on fd such that we can use poll in fdReady as intended
-        if (read && write)
-            result = false;
+        // When shim is installed return false if read and write are both true, otherwise return true
+        result = !(read && write);
     }
     // Else call normal function
     else

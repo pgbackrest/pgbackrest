@@ -219,7 +219,7 @@ storageWriteSftpRename(THIS_VOID)
     if (rc != 0)
     {
         if (rc == LIBSSH2_ERROR_EAGAIN)
-            THROW_FMT(FileWriteError, "timeout moving '%s'", strZ(this->nameTmp));
+            THROW_FMT(FileWriteError, "timeout moving '%s' to '%s'", strZ(this->nameTmp), strZ(this->interface.name));
         else
             storageSftpEvalLibSsh2Error(
                 rc, libssh2_sftp_last_error(this->sftpSession), &FileRemoveError,

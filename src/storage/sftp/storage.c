@@ -525,8 +525,7 @@ storageSftpNewRead(THIS_VOID, const String *const file, const bool ignoreMissing
     FUNCTION_LOG_RETURN(
         STORAGE_READ,
         storageReadSftpNew(
-            this, file, ignoreMissing, this->session, this->sftpSession, this->sftpHandle,
-            param.offset, param.limit));
+            this, file, ignoreMissing, this->session, this->sftpSession, this->sftpHandle, param.offset, param.limit));
 }
 
 /**********************************************************************************************************************************/
@@ -561,9 +560,9 @@ storageSftpNewWrite(THIS_VOID, const String *const file, const StorageInterfaceN
     FUNCTION_LOG_RETURN(
         STORAGE_WRITE,
         storageWriteSftpNew(
-            this, file, this->session, this->sftpSession, this->sftpHandle, param.modeFile,
-            param.modePath, param.user, param.group, param.timeModified, param.createPath, param.syncFile,
-            this->interface.pathSync != NULL ? param.syncPath : false, param.atomic, param.truncate));
+            this, file, this->session, this->sftpSession, this->sftpHandle, param.modeFile, param.modePath, param.user, param.group,
+            param.timeModified, param.createPath, param.syncFile, this->interface.pathSync != NULL ? param.syncPath : false,
+            param.atomic, param.truncate));
 }
 
 /**********************************************************************************************************************************/

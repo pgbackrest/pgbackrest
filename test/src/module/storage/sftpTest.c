@@ -3518,7 +3518,7 @@ testRun(void)
 
         TEST_ERROR(
             storagePutP(storageNewWriteP(storageTest, emptyFile), NULL), FileWriteError,
-            "timeout moving '" TEST_PATH "/test.empty.pgbackrest.tmp'");
+            "timeout moving '" TEST_PATH "/test.empty.pgbackrest.tmp' to '" TEST_PATH "/test.empty'");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
