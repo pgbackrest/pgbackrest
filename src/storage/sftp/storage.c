@@ -154,28 +154,27 @@ storageSftpEvalLibSsh2Error(
     FUNCTION_TEST_NO_RETURN();
 }
 
-/**********************************************************************************************************************************
-Check which direction we are currently blocking on (reading, writing, or both) and wait for the fd to be ready accordingly.
+/***********************************************************************************************************************************
+Call in a loop whenever a libssh2 call might return LIBSSH2_ERROR_EAGAIN. We handle checking the rc from the libssh2 call here and
+will immediately exit out if it isn't LIBSSH2_ERROR_EAGAIN.
 
-Call in a loop whenever a libssh2 call might return LIBSSH2_ERROR_EAGAIN.  We handle checking the rc from the libssh2 call here
-and will immediately exit out if it isn't LIBSSH2_ERROR_EAGAIN.
-
-Note that LIBSSH2_ERROR_EAGAIN can still be set after this call- if that happens then there was a timeout while waiting for the
-fd to be ready.
+Note that LIBSSH2_ERROR_EAGAIN can still be set after this call -- if that happens then there was a timeout while waiting for the fd
+to be ready.
 ***********************************************************************************************************************************/
 FN_EXTERN bool
 storageSftpWaitFd(StorageSftp *const this, const int64_t rc)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_SFTP, this);
+        FUNCTION_TEST_PARAM(INT64, rc);
     FUNCTION_TEST_END();
 
     if (rc != LIBSSH2_ERROR_EAGAIN)
         FUNCTION_TEST_RETURN(BOOL, false);
 
-    const int dir = libssh2_session_block_directions(this->session);
-    const bool waitingRead = dir & LIBSSH2_SESSION_BLOCK_INBOUND;
-    const bool waitingWrite = dir & LIBSSH2_SESSION_BLOCK_OUTBOUND;
+    const int direction = libssh2_session_block_directions(this->session);
+    const bool waitingRead = direction & LIBSSH2_SESSION_BLOCK_INBOUND;
+    const bool waitingWrite = direction & LIBSSH2_SESSION_BLOCK_OUTBOUND;
 
     if (!waitingRead && !waitingWrite)
         FUNCTION_TEST_RETURN(BOOL, true);

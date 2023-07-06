@@ -20,6 +20,7 @@ Functions
 FN_EXTERN void storageSftpEvalLibSsh2Error(
     int ssh2Errno, uint64_t sftpErrno, const ErrorType *errorType, const String *msg, const String *hint);
 
+// Check which direction we are currently blocking on (reading, writing, or both) and wait for the fd to be ready accordingly
 FN_EXTERN bool storageSftpWaitFd(StorageSftp *this, int64_t rc);
 
 /***********************************************************************************************************************************
