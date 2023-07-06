@@ -815,6 +815,51 @@ stanzaInfoList(List *stanzaRepoList, const String *const backupLabel, const unsi
 /***********************************************************************************************************************************
 Format the text output for archive and backups for a database group of a stanza
 ***********************************************************************************************************************************/
+// Helper to format date/time with timezone offset
+static String *
+formatTextBackupDateTime(const time_t epoch)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(TIME, epoch);
+    FUNCTION_TEST_END();
+
+    // Construct date/time
+    String *const result = strNew();
+    struct tm timePart;
+    char timeBuffer[20];
+
+    strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", localtime_r(&epoch, &timePart));
+    strCatZ(result, timeBuffer);
+
+    // Add timezone offset. Since this is not directly available in Posix-compliant APIs, use the difference between gmtime_r() and
+    // localtime_r to determine the offset. Handle minute offsets when present.
+    struct tm timePartGm;
+
+    gmtime_r(&epoch, &timePartGm);
+
+    timePart.tm_isdst = -1;
+    timePartGm.tm_isdst = -1;
+    time_t offset = mktime(&timePart) - mktime(&timePartGm);
+
+    if (offset >= 0)
+        strCatChr(result, '+');
+    else
+    {
+        offset *= -1;
+        strCatChr(result, '-');
+    }
+
+    const unsigned int minute = (unsigned int)offset / 60;
+    const unsigned int hour = minute / 60;
+
+    strCatFmt(result, "%02u", hour);
+
+    if (minute % 60 != 0)
+        strCatFmt(result, ":%02u", minute - (hour * 60));
+
+    FUNCTION_TEST_RETURN(STRING, result);
+}
+
 static void
 formatTextBackup(const DbGroup *dbGroup, String *resultStr)
 {
@@ -843,21 +888,16 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr)
             resultStr, "\n        %s backup: %s\n", strZ(varStr(kvGet(backupInfo, BACKUP_KEY_TYPE_VAR))),
             strZ(varStr(kvGet(backupInfo, BACKUP_KEY_LABEL_VAR))));
 
-        // Get and format the backup start/stop time
-        KeyValue *timestampInfo = varKv(kvGet(backupInfo, BACKUP_KEY_TIMESTAMP_VAR));
+        // Get and format backup start/stop time
+        const KeyValue *const timestampInfo = varKv(kvGet(backupInfo, BACKUP_KEY_TIMESTAMP_VAR));
 
-        struct tm timePart;
-        char timeBufferStart[20];
-        char timeBufferStop[20];
-        time_t timeStart = (time_t)varUInt64(kvGet(timestampInfo, KEY_START_VAR));
-        time_t timeStop = (time_t)varUInt64(kvGet(timestampInfo, KEY_STOP_VAR));
-
-        strftime(timeBufferStart, sizeof(timeBufferStart), "%Y-%m-%d %H:%M:%S", localtime_r(&timeStart, &timePart));
-        strftime(timeBufferStop, sizeof(timeBufferStop), "%Y-%m-%d %H:%M:%S", localtime_r(&timeStop, &timePart));
-
-        strCatFmt(resultStr, "            timestamp start/stop: %s / %s\n", timeBufferStart, timeBufferStop);
+        strCatFmt(
+            resultStr, "            timestamp start/stop: %s / %s\n",
+            strZ(formatTextBackupDateTime((time_t)varUInt64(kvGet(timestampInfo, KEY_START_VAR)))),
+            strZ(formatTextBackupDateTime((time_t)varUInt64(kvGet(timestampInfo, KEY_STOP_VAR)))));
         strCatZ(resultStr, "            wal start/stop: ");
 
+        // Get and format WAL start/stop
         KeyValue *archiveBackupInfo = varKv(kvGet(backupInfo, KEY_ARCHIVE_VAR));
 
         if (kvGet(archiveBackupInfo, KEY_START_VAR) != NULL && kvGet(archiveBackupInfo, KEY_STOP_VAR) != NULL)

@@ -57,6 +57,20 @@
 
                 <release-improvement-list>
                     <release-item>
+                        <github-issue id="2093"/>
+                        <github-pull-request id="2095"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="philip.hurst"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                            <release-item-reviewer id="philip.hurst"/>
+                        </release-item-contributor-list>
+
+                        <p>Add timezone offset to <cmd>info</cmd> command date/time output.</p>
+                    </release-item>
+
+                    <release-item>
                         <commit subject="Refactor allow list processing in config/parse module."/>
                         <commit subject="Centralize error handling for unsupported features.">
                             <github-pull-request id="2075"/>
@@ -12921,6 +12935,11 @@
         <contributor id="pavel.suderevsky">
             <contributor-name-display>Pavel Suderevsky</contributor-name-display>
             <contributor-id type="github">psuderevsky</contributor-id>
+        </contributor>
+
+        <contributor id="philip.hurst">
+            <contributor-name-display>Philip Hurst</contributor-name-display>
+            <contributor-id type="github">philrhurst</contributor-id>
         </contributor>
 
         <contributor id="pierre.ducroquet">
