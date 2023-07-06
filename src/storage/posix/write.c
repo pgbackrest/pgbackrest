@@ -120,30 +120,35 @@ storageWritePosixOpen(THIS_VOID)
     // Update user/group owner
     if (this->interface.user != NULL || this->interface.group != NULL)
     {
-        const StorageInfo info = storageInterfaceInfoP(this->storage, this->nameTmp, storageInfoLevelDetail, .followLink = true);
-        ASSERT(info.exists);
-        uid_t updateUserId = userIdFromName(this->interface.user);
-        gid_t updateGroupId = groupIdFromName(this->interface.group);
-
-        if (updateUserId == (uid_t)-1)
-            updateUserId = info.userId;
-
-        if (updateGroupId == (gid_t)-1)
-            updateGroupId = info.groupId;
-
-        // Continue if one of the owners would be changed
-        if (updateUserId != info.userId || updateGroupId != info.groupId)
+        MEM_CONTEXT_TEMP_BEGIN()
         {
-            THROW_ON_SYS_ERROR_FMT(
-                chown(strZ(this->nameTmp), updateUserId, updateGroupId) == -1, FileOwnerError,
-                "unable to set ownership for '%s' to %s%s:%s%s from %s[%u]:%s[%u]", strZ(this->nameTmp),
-                storageWritePosixOpenOwner(this->interface.user, "[none]"),
-                storageWritePosixOpenOwnerId(this->interface.user, updateUserId),
-                storageWritePosixOpenOwner(this->interface.group, "[none]"),
-                storageWritePosixOpenOwnerId(this->interface.group, updateGroupId),
-                storageWritePosixOpenOwner(info.user, "[unknown]"), info.userId,
-                storageWritePosixOpenOwner(info.group, "[unknown]"), info.groupId);
+            const StorageInfo info = storageInterfaceInfoP(
+                this->storage, this->nameTmp, storageInfoLevelDetail, .followLink = true);
+            ASSERT(info.exists);
+            uid_t updateUserId = userIdFromName(this->interface.user);
+            gid_t updateGroupId = groupIdFromName(this->interface.group);
+
+            if (updateUserId == (uid_t)-1)
+                updateUserId = info.userId;
+
+            if (updateGroupId == (gid_t)-1)
+                updateGroupId = info.groupId;
+
+            // Continue if one of the owners would be changed
+            if (updateUserId != info.userId || updateGroupId != info.groupId)
+            {
+                THROW_ON_SYS_ERROR_FMT(
+                    chown(strZ(this->nameTmp), updateUserId, updateGroupId) == -1, FileOwnerError,
+                    "unable to set ownership for '%s' to %s%s:%s%s from %s[%u]:%s[%u]", strZ(this->nameTmp),
+                    storageWritePosixOpenOwner(this->interface.user, "[none]"),
+                    storageWritePosixOpenOwnerId(this->interface.user, updateUserId),
+                    storageWritePosixOpenOwner(this->interface.group, "[none]"),
+                    storageWritePosixOpenOwnerId(this->interface.group, updateGroupId),
+                    storageWritePosixOpenOwner(info.user, "[unknown]"), info.userId,
+                    storageWritePosixOpenOwner(info.group, "[unknown]"), info.groupId);
+            }
         }
+        MEM_CONTEXT_TEMP_END();
     }
 
     FUNCTION_LOG_RETURN_VOID();

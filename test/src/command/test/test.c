@@ -24,16 +24,20 @@ cmdTestExec(const String *const command)
     ASSERT(cmdTestExecLog != NULL);
     ASSERT(command != NULL);
 
-    LOG_DETAIL_FMT("exec: %s", strZ(command));
-
-    if (system(zNewFmt("%s > %s 2>&1", strZ(command), strZ(cmdTestExecLog))) != 0)
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        const Buffer *const buffer = storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), cmdTestExecLog));
+        LOG_DETAIL_FMT("exec: %s", strZ(command));
 
-        THROW_FMT(
-            ExecuteError, "unable to execute: %s > %s 2>&1:\n%s", strZ(command), strZ(cmdTestExecLog),
-            zNewFmt("\n%s", strZ(strTrim(strNewBuf(buffer)))));
+        if (system(zNewFmt("%s > %s 2>&1", strZ(command), strZ(cmdTestExecLog))) != 0)
+        {
+            const Buffer *const buffer = storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), cmdTestExecLog));
+
+            THROW_FMT(
+                ExecuteError, "unable to execute: %s > %s 2>&1:\n%s", strZ(command), strZ(cmdTestExecLog),
+                zNewFmt("\n%s", strZ(strTrim(strNewBuf(buffer)))));
+        }
     }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }
