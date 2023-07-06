@@ -193,7 +193,7 @@ storageReadSftpClose(THIS_VOID)
 
     if (this->sftpHandle != NULL)
     {
-        int rc = 0;
+        int rc;
         Wait *const wait = waitNew(this->timeout);
 
         // Close the file
@@ -205,7 +205,7 @@ storageReadSftpClose(THIS_VOID)
 
         waitFree(wait);
 
-        if (rc)
+        if (rc != 0)
         {
             THROW_FMT(
                 FileCloseError,
