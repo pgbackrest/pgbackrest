@@ -183,7 +183,7 @@ storageReadSftpClose(THIS_VOID)
 
     if (this->sftpHandle != NULL)
     {
-        int rc = 0;
+        int rc;
 
         // Close the file
         do
@@ -192,7 +192,7 @@ storageReadSftpClose(THIS_VOID)
         }
         while (storageSftpWaitFd(this->storage, rc));
 
-        if (rc)
+        if (rc != 0)
         {
             if (rc != LIBSSH2_ERROR_EAGAIN)
                 THROW_FMT(

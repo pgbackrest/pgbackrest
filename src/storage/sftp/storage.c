@@ -60,7 +60,7 @@ storageSftpLibSsh2SessionFreeResource(THIS_VOID)
         }
         while (storageSftpWaitFd(this, rc));
 
-        if (rc)
+        if (rc != 0)
         {
             if (rc != LIBSSH2_ERROR_EAGAIN)
                 THROW_FMT(
@@ -81,7 +81,7 @@ storageSftpLibSsh2SessionFreeResource(THIS_VOID)
         }
         while (storageSftpWaitFd(this, rc));
 
-        if (rc)
+        if (rc != 0)
         {
             if (rc != LIBSSH2_ERROR_EAGAIN)
                 THROW_FMT(
@@ -102,7 +102,7 @@ storageSftpLibSsh2SessionFreeResource(THIS_VOID)
         }
         while (storageSftpWaitFd(this, rc));
 
-        if (rc)
+        if (rc != 0)
         {
             if (rc != LIBSSH2_ERROR_EAGAIN)
                 THROW_FMT(ServiceError, "failed to disconnect libssh2 session: libssh2 errno [%d]", rc);
@@ -116,7 +116,7 @@ storageSftpLibSsh2SessionFreeResource(THIS_VOID)
         }
         while (storageSftpWaitFd(this, rc));
 
-        if (rc)
+        if (rc != 0)
         {
             if (rc != LIBSSH2_ERROR_EAGAIN)
                 THROW_FMT(ServiceError, "failed to free libssh2 session: libssh2 errno [%d]", rc);
@@ -231,7 +231,7 @@ storageSftpInfo(THIS_VOID, const String *const file, const StorageInfoLevel leve
     }
     while (storageSftpWaitFd(this, rc));
 
-    if (rc)
+    if (rc != 0)
     {
         if (rc == LIBSSH2_ERROR_EAGAIN)
             THROW_FMT(FileOpenError, "timeout opening '%s'", strZ(file));
@@ -441,7 +441,7 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
             }
             while (storageSftpWaitFd(this, rc));
 
-            if (rc)
+            if (rc != 0)
             {
                 if (rc != LIBSSH2_ERROR_EAGAIN)
                     THROW_FMT(PathCloseError, "unable to close path '%s' after listing", strZ(path));
@@ -481,7 +481,7 @@ storageSftpRemove(THIS_VOID, const String *const file, const StorageInterfaceRem
     }
     while (storageSftpWaitFd(this, rc));
 
-    if (rc)
+    if (rc != 0)
     {
         if (rc == LIBSSH2_ERROR_EAGAIN)
             THROW_FMT(FileRemoveError, "timeout removing '%s'", strZ(file));
@@ -595,7 +595,7 @@ storageSftpPathCreate(
     }
     while (storageSftpWaitFd(this, rc));
 
-    if (rc)
+    if (rc != 0)
     {
         if (rc == LIBSSH2_ERROR_EAGAIN)
             THROW_FMT(PathCreateError, "timeout creating path '%s'", strZ(path));
@@ -685,7 +685,7 @@ storageSftpPathRemove(THIS_VOID, const String *const path, const bool recurse, c
                         }
                         while (storageSftpWaitFd(this, rc));
 
-                        if (rc)
+                        if (rc != 0)
                         {
                             if (rc == LIBSSH2_ERROR_EAGAIN)
                                 THROW_FMT(PathRemoveError, "timeout removing file '%s'", strZ(file));
@@ -717,7 +717,7 @@ storageSftpPathRemove(THIS_VOID, const String *const path, const bool recurse, c
         }
         while (storageSftpWaitFd(this, rc));
 
-        if (rc)
+        if (rc != 0)
         {
             if (rc == LIBSSH2_ERROR_EAGAIN)
                 THROW_FMT(PathRemoveError, "timeout removing path '%s'", strZ(path));
@@ -887,7 +887,7 @@ storageSftpNew(
         }
         while (storageSftpWaitFd(this, rc));
 
-        if (rc)
+        if (rc != 0)
         {
             if (rc == LIBSSH2_ERROR_EAGAIN)
                 THROW_FMT(ServiceError, "timeout during public key authentication");

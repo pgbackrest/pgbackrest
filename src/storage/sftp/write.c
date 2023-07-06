@@ -177,7 +177,7 @@ storageWriteSftpUnlinkExisting(THIS_VOID)
     }
     while (storageSftpWaitFd(this->storage, rc));
 
-    if (rc)
+    if (rc != 0)
     {
         if (rc == LIBSSH2_ERROR_EAGAIN)
             THROW_FMT(FileWriteError, "timeout unlinking '%s'", strZ(this->interface.name));
@@ -216,7 +216,7 @@ storageWriteSftpRename(THIS_VOID)
     }
     while (storageSftpWaitFd(this->storage, rc));
 
-    if (rc)
+    if (rc != 0)
     {
         if (rc == LIBSSH2_ERROR_EAGAIN)
             THROW_FMT(FileWriteError, "timeout moving '%s'", strZ(this->nameTmp));
@@ -256,7 +256,7 @@ storageWriteSftpClose(THIS_VOID)
             }
             while (storageSftpWaitFd(this->storage, rc));
 
-            if (rc)
+            if (rc != 0)
             {
                 if (rc == LIBSSH2_ERROR_EAGAIN)
                     THROW_FMT(FileSyncError, "timeout syncing file '%s'", strZ(this->nameTmp));
@@ -272,7 +272,7 @@ storageWriteSftpClose(THIS_VOID)
         }
         while (storageSftpWaitFd(this->storage, rc));
 
-        if (rc)
+        if (rc != 0)
         {
             if (rc == LIBSSH2_ERROR_EAGAIN)
                 THROW_FMT(FileCloseError, "timeout closing file '%s'", strZ(this->nameTmp));
@@ -296,7 +296,7 @@ storageWriteSftpClose(THIS_VOID)
             }
             while (storageSftpWaitFd(this->storage, rc));
 
-            if (rc)
+            if (rc != 0)
             {
                 if (rc == LIBSSH2_ERROR_EAGAIN)
                     THROW_FMT(FileCloseError, "timeout renaming file '%s'", strZ(this->nameTmp));

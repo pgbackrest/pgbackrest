@@ -433,7 +433,7 @@ libssh2_sftp_symlink_ex(
     }
     MEM_CONTEXT_TEMP_END();
 
-    int rc = 0;
+    int rc;
 
     switch (link_type)
     {
