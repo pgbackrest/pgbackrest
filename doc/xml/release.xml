@@ -29,6 +29,18 @@
 
                         <p>Skip <file>recovery.signal</file> for <postgres/> &gt;= 12 when recovery <br-option>type=none</br-option>.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-issue id="1873"/>
+                        <github-pull-request id="2104"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="andrey.sokolov"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix unique label generation for diff/incr backup.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-improvement-list>
