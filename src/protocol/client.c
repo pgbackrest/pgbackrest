@@ -271,7 +271,6 @@ protocolClientCommandPut(ProtocolClient *const this, ProtocolCommand *const comm
     if (protocolCommandType(command) == protocolCommandTypeOpen)
     {
         PackRead *const read = protocolClientDataGet(this);
-
         result = pckReadU64P(read);
 
         pckReadFree(read);
