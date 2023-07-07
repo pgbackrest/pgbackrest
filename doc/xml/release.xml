@@ -58,6 +58,7 @@
                 <release-improvement-list>
                     <release-item>
                         <commit subject="Make result code handling in storage/sftp more consistent."/>
+                        <commit subject="Cleanup of init/handshake in storageSftpNew()."/>
                         <commit subject="Improve performance of SFTP storage driver.">
                             <github-pull-request id="2089"/>
                         </commit>
