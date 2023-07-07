@@ -57,7 +57,10 @@
 
                 <release-improvement-list>
                     <release-item>
-                        <github-pull-request id="2089"/>
+                        <commit subject="Make result code handling in storage/sftp more consistent."/>
+                        <commit subject="Improve performance of SFTP storage driver.">
+                            <github-pull-request id="2089"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="stephen.frost"/>
