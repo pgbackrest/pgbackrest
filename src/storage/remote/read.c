@@ -329,10 +329,10 @@ storageReadRemoteNew(
                 },
             },
         };
-
-        this->read = storageReadNew(OBJ_NAME(this, StorageRead::StorageReadRemote), &this->interface);
     }
     OBJ_NEW_END();
+
+    this->read = storageReadNew(OBJ_NAME(this, StorageRead::StorageReadRemote), &this->interface);
 
     ASSERT(this != NULL);
     FUNCTION_LOG_RETURN(STORAGE_READ, this->read);
