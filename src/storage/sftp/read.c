@@ -8,7 +8,6 @@ SFTP Storage Read
 #include "common/debug.h"
 #include "common/io/session.h"
 #include "common/log.h"
-#include "common/wait.h"
 #include "storage/read.intern.h"
 #include "storage/sftp/read.h"
 
@@ -20,7 +19,6 @@ typedef struct StorageReadSftp
     StorageReadInterface interface;                                 // Interface
     StorageSftp *storage;                                           // Storage that created this object
 
-    IoSession *ioSession;                                           // IoSession (socket) connection to SFTP server
     LIBSSH2_SESSION *session;                                       // LibSsh2 session
     LIBSSH2_SFTP *sftpSession;                                      // LibSsh2 session sftp session
     LIBSSH2_SFTP_HANDLE *sftpHandle;                                // LibSsh2 session sftp handle
@@ -28,7 +26,6 @@ typedef struct StorageReadSftp
     uint64_t current;                                               // Current bytes read from file
     uint64_t limit;                                                 // Limit bytes to be read from file (UINT64_MAX for no limit)
     bool eof;                                                       // Did we reach end of file
-    TimeMSec timeout;                                               // Session timeout
 } StorageReadSftp;
 
 /***********************************************************************************************************************************
@@ -53,18 +50,13 @@ storageReadSftpOpen(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    // Open the file
-    Wait *const wait = waitNew(this->timeout);
-
     do
     {
         this->sftpHandle = libssh2_sftp_open_ex(
             this->sftpSession, strZ(this->interface.name), (unsigned int)strSize(this->interface.name), LIBSSH2_FXF_READ, 0,
             LIBSSH2_SFTP_OPENFILE);
     }
-    while (this->sftpHandle == NULL && waitMore(wait));
-
-    waitFree(wait);
+    while (this->sftpHandle == NULL && storageSftpWaitFd(this->storage, libssh2_session_last_errno(this->session)));
 
     if (this->sftpHandle == NULL)
     {
@@ -126,15 +118,11 @@ storageReadSftp(THIS_VOID, Buffer *const buffer, const bool block)
         // Read until EOF or buffer is full
         do
         {
-            Wait *const wait = waitNew(this->timeout);
-
             do
             {
                 rc = libssh2_sftp_read(this->sftpHandle, (char *)bufRemainsPtr(buffer), bufRemains(buffer));
             }
-            while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
-
-            waitFree(wait);
+            while (storageSftpWaitFd(this->storage, rc));
 
             // Break on EOF or error
             if (rc <= 0)
@@ -161,6 +149,8 @@ storageReadSftp(THIS_VOID, Buffer *const buffer, const bool block)
                 else
                     THROW_FMT(FileReadError, "unable to read '%s': sftp errno [%" PRIu64 "]", strZ(this->interface.name), sftpErr);
             }
+            else if (rc == LIBSSH2_ERROR_EAGAIN)
+                THROW_FMT(FileReadError, "timeout reading '%s'", strZ(this->interface.name));
             else
                 THROW_FMT(FileReadError, "unable to read '%s'", strZ(this->interface.name));
         }
@@ -194,24 +184,24 @@ storageReadSftpClose(THIS_VOID)
     if (this->sftpHandle != NULL)
     {
         int rc;
-        Wait *const wait = waitNew(this->timeout);
 
         // Close the file
         do
         {
             rc = libssh2_sftp_close(this->sftpHandle);
         }
-        while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
-
-        waitFree(wait);
+        while (storageSftpWaitFd(this->storage, rc));
 
         if (rc != 0)
         {
-            THROW_FMT(
-                FileCloseError,
-                STORAGE_ERROR_READ_CLOSE ": libssh2 errno [%d]%s", strZ(this->interface.name), rc,
-                rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
-                    strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
+            if (rc != LIBSSH2_ERROR_EAGAIN)
+                THROW_FMT(
+                    FileCloseError,
+                    STORAGE_ERROR_READ_CLOSE ": libssh2 errno [%d]%s", strZ(this->interface.name), rc,
+                    rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
+                        strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
+            else
+                THROW_FMT(FileCloseError, "timeout closing file '%s'", strZ(this->interface.name));
         }
     }
 
@@ -240,18 +230,15 @@ storageReadSftpEof(THIS_VOID)
 /**********************************************************************************************************************************/
 FN_EXTERN StorageRead *
 storageReadSftpNew(
-    StorageSftp *const storage, const String *const name, const bool ignoreMissing, IoSession *const ioSession,
-    LIBSSH2_SESSION *const session, LIBSSH2_SFTP *const sftpSession, LIBSSH2_SFTP_HANDLE *const sftpHandle,
-    const TimeMSec timeout, const uint64_t offset, const Variant *const limit)
+    StorageSftp *const storage, const String *const name, const bool ignoreMissing, LIBSSH2_SESSION *const session,
+    LIBSSH2_SFTP *const sftpSession, LIBSSH2_SFTP_HANDLE *const sftpHandle, const uint64_t offset, const Variant *const limit)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
-        FUNCTION_LOG_PARAM(IO_SESSION, ioSession);
         FUNCTION_LOG_PARAM_P(VOID, session);
         FUNCTION_LOG_PARAM_P(VOID, sftpSession);
         FUNCTION_LOG_PARAM_P(VOID, sftpHandle);
-        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
         FUNCTION_LOG_PARAM(UINT64, offset);
         FUNCTION_LOG_PARAM(VARIANT, limit);
     FUNCTION_LOG_END();
@@ -263,11 +250,9 @@ storageReadSftpNew(
         *this = (StorageReadSftp)
         {
             .storage = storage,
-            .ioSession = ioSession,
             .session = session,
             .sftpSession = sftpSession,
             .sftpHandle = sftpHandle,
-            .timeout = timeout,
 
             // Rather than enable/disable limit checking just use a big number when there is no limit. We can feel pretty confident
             // that no files will be > UINT64_MAX in size. This is a copy of the interface limit but it simplifies the code during

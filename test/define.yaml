@@ -608,6 +608,12 @@ unit:
       - name: sftp
         total: 20
         harness: libSsh2
+        harness:
+          name: fd
+          shim:
+            common/io/fd:
+              function:
+                - fdReady
 
         coverage:
           - storage/sftp/helper
