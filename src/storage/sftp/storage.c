@@ -761,31 +761,33 @@ storageSftpNew(
             .timeout = timeout,
         };
 
+        // Init SFTP session
         if (libssh2_init(0) != 0)
             THROW_FMT(ServiceError, "unable to init libssh2");
 
         this->ioSession = ioClientOpen(sckClientNew(host, port, timeout, timeout));
-
         this->session = libssh2_session_init();
+
         if (this->session == NULL)
             THROW_FMT(ServiceError, "unable to init libssh2 session");
 
-        // Returns void
+        // Set session to non-blocking
         libssh2_session_set_blocking(this->session, 0);
 
-        int handshakeStatus = 0;
+        // Perform handshake
+        int rc;
         Wait *wait = waitNew(timeout);
 
         do
         {
-            handshakeStatus = libssh2_session_handshake(this->session, ioSessionFd(this->ioSession));
+            rc = libssh2_session_handshake(this->session, ioSessionFd(this->ioSession));
         }
-        while (handshakeStatus == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
+        while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
 
         waitFree(wait);
 
-        if (handshakeStatus != 0)
-            THROW_FMT(ServiceError, "libssh2 handshake failed [%d]", handshakeStatus);
+        if (rc != 0)
+            THROW_FMT(ServiceError, "libssh2 handshake failed [%d]", rc);
 
         int hashType = LIBSSH2_HOSTKEY_HASH_SHA1;
         size_t hashSize = 0;
@@ -838,9 +840,6 @@ storageSftpNew(
             }
         }
 
-        LOG_DEBUG_FMT("attempting public key authentication");
-
-        int rc;
         wait = waitNew(timeout);
 
         do
