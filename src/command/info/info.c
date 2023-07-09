@@ -849,7 +849,7 @@ formatTextBackupDateTime(const time_t epoch)
         strCatChr(result, '-');
     }
 
-    const unsigned int minute = (unsigned int)offset / 60;
+    const unsigned int minute = (unsigned int)(offset / 60);
     const unsigned int hour = minute / 60;
 
     strCatFmt(result, "%02u", hour);

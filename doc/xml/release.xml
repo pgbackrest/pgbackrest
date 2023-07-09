@@ -73,8 +73,11 @@
                     </release-item>
 
                     <release-item>
-                        <github-issue id="2093"/>
-                        <github-pull-request id="2095"/>
+                        <commit subject="Add timezone offset to info command date/time output.">
+                            <github-issue id="2093"/>
+                            <github-pull-request id="2095"/>
+                        </commit>
+                        <commit subject="Modify time_t casts based on complaint from Coverity."/>
 
                         <release-item-contributor-list>
                             <release-item-ideator id="philip.hurst"/>
