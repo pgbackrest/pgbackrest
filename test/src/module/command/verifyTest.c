@@ -1698,7 +1698,7 @@ testRun(void)
             "[target:file]\n"                                                                                                      \
             "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"reference\":\"20181119-152900F\""     \
                 ",\"size\":4,\"timestamp\":1565282114}\n"                                                                          \
-            "pg_data/biind={\"bi\":1,\"bim\":3,\"checksum\":\"f0da04b8eb24817a8a920cdbcc00402c0bb85a29\","                         \
+            "pg_data/biind={\"bi\":1,\"bim\":3,\"checksum\":\"ffffffffffffffffffffffffffffffffffffffff\","                         \
             "\"reference\":\"20181119-152900F\",\"size\":4,\"timestamp\":1565282114}\n"                                            \
             TEST_MANIFEST_FILE_DEFAULT                                                                                             \
             TEST_MANIFEST_LINK                                                                                                     \
