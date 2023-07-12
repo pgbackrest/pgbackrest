@@ -991,9 +991,7 @@ verifyBackup(VerifyJobData *const jobData)
                                 pckWriteU64P(param, fileData.sizeRepo);
                             }
                             else
-                            {
                                 pckWriteBoolP(param, false);
-                            }
 
                             // Use the repo checksum when present
                             if (fileData.checksumRepoSha1 != NULL)
