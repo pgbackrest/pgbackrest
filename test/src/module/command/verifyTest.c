@@ -1657,8 +1657,8 @@ testRun(void)
         HRN_INFO_PUT(storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_BACKUP_INFO);
         HRN_INFO_PUT(storageRepoWrite(), INFO_BACKUP_PATH_FILE INFO_COPY_EXT, TEST_BACKUP_INFO);
 
-        // Create valid full backup for DB1
-        #define TEST_MANIFEST_FULL_DB1                                                                                             \
+        // Create valid full backup
+        #define TEST_MANIFEST_FULL_DB2                                                                                             \
             TEST_MANIFEST_HEADER                                                                                                   \
             TEST_MANIFEST_DB_94                                                                                                    \
             TEST_MANIFEST_OPTION_ALL                                                                                               \
@@ -1673,14 +1673,14 @@ testRun(void)
 
         // Write manifests for full backup
         HRN_INFO_PUT(
-            storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152900F/" BACKUP_MANIFEST_FILE, TEST_MANIFEST_FULL_DB1,
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152900F/" BACKUP_MANIFEST_FILE, TEST_MANIFEST_FULL_DB2,
             .comment = "valid manifest - full");
         HRN_INFO_PUT(
-            storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152900F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, TEST_MANIFEST_FULL_DB1,
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152900F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, TEST_MANIFEST_FULL_DB2,
             .comment = "valid manifest copy - full");
 
-        // Create valid diff backup for DB1
-        #define TEST_MANIFEST_DIFF_DB1                                                                                             \
+        // Create valid diff backup
+        #define TEST_MANIFEST_DIFF_DB2                                                                                             \
             TEST_MANIFEST_HEADER                                                                                                   \
             TEST_MANIFEST_DB_94                                                                                                    \
             TEST_MANIFEST_OPTION_ALL                                                                                               \
@@ -1699,10 +1699,10 @@ testRun(void)
         // Write manifests for diff backup
         HRN_INFO_PUT(
             storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152900F_20181119-152909D/" BACKUP_MANIFEST_FILE,
-            TEST_MANIFEST_DIFF_DB1, .comment = "valid manifest - diff");
+            TEST_MANIFEST_DIFF_DB2, .comment = "valid manifest - diff");
         HRN_INFO_PUT(
             storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152900F_20181119-152909D/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
-            TEST_MANIFEST_DIFF_DB1, .comment = "valid manifest copy - diff");
+            TEST_MANIFEST_DIFF_DB2, .comment = "valid manifest copy - diff");
 
         // Put the file referenced by both backups into the full backup
         HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152900F/pg_data/PG_VERSION", fileContents);
