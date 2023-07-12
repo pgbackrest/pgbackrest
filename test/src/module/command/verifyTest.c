@@ -1661,7 +1661,7 @@ testRun(void)
         HRN_INFO_PUT(storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_BACKUP_INFO);
         HRN_INFO_PUT(storageRepoWrite(), INFO_BACKUP_PATH_FILE INFO_COPY_EXT, TEST_BACKUP_INFO);
 
-        // Create valid full backup for DB2
+        // Create valid full backup
         #define TEST_MANIFEST_FULL_DB2                                                                                             \
             TEST_MANIFEST_HEADER                                                                                                   \
             TEST_MANIFEST_DB_94                                                                                                    \
@@ -1669,7 +1669,7 @@ testRun(void)
             TEST_MANIFEST_TARGET                                                                                                   \
             TEST_MANIFEST_DB                                                                                                       \
             TEST_MANIFEST_FILE                                                                                                     \
-            "pg_data/biind={\"bi\":1,\"bim\":3,\"checksum\":\"f0da04b8eb24817a8a920cdbcc00402c0bb85a29\",\"size\":4"               \
+            "pg_data/biind={\"bi\":1,\"bim\":3,\"checksum\":\"ffffffffffffffffffffffffffffffffffffffff\",\"size\":4"               \
             ",\"timestamp\":1565282114}\n"                                                                                         \
             TEST_MANIFEST_FILE_DEFAULT                                                                                             \
             TEST_MANIFEST_LINK                                                                                                     \
@@ -1686,9 +1686,8 @@ testRun(void)
             .comment = "valid manifest copy - full");
         HRN_STORAGE_PUT_Z(
             storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152900F/pg_data/biind.pgbi", "ZVZV", .comment = "pgbi file");
-        // THROW_FMT(AssertError, "!!! %s", strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, BUFSTRDEF("ZVZV")))));
 
-        // Create valid diff backup for DB2
+        // Create valid diff backup
         #define TEST_MANIFEST_DIFF_DB2                                                                                             \
             TEST_MANIFEST_HEADER                                                                                                   \
             TEST_MANIFEST_DB_94                                                                                                    \
@@ -1740,8 +1739,6 @@ testRun(void)
             "    missing: 0, checksum invalid: 2, size invalid: 0, other: 0\n"
             "  backup: 20181119-152900F_20181119-152909D, status: invalid, total files checked: 2, total valid files: 1\n"
             "    missing: 0, checksum invalid: 1, size invalid: 0, other: 0\n", .remove = true);
-        // The error for the referenced file is logged twice because it is checked again by the second backup since the first backup
-        // verification had not yet completed before the second backup verification began
         TEST_RESULT_LOG(
             "P01   INFO: invalid checksum '20181119-152900F/pg_data/PG_VERSION'\n"
             "P01   INFO: invalid checksum '20181119-152900F/pg_data/biind.pgbi'\n"
