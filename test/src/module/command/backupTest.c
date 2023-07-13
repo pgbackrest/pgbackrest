@@ -68,6 +68,196 @@ testBlockDelta(const BlockMap *const blockMap, const size_t blockSize, const siz
 Get a list of all files in the backup and a redacted version of the manifest that can be tested against a static string
 ***********************************************************************************************************************************/
 static String *
+testBackupValidateFile(
+    const Storage *const storage, const String *const path, Manifest *const manifest, const ManifestData *const manifestData,
+    const String *const fileName, uint64_t fileSize, ManifestFilePack **const filePack, const CipherType cipherType,
+    const String *const cipherPass)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STORAGE, storage);
+        FUNCTION_HARNESS_PARAM(STRING, path);
+        FUNCTION_HARNESS_PARAM(MANIFEST, manifest);
+        FUNCTION_HARNESS_PARAM_P(VOID, manifestData);
+        FUNCTION_HARNESS_PARAM(STRING, fileName);
+        FUNCTION_HARNESS_PARAM(UINT64, fileSize);
+        FUNCTION_HARNESS_PARAM_P(VOID, filePack);
+        FUNCTION_HARNESS_PARAM(STRING_ID, cipherType);
+        FUNCTION_HARNESS_PARAM(STRING, cipherPass);
+    FUNCTION_HARNESS_END();
+
+    String *const result = strNew();
+    ManifestFile file = manifestFileUnpack(manifest, *filePack);
+
+    if (file.bundleId != 0)
+        strCatFmt(result, "%s/%s {file", strZ(fileName), strZ(file.name));
+    else
+        strCatFmt(result, "%s {file", strZ(fileName));
+
+    // Validate repo checksum
+    // -------------------------------------------------------------------------------------------------------------
+    if (file.checksumRepoSha1 != NULL)
+    {
+        StorageRead *read = storageNewReadP(
+            storage, strNewFmt("%s/%s", strZ(path), strZ(fileName)), .offset = file.bundleOffset,
+            .limit = VARUINT64(file.sizeRepo));
+        const Buffer *const checksum = cryptoHashOne(hashTypeSha1, storageGetP(read));
+
+        if (!bufEq(checksum, BUF(file.checksumRepoSha1, HASH_TYPE_SHA1_SIZE)))
+            THROW_FMT(AssertError, "'%s' repo checksum does match manifest", strZ(file.name));
+    }
+
+    // Calculate checksum/size and decompress if needed
+    // -------------------------------------------------------------------------------------------------------------
+    uint64_t size = 0;
+    const Buffer *checksum = NULL;
+
+    // If block incremental
+    if (file.blockIncrMapSize != 0)
+    {
+        // Read block map
+        StorageRead *read = storageNewReadP(
+            storage, strNewFmt("%s/%s", strZ(path), strZ(fileName)),
+            .offset = file.bundleOffset + file.sizeRepo - file.blockIncrMapSize,
+            .limit = VARUINT64(file.blockIncrMapSize));
+
+        if (cipherType != cipherTypeNone)
+        {
+            ioFilterGroupAdd(
+                ioReadFilterGroup(storageReadIo(read)),
+                cipherBlockNewP(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), .raw = true));
+        }
+
+        ioReadOpen(storageReadIo(read));
+
+        const BlockMap *const blockMap = blockMapNewRead(
+            storageReadIo(read), file.blockIncrSize, file.blockIncrChecksumSize);
+
+        // Build map log
+        String *const mapLog = strNew();
+        const BlockMapItem *blockMapItemLast = NULL;
+
+        for (unsigned int blockMapIdx = 0; blockMapIdx < blockMapSize(blockMap); blockMapIdx++)
+        {
+            const BlockMapItem *const blockMapItem = blockMapGet(blockMap, blockMapIdx);
+            const bool superBlockChange =
+                blockMapItemLast == NULL || blockMapItemLast->reference != blockMapItem->reference ||
+                blockMapItemLast->offset != blockMapItem->offset;
+
+            if (superBlockChange && blockMapIdx != 0)
+                strCatChr(mapLog, '}');
+
+            if (!strEmpty(mapLog))
+                strCatChr(mapLog, ',');
+
+            if (superBlockChange)
+                strCatFmt(mapLog, "%u:{", blockMapItem->reference);
+
+            strCatFmt(mapLog, "%" PRIu64, blockMapItem->block);
+
+            blockMapItemLast = blockMapItem;
+        }
+
+        // Check blocks
+        Buffer *fileBuffer = bufNew((size_t)file.size);
+        bufUsedSet(fileBuffer, bufSize(fileBuffer));
+
+        BlockDelta *const blockDelta = blockDeltaNew(
+            blockMap, file.blockIncrSize, file.blockIncrChecksumSize, NULL, cipherType, cipherPass,
+            manifestData->backupOptionCompressType);
+
+        for (unsigned int readIdx = 0; readIdx < blockDeltaReadSize(blockDelta); readIdx++)
+        {
+            const BlockDeltaRead *const read = blockDeltaReadGet(blockDelta, readIdx);
+            const String *const blockName = backupFileRepoPathP(
+                strLstGet(manifestReferenceList(manifest), read->reference), .manifestName = file.name,
+                .bundleId = read->bundleId, .blockIncr = true);
+
+            IoRead *blockRead = storageReadIo(
+                storageNewReadP(
+                    storage, blockName, .offset = read->offset, .limit = VARUINT64(read->size)));
+            ioReadOpen(blockRead);
+
+            const BlockDeltaWrite *deltaWrite = blockDeltaNext(blockDelta, read, blockRead);
+
+            while (deltaWrite != NULL)
+            {
+                // Update size and file
+                size += bufUsed(deltaWrite->block);
+                memcpy(
+                    bufPtr(fileBuffer) + deltaWrite->offset, bufPtr(deltaWrite->block),
+                    bufUsed(deltaWrite->block));
+
+                deltaWrite = blockDeltaNext(blockDelta, read, blockRead);
+            }
+        }
+
+        strCatFmt(result, ", m=%s}", strZ(mapLog));
+
+        checksum = cryptoHashOne(hashTypeSha1, fileBuffer);
+    }
+    // Else normal file
+    else
+    {
+        StorageRead *read = storageNewReadP(
+            storage, strNewFmt("%s/%s", strZ(path), strZ(fileName)), .offset = file.bundleOffset,
+            .limit = VARUINT64(file.sizeRepo));
+        const bool raw = file.bundleId != 0 && manifest->pub.data.bundleRaw;
+
+        if (cipherType != cipherTypeNone)
+        {
+            ioFilterGroupAdd(
+                ioReadFilterGroup(storageReadIo(read)),
+                cipherBlockNewP(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), .raw = raw));
+        }
+
+        if (manifestData->backupOptionCompressType != compressTypeNone)
+        {
+            ioFilterGroupAdd(
+                ioReadFilterGroup(storageReadIo(read)),
+                decompressFilterP(manifestData->backupOptionCompressType, .raw = raw));
+        }
+
+        ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(hashTypeSha1));
+
+        size = bufUsed(storageGetP(read));
+        checksum = pckReadBinP(
+            ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE));
+    }
+
+    // Validate checksum
+    if (!bufEq(checksum, BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE)))
+        THROW_FMT(AssertError, "'%s' checksum does match manifest", strZ(file.name));
+
+    strCatFmt(result, ", s=%" PRIu64, size);
+
+    // Test size and repo-size
+    // -------------------------------------------------------------------------------------------------------------
+    if (size != file.size)
+        THROW_FMT(AssertError, "'%s' size does match manifest", strZ(file.name));
+
+    // Repo size can only be compared to file size when not bundled
+    if (file.bundleId == 0 && fileSize != file.sizeRepo)
+        THROW_FMT(AssertError, "'%s' repo size does match manifest", strZ(file.name));
+
+    // pg_control and WAL headers have different checksums depending on cpu architecture so remove the checksum from
+    // the test output.
+    // -------------------------------------------------------------------------------------------------------------
+    if (strEqZ(file.name, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) ||
+        strBeginsWith(
+            file.name, strNewFmt(MANIFEST_TARGET_PGDATA "/%s/", strZ(pgWalPath(manifestData->pgVersion)))))
+    {
+        file.checksumSha1 = NULL;
+    }
+
+    strCatZ(result, "}\n");
+
+    // Update changes to manifest file
+    manifestFilePackUpdate(manifest, filePack, &file);
+
+    FUNCTION_HARNESS_RETURN(STRING, result);
+}
+
+static String *
 testBackupValidateList(
     const Storage *const storage, const String *const path, Manifest *const manifest, const ManifestData *const manifestData,
     const CipherType cipherType, const String *const cipherPass, String *const result)
@@ -161,177 +351,11 @@ testBackupValidateList(
                 // -----------------------------------------------------------------------------------------------------------------
                 for (unsigned int fileIdx = 0; fileIdx < lstSize(fileList); fileIdx++)
                 {
-                    ManifestFilePack **const filePack = *(ManifestFilePack ***)lstGet(fileList, fileIdx);
-                    ManifestFile file = manifestFileUnpack(manifest, *filePack);
-
-                    if (bundle)
-                        strCatFmt(result, "%s/%s {file", strZ(info.name), strZ(file.name));
-                    else
-                        strCatFmt(result, "%s {file", strZ(info.name));
-
-                    // Validate repo checksum
-                    // -------------------------------------------------------------------------------------------------------------
-                    if (file.checksumRepoSha1 != NULL)
-                    {
-                        StorageRead *read = storageNewReadP(
-                            storage, strNewFmt("%s/%s", strZ(path), strZ(info.name)), .offset = file.bundleOffset,
-                            .limit = VARUINT64(file.sizeRepo));
-                        const Buffer *const checksum = cryptoHashOne(hashTypeSha1, storageGetP(read));
-
-                        if (!bufEq(checksum, BUF(file.checksumRepoSha1, HASH_TYPE_SHA1_SIZE)))
-                            THROW_FMT(AssertError, "'%s' repo checksum does match manifest", strZ(file.name));
-                    }
-
-                    // Calculate checksum/size and decompress if needed
-                    // -------------------------------------------------------------------------------------------------------------
-                    uint64_t size = 0;
-                    const Buffer *checksum = NULL;
-
-                    // If block incremental
-                    if (file.blockIncrMapSize != 0)
-                    {
-                        // Read block map
-                        StorageRead *read = storageNewReadP(
-                            storage, strNewFmt("%s/%s", strZ(path), strZ(info.name)),
-                            .offset = file.bundleOffset + file.sizeRepo - file.blockIncrMapSize,
-                            .limit = VARUINT64(file.blockIncrMapSize));
-
-                        if (cipherType != cipherTypeNone)
-                        {
-                            ioFilterGroupAdd(
-                                ioReadFilterGroup(storageReadIo(read)),
-                                cipherBlockNewP(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), .raw = true));
-                        }
-
-                        ioReadOpen(storageReadIo(read));
-
-                        const BlockMap *const blockMap = blockMapNewRead(
-                            storageReadIo(read), file.blockIncrSize, file.blockIncrChecksumSize);
-
-                        // Build map log
-                        String *const mapLog = strNew();
-                        const BlockMapItem *blockMapItemLast = NULL;
-
-                        for (unsigned int blockMapIdx = 0; blockMapIdx < blockMapSize(blockMap); blockMapIdx++)
-                        {
-                            const BlockMapItem *const blockMapItem = blockMapGet(blockMap, blockMapIdx);
-                            const bool superBlockChange =
-                                blockMapItemLast == NULL || blockMapItemLast->reference != blockMapItem->reference ||
-                                blockMapItemLast->offset != blockMapItem->offset;
-
-                            if (superBlockChange && blockMapIdx != 0)
-                                strCatChr(mapLog, '}');
-
-                            if (!strEmpty(mapLog))
-                                strCatChr(mapLog, ',');
-
-                            if (superBlockChange)
-                                strCatFmt(mapLog, "%u:{", blockMapItem->reference);
-
-                            strCatFmt(mapLog, "%" PRIu64, blockMapItem->block);
-
-                            blockMapItemLast = blockMapItem;
-                        }
-
-                        // Check blocks
-                        Buffer *fileBuffer = bufNew((size_t)file.size);
-                        bufUsedSet(fileBuffer, bufSize(fileBuffer));
-
-                        BlockDelta *const blockDelta = blockDeltaNew(
-                            blockMap, file.blockIncrSize, file.blockIncrChecksumSize, NULL, cipherType, cipherPass,
-                            manifestData->backupOptionCompressType);
-
-                        for (unsigned int readIdx = 0; readIdx < blockDeltaReadSize(blockDelta); readIdx++)
-                        {
-                            const BlockDeltaRead *const read = blockDeltaReadGet(blockDelta, readIdx);
-                            const String *const blockName = backupFileRepoPathP(
-                                strLstGet(manifestReferenceList(manifest), read->reference), .manifestName = file.name,
-                                .bundleId = read->bundleId, .blockIncr = true);
-
-                            IoRead *blockRead = storageReadIo(
-                                storageNewReadP(
-                                    storage, blockName, .offset = read->offset, .limit = VARUINT64(read->size)));
-                            ioReadOpen(blockRead);
-
-                            const BlockDeltaWrite *deltaWrite = blockDeltaNext(blockDelta, read, blockRead);
-
-                            while (deltaWrite != NULL)
-                            {
-                                // Update size and file
-                                size += bufUsed(deltaWrite->block);
-                                memcpy(
-                                    bufPtr(fileBuffer) + deltaWrite->offset, bufPtr(deltaWrite->block),
-                                    bufUsed(deltaWrite->block));
-
-                                deltaWrite = blockDeltaNext(blockDelta, read, blockRead);
-                            }
-                        }
-
-                        strCatFmt(result, ", m=%s}", strZ(mapLog));
-
-                        checksum = cryptoHashOne(hashTypeSha1, fileBuffer);
-                    }
-                    // Else normal file
-                    else
-                    {
-                        StorageRead *read = storageNewReadP(
-                            storage, strNewFmt("%s/%s", strZ(path), strZ(info.name)), .offset = file.bundleOffset,
-                            .limit = VARUINT64(file.sizeRepo));
-                        const bool raw = bundle && manifest->pub.data.bundleRaw;
-
-                        if (cipherType != cipherTypeNone)
-                        {
-                            ioFilterGroupAdd(
-                                ioReadFilterGroup(storageReadIo(read)),
-                                cipherBlockNewP(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), .raw = raw));
-                        }
-
-                        if (manifestData->backupOptionCompressType != compressTypeNone)
-                        {
-                            ioFilterGroupAdd(
-                                ioReadFilterGroup(storageReadIo(read)),
-                                decompressFilterP(manifestData->backupOptionCompressType, .raw = raw));
-                        }
-
-                        ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(hashTypeSha1));
-
-                        size = bufUsed(storageGetP(read));
-                        checksum = pckReadBinP(
-                            ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE));
-                    }
-
-                    // Validate checksum
-                    if (!bufEq(checksum, BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE)))
-                        THROW_FMT(AssertError, "'%s' checksum does match manifest", strZ(file.name));
-
-                    strCatFmt(result, ", s=%" PRIu64, size);
-
-                    // Test size and repo-size
-                    // -------------------------------------------------------------------------------------------------------------
-                    if (size != file.size)
-                        THROW_FMT(AssertError, "'%s' size does match manifest", strZ(file.name));
-
-                    // Repo size can only be compared to file size when not bundled
-                    if (!bundle)
-                    {
-                        if (info.size != file.sizeRepo)
-                            THROW_FMT(AssertError, "'%s' repo size does match manifest", strZ(file.name));
-                    }
-
-                    // pg_control and WAL headers have different checksums depending on cpu architecture so remove the checksum from
-                    // the test output.
-                    // -------------------------------------------------------------------------------------------------------------
-                    if (strEqZ(file.name, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) ||
-                        strBeginsWith(
-                            file.name, strNewFmt(MANIFEST_TARGET_PGDATA "/%s/", strZ(pgWalPath(manifestData->pgVersion)))))
-                    {
-                        file.checksumSha1 = NULL;
-                    }
-
-                    strCatZ(result, "}\n");
-
-                    // Update changes to manifest file
-                    manifestFilePackUpdate(manifest, filePack, &file);
+                    strCat(
+                        result,
+                        testBackupValidateFile(
+                            storage, path, manifest, manifestData, info.name, info.size,
+                            *(ManifestFilePack ***)lstGet(fileList, fileIdx), cipherType, cipherPass));
                 }
 
                 break;
