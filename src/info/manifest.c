@@ -1679,6 +1679,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                     // Copy block incr info if the file has a block incr size. It is possible for a file to shrink below the limit
                     // for block incr and lose the block incr map or block incr could be disabled. The block incr size needs to be
                     // copied from the prior file because it cannot change within a backup set without invalidating all prior maps.
+                    // !!! THIS SHOULD PROBABLY BE REMOVED IN CASE THE PRIOR RESULT IS KEPT
                     if (file.blockIncrSize > 0)
                     {
                         file.blockIncrSize = filePrior.blockIncrSize;
