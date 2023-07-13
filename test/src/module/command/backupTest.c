@@ -4184,6 +4184,13 @@ testRun(void)
 
             HRN_STORAGE_TIME(storagePgWrite(), "block-incr-grow", backupTimeStart);
 
+            // Reduce file with block multiplier
+            Buffer *file = bufNew(8192);
+            memset(bufPtr(file), 0, bufSize(file));
+            bufUsedSet(file, bufSize(file));
+
+            HRN_STORAGE_PUT(storagePgWrite(), "block-age-multiplier", file, .timeModified = backupTimeStart);
+
             // Run backup
             hrnBackupPqScriptP(
                 PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherType = cipherTypeAes256Cbc,
@@ -4196,11 +4203,10 @@ testRun(void)
                 "P00   INFO: backup start archive = 0000000105DC9B4000000000, lsn = 5dc9b40/0\n"
                 "P00   INFO: check archive for segment 0000000105DC9B4000000000\n"
                 "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/block-age-multiplier (32KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/0, 8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/block-incr-grow (48KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-age-multiplier (bundle 1/88, 8KB, [PCT]) checksum [SHA1]\n"
                 "P00 DETAIL: reference pg_data/PG_VERSION to 20191108-080000F\n"
-                "P00 DETAIL: reference pg_data/block-age-multiplier to 20191108-080000F_20191110-153320D\n"
                 "P00 DETAIL: reference pg_data/block-incr-grow to 20191108-080000F_20191110-153320D\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DC9B4000000000, lsn = 5dc9b40/100000\n"
@@ -4216,6 +4222,7 @@ testRun(void)
                     .cipherPass = TEST_CIPHER_PASS),
                 ". {link, d=20191108-080000F_20191111-192000I}\n"
                 "bundle {path}\n"
+                "bundle/1/pg_data/block-age-multiplier {file, s=8192}\n"
                 "bundle/1/pg_data/global/pg_control {file, s=8192}\n"
                 "pg_data {path}\n"
                 "pg_data/backup_label.gz {file, s=17}\n"
@@ -4229,9 +4236,8 @@ testRun(void)
                 ",\"size\":2,\"timestamp\":1572800000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                 ",\"timestamp\":1573500002}\n"
-                "pg_data/block-age-multiplier={\"bi\":2,\"bic\":16,\"bim\":56"
-                ",\"checksum\":\"5188431849b4613152fd7bdba6a3ff0a4fd6424b\",\"reference\":\"20191108-080000F_20191110-153320D\""
-                ",\"size\":32768,\"timestamp\":1573313600}\n"
+                "pg_data/block-age-multiplier={\"checksum\":\"0631457264ff7f8d5fb1edc2c0211992a67c73e6\",\"size\":8192"
+                ",\"timestamp\":1573500000}\n"
                 "pg_data/block-incr-grow={\"bi\":1,\"bim\":72,\"checksum\":\"bd4716c88f38d2540e3024b54308b0b95f34a0cc\""
                 ",\"reference\":\"20191108-080000F_20191110-153320D\",\"size\":49152,\"timestamp\":1573500000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1573500000}\n"
