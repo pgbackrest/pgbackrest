@@ -1545,6 +1545,8 @@ testRun(void)
             "[target:file]\n"
             "pg_data/validfile={\"bni\":1,\"bno\":3,\"checksum\":\"%s\",\"size\":%u,\"timestamp\":1565282114}\n"
             "pg_data/zerofile={\"size\":0,\"timestamp\":1565282114}\n"
+            "pg_data/biind={\"bi\":1,\"bim\":3,\"checksum\":\"9865d483bc5a94f2e30056fc256ed3066af54d04\",\"size\":4"
+            ",\"timestamp\":1565282114}\n"
             TEST_MANIFEST_FILE_DEFAULT
             TEST_MANIFEST_LINK
             TEST_MANIFEST_LINK_DEFAULT
@@ -1562,6 +1564,8 @@ testRun(void)
         HRN_STORAGE_PUT_Z(
             storageRepoWrite(), STORAGE_REPO_BACKUP "/20201119-163000F/bundle/1", zNewFmt("XXX%s", fileContents),
             .comment = "valid file");
+        HRN_STORAGE_PUT_Z(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20201119-163000F/pg_data/biind.pgbi", "ZZZZ", .comment = "pgbi file");
 
         // Create WAL file with just header info and small WAL size
         Buffer *walBuffer = bufNew((size_t)(1024 * 1024));
@@ -1665,6 +1669,8 @@ testRun(void)
             TEST_MANIFEST_TARGET                                                                                                   \
             TEST_MANIFEST_DB                                                                                                       \
             TEST_MANIFEST_FILE                                                                                                     \
+            "pg_data/biind={\"bi\":1,\"bim\":3,\"checksum\":\"ffffffffffffffffffffffffffffffffffffffff\",\"size\":4"               \
+            ",\"timestamp\":1565282114}\n"                                                                                         \
             TEST_MANIFEST_FILE_DEFAULT                                                                                             \
             TEST_MANIFEST_LINK                                                                                                     \
             TEST_MANIFEST_LINK_DEFAULT                                                                                             \
@@ -1678,6 +1684,8 @@ testRun(void)
         HRN_INFO_PUT(
             storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152900F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, TEST_MANIFEST_FULL_DB2,
             .comment = "valid manifest copy - full");
+        HRN_STORAGE_PUT_Z(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152900F/pg_data/biind.pgbi", "ZVZV", .comment = "pgbi file");
 
         // Create valid diff backup
         #define TEST_MANIFEST_DIFF_DB2                                                                                             \
@@ -1690,6 +1698,8 @@ testRun(void)
             "[target:file]\n"                                                                                                      \
             "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"reference\":\"20181119-152900F\""     \
                 ",\"size\":4,\"timestamp\":1565282114}\n"                                                                          \
+            "pg_data/biind={\"bi\":1,\"bim\":3,\"checksum\":\"ffffffffffffffffffffffffffffffffffffffff\","                         \
+            "\"reference\":\"20181119-152900F\",\"size\":4,\"timestamp\":1565282114}\n"                                            \
             TEST_MANIFEST_FILE_DEFAULT                                                                                             \
             TEST_MANIFEST_LINK                                                                                                     \
             TEST_MANIFEST_LINK_DEFAULT                                                                                             \
@@ -1725,22 +1735,20 @@ testRun(void)
             "stanza: db\n"
             "status: error\n"
             "  archiveId: none found\n"
-            "  backup: 20181119-152900F, status: invalid, total files checked: 1, total valid files: 0\n"
-            "    missing: 0, checksum invalid: 1, size invalid: 0, other: 0\n"
-            "  backup: 20181119-152900F_20181119-152909D, status: invalid, total files checked: 1, total valid files: 0\n"
+            "  backup: 20181119-152900F, status: invalid, total files checked: 2, total valid files: 0\n"
+            "    missing: 0, checksum invalid: 2, size invalid: 0, other: 0\n"
+            "  backup: 20181119-152900F_20181119-152909D, status: invalid, total files checked: 2, total valid files: 1\n"
             "    missing: 0, checksum invalid: 1, size invalid: 0, other: 0\n", .remove = true);
-        // The error for the referenced file is logged twice because it is checked again by the second backup since the first backup
-        // verification had not yet completed before the second backup verification began
         TEST_RESULT_LOG(
             "P01   INFO: invalid checksum '20181119-152900F/pg_data/PG_VERSION'\n"
-            "P01   INFO: invalid checksum '20181119-152900F/pg_data/PG_VERSION'\n"
+            "P01   INFO: invalid checksum '20181119-152900F/pg_data/biind.pgbi'\n"
             "P00   INFO: stanza: db\n"
             "            status: error\n"
             "              archiveId: none found\n"
-            "              backup: 20181119-152900F, status: invalid, total files checked: 1, total valid files: 0\n"
-            "                missing: 0, checksum invalid: 1, size invalid: 0, other: 0\n"
-            "              backup: 20181119-152900F_20181119-152909D, status: invalid, total files checked: 1,"
-            " total valid files: 0\n"
+            "              backup: 20181119-152900F, status: invalid, total files checked: 2, total valid files: 0\n"
+            "                missing: 0, checksum invalid: 2, size invalid: 0, other: 0\n"
+            "              backup: 20181119-152900F_20181119-152909D, status: invalid, total files checked: 2,"
+            " total valid files: 1\n"
             "                missing: 0, checksum invalid: 1, size invalid: 0, other: 0");
     }
 
