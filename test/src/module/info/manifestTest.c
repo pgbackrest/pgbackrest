@@ -1245,8 +1245,9 @@ testRun(void)
             .group = "test", .user = "test");
 
         HRN_MANIFEST_FILE_ADD(
-            manifestPrior, .name = MANIFEST_TARGET_PGDATA "/FILE2", .copy = true, .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
-            .reference = "20190101-010101F_20190202-010101D", .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa");
+            manifestPrior, .name = MANIFEST_TARGET_PGDATA "/FILE2", .copy = true, .size = 6, .sizeOriginal = 4, .sizeRepo = 4,
+            .timestamp = 1482182860, .reference = "20190101-010101F_20190202-010101D",
+            .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa");
 
         TEST_RESULT_VOID(
             manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, STRDEF("000000040000000400000004")),
@@ -1273,7 +1274,8 @@ testRun(void)
                     "\n"
                     "[target:file]\n"
                     "pg_data/FILE1={\"size\":6,\"timestamp\":1482182861}\n"
-                    "pg_data/FILE2={\"size\":6,\"timestamp\":1482182860}\n"
+                    "pg_data/FILE2={\"checksum\":\"ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa\""
+                    ",\"reference\":\"20190101-010101F_20190202-010101D\",\"repo-size\":4,\"size\":6,\"timestamp\":1482182860}\n"
                     TEST_MANIFEST_FILE_DEFAULT
                     "\n"
                     "[target:path]\n"

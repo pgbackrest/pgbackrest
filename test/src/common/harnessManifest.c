@@ -88,14 +88,13 @@ hrnManifestFileAdd(Manifest *const manifest, const HrnManifestFile hrnManifestFi
             .blockIncrChecksumSize = hrnManifestFile.blockIncrChecksumSize,
             .blockIncrMapSize = hrnManifestFile.blockIncrMapSize,
             .size = hrnManifestFile.size,
+            .sizeOriginal = hrnManifestFile.sizeOriginal,
             .sizeRepo = hrnManifestFile.sizeRepo,
             .timestamp = hrnManifestFile.timestamp,
         };
 
-        if (hrnManifestFile.sizeOriginal == 0)
+        if (manifestFile.sizeOriginal == 0)
             manifestFile.sizeOriginal = manifestFile.size;
-        else
-            manifestFile.sizeOriginal = hrnManifestFile.sizeOriginal;
 
         if (hrnManifestFile.mode == 0)
             manifestFile.mode = 0600;

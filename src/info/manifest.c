@@ -1649,12 +1649,12 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                     }
 
                     // Check for size change with no timestamp change
-                    if (file.size != filePrior.size && file.timestamp == filePrior.timestamp)
+                    if (file.sizeOriginal != filePrior.sizeOriginal && file.timestamp == filePrior.timestamp)
                     {
                         LOG_WARN_FMT(
                             "file '%s' has same timestamp (%" PRId64 ") as prior but different size (prior %" PRIu64 ", current"
                             " %" PRIu64 "), enabling delta checksum",
-                            strZ(manifestPathPg(file.name)), (int64_t)file.timestamp, filePrior.size, file.size);
+                            strZ(manifestPathPg(file.name)), (int64_t)file.timestamp, filePrior.sizeOriginal, file.sizeOriginal);
 
                         this->pub.data.backupOptionDelta = BOOL_TRUE_VAR;
                         break;
