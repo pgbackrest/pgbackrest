@@ -108,6 +108,7 @@ typedef enum
     manifestFilePackFlagChecksumPage,
     manifestFilePackFlagChecksumPageError,
     manifestFilePackFlagChecksumPageErrorList,
+    manifestFilePackFlagSizeOriginal,
     manifestFilePackFlagMode,
     manifestFilePackFlagUser,
     manifestFilePackFlagUserNull,
@@ -166,6 +167,9 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
     if (file->blockIncrSize != 0)
         flag |= 1 << manifestFilePackFlagBlockIncr;
 
+    if (file->sizeOriginal != file->size)
+        flag |= 1 << manifestFilePackFlagSizeOriginal;
+
     if (file->mode != manifest->fileModeDefault)
         flag |= 1 << manifestFilePackFlagMode;
 
@@ -183,6 +187,10 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
 
     // Size
     cvtUInt64ToVarInt128(file->size, buffer, &bufferPos, sizeof(buffer));
+
+    // Original size
+    if (flag & (1 << manifestFilePackFlagSizeOriginal))
+        cvtUInt64ToVarInt128(file->sizeOriginal, buffer, &bufferPos, sizeof(buffer));
 
     // Use the first timestamp that appears as the base for all other timestamps. Ideally we would like a timestamp as close to the
     // middle as possible but it doesn't seem worth doing the calculation.
@@ -307,6 +315,12 @@ manifestFileUnpack(const Manifest *const manifest, const ManifestFilePack *const
 
     // Size
     result.size = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
+
+    // Original size
+    if (flag & (1 << manifestFilePackFlagSizeOriginal))
+        result.sizeOriginal = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
+    else
+        result.sizeOriginal = result.size;
 
     // Timestamp
     result.timestamp =
@@ -1052,6 +1066,7 @@ manifestBuildInfo(
                 .user = info->user,
                 .group = info->group,
                 .size = info->size,
+                .sizeOriginal = info->size,
                 .sizeRepo = info->size,
                 .timestamp = info->timeModified,
             };
@@ -1857,6 +1872,7 @@ manifestBuildComplete(
 #define MANIFEST_KEY_PATH                                           STRID5("path", 0x450300)
 #define MANIFEST_KEY_REFERENCE                                      STRID5("reference", 0x51b8b2298b20)
 #define MANIFEST_KEY_SIZE                                           STRID5("size", 0x2e9330)
+#define MANIFEST_KEY_SIZE_ORIGINAL                                  STRID5("szo", 0x3f530)
 #define MANIFEST_KEY_SIZE_REPO                                      STRID5("repo-size", 0x5d267b7c0b20)
 #define MANIFEST_KEY_TABLESPACE_ID                                  "tablespace-id"
 #define MANIFEST_KEY_TABLESPACE_NAME                                "tablespace-name"
@@ -2059,6 +2075,13 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
         // If file size is zero then assign the static zero hash
         if (file.size == 0)
             file.checksumSha1 = bufPtrConst(HASH_TYPE_SHA1_ZERO_BUF);
+
+        // If original is not present in the manifest file then it is the same as size (i.e. the file did not change size during
+        // copy) -- to save space the original size is only stored in the manifest file if it is different than size.
+        if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_SIZE_ORIGINAL))
+            file.sizeOriginal = jsonReadUInt64(json);
+        else
+            file.sizeOriginal = file.size;
 
         // Timestamp is required so error if it is not present
         if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_TIMESTAMP))
@@ -2773,6 +2796,10 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
                     jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_SIZE_REPO), file.sizeRepo);
 
                 jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_SIZE), file.size);
+
+                if (file.sizeOriginal != file.size)
+                    jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_SIZE_ORIGINAL), file.sizeOriginal);
+
                 jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_TIMESTAMP), (uint64_t)file.timestamp);
 
                 if (!varEq(manifestOwnerVar(file.user), saveData->userDefault))
