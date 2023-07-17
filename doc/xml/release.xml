@@ -47,6 +47,20 @@
                     </release-item>
 
                     <release-item>
+                        <github-issue id="2020"/>
+                        <github-pull-request id="2124"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="krmozejko"/>
+                            <release-item-ideator id="don.seiler"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix spurious automatic delta backup on backup from standby.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-issue id="2062"/>
                         <github-pull-request id="2070"/>
 
@@ -12773,6 +12787,11 @@
         <contributor id="kacey.holston">
             <contributor-name-display>Kacey Holston</contributor-name-display>
             <contributor-id type="github">kaceymiri</contributor-id>
+        </contributor>
+
+        <contributor id="krmozejko">
+            <contributor-name-display>krmozejko</contributor-name-display>
+            <contributor-id type="github">krmozejko</contributor-id>
         </contributor>
 
         <contributor id="kyle.nevins">
