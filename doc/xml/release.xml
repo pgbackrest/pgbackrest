@@ -18,6 +18,22 @@
             <release-core-list>
                 <release-bug-list>
                     <release-item>
+                        <commit subject="Improve validation of referenced files in command/backup unit test."/>
+                        <commit subject="Preserve block incremental info in manifest during delta backup.">
+                            <github-issue id="2112"/>
+                            <github-pull-request id="2123"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="francisco.miguel.biete"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Preserve block incremental info in manifest during delta backup.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-issue id="2112"/>
                         <github-pull-request id="2120"/>
 

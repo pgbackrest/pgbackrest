@@ -4080,6 +4080,13 @@ testRun(void)
 
             HRN_STORAGE_PUT(storagePgWrite(), "block-incr-grow", file, .timeModified = backupTimeStart);
 
+            // File that will later have a timestamp far enough in the past to make the block size zero
+            file = bufNew((size_t)(BLOCK_MIN_FILE_SIZE));
+            memset(bufPtr(file), 0, bufSize(file));
+            bufUsedSet(file, bufSize(file));
+
+            HRN_STORAGE_PUT(storagePgWrite(), "block-incr-wayback", file, .timeModified = backupTimeStart);
+
             // Run backup
             hrnBackupPqScriptP(
                 PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherType = cipherTypeAes256Cbc,
@@ -4091,6 +4098,7 @@ testRun(void)
                 "P00   INFO: backup start archive = 0000000105DC520000000000, lsn = 5dc5200/0\n"
                 "P00   INFO: check archive for segment 0000000105DC520000000000\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (24KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-wayback (16KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/0, 2B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/24, 8KB, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
@@ -4099,7 +4107,7 @@ testRun(void)
                 "P00 DETAIL: wrote 'tablespace_map' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000000105DC520000000000:0000000105DC520000000001\n"
                 "P00   INFO: new backup label = 20191108-080000F\n"
-                "P00   INFO: full backup size = [SIZE], file total = 5");
+                "P00   INFO: full backup size = [SIZE], file total = 6");
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(
@@ -4112,6 +4120,7 @@ testRun(void)
                 "pg_data {path}\n"
                 "pg_data/backup_label.gz {file, s=17}\n"
                 "pg_data/block-incr-grow.pgbi {file, m=0:{0,1,2}, s=24576}\n"
+                "pg_data/block-incr-wayback.pgbi {file, m=0:{0,1}, s=16384}\n"
                 "pg_data/tablespace_map.gz {file, s=19}\n"
                 "--------\n"
                 "[backup:target]\n"
@@ -4124,6 +4133,8 @@ testRun(void)
                 ",\"timestamp\":1573200002}\n"
                 "pg_data/block-incr-grow={\"bi\":1,\"bim\":40,\"checksum\":\"ebdd38b69cd5b9f2d00d273c981e16960fbbb4f7\","
                 "\"size\":24576,\"timestamp\":1573200000}\n"
+                "pg_data/block-incr-wayback={\"bi\":1,\"bim\":40,\"checksum\":\"897256b6709e1a4da9daba92b6bde39ccfccd8c1\""
+                ",\"size\":16384,\"timestamp\":1573200000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1573200000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
                 ",\"timestamp\":1573200002}\n"
@@ -4181,6 +4192,9 @@ testRun(void)
 
             HRN_STORAGE_PUT(storagePgWrite(), "block-age-to-zero", file, .timeModified = backupTimeStart - 2 * SEC_PER_DAY);
 
+            // File goes back in time far enough to not need block incr if it was new
+            HRN_STORAGE_TIME(storagePgWrite(), "block-incr-wayback", backupTimeStart - 2 * SEC_PER_DAY);
+
             // Run backup
             hrnBackupPqScriptP(
                 PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherType = cipherTypeAes256Cbc,
@@ -4193,18 +4207,20 @@ testRun(void)
                 "P00   INFO: backup start archive = 0000000105DC82D000000000, lsn = 5dc82d0/0\n"
                 "P00   INFO: check archive for segment 0000000105DC82D000000000\n"
                 "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/block-incr-wayback (16KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-age-to-zero (bundle 1/0, 16KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-age-multiplier (bundle 1/56, 32KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/184, 8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (bundle 1/272, 48KB, [PCT]) checksum [SHA1]\n"
                 "P00 DETAIL: reference pg_data/PG_VERSION to 20191108-080000F\n"
+                "P00 DETAIL: reference pg_data/block-incr-wayback to 20191108-080000F\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DC82D000000001, lsn = 5dc82d0/300000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
                 "P00 DETAIL: wrote 'tablespace_map' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000000105DC82D000000000:0000000105DC82D000000001\n"
                 "P00   INFO: new backup label = 20191108-080000F_20191110-153320D\n"
-                "P00   INFO: diff backup size = [SIZE], file total = 7");
+                "P00   INFO: diff backup size = [SIZE], file total = 8");
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(
@@ -4220,6 +4236,7 @@ testRun(void)
                 "pg_data/backup_label.gz {file, s=17}\n"
                 "pg_data/tablespace_map.gz {file, s=19}\n"
                 "20191108-080000F/bundle/1/pg_data/PG_VERSION {file, s=2}\n"
+                "20191108-080000F/pg_data/block-incr-wayback.pgbi {file, m=0:{0,1}, s=16384}\n"
                 "--------\n"
                 "[backup:target]\n"
                 "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n"
@@ -4235,6 +4252,8 @@ testRun(void)
                 "\"timestamp\":1573227200}\n"
                 "pg_data/block-incr-grow={\"bi\":1,\"bim\":72,\"checksum\":\"bd4716c88f38d2540e3024b54308b0b95f34a0cc\""
                 ",\"size\":49152,\"timestamp\":1573400000}\n"
+                "pg_data/block-incr-wayback={\"bi\":1,\"bim\":40,\"checksum\":\"897256b6709e1a4da9daba92b6bde39ccfccd8c1\","
+                "\"reference\":\"20191108-080000F\",\"size\":16384,\"timestamp\":1573227200}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1573400000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
                 ",\"timestamp\":1573400002}\n"
