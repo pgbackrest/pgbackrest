@@ -157,7 +157,8 @@ typedef struct ManifestFile
     size_t blockIncrSize;                                           // Size of incremental blocks
     size_t blockIncrChecksumSize;                                   // Size of incremental block checksum
     uint64_t blockIncrMapSize;                                      // Block incremental map size
-    uint64_t size;                                                  // Original size
+    uint64_t size;                                                  // Final size (after copy)
+    uint64_t sizeOriginal;                                          // Original size (from manifest build)
     uint64_t sizeRepo;                                              // Size in repo
     time_t timestamp;                                               // Original timestamp
 } ManifestFile;
