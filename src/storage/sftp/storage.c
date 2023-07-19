@@ -776,6 +776,7 @@ storageSftpNew(
         FUNCTION_LOG_PARAM(MODE, param.modeFile);
         FUNCTION_LOG_PARAM(MODE, param.modePath);
         FUNCTION_LOG_PARAM(BOOL, param.write);
+        FUNCTION_LOG_PARAM(BOOL, param.requireKnownHostsMatch);
         FUNCTION_LOG_PARAM(FUNCTIONP, param.pathExpressionFunction);
     FUNCTION_LOG_END();
 
@@ -877,6 +878,102 @@ storageSftpNew(
             }
         }
 
+        // Check for a matching entry in the .ssh/known_hosts file
+        if (param.requireKnownHostsMatch)
+        {
+            LIBSSH2_KNOWNHOSTS *nh;
+            const char *hostkey;
+            size_t len;
+            int type;
+            char *libSsh2ErrMsg;
+            int libSsh2ErrMsgLen;
+
+            // Init the knownhost collection
+            nh = libssh2_knownhost_init(this->session);
+
+            if (nh == NULL)
+                THROW_FMT(ServiceError, "failure during libssh2_knownhost_init");
+
+            // Load the known_hosts file into the collection
+            if ((rc = libssh2_knownhost_readfile(
+                        nh, strZ(strNewFmt("%s%s", strZ(userHome()), "/.ssh/known_hosts")), LIBSSH2_KNOWNHOST_FILE_OPENSSH)) <= 0)
+            {
+                // Free the nh list on read file failure
+                libssh2_knownhost_free(nh);
+
+                // Reading an empty file returns 0
+                if (rc == 0)
+                {
+                    THROW_FMT(
+                        ServiceError, "libssh2 '%s' file is empty", strZ(strNewFmt("%s%s", strZ(userHome()), "/.ssh/known_hosts")));
+                }
+                else
+                {
+                    // Get the libssh2 error message
+                    rc = libssh2_session_last_error(this->session, &libSsh2ErrMsg, &libSsh2ErrMsgLen, 0);
+
+                    THROW_FMT(
+                        ServiceError,
+                        "libssh2 read '%s' file failed: libssh2 errno [%d]%s",
+                        strZ(strNewFmt("%s%s", strZ(userHome()), "/.ssh/known_hosts")), rc,
+                        rc ? strZ(strNewFmt(" %s", libSsh2ErrMsg)) : "");
+                }
+            }
+
+            // Get the remote host key
+            hostkey = libssh2_session_hostkey(this->session, &len, &type);
+
+            // If we get a key, check for a match in known_hosts, else throw an error
+            if (hostkey != NULL)
+            {
+                rc = libssh2_knownhost_checkp(
+                        nh, strZ(host), (int)port, hostkey, len, LIBSSH2_KNOWNHOST_TYPE_PLAIN | LIBSSH2_KNOWNHOST_KEYENC_RAW, NULL);
+
+                // Error on failure to match
+                if (rc != LIBSSH2_KNOWNHOST_CHECK_MATCH)
+                {
+                    const char *errmsg;
+
+                    switch (rc)
+                    {
+                        case LIBSSH2_KNOWNHOST_CHECK_FAILURE:
+                            errmsg = "LIBSSH2_KNOWNHOST_CHECK_FAILURE";
+                            break;
+
+                        case LIBSSH2_KNOWNHOST_CHECK_NOTFOUND:
+                            errmsg = "not found in known_hosts file: LIBSSH2_KNOWNHOST_CHECK_NOTFOUND";
+                            break;
+
+                        case LIBSSH2_KNOWNHOST_CHECK_MISMATCH:
+                            errmsg = "mismatch in known_hosts file: LIBSSH2_KNOWNHOST_CHECK_MISMATCH";
+                            break;
+
+                        default:
+                            errmsg = "experienced an unknown failure:";
+                            break;
+                    }
+
+                    // Free the nh list on failure to match in known_hosts
+                    libssh2_knownhost_free(nh);
+
+                    THROW_FMT(ServiceError, "libssh2_knownhost_checkp failure: '%s' %s [%d]", strZ(host), errmsg, rc);
+                }
+            }
+            else
+            {
+                // Free the nh list on failure to get a host key
+                libssh2_knownhost_free(nh);
+
+                THROW_FMT(
+                    ServiceError,
+                    "libssh2 libssh2_session_hostkey failed: libssh2 error [%d]", libssh2_session_last_errno(this->session));
+            }
+
+            // Free the nh list
+            libssh2_knownhost_free(nh);
+        }
+
+        // Perform public key authorization
         do
         {
             rc = libssh2_userauth_publickey_fromfile(
@@ -899,6 +996,7 @@ storageSftpNew(
                     " generate the keypair"));
         }
 
+        // Init the sftp session
         do
         {
             this->sftpSession = libssh2_sftp_init(this->session);

@@ -24,6 +24,7 @@ static struct
 
     gid_t groupId;                                                  // Real group id of the calling process from getgid()
     const String *groupName;                                        // Group name if it exists
+    const String *userHome;                                         // User HOME directory
 } userLocalData;
 
 /**********************************************************************************************************************************/
@@ -40,6 +41,7 @@ userInitInternal(void)
 
             userLocalData.userId = getuid();
             userLocalData.userName = userNameFromId(userLocalData.userId);
+            userLocalData.userHome = userHomeFromId(userLocalData.userId);
             userLocalData.userRoot = userLocalData.userId == 0;
 
             userLocalData.groupId = getgid();
@@ -110,6 +112,30 @@ groupNameFromId(gid_t groupId)
 
     if (groupData != NULL)
         FUNCTION_TEST_RETURN(STRING, strNewZ(groupData->gr_name));
+
+    FUNCTION_TEST_RETURN(STRING, NULL);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN const String *
+userHome(void)
+{
+    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_RETURN_CONST(STRING, userLocalData.userHome);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN String *
+userHomeFromId(uid_t userId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, userId);
+    FUNCTION_TEST_END();
+
+    struct passwd *userData = getpwuid(userId);
+
+    if (userData != NULL)
+        FUNCTION_TEST_RETURN(STRING, strNewZ(userData->pw_dir));
 
     FUNCTION_TEST_RETURN(STRING, NULL);
 }

@@ -1085,6 +1085,16 @@
                         <example>~/.ssh/id_ed25519.pub</example>
                     </config-key>
 
+                    <config-key id="repo-sftp-req-known-hosts-match" name="Require a known_hosts match for the SFTP host">
+                        <summary>SFTP require known_hosts match.</summary>
+
+                        <text>
+                            <p>Require a successful known_hosts match for the SFTP host as part of the authentication process.</p>
+                        </text>
+
+                        <example>y</example>
+                    </config-key>
+
                     <config-key id="repo-storage-ca-file" name="Repository Storage CA File">
                         <summary>Repository storage CA file.</summary>
 

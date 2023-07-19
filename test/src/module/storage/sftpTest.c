@@ -242,6 +242,201 @@ testRun(void)
             " [9132333435363738393039383736353433323130] do not match");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("known host init failure");
+
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
+        {
+            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
+            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "01234567899876543210"},
+            {.function = HRNLIBSSH2_KNOWNHOST_INIT, .resultNull = true},
+            {.function = NULL}
+        });
+
+        TEST_ERROR(
+            storageSftpNewP(
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1, .requireKnownHostsMatch = true),
+            ServiceError, "failure during libssh2_knownhost_init");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("read known_hosts file failure libssh2 errno -16");
+
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
+        {
+            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
+            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "01234567899876543210"},
+            {.function = HRNLIBSSH2_KNOWNHOST_INIT},
+            {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]",
+             .resultInt = LIBSSH2_ERROR_FILE},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERROR, .errMsg = (char *)"Failed to open file", .resultInt = LIBSSH2_ERROR_FILE},
+            {.function = NULL}
+        });
+
+        TEST_ERROR(
+            storageSftpNewP(
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1, .requireKnownHostsMatch = true),
+            ServiceError,
+            "libssh2 read '/home/" TEST_USER "/.ssh/known_hosts' file failed: libssh2 errno [-16] Failed to open file");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("read known_hosts file failure no libssh2 errno");
+
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
+        {
+            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
+            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "01234567899876543210"},
+            {.function = HRNLIBSSH2_KNOWNHOST_INIT},
+            {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]",
+             .resultInt = LIBSSH2_ERROR_FILE},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERROR, .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = NULL}
+        });
+
+        TEST_ERROR(
+            storageSftpNewP(
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1, .requireKnownHostsMatch = true),
+            ServiceError,
+            "libssh2 read '/home/" TEST_USER "/.ssh/known_hosts' file failed: libssh2 errno [0]");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("read known_hosts file failure - empty file");
+
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
+        {
+            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
+            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "01234567899876543210"},
+            {.function = HRNLIBSSH2_KNOWNHOST_INIT},
+            {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]", .resultInt = 0},
+            {.function = NULL}
+        });
+
+        TEST_ERROR(
+            storageSftpNewP(
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1, .requireKnownHostsMatch = true),
+            ServiceError, "libssh2 '/home/" TEST_USER "/.ssh/known_hosts' file is empty");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("libssh2_session_hostkey fail - return NULL");
+
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
+        {
+            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
+            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "01234567899876543210"},
+            {.function = HRNLIBSSH2_KNOWNHOST_INIT},
+            {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]", .resultInt = 5},
+            {.function = HRNLIBSSH2_SESSION_HOSTKEY, .len = 20, .type = LIBSSH2_HOSTKEY_TYPE_RSA, .resultNull = true},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SOCKET_SEND},
+            {.function = NULL}
+        });
+
+        TEST_ERROR(
+            storageSftpNewP(
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1, .requireKnownHostsMatch = true),
+            ServiceError,
+            "libssh2 libssh2_session_hostkey failed: libssh2 error [-7]");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("knownhost_checkp failure LIBSSH2_KNOWNHOST_CHECK_MISMATCH");
+
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
+        {
+            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
+            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "01234567899876543210"},
+            {.function = HRNLIBSSH2_KNOWNHOST_INIT},
+            {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]", .resultInt = 5},
+            {.function = HRNLIBSSH2_SESSION_HOSTKEY, .len = 20, .type = LIBSSH2_HOSTKEY_TYPE_RSA, .resultZ = HOSTKEY},
+            {.function = HRNLIBSSH2_KNOWNHOST_CHECKP, .param = "[\"localhost\",22,\"" HOSTKEY "\",20,65537]",
+             .resultInt = LIBSSH2_KNOWNHOST_CHECK_MISMATCH},
+            {.function = NULL}
+        });
+
+        TEST_ERROR(
+            storageSftpNewP(
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1, .requireKnownHostsMatch = true),
+            ServiceError,
+            "libssh2_knownhost_checkp failure: 'localhost' mismatch in known_hosts file: LIBSSH2_KNOWNHOST_CHECK_MISMATCH [1]");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("knownhost_checkp failure LIBSSH2_KNOWNHOST_CHECK_FAILURE");
+
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
+        {
+            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
+            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "01234567899876543210"},
+            {.function = HRNLIBSSH2_KNOWNHOST_INIT},
+            {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]", .resultInt = 5},
+            {.function = HRNLIBSSH2_SESSION_HOSTKEY, .len = 20, .type = LIBSSH2_HOSTKEY_TYPE_RSA, .resultZ = HOSTKEY},
+            {.function = HRNLIBSSH2_KNOWNHOST_CHECKP, .param = "[\"localhost\",22,\"" HOSTKEY "\",20,65537]",
+             .resultInt = LIBSSH2_KNOWNHOST_CHECK_FAILURE},
+            {.function = NULL}
+        });
+
+        TEST_ERROR(
+            storageSftpNewP(
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1, .requireKnownHostsMatch = true),
+            ServiceError,
+            "libssh2_knownhost_checkp failure: 'localhost' LIBSSH2_KNOWNHOST_CHECK_FAILURE [3]");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("knownhost_checkp failure LIBSSH2_KNOWNHOST_CHECK_NOTFOUND");
+
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
+        {
+            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
+            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "01234567899876543210"},
+            {.function = HRNLIBSSH2_KNOWNHOST_INIT},
+            {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]", .resultInt = 5},
+            {.function = HRNLIBSSH2_SESSION_HOSTKEY, .len = 20, .type = LIBSSH2_HOSTKEY_TYPE_RSA, .resultZ = HOSTKEY},
+            {.function = HRNLIBSSH2_KNOWNHOST_CHECKP, .param = "[\"localhost\",22,\"" HOSTKEY "\",20,65537]",
+             .resultInt = LIBSSH2_KNOWNHOST_CHECK_NOTFOUND},
+            {.function = NULL}
+        });
+
+        TEST_ERROR(
+            storageSftpNewP(
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1, .requireKnownHostsMatch = true),
+            ServiceError,
+            "libssh2_knownhost_checkp failure: 'localhost' not found in known_hosts file: LIBSSH2_KNOWNHOST_CHECK_NOTFOUND [2]");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("knownhost_checkp unknown failure type");
+
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
+        {
+            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
+            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "01234567899876543210"},
+            {.function = HRNLIBSSH2_KNOWNHOST_INIT},
+            {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]", .resultInt = 5},
+            {.function = HRNLIBSSH2_SESSION_HOSTKEY, .len = 20, .type = LIBSSH2_HOSTKEY_TYPE_RSA, .resultZ = HOSTKEY},
+            {.function = HRNLIBSSH2_KNOWNHOST_CHECKP, .param = "[\"localhost\",22,\"" HOSTKEY "\",20,65537]",
+             .resultInt = 5},
+            {.function = NULL}
+        });
+
+        TEST_ERROR(
+            storageSftpNewP(
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1, .requireKnownHostsMatch = true),
+            ServiceError,
+            "libssh2_knownhost_checkp failure: 'localhost' experienced an unknown failure: [5]");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("public key from file auth failure, no public key");
 
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
@@ -250,6 +445,11 @@ testRun(void)
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
             {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "01234567899876543210"},
+            {.function = HRNLIBSSH2_KNOWNHOST_INIT},
+            {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]", .resultInt = 5},
+            {.function = HRNLIBSSH2_SESSION_HOSTKEY, .len = 20, .type = LIBSSH2_HOSTKEY_TYPE_RSA, .resultZ = HOSTKEY},
+            {.function = HRNLIBSSH2_KNOWNHOST_CHECKP, .param = "[\"localhost\",22,\"" HOSTKEY "\",20,65537]",
+             .resultInt = LIBSSH2_KNOWNHOST_CHECK_MATCH},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
              .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",null,\"" KEYPRIV_CSTR "\",null]", .resultInt = -16},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_OK},
@@ -257,7 +457,9 @@ testRun(void)
         });
 
         TEST_ERROR(
-            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1), ServiceError,
+            storageSftpNewP(
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1, .requireKnownHostsMatch = true),
+            ServiceError,
             "public key authentication failed: libssh2 error [-16]\n"
             "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-key-file and"
             " --repo-sftp-public-key-file to be provided\n"
@@ -273,6 +475,11 @@ testRun(void)
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
             {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "01234567899876543210"},
+            {.function = HRNLIBSSH2_KNOWNHOST_INIT},
+            {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]", .resultInt = 5},
+            {.function = HRNLIBSSH2_SESSION_HOSTKEY, .len = 20, .type = LIBSSH2_HOSTKEY_TYPE_RSA, .resultZ = HOSTKEY},
+            {.function = HRNLIBSSH2_KNOWNHOST_CHECKP, .param = "[\"localhost\",22,\"" HOSTKEY "\",20,65537]",
+             .resultInt = LIBSSH2_KNOWNHOST_CHECK_MATCH},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
              .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",\"" KEYPUB_CSTR "\",\"" KEYPRIV_CSTR "\",\"keyPassphrase\"]",
              .resultInt = -16},
@@ -283,7 +490,7 @@ testRun(void)
         TEST_ERROR(
             storageSftpNewP(
                 TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB,
-                .keyPassphrase = STRDEF("keyPassphrase")),
+                .keyPassphrase = STRDEF("keyPassphrase"), .requireKnownHostsMatch = true),
             ServiceError,
             "public key authentication failed: libssh2 error [-16]\n"
             "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-key-file and"
@@ -300,6 +507,11 @@ testRun(void)
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
             {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "12345678910123456789"},
+            {.function = HRNLIBSSH2_KNOWNHOST_INIT},
+            {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]", .resultInt = 5},
+            {.function = HRNLIBSSH2_SESSION_HOSTKEY, .len = 20, .type = LIBSSH2_HOSTKEY_TYPE_RSA, .resultZ = HOSTKEY},
+            {.function = HRNLIBSSH2_KNOWNHOST_CHECKP, .param = "[\"localhost\",22,\"" HOSTKEY "\",20,65537]",
+             .resultInt = LIBSSH2_KNOWNHOST_CHECK_MATCH},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
              .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",\"" KEYPUB_CSTR "\",\"" KEYPRIV_CSTR "\",null]",
              .resultInt = LIBSSH2_ERROR_EAGAIN},
@@ -309,8 +521,9 @@ testRun(void)
 
         TEST_ERROR(
             storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 100, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB), ServiceError,
-            "timeout during public key authentication");
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 100, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB,
+                .requireKnownHostsMatch = true),
+            ServiceError, "timeout during public key authentication");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("sftp session init failure ssh2 error");
@@ -321,6 +534,11 @@ testRun(void)
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
             {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "12345678910123456789"},
+            {.function = HRNLIBSSH2_KNOWNHOST_INIT},
+            {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]", .resultInt = 5},
+            {.function = HRNLIBSSH2_SESSION_HOSTKEY, .len = 20, .type = LIBSSH2_HOSTKEY_TYPE_RSA, .resultZ = HOSTKEY},
+            {.function = HRNLIBSSH2_KNOWNHOST_CHECKP, .param = "[\"localhost\",22,\"" HOSTKEY "\",20,65537]",
+             .resultInt = LIBSSH2_KNOWNHOST_CHECK_MATCH},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
              .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",\"" KEYPUB_CSTR "\",\"" KEYPRIV_CSTR "\",null]",
              .resultInt = LIBSSH2_ERROR_NONE},
@@ -333,8 +551,9 @@ testRun(void)
 
         TEST_ERROR(
             storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB), ServiceError,
-            "unable to init libssh2_sftp session");
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB,
+                .requireKnownHostsMatch = true),
+            ServiceError, "unable to init libssh2_sftp session");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("sftp session init fail && timeout");
@@ -345,6 +564,11 @@ testRun(void)
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
             {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "12345678910123456789"},
+            {.function = HRNLIBSSH2_KNOWNHOST_INIT},
+            {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]", .resultInt = 5},
+            {.function = HRNLIBSSH2_SESSION_HOSTKEY, .len = 20, .type = LIBSSH2_HOSTKEY_TYPE_RSA, .resultZ = HOSTKEY},
+            {.function = HRNLIBSSH2_KNOWNHOST_CHECKP, .param = "[\"localhost\",22,\"" HOSTKEY "\",20,65537]",
+             .resultInt = LIBSSH2_KNOWNHOST_CHECK_MATCH},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
              .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",\"" KEYPUB_CSTR "\",\"" KEYPRIV_CSTR "\",null]",
              .resultInt = LIBSSH2_ERROR_NONE},
@@ -358,8 +582,9 @@ testRun(void)
 
         TEST_ERROR(
             storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 100, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB), ServiceError,
-            "timeout during init of libssh2_sftp session");
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 100, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB,
+                .requireKnownHostsMatch = true),
+            ServiceError, "timeout during init of libssh2_sftp session");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("sftp session init fail no timeout");
@@ -370,6 +595,11 @@ testRun(void)
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
             {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "12345678910123456789"},
+            {.function = HRNLIBSSH2_KNOWNHOST_INIT},
+            {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]", .resultInt = 5},
+            {.function = HRNLIBSSH2_SESSION_HOSTKEY, .len = 20, .type = LIBSSH2_HOSTKEY_TYPE_RSA, .resultZ = HOSTKEY},
+            {.function = HRNLIBSSH2_KNOWNHOST_CHECKP, .param = "[\"localhost\",22,\"" HOSTKEY "\",20,65537]",
+             .resultInt = LIBSSH2_KNOWNHOST_CHECK_MATCH},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
              .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",\"" KEYPUB_CSTR "\",\"" KEYPRIV_CSTR "\",null]",
              .resultInt = LIBSSH2_ERROR_NONE},
@@ -385,8 +615,9 @@ testRun(void)
 
         TEST_ERROR(
             storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 100, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB), ServiceError,
-            "unable to init libssh2_sftp session");
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 100, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB,
+                .requireKnownHostsMatch = true),
+            ServiceError, "unable to init libssh2_sftp session");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("sftp session init success");
@@ -427,8 +658,7 @@ testRun(void)
 
         TEST_ASSIGN(
             storageTest,
-            storageSftpNewP(
-                STRDEF("/tmp"), STRDEF("localhost"), 22, TEST_USER_STR, 100, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
+            storageSftpNewP(STRDEF("/tmp"), STRDEF("localhost"), 22, TEST_USER_STR, 100, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
             "new storage (defaults)");
         TEST_RESULT_BOOL(storageTest->write, false, "check write");
 

@@ -8535,6 +8535,92 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                          // opt/repo-sftp-public-key-file
     ),                                                                                              // opt/repo-sftp-public-key-file
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                         // opt/repo-sftp-req-known-hosts-match
+    (                                                                                         // opt/repo-sftp-req-known-hosts-match
+        PARSE_RULE_OPTION_NAME("repo-sftp-req-known-hosts-match"),                            // opt/repo-sftp-req-known-hosts-match
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),                                            // opt/repo-sftp-req-known-hosts-match
+        PARSE_RULE_OPTION_NEGATE(true),                                                       // opt/repo-sftp-req-known-hosts-match
+        PARSE_RULE_OPTION_RESET(true),                                                        // opt/repo-sftp-req-known-hosts-match
+        PARSE_RULE_OPTION_REQUIRED(true),                                                     // opt/repo-sftp-req-known-hosts-match
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),                                          // opt/repo-sftp-req-known-hosts-match
+        PARSE_RULE_OPTION_GROUP_MEMBER(true),                                                 // opt/repo-sftp-req-known-hosts-match
+        PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),                                            // opt/repo-sftp-req-known-hosts-match
+                                                                                              // opt/repo-sftp-req-known-hosts-match
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                        // opt/repo-sftp-req-known-hosts-match
+        (                                                                                     // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                         // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                       // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                      // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                           // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                            // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)                                           // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                             // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdManifest)                                         // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                       // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)                                          // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)                                           // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)                                          // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)                                           // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                          // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                     // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                     // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                    // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                           // opt/repo-sftp-req-known-hosts-match
+        ),                                                                                    // opt/repo-sftp-req-known-hosts-match
+                                                                                              // opt/repo-sftp-req-known-hosts-match
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                       // opt/repo-sftp-req-known-hosts-match
+        (                                                                                     // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                       // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                      // opt/repo-sftp-req-known-hosts-match
+        ),                                                                                    // opt/repo-sftp-req-known-hosts-match
+                                                                                              // opt/repo-sftp-req-known-hosts-match
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                       // opt/repo-sftp-req-known-hosts-match
+        (                                                                                     // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                       // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                      // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                           // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                          // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                           // opt/repo-sftp-req-known-hosts-match
+        ),                                                                                    // opt/repo-sftp-req-known-hosts-match
+                                                                                              // opt/repo-sftp-req-known-hosts-match
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                      // opt/repo-sftp-req-known-hosts-match
+        (                                                                                     // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                         // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                       // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                      // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                            // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                             // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdManifest)                                         // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                       // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)                                          // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)                                           // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)                                          // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)                                           // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                          // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                     // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                     // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                    // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                           // opt/repo-sftp-req-known-hosts-match
+        ),                                                                                    // opt/repo-sftp-req-known-hosts-match
+                                                                                              // opt/repo-sftp-req-known-hosts-match
+        PARSE_RULE_OPTIONAL                                                                   // opt/repo-sftp-req-known-hosts-match
+        (                                                                                     // opt/repo-sftp-req-known-hosts-match
+            PARSE_RULE_OPTIONAL_GROUP                                                         // opt/repo-sftp-req-known-hosts-match
+            (                                                                                 // opt/repo-sftp-req-known-hosts-match
+                PARSE_RULE_OPTIONAL_DEPEND                                                    // opt/repo-sftp-req-known-hosts-match
+                (                                                                             // opt/repo-sftp-req-known-hosts-match
+                    PARSE_RULE_VAL_OPT(cfgOptRepoType),                                       // opt/repo-sftp-req-known-hosts-match
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdSftp),                              // opt/repo-sftp-req-known-hosts-match
+                ),                                                                            // opt/repo-sftp-req-known-hosts-match
+                                                                                              // opt/repo-sftp-req-known-hosts-match
+                PARSE_RULE_OPTIONAL_DEFAULT                                                   // opt/repo-sftp-req-known-hosts-match
+                (                                                                             // opt/repo-sftp-req-known-hosts-match
+                    PARSE_RULE_VAL_BOOL_FALSE,                                                // opt/repo-sftp-req-known-hosts-match
+                ),                                                                            // opt/repo-sftp-req-known-hosts-match
+            ),                                                                                // opt/repo-sftp-req-known-hosts-match
+        ),                                                                                    // opt/repo-sftp-req-known-hosts-match
+    ),                                                                                        // opt/repo-sftp-req-known-hosts-match
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                    // opt/repo-storage-ca-file
     (                                                                                                    // opt/repo-storage-ca-file
         PARSE_RULE_OPTION_NAME("repo-storage-ca-file"),                                                  // opt/repo-storage-ca-file
@@ -10680,6 +10766,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoSftpPrivateKeyFile,                                                                               // opt-resolve-order
     cfgOptRepoSftpPrivateKeyPassphrase,                                                                         // opt-resolve-order
     cfgOptRepoSftpPublicKeyFile,                                                                                // opt-resolve-order
+    cfgOptRepoSftpReqKnownHostsMatch,                                                                           // opt-resolve-order
     cfgOptRepoStorageCaFile,                                                                                    // opt-resolve-order
     cfgOptRepoStorageCaPath,                                                                                    // opt-resolve-order
     cfgOptRepoStorageHost,                                                                                      // opt-resolve-order

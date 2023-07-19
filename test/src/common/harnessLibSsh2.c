@@ -166,6 +166,113 @@ libssh2_init(int flags)
 }
 
 /***********************************************************************************************************************************
+Shim for libssh2_knownhost_checkp
+***********************************************************************************************************************************/
+int
+libssh2_knownhost_checkp(
+    LIBSSH2_KNOWNHOSTS *hosts, const char *host, int port, const char *key, size_t keylen, int typemask,
+    struct libssh2_knownhost **knownhost)
+{
+    // Avoid compiler complaining of unused param
+    (void)knownhost;
+
+    if (hosts == NULL)
+    {
+        snprintf(
+            hrnLibSsh2ScriptError, sizeof(hrnLibSsh2ScriptError),
+            "libssh2 script function 'libssh2_knownhost_checkp', expects hosts to be not NULL");
+        THROW(AssertError, hrnLibSsh2ScriptError);
+    }
+
+    HrnLibSsh2 *hrnLibSsh2 = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        hrnLibSsh2 = hrnLibSsh2ScriptRun(
+            HRNLIBSSH2_KNOWNHOST_CHECKP,
+            varLstAdd(
+                varLstAdd(
+                    varLstAdd(
+                        varLstAdd(
+                            varLstAdd(
+                                varLstNew(), varNewStrZ(host)),
+                            varNewInt(port)),
+                        varNewStrZ(key)),
+                    varNewUInt64(keylen)),
+                varNewInt(typemask)),
+            (HrnLibSsh2 *)hosts);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    return hrnLibSsh2->resultInt;
+}
+
+/***********************************************************************************************************************************
+Shim for libssh2_knownhost_free
+***********************************************************************************************************************************/
+void
+libssh2_knownhost_free(LIBSSH2_KNOWNHOSTS *hosts)
+{
+    if (hosts == NULL)
+    {
+        snprintf(
+            hrnLibSsh2ScriptError, sizeof(hrnLibSsh2ScriptError),
+            "libssh2 script function 'libssh2_session_knownhost_free', expects hosts to be not NULL");
+        THROW(AssertError, hrnLibSsh2ScriptError);
+    }
+
+    return;
+}
+
+/***********************************************************************************************************************************
+Shim for libssh2_knownhost_init
+***********************************************************************************************************************************/
+LIBSSH2_KNOWNHOSTS *
+libssh2_knownhost_init(LIBSSH2_SESSION *session)
+{
+    HrnLibSsh2 *hrnLibSsh2 = hrnLibSsh2ScriptRun(HRNLIBSSH2_KNOWNHOST_INIT, NULL, (HrnLibSsh2 *)session);
+
+    return hrnLibSsh2->resultNull ? NULL : (LIBSSH2_KNOWNHOSTS *)hrnLibSsh2;
+}
+
+/***********************************************************************************************************************************
+Shim for libssh2_knownhost_readfile
+***********************************************************************************************************************************/
+int
+libssh2_knownhost_readfile(LIBSSH2_KNOWNHOSTS *hosts, const char *filename, int type)
+{
+    HrnLibSsh2 *hrnLibSsh2 = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        hrnLibSsh2 = hrnLibSsh2ScriptRun(
+            HRNLIBSSH2_KNOWNHOST_READFILE,
+            varLstAdd(
+                varLstAdd(
+                    varLstNew(), varNewStrZ(filename)),
+                varNewInt(type)),
+            (HrnLibSsh2 *)hosts);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    return hrnLibSsh2->resultInt;
+}
+
+/***********************************************************************************************************************************
+Shim for libssh2_session_hostkey
+***********************************************************************************************************************************/
+const char *
+libssh2_session_hostkey(LIBSSH2_SESSION *session, size_t *len, int *type)
+{
+    HrnLibSsh2 *hrnLibSsh2 = hrnLibSsh2ScriptRun(HRNLIBSSH2_SESSION_HOSTKEY, NULL, (HrnLibSsh2 *)session);
+
+    *len = (size_t)hrnLibSsh2->len;
+    *type = (int)hrnLibSsh2->type;
+
+    return hrnLibSsh2->resultNull ? NULL : (const char *)hrnLibSsh2->resultZ;
+}
+
+/***********************************************************************************************************************************
 Shim for libssh2_session_init
 ***********************************************************************************************************************************/
 LIBSSH2_SESSION *
@@ -197,28 +304,21 @@ libssh2_session_init_ex(
 }
 
 /***********************************************************************************************************************************
-Shim for libssh2_session_set_blocking
+Shim for libssh2_session_last_error
 ***********************************************************************************************************************************/
-void
-libssh2_session_set_blocking(LIBSSH2_SESSION *session, int blocking)
+int
+libssh2_session_last_error(LIBSSH2_SESSION *session, char **errmsg, int *errmsg_len, int want_buf)
 {
-    if (session == NULL)
-    {
-        snprintf(
-            hrnLibSsh2ScriptError, sizeof(hrnLibSsh2ScriptError),
-            "libssh2 script function 'libssh2_session_set_blocking', expects session to be not NULL");
-        THROW(AssertError, hrnLibSsh2ScriptError);
-    }
+    // Avoid compiler complaining of unused params
+    (void)errmsg_len;
+    (void)want_buf;
 
-    if (!(INT_MIN <= blocking && blocking <= INT_MAX))
-    {
-        snprintf(
-            hrnLibSsh2ScriptError, sizeof(hrnLibSsh2ScriptError),
-            "libssh2 script function 'libssh2_session_set_blocking', expects blocking to be an integer value");
-        THROW(AssertError, hrnLibSsh2ScriptError);
-    }
+    HrnLibSsh2 *hrnLibSsh2 = hrnLibSsh2ScriptRun(HRNLIBSSH2_SESSION_LAST_ERROR, NULL, (HrnLibSsh2 *)session);
 
-    return;
+    if (hrnLibSsh2->errMsg != NULL)
+        *errmsg = hrnLibSsh2->errMsg;
+
+    return hrnLibSsh2->resultInt;
 }
 
 /***********************************************************************************************************************************

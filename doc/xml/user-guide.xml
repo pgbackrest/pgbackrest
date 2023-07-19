@@ -808,6 +808,7 @@
             <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-host-user">{[br-user]}</backrest-config-option>
             <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-private-key-file">{[sftp-setup-user-home-path]}/.ssh/id_rsa_sftp</backrest-config-option>
             <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-public-key-file">{[sftp-setup-user-home-path]}/.ssh/id_rsa_sftp.pub</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-req-known-hosts-match">y</backrest-config-option>
             <backrest-config-option section="global" key="process-max">4</backrest-config-option>
         </backrest-config>
 
@@ -2571,6 +2572,14 @@
         </block>
 
         <p>Commands are run exactly as if the repository were stored on a local disk.</p>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Add sftp-server fingerprint to known_hosts file since we configured sftp-req-known-hosts-match=y.</title>
+
+            <execute user="postgres" user-force="y">
+                <exe-cmd>ssh-keyscan -H {[host-sftp]} >> {[pg-home-path]}/.ssh/known_hosts 2>/dev/null</exe-cmd>
+            </execute>
+        </execute-list>
 
         <execute-list host="{[host-pg1]}">
             <title>Create the stanza</title>

@@ -30,6 +30,10 @@ testRun(void)
         TEST_RESULT_UINT(groupIdFromName(STRDEF("bogus")), (uid_t)-1, "get bogus group id");
         TEST_RESULT_STR(groupName(), TEST_GROUP_STR, "check name name");
         TEST_RESULT_STR_Z(groupNameFromId(77777), NULL, "invalid group name by id");
+
+        TEST_RESULT_STR(userHome(), STRDEF("/home/" TEST_USER), "check user name");
+        TEST_RESULT_STR_Z(userHomeFromId(userId()), "/home/" TEST_USER, "user home by id");
+        TEST_RESULT_STR_Z(userHomeFromId(77777), NULL, "invalid user home by id");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
