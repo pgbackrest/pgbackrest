@@ -41,7 +41,9 @@ userInitInternal(void)
 
             userLocalData.userId = getuid();
             userLocalData.userName = userNameFromId(userLocalData.userId);
+#ifdef HAVE_LIBSSH2
             userLocalData.userHome = userHomeFromId(userLocalData.userId);
+#endif // HAVE_LIBSSH2
             userLocalData.userRoot = userLocalData.userId == 0;
 
             userLocalData.groupId = getgid();
@@ -116,6 +118,8 @@ groupNameFromId(gid_t groupId)
     FUNCTION_TEST_RETURN(STRING, NULL);
 }
 
+#ifdef HAVE_LIBSSH2
+
 /**********************************************************************************************************************************/
 FN_EXTERN const String *
 userHome(void)
@@ -139,6 +143,8 @@ userHomeFromId(uid_t userId)
 
     FUNCTION_TEST_RETURN(STRING, NULL);
 }
+
+#endif // HAVE_LIBSSH2
 
 /**********************************************************************************************************************************/
 FN_EXTERN uid_t
