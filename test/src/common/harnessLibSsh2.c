@@ -220,8 +220,6 @@ libssh2_knownhost_free(LIBSSH2_KNOWNHOSTS *hosts)
             "libssh2 script function 'libssh2_session_knownhost_free', expects hosts to be not NULL");
         THROW(AssertError, hrnLibSsh2ScriptError);
     }
-
-    return;
 }
 
 /***********************************************************************************************************************************
@@ -770,8 +768,6 @@ libssh2_sftp_seek64(LIBSSH2_SFTP_HANDLE *handle, libssh2_uint64_t offset)
             (HrnLibSsh2 *)handle);
     }
     MEM_CONTEXT_TEMP_END();
-
-    return;
 }
 
 /***********************************************************************************************************************************

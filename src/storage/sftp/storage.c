@@ -66,7 +66,7 @@ storageSftpLibSsh2SessionFreeResource(THIS_VOID)
                 THROW_FMT(
                     ServiceError, "failed to close sftpHandle: libssh2 errno [%d]%s", rc,
                     rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
-                        strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
+                    strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
             else
                 THROW_FMT(
                     ServiceError, "timeout closing sftpHandle: libssh2 errno [%d]", rc);
@@ -87,7 +87,7 @@ storageSftpLibSsh2SessionFreeResource(THIS_VOID)
                 THROW_FMT(
                     ServiceError, "failed to shutdown sftpSession: libssh2 errno [%d]%s", rc,
                     rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
-                        strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
+                    strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
             else
                 THROW_FMT(
                     ServiceError, "timeout shutting down sftpSession: libssh2 errno [%d]", rc);
@@ -896,7 +896,7 @@ storageSftpNew(
 
             // Load the known_hosts file into the collection
             if ((rc = libssh2_knownhost_readfile(
-                        nh, strZ(strNewFmt("%s%s", strZ(userHome()), "/.ssh/known_hosts")), LIBSSH2_KNOWNHOST_FILE_OPENSSH)) <= 0)
+                     nh, strZ(strNewFmt("%s%s", strZ(userHome()), "/.ssh/known_hosts")), LIBSSH2_KNOWNHOST_FILE_OPENSSH)) <= 0)
             {
                 // Free the nh list on read file failure
                 libssh2_knownhost_free(nh);
@@ -927,7 +927,7 @@ storageSftpNew(
             if (hostkey != NULL)
             {
                 rc = libssh2_knownhost_checkp(
-                        nh, strZ(host), (int)port, hostkey, len, LIBSSH2_KNOWNHOST_TYPE_PLAIN | LIBSSH2_KNOWNHOST_KEYENC_RAW, NULL);
+                    nh, strZ(host), (int)port, hostkey, len, LIBSSH2_KNOWNHOST_TYPE_PLAIN | LIBSSH2_KNOWNHOST_KEYENC_RAW, NULL);
 
                 // Error on failure to match
                 if (rc != LIBSSH2_KNOWNHOST_CHECK_MATCH)
