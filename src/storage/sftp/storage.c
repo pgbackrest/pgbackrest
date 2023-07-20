@@ -881,25 +881,24 @@ storageSftpNew(
         // Check for a matching entry in the .ssh/known_hosts file
         if (param.requireKnownHostsMatch)
         {
-            LIBSSH2_KNOWNHOSTS *nh;
+            LIBSSH2_KNOWNHOSTS *knownHostsList;
             const char *hostkey;
             size_t len;
             int type;
-            char *libSsh2ErrMsg;
-            int libSsh2ErrMsgLen;
 
             // Init the knownhost collection
-            nh = libssh2_knownhost_init(this->session);
+            knownHostsList = libssh2_knownhost_init(this->session);
 
-            if (nh == NULL)
+            if (knownHostsList == NULL)
                 THROW_FMT(ServiceError, "failure during libssh2_knownhost_init");
 
-            // Load the known_hosts file into the collection
+            // Load the known_hosts file into the list
             if ((rc = libssh2_knownhost_readfile(
-                     nh, strZ(strNewFmt("%s%s", strZ(userHome()), "/.ssh/known_hosts")), LIBSSH2_KNOWNHOST_FILE_OPENSSH)) <= 0)
+                     knownHostsList, strZ(strNewFmt("%s%s", strZ(userHome()), "/.ssh/known_hosts")),
+                     LIBSSH2_KNOWNHOST_FILE_OPENSSH)) <= 0)
             {
-                // Free the nh list on read file failure
-                libssh2_knownhost_free(nh);
+                // Free the knownHostsList on read file failure
+                libssh2_knownhost_free(knownHostsList);
 
                 // Reading an empty file returns 0
                 if (rc == 0)
@@ -909,6 +908,9 @@ storageSftpNew(
                 }
                 else
                 {
+                    char *libSsh2ErrMsg;
+                    int libSsh2ErrMsgLen;
+
                     // Get the libssh2 error message
                     rc = libssh2_session_last_error(this->session, &libSsh2ErrMsg, &libSsh2ErrMsgLen, 0);
 
@@ -927,7 +929,7 @@ storageSftpNew(
             if (hostkey != NULL)
             {
                 rc = libssh2_knownhost_checkp(
-                    nh, strZ(host), (int)port, hostkey, len, LIBSSH2_KNOWNHOST_TYPE_PLAIN | LIBSSH2_KNOWNHOST_KEYENC_RAW, NULL);
+                    knownHostsList, strZ(host), (int)port, hostkey, len, LIBSSH2_KNOWNHOST_TYPE_PLAIN | LIBSSH2_KNOWNHOST_KEYENC_RAW, NULL);
 
                 // Error on failure to match
                 if (rc != LIBSSH2_KNOWNHOST_CHECK_MATCH)
@@ -953,24 +955,24 @@ storageSftpNew(
                             break;
                     }
 
-                    // Free the nh list on failure to match in known_hosts
-                    libssh2_knownhost_free(nh);
+                    // Free the knownHostsList on failure to match in known_hosts
+                    libssh2_knownhost_free(knownHostsList);
 
                     THROW_FMT(ServiceError, "libssh2_knownhost_checkp failure: '%s' %s [%d]", strZ(host), errmsg, rc);
                 }
             }
             else
             {
-                // Free the nh list on failure to get a host key
-                libssh2_knownhost_free(nh);
+                // Free the knownHostsList on failure to get a host key
+                libssh2_knownhost_free(knownHostsList);
 
                 THROW_FMT(
                     ServiceError,
                     "libssh2 libssh2_session_hostkey failed: libssh2 error [%d]", libssh2_session_last_errno(this->session));
             }
 
-            // Free the nh list
-            libssh2_knownhost_free(nh);
+            // Free the knownHostsList
+            libssh2_knownhost_free(knownHostsList);
         }
 
         // Perform public key authorization
