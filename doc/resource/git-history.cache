@@ -1,5 +1,225 @@
 [
     {
+        "commit": "5ed6f8df1487174985c42d6e13c367d70c2d8b8a",
+        "date": "2023-07-18 07:35:12 +0200",
+        "subject": "Fix spurious automatic delta backup on backup from standby.",
+        "body": "When performing backup from standby the file sizes on the standby may not be equal to file sizes on the primary. This is because replication continues during the backup and by the time the file is copied from the standby it may have changed. Since we cap the size of all files copied from the standby this practically applies to truncation and in particular truncation of free space maps (at least, every case we have seen so far is an fsm). Free space maps are especially vulnerable since they are only partially replicated, which amplifies the difference between the primary and standby.\r\n\r\nOn an incremental backup it may look like the size has changed on the primary (because of the final size recorded by the standby in the prior backup) but the timestamp may not have changed on the primary and this will trigger a checksum delta for safety. While this has no impact on backup integrity, checksum delta incrementals can run much longer than regular incrementals and backup schedules may be impacted.\r\n\r\nThe solution is to preserve the original size in the manifest and use it to do the time/size check. In the case of backup from standby the original size will always be the size on the primary, which makes comparisons against subsequent file sizes on the primary consistent. Original size is only stored in the manifest when it differs from final size, so there should not be any noticeable manifest bloat."
+    },
+    {
+        "commit": "4c27d74bbd3a44d8ab1af140277d3cd8302060c2",
+        "date": "2023-07-17 22:37:02 +0200",
+        "subject": "Preserve block incremental info in manifest during delta backup.",
+        "body": "It was possible for block incremental info to be lost if a file had been modified in such a way that block incremental would be disabled if the file were new, e.g. if the file shrank below the block incremental limit or the file timestamp regressed far enough into the past. In those cases the block incremental info would not be copied in manifestBuildIncr().\r\n\r\nInstead always copy the block incremental info in case the file ends up being referenced to a prior backup.\r\n\r\nThe validation tests were not robust enough to catch this issue so they were improved in 1d42aed.\r\n\r\nIn the particular case that exposed this bug, a file had a timestamp that was almost four weeks in the past at full backup time. A few days later a fail over occurred and the next incremental ran on the new primary (old standby) in delta mode. The same file had a timestamp just a few hours older than in the full backup, but now four weeks older than the current backup. Block incremental was disabled for the file on initial manifest build because of its age, which meant the block incremental info was not copied into the new manifest. The delta then determined the file had not changed and referenced it to the full backup. On restore, the file appeared to be a normal file stored in a bundle but could not be decompressed because it was in fact a block incremental."
+    },
+    {
+        "commit": "cdb7e26350822b55c00771d6d575242b1202e741",
+        "date": "2023-07-14 17:53:58 +0300",
+        "subject": "Fix block incremental file names in verify command.",
+        "body": "The verify command was not appending the .pgbi extension instead of the compression extension when verifying block incremental files stored outside a bundle.\r\n\r\nOriginally the idea was that verify would not need any changes (since it just examines repo-size and checksum) but at some point the new extension was added and broke that assumption.\r\n\r\nUse backupFileRepoPathP() to generate the correct filename (Just like backup, restore, etc)."
+    },
+    {
+        "commit": "1d42aed152563fff6ec70c517d86eb39158b3f20",
+        "date": "2023-07-14 11:18:25 +0300",
+        "subject": "Improve validation of referenced files in command/backup unit test.",
+        "body": "Referenced files were not being checked for validity unless they were hard linked to the current backup (which a lot of the tests did). Newer tests with bundling do not have hard links and so missed these checks.\n\nImprove the validation code to check referenced files in the manifest even when they are not hard linked into the current backup.\n\nAdd a delta test for bundling/block incremental that includes a file old enough to get a block size of zero. These are good tests by themselves but they also reduce the churn in an upcoming bug fix."
+    },
+    {
+        "commit": "c9703b35304c66a0bd0ebaaaebb389150ef207d6",
+        "date": "2023-07-13 13:47:27 +0300",
+        "subject": "Log when file size changes during backup.",
+        "body": "It is possible for the size of a file to change during the backup. In most cases we won't notice since files sizes are usually capped but it is possible for some files to grow or shrink between when they are recorded in the manifest and when they are actually copied. The new size is recorded in the manifest but the old size may be useful for debugging.\n\nThe new code has coverage but no test changes because it is covered by the parallel backup testing, which does not have deterministic log output. It doesn't seem worth creating a new test to check the log format as it is not very critical (though the output was manually verified)."
+    },
+    {
+        "commit": "b6b13bd6344a1f3ed7279f5a8da771643c0e948a",
+        "date": "2023-07-12 13:23:16 +0300",
+        "subject": "Mention block-level backups in feature list."
+    },
+    {
+        "commit": "c8afbed5308d31302c5853850e4ed56d48b6bb4b",
+        "date": "2023-07-12 13:09:34 +0300",
+        "subject": "Increase protocolServerError() logging to debug level.",
+        "body": "Errors should be rare enough that it makes sense to log them at debug level. Right now if there is an error if won't be logged at debug level, which makes it harder to tell why the main process may have terminated the local/remote process."
+    },
+    {
+        "commit": "06536b5814f2fed3e710d1d7b578aa6be53195cb",
+        "date": "2023-07-12 10:20:09 +0300",
+        "subject": "Rename macros in command/verify unit test.",
+        "body": "These macros were redefined, which worked since they were identical to their prior definitions, but this will not always be true."
+    },
+    {
+        "commit": "aa229a1deef3afeebb66db1443b19e24559adf96",
+        "date": "2023-07-09 21:56:05 +0300",
+        "subject": "Modify time_t casts based on complaints from Coverity.",
+        "body": "Coverity complained about time_t being cast directly to unsigned int, so instead cast the result of the operation.\n\nWe are confident in both cases that the time_t values will not be out of unsigned int range but Coverity has no way to know that.\n\nOne of these is new (introduced by 9efd5cd0) but the other one (from a9867cb0) remained unnoticed for a while, though it has not caused any production impact."
+    },
+    {
+        "commit": "28b6b2d4659d78ce67c1bd3104d96e5705d955c9",
+        "date": "2023-07-07 10:36:15 +0200",
+        "subject": "Improve performance of SFTP storage driver.",
+        "body": "The initial implementation used simple waits when having to loop due to getting a LIBSSH2_ERROR_EAGAIN, but we don't want to just wait some amount of time, we want to wait until we're able to read or write on the fd that we would have blocked on.\r\n\r\nThis change removes all of the wait code from the SFTP driver and changes the loops to call the newly introduced storageSftpWaitFd(), which in turn checks with libssh2 to determine the appropriate direction to wait on (read, write, or both) and then calls fdReady() to perform the wait using the provided timeout.\r\n\r\nThis also removes the need to pass ioSession or timeout down into the SFTP read/write code."
+    },
+    {
+        "commit": "125676ae0e98d3730d2dc0d47e37ca1df145d044",
+        "date": "2023-07-07 09:56:26 +0200",
+        "subject": "Cleanup of init/handshake in storageSftpNew().",
+        "body": "Rename handshakeStatus to rc to be consistent with the rest of the module.\n\nAdd comments and do some reformatting."
+    },
+    {
+        "commit": "9efd5cd0bb40c5dc2fcac2e21c9b62e554b94db6",
+        "date": "2023-07-06 18:46:31 +0200",
+        "subject": "Add timezone offset to info command date/time output.",
+        "body": "This makes it easier to use timestamps from the info command directly in PostgreSQL recovery settings, especially the --target option."
+    },
+    {
+        "commit": "762498f4cd5f1425db4c176fc707926d62cc7c04",
+        "date": "2023-07-06 11:27:00 +0200",
+        "subject": "Fix time-based archive expiration when no backups are expired.",
+        "body": "In the case that no backups were expired but time-based retention was met no archive expiration would occur and the following would be logged:\r\n\r\nINFO: time-based archive retention not met - archive logs will not be expired\r\n\r\nIn most cases this was harmless, but when retention was first met or if retention was increased, it would require one additional backup to expire earlier WAL. After that expiration worked as normal.\r\n\r\nEven once expiration was working normally the message would continue to be output, which was pretty misleading since retention had been met, even though there was nothing to do.\r\n\r\nBring this code in line with count-based retention, i.e. always log what should be expired at detail level (even if nothing will be expired) and then log info about what was expired (even if nothing is expired). For example:\r\n\r\nDETAIL: repo1: 11-1 archive retention on backup 20181119-152138F, start = 000000010000000000000002\r\nINFO: repo1: 11-1 no archive to remove"
+    },
+    {
+        "commit": "e280ed9098a6f5da9bdabb541e9c69d4f24ffcf2",
+        "date": "2023-07-06 08:58:16 +0200",
+        "subject": "Make result code handling in storage/sftp more consistent.",
+        "body": "Initializers are useless since rc is always set later. Make rc checks consistent with the rest of the module."
+    },
+    {
+        "commit": "1fd8845c7ffd76ee335ec7960ccd531eef43bd29",
+        "date": "2023-06-29 11:08:58 +0200",
+        "subject": "Remove unresolved todo from 87087fac.",
+        "body": "Seems easiest just to make the additional config required since it tests that custom ports are being used correctly. The test for synthetic was a noop since SFTP is not used in synthetic tests."
+    },
+    {
+        "commit": "0051d7ca872c84231dd55057586f957aa2bc1fa3",
+        "date": "2023-06-29 09:42:12 +0200",
+        "subject": "Update comments for removal of chunking and block numbers.",
+        "body": "dd4e526 should have updated this comment but failed to do so."
+    },
+    {
+        "commit": "0ac09344dc17fb54e250705ce49399b86329bb3d",
+        "date": "2023-06-28 18:19:20 +0200",
+        "subject": "Fix unique label generation for diff/incr backup.",
+        "body": "If there were at least two full backups and the last one was expired, it was impossible to make either a differential or incremental backup without first making a new full backup. The backupLabelCreate() function identified this situation as clock skew because the new backup label was compared with label of the expired full backup.\r\n\r\nIf the new backup is differential or incremental, then its label is now compared with the labels of differential or incremental backups related to the same full backup.\r\n\r\nAlso convert a hard-coded date length to a macro."
+    },
+    {
+        "commit": "5cbef3ade2ab08d8d2431f40d09683efe55c9586",
+        "date": "2023-06-25 17:36:57 +0200",
+        "subject": "Fix missed memory auditing in FUNCTION_LOG_RETURN_VOID().",
+        "body": "9ca492c missed adding auditing to this macro and as a result a few memory leaks have slipped through. Add auditing to the macro to close this hole.\n\nOf the leaks found the only possibly serious one is in blockIncrProcess(), which would leak a PackRead of about eight bytes with every superblock. Since superblocks max out at a few thousand per file this was probably not too bad.\n\nAlso change the ordering of auditing in FUNCTION_TEST_RETURN_VOID(). Even though the order does not matter, having it different from the other macros is confusing and looks like an error."
+    },
+    {
+        "commit": "ecae001653489ac734c3424ea10393989c218ab5",
+        "date": "2023-06-24 10:18:29 +0200",
+        "subject": "Add test for configuration hash type override behavior.",
+        "body": "This behavior is different than regular options where a repeated value will result in an error. It appears to be a legacy of the original Perl implementation, which used a hash as the underlying data type in the built-in command-line parser, and the C command-line parser was written to match."
+    },
+    {
+        "commit": "434938e32b2f71301196f933c3b9a62ed1183c31",
+        "date": "2023-06-22 18:23:06 +0200",
+        "subject": "Update Fedora test image to Fedora 38.",
+        "body": "This adds testing for the latest tool versions, e.g. gcc."
+    },
+    {
+        "commit": "5531e2662d2abcd52c24f25b4a5836c9e07a8ac9",
+        "date": "2023-06-18 12:55:29 +0300",
+        "subject": "Add --tz param missed in C unit test migration.",
+        "body": "This was missed in the C unit test migration and since then a new test was added that was not setting its timezone correctly.\n\nThis feature exists to make sure the tests will run on systems with different timezones and has no impact on the core code."
+    },
+    {
+        "commit": "a36f480c85c7add6fdf0e5517748d740e3a7b424",
+        "date": "2023-06-14 14:39:40 +0200",
+        "subject": "Clarify preference to install from packages in the user guide."
+    },
+    {
+        "commit": "9b1bc7d11bdea9cdb1bbf1210d66d53c15d72a46",
+        "date": "2023-06-14 12:28:00 +0200",
+        "subject": "Use new LibXML error handler.",
+        "body": "The old error handler has been deprecated."
+    },
+    {
+        "commit": "4adf6eed09da3f0819abef813c5a44deb9c91487",
+        "date": "2023-06-12 23:10:14 +0200",
+        "subject": "Clarify comments for the handling of pg_control during restore."
+    },
+    {
+        "commit": "396e237d53a94b04878bfea23b4de2400256de82",
+        "date": "2023-06-12 15:41:39 +0200",
+        "subject": "Update NEWS.md for new version and features."
+    },
+    {
+        "commit": "6875358d11828cbbaffb51f2297a866af32ee8a4",
+        "date": "2023-06-12 11:26:03 +0200",
+        "subject": "Fix typo in \"Upgrading PostgreSQL\" section of user guide."
+    },
+    {
+        "commit": "818ef4b71d3ec77c0003ea8ca83981977b4447ac",
+        "date": "2023-06-08 16:36:25 +0300",
+        "subject": "Improve comments in protocol/command module."
+    },
+    {
+        "commit": "0bf1b4a3b8cc6caf12a4174cd52a1782cda4dc31",
+        "date": "2023-05-26 19:50:08 +0300",
+        "subject": "Move delete stanza section in user guide.",
+        "body": "Deleting a stanza after all the storage driver stanzas were created was causing problems because the SFTP driver is slow and the GCS driver has no server (so it threw errors). This delayed the shutdown of PostgreSQL, which for some reason caused systemctl to hang when the documentation was being built on a RHEL host.\n\nMove the section up and add a comment about why the location is required. Also add a comment to the GCS section about its location.\n\nThis does not address the issue of systemctl hanging on RHEL container hosts but it will hopefully make it less common."
+    },
+    {
+        "commit": "5d671c63d898e9bf1c08c8ed9e830070361c861e",
+        "date": "2023-05-25 20:08:12 +0300",
+        "subject": "New CI container build for PostgreSQL 16 beta1."
+    },
+    {
+        "commit": "9cceed6ac4a32c14a797eba89a4ad1dc06d89d80",
+        "date": "2023-05-24 16:34:21 +0300",
+        "subject": "Skip recovery.signal for PostgreSQL >= 12 when recovery type=none.",
+        "body": "Bring PostgreSQL >= 12 behavior in line with other versions when recovery type=none.\r\n\r\nWe are fairly sure this did not work correctly when PostgreSQL 12 was released, but apparently the issue has been fixed since then. Either way, after testing we have determined that the behavior is now as expected."
+    },
+    {
+        "commit": "36ff81dc6ff7e98e40c0c05a4a343a71b91b1678",
+        "date": "2023-05-24 14:17:07 +0300",
+        "subject": "Centralize error handling for unsupported features.",
+        "body": "Some features are conditionally compiled into pgBackRest (e.g. lz4). Previously checking to see if the feature existed was the responsibility of the feature's module.\r\n\r\nCentralize this logic in the config/parse module to make the errors more detailed and consistent.\r\n\r\nThis also fixes the assert that is thrown when SFTP storage is specified but SFTP support is not compiled into pgBackRest."
+    },
+    {
+        "commit": "de46276bf60b8a2181621b123d1a99e56808a089",
+        "date": "2023-05-24 09:56:32 +0300",
+        "subject": "Refactor allow list processing in config/parse module.",
+        "body": "Combine StringId and int checking into a single loop. This seems more compact and makes it easier to add code that affects both types (and possibly more types in the future)."
+    },
+    {
+        "commit": "48b26bf569664da59bff08eb3ef959f0cd440e29",
+        "date": "2023-05-23 12:50:12 +0300",
+        "subject": "Fix sftp-all=y in the user guide so it creates a valid configuration.",
+        "body": "This was not tested in 87087fac and the generated config was only valid for pushing from the primary. Also do some general cleanup.\n\nUpdate the SFTP server user to be \"pgbackrest\" instead of \"postgres\".\n\nEven though sftp-all=y now creates a valid configuration, the user guide build still fails because SFTP is too slow and operations time out (particularly starting PostgreSQL). This will need to be addressed in a future commit."
+    },
+    {
+        "commit": "c633b187db32d18ccab24e77ab3413335e067775",
+        "date": "2023-05-23 10:58:51 +0300",
+        "subject": "Remove user-facing documentation references to --vm=none.",
+        "body": "This parameter is now optional and defaults to none so there is no reason to explicitly show it in user-facing documentation.\n\nAlso make the vm parameter in ci.pl optional to be consistent with how test.pl behaves."
+    },
+    {
+        "commit": "4ec51cdb2f92e3fd814063a2bb606640965f8c5a",
+        "date": "2023-05-23 10:40:56 +0300",
+        "subject": "Explicitly create SSH directory in SFTP setup.",
+        "body": "RHEL 9 (at least) will warn on stderr that the directory has been created which causes the documentation build to fail."
+    },
+    {
+        "commit": "5bbe98758919a38692cd859809203cb029543c59",
+        "date": "2023-05-23 10:14:00 +0300",
+        "subject": "Build u20 image to speed contributing document generation.",
+        "body": "This image was left out of the last round of builds, which forced the contributing document to build it from scratch."
+    },
+    {
+        "commit": "c2c60350d376379322d6c14c27cbb93bf6e86987",
+        "date": "2023-05-23 08:25:17 +0300",
+        "subject": "Add missed --no-log-timestamp in unit tests and improved formatting.",
+        "body": "The --no-log-timestamp option was missed when unit test building was migrated to C, which caused test timings to show up in the contributing guide. This caused no harm but did create churn in this file during releases.\n\nAlso improve the formatting when test timing is disabled."
+    },
+    {
+        "commit": "9dbf76d8e87287786f03b65c94305b3dc126029b",
+        "date": "2023-05-22 11:19:00 +0300",
+        "subject": "Begin v2.47 development."
+    },
+    {
         "commit": "b461f7c6f884dba8056858464d1b571e708dad77",
         "date": "2023-05-22 11:13:13 +0300",
         "subject": "v2.46: Block Incremental Backup and SFTP Storage"
