@@ -1,5 +1,10 @@
 [
     {
+        "commit": "b5b033cc1ce152d387f20681f023b5e1f7c3ed3b",
+        "date": "2023-07-24 09:12:30 +0200",
+        "subject": "v2.47: Performance Improvements and Bug Fixes"
+    },
+    {
         "commit": "5ed6f8df1487174985c42d6e13c367d70c2d8b8a",
         "date": "2023-07-18 07:35:12 +0200",
         "subject": "Fix spurious automatic delta backup on backup from standby.",
