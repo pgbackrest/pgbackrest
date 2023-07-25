@@ -75,6 +75,19 @@ testRun(void)
             "HINT: is this version of PostgreSQL supported?");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("invalid CRC");
+
+        HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_11, .crc = 0xFADEFADE);
+
+        TEST_ERROR_FMT(
+            pgControlFromFile(storageTest, NULL), ChecksumError,
+            "calculated pg_control checksum does not match stored value\n"
+            "HINT: calculated 0x%x but stored value is 0xfadefade\n"
+            "HINT: is pg_control corrupt?\n"
+            "HINT: does pg_control have a different layout than expected?",
+            (uint32_t)0x4ad387b2);
+
+        // -------------------------------------------------------------------------------------------------------------------------
         HRN_PG_CONTROL_PUT(
             storageTest, PG_VERSION_11, .systemId = 0xFACEFACE, .checkpoint = 0xEEFFEEFFAABBAABB, .timeline = 47,
             .walSegmentSize = 1024 * 1024);

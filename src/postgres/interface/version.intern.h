@@ -79,7 +79,7 @@ Read the version specific pg_control into a general data structure
 #endif
 
 /***********************************************************************************************************************************
-Get the CRC for the pg_control
+Calculate CRC for pg_control
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 

@@ -226,13 +226,17 @@ pgControlFromBuffer(const Buffer *controlFile, const String *const pgVersionForc
     result.version = interface->version;
 
     // Check CRC
-    if (result.crc != interface->controlCrc(bufPtrConst(controlFile))) // {uncovered - !!!}
+    const uint32_t crcCalculated = interface->controlCrc(bufPtrConst(controlFile));
+
+    if (crcCalculated != result.crc)
     {
-        THROW_FMT( // {uncovered - !!!}
+        THROW_FMT(
             ChecksumError,
             "calculated " PG_FILE_PGCONTROL " checksum does not match stored value\n"
+            "HINT: calculated 0x%x but stored value is 0x%x\n"
             "HINT: is " PG_FILE_PGCONTROL " corrupt?\n"
-            "HINT: does " PG_FILE_PGCONTROL " have a different layout than expected?");
+            "HINT: does " PG_FILE_PGCONTROL " have a different layout than expected?",
+            crcCalculated, result.crc);
     }
 
     // Check the segment size
