@@ -2359,8 +2359,8 @@ testRun(void)
             "P00   INFO: new backup label = [FULL-1]\n"
             "P00   INFO: full backup size = 8KB, file total = 2",
             TEST_64BIT() ?
-                (TEST_BIG_ENDIAN() ? "542c539fabf827717812b872913d593766848434" : "cc603d502a8ecede30fa96b0b0dc35014950aba2") :
-                "aca8af76589171a70c901e13080e359efedd7a08");
+                (TEST_BIG_ENDIAN() ? "542c539fabf827717812b872913d593766848434" : "3854bff1d2d081051ca2ac61fb5b3a28830fa027") :
+                "d353468d1c1f89a6e44a1fba454961916d1e7d6d");
 
         // Make pg no longer appear to be running
         HRN_STORAGE_REMOVE(storagePgWrite(), PG_FILE_POSTMTRPID, .errorOnMissing = true);
@@ -4212,7 +4212,7 @@ testRun(void)
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-age-to-zero (bundle 1/0, 16KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-age-multiplier (bundle 1/56, 32KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/184, 8KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (bundle 1/272, 48KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (bundle 1/288, 48KB, [PCT]) checksum [SHA1]\n"
                 "P00 DETAIL: reference pg_data/PG_VERSION to 20191108-080000F\n"
                 "P00 DETAIL: reference pg_data/block-incr-wayback to 20191108-080000F\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"

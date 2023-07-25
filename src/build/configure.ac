@@ -131,10 +131,6 @@ AC_CHECK_LIB(
             [AC_DEFINE(HAVE_LIBZST) AC_SUBST(LIBS, "${LIBS} -lzstd")])],
         [AC_MSG_ERROR([header file <zstd.h> is required])])])
 
-# Check endianness
-# ----------------------------------------------------------------------------------------------------------------------------------
-AC_C_BIGENDIAN([AC_DEFINE(ARCH_BIG_ENDIAN)])
-
 # Set configuration path
 # ----------------------------------------------------------------------------------------------------------------------------------
 AC_ARG_WITH(
