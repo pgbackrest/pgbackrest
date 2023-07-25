@@ -31,10 +31,10 @@ jobs:
           # All unit tests (without coverage) for 32-bit
           - param: test --vm=d10 --param=no-performance --param=c-only
 
-          # All real integration tests for 32-bit
-          - param: test --vm=d10 --param=module=real
+          # All integration tests for 32-bit
+          - param: test --vm=d10 --param=module=mock --param=module=real
 
-          # Debian/Ubuntu documentation !!! FIX
+          # Debian/Ubuntu documentation
           - param: doc --vm=u20
 
           # All integration tests
