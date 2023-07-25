@@ -85,7 +85,7 @@ testRun(void)
             "HINT: calculated 0x%x but stored value is 0xffffffff\n"
             "HINT: is pg_control corrupt?\n"
             "HINT: does pg_control have a different layout than expected?",
-            (uint32_t)(TEST_BIG_ENDIAN() ? 0x0 : (TEST_64BIT() ? 0x4ad387b2 : 0x0)));
+            (uint32_t)(TEST_BIG_ENDIAN() ? 0x4e206eeb : (TEST_64BIT() ? 0x4ad387b2 : 0x0)));
 
         // -------------------------------------------------------------------------------------------------------------------------
         HRN_PG_CONTROL_PUT(
