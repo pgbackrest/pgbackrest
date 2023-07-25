@@ -2359,8 +2359,8 @@ testRun(void)
             "P00   INFO: new backup label = [FULL-1]\n"
             "P00   INFO: full backup size = 8KB, file total = 2",
             TEST_64BIT() ?
-                (TEST_BIG_ENDIAN() ? "512100f054360d9d20581ce603e851dc05b19b35" : "20df8640327df5ebc0658817cbc4c93624fd451b") :
-                "d353468d1c1f89a6e44a1fba454961916d1e7d6d");
+                (TEST_BIG_ENDIAN() ? "8e756232fbbf97f0d1026d62ba68b3d6602acbd7" : "20df8640327df5ebc0658817cbc4c93624fd451b") :
+                "56d0a8a2d6b0b6dd2880c4b0221fec24e958c1a6");
 
         // Make pg no longer appear to be running
         HRN_STORAGE_REMOVE(storagePgWrite(), PG_FILE_POSTMTRPID, .errorOnMissing = true);
