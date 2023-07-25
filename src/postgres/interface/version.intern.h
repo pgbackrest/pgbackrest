@@ -72,6 +72,7 @@ Read the version specific pg_control into a general data structure
             .pageSize = ((ControlFileData *)controlFile)->blcksz,                                                                  \
             .walSegmentSize = ((ControlFileData *)controlFile)->xlog_seg_size,                                                     \
             .pageChecksum = ((ControlFileData *)controlFile)->data_checksum_version != 0,                                          \
+            .crc = ((ControlFileData *)controlFile)->crc,                                                                          \
         };                                                                                                                         \
     }
 
@@ -85,23 +86,23 @@ Get the CRC for the pg_control
 #elif PG_VERSION >= PG_VERSION_95
 
 #define PG_INTERFACE_CONTROL_CRC(version)                                                                                          \
-    static bool                                                                                                                    \
+    static uint32_t                                                                                                                \
     pgInterfaceControlCrc##version(const unsigned char *controlFile)                                                               \
     {                                                                                                                              \
         ASSERT(controlFile != NULL);                                                                                               \
                                                                                                                                    \
-        return crc32cOne(controlFile, offsetof(ControlFileData, crc)) == ((ControlFileData *)controlFile)->crc;                    \
+        return crc32cOne(controlFile, offsetof(ControlFileData, crc));                                                             \
     }
 
 #elif PG_VERSION >= PG_VERSION_93
 
 #define PG_INTERFACE_CONTROL_CRC(version)                                                                                          \
-    static bool                                                                                                                    \
+    static uint32_t                                                                                                                \
     pgInterfaceControlCrc##version(const unsigned char *controlFile)                                                               \
     {                                                                                                                              \
         ASSERT(controlFile != NULL);                                                                                               \
                                                                                                                                    \
-        return crc32One(controlFile, offsetof(ControlFileData, crc)) == ((ControlFileData *)controlFile)->crc;                     \
+        return crc32One(controlFile, offsetof(ControlFileData, crc));                                                              \
     }
 
 #endif

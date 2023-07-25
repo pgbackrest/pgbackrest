@@ -372,7 +372,7 @@ sub run
 
         $oHostDbPrimary->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_PGCONTROL, '[replaceme]',
-            $self->archBits() == 32 ? '8107e546c59c72a8c1818fc3610d7cc1e5623660' : '9a2390fbd29bb6dc92831fc01aa2d5a9b69d0930',
+            $self->archBits() == 32 ? 'b01d179304b8fa0b962662871c173f916c494e85' : '9a2390fbd29bb6dc92831fc01aa2d5a9b69d0930',
             $lTime - 100, undef, true);
 
         # Copy pg_control

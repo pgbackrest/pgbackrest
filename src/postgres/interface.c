@@ -64,8 +64,8 @@ typedef struct PgInterface
     // Convert pg_control to a common data structure
     PgControl (*control)(const unsigned char *);
 
-    // Does pg_control stored crc match calculated crc?
-    bool (*controlCrc)(const unsigned char *);
+    // Calculate the CRC for the pg_control buffer
+    uint32_t (*controlCrc)(const unsigned char *);
 
     // Get the control version for this version of PostgreSQL
     uint32_t (*controlVersion)(void);
@@ -226,7 +226,7 @@ pgControlFromBuffer(const Buffer *controlFile, const String *const pgVersionForc
     result.version = interface->version;
 
     // Check CRC
-    if (!interface->controlCrc(bufPtrConst(controlFile))) // {uncovered - !!!}
+    if (result.crc != interface->controlCrc(bufPtrConst(controlFile))) // {uncovered - !!!}
     {
         THROW_FMT( // {uncovered - !!!}
             ChecksumError,
