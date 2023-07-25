@@ -2359,7 +2359,7 @@ testRun(void)
             "P00   INFO: new backup label = [FULL-1]\n"
             "P00   INFO: full backup size = 8KB, file total = 2",
             TEST_64BIT() ?
-                (TEST_BIG_ENDIAN() ? "542c539fabf827717812b872913d593766848434" : "3854bff1d2d081051ca2ac61fb5b3a28830fa027") :
+                (TEST_BIG_ENDIAN() ? "512100f054360d9d20581ce603e851dc05b19b35" : "3854bff1d2d081051ca2ac61fb5b3a28830fa027") :
                 "d353468d1c1f89a6e44a1fba454961916d1e7d6d");
 
         // Make pg no longer appear to be running
