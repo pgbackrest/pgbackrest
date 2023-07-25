@@ -18,6 +18,18 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("pgVersionFromStr() and pgVersionToStr()"))
     {
+        Buffer *buffer = bufNewC(bufPtr(hrnPgControlToBuffer(0, (PgControl){.version = PG_VERSION_93, .systemId = 1000000000000000093})), 512);
+        TEST_LOG_FMT("9.3: %s", strZ(strNewEncode(encodingHex, buffer)));
+        buffer = bufNewC(bufPtr(hrnPgControlToBuffer(0, (PgControl){.version = PG_VERSION_94, .systemId = 1000000000000000094})), 512);
+        TEST_LOG_FMT("9.4: %s", strZ(strNewEncode(encodingHex, buffer)));
+        buffer = bufNewC(bufPtr(hrnPgControlToBuffer(0, (PgControl){.version = PG_VERSION_95, .systemId = 1000000000000000095})), 512);
+        TEST_LOG_FMT("9.5: %s", strZ(strNewEncode(encodingHex, buffer)));
+        buffer = bufNewC(bufPtr(hrnPgControlToBuffer(0, (PgControl){.version = PG_VERSION_96, .systemId = 1000000000000000096})), 512);
+        TEST_LOG_FMT("9.6: %s", strZ(strNewEncode(encodingHex, buffer)));
+        buffer = bufNewC(bufPtr(hrnPgControlToBuffer(0, (PgControl){.version = PG_VERSION_10, .systemId = 1000000000000000100})), 512);
+        TEST_LOG_FMT("10: %s", strZ(strNewEncode(encodingHex, buffer)));
+        THROW(AssertError, "DONE");
+
         TEST_ERROR(pgVersionFromStr(STRDEF("9.3.4")), AssertError, "version 9.3.4 format is invalid");
         TEST_ERROR(pgVersionFromStr(STRDEF("abc")), AssertError, "version abc format is invalid");
         TEST_ERROR(pgVersionFromStr(NULL), AssertError, "assertion 'version != NULL' failed");
