@@ -2307,7 +2307,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
         // Create pg_control
-        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_93);
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_94);
 
         cmdStanzaCreate();
         TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'test1' on repo1");
@@ -2359,7 +2359,7 @@ testRun(void)
             "P00   INFO: new backup label = [FULL-1]\n"
             "P00   INFO: full backup size = 8KB, file total = 2",
             TEST_64BIT() ?
-                (TEST_BIG_ENDIAN() ? "512100f054360d9d20581ce603e851dc05b19b35" : "3854bff1d2d081051ca2ac61fb5b3a28830fa027") :
+                (TEST_BIG_ENDIAN() ? "512100f054360d9d20581ce603e851dc05b19b35" : "20df8640327df5ebc0658817cbc4c93624fd451b") :
                 "d353468d1c1f89a6e44a1fba454961916d1e7d6d");
 
         // Make pg no longer appear to be running

@@ -82,7 +82,7 @@ Get the CRC for the pg_control
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_93
+#elif PG_VERSION >= PG_VERSION_95
 
 #define PG_INTERFACE_CONTROL_CRC(version)                                                                                          \
     static bool                                                                                                                    \
@@ -91,6 +91,17 @@ Get the CRC for the pg_control
         ASSERT(controlFile != NULL);                                                                                               \
                                                                                                                                    \
         return crc32c(controlFile, offsetof(ControlFileData, crc)) == ((ControlFileData *)controlFile)->crc;                       \
+    }
+
+#elif PG_VERSION >= PG_VERSION_93
+
+#define PG_INTERFACE_CONTROL_CRC(version)                                                                                          \
+    static bool                                                                                                                    \
+    pgInterfaceControlCrc##version(const unsigned char *controlFile)                                                               \
+    {                                                                                                                              \
+        ASSERT(controlFile != NULL);                                                                                               \
+                                                                                                                                   \
+        return crc32(controlFile, offsetof(ControlFileData, crc)) == ((ControlFileData *)controlFile)->crc;                        \
     }
 
 #endif

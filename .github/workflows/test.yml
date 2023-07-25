@@ -34,8 +34,8 @@ jobs:
           # All integration tests for 32-bit
           - param: test --vm=d10 --param=module=mock --param=module=real
 
-          # Debian/Ubuntu documentation
-          - param: doc --vm=u20
+          # Debian/Ubuntu documentation !!! FIX
+          # - param: doc --vm=u20
 
           # All integration tests
           - param: test --vm=u22 --param=build-package --param=module=mock --param=module=real

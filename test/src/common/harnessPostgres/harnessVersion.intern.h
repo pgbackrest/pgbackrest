@@ -55,7 +55,9 @@ Create a pg_control file
             .data_checksum_version = pgControl.pageChecksum,                                                                       \
         };                                                                                                                         \
                                                                                                                                    \
-        ((ControlFileData *)buffer)->crc = crc32c(buffer, offsetof(ControlFileData, crc));                                         \
+        ((ControlFileData *)buffer)->crc =                                                                                         \
+            PG_VERSION >= PG_VERSION_95 ?                                                                                          \
+                crc32c(buffer, offsetof(ControlFileData, crc)) : crc32(buffer, offsetof(ControlFileData, crc));                    \
     }
 
 #endif
