@@ -184,6 +184,11 @@ if cc.compiles('''int main(int arg, char **argv) {({ _Static_assert(1, "foo");})
   configuration.set('HAVE_STATIC_ASSERT', true, description: 'Does the compiler provide _Static_assert()?')
 endif
 
+# Check endianness
+if host_machine.endian() == 'big'
+    configuration.set('ARCH_BIG_ENDIAN', true, 'Is architecture big-endian?')
+endif
+
 # Enable debug code. We would prefer to use `get_option('debug')` when our minimum version is high enough to allow it.
 if get_option('buildtype') == 'debug' or get_option('buildtype') == 'debugoptimized'
     configuration.set('DEBUG', true, description: 'Enable debug code')

@@ -6,6 +6,7 @@ Macros to create harness functions per PostgreSQL version.
 #ifndef TEST_COMMON_HARNESS_POSTGRES_VERSIONINTERN_H
 #define TEST_COMMON_HARNESS_POSTGRES_VERSIONINTERN_H
 
+#include "postgres/interface/crc32.h"
 #include "postgres/interface/version.vendor.h"
 
 #include "common/harnessPostgres.h"
@@ -53,6 +54,8 @@ Create a pg_control file
             .xlog_seg_size = pgControl.walSegmentSize,                                                                             \
             .data_checksum_version = pgControl.pageChecksum,                                                                       \
         };                                                                                                                         \
+                                                                                                                                   \
+        ((ControlFileData *)buffer)->crc = crc32c(buffer, offsetof(ControlFileData, crc));                                         \
     }
 
 #endif
