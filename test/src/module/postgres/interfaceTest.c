@@ -77,15 +77,15 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("invalid CRC");
 
-        HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_11, .crc = 0xFFFFFFFF);
+        HRN_PG_CONTROL_OVERRIDE_CRC_PUT(storageTest, PG_VERSION_11, 0xFADEFADE);
 
         TEST_ERROR_FMT(
             pgControlFromFile(storageTest, NULL), ChecksumError,
             "calculated pg_control checksum does not match stored value\n"
-            "HINT: calculated 0x%x but stored value is 0xffffffff\n"
+            "HINT: calculated 0x%x but stored value is 0xfadefade\n"
             "HINT: is pg_control corrupt?\n"
             "HINT: does pg_control have a different layout than expected?",
-            (uint32_t)(TEST_BIG_ENDIAN() ? 0x4e206eeb : (TEST_64BIT() ? 0x4ad387b2 : 0x0)));
+            (uint32_t)(TEST_BIG_ENDIAN() ? 0x4e206eeb : (TEST_64BIT() ? 0x4ad387b2 : 0x3ca3a1ec)));
 
         // -------------------------------------------------------------------------------------------------------------------------
         HRN_PG_CONTROL_PUT(
