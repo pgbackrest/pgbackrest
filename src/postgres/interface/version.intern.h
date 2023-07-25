@@ -90,7 +90,7 @@ Get the CRC for the pg_control
     {                                                                                                                              \
         ASSERT(controlFile != NULL);                                                                                               \
                                                                                                                                    \
-        return crc32c(controlFile, offsetof(ControlFileData, crc)) == ((ControlFileData *)controlFile)->crc;                       \
+        return crc32cOne(controlFile, offsetof(ControlFileData, crc)) == ((ControlFileData *)controlFile)->crc;                    \
     }
 
 #elif PG_VERSION >= PG_VERSION_93
@@ -101,7 +101,7 @@ Get the CRC for the pg_control
     {                                                                                                                              \
         ASSERT(controlFile != NULL);                                                                                               \
                                                                                                                                    \
-        return crc32(controlFile, offsetof(ControlFileData, crc)) == ((ControlFileData *)controlFile)->crc;                        \
+        return crc32One(controlFile, offsetof(ControlFileData, crc)) == ((ControlFileData *)controlFile)->crc;                     \
     }
 
 #endif

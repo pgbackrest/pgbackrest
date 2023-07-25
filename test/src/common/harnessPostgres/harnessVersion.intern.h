@@ -57,7 +57,7 @@ Create a pg_control file
                                                                                                                                    \
         ((ControlFileData *)buffer)->crc =                                                                                         \
             PG_VERSION >= PG_VERSION_95 ?                                                                                          \
-                crc32c(buffer, offsetof(ControlFileData, crc)) : crc32(buffer, offsetof(ControlFileData, crc));                    \
+                crc32cOne(buffer, offsetof(ControlFileData, crc)) : crc32One(buffer, offsetof(ControlFileData, crc));              \
     }
 
 #endif
