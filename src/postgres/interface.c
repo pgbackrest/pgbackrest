@@ -9,6 +9,7 @@ PostgreSQL Interface
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
+#include "common/time.h"
 #include "postgres/interface.h"
 #include "postgres/interface/static.vendor.h"
 #include "postgres/version.h"
@@ -44,8 +45,10 @@ STRING_STATIC(PG_NAME_LOCATION_STR,                                 "location");
 
 /***********************************************************************************************************************************
 The control file is 8192 bytes but only the first 512 bytes are used to prevent torn pages even on really old storage with 512-byte
-sectors. This is true across all versions of PostgreSQL.
+sectors. This is true across all versions of PostgreSQL. Unfortunately, this is not sufficient to prevent torn pages during
+concurrent reads and writes so retries are required.
 ***********************************************************************************************************************************/
+#define PG_CONTROL_SIZE                                             8192
 #define PG_CONTROL_DATA_SIZE                                        512
 
 /***********************************************************************************************************************************
@@ -249,6 +252,82 @@ pgControlFromBuffer(const Buffer *controlFile, const String *const pgVersionForc
     FUNCTION_LOG_RETURN(PG_CONTROL, result);
 }
 
+// Helper to compare control data to last read
+static bool
+pgControlBufferEq(const Buffer *const last, const Buffer *const current)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BUFFER, last);
+        FUNCTION_TEST_PARAM(BUFFER, current);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(BOOL, last != NULL && bufEq(last, current));
+}
+
+FN_EXTERN Buffer *
+pgControlBufferFromFile(const Storage *storage, const String *const pgVersionForce)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
+        FUNCTION_LOG_PARAM(STRING, pgVersionForce);
+    FUNCTION_LOG_END();
+
+    ASSERT(storage != NULL);
+
+    Buffer *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // On filesystems that do not implement atomicity of concurrent reads and writes, we might get garbage if the server is
+        // writing the pg_control file at the same time as we try to read it. Keep trying until success or we read the same data
+        // twice in a row. Do not use a timeout here because there are plenty of other errors that can happen and we don't want to
+        // wait for them.
+        Buffer *controlFileLast = NULL;
+        bool done = false;
+
+        do
+        {
+            // Read control file
+            Buffer *const controlFile = storageGetP(
+                storageNewReadP(storage, STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)), .exactSize = PG_CONTROL_DATA_SIZE);
+
+            TRY_BEGIN()
+            {
+                // Check that control data is valid
+                pgControlFromBuffer(controlFile, pgVersionForce);
+
+                // Create a buffer of the correct size to hold pg_control and zero out the remaining portion
+                result = bufNew(PG_CONTROL_SIZE);
+
+                bufCat(result, controlFile);
+                memset(bufPtr(result) + bufUsed(controlFile), 0, bufSize(result) - bufUsed(controlFile));
+                bufUsedSet(result, bufSize(result));
+                bufMove(result, memContextPrior());
+
+                done = true;
+            }
+            CATCH_ANY()
+            {
+                // If we get the same bad data twice in a row then error
+                if (pgControlBufferEq(controlFileLast, controlFile))
+                    RETHROW();
+
+                // Copy data to last
+                bufFree(controlFileLast);
+                controlFileLast = controlFile;
+
+                // Sleep to let data stabilize
+                sleepMSec(50);
+            }
+            TRY_END();
+        }
+        while (!done);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(BUFFER, result);
+}
+
 FN_EXTERN PgControl
 pgControlFromFile(const Storage *storage, const String *const pgVersionForce)
 {
@@ -259,17 +338,10 @@ pgControlFromFile(const Storage *storage, const String *const pgVersionForce)
 
     ASSERT(storage != NULL);
 
-    PgControl result = {0};
+    Buffer *const buffer = pgControlBufferFromFile(storage, pgVersionForce);
+    PgControl result = pgControlFromBuffer(buffer, pgVersionForce);
 
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        // Read control file
-        Buffer *controlFile = storageGetP(
-            storageNewReadP(storage, STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)), .exactSize = PG_CONTROL_DATA_SIZE);
-
-        result = pgControlFromBuffer(controlFile, pgVersionForce);
-    }
-    MEM_CONTEXT_TEMP_END();
+    bufFree(buffer);
 
     FUNCTION_LOG_RETURN(PG_CONTROL, result);
 }
