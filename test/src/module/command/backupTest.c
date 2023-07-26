@@ -3584,7 +3584,7 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Create pg_control with unexpected catalog and control version
-            HRN_PG_CONTROL_OVERRIDE_PUT(
+            HRN_PG_CONTROL_OVERRIDE_VERSION_PUT(
                 storagePgWrite(), PG_VERSION_11, 1501, .catalogVersion = 202211110, .pageChecksum = true,
                 .walSegmentSize = 1024 * 1024);
 

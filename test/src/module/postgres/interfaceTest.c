@@ -67,7 +67,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("unknown control version");
 
-        HRN_PG_CONTROL_OVERRIDE_PUT(storageTest, PG_VERSION_15, 1501, .catalogVersion = 202211111);
+        HRN_PG_CONTROL_OVERRIDE_VERSION_PUT(storageTest, PG_VERSION_15, 1501, .catalogVersion = 202211111);
 
         TEST_ERROR(
             pgControlFromFile(storageTest, NULL), VersionNotSupportedError,
@@ -127,7 +127,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("force control version");
 
-        HRN_PG_CONTROL_OVERRIDE_PUT(
+        HRN_PG_CONTROL_OVERRIDE_VERSION_PUT(
             storageTest, PG_VERSION_15, 1501, .systemId = 0xEFEFEFEFEF, .catalogVersion = 202211111,
             .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88);
 
