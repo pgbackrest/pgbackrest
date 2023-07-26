@@ -523,7 +523,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptPgVersionForce, "15");
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
-        HRN_PG_CONTROL_OVERRIDE_PUT(storagePgWrite(), PG_VERSION_15, 1501, .catalogVersion = 202211111);
+        HRN_PG_CONTROL_OVERRIDE_VERSION_PUT(storagePgWrite(), PG_VERSION_15, 1501, .catalogVersion = 202211111);
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - forcing another PG version");
         TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
@@ -927,7 +927,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptPgVersionForce, "15");
         HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
 
-        HRN_PG_CONTROL_OVERRIDE_PUT(storagePgWrite(), PG_VERSION_15, 1501, .catalogVersion = 202211111);
+        HRN_PG_CONTROL_OVERRIDE_VERSION_PUT(storagePgWrite(), PG_VERSION_15, 1501, .catalogVersion = 202211111);
 
         HRN_INFO_PUT(
             storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE,
