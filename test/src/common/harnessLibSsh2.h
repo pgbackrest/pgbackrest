@@ -26,6 +26,9 @@ libssh2 authorization constants
 #define KEYPRIV_CSTR                                                "/home/" TEST_USER "/.ssh/id_rsa"
 #define KEYPUB_CSTR                                                 "/home/" TEST_USER "/.ssh/id_rsa.pub"
 #define KNOWNHOSTS_FILE_CSTR                                        "/home/" TEST_USER "/.ssh/known_hosts"
+#define KNOWNHOSTS2_FILE_CSTR                                       "/home/" TEST_USER "/.ssh/known_hosts2"
+#define ETC_KNOWNHOSTS_FILE_CSTR                                    "/etc/ssh/ssh_known_hosts"
+#define ETC_KNOWNHOSTS2_FILE_CSTR                                   "/etc/ssh/ssh_known_hosts2"
 #define HOSTKEY                                                     "12345678901234567890"
 
 /***********************************************************************************************************************************
@@ -72,6 +75,11 @@ Macros for defining groups of functions that implement commands
     {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},                                                    \
     {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = 0},                                          \
     {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "12345678910123456789"},                                      \
+    {.function = HRNLIBSSH2_KNOWNHOST_INIT},                                                                                       \
+    {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]", .resultInt = 5},                      \
+    {.function = HRNLIBSSH2_SESSION_HOSTKEY, .len = 20, .type = LIBSSH2_HOSTKEY_TYPE_RSA, .resultZ = HOSTKEY},                     \
+    {.function = HRNLIBSSH2_KNOWNHOST_CHECKP, .param = "[\"localhost\",22,\"" HOSTKEY "\",20,65537]",                              \
+     .resultInt = LIBSSH2_KNOWNHOST_CHECK_MATCH},                                                                                  \
     {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,                                                                        \
     .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",\"" KEYPUB_CSTR "\",\"" KEYPRIV_CSTR "\",null]",                                \
     .resultInt = 0},                                                                                                               \

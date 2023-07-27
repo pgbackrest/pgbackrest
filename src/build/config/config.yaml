@@ -2396,6 +2396,14 @@ option:
     command: repo-type
     depend: repo-sftp-host
 
+  repo-sftp-known-hosts-files:
+    section: global
+    group: repo
+    type: string
+    required: false
+    command: repo-type
+    depend: repo-sftp-host
+
   repo-sftp-private-key-file:
     section: global
     group: repo

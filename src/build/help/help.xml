@@ -1019,7 +1019,7 @@
                         <summary>SFTP repository host fingerprint.</summary>
 
                         <text>
-                            <p>SFTP repository host fingerprint generation should match the <setting>repo-sftp-host-key-hash-type</setting>. Generate the fingeprint via <code>awk '{print $2}' ssh_host_xxx_key.pub | base64 -d | (md5sum or sha1sum) -b</code>. The ssh host keys are normally found in the <path>/etc/ssh</path> directory.</p>
+                            <p>SFTP repository host fingerprint generation should match the <setting>repo-sftp-host-key-hash-type</setting>. Generate the fingeprint via <code>awk '{print $2}' ssh_host_xxx_key.pub | base64 -d | (md5sum or sha1sum) -b</code>. The ssh host keys are normally found in the <path>/etc/ssh</path> directory. Options <setting>repo-sftp-host-fingerprint</setting> and <setting>repo-sftp-req-known-hosts-match</setting> are mutually exclusive.</p>
                         </text>
 
                         <example>f84e172dfead7aeeeae6c1fdfb5aa8cf</example>
@@ -1055,6 +1055,16 @@
                         <example>pg-backup</example>
                     </config-key>
 
+                    <config-key id="repo-sftp-known-hosts-files" name="SFTP known_hosts files">
+                        <summary>List of known_hosts files to search.</summary>
+
+                        <text>
+                            <p>A comma delimited list of known_hosts files to search for an SFTP host match during authentication. If unconfigured, <backrest/> will default to searching in order ~/.ssh/known_hosts ~/.ssh/known_hosts2 /etc/ssh/ssh_known_hosts /etc/ssh/ssh_known_hosts2. If configured with a comma delimited file path list, <backrest/> will search the files for a match in the order that they are provided. Explicitely disabling the option <setting>repo1-sftp-known-hosts-files=disable</setting> will disable matching during authentication. File paths must be full or leading tilde paths. If enabled and there is a match failure, a warning will be logged. To force an error on a match failure, enable option <setting>repo-sftp-req-known-hosts-match</setting>. Options <setting>repo-sftp-req-known-hosts-match</setting> and <setting>repo-sftp-host-fingerprint</setting> are mutually exclusive.</p>
+                        </text>
+
+                        <example>/home/postgres/.ssh/known_hosts,~/.ssh/known_hosts2, /etc/ssh/ssh_known_host</example>
+                    </config-key>
+
                     <config-key id="repo-sftp-private-key-file" name="SFTP Repository Private Key File">
                         <summary>SFTP private key file.</summary>
 
@@ -1085,11 +1095,11 @@
                         <example>~/.ssh/id_ed25519.pub</example>
                     </config-key>
 
-                    <config-key id="repo-sftp-req-known-hosts-match" name="Require a known_hosts match for the SFTP host">
-                        <summary>SFTP require known_hosts match.</summary>
+                    <config-key id="repo-sftp-req-known-hosts-match" name="SFTP require known_hosts match">
+                        <summary>Require a known_hosts match for the SFTP host.</summary>
 
                         <text>
-                            <p>Require a successful known_hosts match for the SFTP host as part of the authentication process.</p>
+                            <p>Require a successful known_hosts match for the SFTP host during authentication. If enabled an error will be thrown if no match is found. If unconfigured or disabled a warning will be logged if no match is found.</p>
                         </text>
 
                         <example>y</example>

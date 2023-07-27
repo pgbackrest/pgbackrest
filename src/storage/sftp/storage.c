@@ -19,8 +19,10 @@ SFTP Storage
 Define PATH_MAX if it is not defined
 ***********************************************************************************************************************************/
 #ifndef PATH_MAX
-#define PATH_MAX                                                (4 * 1024)
+#define PATH_MAX                                                    (4 * 1024)
 #endif
+
+#define DISABLE_KNOWN_HOSTS_SEARCH                                  "disable"
 
 /***********************************************************************************************************************************
 Object type
@@ -304,6 +306,63 @@ storageSftpInfo(THIS_VOID, const String *const file, const StorageInfoLevel leve
     }
 
     FUNCTION_LOG_RETURN(STORAGE_INFO, result);
+}
+
+/**********************************************************************************************************************************/
+static StringList *
+storageSftpKnownHostsFilesList(const String *const knownHostsFiles)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, knownHostsFiles);
+    FUNCTION_LOG_END();
+
+    StringList *result = strLstNew();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Build default known_hosts files list if knownHostsFiles is NULL
+        if (knownHostsFiles == NULL)
+        {
+            // Default files are ~/.ssh/known_hosts ~/.ssh/known_hosts2 /etc/ssh/ssh_known_hosts /etc/ssh/ssh_known_hosts2
+            strLstAddFmt(result, "%s%s", strZ(userHome()), "/.ssh/known_hosts");
+            strLstAddFmt(result, "%s%s", strZ(userHome()), "/.ssh/known_hosts2");
+            strLstAddZ(result, "/etc/ssh/ssh_known_hosts");
+            strLstAddZ(result, "/etc/ssh/ssh_known_hosts2");
+        }
+        else // Add user provided files to list
+        {
+            // If a tilde is present in the file list, at least one path will need to be converted to a full path
+            if (strChr(knownHostsFiles, '~') != -1)
+            {
+                // Convert comma delimited paths to local string list
+                StringList *lclList = strLstNewSplitZ(knownHostsFiles, ",");
+
+                // Process the local list entries and add them to the result list
+                for (unsigned int listIdx = 0; listIdx < strLstSize(lclList); listIdx++)
+                {
+                    // Convert leading tilde paths to full paths and add to the result list
+                    if (strBeginsWithZ(strLstGet(lclList, listIdx), "~"))
+                    {
+                        // Replace tilde with space, trim space, prepend user home path
+                        strLstAddFmt(
+                            result, "%s%s", strZ(userHome()), strZ(strTrim(strReplaceChr(strLstGet(lclList, listIdx), '~', ' '))));
+                    }
+                    else
+                        strLstAdd(result, strTrim(strLstGet(lclList, listIdx)));
+                }
+            }
+            else  // We have one or more full paths
+            {
+                StringList *lclList = strLstNewSplitZ(knownHostsFiles, ",");
+
+                for (unsigned int listIdx = 0; listIdx < strLstSize(lclList); listIdx++)
+                    strLstAdd(result, strTrim(strLstGet(lclList, listIdx)));
+            }
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(STRING_LIST, result);
 }
 
 /**********************************************************************************************************************************/
@@ -776,7 +835,7 @@ storageSftpNew(
         FUNCTION_LOG_PARAM(MODE, param.modeFile);
         FUNCTION_LOG_PARAM(MODE, param.modePath);
         FUNCTION_LOG_PARAM(BOOL, param.write);
-        FUNCTION_LOG_PARAM(BOOL, param.requireKnownHostsMatch);
+        FUNCTION_LOG_PARAM(STRING, param.knownHostsFiles);
         FUNCTION_LOG_PARAM(FUNCTIONP, param.pathExpressionFunction);
     FUNCTION_LOG_END();
 
@@ -786,7 +845,6 @@ storageSftpNew(
     ASSERT(user != NULL);
     ASSERT(keyPriv != NULL);
     ASSERT(hostKeyHashType != 0);
-
     // Initialize user module
     userInit();
 
@@ -851,15 +909,27 @@ storageSftpNew(
 #endif // LIBSSH2_HOSTKEY_HASH_SHA256
 
             default:
-                THROW_FMT(
-                    ServiceError, "requested ssh2 hostkey hash type (%s) not available", strZ(strIdToStr(hostKeyHashType)));
+                THROW_FMT(ServiceError, "requested ssh2 hostkey hash type (%s) not available", strZ(strIdToStr(hostKeyHashType)));
                 break;
         }
 
-        const char *binaryFingerprint = libssh2_hostkey_hash(this->session, hashType);
+        const char *const binaryFingerprint = libssh2_hostkey_hash(this->session, hashType);
 
         if (binaryFingerprint == NULL)
             THROW_FMT(ServiceError, "libssh2 hostkey hash failed: libssh2 errno [%d]", libssh2_session_last_errno(this->session));
+
+        // Is known_hosts search enabled
+        const bool performKnownHostsCheck = (param.knownHostsFiles == NULL ||
+                 !strBeginsWithZ(strLower(strDup(param.knownHostsFiles)), DISABLE_KNOWN_HOSTS_SEARCH));
+
+        // Throw an error if both known_hosts search is enabled and fingerprint match (repo-sftp-host-fingerprint) is configured
+        if (param.hostFingerprint != NULL && performKnownHostsCheck)
+        {
+            THROW_FMT(
+                ServiceError,
+                "repo-sftp-known-hosts-files is enabled and repo-sftp-host-fingerprint is configured. Utilize only one.\n"
+                "HINT: disable repo-sftp-known-hosts-files or unconfigure repo-sftp-host-fingerprint.");
+        }
 
         // Compare fingerprint if provided
         if (param.hostFingerprint != NULL)
@@ -878,8 +948,8 @@ storageSftpNew(
             }
         }
 
-        // Check for a matching entry in the .ssh/known_hosts file
-        if (param.requireKnownHostsMatch)
+        // Check for a matching entry in known_hosts files
+        if (performKnownHostsCheck)
         {
             LIBSSH2_KNOWNHOSTS *knownHostsList;
             const char *hostkey;
@@ -892,33 +962,31 @@ storageSftpNew(
             if (knownHostsList == NULL)
                 THROW_FMT(ServiceError, "failure during libssh2_knownhost_init");
 
-            // Load the known_hosts file into the list
-            if ((rc = libssh2_knownhost_readfile(
-                     knownHostsList, strZ(strNewFmt("%s%s", strZ(userHome()), "/.ssh/known_hosts")),
-                     LIBSSH2_KNOWNHOST_FILE_OPENSSH)) <= 0)
+            // Get the list of known_hosts files to search
+            const StringList *const knownHostsPathList = storageSftpKnownHostsFilesList(param.knownHostsFiles);
+
+            // Loop through the list of known_hosts files
+            for (unsigned int listIdx = 0; listIdx < strLstSize(knownHostsPathList); listIdx++)
             {
-                // Free the knownHostsList on read file failure
-                libssh2_knownhost_free(knownHostsList);
+                const char *const currentKnownHostFile = strZNull(strLstGet(knownHostsPathList, listIdx));
 
-                // Reading an empty file returns 0
-                if (rc == 0)
+                // Load the known_hosts file entries into the collection
+                if ((rc = libssh2_knownhost_readfile(knownHostsList, currentKnownHostFile, LIBSSH2_KNOWNHOST_FILE_OPENSSH)) <= 0)
                 {
-                    THROW_FMT(
-                        ServiceError, "libssh2 '%s' file is empty", strZ(strNewFmt("%s%s", strZ(userHome()), "/.ssh/known_hosts")));
-                }
-                else
-                {
-                    char *libSsh2ErrMsg;
-                    int libSsh2ErrMsgLen;
+                    // Log warnings on empty known_hosts files and file read errors
+                    if (rc == 0)
+                        LOG_WARN_FMT("libssh2 '%s' file is empty", currentKnownHostFile);
+                    else
+                    {
+                        char *libSsh2ErrMsg;
+                        int libSsh2ErrMsgLen;
 
-                    // Get the libssh2 error message
-                    rc = libssh2_session_last_error(this->session, &libSsh2ErrMsg, &libSsh2ErrMsgLen, 0);
+                        // Get the libssh2 error message
+                        rc = libssh2_session_last_error(this->session, &libSsh2ErrMsg, &libSsh2ErrMsgLen, 0);
 
-                    THROW_FMT(
-                        ServiceError,
-                        "libssh2 read '%s' file failed: libssh2 errno [%d]%s",
-                        strZ(strNewFmt("%s%s", strZ(userHome()), "/.ssh/known_hosts")), rc,
-                        rc ? strZ(strNewFmt(" %s", libSsh2ErrMsg)) : "");
+                        LOG_WARN_FMT(
+                            "libssh2 read '%s' file failed: libssh2 errno [%d] %s", currentKnownHostFile, rc, libSsh2ErrMsg);
+                    }
                 }
             }
 
@@ -929,46 +997,60 @@ storageSftpNew(
             if (hostkey != NULL)
             {
                 rc = libssh2_knownhost_checkp(
-                    knownHostsList, strZ(host), (int)port, hostkey, len, LIBSSH2_KNOWNHOST_TYPE_PLAIN | LIBSSH2_KNOWNHOST_KEYENC_RAW, NULL);
+                    knownHostsList, strZ(host), (int)port, hostkey, len,
+                    LIBSSH2_KNOWNHOST_TYPE_PLAIN | LIBSSH2_KNOWNHOST_KEYENC_RAW, NULL);
 
                 // Error on failure to match
                 if (rc != LIBSSH2_KNOWNHOST_CHECK_MATCH)
                 {
-                    const char *errmsg;
+                    const char *matchFailMsg;
 
                     switch (rc)
                     {
                         case LIBSSH2_KNOWNHOST_CHECK_FAILURE:
-                            errmsg = "LIBSSH2_KNOWNHOST_CHECK_FAILURE";
+                            matchFailMsg = "LIBSSH2_KNOWNHOST_CHECK_FAILURE";
                             break;
 
                         case LIBSSH2_KNOWNHOST_CHECK_NOTFOUND:
-                            errmsg = "not found in known_hosts file: LIBSSH2_KNOWNHOST_CHECK_NOTFOUND";
+                            matchFailMsg = "not found in known_hosts file: LIBSSH2_KNOWNHOST_CHECK_NOTFOUND";
                             break;
 
                         case LIBSSH2_KNOWNHOST_CHECK_MISMATCH:
-                            errmsg = "mismatch in known_hosts file: LIBSSH2_KNOWNHOST_CHECK_MISMATCH";
+                            matchFailMsg = "mismatch in known_hosts file: LIBSSH2_KNOWNHOST_CHECK_MISMATCH";
                             break;
 
                         default:
-                            errmsg = "experienced an unknown failure:";
+                            matchFailMsg = "experienced an unknown failure:";
                             break;
                     }
 
-                    // Free the knownHostsList on failure to match in known_hosts
-                    libssh2_knownhost_free(knownHostsList);
+                    // Error if known_hosts match is required else log warning
+                    if (param.requireKnownHostsMatch)
+                    {
+                        // Free the knownHostsList
+                        libssh2_knownhost_free(knownHostsList);
 
-                    THROW_FMT(ServiceError, "libssh2_knownhost_checkp failure: '%s' %s [%d]", strZ(host), errmsg, rc);
+                        THROW_FMT(ServiceError, "libssh2_knownhost_checkp failure: '%s' %s [%d]", strZ(host), matchFailMsg, rc);
+                    }
+                    else
+                        LOG_WARN_FMT("libssh2_knownhost_checkp failure: '%s' %s [%d]", strZ(host), matchFailMsg, rc);
                 }
             }
             else
             {
-                // Free the knownHostsList on failure to get a host key
-                libssh2_knownhost_free(knownHostsList);
+                // Error if known_hosts match is required else log warning
+                if (param.requireKnownHostsMatch)
+                {
+                    // Free the knownHostsList
+                    libssh2_knownhost_free(knownHostsList);
 
-                THROW_FMT(
-                    ServiceError,
-                    "libssh2 libssh2_session_hostkey failed: libssh2 error [%d]", libssh2_session_last_errno(this->session));
+                    THROW_FMT(
+                        ServiceError,
+                        "libssh2_session_hostkey failed: libssh2 error [%d]", libssh2_session_last_errno(this->session));
+                }
+                else
+                    LOG_WARN_FMT(
+                        "libssh2_session_hostkey failed: libssh2 error [%d]", libssh2_session_last_errno(this->session));
             }
 
             // Free the knownHostsList
