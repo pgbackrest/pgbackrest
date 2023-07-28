@@ -192,7 +192,7 @@ testRun(void)
             ServiceError, "requested ssh2 hostkey hash type (aes-256-cbc) not available");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("public key from file auth failure");
+        TEST_TITLE("public key from file auth failure leading tilde key path");
 
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
@@ -212,7 +212,8 @@ testRun(void)
 
         TEST_ERROR(
             storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB,
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, STRDEF("~/.ssh/id_rsa"), hashTypeSha1,
+                .keyPub = STRDEF("~/.ssh/id_rsa.pub"),
                 .hostFingerprint = STRDEF("3132333435363738393039383736353433323130")),
             ServiceError,
             "public key authentication failed: libssh2 error [-16]\n"
@@ -220,6 +221,37 @@ testRun(void)
             " --repo-sftp-public-key-file to be provided\n"
             "HINT: libssh2 versions before 1.9.0 expect a PEM format keypair, try ssh-keygen -m PEM -t rsa -P \"\" to generate the"
             " keypair");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("public key from file auth failure NULL public key leading tilde key path");
+
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
+        {
+            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
+            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "12345678909876543210"},
+            {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
+             .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",null,\"" KEYPRIV_CSTR "\",null]",
+             .resultInt = LIBSSH2_ERROR_EAGAIN},
+            {.function = HRNLIBSSH2_SESSION_BLOCK_DIRECTIONS, .resultInt = SSH2_NO_BLOCK_READING_WRITING},
+            {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
+             .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",null,\"" KEYPRIV_CSTR "\",null]", .resultInt = -16},
+            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_OK},
+            {.function = NULL}
+        });
+
+        TEST_ERROR(
+            storageSftpNewP(
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, STRDEF("~/.ssh/id_rsa"), hashTypeSha1,
+                .hostFingerprint = STRDEF("3132333435363738393039383736353433323130")),
+            ServiceError,
+            "public key authentication failed: libssh2 error [-16]\n"
+            "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-key-file and"
+            " --repo-sftp-public-key-file to be provided\n"
+            "HINT: libssh2 versions before 1.9.0 expect a PEM format keypair, try ssh-keygen -m PEM -t rsa -P \"\" to generate the"
+            " keypair");
+
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("fingerprint mismatch");
@@ -4577,8 +4609,8 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoType, "sftp");
         hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
         hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, KEYPRIV_CSTR);
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyFile, KEYPUB_CSTR);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, "   ~/.ssh/id_rsa");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyFile, "         ~/.ssh/id_rsa.pub");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         const Storage *storage = NULL;

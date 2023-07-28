@@ -10,6 +10,7 @@ SFTP Storage
 #include "common/io/fd.h"
 #include "common/io/socket/client.h"
 #include "common/log.h"
+#include "common/regExp.h"
 #include "common/user.h"
 #include "storage/sftp/read.h"
 #include "storage/sftp/storage.intern.h"
@@ -304,6 +305,25 @@ storageSftpInfo(THIS_VOID, const String *const file, const StorageInfoLevel leve
     }
 
     FUNCTION_LOG_RETURN(STORAGE_INFO, result);
+}
+
+/**********************************************************************************************************************************/
+static String *
+storageSftpExpandTildePath(const String *const tildePath)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, tildePath);
+    FUNCTION_TEST_END();
+
+    String *result = strNew();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        strCatFmt(result, "%s%s",strZ(userHome()), strZ(strTrim(strReplaceChr(strNewZ(strZ(tildePath)), '~', ' '))));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/
@@ -879,8 +899,13 @@ storageSftpNew(
 
         do
         {
+            // Perform public key authorization. Expand leading tilde file path when necessary.
             rc = libssh2_userauth_publickey_fromfile(
-                this->session, strZ(user), strZNull(param.keyPub), strZ(keyPriv), strZNull(param.keyPassphrase));
+                this->session, strZ(user),
+                param.keyPub == NULL || !regExpMatchOne(STRDEF("^ *~"), param.keyPub) ? strZNull(param.keyPub) :
+                strZ(storageSftpExpandTildePath(param.keyPub)),
+                !regExpMatchOne(STRDEF("^ *~"), (keyPriv)) ? strZ(keyPriv) : strZ(storageSftpExpandTildePath(keyPriv)),
+                strZNull(param.keyPassphrase));
         }
         while (storageSftpWaitFd(this, rc));
 
