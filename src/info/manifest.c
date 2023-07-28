@@ -1032,6 +1032,8 @@ manifestBuildInfo(
                      pgVersion < PG_VERSION_12) ||
                     // Skip temp file for safely writing postgresql.auto.conf
                     (strEqZ(info->name, PG_FILE_POSTGRESQLAUTOCONFTMP) && pgVersion >= PG_VERSION_94) ||
+                    // Skip temp file for safely writing pg_control during backup
+                    (strEqZ(info->name, PG_FILE_PGCONTROL_TMP)) ||
                     // Skip backup_label in versions where non-exclusive backup is supported
                     (strEqZ(info->name, PG_FILE_BACKUPLABEL) && pgVersion >= PG_VERSION_96) ||
                     // Skip old backup labels

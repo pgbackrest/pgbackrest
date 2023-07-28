@@ -19,6 +19,7 @@ Defines for various Postgres paths and files
 #define PG_FILE_BACKUPMANIFEST                                      "backup_manifest"
 #define PG_FILE_BACKUPMANIFEST_TMP                                  "backup_manifest.tmp"
 #define PG_FILE_PGCONTROL                                           "pg_control"
+#define PG_FILE_PGCONTROL_TMP                                       PG_FILE_PGCONTROL ".tmp"
 #define PG_FILE_PGFILENODEMAP                                       "pg_filenode.map"
 #define PG_FILE_PGINTERNALINIT                                      "pg_internal.init"
 #define PG_FILE_PGVERSION                                           "PG_VERSION"
@@ -131,6 +132,7 @@ FN_EXTERN bool pgDbIsSystem(const String *name);
 FN_EXTERN bool pgDbIsSystemId(unsigned int id);
 
 // Get info from pg_control
+FN_EXTERN Buffer *pgControlBufferFromFile(const Storage *storage, const String *pgVersionForce);
 FN_EXTERN PgControl pgControlFromFile(const Storage *storage, const String *pgVersionForce);
 
 // Get the control version for a PostgreSQL version

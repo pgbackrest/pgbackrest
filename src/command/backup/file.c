@@ -195,11 +195,17 @@ backupFile(
                     // good to copy data past the end of the size recorded in the manifest since those blocks will need to be
                     // replayed from WAL during recovery.
                     bool repoChecksum = false;
+                    IoRead *readIo;
 
-                    StorageRead *const read = storageNewReadP(
-                        storagePg(), file->pgFile, .ignoreMissing = file->pgFileIgnoreMissing, .compressible = compressible,
-                        .limit = file->pgFileCopyExactSize ? VARUINT64(file->pgFileSize) : NULL);
-                    IoRead *const readIo = storageReadIo(read);
+                    if (strEqZ(file->pgFile, PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL))
+                        readIo = ioBufferReadNew(pgControlBufferFromFile(storagePg(), cfgOptionStrNull(cfgOptPgVersionForce)));
+                    else
+                    {
+                        readIo = storageReadIo(
+                            storageNewReadP(
+                                storagePg(), file->pgFile, .ignoreMissing = file->pgFileIgnoreMissing, .compressible = compressible,
+                                .limit = file->pgFileCopyExactSize ? VARUINT64(file->pgFileSize) : NULL));
+                    }
 
                     ioFilterGroupAdd(ioReadFilterGroup(readIo), cryptoHashNew(hashTypeSha1));
                     ioFilterGroupAdd(ioReadFilterGroup(readIo), ioSizeNew());

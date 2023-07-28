@@ -265,7 +265,7 @@ pgControlBufferEq(const Buffer *const last, const Buffer *const current)
 }
 
 FN_EXTERN Buffer *
-pgControlBufferFromFile(const Storage *storage, const String *const pgVersionForce)
+pgControlBufferFromFile(const Storage *const storage, const String *const pgVersionForce)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storage);
@@ -329,7 +329,7 @@ pgControlBufferFromFile(const Storage *storage, const String *const pgVersionFor
 }
 
 FN_EXTERN PgControl
-pgControlFromFile(const Storage *storage, const String *const pgVersionForce)
+pgControlFromFile(const Storage *const storage, const String *const pgVersionForce)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storage);
