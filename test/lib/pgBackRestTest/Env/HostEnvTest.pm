@@ -377,7 +377,10 @@ sub controlGenerateContent
 
 
     # Pad bytes
-    $tControlContent .= ('C' x (8192 - length($tControlContent)));
+    for (my $iIdx = length($tControlContent); $iIdx < 8192; $iIdx++)
+    {
+        $tControlContent .= pack('C', 0);
+    }
 
     return \$tControlContent;
 }
