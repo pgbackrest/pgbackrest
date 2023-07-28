@@ -308,7 +308,10 @@ storageSftpInfo(THIS_VOID, const String *const file, const StorageInfoLevel leve
     FUNCTION_LOG_RETURN(STORAGE_INFO, result);
 }
 
-/**********************************************************************************************************************************/
+/***********************************************************************************************************************************
+Build known_hosts file list. If knownHostsFiles is NULL build a default file list, otherwise build the list provided. If provided,
+knownHostsFiles must be comma delimited and must contain full path or leading tilde path entries.
+***********************************************************************************************************************************/
 static StringList *
 storageSftpKnownHostsFilesList(const String *const knownHostsFiles)
 {
@@ -320,10 +323,10 @@ storageSftpKnownHostsFilesList(const String *const knownHostsFiles)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Build default known_hosts files list if knownHostsFiles is NULL
+        // Add default known_hosts files if knownHostsFiles is NULL
         if (knownHostsFiles == NULL)
         {
-            // Default files are ~/.ssh/known_hosts ~/.ssh/known_hosts2 /etc/ssh/ssh_known_hosts /etc/ssh/ssh_known_hosts2
+            // Default files are ~/.ssh/known_hosts, ~/.ssh/known_hosts2, /etc/ssh/ssh_known_hosts, /etc/ssh/ssh_known_hosts2
             strLstAddFmt(result, "%s%s", strZ(userHome()), "/.ssh/known_hosts");
             strLstAddFmt(result, "%s%s", strZ(userHome()), "/.ssh/known_hosts2");
             strLstAddZ(result, "/etc/ssh/ssh_known_hosts");
@@ -331,32 +334,21 @@ storageSftpKnownHostsFilesList(const String *const knownHostsFiles)
         }
         else // Add user provided files to list
         {
-            // If a tilde is present in the file list, at least one path will need to be converted to a full path
-            if (strChr(knownHostsFiles, '~') != -1)
-            {
-                // Convert comma delimited paths to local string list
-                StringList *lclList = strLstNewSplitZ(knownHostsFiles, ",");
+            // Convert comma delimited paths to local string list
+            StringList *lclList = strLstNewSplitZ(knownHostsFiles, ",");
 
-                // Process the local list entries and add them to the result list
-                for (unsigned int listIdx = 0; listIdx < strLstSize(lclList); listIdx++)
-                {
-                    // Convert leading tilde paths to full paths and add to the result list
-                    if (strBeginsWithZ(strLstGet(lclList, listIdx), "~"))
-                    {
-                        // Replace tilde with space, trim space, prepend user home path
-                        strLstAddFmt(
-                            result, "%s%s", strZ(userHome()), strZ(strTrim(strReplaceChr(strLstGet(lclList, listIdx), '~', ' '))));
-                    }
-                    else
-                        strLstAdd(result, strTrim(strLstGet(lclList, listIdx)));
-                }
-            }
-            else  // We have one or more full paths
+            // Process the local list entries and add them to the result list
+            for (unsigned int listIdx = 0; listIdx < strLstSize(lclList); listIdx++)
             {
-                StringList *lclList = strLstNewSplitZ(knownHostsFiles, ",");
+                // Get the trimmed file path
+                String *filePath = strTrim(strLstGet(lclList, listIdx));
 
-                for (unsigned int listIdx = 0; listIdx < strLstSize(lclList); listIdx++)
-                    strLstAdd(result, strTrim(strLstGet(lclList, listIdx)));
+                // If leading tilde path, replace tilde with space, trim space, prepend user home path and add to the result list
+                // else add the full path to the list
+                if (strBeginsWithZ(filePath, "~/"))
+                    strLstAddFmt(result, "%s%s", strZ(userHome()), strZ(strTrim(strReplaceChr(filePath, '~', ' '))));
+                else
+                    strLstAdd(result, filePath);
             }
         }
     }
@@ -702,6 +694,7 @@ storageSftpPathCreate(
     FUNCTION_LOG_RETURN_VOID();
 }
 
+/**********************************************************************************************************************************/
 static bool
 storageSftpPathRemove(THIS_VOID, const String *const path, const bool recurse, const StorageInterfacePathRemoveParam param)
 {
