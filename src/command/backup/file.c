@@ -14,10 +14,12 @@ Backup File
 #include "common/io/filter/group.h"
 #include "common/io/filter/size.h"
 #include "common/io/io.h"
+#include "common/io/bufferRead.h"
 #include "common/log.h"
 #include "common/regExp.h"
 #include "common/type/convert.h"
 #include "common/type/json.h"
+#include "config/config.h" // !!! SHOULD PASS THIS INSTEAD?
 #include "info/manifest.h"
 #include "postgres/interface.h"
 #include "storage/helper.h"
