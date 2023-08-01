@@ -25,6 +25,8 @@ libssh2 authorization constants
 #define KEYPUB                                                      STRDEF("/home/" TEST_USER "/.ssh/id_rsa.pub")
 #define KEYPRIV_CSTR                                                "/home/" TEST_USER "/.ssh/id_rsa"
 #define KEYPUB_CSTR                                                 "/home/" TEST_USER "/.ssh/id_rsa.pub"
+#define KEYPRIV_ED25519_CSTR                                        "/home/" TEST_USER "/.ssh/id_ed25519"
+#define KEYPUB_ED25519_CSTR                                         "/home/" TEST_USER "/.ssh/id_ed25519.pub"
 
 /***********************************************************************************************************************************
 Function constants

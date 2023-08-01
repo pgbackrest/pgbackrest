@@ -67,7 +67,7 @@ storageSftpLibSsh2SessionFreeResource(THIS_VOID)
                 THROW_FMT(
                     ServiceError, "failed to close sftpHandle: libssh2 errno [%d]%s", rc,
                     rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
-                        strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
+                    strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
             else
                 THROW_FMT(
                     ServiceError, "timeout closing sftpHandle: libssh2 errno [%d]", rc);
@@ -88,7 +88,7 @@ storageSftpLibSsh2SessionFreeResource(THIS_VOID)
                 THROW_FMT(
                     ServiceError, "failed to shutdown sftpSession: libssh2 errno [%d]%s", rc,
                     rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
-                        strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
+                    strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
             else
                 THROW_FMT(
                     ServiceError, "timeout shutting down sftpSession: libssh2 errno [%d]", rc);
@@ -317,13 +317,43 @@ storageSftpExpandTildePath(const String *const tildePath)
 
     String *result = strNew();
 
+    // Prepend user home directory to path substring after tilde
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        strCatFmt(result, "%s%s",strZ(userHome()), strZ(strTrim(strReplaceChr(strNewZ(strZ(tildePath)), '~', ' '))));
+        strCatFmt(result, "%s%s", strZ(userHome()), strZ(strSub(tildePath, (size_t)strChr(tildePath, '~') + 1)));
     }
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_TEST_RETURN(STRING, result);
+}
+
+/***********************************************************************************************************************************
+Build keys file list.  keyFiles must be comma delimited and may contain only full path and/or leading tilde path entries.
+***********************************************************************************************************************************/
+static StringList *
+storageSftpKeyFilesList(const String *const keyFiles)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, keyFiles);
+    FUNCTION_LOG_END();
+
+    StringList *result = strLstNew();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Convert comma delimited key file list into a string list.
+        StringList *lclList = strLstNewSplitZ(keyFiles, ",");
+
+        // Trim whitespace and expand leading tilde paths as needed. Add to result list.
+        for (unsigned int listIdx = 0; listIdx < strLstSize(lclList); listIdx++)
+        {
+            String *filePath = strTrim(strLstGet(lclList, listIdx));
+            strLstAdd(result, !regExpMatchOne(STRDEF("^ *~"), filePath) ? filePath : storageSftpExpandTildePath(filePath));
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(STRING_LIST, result);
 }
 
 /**********************************************************************************************************************************/
@@ -897,33 +927,55 @@ storageSftpNew(
             }
         }
 
-        do
-        {
-            // Perform public key authorization. Expand leading tilde file path when necessary.
-            rc = libssh2_userauth_publickey_fromfile(
-                this->session, strZ(user),
-                param.keyPub == NULL || !regExpMatchOne(STRDEF("^ *~"), param.keyPub) ? strZNull(param.keyPub) :
-                strZ(storageSftpExpandTildePath(param.keyPub)),
-                !regExpMatchOne(STRDEF("^ *~"), (keyPriv)) ? strZ(keyPriv) : strZ(storageSftpExpandTildePath(keyPriv)),
-                strZNull(param.keyPassphrase));
-        }
-        while (storageSftpWaitFd(this, rc));
+        // Convert comma delimited private and public key file lists into string lists
+        StringList *privKeyFileList = storageSftpKeyFilesList(keyPriv);
+        StringList *pubKeyFileList = param.keyPub == NULL ? NULL : storageSftpKeyFilesList(param.keyPub);
 
-        if (rc != 0)
+        // Loop through the private keys attempting to authorize. Use correlating public key if exists. Break on
+        // successful authorization.
+        for (unsigned int listIdx = 0; listIdx < strLstSize(privKeyFileList); listIdx++)
         {
+            // Get the trimmed private key file
+            String *privKeyFile = strLstGet(privKeyFileList, listIdx);
+
+            // Check for a matching public key file
+            String *pubKeyFile =
+                pubKeyFileList == NULL || !strLstExists(pubKeyFileList, strNewFmt("%s%s", strZ(privKeyFile), ".pub")) ? NULL :
+                strNewFmt("%s%s", strZ(privKeyFile), ".pub");
+
+            do
+            {
+                // Perform public key authorization.
+                rc = libssh2_userauth_publickey_fromfile(
+                    this->session, strZ(user), pubKeyFile == NULL ? NULL : strZ(pubKeyFile), strZ(privKeyFile),
+                    strZNull(param.keyPassphrase));
+            }
+            while (storageSftpWaitFd(this, rc));
+
+            // Break for loop on successful authorization
+            if (rc == 0)
+                break;
+
+            // Log info related to failures
             if (rc == LIBSSH2_ERROR_EAGAIN)
-                THROW_FMT(ServiceError, "timeout during public key authentication");
-
-            storageSftpEvalLibSsh2Error(
-                rc, libssh2_sftp_last_error(this->sftpSession), &ServiceError,
-                STRDEF("public key authentication failed"),
-                STRDEF(
+                LOG_INFO_FMT("timeout during public key authentication using %s", strZ(privKeyFile));
+            else
+            {
+                LOG_INFO_FMT(
+                    "public key authentication failed using %s: libssh2 error [%d]\n"
                     "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-key-file and"
                     " --repo-sftp-public-key-file to be provided\n"
                     "HINT: libssh2 versions before 1.9.0 expect a PEM format keypair, try ssh-keygen -m PEM -t rsa -P \"\" to"
-                    " generate the keypair"));
+                    " generate the keypair",
+                    strZ(privKeyFile), rc);
+            }
         }
 
+        // If authorization attempts for all files fail throw an error
+        if (rc != 0)
+            THROW_FMT(ServiceError, "public key authentication failed, check the log file for details");
+
+        // Initialize sftp session
         do
         {
             this->sftpSession = libssh2_sftp_init(this->session);
