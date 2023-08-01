@@ -396,7 +396,7 @@ testRun(void)
             "libssh2_knownhost_checkp failure: 'localhost' not found in known_hosts file: LIBSSH2_KNOWNHOST_CHECK_NOTFOUND [2]");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("read known_hosts file failure - empty files - log warning on empty known_hosts files");
+        TEST_TITLE("read known_hosts file failure - empty files - log INFO on empty known_hosts files");
 
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
@@ -421,10 +421,10 @@ testRun(void)
             ServiceError,
             "libssh2_knownhost_checkp failure: 'localhost' not found in known_hosts file: LIBSSH2_KNOWNHOST_CHECK_NOTFOUND [2]");
         TEST_RESULT_LOG(
-            "P00   WARN: libssh2 '/home/" TEST_USER "/.ssh/known_hosts' file is empty\n"
-            "P00   WARN: libssh2 '/home/" TEST_USER "/.ssh/known_hosts2' file is empty\n"
-            "P00   WARN: libssh2 '/etc/ssh/ssh_known_hosts' file is empty\n"
-            "P00   WARN: libssh2 '/etc/ssh/ssh_known_hosts2' file is empty");
+            "P00   INFO: libssh2 '/home/" TEST_USER "/.ssh/known_hosts' file is empty\n"
+            "P00   INFO: libssh2 '/home/" TEST_USER "/.ssh/known_hosts2' file is empty\n"
+            "P00   INFO: libssh2 '/etc/ssh/ssh_known_hosts' file is empty\n"
+            "P00   INFO: libssh2 '/etc/ssh/ssh_known_hosts2' file is empty");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("knownhost_checkp unknown failure type");
@@ -700,19 +700,19 @@ testRun(void)
                 TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
             "new storage (defaults)");
         TEST_RESULT_LOG(
-            "P00   WARN: libssh2 read '/home/" TEST_USER "/.ssh/known_hosts' file failed: libssh2 errno [-16] Failed to open"
+            "P00   INFO: libssh2 read '/home/" TEST_USER "/.ssh/known_hosts' file failed: libssh2 errno [-16] Failed to open"
             " file\n"
-            "P00   WARN: libssh2 read '/home/" TEST_USER "/.ssh/known_hosts2' file failed: libssh2 errno [-16] Failed to open"
+            "P00   INFO: libssh2 read '/home/" TEST_USER "/.ssh/known_hosts2' file failed: libssh2 errno [-16] Failed to open"
             " file\n"
-            "P00   WARN: libssh2 read '/etc/ssh/ssh_known_hosts' file failed: libssh2 errno [-16] Failed to open file\n"
-            "P00   WARN: libssh2 read '/etc/ssh/ssh_known_hosts2' file failed: libssh2 errno [-16] Failed to open file\n"
-            "P00   WARN: libssh2_knownhost_checkp failure: 'localhost' not found in known_hosts file:"
+            "P00   INFO: libssh2 read '/etc/ssh/ssh_known_hosts' file failed: libssh2 errno [-16] Failed to open file\n"
+            "P00   INFO: libssh2 read '/etc/ssh/ssh_known_hosts2' file failed: libssh2 errno [-16] Failed to open file\n"
+            "P00   INFO: libssh2_knownhost_checkp failure: 'localhost' not found in known_hosts file:"
             " LIBSSH2_KNOWNHOST_CHECK_NOTFOUND [2]");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("sftp session init success - libssh2_session_hostkey fail - requireKnownHostsMatch false - log warning");
+        TEST_TITLE("sftp session init success - libssh2_session_hostkey fail - requireKnownHostsMatch false - log INFO");
 
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
@@ -740,12 +740,12 @@ testRun(void)
                 .knownHostsFiles = STRDEF(KNOWNHOSTS_FILE_CSTR)),
             "new storage (defaults)");
         TEST_RESULT_LOG(
-            "P00   WARN: libssh2_session_hostkey failed: libssh2 error [-7]");
+            "P00   INFO: libssh2_session_hostkey failed: libssh2 error [-7]");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("sftp session init success with requireKnownHostsMatch disabled warning");
+        TEST_TITLE("sftp session init success with requireKnownHostsMatch disabled - log INFO");
 
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
@@ -774,7 +774,7 @@ testRun(void)
             "new storage (defaults)");
         TEST_RESULT_BOOL(storageTest->write, false, "check write");
         TEST_RESULT_LOG(
-            "P00   WARN: libssh2_knownhost_checkp failure: 'localhost' mismatch in known_hosts file:"
+            "P00   INFO: libssh2_knownhost_checkp failure: 'localhost' mismatch in known_hosts file:"
             " LIBSSH2_KNOWNHOST_CHECK_MISMATCH [1]");
 
         // Free context, otherwise callbacks to storageSftpLibSsh2SessionFreeResource() accumulate

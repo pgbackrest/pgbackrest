@@ -346,7 +346,10 @@ storageSftpKnownHostsFilesList(const String *const knownHostsFiles)
                 // If leading tilde path, replace tilde with space, trim space, prepend user home path and add to the result list
                 // else add the full path to the list
                 if (strBeginsWithZ(filePath, "~/"))
-                    strLstAddFmt(result, "%s%s", strZ(userHome()), strZ(strTrim(strReplaceChr(filePath, '~', ' '))));
+                {
+                    strLstAddFmt(
+                        result, "%s%s", strZ(userHome()), strZ(strTrim(strSub(filePath, (size_t)strChr(filePath, '~') + 1))));
+                }
                 else
                     strLstAdd(result, filePath);
             }
@@ -966,9 +969,9 @@ storageSftpNew(
                 // Load the known_hosts file entries into the collection
                 if ((rc = libssh2_knownhost_readfile(knownHostsList, currentKnownHostFile, LIBSSH2_KNOWNHOST_FILE_OPENSSH)) <= 0)
                 {
-                    // Log warnings on empty known_hosts files and file read errors
+                    // Log message on empty known_hosts files and file read errors
                     if (rc == 0)
-                        LOG_WARN_FMT("libssh2 '%s' file is empty", currentKnownHostFile);
+                        LOG_INFO_FMT("libssh2 '%s' file is empty", currentKnownHostFile);
                     else
                     {
                         char *libSsh2ErrMsg;
@@ -977,7 +980,7 @@ storageSftpNew(
                         // Get the libssh2 error message
                         rc = libssh2_session_last_error(this->session, &libSsh2ErrMsg, &libSsh2ErrMsgLen, 0);
 
-                        LOG_WARN_FMT(
+                        LOG_INFO_FMT(
                             "libssh2 read '%s' file failed: libssh2 errno [%d] %s", currentKnownHostFile, rc, libSsh2ErrMsg);
                     }
                 }
@@ -1017,7 +1020,7 @@ storageSftpNew(
                             break;
                     }
 
-                    // Error if known_hosts match is required else log warning
+                    // Error if known_hosts match is required else log message
                     if (param.requireKnownHostsMatch)
                     {
                         // Free the knownHostsList
@@ -1026,12 +1029,12 @@ storageSftpNew(
                         THROW_FMT(ServiceError, "libssh2_knownhost_checkp failure: '%s' %s [%d]", strZ(host), matchFailMsg, rc);
                     }
                     else
-                        LOG_WARN_FMT("libssh2_knownhost_checkp failure: '%s' %s [%d]", strZ(host), matchFailMsg, rc);
+                        LOG_INFO_FMT("libssh2_knownhost_checkp failure: '%s' %s [%d]", strZ(host), matchFailMsg, rc);
                 }
             }
             else
             {
-                // Error if known_hosts match is required else log warning
+                // Error if known_hosts match is required else log message
                 if (param.requireKnownHostsMatch)
                 {
                     // Free the knownHostsList
@@ -1042,8 +1045,7 @@ storageSftpNew(
                         "libssh2_session_hostkey failed: libssh2 error [%d]", libssh2_session_last_errno(this->session));
                 }
                 else
-                    LOG_WARN_FMT(
-                        "libssh2_session_hostkey failed: libssh2 error [%d]", libssh2_session_last_errno(this->session));
+                    LOG_INFO_FMT("libssh2_session_hostkey failed: libssh2 error [%d]", libssh2_session_last_errno(this->session));
             }
 
             // Free the knownHostsList
