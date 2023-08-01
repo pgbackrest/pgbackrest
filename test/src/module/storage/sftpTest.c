@@ -192,7 +192,7 @@ testRun(void)
             ServiceError, "requested ssh2 hostkey hash type (aes-256-cbc) not available");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("public key from file auth failure leading tilde key path");
+        TEST_TITLE("public key from file auth failure leading tilde key paths");
 
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
@@ -206,6 +206,7 @@ testRun(void)
             {.function = HRNLIBSSH2_SESSION_BLOCK_DIRECTIONS, .resultInt = SSH2_NO_BLOCK_READING_WRITING},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
              .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",\"" KEYPUB_CSTR "\",\"" KEYPRIV_CSTR "\",null]", .resultInt = -16},
+            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_OK},
             {.function = NULL}
         });
 
@@ -215,44 +216,11 @@ testRun(void)
                 .keyPub = STRDEF("~/.ssh/id_rsa.pub"),
                 .hostFingerprint = STRDEF("3132333435363738393039383736353433323130")),
             ServiceError,
-            "public key authentication failed, check the log file for details");
-        TEST_RESULT_LOG(
-            "P00   INFO: public key authentication failed using /home/vagrant/.ssh/id_rsa: libssh2 error [-16]\n"
-            "            HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-key-file and"
+            "public key authentication failed: libssh2 error [-16]\n"
+            "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-key-file and"
             " --repo-sftp-public-key-file to be provided\n"
-            "            HINT: libssh2 versions before 1.9.0 expect a PEM format keypair, try ssh-keygen -m PEM -t rsa -P \"\" to"
-            " generate the keypair");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("public key from file auth failure NULL public key leading tilde key path");
-
-        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
-        {
-            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
-            {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
-            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = LIBSSH2_ERROR_NONE},
-            {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "12345678909876543210"},
-            {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
-             .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",null,\"" KEYPRIV_CSTR "\",null]",
-             .resultInt = LIBSSH2_ERROR_EAGAIN},
-            {.function = HRNLIBSSH2_SESSION_BLOCK_DIRECTIONS, .resultInt = SSH2_NO_BLOCK_READING_WRITING},
-            {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
-             .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",null,\"" KEYPRIV_CSTR "\",null]", .resultInt = -16},
-            {.function = NULL}
-        });
-
-        TEST_ERROR(
-            storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, STRDEF("~/.ssh/id_rsa"), hashTypeSha1,
-                .hostFingerprint = STRDEF("3132333435363738393039383736353433323130")),
-            ServiceError,
-            "public key authentication failed, check the log file for details");
-        TEST_RESULT_LOG(
-            "P00   INFO: public key authentication failed using /home/vagrant/.ssh/id_rsa: libssh2 error [-16]\n"
-            "            HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-key-file and"
-            " --repo-sftp-public-key-file to be provided\n"
-            "            HINT: libssh2 versions before 1.9.0 expect a PEM format keypair, try ssh-keygen -m PEM -t rsa -P \"\" to"
-            " generate the keypair");
+            "HINT: libssh2 versions before 1.9.0 expect a PEM format keypair, try ssh-keygen -m PEM -t rsa -P \"\" to generate the"
+            " keypair");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("fingerprint mismatch");
@@ -285,45 +253,17 @@ testRun(void)
             {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "01234567899876543210"},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
              .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",null,\"" KEYPRIV_CSTR "\",null]", .resultInt = -16},
+            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_OK},
             {.function = NULL}
         });
 
         TEST_ERROR(
             storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1), ServiceError,
-            "public key authentication failed, check the log file for details");
-        TEST_RESULT_LOG(
-            "P00   INFO: public key authentication failed using /home/vagrant/.ssh/id_rsa: libssh2 error [-16]\n"
-            "            HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-key-file and"
+            "public key authentication failed: libssh2 error [-16]\n"
+            "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-key-file and"
             " --repo-sftp-public-key-file to be provided\n"
-            "            HINT: libssh2 versions before 1.9.0 expect a PEM format keypair, try ssh-keygen -m PEM -t rsa -P \"\" to"
-            " generate the keypair");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("public key from file auth failure, non matching public key");
-
-        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
-        {
-            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
-            {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
-            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = LIBSSH2_ERROR_NONE},
-            {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "01234567899876543210"},
-            {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
-             .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",null,\"" KEYPRIV_CSTR "\",null]", .resultInt = -16},
-            {.function = NULL}
-        });
-
-        TEST_ERROR(
-            storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1,
-                .keyPub = STRDEF("/home/" TEST_USER "/.ssh/does_not_match")),
-            ServiceError,
-            "public key authentication failed, check the log file for details");
-        TEST_RESULT_LOG(
-            "P00   INFO: public key authentication failed using /home/vagrant/.ssh/id_rsa: libssh2 error [-16]\n"
-            "            HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-key-file and"
-            " --repo-sftp-public-key-file to be provided\n"
-            "            HINT: libssh2 versions before 1.9.0 expect a PEM format keypair, try ssh-keygen -m PEM -t rsa -P \"\" to"
-            " generate the keypair");
+            "HINT: libssh2 versions before 1.9.0 expect a PEM format keypair, try ssh-keygen -m PEM -t rsa -P \"\" to generate the"
+            " keypair");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("public key from file auth failure, key passphrase");
@@ -337,6 +277,7 @@ testRun(void)
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
              .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",\"" KEYPUB_CSTR "\",\"" KEYPRIV_CSTR "\",\"keyPassphrase\"]",
              .resultInt = -16},
+            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_OK},
             {.function = NULL}
         });
 
@@ -345,13 +286,11 @@ testRun(void)
                 TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB,
                 .keyPassphrase = STRDEF("keyPassphrase")),
             ServiceError,
-            "public key authentication failed, check the log file for details");
-        TEST_RESULT_LOG(
-            "P00   INFO: public key authentication failed using /home/vagrant/.ssh/id_rsa: libssh2 error [-16]\n"
-            "            HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-key-file and"
+            "public key authentication failed: libssh2 error [-16]\n"
+            "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-key-file and"
             " --repo-sftp-public-key-file to be provided\n"
-            "            HINT: libssh2 versions before 1.9.0 expect a PEM format keypair, try ssh-keygen -m PEM -t rsa -P \"\" to"
-            " generate the keypair");
+            "HINT: libssh2 versions before 1.9.0 expect a PEM format keypair, try ssh-keygen -m PEM -t rsa -P \"\" to generate the"
+            " keypair");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("public key from file LIBSSH2_ERROR_EAGAIN, failure");
@@ -372,8 +311,7 @@ testRun(void)
         TEST_ERROR(
             storageSftpNewP(
                 TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 100, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB), ServiceError,
-            "public key authentication failed, check the log file for details");
-        TEST_RESULT_LOG("P00   INFO: timeout during public key authentication using /home/vagrant/.ssh/id_rsa");
+            "timeout during public key authentication");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("sftp session init failure ssh2 error");
@@ -494,43 +432,6 @@ testRun(void)
                 STRDEF("/tmp"), STRDEF("localhost"), 22, TEST_USER_STR, 100, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB),
             "new storage (defaults)");
         TEST_RESULT_BOOL(storageTest->write, false, "check write");
-
-        memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("sftp session init success - multiple ssh key files");
-
-        // Shim sets FD for tests.
-        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
-        {
-            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
-            {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
-            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = LIBSSH2_ERROR_NONE},
-            {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "12345678910123456789"},
-            {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
-             .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",\"" KEYPUB_CSTR "\",\"" KEYPRIV_CSTR "\",null]",
-             .resultInt = LIBSSH2_ERROR_AUTHENTICATION_FAILED},
-            {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
-             .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",\"" KEYPUB_ED25519_CSTR "\",\"" KEYPRIV_ED25519_CSTR "\",null]",
-             .resultInt = LIBSSH2_ERROR_NONE},
-            {.function = HRNLIBSSH2_SFTP_INIT, .resultInt = LIBSSH2_ERROR_NONE},
-            HRNLIBSSH2_MACRO_SHUTDOWN()
-        });
-
-        TEST_ASSIGN(
-            storageTest,
-            storageSftpNewP(
-                STRDEF("/tmp"), STRDEF("localhost"), 22, TEST_USER_STR, 100,
-                STRDEF("/home/" TEST_USER "/.ssh/id_rsa,/home/" TEST_USER "/.ssh/id_ed25519"), hashTypeSha1,
-                .keyPub = STRDEF("/home/" TEST_USER "/.ssh/id_rsa.pub,/home/" TEST_USER "/.ssh/id_ed25519.pub")),
-            "new storage (defaults)");
-        TEST_RESULT_BOOL(storageTest->write, false, "check write");
-        TEST_RESULT_LOG(
-            "P00   INFO: public key authentication failed using /home/vagrant/.ssh/id_rsa: libssh2 error [-18]\n"
-            "            HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-key-file and"
-            " --repo-sftp-public-key-file to be provided\n"
-            "            HINT: libssh2 versions before 1.9.0 expect a PEM format keypair, try ssh-keygen -m PEM -t rsa -P \"\" to"
-            " generate the keypair");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
