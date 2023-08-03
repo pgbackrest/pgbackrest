@@ -192,7 +192,7 @@ testRun(void)
             ServiceError, "requested ssh2 hostkey hash type (aes-256-cbc) not available");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("public key from file auth failure leading tilde key paths");
+        TEST_TITLE("public key from file auth failure leading - tilde key paths");
 
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {

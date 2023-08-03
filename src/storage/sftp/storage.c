@@ -67,7 +67,7 @@ storageSftpLibSsh2SessionFreeResource(THIS_VOID)
                 THROW_FMT(
                     ServiceError, "failed to close sftpHandle: libssh2 errno [%d]%s", rc,
                     rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
-                    strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
+                        strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
             else
                 THROW_FMT(
                     ServiceError, "timeout closing sftpHandle: libssh2 errno [%d]", rc);
@@ -88,7 +88,7 @@ storageSftpLibSsh2SessionFreeResource(THIS_VOID)
                 THROW_FMT(
                     ServiceError, "failed to shutdown sftpSession: libssh2 errno [%d]%s", rc,
                     rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
-                    strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
+                        strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
             else
                 THROW_FMT(
                     ServiceError, "timeout shutting down sftpSession: libssh2 errno [%d]", rc);
@@ -317,7 +317,7 @@ storageSftpExpandTildePath(const String *const tildePath)
 
     String *result = strNew();
 
-    // Prepend user home directory to path substring after tilde
+    // Append to user home directory path substring after the tilde
     MEM_CONTEXT_TEMP_BEGIN()
     {
         strCatFmt(result, "%s%s", strZ(userHome()), strZ(strSub(tildePath, (size_t)strChr(tildePath, '~') + 1)));
@@ -929,7 +929,6 @@ storageSftpNew(
                     " generate the keypair"));
         }
 
-        // Init sftp session
         do
         {
             this->sftpSession = libssh2_sftp_init(this->session);
