@@ -315,7 +315,7 @@ storageSftpExpandTildePath(const String *const tildePath)
         FUNCTION_TEST_PARAM(STRING, tildePath);
     FUNCTION_TEST_END();
 
-    String *result = strNew();
+    String *const result = strNew();
 
     // Append to user home directory path substring after the tilde
     MEM_CONTEXT_TEMP_BEGIN()
@@ -901,8 +901,8 @@ storageSftpNew(
         // Perform public key authorization, expand leading tilde key file paths if needed
         String *const privKeyPath = regExpMatchOne(STRDEF("^ *~"), keyPriv) ? storageSftpExpandTildePath(keyPriv) : strDup(keyPriv);
         String *const pubKeyPath =
-            param.keyPub != NULL && regExpMatchOne(STRDEF("^ *~"), param.keyPub) ? storageSftpExpandTildePath(param.keyPub) :
-            strDup(param.keyPub);
+            param.keyPub != NULL && regExpMatchOne(STRDEF("^ *~"), param.keyPub) ?
+                storageSftpExpandTildePath(param.keyPub) : strDup(param.keyPub);
 
         do
         {
