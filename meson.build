@@ -165,6 +165,8 @@ lib_yaml = dependency('yaml-0.1')
 # Find required gz library
 lib_z = dependency('zlib')
 
+configuration.set('ZLIB_CONST', true, description: 'Require zlib const input buffer')
+
 # Find optional libssh2 library
 lib_ssh2 = dependency('libssh2', required: false)
 

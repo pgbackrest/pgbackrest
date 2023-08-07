@@ -101,6 +101,11 @@ testRun(void)
         HRN_SYSTEM_FMT("mkdir -m 750 %s", strZ(configIncludePath));
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("no stanzas loaded yet");
+
+        TEST_RESULT_STRLST_Z(cfgParseStanzaList(), NULL, "stanza list");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check old config file constants");
 
         TEST_RESULT_Z(PGBACKREST_CONFIG_ORIG_PATH_FILE, "/etc/pgbackrest.conf", "check old config path");
@@ -621,8 +626,8 @@ testRun(void)
         strLstAddZ(argList, TEST_BACKREST_EXE);
         strLstAddZ(argList, "-bogus");
         TEST_ERROR(
-            cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidError,
-            "option '-bogus' must begin with --");
+            cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true),
+            OptionInvalidError, "option '-bogus' must begin with --");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when option argument is invalid");
@@ -1262,6 +1267,17 @@ testRun(void)
             "option 'target-exclusive' not valid without option 'type' in ('lsn', 'time', 'xid')");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("dependent option missing (indexed option depends on non-indexed option");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/db");
+        strLstAddZ(argList, CFGCMD_CHECK);
+        TEST_ERROR(
+            cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidError,
+            "option 'pg1-path' not valid without option 'stanza'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("option invalid for command");
 
         argList = strLstNew();
@@ -1453,6 +1469,9 @@ testRun(void)
         TEST_ERROR(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidError,
             "configuration file contains duplicate options ('db-path', 'pg1-path') in section '[db]'");
+        TEST_ERROR(
+            cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true, .noConfigLoad = true),
+            OptionInvalidError, "configuration file contains duplicate options ('db-path', 'pg1-path') in section '[db]'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("config file - option set multiple times");
@@ -1711,6 +1730,7 @@ testRun(void)
             "P00   WARN: configuration file contains invalid option 'backup-standb'\n"
             "P00   WARN: configuration file contains stanza-only option 'pg1-path' in global section 'global'");
 
+        TEST_RESULT_STRLST_Z(cfgParseStanzaList(), "db\n", "stanza list");
         TEST_RESULT_STR_Z(jsonFromVar(varNewVarLst(cfgCommandJobRetry())), "[0,33000,33000]", "custom job retries");
         TEST_RESULT_BOOL(cfgOptionIdxTest(cfgOptPgHost, 0), false, "pg1-host is not set (command line reset override)");
         TEST_RESULT_BOOL(cfgOptionIdxReset(cfgOptPgHost, 0), true, "pg1-host was reset");
