@@ -64,6 +64,7 @@ hrnManifestFileAdd(Manifest *const manifest, const HrnManifestFile hrnManifestFi
         FUNCTION_HARNESS_PARAM(UINT64, hrnManifestFile.blockIncrSize);
         FUNCTION_HARNESS_PARAM(UINT64, hrnManifestFile.blockIncrMapSize);
         FUNCTION_HARNESS_PARAM(UINT64, hrnManifestFile.size);
+        FUNCTION_HARNESS_PARAM(UINT64, hrnManifestFile.sizeOriginal);
         FUNCTION_HARNESS_PARAM(UINT64, hrnManifestFile.sizeRepo);
         FUNCTION_HARNESS_PARAM(TIME, hrnManifestFile.timestamp);
     FUNCTION_HARNESS_END();
@@ -87,9 +88,13 @@ hrnManifestFileAdd(Manifest *const manifest, const HrnManifestFile hrnManifestFi
             .blockIncrChecksumSize = hrnManifestFile.blockIncrChecksumSize,
             .blockIncrMapSize = hrnManifestFile.blockIncrMapSize,
             .size = hrnManifestFile.size,
+            .sizeOriginal = hrnManifestFile.sizeOriginal,
             .sizeRepo = hrnManifestFile.sizeRepo,
             .timestamp = hrnManifestFile.timestamp,
         };
+
+        if (manifestFile.sizeOriginal == 0)
+            manifestFile.sizeOriginal = manifestFile.size;
 
         if (hrnManifestFile.mode == 0)
             manifestFile.mode = 0600;

@@ -450,7 +450,7 @@ sub containerBuild
         }
 
         #---------------------------------------------------------------------------------------------------------------------------
-        if ($strOS ne VM_U22 && $strOS ne VM_F36)
+        if ($strOS ne VM_U22)
         {
             my $strValgrind = 'valgrind-3.17.0';
 
@@ -495,11 +495,11 @@ sub containerBuild
                         "        https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-" . hostArch() . "/" .
                             "pgdg-redhat-repo-latest.noarch.rpm && \\\n";
                 }
-                elsif ($strOS eq VM_F36)
+                elsif ($strOS eq VM_F38)
                 {
                     $strScript .=
                         "    rpm -ivh \\\n" .
-                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-36-" . hostArch() . "/" .
+                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-38-" . hostArch() . "/" .
                             "pgdg-fedora-repo-latest.noarch.rpm && \\\n";
                 }
 
@@ -509,14 +509,10 @@ sub containerBuild
             {
                 $strScript .=
                     "    echo \"deb http://apt.postgresql.org/pub/repos/apt/ \$(lsb_release -s -c)-pgdg main" .
-                        "\" >> /etc/apt/sources.list.d/pgdg.list && \\\n" .
-                    ($strOS eq VM_U22 ?
-                        "    echo \"deb http://apt.postgresql.org/pub/repos/apt/ \$(lsb_release -s -c)-pgdg-snapshot main 16\"" .
-                            " >> /etc/apt/sources.list.d/pgdg.list && \\\n" : '') .
+                        ($strOS eq VM_U22 ? ' 16' : '') . "\" >> /etc/apt/sources.list.d/pgdg.list && \\\n" .
                     "    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \\\n" .
                     "    apt-get update && \\\n" .
-                    "    apt-get install -y --no-install-recommends" .
-                    ($strOS eq VM_U22 ? " -t \$(lsb_release -s -c)-pgdg-snapshot" : '') . " postgresql-common libpq-dev && \\\n" .
+                    "    apt-get install -y --no-install-recommends postgresql-common libpq-dev && \\\n" .
                     "    sed -i 's/^\\#create\\_main\\_cluster.*\$/create\\_main\\_cluster \\= false/' " .
                         "/etc/postgresql-common/createcluster.conf";
             }
@@ -532,9 +528,7 @@ sub containerBuild
                 }
                 else
                 {
-                    $strScript .=
-                        "    apt-get install -y --no-install-recommends" .
-                        ($strOS eq VM_U22 ? " -t \$(lsb_release -s -c)-pgdg-snapshot" : '');
+                    $strScript .= "    apt-get install -y --no-install-recommends";
                  }
 
                 # Construct list of databases to install

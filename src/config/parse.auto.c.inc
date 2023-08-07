@@ -1582,7 +1582,13 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                     PARSE_RULE_VAL_STRID(parseRuleValStrIdBz2),                                                 // opt/compress-type
                     PARSE_RULE_VAL_STRID(parseRuleValStrIdGz),                                                  // opt/compress-type
                     PARSE_RULE_VAL_STRID(parseRuleValStrIdLz4),                                                 // opt/compress-type
+#ifndef HAVE_LIBLZ4                                                                                             // opt/compress-type
+                        PARSE_RULE_BOOL_FALSE,                                                                  // opt/compress-type
+#endif                                                                                                          // opt/compress-type
                     PARSE_RULE_VAL_STRID(parseRuleValStrIdZst),                                                 // opt/compress-type
+#ifndef HAVE_LIBZST                                                                                             // opt/compress-type
+                        PARSE_RULE_BOOL_FALSE,                                                                  // opt/compress-type
+#endif                                                                                                          // opt/compress-type
                 ),                                                                                              // opt/compress-type
                                                                                                                 // opt/compress-type
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                     // opt/compress-type
@@ -9123,6 +9129,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                     PARSE_RULE_VAL_STRID(parseRuleValStrIdPosix),                                                   // opt/repo-type
                     PARSE_RULE_VAL_STRID(parseRuleValStrIdS3),                                                      // opt/repo-type
                     PARSE_RULE_VAL_STRID(parseRuleValStrIdSftp),                                                    // opt/repo-type
+#ifndef HAVE_LIBSSH2                                                                                                // opt/repo-type
+                        PARSE_RULE_BOOL_FALSE,                                                                      // opt/repo-type
+#endif                                                                                                              // opt/repo-type
                 ),                                                                                                  // opt/repo-type
                                                                                                                     // opt/repo-type
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                         // opt/repo-type

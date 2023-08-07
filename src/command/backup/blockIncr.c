@@ -201,8 +201,8 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
             ioWriteClose(this->blockOutWrite);
 
             // Update size and super block size for items already added to the block map
-            const uint64_t blockOutSize = pckReadU64P(
-                ioFilterGroupResultP(ioWriteFilterGroup(this->blockOutWrite), SIZE_FILTER_TYPE));
+            PackRead *const filter = ioFilterGroupResultP(ioWriteFilterGroup(this->blockOutWrite), SIZE_FILTER_TYPE);
+            const uint64_t blockOutSize = pckReadU64P(filter);
 
             for (unsigned int blockMapIdx = 0; blockMapIdx < lstSize(this->blockOutList); blockMapIdx++)
             {
@@ -213,6 +213,7 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
                 blockMapItem->superBlockSize = this->blockOutSize;
             }
 
+            pckReadFree(filter);
             lstFree(this->blockOutList);
 
             // Set to NULL so the super block can be flushed

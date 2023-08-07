@@ -78,14 +78,19 @@ backupLabelCreate(const BackupType type, const String *const backupLabelPrior, c
 
         if (!strLstEmpty(historyYearList))
         {
+            // For full backup compare against all backups in the history. For other backup types find backups whose name begins
+            // with full backup part of backupLabelLatest. This prevents label generation from failing when the last full backup is
+            // removed and then an diff/incr is generated from the last remaining full backup.
+            const String *const fileNameRegExp =
+                (type == backupTypeFull) ?
+                    backupRegExpP(.full = true, .differential = true, .incremental = true, .noAnchorEnd = true) :
+                    strNewFmt("^%.*sF\\_" DATE_TIME_REGEX "(D|I)", DATE_TIME_LEN, strZ(backupLabelLatest));
+
             const StringList *historyList = strLstSort(
                 storageListP(
                     storageRepo(),
                     strNewFmt(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s", strZ(strLstGet(historyYearList, 0))),
-                    .expression = strNewFmt(
-                        "%s\\.manifest\\.%s$",
-                        strZ(backupRegExpP(.full = true, .differential = true, .incremental = true, .noAnchorEnd = true)),
-                        strZ(compressTypeStr(compressTypeGz)))),
+                    .expression = strNewFmt("%s\\.manifest\\.%s$", strZ(fileNameRegExp), strZ(compressTypeStr(compressTypeGz)))),
                 sortOrderDesc);
 
             if (!strLstEmpty(historyList))
@@ -437,7 +442,7 @@ backupBlockIncrMap(void)
 
                 ManifestBlockIncrAgeMap manifestBuildBlockIncrAgeMap =
                 {
-                    .fileAge = varUIntForce(mapKey) * (unsigned int)SEC_PER_DAY,
+                    .fileAge = (unsigned int)(varUIntForce(mapKey) * SEC_PER_DAY),
                     .blockMultiplier = varUIntForce(kvGet(manifestBlockIncrAgeKv, mapKey)),
                 };
 
@@ -1204,6 +1209,7 @@ backupFilePut(
                 .user = basePath->user,
                 .group = basePath->group,
                 .size = strSize(content),
+                .sizeOriginal = strSize(content),
                 .sizeRepo = pckReadU64P(ioFilterGroupResultP(filterGroup, SIZE_FILTER_TYPE)),
                 .timestamp = timestamp,
                 .checksumSha1 = bufPtr(pckReadBinP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE, .idx = 0))),
@@ -1432,6 +1438,10 @@ backupJobResult(
 
                 if (bundleId != 0 && copyResult != backupCopyResultNoOp)
                     strCatFmt(logProgress, "bundle %" PRIu64 "/%" PRIu64 ", ", bundleId, bundleOffset);
+
+                // Log original manifest size if copy size differs
+                if (copySize != file.size)
+                    strCatFmt(logProgress, "%s->", strZ(strSizeFormat(file.size)));
 
                 // Store percentComplete as an integer
                 percentComplete = sizeTotal == 0 ? 10000 : (unsigned int)(((double)*sizeProgress / (double)sizeTotal) * 10000);
@@ -2394,6 +2404,7 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
                             .user = basePath->user,
                             .group = basePath->group,
                             .size = backupData->walSegmentSize,
+                            .sizeOriginal = backupData->walSegmentSize,
                             .sizeRepo = pckReadU64P(ioFilterGroupResultP(filterGroup, SIZE_FILTER_TYPE)),
                             .timestamp = manifestData(manifest)->backupTimestampStop,
                             .checksumSha1 = bufPtr(bufNewDecode(encodingHex, strSubN(archiveFile, 25, 40))),

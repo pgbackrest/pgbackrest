@@ -46,6 +46,7 @@ typedef struct HrnManifestFile
     size_t blockIncrChecksumSize;
     uint64_t blockIncrMapSize;
     uint64_t size;
+    uint64_t sizeOriginal;
     uint64_t sizeRepo;
     time_t timestamp;
 } HrnManifestFile;

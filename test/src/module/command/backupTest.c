@@ -68,15 +68,206 @@ testBlockDelta(const BlockMap *const blockMap, const size_t blockSize, const siz
 Get a list of all files in the backup and a redacted version of the manifest that can be tested against a static string
 ***********************************************************************************************************************************/
 static String *
-testBackupValidateList(
+testBackupValidateFile(
     const Storage *const storage, const String *const path, Manifest *const manifest, const ManifestData *const manifestData,
-    const CipherType cipherType, const String *const cipherPass, String *const result)
+    const String *const fileName, uint64_t fileSize, ManifestFilePack **const filePack, const CipherType cipherType,
+    const String *const cipherPass)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(STORAGE, storage);
         FUNCTION_HARNESS_PARAM(STRING, path);
         FUNCTION_HARNESS_PARAM(MANIFEST, manifest);
         FUNCTION_HARNESS_PARAM_P(VOID, manifestData);
+        FUNCTION_HARNESS_PARAM(STRING, fileName);
+        FUNCTION_HARNESS_PARAM(UINT64, fileSize);
+        FUNCTION_HARNESS_PARAM_P(VOID, filePack);
+        FUNCTION_HARNESS_PARAM(STRING_ID, cipherType);
+        FUNCTION_HARNESS_PARAM(STRING, cipherPass);
+    FUNCTION_HARNESS_END();
+
+    String *const result = strNew();
+    ManifestFile file = manifestFileUnpack(manifest, *filePack);
+
+    if (file.bundleId != 0)
+        strCatFmt(result, "%s/%s {file", strZ(fileName), strZ(file.name));
+    else
+        strCatFmt(result, "%s {file", strZ(fileName));
+
+    // Validate repo checksum
+    // -------------------------------------------------------------------------------------------------------------
+    if (file.checksumRepoSha1 != NULL)
+    {
+        StorageRead *read = storageNewReadP(
+            storage, strNewFmt("%s/%s", strZ(path), strZ(fileName)), .offset = file.bundleOffset,
+            .limit = VARUINT64(file.sizeRepo));
+        const Buffer *const checksum = cryptoHashOne(hashTypeSha1, storageGetP(read));
+
+        if (!bufEq(checksum, BUF(file.checksumRepoSha1, HASH_TYPE_SHA1_SIZE)))
+            THROW_FMT(AssertError, "'%s' repo checksum does match manifest", strZ(file.name));
+    }
+
+    // Calculate checksum/size and decompress if needed
+    // -------------------------------------------------------------------------------------------------------------
+    uint64_t size = 0;
+    const Buffer *checksum = NULL;
+
+    // If block incremental
+    if (file.blockIncrMapSize != 0)
+    {
+        // Read block map
+        StorageRead *read = storageNewReadP(
+            storage, strNewFmt("%s/%s", strZ(path), strZ(fileName)),
+            .offset = file.bundleOffset + file.sizeRepo - file.blockIncrMapSize,
+            .limit = VARUINT64(file.blockIncrMapSize));
+
+        if (cipherType != cipherTypeNone)
+        {
+            ioFilterGroupAdd(
+                ioReadFilterGroup(storageReadIo(read)),
+                cipherBlockNewP(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), .raw = true));
+        }
+
+        ioReadOpen(storageReadIo(read));
+
+        const BlockMap *const blockMap = blockMapNewRead(
+            storageReadIo(read), file.blockIncrSize, file.blockIncrChecksumSize);
+
+        // Build map log
+        String *const mapLog = strNew();
+        const BlockMapItem *blockMapItemLast = NULL;
+
+        for (unsigned int blockMapIdx = 0; blockMapIdx < blockMapSize(blockMap); blockMapIdx++)
+        {
+            const BlockMapItem *const blockMapItem = blockMapGet(blockMap, blockMapIdx);
+            const bool superBlockChange =
+                blockMapItemLast == NULL || blockMapItemLast->reference != blockMapItem->reference ||
+                blockMapItemLast->offset != blockMapItem->offset;
+
+            if (superBlockChange && blockMapIdx != 0)
+                strCatChr(mapLog, '}');
+
+            if (!strEmpty(mapLog))
+                strCatChr(mapLog, ',');
+
+            if (superBlockChange)
+                strCatFmt(mapLog, "%u:{", blockMapItem->reference);
+
+            strCatFmt(mapLog, "%" PRIu64, blockMapItem->block);
+
+            blockMapItemLast = blockMapItem;
+        }
+
+        // Check blocks
+        Buffer *fileBuffer = bufNew((size_t)file.size);
+        bufUsedSet(fileBuffer, bufSize(fileBuffer));
+
+        BlockDelta *const blockDelta = blockDeltaNew(
+            blockMap, file.blockIncrSize, file.blockIncrChecksumSize, NULL, cipherType, cipherPass,
+            manifestData->backupOptionCompressType);
+
+        for (unsigned int readIdx = 0; readIdx < blockDeltaReadSize(blockDelta); readIdx++)
+        {
+            const BlockDeltaRead *const read = blockDeltaReadGet(blockDelta, readIdx);
+            const String *const blockName = backupFileRepoPathP(
+                strLstGet(manifestReferenceList(manifest), read->reference), .manifestName = file.name,
+                .bundleId = read->bundleId, .blockIncr = true);
+
+            IoRead *blockRead = storageReadIo(
+                storageNewReadP(
+                    storage, blockName, .offset = read->offset, .limit = VARUINT64(read->size)));
+            ioReadOpen(blockRead);
+
+            const BlockDeltaWrite *deltaWrite = blockDeltaNext(blockDelta, read, blockRead);
+
+            while (deltaWrite != NULL)
+            {
+                // Update size and file
+                size += bufUsed(deltaWrite->block);
+                memcpy(
+                    bufPtr(fileBuffer) + deltaWrite->offset, bufPtr(deltaWrite->block),
+                    bufUsed(deltaWrite->block));
+
+                deltaWrite = blockDeltaNext(blockDelta, read, blockRead);
+            }
+        }
+
+        strCatFmt(result, ", m=%s}", strZ(mapLog));
+
+        checksum = cryptoHashOne(hashTypeSha1, fileBuffer);
+    }
+    // Else normal file
+    else
+    {
+        StorageRead *read = storageNewReadP(
+            storage, strNewFmt("%s/%s", strZ(path), strZ(fileName)), .offset = file.bundleOffset,
+            .limit = VARUINT64(file.sizeRepo));
+        const bool raw = file.bundleId != 0 && manifest->pub.data.bundleRaw;
+
+        if (cipherType != cipherTypeNone)
+        {
+            ioFilterGroupAdd(
+                ioReadFilterGroup(storageReadIo(read)),
+                cipherBlockNewP(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), .raw = raw));
+        }
+
+        if (manifestData->backupOptionCompressType != compressTypeNone)
+        {
+            ioFilterGroupAdd(
+                ioReadFilterGroup(storageReadIo(read)),
+                decompressFilterP(manifestData->backupOptionCompressType, .raw = raw));
+        }
+
+        ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(hashTypeSha1));
+
+        size = bufUsed(storageGetP(read));
+        checksum = pckReadBinP(
+            ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE));
+    }
+
+    // Validate checksum
+    if (!bufEq(checksum, BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE)))
+        THROW_FMT(AssertError, "'%s' checksum does match manifest", strZ(file.name));
+
+    strCatFmt(result, ", s=%" PRIu64, size);
+
+    // Test size and repo-size
+    // -------------------------------------------------------------------------------------------------------------
+    if (size != file.size)
+        THROW_FMT(AssertError, "'%s' size does match manifest", strZ(file.name));
+
+    // Repo size can only be compared to file size when not bundled
+    if (file.bundleId == 0 && fileSize != file.sizeRepo)
+        THROW_FMT(AssertError, "'%s' repo size does match manifest", strZ(file.name));
+
+    // pg_control and WAL headers have different checksums depending on cpu architecture so remove the checksum from
+    // the test output.
+    // -------------------------------------------------------------------------------------------------------------
+    if (strEqZ(file.name, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) ||
+        strBeginsWith(
+            file.name, strNewFmt(MANIFEST_TARGET_PGDATA "/%s/", strZ(pgWalPath(manifestData->pgVersion)))))
+    {
+        file.checksumSha1 = NULL;
+    }
+
+    strCatZ(result, "}\n");
+
+    // Update changes to manifest file
+    manifestFilePackUpdate(manifest, filePack, &file);
+
+    FUNCTION_HARNESS_RETURN(STRING, result);
+}
+
+static String *
+testBackupValidateList(
+    const Storage *const storage, const String *const path, Manifest *const manifest, const ManifestData *const manifestData,
+    StringList *const manifestFileList, const CipherType cipherType, const String *const cipherPass, String *const result)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STORAGE, storage);
+        FUNCTION_HARNESS_PARAM(STRING, path);
+        FUNCTION_HARNESS_PARAM(MANIFEST, manifest);
+        FUNCTION_HARNESS_PARAM_P(VOID, manifestData);
+        FUNCTION_HARNESS_PARAM(STRING_LIST, manifestFileList);
         FUNCTION_HARNESS_PARAM(STRING_ID, cipherType);
         FUNCTION_HARNESS_PARAM(STRING, cipherPass);
         FUNCTION_HARNESS_PARAM(STRING, result);
@@ -161,177 +352,16 @@ testBackupValidateList(
                 // -----------------------------------------------------------------------------------------------------------------
                 for (unsigned int fileIdx = 0; fileIdx < lstSize(fileList); fileIdx++)
                 {
+                    // Remove this file from manifest file list to track what has been updated
                     ManifestFilePack **const filePack = *(ManifestFilePack ***)lstGet(fileList, fileIdx);
-                    ManifestFile file = manifestFileUnpack(manifest, *filePack);
+                    const unsigned int manifestFileIdx = strLstFindIdxP(
+                        manifestFileList, (String *const)*filePack, .required = true);
+                    strLstRemoveIdx(manifestFileList, manifestFileIdx);
 
-                    if (bundle)
-                        strCatFmt(result, "%s/%s {file", strZ(info.name), strZ(file.name));
-                    else
-                        strCatFmt(result, "%s {file", strZ(info.name));
-
-                    // Validate repo checksum
-                    // -------------------------------------------------------------------------------------------------------------
-                    if (file.checksumRepoSha1 != NULL)
-                    {
-                        StorageRead *read = storageNewReadP(
-                            storage, strNewFmt("%s/%s", strZ(path), strZ(info.name)), .offset = file.bundleOffset,
-                            .limit = VARUINT64(file.sizeRepo));
-                        const Buffer *const checksum = cryptoHashOne(hashTypeSha1, storageGetP(read));
-
-                        if (!bufEq(checksum, BUF(file.checksumRepoSha1, HASH_TYPE_SHA1_SIZE)))
-                            THROW_FMT(AssertError, "'%s' repo checksum does match manifest", strZ(file.name));
-                    }
-
-                    // Calculate checksum/size and decompress if needed
-                    // -------------------------------------------------------------------------------------------------------------
-                    uint64_t size = 0;
-                    const Buffer *checksum = NULL;
-
-                    // If block incremental
-                    if (file.blockIncrMapSize != 0)
-                    {
-                        // Read block map
-                        StorageRead *read = storageNewReadP(
-                            storage, strNewFmt("%s/%s", strZ(path), strZ(info.name)),
-                            .offset = file.bundleOffset + file.sizeRepo - file.blockIncrMapSize,
-                            .limit = VARUINT64(file.blockIncrMapSize));
-
-                        if (cipherType != cipherTypeNone)
-                        {
-                            ioFilterGroupAdd(
-                                ioReadFilterGroup(storageReadIo(read)),
-                                cipherBlockNewP(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), .raw = true));
-                        }
-
-                        ioReadOpen(storageReadIo(read));
-
-                        const BlockMap *const blockMap = blockMapNewRead(
-                            storageReadIo(read), file.blockIncrSize, file.blockIncrChecksumSize);
-
-                        // Build map log
-                        String *const mapLog = strNew();
-                        const BlockMapItem *blockMapItemLast = NULL;
-
-                        for (unsigned int blockMapIdx = 0; blockMapIdx < blockMapSize(blockMap); blockMapIdx++)
-                        {
-                            const BlockMapItem *const blockMapItem = blockMapGet(blockMap, blockMapIdx);
-                            const bool superBlockChange =
-                                blockMapItemLast == NULL || blockMapItemLast->reference != blockMapItem->reference ||
-                                blockMapItemLast->offset != blockMapItem->offset;
-
-                            if (superBlockChange && blockMapIdx != 0)
-                                strCatChr(mapLog, '}');
-
-                            if (!strEmpty(mapLog))
-                                strCatChr(mapLog, ',');
-
-                            if (superBlockChange)
-                                strCatFmt(mapLog, "%u:{", blockMapItem->reference);
-
-                            strCatFmt(mapLog, "%" PRIu64, blockMapItem->block);
-
-                            blockMapItemLast = blockMapItem;
-                        }
-
-                        // Check blocks
-                        Buffer *fileBuffer = bufNew((size_t)file.size);
-                        bufUsedSet(fileBuffer, bufSize(fileBuffer));
-
-                        BlockDelta *const blockDelta = blockDeltaNew(
-                            blockMap, file.blockIncrSize, file.blockIncrChecksumSize, NULL, cipherType, cipherPass,
-                            manifestData->backupOptionCompressType);
-
-                        for (unsigned int readIdx = 0; readIdx < blockDeltaReadSize(blockDelta); readIdx++)
-                        {
-                            const BlockDeltaRead *const read = blockDeltaReadGet(blockDelta, readIdx);
-                            const String *const blockName = backupFileRepoPathP(
-                                strLstGet(manifestReferenceList(manifest), read->reference), .manifestName = file.name,
-                                .bundleId = read->bundleId, .blockIncr = true);
-
-                            IoRead *blockRead = storageReadIo(
-                                storageNewReadP(
-                                    storage, blockName, .offset = read->offset, .limit = VARUINT64(read->size)));
-                            ioReadOpen(blockRead);
-
-                            const BlockDeltaWrite *deltaWrite = blockDeltaNext(blockDelta, read, blockRead);
-
-                            while (deltaWrite != NULL)
-                            {
-                                // Update size and file
-                                size += bufUsed(deltaWrite->block);
-                                memcpy(
-                                    bufPtr(fileBuffer) + deltaWrite->offset, bufPtr(deltaWrite->block),
-                                    bufUsed(deltaWrite->block));
-
-                                deltaWrite = blockDeltaNext(blockDelta, read, blockRead);
-                            }
-                        }
-
-                        strCatFmt(result, ", m=%s}", strZ(mapLog));
-
-                        checksum = cryptoHashOne(hashTypeSha1, fileBuffer);
-                    }
-                    // Else normal file
-                    else
-                    {
-                        StorageRead *read = storageNewReadP(
-                            storage, strNewFmt("%s/%s", strZ(path), strZ(info.name)), .offset = file.bundleOffset,
-                            .limit = VARUINT64(file.sizeRepo));
-                        const bool raw = bundle && manifest->pub.data.bundleRaw;
-
-                        if (cipherType != cipherTypeNone)
-                        {
-                            ioFilterGroupAdd(
-                                ioReadFilterGroup(storageReadIo(read)),
-                                cipherBlockNewP(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), .raw = raw));
-                        }
-
-                        if (manifestData->backupOptionCompressType != compressTypeNone)
-                        {
-                            ioFilterGroupAdd(
-                                ioReadFilterGroup(storageReadIo(read)),
-                                decompressFilterP(manifestData->backupOptionCompressType, .raw = raw));
-                        }
-
-                        ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(hashTypeSha1));
-
-                        size = bufUsed(storageGetP(read));
-                        checksum = pckReadBinP(
-                            ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE));
-                    }
-
-                    // Validate checksum
-                    if (!bufEq(checksum, BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE)))
-                        THROW_FMT(AssertError, "'%s' checksum does match manifest", strZ(file.name));
-
-                    strCatFmt(result, ", s=%" PRIu64, size);
-
-                    // Test size and repo-size
-                    // -------------------------------------------------------------------------------------------------------------
-                    if (size != file.size)
-                        THROW_FMT(AssertError, "'%s' size does match manifest", strZ(file.name));
-
-                    // Repo size can only be compared to file size when not bundled
-                    if (!bundle)
-                    {
-                        if (info.size != file.sizeRepo)
-                            THROW_FMT(AssertError, "'%s' repo size does match manifest", strZ(file.name));
-                    }
-
-                    // pg_control and WAL headers have different checksums depending on cpu architecture so remove the checksum from
-                    // the test output.
-                    // -------------------------------------------------------------------------------------------------------------
-                    if (strEqZ(file.name, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) ||
-                        strBeginsWith(
-                            file.name, strNewFmt(MANIFEST_TARGET_PGDATA "/%s/", strZ(pgWalPath(manifestData->pgVersion)))))
-                    {
-                        file.checksumSha1 = NULL;
-                    }
-
-                    strCatZ(result, "}\n");
-
-                    // Update changes to manifest file
-                    manifestFilePackUpdate(manifest, filePack, &file);
+                    strCat(
+                        result,
+                        testBackupValidateFile(
+                            storage, path, manifest, manifestData, info.name, info.size, filePack, cipherType, cipherPass));
                 }
 
                 break;
@@ -370,30 +400,6 @@ testBackupValidateList(
         }
     }
 
-    // Check all files in manifest. Since the scan above maps from files to the manifest, any referenced files will not be checked.
-    // -----------------------------------------------------------------------------------------------------------------------------
-    for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
-    {
-        ManifestFilePack **const filePack = lstGet(manifest->pub.fileList, fileIdx);
-        ManifestFile file = manifestFileUnpack(manifest, *filePack);
-
-        // If compressed or block incremental then set the repo-size to size so it will not be in test output. Even the same
-        // compression algorithm can give slightly different results based on the version so repo-size is not deterministic for
-        // compression. Block incremental maps increase repo-size in a non-obvious way.
-        if (manifestData->backupOptionCompressType != compressTypeNone || file.blockIncrMapSize != 0)
-            file.sizeRepo = file.size;
-
-        // Bundle id/offset are too noisy so remove them. They are verified against size/checksum and listed with the files.
-        file.bundleId = 0;
-        file.bundleOffset = 0;
-
-        // Remove repo checksum since it has been validated
-        file.checksumRepoSha1 = NULL;
-
-        // Update changes to manifest file
-        manifestFilePackUpdate(manifest, filePack, &file);
-    }
-
     FUNCTION_HARNESS_RETURN(STRING, result);
 }
 
@@ -429,13 +435,50 @@ testBackupValidate(const Storage *const storage, const String *const path, TestB
         const InfoBackup *const infoBackup = infoBackupLoadFile(
             storageRepo(), INFO_BACKUP_PATH_FILE_STR, param.cipherType == 0 ? cipherTypeNone : param.cipherType,
             param.cipherPass == NULL ? NULL : STR(param.cipherPass));
-
         Manifest *manifest = manifestLoadFile(
             storage, strNewFmt("%s/" BACKUP_MANIFEST_FILE, strZ(path)), param.cipherType == 0 ? cipherTypeNone : param.cipherType,
             param.cipherPass == NULL ? NULL : infoBackupCipherPass(infoBackup));
-        testBackupValidateList(
-            storage, path, manifest, manifestData(manifest), param.cipherType == 0 ? cipherTypeNone : param.cipherType,
-            param.cipherPass == NULL ? NULL : manifestCipherSubPass(manifest), result);
+
+        // Build list of files in the manifest
+        StringList *const manifestFileList = strLstNew();
+
+        for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
+            strLstAdd(manifestFileList, manifestFileUnpack(manifest, manifestFilePackGet(manifest, fileIdx)).name);
+
+        // Validate files on disk against the manifest
+        const CipherType cipherType = param.cipherType == 0 ? cipherTypeNone : param.cipherType;
+        const String *const cipherPass = param.cipherPass == NULL ? NULL : manifestCipherSubPass(manifest);
+
+        testBackupValidateList(storage, path, manifest, manifestData(manifest), manifestFileList, cipherType, cipherPass, result);
+
+        // Check remaining files in the manifest -- these should all be references
+        for (unsigned int manifestFileIdx = 0; manifestFileIdx < strLstSize(manifestFileList); manifestFileIdx++)
+        {
+            ManifestFilePack **const filePack = manifestFilePackFindInternal(
+                manifest, strLstGet(manifestFileList, manifestFileIdx));
+            const ManifestFile file = manifestFileUnpack(manifest, *filePack);
+
+            // No need to check zero-length files in bundled backups
+            if (manifestData(manifest)->bundle && file.size == 0)
+                continue;
+
+            // Error if reference is NULL
+            if (file.reference == NULL)
+                THROW_FMT(AssertError, "manifest file '%s' not in backup but does not have a reference", strZ(file.name));
+
+            strCat(
+                result,
+                testBackupValidateFile(
+                    storage, strPath(path), manifest, manifestData(manifest),
+                    strSub(
+                        backupFileRepoPathP(
+                            file.reference,
+                            .manifestName = file.name, .bundleId = file.bundleId,
+                            .compressType = manifestData(manifest)->backupOptionCompressType,
+                            .blockIncr = file.blockIncrMapSize != 0),
+                        sizeof(STORAGE_REPO_BACKUP)),
+                    file.sizeRepo, filePack, cipherType, cipherPass));
+        }
 
         // Make sure both backup.manifest files exist since we skipped them in the callback above
         if (!storageExistsP(storage, strNewFmt("%s/" BACKUP_MANIFEST_FILE, strZ(path))))
@@ -443,6 +486,30 @@ testBackupValidate(const Storage *const storage, const String *const path, TestB
 
         if (!storageExistsP(storage, strNewFmt("%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strZ(path))))
             THROW(AssertError, BACKUP_MANIFEST_FILE INFO_COPY_EXT " is missing");
+
+        // Update manifest to make the output a bit simpler
+        // -------------------------------------------------------------------------------------------------------------------------
+        for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
+        {
+            ManifestFilePack **const filePack = lstGet(manifest->pub.fileList, fileIdx);
+            ManifestFile file = manifestFileUnpack(manifest, *filePack);
+
+            // If compressed or block incremental then set the repo-size to size so it will not be in test output. Even the same
+            // compression algorithm can give slightly different results based on the version so repo-size is not deterministic for
+            // compression. Block incremental maps increase repo-size in a non-obvious way.
+            if (manifestData(manifest)->backupOptionCompressType != compressTypeNone || file.blockIncrMapSize != 0)
+                file.sizeRepo = file.size;
+
+            // Bundle id/offset are too noisy so remove them. They are verified against size/checksum and listed with the files.
+            file.bundleId = 0;
+            file.bundleOffset = 0;
+
+            // Remove repo checksum since it has been validated
+            file.checksumRepoSha1 = NULL;
+
+            // Update changes to manifest file
+            manifestFilePackUpdate(manifest, filePack, &file);
+        }
 
         // Output the manifest to a string and exclude sections that don't need validation. Note that each of these sections should
         // be considered from automatic validation but adding them to the output will make the tests too noisy. One good technique
@@ -1655,6 +1722,7 @@ testRun(void)
 
         time_t timestamp = 1575401652;
         String *backupLabel = backupLabelFormat(backupTypeFull, NULL, timestamp);
+        const String *const olderBackupLabel = backupLabelFormat(backupTypeFull, NULL, timestamp - 3);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("assign label when no history");
@@ -1678,9 +1746,89 @@ testRun(void)
         TEST_TITLE("assign label when backup is older");
 
         HRN_STORAGE_PUT_EMPTY(
-            storageRepoWrite(), zNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(backupLabelFormat(backupTypeFull, NULL, timestamp - 2))));
+            storageRepoWrite(), zNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(olderBackupLabel)));
 
         TEST_RESULT_STR(backupLabelCreate(backupTypeFull, NULL, timestamp), backupLabel, "create label");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("differential and incremental backups read history related to full backup they are created on (full only)");
+
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoWrite(),
+            zNewFmt(
+                STORAGE_REPO_BACKUP "/backup.history/2019/%s.manifest.gz",
+                strZ(backupLabelFormat(backupTypeFull, NULL, timestamp - 1))));
+
+        TEST_RESULT_STR(
+            backupLabelCreate(backupTypeDiff, olderBackupLabel, timestamp),
+            backupLabelFormat(backupTypeDiff, olderBackupLabel, timestamp),
+            "create label");
+
+        TEST_RESULT_STR(
+            backupLabelCreate(backupTypeIncr, olderBackupLabel, timestamp),
+            backupLabelFormat(backupTypeIncr, olderBackupLabel, timestamp),
+            "create label");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("differential and incremental backups read history related to full backup they are created on (diff exists)");
+
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoWrite(),
+            zNewFmt(
+                STORAGE_REPO_BACKUP "/backup.history/2019/%s.manifest.gz",
+                strZ(backupLabelFormat(backupTypeDiff, olderBackupLabel, timestamp - 2))));
+
+        TEST_RESULT_STR(
+            backupLabelCreate(backupTypeDiff, olderBackupLabel, timestamp),
+            backupLabelFormat(backupTypeDiff, olderBackupLabel, timestamp),
+            "create label");
+
+        TEST_RESULT_STR(
+            backupLabelCreate(backupTypeIncr, olderBackupLabel, timestamp),
+            backupLabelFormat(backupTypeIncr, olderBackupLabel, timestamp),
+            "create label");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("differential and incremental backups read history related to full backup they are created on (diff and incr)");
+
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoWrite(),
+            zNewFmt(
+                STORAGE_REPO_BACKUP "/backup.history/2019/%s.manifest.gz",
+                strZ(backupLabelFormat(backupTypeIncr, olderBackupLabel, timestamp - 1))));
+
+        TEST_RESULT_STR(
+            backupLabelCreate(backupTypeDiff, olderBackupLabel, timestamp),
+            backupLabelFormat(backupTypeDiff, olderBackupLabel, timestamp),
+            "create label");
+
+        TEST_RESULT_STR(
+            backupLabelCreate(backupTypeIncr, olderBackupLabel, timestamp),
+            backupLabelFormat(backupTypeIncr, olderBackupLabel, timestamp),
+            "create label");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("differential and incremental backups read history related to full backup they are created on (skew)");
+
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoWrite(),
+            zNewFmt(
+                STORAGE_REPO_BACKUP "/backup.history/2019/%s.manifest.gz",
+                strZ(backupLabelFormat(backupTypeIncr, olderBackupLabel, timestamp + 3))));
+
+        TEST_ERROR(
+            backupLabelCreate(backupTypeDiff, olderBackupLabel, timestamp), ClockError,
+            "new backup label '20191203-193409F_20191203-193413D' is not later "
+            "than latest backup label '20191203-193409F_20191203-193415I'\n"
+            "HINT: has the timezone changed?\n"
+            "HINT: is there clock skew?");
+
+        TEST_ERROR(
+            backupLabelCreate(backupTypeIncr, olderBackupLabel, timestamp), ClockError,
+            "new backup label '20191203-193409F_20191203-193413I' is not later "
+            "than latest backup label '20191203-193409F_20191203-193415I'\n"
+            "HINT: has the timezone changed?\n"
+            "HINT: is there clock skew?");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("advance time when backup is same");
@@ -3000,7 +3148,8 @@ testRun(void)
                 ",\"timestamp\":1571200002}\n"
                 "pg_data/base/1/1={\"size\":0,\"timestamp\":1571200000}\n"
                 "pg_data/base/1/2={\"checksum\":\"54ceb91256e8190e474aa752a6e0650a2df5ba37\",\"size\":2,\"timestamp\":1571200000}\n"
-                "pg_data/base/1/3={\"checksum\":\"3c01bdbb26f358bab27f267924aa2c9a03fcfdb8\",\"size\":3,\"timestamp\":1571200000}\n"
+                "pg_data/base/1/3={\"checksum\":\"3c01bdbb26f358bab27f267924aa2c9a03fcfdb8\",\"size\":3,\"szo\":4"
+                ",\"timestamp\":1571200000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1571200000}\n"
                 "pg_data/pg_xlog/0000000105DA69C000000000={\"size\":16777216,\"timestamp\":1571200002}\n"
                 "pg_data/postgresql.conf={\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\",\"size\":11"
@@ -3435,7 +3584,7 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Create pg_control with unexpected catalog and control version
-            HRN_PG_CONTROL_OVERRIDE_PUT(
+            HRN_PG_CONTROL_OVERRIDE_VERSION_PUT(
                 storagePgWrite(), PG_VERSION_11, 1501, .catalogVersion = 202211110, .pageChecksum = true,
                 .walSegmentSize = 1024 * 1024);
 
@@ -3625,6 +3774,7 @@ testRun(void)
                 "pg_data {path}\n"
                 "pg_data/backup_label.gz {file, s=17}\n"
                 "pg_data/tablespace_map.gz {file, s=19}\n"
+                "20191030-014640F/bundle/1/pg_data/PG_VERSION {file, s=2}\n"
                 "--------\n"
                 "[backup:target]\n"
                 "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n"
@@ -3851,6 +4001,7 @@ testRun(void)
                 "pg_data/block-incr-grow.pgbi {file, m=0:{0},1:{0},0:{2},1:{1,2,3,4,5,6,7,8,9,10,11,12,13}, s=131072}\n"
                 "pg_data/block-incr-larger.pgbi {file, m=1:{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15},1:{0,1,2,3,4,5,6}, s=1507328}\n"
                 "pg_data/tablespace_map {file, s=19}\n"
+                "20191103-165320F/bundle/1/pg_data/PG_VERSION {file, s=2}\n"
                 "--------\n"
                 "[backup:target]\n"
                 "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n"
@@ -3930,6 +4081,13 @@ testRun(void)
 
             HRN_STORAGE_PUT(storagePgWrite(), "block-incr-grow", file, .timeModified = backupTimeStart);
 
+            // File that will later have a timestamp far enough in the past to make the block size zero
+            file = bufNew((size_t)(BLOCK_MIN_FILE_SIZE));
+            memset(bufPtr(file), 0, bufSize(file));
+            bufUsedSet(file, bufSize(file));
+
+            HRN_STORAGE_PUT(storagePgWrite(), "block-incr-wayback", file, .timeModified = backupTimeStart);
+
             // Run backup
             hrnBackupPqScriptP(
                 PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherType = cipherTypeAes256Cbc,
@@ -3941,6 +4099,7 @@ testRun(void)
                 "P00   INFO: backup start archive = 0000000105DC520000000000, lsn = 5dc5200/0\n"
                 "P00   INFO: check archive for segment 0000000105DC520000000000\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (24KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-wayback (16KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/0, 2B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/24, 8KB, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
@@ -3949,7 +4108,7 @@ testRun(void)
                 "P00 DETAIL: wrote 'tablespace_map' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000000105DC520000000000:0000000105DC520000000001\n"
                 "P00   INFO: new backup label = 20191108-080000F\n"
-                "P00   INFO: full backup size = [SIZE], file total = 5");
+                "P00   INFO: full backup size = [SIZE], file total = 6");
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(
@@ -3962,6 +4121,7 @@ testRun(void)
                 "pg_data {path}\n"
                 "pg_data/backup_label.gz {file, s=17}\n"
                 "pg_data/block-incr-grow.pgbi {file, m=0:{0,1,2}, s=24576}\n"
+                "pg_data/block-incr-wayback.pgbi {file, m=0:{0,1}, s=16384}\n"
                 "pg_data/tablespace_map.gz {file, s=19}\n"
                 "--------\n"
                 "[backup:target]\n"
@@ -3974,6 +4134,8 @@ testRun(void)
                 ",\"timestamp\":1573200002}\n"
                 "pg_data/block-incr-grow={\"bi\":1,\"bim\":40,\"checksum\":\"ebdd38b69cd5b9f2d00d273c981e16960fbbb4f7\","
                 "\"size\":24576,\"timestamp\":1573200000}\n"
+                "pg_data/block-incr-wayback={\"bi\":1,\"bim\":40,\"checksum\":\"897256b6709e1a4da9daba92b6bde39ccfccd8c1\""
+                ",\"size\":16384,\"timestamp\":1573200000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1573200000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
                 ",\"timestamp\":1573200002}\n"
@@ -3985,7 +4147,7 @@ testRun(void)
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("online 11 diff backup with comp/enc");
+        TEST_TITLE("online 11 diff backup with comp/enc and delta");
 
         backupTimeStart = BACKUP_EPOCH + 3400000;
 
@@ -4000,8 +4162,10 @@ testRun(void)
             hrnCfgArgRawBool(argList, cfgOptRepoBundle, true);
             hrnCfgArgRawZ(argList, cfgOptRepoBundleLimit, "4MiB");
             hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
+            hrnCfgArgRawBool(argList, cfgOptDelta, true);
             hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
             hrnCfgArgRawZ(argList, cfgOptRepoBlockAgeMap, "1=2");
+            hrnCfgArgRawZ(argList, cfgOptRepoBlockAgeMap, "2=0");
             hrnCfgArgRawZ(argList, cfgOptRepoBlockChecksumSizeMap, "16KiB=16");
             hrnCfgArgRawZ(argList, cfgOptRepoBlockChecksumSizeMap, "8KiB=12");
             hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
@@ -4022,6 +4186,16 @@ testRun(void)
 
             HRN_STORAGE_PUT(storagePgWrite(), "block-age-multiplier", file, .timeModified = backupTimeStart - SEC_PER_DAY);
 
+            // File with age old enough to not have block incr
+            file = bufNew(BLOCK_MIN_FILE_SIZE);
+            memset(bufPtr(file), 0, bufSize(file));
+            bufUsedSet(file, bufSize(file));
+
+            HRN_STORAGE_PUT(storagePgWrite(), "block-age-to-zero", file, .timeModified = backupTimeStart - 2 * SEC_PER_DAY);
+
+            // File goes back in time far enough to not need block incr if it was new
+            HRN_STORAGE_TIME(storagePgWrite(), "block-incr-wayback", backupTimeStart - 2 * SEC_PER_DAY);
+
             // Run backup
             hrnBackupPqScriptP(
                 PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherType = cipherTypeAes256Cbc,
@@ -4033,17 +4207,21 @@ testRun(void)
                 "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DC82D000000000, lsn = 5dc82d0/0\n"
                 "P00   INFO: check archive for segment 0000000105DC82D000000000\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-age-multiplier (bundle 1/0, 32KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/128, 8KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (bundle 1/216, 48KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/block-incr-wayback (16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-age-to-zero (bundle 1/0, 16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-age-multiplier (bundle 1/56, 32KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/184, 8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (bundle 1/272, 48KB, [PCT]) checksum [SHA1]\n"
                 "P00 DETAIL: reference pg_data/PG_VERSION to 20191108-080000F\n"
+                "P00 DETAIL: reference pg_data/block-incr-wayback to 20191108-080000F\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DC82D000000001, lsn = 5dc82d0/300000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
                 "P00 DETAIL: wrote 'tablespace_map' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000000105DC82D000000000:0000000105DC82D000000001\n"
                 "P00   INFO: new backup label = 20191108-080000F_20191110-153320D\n"
-                "P00   INFO: diff backup size = [SIZE], file total = 6");
+                "P00   INFO: diff backup size = [SIZE], file total = 8");
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(
@@ -4052,11 +4230,14 @@ testRun(void)
                 ". {link, d=20191108-080000F_20191110-153320D}\n"
                 "bundle {path}\n"
                 "bundle/1/pg_data/block-age-multiplier {file, m=1:{0,1}, s=32768}\n"
+                "bundle/1/pg_data/block-age-to-zero {file, s=16384}\n"
                 "bundle/1/pg_data/block-incr-grow {file, m=0:{0,1},1:{0,1,2,3}, s=49152}\n"
                 "bundle/1/pg_data/global/pg_control {file, s=8192}\n"
                 "pg_data {path}\n"
                 "pg_data/backup_label.gz {file, s=17}\n"
                 "pg_data/tablespace_map.gz {file, s=19}\n"
+                "20191108-080000F/bundle/1/pg_data/PG_VERSION {file, s=2}\n"
+                "20191108-080000F/pg_data/block-incr-wayback.pgbi {file, m=0:{0,1}, s=16384}\n"
                 "--------\n"
                 "[backup:target]\n"
                 "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n"
@@ -4068,8 +4249,12 @@ testRun(void)
                 ",\"timestamp\":1573400002}\n"
                 "pg_data/block-age-multiplier={\"bi\":2,\"bic\":16,\"bim\":56"
                 ",\"checksum\":\"5188431849b4613152fd7bdba6a3ff0a4fd6424b\",\"size\":32768,\"timestamp\":1573313600}\n"
+                "pg_data/block-age-to-zero={\"checksum\":\"897256b6709e1a4da9daba92b6bde39ccfccd8c1\",\"size\":16384,"
+                "\"timestamp\":1573227200}\n"
                 "pg_data/block-incr-grow={\"bi\":1,\"bim\":72,\"checksum\":\"bd4716c88f38d2540e3024b54308b0b95f34a0cc\""
                 ",\"size\":49152,\"timestamp\":1573400000}\n"
+                "pg_data/block-incr-wayback={\"bi\":1,\"bim\":40,\"checksum\":\"897256b6709e1a4da9daba92b6bde39ccfccd8c1\","
+                "\"reference\":\"20191108-080000F\",\"size\":16384,\"timestamp\":1573227200}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1573400000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
                 ",\"timestamp\":1573400002}\n"

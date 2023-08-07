@@ -469,7 +469,7 @@ testRun(void)
             "unexpected WAL magic 999\n"
             "HINT: is this version of PostgreSQL supported?");
 
-        HRN_PG_CONTROL_OVERRIDE_PUT(storagePgWrite(), PG_VERSION_11, 1501, .catalogVersion = 202211111);
+        HRN_PG_CONTROL_OVERRIDE_VERSION_PUT(storagePgWrite(), PG_VERSION_11, 1501, .catalogVersion = 202211111);
 
         TEST_ERROR(
             cmdArchivePush(), VersionNotSupportedError,
