@@ -442,7 +442,7 @@ backupBlockIncrMap(void)
 
                 ManifestBlockIncrAgeMap manifestBuildBlockIncrAgeMap =
                 {
-                    .fileAge = varUIntForce(mapKey) * (unsigned int)SEC_PER_DAY,
+                    .fileAge = (unsigned int)(varUIntForce(mapKey) * SEC_PER_DAY),
                     .blockMultiplier = varUIntForce(kvGet(manifestBlockIncrAgeKv, mapKey)),
                 };
 
@@ -1209,6 +1209,7 @@ backupFilePut(
                 .user = basePath->user,
                 .group = basePath->group,
                 .size = strSize(content),
+                .sizeOriginal = strSize(content),
                 .sizeRepo = pckReadU64P(ioFilterGroupResultP(filterGroup, SIZE_FILTER_TYPE)),
                 .timestamp = timestamp,
                 .checksumSha1 = bufPtr(pckReadBinP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE, .idx = 0))),
@@ -1437,6 +1438,10 @@ backupJobResult(
 
                 if (bundleId != 0 && copyResult != backupCopyResultNoOp)
                     strCatFmt(logProgress, "bundle %" PRIu64 "/%" PRIu64 ", ", bundleId, bundleOffset);
+
+                // Log original manifest size if copy size differs
+                if (copySize != file.size)
+                    strCatFmt(logProgress, "%s->", strZ(strSizeFormat(file.size)));
 
                 // Store percentComplete as an integer
                 percentComplete = sizeTotal == 0 ? 10000 : (unsigned int)(((double)*sizeProgress / (double)sizeTotal) * 10000);
@@ -2399,6 +2404,7 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
                             .user = basePath->user,
                             .group = basePath->group,
                             .size = backupData->walSegmentSize,
+                            .sizeOriginal = backupData->walSegmentSize,
                             .sizeRepo = pckReadU64P(ioFilterGroupResultP(filterGroup, SIZE_FILTER_TYPE)),
                             .timestamp = manifestData(manifest)->backupTimestampStop,
                             .checksumSha1 = bufPtr(bufNewDecode(encodingHex, strSubN(archiveFile, 25, 40))),

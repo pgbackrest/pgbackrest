@@ -833,7 +833,7 @@ testRun(void)
         TEST_TITLE("get WAL segment with a modified control/catalog version");
 
         // Modify control/catalog version and use the --pg-version option
-        HRN_PG_CONTROL_OVERRIDE_PUT(storagePgWrite(), PG_VERSION_10, 1501, .catalogVersion = 202211111);
+        HRN_PG_CONTROL_OVERRIDE_VERSION_PUT(storagePgWrite(), PG_VERSION_10, 1501, .catalogVersion = 202211111);
 
         TEST_ERROR(
             cmdArchiveGet(), VersionNotSupportedError,

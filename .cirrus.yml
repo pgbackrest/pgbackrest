@@ -76,7 +76,8 @@ macos_ventura_task:
      - brew install -q pkg-config openssl@1.1 libpq libxml2 libyaml meson
 
   script:
-    - cd .. && ${CIRRUS_WORKING_DIR}/test/test.pl --min-gen --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup
+    - cd ..
+    - ${CIRRUS_WORKING_DIR}/test/test.pl --min-gen --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup --test=info
 
   debug_script:
     - ls -lah ${CIRRUS_WORKING_DIR}
