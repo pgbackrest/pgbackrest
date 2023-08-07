@@ -25,7 +25,7 @@ static struct
     gid_t groupId;                                                  // Real group id of the calling process from getgid()
     const String *groupName;                                        // Group name if it exists
 #ifdef HAVE_LIBSSH2
-    const String *userHome;                                         // User HOME directory
+    const String *userHome;                                         // User home directory
 #endif // HAVE_LIBSSH2
 } userLocalData;
 
@@ -120,10 +120,10 @@ groupNameFromId(gid_t groupId)
     FUNCTION_TEST_RETURN(STRING, NULL);
 }
 
-// Currently userHome() and userHomeFromId() are only used if we are building with libssh2
+/**********************************************************************************************************************************/
+// Currently userHome() and userHomeFromId() are only used when building with libssh2
 #ifdef HAVE_LIBSSH2
 
-/**********************************************************************************************************************************/
 FN_EXTERN const String *
 userHome(void)
 {
