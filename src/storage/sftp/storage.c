@@ -914,7 +914,8 @@ storageSftpNew(
         if (binaryFingerprint == NULL)
             THROW_FMT(ServiceError, "libssh2 hostkey hash failed: libssh2 errno [%d]", libssh2_session_last_errno(this->session));
 
-        // Is known_hosts search enabled
+        // Enable known_hosts search unless param.knownHostsFiles (--repo-sftp-known-hosts-files) is explicitly set to disable it.
+        // NULL results in searching a default known_hosts file list.
         const bool performKnownHostsCheck = (param.knownHostsFiles == NULL ||
                  !strBeginsWithZ(strLower(strDup(param.knownHostsFiles)), DISABLE_KNOWN_HOSTS_SEARCH));
 
