@@ -35,6 +35,8 @@ Constants
 #define LOCK_KEY_EXEC_ID                                            STRID6("execId", 0x12e0c56051)
 #define LOCK_KEY_PERCENT_COMPLETE                                   STRID6("pctCplt", 0x14310a140d01)
 #define LOCK_KEY_PROCESS_ID                                         STRID5("pid", 0x11300)
+#define LOCK_KEY_SIZE_PROGRESS                                      STRID6("sizePrg", 0x74b515a2531)
+#define LOCK_KEY_SIZE_TOTAL                                         STRID6("sizeTot", 0x143f915a2531)
 
 /***********************************************************************************************************************************
 Lock type names
@@ -152,6 +154,12 @@ lockReadFileData(const String *const lockFile, const int fd)
                     result.percentComplete = varNewUInt(jsonReadUInt(json));
 
                 result.processId = jsonReadInt(jsonReadKeyRequireStrId(json, LOCK_KEY_PROCESS_ID));
+
+                if (jsonReadKeyExpectStrId(json, LOCK_KEY_SIZE_PROGRESS))
+                    result.sizeProgress = jsonReadUInt(json);
+
+                if (jsonReadKeyExpectStrId(json, LOCK_KEY_SIZE_TOTAL))
+                    result.sizeTotal = jsonReadUInt(json);
             }
             MEM_CONTEXT_PRIOR_END();
         }
@@ -266,6 +274,8 @@ lockWriteData(const LockType lockType, const LockWriteDataParam param)
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(ENUM, lockType);
         FUNCTION_LOG_PARAM(VARIANT, param.percentComplete);
+        FUNCTION_LOG_PARAM(UINT64, param.sizeProgress);
+        FUNCTION_LOG_PARAM(UINT64, param.sizeTotal);
     FUNCTION_LOG_END();
 
     ASSERT(lockType < lockTypeAll);
@@ -284,6 +294,12 @@ lockWriteData(const LockType lockType, const LockWriteDataParam param)
             jsonWriteUInt(jsonWriteKeyStrId(json, LOCK_KEY_PERCENT_COMPLETE), varUInt(param.percentComplete));
 
         jsonWriteInt(jsonWriteKeyStrId(json, LOCK_KEY_PROCESS_ID), getpid());
+
+        if (param.sizeTotal > 0)
+        {
+            jsonWriteUInt(jsonWriteKeyStrId(json, LOCK_KEY_SIZE_PROGRESS), param.sizeProgress);
+            jsonWriteUInt(jsonWriteKeyStrId(json, LOCK_KEY_SIZE_TOTAL), param.sizeTotal);
+        }
 
         jsonWriteObjectEnd(json);
 

@@ -75,6 +75,8 @@ VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_VAR,                          "lock");
 VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_BACKUP_VAR,                   "backup");
 VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_BACKUP_HELD_VAR,              "held");
 VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_BACKUP_PERCENT_COMPLETE_VAR,  "pct-cplt");
+VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_BACKUP_SIZE_PROGRESS_VAR,     "size-prg");
+VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_BACKUP_SIZE_TOTAL_VAR,        "size-tot");
 VARIANT_STRDEF_STATIC(STATUS_KEY_MESSAGE_VAR,                       "message");
 
 #define INFO_STANZA_STATUS_OK                                       "ok"
@@ -134,6 +136,8 @@ typedef struct InfoStanzaRepo
     bool backupLockChecked;                                         // Has the check for a backup lock already been performed?
     bool backupLockHeld;                                            // Is backup lock held on the system where info command is run?
     const Variant *percentComplete;                                 // Percentage of backup complete * 100 (when not NULL)
+    uint64_t sizeProgress;                                          // Backup copy progress in bytes
+    uint64_t sizeTotal;                                             // Total size of the backup in bytes
     InfoRepoData *repoList;                                         // List of configured repositories
 } InfoStanzaRepo;
 
@@ -238,6 +242,12 @@ stanzaStatus(const int code, const InfoStanzaRepo *const stanzaData, Variant *st
 
     if (stanzaData->percentComplete != NULL && cfgOptionStrId(cfgOptOutput) != CFGOPTVAL_OUTPUT_JSON)
         kvPut(backupLockKv, STATUS_KEY_LOCK_BACKUP_PERCENT_COMPLETE_VAR, stanzaData->percentComplete);
+
+    if (stanzaData->sizeTotal > 0)
+    {
+        kvPut(backupLockKv, STATUS_KEY_LOCK_BACKUP_SIZE_PROGRESS_VAR, VARUINT(stanzaData->sizeProgress));
+        kvPut(backupLockKv, STATUS_KEY_LOCK_BACKUP_SIZE_TOTAL_VAR, VARUINT(stanzaData->sizeTotal));
+    }
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -1290,8 +1300,10 @@ infoUpdateStanza(
 
                     if (stanzaRepo->backupLockHeld)
                     {
-                        stanzaRepo->percentComplete =
-                            lockRead(cfgOptionStr(cfgOptLockPath), stanzaRepo->name, lockTypeBackup).data.percentComplete;
+                        LockReadResult lockReadResult = lockRead(cfgOptionStr(cfgOptLockPath), stanzaRepo->name, lockTypeBackup);
+                        stanzaRepo->percentComplete = lockReadResult.data.percentComplete;
+                        stanzaRepo->sizeProgress = lockReadResult.data.sizeProgress;
+                        stanzaRepo->sizeTotal = lockReadResult.data.sizeTotal;
                     }
                 }
             }

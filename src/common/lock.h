@@ -25,6 +25,8 @@ typedef struct LockData
     pid_t processId;                                                // Process holding the lock
     const String *execId;                                           // Exec id of process holding the lock
     Variant *percentComplete;                                       // Percentage of backup complete * 100 (when not NULL)
+    uint64_t sizeProgress;                                          // Backup copy progress in bytes
+    uint64_t sizeTotal;                                             // Total size of the backup in bytes
 } LockData;
 
 #include "common/time.h"
@@ -65,6 +67,8 @@ typedef struct LockWriteDataParam
 {
     VAR_PARAM_HEADER;
     const Variant *percentComplete;                                 // Percentage of backup complete * 100 (when not NULL)
+    uint64_t sizeProgress;                                          // Backup copy progress in bytes
+    uint64_t sizeTotal;                                             // Total size of the backup in bytes
 } LockWriteDataParam;
 
 #define lockWriteDataP(lockType, ...)                                                                                              \
