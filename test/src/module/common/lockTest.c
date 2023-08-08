@@ -224,21 +224,30 @@ testRun(void)
         TEST_RESULT_PTR(
             lockReadFileData(backupLockFile, lockLocal.file[lockTypeBackup].fd).percentComplete, NULL, "verify percentComplete");
 
-        TEST_RESULT_VOID(lockWriteDataP(lockTypeBackup, .percentComplete = VARUINT(5555)), "write lock data");
-        THROW_ON_SYS_ERROR_FMT(
-            lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)0,
-            strZ(lockLocal.file[lockTypeBackup].name));
-        TEST_RESULT_UINT(
-            varUInt(lockReadFileData(backupLockFile, lockLocal.file[lockTypeBackup].fd).percentComplete), 5555,
-            "verify percentComplete");
+        TEST_RESULT_VOID(
+            lockWriteDataP(
+                lockTypeBackup, .percentComplete = VARUINT(5555),
+                .sizeProgress = VARUINT64(1754824), .sizeTotal = VARUINT64(3159000)), "write lock data");
 
-        TEST_RESULT_VOID(lockWriteDataP(lockTypeBackup, .percentComplete = VARUINT(8888)), "write lock data");
         THROW_ON_SYS_ERROR_FMT(
             lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)0,
             strZ(lockLocal.file[lockTypeBackup].name));
-        TEST_RESULT_UINT(
-            varUInt(lockReadFileData(backupLockFile, lockLocal.file[lockTypeBackup].fd).percentComplete), 8888,
-            "verify percentComplete");
+        LockData lockDataResult = lockReadFileData(backupLockFile, lockLocal.file[lockTypeBackup].fd);
+        TEST_RESULT_UINT(varUInt(lockDataResult.percentComplete), 5555, "verify percentComplete");
+        TEST_RESULT_UINT(varUInt64(lockDataResult.sizeProgress), 1754824, "verify sizeProgress");
+        TEST_RESULT_UINT(varUInt64(lockDataResult.sizeTotal), 3159000, "verify sizeTotal");
+
+        TEST_RESULT_VOID(
+            lockWriteDataP(
+                lockTypeBackup, .percentComplete = VARUINT(8888),
+                .sizeProgress = VARUINT64(2807719), .sizeTotal = VARUINT64(3159000)), "write lock data");
+        THROW_ON_SYS_ERROR_FMT(
+            lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)0,
+            strZ(lockLocal.file[lockTypeBackup].name));
+        lockDataResult = lockReadFileData(backupLockFile, lockLocal.file[lockTypeBackup].fd);
+        TEST_RESULT_UINT(varUInt(lockDataResult.percentComplete), 8888, "verify percentComplete");
+        TEST_RESULT_UINT(varUInt64(lockDataResult.sizeProgress), 2807719, "verify sizeProgress");
+        TEST_RESULT_UINT(varUInt64(lockDataResult.sizeTotal), 3159000, "verify sizeTotal");
 
         TEST_ERROR(
             lockAcquireP(.returnOnNoLock = true), AssertError,
