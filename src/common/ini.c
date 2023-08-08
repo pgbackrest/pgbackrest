@@ -299,6 +299,20 @@ iniSectionKeyIsList(const Ini *const this, const String *const section, const St
 
 /**********************************************************************************************************************************/
 FN_EXTERN StringList *
+iniSectionList(const Ini *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INI, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->store != NULL);
+
+    FUNCTION_TEST_RETURN(STRING_LIST, strLstNewVarLst(kvKeyList(this->store)));
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN StringList *
 iniSectionKeyList(const Ini *const this, const String *const section)
 {
     FUNCTION_TEST_BEGIN();

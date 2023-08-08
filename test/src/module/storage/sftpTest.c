@@ -192,7 +192,7 @@ testRun(void)
             ServiceError, "requested ssh2 hostkey hash type (aes-256-cbc) not available");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("public key from file auth failure");
+        TEST_TITLE("public key from file auth failure leading - tilde key paths");
 
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
@@ -212,7 +212,8 @@ testRun(void)
 
         TEST_ERROR(
             storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB,
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, STRDEF("~/.ssh/id_rsa"), hashTypeSha1,
+                .keyPub = STRDEF("~/.ssh/id_rsa.pub"),
                 .hostFingerprint = STRDEF("3132333435363738393039383736353433323130")),
             ServiceError,
             "public key authentication failed: libssh2 error [-16]\n"
@@ -4577,8 +4578,8 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoType, "sftp");
         hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
         hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, KEYPRIV_CSTR);
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyFile, KEYPUB_CSTR);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, "   ~/.ssh/id_rsa");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyFile, "               ~/.ssh/id_rsa.pub");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         const Storage *storage = NULL;

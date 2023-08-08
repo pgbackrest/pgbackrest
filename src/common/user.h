@@ -26,6 +26,16 @@ FN_EXTERN const String *groupName(void);
 // Get the group name from a group id. Returns NULL if the group id is invalid or there is no mapping.
 FN_EXTERN String *groupNameFromId(gid_t groupId);
 
+#ifdef HAVE_LIBSSH2
+
+// Get the home directory of the current user. Returns NULL if there is no mapping.
+FN_EXTERN const String *userHome(void);
+
+// Get the user home directory from a user id. Returns NULL if the user id is invalid or there is no mapping.
+FN_EXTERN String *userHomeFromId(uid_t userId);
+
+#endif // HAVE_LIBSSH2
+
 // Get the id of the current user
 FN_EXTERN uid_t userId(void);
 

@@ -10,6 +10,7 @@ SFTP Storage
 #include "common/io/fd.h"
 #include "common/io/socket/client.h"
 #include "common/log.h"
+#include "common/regExp.h"
 #include "common/user.h"
 #include "storage/sftp/read.h"
 #include "storage/sftp/storage.intern.h"
@@ -304,6 +305,26 @@ storageSftpInfo(THIS_VOID, const String *const file, const StorageInfoLevel leve
     }
 
     FUNCTION_LOG_RETURN(STORAGE_INFO, result);
+}
+
+/**********************************************************************************************************************************/
+static String *
+storageSftpExpandTildePath(const String *const tildePath)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, tildePath);
+    FUNCTION_TEST_END();
+
+    String *const result = strNew();
+
+    // Append to user home directory path substring after the tilde
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        strCatFmt(result, "%s%s", strZ(userHome()), strZ(strSub(tildePath, (size_t)strChr(tildePath, '~') + 1)));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/
@@ -877,12 +898,21 @@ storageSftpNew(
             }
         }
 
+        // Perform public key authorization, expand leading tilde key file paths if needed
+        String *const privKeyPath = regExpMatchOne(STRDEF("^ *~"), keyPriv) ? storageSftpExpandTildePath(keyPriv) : strDup(keyPriv);
+        String *const pubKeyPath =
+            param.keyPub != NULL && regExpMatchOne(STRDEF("^ *~"), param.keyPub) ?
+                storageSftpExpandTildePath(param.keyPub) : strDup(param.keyPub);
+
         do
         {
             rc = libssh2_userauth_publickey_fromfile(
-                this->session, strZ(user), strZNull(param.keyPub), strZ(keyPriv), strZNull(param.keyPassphrase));
+                this->session, strZ(user), strZNull(pubKeyPath), strZ(privKeyPath), strZNull(param.keyPassphrase));
         }
         while (storageSftpWaitFd(this, rc));
+
+        strFree(privKeyPath);
+        strFree(pubKeyPath);
 
         if (rc != 0)
         {

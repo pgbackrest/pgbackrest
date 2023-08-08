@@ -10,6 +10,8 @@ Check Command
 #include "common/log.h"
 #include "common/memContext.h"
 #include "config/config.h"
+#include "config/load.h"
+#include "config/parse.h"
 #include "db/helper.h"
 #include "info/infoArchive.h"
 #include "postgres/interface.h"
@@ -176,15 +178,54 @@ cmdCheck(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Get the primary/standby connections (standby is only required if backup from standby is enabled)
-        DbGetResult dbGroup = dbGet(false, false, false);
+        // Build stanza list based on whether a stanza was specified or not
+        StringList *stanzaList;
+        bool stanzaSpecified = cfgOptionTest(cfgOptStanza);
 
-        if (dbGroup.standby == NULL && dbGroup.primary == NULL)
-            THROW(ConfigError, "no database found\nHINT: check indexed pg-path/pg-host configurations");
+        if (stanzaSpecified)
+        {
+            stanzaList = strLstNew();
+            strLstAdd(stanzaList, cfgOptionStr(cfgOptStanza));
+        }
+        else
+        {
+            stanzaList = cfgParseStanzaList();
 
-        const unsigned int pgPathDefinedTotal = checkManifest();
-        checkStandby(dbGroup, pgPathDefinedTotal);
-        checkPrimary(dbGroup);
+            if (strLstSize(stanzaList) == 0)
+            {
+                LOG_WARN(
+                    "no stanzas found to check\n"
+                    "HINT: are there non-empty stanza sections in the configuration?");
+            }
+        }
+
+        // Iterate stanzas
+        for (unsigned int stanzaIdx = 0; stanzaIdx < strLstSize(stanzaList); stanzaIdx++)
+        {
+            // Switch stanza if required
+            if (!stanzaSpecified)
+            {
+                const String *const stanza = strLstGet(stanzaList, stanzaIdx);
+                LOG_INFO_FMT("check stanza '%s'", strZ(stanza));
+
+                // Free storage and protocol cache
+                storageHelperFree();
+                protocolFree();
+
+                // Reload config with new stanza
+                cfgLoadStanza(stanza);
+            }
+
+            // Get the primary/standby connections (standby is only required if backup from standby is enabled)
+            DbGetResult dbGroup = dbGet(false, false, false);
+
+            if (dbGroup.standby == NULL && dbGroup.primary == NULL)
+                THROW(ConfigError, "no database found\nHINT: check indexed pg-path/pg-host configurations");
+
+            const unsigned int pgPathDefinedTotal = checkManifest();
+            checkStandby(dbGroup, pgPathDefinedTotal);
+            checkPrimary(dbGroup);
+        }
     }
     MEM_CONTEXT_TEMP_END();
 

@@ -18,6 +18,28 @@
             <release-core-list>
                 <release-improvement-list>
                     <release-item>
+                        <github-pull-request id="2057"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Multi-stanza check command.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="2136"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="reid.thompson"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Accept leading tilde in paths for SFTP public/private keys.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-pull-request id="2072"/>
 
                         <release-item-contributor-list>
