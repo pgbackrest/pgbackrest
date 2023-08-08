@@ -156,10 +156,10 @@ lockReadFileData(const String *const lockFile, const int fd)
                 result.processId = jsonReadInt(jsonReadKeyRequireStrId(json, LOCK_KEY_PROCESS_ID));
 
                 if (jsonReadKeyExpectStrId(json, LOCK_KEY_SIZE_PROGRESS))
-                    result.sizeProgress = jsonReadUInt(json);
+                    result.sizeProgress = varNewUInt(jsonReadUInt(json));
 
                 if (jsonReadKeyExpectStrId(json, LOCK_KEY_SIZE_TOTAL))
-                    result.sizeTotal = jsonReadUInt(json);
+                    result.sizeTotal = varNewUInt(jsonReadUInt(json));
             }
             MEM_CONTEXT_PRIOR_END();
         }
@@ -274,8 +274,8 @@ lockWriteData(const LockType lockType, const LockWriteDataParam param)
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(ENUM, lockType);
         FUNCTION_LOG_PARAM(VARIANT, param.percentComplete);
-        FUNCTION_LOG_PARAM(UINT64, param.sizeProgress);
-        FUNCTION_LOG_PARAM(UINT64, param.sizeTotal);
+        FUNCTION_LOG_PARAM(VARIANT, param.sizeProgress);
+        FUNCTION_LOG_PARAM(VARIANT, param.sizeTotal);
     FUNCTION_LOG_END();
 
     ASSERT(lockType < lockTypeAll);
@@ -295,11 +295,11 @@ lockWriteData(const LockType lockType, const LockWriteDataParam param)
 
         jsonWriteInt(jsonWriteKeyStrId(json, LOCK_KEY_PROCESS_ID), getpid());
 
-        if (param.sizeTotal > 0)
-        {
-            jsonWriteUInt(jsonWriteKeyStrId(json, LOCK_KEY_SIZE_PROGRESS), param.sizeProgress);
-            jsonWriteUInt(jsonWriteKeyStrId(json, LOCK_KEY_SIZE_TOTAL), param.sizeTotal);
-        }
+        if (param.sizeProgress != NULL)
+            jsonWriteUInt(jsonWriteKeyStrId(json, LOCK_KEY_SIZE_PROGRESS), varUInt(param.sizeProgress));
+
+        if (param.sizeTotal != NULL)
+            jsonWriteUInt(jsonWriteKeyStrId(json, LOCK_KEY_SIZE_TOTAL), varUInt(param.sizeTotal));
 
         jsonWriteObjectEnd(json);
 

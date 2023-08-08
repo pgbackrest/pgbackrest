@@ -136,8 +136,8 @@ typedef struct InfoStanzaRepo
     bool backupLockChecked;                                         // Has the check for a backup lock already been performed?
     bool backupLockHeld;                                            // Is backup lock held on the system where info command is run?
     const Variant *percentComplete;                                 // Percentage of backup complete * 100 (when not NULL)
-    uint64_t sizeProgress;                                          // Backup copy progress in bytes
-    uint64_t sizeTotal;                                             // Total size of the backup in bytes
+    const Variant *sizeProgress;                                    // Backup copy progress in bytes
+    const Variant *sizeTotal;                                       // Total size of the backup in bytes
     InfoRepoData *repoList;                                         // List of configured repositories
 } InfoStanzaRepo;
 
@@ -243,11 +243,11 @@ stanzaStatus(const int code, const InfoStanzaRepo *const stanzaData, Variant *st
     if (stanzaData->percentComplete != NULL && cfgOptionStrId(cfgOptOutput) != CFGOPTVAL_OUTPUT_JSON)
         kvPut(backupLockKv, STATUS_KEY_LOCK_BACKUP_PERCENT_COMPLETE_VAR, stanzaData->percentComplete);
 
-    if (stanzaData->sizeTotal > 0)
-    {
-        kvPut(backupLockKv, STATUS_KEY_LOCK_BACKUP_SIZE_PROGRESS_VAR, VARUINT(stanzaData->sizeProgress));
-        kvPut(backupLockKv, STATUS_KEY_LOCK_BACKUP_SIZE_TOTAL_VAR, VARUINT(stanzaData->sizeTotal));
-    }
+    if (stanzaData->sizeProgress != NULL)
+        kvPut(backupLockKv, STATUS_KEY_LOCK_BACKUP_SIZE_PROGRESS_VAR, stanzaData->sizeProgress);
+
+    if (stanzaData->sizeTotal != NULL)
+        kvPut(backupLockKv, STATUS_KEY_LOCK_BACKUP_SIZE_TOTAL_VAR, stanzaData->sizeTotal);
 
     FUNCTION_TEST_RETURN_VOID();
 }

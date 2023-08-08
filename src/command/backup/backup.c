@@ -1587,7 +1587,8 @@ backupJobResult(
                 *currentPercentComplete = percentComplete;
                 lockWriteDataP(
                     lockTypeBackup,
-                    .percentComplete = VARUINT(*currentPercentComplete), .sizeProgress = *sizeProgress, .sizeTotal = sizeTotal);
+                    .percentComplete = VARUINT(*currentPercentComplete),
+                    .sizeProgress = VARUINT(*sizeProgress), .sizeTotal = VARUINT(sizeTotal));
             }
         }
         MEM_CONTEXT_TEMP_END();
@@ -2199,7 +2200,8 @@ backupProcess(
         unsigned int currentPercentComplete = 0;
         lockWriteDataP(
             lockTypeBackup,
-            .percentComplete = VARUINT(currentPercentComplete), .sizeProgress = sizeProgress, .sizeTotal = sizeTotal);
+            .percentComplete = VARUINT(currentPercentComplete),
+            .sizeProgress = VARUINT(sizeProgress), .sizeTotal = VARUINT(sizeTotal));
 
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
