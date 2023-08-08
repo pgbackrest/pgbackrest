@@ -26,6 +26,15 @@ Configuration Load
 #include "storage/sftp/storage.h"
 
 /***********************************************************************************************************************************
+Local variables
+***********************************************************************************************************************************/
+static struct ConfigLoadLocal
+{
+    unsigned int argListSize;                                       // Argument list size
+    const char **argList;                                           // Argument list
+} configLoadLocal;
+
+/***********************************************************************************************************************************
 Load log settings
 ***********************************************************************************************************************************/
 static void
@@ -437,17 +446,24 @@ cfgLoadLogFile(void)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-cfgLoad(unsigned int argListSize, const char *argList[])
+cfgLoad(const unsigned int argListSize, const char *argList[])
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(UINT, argListSize);
         FUNCTION_LOG_PARAM(CHARPY, argList);
     FUNCTION_LOG_END();
 
+    ASSERT(argListSize > 0);
+    ASSERT(argList != NULL);
+
+    // Store arguments
+    configLoadLocal.argListSize = argListSize;
+    configLoadLocal.argList = argList;
+
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Parse config from command line and config file
-        cfgParseP(storageLocal(), argListSize, argList);
+        cfgParseP(storageLocal(), configLoadLocal.argListSize, configLoadLocal.argList);
 
         // Initialize dry-run mode for storage when valid for the current command
         storageHelperDryRunInit(cfgOptionValid(cfgOptDryRun) && cfgOptionBool(cfgOptDryRun));
@@ -512,6 +528,44 @@ cfgLoad(unsigned int argListSize, const char *argList[])
             // Update options that have complex rules
             cfgLoadUpdateOption();
         }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+cfgLoadStanza(const String *const stanza)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, stanza);
+    FUNCTION_LOG_END();
+
+    ASSERT(stanza != NULL);
+    ASSERT(configLoadLocal.argListSize > 0);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Store the exec id so it can be preserved after reload
+        const Variant *const execId = varNewStr(cfgOptionStr(cfgOptExecId));
+
+        // Make a copy of the arguments and add the stanza (this assumes the stanza was not originally specified)
+        StringList *const argListNew = strLstNew();
+
+        for (unsigned int argListIdx = 0; argListIdx < configLoadLocal.argListSize; argListIdx++)
+            strLstAddZ(argListNew, configLoadLocal.argList[argListIdx]);
+
+        strLstAddFmt(argListNew, "--" CFGOPT_STANZA "=%s", strZ(stanza));
+
+        // Parse config from command line and config file
+        cfgParseP(storageLocal(), strLstSize(argListNew), strLstPtr(argListNew), .noConfigLoad = true, .noResetLogLevel = true);
+
+        // Update options that have complex rules
+        cfgLoadUpdateOption();
+
+        // Set execId to prior value
+        cfgOptionSet(cfgOptExecId, cfgSourceParam, execId);
     }
     MEM_CONTEXT_TEMP_END();
 

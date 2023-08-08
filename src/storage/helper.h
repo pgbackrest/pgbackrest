@@ -62,4 +62,7 @@ FN_EXTERN const Storage *storageRepoWrite(void);
 FN_EXTERN const Storage *storageSpool(void);
 FN_EXTERN const Storage *storageSpoolWrite(void);
 
+// Free cached storage objects
+FN_EXTERN void storageHelperFree(void);
+
 #endif
