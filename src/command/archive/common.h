@@ -97,7 +97,12 @@ FN_EXTERN String *walPath(const String *walFile, const String *pgPath, const Str
 // Find a WAL segment in the repository. The file name can have several things appended such as a hash, compression extension, and
 // partial extension so it is possible to have multiple files that match the segment, though more than one match is not a good
 // thing.
-FN_EXTERN String *walSegmentFind(const Storage *storage, const String *archiveId, const String *walSegment, TimeMSec timeout);
+typedef struct WalSegmentFind WalSegmentFind;
+
+FN_EXTERN WalSegmentFind *walSegmentFindNew(const Storage *storage, const String *archiveId);
+FN_EXTERN String *walSegmentFind(WalSegmentFind *this, const String *walSegment, TimeMSec timeout);
+
+FN_EXTERN String *walSegmentFindOne(const Storage *storage, const String *archiveId, const String *walSegment, TimeMSec timeout);
 
 // Get the next WAL segment given a WAL segment and WAL segment size
 FN_EXTERN String *walSegmentNext(const String *walSegment, size_t walSegmentSize, unsigned int pgVersion);

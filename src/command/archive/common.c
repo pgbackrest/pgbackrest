@@ -406,18 +406,54 @@ walIsSegment(const String *walSegment)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-walSegmentFind(const Storage *storage, const String *archiveId, const String *walSegment, TimeMSec timeout)
+struct WalSegmentFind
+{
+    const Storage *storage;                                         // Storage
+    const String *archiveId;                                        // Archive id to find segments in
+    StringList *list;                                               // List of found segments
+};
+
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+#define FUNCTION_LOG_WAL_SEGMENT_FIND_TYPE                                                                                         \
+    WalSegmentFind *
+#define FUNCTION_LOG_WAL_SEGMENT_FIND_FORMAT(value, buffer, bufferSize)                                                            \
+    objNameToLog(value, "WalSegmentFind", buffer, bufferSize)
+
+FN_EXTERN WalSegmentFind *
+walSegmentFindNew(const Storage *const storage, const String *const archiveId)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storage);
         FUNCTION_LOG_PARAM(STRING, archiveId);
-        FUNCTION_LOG_PARAM(STRING, walSegment);
-        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
     ASSERT(archiveId != NULL);
+
+    OBJ_NEW_BEGIN(WalSegmentFind, .childQty = MEM_CONTEXT_QTY_MAX)
+    {
+        *this = (WalSegmentFind)
+        {
+            .storage = storage,
+            .archiveId = strDup(archiveId),
+        };
+    }
+    OBJ_NEW_END();
+
+    FUNCTION_LOG_RETURN(WAL_SEGMENT_FIND, this);
+}
+
+FN_EXTERN String *
+walSegmentFind(WalSegmentFind *const this, const String *const walSegment, const TimeMSec timeout)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(WAL_SEGMENT_FIND, this);
+        FUNCTION_LOG_PARAM(STRING, walSegment);
+        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
+    FUNCTION_LOG_END();
+
     ASSERT(walSegment != NULL);
     ASSERT(walIsSegment(walSegment));
 
@@ -425,35 +461,43 @@ walSegmentFind(const Storage *storage, const String *archiveId, const String *wa
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        Wait *wait = waitNew(timeout);
+        Wait *const wait = waitNew(timeout);
 
         do
         {
             // Get a list of all WAL segments that match
-            StringList *list = storageListP(
-                storage, strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(strSubN(walSegment, 0, 16))),
-                .expression = strNewFmt(
-                    "^%s%s-[0-f]{40}" COMPRESS_TYPE_REGEXP "{0,1}$", strZ(strSubN(walSegment, 0, 24)),
-                    walIsPartial(walSegment) ? WAL_SEGMENT_PARTIAL_EXT : ""),
-                .nullOnMissing = true);
+            // if (this->list == NULL)
+            // {
+                MEM_CONTEXT_OBJ_BEGIN(this)
+                {
+                    this->list = storageListP(
+                        this->storage,
+                        strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(this->archiveId), strZ(strSubN(walSegment, 0, 16))),
+                        .expression = strNewFmt(
+                            "^%s%s-[0-f]{40}" COMPRESS_TYPE_REGEXP "{0,1}$", strZ(strSubN(walSegment, 0, 24)),
+                            walIsPartial(walSegment) ? WAL_SEGMENT_PARTIAL_EXT : ""),
+                        .nullOnMissing = true);
+                }
+                MEM_CONTEXT_OBJ_END();
+            // }
 
             // If there are results
-            if (list != NULL && !strLstEmpty(list))
+            if (this->list != NULL && !strLstEmpty(this->list))
             {
                 // Error if there is more than one match
-                if (strLstSize(list) > 1)
+                if (strLstSize(this->list) > 1)
                 {
                     THROW_FMT(
                         ArchiveDuplicateError,
                         "duplicates found in archive for WAL segment %s: %s\n"
                         "HINT: are multiple primaries archiving to this stanza?",
-                        strZ(walSegment), strZ(strLstJoin(strLstSort(list, sortOrderAsc), ", ")));
+                        strZ(walSegment), strZ(strLstJoin(strLstSort(this->list, sortOrderAsc), ", ")));
                 }
 
                 // Copy file name of WAL segment found into the prior context
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {
-                    result = strDup(strLstGet(list, 0));
+                    result = strDup(strLstGet(this->list, 0));
                 }
                 MEM_CONTEXT_PRIOR_END();
             }
@@ -472,6 +516,34 @@ walSegmentFind(const Storage *storage, const String *archiveId, const String *wa
             "HINT: run the 'start' command if the stanza was previously stopped.",
             strZ(walSegment), timeout);
     }
+
+    FUNCTION_LOG_RETURN(STRING, result);
+}
+
+FN_EXTERN String *
+walSegmentFindOne(
+    const Storage *const storage, const String *const archiveId, const String *const walSegment, const TimeMSec timeout)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
+        FUNCTION_LOG_PARAM(STRING, archiveId);
+        FUNCTION_LOG_PARAM(STRING, walSegment);
+        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
+    FUNCTION_LOG_END();
+
+    String *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        WalSegmentFind *const find = walSegmentFindNew(storage, archiveId);
+
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = walSegmentFind(find, walSegment, timeout);
+        }
+        MEM_CONTEXT_PRIOR_END();
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(STRING, result);
 }

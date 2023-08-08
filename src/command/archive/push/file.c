@@ -175,7 +175,7 @@ archivePushFile(
 
                 TRY_BEGIN()
                 {
-                    walSegmentFile = walSegmentFind(storageRepoIdx(repoData->repoIdx), repoData->archiveId, archiveFile, 0);
+                    walSegmentFile = walSegmentFindOne(storageRepoIdx(repoData->repoIdx), repoData->archiveId, archiveFile, 0);
                 }
                 CATCH_ANY()
                 {

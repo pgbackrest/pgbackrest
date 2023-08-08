@@ -1118,7 +1118,7 @@ backupStart(BackupData *const backupData)
                     strEq(result.walSegmentName, dbBackupStartResult.walSegmentCheck) ? "" : "prior ",
                     strZ(dbBackupStartResult.walSegmentCheck));
 
-                walSegmentFind(
+                walSegmentFindOne(
                     storageRepo(), backupData->archiveId, dbBackupStartResult.walSegmentCheck,
                     cfgOptionUInt64(cfgOptArchiveTimeout));
             }
@@ -2341,7 +2341,7 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
                     const String *const walSegment = strLstGet(walSegmentList, walSegmentIdx);
 
                     // Find the actual wal segment file in the archive
-                    const String *const archiveFile = walSegmentFind(
+                    const String *const archiveFile = walSegmentFindOne(
                         storageRepo(), backupData->archiveId, walSegment, cfgOptionUInt64(cfgOptArchiveTimeout));
 
                     if (cfgOptionBool(cfgOptArchiveCopy))

@@ -236,13 +236,13 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("no path or segment");
 
-        TEST_RESULT_STR(walSegmentFind(storageRepo(), STRDEF("9.6-2"), STRDEF("123456781234567812345678"), 0), NULL, "no path");
+        TEST_RESULT_STR(walSegmentFindOne(storageRepo(), STRDEF("9.6-2"), STRDEF("123456781234567812345678"), 0), NULL, "no path");
 
         HRN_STORAGE_PATH_CREATE(storageTest, "archive/db/9.6-2/1234567812345678");
         TEST_RESULT_STR(
-            walSegmentFind(storageRepo(), STRDEF("9.6-2"), STRDEF("123456781234567812345678"), 0), NULL, "no segment");
+            walSegmentFindOne(storageRepo(), STRDEF("9.6-2"), STRDEF("123456781234567812345678"), 0), NULL, "no segment");
         TEST_ERROR(
-            walSegmentFind(storageRepo(), STRDEF("9.6-2"), STRDEF("123456781234567812345678"), 100), ArchiveTimeoutError,
+            walSegmentFindOne(storageRepo(), STRDEF("9.6-2"), STRDEF("123456781234567812345678"), 100), ArchiveTimeoutError,
             "WAL segment 123456781234567812345678 was not archived before the 100ms timeout\n"
             "HINT: check the archive_command to ensure that all options are correct (especially --stanza).\n"
             "HINT: check the PostgreSQL server log for errors.\n"
@@ -267,7 +267,7 @@ testRun(void)
             HRN_FORK_PARENT_BEGIN()
             {
                 TEST_RESULT_STR_Z(
-                    walSegmentFind(storageRepo(), STRDEF("9.6-2"), STRDEF("123456781234567812345678"), 1000),
+                    walSegmentFindOne(storageRepo(), STRDEF("9.6-2"), STRDEF("123456781234567812345678"), 1000),
                     "123456781234567812345678-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "found segment");
             }
             HRN_FORK_PARENT_END();
@@ -281,7 +281,7 @@ testRun(void)
             storageTest, "archive/db/9.6-2/1234567812345678/123456781234567812345678-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.gz");
 
         TEST_ERROR(
-            walSegmentFind(storageRepo(), STRDEF("9.6-2"), STRDEF("123456781234567812345678"), 0),
+            walSegmentFindOne(storageRepo(), STRDEF("9.6-2"), STRDEF("123456781234567812345678"), 0),
             ArchiveDuplicateError,
             "duplicates found in archive for WAL segment 123456781234567812345678:"
             " 123456781234567812345678-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
@@ -292,7 +292,7 @@ testRun(void)
         TEST_TITLE("partial not found");
 
         TEST_RESULT_STR(
-            walSegmentFind(storageRepo(), STRDEF("9.6-2"), STRDEF("123456781234567812345678.partial"), 0), NULL,
+            walSegmentFindOne(storageRepo(), STRDEF("9.6-2"), STRDEF("123456781234567812345678.partial"), 0), NULL,
             "did not find partial segment");
     }
 

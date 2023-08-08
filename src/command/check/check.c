@@ -149,7 +149,7 @@ checkPrimary(const DbGetResult dbGroup)
         {
             LOG_INFO_FMT(CFGCMD_CHECK " %s archive for WAL (primary)", cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
 
-            const String *const walSegmentFile = walSegmentFind(
+            const String *const walSegmentFile = walSegmentFindOne(
                 storageRepoIdx(repoIdx), repoArchiveId[repoIdx], walSegment, cfgOptionUInt64(cfgOptArchiveTimeout));
 
             LOG_INFO_FMT(
