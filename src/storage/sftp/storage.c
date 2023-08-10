@@ -972,7 +972,7 @@ storageSftpNew(
                 {
                     // Log message on empty known_hosts files and file read errors
                     if (rc == 0)
-                        LOG_INFO_FMT("libssh2 '%s' file is empty", currentKnownHostFile);
+                        LOG_DETAIL_FMT("libssh2 '%s' file is empty", currentKnownHostFile);
                     else
                     {
                         char *libSsh2ErrMsg;
@@ -981,7 +981,7 @@ storageSftpNew(
                         // Get the libssh2 error message
                         rc = libssh2_session_last_error(this->session, &libSsh2ErrMsg, &libSsh2ErrMsgLen, 0);
 
-                        LOG_INFO_FMT(
+                        LOG_DETAIL_FMT(
                             "libssh2 read '%s' file failed: libssh2 errno [%d] %s", currentKnownHostFile, rc, libSsh2ErrMsg);
                     }
                 }
@@ -1030,8 +1030,11 @@ storageSftpNew(
                         THROW_FMT(ServiceError, "libssh2_knownhost_checkp failure: '%s' %s [%d]", strZ(host), matchFailMsg, rc);
                     }
                     else
-                        LOG_INFO_FMT("libssh2_knownhost_checkp failure: '%s' %s [%d]", strZ(host), matchFailMsg, rc);
+                        LOG_DETAIL_FMT("libssh2_knownhost_checkp failure: '%s' %s [%d]", strZ(host), matchFailMsg, rc);
                 }
+                else
+                    LOG_DETAIL_FMT("libssh2_knownhost_checkp match found for '%s'", strZ(host));
+
             }
             else
             {
@@ -1046,7 +1049,7 @@ storageSftpNew(
                         "libssh2_session_hostkey failed: libssh2 error [%d]", libssh2_session_last_errno(this->session));
                 }
                 else
-                    LOG_INFO_FMT("libssh2_session_hostkey failed: libssh2 error [%d]", libssh2_session_last_errno(this->session));
+                    LOG_DETAIL_FMT("libssh2_session_hostkey failed: libssh2 error [%d]", libssh2_session_last_errno(this->session));
             }
 
             // Free the knownHostsList
