@@ -333,6 +333,16 @@ Types from src/include/catalog/pg_control.h
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
 
+#elif PG_VERSION >= PG_VERSION_15
+
+/* Version identifier for this pg_control format */
+#define PG_CONTROL_VERSION	1500
+
+#elif PG_VERSION >= PG_VERSION_14
+
+/* Version identifier for this pg_control format */
+#define PG_CONTROL_VERSION	1400
+
 #elif PG_VERSION >= PG_VERSION_13
 
 /* Version identifier for this pg_control format */
