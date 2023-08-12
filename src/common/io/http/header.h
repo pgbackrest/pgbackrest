@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 HTTP Header
 
-Object to track HTTP headers.  Headers can be marked as redacted so they are not logged.
+Object to track HTTP headers. Headers can be marked as redacted so they are not logged.
 ***********************************************************************************************************************************/
 #ifndef COMMON_IO_HTTP_HEADER_H
 #define COMMON_IO_HTTP_HEADER_H

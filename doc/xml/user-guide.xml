@@ -36,7 +36,7 @@
         <variable key="os-type-is-rhel">'{[os-type]}' eq '{[os-rhel]}'</variable>
 
         <!-- Defines the container image that will be used to build the host -->
-        <variable key="os-image" if="{[os-type-is-debian]}">ubuntu:18.04</variable>
+        <variable key="os-image" if="{[os-type-is-debian]}">ubuntu:20.04</variable>
         <variable key="os-image" if="{[os-type-is-rhel]}">rockylinux/rockylinux:8</variable>
 
         <variable key="user-guide-subtitle" if="{[os-type-is-debian]}">{[os-debian-title]}</variable>
@@ -169,8 +169,12 @@
         <variable key="s3-key">accessKey1</variable>
         <variable key="s3-key-secret">verySecretKey1</variable>
 
+        <!-- SFTP Settings -->
+        <variable key="sftp-all">n</variable>                        <!-- Build all the documentation with SFTP? -->
+        <variable key="sftp-repo">demo-repo</variable>
+
         <!-- Is any object store being used to build all the documentation? -->
-        <variable key="object-any-all">('{[azure-all]}' eq 'y' || '{[gcs-all]}' eq 'y' || '{[s3-all]}' eq 'y')</variable>
+        <variable key="object-any-all">('{[azure-all]}' eq 'y' || '{[gcs-all]}' eq 'y' || '{[s3-all]}' eq 'y' || '{[sftp-all]}' eq 'y')</variable>
 
         <!-- Hosts -->
         <variable key="host-image">pgbackrest/doc:{[os-type]}</variable>
@@ -192,6 +196,12 @@
         <variable key="host-s3-id">s3</variable>
         <variable key="host-s3">s3-server</variable>
 
+        <variable key="host-sftp-id">sftp</variable>
+        <variable key="host-sftp">sftp-server</variable>
+        <variable key="host-sftp-user">{[host-user]}</variable>
+        <variable key="host-sftp-image">{[host-image]}</variable>
+        <variable key="host-sftp-mount">{[host-mount]}</variable>
+
         <variable key="host-pg1-id">pg1</variable>
         <variable key="host-pg1">pg-primary</variable>
         <variable key="host-pg1-user">{[host-user]}</variable>
@@ -209,6 +219,12 @@
         <variable key="host-pg2-user">{[host-pg1-user]}</variable>
         <variable key="host-pg2-image">{[host-image]}</variable>
         <variable key="host-pg2-mount">{[host-mount]}</variable>
+
+        <variable key="host-pgalt-id">pgalt</variable>
+        <variable key="host-pgalt">pg-alt</variable>
+        <variable key="host-pgalt-user">{[host-pg1-user]}</variable>
+        <variable key="host-pgalt-image">{[host-image]}</variable>
+        <variable key="host-pgalt-mount">{[host-mount]}</variable>
 
         <variable key="host-repo1-id">repo1</variable>
         <variable key="host-repo1">repository</variable>
@@ -300,7 +316,7 @@
             rm /etc/apt/apt.conf.d/70debconf &amp;&amp; \
             apt-get update &amp;&amp; \
             apt-get install -y --no-install-recommends sudo ssh wget vim gnupg lsb-release iputils-ping ca-certificates \
-                    tzdata locales 2>&amp;1
+                    tzdata locales libssh2-1-dev 2>&amp;1
 
         {[sudo-disable-core-dump]}
 
@@ -360,6 +376,10 @@
 
         # Enable PowerTools repository (only available on RHEL8)
         RUN dnf config-manager --set-enabled powertools || true
+
+        # Install and enable epel repository
+        RUN dnf -y install epel-release
+        RUN crb enable
 
         # Install CA certificate
         RUN update-ca-trust extract
@@ -544,20 +564,26 @@
 
     <!-- ======================================================================================================================= -->
     <block-define if="'{[package]}' eq 'none'" id="br-install">
-        <p><backrest/> needs to be installed from a package or installed manually as shown here.</p>
+        <p>Installing <backrest/> from a package is preferable to building from source. When installing from a package the rest of the instructions in this section are generally not required, but it is possible that a package will skip creating one of the directories or apply incorrect permissions. In that case it may be necessary to manually create directories or update permissions.</p>
+
+        <p if="{[os-type-is-debian]}">{[user-guide-os]} packages for <backrest/> are available at <link url="https://www.postgresql.org/download/linux/ubuntu/">apt.postgresql.org</link>.</p>
+
+        <p if="{[os-type-is-rhel]}">{[user-guide-os]} packages for <backrest/> are available from <link url="{[crunchy-url-base]}">Crunchy Data</link> or <link url="http://yum.postgresql.org">yum.postgresql.org</link>.</p>
+
+        <p>If packages are not provided for your distribution/version you can <link section="/build">build from source</link> and then install manually as shown here.</p>
 
         <execute-list host="{[br-install-host]}">
             <title>Install dependencies</title>
 
             <execute if="{[os-type-is-debian]}" user="root" pre="y">
                 <exe-cmd>
-                    apt-get install postgresql-client libxml2</exe-cmd>
+                    apt-get install postgresql-client libxml2 libssh2-1</exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
             <execute if="{[os-type-is-rhel]}" user="root" pre="y">
                 <exe-cmd>
-                    yum install postgresql-libs
+                    yum install postgresql-libs libssh2
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
@@ -685,7 +711,7 @@
 
     <!-- ======================================================================================================================= -->
     <block-define id="azure-setup">
-        <p><backrest/> supports locating repositories in <proper>Azure-compatible</proper> object stores.  The container used to store the repository must be created in advance &amp;mdash; <backrest/> will not do it automatically.  The repository can be located in the container root (<path>/</path>) but it's usually best to place it in a subpath so object store logs or other data can also be stored in the container without conflicts.</p>
+        <p><backrest/> supports locating repositories in <proper>Azure-compatible</proper> object stores. The container used to store the repository must be created in advance &amp;mdash; <backrest/> will not do it automatically. The repository can be located in the container root (<path>/</path>) but it's usually best to place it in a subpath so object store logs or other data can also be stored in the container without conflicts.</p>
 
         <admonition type="warning">Do not enable <quote>hierarchical namespace</quote> as this will cause errors during expire.</admonition>
 
@@ -740,7 +766,7 @@
 
     <!-- ======================================================================================================================= -->
     <block-define id="s3-setup">
-        <p><backrest/> supports locating repositories in <proper>S3-compatible</proper> object stores.  The bucket used to store the repository must be created in advance &amp;mdash; <backrest/> will not do it automatically.  The repository can be located in the bucket root (<path>/</path>) but it's usually best to place it in a subpath so object store logs or other data can also be stored in the bucket without conflicts.</p>
+        <p><backrest/> supports locating repositories in <proper>S3-compatible</proper> object stores. The bucket used to store the repository must be created in advance &amp;mdash; <backrest/> will not do it automatically. The repository can be located in the bucket root (<path>/</path>) but it's usually best to place it in a subpath so object store logs or other data can also be stored in the bucket without conflicts.</p>
 
         <backrest-config host="{[s3-setup-host]}" file="{[backrest-config-demo]}" owner="{[s3-setup-config-owner]}">
             <title>Configure <proper>S3</proper></title>
@@ -770,7 +796,89 @@
             </execute>
         </execute-list>
 
-        <admonition type="note">The region and endpoint will need to be configured to where the bucket is located.  The values given here are for the <id>{[s3-region]}</id> region.</admonition>
+        <admonition type="note">The region and endpoint will need to be configured to where the bucket is located. The values given here are for the <id>{[s3-region]}</id> region.</admonition>
+    </block-define>
+
+    <!-- ======================================================================================================================= -->
+    <block-define id="sftp-setup">
+        <p><backrest/> supports locating repositories on <proper>SFTP</proper> hosts. SFTP file transfer is relatively slow so commands benefit by increasing <br-option>process-max</br-option> to parallelize file transfer.</p>
+
+        <backrest-config host="{[sftp-setup-host]}" file="{[backrest-config-demo]}" owner="{[sftp-setup-config-owner]}">
+            <title>Configure <proper>SFTP</proper></title>
+
+            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-type">sftp</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-path">/{[sftp-repo]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-bundle">y</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-host">{[host-sftp]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-host-key-hash-type">sha1</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-host-user">{[br-user]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-private-key-file">{[sftp-setup-user-home-path]}/.ssh/id_rsa_sftp</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-public-key-file">{[sftp-setup-user-home-path]}/.ssh/id_rsa_sftp.pub</backrest-config-option>
+            <backrest-config-option section="global" key="process-max">4</backrest-config-option>
+        </backrest-config>
+
+        <p>When utilizing <proper>SFTP</proper>, if libssh2 is compiled against OpenSSH then <br-option>repo{[sftp-setup-repo-id]}-sftp-public-key-file</br-option> is optional.</p>
+
+        <execute-list host="{[sftp-setup-host]}">
+            <title>Generate SSH keypair for SFTP backup</title>
+
+            <execute user="{[sftp-setup-user]}">
+                <exe-cmd>mkdir -m 750 -p {[sftp-setup-user-home-path]}/.ssh</exe-cmd>
+            </execute>
+            <execute user="{[sftp-setup-user]}">
+                <exe-cmd>ssh-keygen -f {[sftp-setup-user-home-path]}/.ssh/id_rsa_sftp
+                    -t rsa -b 4096 -N "" -m PEM</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <execute-list host="{[host-sftp]}">
+            <title>Copy <host>{[host-pg1]}</host> SFTP backup public key to <host>{[host-sftp]}</host></title>
+
+            <!-- There is no need to show creation of the user and repo path -->
+            <execute if="{[os-type-is-debian]}" user="root" user-force="y" show="n">
+                <exe-cmd>id -u {[br-user]} > /dev/null 2>&amp;1 || adduser --disabled-password --gecos "" {[br-user]}</exe-cmd>
+            </execute>
+            <execute if="{[os-type-is-rhel]}" user="root" user-force="y" show="n">
+                <exe-cmd>id -u {[br-user]} > /dev/null 2>&amp;1 || adduser -n {[br-user]}</exe-cmd>
+            </execute>
+            <execute user="root" user-force="y" show="n">
+                <exe-cmd>mkdir -m 750 -p /{[sftp-repo]} &amp;&amp; chown {[br-user]} /{[sftp-repo]}</exe-cmd>
+            </execute>
+
+            <execute user="{[br-user]}">
+                <exe-cmd>mkdir -m 750 -p {[br-home-path]}/.ssh</exe-cmd>
+            </execute>
+            <execute user="root" err-suppress="y" user-force="y">
+                <exe-cmd>
+                    (sudo ssh root@{[sftp-setup-host]} cat {[sftp-setup-user-home-path]}/.ssh/id_rsa_sftp.pub) |
+                    sudo -u {[br-user]} tee -a {[br-home-path]}/.ssh/authorized_keys
+                </exe-cmd>
+            </execute>
+        </execute-list>
+    </block-define>
+
+    <!-- ======================================================================================================================= -->
+    <block-define id="stress-update-incr">
+        <execute-list host="{[host-pg1]}">
+            <title>Database updates {[stress-update-incr-count]}</title>
+
+            <execute user="postgres" output="n">
+                <exe-cmd>{[pg-bin-path]}/pgbench -n -b simple-update -t {[stress-scale-data]}</exe-cmd>
+                <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
+            </execute>
+        </execute-list>
+
+        <execute-list host="{[host-repo1]}">
+            <title>Incr backup {[stress-update-incr-count]}</title>
+
+            <execute user="{[br-user]}" output="n">
+                <exe-cmd>
+                    pgbackrest --stanza=demo --type=incr --repo1-bundle
+                    --repo1-block --log-level-console=info backup
+                </exe-cmd>
+                <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
+            </execute>
+        </execute-list>
     </block-define>
 
     <!-- ======================================================================================================================= -->
@@ -783,15 +891,18 @@
         <!-- Create S3 server first to allow it time to boot before being used -->
         <host-add if="'{[s3-local]}' eq 'y'" id="{[host-s3-id]}" name="{[host-s3]}" user="root" image="{[s3-image]}" os="{[os-type]}" option="-v {[fake-cert-path]}/s3-server.crt:/root/.minio/certs/public.crt:ro -v {[fake-cert-path]}/s3-server.key:/root/.minio/certs/private.key:ro -e MINIO_REGION={[s3-region]} -e MINIO_DOMAIN={[s3-endpoint]} -e MINIO_BROWSER=off -e MINIO_ACCESS_KEY={[s3-key]} -e MINIO_SECRET_KEY={[s3-key-secret]}" param="server /data --address :443" update-hosts="n"/>
 
+        <!-- Create SFTP server first to allow it time to boot before being used -->
+        <host-add id="{[host-sftp-id]}" name="{[host-sftp]}" user="{[host-sftp-user]}" image="{[host-sftp-image]}" os="{[os-type]}" mount="{[host-sftp-mount]}" option="{[host-mem]} {[host-option]}"/>
+
         <p>This user guide is intended to be followed sequentially from beginning to end &amp;mdash; each section depends on the last. For example, the <link section="/restore">Restore</link> section relies on setup that is performed in the <link section="/quickstart">Quick Start</link> section. Once <backrest/> is up and running then skipping around is possible but following the user guide in order is recommended the first time through.</p>
 
         <p>Although the examples in this guide are targeted at <proper>{[user-guide-os]}</proper> and <postgres/> {[pg-version]}, it should be fairly easy to apply the examples to any Unix distribution and <postgres/> version. The only OS-specific commands are those to create, start, stop, and drop <postgres/> clusters. The <backrest/> commands will be the same on any Unix system though the location of the executable may vary. While <backrest/> strives to operate consistently across versions of <postgres/>, there are subtle differences between versions of <postgres/> that may show up in this guide when illustrating certain examples, e.g. <postgres/> path/file names and settings.</p>
 
         <p>Configuration information and documentation for PostgreSQL can be found in the <postgres/> <link url='http://www.postgresql.org/docs/{[pg-version]}/static/index.html'>Manual</link>.</p>
 
-        <p>A somewhat novel approach is taken to documentation in this user guide.  Each command is run on a virtual machine when the documentation is built from the XML source.  This means you can have a high confidence that the commands work correctly in the order presented.  Output is captured and displayed below the command when appropriate.  If the output is not included it is because it was deemed not relevant or was considered a distraction from the narrative.</p>
+        <p>A somewhat novel approach is taken to documentation in this user guide. Each command is run on a virtual machine when the documentation is built from the XML source. This means you can have a high confidence that the commands work correctly in the order presented. Output is captured and displayed below the command when appropriate. If the output is not included it is because it was deemed not relevant or was considered a distraction from the narrative.</p>
 
-        <p>All commands are intended to be run as an unprivileged user that has sudo privileges for both the <user>root</user> and <user>postgres</user> users.  It's also possible to run the commands directly as their respective users without modification and in that case the <cmd>sudo</cmd> commands can be stripped off.</p>
+        <p>All commands are intended to be run as an unprivileged user that has sudo privileges for both the <user>root</user> and <user>postgres</user> users. It's also possible to run the commands directly as their respective users without modification and in that case the <cmd>sudo</cmd> commands can be stripped off.</p>
     </section>
 
     <!-- ======================================================================================================================= -->
@@ -817,7 +928,7 @@
         <section id="restore">
             <title>Restore</title>
 
-            <p>A restore is the act of copying a backup to a system where it will be started as a live database cluster.  A restore requires the backup files and one or more WAL segments in order to work correctly.</p>
+            <p>A restore is the act of copying a backup to a system where it will be started as a live database cluster. A restore requires the backup files and one or more WAL segments in order to work correctly.</p>
         </section>
 
         <!-- =================================================================================================================== -->
@@ -826,7 +937,7 @@
 
             <p>WAL is the mechanism that <postgres/> uses to ensure that no committed changes are lost. Transactions are written sequentially to the WAL and a transaction is considered to be committed when those writes are flushed to disk. Afterwards, a background process writes the changes into the main database cluster files (also known as the heap). In the event of a crash, the WAL is replayed to make the database consistent.</p>
 
-            <p>WAL is conceptually infinite but in practice is broken up into individual 16MB files called segments.  WAL segments follow the naming convention <id>0000000100000A1E000000FE</id> where the first 8 hexadecimal digits represent the timeline and the next 16 digits are the logical sequence number (LSN).</p>
+            <p>WAL is conceptually infinite but in practice is broken up into individual 16MB files called segments. WAL segments follow the naming convention <id>0000000100000A1E000000FE</id> where the first 8 hexadecimal digits represent the timeline and the next 16 digits are the logical sequence number (LSN).</p>
 
         </section>
 
@@ -848,21 +959,21 @@
         <section id="v1-v2">
             <title>Upgrading {[project]} from v1 to v2</title>
 
-            <p>Upgrading from <proper>v1</proper> to <proper>v2</proper> is fairly straight-forward.  The repository format has not changed and all non-deprecated options from <proper>v1</proper> are accepted, so for most installations it is simply a matter of installing the new version.</p>
+            <p>Upgrading from <proper>v1</proper> to <proper>v2</proper> is fairly straight-forward. The repository format has not changed and all non-deprecated options from <proper>v1</proper> are accepted, so for most installations it is simply a matter of installing the new version.</p>
 
             <p>However, there are a few caveats:</p>
 
             <list>
-                <list-item>The deprecated <br-option>thread-max</br-option> option is no longer valid.  Use <br-option>process-max</br-option> instead.</list-item>
+                <list-item>The deprecated <br-option>thread-max</br-option> option is no longer valid. Use <br-option>process-max</br-option> instead.</list-item>
 
-                <list-item>The deprecated <br-option>archive-max-mb</br-option> option is no longer valid.  This has been replaced with the <br-option>archive-push-queue-max</br-option> option which has different semantics.</list-item>
+                <list-item>The deprecated <br-option>archive-max-mb</br-option> option is no longer valid. This has been replaced with the <br-option>archive-push-queue-max</br-option> option which has different semantics.</list-item>
 
                 <list-item>The default for the <br-option>backup-user</br-option> option has changed from <id>backrest</id> to <id>pgbackrest</id>.</list-item>
 
                 <list-item>In <proper>v2.02</proper> the default location of the <backrest/> configuration file has changed from <file>/etc/pgbackrest.conf</file> to <file>/etc/pgbackrest/pgbackrest.conf</file>. If <file>/etc/pgbackrest/pgbackrest.conf</file> does not exist, the <file>/etc/pgbackrest.conf</file> file will be loaded instead, if it exists.</list-item>
             </list>
 
-            <p>Many option names have changed to improve consistency although the old names from <proper>v1</proper> are still accepted.  In general, <id>db-*</id> options have been renamed to <id>pg-*</id> and <id>backup-*</id>/<id>retention-*</id> options have been renamed to <id>repo-*</id> when appropriate.</p>
+            <p>Many option names have changed to improve consistency although the old names from <proper>v1</proper> are still accepted. In general, <id>db-*</id> options have been renamed to <id>pg-*</id> and <id>backup-*</id>/<id>retention-*</id> options have been renamed to <id>repo-*</id> when appropriate.</p>
 
             <p><postgres/> and repository options must be indexed when using the new names introduced in <proper>v2</proper>, e.g. <br-option>pg1-host</br-option>, <br-option>pg1-path</br-option>, <br-option>repo1-path</br-option>, <br-option>repo1-type</br-option>, etc.</p>
         </section>
@@ -879,13 +990,11 @@
     <section if="'{[package]}' eq 'none'" id="build">
         <title>Build</title>
 
-        <p if="{[os-type-is-debian]}">{[user-guide-os]} packages for <backrest/> are available at <link url="https://www.postgresql.org/download/linux/ubuntu/">apt.postgresql.org</link>.  If they are not provided for your distribution/version it is easy to download the source and install manually.</p>
-
-        <p if="{[os-type-is-rhel]}">{[user-guide-os]} packages for <backrest/> are available from <link url="{[crunchy-url-base]}">Crunchy Data</link> or <link url="http://yum.postgresql.org">yum.postgresql.org</link>, but it is also easy to download the source and install manually.</p>
+        <p>Installing <backrest/> from a package is preferable to building from source. See <link section="/installation">Installation</link> for more information about packages.</p>
 
         <host-add id="{[host-build-id]}" name="{[host-build]}" user="{[host-build-user]}" image="{[host-build-image]}" os="{[os-type]}" mount="{[host-build-mount]}" option="{[host-option]}"/>
 
-        <p>When building from source it is best to use a build host rather than building on production.  Many of the tools required for the build should generally not be installed in production.  <backrest/> consists of a single executable so it is easy to copy to a new host once it is built.</p>
+        <p>When building from source it is best to use a build host rather than building on production. Many of the tools required for the build should generally not be installed in production. <backrest/> consists of a single executable so it is easy to copy to a new host once it is built.</p>
 
         <execute-list host="{[host-build]}">
             <title>Download version <id>{[version]}</id> of <backrest/> to <path>{[build-path]}</path> path</title>
@@ -925,15 +1034,15 @@
             <execute if="{[os-type-is-debian]}" user="root" pre="y">
                 <exe-cmd>
                     apt-get install make gcc libpq-dev libssl-dev libxml2-dev pkg-config
-                    liblz4-dev libzstd-dev libbz2-dev libz-dev libyaml-dev
+                    liblz4-dev libzstd-dev libbz2-dev libz-dev libyaml-dev libssh2-1-dev
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
             <execute if="{[os-type-is-rhel]}" user="root" pre="y">
                 <exe-cmd>
-                    yum install make gcc postgresql{[pg-version-nodot]}-devel
-                    openssl-devel libxml2-devel lz4-devel libzstd-devel bzip2-devel libyaml-devel
+                    yum install make gcc postgresql{[pg-version-nodot]}-devel openssl-devel
+                    libxml2-devel lz4-devel libzstd-devel bzip2-devel libyaml-devel libssh2-devel
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
@@ -974,7 +1083,7 @@
             <block-variable-replace key="br-install-group">postgres</block-variable-replace>
         </block>
 
-        <p><backrest/> should now be properly installed but it is best to check.  If any dependencies were missed then you will get an error when running <backrest/> from the command line.</p>
+        <p><backrest/> should now be properly installed but it is best to check. If any dependencies were missed then you will get an error when running <backrest/> from the command line.</p>
 
         <execute-list host="{[host-pg1]}">
             <title>Make sure the installation worked</title>
@@ -1033,7 +1142,7 @@
 
             <p>The name 'demo' describes the purpose of this cluster accurately so that will also make a good stanza name.</p>
 
-            <p><backrest/> needs to know where the base data directory for the <postgres/> cluster is located.  The path can be requested from <postgres/> directly but in a recovery scenario the <postgres/> process will not be available.  During backups the value supplied to <backrest/> will be compared against the path that <postgres/> is running on and they must be equal or the backup will return an error.  Make sure that <br-option>pg-path</br-option> is exactly equal to <pg-option>data_directory</pg-option> in <file>postgresql.conf</file>.</p>
+            <p><backrest/> needs to know where the base data directory for the <postgres/> cluster is located. The path can be requested from <postgres/> directly but in a recovery scenario the <postgres/> process will not be available. During backups the value supplied to <backrest/> will be compared against the path that <postgres/> is running on and they must be equal or the backup will return an error. Make sure that <br-option>pg-path</br-option> is exactly equal to <pg-option>data_directory</pg-option> in <file>postgresql.conf</file>.</p>
 
             <p>By default {[user-guide-os]} stores clusters in <path>{[pg-path-default]}</path> so it is easy to determine the correct path for the data directory.</p>
 
@@ -1048,7 +1157,7 @@
                 <backrest-config-option section="global" key="log-timestamp">n</backrest-config-option>
             </backrest-config>
 
-            <p><backrest/> configuration files follow the Windows INI convention.  Sections are denoted by text in brackets and key/value pairs are contained in each section.  Lines beginning with <id>#</id> are ignored and can be used as comments.</p>
+            <p><backrest/> configuration files follow the Windows INI convention. Sections are denoted by text in brackets and key/value pairs are contained in each section. Lines beginning with <id>#</id> are ignored and can be used as comments.</p>
 
             <p>There are multiple ways the <backrest/> configuration files can be loaded:</p>
             <list>
@@ -1090,7 +1199,7 @@
 
             <option-description key="repo-path"/>
 
-            <p>For this demonstration the repository will be stored on the same host as the <postgres/> server.  This is the simplest configuration and is useful in cases where traditional backup software is employed to backup the database host.</p>
+            <p>For this demonstration the repository will be stored on the same host as the <postgres/> server. This is the simplest configuration and is useful in cases where traditional backup software is employed to backup the database host.</p>
 
             <block id="br-install-repo">
                 <block-variable-replace key="br-install-host">{[host-pg1]}</block-variable-replace>
@@ -1148,10 +1257,23 @@
         </section>
 
         <!-- =================================================================================================================== -->
+        <section id="sftp-support" if="'{[sftp-all]}' eq 'y'">
+            <title>SFTP Storage Support</title>
+
+            <block id="sftp-setup">
+                <block-variable-replace key="sftp-setup-repo-id">1</block-variable-replace>
+                <block-variable-replace key="sftp-setup-host">{[host-pg1]}</block-variable-replace>
+                <block-variable-replace key="sftp-setup-user">postgres</block-variable-replace>
+                <block-variable-replace key="sftp-setup-config-owner">postgres:postgres</block-variable-replace>
+                <block-variable-replace key="sftp-setup-user-home-path">{[pg-home-path]}</block-variable-replace>
+            </block>
+        </section>
+
+        <!-- =================================================================================================================== -->
         <section id="configure-archiving">
             <title>Configure Archiving</title>
 
-            <p>Backing up a running <postgres/> cluster requires WAL archiving to be enabled.  Note that <i>at least</i> one WAL segment will be created during the backup process even if no explicit writes are made to the cluster.</p>
+            <p>Backing up a running <postgres/> cluster requires WAL archiving to be enabled. Note that <i>at least</i> one WAL segment will be created during the backup process even if no explicit writes are made to the cluster.</p>
 
             <postgres-config host="{[host-pg1]}" file="{[postgres-config-demo]}">
                 <title>Configure archive settings</title>
@@ -1196,7 +1318,7 @@
 
             <p>When archiving a WAL segment is expected to take more than 60 seconds (the default) to reach the <backrest/> repository, then the <backrest/> <br-option>archive-timeout</br-option> option should be increased. Note that this option is not the same as the <postgres/> <pg-option>archive_timeout</pg-option> option which is used to force a WAL segment switch; useful for databases where there are long periods of inactivity. For more information on the <postgres/> <pg-option>archive_timeout</pg-option> option, see <postgres/> <link url="https://www.postgresql.org/docs/current/static/runtime-config-wal.html">Write Ahead Log</link>.</p>
 
-            <p>The <cmd>archive-push</cmd> command can be configured with its own options.  For example, a lower compression level may be set to speed archiving without affecting the compression used for backups.</p>
+            <p>The <cmd>archive-push</cmd> command can be configured with its own options. For example, a lower compression level may be set to speed archiving without affecting the compression used for backups.</p>
 
             <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
                 <title>Config <cmd>archive-push</cmd> to use a lower compression level</title>
@@ -1226,9 +1348,9 @@
         <section if="'{[encrypt]}' eq 'y'" id="configure-encryption">
             <title>Configure Repository Encryption</title>
 
-            <p>The repository will be configured with a cipher type and key to demonstrate encryption.  Encryption is always performed client-side even if the repository type (e.g. <proper>S3</proper> or other object store) supports encryption.</p>
+            <p>The repository will be configured with a cipher type and key to demonstrate encryption. Encryption is always performed client-side even if the repository type (e.g. <proper>S3</proper> or other object store) supports encryption.</p>
 
-            <p>It is important to use a long, random passphrase for the cipher key.  A good way to generate one is to run: <code>openssl rand -base64 48</code>.</p>
+            <p>It is important to use a long, random passphrase for the cipher key. A good way to generate one is to run: <code>openssl rand -base64 48</code>.</p>
 
             <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
                 <title>Configure <backrest/> repository encryption</title>
@@ -1309,7 +1431,7 @@
                 </execute>
             </execute-list>
 
-            <p>By default <backrest/> will attempt to perform an incremental backup.  However, an incremental backup must be based on a full backup and since no full backup existed <backrest/> ran a full backup instead.</p>
+            <p>By default <backrest/> will attempt to perform an incremental backup. However, an incremental backup must be based on a full backup and since no full backup existed <backrest/> ran a full backup instead.</p>
 
             <p>The <br-option>type</br-option> option can be used to specify a full or differential backup.</p>
 
@@ -1323,7 +1445,7 @@
                 </execute>
             </execute-list>
 
-            <p>This time there was no warning because a full backup already existed.  While incremental backups can be based on a full <i>or</i> differential backup, differential backups must be based on a full backup.  A full backup can be performed by running the <cmd>backup</cmd> command with <br-setting>{[dash]}-type=full</br-setting>.</p>
+            <p>This time there was no warning because a full backup already existed. While incremental backups can be based on a full <i>or</i> differential backup, differential backups must be based on a full backup. A full backup can be performed by running the <cmd>backup</cmd> command with <br-setting>{[dash]}-type=full</br-setting>.</p>
 
             <p>During an online backup <backrest/> waits for WAL segments that are required for backup consistency to be archived. This wait time is governed by the <backrest/> <br-option>archive-timeout</br-option> option which defaults to 60 seconds. If archiving an individual segment is known to take longer then this option should be increased.</p>
         </section>
@@ -1367,7 +1489,7 @@
         <section id="perform-restore" depend="perform-backup">
             <title>Restore a Backup</title>
 
-            <p>Backups can protect you from a number of disaster scenarios, the most common of which are hardware failure and data corruption.  The easiest way to simulate data corruption is to remove an important <postgres/> cluster file.</p>
+            <p>Backups can protect you from a number of disaster scenarios, the most common of which are hardware failure and data corruption. The easiest way to simulate data corruption is to remove an important <postgres/> cluster file.</p>
 
             <execute-list host="{[host-pg1]}">
                 <title>Stop the {[postgres-cluster-demo]} cluster and delete the <file>pg_control</file> file</title>
@@ -1437,7 +1559,7 @@
     <section id="monitor" depend="/quickstart/perform-backup">
         <title>Monitoring</title>
 
-        <p>Monitoring is an important part of any production system.  There are many tools available and <backrest/> can be monitored on any of them with a little work.</p>
+        <p>Monitoring is an important part of any production system. There are many tools available and <backrest/> can be monitored on any of them with a little work.</p>
 
         <p><backrest/> can output information about the repository in JSON format which includes a list of all backups for each stanza and WAL archive info.</p>
 
@@ -1445,7 +1567,7 @@
         <section id="postgresql">
             <title>In <postgres/></title>
 
-            <p>The <postgres/> <id>COPY</id> command allows <backrest/> info to be loaded into a table.  The following example wraps that logic in a function that can be used to perform real-time queries.</p>
+            <p>The <postgres/> <id>COPY</id> command allows <backrest/> info to be loaded into a table. The following example wraps that logic in a function that can be used to perform real-time queries.</p>
 
             <execute-list host="{[host-pg1]}">
                 <title>Load <backrest/> info function for <postgres/></title>
@@ -1529,7 +1651,7 @@
             </execute-list>
 
             <admonition type="note">This syntax requires <proper>jq v1.5</proper>.</admonition>
-            <admonition type="note"><proper>jq</proper> may round large numbers such as system identifiers.  Test your queries carefully.</admonition>
+            <admonition type="note"><proper>jq</proper> may round large numbers such as system identifiers. Test your queries carefully.</admonition>
         </section>
     </section>
 
@@ -1580,8 +1702,6 @@
         <section id="block">
             <title>Block Incremental</title>
 
-            <admonition type="important">This feature is in beta release and should not be used in production. The on-disk format will change before the GA release. The <br-option>beta</br-option> option must be enabled to prevent accidental usage of beta features.</admonition>
-
             <p>Block incremental backups save space by only storing the parts of a file that have changed since the prior backup rather than storing the entire file.</p>
 
             <p>The block incremental feature is enabled with the <br-option>repo-block</br-option> option and it works best when enabled for all backup types. File bundling must also be enabled.</p>
@@ -1589,11 +1709,8 @@
             <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
                 <title>Configure <br-option>repo1-block</br-option></title>
 
-                <backrest-config-option section="global" key="beta">y</backrest-config-option>
                 <backrest-config-option section="global" key="repo1-block">y</backrest-config-option>
             </backrest-config>
-
-            <p>The <br-option>repo-block-size-map</br-option>, <br-option>repo-block-size-super</br-option>, <br-option>repo-block-size-super-full</br-option>, <br-option>repo-block-age-map</br-option>, and <br-option>repo-block-checksum-size-map</br-option> options can be used for tuning, though the defaults should be optimal in most cases. Note that these options may not be be available after the beta since they are primarily intended to allow experimentation to find the optimal values.</p>
         </section>
 
         <!-- =================================================================================================================== -->
@@ -1648,7 +1765,7 @@
     <section id="retention" depend="quickstart/perform-backup">
         <title>Retention</title>
 
-        <p>Generally it is best to retain as many backups as possible to provide a greater window for <link section="/pitr">Point-in-Time Recovery</link>, but practical concerns such as disk space must also be considered.  Retention options remove older backups once they are no longer needed.</p>
+        <p>Generally it is best to retain as many backups as possible to provide a greater window for <link section="/pitr">Point-in-Time Recovery</link>, but practical concerns such as disk space must also be considered. Retention options remove older backups once they are no longer needed.</p>
 
         <cmd-description key="expire"/>
 
@@ -1656,7 +1773,7 @@
         <section id="full">
             <title>Full Backup Retention</title>
 
-            <p>The <br-option>repo1-retention-full-type</br-option> determines how the option <br-option>repo1-retention-full</br-option> is interpreted; either as the count of full backups to be retained or how many days to retain full backups.  New backups must be completed before expiration will occur &amp;mdash; that means if <br-setting>repo1-retention-full-type=count</br-setting> and <br-setting>repo1-retention-full=2</br-setting> then there will be three full backups stored before the oldest one is expired, or if <br-setting>repo1-retention-full-type=time</br-setting> and <br-setting>repo1-retention-full=20</br-setting> then there must be one full backup that is at least 20 days old before expiration can occur.</p>
+            <p>The <br-option>repo1-retention-full-type</br-option> determines how the option <br-option>repo1-retention-full</br-option> is interpreted; either as the count of full backups to be retained or how many days to retain full backups. New backups must be completed before expiration will occur &amp;mdash; that means if <br-setting>repo1-retention-full-type=count</br-setting> and <br-setting>repo1-retention-full=2</br-setting> then there will be three full backups stored before the oldest one is expired, or if <br-setting>repo1-retention-full-type=time</br-setting> and <br-setting>repo1-retention-full=20</br-setting> then there must be one full backup that is at least 20 days old before expiration can occur.</p>
 
             <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
                 <title>Configure <br-option>repo1-retention-full</br-option></title>
@@ -1680,7 +1797,7 @@
                 </execute>
             </execute-list>
 
-            <p>Archive <i>is</i> expired because WAL segments were generated before the oldest backup.  These are not useful for recovery &amp;mdash; only WAL segments generated after a backup can be used to recover that backup.</p>
+            <p>Archive <i>is</i> expired because WAL segments were generated before the oldest backup. These are not useful for recovery &amp;mdash; only WAL segments generated after a backup can be used to recover that backup.</p>
 
             <execute-list host="{[host-pg1]}">
                 <title>Perform a full backup</title>
@@ -1699,7 +1816,7 @@
         <section id="diff">
             <title>Differential Backup Retention</title>
 
-            <p>Set <br-option>repo1-retention-diff</br-option> to the number of differential backups required.  Differentials only rely on the prior full backup so it is possible to create a <quote>rolling</quote> set of differentials for the last day or more.  This allows quick restores to recent points-in-time but reduces overall space consumption.</p>
+            <p>Set <br-option>repo1-retention-diff</br-option> to the number of differential backups required. Differentials only rely on the prior full backup so it is possible to create a <quote>rolling</quote> set of differentials for the last day or more. This allows quick restores to recent points-in-time but reduces overall space consumption.</p>
 
             <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
                 <title>Configure <br-option>repo1-retention-diff</br-option></title>
@@ -1707,7 +1824,7 @@
                 <backrest-config-option section="global" key="repo1-retention-diff">1</backrest-config-option>
             </backrest-config>
 
-            <p>Backup <br-setting>repo1-retention-diff=1</br-setting> so two differentials will need to be performed before one is expired.  An incremental backup is added to demonstrate incremental expiration.  Incremental backups cannot be expired independently &amp;mdash; they are always expired with their related full or differential backup.</p>
+            <p>Backup <br-setting>repo1-retention-diff=1</br-setting> so two differentials will need to be performed before one is expired. An incremental backup is added to demonstrate incremental expiration. Incremental backups cannot be expired independently &amp;mdash; they are always expired with their related full or differential backup.</p>
 
             <execute-list host="{[host-pg1]}">
                 <title>Perform differential and incremental backups</title>
@@ -1742,7 +1859,7 @@
         <section id="archive">
             <title>Archive Retention</title>
 
-            <p>Although <backrest/> automatically removes archived WAL segments when expiring backups (the default expires WAL for full backups based on the <br-option>repo1-retention-full</br-option> option), it may be useful to expire archive more aggressively to save disk space.  Note that full backups are treated as differential backups for the purpose of differential archive retention.</p>
+            <p>Although <backrest/> automatically removes archived WAL segments when expiring backups (the default expires WAL for full backups based on the <br-option>repo1-retention-full</br-option> option), it may be useful to expire archive more aggressively to save disk space. Note that full backups are treated as differential backups for the purpose of differential archive retention.</p>
 
             <p>Expiring archive will never remove WAL segments that are required to make a backup consistent. However, since Point-in-Time-Recovery (PITR) only works on a continuous WAL stream, care should be taken when aggressively expiring archive outside of the normal backup expiration process. To determine what will be expired without actually expiring anything, the <br-option>dry-run</br-option> option can be provided on the command line with the <cmd>expire</cmd> command.</p>
 
@@ -1805,16 +1922,16 @@
         <section id="ownership">
             <title>File Ownership</title>
 
-            <p>If a <cmd>restore</cmd> is run as a non-root user (the typical scenario) then all files restored will belong to the user/group executing <backrest/>.  If existing files are not owned by the executing user/group then an error will result if the ownership cannot be updated to the executing user/group.  In that case the file ownership will need to be updated by a privileged user before the restore can be retried.</p>
+            <p>If a <cmd>restore</cmd> is run as a non-root user (the typical scenario) then all files restored will belong to the user/group executing <backrest/>. If existing files are not owned by the executing user/group then an error will result if the ownership cannot be updated to the executing user/group. In that case the file ownership will need to be updated by a privileged user before the restore can be retried.</p>
 
-            <p>If a <cmd>restore</cmd> is run as the <id>root</id> user then <backrest/> will attempt to recreate the ownership recorded in the manifest when the backup was made.  Only user/group <b>names</b> are stored in the manifest so the same names must exist on the restore host for this to work.  If the user/group name cannot be found locally then the user/group of the <postgres/> data directory will be used and finally <id>root</id> if the data directory user/group cannot be mapped to a name.</p>
+            <p>If a <cmd>restore</cmd> is run as the <id>root</id> user then <backrest/> will attempt to recreate the ownership recorded in the manifest when the backup was made. Only user/group <b>names</b> are stored in the manifest so the same names must exist on the restore host for this to work. If the user/group name cannot be found locally then the user/group of the <postgres/> data directory will be used and finally <id>root</id> if the data directory user/group cannot be mapped to a name.</p>
         </section>
 
         <!-- =================================================================================================================== -->
         <section id="option-delta">
             <title>Delta Option</title>
 
-            <p><link section="/quickstart/perform-restore">Restore a Backup</link> in <link section="/quickstart">Quick Start</link> required the database cluster directory to be cleaned before the <cmd>restore</cmd> could be performed.  The <br-option>delta</br-option> option allows <backrest/> to automatically determine which files in the database cluster directory can be preserved and which ones need to be restored from the backup &amp;mdash; it also <i>removes</i> files not present in the backup manifest so it will dispose of divergent changes.  This is accomplished by calculating a <link url="https://en.wikipedia.org/wiki/SHA-1">SHA-1</link> cryptographic hash for each file in the database cluster directory.  If the <id>SHA-1</id> hash does not match the hash stored in the backup then that file will be restored.  This operation is very efficient when combined with the <br-option>process-max</br-option> option.  Since the <postgres/> server is shut down during the restore, a larger number of processes can be used than might be desirable during a backup when the <postgres/> server is running.</p>
+            <p><link section="/quickstart/perform-restore">Restore a Backup</link> in <link section="/quickstart">Quick Start</link> required the database cluster directory to be cleaned before the <cmd>restore</cmd> could be performed. The <br-option>delta</br-option> option allows <backrest/> to automatically determine which files in the database cluster directory can be preserved and which ones need to be restored from the backup &amp;mdash; it also <i>removes</i> files not present in the backup manifest so it will dispose of divergent changes. This is accomplished by calculating a <link url="https://en.wikipedia.org/wiki/SHA-1">SHA-1</link> cryptographic hash for each file in the database cluster directory. If the <id>SHA-1</id> hash does not match the hash stored in the backup then that file will be restored. This operation is very efficient when combined with the <br-option>process-max</br-option> option. Since the <postgres/> server is shut down during the restore, a larger number of processes can be used than might be desirable during a backup when the <postgres/> server is running.</p>
 
             <execute-list host="{[host-pg1]}">
                 <title>Stop the {[postgres-cluster-demo]} cluster, perform delta restore</title>
@@ -1847,7 +1964,7 @@
         <section id="option-db-include">
             <title>Restore Selected Databases</title>
 
-            <p>There may be cases where it is desirable to selectively restore specific databases from a cluster backup.  This could be done for performance reasons or to move selected databases to a machine that does not have enough space to restore the entire cluster backup.</p>
+            <p>There may be cases where it is desirable to selectively restore specific databases from a cluster backup. This could be done for performance reasons or to move selected databases to a machine that does not have enough space to restore the entire cluster backup.</p>
 
             <p>To demonstrate this feature two databases are created: test1 and test2.</p>
 
@@ -1897,7 +2014,7 @@
                 </execute>
             </execute-list>
 
-            <p>One of the main reasons to use selective restore is to save space.  The size of the test1 database is shown here so it can be compared with the disk utilization after a selective restore.</p>
+            <p>One of the main reasons to use selective restore is to save space. The size of the test1 database is shown here so it can be compared with the disk utilization after a selective restore.</p>
 
             <execute-list host="{[host-pg1]}">
                 <title>Show space used by test1 database</title>
@@ -1931,7 +2048,7 @@
                 </execute>
             </execute-list>
 
-            <p>Stop the cluster and restore only the test2 database.  Built-in databases (<id>template0</id>, <id>template1</id>, and <id>postgres</id>) are always restored.</p>
+            <p>Stop the cluster and restore only the test2 database. Built-in databases (<id>template0</id>, <id>template1</id>, and <id>postgres</id>) are always restored.</p>
 
             <admonition type="warning">Recovery may error unless <br-option>--type=immediate</br-option> is specified. This is because after consistency is reached <postgres/> will flag zeroed pages as errors even for a full-page write. For <postgres/> &amp;ge; <proper>13</proper> the <pg-option>ignore_invalid_pages</pg-option> setting may be used to ignore invalid pages. In this case it is important to check the logs after recovery to ensure that no invalid pages were reported in the selected databases.</admonition>
 
@@ -1968,7 +2085,7 @@
                 </execute>
             </execute-list>
 
-            <p>The test1 database, despite successful recovery, is not accessible.  This is because the entire database was restored as sparse, zeroed files.  <postgres/> can successfully apply WAL on the zeroed files but the database as a whole will not be valid because key files contain no data.  This is purposeful to prevent the database from being accidentally used when it might contain partial data that was applied during WAL replay.</p>
+            <p>The test1 database, despite successful recovery, is not accessible. This is because the entire database was restored as sparse, zeroed files. <postgres/> can successfully apply WAL on the zeroed files but the database as a whole will not be valid because key files contain no data. This is purposeful to prevent the database from being accidentally used when it might contain partial data that was applied during WAL replay.</p>
 
             <execute-list host="{[host-pg1]}">
                 <title>Attempting to connect to the test1 database will produce an error</title>
@@ -1981,7 +2098,7 @@
                 </execute>
             </execute-list>
 
-            <p>Since the test1 database is restored with sparse, zeroed files it will only require as much space as the amount of WAL that is written during recovery.  While the amount of WAL generated during a backup and applied during recovery can be significant it will generally be a small fraction of the total database size, especially for large databases where this feature is most likely to be useful.</p>
+            <p>Since the test1 database is restored with sparse, zeroed files it will only require as much space as the amount of WAL that is written during recovery. While the amount of WAL generated during a backup and applied during recovery can be significant it will generally be a small fraction of the total database size, especially for large databases where this feature is most likely to be useful.</p>
 
             <p>It is clear that the test1 database uses far less disk space during the selective restore than it would have if the entire database had been restored.</p>
 
@@ -2049,7 +2166,7 @@
             </execute>
         </execute-list>
 
-        <p>It is important to represent the time as reckoned by <postgres/> and to include timezone offsets.  This reduces the possibility of unintended timezone conversions and an unexpected recovery result.</p>
+        <p>It is important to represent the time as reckoned by <postgres/> and to include timezone offsets. This reduces the possibility of unintended timezone conversions and an unexpected recovery result.</p>
 
         <execute-list host="{[host-pg1]}">
             <title>Get the time from <postgres/></title>
@@ -2069,7 +2186,7 @@
             </execute>
         </execute-list>
 
-        <p>Now that the time has been recorded the table is dropped.  In practice finding the exact time that the table was dropped is a lot harder than in this example.  It may not be possible to find the exact time, but some forensic work should be able to get you close.</p>
+        <p>Now that the time has been recorded the table is dropped. In practice finding the exact time that the table was dropped is a lot harder than in this example. It may not be possible to find the exact time, but some forensic work should be able to get you close.</p>
 
         <execute-list host="{[host-pg1]}">
             <title>Drop the important table</title>
@@ -2127,7 +2244,7 @@
             </execute>
         </execute-list>
 
-        <p>The <postgres/> log also contains valuable information.  It will indicate the time and transaction where the recovery stopped and also give the time of the last transaction to be applied.</p>
+        <p>The <postgres/> log also contains valuable information. It will indicate the time and transaction where the recovery stopped and also give the time of the last transaction to be applied.</p>
 
         <execute-list host="{[host-pg1]}">
             <title>Examine the <postgres/> log output</title>
@@ -2138,7 +2255,7 @@
             </execute>
         </execute-list>
 
-        <p>This example was rigged to give the correct result.  If a backup after the required time is chosen then <postgres/> will not be able to recover the lost table. <postgres/> can only play forward, not backward.  To demonstrate this the important table must be dropped (again).</p>
+        <p>This example was rigged to give the correct result. If a backup after the required time is chosen then <postgres/> will not be able to recover the lost table. <postgres/> can only play forward, not backward. To demonstrate this the important table must be dropped (again).</p>
 
         <execute-list host="{[host-pg1]}">
             <title>Drop the important table (again)</title>
@@ -2202,7 +2319,7 @@
             </execute>
         </execute-list>
 
-        <p>Looking at the log output it's not obvious that recovery failed to restore the table.  The key is to look for the presence of the <quote>recovery stopping before...</quote> and <quote>last completed transaction...</quote> log messages.  If they are not present then the recovery to the specified point-in-time was not successful.</p>
+        <p>Looking at the log output it's not obvious that recovery failed to restore the table. The key is to look for the presence of the <quote>recovery stopping before...</quote> and <quote>last completed transaction...</quote> log messages. If they are not present then the recovery to the specified point-in-time was not successful.</p>
 
         <execute-list host="{[host-pg1]}">
             <title>Examine the <postgres/> log output to discover the recovery was not successful</title>
@@ -2256,6 +2373,47 @@
             <execute user="postgres" output="y">
                 <exe-cmd>cat {[postgres-log-demo]}</exe-cmd>
                 <exe-highlight>recovery stopping before|last completed transaction|starting point-in-time recovery</exe-highlight>
+            </execute>
+        </execute-list>
+    </section>
+
+    <!-- ======================================================================================================================= -->
+    <!-- This section must be before any of the additional drivers are tested because slow drivers can cause shutdown to fail. -->
+    <section id="delete-stanza" if="!{[object-any-all]}" depend="/quickstart">
+        <title>Delete a Stanza</title>
+
+        <cmd-description key="stanza-delete"/>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Stop <postgres/> cluster to be removed</title>
+
+            <execute user="root">
+                <exe-cmd>{[pg-cluster-stop]}</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Stop <backrest/> for the stanza</title>
+
+            <execute user="postgres" output="y">
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info stop</exe-cmd>
+                <exe-highlight>completed successfully</exe-highlight>
+            </execute>
+        </execute-list>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Delete the stanza from one repository</title>
+
+            <execute user="postgres" output="y">
+                <exe-cmd>
+                    {[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --repo=1
+                    {[dash]}-log-level-console=info stanza-delete
+                </exe-cmd>
+                <exe-highlight>completed successfully</exe-highlight>
+            </execute>
+
+            <execute user="root" show="n">
+                <exe-cmd>{[pg-cluster-start]}</exe-cmd>
             </execute>
         </execute-list>
     </section>
@@ -2407,11 +2565,46 @@
     </section>
 
     <!-- ======================================================================================================================= -->
+    <section id="sftp-support" if="!{[object-any-all]}" depend="/quickstart/configure-archiving">
+        <title>SFTP Support</title>
+
+        <block id="sftp-setup">
+            <block-variable-replace key="sftp-setup-repo-id">4</block-variable-replace>
+            <block-variable-replace key="sftp-setup-host">{[host-pg1]}</block-variable-replace>
+            <block-variable-replace key="sftp-setup-user">postgres</block-variable-replace>
+            <block-variable-replace key="sftp-setup-config-owner">postgres:postgres</block-variable-replace>
+            <block-variable-replace key="sftp-setup-user-home-path">{[pg-home-path]}</block-variable-replace>
+        </block>
+
+        <p>Commands are run exactly as if the repository were stored on a local disk.</p>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Create the stanza</title>
+
+            <execute user="postgres" output="y">
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info stanza-create</exe-cmd>
+                <exe-highlight>completed successfully</exe-highlight>
+            </execute>
+        </execute-list>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Backup the {[postgres-cluster-demo]} cluster</title>
+
+            <execute user="postgres" output="y">
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --repo=4
+                    --log-level-console=info backup</exe-cmd>
+                <exe-highlight>no prior backup exists|full backup size</exe-highlight>
+            </execute>
+        </execute-list>
+    </section>
+
+    <!-- ======================================================================================================================= -->
+    <!-- This section must be last of all drivers tested since there is no GCS server to make it work. -->
     <section id="gcs-support" if="!{[object-any-all]}" depend="/quickstart/configure-archiving">
         <title>GCS-Compatible Object Store Support</title>
 
         <block id="gcs-setup">
-            <block-variable-replace key="gcs-setup-repo-id">4</block-variable-replace>
+            <block-variable-replace key="gcs-setup-repo-id">5</block-variable-replace>
             <block-variable-replace key="gcs-setup-host">{[host-pg1]}</block-variable-replace>
             <block-variable-replace key="gcs-setup-user">postgres</block-variable-replace>
             <block-variable-replace key="gcs-setup-config-owner">postgres:postgres</block-variable-replace>
@@ -2423,50 +2616,10 @@
     </section>
 
     <!-- ======================================================================================================================= -->
-    <section id="delete-stanza" if="!{[object-any-all]}" depend="/quickstart">
-        <title>Delete a Stanza</title>
-
-        <cmd-description key="stanza-delete"/>
-
-        <execute-list host="{[host-pg1]}">
-            <title>Stop <postgres/> cluster to be removed</title>
-
-            <execute user="root">
-                <exe-cmd>{[pg-cluster-stop]}</exe-cmd>
-            </execute>
-        </execute-list>
-
-        <execute-list host="{[host-pg1]}">
-            <title>Stop <backrest/> for the stanza</title>
-
-            <execute user="postgres" output="y">
-                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info stop</exe-cmd>
-                <exe-highlight>completed successfully</exe-highlight>
-            </execute>
-        </execute-list>
-
-        <execute-list host="{[host-pg1]}">
-            <title>Delete the stanza from one repository</title>
-
-            <execute user="postgres" output="y">
-                <exe-cmd>
-                    {[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --repo=1
-                    {[dash]}-log-level-console=info stanza-delete
-                </exe-cmd>
-                <exe-highlight>completed successfully</exe-highlight>
-            </execute>
-
-            <execute user="root" show="n">
-                <exe-cmd>{[pg-cluster-start]}</exe-cmd>
-            </execute>
-        </execute-list>
-    </section>
-
-    <!-- ======================================================================================================================= -->
     <section id="repo-host" depend="/quickstart/configure-archiving">
         <title>Dedicated Repository Host</title>
 
-        <p>The configuration described in <link section="/quickstart">Quickstart</link> is suitable for simple installations but for enterprise configurations it is more typical to have a dedicated <host>repository</host> host where the backups and WAL archive files are stored.  This separates the backups and WAL archive from the database server so <host>database</host> host failures have less impact.  It is still a good idea to employ traditional backup software to backup the <host>repository</host> host.</p>
+        <p>The configuration described in <link section="/quickstart">Quickstart</link> is suitable for simple installations but for enterprise configurations it is more typical to have a dedicated <host>repository</host> host where the backups and WAL archive files are stored. This separates the backups and WAL archive from the database server so <host>database</host> host failures have less impact. It is still a good idea to employ traditional backup software to backup the <host>repository</host> host.</p>
 
         <p>On <postgres/> hosts, <br-option>pg1-path</br-option> is required to be the path of the local PostgreSQL cluster and no <br-option>pg1-host</br-option> should be configured. When configuring a repository host, the pgbackrest configuration file must have the <br-option>pg-host</br-option> option configured to connect to the primary and standby (if any) hosts. The repository host has the only pgbackrest configuration that should be aware of more than one <postgres/> host. Order does not matter, e.g. pg1-path/pg1-host, pg2-path/pg2-host can be primary or standby.</p>
 
@@ -2480,7 +2633,7 @@
 
             <host-add id="{[host-repo1-id]}" name="{[host-repo1]}" user="{[host-repo1-user]}" image="{[host-repo1-image]}" os="{[os-type]}" mount="{[host-repo1-mount]}" option="{[host-mem]} {[host-option]}"/>
 
-            <p>The <user>{[br-user]}</user> user is created to own the <backrest/> repository.  Any user can own the repository but it is best not to use <user>postgres</user> (if it exists) to avoid confusion.</p>
+            <p>The <user>{[br-user]}</user> user is created to own the <backrest/> repository. Any user can own the repository but it is best not to use <user>postgres</user> (if it exists) to avoid confusion.</p>
 
             <execute-list host="{[host-repo1]}">
                 <title>Create <user>{[br-user]}</user> user</title>
@@ -2536,7 +2689,7 @@
                 <block-variable-replace key="setup-ssh-user-home-path">{[pg-home-path]}</block-variable-replace>
             </block>
 
-            <admonition type="note">ssh has been configured to only allow <backrest/> to be run via passwordless ssh.  This enhances security in the event that one of the service accounts is hijacked.</admonition>
+            <admonition type="note">ssh has been configured to only allow <backrest/> to be run via passwordless ssh. This enhances security in the event that one of the service accounts is hijacked.</admonition>
 
             <!-- <block if="{[pg-version]} >= 11" id="setup-ssh">
                 <block-variable-replace key="setup-ssh-host">{[host-pg1]}</block-variable-replace>
@@ -2559,7 +2712,7 @@
                 <backrest-config-option section="global" key="repo1-path">{[backrest-repo-path]}</backrest-config-option>
             </backrest-config>
 
-            <p>The <host>repository</host> host must be configured with the <host>{[host-pg1]}</host> host/user and database path.  The primary will be configured as <id>pg1</id> to allow a standby to be added later.</p>
+            <p>The <host>repository</host> host must be configured with the <host>{[host-pg1]}</host> host/user and database path. The primary will be configured as <id>pg1</id> to allow a standby to be added later.</p>
 
             <backrest-config host="{[host-repo1]}" owner="{[br-user]}:{[br-group]}" file="{[backrest-config-demo]}">
                 <title>Configure <br-option>pg1-host</br-option>/<br-option>pg1-host-user</br-option> and <br-option>pg1-path</br-option></title>
@@ -2573,11 +2726,11 @@
                 <backrest-config-option if="{[protocol-tls]}" section="demo" key="pg1-host-cert-file">/etc/pgbackrest/cert/client.crt</backrest-config-option>
                 <backrest-config-option if="{[protocol-tls]}" section="demo" key="pg1-host-key-file">/etc/pgbackrest/cert/client.key</backrest-config-option>
 
-                <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-auth">pgbackrest-client=demo</backrest-config-option>
-                <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-address">*</backrest-config-option>
-                <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-ca-file">/etc/pgbackrest/cert/ca.crt</backrest-config-option>
-                <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-cert-file">/etc/pgbackrest/cert/server.crt</backrest-config-option>
-                <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-key-file">/etc/pgbackrest/cert/server.key</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-auth">pgbackrest-client=*</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-address">*</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-ca-file">/etc/pgbackrest/cert/ca.crt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-cert-file">/etc/pgbackrest/cert/server.crt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-key-file">/etc/pgbackrest/cert/server.key</backrest-config-option>
 
                 <backrest-config-option section="global" key="start-fast">y</backrest-config-option>
                 <backrest-config-option section="global" key="repo1-retention-full">2</backrest-config-option>
@@ -2586,7 +2739,7 @@
                 <backrest-config-option section="global" key="log-timestamp">n</backrest-config-option>
             </backrest-config>
 
-            <p>The database host must be configured with the repository host/user.  The default for the <br-option>repo1-host-user</br-option> option is <id>pgbackrest</id>.  If the <id>postgres</id> user does restores on the repository host it is best not to also allow the <id>postgres</id> user to perform backups.  However, the <id>postgres</id> user can read the repository directly if it is in the same group as the <id>pgbackrest</id> user.</p>
+            <p>The database host must be configured with the repository host/user. The default for the <br-option>repo1-host-user</br-option> option is <id>pgbackrest</id>. If the <id>postgres</id> user does restores on the repository host it is best not to also allow the <id>postgres</id> user to perform backups. However, the <id>postgres</id> user can read the repository directly if it is in the same group as the <id>pgbackrest</id> user.</p>
 
             <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}" reset="y">
                 <title>Configure <br-option>repo1-host</br-option>/<br-option>repo1-host-user</br-option></title>
@@ -2600,11 +2753,11 @@
                 <backrest-config-option if="{[protocol-tls]}" section="global" key="repo1-host-cert-file">/etc/pgbackrest/cert/client.crt</backrest-config-option>
                 <backrest-config-option if="{[protocol-tls]}" section="global" key="repo1-host-key-file">/etc/pgbackrest/cert/client.key</backrest-config-option>
 
-                <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-auth">pgbackrest-client=demo</backrest-config-option>
-                <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-address">*</backrest-config-option>
-                <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-ca-file">/etc/pgbackrest/cert/ca.crt</backrest-config-option>
-                <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-cert-file">/etc/pgbackrest/cert/server.crt</backrest-config-option>
-                <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-key-file">/etc/pgbackrest/cert/server.key</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-auth">pgbackrest-client=demo</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-address">*</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-ca-file">/etc/pgbackrest/cert/ca.crt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-cert-file">/etc/pgbackrest/cert/server.crt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-key-file">/etc/pgbackrest/cert/server.key</backrest-config-option>
 
                 <backrest-config-option section="global" key="log-level-file">detail</backrest-config-option>
 
@@ -2659,6 +2812,16 @@
                 <block-variable-replace key="s3-setup-user">{[br-user]}</block-variable-replace>
                 <block-variable-replace key="s3-setup-config-owner">{[br-user]}:{[br-group]}</block-variable-replace>
                 <block-variable-replace key="s3-setup-create-bucket">n</block-variable-replace>
+            </block>
+
+            <p if="'{[sftp-all]}' eq 'y'">Configure SFTP storage if required.</p>
+
+            <block id="sftp-setup" if="'{[sftp-all]}' eq 'y'">
+                <block-variable-replace key="sftp-setup-repo-id">1</block-variable-replace>
+                <block-variable-replace key="sftp-setup-host">{[host-repo1]}</block-variable-replace>
+                <block-variable-replace key="sftp-setup-user">{[br-user]}</block-variable-replace>
+                <block-variable-replace key="sftp-setup-config-owner">{[br-user]}:{[br-group]}</block-variable-replace>
+                <block-variable-replace key="sftp-setup-user-home-path">{[br-home-path]}</block-variable-replace>
             </block>
         </section>
 
@@ -2766,9 +2929,9 @@
 
         <p><backrest/> offers parallel processing to improve performance of compression and transfer. The number of processes to be used for this feature is set using the <br-option>--process-max</br-option> option.</p>
 
-        <p>It is usually best not to use more than 25% of available CPUs for the <cmd>backup</cmd> command.  Backups don't have to run that fast as long as they are performed regularly and the backup process should not impact database performance, if at all possible.</p>
+        <p>It is usually best not to use more than 25% of available CPUs for the <cmd>backup</cmd> command. Backups don't have to run that fast as long as they are performed regularly and the backup process should not impact database performance, if at all possible.</p>
 
-        <p>The restore command can and should use all available CPUs because during a restore the <postgres/> cluster is shut down and there is generally no other important work being done on the host.  If the host contains multiple clusters then that should be considered when setting restore parallelism.</p>
+        <p>The restore command can and should use all available CPUs because during a restore the <postgres/> cluster is shut down and there is generally no other important work being done on the host. If the host contains multiple clusters then that should be considered when setting restore parallelism.</p>
 
         <execute-list host="{[host-repo1]}">
             <title>Perform a backup with single process</title>
@@ -2801,14 +2964,14 @@
             </execute>
         </execute-list>
 
-        <p>The performance of the last backup should be improved by using multiple processes.  For very small backups the difference may not be very apparent, but as the size of the database increases so will time savings.</p>
+        <p>The performance of the last backup should be improved by using multiple processes. For very small backups the difference may not be very apparent, but as the size of the database increases so will time savings.</p>
     </section>
 
     <!-- ======================================================================================================================= -->
     <section id="start-stop" depend="/repo-host/config">
         <title>Starting and Stopping</title>
 
-        <p>Sometimes it is useful to prevent <backrest/> from running on a system.  For example, when failing over from a primary to a standby it's best to prevent <backrest/> from running on the old primary in case <postgres/> gets restarted or can't be completely killed.  This will also prevent <backrest/> from running on <id>cron</id>.</p>
+        <p>Sometimes it is useful to prevent <backrest/> from running on a system. For example, when failing over from a primary to a standby it's best to prevent <backrest/> from running on the old primary in case <postgres/> gets restarted or can't be completely killed. This will also prevent <backrest/> from running on <id>cron</id>.</p>
 
         <execute-list host="{[host-pg1]}">
             <title>Stop the <backrest/> services</title>
@@ -2829,7 +2992,7 @@
             </execute>
         </execute-list>
 
-        <p>Specify the <br-option>--force</br-option> option to terminate any <backrest/> process that are currently running.  If <backrest/> is already stopped then stopping again will generate a warning.</p>
+        <p>Specify the <br-option>--force</br-option> option to terminate any <backrest/> process that are currently running. If <backrest/> is already stopped then stopping again will generate a warning.</p>
 
         <execute-list host="{[host-pg1]}">
             <title>Stop the <backrest/> services again</title>
@@ -2885,7 +3048,7 @@
     <section id="replication" depend="/repo-host/perform-backup">
         <title>Replication</title>
 
-        <p>Replication allows multiple copies of a <postgres/> cluster (called standbys) to be created from a single primary.  The standbys are useful for balancing reads and to provide redundancy in case the primary host fails.</p>
+        <p>Replication allows multiple copies of a <postgres/> cluster (called standbys) to be created from a single primary. The standbys are useful for balancing reads and to provide redundancy in case the primary host fails.</p>
 
         <!-- =================================================================================================================== -->
         <section id="installation">
@@ -2955,11 +3118,11 @@
                 <backrest-config-option if="{[protocol-tls]}" section="global" key="repo1-host-cert-file">/etc/pgbackrest/cert/client.crt</backrest-config-option>
                 <backrest-config-option if="{[protocol-tls]}" section="global" key="repo1-host-key-file">/etc/pgbackrest/cert/client.key</backrest-config-option>
 
-                <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-auth">pgbackrest-client=demo</backrest-config-option>
-                <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-address">*</backrest-config-option>
-                <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-ca-file">/etc/pgbackrest/cert/ca.crt</backrest-config-option>
-                <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-cert-file">/etc/pgbackrest/cert/server.crt</backrest-config-option>
-                <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-key-file">/etc/pgbackrest/cert/server.key</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-auth">pgbackrest-client=demo</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-address">*</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-ca-file">/etc/pgbackrest/cert/ca.crt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-cert-file">/etc/pgbackrest/cert/server.crt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-key-file">/etc/pgbackrest/cert/server.key</backrest-config-option>
 
                 <backrest-config-option section="global" key="log-level-file">detail</backrest-config-option>
 
@@ -3019,7 +3182,7 @@
                 </execute>
             </execute-list>
 
-            <p>The <pg-setting>hot_standby</pg-setting> setting must be enabled before starting <postgres/> to allow read-only connections on <host>{[host-pg2]}</host>.  Otherwise, connection attempts will be refused.  The rest of the configuration is in case the standby is promoted to a primary.</p>
+            <p>The <pg-setting>hot_standby</pg-setting> setting must be enabled before starting <postgres/> to allow read-only connections on <host>{[host-pg2]}</host>. Otherwise, connection attempts will be refused. The rest of the configuration is in case the standby is promoted to a primary.</p>
 
             <postgres-config host="{[host-pg2]}" file="{[postgres-config-demo]}">
                 <title>Configure <postgres/></title>
@@ -3048,7 +3211,7 @@
                 </execute>
             </execute-list>
 
-            <p>The <postgres/> log gives valuable information about the recovery.  Note especially that the cluster has entered standby mode and is ready to accept read-only connections.</p>
+            <p>The <postgres/> log gives valuable information about the recovery. Note especially that the cluster has entered standby mode and is ready to accept read-only connections.</p>
 
             <execute-list host="{[host-pg2]}">
                 <title>Examine the <postgres/> log output for log messages indicating success</title>
@@ -3088,7 +3251,7 @@
                 </execute>
             </execute-list>
 
-            <p>So, what went wrong?  Since <postgres/> is pulling WAL segments from the archive to perform replication, changes won't be seen on the standby until the WAL segment that contains those changes is pushed from <host>{[host-pg1]}</host>.</p>
+            <p>So, what went wrong? Since <postgres/> is pulling WAL segments from the archive to perform replication, changes won't be seen on the standby until the WAL segment that contains those changes is pushed from <host>{[host-pg1]}</host>.</p>
 
             <p>This can be done manually by calling <code>{[pg-switch-wal]}()</code> which pushes the current WAL segment to the archive (a new WAL segment is created to contain further changes).</p>
 
@@ -3130,7 +3293,7 @@
         <section id="streaming">
             <title>Streaming Replication</title>
 
-            <p>Instead of relying solely on the WAL archive, streaming replication makes a direct connection to the primary and applies changes as soon as they are made on the primary.  This results in much less lag between the primary and standby.</p>
+            <p>Instead of relying solely on the WAL archive, streaming replication makes a direct connection to the primary and applies changes as soon as they are made on the primary. This results in much less lag between the primary and standby.</p>
 
             <p>Streaming replication requires a user with the replication privilege.</p>
 
@@ -3145,7 +3308,7 @@
                 </execute>
             </execute-list>
 
-            <p>The <file>pg_hba.conf</file> file must be updated to allow the standby to connect as the replication user.  Be sure to replace the IP address below with the actual IP address of your <host>{[host-pg2]}</host>.  A reload will be required after modifying the <file>pg_hba.conf</file> file.</p>
+            <p>The <file>pg_hba.conf</file> file must be updated to allow the standby to connect as the replication user. Be sure to replace the IP address below with the actual IP address of your <host>{[host-pg2]}</host>. A reload will be required after modifying the <file>pg_hba.conf</file> file.</p>
 
             <execute-list host="{[host-pg1]}">
                 <title>Create <file>pg_hba.conf</file> entry for replication user</title>
@@ -3209,7 +3372,7 @@
 
             <admonition type="note">The <pg-setting>primary_conninfo</pg-setting> setting has been written into the <file>{[pg-recovery-file-demo]}</file> file because it was configured as a <br-option>recovery-option</br-option> in <file>{[project-exe]}.conf</file>. The <br-setting>{[dash]}-type=preserve</br-setting> option can be used with the <cmd>restore</cmd> to leave the existing <file>{[pg-recovery-file-demo]}</file> file in place if that behavior is preferred.</admonition>
 
-            <p if="{[os-type-is-rhel]}">By default {[user-guide-os]} stores the <file>postgresql.conf</file> file in the <postgres/> data directory.  That means the change made to <file>postgresql.conf</file> was overwritten by the last restore and the <pg-option>hot_standby</pg-option> setting must be enabled again.  Other solutions to this problem are to store the <file>postgresql.conf</file> file elsewhere or to enable the <pg-option>hot_standby</pg-option> setting on the <host>{[host-pg1]}</host> host where it will be ignored.</p>
+            <p if="{[os-type-is-rhel]}">By default {[user-guide-os]} stores the <file>postgresql.conf</file> file in the <postgres/> data directory. That means the change made to <file>postgresql.conf</file> was overwritten by the last restore and the <pg-option>hot_standby</pg-option> setting must be enabled again. Other solutions to this problem are to store the <file>postgresql.conf</file> file elsewhere or to enable the <pg-option>hot_standby</pg-option> setting on the <host>{[host-pg1]}</host> host where it will be ignored.</p>
 
             <postgres-config host="{[host-pg2]}" if="{[os-type-is-rhel]}" file="{[postgres-config-demo]}">
                 <title>Enable <pg-option>hot_standby</pg-option></title>
@@ -3275,12 +3438,177 @@
     </section>
 
     <!-- ======================================================================================================================= -->
+    <section id="multi-stanza" depend="/repo-host/perform-backup">
+        <title>Multiple Stanzas</title>
+
+        <p><backrest/> supports multiple stanzas. The most common usage is sharing a <host>{[host-repo1]}</host> host among multiple stanzas.</p>
+
+        <!-- =================================================================================================================== -->
+        <section id="installation">
+            <title>Installation</title>
+
+            <p>A new host named <host>{[host-pgalt]}</host> is created to run the new primary.</p>
+
+            <host-add id="{[host-pgalt-id]}" name="{[host-pgalt]}" user="{[host-pgalt-user]}" image="{[host-pgalt-image]}" os="{[os-type]}" mount="{[host-pgalt-mount]}" option="{[host-mem]} {[host-option]}"/>
+
+            <block id="br-install">
+                <block-variable-replace key="br-install-host">{[host-pgalt]}</block-variable-replace>
+                <block-variable-replace key="br-install-user">postgres</block-variable-replace>
+                <block-variable-replace key="br-install-group">postgres</block-variable-replace>
+            </block>
+        </section>
+
+        <!-- =================================================================================================================== -->
+        <section if="{[protocol-ssh]}" id="setup-ssh">
+            <title>Setup Passwordless SSH</title>
+
+            <block id="setup-ssh-intro">
+                <!-- ??? Bogus variable is set because the syntax currently requires at least one -->
+                <block-variable-replace key="bogus"></block-variable-replace>
+            </block>
+
+            <block id="setup-ssh">
+                <block-variable-replace key="setup-ssh-host">{[host-pgalt]}</block-variable-replace>
+                <block-variable-replace key="setup-ssh-user">postgres</block-variable-replace>
+                <block-variable-replace key="setup-ssh-user-home-path">{[pg-home-path]}</block-variable-replace>
+            </block>
+        </section>
+
+        <!-- =================================================================================================================== -->
+        <section id="configuration">
+            <title>Configuration</title>
+
+            <p><backrest/> configuration is nearly identical to <host>{[host-pg1]}</host> except that the <id>demo-alt</id> stanza will be used so backups and archive will be stored in a separate location.</p>
+
+            <backrest-config host="{[host-pgalt]}" file="{[backrest-config-demo]}">
+                <title>Configure <backrest/> on the new primary</title>
+
+                <backrest-config-option section="demo-alt" key="pg1-path">{[pg-path]}</backrest-config-option>
+
+                <backrest-config-option section="global" key="repo1-host">{[host-repo1]}</backrest-config-option>
+
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="repo1-host-type">tls</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="repo1-host-ca-file">/etc/pgbackrest/cert/ca.crt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="repo1-host-cert-file">/etc/pgbackrest/cert/client.crt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="repo1-host-key-file">/etc/pgbackrest/cert/client.key</backrest-config-option>
+
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-auth">pgbackrest-client=demo-alt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-address">*</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-ca-file">/etc/pgbackrest/cert/ca.crt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-cert-file">/etc/pgbackrest/cert/server.crt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-key-file">/etc/pgbackrest/cert/server.key</backrest-config-option>
+
+                <backrest-config-option section="global" key="log-level-file">detail</backrest-config-option>
+
+                <backrest-config-option section="global" key="log-level-stderr">off</backrest-config-option>
+                <backrest-config-option section="global" key="log-timestamp">n</backrest-config-option>
+            </backrest-config>
+
+            <backrest-config host="{[host-repo1]}" owner="{[br-user]}:{[br-group]}" file="{[backrest-config-demo]}">
+                <title>Configure <br-option>pg1-host</br-option>/<br-option>pg1-host-user</br-option> and <br-option>pg1-path</br-option></title>
+
+                <backrest-config-option section="demo-alt" key="pg1-path">{[pg-path]}</backrest-config-option>
+                <backrest-config-option section="demo-alt" key="pg1-host">{[host-pgalt]}</backrest-config-option>
+
+                <backrest-config-option if="{[protocol-tls]}" section="demo-alt" key="pg1-host-type">tls</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="demo-alt" key="pg1-host-ca-file">/etc/pgbackrest/cert/ca.crt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="demo-alt" key="pg1-host-cert-file">/etc/pgbackrest/cert/client.crt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="demo-alt" key="pg1-host-key-file">/etc/pgbackrest/cert/client.key</backrest-config-option>
+            </backrest-config>
+
+            <block if="{[protocol-tls]}" id="setup-tls">
+                <block-variable-replace key="setup-tls-host">{[host-pgalt]}</block-variable-replace>
+                <block-variable-replace key="setup-tls-user">postgres</block-variable-replace>
+                <block-variable-replace key="setup-tls-group">postgres</block-variable-replace>
+            </block>
+        </section>
+
+        <!-- =================================================================================================================== -->
+        <section id="setup-demo-cluster">
+            <title>Setup Demo Cluster</title>
+
+            <execute-list host="{[host-pgalt]}">
+                <title>Create the demo cluster</title>
+
+                <execute user="postgres">
+                    <exe-cmd>
+                        {[pg-bin-path]}/initdb
+                            -D {[pg-path]} -k -A peer
+                    </exe-cmd>
+                </execute>
+
+                <execute if="{[os-type-is-debian]}" user="root" output="y" filter="n">
+                    <exe-cmd>{[pg-cluster-create]}</exe-cmd>
+                </execute>
+
+                <execute user="root" show="n" user-force="y">
+                    <exe-cmd>cat /root/postgresql.common.conf >> {[postgres-config-demo]}</exe-cmd>
+                </execute>
+            </execute-list>
+
+            <postgres-config host="{[host-pgalt]}" file="{[postgres-config-demo]}">
+                <title>Configure <postgres/> settings</title>
+
+                <postgres-config-option key="archive_command">'{[project-exe]} {[dash]}-stanza=demo-alt archive-push %p'</postgres-config-option>
+                <postgres-config-option key="archive_mode">on</postgres-config-option>
+                <postgres-config-option key="wal_level">{[wal-level]}</postgres-config-option>
+                <postgres-config-option key="max_wal_senders">3</postgres-config-option>
+                <postgres-config-option if="{[os-type-is-rhel]}" key="log_filename">'postgresql.log'</postgres-config-option>
+            </postgres-config>
+
+            <execute-list host="{[host-pgalt]}">
+                <title>Start the {[postgres-cluster-demo]} cluster</title>
+
+                <execute user="root">
+                    <exe-cmd>{[pg-cluster-restart]}</exe-cmd>
+                </execute>
+
+                <execute user="postgres" show="n">
+                    <exe-cmd>{[pg-cluster-wait]}</exe-cmd>
+                </execute>
+            </execute-list>
+        </section>
+
+        <!-- =================================================================================================================== -->
+        <section id="create-stanza">
+            <title>Create the Stanza and Check Configuration</title>
+
+            <p>The <cmd>stanza-create</cmd> command must be run to initialize the stanza. It is recommended that the <cmd>check</cmd> command be run after <cmd>stanza-create</cmd> to ensure archiving and backups are properly configured.</p>
+
+            <execute-list host="{[host-pgalt]}">
+                <title>Create the stanza and check the configuration</title>
+
+                <execute user="postgres" output="y">
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza=demo-alt {[dash]}-log-level-console=info stanza-create</exe-cmd>
+                    <exe-highlight>completed successfully</exe-highlight>
+                </execute>
+
+                <execute user="postgres" output="y">
+                    <exe-cmd>{[project-exe]} {[dash]}-log-level-console=info check</exe-cmd>
+                    <exe-highlight>check stanza | successfully archived to </exe-highlight>
+                </execute>
+            </execute-list>
+
+            <p>If the <cmd>check</cmd> command is run from the <host>{[host-repo1]}</host> host then all stanzas will be checked.</p>
+
+            <execute-list host="{[host-repo1]}">
+                <title>Check the configuration for all stanzas</title>
+
+                <execute user="{[br-user]}" output="y">
+                    <exe-cmd>{[project-exe]} {[dash]}-log-level-console=info check</exe-cmd>
+                    <exe-highlight>check stanza | successfully archived to </exe-highlight>
+                </execute>
+            </execute-list>
+        </section>
+    </section>
+
+    <!-- ======================================================================================================================= -->
     <section id="async-archiving" depend="/replication">
         <title>Asynchronous Archiving</title>
 
-        <p>Asynchronous archiving is enabled with the <br-option>archive-async</br-option> option.  This option enables asynchronous operation for both the <cmd>archive-push</cmd> and <cmd>archive-get</cmd> commands.</p>
+        <p>Asynchronous archiving is enabled with the <br-option>archive-async</br-option> option. This option enables asynchronous operation for both the <cmd>archive-push</cmd> and <cmd>archive-get</cmd> commands.</p>
 
-        <p>A spool path is required.  The commands will store transient data here but each command works quite a bit differently so spool path usage is described in detail in each section.</p>
+        <p>A spool path is required. The commands will store transient data here but each command works quite a bit differently so spool path usage is described in detail in each section.</p>
 
         <execute-list host="{[host-pg1]}">
             <title>Create the spool directory</title>
@@ -3304,7 +3632,7 @@
             </execute>
         </execute-list>
 
-        <p>The spool path must be configured and asynchronous archiving enabled.  Asynchronous archiving automatically confers some benefit by reducing the number of connections made to remote storage, but setting <br-option>process-max</br-option> can drastically improve performance by parallelizing operations.  Be sure not to set <br-option>process-max</br-option> so high that it affects normal database operations.</p>
+        <p>The spool path must be configured and asynchronous archiving enabled. Asynchronous archiving automatically confers some benefit by reducing the number of connections made to remote storage, but setting <br-option>process-max</br-option> can drastically improve performance by parallelizing operations. Be sure not to set <br-option>process-max</br-option> so high that it affects normal database operations.</p>
 
         <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
             <title>Configure the spool path and asynchronous archiving</title>
@@ -3324,7 +3652,7 @@
             <backrest-config-option section="global:archive-get" key="process-max">2</backrest-config-option>
         </backrest-config>
 
-        <admonition type="note"><br-option>process-max</br-option> is configured using command sections so that the option is not used by backup and restore.  This also allows different values for <cmd>archive-push</cmd> and <cmd>archive-get</cmd>.</admonition>
+        <admonition type="note"><br-option>process-max</br-option> is configured using command sections so that the option is not used by backup and restore. This also allows different values for <cmd>archive-push</cmd> and <cmd>archive-get</cmd>.</admonition>
 
         <p>For demonstration purposes streaming replication will be broken to force <postgres/> to get WAL using the <pg-option>restore_command</pg-option>.</p>
 
@@ -3350,13 +3678,13 @@
         <section id="async-archive-push">
             <title>Archive Push</title>
 
-            <p>The asynchronous <cmd>archive-push</cmd> command offloads WAL archiving to a separate process (or processes) to improve throughput.  It works by <quote>looking ahead</quote> to see which WAL segments are ready to be archived beyond the request that <postgres/> is currently making via the <code>archive_command</code>. WAL segments are transferred to the archive directly from the <path>pg_xlog</path>/<path>pg_wal</path> directory and success is only returned by the <code>archive_command</code> when the WAL segment has been safely stored in the archive.</p>
+            <p>The asynchronous <cmd>archive-push</cmd> command offloads WAL archiving to a separate process (or processes) to improve throughput. It works by <quote>looking ahead</quote> to see which WAL segments are ready to be archived beyond the request that <postgres/> is currently making via the <code>archive_command</code>. WAL segments are transferred to the archive directly from the <path>pg_xlog</path>/<path>pg_wal</path> directory and success is only returned by the <code>archive_command</code> when the WAL segment has been safely stored in the archive.</p>
 
-            <p>The spool path holds the current status of WAL archiving.  Status files written into the spool directory are typically zero length and should consume a minimal amount of space (a few MB at most) and very little IO.  All the information in this directory can be recreated so it is not necessary to preserve the spool directory if the cluster is moved to new hardware.</p>
+            <p>The spool path holds the current status of WAL archiving. Status files written into the spool directory are typically zero length and should consume a minimal amount of space (a few MB at most) and very little IO. All the information in this directory can be recreated so it is not necessary to preserve the spool directory if the cluster is moved to new hardware.</p>
 
-            <admonition type="important">In the original implementation of asynchronous archiving, WAL segments were copied to the spool directory before compression and transfer.  The new implementation copies WAL directly from the <path>pg_xlog</path> directory.  If asynchronous archiving was utilized in <proper>v1.12</proper> or prior, read the <proper>v1.13</proper> release notes carefully before upgrading.</admonition>
+            <admonition type="important">In the original implementation of asynchronous archiving, WAL segments were copied to the spool directory before compression and transfer. The new implementation copies WAL directly from the <path>pg_xlog</path> directory. If asynchronous archiving was utilized in <proper>v1.12</proper> or prior, read the <proper>v1.13</proper> release notes carefully before upgrading.</admonition>
 
-            <p>The <file>[stanza]-archive-push-async.log</file> file can be used to monitor the activity of the asynchronous process.  A good way to test this is to quickly push a number of WAL segments.</p>
+            <p>The <file>[stanza]-archive-push-async.log</file> file can be used to monitor the activity of the asynchronous process. A good way to test this is to quickly push a number of WAL segments.</p>
 
             <execute-list host="{[host-pg1]}">
                 <title>Test parallel asynchronous archiving</title>
@@ -3398,9 +3726,9 @@
         <section id="async-archive-get">
             <title>Archive Get</title>
 
-            <p>The asynchronous <cmd>archive-get</cmd> command maintains a local queue of WAL to improve throughput.  If a WAL segment is not found in the queue it is fetched from the repository along with enough consecutive WAL to fill the queue.  The maximum size of the queue is defined by <br-option>archive-get-queue-max</br-option>.  Whenever the queue is less than half full more WAL will be fetched to fill it.</p>
+            <p>The asynchronous <cmd>archive-get</cmd> command maintains a local queue of WAL to improve throughput. If a WAL segment is not found in the queue it is fetched from the repository along with enough consecutive WAL to fill the queue. The maximum size of the queue is defined by <br-option>archive-get-queue-max</br-option>. Whenever the queue is less than half full more WAL will be fetched to fill it.</p>
 
-            <p>Asynchronous operation is most useful in environments that generate a lot of WAL or have a high latency connection to the repository storage (i.e., <proper>S3</proper> or other object stores).  In the case of a high latency connection it may be a good idea to increase <br-option>process-max</br-option>.</p>
+            <p>Asynchronous operation is most useful in environments that generate a lot of WAL or have a high latency connection to the repository storage (i.e., <proper>S3</proper> or other object stores). In the case of a high latency connection it may be a good idea to increase <br-option>process-max</br-option>.</p>
 
             <p>The <file>[stanza]-archive-get-async.log</file> file can be used to monitor the activity of the asynchronous process.</p>
 
@@ -3432,7 +3760,7 @@
     <section id="standby-backup" depend="/replication/streaming">
         <title>Backup from a Standby</title>
 
-        <p><backrest/> can perform backups on a standby instead of the primary.  Standby backups require the <host>{[host-pg2]}</host> host to be configured and the <br-option>backup-standby</br-option> option enabled.  If more than one standby is configured then the first running standby found will be used for the backup.</p>
+        <p><backrest/> can perform backups on a standby instead of the primary. Standby backups require the <host>{[host-pg2]}</host> host to be configured and the <br-option>backup-standby</br-option> option enabled. If more than one standby is configured then the first running standby found will be used for the backup.</p>
 
         <backrest-config host="{[host-repo1]}" owner="{[br-user]}:{[br-group]}" file="{[backrest-config-demo]}">
             <title>Configure <br-option>pg2-host</br-option>/<br-option>pg2-host-user</br-option> and <br-option>pg2-path</br-option></title>
@@ -3450,7 +3778,7 @@
             <backrest-config-option section="global" key="backup-standby">y</backrest-config-option>
         </backrest-config>
 
-        <p>Both the primary and standby databases are required to perform the backup, though the vast majority of the files will be copied from the standby to reduce load on the primary.  The database hosts can be configured in any order.  <backrest/> will automatically determine which is the primary and which is the standby.</p>
+        <p>Both the primary and standby databases are required to perform the backup, though the vast majority of the files will be copied from the standby to reduce load on the primary. The database hosts can be configured in any order. <backrest/> will automatically determine which is the primary and which is the standby.</p>
 
         <execute-list host="{[host-repo1]}">
             <title>Backup the {[postgres-cluster-demo]} cluster from <host>pg2</host></title>
@@ -3463,7 +3791,7 @@
 
         <p>This incremental backup shows that most of the files are copied from the <host>{[host-pg2]}</host> host and only a few are copied from the <host>{[host-pg1]}</host> host.</p>
 
-        <p><backrest/> creates a standby backup that is identical to a backup performed on the primary.  It does this by starting/stopping the backup on the <host>{[host-pg1]}</host> host, copying only files that are replicated from the <host>{[host-pg2]}</host> host, then copying the remaining few files from the <host>{[host-pg1]}</host> host.  This means that logs and statistics from the primary database will be included in the backup.</p>
+        <p><backrest/> creates a standby backup that is identical to a backup performed on the primary. It does this by starting/stopping the backup on the <host>{[host-pg1]}</host> host, copying only files that are replicated from the <host>{[host-pg2]}</host> host, then copying the remaining few files from the <host>{[host-pg1]}</host> host. This means that logs and statistics from the primary database will be included in the backup.</p>
     </section>
 
     <!-- ===========================================================================================================================
@@ -3644,15 +3972,24 @@
 
             <!-- =============================================================================================================== -->
             <section id="backup-diff-delta">
-                <title>Diff Backup with Delta</title>
+                <title>Diff Backup with Delta and Block Incremental</title>
+
+                <execute-list host="{[host-pg1]}">
+                    <title>Database updates</title>
+
+                    <execute user="postgres">
+                        <exe-cmd>{[pg-bin-path]}/pgbench -n -b simple-update -t {[stress-scale-data]}</exe-cmd>
+                        <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
+                    </execute>
+                </execute-list>
 
                 <execute-list host="{[host-repo1]}">
                     <title>Diff backup</title>
 
                     <execute user="{[br-user]}" output="y" filter="n">
                         <exe-cmd>
-                            pgbackrest --stanza=demo --type=diff --delta
-                            --log-level-console=info --log-level-file=detail backup
+                            pgbackrest --stanza=demo --type=diff --delta --repo1-bundle
+                            --repo1-block --log-level-console=info --log-level-file=detail backup
                         </exe-cmd>
                         <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
                     </execute>
@@ -3660,8 +3997,53 @@
             </section>
 
             <!-- =============================================================================================================== -->
+            <section id="backup-incr">
+                <title>Incr Backup with Block Incremental</title>
+
+                <block id="stress-update-incr">
+                    <block-variable-replace key="stress-update-incr-count">1</block-variable-replace>
+                </block>
+                <block id="stress-update-incr">
+                    <block-variable-replace key="stress-update-incr-count">2</block-variable-replace>
+                </block>
+                <block id="stress-update-incr">
+                    <block-variable-replace key="stress-update-incr-count">3</block-variable-replace>
+                </block>
+                <block id="stress-update-incr">
+                    <block-variable-replace key="stress-update-incr-count">4</block-variable-replace>
+                </block>
+                <block id="stress-update-incr">
+                    <block-variable-replace key="stress-update-incr-count">5</block-variable-replace>
+                </block>
+                <block id="stress-update-incr">
+                    <block-variable-replace key="stress-update-incr-count">6</block-variable-replace>
+                </block>
+                <block id="stress-update-incr">
+                    <block-variable-replace key="stress-update-incr-count">7</block-variable-replace>
+                </block>
+                <block id="stress-update-incr">
+                    <block-variable-replace key="stress-update-incr-count">8</block-variable-replace>
+                </block>
+                <block id="stress-update-incr">
+                    <block-variable-replace key="stress-update-incr-count">9</block-variable-replace>
+                </block>
+                <block id="stress-update-incr">
+                    <block-variable-replace key="stress-update-incr-count">10</block-variable-replace>
+                </block>
+            </section>
+
+            <!-- =============================================================================================================== -->
             <section id="restore-delta">
                 <title>Restore with Delta</title>
+
+                <execute-list host="{[host-pg1]}">
+                    <title>Database updates so delta has something to restore</title>
+
+                    <execute user="postgres">
+                        <exe-cmd>{[pg-bin-path]}/pgbench -n -b simple-update -t {[stress-scale-data]}</exe-cmd>
+                        <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
+                    </execute>
+                </execute-list>
 
                 <execute-list host="{[host-pg2]}">
                     <title>Stop <postgres/></title>

@@ -57,8 +57,8 @@ cmdRemote(ProtocolServer *const server)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Acquire a lock if this command needs one.  We'll use the noop that is always sent from the client right after the
-        // handshake to return an error.  We can't take a lock earlier than this because we want the error to go back through the
+        // Acquire a lock if this command needs one. We'll use the noop that is always sent from the client right after the
+        // handshake to return an error. We can't take a lock earlier than this because we want the error to go back through the
         // protocol layer.
         volatile bool success = false;
 

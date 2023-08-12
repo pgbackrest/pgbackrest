@@ -268,7 +268,7 @@ sub contributorTextGet
 }
 
 ####################################################################################################################################
-# Find a commit by subject prefix.  Error if the prefix appears more than once.
+# Find a commit by subject prefix. Error if the prefix appears more than once.
 ####################################################################################################################################
 sub commitFindSubject
 {

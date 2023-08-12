@@ -79,8 +79,8 @@ httpHeaderAdd(HttpHeader *this, const String *key, const String *value)
     const Variant *keyVar = VARSTR(key);
     const Variant *valueVar = kvGet(this->kv, keyVar);
 
-    // If the key exists then append the new value.  The HTTP spec (RFC 2616, Section 4.2) says that if a header appears more than
-    // once then it is equivalent to a single comma-separated header.  There appear to be a few exceptions such as Set-Cookie, but
+    // If the key exists then append the new value. The HTTP spec (RFC 2616, Section 4.2) says that if a header appears more than
+    // once then it is equivalent to a single comma-separated header. There appear to be a few exceptions such as Set-Cookie, but
     // they should not be of concern to us here.
     if (valueVar != NULL)
     {

@@ -32,7 +32,7 @@ segmentNumber(const String *const pgFile)
         FUNCTION_TEST_PARAM(STRING, pgFile);
     FUNCTION_TEST_END();
 
-    // Determine which segment number this is by checking for a numeric extension.  No extension means segment 0.
+    // Determine which segment number this is by checking for a numeric extension. No extension means segment 0.
     FUNCTION_TEST_RETURN(UINT, regExpMatchOne(STRDEF("\\.[0-9]+$"), pgFile) ? cvtZToUInt(strrchr(strZ(pgFile), '.') + 1) : 0);
 }
 
@@ -191,7 +191,7 @@ backupFile(
 
                 if (fileResult->backupCopyResult == backupCopyResultCopy || fileResult->backupCopyResult == backupCopyResultReCopy)
                 {
-                    // Setup pg file for read. Only read as many bytes as passed in pgFileSize.  If the file is growing it does no
+                    // Setup pg file for read. Only read as many bytes as passed in pgFileSize. If the file is growing it does no
                     // good to copy data past the end of the size recorded in the manifest since those blocks will need to be
                     // replayed from WAL during recovery.
                     bool repoChecksum = false;
@@ -208,7 +208,8 @@ backupFile(
                         ioFilterGroupAdd(
                             ioReadFilterGroup(storageReadIo(read)),
                             pageChecksumNew(
-                                segmentNumber(file->pgFile), PG_SEGMENT_PAGE_DEFAULT, storagePathP(storagePg(), file->pgFile)));
+                                segmentNumber(file->pgFile), PG_SEGMENT_PAGE_DEFAULT, file->pgFilePageHeaderCheck,
+                                storagePathP(storagePg(), file->pgFile)));
                     }
 
                     // Compress filter

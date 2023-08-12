@@ -17,7 +17,7 @@ This wrapper runs the C unit tests.
 C files to be tested
 
 The files are included directly so the test can see and manipulate variables and functions in the module without the need to extern.
-If a .c file does not exist for a module then the header file will be included instead.  They are included first so they won't see
+If a .c file does not exist for a module then the header file will be included instead. They are included first so they won't see
 the includes which are required for the test code.
 ***********************************************************************************************************************************/
 {[C_INCLUDE]}
@@ -77,6 +77,7 @@ STRING_EXTERN(HRN_PATH_STR, HRN_PATH);
 #define TEST_USER                                                   "{[C_TEST_USER]}"
 #define TEST_USER_ID                                                {[C_TEST_USER_ID]}
 #define TEST_USER_ID_Z                                              "{[C_TEST_USER_ID]}"
+#define TEST_USER_LEN                                               "{[C_TEST_USER_LEN]}"
 
 #ifdef HRN_FEATURE_STRING
 STRING_EXTERN(TEST_USER_STR, TEST_USER);

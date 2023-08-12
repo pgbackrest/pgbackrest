@@ -152,7 +152,7 @@ stackTraceParamIdx(int stackIdx)
 }
 
 FN_EXTERN const char *
-stackTraceParam()
+stackTraceParam(void)
 {
     return stackTraceParamIdx(stackTraceLocal.stackSize - 1);
 }
@@ -174,7 +174,7 @@ stackTraceParamBuffer(const char *paramName)
         data->paramOverflow = true;
 
         // There's no way to stop the parameter from being formatted so we reserve a space at the end where the format can safely
-        // take place and not disturb the rest of the buffer.  Hopefully overflows just won't happen but we need to be prepared in
+        // take place and not disturb the rest of the buffer. Hopefully overflows just won't happen but we need to be prepared in
         // case of runaway recursion or some other issue that fills the buffer because we don't want a segfault.
         return stackTraceLocal.functionParamBuffer + sizeof(stackTraceLocal.functionParamBuffer) - STACK_TRACE_PARAM_MAX;
     }

@@ -67,7 +67,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("unknown control version");
 
-        HRN_PG_CONTROL_OVERRIDE_PUT(storageTest, PG_VERSION_15, 1501, .catalogVersion = 202211111);
+        HRN_PG_CONTROL_OVERRIDE_VERSION_PUT(storageTest, PG_VERSION_15, 1501, .catalogVersion = 202211111);
 
         TEST_ERROR(
             pgControlFromFile(storageTest, NULL), VersionNotSupportedError,
@@ -114,7 +114,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("force control version");
 
-        HRN_PG_CONTROL_OVERRIDE_PUT(
+        HRN_PG_CONTROL_OVERRIDE_VERSION_PUT(
             storageTest, PG_VERSION_15, 1501, .systemId = 0xEFEFEFEFEF, .catalogVersion = 202211111,
             .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88);
 
@@ -127,7 +127,7 @@ testRun(void)
             "invalid PostgreSQL version 990000\n"
             "HINT: is this version of PostgreSQL supported?");
 
-        TEST_ASSIGN(info, pgControlFromFile(storageTest, STRDEF(PG_VERSION_15_STR)), "get control info v90");
+        TEST_ASSIGN(info, pgControlFromFile(storageTest, STRDEF(PG_VERSION_15_Z)), "get control info v90");
         TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "check system id");
         TEST_RESULT_UINT(info.version, PG_VERSION_15, "check version");
         TEST_RESULT_UINT(info.catalogVersion, 202211111, "check catalog version");
@@ -265,7 +265,7 @@ testRun(void)
             "unexpected WAL magic 777\n"
             "HINT: is this version of PostgreSQL supported?");
 
-        TEST_ASSIGN(info, pgWalFromFile(walFile, storageTest, STRDEF(PG_VERSION_15_STR)), "force wal info v15");
+        TEST_ASSIGN(info, pgWalFromFile(walFile, storageTest, STRDEF(PG_VERSION_15_Z)), "force wal info v15");
         TEST_RESULT_UINT(info.systemId, 0xFAFAFAFA, "check system id");
         TEST_RESULT_UINT(info.version, PG_VERSION_15, "   check version");
         TEST_RESULT_UINT(info.size, PG_WAL_SEGMENT_SIZE_DEFAULT, "   check size");

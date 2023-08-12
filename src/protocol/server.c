@@ -73,7 +73,7 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
 FN_EXTERN void
 protocolServerError(ProtocolServer *this, int code, const String *message, const String *stack)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
         FUNCTION_LOG_PARAM(INT, code);
         FUNCTION_LOG_PARAM(STRING, message);
@@ -265,7 +265,7 @@ protocolServerProcess(
                 }
 
                 // Send keep-alive to remotes. When a local process is doing work that does not involve the remote it is important
-                // that the remote does not timeout.  This will send a keep alive once per unit of work that is performed by the
+                // that the remote does not timeout. This will send a keep alive once per unit of work that is performed by the
                 // local process.
                 protocolKeepAlive();
             }

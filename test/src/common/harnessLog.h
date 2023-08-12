@@ -47,7 +47,7 @@ void hrnLogProcessIdSet(unsigned int processId);
 /***********************************************************************************************************************************
 Internal Setters
 ***********************************************************************************************************************************/
-// Set dry-run on or off.  This is usually called only from the config harness.
+// Set dry-run on or off. This is usually called only from the config harness.
 void harnessLogDryRunSet(bool dryRun);
 
 #endif

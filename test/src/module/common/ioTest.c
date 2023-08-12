@@ -126,7 +126,7 @@ ioTestFilterSizeNew(const StringId type)
 }
 
 /***********************************************************************************************************************************
-Test filter to multiply input to the output.  It can also flush out a variable number of bytes at the end.
+Test filter to multiply input to the output. It can also flush out a variable number of bytes at the end.
 ***********************************************************************************************************************************/
 typedef struct IoTestFilterMultiply
 {
@@ -393,7 +393,7 @@ testRun(void)
         filterGroup->pub.closed = true;
         TEST_RESULT_UINT(pckReadU64P(ioFilterGroupResultP(filterGroup, STRID5("test", 0xa4cb40))), 777, "    check filter result");
 
-        // Read a zero-size buffer to ensure filters are still processed even when there is no input.  Some filters (e.g. encryption
+        // Read a zero-size buffer to ensure filters are still processed even when there is no input. Some filters (e.g. encryption
         // and compression) will produce output even if there is no input.
         // -------------------------------------------------------------------------------------------------------------------------
         ioBufferSizeSet(1024);
@@ -761,44 +761,27 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("IoChunkedRead and ioChunkedWrite"))
+    if (testBegin("IoLimitRead"))
     {
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("write chunks");
+        TEST_TITLE("read limit");
 
-        ioBufferSizeSet(3);
-        Buffer *destination = bufNew(256);
-        IoWrite *write = ioBufferWriteNew(destination);
-        ioFilterGroupAdd(ioWriteFilterGroup(write), ioChunkNew());
-        ioWriteOpen(write);
-
-        TEST_RESULT_VOID(ioWrite(write, BUFSTRDEF("ABC")), "write");
-        TEST_RESULT_VOID(ioWrite(write, BUFSTRDEF("DEF")), "write");
-        TEST_RESULT_VOID(ioWriteClose(write), "close");
-
-        TEST_RESULT_STR_Z(strNewEncode(encodingHex, destination), "034142430144454600", "check");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("read chunks");
-
+        const Buffer *input = BUFSTRZ("ABCDEF");
         ioBufferSizeSet(2);
-        IoRead *read = ioChunkedReadNew(ioBufferReadNewOpen(destination));
+        IoRead *read = ioLimitReadNew(ioBufferReadNewOpen(input), 5);
         ioReadOpen(read);
 
-        Buffer *actual = bufNew(3);
-        TEST_RESULT_UINT(ioRead(read, actual), 3, "read");
-        TEST_RESULT_STR_Z(strNewBuf(actual), "ABC", "check");
+        Buffer *output = bufNew(2);
+        TEST_RESULT_UINT(ioRead(read, output), 2, "read");
+        TEST_RESULT_STR_Z(strNewBuf(output), "AB", "check");
 
-        actual = bufNew(1);
-        TEST_RESULT_UINT(ioRead(read, actual), 1, "read");
-        TEST_RESULT_STR_Z(strNewBuf(actual), "D", "check");
+        bufUsedZero(output);
+        TEST_RESULT_UINT(ioRead(read, output), 2, "read");
+        TEST_RESULT_STR_Z(strNewBuf(output), "CD", "check");
 
-        actual = bufNew(3);
-        TEST_RESULT_UINT(ioRead(read, actual), 2, "read");
-        TEST_RESULT_STR_Z(strNewBuf(actual), "EF", "check");
-
-        actual = bufNew(2);
-        TEST_RESULT_UINT(ioRead(read, actual), 0, "eof");
+        bufUsedZero(output);
+        TEST_RESULT_UINT(ioRead(read, output), 1, "read");
+        TEST_RESULT_STR_Z(strNewBuf(output), "E", "check");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

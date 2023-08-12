@@ -100,7 +100,7 @@ sub read
         $iRemainingSize -= $iReadSize;
     }
 
-    # If this is a blocking read then loop until all bytes have been read, else error.  If not blocking read until the request size
+    # If this is a blocking read then loop until all bytes have been read, else error. If not blocking read until the request size
     # has been met or EOF.
     my $fTimeStart = gettimeofday();
     my $fRemaining = $self->timeout();
@@ -264,7 +264,7 @@ sub handleReadSet
     $self->{oReadSelect} = IO::Select->new();
     $self->{oReadSelect}->add($self->handleRead());
 
-    # Check if the read handle has a pending method.  This should be checked before can_read for SSL sockets.
+    # Check if the read handle has a pending method. This should be checked before can_read for SSL sockets.
     $self->{bPending} = defined($fhRead) && $fhRead->can('pending') ? true : false;
 }
 

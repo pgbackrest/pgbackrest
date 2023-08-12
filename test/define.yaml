@@ -3,8 +3,8 @@
 #
 # Contains definitions for all unit and integration tests.
 #
-# The definitions consist of modules and tests.  Modules group together tests that are related and allow common settings for all the
-# tests.  Every module and test must have a name.  Tests must also have a total.  If this total does not match the actual number of
+# The definitions consist of modules and tests. Modules group together tests that are related and allow common settings for all the
+# tests. Every module and test must have a name. Tests must also have a total. If this total does not match the actual number of
 # runs in a test then an error will be thrown.
 #
 # Most options can be set for modules and tests (test option will override module option if both are set):
@@ -295,17 +295,16 @@ unit:
         coverage:
           - common/io/bufferRead
           - common/io/bufferWrite
-          - common/io/chunkedRead
           - common/io/fd
           - common/io/fdRead
           - common/io/fdWrite
           - common/io/filter/buffer
-          - common/io/filter/chunk
           - common/io/filter/filter
           - common/io/filter/group
           - common/io/filter/sink
           - common/io/filter/size
           - common/io/io
+          - common/io/limitRead
           - common/io/read
           - common/io/write
 
@@ -366,6 +365,12 @@ unit:
         total: 5
         feature: SOCKET
         harness: server
+        harness:
+          name: socket
+          shim:
+            common/io/socket/client:
+              function:
+                - sckClientOpen
 
         coverage:
           - common/io/client
@@ -415,11 +420,10 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: lock
         total: 3
-        harness: config
         harness:
-          name: storageHelper
+          name: config
           shim:
-            storage/helper: ~
+            config/load: ~
         harness:
           name: lock
           shim:
@@ -596,6 +600,29 @@ unit:
 
         include:
           - storage/helper
+          - storage/storage
+          - storage/write
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: sftp
+        total: 20
+        harness: libSsh2
+        harness:
+          name: fd
+          shim:
+            common/io/fd:
+              function:
+                - fdReady
+
+        coverage:
+          - storage/sftp/helper
+          - storage/sftp/read
+          - storage/sftp/storage
+          - storage/sftp/write
+
+        include:
+          - storage/helper
+          - storage/read
           - storage/storage
           - storage/write
 
@@ -804,7 +831,6 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: check
         total: 3
-        containerReq: true
 
         coverage:
           - command/check/common
@@ -900,7 +926,7 @@ unit:
           - command/repo/rm
 
         include:
-          # command/repo/create is currently for testing purposes only so coverage is not provided except in integration.  In the
+          # command/repo/create is currently for testing purposes only so coverage is not provided except in integration. In the
           # future this will probably be rolled into a custom object store server implementation.
           - command/repo/create
 
@@ -952,8 +978,8 @@ unit:
 # **********************************************************************************************************************************
 # Integration tests
 #
-# Integration tests are not run in a container.  They are expected to create their own containers since most integration runs will
-# create more than one.  For this reason each run is executed individually.
+# Integration tests are not run in a container. They are expected to create their own containers since most integration runs will
+# create more than one. For this reason each run is executed individually.
 # **********************************************************************************************************************************
 integration:
 

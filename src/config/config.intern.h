@@ -13,7 +13,7 @@ The general-purpose functions for querying the current configuration are found i
 #include "config/parse.h"
 
 /***********************************************************************************************************************************
-Configuration data. These structures are not directly user-created or accessible. configParse() creates the structures and uses
+Configuration data. These structures are not directly user-created or accessible. cfgParseP() creates the structures and uses
 cfgInit() to load it as the current configuration. Various cfg*() functions provide access.
 ***********************************************************************************************************************************/
 // Group options that are related to allow valid and test checks across all options in the group

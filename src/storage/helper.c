@@ -54,7 +54,7 @@ static struct StorageHelperLocal
 
     String *stanza;                                                 // Stanza for storage
     bool stanzaInit;                                                // Has the stanza been initialized?
-    bool dryRunInit;                                                // Has dryRun been initialized?  If not disallow writes.
+    bool dryRunInit;                                                // Has dryRun been initialized? If not disallow writes.
     bool dryRun;                                                    // Disallow writes in dry-run mode.
     RegExp *walRegExp;                                              // Regular expression for identifying wal files
 } storageHelper;
@@ -567,4 +567,18 @@ storageSpoolWrite(void)
     }
 
     FUNCTION_TEST_RETURN_CONST(STORAGE, storageHelper.storageSpoolWrite);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+storageHelperFree(void)
+{
+    FUNCTION_TEST_VOID();
+
+    if (storageHelper.memContext != NULL)
+        memContextFree(storageHelper.memContext);
+
+    storageHelper = (struct StorageHelperLocal){.memContext = NULL, .helperList = storageHelper.helperList};
+
+    FUNCTION_TEST_RETURN_VOID();
 }

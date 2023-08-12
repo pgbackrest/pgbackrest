@@ -21,7 +21,6 @@ FN_EXTERN ProtocolCommand *protocolCommandNew(const StringId command);
 Functions
 ***********************************************************************************************************************************/
 // Move to a new parent mem context
-// Move to a new parent mem context
 FN_INLINE_ALWAYS ProtocolCommand *
 protocolCommandMove(ProtocolCommand *const this, MemContext *const parentNew)
 {

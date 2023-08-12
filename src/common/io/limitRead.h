@@ -1,16 +1,16 @@
 /***********************************************************************************************************************************
-Read Chunked I/O
+Read Limited Data
 
-Read data that has been chunked with the IoChunk filter.
+Read only as much data as specified.
 ***********************************************************************************************************************************/
-#ifndef COMMON_IO_CHUNKEDREAD_H
-#define COMMON_IO_CHUNKEDREAD_H
+#ifndef COMMON_IO_LIMITREAD_H
+#define COMMON_IO_LIMITREAD_H
 
 #include "common/io/read.h"
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN IoRead *ioChunkedReadNew(IoRead *read);
+FN_EXTERN IoRead *ioLimitReadNew(IoRead *read, uint64_t limit);
 
 #endif

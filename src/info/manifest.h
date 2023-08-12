@@ -2,10 +2,10 @@
 Backup Manifest Handler
 
 The backup manifest stores a complete list of all files, links, and paths in a backup along with metadata such as checksums, sizes,
-timestamps, etc.  A list of databases is also included for selective restore.
+timestamps, etc. A list of databases is also included for selective restore.
 
 The purpose of the manifest is to allow the restore command to confidently reconstruct the PostgreSQL data directory and ensure that
-nothing is missing or corrupt.  It is also useful for reporting, e.g. size of backup, backup time, etc.
+nothing is missing or corrupt. It is also useful for reporting, e.g. size of backup, backup time, etc.
 ***********************************************************************************************************************************/
 #ifndef INFO_MANIFEST_H
 #define INFO_MANIFEST_H
@@ -157,7 +157,8 @@ typedef struct ManifestFile
     size_t blockIncrSize;                                           // Size of incremental blocks
     size_t blockIncrChecksumSize;                                   // Size of incremental block checksum
     uint64_t blockIncrMapSize;                                      // Block incremental map size
-    uint64_t size;                                                  // Original size
+    uint64_t size;                                                  // Final size (after copy)
+    uint64_t sizeOriginal;                                          // Original size (from manifest build)
     uint64_t sizeRepo;                                              // Size in repo
     time_t timestamp;                                               // Original timestamp
 } ManifestFile;
@@ -293,7 +294,7 @@ manifestMove(Manifest *const this, MemContext *const parentNew)
 // Manifest save
 FN_EXTERN void manifestSave(Manifest *this, IoWrite *write);
 
-// Validate a completed manifest.  Use strict mode only when saving the manifest after a backup.
+// Validate a completed manifest. Use strict mode only when saving the manifest after a backup.
 FN_EXTERN void manifestValidate(Manifest *this, bool strict);
 
 /***********************************************************************************************************************************

@@ -1,17 +1,17 @@
 /***********************************************************************************************************************************
-Storage Helper Test Harness
-
-Helper functions for testing the storage helper.
+SFTP Storage Read
 ***********************************************************************************************************************************/
-#ifndef TEST_COMMON_HARNESS_STORAGE_HELPER_H
-#define TEST_COMMON_HARNESS_STORAGE_HELPER_H
+#ifndef STORAGE_SFTP_READ_H
+#define STORAGE_SFTP_READ_H
 
-#include "storage/helper.h"
+#include "storage/read.h"
+#include "storage/sftp/storage.intern.h"
 
 /***********************************************************************************************************************************
-Functions
+Constructors
 ***********************************************************************************************************************************/
-// Free all storage helper objects. This should be done on any config load to ensure that stanza changes are honored.
-void hrnStorageHelperFree(void);
+FN_EXTERN StorageRead *storageReadSftpNew(
+    StorageSftp *storage, const String *name, bool ignoreMissing, LIBSSH2_SESSION *session, LIBSSH2_SFTP *sftpSession,
+    LIBSSH2_SFTP_HANDLE *sftpHandle, uint64_t offset, const Variant *limit);
 
 #endif

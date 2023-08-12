@@ -10,6 +10,8 @@ Check Command
 #include "common/log.h"
 #include "common/memContext.h"
 #include "config/config.h"
+#include "config/load.h"
+#include "config/parse.h"
 #include "db/helper.h"
 #include "info/infoArchive.h"
 #include "postgres/interface.h"
@@ -43,7 +45,7 @@ checkManifest(void)
 }
 
 static void
-checkStandby(const DbGetResult dbGroup, unsigned int pgPathDefinedTotal)
+checkStandby(const DbGetResult dbGroup, const unsigned int pgPathDefinedTotal)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(DB_GET_RESULT, dbGroup);
@@ -126,7 +128,7 @@ checkPrimary(const DbGetResult dbGroup)
             LOG_INFO_FMT(CFGCMD_CHECK " %s configuration (primary)", cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
 
             // Get the repo storage in case it is remote and encryption settings need to be pulled down (performed here for testing)
-            const Storage *storageRepo = storageRepoIdx(repoIdx);
+            const Storage *const storageRepo = storageRepoIdx(repoIdx);
 
             // Check that the backup and archive info files exist and are valid for the current database of the stanza
             checkStanzaInfoPg(
@@ -134,7 +136,7 @@ checkPrimary(const DbGetResult dbGroup)
                 cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
 
             // Attempt to load the archive info file and retrieve the archiveId
-            InfoArchive *archiveInfo = infoArchiveLoadFile(
+            const InfoArchive *const archiveInfo = infoArchiveLoadFile(
                 storageRepo, INFO_ARCHIVE_PATH_FILE_STR, cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
                 cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
 
@@ -142,23 +144,23 @@ checkPrimary(const DbGetResult dbGroup)
         }
 
         // Perform a WAL switch
-        const String *walSegment = dbWalSwitch(dbGroup.primary);
+        const String *const walSegment = dbWalSwitch(dbGroup.primary);
 
         // Wait for the WAL to appear in each repo
         for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
         {
             LOG_INFO_FMT(CFGCMD_CHECK " %s archive for WAL (primary)", cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
 
-            const Storage *storageRepo = storageRepoIdx(repoIdx);
-            const String *walSegmentFile = walSegmentFind(
-                storageRepo, repoArchiveId[repoIdx], walSegment, cfgOptionUInt64(cfgOptArchiveTimeout));
+            const String *const walSegmentFile = walSegmentFind(
+                storageRepoIdx(repoIdx), repoArchiveId[repoIdx], walSegment, cfgOptionUInt64(cfgOptArchiveTimeout));
 
             LOG_INFO_FMT(
                 "WAL segment %s successfully archived to '%s' on %s",
                 strZ(walSegment),
                 strZ(
                     storagePathP(
-                        storageRepo, strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(repoArchiveId[repoIdx]), strZ(walSegmentFile)))),
+                        storageRepoIdx(repoIdx),
+                        strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(repoArchiveId[repoIdx]), strZ(walSegmentFile)))),
                 cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
         }
 
@@ -176,15 +178,54 @@ cmdCheck(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Get the primary/standby connections (standby is only required if backup from standby is enabled)
-        DbGetResult dbGroup = dbGet(false, false, false);
+        // Build stanza list based on whether a stanza was specified or not
+        StringList *stanzaList;
+        bool stanzaSpecified = cfgOptionTest(cfgOptStanza);
 
-        if (dbGroup.standby == NULL && dbGroup.primary == NULL)
-            THROW(ConfigError, "no database found\nHINT: check indexed pg-path/pg-host configurations");
+        if (stanzaSpecified)
+        {
+            stanzaList = strLstNew();
+            strLstAdd(stanzaList, cfgOptionStr(cfgOptStanza));
+        }
+        else
+        {
+            stanzaList = cfgParseStanzaList();
 
-        unsigned int pgPathDefinedTotal = checkManifest();
-        checkStandby(dbGroup, pgPathDefinedTotal);
-        checkPrimary(dbGroup);
+            if (strLstSize(stanzaList) == 0)
+            {
+                LOG_WARN(
+                    "no stanzas found to check\n"
+                    "HINT: are there non-empty stanza sections in the configuration?");
+            }
+        }
+
+        // Iterate stanzas
+        for (unsigned int stanzaIdx = 0; stanzaIdx < strLstSize(stanzaList); stanzaIdx++)
+        {
+            // Switch stanza if required
+            if (!stanzaSpecified)
+            {
+                const String *const stanza = strLstGet(stanzaList, stanzaIdx);
+                LOG_INFO_FMT("check stanza '%s'", strZ(stanza));
+
+                // Free storage and protocol cache
+                storageHelperFree();
+                protocolFree();
+
+                // Reload config with new stanza
+                cfgLoadStanza(stanza);
+            }
+
+            // Get the primary/standby connections (standby is only required if backup from standby is enabled)
+            DbGetResult dbGroup = dbGet(false, false, false);
+
+            if (dbGroup.standby == NULL && dbGroup.primary == NULL)
+                THROW(ConfigError, "no database found\nHINT: check indexed pg-path/pg-host configurations");
+
+            const unsigned int pgPathDefinedTotal = checkManifest();
+            checkStandby(dbGroup, pgPathDefinedTotal);
+            checkPrimary(dbGroup);
+        }
     }
     MEM_CONTEXT_TEMP_END();
 

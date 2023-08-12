@@ -523,7 +523,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptPgVersionForce, "15");
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
-        HRN_PG_CONTROL_OVERRIDE_PUT(storagePgWrite(), PG_VERSION_15, 1501, .catalogVersion = 202211111);
+        HRN_PG_CONTROL_OVERRIDE_VERSION_PUT(storagePgWrite(), PG_VERSION_15, 1501, .catalogVersion = 202211111);
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - forcing another PG version");
         TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
@@ -611,8 +611,8 @@ testRun(void)
 
         TEST_ERROR(
             pgValidate(), DbMismatchError,
-            "version '" PG_VERSION_11_STR "' and path '" TEST_PATH "/pg' queried from cluster do not match version '"
-            PG_VERSION_10_STR "' and '" TEST_PATH "/pg' read from '" TEST_PATH "/pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
+            "version '" PG_VERSION_11_Z "' and path '" TEST_PATH "/pg' queried from cluster do not match version '" PG_VERSION_10_Z
+            "' and '" TEST_PATH "/pg' read from '" TEST_PATH "/pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
             "HINT: the pg1-path and pg1-port settings likely reference different clusters.");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -629,9 +629,8 @@ testRun(void)
 
         TEST_ERROR(
             pgValidate(), DbMismatchError,
-            "version '" PG_VERSION_15_STR "' and path '" TEST_PATH "/pg2' queried from cluster do not match version"
-            " '" PG_VERSION_15_STR "' and '" TEST_PATH "/pg' read from '" TEST_PATH "/pg/" PG_PATH_GLOBAL
-            "/" PG_FILE_PGCONTROL "'\n"
+            "version '" PG_VERSION_15_Z "' and path '" TEST_PATH "/pg2' queried from cluster do not match version '" PG_VERSION_15_Z
+            "' and '" TEST_PATH "/pg' read from '" TEST_PATH "/pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
             "HINT: the pg1-path and pg1-port settings likely reference different clusters.");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -928,7 +927,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptPgVersionForce, "15");
         HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
 
-        HRN_PG_CONTROL_OVERRIDE_PUT(storagePgWrite(), PG_VERSION_15, 1501, .catalogVersion = 202211111);
+        HRN_PG_CONTROL_OVERRIDE_VERSION_PUT(storagePgWrite(), PG_VERSION_15, 1501, .catalogVersion = 202211111);
 
         HRN_INFO_PUT(
             storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE,

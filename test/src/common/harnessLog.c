@@ -353,7 +353,7 @@ hrnLogReplace(void)
                         match = regExpMatchStr(logReplace->regExpSub, match);
                     }
 
-                    // Build replacement string.  If versioned then append the version number.
+                    // Build replacement string. If versioned then append the version number.
                     String *replace = strCatFmt(strNew(), "[%s", strZ(logReplace->replacement));
 
                     if (logReplace->version)

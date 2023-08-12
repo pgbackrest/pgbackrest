@@ -21,7 +21,7 @@
 ./doc.pl --out=html --include=user-guide --var=os-type=rhel
         </code-block>
 
-        <p>Documentation generation will build a cache of all executed statements and use the cache to build the documentation quickly if no executed statements have changed.  This makes proofing text-only edits very fast, but sometimes it is useful to do a full build without using the cache:</p>
+        <p>Documentation generation will build a cache of all executed statements and use the cache to build the documentation quickly if no executed statements have changed. This makes proofing text-only edits very fast, but sometimes it is useful to do a full build without using the cache:</p>
 
         <code-block type="bash">
 ./doc.pl --out=html --include=user-guide --var=os-type=rhel --no-cache
@@ -65,9 +65,9 @@ sudo usermod -aG docker testdoc
     <section id="package">
         <title>Building with Packages</title>
 
-        <p>A user-specified package can be used when building the documentation.  Since the documentation exercises most <backrest/> functionality this is a great way to smoke-test packages.</p>
+        <p>A user-specified package can be used when building the documentation. Since the documentation exercises most <backrest/> functionality this is a great way to smoke-test packages.</p>
 
-        <p>The package must be located within the <backrest/> repo and the specified path should be relative to the repository base.  <path>test/package</path> is a good default path to use.</p>
+        <p>The package must be located within the <backrest/> repo and the specified path should be relative to the repository base. <path>test/package</path> is a good default path to use.</p>
 
         <p>Ubuntu 16.04:</p>
 
@@ -78,7 +78,7 @@ sudo usermod -aG docker testdoc
         <p>RHEL 7:</p>
 
         <code-block type="bash">
-./doc.pl --out=html --include=user-guide --no-cache --var=os-type=rhel --var=os-image=centos:7  --var=package=test/package/pgbackrest-2.08-1.el7.x86_64.rpm
+./doc.pl --out=html --include=user-guide --no-cache --var=os-type=rhel --var=os-image=centos:7 --var=package=test/package/pgbackrest-2.08-1.el7.x86_64.rpm
         </code-block>
 
         <p>RHEL 8:</p>

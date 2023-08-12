@@ -432,7 +432,7 @@ lockAcquire(const LockAcquireParam param)
 
     bool result = true;
 
-    // Don't allow failures when locking more than one file.  This makes cleanup difficult and there are no known use cases.
+    // Don't allow failures when locking more than one file. This makes cleanup difficult and there are no known use cases.
     ASSERT(!param.returnOnNoLock || lockLocal.type != lockTypeAll);
 
     // Don't allow another lock if one is already held

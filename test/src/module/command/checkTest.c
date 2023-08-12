@@ -6,11 +6,13 @@ Test Check Command
 #include "info/infoBackup.h"
 #include "postgres/version.h"
 #include "storage/helper.h"
+#include "storage/posix/storage.h"
 
 #include "common/harnessConfig.h"
 #include "common/harnessInfo.h"
 #include "common/harnessPostgres.h"
 #include "common/harnessPq.h"
+#include "common/harnessStorage.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -19,6 +21,9 @@ static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
+
+    // Create default storage object for testing
+    const Storage *const storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     // PQfinish() is strictly checked
     harnessPqScriptStrictSet(true);
@@ -183,8 +188,8 @@ testRun(void)
 
         TEST_ERROR(
             cmdCheck(), DbMismatchError,
-            "version '" PG_VERSION_15_STR "' and path '" TEST_PATH "' queried from cluster do not match version"
-            " '" PG_VERSION_15_STR "' and '" TEST_PATH "/pg' read from '" TEST_PATH "/pg/global/pg_control'\n"
+            "version '" PG_VERSION_15_Z "' and path '" TEST_PATH "' queried from cluster do not match version '" PG_VERSION_15_Z
+            "' and '" TEST_PATH "/pg' read from '" TEST_PATH "/pg/global/pg_control'\n"
             "HINT: the pg1-path and pg1-port settings likely reference different clusters.");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -272,9 +277,13 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo - primary database only, WAL not found");
 
+        HRN_STORAGE_PUT_Z(
+            storageTest, "pgbackrest.conf",
+            "[test1]\n"
+            "pg1-path=" TEST_PATH "/pg\n");
+
         argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
-        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
+        hrnCfgArgRawZ(argList, cfgOptConfig, TEST_PATH "/pgbackrest.conf");
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, ".5");
@@ -282,7 +291,7 @@ testRun(void)
 
         // Create stanza files on repo2
         HRN_INFO_PUT(
-            storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE,
+            storageTest, "repo2/archive/test1/" INFO_ARCHIVE_FILE,
             "[db]\n"
             "db-id=1\n"
             "db-system-id=" HRN_PG_SYSTEMID_15_Z "\n"
@@ -291,7 +300,7 @@ testRun(void)
             "[db:history]\n"
             "1={\"db-id\":" HRN_PG_SYSTEMID_15_Z ",\"db-version\":\"15\"}\n");
         HRN_INFO_PUT(
-            storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE,
+            storageTest, "repo2/backup/test1/" INFO_BACKUP_FILE,
             "[db]\n"
             "db-catalog-version=202209061\n"
             "db-control-version=1300\n"
@@ -320,12 +329,34 @@ testRun(void)
             "HINT: check the PostgreSQL server log for errors.\n"
             "HINT: run the 'start' command if the stanza was previously stopped.");
         TEST_RESULT_LOG(
+            "P00   INFO: check stanza 'test1'\n"
             "P00   INFO: check repo1 configuration (primary)\n"
             "P00   INFO: check repo2 configuration (primary)\n"
             "P00   INFO: check repo1 archive for WAL (primary)");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("no stanzas in config file");
+
+        HRN_STORAGE_PUT_Z(
+            storageTest, "pgbackrest.conf",
+            "[test1]\n");
+        HRN_CFG_LOAD(cfgCmdCheck, argList);
+
+        TEST_RESULT_VOID(cmdCheck(), "check");
+        TEST_RESULT_LOG(
+            "P00   WARN: no stanzas found to check\n"
+            "            HINT: are there non-empty stanza sections in the configuration?");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo - WAL segment switch performed once for all repos");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
+        hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, ".5");
+        HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         // Create WAL segment
         Buffer *buffer = bufNew(16 * 1024 * 1024);
@@ -421,8 +452,8 @@ testRun(void)
 
         TEST_ERROR(
             checkDbConfig(PG_VERSION_94, db.primaryIdx, db.primary, false), DbMismatchError,
-            "version '" PG_VERSION_11_STR "' and path '" TEST_PATH "/pg' queried from cluster do not match version '"
-            PG_VERSION_94_STR "' and '" TEST_PATH "/pg' read from '" TEST_PATH "/pg/global/pg_control'\n"
+            "version '" PG_VERSION_11_Z "' and path '" TEST_PATH "/pg' queried from cluster do not match version '"
+            PG_VERSION_94_Z "' and '" TEST_PATH "/pg' read from '" TEST_PATH "/pg/global/pg_control'\n"
             "HINT: the pg1-path and pg1-port settings likely reference different clusters.");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -430,7 +461,7 @@ testRun(void)
 
         TEST_ERROR_FMT(
             checkDbConfig(PG_VERSION_11, db.standbyIdx, db.standby, true), DbMismatchError,
-            "version '" PG_VERSION_11_STR "' and path '%s' queried from cluster do not match version '" PG_VERSION_11_STR "' and"
+            "version '" PG_VERSION_11_Z "' and path '%s' queried from cluster do not match version '" PG_VERSION_11_Z "' and"
             " '" TEST_PATH "/pg8' read from '" TEST_PATH "/pg8/global/pg_control'\n"
             "HINT: the pg8-path and pg8-port settings likely reference different clusters.",
             strZ(dbPgDataPath(db.standby)));

@@ -51,7 +51,7 @@ Mem context and local variables
 ***********************************************************************************************************************************/
 static struct ConfigParseLocal
 {
-    MemContext *memContext;                                         // Mem context for locks
+    MemContext *memContext;                                         // Mem context
     Ini *ini;                                                       // Parsed ini data
 } configParseLocal;
 
@@ -486,6 +486,43 @@ cfgParseIni(void)
 {
     FUNCTION_TEST_VOID();
     FUNCTION_TEST_RETURN(INI, configParseLocal.ini);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN StringList *
+cfgParseStanzaList(void)
+{
+    FUNCTION_TEST_VOID();
+
+    StringList *const result = strLstNew();
+
+    if (configParseLocal.ini != NULL)
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            const StringList *const sectionList = strLstSort(iniSectionList(configParseLocal.ini), sortOrderAsc);
+
+            for (unsigned int sectionIdx = 0; sectionIdx < strLstSize(sectionList); sectionIdx++)
+            {
+                const String *const section = strLstGet(sectionList, sectionIdx);
+
+                // Skip global sections
+                if (strEqZ(section, CFGDEF_SECTION_GLOBAL) || strBeginsWithZ(section, CFGDEF_SECTION_GLOBAL ":"))
+                    continue;
+
+                // Extract stanza
+                const StringList *const sectionPart = strLstNewSplitZ(section, ":");
+                ASSERT(strLstSize(sectionPart) <= 2);
+
+                strLstAddIfMissing(result, strLstGet(sectionPart, 0));
+            }
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+
+    strLstSort(result, sortOrderAsc);
+
+    FUNCTION_TEST_RETURN(STRING_LIST, result);
 }
 
 /***********************************************************************************************************************************
@@ -1054,7 +1091,8 @@ cfgParseOptionalFilterDepend(PackRead *const filter, const Config *const config,
     // Get the depend option value
     const ConfigOption dependId = (ConfigOption)pckReadU32P(filter);
     ASSERT(config->option[dependId].index != NULL);
-    const ConfigOptionValue *const dependValue = &config->option[dependId].index[optionListIdx];
+    const ConfigOptionValue *const dependValue =
+        &config->option[dependId].index[parseRuleOption[dependId].group ? optionListIdx : 0];
 
     // Is the dependency resolved?
     if (dependValue->set)
@@ -1425,17 +1463,58 @@ cfgFileLoad(
 }
 
 /***********************************************************************************************************************************
-??? Add validation of section names and check all sections for invalid options in the check command.  It's too expensive to add the
+??? Add validation of section names and check all sections for invalid options in the check command. It's too expensive to add the
 logic to this critical path code.
 ***********************************************************************************************************************************/
+// Helper to check that option values are valid for conditional builds. This is a bit tricky since the distros used for unit testing
+// have all possible features enabled, so this is split out to allow it to be tested independently. The loop variable is
+// intentionally integrated into this function to make it obvious if it is omitted from the caller.
+FN_EXTERN bool
+cfgParseOptionValueCondition(
+    bool more, PackRead *const allowList, const bool allowListFound, const unsigned int optionId, const unsigned int optionKeyIdx,
+    const String *const valueAllow)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BOOL, more);
+        FUNCTION_TEST_PARAM(PACK_READ, allowList);
+        FUNCTION_TEST_PARAM(BOOL, allowListFound);
+        FUNCTION_TEST_PARAM(UINT, optionId);
+        FUNCTION_TEST_PARAM(UINT, optionKeyIdx);
+        FUNCTION_TEST_PARAM(STRING, valueAllow);
+    FUNCTION_TEST_END();
+
+    ASSERT(allowList != NULL);
+    ASSERT(valueAllow != NULL);
+
+    if (more && pckReadType(allowList) == pckTypeBool)
+    {
+        pckReadBoolP(allowList);
+
+        if (allowListFound)
+        {
+            THROW_FMT(
+                OptionInvalidValueError,
+                PROJECT_NAME " not built with '%s=%s' support\n"
+                "HINT: if " PROJECT_NAME " was installed from a package, does the package support this feature?\n"
+                "HINT: if " PROJECT_NAME " was built from source, were the required development packages installed?",
+                cfgParseOptionKeyIdxName(optionId, optionKeyIdx), strZ(valueAllow));
+        }
+
+        more = pckReadNext(allowList);
+    }
+
+    FUNCTION_TEST_RETURN(BOOL, more);
+}
+
 FN_EXTERN void
-configParse(const Storage *storage, unsigned int argListSize, const char *argList[], bool resetLogLevel)
+cfgParse(const Storage *const storage, const unsigned int argListSize, const char *argList[], const CfgParseParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE, storage);
         FUNCTION_LOG_PARAM(UINT, argListSize);
         FUNCTION_LOG_PARAM(CHARPY, argList);
-        FUNCTION_LOG_PARAM(BOOL, resetLogLevel);
+        FUNCTION_LOG_PARAM(BOOL, param.noResetLogLevel);
+        FUNCTION_LOG_PARAM(BOOL, param.noConfigLoad);
     FUNCTION_LOG_END();
 
     // Initialize local mem context
@@ -1711,7 +1790,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
             THROW(ParamInvalidError, "command does not allow parameters");
 
         // Enable logging for main role so config file warnings will be output
-        if (resetLogLevel && config->commandRole == cfgCmdRoleMain)
+        if (!param.noResetLogLevel && config->commandRole == cfgCmdRoleMain)
             logInit(logLevelWarn, logLevelWarn, logLevelOff, false, 0, 1, false);
 
         // Only continue if command options need to be validated, i.e. a real command is running or we are getting help for a
@@ -1803,21 +1882,30 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
             // Phase 3: parse config file unless --no-config passed
             // ---------------------------------------------------------------------------------------------------------------------
             // Load the configuration file(s)
-            String *configString = cfgFileLoad(
-                storage, parseOptionList,
-                (const String *)&parseRuleValueStr[parseRuleValStrCFGOPTDEF_CONFIG_PATH_SP_QT_FS_QT_SP_PROJECT_CONFIG_FILE],
-                (const String *)&parseRuleValueStr[parseRuleValStrCFGOPTDEF_CONFIG_PATH_SP_QT_FS_QT_SP_PROJECT_CONFIG_INCLUDE_PATH],
-                PGBACKREST_CONFIG_ORIG_PATH_FILE_STR);
-
-            if (configString != NULL)
+            if (!param.noConfigLoad)
             {
-                MEM_CONTEXT_BEGIN(configParseLocal.memContext)
-                {
-                    iniFree(configParseLocal.ini);
-                    configParseLocal.ini = iniNewP(ioBufferReadNew(BUFSTR(configString)), .store = true);
-                }
-                MEM_CONTEXT_END();
+                const String *const configString = cfgFileLoad(
+                    storage, parseOptionList,
+                    (const String *)&parseRuleValueStr[parseRuleValStrCFGOPTDEF_CONFIG_PATH_SP_QT_FS_QT_SP_PROJECT_CONFIG_FILE],
+                    (const String *)&parseRuleValueStr[
+                        parseRuleValStrCFGOPTDEF_CONFIG_PATH_SP_QT_FS_QT_SP_PROJECT_CONFIG_INCLUDE_PATH],
+                    PGBACKREST_CONFIG_ORIG_PATH_FILE_STR);
 
+                iniFree(configParseLocal.ini);
+                configParseLocal.ini = NULL;
+
+                if (configString != NULL)
+                {
+                    MEM_CONTEXT_BEGIN(configParseLocal.memContext)
+                    {
+                        configParseLocal.ini = iniNewP(ioBufferReadNew(BUFSTR(configString)), .store = true);
+                    }
+                    MEM_CONTEXT_END();
+                }
+            }
+
+            if (configParseLocal.ini != NULL)
+            {
                 // Get the stanza name
                 String *stanza = NULL;
 
@@ -1840,7 +1928,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                 for (unsigned int sectionIdx = 0; sectionIdx < strLstSize(sectionList); sectionIdx++)
                 {
                     String *section = strLstGet(sectionList, sectionIdx);
-                    StringList *keyList = iniSectionKeyList(configParseLocal.ini, section);
+                    const StringList *const keyList = iniSectionKeyList(configParseLocal.ini, section);
                     KeyValue *optionFound = kvNew();
 
                     // Loop through keys to search for options
@@ -2084,7 +2172,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
 
             for (unsigned int optionOrderIdx = 0; optionOrderIdx < CFG_OPTION_TOTAL; optionOrderIdx++)
             {
-                // Validate options based on the option resolve order.  This allows resolving all options in a single pass.
+                // Validate options based on the option resolve order. This allows resolving all options in a single pass.
                 ConfigOption optionId = optionResolveOrder[optionOrderIdx];
 
                 // Skip this option if it is not valid
@@ -2151,7 +2239,8 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
 
                             // Get depend option id and name
                             ConfigOption dependId = pckReadU32P(filter);
-                            const String *dependOptionName = STR(cfgParseOptionKeyIdxName(dependId, optionKeyIdx));
+                            const String *dependOptionName = STR(
+                                cfgParseOptionKeyIdxName(dependId, parseRuleOption[dependId].group ? optionKeyIdx : 0));
 
                             // If depend value is not set
                             ASSERT(config->option[dependId].index != NULL);
@@ -2378,28 +2467,35 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                                     PackRead *const allowList = pckReadNewC(optionalRules.allowList, optionalRules.allowListSize);
                                     bool allowListFound = false;
 
-                                    if (parseRuleOption[optionId].type == cfgOptTypeStringId)
+                                    pckReadNext(allowList);
+
+                                    while (true)
                                     {
-                                        while (pckReadNext(allowList))
+                                        // Compare based on option type
+                                        const unsigned int valueIdx = pckReadU32P(allowList);
+
+                                        switch (parseRuleOption[optionId].type)
                                         {
-                                            if (parseRuleValueStrId[pckReadU32P(allowList)] == configOptionValue->value.stringId)
+                                            case cfgOptTypeStringId:
+                                                allowListFound = parseRuleValueStrId[valueIdx] == configOptionValue->value.stringId;
+                                                break;
+
+                                            default:
                                             {
-                                                allowListFound = true;
+                                                ASSERT(parseRuleOption[optionId].type == cfgOptTypeSize);
+
+                                                allowListFound = parseRuleValueInt[valueIdx] == configOptionValue->value.integer;
                                                 break;
                                             }
                                         }
-                                    }
-                                    else
-                                    {
-                                        ASSERT(parseRuleOption[optionId].type == cfgOptTypeSize);
 
-                                        while (pckReadNext(allowList))
+                                        // Stop when allow list is exhausted or value is found
+                                        if (!cfgParseOptionValueCondition(
+                                                pckReadNext(allowList), allowList, allowListFound, optionId, optionKeyIdx,
+                                                valueAllow) ||
+                                            allowListFound)
                                         {
-                                            if (parseRuleValueInt[pckReadU32P(allowList)] == configOptionValue->value.integer)
-                                            {
-                                                allowListFound = true;
-                                                break;
-                                            }
+                                            break;
                                         }
                                     }
 

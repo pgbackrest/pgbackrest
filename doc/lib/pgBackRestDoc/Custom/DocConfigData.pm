@@ -35,7 +35,7 @@ use constant CFGCMD_VERSION                                         => 'version'
 
 ####################################################################################################################################
 # Command role constants - roles allowed for each command. Commands may have multiple processes that work together to implement
-# their functionality.  These roles allow each process to know what it is supposed to do.
+# their functionality. These roles allow each process to know what it is supposed to do.
 ####################################################################################################################################
 # Called directly by the user. This is the main process of the command that may or may not spawn other command roles.
 use constant CFGCMD_ROLE_MAIN                                       => 'main';
@@ -400,7 +400,7 @@ foreach my $strKey (sort(keys(%{$rhConfigDefine})))
         $rhConfigDefine->{$strKey}{&CFGDEF_INTERNAL} = false;
     }
 
-    # All boolean config options can be negated.  Boolean command-line options must be marked for negation individually.
+    # All boolean config options can be negated. Boolean command-line options must be marked for negation individually.
     if ($rhConfigDefine->{$strKey}{&CFGDEF_TYPE} eq CFGDEF_TYPE_BOOLEAN && defined($rhConfigDefine->{$strKey}{&CFGDEF_SECTION}))
     {
         $rhConfigDefine->{$strKey}{&CFGDEF_NEGATE} = true;

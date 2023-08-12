@@ -3,3 +3,9 @@ d4070c90641a61fa3cb1169f3bd53067193bab4e
 
 # Fix formatting errors.
 b2202c36d9e7c4557ac37087757df80193d516b5
+
+# Remove double spaces from comments and documentation.
+1bd5530a59cd8ddbabc279802d1ede4f8fbd5314
+
+# Remove double spaces missed in 1bd5530a.
+d49907239eb37c3e4e905f97543824181a1bd406

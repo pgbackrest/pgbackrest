@@ -198,7 +198,7 @@ expireDiffBackup(InfoBackup *infoBackup, unsigned int repoIdx)
             {
                 for (unsigned int diffIdx = 0; diffIdx < strLstSize(currentBackupList) - differentialRetention; diffIdx++)
                 {
-                    // Skip if this is a full backup.  Full backups only count as differential when deciding which differential
+                    // Skip if this is a full backup. Full backups only count as differential when deciding which differential
                     // backups to expire.
                     if (regExpMatchOne(backupRegExpP(.full = true), strLstGet(currentBackupList, diffIdx)))
                         continue;
@@ -299,45 +299,52 @@ expireTimeBasedBackup(InfoBackup *infoBackup, const time_t minTimestamp, unsigne
         // and D1c, and keep the next full backups (F2 and F3) and all intermediate non-full backups.
         if (backupIdx > 0)
         {
-            const String *lastBackupLabelToKeep = NULL;
+            const String *retentionMetBackupLabel = NULL;
 
             do
             {
                 backupIdx--;
 
                 InfoBackupData *info = infoBackupDataByLabel(infoBackup, strLstGet(currentBackupList, backupIdx));
-                lastBackupLabelToKeep = info->backupLabel;
 
                 // We can start deleting before this backup. This way, we keep one full backup and its dependents.
                 if (info->backupTimestampStop < minTimestamp)
+                {
+                    retentionMetBackupLabel = info->backupLabel;
                     break;
+                }
             }
             while (backupIdx != 0);
 
-            // Count number of full backups being expired
-            unsigned int numFullExpired = 0;
-
-            // Since expireBackup will remove the requested entry from the backup list, we keep checking the first entry which is
-            // always the oldest so if it is not the backup to keep then we can remove it
-            while (!strEq(infoBackupData(infoBackup, 0).backupLabel, lastBackupLabelToKeep))
+            // If retention has not been met there is nothing to expire
+            if (retentionMetBackupLabel != NULL)
             {
-                StringList *backupExpired = expireBackup(infoBackup, infoBackupData(infoBackup, 0).backupLabel, repoIdx);
+                // Count number of full backups being expired
+                unsigned int numFullExpired = 0;
 
-                result += strLstSize(backupExpired);
-                numFullExpired++;
+                // Since expireBackup() will remove the requested entry from the backup list, we keep checking the first entry which
+                // is always the oldest so if it is not the backup to retain then we can remove it
+                while (!strEq(infoBackupData(infoBackup, 0).backupLabel, retentionMetBackupLabel))
+                {
+                    StringList *backupExpired = expireBackup(infoBackup, infoBackupData(infoBackup, 0).backupLabel, repoIdx);
 
-                // Log the expired backups. If there is more than one backup, then prepend "set:"
-                LOG_INFO_FMT(
-                    "%s: expire time-based backup %s%s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx),
-                    (strLstSize(backupExpired) > 1 ? "set " : ""), strZ(strLstJoin(backupExpired, ", ")));
-            }
+                    result += strLstSize(backupExpired);
+                    numFullExpired++;
 
-            if (cfgOptionIdxStrId(cfgOptRepoRetentionArchiveType, repoIdx) == backupTypeFull &&
-                !cfgOptionIdxTest(cfgOptRepoRetentionArchive, repoIdx) && numFullExpired > 0)
-            {
-                cfgOptionIdxSet(
-                    cfgOptRepoRetentionArchive, repoIdx, cfgSourceDefault,
-                    VARINT64(strLstSize(currentBackupList) - numFullExpired));
+                    // Log the expired backups. If there is more than one backup, then prepend "set:"
+                    LOG_INFO_FMT(
+                        "%s: expire time-based backup %s%s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx),
+                        (strLstSize(backupExpired) > 1 ? "set " : ""), strZ(strLstJoin(backupExpired, ", ")));
+                }
+
+                // Set archive retention (if it is not already set) based on the number of full backups retained
+                if (cfgOptionIdxStrId(cfgOptRepoRetentionArchiveType, repoIdx) == backupTypeFull &&
+                    !cfgOptionIdxTest(cfgOptRepoRetentionArchive, repoIdx))
+                {
+                    cfgOptionIdxSet(
+                        cfgOptRepoRetentionArchive, repoIdx, cfgSourceDefault,
+                        VARINT64(strLstSize(currentBackupList) - numFullExpired));
+                }
             }
         }
     }
@@ -586,7 +593,7 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
 
                         if (archiveRetentionBackup.backupArchiveStart != NULL)
                         {
-                            // Get archive ranges to preserve.  Because archive retention can be less than total retention it is
+                            // Get archive ranges to preserve. Because archive retention can be less than total retention it is
                             // important to preserve archive that is required to make the older backups consistent even though they
                             // cannot be played any further forward with PITR.
                             String *archiveExpireMax = NULL;
@@ -669,7 +676,7 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
                                     archiveExpire.stop = strDup(walPath);
                                 }
                                 // Else delete individual files instead if the major path is less than or equal to the most recent
-                                // retention backup.  This optimization prevents scanning though major paths that could not possibly
+                                // retention backup. This optimization prevents scanning though major paths that could not possibly
                                 // have anything to expire.
                                 else if (strCmp(walPath, strSubN(archiveExpireMax, 0, 16)) <= 0)
                                 {

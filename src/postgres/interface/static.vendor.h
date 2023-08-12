@@ -4,15 +4,15 @@ PostgreSQL Types That Do Not Vary By Version
 Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
 Portions Copyright (c) 1994, Regents of the University of California
 
-For each supported release of PostgreSQL check the types in this file to see if they have changed.  The easiest way to do this is to
-copy and paste in place and check git to see if there are any diffs.  Tabs should be copied as is to make this process easy even
+For each supported release of PostgreSQL check the types in this file to see if they have changed. The easiest way to do this is to
+copy and paste in place and check git to see if there are any diffs. Tabs should be copied as is to make this process easy even
 though the pgBackRest project does not use tabs elsewhere.
 
-Comments should be copied with the types they apply to, even if the comment has not changed.  This does get repetitive, but has no
+Comments should be copied with the types they apply to, even if the comment has not changed. This does get repetitive, but has no
 runtime cost and makes the rules a bit easier to follow.
 
-If a comment is changed then the newer comment should be copied.  If the *type* has changed then it must be moved to version.auto.c
-which could have a large impact on dependencies.  Hopefully that won't happen often.
+If a comment is changed then the newer comment should be copied. If the *type* has changed then it must be moved to version.auto.c
+which could have a large impact on dependencies. Hopefully that won't happen often.
 
 Note when adding new types it is safer to add them to version.auto.c unless they are needed for code that must be compatible across
 all versions of PostgreSQL supported by pgBackRest.
@@ -134,11 +134,6 @@ typedef struct
 	uint32		xrecoff;		/* low bits */
 } PageXLogRecPtr;
 
-// PageXLogRecPtrGet macro
-// ---------------------------------------------------------------------------------------------------------------------------------
-#define PageXLogRecPtrGet(val) \
-	((uint64) (val).xlogid << 32 | (val).xrecoff)
-
 // PageHeaderData type
 // ---------------------------------------------------------------------------------------------------------------------------------
 /*
@@ -204,14 +199,6 @@ typedef struct PageHeaderData
 // PageHeader type
 // ---------------------------------------------------------------------------------------------------------------------------------
 typedef PageHeaderData *PageHeader;
-
-// PageIsNew macro
-// ---------------------------------------------------------------------------------------------------------------------------------
-/*
- * PageIsNew
- *		returns true iff page has not been initialized (by PageInit)
- */
-#define PageIsNew(page) (((PageHeader) (page))->pd_upper == 0)
 
 /***********************************************************************************************************************************
 Types from src/include/access/transam.h

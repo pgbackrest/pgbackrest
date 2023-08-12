@@ -295,8 +295,8 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptDelta), false, "--delta set to false");
         TEST_RESULT_LOG(
             "P00   WARN: --delta or --force specified but unable to find 'PG_VERSION' or 'backup.manifest' in '" TEST_PATH "/pg' to"
-            " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
-            " exist in the destination directories the restore will be aborted.");
+            " confirm that this is a valid $PGDATA directory. --delta and --force have been disabled and if any files exist in the"
+            " destination directories the restore will be aborted.");
 
         HRN_CFG_LOAD(cfgCmdRestore, argList);
         HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "backup.manifest");
@@ -317,8 +317,8 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptForce), false, "--force set to false");
         TEST_RESULT_LOG(
             "P00   WARN: --delta or --force specified but unable to find 'PG_VERSION' or 'backup.manifest' in '" TEST_PATH "/pg' to"
-            " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
-            " exist in the destination directories the restore will be aborted.");
+            " confirm that this is a valid $PGDATA directory. --delta and --force have been disabled and if any files exist in the"
+            " destination directories the restore will be aborted.");
 
         HRN_CFG_LOAD(cfgCmdRestore, argList);
         HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_PGVERSION);
@@ -1856,6 +1856,7 @@ testRun(void)
     if (testBegin("restoreRecoveryWrite*()"))
     {
         const String *pgPath = STRDEF(TEST_PATH "/pg");
+        const StorageInfo fileInfo = {.user = NULL, .group = NULL, .mode = 0600};
         HRN_STORAGE_PATH_CREATE(storageTest, strZ(pgPath), .mode = 0700);
 
         const String *restoreLabel = STRDEF("LABEL");
@@ -1876,7 +1877,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(
-            restoreRecoveryWriteAutoConf(manifest, PG_VERSION_12, restoreLabel), OptionInvalidError,
+            restoreRecoveryWriteAutoConf(manifest, &fileInfo, PG_VERSION_12, restoreLabel), OptionInvalidError,
             "'standby_mode' setting is not valid for PostgreSQL >= 12\n"
             "HINT: use --type=standby instead of --recovery-option=standby_mode=on.");
 
@@ -1892,14 +1893,11 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptType, "none");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        restoreRecoveryWriteAutoConf(manifest, PG_VERSION_12, restoreLabel);
+        restoreRecoveryWriteAutoConf(manifest, &fileInfo, PG_VERSION_12, restoreLabel);
 
         TEST_STORAGE_GET_EMPTY(storagePg(), PG_FILE_POSTGRESQLAUTOCONF, .comment = "check postgresql.auto.conf");
         TEST_STORAGE_LIST(
-            storagePg(), NULL,
-            PG_FILE_POSTGRESQLAUTOCONF "\n"
-            PG_FILE_RECOVERYSIGNAL "\n",
-            .comment = "recovery.signal exists, standby.signal missing");
+            storagePg(), NULL, PG_FILE_POSTGRESQLAUTOCONF "\n", .comment = "recovery.signal exists, standby.signal missing");
 
         TEST_RESULT_LOG(
             "P00   WARN: postgresql.auto.conf does not exist -- creating to contain recovery settings\n"
@@ -1915,7 +1913,7 @@ testRun(void)
             "# DO NOT MODIFY\n"
             "\t recovery_target_action='promote'\n\n");
 
-        restoreRecoveryWriteAutoConf(manifest, PG_VERSION_12, restoreLabel);
+        restoreRecoveryWriteAutoConf(manifest, &fileInfo, PG_VERSION_12, restoreLabel);
 
         TEST_STORAGE_GET(
             storagePg(), PG_FILE_POSTGRESQLAUTOCONF,
@@ -1923,10 +1921,7 @@ testRun(void)
             RECOVERY_SETTING_PREFIX "\t recovery_target_action='promote'\n\n",
             .comment = "check postgresql.auto.conf");
         TEST_STORAGE_LIST(
-            storagePg(), NULL,
-            PG_FILE_POSTGRESQLAUTOCONF "\n"
-            PG_FILE_RECOVERYSIGNAL "\n",
-            .comment = "recovery.signal exists, standby.signal missing");
+            storagePg(), NULL, PG_FILE_POSTGRESQLAUTOCONF "\n", .comment = "recovery.signal exists, standby.signal missing");
 
         TEST_RESULT_LOG("P00   INFO: write updated " TEST_PATH "/pg/postgresql.auto.conf");
 
@@ -1941,7 +1936,7 @@ testRun(void)
             "# DO NOT MODIFY\n"
             "\t recovery_target_action='promote'\n\n");
 
-        restoreRecoveryWriteAutoConf(manifest, PG_VERSION_12, restoreLabel);
+        restoreRecoveryWriteAutoConf(manifest, &fileInfo, PG_VERSION_12, restoreLabel);
 
         TEST_STORAGE_GET(
             storagePg(), PG_FILE_POSTGRESQLAUTOCONF,
@@ -1976,7 +1971,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRecoveryOption, "restore-command=my_restore_command");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        restoreRecoveryWriteAutoConf(manifest, PG_VERSION_12, restoreLabel);
+        restoreRecoveryWriteAutoConf(manifest, &fileInfo, PG_VERSION_12, restoreLabel);
 
         TEST_STORAGE_GET(
             storagePg(), PG_FILE_POSTGRESQLAUTOCONF,
@@ -2010,7 +2005,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptType, "preserve");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        restoreRecoveryWrite(manifest);
+        restoreRecoveryWrite(manifest, &fileInfo);
 
         TEST_STORAGE_GET(
             storagePg(), PG_FILE_POSTGRESQLAUTOCONF, "# DO NOT MODIFY\n", .comment = "check postgresql.auto.conf");
@@ -2033,7 +2028,7 @@ testRun(void)
         hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        restoreRecoveryWrite(manifest);
+        restoreRecoveryWrite(manifest, &fileInfo);
 
         TEST_RESULT_BOOL(
             bufEq(storageGetP(storageNewReadP(storagePg(), PG_FILE_POSTGRESQLAUTOCONF_STR)), BUFSTRDEF("# DO NOT MODIFY\n")),
@@ -2121,11 +2116,11 @@ testRun(void)
             HRN_MANIFEST_FILE_ADD(
                 manifest, .name = TEST_PGDATA PG_FILE_PGVERSION, .size = 4, .timestamp = 1482182860,
                 .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1");
-            HRN_STORAGE_PUT_Z(storageRepoIdxWrite(0), TEST_REPO_PATH PG_FILE_PGVERSION, PG_VERSION_94_STR "\n");
+            HRN_STORAGE_PUT_Z(storageRepoIdxWrite(0), TEST_REPO_PATH PG_FILE_PGVERSION, PG_VERSION_94_Z "\n");
 
             // Store the file also to the encrypted repo
             HRN_STORAGE_PUT_Z(
-                storageRepoIdxWrite(1), TEST_REPO_PATH PG_FILE_PGVERSION, PG_VERSION_94_STR "\n",
+                storageRepoIdxWrite(1), TEST_REPO_PATH PG_FILE_PGVERSION, PG_VERSION_94_Z "\n",
                 .cipherType = cipherTypeAes256Cbc, .cipherPass = TEST_CIPHER_PASS_ARCHIVE);
 
             // pg_tblspc
@@ -2191,7 +2186,7 @@ testRun(void)
                 "P00   INFO: restore size = 4B, file total = 1",
                 TEST_PATH, TEST_PATH, TEST_PATH, TEST_PATH));
 
-        // Remove recovery.conf before file comparison since it will have a new timestamp.  Make sure it existed, though.
+        // Remove recovery.conf before file comparison since it will have a new timestamp. Make sure it existed, though.
         HRN_STORAGE_REMOVE(storagePgWrite(), PG_FILE_RECOVERYCONF, .errorOnMissing = true);
 
         TEST_STORAGE_LIST(
@@ -2292,7 +2287,7 @@ testRun(void)
 
             HRN_STORAGE_PUT_Z(
                 storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_LABEL "/" MANIFEST_TARGET_PGTBLSPC "/1/16384/" PG_FILE_PGVERSION,
-                PG_VERSION_94_STR "\n");
+                PG_VERSION_94_Z "\n");
 
             // Always sort
             lstSort(manifest->pub.targetList, sortOrderAsc);
@@ -2439,7 +2434,7 @@ testRun(void)
             .level = storageInfoLevelBasic, .includeDot = true);
 
         // PG_VERSION was restored by the force option
-        TEST_STORAGE_GET(storagePg(), PG_FILE_PGVERSION, PG_VERSION_94_STR "\n", .comment = "check PG_VERSION was restored");
+        TEST_STORAGE_GET(storagePg(), PG_FILE_PGVERSION, PG_VERSION_94_Z "\n", .comment = "check PG_VERSION was restored");
 
         // Remove tablespace
         HRN_STORAGE_PATH_REMOVE(storagePgWrite(), MANIFEST_TARGET_PGTBLSPC "/1/PG_9.4_201409291", .recurse = true);
@@ -2538,7 +2533,7 @@ testRun(void)
                 .bundleId = 1, .bundleOffset = 17, .checksumSha1 = "d7dacae2c968388960bf8970080a980ed5c5dcb7");
             HRN_STORAGE_PUT_Z(
                 storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_LABEL "/bundle/1",
-                PG_VERSION_96_STR "\n" PG_VERSION_96_STR "\nyyyxxxxxAzzA");
+                PG_VERSION_96_Z "\n" PG_VERSION_96_Z "\nyyyxxxxxAzzA");
 
             // base directory
             HRN_MANIFEST_PATH_ADD(manifest, .name = TEST_PGDATA PG_PATH_BASE);
@@ -2603,7 +2598,7 @@ testRun(void)
             HRN_MANIFEST_FILE_ADD(
                 manifest, .name = TEST_PGDATA "base/16384/" PG_FILE_PGVERSION, .size = 4, .timestamp = 1482182860,
                 .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1");
-            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "base/16384/" PG_FILE_PGVERSION, PG_VERSION_94_STR "\n");
+            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "base/16384/" PG_FILE_PGVERSION, PG_VERSION_94_Z "\n");
 
             // base/16384/16385
             fileBuffer = bufNew(16384);
@@ -2623,7 +2618,7 @@ testRun(void)
             HRN_MANIFEST_FILE_ADD(
                 manifest, .name = TEST_PGDATA "base/32768/" PG_FILE_PGVERSION, .size = 4, .timestamp = 1482182860,
                 .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1");
-            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "base/32768/" PG_FILE_PGVERSION, PG_VERSION_94_STR "\n");
+            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "base/32768/" PG_FILE_PGVERSION, PG_VERSION_94_Z "\n");
 
             // base/32768/32769
             fileBuffer = bufNew(32768);
@@ -2946,7 +2941,7 @@ testRun(void)
 
         // Enlarge a file so it gets truncated. Keep timestamp the same to prove that it gets updated after the truncate.
         HRN_STORAGE_PUT_Z(
-            storagePgWrite(), "base/16384/" PG_FILE_PGVERSION, PG_VERSION_94_STR "\n\n", .modeFile = 0600,
+            storagePgWrite(), "base/16384/" PG_FILE_PGVERSION, PG_VERSION_94_Z "\n\n", .modeFile = 0600,
             .timeModified = 1482182860);
 
         // Enlarge a zero-length file so it gets truncated

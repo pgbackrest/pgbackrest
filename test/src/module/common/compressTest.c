@@ -24,7 +24,7 @@ testCompress(IoFilter *compress, Buffer *decompressed, size_t inputSize, size_t 
     // Compress input data
     while (inputTotal < bufSize(decompressed))
     {
-        // Generate the input buffer based on input size.  This breaks the data up into chunks as it would be in a real scenario.
+        // Generate the input buffer based on input size. This breaks the data up into chunks as it would be in a real scenario.
         Buffer *input = bufNewC(
             bufPtr(decompressed) + inputTotal,
             inputSize > bufSize(decompressed) - inputTotal ? bufSize(decompressed) - inputTotal : inputSize);
@@ -352,7 +352,7 @@ testRun(void)
         TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(decompress, lz4DecompressToLog, buffer, sizeof(buffer)), "lz4DecompressToLog");
         TEST_RESULT_Z(buffer, "{inputSame: true, inputOffset: 999, frameDone false, done: true}", "check log");
 #else
-        TEST_ERROR(compressTypePresent(compressTypeLz4), OptionInvalidValueError, "pgBackRest not compiled with lz4 support");
+        TEST_ERROR(compressTypePresent(compressTypeLz4), OptionInvalidValueError, "pgBackRest not built with lz4 support");
 #endif // HAVE_LIBLZ4
     }
 
@@ -399,7 +399,7 @@ testRun(void)
         TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(decompress, zstDecompressToLog, buffer, sizeof(buffer)), "zstDecompressToLog");
         TEST_RESULT_Z(buffer, "{inputSame: true, inputOffset: 999, frameDone false, done: true}", "check log");
 #else
-        TEST_ERROR(compressTypePresent(compressTypeZst), OptionInvalidValueError, "pgBackRest not compiled with zst support");
+        TEST_ERROR(compressTypePresent(compressTypeZst), OptionInvalidValueError, "pgBackRest not built with zst support");
 #endif // HAVE_LIBZST
     }
 
@@ -422,7 +422,7 @@ testRun(void)
         TEST_TITLE("compressTypePresent()");
 
         TEST_RESULT_VOID(compressTypePresent(compressTypeNone), "type none always present");
-        TEST_ERROR(compressTypePresent(compressTypeXz), OptionInvalidValueError, "pgBackRest not compiled with xz support");
+        TEST_ERROR(compressTypePresent(compressTypeXz), OptionInvalidValueError, "pgBackRest not built with xz support");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("compressTypeFromName()");

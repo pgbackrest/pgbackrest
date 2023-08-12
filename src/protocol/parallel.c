@@ -135,7 +135,7 @@ protocolParallelProcess(ProtocolParallel *this)
         // If clients are running then wait for one to finish
         if (clientRunningTotal > 0)
         {
-            // Initialize timeout struct used for select.  Recreate this structure each time since Linux (at least) will modify it.
+            // Initialize timeout struct used for select. Recreate this structure each time since Linux (at least) will modify it.
             struct timeval timeoutSelect;
             timeoutSelect.tv_sec = (time_t)(this->timeout / MSEC_PER_SEC);
             timeoutSelect.tv_usec = (suseconds_t)(this->timeout % MSEC_PER_SEC * 1000);

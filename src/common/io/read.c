@@ -276,7 +276,7 @@ ioReadLineParam(IoRead *this, bool allowEof)
     ASSERT(this != NULL);
     ASSERT(this->pub.opened && !this->pub.closed);
 
-    // Allocate the output buffer if it has not already been allocated.  This buffer is not allocated at object creation because it
+    // Allocate the output buffer if it has not already been allocated. This buffer is not allocated at object creation because it
     // is not always used.
     if (this->output == NULL)
     {

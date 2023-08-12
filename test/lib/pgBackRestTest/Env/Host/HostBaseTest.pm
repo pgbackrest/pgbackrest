@@ -43,6 +43,8 @@ use constant HOST_AZURE                                             => 'azure';
     push @EXPORT, qw(HOST_AZURE);
 use constant HOST_S3                                                => 's3-server';
     push @EXPORT, qw(HOST_S3);
+use constant HOST_SFTP                                              => 'sftp-srvr';
+    push @EXPORT, qw(HOST_SFTP);
 
 ####################################################################################################################################
 # CA/cert/key constants
@@ -58,6 +60,16 @@ use constant HOST_SERVER_CA                                         => HOST_CERT
     push @EXPORT, qw(HOST_SERVER_CA);
 use constant HOST_SERVER_CERT                                       => HOST_CERT_PATH . 'pgbackrest-test-server.crt';
 use constant HOST_SERVER_KEY                                        => HOST_CERT_PATH . 'pgbackrest-test-server.key';
+
+####################################################################################################################################
+# SFTP key constants
+####################################################################################################################################
+use constant SSH_KEY_PATH                                           => '/test/certificate/ssh/';
+
+use constant SSH_PRIVATE_KEY                                        => SSH_KEY_PATH . 'id_rsa';
+    push @EXPORT, qw(SSH_PRIVATE_KEY);
+use constant SSH_PUBLIC_KEY                                         => SSH_KEY_PATH . 'id_rsa.pub';
+    push @EXPORT, qw(SSH_PUBLIC_KEY);
 
 ####################################################################################################################################
 # new

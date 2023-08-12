@@ -70,6 +70,10 @@ sub setup
     {
         $oHostObject = new pgBackRestTest::Env::Host::HostGcsTest();
     }
+    elsif ($oConfigParam->{strStorage} eq SFTP)
+    {
+        $oHostObject = new pgBackRestTest::Env::Host::HostSftpTest();
+    }
 
     # Get host group
     my $oHostGroup = hostGroupGet();
@@ -132,7 +136,7 @@ sub setup
     {
         $oHostGroup->hostAdd($oHostObject, {rstryHostName => ['pgbackrest-dev.s3.amazonaws.com', 's3.amazonaws.com']});
     }
-    elsif ($oConfigParam->{strStorage} eq AZURE || $oConfigParam->{strStorage} eq GCS)
+    elsif ($oConfigParam->{strStorage} eq AZURE || $oConfigParam->{strStorage} eq GCS || $oConfigParam->{strStorage} eq SFTP)
     {
         $oHostGroup->hostAdd($oHostObject);
     }
@@ -164,7 +168,8 @@ sub setup
     # If backup host is not defined set it to db-primary
     else
     {
-        $oHostBackup = $strBackupDestination eq HOST_DB_PRIMARY ? $oHostDbPrimary : $oHostDbStandby;
+        $oHostBackup = $strBackupDestination eq HOST_DB_PRIMARY || $strBackupDestination eq HOST_SFTP ? $oHostDbPrimary :
+            $oHostDbStandby;
     }
 
     storageRepoCommandSet(
@@ -172,7 +177,8 @@ sub setup
             ' --config=' . $oHostBackup->backrestConfig() . ' --stanza=' . $self->stanza() . ' --log-level-console=off' .
             ' --log-level-stderr=error' .
             ($oConfigParam->{strStorage} ne POSIX ?
-                " --no-repo1-storage-verify-tls --repo1-$oConfigParam->{strStorage}-" .
+                ($oConfigParam->{strStorage} ne SFTP ? " --no-repo1-storage-verify-tls" : '') .
+                " --repo1-$oConfigParam->{strStorage}-" .
                 ($oConfigParam->{strStorage} eq GCS ? 'endpoint' : 'host') . "=" . $oHostObject->ipGet() : '') .
                 ($oConfigParam->{strStorage} eq GCS ? ':' . HOST_GCS_PORT : ''),
         $oConfigParam->{strStorage} eq POSIX ? STORAGE_POSIX : STORAGE_OBJECT);
@@ -254,6 +260,7 @@ sub dbCatalogVersion
         &PG_VERSION_13 => 202007201,
         &PG_VERSION_14 => 202105121,
         &PG_VERSION_15 => 202209061,
+        &PG_VERSION_16 => 202304110,
     };
 
     if (!defined($hCatalogVersion->{$strPgVersion}))
@@ -295,6 +302,7 @@ sub dbControlVersion
         &PG_VERSION_13 => 1300,
         &PG_VERSION_14 => 1300,
         &PG_VERSION_15 => 1300,
+        &PG_VERSION_16 => 1300,
     };
 
     if (!defined($hControlVersion->{$strPgVersion}))

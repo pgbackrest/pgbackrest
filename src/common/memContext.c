@@ -186,7 +186,7 @@ memContextCallbackOne(MemContext *const memContext)
 /***********************************************************************************************************************************
 Top context
 
-The top context always exists and can never be freed.  All other contexts are children of the top context. The top context is
+The top context always exists and can never be freed. All other contexts are children of the top context. The top context is
 generally used to allocate memory that exists for the life of the program.
 ***********************************************************************************************************************************/
 static struct MemContextTop

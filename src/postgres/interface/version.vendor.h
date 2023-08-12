@@ -4,22 +4,22 @@ PostgreSQL Types That Vary By Version
 Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
 Portions Copyright (c) 1994, Regents of the University of California
 
-For each supported release of PostgreSQL check the types in this file to see if they have changed.  The easiest way to do this is to
-copy and paste in place and check git to see if there are any diffs.  Tabs should be copied as is to make this process easy even
+For each supported release of PostgreSQL check the types in this file to see if they have changed. The easiest way to do this is to
+copy and paste in place and check git to see if there are any diffs. Tabs should be copied as is to make this process easy even
 though the pgBackRest project does not use tabs elsewhere.
 
 New versions should always be added to the top of each type's #if block, underneath `PG_VERSION > PG_VERSION_MAX` to cause as little
-churn as possible.  This also ensures that new versions will not work until PG_VERSION_MAX and this file have been updated.
+churn as possible. This also ensures that new versions will not work until PG_VERSION_MAX and this file have been updated.
 
 New data structures do not need to add #elif branches for old versions. See pg_time_t as an example.
 
-Comments should be copied with the types they apply to, even if the comment has not changed.  This does get repetitive, but has no
+Comments should be copied with the types they apply to, even if the comment has not changed. This does get repetitive, but has no
 runtime cost and makes the rules a bit easier to follow.
 
 If a comment has syntax only changes, then the new version of the comment can be applied to older versions of the type.
 
 If a comment has changed in a way that implies a difference in the way the type is used, then a new version of the comment and type
-should be created.  See the CheckPoint type difference between 9.5 and 9.6 as an example.
+should be created. See the CheckPoint type difference between 9.5 and 9.6 as an example.
 ***********************************************************************************************************************************/
 #include "postgres/interface/static.vendor.h"
 #include "postgres/version.h"
@@ -157,6 +157,19 @@ Types from src/include/catalog/catversion.h
 // CATALOG_VERSION_NO define
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
+
+#elif PG_VERSION >= PG_VERSION_16
+
+/*
+ * We could use anything we wanted for version numbers, but I recommend
+ * following the "YYYYMMDDN" style often used for DNS zone serial numbers.
+ * YYYYMMDD are the date of the change, and N is the number of the change
+ * on that day.  (Hopefully we'll never commit ten independent sets of
+ * catalog changes on the same day...)
+ */
+
+/*							yyyymmddN */
+#define CATALOG_VERSION_NO	202304110
 
 #elif PG_VERSION >= PG_VERSION_15
 
@@ -1707,6 +1720,10 @@ Types from src/include/access/xlog_internal.h
 // XLOG_PAGE_MAGIC define
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
+
+#elif PG_VERSION >= PG_VERSION_16
+
+#define XLOG_PAGE_MAGIC 0xD113	/* can be used as WAL version indicator */
 
 #elif PG_VERSION >= PG_VERSION_15
 

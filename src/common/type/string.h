@@ -215,8 +215,8 @@ Macros for constant strings
 
 Frequently used constant strings can be declared with these macros at compile time rather than dynamically at run time.
 
-Note that strings created in this way are declared as const so can't be modified or freed by the str*() methods.  Casting to
-String * will result in a segfault due to modifying read-only memory.
+Note that strings created in this way are declared as const so can't be modified or freed by the str*() methods. Casting to String *
+will result in a segfault due to modifying read-only memory.
 
 By convention all string constant identifiers are appended with _STR.
 ***********************************************************************************************************************************/

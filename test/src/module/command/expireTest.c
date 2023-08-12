@@ -2302,7 +2302,7 @@ testRun(void)
         TEST_RESULT_UINT(expireTimeBasedBackup(infoBackup, (time_t)(timeNow - (40 * SEC_PER_DAY)), 0), 0, "no backups to expire");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("oldest backup not expired");
+        TEST_TITLE("retention not set");
 
         // Set up
         StringList *argListTime = strLstDup(argListBase);
@@ -2353,21 +2353,47 @@ testRun(void)
             "20181119-152138F\n20181119-152800F\n20181119-152800F_20181119-152152D\n20181119-152800F_20181119-152155I\n"
             "20181119-152900F\n20181119-152900F_20181119-152600D\n", "no backups expired");
 
-        // Add a time period
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("retention not met");
+
         StringList *argList = strLstDup(argListTime);
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "99");
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
+
+        TEST_RESULT_VOID(cmdExpire(), "oldest backup not old enough for retention");
+
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000", archiveExpectList(1, 11, "0000000100000000"),
+            .comment = "no archives expired");
+        TEST_RESULT_LOG("P00   INFO: repo1: time-based archive retention not met - archive logs will not be expired");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("oldest backup not expired (but WAL before it is)");
+
+        argList = strLstDup(argListTime);
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "35");
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         TEST_RESULT_VOID(cmdExpire(), "oldest backup older but other backups too young");
 
         TEST_STORAGE_LIST(
-            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000", archiveExpectList(1, 11, "0000000100000000"),
+            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000", archiveExpectList(2, 11, "0000000100000000"),
             .comment = "no archives expired");
-        TEST_RESULT_STRLST_Z(
-            infoBackupDataLabelList(infoBackup, NULL),
-            "20181119-152138F\n20181119-152800F\n20181119-152800F_20181119-152152D\n20181119-152800F_20181119-152155I\n"
-            "20181119-152900F\n20181119-152900F_20181119-152600D\n", "no backups expired");
-        TEST_RESULT_LOG("P00   INFO: repo1: time-based archive retention not met - archive logs will not be expired");
+        TEST_RESULT_LOG(
+            "P00 DETAIL: repo1: 9.4-1 archive retention on backup 20181119-152138F, start = 000000010000000000000002\n"
+            "P00   INFO: repo1: 9.4-1 remove archive, start = 000000010000000000000001, stop = 000000010000000000000001");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("oldest backup not expired (and no WAL before it)");
+
+        TEST_RESULT_VOID(cmdExpire(), "oldest backup older but other backups too young");
+
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000", archiveExpectList(2, 11, "0000000100000000"),
+            .comment = "no archives expired");
+        TEST_RESULT_LOG(
+            "P00 DETAIL: repo1: 9.4-1 archive retention on backup 20181119-152138F, start = 000000010000000000000002\n"
+            "P00   INFO: repo1: 9.4-1 no archive to remove");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("oldest backup expired");
@@ -2381,7 +2407,7 @@ testRun(void)
             "P00   INFO: [DRY-RUN] repo1: expire time-based backup 20181119-152138F\n"
             "P00   INFO: [DRY-RUN] repo1: remove expired backup 20181119-152138F\n"
             "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152800F, start = 000000010000000000000004\n"
-            "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000010000000000000001, stop = 000000010000000000000003");
+            "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000010000000000000002, stop = 000000010000000000000003");
 
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionArchive, "9999999");
         HRN_CFG_LOAD(cfgCmdExpire, argList);
@@ -2406,7 +2432,7 @@ testRun(void)
             "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152800F_20181119-152155I"
             ", start = 000000010000000000000007, stop = 000000010000000000000007\n"
             "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152900F, start = 000000010000000000000009\n"
-            "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000010000000000000001, stop = 000000010000000000000003\n"
+            "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000010000000000000002, stop = 000000010000000000000003\n"
             "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000010000000000000005, stop = 000000010000000000000005\n"
             "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000010000000000000008, stop = 000000010000000000000008");
 
@@ -2437,7 +2463,7 @@ testRun(void)
             ", stop = 000000010000000000000009\n"
             "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152900F_20181119-152600D"
             ", start = 000000010000000000000011\n"
-            "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000010000000000000001, stop = 000000010000000000000003\n"
+            "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000010000000000000002, stop = 000000010000000000000003\n"
             "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000010000000000000005, stop = 000000010000000000000005\n"
             "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000010000000000000008, stop = 000000010000000000000008\n"
             "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000010000000000000010, stop = 000000010000000000000010");
@@ -2459,7 +2485,7 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   INFO: repo1: remove expired backup 20181119-152138F\n"
             "P00 DETAIL: repo1: 9.4-1 archive retention on backup 20181119-152800F, start = 000000010000000000000004\n"
-            "P00   INFO: repo1: 9.4-1 remove archive, start = 000000010000000000000001, stop = 000000010000000000000003");
+            "P00   INFO: repo1: 9.4-1 remove archive, start = 000000010000000000000002, stop = 000000010000000000000003");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("newest backup - retention met but must keep one");
@@ -2516,7 +2542,8 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdExpire(), "expire all but newest");
         TEST_RESULT_LOG(
-            "P00   INFO: repo1: time-based archive retention not met - archive logs will not be expired\n"
+            "P00 DETAIL: repo1: 9.4-1 archive retention on backup 20181119-152900F, start = 000000010000000000000009\n"
+            "P00   INFO: repo1: 9.4-1 no archive to remove\n"
             "P00   INFO: repo2: expire time-based backup 20181119-152138F\n"
             "P00   INFO: repo2: remove expired backup 20181119-152138F\n"
             "P00 DETAIL: repo2: 9.4-1 archive retention on backup 20181119-152800F, start = 000000010000000000000004\n"

@@ -374,7 +374,8 @@ option:
       archive-get: {}
       archive-push: {}
       backup: {}
-      check: {}
+      check:
+        required: false
       expire: {}
       info:
         required: false
@@ -769,8 +770,8 @@ option:
       - none
       - bz2
       - gz
-      - lz4
-      - zst
+      - lz4: HAVE_LIBLZ4
+      - zst: HAVE_LIBZST
     command: compress
     command-role:
       async: {}
@@ -1218,6 +1219,15 @@ option:
     command-role:
       main: {}
 
+  page-header-check:
+    section: global
+    type: boolean
+    default: true
+    command:
+      backup: {}
+    command-role:
+      main: {}
+
   exclude:
     section: global
     type: list
@@ -1543,7 +1553,9 @@ option:
       archive-push:
         required: false
       backup: {}
-      check: {}
+      check:
+        depend:
+          option: stanza
       manifest:
         required: false
       restore: {}
@@ -1734,6 +1746,7 @@ option:
       - gcs
       - posix
       - s3
+      - sftp: HAVE_LIBSSH2
     command:
       annotate:
         command-role:
@@ -1897,7 +1910,6 @@ option:
     section: global
     group: repo
     type: boolean
-    beta: true
     default: false
     command:
       backup: {}
@@ -1914,7 +1926,7 @@ option:
     group: repo
     type: hash
     required: false
-    beta: true
+    internal: true
     command: repo-block
     command-role:
       main: {}
@@ -1935,7 +1947,7 @@ option:
     type: size
     default: 256KiB
     allow-range: [32KiB, 16MiB]
-    beta: true
+    internal: true
     command: repo-block
     command-role:
       main: {}
@@ -2349,6 +2361,75 @@ option:
       - path
     command: repo-type
     depend: repo-s3-bucket
+
+  repo-sftp-host:
+    section: global
+    group: repo
+    type: string
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - sftp
+
+  repo-sftp-host-fingerprint:
+    section: global
+    group: repo
+    type: string
+    required: false
+    command: repo-type
+    depend: repo-sftp-host
+
+  repo-sftp-host-key-hash-type:
+    section: global
+    group: repo
+    type: string-id
+    allow-list:
+      - md5
+      - sha1
+      - sha256
+    command: repo-type
+    depend: repo-sftp-host
+
+  repo-sftp-host-port:
+    section: global
+    group: repo
+    type: integer
+    default: 22
+    allow-range: [1, 65535]
+    command: repo-type
+    depend: repo-sftp-host
+
+  repo-sftp-host-user:
+    section: global
+    group: repo
+    type: string
+    command: repo-type
+    depend: repo-sftp-host
+
+  repo-sftp-private-key-file:
+    section: global
+    group: repo
+    type: string
+    command: repo-type
+    depend: repo-sftp-host
+
+  repo-sftp-private-key-passphrase:
+    section: global
+    group: repo
+    type: string
+    required: false
+    secure: true
+    command: repo-type
+    depend: repo-sftp-host
+
+  repo-sftp-public-key-file:
+    section: global
+    group: repo
+    type: string
+    required: false
+    command: repo-type
+    depend: repo-sftp-host
 
   repo-storage-verify-tls:
     section: global

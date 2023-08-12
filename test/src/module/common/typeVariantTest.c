@@ -31,7 +31,7 @@ testRun(void)
         TEST_RESULT_BOOL(varBool(BOOL_FALSE_VAR), false, "false bool variant");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_BOOL(varBoolForce(VARBOOL(false)), false, "force bool to bool");
+        TEST_RESULT_BOOL(varBoolForce(BOOL_FALSE_VAR), false, "force bool to bool");
         TEST_RESULT_BOOL(varBoolForce(VARINT(1)), true, "force int to bool");
         TEST_RESULT_BOOL(varBoolForce(VARUINT(0)), false, "force uint to bool");
         TEST_RESULT_BOOL(varBoolForce(VARINT64(false)), false, "force int64 to bool");

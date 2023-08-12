@@ -41,10 +41,10 @@ Useful for ensuring coverage in cases where compared values may be always ascend
 If the "condition" (a compile-time-constant expression) evaluates to false then throw a compile error using the "message" (a string
 literal).
 
-gcc 4.6 and up supports _Static_assert(), but there are bizarre syntactic placement restrictions.  Macros STATIC_ASSERT_STMT() and
+gcc 4.6 and up supports _Static_assert(), but there are bizarre syntactic placement restrictions. Macros STATIC_ASSERT_STMT() and
 STATIC_ASSERT_EXP() make it safe to use as a statement or in an expression, respectively.
 
-Otherwise we fall back on a kluge that assumes the compiler will complain about a negative width for a struct bit-field.  This will
+Otherwise we fall back on a kluge that assumes the compiler will complain about a negative width for a struct bit-field. This will
 not include a helpful error message, but it beats not getting an error at all. Note that when std=c99 it looks like gcc is using the
 same kluge.
 

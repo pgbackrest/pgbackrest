@@ -84,7 +84,7 @@ static struct
 /***********************************************************************************************************************************
 Message buffer and buffer size
 
-The message buffer is statically allocated so there is some space to store error messages.  Not being able to allocate such a small
+The message buffer is statically allocated so there is some space to store error messages. Not being able to allocate such a small
 amount of memory seems pretty unlikely so just keep the code simple and let the loader deal with massively constrained memory
 situations.
 
