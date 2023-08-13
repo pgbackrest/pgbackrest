@@ -31,11 +31,10 @@ Command constants
 #define CFGCMD_STANZA_UPGRADE                                       "stanza-upgrade"
 #define CFGCMD_START                                                "start"
 #define CFGCMD_STOP                                                 "stop"
-#define CFGCMD_SUPPORT                                              "support"
 #define CFGCMD_VERIFY                                               "verify"
 #define CFGCMD_VERSION                                              "version"
 
-#define CFG_COMMAND_TOTAL                                           25
+#define CFG_COMMAND_TOTAL                                           24
 
 /***********************************************************************************************************************************
 Option group constants
@@ -356,7 +355,6 @@ typedef enum
     cfgCmdStanzaUpgrade,
     cfgCmdStart,
     cfgCmdStop,
-    cfgCmdSupport,
     cfgCmdVerify,
     cfgCmdVersion,
     cfgCmdNone,

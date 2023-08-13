@@ -1,13 +1,15 @@
 /***********************************************************************************************************************************
-Support Command
+Check Command Report
 ***********************************************************************************************************************************/
-#ifndef COMMAND_SUPPORT_SUPPORT_H
-#define COMMAND_SUPPORT_SUPPORT_H
+#ifndef COMMAND_CHECK_REPORT_H
+#define COMMAND_CHECK_REPORT_H
+
+#include "common/type/string.h"
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Support info
-FN_EXTERN void cmdSupport(unsigned int argListSize, const char *argList[]);
+// Check report
+FN_EXTERN String *checkReport(void);
 
 #endif

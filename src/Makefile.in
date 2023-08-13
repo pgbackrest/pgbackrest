@@ -67,6 +67,7 @@ SRCS = \
 	command/backup/file.c \
 	command/check/check.c \
 	command/check/common.c \
+	command/check/report.c \
 	command/expire/expire.c \
 	command/exit.c \
 	command/help/help.c \
@@ -95,7 +96,6 @@ SRCS = \
 	command/stanza/create.c \
 	command/stanza/delete.c \
 	command/stanza/upgrade.c \
-	command/support/support.c \
 	command/verify/file.c \
 	command/verify/protocol.c \
 	command/verify/verify.c \

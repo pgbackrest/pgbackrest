@@ -162,12 +162,6 @@ command:
 
   stop: {}
 
-  support:
-    command-role:
-      remote: {}
-    internal: true
-    log-file: false
-
   verify:
     command-role:
       local: {}
@@ -878,7 +872,6 @@ option:
       stanza-upgrade: {}
       start: {}
       stop: {}
-      support: {}
       verify: {}
 
   process-max:
@@ -1077,7 +1070,6 @@ option:
       stanza-create: {}
       stanza-delete: {}
       stanza-upgrade: {}
-      support: {}
       verify: {}
 
   log-timestamp:
