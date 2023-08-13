@@ -3,10 +3,14 @@ Check Command
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <unistd.h>
+
 #include "command/archive/common.h"
 #include "command/check/check.h"
 #include "command/check/common.h"
+#include "command/check/report.h"
 #include "common/debug.h"
+#include "common/io/fdWrite.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "config/config.h"
@@ -178,53 +182,58 @@ cmdCheck(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Build stanza list based on whether a stanza was specified or not
-        StringList *stanzaList;
-        bool stanzaSpecified = cfgOptionTest(cfgOptStanza);
-
-        if (stanzaSpecified)
-        {
-            stanzaList = strLstNew();
-            strLstAdd(stanzaList, cfgOptionStr(cfgOptStanza));
-        }
+        if (cfgOptionBool(cfgOptReport)) // {uncovered - !!!}
+            ioFdWriteOneStr(STDOUT_FILENO, checkReport()); // {uncovered - !!!}
         else
         {
-            stanzaList = cfgParseStanzaList();
+            // Build stanza list based on whether a stanza was specified or not
+            StringList *stanzaList;
+            bool stanzaSpecified = cfgOptionTest(cfgOptStanza);
 
-            if (strLstSize(stanzaList) == 0)
+            if (stanzaSpecified)
             {
-                LOG_WARN(
-                    "no stanzas found to check\n"
-                    "HINT: are there non-empty stanza sections in the configuration?");
+                stanzaList = strLstNew();
+                strLstAdd(stanzaList, cfgOptionStr(cfgOptStanza));
             }
-        }
-
-        // Iterate stanzas
-        for (unsigned int stanzaIdx = 0; stanzaIdx < strLstSize(stanzaList); stanzaIdx++)
-        {
-            // Switch stanza if required
-            if (!stanzaSpecified)
+            else
             {
-                const String *const stanza = strLstGet(stanzaList, stanzaIdx);
-                LOG_INFO_FMT("check stanza '%s'", strZ(stanza));
+                stanzaList = cfgParseStanzaList();
 
-                // Free storage and protocol cache
-                storageHelperFree();
-                protocolFree();
-
-                // Reload config with new stanza
-                cfgLoadStanza(stanza);
+                if (strLstSize(stanzaList) == 0)
+                {
+                    LOG_WARN(
+                        "no stanzas found to check\n"
+                        "HINT: are there non-empty stanza sections in the configuration?");
+                }
             }
 
-            // Get the primary/standby connections (standby is only required if backup from standby is enabled)
-            DbGetResult dbGroup = dbGet(false, false, false);
+            // Iterate stanzas
+            for (unsigned int stanzaIdx = 0; stanzaIdx < strLstSize(stanzaList); stanzaIdx++)
+            {
+                // Switch stanza if required
+                if (!stanzaSpecified)
+                {
+                    const String *const stanza = strLstGet(stanzaList, stanzaIdx);
+                    LOG_INFO_FMT("check stanza '%s'", strZ(stanza));
 
-            if (dbGroup.standby == NULL && dbGroup.primary == NULL)
-                THROW(ConfigError, "no database found\nHINT: check indexed pg-path/pg-host configurations");
+                    // Free storage and protocol cache
+                    storageHelperFree();
+                    protocolFree();
 
-            const unsigned int pgPathDefinedTotal = checkManifest();
-            checkStandby(dbGroup, pgPathDefinedTotal);
-            checkPrimary(dbGroup);
+                    // Reload config with new stanza
+                    cfgLoadStanza(stanza);
+                }
+
+                // Get the primary/standby connections (standby is only required if backup from standby is enabled)
+                DbGetResult dbGroup = dbGet(false, false, false);
+
+                if (dbGroup.standby == NULL && dbGroup.primary == NULL)
+                    THROW(ConfigError, "no database found\nHINT: check indexed pg-path/pg-host configurations");
+
+                const unsigned int pgPathDefinedTotal = checkManifest();
+                checkStandby(dbGroup, pgPathDefinedTotal);
+                checkPrimary(dbGroup);
+            }
         }
     }
     MEM_CONTEXT_TEMP_END();

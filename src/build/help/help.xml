@@ -2092,6 +2092,18 @@
 
                     <!-- Note, linking to the User Guide is limited since it can cause a cyclical reference -->
                 </text>
+
+                <option-list>
+                    <option id="report" name="Report">
+                        <summary>!!!</summary>
+
+                        <text>
+                            <p>!!!</p>
+                        </text>
+
+                        <example>20150131-153358F_20150131-153401I</example>
+                    </option>
+                </option-list>
             </command>
 
             <command id="expire" name="Expire">

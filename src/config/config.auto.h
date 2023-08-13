@@ -108,6 +108,7 @@ Option constants
 #define CFGOPT_REFERENCE                                            "reference"
 #define CFGOPT_REMOTE_TYPE                                          "remote-type"
 #define CFGOPT_REPO                                                 "repo"
+#define CFGOPT_REPORT                                               "report"
 #define CFGOPT_RESUME                                               "resume"
 #define CFGOPT_SCK_BLOCK                                            "sck-block"
 #define CFGOPT_SCK_KEEP_ALIVE                                       "sck-keep-alive"
@@ -135,7 +136,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
 #define CFGOPT_VERBOSE                                              "verbose"
 
-#define CFG_OPTION_TOTAL                                            175
+#define CFG_OPTION_TOTAL                                            176
 
 /***********************************************************************************************************************************
 Option value constants
@@ -523,6 +524,7 @@ typedef enum
     cfgOptRepoStorageUploadChunkSize,
     cfgOptRepoStorageVerifyTls,
     cfgOptRepoType,
+    cfgOptReport,
     cfgOptResume,
     cfgOptSckBlock,
     cfgOptSckKeepAlive,

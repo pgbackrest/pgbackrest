@@ -9156,6 +9156,30 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                          // opt/repo-type
     ),                                                                                                              // opt/repo-type
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                                  // opt/report
+    (                                                                                                                  // opt/report
+        PARSE_RULE_OPTION_NAME("report"),                                                                              // opt/report
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),                                                                     // opt/report
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                              // opt/report
+        PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),                                                              // opt/report
+                                                                                                                       // opt/report
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                                 // opt/report
+        (                                                                                                              // opt/report
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                                     // opt/report
+        ),                                                                                                             // opt/report
+                                                                                                                       // opt/report
+        PARSE_RULE_OPTIONAL                                                                                            // opt/report
+        (                                                                                                              // opt/report
+            PARSE_RULE_OPTIONAL_GROUP                                                                                  // opt/report
+            (                                                                                                          // opt/report
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                            // opt/report
+                (                                                                                                      // opt/report
+                    PARSE_RULE_VAL_BOOL_FALSE,                                                                         // opt/report
+                ),                                                                                                     // opt/report
+            ),                                                                                                         // opt/report
+        ),                                                                                                             // opt/report
+    ),                                                                                                                 // opt/report
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                                  // opt/resume
     (                                                                                                                  // opt/resume
         PARSE_RULE_OPTION_NAME("resume"),                                                                              // opt/resume
@@ -10621,6 +10645,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoRetentionFullType,                                                                                // opt-resolve-order
     cfgOptRepoRetentionHistory,                                                                                 // opt-resolve-order
     cfgOptRepoType,                                                                                             // opt-resolve-order
+    cfgOptReport,                                                                                               // opt-resolve-order
     cfgOptResume,                                                                                               // opt-resolve-order
     cfgOptSckBlock,                                                                                             // opt-resolve-order
     cfgOptSckKeepAlive,                                                                                         // opt-resolve-order
