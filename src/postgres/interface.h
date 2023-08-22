@@ -104,9 +104,8 @@ typedef struct PgControl
 
     unsigned int pageSize;
     unsigned int walSegmentSize;
-    bool pageChecksum;
 
-    uint32_t crc;                                                   // CRC checksum
+    bool pageChecksum;
 } PgControl;
 
 /***********************************************************************************************************************************

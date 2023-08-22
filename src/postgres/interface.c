@@ -11,6 +11,7 @@ PostgreSQL Interface
 #include "common/regExp.h"
 #include "common/time.h"
 #include "postgres/interface.h"
+#include "postgres/interface/crc32.h"
 #include "postgres/interface/static.vendor.h"
 #include "postgres/version.h"
 #include "storage/helper.h"
@@ -67,8 +68,8 @@ typedef struct PgInterface
     // Convert pg_control to a common data structure
     PgControl (*control)(const unsigned char *);
 
-    // Calculate the CRC for the pg_control buffer
-    uint32_t (*controlCrc)(const unsigned char *);
+    // Get control crc offset
+    size_t (*controlCrcOffset)(void);
 
     // Get the control version for this version of PostgreSQL
     uint32_t (*controlVersion)(void);
@@ -229,9 +230,13 @@ pgControlFromBuffer(const Buffer *controlFile, const String *const pgVersionForc
     result.version = interface->version;
 
     // Check CRC
-    const uint32_t crcCalculated = interface->controlCrc(bufPtrConst(controlFile));
+    const uint32_t crcCalculated =
+        result.version > PG_VERSION_94 ?
+            crc32cOne(bufPtrConst(controlFile), interface->controlCrcOffset()) :
+            crc32One(bufPtrConst(controlFile), interface->controlCrcOffset());
+    const uint32_t crcStored = *((uint32_t *)(bufPtrConst(controlFile) + interface->controlCrcOffset()));
 
-    if (crcCalculated != result.crc)
+    if (crcCalculated != crcStored)
     {
         THROW_FMT(
             ChecksumError,
@@ -239,7 +244,7 @@ pgControlFromBuffer(const Buffer *controlFile, const String *const pgVersionForc
             "HINT: calculated 0x%x but stored value is 0x%x\n"
             "HINT: is " PG_FILE_PGCONTROL " corrupt?\n"
             "HINT: does " PG_FILE_PGCONTROL " have a different layout than expected?",
-            crcCalculated, result.crc);
+            crcCalculated, crcStored);
     }
 
     // Check the segment size

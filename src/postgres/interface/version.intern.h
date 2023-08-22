@@ -6,7 +6,6 @@ evolve over time, this seems to be the easiest way to extract information from t
 
 These macros should be kept as simple as possible, with most of the logic contained in postgres/interface.c.
 ***********************************************************************************************************************************/
-#include "postgres/interface/crc32.h"
 #include "postgres/interface/version.vendor.h"
 #include "postgres/version.h"
 
@@ -72,37 +71,23 @@ Read the version specific pg_control into a general data structure
             .pageSize = ((ControlFileData *)controlFile)->blcksz,                                                                  \
             .walSegmentSize = ((ControlFileData *)controlFile)->xlog_seg_size,                                                     \
             .pageChecksum = ((ControlFileData *)controlFile)->data_checksum_version != 0,                                          \
-            .crc = ((ControlFileData *)controlFile)->crc,                                                                          \
         };                                                                                                                         \
     }
 
 #endif
 
 /***********************************************************************************************************************************
-Calculate CRC for pg_control
+Get control crc offset
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_95
-
-#define PG_INTERFACE_CONTROL_CRC(version)                                                                                          \
-    static uint32_t                                                                                                                \
-    pgInterfaceControlCrc##version(const unsigned char *controlFile)                                                               \
-    {                                                                                                                              \
-        ASSERT(controlFile != NULL);                                                                                               \
-                                                                                                                                   \
-        return crc32cOne(controlFile, offsetof(ControlFileData, crc));                                                             \
-    }
-
 #elif PG_VERSION >= PG_VERSION_93
 
-#define PG_INTERFACE_CONTROL_CRC(version)                                                                                          \
-    static uint32_t                                                                                                                \
-    pgInterfaceControlCrc##version(const unsigned char *controlFile)                                                               \
+#define PG_INTERFACE_CONTROL_CRC_OFFSET(version)                                                                                   \
+    static size_t                                                                                                                  \
+    pgInterfaceControlCrcOffset##version(void)                                                                                     \
     {                                                                                                                              \
-        ASSERT(controlFile != NULL);                                                                                               \
-                                                                                                                                   \
-        return crc32One(controlFile, offsetof(ControlFileData, crc));                                                              \
+        return offsetof(ControlFileData, crc);                                                                                     \
     }
 
 #endif
