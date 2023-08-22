@@ -226,28 +226,28 @@ testRun(void)
 
         TEST_RESULT_VOID(
             lockWriteDataP(
-                lockTypeBackup, .percentComplete = VARUINT(5555),
-                .sizeProgress = VARUINT64(1754824), .sizeTotal = VARUINT64(3159000)), "write lock data");
+                lockTypeBackup, .percentComplete = VARUINT(5555), .sizeComplete = VARUINT64(1754824), .size = VARUINT64(3159000)),
+            "write lock data");
 
         THROW_ON_SYS_ERROR_FMT(
             lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)0,
             strZ(lockLocal.file[lockTypeBackup].name));
         LockData lockDataResult = lockReadFileData(backupLockFile, lockLocal.file[lockTypeBackup].fd);
         TEST_RESULT_UINT(varUInt(lockDataResult.percentComplete), 5555, "verify percentComplete");
-        TEST_RESULT_UINT(varUInt64(lockDataResult.sizeProgress), 1754824, "verify sizeProgress");
-        TEST_RESULT_UINT(varUInt64(lockDataResult.sizeTotal), 3159000, "verify sizeTotal");
+        TEST_RESULT_UINT(varUInt64(lockDataResult.sizeComplete), 1754824, "verify sizeProgress");
+        TEST_RESULT_UINT(varUInt64(lockDataResult.size), 3159000, "verify sizeTotal");
 
         TEST_RESULT_VOID(
             lockWriteDataP(
-                lockTypeBackup, .percentComplete = VARUINT(8888),
-                .sizeProgress = VARUINT64(2807719), .sizeTotal = VARUINT64(3159000)), "write lock data");
+                lockTypeBackup, .percentComplete = VARUINT(8888), .sizeComplete = VARUINT64(2807719), .size = VARUINT64(3159000)),
+                "write lock data");
         THROW_ON_SYS_ERROR_FMT(
             lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)0,
             strZ(lockLocal.file[lockTypeBackup].name));
         lockDataResult = lockReadFileData(backupLockFile, lockLocal.file[lockTypeBackup].fd);
         TEST_RESULT_UINT(varUInt(lockDataResult.percentComplete), 8888, "verify percentComplete");
-        TEST_RESULT_UINT(varUInt64(lockDataResult.sizeProgress), 2807719, "verify sizeProgress");
-        TEST_RESULT_UINT(varUInt64(lockDataResult.sizeTotal), 3159000, "verify sizeTotal");
+        TEST_RESULT_UINT(varUInt64(lockDataResult.sizeComplete), 2807719, "verify sizeProgress");
+        TEST_RESULT_UINT(varUInt64(lockDataResult.size), 3159000, "verify sizeTotal");
 
         TEST_ERROR(
             lockAcquireP(.returnOnNoLock = true), AssertError,

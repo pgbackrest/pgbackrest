@@ -35,8 +35,8 @@ Constants
 #define LOCK_KEY_EXEC_ID                                            STRID6("execId", 0x12e0c56051)
 #define LOCK_KEY_PERCENT_COMPLETE                                   STRID6("pctCplt", 0x14310a140d01)
 #define LOCK_KEY_PROCESS_ID                                         STRID5("pid", 0x11300)
-#define LOCK_KEY_SIZE_PROGRESS                                      STRID6("sizePrg", 0x74b515a2531)
-#define LOCK_KEY_SIZE_TOTAL                                         STRID6("sizeTot", 0x143f915a2531)
+#define LOCK_KEY_SIZE_COMPLETE                                      STRID6("szCplt", 0x50c4286931)
+#define LOCK_KEY_SIZE                                               STRID5("sz", 0x3530)
 
 /***********************************************************************************************************************************
 Lock type names
@@ -155,11 +155,11 @@ lockReadFileData(const String *const lockFile, const int fd)
 
                 result.processId = jsonReadInt(jsonReadKeyRequireStrId(json, LOCK_KEY_PROCESS_ID));
 
-                if (jsonReadKeyExpectStrId(json, LOCK_KEY_SIZE_PROGRESS))
-                    result.sizeProgress = varNewUInt64(jsonReadUInt(json));
+                if (jsonReadKeyExpectStrId(json, LOCK_KEY_SIZE))
+                    result.size = varNewUInt64(jsonReadUInt(json));
 
-                if (jsonReadKeyExpectStrId(json, LOCK_KEY_SIZE_TOTAL))
-                    result.sizeTotal = varNewUInt64(jsonReadUInt(json));
+                if (jsonReadKeyExpectStrId(json, LOCK_KEY_SIZE_COMPLETE))
+                    result.sizeComplete = varNewUInt64(jsonReadUInt(json));
             }
             MEM_CONTEXT_PRIOR_END();
         }
@@ -274,8 +274,8 @@ lockWriteData(const LockType lockType, const LockWriteDataParam param)
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(ENUM, lockType);
         FUNCTION_LOG_PARAM(VARIANT, param.percentComplete);
-        FUNCTION_LOG_PARAM(VARIANT, param.sizeProgress);
-        FUNCTION_LOG_PARAM(VARIANT, param.sizeTotal);
+        FUNCTION_LOG_PARAM(VARIANT, param.sizeComplete);
+        FUNCTION_LOG_PARAM(VARIANT, param.size);
     FUNCTION_LOG_END();
 
     ASSERT(lockType < lockTypeAll);
@@ -295,11 +295,11 @@ lockWriteData(const LockType lockType, const LockWriteDataParam param)
 
         jsonWriteInt(jsonWriteKeyStrId(json, LOCK_KEY_PROCESS_ID), getpid());
 
-        if (param.sizeProgress != NULL)
-            jsonWriteUInt64(jsonWriteKeyStrId(json, LOCK_KEY_SIZE_PROGRESS), varUInt64(param.sizeProgress));
+        if (param.size != NULL)
+            jsonWriteUInt64(jsonWriteKeyStrId(json, LOCK_KEY_SIZE), varUInt64(param.size));
 
-        if (param.sizeTotal != NULL)
-            jsonWriteUInt64(jsonWriteKeyStrId(json, LOCK_KEY_SIZE_TOTAL), varUInt64(param.sizeTotal));
+        if (param.sizeComplete != NULL)
+            jsonWriteUInt64(jsonWriteKeyStrId(json, LOCK_KEY_SIZE_COMPLETE), varUInt64(param.sizeComplete));
 
         jsonWriteObjectEnd(json);
 

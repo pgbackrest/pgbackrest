@@ -1027,8 +1027,9 @@ testRun(void)
                 TEST_RESULT_INT_NE(lockAcquireP(), -1, "create backup/expire lock");
                 TEST_RESULT_VOID(
                     lockWriteDataP(
-                        lockTypeBackup, .percentComplete = VARUINT(4545),
-                        .sizeProgress = VARUINT64(1435765), .sizeTotal = VARUINT64(3159000)), "write lock data");
+                        lockTypeBackup, .percentComplete = VARUINT(4545), .sizeComplete = VARUINT64(1435765),
+                        .size = VARUINT64(3159000)),
+                    "write lock data");
 
                 // Notify parent that lock has been acquired
                 HRN_FORK_CHILD_NOTIFY_PUT();
@@ -1368,7 +1369,7 @@ testRun(void)
                             "],"
                             "\"status\":{"
                                 "\"code\":4,"
-                                "\"lock\":{\"backup\":{\"held\":true,\"size-prg\":1435765,\"size-tot\":3159000}},"
+                                "\"lock\":{\"backup\":{\"held\":true,\"size\":3159000,\"size-cplt\":1435765}},"
                                 "\"message\":\"different across repos\""
                             "}"
                         "},"
