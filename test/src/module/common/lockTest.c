@@ -240,7 +240,7 @@ testRun(void)
         TEST_RESULT_VOID(
             lockWriteDataP(
                 lockTypeBackup, .percentComplete = VARUINT(8888), .sizeComplete = VARUINT64(2807719), .size = VARUINT64(3159000)),
-                "write lock data");
+            "write lock data");
         THROW_ON_SYS_ERROR_FMT(
             lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)0,
             strZ(lockLocal.file[lockTypeBackup].name));
