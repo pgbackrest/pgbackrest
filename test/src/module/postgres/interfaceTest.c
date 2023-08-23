@@ -99,7 +99,7 @@ testRun(void)
             "HINT: checksum values may be misleading due to forced version scan\n"
             "HINT: is pg_control corrupt?\n"
             "HINT: does pg_control have a different layout than expected?",
-            (uint32_t)(TEST_BIG_ENDIAN() ? 0x4e206eeb : (TEST_64BIT() ? 0xa9264d94 : 0x3ca3a1ec)));
+            (uint32_t)(TEST_BIG_ENDIAN() ? 0x27dc2b85 : (TEST_64BIT() ? 0xa9264d94 : 0xb371302a)));
 
         // -------------------------------------------------------------------------------------------------------------------------
         HRN_PG_CONTROL_PUT(
