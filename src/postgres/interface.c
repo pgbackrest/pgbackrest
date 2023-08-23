@@ -230,22 +230,45 @@ pgControlFromBuffer(const Buffer *controlFile, const String *const pgVersionForc
     result.version = interface->version;
 
     // Check CRC
-    const uint32_t crcCalculated =
-        result.version > PG_VERSION_94 ?
-            crc32cOne(bufPtrConst(controlFile), interface->controlCrcOffset()) :
-            crc32One(bufPtrConst(controlFile), interface->controlCrcOffset());
-    const uint32_t crcStored = *((uint32_t *)(bufPtrConst(controlFile) + interface->controlCrcOffset()));
+    size_t crcOffset = interface->controlCrcOffset();
 
-    if (crcCalculated != crcStored)
+    do
     {
-        THROW_FMT(
-            ChecksumError,
-            "calculated " PG_FILE_PGCONTROL " checksum does not match stored value\n"
-            "HINT: calculated 0x%x but stored value is 0x%x\n"
-            "HINT: is " PG_FILE_PGCONTROL " corrupt?\n"
-            "HINT: does " PG_FILE_PGCONTROL " have a different layout than expected?",
-            crcCalculated, crcStored);
+        // Calculate CRC and retrieve expected CRC
+        const uint32_t crcCalculated =
+            result.version > PG_VERSION_94 ?
+                crc32cOne(bufPtrConst(controlFile), crcOffset) : crc32One(bufPtrConst(controlFile), crcOffset);
+        const uint32_t crcExpected = *((uint32_t *)(bufPtrConst(controlFile) + crcOffset));
+
+        // If CRC does not match
+        if (crcCalculated != crcExpected)
+        {
+            // If version is forced then the CRC might be later in the file (assuming the fork added extra fields to pg_control).
+            // Increment the offset by CRC data size and continue to try again.
+            if (pgVersionForce != NULL)
+            {
+                crcOffset += sizeof(uint32_t);
+
+                if (crcOffset <= bufUsed(controlFile) - sizeof(uint32_t))
+                    continue;
+            }
+
+            // If no retry then error
+            THROW_FMT(
+                ChecksumError,
+                "calculated " PG_FILE_PGCONTROL " checksum does not match expected value\n"
+                "HINT: calculated 0x%x but expected value is 0x%x\n"
+                "%s"
+                "HINT: is " PG_FILE_PGCONTROL " corrupt?\n"
+                "HINT: does " PG_FILE_PGCONTROL " have a different layout than expected?",
+                crcCalculated, crcExpected,
+                pgVersionForce == NULL ? "" : "HINT: checksum values may be misleading due to forced version scan\n");
+        }
+
+        // Do not retry if the CRC is valid
+        break;
     }
+    while (true);
 
     // Check the segment size
     pgWalSegmentSizeCheck(result.version, result.walSegmentSize);
