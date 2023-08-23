@@ -195,7 +195,8 @@ backupFile(
                 {
                     // Setup pg file for read. Only read as many bytes as passed in pgFileSize. If the file is growing it does no
                     // good to copy data past the end of the size recorded in the manifest since those blocks will need to be
-                    // replayed from WAL during recovery.
+                    // replayed from WAL during recovery. pg_control requires special handling since it needs to be retried on crc
+                    // validation failure.
                     bool repoChecksum = false;
                     IoRead *readIo;
 

@@ -19,7 +19,6 @@ Defines for various Postgres paths and files
 #define PG_FILE_BACKUPMANIFEST                                      "backup_manifest"
 #define PG_FILE_BACKUPMANIFEST_TMP                                  "backup_manifest.tmp"
 #define PG_FILE_PGCONTROL                                           "pg_control"
-#define PG_FILE_PGCONTROL_TMP                                       PG_FILE_PGCONTROL ".tmp"
 #define PG_FILE_PGFILENODEMAP                                       "pg_filenode.map"
 #define PG_FILE_PGINTERNALINIT                                      "pg_internal.init"
 #define PG_FILE_PGVERSION                                           "PG_VERSION"
