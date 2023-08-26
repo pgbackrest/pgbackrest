@@ -54,6 +54,9 @@ FN_EXTERN const Storage *storagePgWrite(void);
 FN_EXTERN const Storage *storageRepoIdx(unsigned int repoIdx);
 FN_EXTERN const Storage *storageRepoIdxWrite(unsigned int repoIdx);
 
+// Repository storage tags by cfgOptGrpRepo index
+FN_EXTERN Pack *storageRepoIdxTag(unsigned int repoIdx);
+
 // Repository storage default (calculated from the repo option, when set, or the first cfgOptGrpPg index)
 FN_EXTERN const Storage *storageRepo(void);
 FN_EXTERN const Storage *storageRepoWrite(void);

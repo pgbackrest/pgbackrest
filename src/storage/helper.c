@@ -345,6 +345,40 @@ storageRepoPathExpression(const String *const expression, const String *const pa
     FUNCTION_TEST_RETURN(STRING, result);
 }
 
+/**********************************************************************************************************************************/
+FN_EXTERN Pack *storageRepoIdxTag(unsigned int repoIdx)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, repoIdx);
+    FUNCTION_TEST_END();
+
+    Pack *result = NULL;
+
+    if (cfgOptionIdxTest(cfgOptRepoStorageTag, repoIdx))
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            PackWrite *const tagPack = pckWriteNewP();
+            const KeyValue *const tagKv = cfgOptionIdxKv(cfgOptRepoStorageTag, repoIdx);
+            const StringList *const tagKey = strLstSort(strLstNewVarLst(kvKeyList(tagKv)), sortOrderAsc);
+
+            for (unsigned int keyIdx = 0; keyIdx < strLstSize(tagKey); keyIdx++)
+            {
+                const String *const key = strLstGet(tagKey, keyIdx);
+
+                pckWriteStrP(tagPack, key);
+                pckWriteStrP(tagPack, varStr(kvGet(tagKv, VARSTR(key))));
+            }
+
+            pckWriteEndP(tagPack);
+            result = pckMove(pckWriteResult(tagPack), memContextPrior());
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+
+    FUNCTION_TEST_RETURN(PACK, result);
+}
+
 /***********************************************************************************************************************************
 Get the repo storage
 ***********************************************************************************************************************************/
