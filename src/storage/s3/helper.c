@@ -15,12 +15,14 @@ S3 Storage Helper
 
 /**********************************************************************************************************************************/
 FN_EXTERN Storage *
-storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpressionCallback pathExpressionCallback)
+storageS3Helper(
+    const unsigned int repoIdx, const bool write, StoragePathExpressionCallback pathExpressionCallback, const Pack *const tag)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(UINT, repoIdx);
         FUNCTION_LOG_PARAM(BOOL, write);
         FUNCTION_LOG_PARAM_P(VOID, pathExpressionCallback);
+        FUNCTION_LOG_PARAM(PACK, tag);
     FUNCTION_LOG_END();
 
     ASSERT(cfgOptionIdxStrId(cfgOptRepoType, repoIdx) == STORAGE_S3_TYPE);

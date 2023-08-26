@@ -10,15 +10,18 @@ CIFS Storage Helper
 
 /**********************************************************************************************************************************/
 FN_EXTERN Storage *
-storageCifsHelper(const unsigned int repoIdx, const bool write, StoragePathExpressionCallback pathExpressionCallback)
+storageCifsHelper(
+    const unsigned int repoIdx, const bool write, StoragePathExpressionCallback pathExpressionCallback, const Pack *const tag)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(UINT, repoIdx);
         FUNCTION_LOG_PARAM(BOOL, write);
         FUNCTION_LOG_PARAM_P(VOID, pathExpressionCallback);
+        (void)tag;                                                  // Unused
     FUNCTION_LOG_END();
 
     ASSERT(cfgOptionIdxStrId(cfgOptRepoType, repoIdx) == STORAGE_CIFS_TYPE);
+    ASSERT(tag == NULL);
 
     Storage *const result = storageCifsNew(
         cfgOptionIdxStr(cfgOptRepoPath, repoIdx), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write,

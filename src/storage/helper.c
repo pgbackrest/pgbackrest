@@ -373,17 +373,25 @@ storageRepoGet(unsigned int repoIdx, bool write)
 
         if (storageHelper.helperList != NULL)
         {
+            Pack *tag = NULL;
+
+            // if (cfgOptionIdxTest(cfgOpRepoStorageTag, repoIdx))
+            // {
+            //     PackWrite *const packWrite
+
             for (const StorageHelper *helper = storageHelper.helperList; helper->type != 0; helper++)
             {
                 if (helper->type == type)
                 {
-                    result = helper->helper(repoIdx, write, storageRepoPathExpression);
+                    result = helper->helper(repoIdx, write, storageRepoPathExpression, tag);
                     break;
                 }
             }
+
+            pckFree(tag);
         }
 
-        // If no helper was found it try Posix
+        // If no helper was found then try Posix
         if (result == NULL)
         {
             CHECK(AssertError, type == STORAGE_POSIX_TYPE, "invalid storage type");
