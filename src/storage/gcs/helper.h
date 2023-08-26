@@ -9,8 +9,7 @@ GCS Storage Helper
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-FN_EXTERN Storage *storageGcsHelper(
-    unsigned int repoIdx, bool write, StoragePathExpressionCallback pathExpressionCallback, const Pack *tag);
+FN_EXTERN Storage *storageGcsHelper(unsigned int repoIdx, bool write, StoragePathExpressionCallback pathExpressionCallback);
 
 /***********************************************************************************************************************************
 Storage helper for StorageHelper array passed to storageHelperInit()

@@ -161,13 +161,6 @@ pckToBuf(const Pack *const pack)
     return (const Buffer *)pack;
 }
 
-// Free pack
-FN_INLINE_ALWAYS void
-pckFree(Pack *const pack)
-{
-    return bufFree((Buffer *const)pack);
-}
-
 /***********************************************************************************************************************************
 Read Constructors
 ***********************************************************************************************************************************/

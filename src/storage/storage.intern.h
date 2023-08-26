@@ -269,8 +269,7 @@ Storage type and helper function struct
 
 An array of this struct must be passed to storageHelperInit() to enable storage drivers other than built-in Posix.
 ***********************************************************************************************************************************/
-typedef Storage *(*StorageHelperFunction)(
-    unsigned int repoIdx, bool write, StoragePathExpressionCallback pathExpressionCallback, const Pack *tag);
+typedef Storage *(*StorageHelperFunction)(unsigned int repoIdx, bool write, StoragePathExpressionCallback pathExpressionCallback);
 
 typedef struct StorageHelper
 {

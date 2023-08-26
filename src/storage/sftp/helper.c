@@ -12,18 +12,15 @@ SFTP Storage Helper
 
 /**********************************************************************************************************************************/
 FN_EXTERN Storage *
-storageSftpHelper(
-    const unsigned int repoIdx, const bool write, StoragePathExpressionCallback pathExpressionCallback, const Pack *const tag)
+storageSftpHelper(const unsigned int repoIdx, const bool write, StoragePathExpressionCallback pathExpressionCallback)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(UINT, repoIdx);
         FUNCTION_LOG_PARAM(BOOL, write);
         FUNCTION_LOG_PARAM_P(VOID, pathExpressionCallback);
-        (void)tag;                                                  // Unused
     FUNCTION_LOG_END();
 
     ASSERT(cfgOptionIdxStrId(cfgOptRepoType, repoIdx) == STORAGE_SFTP_TYPE);
-    ASSERT(tag == NULL);
 
     FUNCTION_LOG_RETURN(
         STORAGE,
