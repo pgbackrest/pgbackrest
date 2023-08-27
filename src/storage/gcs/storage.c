@@ -28,6 +28,7 @@ GCS Storage
 /***********************************************************************************************************************************
 HTTP headers
 ***********************************************************************************************************************************/
+#define GCS_HEADER_META                                             "x-goog-meta-"
 STRING_EXTERN(GCS_HEADER_UPLOAD_ID_STR,                             GCS_HEADER_UPLOAD_ID);
 STRING_STATIC(GCS_HEADER_METADATA_FLAVOR_STR,                       "metadata-flavor");
 STRING_STATIC(GCS_HEADER_GOOGLE_STR,                                "Google");
@@ -87,6 +88,7 @@ struct StorageGcs
     const String *bucket;                                           // Bucket to store data in
     const String *endpoint;                                         // Endpoint
     size_t chunkSize;                                               // Block size for resumable upload
+    const KeyValue *tag;                                            // Tags to be applied to objects
 
     StorageGcsKeyType keyType;                                      // Auth key type
     const String *key;                                              // Key (value depends on key type)
@@ -391,6 +393,7 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
         FUNCTION_LOG_PARAM(BOOL, param.noBucket);
         FUNCTION_LOG_PARAM(BOOL, param.upload);
         FUNCTION_LOG_PARAM(BOOL, param.noAuth);
+        FUNCTION_LOG_PARAM(BOOL, param.tag);
         FUNCTION_LOG_PARAM(STRING, param.object);
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
@@ -425,6 +428,18 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
         httpHeaderPut(
             requestHeader, HTTP_HEADER_CONTENT_LENGTH_STR,
             param.content == NULL || bufEmpty(param.content) ? ZERO_STR : strNewFmt("%zu", bufUsed(param.content)));
+
+        // Set tags when requested and available
+        if (param.tag && this->tag != NULL)
+        {
+            const StringList *const keyList = strLstSort(strLstNewVarLst(kvKeyList(this->tag)), sortOrderAsc);
+
+            for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)
+            {
+                const String *const key = strLstGet(keyList, keyIdx);
+                httpHeaderPut(requestHeader, strNewFmt(GCS_HEADER_META "%s", strZ(key)), varStr(kvGet(this->tag, VARSTR(key))));
+            }
+        }
 
         // Make a copy of the query so it can be modified
         HttpQuery *query = httpQueryDupP(param.query, .redactList = this->queryRedactList);
@@ -488,6 +503,7 @@ storageGcsRequest(StorageGcs *const this, const String *const verb, const Storag
         FUNCTION_LOG_PARAM(BOOL, param.noBucket);
         FUNCTION_LOG_PARAM(BOOL, param.upload);
         FUNCTION_LOG_PARAM(BOOL, param.noAuth);
+        FUNCTION_LOG_PARAM(BOOL, param.tag);
         FUNCTION_LOG_PARAM(STRING, param.object);
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
@@ -498,8 +514,8 @@ storageGcsRequest(StorageGcs *const this, const String *const verb, const Storag
     FUNCTION_LOG_END();
 
     HttpRequest *const request = storageGcsRequestAsyncP(
-        this, verb, .noBucket = param.noBucket, .upload = param.upload, .noAuth = param.noAuth, .object = param.object,
-        .header = param.header, .query = param.query, .content = param.content);
+        this, verb, .noBucket = param.noBucket, .upload = param.upload, .noAuth = param.noAuth, .tag = param.tag,
+        .object = param.object, .header = param.header, .query = param.query, .content = param.content);
     HttpResponse *const result = storageGcsResponseP(
         request, .allowMissing = param.allowMissing, .allowIncomplete = param.allowIncomplete, .contentIo = param.contentIo);
 
@@ -953,8 +969,9 @@ static const StorageInterface storageInterfaceGcs =
 FN_EXTERN Storage *
 storageGcsNew(
     const String *const path, const bool write, StoragePathExpressionCallback pathExpressionFunction, const String *const bucket,
-    const StorageGcsKeyType keyType, const String *const key, const size_t chunkSize, const String *const endpoint,
-    const TimeMSec timeout, const bool verifyPeer, const String *const caFile, const String *const caPath)
+    const StorageGcsKeyType keyType, const String *const key, const size_t chunkSize, const KeyValue *const tag,
+    const String *const endpoint, const TimeMSec timeout, const bool verifyPeer, const String *const caFile,
+    const String *const caPath)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -964,6 +981,7 @@ storageGcsNew(
         FUNCTION_LOG_PARAM(STRING_ID, keyType);
         FUNCTION_TEST_PARAM(STRING, key);
         FUNCTION_LOG_PARAM(SIZE, chunkSize);
+        FUNCTION_LOG_PARAM(KEY_VALUE, tag);
         FUNCTION_LOG_PARAM(STRING, endpoint);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
         FUNCTION_LOG_PARAM(BOOL, verifyPeer);
@@ -985,6 +1003,7 @@ storageGcsNew(
             .bucket = strDup(bucket),
             .keyType = keyType,
             .chunkSize = chunkSize,
+            .tag = tag == NULL ? NULL : kvDup(tag),
         };
 
         // Handle auth key types

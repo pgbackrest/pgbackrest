@@ -77,6 +77,7 @@ typedef struct TestRequestParam
     const char *contentRange;
     const char *content;
     const char *range;
+    const char *tag;
 } TestRequestParam;
 
 #define testRequestP(write, verb, ...)                                                                                             \
@@ -116,6 +117,9 @@ testRequest(IoWrite *write, const char *verb, TestRequestParam param)
     // Add range
     if (param.range != NULL)
         strCatFmt(request, "range:bytes=%s\r\n", param.range);
+
+    if (param.tag != NULL)
+        strCatFmt(request, "%s\r\n", param.tag);
 
     // Complete headers
     strCatZ(request, "\r\n");
@@ -245,7 +249,7 @@ testRun(void)
             (StorageGcs *)storageDriver(
                 storageGcsNew(
                     STRDEF("/repo"), false, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService, TEST_KEY_FILE_STR, TEST_CHUNK_SIZE,
-                    TEST_ENDPOINT_STR, TEST_TIMEOUT, true, NULL, NULL)),
+                    NULL, TEST_ENDPOINT_STR, TEST_TIMEOUT, true, NULL, NULL)),
             "read-only gcs storage - service key");
         TEST_RESULT_STR_Z(httpUrlHost(storage->authUrl), "test.com", "check host");
         TEST_RESULT_STR_Z(httpUrlPath(storage->authUrl), "/token", "check path");
@@ -270,7 +274,7 @@ testRun(void)
             (StorageGcs *)storageDriver(
                 storageGcsNew(
                     STRDEF("/repo"), true, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService, TEST_KEY_FILE_STR, TEST_CHUNK_SIZE,
-                    TEST_ENDPOINT_STR, TEST_TIMEOUT, true, NULL, NULL)),
+                    NULL, TEST_ENDPOINT_STR, TEST_TIMEOUT, true, NULL, NULL)),
             "read/write gcs storage - service key");
 
         TEST_RESULT_STR_Z(
@@ -434,6 +438,8 @@ testRun(void)
 
                 StringList *argListAuto = strLstDup(argList);
                 hrnCfgArgRawStrId(argListAuto, cfgOptRepoGcsKeyType, storageGcsKeyTypeAuto);
+                hrnCfgArgRawZ(argListAuto, cfgOptRepoStorageTag, "key1=Value1");
+                hrnCfgArgRawZ(argListAuto, cfgOptRepoStorageTag, "key2=Value2");
                 HRN_CFG_LOAD(cfgCmdArchivePush, argListAuto);
 
                 TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
@@ -505,7 +511,7 @@ testRun(void)
 
                 testRequestP(
                     service, HTTP_VERB_POST, .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=media", .upload = true,
-                    .content = "ABCD");
+                    .content = "ABCD", .tag = "x-goog-meta-key1:Value1\r\nx-goog-meta-key2:Value2");
                 testResponseP(service, .code = 403);
 
                 TEST_ERROR_FMT(
@@ -516,7 +522,9 @@ testRun(void)
                     "*** Request Headers ***:\n"
                     "authorization: <redacted>\n"
                     "content-length: 4\n"
-                    "host: %s",
+                    "host: %s\n"
+                    "x-goog-meta-key1: Value1\n"
+                    "x-goog-meta-key2: Value2",
                     strZ(hrnServerHost()));
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -524,11 +532,11 @@ testRun(void)
 
                 testRequestP(
                     service, HTTP_VERB_POST, .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=media", .upload = true,
-                    .content = "ABCD");
+                    .content = "ABCD", .tag = "x-goog-meta-key1:Value1\r\nx-goog-meta-key2:Value2");
                 testResponseP(service, .code = 503);
                 testRequestP(
                     service, HTTP_VERB_POST, .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=media", .upload = true,
-                    .content = "ABCD");
+                    .content = "ABCD", .tag = "x-goog-meta-key1:Value1\r\nx-goog-meta-key2:Value2");
                 testResponseP(service, .content = "{\"md5Hash\":\"ywjKSnu1+Wg8GRM6hIcspw==\"}");
 
                 StorageWrite *write = NULL;
@@ -551,7 +559,7 @@ testRun(void)
 
                 testRequestP(
                     service, HTTP_VERB_POST, .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=media", .upload = true,
-                    .content = "");
+                    .content = "", .tag = "x-goog-meta-key1:Value1\r\nx-goog-meta-key2:Value2");
                 testResponseP(service, .content = "{\"md5Hash\":\"1B2M2Y8AsgTpgAmY7PhCfg==\",\"size\":\"0\"}");
 
                 TEST_ASSIGN(write, storageNewWriteP(storage, STRDEF("file.txt")), "new write");
@@ -562,7 +570,7 @@ testRun(void)
 
                 testRequestP(
                     service, HTTP_VERB_POST, .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=media", .upload = true,
-                    .content = "");
+                    .content = "", .tag = "x-goog-meta-key1:Value1\r\nx-goog-meta-key2:Value2");
                 testResponseP(service, .content = "{\"md5Hash\":\"ywjK\",\"size\":\"0\"}");
 
                 TEST_ASSIGN(write, storageNewWriteP(storage, STRDEF("file.txt")), "new write");
@@ -575,7 +583,7 @@ testRun(void)
 
                 testRequestP(
                     service, HTTP_VERB_POST, .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=media", .upload = true,
-                    .content = "");
+                    .content = "", .tag = "x-goog-meta-key1:Value1\r\nx-goog-meta-key2:Value2");
                 testResponseP(service, .content = "{\"md5Hash\":\"1B2M2Y8AsgTpgAmY7PhCfg==\",\"size\":\"55\"}");
 
                 TEST_ASSIGN(write, storageNewWriteP(storage, STRDEF("file.txt")), "new write");
@@ -596,7 +604,7 @@ testRun(void)
                 testRequestP(
                     service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
                     .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=resumable&upload_id=ulid1", .contentRange = "16-31/32",
-                    .content = "7890123456789012");
+                    .content = "7890123456789012", .tag = "x-goog-meta-key1:Value1\r\nx-goog-meta-key2:Value2");
                 testResponseP(service, .content = "{\"md5Hash\":\"dnF5x6K/8ZZRzpfSlMMM+w==\",\"size\":\"32\"}");
 
                 TEST_ASSIGN(write, storageNewWriteP(storage, STRDEF("file.txt")), "new write");
@@ -604,6 +612,9 @@ testRun(void)
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write file in chunks with something left over on close");
+
+                // Stop writing tags
+                ((StorageGcs *)storageDriver(storage))->tag = NULL;
 
                 testRequestP(service, HTTP_VERB_POST, .upload = true, .query = "name=file.txt&uploadType=resumable");
                 testResponseP(service, .header = "x-guploader-uploadid:ulid2");
