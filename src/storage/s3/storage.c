@@ -1106,7 +1106,7 @@ storageS3New(
     const String *const endPoint, const StorageS3UriStyle uriStyle, const String *const region, const StorageS3KeyType keyType,
     const String *const accessKey, const String *const secretAccessKey, const String *const securityToken,
     const String *const kmsKeyId, const String *const credRole, const String *const webIdToken, const size_t partSize,
-    const Pack *const tag, const String *host, const unsigned int port, const TimeMSec timeout, const bool verifyPeer,
+    const KeyValue *const tag, const String *host, const unsigned int port, const TimeMSec timeout, const bool verifyPeer,
     const String *const caFile, const String *const caPath)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -1125,7 +1125,7 @@ storageS3New(
         FUNCTION_TEST_PARAM(STRING, credRole);
         FUNCTION_TEST_PARAM(STRING, webIdToken);
         FUNCTION_LOG_PARAM(SIZE, partSize);
-        FUNCTION_LOG_PARAM(PACK, tag);
+        FUNCTION_LOG_PARAM(KEY_VALUE, tag);
         FUNCTION_LOG_PARAM(STRING, host);
         FUNCTION_LOG_PARAM(UINT, port);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
@@ -1162,27 +1162,9 @@ storageS3New(
         // Create tag query string
         if (tag != NULL)
         {
-            MEM_CONTEXT_TEMP_BEGIN()
-            {
-                HttpQuery *const query = httpQueryNewP();
-                PackRead *const tagRead = pckReadNew(tag);
-
-                do
-                {
-                    const String *const key = pckReadStrP(tagRead);
-                    const String *const value = pckReadStrP(tagRead);
-
-                    httpQueryAdd(query, key, value);
-                }
-                while (!pckReadNullP(tagRead));
-
-                MEM_CONTEXT_PRIOR_BEGIN()
-                {
-                    this->tag = httpQueryRenderP(query);
-                }
-                MEM_CONTEXT_PRIOR_END();
-            }
-            MEM_CONTEXT_TEMP_END();
+            HttpQuery *const query = httpQueryNewP(.kv = tag);
+            this->tag = httpQueryRenderP(query);
+            httpQueryFree(query);
         }
 
         // Create the HTTP client used to service requests
