@@ -225,7 +225,7 @@ storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureReq
         }
 
         // Set tags when requested and available
-        if (param.tag && this->tag)
+        if (param.tag && this->tag != NULL)
             httpHeaderPut(requestHeader, AZURE_HEADER_TAGS, this->tag);
 
         // Encode path

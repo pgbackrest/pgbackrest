@@ -490,7 +490,7 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
         }
 
         // Set tags when requested and available
-        if (param.tag && this->tag)
+        if (param.tag && this->tag != NULL)
             httpHeaderPut(requestHeader, S3_HEADER_TAGGING, this->tag);
 
         // When using path-style URIs the bucket name needs to be prepended
