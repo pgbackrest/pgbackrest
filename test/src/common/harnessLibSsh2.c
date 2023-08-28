@@ -435,6 +435,14 @@ libssh2_userauth_publickey_fromfile_ex(
 {
     HrnLibSsh2 *hrnLibSsh2 = NULL;
 
+    if (privatekey == NULL)
+    {
+        snprintf(
+            hrnLibSsh2ScriptError, sizeof(hrnLibSsh2ScriptError),
+            "libssh2 script function 'libssh2_userauth_publickey_fromfile_ex', expects privatekey to be not NULL");
+        THROW(AssertError, hrnLibSsh2ScriptError);
+    }
+
     MEM_CONTEXT_TEMP_BEGIN()
     {
         hrnLibSsh2 = hrnLibSsh2ScriptRun(
