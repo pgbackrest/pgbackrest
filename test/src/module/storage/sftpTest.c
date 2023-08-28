@@ -1190,8 +1190,7 @@ testRun(void)
             {.function = HRNLIBSSH2_KNOWNHOST_CHECKP, .param = "[\"localhost\",22,\"" HOSTKEY "\",20,65537]",
              .resultInt = LIBSSH2_KNOWNHOST_CHECK_MISMATCH},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
-             .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",null,null,null]",
-             .resultInt = 0},
+             .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",null,\"" KEYPRIV_CSTR "\",null]", .resultInt = 0},
             {.function = HRNLIBSSH2_SFTP_INIT},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
@@ -1199,7 +1198,7 @@ testRun(void)
         TEST_ASSIGN(
             storageTest,
             storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, NULL, hashTypeSha1,
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1,
                 .knownHostsFiles = STRDEF(KNOWNHOSTS_FILE_CSTR), .sftpStrictHostKeyChecking = SFTP_STRICT_HOSTKEY_CHECKING_OFF),
             "new storage (defaults)");
         TEST_RESULT_LOG(
@@ -1292,8 +1291,7 @@ testRun(void)
             {.function = HRNLIBSSH2_KNOWNHOST_CHECKP, .param = "[\"localhost\",22,\"" HOSTKEY "\",20,65537]",
              .resultInt = LIBSSH2_KNOWNHOST_CHECK_MATCH},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
-             .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",null,null,null]",
-             .resultInt = 0},
+             .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",null,\"" KEYPRIV_CSTR "\",null]", .resultInt = 0},
             {.function = HRNLIBSSH2_SFTP_INIT},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
@@ -1301,7 +1299,7 @@ testRun(void)
         TEST_ASSIGN(
             storageTest,
             storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, NULL, hashTypeSha1,
+                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1,
                 .knownHostsFiles = STRDEF(KNOWNHOSTS_FILE_CSTR),
                 .sftpStrictHostKeyChecking = SFTP_STRICT_HOSTKEY_CHECKING_ACCEPT_NEW),
             "new storage (defaults)");
