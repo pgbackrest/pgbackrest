@@ -1736,7 +1736,7 @@ testRun(void)
              .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
              .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                       LIBSSH2_SFTP_ATTR_SIZE,
-             .mtime = 1555155555, .uid = 99999, .gid = 99999, .filesize = 8},
+             .mtime = 1555155555, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             // Info - link
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/testlink\",1]",
              .resultInt = LIBSSH2_ERROR_NONE,
