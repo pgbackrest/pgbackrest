@@ -693,7 +693,7 @@ testRun(void)
             "'/home/" TEST_USER "/.ssh/known_hosts'\n"
             "P00   WARN: libssh2 unable to open '/home/" TEST_USER "/.ssh/known_hosts' for update: libssh2 errno [-16] Failed "
             "to open file\n"
-            "            HINT: does '/home/vagrant/.ssh/known_hosts' exist with proper permissions?");
+            "            HINT: does '/home/" TEST_USER "/.ssh/known_hosts' exist with proper permissions?");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
