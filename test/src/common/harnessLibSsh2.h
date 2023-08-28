@@ -36,10 +36,12 @@ Function constants
 ***********************************************************************************************************************************/
 #define HRNLIBSSH2_HOSTKEY_HASH                                     "libssh2_hostkey_hash"
 #define HRNLIBSSH2_INIT                                             "libssh2_init"
+#define HRNLIBSSH2_KNOWNHOST_ADDC                                   "libssh2_knownhost_addc"
 #define HRNLIBSSH2_KNOWNHOST_CHECKP                                 "libssh2_knownhost_checkp"
 #define HRNLIBSSH2_KNOWNHOST_FREE                                   "libssh2_knownhost_free"
 #define HRNLIBSSH2_KNOWNHOST_INIT                                   "libssh2_knownhost_init"
 #define HRNLIBSSH2_KNOWNHOST_READFILE                               "libssh2_knownhost_readfile"
+#define HRNLIBSSH2_KNOWNHOST_WRITEFILE                              "libssh2_knownhost_writefile"
 #define HRNLIBSSH2_SESSION_BLOCK_DIRECTIONS                         "libssh2_session_block_directions"
 #define HRNLIBSSH2_SESSION_DISCONNECT_EX                            "libssh2_session_disconnect_ex"
 #define HRNLIBSSH2_SESSION_FREE                                     "libssh2_session_free"
@@ -74,7 +76,6 @@ Macros for defining groups of functions that implement commands
     {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = 0},                                                                 \
     {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},                                                    \
     {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = 0},                                          \
-    {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "12345678910123456789"},                                      \
     {.function = HRNLIBSSH2_KNOWNHOST_INIT},                                                                                       \
     {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]", .resultInt = 5},                      \
     {.function = HRNLIBSSH2_SESSION_HOSTKEY, .len = 20, .type = LIBSSH2_HOSTKEY_TYPE_RSA, .resultZ = HOSTKEY},                     \

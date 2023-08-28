@@ -1019,7 +1019,7 @@
                         <summary>SFTP repository host fingerprint.</summary>
 
                         <text>
-                            <p>SFTP repository host fingerprint generation should match the <setting>repo-sftp-host-key-hash-type</setting>. Generate the fingeprint via <code>awk '{print $2}' ssh_host_xxx_key.pub | base64 -d | (md5sum or sha1sum) -b</code>. The ssh host keys are normally found in the <path>/etc/ssh</path> directory. Options <setting>repo-sftp-host-fingerprint</setting> and <setting>repo-sftp-req-known-hosts-match</setting> are mutually exclusive.</p>
+                            <p>SFTP repository host fingerprint generation should match the <setting>repo-sftp-host-key-hash-type</setting>. Generate the fingeprint via <code>awk '{print $2}' ssh_host_xxx_key.pub | base64 -d | (md5sum or sha1sum) -b</code>. The ssh host keys are normally found in the <path>/etc/ssh</path> directory. If a host fingerprint is provided, known hosts file checking will not occur.</p>
                         </text>
 
                         <example>f84e172dfead7aeeeae6c1fdfb5aa8cf</example>
@@ -1059,7 +1059,7 @@
                         <summary>List of known_hosts files to search.</summary>
 
                         <text>
-                            <p>A comma delimited list of known_hosts files to search for an SFTP host match during authentication. If unconfigured, <backrest/> will default to searching in order ~/.ssh/known_hosts ~/.ssh/known_hosts2 /etc/ssh/ssh_known_hosts /etc/ssh/ssh_known_hosts2. If configured with a comma delimited file path list, <backrest/> will search the files for a match in the order that they are provided. Explicitely disabling the option <setting>repo1-sftp-known-hosts-files=disable</setting> will disable matching during authentication. File paths must be full or leading tilde paths. If enabled and there is a match failure, an INFO level message will be logged. To force an error on a match failure, enable option <setting>repo-sftp-req-known-hosts-match</setting>. Options <setting>repo-sftp-req-known-hosts-match</setting> and <setting>repo-sftp-host-fingerprint</setting> are mutually exclusive.</p>
+                            <p>A comma delimited list of known_hosts files to search for an SFTP host match during authentication. If unconfigured, <backrest/> will default to searching in order ~/.ssh/known_hosts ~/.ssh/known_hosts2 /etc/ssh/ssh_known_hosts /etc/ssh/ssh_known_hosts2. If configured with a comma delimited file path list, <backrest/> will search those files for a match in the order that they are provided. File paths must be full or leading tilde paths. To utilize known hosts file checking <setting>repo-sftp-host-fingerprint</setting> must be empty. See also option <setting>repo-sftp-strict-host-checking</setting>.</p>
                         </text>
 
                         <example>/home/postgres/.ssh/known_hosts,~/.ssh/known_hosts2, /etc/ssh/ssh_known_host</example>
@@ -1095,14 +1095,14 @@
                         <example>~/.ssh/id_ed25519.pub</example>
                     </config-key>
 
-                    <config-key id="repo-sftp-req-known-hosts-match" name="SFTP require known_hosts match">
-                        <summary>Require a known_hosts match for the SFTP host.</summary>
+                    <config-key id="repo-sftp-strict-host-key-checking" name="SFTP strict host key checking">
+                        <summary>Manage host key matching for the SFTP host.</summary>
 
                         <text>
-                            <p>Require a successful known_hosts match for the SFTP host during authentication. If enabled an error will be thrown if no match is found. If unconfigured or disabled an INFO level message will be logged if no match is found.</p>
+                            <p>The default setting is <quote>yes</quote>. If this flag is set to <quote>yes</quote>, <backrest/> will never automatically add host keys to the ~/.ssh/known_hosts file, and refuses to connect to hosts whose host key has changed or is not found in the known hosts files. This option forces the user to manually add all new hosts. If this flag is set to <quote>accept-new</quote> then <backrest/> will automatcially add new host keys to the user's known hosts file, but will not permit connections to hosts with changed host keys. If this flag is set to <quote>no</quote> or <quote>off</quote>, <backrest/> will automatically add new host keys to the user's known hosts file and allow connections to hosts with changed host keys to proceed.</p>
                         </text>
 
-                        <example>y</example>
+                        <example>accept-new</example>
                     </config-key>
 
                     <config-key id="repo-storage-ca-file" name="Repository Storage CA File">

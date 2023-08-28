@@ -166,6 +166,52 @@ libssh2_init(int flags)
 }
 
 /***********************************************************************************************************************************
+Shim for libssh2_knownhost_addc
+***********************************************************************************************************************************/
+int
+libssh2_knownhost_addc(
+        LIBSSH2_KNOWNHOSTS *hosts, const char *host, const char *salt, const char *key, size_t keylen, const char *comment,
+        size_t commentlen, int typemask, struct libssh2_knownhost **store)
+{
+    // Avoid compiler complaining of unused param
+    (void)store;
+
+    if (hosts == NULL)
+    {
+        snprintf(
+            hrnLibSsh2ScriptError, sizeof(hrnLibSsh2ScriptError),
+            "libssh2 script function 'libssh2_knownhost_adddc', expects hosts to be not NULL");
+        THROW(AssertError, hrnLibSsh2ScriptError);
+    }
+
+    HrnLibSsh2 *hrnLibSsh2 = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        hrnLibSsh2 = hrnLibSsh2ScriptRun(
+            HRNLIBSSH2_KNOWNHOST_ADDC,
+            varLstAdd(
+                varLstAdd(
+                    varLstAdd(
+                        varLstAdd(
+                            varLstAdd(
+                                varLstAdd(
+                                    varLstAdd(
+                                        varLstNew(), varNewStrZ(host)),
+                                    varNewStrZ(salt)),
+                                varNewStrZ(key)),
+                            varNewUInt64(keylen)),
+                        varNewStrZ(comment)),
+                    varNewUInt64(commentlen)),
+                varNewInt(typemask)),
+            (HrnLibSsh2 *)hosts);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    return hrnLibSsh2->resultInt;
+}
+
+/***********************************************************************************************************************************
 Shim for libssh2_knownhost_checkp
 ***********************************************************************************************************************************/
 int
@@ -245,6 +291,29 @@ libssh2_knownhost_readfile(LIBSSH2_KNOWNHOSTS *hosts, const char *filename, int 
     {
         hrnLibSsh2 = hrnLibSsh2ScriptRun(
             HRNLIBSSH2_KNOWNHOST_READFILE,
+            varLstAdd(
+                varLstAdd(
+                    varLstNew(), varNewStrZ(filename)),
+                varNewInt(type)),
+            (HrnLibSsh2 *)hosts);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    return hrnLibSsh2->resultInt;
+}
+
+/***********************************************************************************************************************************
+Shim for libssh2_knownhost_writefile
+***********************************************************************************************************************************/
+int
+libssh2_knownhost_writefile(LIBSSH2_KNOWNHOSTS *hosts, const char *filename, int type)
+{
+    HrnLibSsh2 *hrnLibSsh2 = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        hrnLibSsh2 = hrnLibSsh2ScriptRun(
+            HRNLIBSSH2_KNOWNHOST_WRITEFILE,
             varLstAdd(
                 varLstAdd(
                     varLstNew(), varNewStrZ(filename)),

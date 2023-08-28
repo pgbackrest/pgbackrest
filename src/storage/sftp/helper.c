@@ -34,7 +34,7 @@ storageSftpHelper(const unsigned int repoIdx, const bool write, StoragePathExpre
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
             .knownHostsFiles = cfgOptionIdxStrNull(cfgOptRepoSftpKnownHostsFiles, repoIdx),
-            .requireKnownHostsMatch = cfgOptionIdxBool(cfgOptRepoSftpReqKnownHostsMatch, repoIdx)));
+            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx)));
 }
 
 #endif // HAVE_LIBSSH2
