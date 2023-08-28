@@ -30,6 +30,7 @@ typedef struct StorageWriteGcs
 
     HttpRequest *request;                                           // Async chunk upload request
     size_t chunkSize;                                               // Size of chunks for resumable upload
+    bool tag;                                                       // Are tags available?
     Buffer *chunkBuffer;                                            // Block buffer (stores data until chunkSize is reached)
     const String *uploadId;                                         // Id for resumable upload
     uint64_t uploadTotal;                                           // Total bytes uploaded
@@ -175,7 +176,8 @@ storageWriteGcsBlockAsync(StorageWriteGcs *this, bool done)
         // Get the upload id
         if (this->uploadId == NULL)
         {
-            HttpResponse *response = storageGcsRequestP(this->storage, HTTP_VERB_POST_STR, .upload = true, .query = query);
+            HttpResponse *response = storageGcsRequestP(
+                this->storage, HTTP_VERB_POST_STR, .upload = true, .tag = this->tag, .query = query);
 
             MEM_CONTEXT_OBJ_BEGIN(this)
             {
@@ -205,8 +207,9 @@ storageWriteGcsBlockAsync(StorageWriteGcs *this, bool done)
 
         MEM_CONTEXT_OBJ_BEGIN(this)
         {
+            // LOG_WARN_FMT("!!! UPLOAD MULTI %s", strZ(this->interface.name));
             this->request = storageGcsRequestAsyncP(
-                this->storage, HTTP_VERB_PUT_STR, .upload = true, .noAuth = true, .tag = done, .header = header, .query = query,
+                this->storage, HTTP_VERB_PUT_STR, .upload = true, .noAuth = true, .header = header, .query = query,
                 .content = this->chunkBuffer);
         }
         MEM_CONTEXT_OBJ_END();
@@ -304,11 +307,12 @@ storageWriteGcsClose(THIS_VOID)
 
                 this->uploadTotal = bufUsed(this->chunkBuffer);
 
+                // LOG_WARN_FMT("!!! UPLOAD SINGLE %s", strZ(this->interface.name));
+
                 storageWriteGcsVerify(
                     this,
                     storageGcsRequestP(
-                        this->storage, HTTP_VERB_POST_STR, .upload = true, .tag = true, .query = query,
-                        .content = this->chunkBuffer));
+                        this->storage, HTTP_VERB_POST_STR, .upload = true, .query = query, .content = this->chunkBuffer));
             }
 
             bufFree(this->chunkBuffer);
@@ -322,12 +326,13 @@ storageWriteGcsClose(THIS_VOID)
 
 /**********************************************************************************************************************************/
 FN_EXTERN StorageWrite *
-storageWriteGcsNew(StorageGcs *const storage, const String *const name, const size_t chunkSize)
+storageWriteGcsNew(StorageGcs *const storage, const String *const name, const size_t chunkSize, const bool tag)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_GCS, storage);
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(UINT64, chunkSize);
+        FUNCTION_LOG_PARAM(BOOL, tag);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
@@ -339,6 +344,7 @@ storageWriteGcsNew(StorageGcs *const storage, const String *const name, const si
         {
             .storage = storage,
             .chunkSize = chunkSize,
+            .tag = tag,
 
             .interface = (StorageWriteInterface)
             {

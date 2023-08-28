@@ -88,7 +88,7 @@ struct StorageGcs
     const String *bucket;                                           // Bucket to store data in
     const String *endpoint;                                         // Endpoint
     size_t chunkSize;                                               // Block size for resumable upload
-    const KeyValue *tag;                                            // Tags to be applied to objects
+    const Buffer *tag;                                              // Tags to be applied to objects
 
     StorageGcsKeyType keyType;                                      // Auth key type
     const String *key;                                              // Key (value depends on key type)
@@ -365,6 +365,9 @@ storageGcsAuth(StorageGcs *this, HttpHeader *httpHeader)
                     strFree(this->token);
                     this->token = strNewFmt("%s %s", strZ(tokenResult.tokenType), strZ(tokenResult.token));
 
+                    // if (this->write)
+                    //     LOG_WARN_FMT("!!! %s", strZ(this->token));
+
                     // Subtract http client timeout * 2 so the token does not expire in the middle of http retries
                     this->tokenTimeExpire =
                         tokenResult.timeExpire - ((time_t)(httpClientTimeout(this->httpClient) / MSEC_PER_SEC * 2));
@@ -417,9 +420,20 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
         if (param.object != NULL)
             strCatFmt(path, "/%s", strZ(httpUriEncode(strSub(param.object, 1), false)));
 
-        // Create header list and add content length
+        // Create header list
         HttpHeader *requestHeader =
             param.header == NULL ? httpHeaderNew(this->headerRedactList) : httpHeaderDup(param.header, this->headerRedactList);
+
+        // Add tags
+        if (param.tag)
+        {
+            ASSERT(param.content == NULL);
+            ASSERT(this->tag != NULL);
+
+            httpHeaderPut(requestHeader, HTTP_HEADER_CONTENT_TYPE_STR, STRDEF("application/json"));
+            param.content = this->tag;
+            // LOG_WARN("!!! ADD HEADER");
+        }
 
         // Set host
         httpHeaderPut(requestHeader, HTTP_HEADER_HOST_STR, this->endpoint);
@@ -428,18 +442,6 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
         httpHeaderPut(
             requestHeader, HTTP_HEADER_CONTENT_LENGTH_STR,
             param.content == NULL || bufEmpty(param.content) ? ZERO_STR : strNewFmt("%zu", bufUsed(param.content)));
-
-        // Set tags when requested and available
-        if (param.tag && this->tag != NULL)
-        {
-            const StringList *const keyList = strLstSort(strLstNewVarLst(kvKeyList(this->tag)), sortOrderAsc);
-
-            for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)
-            {
-                const String *const key = strLstGet(keyList, keyIdx);
-                httpHeaderPut(requestHeader, strNewFmt(GCS_HEADER_META "%s", strZ(key)), varStr(kvGet(this->tag, VARSTR(key))));
-            }
-        }
 
         // Make a copy of the query so it can be modified
         HttpQuery *query = httpQueryDupP(param.query, .redactList = this->queryRedactList);
@@ -852,7 +854,7 @@ storageGcsNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWriteParam 
     ASSERT(param.group == NULL);
     ASSERT(param.timeModified == 0);
 
-    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteGcsNew(this, file, this->chunkSize));
+    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteGcsNew(this, file, this->chunkSize, this->tag != NULL));
 }
 
 /**********************************************************************************************************************************/
@@ -1003,8 +1005,34 @@ storageGcsNew(
             .bucket = strDup(bucket),
             .keyType = keyType,
             .chunkSize = chunkSize,
-            .tag = tag == NULL ? NULL : kvDup(tag),
         };
+
+        // !!!
+        if (tag != NULL)
+        {
+            MEM_CONTEXT_TEMP_BEGIN()
+            {
+                JsonWrite *const tagJson = jsonWriteObjectBegin(jsonWriteKeyZ(jsonWriteObjectBegin(jsonWriteNewP()), "metadata"));
+                const StringList *const keyList = strLstSort(strLstNewVarLst(kvKeyList(tag)), sortOrderAsc);
+
+                for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)
+                {
+                    const String *const key = strLstGet(keyList, keyIdx);
+                    jsonWriteStr(jsonWriteKey(tagJson, key), varStr(kvGet(tag, VARSTR(key))));
+
+                    // LOG_WARN_FMT("!!! HEADER %s: %s", strZ(key), strZ(varStr(kvGet(tag, VARSTR(key)))));
+                }
+
+                const String *const tagStr = jsonWriteResult(jsonWriteObjectEnd(jsonWriteObjectEnd(tagJson)));
+
+                MEM_CONTEXT_PRIOR_BEGIN()
+                {
+                    this->tag = bufNewC((const unsigned char *)strZ(tagStr), strSize(tagStr));
+                }
+                MEM_CONTEXT_PRIOR_END();
+            }
+            MEM_CONTEXT_TEMP_END();
+        }
 
         // Handle auth key types
         switch (keyType)
