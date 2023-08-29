@@ -453,7 +453,7 @@ testRun(void)
                 // Tests need the chunk size to be 16
                 ((StorageGcs *)storageDriver(storage))->chunkSize = 16;
 
-                // Storage tags and set to NULL
+                // Store tags and set to NULL
                 const Buffer *tag = ((StorageGcs *)storageDriver(storage))->tag;
                 ((StorageGcs *)storageDriver(storage))->tag = NULL;
 
