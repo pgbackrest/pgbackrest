@@ -188,16 +188,27 @@ storageWriteGcsBlockAsync(StorageWriteGcs *this, bool done)
         }
 
         // Add data to md5 hash
-        ioFilterProcessIn(this->md5hash, this->chunkBuffer);
+        if (bufUsed(this->chunkBuffer) > 0)
+            ioFilterProcessIn(this->md5hash, this->chunkBuffer);
 
         // Upload the chunk. If this is the last chunk then add the total bytes in the file to the range rather than the * added to
         // prior chunks. This indicates that the resumable upload is complete.
-        HttpHeader *header = httpHeaderAdd(
-            httpHeaderNew(NULL), HTTP_HEADER_CONTENT_RANGE_STR,
-            strNewFmt(
-                HTTP_HEADER_CONTENT_RANGE_BYTES " %" PRIu64 "-%" PRIu64 "/%s", this->uploadTotal,
-                this->uploadTotal + bufUsed(this->chunkBuffer) - 1,
-                done ? zNewFmt("%" PRIu64, this->uploadTotal + bufUsed(this->chunkBuffer)) : "*"));
+        HttpHeader *const header = httpHeaderNew(NULL);
+
+        if (bufUsed(this->chunkBuffer) == 0)
+        {
+            httpHeaderAdd(
+                header, HTTP_HEADER_CONTENT_RANGE_STR, STRDEF(HTTP_HEADER_CONTENT_RANGE_BYTES " */0"));
+        }
+        else
+        {
+            httpHeaderAdd(
+                header, HTTP_HEADER_CONTENT_RANGE_STR,
+                strNewFmt(
+                    HTTP_HEADER_CONTENT_RANGE_BYTES " %" PRIu64 "-%s/%s", this->uploadTotal,
+                    bufUsed(this->chunkBuffer) == 0 ? "*" : zNewFmt("%" PRIu64, this->uploadTotal + bufUsed(this->chunkBuffer) - 1),
+                    done ? zNewFmt("%" PRIu64, this->uploadTotal + bufUsed(this->chunkBuffer)) : "*"));
+        }
 
         httpQueryAdd(query, GCS_QUERY_UPLOAD_ID_STR, this->uploadId);
 
@@ -284,9 +295,9 @@ storageWriteGcsClose(THIS_VOID)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // If a resumable upload was started then finish that way
-            if (this->uploadId != NULL)
+            if (this->uploadId != NULL || this->tag)
             {
-                ASSERT(!bufEmpty(this->chunkBuffer));
+                ASSERT(!bufEmpty(this->chunkBuffer) || this->tag);
 
                 // Write what is left in the chunk buffer
                 storageWriteGcsBlockAsync(this, true);
