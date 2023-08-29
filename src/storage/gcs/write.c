@@ -211,7 +211,6 @@ storageWriteGcsBlockAsync(StorageWriteGcs *this, bool done)
 
         MEM_CONTEXT_OBJ_BEGIN(this)
         {
-            // LOG_WARN_FMT("!!! UPLOAD MULTI %s", strZ(this->interface.name));
             this->request = storageGcsRequestAsyncP(
                 this->storage, HTTP_VERB_PUT_STR, .upload = true, .noAuth = true, .header = header, .query = query,
                 .content = this->chunkBuffer);
@@ -310,8 +309,6 @@ storageWriteGcsClose(THIS_VOID)
                 httpQueryAdd(query, GCS_QUERY_FIELDS_STR, GCS_QUERY_FIELDS_VALUE_STR);
 
                 this->uploadTotal = bufUsed(this->chunkBuffer);
-
-                // LOG_WARN_FMT("!!! UPLOAD SINGLE %s", strZ(this->interface.name));
 
                 storageWriteGcsVerify(
                     this,

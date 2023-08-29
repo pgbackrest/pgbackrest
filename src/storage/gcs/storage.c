@@ -28,7 +28,6 @@ GCS Storage
 /***********************************************************************************************************************************
 HTTP headers
 ***********************************************************************************************************************************/
-#define GCS_HEADER_META                                             "x-goog-meta-"
 STRING_EXTERN(GCS_HEADER_UPLOAD_ID_STR,                             GCS_HEADER_UPLOAD_ID);
 STRING_STATIC(GCS_HEADER_METADATA_FLAVOR_STR,                       "metadata-flavor");
 STRING_STATIC(GCS_HEADER_GOOGLE_STR,                                "Google");
@@ -365,9 +364,6 @@ storageGcsAuth(StorageGcs *this, HttpHeader *httpHeader)
                     strFree(this->token);
                     this->token = strNewFmt("%s %s", strZ(tokenResult.tokenType), strZ(tokenResult.token));
 
-                    // if (this->write)
-                    //     LOG_WARN_FMT("!!! %s", strZ(this->token));
-
                     // Subtract http client timeout * 2 so the token does not expire in the middle of http retries
                     this->tokenTimeExpire =
                         tokenResult.timeExpire - ((time_t)(httpClientTimeout(this->httpClient) / MSEC_PER_SEC * 2));
@@ -430,9 +426,8 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
             ASSERT(param.content == NULL);
             ASSERT(this->tag != NULL);
 
-            httpHeaderPut(requestHeader, HTTP_HEADER_CONTENT_TYPE_STR, STRDEF("application/json"));
+            httpHeaderPut(requestHeader, HTTP_HEADER_CONTENT_TYPE_STR, HTTP_HEADER_CONTENT_TYPE_JSON_STR);
             param.content = this->tag;
-            // LOG_WARN("!!! ADD HEADER");
         }
 
         // Set host
@@ -1007,20 +1002,19 @@ storageGcsNew(
             .chunkSize = chunkSize,
         };
 
-        // !!!
-        if (tag != NULL)
+        // Create tag JSON buffer
+        if (write && tag != NULL)
         {
             MEM_CONTEXT_TEMP_BEGIN()
             {
-                JsonWrite *const tagJson = jsonWriteObjectBegin(jsonWriteKeyZ(jsonWriteObjectBegin(jsonWriteNewP()), "metadata"));
+                JsonWrite *const tagJson = jsonWriteObjectBegin(
+                    jsonWriteKeyStrId(jsonWriteObjectBegin(jsonWriteNewP()), STRID5("metadata", 0xd0240d0ad0)));
                 const StringList *const keyList = strLstSort(strLstNewVarLst(kvKeyList(tag)), sortOrderAsc);
 
                 for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)
                 {
                     const String *const key = strLstGet(keyList, keyIdx);
                     jsonWriteStr(jsonWriteKey(tagJson, key), varStr(kvGet(tag, VARSTR(key))));
-
-                    // LOG_WARN_FMT("!!! HEADER %s: %s", strZ(key), strZ(varStr(kvGet(tag, VARSTR(key)))));
                 }
 
                 const String *const tagStr = jsonWriteResult(jsonWriteObjectEnd(jsonWriteObjectEnd(tagJson)));

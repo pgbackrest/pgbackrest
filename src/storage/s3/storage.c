@@ -1160,7 +1160,7 @@ storageS3New(
         };
 
         // Create tag query string
-        if (tag != NULL)
+        if (write && tag != NULL)
         {
             HttpQuery *const query = httpQueryNewP(.kv = tag);
             this->tag = httpQueryRenderP(query);
