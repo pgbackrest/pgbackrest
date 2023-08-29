@@ -186,15 +186,17 @@ storageWriteGcsBlockAsync(StorageWriteGcs *this, bool done)
         }
 
         // Add data to md5 hash
-        ioFilterProcessIn(this->md5hash, this->chunkBuffer);
+        if (!bufEmpty(this->chunkBuffer))
+            ioFilterProcessIn(this->md5hash, this->chunkBuffer);
 
         // Upload the chunk. If this is the last chunk then add the total bytes in the file to the range rather than the * added to
         // prior chunks. This indicates that the resumable upload is complete.
-        HttpHeader *header = httpHeaderAdd(
+        HttpHeader *const header = httpHeaderAdd(
             httpHeaderNew(NULL), HTTP_HEADER_CONTENT_RANGE_STR,
             strNewFmt(
-                HTTP_HEADER_CONTENT_RANGE_BYTES " %" PRIu64 "-%" PRIu64 "/%s", this->uploadTotal,
-                this->uploadTotal + bufUsed(this->chunkBuffer) - 1,
+                HTTP_HEADER_CONTENT_RANGE_BYTES " %s/%s",
+                bufUsed(this->chunkBuffer) == 0 ?
+                    "*" : zNewFmt("%" PRIu64 "-%" PRIu64, this->uploadTotal, this->uploadTotal + bufUsed(this->chunkBuffer) - 1),
                 done ? zNewFmt("%" PRIu64, this->uploadTotal + bufUsed(this->chunkBuffer)) : "*"));
 
         httpQueryAdd(query, GCS_QUERY_UPLOAD_ID_STR, this->uploadId);
@@ -240,14 +242,6 @@ storageWriteGcs(THIS_VOID, const Buffer *buffer)
     // Continue until the write buffer has been exhausted
     do
     {
-        // If the chunk buffer is full then write it. We can't write it at the end of this loop because this might be the end of the
-        // input and we'd have no way to signal the end of the resumable upload when closing the file if there is no more data.
-        if (bufRemains(this->chunkBuffer) == 0)
-        {
-            storageWriteGcsBlockAsync(this, false);
-            bufUsedZero(this->chunkBuffer);
-        }
-
         // Copy as many bytes as possible into the chunk buffer
         const size_t bytesNext =
             bufRemains(this->chunkBuffer) > bufUsed(buffer) - bytesTotal ?
@@ -255,6 +249,14 @@ storageWriteGcs(THIS_VOID, const Buffer *buffer)
 
         bufCatSub(this->chunkBuffer, buffer, bytesTotal, bytesNext);
         bytesTotal += bytesNext;
+
+        // If the chunk buffer is full then write it. It is possible that this is the last chunk and it would be better to wait, but
+        // the chances of that are quite small so in general it is better to write now so there is less to write later.
+        if (bufRemains(this->chunkBuffer) == 0)
+        {
+            storageWriteGcsBlockAsync(this, false);
+            bufUsedZero(this->chunkBuffer);
+        }
     }
     while (bytesTotal != bufUsed(buffer));
 
@@ -283,8 +285,6 @@ storageWriteGcsClose(THIS_VOID)
             // If a resumable upload was started then finish that way
             if (this->uploadId != NULL)
             {
-                ASSERT(!bufEmpty(this->chunkBuffer));
-
                 // Write what is left in the chunk buffer
                 storageWriteGcsBlockAsync(this, true);
                 storageWriteGcsBlock(this, true);
