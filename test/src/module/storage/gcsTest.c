@@ -593,7 +593,27 @@ testRun(void)
                 TEST_ERROR(storagePutP(write, NULL), FormatError, "expected size 55 for '/file.txt' but actual is 0");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("write file in chunks with nothing left over on close");
+                TEST_TITLE("write zero-length file (with tags)");
+
+                testRequestP(
+                    service, HTTP_VERB_POST, .upload = true, .query = "name=file.txt&uploadType=resumable",
+                    .contentType = "application/json", .content = "{\"metadata\":{\" Key 2\":\" Value 2\",\"Key1\":\"Value1\"}}");
+                testResponseP(service, .header = "x-guploader-uploadid:ulid3");
+
+                testRequestP(
+                    service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
+                    .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=resumable&upload_id=ulid3", .contentRange = "*/0");
+                testResponseP(service, .content = "{\"md5Hash\":\"1B2M2Y8AsgTpgAmY7PhCfg==\",\"size\":\"0\"}");
+
+                ((StorageGcs *)storageDriver(storage))->tag = tag;
+
+                TEST_ASSIGN(write, storageNewWriteP(storage, STRDEF("file.txt")), "new write");
+                TEST_RESULT_VOID(storagePutP(write, NULL), "write");
+
+                ((StorageGcs *)storageDriver(storage))->tag = NULL;
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("write file in chunks with nothing left over on close (with tags)");
 
                 testRequestP(
                     service, HTTP_VERB_POST, .upload = true, .query = "name=file.txt&uploadType=resumable",

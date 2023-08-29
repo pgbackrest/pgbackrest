@@ -161,7 +161,7 @@ storageWriteGcsBlockAsync(StorageWriteGcs *this, bool done)
     ASSERT(this != NULL);
     ASSERT(this->chunkBuffer != NULL);
     ASSERT(bufSize(this->chunkBuffer) > 0);
-    ASSERT(!done || this->uploadId != NULL);
+    ASSERT(!done || this->uploadId != NULL || this->tag);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -202,7 +202,6 @@ storageWriteGcsBlockAsync(StorageWriteGcs *this, bool done)
                 bufUsed(this->chunkBuffer) == 0 ?
                     "*" : zNewFmt("%" PRIu64 "-%" PRIu64, this->uploadTotal, this->uploadTotal + bufUsed(this->chunkBuffer) - 1),
                 done ? zNewFmt("%" PRIu64, this->uploadTotal + bufUsed(this->chunkBuffer)) : "*"));
-        }
 
         httpQueryAdd(query, GCS_QUERY_UPLOAD_ID_STR, this->uploadId);
 
