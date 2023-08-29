@@ -1021,7 +1021,7 @@ storageGcsNew(
 
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {
-                    this->tag = bufNewC((const unsigned char *)strZ(tagStr), strSize(tagStr));
+                    this->tag = bufDup(BUFSTR(tagStr));
                 }
                 MEM_CONTEXT_PRIOR_END();
             }
