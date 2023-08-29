@@ -628,8 +628,13 @@ testRun(void)
 
                 testRequestP(
                     service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
-                    .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=resumable&upload_id=ulid1", .contentRange = "16-31/32",
+                    .query = "name=file.txt&uploadType=resumable&upload_id=ulid1", .contentRange = "16-31/*",
                     .content = "7890123456789012");
+                testResponseP(service, .code = 308);
+
+                testRequestP(
+                    service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
+                    .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=resumable&upload_id=ulid1", .contentRange = "*/32");
                 testResponseP(service, .content = "{\"md5Hash\":\"dnF5x6K/8ZZRzpfSlMMM+w==\",\"size\":\"32\"}");
 
                 ((StorageGcs *)storageDriver(storage))->tag = tag;
