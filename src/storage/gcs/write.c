@@ -188,26 +188,20 @@ storageWriteGcsBlockAsync(StorageWriteGcs *this, bool done)
         }
 
         // Add data to md5 hash
+        ASSERT(!bufEmpty(this->chunkBuffer) || this->tag);
+
         if (bufUsed(this->chunkBuffer) > 0)
             ioFilterProcessIn(this->md5hash, this->chunkBuffer);
 
         // Upload the chunk. If this is the last chunk then add the total bytes in the file to the range rather than the * added to
         // prior chunks. This indicates that the resumable upload is complete.
-        HttpHeader *const header = httpHeaderNew(NULL);
-
-        if (bufUsed(this->chunkBuffer) == 0)
-        {
-            httpHeaderAdd(
-                header, HTTP_HEADER_CONTENT_RANGE_STR, STRDEF(HTTP_HEADER_CONTENT_RANGE_BYTES " */0"));
-        }
-        else
-        {
-            httpHeaderAdd(
-                header, HTTP_HEADER_CONTENT_RANGE_STR,
-                strNewFmt(
-                    HTTP_HEADER_CONTENT_RANGE_BYTES " %" PRIu64 "-%s/%s", this->uploadTotal,
-                    bufUsed(this->chunkBuffer) == 0 ? "*" : zNewFmt("%" PRIu64, this->uploadTotal + bufUsed(this->chunkBuffer) - 1),
-                    done ? zNewFmt("%" PRIu64, this->uploadTotal + bufUsed(this->chunkBuffer)) : "*"));
+        HttpHeader *const header = httpHeaderAdd(
+            httpHeaderNew(NULL), HTTP_HEADER_CONTENT_RANGE_STR,
+            strNewFmt(
+                HTTP_HEADER_CONTENT_RANGE_BYTES " %s/%s",
+                bufUsed(this->chunkBuffer) == 0 ?
+                    "*" : zNewFmt("%" PRIu64 "-%" PRIu64, this->uploadTotal, this->uploadTotal + bufUsed(this->chunkBuffer) - 1),
+                done ? zNewFmt("%" PRIu64, this->uploadTotal + bufUsed(this->chunkBuffer)) : "*"));
         }
 
         httpQueryAdd(query, GCS_QUERY_UPLOAD_ID_STR, this->uploadId);
