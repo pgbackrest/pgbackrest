@@ -75,7 +75,7 @@ VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_VAR,                          "lock");
 VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_BACKUP_VAR,                   "backup");
 VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_BACKUP_HELD_VAR,              "held");
 VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_BACKUP_PERCENT_COMPLETE_VAR,  "pct-cplt");
-VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_BACKUP_SIZE_PROGRESS_VAR,     "size-cplt");
+VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_BACKUP_SIZE_COMPLETE_VAR,     "size-cplt");
 VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_BACKUP_SIZE_VAR,              "size");
 VARIANT_STRDEF_STATIC(STATUS_KEY_MESSAGE_VAR,                       "message");
 
@@ -244,7 +244,7 @@ stanzaStatus(const int code, const InfoStanzaRepo *const stanzaData, Variant *st
         kvPut(backupLockKv, STATUS_KEY_LOCK_BACKUP_PERCENT_COMPLETE_VAR, stanzaData->percentComplete);
 
     if (stanzaData->sizeComplete != NULL)
-        kvPut(backupLockKv, STATUS_KEY_LOCK_BACKUP_SIZE_PROGRESS_VAR, stanzaData->sizeComplete);
+        kvPut(backupLockKv, STATUS_KEY_LOCK_BACKUP_SIZE_COMPLETE_VAR, stanzaData->sizeComplete);
 
     if (stanzaData->size != NULL)
         kvPut(backupLockKv, STATUS_KEY_LOCK_BACKUP_SIZE_VAR, stanzaData->size);
