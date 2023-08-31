@@ -2577,7 +2577,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                 ConfigOptionGroupData *const optionGroup = &config->optionGroup[optionGroupIdx];
 
                 // Iterate group indexes
-                for (unsigned int keyIdx = optionGroup->indexTotal - 1; keyIdx < UINT_MAX; keyIdx--)
+                for (unsigned int keyIdx = optionGroup->indexTotal - 1; keyIdx + 1 > 0; keyIdx--)
                 {
                     // Break if there is only one index since each group must have at least one
                     if (optionGroup->indexTotal == 1)

@@ -29,6 +29,17 @@
                     </release-item>
 
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="tom.swartz"/>
+                            <release-item-reviewer id="david.christensen"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow <cmd>archive-get</cmd> command to run when stanza is stopped.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-pull-request id="2136"/>
 
                         <release-item-contributor-list>
