@@ -2195,7 +2195,7 @@ backupProcess(
         // Process jobs
         uint64_t sizeProgress = 0;
 
-        // Initialize the percent complete and bytes processed to zero
+        // Initialize percent complete and bytes completed/total
         unsigned int currentPercentComplete = 0;
         lockWriteDataP(
             lockTypeBackup, .percentComplete = VARUINT(currentPercentComplete), .sizeComplete = VARUINT64(sizeProgress),

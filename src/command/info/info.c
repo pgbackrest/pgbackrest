@@ -1300,10 +1300,10 @@ infoUpdateStanza(
 
                     if (stanzaRepo->backupLockHeld)
                     {
-                        LockReadResult lockReadResult = lockRead(cfgOptionStr(cfgOptLockPath), stanzaRepo->name, lockTypeBackup);
-                        stanzaRepo->percentComplete = lockReadResult.data.percentComplete;
-                        stanzaRepo->sizeComplete = lockReadResult.data.sizeComplete;
-                        stanzaRepo->size = lockReadResult.data.size;
+                        const LockData lockData = lockRead(cfgOptionStr(cfgOptLockPath), stanzaRepo->name, lockTypeBackup).data;
+                        stanzaRepo->percentComplete = lockData.percentComplete;
+                        stanzaRepo->sizeComplete = lockData.sizeComplete;
+                        stanzaRepo->size = lockData.size;
                     }
                 }
             }
