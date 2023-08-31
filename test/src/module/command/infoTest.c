@@ -1025,7 +1025,11 @@ testRun(void)
             {
                 lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("999-ffffffff"), STRDEF("stanza2"), lockTypeBackup);
                 TEST_RESULT_INT_NE(lockAcquireP(), -1, "create backup/expire lock");
-                TEST_RESULT_VOID(lockWriteDataP(lockTypeBackup, .percentComplete = VARUINT(4545)), "write lock data");
+                TEST_RESULT_VOID(
+                    lockWriteDataP(
+                        lockTypeBackup, .percentComplete = VARUINT(4545), .sizeComplete = VARUINT64(1435765),
+                        .size = VARUINT64(3159000)),
+                    "write lock data");
 
                 // Notify parent that lock has been acquired
                 HRN_FORK_CHILD_NOTIFY_PUT();
@@ -1365,7 +1369,7 @@ testRun(void)
                             "],"
                             "\"status\":{"
                                 "\"code\":4,"
-                                "\"lock\":{\"backup\":{\"held\":true}},"
+                                "\"lock\":{\"backup\":{\"held\":true,\"size\":3159000,\"size-cplt\":1435765}},"
                                 "\"message\":\"different across repos\""
                             "}"
                         "},"
