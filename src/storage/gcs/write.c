@@ -190,7 +190,8 @@ storageWriteGcsBlockAsync(StorageWriteGcs *this, bool done)
             ioFilterProcessIn(this->md5hash, this->chunkBuffer);
 
         // Upload the chunk. If this is the last chunk then add the total bytes in the file to the range rather than the * added to
-        // prior chunks. This indicates that the resumable upload is complete.
+        // prior chunks. This indicates that the resumable upload is complete. If the last chunk is zero-size, then the byte range
+        // is * to indicate that there is no more data to upload.
         HttpHeader *const header = httpHeaderAdd(
             httpHeaderNew(NULL), HTTP_HEADER_CONTENT_RANGE_STR,
             strNewFmt(
