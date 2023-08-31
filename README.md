@@ -4,7 +4,7 @@
 
 pgBackRest aims to be a reliable, easy-to-use backup and restore solution that can seamlessly scale up to the largest databases and workloads by utilizing algorithms that are optimized for database-specific requirements.
 
-pgBackRest [v2.46](https://github.com/pgbackrest/pgbackrest/releases/tag/release/2.46) is the current stable release. Release notes are on the [Releases](http://www.pgbackrest.org/release.html) page.
+pgBackRest [v2.47](https://github.com/pgbackrest/pgbackrest/releases/tag/release/2.47) is the current stable release. Release notes are on the [Releases](http://www.pgbackrest.org/release.html) page.
 
 Please find us on [GitHub](https://github.com/pgbackrest/pgbackrest) and give us a star if you like pgBackRest!
 
@@ -22,9 +22,9 @@ A custom protocol allows pgBackRest to backup, restore, and archive locally or r
 
 Multiple repositories allow, for example, a local repository with minimal retention for fast restores and a remote repository with a longer retention for redundancy and access across the enterprise.
 
-### Full, Incremental, & Differential Backups
+### Full, Differential, & Incremental Backups (at File or Block Level)
 
-Full, differential, and incremental backups are supported. pgBackRest is not susceptible to the time resolution issues of rsync, making differential and incremental backups safe without the requirement to checksum each file.
+Full, differential, and incremental backups are supported. pgBackRest is not susceptible to the time resolution issues of rsync, making differential and incremental backups safe without the requirement to checksum each file. Block-level backups save space by only copying the parts of files that have changed.
 
 ### Backup Rotation & Archive Expiration
 

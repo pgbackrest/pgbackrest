@@ -261,7 +261,7 @@ httpQueryRender(const HttpQuery *this, HttpQueryRenderParam param)
                         strCatZ(result, "&");
 
                     strCatFmt(
-                        result, "%s=%s", strZ(key),
+                        result, "%s=%s", strZ(httpUriEncode(key, false)),
                         param.redact && httpQueryRedact(this, key) ?
                             "<redacted>" : strZ(httpUriEncode(httpQueryGet(this, key), false)));
                 }

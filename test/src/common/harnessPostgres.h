@@ -50,7 +50,7 @@ Put a control file to storage
         storageParam, PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,                                                                        \
         hrnPgControlToBuffer(0, (PgControl){.version = versionParam, __VA_ARGS__}))
 
-#define HRN_PG_CONTROL_OVERRIDE_PUT(storageParam, versionParam, controlVersionParam, ...)                                          \
+#define HRN_PG_CONTROL_OVERRIDE_VERSION_PUT(storageParam, versionParam, controlVersionParam, ...)                                  \
     HRN_STORAGE_PUT(                                                                                                               \
         storageParam, PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,                                                                        \
         hrnPgControlToBuffer(controlVersionParam, (PgControl){.version = versionParam, __VA_ARGS__}))

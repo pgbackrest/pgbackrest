@@ -65,9 +65,9 @@
 
         <!-- =================================================================================================================== -->
         <section id="backup-types">
-            <title>Full, Incremental, &amp; Differential Backups</title>
+            <title>Full, Differential, &amp; Incremental Backups (at File or Block Level)</title>
 
-            <p>Full, differential, and incremental backups are supported. <backrest/> is not susceptible to the time resolution issues of rsync, making differential and incremental backups safe without the requirement to checksum each file.</p>
+            <p>Full, differential, and incremental backups are supported. <backrest/> is not susceptible to the time resolution issues of rsync, making differential and incremental backups safe without the requirement to checksum each file. Block-level backups save space by only copying the parts of files that have changed.</p>
         </section>
 
         <!-- =================================================================================================================== -->

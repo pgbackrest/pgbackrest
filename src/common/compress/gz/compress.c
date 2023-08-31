@@ -104,7 +104,7 @@ gzCompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
             this->stream.avail_in = (unsigned int)bufUsed(uncompressed);
 
             // Not all versions of zlib (and none by default) will accept const input buffers
-            this->stream.next_in = UNCONSTIFY(unsigned char *, bufPtrConst(uncompressed));
+            this->stream.next_in = bufPtrConst(uncompressed);
         }
     }
 

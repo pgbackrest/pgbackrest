@@ -600,13 +600,13 @@ testRun(void)
                     "        wal archive min/max (9.4): 000000010000000000000002/000000030000000000000001\n"
                     "\n"
                     "        full backup: 20181116-154756F\n"
-                    "            timestamp start/stop: 2018-11-16 15:47:56 / 2018-11-16 15:48:09\n"
+                    "            timestamp start/stop: 2018-11-16 15:47:56+00 / 2018-11-16 15:48:09+00\n"
                     "            wal start/stop: n/a\n"
                     "            database size: 25.7MB, database backup size: 25.7MB\n"
                     "            repo1: backup set size: 3MB, backup size: 3KB\n"
                     "\n"
                     "        full backup: 20201116-154900F\n"
-                    "            timestamp start/stop: 2020-11-16 15:47:56 / 2020-11-16 15:48:00\n"
+                    "            timestamp start/stop: 2020-11-16 15:47:56+00 / 2020-11-16 15:48:00+00\n"
                     "            wal start/stop: 000000030000000000000001 / 000000030000000000000001\n"
                     "            database size: 25.7MB, database backup size: 25.7MB\n"
                     "            repo1: backup set size: 3MB, backup size: 3KB\n",
@@ -1025,7 +1025,11 @@ testRun(void)
             {
                 lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("999-ffffffff"), STRDEF("stanza2"), lockTypeBackup);
                 TEST_RESULT_INT_NE(lockAcquireP(), -1, "create backup/expire lock");
-                TEST_RESULT_VOID(lockWriteDataP(lockTypeBackup, .percentComplete = VARUINT(4545)), "write lock data");
+                TEST_RESULT_VOID(
+                    lockWriteDataP(
+                        lockTypeBackup, .percentComplete = VARUINT(4545), .sizeComplete = VARUINT64(1435765),
+                        .size = VARUINT64(3159000)),
+                    "write lock data");
 
                 // Notify parent that lock has been acquired
                 HRN_FORK_CHILD_NOTIFY_PUT();
@@ -1365,7 +1369,7 @@ testRun(void)
                             "],"
                             "\"status\":{"
                                 "\"code\":4,"
-                                "\"lock\":{\"backup\":{\"held\":true}},"
+                                "\"lock\":{\"backup\":{\"held\":true,\"size\":3159000,\"size-cplt\":1435765}},"
                                 "\"message\":\"different across repos\""
                             "}"
                         "},"
@@ -1494,20 +1498,20 @@ testRun(void)
                     "        wal archive min/max (9.4): 000000010000000000000002/000000020000000000000003\n"
                     "\n"
                     "        full backup: 20181119-152138F\n"
-                    "            timestamp start/stop: 2018-11-19 15:21:38 / 2018-11-19 15:21:39\n"
+                    "            timestamp start/stop: 2018-11-19 15:21:38+00 / 2018-11-19 15:21:39+00\n"
                     "            wal start/stop: 000000010000000000000002 / 000000010000000000000002\n"
                     "            database size: 19.2MB, database backup size: 19.2MB\n"
                     "            repo1: backup set size: 2.3MB, backup size: 2.3MB\n"
                     "\n"
                     "        diff backup: 20181119-152138F_20181119-152152D\n"
-                    "            timestamp start/stop: 2018-11-19 15:21:52 / 2018-11-19 15:21:55\n"
+                    "            timestamp start/stop: 2018-11-19 15:21:52+00 / 2018-11-19 15:21:55+00\n"
                     "            wal start/stop: 000000010000000000000003 / 000000020000000000000003\n"
                     "            database size: 19.2MB, database backup size: 8.2KB\n"
                     "            repo1: backup set size: 2.3MB, backup size: 346B\n"
                     "            backup reference list: 20181119-152138F\n"
                     "\n"
                     "        incr backup: 20181119-152138F_20181119-152155I\n"
-                    "            timestamp start/stop: 2018-11-19 15:21:55 / 2018-11-19 15:21:57\n"
+                    "            timestamp start/stop: 2018-11-19 15:21:55+00 / 2018-11-19 15:21:57+00\n"
                     "            wal start/stop: n/a\n"
                     "            database size: 19.2MB, database backup size: 8.2KB\n"
                     "            repo1: backup set size: 2.3MB, backup size: 346B\n"
@@ -1517,20 +1521,20 @@ testRun(void)
                     "        wal archive min/max (9.5): 000000010000000000000002/000000010000000000000005\n"
                     "\n"
                     "        full backup: 20201116-155000F\n"
-                    "            timestamp start/stop: 2020-11-16 15:50:00 / 2020-11-16 15:50:02\n"
+                    "            timestamp start/stop: 2020-11-16 15:50:00+00 / 2020-11-16 15:50:02+00\n"
                     "            wal start/stop: 000000010000000000000002 / 000000010000000000000003\n"
                     "            database size: 25.7MB, database backup size: 25.7MB\n"
                     "            repo1: backup set size: 3MB, backup size: 3KB\n"
                     "\n"
                     "        full backup: 20201116-200000F\n"
-                    "            timestamp start/stop: 2020-11-16 20:00:00 / 2020-11-16 20:00:05\n"
+                    "            timestamp start/stop: 2020-11-16 20:00:00+00 / 2020-11-16 20:00:05+00\n"
                     "            wal start/stop: 000000010000000000000004 / 000000010000000000000004\n"
                     "            database size: 25.7MB, database backup size: 25.7MB\n"
                     "            repo2: backup set size: 3MB, backup size: 3KB\n"
                     "            error(s) detected during backup\n"
                     "\n"
                     "        incr backup: 20201116-155000F_20201119-152100I\n"
-                    "            timestamp start/stop: 2020-11-19 15:21:00 / 2020-11-19 15:21:03\n"
+                    "            timestamp start/stop: 2020-11-19 15:21:00+00 / 2020-11-19 15:21:03+00\n"
                     "            wal start/stop: 000000010000000000000005 / 000000010000000000000005\n"
                     "            database size: 19.2MB, database backup size: 8.2KB\n"
                     "            repo1: backup size: 346B\n"
@@ -1559,7 +1563,7 @@ testRun(void)
                     "        wal archive min/max (9.4): 000000010000000000000001/000000010000000000000002\n"
                     "\n"
                     "        full backup: 20201110-100000F\n"
-                    "            timestamp start/stop: 2020-11-10 10:00:00 / 2020-11-10 10:00:02\n"
+                    "            timestamp start/stop: 2020-11-10 10:00:00+00 / 2020-11-10 10:00:02+00\n"
                     "            wal start/stop: 000000010000000000000001 / 000000010000000000000002\n"
                     "            database size: 25.7MB, database backup size: 25.7MB\n"
                     "            repo2: backup set size: 3MB, backup size: 3KB\n",
@@ -1639,6 +1643,9 @@ testRun(void)
         hrnCfgArgRawZ(argList2, cfgOptRepo, "1");
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
+        // Switch to America/New_York to test + timezone offset without minutes
+        setenv("TZ", "America/New_York", true);
+
         TEST_RESULT_STR_Z(
             infoRender(),
             "stanza: stanza1\n"
@@ -1649,7 +1656,7 @@ testRun(void)
             "        wal archive min/max (9.4): 000000010000000000000002/000000020000000000000003\n"
             "\n"
             "        incr backup: 20181119-152138F_20181119-152155I\n"
-            "            timestamp start/stop: 2018-11-19 15:21:55 / 2018-11-19 15:21:57\n"
+            "            timestamp start/stop: 2018-11-19 10:21:55-05 / 2018-11-19 10:21:57-05\n"
             "            wal start/stop: n/a\n"
             "            lsn start/stop: 285/89000028 / 285/89001F88\n"
             "            database size: 19.2MB, database backup size: 8.2KB\n"
@@ -1664,6 +1671,9 @@ testRun(void)
             "                ts12 (12) => /tblspc/ts12\n"
             "            error list: base/16384/17000\n",
             "text - backup set requested");
+
+        // Reset timezone
+        setenv("TZ", "UTC", true);
 
         hrnCfgArgRawZ(argList2, cfgOptOutput, "json");
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
@@ -1796,7 +1806,7 @@ testRun(void)
             "        wal archive min/max (9.4): 000000010000000000000002/000000020000000000000003\n"
             "\n"
             "        full backup: 20181119-152138F\n"
-            "            timestamp start/stop: 2018-11-19 15:21:38 / 2018-11-19 15:21:39\n"
+            "            timestamp start/stop: 2018-11-19 15:21:38+00 / 2018-11-19 15:21:39+00\n"
             "            wal start/stop: 000000010000000000000002 / 000000010000000000000002\n"
             "            database size: 19.2MB, database backup size: 19.2MB\n"
             "            repo1: backup set size: 2.3MB, backup size: 2.3MB\n"
@@ -1805,13 +1815,13 @@ testRun(void)
             "        wal archive min/max (9.5): 000000010000000000000002/000000010000000000000005\n"
             "\n"
             "        full backup: 20201116-155000F\n"
-            "            timestamp start/stop: 2020-11-16 15:50:00 / 2020-11-16 15:50:02\n"
+            "            timestamp start/stop: 2020-11-16 15:50:00+00 / 2020-11-16 15:50:02+00\n"
             "            wal start/stop: 000000010000000000000002 / 000000010000000000000003\n"
             "            database size: 25.7MB, database backup size: 25.7MB\n"
             "            repo1: backup set size: 3MB, backup size: 3KB\n"
             "\n"
             "        full backup: 20201116-200000F\n"
-            "            timestamp start/stop: 2020-11-16 20:00:00 / 2020-11-16 20:00:05\n"
+            "            timestamp start/stop: 2020-11-16 20:00:00+00 / 2020-11-16 20:00:05+00\n"
             "            wal start/stop: 000000010000000000000004 / 000000010000000000000004\n"
             "            database size: 25.7MB, database backup size: 25.7MB\n"
             "            repo2: backup set size: 3MB, backup size: 3KB\n"
@@ -1826,6 +1836,9 @@ testRun(void)
         hrnCfgArgRawZ(argList2, cfgOptSet, "20201116-200000F");
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
+        // Switch to Asia/Kolkata to test - timezone offset with 30 minutes
+        setenv("TZ", "Asia/Kolkata", true);
+
         TEST_RESULT_STR_Z(
             infoRender(),
             "stanza: stanza1\n"
@@ -1838,7 +1851,7 @@ testRun(void)
             "        wal archive min/max (9.5): 000000010000000000000002/000000010000000000000005\n"
             "\n"
             "        full backup: 20201116-200000F\n"
-            "            timestamp start/stop: 2020-11-16 20:00:00 / 2020-11-16 20:00:05\n"
+            "            timestamp start/stop: 2020-11-17 01:30:00+05:30 / 2020-11-17 01:30:05+05:30\n"
             "            wal start/stop: 000000010000000000000004 / 000000010000000000000004\n"
             "            database size: 25.7MB, database backup size: 25.7MB\n"
             "            repo2: backup set size: 3MB, backup size: 3KB\n"
@@ -1851,6 +1864,9 @@ testRun(void)
             "                ts12 (12) => /tblspc/ts12\n"
             "            error list: base/16384/17000\n",
             "text - multi-repo, backup set requested, found on repo2, report stanza and db over all repos");
+
+        // Reset timezone
+        setenv("TZ", "UTC", true);
 
         hrnCfgArgRawZ(argList2, cfgOptOutput, "json");
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
@@ -2031,6 +2047,9 @@ testRun(void)
             TEST_MANIFEST_PATH_DEFAULT,
             .comment = "write manifest with checksum errors and no links");
 
+        // Switch to Pacific/Chatham to test + timezone offset with 45 minutes
+        setenv("TZ", "Pacific/Chatham", true);
+
         TEST_RESULT_STR_Z(
             infoRender(),
             "stanza: stanza1\n"
@@ -2041,7 +2060,7 @@ testRun(void)
             "        wal archive min/max (9.4): 000000010000000000000002/000000020000000000000003\n"
             "\n"
             "        incr backup: 20181119-152138F_20181119-152155I\n"
-            "            timestamp start/stop: 2018-11-19 15:21:55 / 2018-11-19 15:21:57\n"
+            "            timestamp start/stop: 2018-11-20 05:06:55+13:45 / 2018-11-20 05:06:57+13:45\n"
             "            wal start/stop: n/a\n"
             "            lsn start/stop: 285/89000028 / 285/89001F88\n"
             "            database size: 19.2MB, database backup size: 8.2KB\n"
@@ -2050,6 +2069,9 @@ testRun(void)
             "            database list: mail (16456), postgres (12173)\n"
             "            error list: base/16384/17000, base/32768/33000\n",
             "text - backup set requested, no links");
+
+        // Reset timezone
+        setenv("TZ", "UTC", true);
 
         hrnCfgArgRawZ(argList2, cfgOptOutput, "json");
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
@@ -2203,6 +2225,9 @@ testRun(void)
             TEST_MANIFEST_PATH_DEFAULT,
             .comment = " rewrite same manifest without checksum errors");
 
+        // Switch to America/St_Johns to test - timezone offset with 30 minutes
+        setenv("TZ", "America/St_Johns", true);
+
         TEST_RESULT_STR_Z(
             infoRender(),
             "stanza: stanza1\n"
@@ -2213,7 +2238,7 @@ testRun(void)
             "        wal archive min/max (9.4): 000000010000000000000002/000000020000000000000003\n"
             "\n"
             "        incr backup: 20181119-152138F_20181119-152155I\n"
-            "            timestamp start/stop: 2018-11-19 15:21:55 / 2018-11-19 15:21:57\n"
+            "            timestamp start/stop: 2018-11-19 11:51:55-03:30 / 2018-11-19 11:51:57-03:30\n"
             "            wal start/stop: n/a\n"
             "            lsn start/stop: 285/89000028 / 285/89001F88\n"
             "            database size: 19.2MB, database backup size: 8.2KB\n"
@@ -2221,6 +2246,9 @@ testRun(void)
             "            backup reference list: 20181119-152138F, 20181119-152138F_20181119-152152D\n"
             "            database list: none\n",
             "text - backup set requested, no db and no checksum error");
+
+        // Reset timezone
+        setenv("TZ", "UTC", true);
 
         hrnCfgArgRawZ(argList2, cfgOptOutput, "json");
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
@@ -2356,7 +2384,7 @@ testRun(void)
             "        wal archive min/max (9.5): 000000010000000000000002/000000010000000000000005\n"
             "\n"
             "        incr backup: 20201116-155000F_20201119-152100I\n"
-            "            timestamp start/stop: 2020-11-19 15:21:00 / 2020-11-19 15:21:03\n"
+            "            timestamp start/stop: 2020-11-19 15:21:00+00 / 2020-11-19 15:21:03+00\n"
             "            wal start/stop: 000000010000000000000005 / 000000010000000000000005\n"
             "            database size: 19.2MB, database backup size: 8.2KB\n"
             "            repo1: backup size: 346B\n"
@@ -2488,20 +2516,20 @@ testRun(void)
             "        wal archive min/max (9.4): 000000010000000000000002/000000020000000000000003\n"
             "\n"
             "        full backup: 20181119-152138F\n"
-            "            timestamp start/stop: 2018-11-19 15:21:38 / 2018-11-19 15:21:39\n"
+            "            timestamp start/stop: 2018-11-19 15:21:38+00 / 2018-11-19 15:21:39+00\n"
             "            wal start/stop: 000000010000000000000002 / 000000010000000000000002\n"
             "            database size: 19.2MB, database backup size: 19.2MB\n"
             "            repo1: backup set size: 2.3MB, backup size: 2.3MB\n"
             "\n"
             "        diff backup: 20181119-152138F_20181119-152152D\n"
-            "            timestamp start/stop: 2018-11-19 15:21:52 / 2018-11-19 15:21:55\n"
+            "            timestamp start/stop: 2018-11-19 15:21:52+00 / 2018-11-19 15:21:55+00\n"
             "            wal start/stop: 000000010000000000000003 / 000000020000000000000003\n"
             "            database size: 19.2MB, database backup size: 8.2KB\n"
             "            repo1: backup set size: 2.3MB, backup size: 346B\n"
             "            backup reference list: 20181119-152138F\n"
             "\n"
             "        incr backup: 20181119-152138F_20181119-152155I\n"
-            "            timestamp start/stop: 2018-11-19 15:21:55 / 2018-11-19 15:21:57\n"
+            "            timestamp start/stop: 2018-11-19 15:21:55+00 / 2018-11-19 15:21:57+00\n"
             "            wal start/stop: n/a\n"
             "            database size: 19.2MB, database backup size: 8.2KB\n"
             "            repo1: backup set size: 2.3MB, backup size: 346B\n"
@@ -2511,13 +2539,13 @@ testRun(void)
             "        wal archive min/max (9.5): 000000010000000000000002/000000010000000000000005\n"
             "\n"
             "        full backup: 20201116-155000F\n"
-            "            timestamp start/stop: 2020-11-16 15:50:00 / 2020-11-16 15:50:02\n"
+            "            timestamp start/stop: 2020-11-16 15:50:00+00 / 2020-11-16 15:50:02+00\n"
             "            wal start/stop: 000000010000000000000002 / 000000010000000000000003\n"
             "            database size: 25.7MB, database backup size: 25.7MB\n"
             "            repo1: backup set size: 3MB, backup size: 3KB\n"
             "\n"
             "        incr backup: 20201116-155000F_20201119-152100I\n"
-            "            timestamp start/stop: 2020-11-19 15:21:00 / 2020-11-19 15:21:03\n"
+            "            timestamp start/stop: 2020-11-19 15:21:00+00 / 2020-11-19 15:21:03+00\n"
             "            wal start/stop: 000000010000000000000005 / 000000010000000000000005\n"
             "            database size: 19.2MB, database backup size: 8.2KB\n"
             "            repo1: backup size: 346B\n"
@@ -2545,20 +2573,20 @@ testRun(void)
             "        wal archive min/max (9.4): none present\n"
             "\n"
             "        full backup: 20181119-152138F\n"
-            "            timestamp start/stop: 2018-11-19 15:21:38 / 2018-11-19 15:21:39\n"
+            "            timestamp start/stop: 2018-11-19 15:21:38+00 / 2018-11-19 15:21:39+00\n"
             "            wal start/stop: 000000010000000000000002 / 000000010000000000000002\n"
             "            database size: 19.2MB, database backup size: 19.2MB\n"
             "            repo1: backup set size: 2.3MB, backup size: 2.3MB\n"
             "\n"
             "        diff backup: 20181119-152138F_20181119-152152D\n"
-            "            timestamp start/stop: 2018-11-19 15:21:52 / 2018-11-19 15:21:55\n"
+            "            timestamp start/stop: 2018-11-19 15:21:52+00 / 2018-11-19 15:21:55+00\n"
             "            wal start/stop: 000000010000000000000003 / 000000020000000000000003\n"
             "            database size: 19.2MB, database backup size: 8.2KB\n"
             "            repo1: backup set size: 2.3MB, backup size: 346B\n"
             "            backup reference list: 20181119-152138F\n"
             "\n"
             "        incr backup: 20181119-152138F_20181119-152155I\n"
-            "            timestamp start/stop: 2018-11-19 15:21:55 / 2018-11-19 15:21:57\n"
+            "            timestamp start/stop: 2018-11-19 15:21:55+00 / 2018-11-19 15:21:57+00\n"
             "            wal start/stop: n/a\n"
             "            database size: 19.2MB, database backup size: 8.2KB\n"
             "            repo1: backup set size: 2.3MB, backup size: 346B\n"
@@ -2568,13 +2596,13 @@ testRun(void)
             "        wal archive min/max (9.5): 000000010000000000000002/000000010000000000000005\n"
             "\n"
             "        full backup: 20201116-155000F\n"
-            "            timestamp start/stop: 2020-11-16 15:50:00 / 2020-11-16 15:50:02\n"
+            "            timestamp start/stop: 2020-11-16 15:50:00+00 / 2020-11-16 15:50:02+00\n"
             "            wal start/stop: 000000010000000000000002 / 000000010000000000000003\n"
             "            database size: 25.7MB, database backup size: 25.7MB\n"
             "            repo1: backup set size: 3MB, backup size: 3KB\n"
             "\n"
             "        incr backup: 20201116-155000F_20201119-152100I\n"
-            "            timestamp start/stop: 2020-11-19 15:21:00 / 2020-11-19 15:21:03\n"
+            "            timestamp start/stop: 2020-11-19 15:21:00+00 / 2020-11-19 15:21:03+00\n"
             "            wal start/stop: 000000010000000000000005 / 000000010000000000000005\n"
             "            database size: 19.2MB, database backup size: 8.2KB\n"
             "            repo1: backup size: 346B\n"
@@ -2691,7 +2719,7 @@ testRun(void)
             "20210112-192538F={\"backrest-format\":5,\"backrest-version\":\"2.25\","
             "\"backup-archive-start\":\"000000010000000000000006\",\"backup-archive-stop\":\"000000010000000000000006\","
             "\"backup-info-repo-size\":3159000,\"backup-info-repo-size-delta\":3100,\"backup-info-size\":26897000,"
-            "\"backup-info-size-delta\":26897020,\"backup-timestamp-start\":1610479538,\"backup-timestamp-stop\":1610479540,"
+            "\"backup-info-size-delta\":26897020,\"backup-timestamp-start\":1687010984,\"backup-timestamp-stop\":1687011000,"
             "\"backup-type\":\"full\",\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":true,"
             "\"option-backup-standby\":true,\"option-checksum-page\":false,\"option-compress\":false,\"option-hardlink\":true,"
             "\"option-online\":true}\n"
@@ -2714,6 +2742,9 @@ testRun(void)
             storageRepoIdxWrite(0), STORAGE_REPO_ARCHIVE
             "/9.5-2/0000000100000000/000000010000000000000006-47dff2b7552a9d66e4bae1a762488a6885e7082c.gz");
 
+        // Switch to America/New_York to test + timezone offset without minutes
+        setenv("TZ", "America/New_York", true);
+
         TEST_RESULT_STR_Z(
             infoRender(),
             "stanza: stanza3\n"
@@ -2728,13 +2759,13 @@ testRun(void)
             "        wal archive min/max (9.4): 000000010000000000000001/000000010000000000000003\n"
             "\n"
             "        full backup: 20201110-100000F\n"
-            "            timestamp start/stop: 2020-11-10 10:00:00 / 2020-11-10 10:00:02\n"
+            "            timestamp start/stop: 2020-11-10 05:00:00-05 / 2020-11-10 05:00:02-05\n"
             "            wal start/stop: 000000010000000000000001 / 000000010000000000000002\n"
             "            database size: 25.7MB, database backup size: 25.7MB\n"
             "            repo2: backup set size: 3MB, backup size: 3KB\n"
             "\n"
             "        full backup: 20201212-192538F\n"
-            "            timestamp start/stop: 2020-12-12 19:25:38 / 2020-12-12 19:25:40\n"
+            "            timestamp start/stop: 2020-12-12 14:25:38-05 / 2020-12-12 14:25:40-05\n"
             "            wal start/stop: 000000010000000000000002 / 000000010000000000000003\n"
             "            database size: 25.7MB, database backup size: 25.7MB\n"
             "            repo1: backup set size: 3MB, backup size: 3KB\n"
@@ -2743,11 +2774,14 @@ testRun(void)
             "        wal archive min/max (9.5): 000000010000000000000006/000000010000000000000006\n"
             "\n"
             "        full backup: 20210112-192538F\n"
-            "            timestamp start/stop: 2021-01-12 19:25:38 / 2021-01-12 19:25:40\n"
+            "            timestamp start/stop: 2023-06-17 10:09:44-04 / 2023-06-17 10:10:00-04\n"
             "            wal start/stop: 000000010000000000000006 / 000000010000000000000006\n"
             "            database size: 25.7MB, database backup size: 25.7MB\n"
             "            repo1: backup set size: 3MB, backup size: 3KB\n",
             "text - multi-repo, database mismatch, repo2 stanza-upgrade needed");
+
+        // Reset timezone
+        setenv("TZ", "UTC", true);
 
         hrnCfgArgRawZ(argList2, cfgOptOutput, "json");
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
@@ -2872,8 +2906,8 @@ testRun(void)
                             "\"prior\":null,"
                             "\"reference\":null,"
                             "\"timestamp\":{"
-                                "\"start\":1610479538,"
-                                "\"stop\":1610479540"
+                                "\"start\":1687010984,"
+                                "\"stop\":1687011000"
                             "},"
                             "\"type\":\"full\""
                         "}"
@@ -2997,7 +3031,7 @@ testRun(void)
             "        wal archive min/max (9.4): 000000010000000000000001/000000010000000000000002\n"
             "\n"
             "        full backup: 20201110-100000F\n"
-            "            timestamp start/stop: 2020-11-10 10:00:00 / 2020-11-10 10:00:02\n"
+            "            timestamp start/stop: 2020-11-10 10:00:00+00 / 2020-11-10 10:00:02+00\n"
             "            wal start/stop: 000000010000000000000001 / 000000010000000000000002\n"
             "            database size: 25.7MB, database backup size: 25.7MB\n"
             "            repo2: backup set size: 3MB, backup size: 3KB\n",
@@ -3172,7 +3206,7 @@ testRun(void)
             "        wal archive min/max (9.5): 000000010000000000000001/000000010000000000000002\n"
             "\n"
             "        full backup: 20201116-155010F\n"
-            "            timestamp start/stop: 2020-11-16 15:50:10 / 2020-11-16 15:50:12\n"
+            "            timestamp start/stop: 2020-11-16 15:50:10+00 / 2020-11-16 15:50:12+00\n"
             "            wal start/stop: 000000010000000000000001 / 000000010000000000000002\n"
             "            database size: 25.7MB, database backup size: 25.7MB\n"
             "            repo2: backup set size: 3MB, backup size: 3KB\n"
@@ -3181,7 +3215,7 @@ testRun(void)
             "        wal archive min/max (9.4): 000000010000000000000002/000000010000000000000003\n"
             "\n"
             "        full backup: 20201116-155000F\n"
-            "            timestamp start/stop: 2020-11-16 15:50:00 / 2020-11-16 15:50:02\n"
+            "            timestamp start/stop: 2020-11-16 15:50:00+00 / 2020-11-16 15:50:02+00\n"
             "            wal start/stop: 000000010000000000000002 / 000000010000000000000003\n"
             "            database size: 25.7MB, database backup size: 25.7MB\n"
             "            repo1: backup set size: 3MB, backup size: 3KB\n",
@@ -3237,7 +3271,7 @@ testRun(void)
             "        wal archive min/max (9.4): none present\n"
             "\n"
             "        full backup: 20201116-155010F\n"
-            "            timestamp start/stop: 2020-11-16 15:50:10 / 2020-11-16 15:50:12\n"
+            "            timestamp start/stop: 2020-11-16 15:50:10+00 / 2020-11-16 15:50:12+00\n"
             "            wal start/stop: 000000010000000000000001 / 000000010000000000000002\n"
             "            database size: 25.7MB, database backup size: 25.7MB\n"
             "            repo2: backup set size: 3MB, backup size: 3KB\n"
@@ -3246,7 +3280,7 @@ testRun(void)
             "        wal archive min/max (9.4): 000000010000000000000002/000000010000000000000003\n"
             "\n"
             "        full backup: 20201116-155000F\n"
-            "            timestamp start/stop: 2020-11-16 15:50:00 / 2020-11-16 15:50:02\n"
+            "            timestamp start/stop: 2020-11-16 15:50:00+00 / 2020-11-16 15:50:02+00\n"
             "            wal start/stop: 000000010000000000000002 / 000000010000000000000003\n"
             "            database size: 25.7MB, database backup size: 25.7MB\n"
             "            repo1: backup set size: 3MB, backup size: 3KB\n",

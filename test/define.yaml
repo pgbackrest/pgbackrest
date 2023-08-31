@@ -420,11 +420,10 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: lock
         total: 3
-        harness: config
         harness:
-          name: storageHelper
+          name: config
           shim:
-            storage/helper: ~
+            config/load: ~
         harness:
           name: lock
           shim:
@@ -608,6 +607,12 @@ unit:
       - name: sftp
         total: 20
         harness: libSsh2
+        harness:
+          name: fd
+          shim:
+            common/io/fd:
+              function:
+                - fdReady
 
         coverage:
           - storage/sftp/helper
@@ -826,7 +831,6 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: check
         total: 3
-        containerReq: true
 
         coverage:
           - command/check/common

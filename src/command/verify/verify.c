@@ -975,29 +975,23 @@ verifyBackup(VerifyJobData *const jobData)
                         if (fileBackupLabel != NULL)
                         {
                             // Set up the job
-                            ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_VERIFY_FILE);
+                            ProtocolCommand *command = protocolCommandNewP(PROTOCOL_COMMAND_VERIFY_FILE);
                             PackWrite *const param = protocolCommandParamP(command);
+                            const String *const filePathName = backupFileRepoPathP(
+                                fileBackupLabel, .manifestName = fileData.name, .bundleId = fileData.bundleId,
+                                .compressType = manifestData(jobData->manifest)->backupOptionCompressType,
+                                .blockIncr = fileData.blockIncrMapSize != 0);
 
-                            const String *const filePathName = strNewFmt(
-                                STORAGE_REPO_BACKUP "/%s/%s%s", strZ(fileBackupLabel), strZ(fileData.name),
-                                strZ(compressExtStr((manifestData(jobData->manifest))->backupOptionCompressType)));
+                            pckWriteStrP(param, filePathName);
 
                             if (fileData.bundleId != 0)
                             {
-                                pckWriteStrP(
-                                    param,
-                                    strNewFmt(
-                                        STORAGE_REPO_BACKUP "/%s/" MANIFEST_PATH_BUNDLE "/%" PRIu64, strZ(fileBackupLabel),
-                                        fileData.bundleId));
                                 pckWriteBoolP(param, true);
                                 pckWriteU64P(param, fileData.bundleOffset);
                                 pckWriteU64P(param, fileData.sizeRepo);
                             }
                             else
-                            {
-                                pckWriteStrP(param, filePathName);
                                 pckWriteBoolP(param, false);
-                            }
 
                             // Use the repo checksum when present
                             if (fileData.checksumRepoSha1 != NULL)
