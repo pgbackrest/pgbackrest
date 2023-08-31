@@ -16,6 +16,20 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.48dev" title="Under Development">
             <release-core-list>
+                <release-feature-list>
+                    <release-item>
+                        <github-issue id="2007"/>
+                        <github-pull-request id="2141"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="stefan.fercot"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add backup size completed/total to <cmd>info</cmd> command <proper>JSON</proper> output.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-improvement-list>
                     <release-item>
                         <github-pull-request id="2057"/>
