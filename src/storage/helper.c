@@ -12,8 +12,13 @@ Storage Helper
 #include "config/config.h"
 #include "protocol/helper.h"
 #include "storage/helper.h"
+#include "storage/azure/storage.h"
+#include "storage/cifs/storage.h"
+#include "storage/gcs/storage.h"
 #include "storage/posix/storage.h"
 #include "storage/remote/storage.h"
+#include "storage/s3/storage.h"
+#include "storage/sftp/storage.h"
 
 /***********************************************************************************************************************************
 Storage path constants
@@ -579,6 +584,51 @@ storageHelperFree(void)
         memContextFree(storageHelper.memContext);
 
     storageHelper = (struct StorageHelperLocal){.memContext = NULL, .helperList = storageHelper.helperList};
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Struct array <optionalStorageRepoType> and function <optionalStorageRepoTypePresent(RepoType type)> to indicate whether an optional
+repo storage type is available.
+***********************************************************************************************************************************/
+static const struct OptionalStorageRepoType
+{
+    StringId storageRepoTypeId;                                     // Storage repo type
+    bool exists;                                                    // Is this optional storage type available
+} optionalStorageRepoType[] =
+{
+    {
+        .storageRepoTypeId = STRID5("test", 0xa4cb40),
+        .exists = true,
+    },
+    {
+        .storageRepoTypeId = STRID5("bogus", 0x13a9de20),
+    },
+    {
+        .storageRepoTypeId = STORAGE_SFTP_TYPE,
+#ifdef HAVE_LIBSSH2
+        .exists = true,
+#endif // HAVE_LIBSSH2
+    },
+};
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+optionalStorageRepoTypePresent(RepoType type)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, type);
+    FUNCTION_TEST_END();
+
+    ASSERT(type < LENGTH_OF(optionalStorageRepoType));
+
+    if (optionalStorageRepoType[type].exists != true)
+    {
+        THROW_FMT(
+            OptionInvalidValueError, PROJECT_NAME " not built with %s support",
+            strZ(strIdToStr(optionalStorageRepoType[type].storageRepoTypeId)));
+    }
 
     FUNCTION_TEST_RETURN_VOID();
 }
