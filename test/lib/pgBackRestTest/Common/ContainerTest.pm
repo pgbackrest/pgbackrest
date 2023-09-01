@@ -617,6 +617,12 @@ sub containerBuild
                     "    echo 'PubkeyAcceptedAlgorithms=+ssh-rsa,ssh-rsa-cert-v01\@openssh.com' >> /etc/ssh/sshd_config";
             }
 
+            # Rename existing group that would conflict with our group name. This is pretty hacky but should be OK since we are the
+            # only thing running in the container.
+            $strScript .= sectionHeader() .
+                "# Rename conflicting group\n" .
+                '    sed -i s/.*\:x\:' . TEST_GROUP_ID . '\:$/' . TEST_GROUP . '\:x\:' . TEST_GROUP_ID . "\:/ /etc/group";
+
             $strScript .= sectionHeader() .
                 "# Create test user\n" .
                 '    ' . groupCreate($strOS, TEST_GROUP, TEST_GROUP_ID) . " && \\\n" .

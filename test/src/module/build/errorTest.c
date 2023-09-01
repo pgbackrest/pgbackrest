@@ -97,7 +97,7 @@ testRun(void)
             COMMENT_BLOCK_BEGIN "\n"
             "Error type array\n"
             COMMENT_BLOCK_END "\n"
-            "static const ErrorType *errorTypeList[] =\n"
+            "static const ErrorType *const errorTypeList[] =\n"
             "{\n"
             "    &AssertError,\n"
             "    &OptionInvalidError,\n"
