@@ -43,6 +43,17 @@
                     </release-item>
 
                     <release-item>
+                        <github-pull-request id="2162"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve <proper>GCS</proper> multi-part performance.</p>
+                    </release-item>
+
+                    <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
                             <release-item-reviewer id="tom.swartz"/>
