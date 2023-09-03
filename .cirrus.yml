@@ -11,7 +11,7 @@ auto_cancellation: $CIRRUS_BRANCH != 'integration'
 # ----------------------------------------------------------------------------------------------------------------------------------
 arm64_task:
   arm_container:
-    image: ubuntu:22.04
+    image: ubuntu:20.04
     cpu: 4
     memory: 2G
 
