@@ -99,8 +99,8 @@ FN_EXTERN String *walPath(const String *walFile, const String *pgPath, const Str
 // thing.
 typedef struct WalSegmentFind WalSegmentFind;
 
-FN_EXTERN WalSegmentFind *walSegmentFindNew(const Storage *storage, const String *archiveId);
-FN_EXTERN String *walSegmentFind(WalSegmentFind *this, const String *walSegment, TimeMSec timeout);
+FN_EXTERN WalSegmentFind *walSegmentFindNew(const Storage *storage, const String *archiveId, unsigned int total, TimeMSec timeout);
+FN_EXTERN String *walSegmentFind(WalSegmentFind *this, const String *walSegment);
 
 FN_EXTERN String *walSegmentFindOne(const Storage *storage, const String *archiveId, const String *walSegment, TimeMSec timeout);
 
