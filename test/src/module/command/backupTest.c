@@ -3856,7 +3856,7 @@ testRun(void)
             HRN_STORAGE_PUT(storagePgWrite(), "grow-to-block-incr", file, .timeModified = backupTimeStart);
 
             // Run backup
-            hrnBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 1000);
+            hrnBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 100000);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
@@ -3869,10 +3869,10 @@ testRun(void)
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/24575, 16KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/40989, 2B, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
-                "P00   INFO: backup stop archive = 0000000105DBF060000003E7, lsn = 5dbf060/7cf00000\n"
+                "P00   INFO: backup stop archive = 0000000105DBF0900000069F, lsn = 5dbf090/d3f00000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
                 "P00 DETAIL: wrote 'tablespace_map' file returned from backup stop function\n"
-                "P00   INFO: check archive for segment(s) 0000000105DBF06000000000:0000000105DBF060000003E7\n"
+                "P00   INFO: check archive for segment(s) 0000000105DBF06000000000:0000000105DBF0900000069F\n"
                 "P00   INFO: new backup label = 20191103-165320F\n"
                 "P00   INFO: full backup size = [SIZE], file total = 7");
 
