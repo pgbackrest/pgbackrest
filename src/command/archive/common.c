@@ -468,16 +468,22 @@ walSegmentFind(WalSegmentFind *const this, const String *const walSegment)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         Wait *const wait = waitNew(this->timeout);
-        const String *const prefix = strSubN(walSegment, 0, 24);
+        const String *const prefix = strSubN(walSegment, 0, 16);
+        const String *const path = strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(this->archiveId), strZ(prefix));
         const String *const expression = strNewFmt(
-            "^%s%s-[0-f]{40}" COMPRESS_TYPE_REGEXP "{0,1}$", strZ(prefix), walIsPartial(walSegment) ? WAL_SEGMENT_PARTIAL_EXT : "");
+            "^%s%s-[0-f]{40}" COMPRESS_TYPE_REGEXP "{0,1}$", strZ(strSubN(walSegment, 0, 24)),
+            walIsPartial(walSegment) ? WAL_SEGMENT_PARTIAL_EXT : "");
         RegExp *regExp = NULL;
 
         do
         {
+            // fprintf(stdout, "!!!SEARCHING\n");fflush(stdout);
+
             // Get a list of all WAL segments that match
             if (this->list == NULL || !strEq(prefix, this->prefix))
             {
+                // fprintf(stdout, "!!!BUILDING LIST\n");fflush(stdout);
+
                 MEM_CONTEXT_OBJ_BEGIN(this)
                 {
                     if (!strEq(prefix, this->prefix))
@@ -489,11 +495,7 @@ walSegmentFind(WalSegmentFind *const this, const String *const walSegment)
                     strLstFree(this->list);
 
                     this->list = strLstSort(
-                        storageListP(
-                            this->storage,
-                            strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(this->archiveId), strZ(strSubN(walSegment, 0, 16))),
-                            .expression = this->total == 1 ? expression : NULL),
-                        sortOrderAsc);
+                        storageListP(this->storage, path, .expression = this->total == 1 ? expression : NULL), sortOrderAsc);
                 }
                 MEM_CONTEXT_OBJ_END();
             }
@@ -508,24 +510,35 @@ walSegmentFind(WalSegmentFind *const this, const String *const walSegment)
                     if (regExp == NULL)
                         regExp = regExpNew(expression);
 
+                    // fprintf(stdout, "!!!REMOVE NON-MATCHES %s\n", strZ(strLstJoin(this->list, ", ")));fflush(stdout);
+
                     // Remove list items that do not match. This prevents us from having check them again on the next find
-                    while (!strLstEmpty(this->list) && regExpMatch(regExp, strLstGet(this->list, 0)))
+                    while (!strLstEmpty(this->list) && !regExpMatch(regExp, strLstGet(this->list, 0)))
                         strLstRemoveIdx(this->list, 0);
+
+                    // fprintf(stdout, "!!!REMOVED NON-MATCHES %s\n", strZ(strLstJoin(this->list, ", ")));fflush(stdout);
 
                     // Find matches at the beginning of the remaining list
                     match = 0;
 
-                    while (!strLstEmpty(this->list) && regExpMatch(regExp, strLstGet(this->list, match)))
+                    while (match < strLstSize(this->list) && regExpMatch(regExp, strLstGet(this->list, match)))
                         match++;
+
+                    // fprintf(stdout, "!!!MATCHES %u\n", match);fflush(stdout);
                 }
 
                 // Error if there is more than one match
                 if (match > 1)
                 {
+                    // Build list of duplicate WAL
                     StringList *const matchList = strLstNew();
 
                     for (unsigned int matchIdx = 0; matchIdx < match; matchIdx++)
                         strLstAdd(matchList, strLstGet(this->list, matchIdx));
+
+                    // Clear list for next find
+                    strLstFree(this->list);
+                    this->list = NULL;
 
                     THROW_FMT(
                         ArchiveDuplicateError,
@@ -543,12 +556,16 @@ walSegmentFind(WalSegmentFind *const this, const String *const walSegment)
                     }
                     MEM_CONTEXT_PRIOR_END();
                 }
-                // Else clear list for next find
-                else
-                {
-                    strLstFree(this->list);
-                    this->list = NULL;
-                }
+            }
+
+            // Clear list for next find
+            // fprintf(stdout, "!!!TOTAL %u\n", this->total);fflush(stdout);
+
+            if (this->total == 1 || strLstEmpty(this->list))
+            {
+                // fprintf(stdout, "!!!FREE LIST\n");fflush(stdout);
+                strLstFree(this->list);
+                this->list = NULL;
             }
         }
         while (result == NULL && waitMore(wait));

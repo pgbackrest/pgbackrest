@@ -288,12 +288,56 @@ testRun(void)
             ", 123456781234567812345678-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.gz\n"
             "HINT: are multiple primaries archiving to this stanza?");
 
+        HRN_STORAGE_REMOVE(
+            storageTest, "archive/db/9.6-2/1234567812345678/123456781234567812345678-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.gz");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("partial not found");
 
         TEST_RESULT_STR(
             walSegmentFindOne(storageRepo(), STRDEF("9.6-2"), STRDEF("123456781234567812345678.partial"), 0), NULL,
             "did not find partial segment");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("cached results");
+
+        HRN_STORAGE_PUT_EMPTY(
+            storageTest, "archive/db/9.6-2/1234567812345678/123456781234567812345679-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.gz");
+        HRN_STORAGE_PUT_EMPTY(
+            storageTest, "archive/db/9.6-2/1234567812345678/12345678123456781234567A-cccccccccccccccccccccccccccccccccccccccc.gz");
+
+        WalSegmentFind *find;
+        TEST_ASSIGN(find, walSegmentFindNew(storageRepo(), STRDEF("9.6-2"), 3, 500), "new find");
+        TEST_RESULT_STR_Z(
+            walSegmentFind(find, STRDEF("123456781234567812345678")),
+            "123456781234567812345678-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "find");
+        TEST_RESULT_STRLST_Z(
+            find->list,
+            "123456781234567812345678-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+            "123456781234567812345679-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.gz\n"
+            "12345678123456781234567A-cccccccccccccccccccccccccccccccccccccccc.gz\n",
+            "list contents");
+
+        // Write this now to verify that it is not visible immediately since the list should be reused in the next test
+        HRN_STORAGE_PUT_EMPTY(
+            storageTest, "archive/db/9.6-2/1234567812345678/12345678123456781234567B-dddddddddddddddddddddddddddddddddddddddd.lz4");
+
+        TEST_RESULT_STR_Z(
+            walSegmentFind(find, STRDEF("123456781234567812345679")),
+            "123456781234567812345679-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.gz", "find");
+        TEST_RESULT_STRLST_Z(
+            find->list,
+            "123456781234567812345679-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.gz\n"
+            "12345678123456781234567A-cccccccccccccccccccccccccccccccccccccccc.gz\n",
+            "list contents");
+
+        TEST_RESULT_STR_Z(
+            walSegmentFind(find, STRDEF("12345678123456781234567B")),
+            "12345678123456781234567B-dddddddddddddddddddddddddddddddddddddddd.lz4", "find");
+        TEST_RESULT_STRLST_Z(
+            find->list,
+            "12345678123456781234567B-dddddddddddddddddddddddddddddddddddddddd.lz4\n",
+            "list contents");
     }
 
     // *****************************************************************************************************************************
