@@ -4,6 +4,7 @@ Archive Push File
 #include "build.auto.h"
 
 #include "command/archive/common.h"
+#include "command/archive/find.h"
 #include "command/archive/push/file.h"
 #include "command/control/common.h"
 #include "common/crypto/cipherBlock.h"

@@ -3,7 +3,7 @@ Check Command
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include "command/archive/common.h"
+#include "command/archive/find.h"
 #include "command/check/check.h"
 #include "command/check/common.h"
 #include "common/debug.h"

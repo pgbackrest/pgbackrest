@@ -8,7 +8,7 @@ Backup Command
 #include <time.h>
 #include <unistd.h>
 
-#include "command/archive/common.h"
+#include "command/archive/find.h"
 #include "command/backup/backup.h"
 #include "command/backup/common.h"
 #include "command/backup/file.h"
