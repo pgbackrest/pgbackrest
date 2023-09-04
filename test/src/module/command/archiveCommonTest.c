@@ -353,6 +353,18 @@ testRun(void)
             walSegmentFind(find, STRDEF("123456781234567912345679")),
             "123456781234567912345679-dddddddddddddddddddddddddddddddddddddddd.zst", "find");
         TEST_RESULT_STRLST_Z(find->list == NULL ? strLstNew() : find->list, NULL, "list contents");
+
+        // Error on duplicate WAL
+        HRN_STORAGE_PUT_EMPTY(
+            storageTest, "archive/db/9.6-2/1234567812345679/123456781234567912345679-eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee.gz");
+
+        TEST_ERROR(
+            walSegmentFind(find, STRDEF("123456781234567912345679")),
+            ArchiveDuplicateError,
+            "duplicates found in archive for WAL segment 123456781234567912345679:"
+            " 123456781234567912345679-dddddddddddddddddddddddddddddddddddddddd.zst"
+            ", 123456781234567912345679-eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee.gz\n"
+            "HINT: are multiple primaries archiving to this stanza?");
     }
 
     // *****************************************************************************************************************************

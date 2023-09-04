@@ -17,7 +17,7 @@ Object type
 ***********************************************************************************************************************************/
 struct WalSegmentFind
 {
-    const Storage *storage;                                         // Storage
+    const Storage *storage;                                         // Storage to find WAL in
     const String *archiveId;                                        // Archive id to find segments in
     bool single;                                                    // Optimize for a single segment?
     TimeMSec timeout;                                               // Timeout for each segment
@@ -88,19 +88,22 @@ walSegmentFind(WalSegmentFind *const this, const String *const walSegment)
 
         do
         {
-            // Get a list of all WAL segments that match
+            // Get a list of all WAL segments that match the directory (and prefix when finding a single WAL)
             if (this->list == NULL || !strEq(prefix, this->prefix))
             {
                 MEM_CONTEXT_OBJ_BEGIN(this)
                 {
+                    // Free and store prefix
                     if (!strEq(prefix, this->prefix))
                     {
                         strFree(this->prefix);
                         this->prefix = strDup(prefix);
                     }
 
+                    // Free list
                     strLstFree(this->list);
 
+                    // Get list
                     this->list = strLstSort(
                         storageListP(this->storage, path, .expression = this->single ? expression : NULL), sortOrderAsc);
                 }
@@ -110,10 +113,13 @@ walSegmentFind(WalSegmentFind *const this, const String *const walSegment)
             // If there are results
             if (!strLstEmpty(this->list))
             {
+                // By default the match size is the list size since filtering happened above. When not finding a single WAL then
+                // non-matching entries before the matching WAL will need to be removed and then the matching WAL counted.
                 unsigned int match = strLstSize(this->list);
 
                 if (!this->single)
                 {
+                    // Build regexp if not yet built
                     if (regExp == NULL)
                         regExp = regExpNew(expression);
 
@@ -158,9 +164,11 @@ walSegmentFind(WalSegmentFind *const this, const String *const walSegment)
                     MEM_CONTEXT_PRIOR_END();
                 }
 
-                // Remove matching entries so list will get cleared when empty
+                // Remove matching entries so list will be reloaded when empty
                 if (!this->single)
                 {
+                    ASSERT(regExp != NULL);
+
                     while (!strLstEmpty(this->list) && regExpMatch(regExp, strLstGet(this->list, 0)))
                         strLstRemoveIdx(this->list, 0);
                 }
@@ -177,6 +185,7 @@ walSegmentFind(WalSegmentFind *const this, const String *const walSegment)
     }
     MEM_CONTEXT_TEMP_END();
 
+    // Error if segment not found before timeout
     if (result == NULL && this->timeout != 0)
     {
         THROW_FMT(
