@@ -309,15 +309,14 @@ testRun(void)
             storageTest, "archive/db/9.6-2/1234567812345678/12345678123456781234567A-cccccccccccccccccccccccccccccccccccccccc.gz");
 
         WalSegmentFind *find;
-        TEST_ASSIGN(find, walSegmentFindNew(storageRepo(), STRDEF("9.6-2"), 3, 500), "new find");
+        TEST_ASSIGN(find, walSegmentFindNew(storageRepo(), STRDEF("9.6-2"), false, 500), "new find");
 
         // First find will build the list
         TEST_RESULT_STR_Z(
             walSegmentFind(find, STRDEF("123456781234567812345678")),
             "123456781234567812345678-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "find");
         TEST_RESULT_STRLST_Z(
-            find->list,
-            "123456781234567812345678-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+            find->list == NULL ? strLstNew() : find->list,
             "123456781234567812345679-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.gz\n"
             "12345678123456781234567A-cccccccccccccccccccccccccccccccccccccccc.gz\n",
             "list contents");
@@ -325,14 +324,15 @@ testRun(void)
         // Write this now to verify that it is not visible immediately since the list should be reused in the next test
         HRN_STORAGE_PUT_EMPTY(
             storageTest, "archive/db/9.6-2/1234567812345678/12345678123456781234567B-dddddddddddddddddddddddddddddddddddddddd.lz4");
+        HRN_STORAGE_PUT_EMPTY(
+            storageTest, "archive/db/9.6-2/1234567812345678/12345678123456781234567C-dddddddddddddddddddddddddddddddddddddddd.lz4");
 
         // List is reused from prior call -- we know this because 12345678123456781234567B has not appeared
         TEST_RESULT_STR_Z(
             walSegmentFind(find, STRDEF("123456781234567812345679")),
             "123456781234567812345679-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.gz", "find");
         TEST_RESULT_STRLST_Z(
-            find->list,
-            "123456781234567812345679-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.gz\n"
+            find->list == NULL ? strLstNew() : find->list,
             "12345678123456781234567A-cccccccccccccccccccccccccccccccccccccccc.gz\n",
             "list contents");
 
@@ -341,8 +341,8 @@ testRun(void)
             walSegmentFind(find, STRDEF("12345678123456781234567B")),
             "12345678123456781234567B-dddddddddddddddddddddddddddddddddddddddd.lz4", "find");
         TEST_RESULT_STRLST_Z(
-            find->list,
-            "12345678123456781234567B-dddddddddddddddddddddddddddddddddddddddd.lz4\n",
+            find->list == NULL ? strLstNew() : find->list,
+            "12345678123456781234567C-dddddddddddddddddddddddddddddddddddddddd.lz4\n",
             "list contents");
 
         // Force load by finding WAL with a difference prefix
@@ -352,10 +352,7 @@ testRun(void)
         TEST_RESULT_STR_Z(
             walSegmentFind(find, STRDEF("123456781234567912345679")),
             "123456781234567912345679-dddddddddddddddddddddddddddddddddddddddd.zst", "find");
-        TEST_RESULT_STRLST_Z(
-            find->list,
-            "123456781234567912345679-dddddddddddddddddddddddddddddddddddddddd.zst\n",
-            "list contents");
+        TEST_RESULT_STRLST_Z(find->list == NULL ? strLstNew() : find->list, NULL, "list contents");
     }
 
     // *****************************************************************************************************************************

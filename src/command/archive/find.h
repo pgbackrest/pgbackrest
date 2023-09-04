@@ -17,7 +17,7 @@ typedef struct WalSegmentFind WalSegmentFind;
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN WalSegmentFind *walSegmentFindNew(const Storage *storage, const String *archiveId, unsigned int total, TimeMSec timeout);
+FN_EXTERN WalSegmentFind *walSegmentFindNew(const Storage *storage, const String *archiveId, bool single, TimeMSec timeout);
 
 /***********************************************************************************************************************************
 Functions

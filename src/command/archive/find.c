@@ -19,7 +19,7 @@ struct WalSegmentFind
 {
     const Storage *storage;                                         // Storage
     const String *archiveId;                                        // Archive id to find segments in
-    unsigned int total;                                             // Total segments to find
+    bool single;                                                    // Optimize for a single segment?
     TimeMSec timeout;                                               // Timeout for each segment
     String *prefix;                                                 // Current list prefix
     StringList *list;                                               // List of found segments
@@ -35,12 +35,12 @@ Macros for function logging
 
 /**********************************************************************************************************************************/
 FN_EXTERN WalSegmentFind *
-walSegmentFindNew(const Storage *const storage, const String *const archiveId, const unsigned int total, const TimeMSec timeout)
+walSegmentFindNew(const Storage *const storage, const String *const archiveId, const bool single, const TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storage);
         FUNCTION_LOG_PARAM(STRING, archiveId);
-        FUNCTION_LOG_PARAM(UINT, total);
+        FUNCTION_LOG_PARAM(BOOL, single);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
     FUNCTION_LOG_END();
 
@@ -53,7 +53,7 @@ walSegmentFindNew(const Storage *const storage, const String *const archiveId, c
         {
             .storage = storage,
             .archiveId = strDup(archiveId),
-            .total = total,
+            .single = single,
             .timeout = timeout,
         };
     }
@@ -88,13 +88,9 @@ walSegmentFind(WalSegmentFind *const this, const String *const walSegment)
 
         do
         {
-            // fprintf(stdout, "!!!SEARCHING\n");fflush(stdout);
-
             // Get a list of all WAL segments that match
             if (this->list == NULL || !strEq(prefix, this->prefix))
             {
-                // fprintf(stdout, "!!!BUILDING LIST\n");fflush(stdout);
-
                 MEM_CONTEXT_OBJ_BEGIN(this)
                 {
                     if (!strEq(prefix, this->prefix))
@@ -106,7 +102,7 @@ walSegmentFind(WalSegmentFind *const this, const String *const walSegment)
                     strLstFree(this->list);
 
                     this->list = strLstSort(
-                        storageListP(this->storage, path, .expression = this->total == 1 ? expression : NULL), sortOrderAsc);
+                        storageListP(this->storage, path, .expression = this->single ? expression : NULL), sortOrderAsc);
                 }
                 MEM_CONTEXT_OBJ_END();
             }
@@ -116,26 +112,20 @@ walSegmentFind(WalSegmentFind *const this, const String *const walSegment)
             {
                 unsigned int match = strLstSize(this->list);
 
-                if (this->total > 1)
+                if (!this->single)
                 {
                     if (regExp == NULL)
                         regExp = regExpNew(expression);
 
-                    // fprintf(stdout, "!!!REMOVE NON-MATCHES %s\n", strZ(strLstJoin(this->list, ", ")));fflush(stdout);
-
                     // Remove list items that do not match. This prevents us from having check them again on the next find
                     while (!strLstEmpty(this->list) && !regExpMatch(regExp, strLstGet(this->list, 0)))
                         strLstRemoveIdx(this->list, 0);
-
-                    // fprintf(stdout, "!!!REMOVED NON-MATCHES %s\n", strZ(strLstJoin(this->list, ", ")));fflush(stdout);
 
                     // Find matches at the beginning of the remaining list
                     match = 0;
 
                     while (match < strLstSize(this->list) && regExpMatch(regExp, strLstGet(this->list, match)))
                         match++;
-
-                    // fprintf(stdout, "!!!MATCHES %u\n", match);fflush(stdout);
                 }
 
                 // Error if there is more than one match
@@ -167,14 +157,18 @@ walSegmentFind(WalSegmentFind *const this, const String *const walSegment)
                     }
                     MEM_CONTEXT_PRIOR_END();
                 }
+
+                // Remove matching entries so list will get cleared when empty
+                if (!this->single)
+                {
+                    while (!strLstEmpty(this->list) && regExpMatch(regExp, strLstGet(this->list, 0)))
+                        strLstRemoveIdx(this->list, 0);
+                }
             }
 
             // Clear list for next find
-            // fprintf(stdout, "!!!TOTAL %u\n", this->total);fflush(stdout);
-
-            if (this->total == 1 || strLstEmpty(this->list))
+            if (this->single || strLstEmpty(this->list))
             {
-                // fprintf(stdout, "!!!FREE LIST\n");fflush(stdout);
                 strLstFree(this->list);
                 this->list = NULL;
             }
@@ -213,7 +207,7 @@ walSegmentFindOne(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        WalSegmentFind *const find = walSegmentFindNew(storage, archiveId, 1, timeout);
+        WalSegmentFind *const find = walSegmentFindNew(storage, archiveId, true, timeout);
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
