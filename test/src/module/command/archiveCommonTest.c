@@ -302,12 +302,16 @@ testRun(void)
         TEST_TITLE("cached results");
 
         HRN_STORAGE_PUT_EMPTY(
+            storageTest, "archive/db/9.6-2/1234567812345678/123456781234567812345677-eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee.gz");
+        HRN_STORAGE_PUT_EMPTY(
             storageTest, "archive/db/9.6-2/1234567812345678/123456781234567812345679-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.gz");
         HRN_STORAGE_PUT_EMPTY(
             storageTest, "archive/db/9.6-2/1234567812345678/12345678123456781234567A-cccccccccccccccccccccccccccccccccccccccc.gz");
 
         WalSegmentFind *find;
         TEST_ASSIGN(find, walSegmentFindNew(storageRepo(), STRDEF("9.6-2"), 3, 500), "new find");
+
+        // First find will build the list
         TEST_RESULT_STR_Z(
             walSegmentFind(find, STRDEF("123456781234567812345678")),
             "123456781234567812345678-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "find");
@@ -322,6 +326,7 @@ testRun(void)
         HRN_STORAGE_PUT_EMPTY(
             storageTest, "archive/db/9.6-2/1234567812345678/12345678123456781234567B-dddddddddddddddddddddddddddddddddddddddd.lz4");
 
+        // List is reused from prior call -- we know this because 12345678123456781234567B has not appeared
         TEST_RESULT_STR_Z(
             walSegmentFind(find, STRDEF("123456781234567812345679")),
             "123456781234567812345679-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.gz", "find");
@@ -331,12 +336,25 @@ testRun(void)
             "12345678123456781234567A-cccccccccccccccccccccccccccccccccccccccc.gz\n",
             "list contents");
 
+        // Now this is a reload and 12345678123456781234567B appears
         TEST_RESULT_STR_Z(
             walSegmentFind(find, STRDEF("12345678123456781234567B")),
             "12345678123456781234567B-dddddddddddddddddddddddddddddddddddddddd.lz4", "find");
         TEST_RESULT_STRLST_Z(
             find->list,
             "12345678123456781234567B-dddddddddddddddddddddddddddddddddddddddd.lz4\n",
+            "list contents");
+
+        // Force load by finding WAL with a difference prefix
+        HRN_STORAGE_PUT_EMPTY(
+            storageTest, "archive/db/9.6-2/1234567812345679/123456781234567912345679-dddddddddddddddddddddddddddddddddddddddd.zst");
+
+        TEST_RESULT_STR_Z(
+            walSegmentFind(find, STRDEF("123456781234567912345679")),
+            "123456781234567912345679-dddddddddddddddddddddddddddddddddddddddd.zst", "find");
+        TEST_RESULT_STRLST_Z(
+            find->list,
+            "123456781234567912345679-dddddddddddddddddddddddddddddddddddddddd.zst\n",
             "list contents");
     }
 

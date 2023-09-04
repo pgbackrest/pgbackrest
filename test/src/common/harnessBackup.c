@@ -101,7 +101,7 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
         HRN_PG_WAL_TO_BUFFER(walBuffer, pgControl.version, .systemId = pgControl.systemId);
         const String *walChecksum = strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, walBuffer));
 
-        TEST_LOG_FMT("!!!GENERATED %u SEGMENTS, SIZE %u, WAL TOTAL %u", strLstSize(walSegmentList), pgControl.walSegmentSize, param.walTotal);
+        TEST_LOG_FMT("!!!GENERATING %u SEGMENTS, SIZE %u, WAL TOTAL %u", strLstSize(walSegmentList), pgControl.walSegmentSize, param.walTotal);
 
         for (unsigned int walSegmentIdx = 0; walSegmentIdx < strLstSize(walSegmentList); walSegmentIdx++)
         {
