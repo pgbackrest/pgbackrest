@@ -63,8 +63,8 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
     // Set LSN and WAL start/stop
     uint64_t lsnStart = ((uint64_t)backupTimeStart & 0xFFFFFF00) << 28;
     uint64_t lsnStop =
-        lsnStart + ((uint64_t)(param.walTotal == 0 ?
-            0 : param.walTotal - 1) * (uint64_t)pgControl.walSegmentSize) + (uint64_t)(pgControl.walSegmentSize / 2);
+        lsnStart + ((uint64_t)(param.walTotal == 0 ? 0 : param.walTotal - 1) * (uint64_t)pgControl.walSegmentSize) +
+        (uint64_t)(pgControl.walSegmentSize / 2);
 
     const char *walSegmentPrior = strZ(
         pgLsnToWalSegment(param.timeline, lsnStart - pgControl.walSegmentSize, pgControl.walSegmentSize));
