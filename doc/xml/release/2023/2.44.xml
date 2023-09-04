@@ -1,0 +1,185 @@
+<release date="2023-01-30" version="2.44" title="Remove PostgreSQL 9.0/9.1/9.2 Support">
+    <release-core-list>
+        <release-improvement-list>
+            <release-item>
+                <github-pull-request id="1941"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Remove support for <proper>PostgreSQL</proper> <id>9.0</id>/<id>9.1</id>/<id>9.2</id>.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="1942"/>
+                <github-pull-request id="1967"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="soulou"/>
+                    <release-item-contributor id="stefan.fercot"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Restore errors when no backup matches the current version of <postgres/>.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="1216"/>
+                <github-issue id="1931"/>
+                <github-pull-request id="1962"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="gkleen"/>
+                    <release-item-ideator id="viperru"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Add <br-option>compress-level</br-option> range checking for each <br-option>compress-type</br-option>.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <github-issue id="959"/>
+                <github-issue id="1806"/>
+                <github-issue id="1913"/>
+                <github-pull-request id="1916"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                    <release-item-reviewer id="john.morris"/>
+                </release-item-contributor-list>
+
+                <p>Block-level incremental backup.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Rename EncodeType enum to EncodingType."/>
+                <commit subject="Add hex encode/decoding to decode module."/>
+                <commit subject="Use smaller type for decode tables."/>
+                <commit subject="Store manifest checksums in memory more efficiently.">
+                    <github-pull-request id="1953"/>
+                </commit>
+                <commit subject="Add repository checksum to make verify and resume more efficient.">
+                    <github-pull-request id="1956"/>
+                </commit>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Add repository checksum to make verify and resume more efficient.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Mark functions not used externally as static."/>
+                <commit subject="Remove declaration for function that is no longer defined."/>
+                <commit subject="Remove unused functions."/>
+                <commit subject="Put memContextSize() in a DEBUG block."/>
+                <commit subject="Add explicit keyword for covered modules included in other modules."/>
+                <commit subject="Move strReplace() and strUpper() to build/common/string module."/>
+                <commit subject="Move xmlNodeAttribute() to build/common/xml module."/>
+                <commit subject="Use error*() getters where possible."/>
+                <commit subject="Move regExpMatchPtr()/regExpMatchStr() to build/common/regExp module."/>
+                <commit subject="Move storageHelperFree() to storageHelper test harness."/>
+                <commit subject="Use memcpy() instead of strncpy when source size is known."/>
+                <commit subject="Put logging functions unused by release builds into DEBUG blocks."/>
+                <commit subject="Split VR_EXTERN/FN_EXTERN macros from FV_EXTERN."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add meson unity build and tests.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="1968"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Refactor <id>common/ini</id> module to remove callbacks and duplicated code.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-improvement-list>
+            <release-item>
+                <github-issue id="1770"/>
+                <github-pull-request id="1980"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="vojtech.galda"/>
+                    <release-item-ideator id="Pluggi"/>
+                    <release-item-ideator id="asjonos"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Add warning about enabling <quote>hierarchical namespace</quote> on Azure storage.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="1910"/>
+                <github-pull-request id="1963"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="rudonx"/>
+                    <release-item-ideator id="gmustdie"/>
+                    <release-item-ideator id="ivan.shelestov"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Add replacement for linefeeds in monitoring example.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="987"/>
+                <github-issue id="1314"/>
+                <github-pull-request id="1960"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="anton.kurochkin"/>
+                    <release-item-ideator id="chris.bandy"/>
+                    <release-item-contributor id="chris.bandy"/>
+                    <release-item-reviewer id="david.steele"/>
+                    <release-item-reviewer id="anton.kurochkin"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Clarify <br-option>target-action</br-option> behavior on various <postgres/> versions.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="1966"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Updates and clarifications to index page.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="stephen.frost"/>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add dark mode to the website.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-doc-list>
+</release>

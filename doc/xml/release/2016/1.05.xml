@@ -1,0 +1,41 @@
+<release date="2016-08-09" version="1.05" title="Bug Fix for Tablespace Link Checking">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="chris.fort"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue where tablespace paths that had $PGDATA as a substring would be identified as a subdirectories of $PGDATA even when they were not. Also hardened relative path checking a bit.</p>
+            </release-item>
+        </release-bug-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-feature-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Added documentation for scheduling backups with cron.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Moved the backlog from the <backrest/> website to the GitHub repository wiki.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Improved rendering of spaces in code blocks.</p>
+            </release-item>
+        </release-development-list>
+    </release-doc-list>
+</release>

@@ -1,0 +1,47 @@
+<release date="2015-06-30" version="0.77" title="CentOS/RHEL 6 Support and Protocol Improvements">
+    <release-core-list>
+        <release-feature-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="andres.freund"/>
+                </release-item-contributor-list>
+
+                <p>Added file and directory syncs to the <code>File</code> object for additional safety during backup/restore and archiving.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="eric.radman"/>
+                </release-item-contributor-list>
+
+                <p>Added support for Perl 5.10.1 and OpenSSH 5.3 which are default for CentOS/RHEL 6.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="eric.radman"/>
+                </release-item-contributor-list>
+
+                <p>Improved error message when backup is run without <setting>archive_command</setting> set and without <setting>{[dash]}-no-archive-check</setting> specified.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Removed <file>pg_backrest_remote</file> and added the functionality to <file>pg_backrest</file> as the <cmd>remote</cmd> command.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="michael.renner"/>
+                </release-item-contributor-list>
+
+                <p>Moved version number out of the <file>VERSION</file> file to <file>Version.pm</file> to better support packaging.</p>
+            </release-item>
+
+            <release-item>
+                <p>Replaced <code>IPC::System::Simple</code> and <code>Net::OpenSSH</code> with <code>IPC::Open3</code> to eliminate CPAN dependency for multiple operating systems.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+</release>

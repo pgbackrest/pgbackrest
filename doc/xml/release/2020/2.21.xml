@@ -1,0 +1,78 @@
+<release date="2020-01-15" version="2.21" title="C Migration Complete">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="urs.kramer"/>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Fix options being ignored by asynchronous commands.</p>
+
+                <p>The asynchronous <cmd>archive-get</cmd>/<cmd>archive-push</cmd> processes were not loading options configured in command configuration sections, e.g. <id>[global:archive-get]</id>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Fix handling of <id>\</id> in filenames.</p>
+
+                <p><id>\</id> was not being properly escaped when calculating the manifest checksum which prevented the manifest from loading. Since instances of <id>\</id> in cluster filenames should be rare to nonexistent this does not seem likely to be a serious problem in the field.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <p><backrest/> is now pure <proper>C</proper>.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="mike.palmiotto"/>
+                </release-item-contributor-list>
+
+                <p>Add <br-option>pg-user</br-option> option.</p>
+
+                <p>Specifies the database user name when connecting to <postgres/>. If not specified <backrest/> will connect with the local OS user or <id>PGUSER</id>, which was the previous behavior.</p>
+            </release-item>
+
+            <release-item>
+                <p>Allow path-style URIs in <proper>S3</proper> driver.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>The <cmd>backup</cmd> command is implemented entirely in C.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Add basic time management functions.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Add <code>httpLastModifiedToTime()</code> to parse HTTP <id>last-modified</id> header.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Parse dates in <code>storageS3InfoList()</code> and <code>storageS3Info()</code>.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+</release>

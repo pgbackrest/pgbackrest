@@ -1,0 +1,163 @@
+<release date="2018-07-05" version="2.04" title="Critical Bug Fix for Backup Resume">
+    <release-core-list>
+        <text>
+            <p><b>IMPORTANT NOTE</b>: This release fixes a critical bug in the backup resume feature. All resumed backups prior to this release should be considered inconsistent. A backup will be resumed after a prior backup fails, unless <br-option>resume=n</br-option> has been specified. A resumed backup can be identified by checking the backup log for the message <quote>aborted backup of same type exists, will be cleaned to remove invalid files and resumed</quote>. If the message exists, do not use this backup or any backup in the same set for a restore and check the restore logs to see if a resumed backup was restored. If so, there may be inconsistent data in the cluster.</p>
+        </text>
+
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="david.youatt"/>
+                    <release-item-ideator id="yogesh.sharma"/>
+                    <release-item-ideator id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Fix critical bug in resume that resulted in inconsistent backups.</p>
+
+                <p>A regression in <id>v0.82</id> removed the timestamp comparison when deciding which files from the aborted backup to keep on resume. See note above for more details.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="nj.baliyan"/>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Fix error in selective restore when only one user database exists in the cluster.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="andrew.schwartz"/>
+                </release-item-contributor-list>
+
+                <p>Fix non-compliant ISO-8601 timestamp format in S3 authorization headers.</p>
+
+                <p>AWS and some gateways were tolerant of space rather than zero-padded hours while others were not.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <p><postgres/> 11 Beta 2 support.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="adam.k.sumner"/>
+                </release-item-contributor-list>
+
+                <p>Improve the HTTP client to set <id>content-length</id> to 0 when not specified by the server.</p>
+
+                <p>S3 (and gateways) always set <id>content-length</id> or <id>transfer-encoding</id> but <id>HTTP 1.1</id> does not require it and proxies (e.g. <proper>HAProxy</proper>) may not include either.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Set <code>search_path = 'pg_catalog'</code> on <postgres/> connections.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Move cryptographic hash functions to C using <proper>OpenSSL</proper>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Split log levels into separate header file. Many modules that use <code>debug.h</code> do not need to do logging so this reduces dependencies for those modules.</p>
+            </release-item>
+
+            <release-item>
+                <p>Auto-generate Makefile with dependencies.</p>
+            </release-item>
+
+            <release-item>
+                <p>Rename <code>cipher</code> module to the more general <code>crypto</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Update Debian package to add debug symbols to <backrest/> executable.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="devrim.gunduz"/>
+                </release-item-contributor-list>
+
+                <p>Convert the not very portable <code>uint</code> type to <code>unsigned int</code>.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-improvement-list>
+            <release-item>
+                <p>Create a new section to describe building <backrest/> and build on a separate host.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="douglas.j.hunley"/>
+                    <release-item-ideator id="jason.odonnell"/>
+                </release-item-contributor-list>
+
+                <p>Add sample S3 policy to restrict bucket privileges.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Fix default location of <file>pgbackrest.conf</file> in option reference.</p>
+            </release-item>
+
+            <release-item>
+                <p>Preliminary documentation for <postgres/> 11 unprivileged user backup.</p>
+            </release-item>
+
+            <release-item>
+                <p>Remove call to <file>lscpu</file> which can vary widely by build host.</p>
+            </release-item>
+
+            <release-item>
+                <p>Build containers from scratch for more accurate testing. Use a prebuilt s3 server container.</p>
+            </release-item>
+
+            <release-item>
+                <p>Document generator improvements. Allow parameters to be passed when a container is created. Allow <file>/etc/hosts</file> update to be skipped (for containers without bash). Allow environment load to be skipped. Allow bash wrapping to be skipped. Allow forcing a command to run as a user without sudo. Allow an entire execute list to be hidden.</p>
+            </release-item>
+        </release-development-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <p>Add zero-length file to <id>mock</id>/<id>all</id> test.</p>
+            </release-item>
+
+            <release-item>
+                <p>Update primary test environment (Vagrant and Docker) to Ubuntu 18.04.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improve efficiency of C library builds now that they are used only for testing.</p>
+            </release-item>
+
+            <release-item>
+                <p>Remove RHEL and Debian package patches since they have been committed upstream.</p>
+            </release-item>
+
+            <release-item>
+                <p>Update parameters for <file>VBoxService</file> start.</p>
+            </release-item>
+
+            <release-item>
+                <p>Make <file>ls</file> ordering deterministic in <id>mock</id>/<id>all</id> test.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+</release>

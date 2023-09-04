@@ -1,0 +1,205 @@
+<release date="2018-02-23" version="2.00" title="Performance Improvements for Archive Push">
+    <release-core-list>
+        <release-feature-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>The <cmd>archive-push</cmd> command is now partially coded in C which allows the <postgres/> <file>archive_command</file> to run significantly faster when processing status messages from the asynchronous archive process.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Improve <cmd>check</cmd> command to verify that the backup manifest can be built.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improve performance of HTTPS client. Buffering now takes the <code>pending</code> bytes on the socket into account (when present) rather than relying entirely on <code>select()</code>. In some instances the final bytes would not be flushed until the connection was closed.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improve S3 delete performance. The constant <id>S3_BATCH_MAX</id> had been replaced with a hard-coded value of 2, probably during testing.</p>
+            </release-item>
+
+            <release-item>
+                <p>Allow any non-command-line option to be reset to default on the command-line. This allows options in <file>pgbackrest.conf</file> to be reset to default which reduces the need to write new configuration files for specific needs.</p>
+            </release-item>
+
+            <release-item>
+                <p>The C library is now required. This eliminates conditional loading and eases development of new library features.</p>
+            </release-item>
+
+            <release-item>
+                <p>The <file>{[project-exe]}</file> executable is now a C binary instead of Perl. This allows certain time-critical commands (like async <cmd>archive-push</cmd>) to run more quickly.</p>
+            </release-item>
+
+            <release-item>
+                <p>Rename <id>db-*</id> options to <id>pg-*</id> and <id>backup-*</id> options to <id>repo-*</id> to improve consistency. <id>repo-*</id> options are now indexed although currently only one is allowed.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Implement <cmd>help</cmd> command in C.</p>
+            </release-item>
+
+            <release-item>
+                <p>Implement <cmd>version</cmd> command in C.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Config parsing implemented in C and passed to Perl as JSON.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>Buffer</code>, <code>Ini</code>, <code>KeyValue</code>, <code>List</code>, <code>RegExp</code>, <code>Storage</code>, <code>String</code>, <code>StringList</code>, <code>Variant</code>, <code>VariantList</code>, and <code>Wait</code> objects.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>command</code>, <code>exit</code>, <code>log</code>, and <code>time</code> modules.</p>
+            </release-item>
+
+            <release-item>
+                <p>Remove deprecated <br-option>archive-max-mb</br-option> option.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improve <code>MemContext</code> module. Add temporary context blocks and refactor allocation arrays to include allocation size.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improve <code>error</code> module. Add functions to convert error codes to C errors and handle system errors.</p>
+            </release-item>
+
+            <release-item>
+                <p>Create a master list of errors in <file>build/error.yaml</file>. The C and Perl errors lists are created automatically by <code>Build.pm</code> so they stay up to date.</p>
+            </release-item>
+
+            <release-item>
+                <p>Move lock release later in exitSafe() to reduce the chance of a new process starting and acquiring a lock before the old process has exited.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add 30 second wait loop to lockAcquire() when fail on no lock enabled. This should help prevent processes that are shutting down from interfering with processes that are starting up.</p>
+            </release-item>
+
+            <release-item>
+                <p>Replace <code>cfgCommandTotal()</code>/<code>cfgOptionTotal()</code> functions with constants. The constants are applicable in more cases and allow the compiler to optimize certain loops more efficiently.</p>
+            </release-item>
+
+            <release-item>
+                <p>Cleanup usage of internal options. Apply internal to options that need to be read to determine locality but should not appear in the help.</p>
+            </release-item>
+
+            <release-item>
+                <p>Refactor code to make valgrind happy.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Fix non-compliant formatting for function declarations.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-feature-list>
+            <release-item>
+                <p>All clusters in the documentation are initialized with checksums.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <p>List deprecated option names in documentation and command-line help.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="david.youatt"/>
+                </release-item-contributor-list>
+
+                <p>Clarify that S3 buckets must be created by the user.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Add coding standards document.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improve section source feature to not require a title or content. The title will be pulled from the source document.</p>
+            </release-item>
+
+            <release-item>
+                <p>Allow code blocks to have a type. Currently this is only rendered in Markdown.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Add table render for Markdown format.</p>
+            </release-item>
+
+            <release-item>
+                <p>PDF rendering improvements. Check both <path>doc-path</path> and <path>bin-path</path> for logo. Allow PDF to be output to a location other than the <path>output</path> directory. Use PDF-specific version variable for more flexible formatting. Allow sections to be excluded from table of contents. More flexible replacements for titles and footers. Fill is now the default for table columns. Column width is specified as a percentage rather that using latex-specific notation. Fix missing variable replace for <code>code-block</code> title.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <id>id</id> param for hosts created with <code>host-add</code>. The <id>host-*-ip</id> variable is created from the <id>id</id> param so the <id>name</id> param can be changed without affecting the <id>host-*-ip</id> variable. If <id>id</id> is not specified then it is copied from <id>name</id>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Deploy historical documentation to <path>prior</path> rather than the root directory.</p>
+            </release-item>
+        </release-development-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <p>Run valgrind on all C unit tests.</p>
+            </release-item>
+
+            <release-item>
+                <p>Only build C binary/library for Perl unit/integration tests or C unit tests that require Perl.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improve speed of C unit tests. Preserve object files between tests and use a Makefile to avoid rebuilding object files.</p>
+            </release-item>
+
+            <release-item>
+                <p>Report coverage errors via the console. This helps with debugging coverage issues on remote services like Travis.</p>
+            </release-item>
+
+            <release-item>
+                <p>No longer run <id>master</id> branch through CI. The <id>integration</id> branch will be run through CI and then pushed to <id>master</id> with github status checks.</p>
+            </release-item>
+
+            <release-item>
+                <p>Rename Perl tests so they don't conflict with their C counterparts.</p>
+            </release-item>
+
+            <release-item>
+                <p>Update URL for Debian package repository.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+</release>

@@ -1,0 +1,105 @@
+<release date="2017-06-12" version="1.19" title="S3 Support">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Fixed the <cmd>info</cmd> command so the WAL archive min/max displayed is for the current database version.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Fixed the <cmd>backup</cmd> command so the <setting>backup-standby</setting> option is reset (and the backup proceeds on the primary) if the standby is not configured and/or reachable.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Fixed config warnings raised from a remote process causing errors in the master process.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p><proper>Amazon S3</proper> repository support.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-development-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Refactor storage layer to allow for new repository filesystems using drivers.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Refactor IO layer to allow for new compression formats, checksum types, and other capabilities using filters.</p>
+            </release-item>
+
+            <release-item>
+                <p>Move modules in <path>Protocol</path> directory in subdirectories.</p>
+            </release-item>
+
+            <release-item>
+                <p>Move backup modules into <path>Backup</path> directory.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-bug-list>
+            <release-item>
+                <p>Changed invalid <setting>max-archive-mb</setting> option in configuration reference to <setting>archive-queue-max</setting>.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="laetitia"/>
+                </release-item-contributor-list>
+
+                <p>Fixed missing <code>sudo</code> in installation section.</p>
+            </release-item>
+        </release-bug-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <p>Fixed an undefined variable when a module had no uncoverable code exceptions.</p>
+            </release-item>
+
+            <release-item>
+                <p>Fixed issue with <setting>--dry-run</setting> requiring <setting>--vm-out</setting> to work properly.</p>
+            </release-item>
+
+            <release-item>
+                <p>Moved test and env modules to new directories to avoid namespace conflicts with common tests.</p>
+            </release-item>
+
+            <release-item>
+                <p>Set <setting>--vm-max=2</setting> for CI.</p>
+            </release-item>
+
+            <release-item>
+                <p>Remove flapping protocol timeout test that will be replaced in the upcoming storage patch.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+</release>
