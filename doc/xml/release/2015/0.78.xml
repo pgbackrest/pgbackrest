@@ -1,0 +1,26 @@
+<release date="2015-07-13" version="0.78" title="Remove CPAN Dependencies, Stability Improvements">
+    <release-core-list>
+        <release-improvement-list>
+            <release-item>
+                <p>Removed dependency on CPAN packages for multi-threaded operation. While it might not be a bad idea to update the <code>threads</code> and <code>Thread::Queue</code> packages, it is no longer necessary.</p>
+            </release-item>
+            <release-item>
+                <p>Modified wait backoff to use a Fibonacci rather than geometric sequence. This will make wait time grow less aggressively while still giving reasonable values.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-core-list>
+
+    <release-test-list>
+        <release-feature-list>
+            <release-item>
+                <p>Added vagrant test configurations for Ubuntu 12.04 and CentOS 6.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-development-list>
+            <release-item>
+                <p>More options for regression tests and improved code to run in a variety of environments.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+</release>

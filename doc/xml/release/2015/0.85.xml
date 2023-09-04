@@ -1,0 +1,29 @@
+<release date="2015-10-08" version="0.85" title="Start/Stop Commands and Minor Bug Fixes">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <p>Fixed an issue where an error could be returned after a backup or restore completely successfully.</p>
+            </release-item>
+
+            <release-item>
+                <p>Fixed an issue where a resume would fail if temp files were left in the root backup directory when the backup failed. This scenario was likely if the backup process got terminated during the copy phase.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <p>Added <cmd>stop</cmd> and <cmd>start</cmd> commands to prevent <backrest/> processes from running on a system where <postgres/> is shutdown or the system needs to be quiesced for some other reason.</p>
+            </release-item>
+
+            <release-item>
+                <p>Experimental support for <postgres/> 9.5 beta1. This may break when the control version or WAL magic changes in future versions but will be updated in each <backrest/> release to keep pace. All regression tests pass except for <setting>{[dash]}-target-resume</setting> tests (this functionality has changed in 9.5) and there is no testing yet for <file>.partial</file> WAL segments.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Removed dependency on <code>IO::String</code> module.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+</release>

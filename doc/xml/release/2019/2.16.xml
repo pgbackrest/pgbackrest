@@ -1,0 +1,84 @@
+<release date="2019-08-05" version="2.16" title="C Migrations and Bug Fixes">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="sean0101n"/>
+                    <release-item-ideator id="tim.garton"/>
+                    <release-item-ideator id="jesper.st.john"/>
+                    <release-item-ideator id="ales.zeleny"/>
+                </release-item-contributor-list>
+
+                <p>Retry <proper>S3</proper> <id>RequestTimeTooSkewed</id> errors instead of immediately terminating.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="pavel.suderevsky"/>
+                </release-item-contributor-list>
+
+                <p>Fix incorrect handling of <id>transfer-encoding</id> response to <id>HEAD</id> request.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="christian.lange"/>
+                    <release-item-ideator id="ned.t.crigler"/>
+                </release-item-contributor-list>
+
+                <p>Fix scoping violations exposed by optimizations in <proper>gcc 9</proper>.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <p>Add <br-option>repo-s3-port</br-option> option for setting a non-standard <proper>S3</proper> service port.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>The <cmd>local</cmd> command for <cmd>backup</cmd> is implemented entirely in C.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>The <cmd>check</cmd> command is implemented partly in C.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Add Perl interface to C storage layer.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Add <code>Db</code> object to encapsulate <postgres/> queries and commands.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Add PostgreSQL query client.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+</release>

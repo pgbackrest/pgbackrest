@@ -1,0 +1,105 @@
+<release date="2016-09-07" version="1.07" title="Thread to Process Conversion and Bug Fixes">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <p>Fixed an issue where tablespaces were copied from the primary during standby backup.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Fixed the <cmd>check</cmd> command so backup info is checked remotely and not just locally.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue where <br-option>retention-archive</br-option> was not automatically being set when <br-option>retention-archive-type=diff</br-option>, resulting in a less aggressive than intended expiration of archive.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <p>Converted Perl threads to processes to improve compatibility and performance.</p>
+            </release-item>
+
+            <release-item>
+                <p>Exclude contents of <path>$PGDATA/pg_replslot</path> directory so that replication slots on the primary do not become part of the backup.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="jens.wilke"/>
+                </release-item-contributor-list>
+
+                <p>The <setting>archive-start</setting> and <setting>archive-stop</setting> settings are now filled in <file>backup.manifest</file> even when <br-option>archive-check=n</br-option>.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Additional warnings when archive retention settings may not have the intended effect or would allow indefinite retention.</p>
+            </release-item>
+
+            <release-item>
+                <p>Experimental support for non-exclusive backups in <postgres/> 9.6 rc1. Changes to the control/catalog/WAL versions in subsequent release candidates may break compatibility but <backrest/> will be updated with each release to keep pace.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Refactor of protocol minions in preparation for the new local minion.</p>
+            </release-item>
+
+            <release-item>
+                <p>Remove obsolete thread index variable from <code>File()</code> module.</p>
+            </release-item>
+
+            <release-item>
+                <p>Changed temporary file names to consistently use the <file>.pgbackrest.tmp</file> extension even if the destination file is compressed or has an appended checksum.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improve ASSERT error handling, safely check eval blocks, and convert <code>$@</code> to <code>$EVAL_ERROR</code>.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-bug-list>
+            <release-item>
+                <p>Fixed minor documentation reproducibility issues related to binary paths.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Documentation for archive retention.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Suppress TOC for unsupported versions of <backrest/>.</p>
+            </release-item>
+        </release-development-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <p>New vagrant base box and make uid/gid selection for containers dynamic.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+</release>

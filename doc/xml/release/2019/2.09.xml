@@ -1,0 +1,194 @@
+<release date="2019-01-30" version="2.09" title="Minor Improvements and Bug Fixes">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="vidhya.gurumoorthi"/>
+                    <release-item-ideator id="joe.ayers"/>
+                    <release-item-ideator id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Fix issue with multiple async status files causing a hard error.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>The <cmd>info</cmd> command is implemented entirely in C.</p>
+            </release-item>
+
+            <release-item>
+                <p>Simplify <cmd>info</cmd> command text message when no stanzas are present.</p>
+
+                <p>Replace the repository path with <quote>the repository</quote>.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Add <id>_DARWIN_C_SOURCE</id> flag to Makefile for <proper>MacOS</proper> builds.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="bruno.friedmann"/>
+                </release-item-contributor-list>
+
+                <p>Update address lookup in C TLS client to use modern methods.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Include Posix-compliant header for strcasecmp()."/>
+                <commit subject="Include Posix-compliant header for fd_set."/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="ucando"/>
+                </release-item-contributor-list>
+
+                <p>Include Posix-compliant header for <code>strcasecmp()</code> and <code>fd_set</code>.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Add remote storage objects.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>ProtocolClient</code> object and helper functions.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>Exec</code> object.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>IoHandleRead</code> and <code>IoHandleWrite</code> objects.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>cfgExecParam()</code> to generate parameters for executing commands.</p>
+            </release-item>
+
+            <release-item>
+                <p>Ignore <id>SIGPIPE</id> signals and check <id>EPIPE</id> result instead.</p>
+            </release-item>
+
+            <release-item>
+                <p>Function log macro improvements. Rename FUNCTION_DEBUG_* and consolidate ASSERT_* macros for consistency. Improve <code>CONST</code> and <code>P</code>/<code>PP</code> type macro handling. Move <code>MACRO_TO_STR()</code> to <file>common/debug.h</file>. Remove unused type parameter from <code>FUNCTION_TEST_RETURN()</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Make the <proper>C</proper> version of the <cmd>info</cmd> command conform to the <proper>Perl</proper> version.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improve accuracy of <code>strSizeFormat()</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>ioReadBuf()</code> to easily read into a buffer.</p>
+            </release-item>
+
+            <release-item>
+                <p>JSON improvements. Allow empty arrays in JSON parser. Fix null output in JSON renderer. Fix escaping in JSON string parser/renderer.</p>
+            </release-item>
+
+            <release-item>
+                <p>Allocate extra space for concatenations in the <code>String</code> object.</p>
+            </release-item>
+
+            <release-item>
+                <p>Return <code>UnknownError</code> from <code>errorTypeFromCode()</code> for invalid error codes.</p>
+            </release-item>
+
+            <release-item>
+                <p>Update Perl repo rules to work when stanza is not specified.</p>
+            </release-item>
+
+            <release-item>
+                <p>Update <code>Storage::Local->list()</code> to accept an undefined path.</p>
+            </release-item>
+
+            <release-item>
+                <p>Null-terminate list returned by <code>strLstPtr()</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>kvMove()</code> and <code>varLstMove()</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Replace <code>FileOpenError</code> with <code>HostConnectError</code> in <code>TlsClient</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Allow string <code>Variant</code> objects to contain <code>null</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Rename <code>common/io/handle</code> module to <code>common/io/handleWrite</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>const VariantList *</code> debug type.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="heath.lord"/>
+                </release-item-contributor-list>
+
+                <p>Fix hard-coded repository path.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="bruce.burdick"/>
+                </release-item-contributor-list>
+
+                <p>Clarify that encryption is always performed client-side.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add examples for building a documentation host.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Allow if in manifest variables."/>
+                <commit subject="Allow if condition in documentation lists and list items."/>
+
+                <p>Allow <code>if</code> in manifest variables, lists, and list items.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <p>Move C module include in <file>test.c</file> above headers included for testing.</p>
+            </release-item>
+
+            <release-item>
+                <p>Allow primary <id>gid</id> for the test user to be different from <id>uid</id>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Increase timeout in <id>storage/s3</id> module to improve reliability.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+</release>

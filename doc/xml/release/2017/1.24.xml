@@ -1,0 +1,79 @@
+<release date="2017-09-28" version="1.24" title="New Backup Exclusions">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="uspen"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue where warnings were being emitted in place of lower priority log messages during backup from standby initialization.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="uspen"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue where some <id>db-*</id> options (e.g. <br-option>db-port</br-option>) were not being passed to remotes.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <p>Exclude contents of <path>pg_snapshots</path>, <path>pg_serial</path>, <path>pg_notify</path>, and <path>pg_dynshmem</path> from backup since they are rebuilt on startup.</p>
+            </release-item>
+
+            <release-item>
+                <p>Exclude <file>pg_internal.init</file> files from backup since they are rebuilt on startup.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="jens.wilke"/>
+                </release-item-contributor-list>
+
+                <p>Open log file after async process is completely separated from the main process to prevent the main process from also logging to the file.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Dynamically generate list of files for C library build.</p>
+            </release-item>
+
+            <release-item>
+                <p>Break up <file>LibC.xs</file> into separate module files.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-feature-list>
+            <release-item>
+                <p>Add passwordless SSH configuration.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <p>Rename <proper>master</proper> to <proper>primary</proper> in documentation to align with <postgres/> convention.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Add full installation where required and remove doc containers that included parts of the installation.</p>
+            </release-item>
+        </release-development-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <p>Improve C library smart build by ignoring changes outside of <path>/lib/pgBackRest/Config</path>.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+</release>

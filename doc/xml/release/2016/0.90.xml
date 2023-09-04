@@ -1,0 +1,72 @@
+<release date="2016-02-07" version="0.90" title="9.5 Support, Various Enhancements, and Minor Bug Fixes">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="jason.odonnell"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue where specifying <setting>{[dash]}-no-archive-check</setting> would throw a configuration error.</p>
+            </release-item>
+
+            <release-item>
+                <p>Fixed an issue where a temp WAL file left over after a well-timed system crash could cause the next <cmd>archive-push</cmd> to fail.</p>
+            </release-item>
+
+            <release-item>
+                <p>The <setting>retention-archive</setting> option can now be be safely set to less than backup retention (<setting>retention-full</setting> or <setting>retention-diff</setting>) without also specifying <setting>archive-copy=n</setting>. The WAL required to make the backups that fall outside of archive retention consistent will be preserved in the archive. However, in this case PITR will not be possible for the backups that fall outside of archive retention.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <p>When backing up and restoring tablespaces <backrest/> only operates on the subdirectory created for the version of <postgres/> being run against. Since multiple versions can live in a tablespace (especially during a binary upgrade) this prevents too many files from being copied during a backup and other versions possibly being wiped out during a restore. This only applies to <postgres/> >= 9.0 &amp;mdash; prior versions of <postgres/> could not share a tablespace directory.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="david.steele"/>
+                    <release-item-contributor id="jason.odonnell"/>
+                </release-item-contributor-list>
+
+                <p>Generate an error when <setting>archive-check=y</setting> but <setting>archive_command</setting> does not execute <file>pg_backrest</file>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improved error message when <setting>repo-path</setting> or <setting>repo-remote-path</setting> does not exist.</p>
+            </release-item>
+
+            <release-item>
+                <p>Added checks for <setting>{[dash]}-delta</setting> and <setting>{[dash]}-force</setting> restore options to ensure that the destination is a valid $PGDATA directory. <backrest/> will check for the presence of <file>PG_VERSION</file> or <file>backup.manifest</file> (left over from an aborted restore). If neither file is found then <setting>{[dash]}-delta</setting> and <setting>{[dash]}-force</setting> will be disabled but the restore will proceed unless there are files in the $PGDATA directory (or any tablespace directories) in which case the operation will be aborted.</p>
+            </release-item>
+
+            <release-item>
+                <p>When restore <setting>{[dash]}-set=latest</setting> (the default) the actual backup restored will be output to the log.</p>
+            </release-item>
+
+            <release-item>
+                <p>Support for <postgres/> 9.5 partial WAL segments and <setting>recovery_target_action</setting> setting. The <setting>archive_mode = 'always'</setting> setting is not yet supported.</p>
+            </release-item>
+
+            <release-item>
+                <p>Support for <setting>recovery_target = 'immediate'</setting> recovery setting introduced in <postgres/> 9.4.</p>
+            </release-item>
+
+            <release-item>
+                <p>The following tablespace checks have been added: paths or files in pg_tblspc, relative links in pg_tblspc, tablespaces in $PGDATA. All three will generate errors.</p>
+            </release-item>
+        </release-feature-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-development-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="john.harvey"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue where document generation failed because some OSs are not tolerant of having multiple installed versions of <postgres/>. A separate VM is now created for each version. Also added a sleep after database starts during document generation to ensure the database is running before the next command runs.</p>
+            </release-item>
+        </release-development-list>
+    </release-doc-list>
+</release>

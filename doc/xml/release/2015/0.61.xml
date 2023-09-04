@@ -1,0 +1,9 @@
+<release date="2015-04-21" version="0.61" title="Bug Fix for Uncompressed Remote Destination">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <p>Fixed a buffering error that could occur on large, highly-compressible files when copying to an uncompressed remote destination. The error was detected in the decompression code and resulted in a failed backup rather than corruption so it should not affect successful backups made with previous versions.</p>
+            </release-item>
+        </release-bug-list>
+    </release-core-list>
+</release>

@@ -1,0 +1,110 @@
+<release date="2023-03-20" version="2.45" title="Block Incremental Backup (BETA)">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <commit subject="Set online flag in manifest in command/restore unit tests."/>
+                <commit subject="Skip writing recovery.signal by default for restores of offline backups.">
+                    <github-issue id="2018"/>
+                    <github-pull-request id="2019"/>
+                </commit>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="marcel.borger"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Skip writing <file>recovery.signal</file> by default for restores of offline backups.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <commit subject="Add block incremental to real/all test output."/>
+                <commit subject="Improve IoChunkedRead end-of-file handling."/>
+                <commit subject="Remove parameter list from deltaMapNew()."/>
+                <commit subject="Consistently declare block incremental size as size_t."/>
+                <commit subject="Rename DeltaMap to BlockHash."/>
+                <commit subject="Add repo-block-age-map and repo-block-size-map options."/>
+                <commit subject="Rename block incremental manifest keys."/>
+                <commit subject="Add optional raw format for compression types."/>
+                <commit subject="Use raw compression/encryption to bundling and block incremental backup."/>
+                <commit subject="Block-level incremental backup super blocks.">
+                    <github-pull-request id="2011"/>
+                </commit>
+                <commit subject="Use xxHash instead of SHA-1 for block incremental checksums."/>
+                <commit subject="Exclude backup set size from info for block incremental backups."/>
+                <commit subject="Rename BlockHash to BlockChecksum."/>
+                <commit subject="Update default block size and super block values based on testing."/>
+                <commit subject="Ensure no continuations when block size equals super block size."/>
+                <commit subject="Fix typo in blockIncrProcess()."/>
+                <commit subject="Block incremental map fixes and improvements.">
+                    <github-pull-request id="2026"/>
+                </commit>
+                <commit subject="Add beta feature and documentation for block incremental backup."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="john.morris"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Block incremental backup (BETA).</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <github-pull-request id="2011"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Keep only one all-default group index.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <commit subject="Allow control version and WAL magic to be overridden in test harness."/>
+                <commit subject="Add pg-version-force option for fork integration.">
+                    <github-pull-request id="2012"/>
+                </commit>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="stefan.fercot"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add <br-option>pg-version-force</br-option> option for fork integration.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-improvement-list>
+            <release-item>
+                <github-issue id="1774"/>
+                <github-pull-request id="1993"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="christophe.courtois"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add explicit instructions for upgrading between <id>2.x</id> versions.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Remove references to <proper>SSH</proper> made obsolete when <proper>TLS</proper> was introduced.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-doc-list>
+</release>
