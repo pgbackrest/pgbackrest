@@ -1,0 +1,39 @@
+<release date="2016-03-22" version="0.91" title="Tablespace Bug Fix and Minor Enhancements">
+    <release-core-list>
+        <text>
+            <p><b>IMPORTANT BUG FIX FOR TABLESPACES</b>: A change to the repository format was accidentally introduced in 0.90 which means the on-disk backup was no longer a valid <postgres/> cluster when the backup contained tablespaces. This only affected users who directly copied the backups to restore <postgres/> clusters rather than using the restore command. However, the fix breaks compatibility with older backups that contain tablespaces no matter how they are being restored (<backrest/> will throw errors and refuse to restore). New full backups should be taken immediately after installing version 0.91 for any clusters that contain tablespaces. If older backups need to be restored then use a version of <backrest/> that matches the backup version.</p>
+        </text>
+
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="evan.benoit"/>
+                </release-item-contributor-list>
+
+                <p>Fixed repository incompatibility introduced in <backrest/> 0.90.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <p>Copy <file>global/pg_control</file> last during backups.</p>
+            </release-item>
+
+            <release-item>
+                <p>Write <id>.info</id> and <id>.manifest</id> files to temp before moving them to their final locations and fsync'ing.</p>
+            </release-item>
+
+            <release-item>
+                <p>Rename <setting>{[dash]}-no-start-stop</setting> option to <setting>{[dash]}-no-online</setting>.</p>
+            </release-item>
+        </release-feature-list>
+    </release-core-list>
+
+    <release-test-list>
+        <release-feature-list>
+            <release-item>
+                <p>Static source analysis using Perl-Critic, currently passes on gentle.</p>
+            </release-item>
+        </release-feature-list>
+    </release-test-list>
+</release>

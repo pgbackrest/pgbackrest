@@ -1,0 +1,236 @@
+<release date="2019-05-20" version="2.14" title="Bug Fix and Improvements">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="jens.wilke"/>
+                </release-item-contributor-list>
+
+                <p>Fix segfault when <br-option>process-max</br-option> > 8 for <cmd>archive-push</cmd>/<cmd>archive-get</cmd>.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="hatifnatt"/>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Bypass database checks when <cmd>stanza-delete</cmd> issued with <br-option>force</br-option>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <file>configure</file> script for improved multi-platform support.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Filter improvements. Only process next filter in <code>IoFilterGroup</code> when input buffer is full or flushing. Improve filter's notion of <quote>done</quote> to optimize filter processing.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improve performance of non-blocking reads by using maximum buffer size.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>storageInfoList()</code> to get detailed info about all entries in a path.</p>
+            </release-item>
+
+            <release-item>
+                <p>Allow <code>storageInfo()</code> to follow links.</p>
+            </release-item>
+
+            <release-item>
+                <p>Allow <code>StorageFileWrite</code> to set user, group, and modification time.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>pathExists()</code> to <code>Storage</code> object.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improve zero-length content handling in <code>HttpClient</code> object.</p>
+            </release-item>
+
+            <release-item>
+                <p>Don't append <code>strerror()</code> to error message when <code>errno</code> is 0.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Improve type safety of interfaces and drivers.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <br-option>--c</br-option> option to request a C remote.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <file>common/macro.h</file> for general-purpose macros.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add macros for object free functions.</p>
+            </release-item>
+
+            <release-item>
+                <p>Various <code>MemContext</code> callback improvements.</p>
+            </release-item>
+
+            <release-item>
+                <p>Various <code>Buffer</code> improvements.</p>
+            </release-item>
+
+            <release-item>
+                <p>Simplify storage object names.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>ioWriteStr()</code> and <code>ioWriteStrLine()</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add separate functions to encode/decode each JSON type.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add macros to create constant <code>Buffer</code> objects.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add missing <code>httpUriEncode()</code> in S3 request.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>unsigned int</code> <code>Variant</code> type and update code to use it.</p>
+            </release-item>
+
+            <release-item>
+                <p>Expose handle (file descriptor) from <code>IoWrite</code> when applicable.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>iniSave()</code> and <code>iniMove()</code> to <code>Ini</code> object.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>*Save()</code> functions to most <code>Info</code> objects.</p>
+            </release-item>
+
+            <release-item>
+                <p>Extern <code>infoHash()</code> so it can be used by other modules.</p>
+            </release-item>
+
+            <release-item>
+                <p><code>varNewKv()</code> accepts a <code>KeyValue</code> object rather than creating one.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add constant for maximum buffer sizes required by <code>cvt*()</code> functions.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <id>true</id> and <id>false</id> <code>String</code> constants.</p>
+            </release-item>
+
+            <release-item>
+                <p>Refactor <code>Ini</code> interface to expose <code>String</code> values instead of <code>Variant</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Refactor <code>main()</code> as a <code>switch()</code> statement.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>cfgOptionUInt()</code> and <code>cfgOptionUInt64()</code> and update code to use them.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improve log performance, simplify macros, rename <code>logWill()</code> to <code>logAny()</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improve coverage in <file>perl/exec</file>, <file>config/config</file>, and <file>config/parse</file> modules.</p>
+            </release-item>
+
+            <release-item>
+                <p>Remove <id>-Wswitch-enum</id> compiler option.</p>
+            </release-item>
+
+            <release-item>
+                <p>Error on multiple option alternate names and simplify help command.</p>
+            </release-item>
+
+            <release-item>
+                <p>Use <code>THROW_ON_SYS_ERROR*()</code> to improve code coverage.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improve macros and coverage rules that were hiding missing coverage.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improve efficiency of <code>FUNCTION_LOG*()</code> macros.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-feature-list>
+            <release-item>
+                <p>Add user guides for <proper>CentOS</proper>/<proper>RHEL</proper> <proper>6</proper>/<proper>7</proper>.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Automate coverage summary report generation.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <setting>--out-preserve</setting> to preserve contents of output path.</p>
+            </release-item>
+
+            <release-item>
+                <p>Restore index menu url default lost in b85e51d6.</p>
+            </release-item>
+        </release-development-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <p>Add <code>harnessInfoChecksum/Z()</code> to ease creation of test info files.</p>
+            </release-item>
+
+            <release-item>
+                <p>Update containers with <postgres/> minor releases and <id>liblz4</id>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>testUser()</code> and <code>testGroup()</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <id>build-max</id> option to set max build processes.</p>
+            </release-item>
+
+            <release-item>
+                <p>Reduce <proper>ScalityS3</proper> processes since only two are needed.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Update <id>mock/expire</id> module test matrix so expect tests output.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+</release>

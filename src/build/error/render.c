@@ -115,7 +115,7 @@ bldErrRenderErrorAutoC(const Storage *const storageRepo, const BldErr bldErr)
         COMMENT_BLOCK_BEGIN "\n"
         "Error type array\n"
         COMMENT_BLOCK_END "\n"
-        "static const ErrorType *errorTypeList[] =\n"
+        "static const ErrorType *const errorTypeList[] =\n"
         "{\n");
 
     for (unsigned int errIdx = 0; errIdx < lstSize(bldErr.errList); errIdx++)

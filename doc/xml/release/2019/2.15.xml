@@ -1,0 +1,97 @@
+<release date="2019-06-25" version="2.15" title="C Implementation of Expire">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="mohamad.el.rifai"/>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Fix archive retention expiring too aggressively.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>The <cmd>expire</cmd> command is implemented entirely in C.</p>
+            </release-item>
+
+            <release-item>
+                <p>The <cmd>local</cmd> command for restore is implemented entirely in C.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="julian.zhang"/>
+                    <release-item-ideator id="janis.puris"/>
+                </release-item-contributor-list>
+
+                <p>Remove hard-coded <postgres/> user so <id>$PGUSER</id> works.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="daniel.westermann"/>
+                </release-item-contributor-list>
+
+                <p>Honor <proper>configure</proper> <setting>--prefix</setting> option.</p>
+            </release-item>
+
+            <release-item>
+                <p>Rename <br-option>repo-s3-verify-ssl</br-option> option to <br-option>repo-s3-verify-tls</br-option>.</p>
+
+                <p>The new name is preferred because pgBackRest does not support any SSL protocol versions (they are all considered to be insecure). The old name will continue to be accepted.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Add most unimplemented functions to the remote storage driver.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Rename <code>info*New()</code> functions to <code>info*NewLoad()</code>.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Add backup management functions to <code>InfoBackup</code>.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Add FAQ to the documentation.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="patrick.mclaughlin"/>
+                </release-item-contributor-list>
+
+                <p>Use <setting>wal_level=replica</setting> in the documentation for <postgres/> &amp;ge; 9.6.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-doc-list>
+</release>

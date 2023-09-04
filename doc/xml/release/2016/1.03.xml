@@ -1,0 +1,154 @@
+<release date="2016-07-02" version="1.03" title="Check Command and Bug Fixes">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="janice.parkinson"/>
+                    <release-item-ideator id="chris.barber"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue where <id>keep-alives</id> could be starved out by lots of small files during multi-threaded <cmd>backup</cmd>. They were also completely absent from single/multi-threaded <cmd>backup</cmd> resume and <cmd>restore</cmd> checksumming.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="chris.barber"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue where the <cmd>expire</cmd> command would refuse to run when explicitly called from the command line if the <br-option>db-host</br-option> option was set. This was not an issue when <cmd>expire</cmd> was run automatically after a <cmd>backup</cmd></p>
+            </release-item>
+
+            <release-item>
+                <p>Fixed an issue where validation was being running on <pg-setting>archive_command</pg-setting> even when the <br-option>archive-check</br-option> option was disabled.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="david.steele"/>
+                    <release-item-contributor id="cynthia.shang"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Added <cmd>check</cmd> command to validate that <backrest/> is configured correctly for archiving and backups.</p>
+            </release-item>
+
+            <release-item>
+                <p>Added the <br-option>protocol-timeout</br-option> option. Previously <br-option>protocol-timeout</br-option> was set as <br-option>db-timeout</br-option> + 30 seconds.</p>
+            </release-item>
+
+            <release-item>
+                <p>Failure to shutdown remotes at the end of the backup no longer throws an exception. Instead a warning is generated that recommends a higher <br-option>protocol-timeout</br-option>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Experimental support for non-exclusive backups in <postgres/> 9.6 beta2. Changes to the control/catalog/WAL versions in subsequent betas may break compatibility but <backrest/> will be updated with each release to keep pace.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <p>Improved handling of users/groups captured during backup that do not exist on the restore host. Also explicitly handle the case where user/group is not mapped to a name.</p>
+            </release-item>
+
+            <release-item>
+                <p>Option handling is now far more strict. Previously it was possible for a command to use an option that was not explicitly assigned to it. This was especially true for the <br-option>backup-host</br-option> and <br-option>db-host</br-option> options which are used to determine locality.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <p>The <code>pg_xlogfile_name()</code> function is no longer used to construct WAL filenames from LSNs. While this function is convenient it is not available on a standby. Instead, the archive is searched for the LSN in order to find the timeline. If due to some misadventure the LSN appears on multiple timelines then an error will be thrown, whereas before this condition would have passed unnoticed.</p>
+            </release-item>
+
+            <release-item>
+                <p>Changed version variable to a constant. It had originally been designed to play nice with a specific packaging tool but that tool was never used.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="adrian.vondendriesch"/>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Allow a static date to be used for documentation to generate reproducible builds.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Added documentation for asynchronous archiving to the user guide.</p>
+            </release-item>
+
+            <release-item>
+                <p>Recommended install location for <backrest/> modules is now <path>/usr/share/perl5</path> since <path>/usr/lib/perl5</path> has been removed from the search path in newer versions of Perl.</p>
+            </release-item>
+
+            <release-item>
+                <p>Added instructions for removing prior versions of <backrest/>.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Fixed DTD search path that did not work properly when <setting>--doc-path</setting> was used.</p>
+            </release-item>
+
+            <release-item>
+                <p>Fixed <backrest/>-specific xml that was loaded for non-<backrest/> projects.</p>
+            </release-item>
+
+            <release-item>
+                <p>Fixed section names being repeated in the info output when multiple <br-option>--require</br-option> options depended on the same sections.</p>
+            </release-item>
+
+            <release-item>
+                <p>Fixed <backrest/> config sections being blank in the output when not loaded from cache.</p>
+            </release-item>
+
+            <release-item>
+                <p>Allow hidden options to be added to a command. This allows certain commands (like <id>apt-get</id>) to be forced during the build without making that a part of the documentation.</p>
+            </release-item>
+
+            <release-item>
+                <p>Allow command summaries to be inserted anywhere in the documentation to avoid duplication.</p>
+            </release-item>
+
+            <release-item>
+                <p>Update TeX Live to 2016 version.</p>
+            </release-item>
+
+            <release-item>
+                <p>New, consolidated implementation for link rendering.</p>
+            </release-item>
+
+            <release-item>
+                <p><postgres/> version is now a variable to allow multi-version documentation.</p>
+            </release-item>
+        </release-development-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <p>Obsolete containers are removed by the <br-option>--vm-force</br-option> option.</p>
+            </release-item>
+
+            <release-item>
+                <p>Major refactor of the test suite to make it more modular and object-oriented. Multiple Docker containers can now be created for a single test to simulate more realistic environments. Tests paths have been renamed for clarity.</p>
+            </release-item>
+
+            <release-item>
+                <p>Greatly reduced the quantity of Docker containers built by default. Containers are only built for <postgres/> versions specified in <id>db-minimal</id> and those required to build documentation. Additional containers can be built with <br-option>--db-version=all</br-option> or by specifying a version, e.g. <br-option>--db-version=9.4</br-option>.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+</release>

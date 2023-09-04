@@ -1,0 +1,37 @@
+<release date="2020-01-27" version="2.23" title="Bug Fix">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="vitaliy.kukharik"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Fix missing files corrupting the manifest.</p>
+
+                <p>If a file was removed by <postgres/> during the backup (or was missing from the standby) then the next file might not be copied and updated in the manifest. If this happened then the backup would error when restored.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-contributor id="adrian.vondendriesch"/>
+                </release-item-contributor-list>
+
+                <p>Use <file>pkg-config</file> instead of <file>xml2-config</file> for <proper>libxml2</proper> build options.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Validate checksums are set in the manifest on <cmd>backup</cmd>/<cmd>restore</cmd>.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-core-list>
+</release>

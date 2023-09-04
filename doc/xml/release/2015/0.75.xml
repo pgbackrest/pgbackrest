@@ -1,0 +1,31 @@
+<release date="2015-06-14" version="0.75" title="New Repository Format, Info Command and Experimental 9.5 Support">
+    <release-core-list>
+        <text>
+            <p><b>IMPORTANT NOTE</b>: This flag day release breaks compatibility with older versions of <backrest/>. The manifest format, on-disk structure, and the binary names have all changed. You must create a new repository to hold backups for this version of <backrest/> and keep your older repository for a time in case you need to do a restore. The <file>pg_backrest.conf</file> file has not changed but you'll need to change any references to <file>pg_backrest.pl</file> in cron (or elsewhere) to <file>pg_backrest</file> (without the <file>.pl</file> extension).</p>
+        </text>
+
+        <release-feature-list>
+            <release-item>
+                <p>Added the <cmd>info</cmd> command.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="michael.renner"/>
+                </release-item-contributor-list>
+
+                <p>Logging now uses unbuffered output. This should make log files that are being written by multiple threads less chaotic.</p>
+            </release-item>
+
+            <release-item>
+                <p>Experimental support for <postgres/> 9.5. This may break when the control version or WAL magic changes but will be updated in each release.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <p>More efficient file ordering for <cmd>backup</cmd>. Files are copied in descending size order so a single thread does not end up copying a large file at the end. This had already been implemented for <cmd>restore</cmd>.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-core-list>
+</release>

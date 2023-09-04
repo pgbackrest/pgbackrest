@@ -1,0 +1,36 @@
+<release date="2016-05-17" version="1.01" title="Enhanced Info, Selective Restore, and 9.6 Support">
+    <release-core-list>
+        <release-feature-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="david.steele"/>
+                    <release-item-contributor id="cynthia.shang"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Enhanced text output of <cmd>info</cmd> command to include timestamps, sizes, and the reference list for all backups.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="stephen.frost"/>
+                    <!-- <release-item-contributor id="david.steele"/> -->
+                    <release-item-reviewer id="cynthia.shang"/>
+                    <release-item-reviewer id="greg.smith"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Allow selective restore of databases from a cluster backup. This feature can result in major space and time savings when only specific databases are restored. Unrestored databases will not be accessible but must be manually dropped before they will be removed from the shared catalogue.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <!-- <release-item-contributor id="david.steele"/> -->
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Experimental support for non-exclusive backups in <postgres/> 9.6 beta1. Changes to the control/catalog/WAL versions in subsequent betas may break compatibility but <backrest/> will be updated with each release to keep pace.</p>
+            </release-item>
+        </release-feature-list>
+    </release-core-list>
+</release>

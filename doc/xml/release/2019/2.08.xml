@@ -1,0 +1,353 @@
+<release date="2019-01-02" version="2.08" title="Minor Improvements and Bug Fixes">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="matt.kunkel"/>
+                </release-item-contributor-list>
+
+                <p>Remove request for S3 object info directly after putting it.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="ronan.dunklau"/>
+                </release-item-contributor-list>
+
+                <p>Correct <br-option>archive-get-queue-max</br-option> to be <id>size</id> type.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="camilo.aguilar"/>
+                </release-item-contributor-list>
+
+                <p>Add error message when current user <id>uid</id>/<id>gid</id> does not map to a name.</p>
+            </release-item>
+
+            <release-item>
+                <p>Error when <br-option>--target-action=shutdown</br-option> specified for <postgres/> &lt; 9.5.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="ronan.dunklau"/>
+                </release-item-contributor-list>
+
+                <p>Set TCP keepalives on <proper>S3</proper> connections.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="ryan.lambert"/>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Reorder <cmd>info</cmd> command text output so most recent backup is output last.</p>
+            </release-item>
+
+            <release-item>
+                <p>Change file ownership only when required.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="brad.nicholson"/>
+                </release-item-contributor-list>
+
+                <p>Redact <id>authentication</id> header when throwing <proper>S3</proper> errors.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Enable S3 storage and encryption for <cmd>archive-get</cmd> command in C.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Migrate local <cmd>info</cmd> command to C.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <proper>S3</proper> storage driver.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>HttpClient</code> object.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>TlsClient</code> object.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add interface objects for <proper>libxml2</proper>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add encryption capability to <code>Info*</code> objects.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>IoFilter</code> interface to <code>CipherBlock</code> object.</p>
+            </release-item>
+
+            <release-item>
+                <p>Allow arbitrary <code>InOut</code> filters to be chained in <code>IoFilterGroup</code>.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Add <code>infoBackup</code> object to encapsulate the <file>backup.info</file> file.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Improve JSON to <code>Variant</code> conversion and add <code>Variant</code> to JSON conversion.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Storage helper improvements. Allow <code>NULL</code> stanza in storage helper. Add path expression for repository backup.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Info module improvements. Rename constants in <code>Info</code> module for consistency. Remove <code>#define</code> statements in the <code>InfoPg</code> module to conform with newly-adopted coding standards. Use cast to make for loop more readable in <code>InfoPg</code> module. Add <code>infoArchiveIdHistoryMatch()</code> to the <code>InfoArchive</code> object.</p>
+            </release-item>
+
+            <release-item>
+                <p>Allow I/O read interface to explicitly request blocking reads.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Improve error messages when info files are missing/corrupt.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Add <code>strSizeFormat()</code> to <code>String</code> object.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>strLstInsert()</code> and <code>strLstInsertZ()</code> to <code>StringList</code> object.</p>
+            </release-item>
+
+            <release-item>
+                <p>Rename <code>PGBACKREST</code>/<code>BACKREST</code> constants to <code>PROJECT</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Require <proper>S3</proper> key options except for <cmd>local</cmd>/<cmd>remote</cmd> commands.</p>
+            </release-item>
+
+            <release-item>
+                <p>Explicitly compile with Posix 2001 standard.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>ServiceError</code> for errors from a service that can be retried.</p>
+            </release-item>
+
+            <release-item>
+                <p>Conditional compilation of Perl logic in <file>exit.c</file>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Merge <code>cipher.h</code> into <code>crypto.h</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Remove extraneous <code>use</code>/<code>include</code> statements.</p>
+            </release-item>
+
+            <release-item>
+                <p>Remove embedded semicolon from <code>String</code> constant macros.</p>
+            </release-item>
+
+            <release-item>
+                <p>Reduce debug level for <code>infoIni()</code> to test.</p>
+            </release-item>
+
+            <release-item>
+                <p>Return <code>IoFilterGroup *</code> from <code>ioFilterGroupAdd()</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add coding standards for <code>String</code> constants.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add missing <code>LOG_DEBUG()</code> macro.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="keith.fiske"/>
+                </release-item-contributor-list>
+
+                <p>Clarify when <br-option>target-action</br-option> is effective and <postgres/> version support.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="pritam.barhate"/>
+                </release-item-contributor-list>
+
+                <p>Clarify that region/endpoint must be configured correctly for the bucket.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add documentation for building the documentation.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Add <code>admonitions</code> to all documentation renderers (HTML, PDF, Markdown and help text) and update <file>xml</file> files accordingly.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Add HTML table rendering and update PDF/Markdown renderers to support header-less tables. Add optional table captions.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Escape special characters in latex when not in a code block.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Base menu ordering on natural ordering in the manifest.</p>
+            </release-item>
+
+            <release-item>
+                <p>Replace keywords with more flexible if statements.</p>
+            </release-item>
+
+            <release-item>
+                <p>Pre-build containers for any <id>execute</id> elements marked <id>pre</id>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Documentation may be built with user-specified packages.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add Centos/RHEL 7 option to documentation build.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Allow custom logo for PDF documentation.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Modify general document elements to allow any child element.</p>
+            </release-item>
+
+            <release-item>
+                <p>Use absolute paths so that <file>./doc.pl</file> runs.</p>
+            </release-item>
+
+            <release-item>
+                <p>Pick <code>pg_switch_wal()</code>/<code>pg_switch_xlog()</code> based on <postgres/> version.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add configuration to the standby so it works as a primary when promoted.</p>
+            </release-item>
+
+            <release-item>
+                <p>Create common <id>if</id> expressions for testing <id>os-type</id>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <id>zlib1g-dev</id> to <proper>Debian</proper> builds.</p>
+            </release-item>
+        </release-development-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <p>New test containers with static test certificates.</p>
+            </release-item>
+
+            <release-item>
+                <p>Fix test binary name for <file>gprof</file>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Allow arbitrary multiplier and flush character in <code>IoTestFilterMultiply</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Update URL for Docker install.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>testRepoPath()</code> to let C unit tests know where the code repository is located.</p>
+            </release-item>
+
+            <release-item>
+                <p>Merge <file>common/typeStringListTest</file> module into <file>common/typeStringTest</file>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Merge <file>common/typeVariantListTest</file> module into <file>common/typeVariantTest</file>.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+</release>

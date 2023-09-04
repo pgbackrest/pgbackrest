@@ -1,0 +1,95 @@
+<release date="2019-11-12" version="2.19" title="C Migrations and Bug Fixes">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="james.sewell"/>
+                    <release-item-ideator id="jens.wilke"/>
+                </release-item-contributor-list>
+
+                <p>Fix remote timeout in delta restore.</p>
+
+                <p>When performing a delta restore on a largely unchanged cluster the remote could timeout if no files were fetched from the repository within <br-option>protocol-timeout</br-option>. Add keep-alives to prevent remote timeout.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="donicrosby"/>
+                </release-item-contributor-list>
+
+                <p>Fix handling of repeated HTTP headers.</p>
+
+                <p>When HTTP headers are repeated they should be considered equivalent to a single comma-separated header rather than generating an error, which was the prior behavior.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p><proper>JSON</proper> output from the <cmd>info</cmd> command is no longer pretty-printed.</p>
+
+                <p>Monitoring systems can more easily ingest the <proper>JSON</proper> without linefeeds. External tools such as <code>jq</code> can be used to pretty-print if desired.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>The <cmd>check</cmd> command is implemented entirely in C.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Document how to contribute to <backrest/>.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="brad.nicholson"/>
+                </release-item-contributor-list>
+
+                <p>Document maximum version for <br-option>auto-stop</br-option> option.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Fix container test path being used when <br-option>--vm=none</br-option>.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Fix mismatched timezone in expect test.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Don't autogenerate embedded libc code by default.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-test-list>
+</release>
