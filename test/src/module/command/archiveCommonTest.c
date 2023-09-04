@@ -299,7 +299,7 @@ testRun(void)
             "did not find partial segment");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("cached results");
+        TEST_TITLE("find more than one segment with caching");
 
         HRN_STORAGE_PUT_EMPTY(
             storageTest, "archive/db/9.6-2/1234567812345678/123456781234567812345677-eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee.gz");

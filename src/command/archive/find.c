@@ -123,7 +123,7 @@ walSegmentFind(WalSegmentFind *const this, const String *const walSegment)
                     if (regExp == NULL)
                         regExp = regExpNew(expression);
 
-                    // Remove list items that do not match. This prevents us from having check them again on the next find
+                    // Remove list items that do not match. This prevents us from having check them again on the next find.
                     while (!strLstEmpty(this->list) && !regExpMatch(regExp, strLstGet(this->list, 0)))
                         strLstRemoveIdx(this->list, 0);
 
