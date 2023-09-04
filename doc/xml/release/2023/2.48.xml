@@ -72,4 +72,19 @@
             </release-item>
         </release-improvement-list>
     </release-core-list>
+
+    <release-doc-list>
+        <release-bug-list>
+            <release-item>
+                <github-pull-request id="2165"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="hartmut.goebel"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix configuration reference example for the <br-option>tls-server-address</br-option> option.</p>
+            </release-item>
+        </release-bug-list>
+    </release-doc-list>
 </release>

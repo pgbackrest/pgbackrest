@@ -397,6 +397,11 @@
     <contributor-name-display>Hans-J&amp;uuml;rgen Sch&amp;ouml;nig</contributor-name-display>
 </contributor>
 
+<contributor id="hartmut.goebel">
+    <contributor-name-display>Hartmut Goebel</contributor-name-display>
+    <contributor-id type="github">htgoebel</contributor-id>
+</contributor>
+
 <contributor id="heath.lord">
     <contributor-name-display>Heath Lord</contributor-name-display>
     <contributor-id type="github">crunchyheath</contributor-id>
