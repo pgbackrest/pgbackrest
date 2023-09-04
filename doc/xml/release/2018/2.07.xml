@@ -1,0 +1,196 @@
+<release date="2018-11-16" version="2.07" title="Automatic Backup Checksum Delta">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="sebastien.lardiere"/>
+                </release-item-contributor-list>
+
+                <p>Fix issue with <br-option>archive-push-queue-max</br-option> not being honored on connection error.</p>
+            </release-item>
+
+            <release-item>
+                <p>Fix static WAL segment size used to determine if <br-option>archive-push-queue-max</br-option> has been exceeded.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="vthriller"/>
+                </release-item-contributor-list>
+
+                <p>Fix error after log file open failure when processing should continue.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Automatically enable backup checksum delta when anomalies (e.g. timeline switch) are detected.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="craig.a.james"/>
+                </release-item-contributor-list>
+
+                <p>Retry all S3 <id>5xx</id> errors rather than just <id>500</id> internal errors.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Correct current history item in <code>InfoPg</code> to always be in position 0.</p>
+            </release-item>
+
+            <release-item>
+                <p>Make <code>ioReadLine()</code> read less aggressively.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>ioWriteFlush()</code> to flush pending output.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add destructors to <code>IoRead</code> and <code>IoWrite</code> objects.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <id>base</id> variants to all integer to string conversion functions.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>lstInsert()</code> to <code>List</code> object.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>strCatChr()</code>, <code>strEmpty()</code>, and constant macros to <code>String</code> object.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>regExpPrefix()</code> to aid in static prefix searches.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Correct <code>cfgDefDataFind()</code> to use <code>UINTP</code> instead of <code>VOIDPP</code>.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Change <code>infoArchiveCheckPg()</code> to display the <postgres/> version as a string (e.g. 9.4) instead of the integer representation (e.g. 90400) when throwing an error.</p>
+            </release-item>
+
+            <release-item>
+                <p>Allow storage path and file mode to be 0.</p>
+            </release-item>
+
+            <release-item>
+                <p>Limit usable <code>Buffer</code> size without changing allocated size.</p>
+            </release-item>
+
+            <release-item>
+                <p>Construct <code>Wait</code> object in milliseconds instead of fractional seconds.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>THROW*_ON_SYS_ERROR*</code> macros to test and throw system errors.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>KernelError</code> to report miscellaneous kernel errors.</p>
+            </release-item>
+
+            <release-item>
+                <p>Use <code>THROW_ON_SYS_ERROR</code> macro to improve <code>fork</code> code coverage.</p>
+            </release-item>
+
+            <release-item>
+                <p><code>Storage</code> interface methods no longer declare the driver as const.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>memContextCallbackClear()</code> to prevent double <code>free()</code> calls.</p>
+            </release-item>
+
+            <release-item>
+                <p>Merge <file>crypto/random</file> module into <file>crypto/crypto</file>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>cryptoError()</code> and update crypto code to use it.</p>
+            </release-item>
+
+            <release-item>
+                <p>Rename <code>CipherError</code> to <code>CryptoError</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Reword misleading message in stack trace when parameter buffer is full.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add logging macros for <code>TimeMSec</code> type.</p>
+            </release-item>
+
+            <release-item>
+                <p>Modify value of <code>PERL_EMBED_ERROR</code> macro.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-development-list>
+            <release-item>
+                <p>Add new HTML tags and <code>strExtra</code> to <code>DocHtmlElement</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Remove error suppression for <backrest/> <file>make</file>.</p>
+            </release-item>
+        </release-development-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <p>New test containers. Add libxml2 library needed for S3 development. Include new minor version upgrades for <postgres/>. Remove <postgres/> 11 beta/rc repository.</p>
+            </release-item>
+
+            <release-item>
+                <p>Test speed improvements. Mount <id>tmpfs</id> in <file>Vagrantfile</file> instead <file>test.pl</file>. Preserve contents of C unit test build directory between <file>test.pl</file> executions. Improve efficiency of code generation.</p>
+            </release-item>
+
+            <release-item>
+                <p>New, concise coverage report for C.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>TEST_LOG()</code> and <code>TEST_LOG_FMT()</code> macros.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improve alignment of expected vs. actual error test results.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add time since the beginning of the run to each test statement.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+</release>

@@ -177,14 +177,16 @@ testRun(void)
         TEST_ERROR(httpQueryNewStr(STRDEF("a=b&c")), FormatError, "invalid key/value 'c' in query 'a=b&c'");
 
         HttpQuery *query2 = NULL;
-        TEST_ASSIGN(query2, httpQueryNewStr(STRDEF("?a=%2Bb&c=d%3D")), "query from string");
-        TEST_RESULT_STR_Z(httpQueryRenderP(query2), "a=%2Bb&c=d%3D", "render query");
+        TEST_ASSIGN(query2, httpQueryNewStr(STRDEF("?a%2F=%2Bb&c=d%3D")), "query from string");
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(query2, httpQueryToLog, logBuf, sizeof(logBuf)), "httpQueryToLog");
+        TEST_RESULT_Z(logBuf, "{a/: '+b', c: 'd='}", "check log");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("merge queries");
 
         TEST_RESULT_STR_Z(
-            httpQueryRenderP(httpQueryMerge(query, query2)), "a=%2Bb&c=d%3D&key1=value%201%3F&key2=value2a", "render merge");
+            httpQueryRenderP(httpQueryMerge(query, query2)), "a%2F=%2Bb&c=d%3D&key1=value%201%3F&key2=value2a", "render merge");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("free query");

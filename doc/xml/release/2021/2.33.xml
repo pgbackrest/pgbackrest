@@ -1,0 +1,282 @@
+<release date="2021-04-05" version="2.33" title="Multi-Repository and GCS Support">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <github-issue id="1299"/>
+                <github-pull-request id="1301"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="lev.kokotov"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Fix option warnings breaking async <cmd>archive-get</cmd>/<cmd>archive-push</cmd>.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="1319"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="christian.roux"/>
+                    <release-item-ideator id="efremov.egor"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Fix memory leak in backup during archive copy.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="1294"/>
+                <github-pull-request id="1295"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="bsiara"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Fix stack overflow in cipher passphrase generation.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="1317"/>
+                <github-pull-request id="1336"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="lesovsky.alexey"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Fix <cmd>repo-ls</cmd> <id>/</id> on <proper>S3</proper> repositories.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <commit subject="Enhance expire command multi-repo support.">
+                    <github-pull-request id="1289"/>
+                </commit>
+                <commit subject="Expire continues if an error occurs processing a repository.">
+                    <github-pull-request id="1308"/>
+                </commit>
+                <commit subject="Add archive-get command multi-repo support.">
+                    <github-pull-request id="1292"/>
+                </commit>
+                <commit subject="Enhance restore command multi-repo support.">
+                    <github-pull-request id="1300"/>
+                </commit>
+                <commit subject="Refactor info command repoMin/Max."/>
+                <commit subject="Remove restore default repo from integration tests."/>
+                <commit subject="Make --repo optional for backup command.">
+                    <github-pull-request id="1316"/>
+                </commit>
+                <commit subject="Refactor archive-push command warnings to work like archive-get."/>
+                <commit subject="Add write fault-tolerance to archive-push command.">
+                    <github-pull-request id="1316"/>
+                </commit>
+                <commit subject="Make --repo optional for remaining commands except stanza-delete."/>
+                <commit subject="Multiple repository support.">
+                    <github-pull-request id="1227"/>
+                </commit>
+                <commit subject="Allow stanza-* commands to be run remotely.">
+                    <github-pull-request id="1326"/>
+                </commit>
+                <commit subject="Improve info command fault tolerance.">
+                    <github-pull-request id="1342"/>
+                </commit>
+                <commit subject="Improve archive-push command fault tolerance.">
+                    <github-pull-request id="1343"/>
+                </commit>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Multiple repository support.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="631"/>
+                <github-issue id="743"/>
+                <github-pull-request id="1320"/>
+
+                <release-item-contributor-list>
+                    <release-item-reviewer id="cynthia.shang"/>
+                    <!-- Actually tester, but we don't have a tag for that yet -->
+                    <release-item-reviewer id="daniel.farina"/>
+                </release-item-contributor-list>
+
+                <p>GCS support for repository storage.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="1298"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="hans.jurgen.schonig"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Add <br-option>archive-header-check</br-option> option.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <github-issue id="986"/>
+                <github-pull-request id="1307"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="stefan.fercot"/>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Include recreated system databases during selective restore.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="1340"/>
+                <github-pull-request id="1341"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="brian.p.bockelman"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Exclude <id>content-length</id> from <proper>S3</proper> signed headers.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="1321"/>
+
+                <release-item-contributor-list>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Consolidate less commonly used repository storage options.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="1251"/>
+                <github-issue id="1293"/>
+                <github-pull-request id="1255"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="michael.schout"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Allow custom <setting>config-path</setting> default with <id>./configure --with-configdir</id>.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="1319"/>
+                <github-pull-request id="1328"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="cynthia.shang"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Log archive copy during <cmd>backup</cmd>.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <github-pull-request id="1332"/>
+
+                <release-item-contributor-list>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Improve protocol handlers.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="1318"/>
+
+                <release-item-contributor-list>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Add <code>HttpUrl</code> object.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-improvement-list>
+            <release-item>
+                <github-pull-request id="1353"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update reference to include links to user guide examples.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="796"/>
+                <github-pull-request id="1329"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="cynthia.shang"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Update selective restore documentation with caveats.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="1319"/>
+                <github-pull-request id="1327"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="cynthia.shang"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Add <setting>compress-type</setting> clarification to <setting>archive-copy</setting> documentation.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="1242"/>
+                <github-pull-request id="1346"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add <setting>compress-level</setting> defaults per <setting>compress-type</setting> value.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="871"/>
+                <github-pull-request id="1347"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add note about required <proper>NFS</proper> settings being the same as <postgres/>.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-doc-list>
+</release>

@@ -1,0 +1,255 @@
+<release date="2018-10-15" version="2.06" title="Checksum Delta Backup and PostgreSQL 11 Support">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="dan.farrell"/>
+                </release-item-contributor-list>
+
+                <p>Fix missing URI encoding in S3 driver.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="jesper.st.john"/>
+                </release-item-contributor-list>
+
+                <p>Fix incorrect error message for duplicate options in configuration files.</p>
+            </release-item>
+
+            <release-item>
+                <p>Fix incorrectly reported error return in <id>info</id> logging.</p>
+
+                <p>A return code of 1 from the <cmd>archive-get</cmd> was being logged as an error message at <id>info</id> level but otherwise worked correctly.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Add checksum delta for incremental backups.</p>
+
+                <p>Checksum delta backups uses checksums rather than timestamps to determine if files have changed.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="PostgreSQL 11 Beta 4 support."/>
+                <commit subject="Support configurable WAL segment size."/>
+                <commit subject="PostgreSQL 11 support."/>
+
+                <p><postgres/> 11 support, including configurable WAL segment size.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <p>Ignore all files in a linked tablespace directory except the subdirectory for the current version of <postgres/>.</p>
+
+                <p>Previously an error would be generated if other files were present and not owned by the <postgres/> user.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="douglas.j.hunley"/>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Improve <cmd>info</cmd> command to display the stanza cipher type.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improve support for special characters in filenames.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Allow <br-option>delta</br-option> option to be specified in the <backrest/> configuration file.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Migrate local, unencrypted, non-S3 <cmd>archive-get</cmd> command to C.</p>
+            </release-item>
+
+            <release-item>
+                <p>Storage refactoring. Posix file functions now differentiate between open and missing errors. Don't use negations in objects below Storage. Rename posix driver files/functions for consistency. Full abstraction of storage driver interface. Merge protocol storage helper into storage helper. Add CIFS driver to storage helper for read-only repositories.</p>
+            </release-item>
+
+            <release-item>
+                <p>Update all interfaces to use variable parameter constructors.</p>
+            </release-item>
+
+            <release-item>
+                <p>Info objects now parse JSON and use specified storage.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>ioReadLine()</code>/<code>ioWriteLine()</code> to <code>IoRead</code>/<code>IoWrite</code> objects.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add helper for repository storage.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>cryptoHmacOne()</code> for HMAC support.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>cfgDefOptionMulti()</code> to identify multi-value options.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-contributor id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Add <code>bufNewZ()</code> and <code>bufHex()</code> to <code>Buffer</code> object.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Allow <code>hashSize()</code> to run on remote storage.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Restore <code>bIgnoreMissing</code> flag in <code>backupFile()</code> lost in storage refactor.</p>
+            </release-item>
+
+            <release-item>
+                <p>Migrate <code>walIsPartial()</code>, <code>walIsSegment()</code>, and <code>walSegmentFind()</code> from Perl to C.</p>
+            </release-item>
+
+            <release-item>
+                <p>Migrate control functions to detect stop files to C.</p>
+            </release-item>
+
+            <release-item>
+                <p>Make archive-get info messages consistent between C and Perl implementations.</p>
+            </release-item>
+
+            <release-item>
+                <p>Change locking around async process forking to be more test friendly.</p>
+            </release-item>
+
+            <release-item>
+                <p>Simplify debug logging by allowing log functions to return <code>String</code> objects.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improve documentation in <code>filter.h</code> and <code>filter.internal.h</code>.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="stephen.frost"/>
+                    <release-item-ideator id="magnus.hagander"/>
+                </release-item-contributor-list>
+
+                <p>Use <id>command</id> in <file>authorized_hosts</file> to improve SSH security.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="stephane.schildknecht"/>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>List allowable values for the <br-option>buffer-size</br-option> option in the configuration reference.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Update introduction to be pithy.</p>
+            </release-item>
+        </release-development-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <p>Install <proper>nodejs</proper> from <id>deb.nodesource.com</id>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Disable flapping <id>archive/get</id> unit on CentOS 6.</p>
+            </release-item>
+
+            <release-item>
+                <p>Move test expect log out of the regular test directory.</p>
+            </release-item>
+
+            <release-item>
+                <p>Fix buffer underrun in configuration test harness.</p>
+            </release-item>
+
+            <release-item>
+                <p>Fix missing test caused by a misplaced YAML tag.</p>
+            </release-item>
+
+            <release-item>
+                <p>Make Valgrind return an error even when a non-fatal issue is detected. Update some minor issues discovered in the tests as a result.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <id>-ftree-coalesce-vars</id> option to unit test compilation.</p>
+            </release-item>
+
+            <release-item>
+                <p>Clear test directory between test runs.</p>
+            </release-item>
+
+            <release-item>
+                <p>Allow C or Perl coverage to run on more than one VM.</p>
+            </release-item>
+
+            <release-item>
+                <p>Don't perform valgrind when requested.</p>
+            </release-item>
+
+            <release-item>
+                <p>Remove compiler warnings that are not valid for u16.</p>
+            </release-item>
+
+            <release-item>
+                <p>Merge all posix storage tests into a single unit.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Add <file>.gitignore</file> to C <path>src</path> directory.</p>
+            </release-item>
+
+            <release-item>
+                <p>Fix typo in unit test error messages, EXECTED => EXPECTED.</p>
+            </release-item>
+
+            <release-item>
+                <p>Make comment blocks consistent across all tests.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+</release>

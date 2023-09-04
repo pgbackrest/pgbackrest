@@ -1,0 +1,127 @@
+<release date="2020-10-05" version="2.30" title="PostgreSQL 13 Support">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="mohamed.insaf.k"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Error with hints when backup user cannot read <id>pg_settings</id>.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <commit subject="Ignore backup_manifest in PG13."/>
+                <commit subject="Update PostgreSQL 13 test catalog versions missed in 6bb111c1."/>
+                <commit subject="Update test containers for PostgreSQL 13."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p><postgres/> 13 support.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="cynthia.shang"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Improve <postgres/> version identification.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Improve working directory error message.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.christensen"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add hint about starting the stanza when WAL segment not found.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Add hint and documentation for protocol version mismatches."/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="loop-evgeny"/>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Add hint for protocol version mismatch.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add internal verify command.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Allow <code>ProtocolParallel</code> to complete with no jobs.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-improvement-list>
+            <release-item>
+                <commit subject="Add hint and documentation for protocol version mismatches."/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="loop-evgeny"/>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Add note that <backrest/> versions must match when running remotely.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Move info command text to the reference and link to user guide."/>
+                <commit subject="Add text rendering for page links missed in 597739fa."/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="christophe.courtois"/>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Move info command text to the reference and link to user guide.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="heath.lord"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update yum repository path for <proper>CentOS/RHEL</proper> user guide.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-doc-list>
+</release>

@@ -1,0 +1,296 @@
+<release date="2018-08-31" version="2.05" title="Environment Variable Options and Exclude Temporary/Unlogged Relations">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Fix issue where <i>relative</i> links in <path>$PGDATA</path> could be stored in the backup with the wrong path.</p>
+
+                <p>This issue did not affect absolute links and relative tablespace links were caught by other checks.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="jason.odonnell"/>
+                </release-item-contributor-list>
+
+                <p>Remove incompletely implemented <br-option>online</br-option> option from the <cmd>check</cmd> command.</p>
+
+                <p>Offline operation runs counter to the purpose of this command, which is to check if archiving and backups are working correctly.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Fix issue where errors raised in C were not logged when called from Perl.</p>
+
+                <p><backrest/> properly terminated with the correct error code but lacked an error message to aid in debugging.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="yogesh.sharma"/>
+                </release-item-contributor-list>
+
+                <p>Fix issue when a boolean option (e.g. <br-option>delta</br-option>) was specified more than once.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <p>Allow any option to be set in an environment variable.</p>
+
+                <p>This includes options that previously could only be specified on the command line, e.g. <br-option>stanza</br-option>, and secret options that could not be specified on the command-line, e.g. <br-option>repo1-s3-key-secret</br-option>.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Exclude temporary and unlogged relation (table/index) files from backup.</p>
+
+                <p>Implemented using the same logic as the patches adding this feature to <postgres/>, <link url="https://git.postgresql.org/pg/commitdiff/8694cc96b52a967a49725f32be7aa77fd3b6ac25">8694cc96</link> and <link url="https://git.postgresql.org/pg/commitdiff/920a5e500a119b03356fb1fb64a677eb1aa5fc6f">920a5e50</link>. Temporary relation exclusion is enabled in <postgres/> &amp;ge; <id>9.0</id>. Unlogged relation exclusion is enabled in <postgres/> &amp;ge; <id>9.1</id>, where the feature was introduced.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Allow arbitrary directories and/or files to be excluded from a backup.</p>
+
+                <p>Misuse of this feature can lead to inconsistent backups so read the <br-option>--exclude</br-option> documentation carefully before using.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <br-option>log-subprocess</br-option> option to allow file logging for <id>local</id> and <id>remote</id> subprocesses.</p>
+            </release-item>
+
+            <release-item>
+                <p><postgres/> 11 Beta 3 support.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Allow zero-size files in backup manifest to reference a prior manifest regardless of timestamp delta.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Improve asynchronous <cmd>archive-get</cmd>/<cmd>archive-push</cmd> performance by directly checking status files.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="sarah.conway"/>
+                </release-item-contributor-list>
+
+                <p>Improve error message when a command is missing the <br-option>stanza</br-option> option.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Validate configuration options in a single pass. By pre-calculating and storing the option dependencies in <file>parse.auto.c</file> validation can be completed in a single pass, which is both simpler and faster.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add gzip compression/decompression filters for C.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="stephen.frost"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Improve performance of string to int conversion. Use <code>strtoll()</code> instead of <code>sprintf()</code> for conversion. Also use available integer min/max constants rather than hard-coded values.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Add <code>uint64</code> variant type and supporting conversion functions.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add basic C JSON parser.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Migrate minimum set of code for reading <file>archive.info</file> files from Perl to C.</p>
+            </release-item>
+
+            <release-item>
+                <p>Allow <code>Buffer</code> object <quote>used size</quote> to be different than <quote>allocated size</quote>. Add functions to manage used size and remaining size and update automatically when possible.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Abstract IO layer out of the storage layer. This allows the routines to be used for IO objects that do not have a storage representation. Implement buffer read and write IO objects. Implement filters and update <code>cryptoHash</code> to use the new interface. Implement size and buffer filters.</p>
+            </release-item>
+
+            <release-item>
+                <p><code>storageFileRead()</code> accepts a buffer for output rather than creating one. This is more efficient overall and allows the caller to specify how many bytes will be read on each call. Reads are appended if the buffer already contains data but the buffer size will never increase.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Add <code>iniSectionList()</code> to <code>Ini</code> object and remove dead code.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Manifest improvements. Require <postgres/> catalog version when instantiating a <code>Manifest</code> object (and not loading it from disk). Prevent manifest from being built more than once. Limit manifest build recursion (i.e. links followed) to sixteen levels to detect link loops.</p>
+            </release-item>
+
+            <release-item>
+                <p>Do nothing in <code>memContextMove()</code> when the context is already in the specified parent.</p>
+            </release-item>
+
+            <release-item>
+                <p>Allow command/option constants to autonumber in both C and Perl to reduce churn when a new command/option is added.</p>
+            </release-item>
+
+            <release-item>
+                <p>Show exact log level required for stack trace param output instead of just <quote>debug</quote>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Update <code>Archive::Info->archiveIdList()</code> to return a valid error code instead of unknown.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>cvtBoolToConstZ()</code> to simplify conversion of boolean to string.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>cvtZToUInt()</code> to convert string to unsigned int.</p>
+            </release-item>
+
+            <release-item>
+                <p>Enable <id>-Wstrict-prototypes</id>, <id>-Wpointer-arith</id>, <id>-Wduplicated-branches</id>, <id>-Wvla</id>, and <id>-Wduplicated-cond</id> and update code to conform where necessary.</p>
+            </release-item>
+
+            <release-item>
+                <p>Rename error-handling variables in <code>Main.pm</code> to conform to standard.</p>
+            </release-item>
+
+            <release-item>
+                <p>Remove redundant lines from embedded Perl by combining blank lines.</p>
+            </release-item>
+
+            <release-item>
+                <p>Define cipher magic size with <code>sizeof()</code> rather than using a constant.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>cvtCharToZ()</code> and macro for debugging <code>char</code> params.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>strReplaceChr()</code> to <code>String</code> object.</p>
+            </release-item>
+
+            <release-item>
+                <p>Correct <id>OptionInvalidError</id> to <id>OptionInvalidValueError</id> in boolean option parsing.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="camilo.aguilar"/>
+                </release-item-contributor-list>
+
+                <p>Fix invalid log level in <br-option>log-path</br-option> option reference.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="christophe.pettus"/>
+                </release-item-contributor-list>
+
+                <p>Stop trying to arrange contributors in <file>release.xml</file> by last/first name.</p>
+
+                <p>Contributor names have always been presented in the release notes exactly as given, but we tried to assign internal IDs based on last/first name which can be hard to determine and ultimately doesn't make sense. Inspired by Christophe's <proper>PostgresOpen 2017</proper> talk, <quote>Human Beings Do Not Have a Primary Key</quote>.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Allow containers to be defined in a document. The defined containers are built before the document build begins which allows them to be reused.</p>
+            </release-item>
+
+            <release-item>
+                <p>Move most host setup to containers defined in the documentation. This includes <postgres/> installation which had previously been included in the documentation. This way produces faster builds and there is no need for us to document <postgres/> installation.</p>
+            </release-item>
+        </release-development-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-improvement-list>
+            <release-item>
+                <p>Error if LibC build is performed outside the test environment.</p>
+
+                <p>LibC is no longer required for production builds.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Use pre-built images from Docker Hub when the container definition has not changed. Downloading an image is quite a bit faster than building a new image from scratch and saves minutes per test run in CI.</p>
+            </release-item>
+
+            <release-item>
+                <p>Refactor the <code>common/log</code> tests to not depend on <code>common/harnessLog</code>. <code>common/harnessLog</code> was not ideally suited for general testing and made all the tests quite awkward. Instead, move all code used to test the <code>common/log</code> module into the <code>logTest</code> module and repurpose <code>common/harnessLog</code> to do log expect testing for all other tests in a cleaner way. Add a few exceptions for config testing since the log levels are reset by default in <code>config/parse</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <setting>--log-level-test</setting> option. This allows setting the test log level independently from the general test harness setting, but current only works for the C tests. It is useful for seeing log output from functions on the console while a test is running.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improve error reporting for <code>TEST_ASSIGN()</code> and <code>TEST_RESULT_VOID()</code> macros.</p>
+            </release-item>
+
+            <release-item>
+                <p>Update code count for new file types and exclusions.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+</release>

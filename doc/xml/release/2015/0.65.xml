@@ -1,0 +1,27 @@
+<release date="2015-05-11" version="0.65" title="Improved Resume and Restore Logging, Compact Restores">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <p>Fixed an issue where an absolute path was not written into <file>recovery.conf</file> when the restore was run with a relative path.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <p>Better resume support. Resumed files are checked to be sure they have not been modified and the manifest is saved more often to preserve checksums as the backup progresses. More unit tests to verify each resume case.</p>
+            </release-item>
+
+            <release-item>
+                <p>Resume is now optional. Use the <setting>resume</setting> setting or <setting>{[dash]}-no-resume</setting> from the command line to disable.</p>
+            </release-item>
+
+            <release-item>
+                <p>More info messages during restore. Previously, most of the restore messages were debug level so not a lot was output in the log.</p>
+            </release-item>
+
+            <release-item>
+                <p>Added <setting>tablespace</setting> setting to allow tablespaces to be restored into the <path>pg_tblspc</path> path. This produces compact restores that are convenient for development, staging, etc. Currently these restores cannot be backed up as <backrest/> expects only links in the <path>pg_tblspc</path> path.</p>
+            </release-item>
+        </release-feature-list>
+    </release-core-list>
+</release>
