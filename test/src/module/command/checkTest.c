@@ -71,6 +71,37 @@ testRun(void)
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("report on stdout");
+        {
+            argList = strLstNew();
+            hrnCfgArgRawBool(argList, cfgOptReport, true);
+            HRN_CFG_LOAD(cfgCmdCheck, argList);
+
+            // Redirect stdout to a file
+            int stdoutSave = dup(STDOUT_FILENO);
+            const String *stdoutFile = STRDEF(TEST_PATH "/stdout.info");
+
+            THROW_ON_SYS_ERROR(freopen(strZ(stdoutFile), "w", stdout) == NULL, FileWriteError, "unable to reopen stdout");
+
+            // Not in a test wrapper to avoid writing to stdout
+            cmdCheck();
+
+            // Restore normal stdout
+            dup2(stdoutSave, STDOUT_FILENO);
+
+            // Check output of info command stored in file
+            TEST_STORAGE_GET(
+                storageTest, strZ(stdoutFile),
+                "{"
+                    "\"cfg\":{"
+                        "\"env\":{},"
+                        "\"file\":null"
+                    "}"
+                "}",
+                .remove = true);
+        }
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("env and config");
         {
             hrnCfgEnvRawZ(cfgOptBufferSize, "64KiB");

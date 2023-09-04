@@ -2095,13 +2095,13 @@
 
                 <option-list>
                     <option id="report" name="Report">
-                        <summary>!!!</summary>
+                        <summary>Generate a check report.</summary>
 
                         <text>
-                            <p>!!!</p>
+                            <p>Generate a report based on the results of the check command.</p>
                         </text>
 
-                        <example>20150131-153358F_20150131-153401I</example>
+                        <example>y</example>
                     </option>
                 </option-list>
             </command>

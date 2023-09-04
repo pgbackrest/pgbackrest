@@ -182,8 +182,8 @@ cmdCheck(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        if (cfgOptionBool(cfgOptReport)) // {uncovered - !!!}
-            ioFdWriteOneStr(STDOUT_FILENO, checkReport()); // {uncovered - !!!}
+        if (cfgOptionBool(cfgOptReport))
+            ioFdWriteOneStr(STDOUT_FILENO, checkReport());
         else
         {
             // Build stanza list based on whether a stanza was specified or not
