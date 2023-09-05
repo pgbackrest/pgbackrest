@@ -330,7 +330,7 @@ testRun(void)
             "  --repo-sftp-host-key-hash-type        SFTP repository host key hash type\n"
             "  --repo-sftp-host-port                 SFTP repository host port [default=22]\n"
             "  --repo-sftp-host-user                 SFTP repository host user\n"
-            "  --repo-sftp-known-hosts-files         list of known_hosts files to search\n"
+            "  --repo-sftp-known-hosts               a known hosts file to search\n"
             "  --repo-sftp-private-key-file          SFTP private key file\n"
             "  --repo-sftp-private-key-passphrase    SFTP private key passphrase\n"
             "  --repo-sftp-public-key-file           SFTP public key file\n"

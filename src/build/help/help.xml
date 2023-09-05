@@ -1055,14 +1055,14 @@
                         <example>pg-backup</example>
                     </config-key>
 
-                    <config-key id="repo-sftp-known-hosts-files" name="SFTP known_hosts files">
-                        <summary>List of known_hosts files to search.</summary>
+                    <config-key id="repo-sftp-known-hosts" name="SFTP known hosts file">
+                        <summary>Known hosts file to search.</summary>
 
                         <text>
-                            <p>A comma delimited list of known_hosts files to search for an SFTP host match during authentication. If unconfigured, <backrest/> will default to searching in order ~/.ssh/known_hosts ~/.ssh/known_hosts2 /etc/ssh/ssh_known_hosts /etc/ssh/ssh_known_hosts2. If configured with a comma delimited file path list, <backrest/> will search those files for a match in the order that they are provided. File paths must be full or leading tilde paths. To utilize known hosts file checking <setting>repo-sftp-host-fingerprint</setting> must be empty. See also option <setting>repo-sftp-strict-host-checking</setting>.</p>
+                            <p>A known hosts file to search for an SFTP host match during authentication. If unconfigured, <backrest/> will default to searching ~/.ssh/known_hosts ~/.ssh/known_hosts2 /etc/ssh/ssh_known_hosts /etc/ssh/ssh_known_hosts2. If configured with one or more file paths, <backrest/> will search those for a match. File paths must be full or leading tilde paths. The <setting>repo-sftp-known-hosts</setting> option can be passed multiple times to specify more than one known hosts file to search. To utilize known hosts file checking <setting>repo-sftp-host-fingerprint</setting> must be empty. See also option <setting>repo-sftp-strict-host-checking</setting>.</p>
                         </text>
 
-                        <example>/home/postgres/.ssh/known_hosts,~/.ssh/known_hosts2, /etc/ssh/ssh_known_host</example>
+                        <example>--repo-sftp-known-hosts=/home/postgres/.ssh/known_hosts --repo-sftp-known-hosts=~/.ssh/known_hosts2 --repo-sftp-known-hosts=/etc/ssh/ssh_known_host</example>
                     </config-key>
 
                     <config-key id="repo-sftp-private-key-file" name="SFTP Repository Private Key File">

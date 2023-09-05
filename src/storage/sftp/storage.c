@@ -11,6 +11,7 @@ SFTP Storage
 #include "common/io/socket/client.h"
 #include "common/log.h"
 #include "common/user.h"
+#include "config/config.h"
 #include "storage/sftp/read.h"
 #include "storage/sftp/storage.intern.h"
 #include "storage/sftp/write.h"
@@ -178,7 +179,7 @@ storageSftpUpdateKnownHostsFile(StorageSftp *const this, const int hostKeyType, 
             else
             {
                 // Add the host to the user's internal known_hosts list and rewrite the user's updated known_hosts file
-                int knownHostKeyType = storageSftpKnownHostKeyType(hostKeyType);
+                const int knownHostKeyType = storageSftpKnownHostKeyType(hostKeyType);
 
                 if (knownHostKeyType != 0)
                 {
@@ -483,14 +484,13 @@ storageSftpInfo(THIS_VOID, const String *const file, const StorageInfoLevel leve
 }
 
 /***********************************************************************************************************************************
-Build known_hosts file list. If knownHostsFiles is NULL build a default file list, otherwise build the list provided. If provided,
+Build known hosts file list. If knownHostsFiles is NULL build a default file list, otherwise build the list provided. If provided,
 knownHostsFiles must be comma delimited and must contain full path and/or leading tilde path entries.
 ***********************************************************************************************************************************/
 static StringList *
-storageSftpKnownHostsFilesList(const String *const knownHostsFiles)
+storageSftpKnownHostsFilesList(void)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STRING, knownHostsFiles);
     FUNCTION_LOG_END();
 
     StringList *result = strLstNew();
@@ -498,7 +498,7 @@ storageSftpKnownHostsFilesList(const String *const knownHostsFiles)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Create default file list if knownHostsFiles is NULL else create user provided files list
-        if (knownHostsFiles == NULL)
+        if (!cfgOptionTest(cfgOptRepoSftpKnownHosts))
         {
             strLstAddFmt(result, "%s%s", strZ(userHome()), "/.ssh/known_hosts");
             strLstAddFmt(result, "%s%s", strZ(userHome()), "/.ssh/known_hosts2");
@@ -508,13 +508,13 @@ storageSftpKnownHostsFilesList(const String *const knownHostsFiles)
         else
         {
             // Convert comma delimited paths to local string list
-            StringList *lclList = strLstNewSplitZ(knownHostsFiles, ",");
+            const StringList *const lclList = strLstNewVarLst(cfgOptionLst(cfgOptRepoSftpKnownHosts));
 
             // Process the local list entries and add them to the result list
             for (unsigned int listIdx = 0; listIdx < strLstSize(lclList); listIdx++)
             {
                 // Get the trimmed file path
-                String *filePath = strTrim(strLstGet(lclList, listIdx));
+                const String *const filePath = strTrim(strLstGet(lclList, listIdx));
 
                 // If leading tilde path, replace tilde with space, trim space, prepend user home path and add to the result list
                 // else add the full path to the list
@@ -1004,7 +1004,6 @@ storageSftpNew(
         FUNCTION_LOG_PARAM(MODE, param.modeFile);
         FUNCTION_LOG_PARAM(MODE, param.modePath);
         FUNCTION_LOG_PARAM(BOOL, param.write);
-        FUNCTION_LOG_PARAM(STRING, param.knownHostsFiles);
         FUNCTION_LOG_PARAM(FUNCTIONP, param.pathExpressionFunction);
         FUNCTION_LOG_PARAM(STRING_ID, param.sftpStrictHostKeyChecking);
     FUNCTION_LOG_END();
@@ -1120,7 +1119,7 @@ storageSftpNew(
                 THROW_FMT(ServiceError, "failure during libssh2_knownhost_init");
 
             // Get the list of known_hosts files to search
-            const StringList *const knownHostsPathList = storageSftpKnownHostsFilesList(param.knownHostsFiles);
+            const StringList *const knownHostsPathList = storageSftpKnownHostsFilesList();
 
             // Loop through the list of known_hosts files
             for (unsigned int listIdx = 0; listIdx < strLstSize(knownHostsPathList); listIdx++)
