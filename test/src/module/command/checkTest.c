@@ -92,12 +92,14 @@ testRun(void)
             // Check output of info command stored in file
             TEST_STORAGE_GET(
                 storageTest, strZ(stdoutFile),
+                // {uncrustify_off - indentation}
                 "{"
                     "\"cfg\":{"
                         "\"env\":{},"
                         "\"file\":null"
                     "}"
                 "}",
+                // {uncrustify_on}
                 .remove = true);
         }
 
