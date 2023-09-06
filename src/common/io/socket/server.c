@@ -10,6 +10,7 @@ Socket Server
 
 #include "common/debug.h"
 #include "common/io/server.h"
+#include "common/io/socket/addressInfo.h"
 #include "common/io/socket/common.h"
 #include "common/io/socket/server.h"
 #include "common/io/socket/session.h"

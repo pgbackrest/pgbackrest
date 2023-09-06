@@ -4,6 +4,7 @@ Address Lookup
 #include "build.auto.h"
 
 #include "common/debug.h"
+#include "common/log.h"
 #include "common/memContext.h"
 #include "common/io/socket/addressInfo.h"
 

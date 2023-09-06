@@ -199,6 +199,7 @@ src_pgbackrest = [
     'common/io/limitRead.c',
 	'common/io/server.c',
 	'common/io/session.c',
+	'common/io/socket/addressInfo.c',
 	'common/io/socket/client.c',
 	'common/io/socket/common.c',
 	'common/io/socket/server.c',
