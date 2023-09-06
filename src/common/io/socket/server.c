@@ -10,7 +10,7 @@ Socket Server
 
 #include "common/debug.h"
 #include "common/io/server.h"
-#include "common/io/socket/addressInfo.h"
+#include "common/io/socket/address.h"
 #include "common/io/socket/common.h"
 #include "common/io/socket/server.h"
 #include "common/io/socket/session.h"
@@ -165,7 +165,7 @@ sckServerNew(const String *const address, const unsigned int port, const TimeMSe
         };
 
         // Lookup address
-        const struct addrinfo *const addressFound = addrInfoGet(addrInfoNew(this->address, this->port), 0);;
+        const struct addrinfo *const addressFound = addrInfoGet(addrInfoNew(this->address, this->port), 0);
 
         // Create socket
         THROW_ON_SYS_ERROR(
