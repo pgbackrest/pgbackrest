@@ -10,6 +10,7 @@ Socket Client
 
 #include "common/debug.h"
 #include "common/io/client.h"
+#include "common/io/socket/addressInfo.h"
 #include "common/io/socket/client.h"
 #include "common/io/socket/common.h"
 #include "common/io/socket/session.h"
@@ -83,22 +84,14 @@ sckClientOpen(THIS_VOID)
             TRY_BEGIN()
             {
                 // Get an address for the host. We are only going to try the first address returned.
-                struct addrinfo *addressFound = sckHostLookup(this->host, this->port);
+                const struct addrinfo *const addressFound = addrInfoGet(addrInfoNew(this->host, this->port), 0);
 
                 // Connect to the host
-                TRY_BEGIN()
-                {
-                    fd = socket(addressFound->ai_family, addressFound->ai_socktype, addressFound->ai_protocol);
-                    THROW_ON_SYS_ERROR(fd == -1, HostConnectError, "unable to create socket");
+                fd = socket(addressFound->ai_family, addressFound->ai_socktype, addressFound->ai_protocol);
+                THROW_ON_SYS_ERROR(fd == -1, HostConnectError, "unable to create socket");
 
-                    sckOptionSet(fd);
-                    sckConnect(fd, this->host, this->port, addressFound, waitRemaining(wait));
-                }
-                FINALLY()
-                {
-                    freeaddrinfo(addressFound);
-                }
-                TRY_END();
+                sckOptionSet(fd);
+                sckConnect(fd, this->host, this->port, addressFound, waitRemaining(wait));
 
                 // Create the session
                 MEM_CONTEXT_PRIOR_BEGIN()
