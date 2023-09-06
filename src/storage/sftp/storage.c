@@ -12,6 +12,7 @@ SFTP Storage
 #include "common/log.h"
 #include "common/user.h"
 #include "config/config.h"
+#include "storage/posix/storage.h"
 #include "storage/sftp/read.h"
 #include "storage/sftp/storage.intern.h"
 #include "storage/sftp/write.h"
@@ -22,8 +23,6 @@ Define PATH_MAX if it is not defined
 #ifndef PATH_MAX
 #define PATH_MAX                                                (4 * 1024)
 #endif
-
-#define DISABLE_KNOWN_HOSTS_SEARCH                                  "disable"
 
 /***********************************************************************************************************************************
 Object type
@@ -149,7 +148,6 @@ storageSftpUpdateKnownHostsFile(StorageSftp *const this, const int hostKeyType, 
         int libSsh2ErrMsgLen;
         int rc;
 
-
         // Init a known host collection for the user's known_hosts file
         const char *const userKnownHostsFile = strZ(strNewFmt("%s%s", strZ(userHome()), "/.ssh/known_hosts"));
         userKnownHostsList = libssh2_knownhost_init(this->session);
@@ -166,6 +164,13 @@ storageSftpUpdateKnownHostsFile(StorageSftp *const this, const int hostKeyType, 
         }
         else
         {
+            // If user's known_hosts file is non-existant, create an empty one for libssh2 to operate on.
+            Storage *sshStorage =
+                storagePosixNewP(strNewFmt("%s%s", strZ(userHome()), "/.ssh"), .modeFile = 0644, .modePath = 0700, .write = true);
+
+            if (!storageExistsP(sshStorage, strNewFmt("%s", "known_hosts")))
+                storagePutP(storageNewWriteP(sshStorage, strNewFmt("%s", "known_hosts")), bufNew(0));
+
             // Load the user's known_hosts file entries into the collection
             if ((rc = libssh2_knownhost_readfile(userKnownHostsList, userKnownHostsFile, LIBSSH2_KNOWNHOST_FILE_OPENSSH)) < 0)
             {
@@ -185,19 +190,19 @@ storageSftpUpdateKnownHostsFile(StorageSftp *const this, const int hostKeyType, 
                 {
                     // Add host to the internal list
                     if (libssh2_knownhost_addc(userKnownHostsList, strZ(host), NULL, hostKey, hostKeyLen,
-                            "Generated from pgbackrest", strlen("Generated from pgbackrest"),
+                            strZ(strNewZ("Generated from " PROJECT_NAME)), strlen(strZ(strNewZ("Generated from " PROJECT_NAME))),
                             LIBSSH2_KNOWNHOST_TYPE_PLAIN | LIBSSH2_KNOWNHOST_KEYENC_RAW | knownHostKeyType, NULL) == 0)
                     {
                         // Rewrite the updated known_hosts file
                         rc = libssh2_knownhost_writefile(userKnownHostsList, userKnownHostsFile, LIBSSH2_KNOWNHOST_FILE_OPENSSH);
 
                         if (rc != 0)
-                            LOG_WARN_FMT("libssh2_knownhost_writefile unable to write '%s' for update", userKnownHostsFile);
+                            LOG_WARN_FMT(PROJECT_NAME " unable to write '%s' for update", userKnownHostsFile);
                         else
-                            LOG_WARN_FMT("libssh2_knownhost_writefile added new host '%s' to '%s'", strZ(host), userKnownHostsFile);
+                            LOG_WARN_FMT(PROJECT_NAME " added new host '%s' to '%s'", strZ(host), userKnownHostsFile);
                     }
                     else
-                        LOG_WARN_FMT("libssh2_knownhost_addc failed to add '%s' to known_hosts internal list", strZ(host));
+                        LOG_WARN_FMT(PROJECT_NAME " failed to add '%s' to known_hosts internal list", strZ(host));
                 }
                 else
                     LOG_WARN_FMT("unsupported key type [%d], unable to update knownhosts for '%s'", hostKeyType, strZ(host));
@@ -275,7 +280,7 @@ storageSftpLibSsh2SessionFreeResource(THIS_VOID)
     {
         do
         {
-            rc = libssh2_session_disconnect_ex(this->session, SSH_DISCONNECT_BY_APPLICATION, "pgbackrest instance shutdown", "");
+            rc = libssh2_session_disconnect_ex(this->session, SSH_DISCONNECT_BY_APPLICATION, "pgBackRest instance shutdown", "");
         }
         while (storageSftpWaitFd(this, rc));
 
@@ -484,22 +489,24 @@ storageSftpInfo(THIS_VOID, const String *const file, const StorageInfoLevel leve
 }
 
 /***********************************************************************************************************************************
-Build known hosts file list. If knownHostsFiles is NULL build a default file list, otherwise build the list provided. If provided,
-knownHostsFiles must be comma delimited and must contain full path and/or leading tilde path entries.
+Build known hosts file list. If sftpKnownHosts is empty build the default file list, otherwise build the list provided.
+sftpKnownHosts requires full path and/or leading tilde path entries.
 ***********************************************************************************************************************************/
 static StringList *
-storageSftpKnownHostsFilesList(void)
+storageSftpKnownHostsFilesList(const VariantList *const sftpKnownHosts)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(VARIANT_LIST, sftpKnownHosts);
     FUNCTION_LOG_END();
 
     StringList *result = strLstNew();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Create default file list if knownHostsFiles is NULL else create user provided files list
-        if (!cfgOptionTest(cfgOptRepoSftpKnownHosts))
+
+        if (varLstEmpty(sftpKnownHosts))
         {
+            // Create default file list
             strLstAddFmt(result, "%s%s", strZ(userHome()), "/.ssh/known_hosts");
             strLstAddFmt(result, "%s%s", strZ(userHome()), "/.ssh/known_hosts2");
             strLstAddZ(result, "/etc/ssh/ssh_known_hosts");
@@ -507,8 +514,8 @@ storageSftpKnownHostsFilesList(void)
         }
         else
         {
-            // Convert comma delimited paths to local string list
-            const StringList *const lclList = strLstNewVarLst(cfgOptionLst(cfgOptRepoSftpKnownHosts));
+            // Create user provided file list
+            const StringList *const lclList = strLstNewVarLst(sftpKnownHosts);
 
             // Process the local list entries and add them to the result list
             for (unsigned int listIdx = 0; listIdx < strLstSize(lclList); listIdx++)
@@ -1005,6 +1012,7 @@ storageSftpNew(
         FUNCTION_LOG_PARAM(MODE, param.modePath);
         FUNCTION_LOG_PARAM(BOOL, param.write);
         FUNCTION_LOG_PARAM(FUNCTIONP, param.pathExpressionFunction);
+        FUNCTION_LOG_PARAM(VARIANT_LIST, param.sftpKnownHosts);
         FUNCTION_LOG_PARAM(STRING_ID, param.sftpStrictHostKeyChecking);
     FUNCTION_LOG_END();
 
@@ -1119,7 +1127,7 @@ storageSftpNew(
                 THROW_FMT(ServiceError, "failure during libssh2_knownhost_init");
 
             // Get the list of known_hosts files to search
-            const StringList *const knownHostsPathList = storageSftpKnownHostsFilesList();
+            const StringList *const knownHostsPathList = storageSftpKnownHostsFilesList(param.sftpKnownHosts);
 
             // Loop through the list of known_hosts files
             for (unsigned int listIdx = 0; listIdx < strLstSize(knownHostsPathList); listIdx++)

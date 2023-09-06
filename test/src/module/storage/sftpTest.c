@@ -303,8 +303,15 @@ testRun(void)
 
         TEST_ERROR(
             storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1,
-                .sftpStrictHostKeyChecking = SFTP_STRICT_HOSTKEY_CHECKING_YES),
+                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), cfgOptionIdxStr(cfgOptRepoSftpHost, repoIdx),
+                cfgOptionIdxUInt(cfgOptRepoSftpHostPort, repoIdx), cfgOptionIdxStr(cfgOptRepoSftpHostUser, repoIdx),
+                cfgOptionUInt64(cfgOptIoTimeout), cfgOptionIdxStr(cfgOptRepoSftpPrivateKeyFile, repoIdx),
+                cfgOptionIdxStrId(cfgOptRepoSftpHostKeyHashType, repoIdx), .modeFile = STORAGE_MODE_FILE_DEFAULT,
+                .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
+                .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
+                .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             ServiceError,
             "libssh2_session_hostkey failed to get hostkey: libssh2 error [-7]");
 
@@ -333,7 +340,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx)),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             ServiceError,
             "known hosts failure: 'localhost' mismatch in known hosts files: LIBSSH2_KNOWNHOST_CHECK_MISMATCH [1]: strict checking "
             "[yes]");
@@ -363,7 +371,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx)),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             ServiceError, "known hosts failure: 'localhost' LIBSSH2_KNOWNHOST_CHECK_FAILURE [3]: strict checking [yes]");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -391,7 +400,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx)),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             ServiceError,
             "known hosts failure: 'localhost' not found in known hosts files: LIBSSH2_KNOWNHOST_CHECK_NOTFOUND [2]: strict checking"
             " [yes]");
@@ -436,7 +446,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx)),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             ServiceError,
             "known hosts failure: 'localhost' not found in known hosts files: LIBSSH2_KNOWNHOST_CHECK_NOTFOUND [2]: strict checking"
             " [yes]");
@@ -479,7 +490,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx)),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             ServiceError, "known hosts failure: 'localhost' experienced an unknown failure: [5]: strict checking [yes]");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -510,7 +522,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx)),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             ServiceError,
             "public key authentication failed: libssh2 error [-16]\n"
             "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-key-file and"
@@ -563,7 +576,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx)),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             ServiceError,
             "timeout during public key authentication");
 
@@ -599,7 +613,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx)),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             ServiceError,
             "unable to init libssh2_sftp session");
 
@@ -636,7 +651,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx)),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             ServiceError,
             "timeout during init of libssh2_sftp session");
 
@@ -675,7 +691,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx)),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             ServiceError,
             "unable to init libssh2_sftp session");
 
@@ -700,7 +717,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx)),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             "new storage (defaults)");
         TEST_RESULT_BOOL(storageTest->write, false, "check write");
 
@@ -757,7 +775,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx)),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             "new storage (defaults)");
         TEST_RESULT_LOG(
             "P00   WARN: host 'localhost' not found in known hosts files, attempting to add host to "
@@ -805,7 +824,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx)),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             "new storage (defaults)");
         TEST_RESULT_LOG(
             "P00   WARN: host 'localhost' not found in known hosts files, attempting to add host to "
@@ -843,7 +863,7 @@ testRun(void)
             {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]",
              .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_KNOWNHOST_ADDC,
-             .param = "[\"localhost\",null,\"12345678901234567890\",20,\"Generated from pgbackrest\",25,589825]"},
+             .param = "[\"localhost\",null,\"12345678901234567890\",20,\"Generated from pgBackRest\",25,589825]"},
             {.function = HRNLIBSSH2_KNOWNHOST_WRITEFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]",
              .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
@@ -879,12 +899,13 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx)),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             "new storage (defaults)");
         TEST_RESULT_LOG(
             "P00   WARN: host 'localhost' not found in known hosts files, attempting to add host to "
             "'/home/" TEST_USER "/.ssh/known_hosts'\n"
-            "P00   WARN: libssh2_knownhost_writefile added new host 'localhost' to '/home/" TEST_USER "/.ssh/known_hosts'");
+            "P00   WARN: pgBackRest added new host 'localhost' to '/home/" TEST_USER "/.ssh/known_hosts'");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
@@ -912,7 +933,7 @@ testRun(void)
             {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]",
              .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_KNOWNHOST_ADDC,
-             .param = "[\"localhost\",null,\"12345678901234567890\",20,\"Generated from pgbackrest\",25,851969]"},
+             .param = "[\"localhost\",null,\"12345678901234567890\",20,\"Generated from pgBackRest\",25,851969]"},
             {.function = HRNLIBSSH2_KNOWNHOST_WRITEFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]",
              .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
@@ -934,12 +955,13 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx)),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             "new storage (defaults)");
         TEST_RESULT_LOG(
             "P00   WARN: host 'localhost' not found in known hosts files, attempting to add host to "
             "'/home/" TEST_USER "/.ssh/known_hosts'\n"
-            "P00   WARN: libssh2_knownhost_writefile added new host 'localhost' to '/home/" TEST_USER "/.ssh/known_hosts'");
+            "P00   WARN: pgBackRest added new host 'localhost' to '/home/" TEST_USER "/.ssh/known_hosts'");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
@@ -968,7 +990,7 @@ testRun(void)
             {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]",
              .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_KNOWNHOST_ADDC,
-             .param = "[\"localhost\",null,\"12345678901234567890\",20,\"Generated from pgbackrest\",25,1114113]"},
+             .param = "[\"localhost\",null,\"12345678901234567890\",20,\"Generated from pgBackRest\",25,1114113]"},
             {.function = HRNLIBSSH2_KNOWNHOST_WRITEFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]",
              .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
@@ -990,12 +1012,13 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx)),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             "new storage (defaults)");
         TEST_RESULT_LOG(
             "P00   WARN: host 'localhost' not found in known hosts files, attempting to add host to "
             "'/home/" TEST_USER "/.ssh/known_hosts'\n"
-            "P00   WARN: libssh2_knownhost_writefile added new host 'localhost' to '/home/" TEST_USER "/.ssh/known_hosts'");
+            "P00   WARN: pgBackRest added new host 'localhost' to '/home/" TEST_USER "/.ssh/known_hosts'");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 #endif
@@ -1025,7 +1048,7 @@ testRun(void)
             {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]",
              .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_KNOWNHOST_ADDC,
-             .param = "[\"localhost\",null,\"12345678901234567890\",20,\"Generated from pgbackrest\",25,1376257]"},
+             .param = "[\"localhost\",null,\"12345678901234567890\",20,\"Generated from pgBackRest\",25,1376257]"},
             {.function = HRNLIBSSH2_KNOWNHOST_WRITEFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]",
              .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
@@ -1047,12 +1070,13 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx)),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             "new storage (defaults)");
         TEST_RESULT_LOG(
             "P00   WARN: host 'localhost' not found in known hosts files, attempting to add host to "
             "'/home/" TEST_USER "/.ssh/known_hosts'\n"
-            "P00   WARN: libssh2_knownhost_writefile added new host 'localhost' to '/home/" TEST_USER "/.ssh/known_hosts'");
+            "P00   WARN: pgBackRest added new host 'localhost' to '/home/" TEST_USER "/.ssh/known_hosts'");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 #endif
@@ -1082,7 +1106,7 @@ testRun(void)
             {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]",
              .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_KNOWNHOST_ADDC,
-             .param = "[\"localhost\",null,\"12345678901234567890\",20,\"Generated from pgbackrest\",25,1638401]"},
+             .param = "[\"localhost\",null,\"12345678901234567890\",20,\"Generated from pgBackRest\",25,1638401]"},
             {.function = HRNLIBSSH2_KNOWNHOST_WRITEFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]",
              .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
@@ -1104,12 +1128,13 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx)),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             "new storage (defaults)");
         TEST_RESULT_LOG(
             "P00   WARN: host 'localhost' not found in known hosts files, attempting to add host to "
             "'/home/" TEST_USER "/.ssh/known_hosts'\n"
-            "P00   WARN: libssh2_knownhost_writefile added new host 'localhost' to '/home/" TEST_USER "/.ssh/known_hosts'");
+            "P00   WARN: pgBackRest added new host 'localhost' to '/home/" TEST_USER "/.ssh/known_hosts'");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 #endif
@@ -1139,7 +1164,7 @@ testRun(void)
             {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]",
              .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_KNOWNHOST_ADDC,
-             .param = "[\"localhost\",null,\"12345678901234567890\",20,\"Generated from pgbackrest\",25,1900545]"},
+             .param = "[\"localhost\",null,\"12345678901234567890\",20,\"Generated from pgBackRest\",25,1900545]"},
             {.function = HRNLIBSSH2_KNOWNHOST_WRITEFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]",
              .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
@@ -1161,12 +1186,13 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx)),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             "new storage (defaults)");
         TEST_RESULT_LOG(
             "P00   WARN: host 'localhost' not found in known hosts files, attempting to add host to "
             "'/home/" TEST_USER "/.ssh/known_hosts'\n"
-            "P00   WARN: libssh2_knownhost_writefile added new host 'localhost' to '/home/" TEST_USER "/.ssh/known_hosts'");
+            "P00   WARN: pgBackRest added new host 'localhost' to '/home/" TEST_USER "/.ssh/known_hosts'");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 #endif
@@ -1195,7 +1221,7 @@ testRun(void)
             {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]",
              .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_KNOWNHOST_ADDC,
-             .param = "[\"localhost\",null,\"12345678901234567890\",20,\"Generated from pgbackrest\",25,589825]"},
+             .param = "[\"localhost\",null,\"12345678901234567890\",20,\"Generated from pgBackRest\",25,589825]"},
             {.function = HRNLIBSSH2_KNOWNHOST_WRITEFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]",
              .resultInt = LIBSSH2_ERROR_FILE},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
@@ -1217,12 +1243,13 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx)),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             "new storage (defaults)");
         TEST_RESULT_LOG(
             "P00   WARN: host 'localhost' not found in known hosts files, attempting to add host to "
             "'/home/" TEST_USER "/.ssh/known_hosts'\n"
-            "P00   WARN: libssh2_knownhost_writefile unable to write '/home/" TEST_USER "/.ssh/known_hosts' for update");
+            "P00   WARN: pgBackRest unable to write '/home/" TEST_USER "/.ssh/known_hosts' for update");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
@@ -1268,7 +1295,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx)),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             "new storage (defaults)");
         TEST_RESULT_LOG(
             "P00   WARN: host 'localhost' not found in known hosts files, attempting to add host to "
@@ -1301,7 +1329,7 @@ testRun(void)
             {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]",
              .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_KNOWNHOST_ADDC, .resultInt = LIBSSH2_ERROR_KNOWN_HOSTS,
-             .param = "[\"localhost\",null,\"12345678901234567890\",20,\"Generated from pgbackrest\",25,589825]"},
+             .param = "[\"localhost\",null,\"12345678901234567890\",20,\"Generated from pgBackRest\",25,589825]"},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
              .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",\"" KEYPUB_CSTR "\",\"" KEYPRIV_CSTR "\",null]",
              .resultInt = 0},
@@ -1321,12 +1349,13 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx)),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             "new storage (defaults)");
         TEST_RESULT_LOG(
             "P00   WARN: host 'localhost' not found in known hosts files, attempting to add host to "
             "'/home/" TEST_USER "/.ssh/known_hosts'\n"
-            "P00   WARN: libssh2_knownhost_addc failed to add 'localhost' to known_hosts internal list");
+            "P00   WARN: pgBackRest failed to add 'localhost' to known_hosts internal list");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
@@ -1373,7 +1402,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx)),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             "new storage (defaults)");
         TEST_RESULT_LOG(
             "P00   WARN: known hosts failure: 'localhost' mismatch in known hosts files: LIBSSH2_KNOWNHOST_CHECK_MISMATCH [1]: "
@@ -1406,7 +1436,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx)),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             ServiceError, "known hosts failure: 'localhost': LIBSSH2_KNOWNHOST_CHECK_FAILURE [3]: strict checking [off]");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1448,7 +1479,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx)),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             ServiceError, "known hosts failure: 'localhost': LIBSSH2_KNOWNHOST_CHECK_FAILURE [3]: strict checking [accept-new]");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1476,7 +1508,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx)),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             ServiceError,
             "known hosts failure: 'localhost': mismatch in known hosts files: LIBSSH2_KNOWNHOST_CHECK_MISMATCH [1]: strict checking"
             " [accept-new]");
@@ -1510,7 +1543,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx)),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             "new storage (defaults)");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
@@ -1539,7 +1573,7 @@ testRun(void)
             {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]",
              .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_KNOWNHOST_ADDC,
-             .param = "[\"localhost\",null,\"12345678901234567890\",20,\"Generated from pgbackrest\",25,589825]"},
+             .param = "[\"localhost\",null,\"12345678901234567890\",20,\"Generated from pgBackRest\",25,589825]"},
             {.function = HRNLIBSSH2_KNOWNHOST_WRITEFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]",
              .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
@@ -1575,12 +1609,13 @@ testRun(void)
                 .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx)),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             "new storage (defaults)");
         TEST_RESULT_LOG(
             "P00   WARN: host 'localhost' not found in known hosts files, attempting to add host to "
             "'/home/" TEST_USER "/.ssh/known_hosts'\n"
-            "P00   WARN: libssh2_knownhost_writefile added new host 'localhost' to '/home/" TEST_USER "/.ssh/known_hosts'");
+            "P00   WARN: pgBackRest added new host 'localhost' to '/home/" TEST_USER "/.ssh/known_hosts'");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
@@ -1622,7 +1657,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx)),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             ServiceError,
             "libssh2_session_hostkey failed to get hostkey: libssh2 error [-7]");
 
@@ -1672,7 +1708,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx)),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             "new storage (defaults)");
         TEST_RESULT_BOOL(storageTest->write, false, "check write");
         TEST_RESULT_LOG(
@@ -1728,7 +1765,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx)),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             "new storage (defaults)");
         TEST_RESULT_BOOL(storageTest->write, false, "check write");
 
@@ -1779,7 +1817,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx)),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             "new storage (defaults)");
         TEST_RESULT_STR_Z(storageTest->path, "/tmp", "check path");
         TEST_RESULT_INT(storageTest->modeFile, 0640, "check file mode");
@@ -1826,7 +1865,8 @@ testRun(void)
                 .modePath = 0700, .write = true, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx)),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             "new storage (non-default)");
         TEST_RESULT_STR_Z(storageTest->path, "/path/to", "check path");
         TEST_RESULT_INT(storageTest->modeFile, 0600, "check file mode");
@@ -1885,7 +1925,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx)),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             ServiceError,
             "public key authentication failed: libssh2 error [-16]\n"
             "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-key-file and"
@@ -1981,7 +2022,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("file");
@@ -2058,7 +2100,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ERROR_FMT(storageInfoP(storageTest, fileNoPerm), FileOpenError, STORAGE_ERROR_INFO, strZ(fileNoPerm));
 
@@ -2081,7 +2124,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ERROR_FMT(storageInfoP(storageTest, fileNoPerm), FileOpenError, STORAGE_ERROR_INFO, strZ(fileNoPerm));
 
@@ -2121,7 +2165,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx));
+            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_RESULT_BOOL(storageInfoP(storageTest, NULL).exists, true, "info for /");
 
@@ -2144,7 +2189,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx));
+            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         storageRootNoPath->pub.interface.feature ^= 1 << storageFeaturePath;
 
@@ -2264,7 +2310,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ERROR_FMT(storageInfoP(storageTest, fileName), FileOpenError, STORAGE_ERROR_INFO_MISSING, strZ(fileName));
 
@@ -2579,7 +2626,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx));
+            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path missing");
@@ -2720,7 +2768,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx));
+            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx));
 
         TEST_ASSIGN(storageItr, storageNewItrP(storageTest, STRDEF("pg")), "new iterator");
         TEST_RESULT_BOOL(storageItrMore(storageItr), true, "check more");
@@ -2835,7 +2884,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx));
+            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx));
 
         TEST_STORAGE_LIST(
             storageTest, "pg",
@@ -2994,7 +3044,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx));
+            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx));
 
         TEST_STORAGE_LIST(
             storageTest, "pg",
@@ -3153,7 +3204,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx));
+            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx));
 
         storageTest->pub.interface.feature ^= 1 << storageFeatureInfoDetail;
 
@@ -3322,7 +3374,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx));
+            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx));
 
         TEST_STORAGE_LIST(
             storageTest, "pg",
@@ -3462,7 +3515,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx));
+            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx));
 
         TEST_STORAGE_LIST(
             storageTest, "pg",
@@ -3528,7 +3582,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx));
+            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx));
 
         TEST_ERROR_FMT(
             storageListP(storageTest, STRDEF(BOGUS_STR), .errorOnMissing = true), PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING,
@@ -3659,7 +3714,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageTest, STRDEF(".aaa.txt")), BUFSTRDEF("aaaaaaaaaaaaaa")), "write aaa.text");
@@ -3728,7 +3784,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx)),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             "new storage /");
         TEST_RESULT_STR_Z(storagePathP(storageTest, NULL), "/", "root dir");
         TEST_RESULT_STR_Z(storagePathP(storageTest, STRDEF("/")), "/", "same as root dir");
@@ -3774,6 +3831,7 @@ testRun(void)
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
                 .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx),
                 .pathExpressionFunction = storageTestPathExpression),
             "new storage /path/to");
         TEST_RESULT_STR_Z(storagePathP(storageTest, NULL), "/path/to", "root dir");
@@ -3908,7 +3966,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true),
+                .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true),
             "new storage /");
         TEST_RESULT_VOID(storagePathCreateP(storageTest, STRDEF("sub1")), "create sub1");
         TEST_RESULT_INT(storageInfoP(storageTest, STRDEF("sub1")).mode, 0750, "check sub1 dir mode");
@@ -3980,7 +4039,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true),
+                .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true),
             "new storage /");
         TEST_RESULT_VOID(storagePathCreateP(storageTest, STRDEF("subfail")), "timeout success");
         TEST_ERROR(
@@ -4139,7 +4199,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true),
+                .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true),
             "new storage /");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -4249,7 +4310,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true),
+                .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true),
             "new storage /");
         TEST_ERROR_FMT(
             storagePathRemoveP(storageTest, pathRemove1, .recurse = true), PathRemoveError, "timeout removing file '%s'",
@@ -4281,7 +4343,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true),
+                .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true),
             "new storage /");
         TEST_ERROR_FMT(
             storagePathRemoveP(storageTest, pathRemove1, .recurse = true), PathRemoveError, "timeout removing path '%s'",
@@ -4312,7 +4375,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true),
+                .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true),
             "new storage /");
         TEST_ERROR_FMT(
             storagePathRemoveP(storageTest, pathRemove1, .recurse = true), PathRemoveError, "unable to remove path '%s'",
@@ -4365,7 +4429,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true),
+                .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true),
             "new storage /");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -4417,7 +4482,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         StorageRead *file = NULL;
         const String *fileName = STRDEF(TEST_PATH "/readtest.txt");
@@ -4450,7 +4516,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
@@ -4477,7 +4544,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
@@ -4508,7 +4576,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
@@ -4541,7 +4610,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
@@ -4573,7 +4643,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
@@ -4604,7 +4675,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
@@ -4634,7 +4706,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
@@ -4680,7 +4753,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileNoPerm, .noAtomic = true, .noCreatePath = false), "new write file");
         TEST_ERROR_FMT(
@@ -4715,7 +4789,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileNoPerm, .noAtomic = true, .noCreatePath = false), "new write file");
         TEST_ERROR_FMT(ioWriteOpen(storageWriteIo(file)), FileOpenError, "timeout while opening file '%s'", strZ(fileNoPerm));
@@ -4749,7 +4824,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ASSIGN(
             file, storageNewWriteP(storageTest, STRDEF("missing"), .noAtomic = true, .noCreatePath = false), "new write file");
@@ -4788,7 +4864,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName), "new write file (defaults)");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
@@ -4823,7 +4900,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         const String *fileNameTmp = STRDEF(TEST_PATH "/sub1/testfile.pgbackrest.tmp");
 
@@ -4859,7 +4937,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         fileNameTmp = STRDEF(TEST_PATH "/sub1/testfile.pgbackrest.tmp");
 
@@ -4900,7 +4979,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName), "new write file (defaults)");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
@@ -4941,7 +5021,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName), "new write file (defaults)");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
@@ -4981,7 +5062,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName), "new write file (defaults)");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
@@ -5022,7 +5104,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName), "new write file (defaults)");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
@@ -5062,7 +5145,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName), "new write file (defaults)");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
@@ -5097,7 +5181,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .noAtomic = true), "new write file (defaults)");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
@@ -5131,7 +5216,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         // Make interface.pathSync != NULL
         ((StorageSftp *)storageDriver(storageTest))->interface.pathSync = malloc(1);
@@ -5171,7 +5257,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         // Make interface.pathSync != NULL
         ((StorageSftp *)storageDriver(storageTest))->interface.pathSync = malloc(1);
@@ -5209,7 +5296,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         ((StorageSftp *)storageDriver(storageTest))->interface.pathSync = malloc(1);
 
@@ -5246,7 +5334,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .noAtomic = true, .noSyncPath = false), "new write file");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
@@ -5284,7 +5373,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get error - attempt to get directory");
@@ -5318,7 +5408,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         const String *emptyFile = STRDEF(TEST_PATH "/test.empty");
         TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, emptyFile), NULL), "put empty file");
@@ -5354,7 +5445,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ERROR(
             storagePutP(storageNewWriteP(storageTest, emptyFile), NULL), FileRemoveError,
@@ -5397,7 +5489,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ERROR(
             storagePutP(storageNewWriteP(storageTest, emptyFile), NULL), FileWriteError,
@@ -5440,7 +5533,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ERROR(
             storagePutP(storageNewWriteP(storageTest, emptyFile), NULL), FileRemoveError,
@@ -5476,7 +5570,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ERROR(
             storagePutP(storageNewWriteP(storageTest, emptyFile), NULL), FileWriteError,
@@ -5510,7 +5605,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ERROR(
             storagePutP(storageNewWriteP(storageTest, STRDEF(TEST_PATH "/test.txt")), failBuffer), FileWriteError,
@@ -5539,7 +5635,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ERROR(
             storagePutP(storageNewWriteP(storageTest, STRDEF(TEST_PATH "/test.txt")), failBuffer), FileWriteError,
@@ -5583,7 +5680,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, STRDEF(TEST_PATH "/test.txt")), buffer), "put test file");
 
@@ -5610,7 +5708,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_RESULT_PTR(
             storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/" BOGUS_STR), .ignoreMissing = true)), NULL,
@@ -5638,7 +5737,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ASSIGN(buffer, storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.empty"))), "get empty");
         TEST_RESULT_UINT(bufSize(buffer), 0, "size is 0");
@@ -5671,7 +5771,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ASSIGN(outBuffer, storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"))), "get text");
         TEST_RESULT_UINT(bufSize(outBuffer), 9, "check size");
@@ -5702,7 +5803,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ASSIGN(buffer, storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt")), .exactSize = 4), "get exact");
         TEST_RESULT_UINT(bufSize(buffer), 4, "check size");
@@ -5733,7 +5835,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ERROR(
             storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt")), .exactSize = 64), FileReadError,
@@ -5768,7 +5871,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ASSIGN(buffer, storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"))), "get text");
         TEST_RESULT_UINT(bufSize(buffer), 9, "check size");
@@ -5797,7 +5901,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ERROR(
             storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .offset = UINT64_MAX)), FileOpenError,
@@ -5825,7 +5930,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ERROR(
             storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"))), FileReadError,
@@ -5856,7 +5962,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ASSIGN(buffer, storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .limit = VARUINT64(7))), "get");
         TEST_RESULT_UINT(bufSize(buffer), 7, "check size");
@@ -5889,7 +5996,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ASSIGN(buffer, storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .offset = 4)), "get");
         TEST_RESULT_UINT(bufSize(buffer), 5, "check size");
@@ -5919,7 +6027,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ERROR(
             storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"))), FileReadError,
@@ -5966,7 +6075,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_RESULT_VOID(storageRemoveP(storageTest, STRDEF("missing")), "remove missing file");
 
@@ -5993,7 +6103,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ERROR(storageRemoveP(storageTest, STRDEF("missing"), .errorOnMissing = true), FileRemoveError,
                    "unable to remove '/missing': libssh2 error [-31]: sftp error [2]");
@@ -6022,7 +6133,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ERROR(storageRemoveP(storageTest, STRDEF("missing")), FileRemoveError,
                    "unable to remove '/missing': libssh2 error [-31]: sftp error [7]");
@@ -6049,7 +6161,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ERROR(storageRemoveP(storageTest, STRDEF("missing"), .errorOnMissing = true), FileRemoveError,
                    "unable to remove '/missing'");
@@ -6077,7 +6190,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ERROR(
             storageRemoveP(storageTest, STRDEF("missing"), .errorOnMissing = true), FileRemoveError, "timeout removing '/missing'");
@@ -6107,7 +6221,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true),
+                .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true),
             "new storage /");
         TEST_RESULT_VOID(storageRemoveP(storageTest, fileRemove1), "remove file");
 
@@ -6148,7 +6263,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .noSyncFile = true), "storageWriteSftpOpen timeout EAGAIN");
         TEST_ERROR_FMT(ioWriteOpen(storageWriteIo(file)), FileOpenError, "timeout while opening file '%s'", strZ(fileName));
@@ -6183,7 +6299,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .noSyncFile = true), "storageWriteSftpOpen sftp error");
         TEST_ERROR_FMT(
@@ -6214,7 +6331,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .noSyncFile = true), "storageWriteSftpOpen ssh error");
         TEST_ERROR_FMT(ioWriteOpen(storageWriteIo(file)), FileOpenError, STORAGE_ERROR_WRITE_OPEN, strZ(fileName));
@@ -6262,7 +6380,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("ignore missing - file with no permission to read");
@@ -6335,7 +6454,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         Buffer *buffer = bufNew(0);
         Buffer *outBuffer = bufNew(2);
@@ -6433,7 +6553,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ASSIGN(
             file,
@@ -6507,7 +6628,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileNoPerm, .noAtomic = true), "new write file");
         TEST_ERROR_FMT(
@@ -6580,7 +6702,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .noAtomic = true), "new write file");
         TEST_ERROR_FMT(ioWriteOpen(storageWriteIo(file)), FileMissingError, STORAGE_ERROR_WRITE_MISSING, strZ(fileName));
@@ -6666,7 +6789,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
@@ -6764,7 +6888,8 @@ testRun(void)
             .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
             .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
             .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-            .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true);
+            .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+            .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true);
 
         TEST_ASSIGN(
             file,
@@ -7038,10 +7163,10 @@ testRun(void)
             {.function = HRNLIBSSH2_SESSION_BLOCK_DIRECTIONS, .resultInt = SSH2_NO_BLOCK_READING_WRITING},
 
             {.function = HRNLIBSSH2_SFTP_SHUTDOWN, .resultInt = LIBSSH2_ERROR_NONE},
-            {.function = HRNLIBSSH2_SESSION_DISCONNECT_EX, .param = "[11,\"pgbackrest instance shutdown\",\"\"]",
+            {.function = HRNLIBSSH2_SESSION_DISCONNECT_EX, .param = "[11,\"pgBackRest instance shutdown\",\"\"]",
              .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = HRNLIBSSH2_SESSION_BLOCK_DIRECTIONS, .resultInt = SSH2_NO_BLOCK_READING_WRITING},
-            {.function = HRNLIBSSH2_SESSION_DISCONNECT_EX, .param = "[11,\"pgbackrest instance shutdown\",\"\"]",
+            {.function = HRNLIBSSH2_SESSION_DISCONNECT_EX, .param = "[11,\"pgBackRest instance shutdown\",\"\"]",
              .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_FREE, .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = HRNLIBSSH2_SESSION_BLOCK_DIRECTIONS, .resultInt = SSH2_NO_BLOCK_READING_WRITING},
@@ -7073,7 +7198,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true),
+                .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true),
             "new storage (defaults)");
         TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
 
@@ -7103,7 +7229,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true),
+                .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true),
             "new storage (defaults)");
         TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
 
@@ -7134,7 +7261,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true),
+                .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true),
             "new storage (defaults)");
         TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
 
@@ -7169,7 +7297,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true),
+                .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true),
             "new storage (defaults)");
         TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
 
@@ -7204,7 +7333,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true),
+                .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true),
             "new storage (defaults)");
         TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
 
@@ -7237,7 +7367,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true),
+                .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true),
             "new storage (defaults)");
         TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
         TEST_ERROR_FMT(
@@ -7265,7 +7396,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true),
+                .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true),
             "new storage (defaults)");
         TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
         TEST_ERROR_FMT(
@@ -7293,7 +7425,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true),
+                .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true),
             "new storage (defaults)");
         TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
         TEST_ERROR_FMT(
@@ -7307,7 +7440,7 @@ testRun(void)
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_SHUTDOWN, .resultInt = LIBSSH2_ERROR_NONE},
-            {.function = HRNLIBSSH2_SESSION_DISCONNECT_EX, .param = "[11,\"pgbackrest instance shutdown\",\"\"]",
+            {.function = HRNLIBSSH2_SESSION_DISCONNECT_EX, .param = "[11,\"pgBackRest instance shutdown\",\"\"]",
              .resultInt = LIBSSH2_ERROR_SOCKET_DISCONNECT},
             {.function = NULL},
         });
@@ -7322,7 +7455,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true),
+                .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true),
             "new storage (defaults)");
         TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
         TEST_ERROR_FMT(
@@ -7336,7 +7470,7 @@ testRun(void)
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_SHUTDOWN, .resultInt = LIBSSH2_ERROR_NONE},
-            {.function = HRNLIBSSH2_SESSION_DISCONNECT_EX, .param = "[11,\"pgbackrest instance shutdown\",\"\"]",
+            {.function = HRNLIBSSH2_SESSION_DISCONNECT_EX, .param = "[11,\"pgBackRest instance shutdown\",\"\"]",
              .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = HRNLIBSSH2_SESSION_BLOCK_DIRECTIONS, .resultInt = SSH2_BLOCK_READING_WRITING},
             {.function = NULL},
@@ -7352,7 +7486,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true),
+                .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true),
             "new storage (defaults)");
         TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
         TEST_ERROR_FMT(
@@ -7366,7 +7501,7 @@ testRun(void)
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_SHUTDOWN, .resultInt = LIBSSH2_ERROR_NONE},
-            {.function = HRNLIBSSH2_SESSION_DISCONNECT_EX, .param = "[11,\"pgbackrest instance shutdown\",\"\"]",
+            {.function = HRNLIBSSH2_SESSION_DISCONNECT_EX, .param = "[11,\"pgBackRest instance shutdown\",\"\"]",
              .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_FREE, .resultInt = LIBSSH2_ERROR_SOCKET_DISCONNECT},
             {.function = NULL},
@@ -7382,7 +7517,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true),
+                .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true),
             "new storage (defaults)");
         TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
         TEST_ERROR_FMT(
@@ -7396,7 +7532,7 @@ testRun(void)
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_SHUTDOWN, .resultInt = LIBSSH2_ERROR_NONE},
-            {.function = HRNLIBSSH2_SESSION_DISCONNECT_EX, .param = "[11,\"pgbackrest instance shutdown\",\"\"]",
+            {.function = HRNLIBSSH2_SESSION_DISCONNECT_EX, .param = "[11,\"pgBackRest instance shutdown\",\"\"]",
              .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_FREE, .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = HRNLIBSSH2_SESSION_BLOCK_DIRECTIONS, .resultInt = SSH2_BLOCK_READING_WRITING},
@@ -7413,7 +7549,8 @@ testRun(void)
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx), .write = true),
+                .sftpStrictHostKeyChecking =  cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx), .write = true),
             "new storage (defaults)");
         TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
         TEST_ERROR_FMT(

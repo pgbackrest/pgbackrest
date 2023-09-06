@@ -89,7 +89,7 @@ Macros for defining groups of functions that implement commands
 // Set of functions mimicking libssh2 shutdown and disconnect
 #define HRNLIBSSH2_MACRO_SHUTDOWN()                                                                                                \
     {.function = HRNLIBSSH2_SFTP_SHUTDOWN, .resultInt = 0},                                                                        \
-    {.function = HRNLIBSSH2_SESSION_DISCONNECT_EX, .param ="[11,\"pgbackrest instance shutdown\",\"\"]", .resultInt = 0},          \
+    {.function = HRNLIBSSH2_SESSION_DISCONNECT_EX, .param ="[11,\"pgBackRest instance shutdown\",\"\"]", .resultInt = 0},          \
     {.function = HRNLIBSSH2_SESSION_FREE, .resultInt = 0},                                                                         \
     {.function = NULL}                                                                                                             \
 
