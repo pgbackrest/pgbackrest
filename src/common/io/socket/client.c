@@ -8,8 +8,8 @@ Socket Client
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "common/error/retry.h"
 #include "common/debug.h"
+#include "common/error/retry.h"
 #include "common/io/client.h"
 #include "common/io/socket/address.h"
 #include "common/io/socket/client.h"

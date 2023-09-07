@@ -100,7 +100,6 @@ addrInfoNew(const String *const host, unsigned int port)
     FUNCTION_LOG_RETURN(ADDRESS_INFO, this);
 }
 
-
 /***********************************************************************************************************************************
 Convert address to a zero-terminated string
 ***********************************************************************************************************************************/
@@ -134,13 +133,13 @@ addrInfoToName(const String *const host, const unsigned int port, const struct a
         FUNCTION_TEST_PARAM_P(VOID, addrInfo);
     FUNCTION_TEST_END();
 
-    char address[ADDR_INFO_STR_BUFFER_SIZE];
-    addrInfoToZ(addrInfo, address, sizeof(address));
-
     String *const result = strCatFmt(strNew(), "%s:%u", strZ(host), port);
+    String *const address = addrInfoToStr(addrInfo);
 
-    if (!strEqZ(host, address))
-        strCatFmt(result, " (%s)", address);
+    if (!strEq(host, address))
+        strCatFmt(result, " (%s)", strZ(address));
+
+    strFree(address);
 
     FUNCTION_TEST_RETURN(STRING, result);
 }
