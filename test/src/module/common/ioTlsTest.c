@@ -185,6 +185,11 @@ testRun(void)
         TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(addrInfo, addrInfoToLog, logBuf, sizeof(logBuf)), "addrInfoToLog");
         TEST_RESULT_Z(logBuf, zNewFmt("{list: [invalid, %s]}", strZ(addrInfoToStr(addrInfoGet(addrInfo, 1)))), "check log");
         TEST_RESULT_STR_Z(addrInfoToStr(addrInfoGet(addrInfo, 0)), "invalid", "check invalid");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("free");
+
+        TEST_RESULT_VOID(addrInfoFree(addrInfo), "free");
 #endif
     }
 
