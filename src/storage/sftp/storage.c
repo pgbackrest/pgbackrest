@@ -520,7 +520,7 @@ storageSftpKnownHostsFilesList(const VariantList *const sftpKnownHosts)
             // Process the local list entries and add them to the result list
             for (unsigned int listIdx = 0; listIdx < strLstSize(lclList); listIdx++)
             {
-                // Get the trimmed file path
+                // Get the trimmed file path and add it to the result list
                 const String *const filePath = strTrim(strLstGet(lclList, listIdx));
 
                 if (strBeginsWithZ(filePath, "~/"))

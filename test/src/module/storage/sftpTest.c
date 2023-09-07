@@ -221,20 +221,20 @@ testRun(void)
         });
 
         // Load configuration
-          StringList *argList = strLstNew();
-          hrnCfgArgRawZ(argList, cfgOptStanza, "test");
-          hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
-          hrnCfgArgRawZ(argList, cfgOptRepo, "1");
-          hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH);
-          hrnCfgArgRawZ(argList, cfgOptRepoSftpHostUser, TEST_USER);
-          hrnCfgArgRawZ(argList, cfgOptRepoType, "sftp");
-          hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
-          hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
-          hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, "~/.ssh/id_rsa");
-          hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyFile, "~/.ssh/id_rsa.pub");
-          hrnCfgArgRawZ(argList, cfgOptRepoSftpKnownHosts, KNOWNHOSTS_FILE_CSTR);
-          hrnCfgArgRawZ(argList, cfgOptRepoSftpHostFingerprint, "3132333435363738393039383736353433323130");
-          HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+        StringList *argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostUser, TEST_USER);
+        hrnCfgArgRawZ(argList, cfgOptRepoType, "sftp");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, "~/.ssh/id_rsa");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyFile, "~/.ssh/id_rsa.pub");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpKnownHosts, KNOWNHOSTS_FILE_CSTR);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostFingerprint, "3132333435363738393039383736353433323130");
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         TEST_ERROR(
             storageSftpNewP(
@@ -266,20 +266,20 @@ testRun(void)
             {.function = NULL}
         });
 
-          argList = strLstNew();
-          hrnCfgArgRawZ(argList, cfgOptStanza, "test");
-          hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
-          hrnCfgArgRawZ(argList, cfgOptRepo, "1");
-          hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH);
-          hrnCfgArgRawZ(argList, cfgOptRepoSftpHostUser, TEST_USER);
-          hrnCfgArgRawZ(argList, cfgOptRepoType, "sftp");
-          hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
-          hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
-          hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, "~/.ssh/id_rsa");
-          hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyFile, "~/.ssh/id_rsa.pub");
-          hrnCfgArgRawZ(argList, cfgOptRepoSftpKnownHosts, KNOWNHOSTS_FILE_CSTR);
-          hrnCfgArgRawZ(argList, cfgOptRepoSftpHostFingerprint, "9132333435363738393039383736353433323130");
-          HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostUser, TEST_USER);
+        hrnCfgArgRawZ(argList, cfgOptRepoType, "sftp");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, "~/.ssh/id_rsa");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyFile, "~/.ssh/id_rsa.pub");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpKnownHosts, KNOWNHOSTS_FILE_CSTR);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostFingerprint, "9132333435363738393039383736353433323130");
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         TEST_ERROR(
             storageSftpNewP(
@@ -1848,7 +1848,7 @@ testRun(void)
             {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_KNOWNHOST_INIT},
             {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"/home/" TEST_USER "/.ssh/pgbackrest_known_hosts\",1]",
-            .resultInt = 5},
+             .resultInt = 5},
             {.function = HRNLIBSSH2_SESSION_HOSTKEY, .len = 20, .type = LIBSSH2_HOSTKEY_TYPE_RSA, .resultZ = HOSTKEY},
             {.function = HRNLIBSSH2_KNOWNHOST_CHECKP, .param = "[\"localhost\",22,\"" HOSTKEY "\",20,65537]",
              .resultInt = LIBSSH2_KNOWNHOST_CHECK_MATCH},
