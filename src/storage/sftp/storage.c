@@ -11,7 +11,6 @@ SFTP Storage
 #include "common/io/socket/client.h"
 #include "common/log.h"
 #include "common/user.h"
-#include "config/config.h"
 #include "storage/posix/storage.h"
 #include "storage/sftp/read.h"
 #include "storage/sftp/storage.intern.h"
@@ -1082,7 +1081,7 @@ storageSftpNew(
                 hashType = LIBSSH2_HOSTKEY_HASH_SHA256;
                 hashSize = HASH_TYPE_SHA256_SIZE;
                 break;
-#endif  // LIBSSH2_HOSTKEY_HASH_SHA256
+#endif // LIBSSH2_HOSTKEY_HASH_SHA256
 
             default:
                 THROW_FMT(ServiceError, "requested ssh2 hostkey hash type (%s) not available", strZ(strIdToStr(hostKeyHashType)));
