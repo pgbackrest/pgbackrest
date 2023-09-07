@@ -8,6 +8,7 @@ Socket Client
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "common/error/retry.h"
 #include "common/debug.h"
 #include "common/io/client.h"
 #include "common/io/socket/address.h"
@@ -73,7 +74,12 @@ sckClientOpen(THIS_VOID)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         bool retry;
-        Wait *wait = waitNew(this->timeoutConnect);
+        Wait *const wait = waitNew(this->timeoutConnect);
+        ErrorRetry *const errRetry = errRetryNew();
+
+        // Get an address list for the host
+        const AddressInfo *const addrInfo = addrInfoNew(this->host, this->port);
+        unsigned int addrInfoIdx = 0;
 
         do
         {
@@ -83,8 +89,8 @@ sckClientOpen(THIS_VOID)
 
             TRY_BEGIN()
             {
-                // Get an address for the host. We are only going to try the first address returned.
-                const struct addrinfo *const addressFound = addrInfoGet(addrInfoNew(this->host, this->port), 0);
+                // Get next address for the host
+                const struct addrinfo *const addressFound = addrInfoGet(addrInfo, addrInfoIdx);
 
                 // Connect to the host
                 fd = socket(addressFound->ai_family, addressFound->ai_socktype, addressFound->ai_protocol);
@@ -101,12 +107,16 @@ sckClientOpen(THIS_VOID)
                 MEM_CONTEXT_PRIOR_END();
 
                 // Update client name to include address
-                strCatFmt(this->name, " (%s)", strZ(addrInfoToStr(addressFound)));
+                strTrunc(this->name);
+                strCat(this->name, addrInfoToName(this->host, this->port, addressFound));
             }
             CATCH_ANY()
             {
-                if (fd != -1)
-                    close(fd);
+                // Close socket
+                close(fd);
+
+                // Add the error retry info
+                errRetryAdd(errRetry);
 
                 // Retry if wait time has not expired
                 if (waitMore(wait))
@@ -114,10 +124,16 @@ sckClientOpen(THIS_VOID)
                     LOG_DEBUG_FMT("retry %s: %s", errorTypeName(errorType()), errorMessage());
                     retry = true;
 
+                    // Increment address info index and reset if the end has been reached
+                    addrInfoIdx++;
+
+                    if (addrInfoIdx >= addrInfoSize(addrInfo))
+                        addrInfoIdx = 0;
+
                     statInc(SOCKET_STAT_RETRY_STR);
                 }
                 else
-                    RETHROW();
+                    THROWP(errRetryType(errRetry), strZ(errRetryMessage(errRetry)));
             }
             TRY_END();
         }

@@ -34,7 +34,7 @@ typedef struct AddressInfoPub
 
 // Get address
 FN_INLINE_ALWAYS const struct addrinfo *
-addrInfoGet(const AddressInfo *const this, unsigned int index)
+addrInfoGet(const AddressInfo *const this, const unsigned int index)
 {
     return *(const struct addrinfo **)lstGet(THIS_PUB(AddressInfo)->list, index);
 }
@@ -74,6 +74,9 @@ Helper functions
 ***********************************************************************************************************************************/
 // Convert address info to string
 FN_EXTERN String *addrInfoToStr(const struct addrinfo *addrInfo);
+
+// Generate name for the host/port/address combination (address is omitted if it equals host)
+FN_EXTERN String *addrInfoToName(const String *host, unsigned int port, const struct addrinfo *addrInfo);
 
 /***********************************************************************************************************************************
 Macros for function logging

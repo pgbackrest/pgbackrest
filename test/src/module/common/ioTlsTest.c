@@ -8,6 +8,7 @@ Test Tls Client
 #include "common/io/fdWrite.h"
 #include "storage/posix/storage.h"
 
+#include "common/harnessErrorRetry.h"
 #include "common/harnessFork.h"
 #include "common/harnessServer.h"
 #include "common/harnessStorage.h"
@@ -351,12 +352,18 @@ testRun(void)
 
         TEST_ASSIGN(client, sckClientNew(STRDEF("localhost"), hrnServerPort(0), 100, 100), "new client");
         TEST_ERROR_FMT(
-            ioClientOpen(client), HostConnectError, "unable to connect to 'localhost:%u': [111] Connection refused",
+            ioClientOpen(client), HostConnectError,
+            "unable to connect to 'localhost:%u (127.0.0.1)': [111] Connection refused\n"
+            "[RETRY DETAIL OMITTED]",
             hrnServerPort(0));
 
         // This address should not be in use in a test environment -- if it is the test will fail
         TEST_ASSIGN(client, sckClientNew(STRDEF("172.31.255.255"), hrnServerPort(0), 100, 100), "new client");
-        TEST_ERROR_FMT(ioClientOpen(client), HostConnectError, "timeout connecting to '172.31.255.255:%u'", hrnServerPort(0));
+        TEST_ERROR_FMT(
+            ioClientOpen(client), HostConnectError,
+            "timeout connecting to '172.31.255.255:%u'\n"
+            "[RETRY DETAIL OMITTED]",
+            hrnServerPort(0));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("sckServerAccept() returns NULL on interrupt");
@@ -434,7 +441,9 @@ testRun(void)
             client, tlsClientNewP(sckClientNew(STRDEF("localhost"), hrnServerPort(0), 100, 100), STRDEF("X"), 100, 100, true),
             "new client");
         TEST_ERROR_FMT(
-            ioClientOpen(client), HostConnectError, "unable to connect to 'localhost:%u': [111] Connection refused",
+            ioClientOpen(client), HostConnectError,
+            "unable to connect to 'localhost:%u (127.0.0.1)': [111] Connection refused\n"
+            "[RETRY DETAIL OMITTED]",
             hrnServerPort(0));
 
         // -------------------------------------------------------------------------------------------------------------------------
