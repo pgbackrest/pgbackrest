@@ -612,7 +612,8 @@ testRun(void)
                             sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true,
                             .caPath = STRDEF("/bogus"))),
                     CryptoError,
-                    "unable to verify certificate presented by 'localhost:%u': [20] unable to get local issuer certificate",
+                    "unable to verify certificate presented by 'localhost:%u (127.0.0.1)': [20] unable to get local issuer"
+                        " certificate",
                     hrnServerPort(0));
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -667,7 +668,8 @@ testRun(void)
                             sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true,
                             .caFile = STRDEF(HRN_SERVER_CERT))),
                     CryptoError,
-                    "unable to verify certificate presented by 'localhost:%u': [20] unable to get local issuer certificate",
+                    "unable to verify certificate presented by 'localhost:%u (127.0.0.1)': [20] unable to get local issuer"
+                        " certificate",
                     hrnServerPort(0));
 
                 // -----------------------------------------------------------------------------------------------------------------

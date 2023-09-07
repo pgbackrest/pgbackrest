@@ -99,6 +99,14 @@ sckClientOpen(THIS_VOID)
                     result = sckSessionNew(ioSessionRoleClient, fd, this->host, this->port, this->timeoutSession);
                 }
                 MEM_CONTEXT_PRIOR_END();
+
+                // Update client name to include address
+                MEM_CONTEXT_OBJ_BEGIN(this)
+                {
+                    strCatFmt(this->name, " (%s)", strZ(addrInfoToStr(addressFound)));
+                }
+                MEM_CONTEXT_OBJ_END();
+
             }
             CATCH_ANY()
             {
@@ -169,7 +177,7 @@ sckClientNew(const String *const host, const unsigned int port, const TimeMSec t
         {
             .host = strDup(host),
             .port = port,
-            .name = strNewFmt("%s:%u", strZ(host), port),
+            .name = strCatFmt(strNew(), "%s:%u", strZ(host), port),
             .timeoutConnect = timeoutConnect,
             .timeoutSession = timeoutSession,
         };
