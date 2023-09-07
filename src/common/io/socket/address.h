@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Address Info
 
-!!! Get address info for a host/address
+Get address info for a host/address. If the input is a host then there may be multiple addresses that map to the host.
 ***********************************************************************************************************************************/
 #ifndef COMMON_IO_SOCKET_ADDRESSINFO_H
 #define COMMON_IO_SOCKET_ADDRESSINFO_H

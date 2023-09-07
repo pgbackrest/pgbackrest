@@ -160,7 +160,7 @@ sckServerNew(const String *const address, const unsigned int port, const TimeMSe
         {
             .address = strDup(address),
             .port = port,
-            .name = strNewFmt("%s:%u", strZ(address), port),
+            .name = strCatFmt(strNew(), "%s:%u", strZ(address), port),
             .timeout = timeout,
         };
 
@@ -180,6 +180,9 @@ sckServerNew(const String *const address, const unsigned int port, const TimeMSe
 
         // Ensure file descriptor is closed
         memContextCallbackSet(objMemContext(this), sckServerFreeResource, this);
+
+        // Update server name to include address
+        strCatFmt(this->name, " (%s)", strZ(addrInfoToStr(addressFound)));
 
         // Bind the address
         THROW_ON_SYS_ERROR(

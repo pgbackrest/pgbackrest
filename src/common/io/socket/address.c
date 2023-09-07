@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Address Lookup
+Address Info
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
@@ -101,6 +101,26 @@ addrInfoNew(const String *const host, unsigned int port)
 }
 
 /**********************************************************************************************************************************/
+#define ADDR_INFO_STR_BUFFER_SIZE                                   48
+
+static void
+addrInfoToZ(const struct addrinfo *const addrInfo, char *const buffer, const size_t bufferSize)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, addrInfo);
+        FUNCTION_TEST_PARAM_P(CHAR, buffer);
+        FUNCTION_TEST_PARAM(SIZE, bufferSize);
+    FUNCTION_TEST_END();
+
+    if (getnameinfo(addrInfo->ai_addr, addrInfo->ai_addrlen, buffer, (socklen_t)bufferSize, 0, 0, NI_NUMERICHOST) != 0)
+    {
+        strncpy(buffer, "invalid", bufferSize);
+        buffer[bufferSize - 1] = '\0';
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 FN_EXTERN String *
 addrInfoToStr(const struct addrinfo *const addrInfo)
 {
@@ -108,10 +128,8 @@ addrInfoToStr(const struct addrinfo *const addrInfo)
         FUNCTION_TEST_PARAM_P(VOID, addrInfo);
     FUNCTION_TEST_END();
 
-    char buffer[48];
-
-    if (getnameinfo(addrInfo->ai_addr, addrInfo->ai_addrlen, buffer, sizeof(buffer), 0, 0, NI_NUMERICHOST) != 0)
-        FUNCTION_TEST_RETURN(STRING, strNewZ("invalid"));
+    char buffer[ADDR_INFO_STR_BUFFER_SIZE];
+    addrInfoToZ(addrInfo, buffer, sizeof(buffer));
 
     FUNCTION_TEST_RETURN(STRING, strNewZ(buffer));
 }
@@ -131,10 +149,8 @@ addrInfoToLog(const AddressInfo *const this, StringStatic *const debugLog)
         if (listIdx != 0)
             strStcCat(debugLog, ", ");
 
-        if (getnameinfo(addrInfo->ai_addr, addrInfo->ai_addrlen, buffer, sizeof(buffer), 0, 0, NI_NUMERICHOST) != 0)
-            strStcCat(debugLog, "invalid");
-        else
-            strStcCat(debugLog, buffer);
+        addrInfoToZ(addrInfo, buffer, sizeof(buffer));
+        strStcCat(debugLog, buffer);
     }
 
     strStcCat(debugLog, "]}");

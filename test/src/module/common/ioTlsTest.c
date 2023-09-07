@@ -719,7 +719,8 @@ testRun(void)
                     STRDEF(TEST_PATH "/server-cn-only.crt"), 5000);
                 IoSession *socketSession = NULL;
 
-                TEST_RESULT_STR(ioServerName(socketServer), strNewFmt("localhost:%u", hrnServerPort(0)), "socket server name");
+                TEST_RESULT_STR(
+                    ioServerName(socketServer), strNewFmt("localhost:%u (127.0.0.1)", hrnServerPort(0)), "socket server name");
                 TEST_RESULT_STR_Z(ioServerName(tlsServer), "localhost", "tls server name");
 
                 // Invalid client cert
