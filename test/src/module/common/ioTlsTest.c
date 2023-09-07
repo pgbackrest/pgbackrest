@@ -152,6 +152,41 @@ testRun(void)
         chmod(HRN_SERVER_CLIENT_KEY, 0600) == -1, FileModeError, "unable to set mode on " HRN_SERVER_CLIENT_KEY);
 
     // *****************************************************************************************************************************
+    if (testBegin("AddressInfo"))
+    {
+#ifdef TEST_CONTAINER_REQUIRED
+        HRN_SYSTEM("echo \"127.0.0.1 test-addr-loop.pgbackrest.org\" | sudo tee -a /etc/hosts > /dev/null");
+        HRN_SYSTEM("echo \"::1 test-addr-loop.pgbackrest.org\" | sudo tee -a /etc/hosts > /dev/null");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("lookup address info");
+
+        AddressInfo *addrInfo = NULL;
+        TEST_ASSIGN(addrInfo, addrInfoNew(STRDEF("test-addr-loop.pgbackrest.org"), 443), "addr list");
+        TEST_RESULT_UINT(addrInfoSize(addrInfo), 2, "check size");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("addrInfoToLog");
+
+        char logBuf[STACK_TRACE_PARAM_MAX];
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(addrInfo, addrInfoToLog, logBuf, sizeof(logBuf)), "addrInfoToLog");
+        TEST_RESULT_Z(
+            logBuf,
+            zNewFmt(
+                "{list: [%s, %s]}", strZ(addrInfoToStr(addrInfoGet(addrInfo, 0))), strZ(addrInfoToStr(addrInfoGet(addrInfo, 1)))),
+            "check log");
+
+        // Munge address so it is invalid
+        (*(struct addrinfo **)lstGet(addrInfo->pub.list, 0))->ai_addr = NULL;
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(addrInfo, addrInfoToLog, logBuf, sizeof(logBuf)), "addrInfoToLog");
+        TEST_RESULT_Z(logBuf, zNewFmt("{list: [invalid, %s]}", strZ(addrInfoToStr(addrInfoGet(addrInfo, 1)))), "check log");
+        TEST_RESULT_STR_Z(addrInfoToStr(addrInfoGet(addrInfo, 0)), "invalid", "check invalid");
+#endif
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("Socket Common"))
     {
         // Save socket settings

@@ -54,12 +54,20 @@ addrInfoFree(AddressInfo *const this)
 }
 
 /***********************************************************************************************************************************
+Helper functions
+***********************************************************************************************************************************/
+// Convert address info to string
+FN_EXTERN String *addrInfoToStr(const struct addrinfo *addrInfo);
+
+/***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
+FN_EXTERN void addrInfoToLog(const AddressInfo *this, StringStatic *debugLog);
+
 // !!! Make this a real log function
 #define FUNCTION_LOG_ADDRESS_INFO_TYPE                                                                                             \
     AddressInfo *
 #define FUNCTION_LOG_ADDRESS_INFO_FORMAT(value, buffer, bufferSize)                                                                \
-    objNameToLog(value, "AddressInfo", buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, addrInfoToLog, buffer, bufferSize)
 
 #endif

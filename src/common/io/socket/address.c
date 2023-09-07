@@ -97,3 +97,43 @@ addrInfoNew(const String *const host, unsigned int port)
 
     FUNCTION_LOG_RETURN(ADDRESS_INFO, this);
 }
+
+/**********************************************************************************************************************************/
+FN_EXTERN String *
+addrInfoToStr(const struct addrinfo *const addrInfo)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, addrInfo);
+    FUNCTION_TEST_END();
+
+    char buffer[48];
+
+    if (getnameinfo(addrInfo->ai_addr, addrInfo->ai_addrlen, buffer, sizeof(buffer), 0, 0, NI_NUMERICHOST) != 0)
+        FUNCTION_TEST_RETURN(STRING, strNewZ("invalid"));
+
+    FUNCTION_TEST_RETURN(STRING, strNewZ(buffer));
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+addrInfoToLog(const AddressInfo *const this, StringStatic *const debugLog)
+{
+    char buffer[48];
+
+    strStcFmt(debugLog, "{list: [");
+
+    for (unsigned int listIdx = 0; listIdx < addrInfoSize(this); listIdx++)
+    {
+        const struct addrinfo *const addrInfo = addrInfoGet(this, listIdx);
+
+        if (listIdx != 0)
+            strStcCat(debugLog, ", ");
+
+        if (getnameinfo(addrInfo->ai_addr, addrInfo->ai_addrlen, buffer, sizeof(buffer), 0, 0, NI_NUMERICHOST) != 0)
+            strStcCat(debugLog, "invalid");
+        else
+            strStcCat(debugLog, buffer);
+    }
+
+    strStcCat(debugLog, "]}");
+}
