@@ -106,7 +106,6 @@ sckClientOpen(THIS_VOID)
                     strCatFmt(this->name, " (%s)", strZ(addrInfoToStr(addressFound)));
                 }
                 MEM_CONTEXT_OBJ_END();
-
             }
             CATCH_ANY()
             {

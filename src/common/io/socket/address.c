@@ -53,6 +53,8 @@ addrInfoNew(const String *const host, unsigned int port)
         {
             .pub =
             {
+                .host = strDup(host),
+                .port = port,
                 .list = lstNewP(sizeof(struct addrinfo *)),
             },
         };

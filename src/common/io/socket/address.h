@@ -27,21 +27,37 @@ Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct AddressInfoPub
 {
+    const String *host;                                             // Host for address info lookup
+    unsigned int port;                                              // Port for address info lookup
     List *list;                                                     // List of addresses for the host
 } AddressInfoPub;
-
-// Size of address list
-FN_INLINE_ALWAYS unsigned int
-addrInfoSize(const AddressInfo *const this)
-{
-    return lstSize(THIS_PUB(AddressInfo)->list);
-}
 
 // Get address
 FN_INLINE_ALWAYS const struct addrinfo *
 addrInfoGet(const AddressInfo *const this, unsigned int index)
 {
     return *(const struct addrinfo **)lstGet(THIS_PUB(AddressInfo)->list, index);
+}
+
+// Get lookup host
+FN_INLINE_ALWAYS const String *
+addrInfoHost(const AddressInfo *const this)
+{
+    return THIS_PUB(AddressInfo)->host;
+}
+
+// Get lookup port
+FN_INLINE_ALWAYS unsigned int
+addrInfoPort(const AddressInfo *const this)
+{
+    return THIS_PUB(AddressInfo)->port;
+}
+
+// Size of address list
+FN_INLINE_ALWAYS unsigned int
+addrInfoSize(const AddressInfo *const this)
+{
+    return lstSize(THIS_PUB(AddressInfo)->list);
 }
 
 /***********************************************************************************************************************************

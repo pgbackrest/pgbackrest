@@ -163,6 +163,8 @@ testRun(void)
 
         AddressInfo *addrInfo = NULL;
         TEST_ASSIGN(addrInfo, addrInfoNew(STRDEF("test-addr-loop.pgbackrest.org"), 443), "addr list");
+        TEST_RESULT_STR_Z(addrInfoHost(addrInfo), "test-addr-loop.pgbackrest.org", "check host");
+        TEST_RESULT_UINT(addrInfoPort(addrInfo), 443, "check port");
         TEST_RESULT_UINT(addrInfoSize(addrInfo), 2, "check size");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -613,7 +615,7 @@ testRun(void)
                             .caPath = STRDEF("/bogus"))),
                     CryptoError,
                     "unable to verify certificate presented by 'localhost:%u (127.0.0.1)': [20] unable to get local issuer"
-                        " certificate",
+                    " certificate",
                     hrnServerPort(0));
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -669,7 +671,7 @@ testRun(void)
                             .caFile = STRDEF(HRN_SERVER_CERT))),
                     CryptoError,
                     "unable to verify certificate presented by 'localhost:%u (127.0.0.1)': [20] unable to get local issuer"
-                        " certificate",
+                    " certificate",
                     hrnServerPort(0));
 
                 // -----------------------------------------------------------------------------------------------------------------
