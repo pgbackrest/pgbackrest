@@ -1,0 +1,101 @@
+<release date="2016-06-02" version="1.02" title="Bug Fix for Perl 5.22">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="adrian.vondendriesch"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix usage of sprintf() due to new constraints in Perl 5.22. Parameters not referenced in the format string are no longer allowed.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Log directory create and file open now using FileCommon functions which produce more detailed error messages on failure.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="christoph.berg"/>
+                    <release-item-contributor id="adrian.vondendriesch"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fixed syntax that was not compatible with Perl 5.2X.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="adrian.vondendriesch"/>
+                </release-item-contributor-list>
+
+                <p>Fixed absolute paths that were used for the PDF logo.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <p>Release notes are now broken into sections so that bugs, features, and refactors are clearly delineated. An <quote>Additional Notes</quote> section has been added for changes to documentation and the test suite that do not affect the core code.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="adrian.vondendriesch"/>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Added man page generation.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="david.steele"/>
+                    <release-item-contributor id="cynthia.shang"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>The change log was the last piece of documentation to be rendered in Markdown only. Wrote a converter so the document can be output by the standard renderers. The change log will now be located on the website and has been renamed to <quote>Releases</quote>.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Added an execution cache so that documentation can be generated without setting up the full container environment. This is useful for packaging, keeps the documentation consistent for a release, and speeds up generation when no changes are made in the execution list.</p>
+            </release-item>
+
+            <release-item>
+                <p>Remove function constants and pass strings directly to logDebugParam(). The function names were only used once so creating constants for them was wasteful.</p>
+            </release-item>
+
+            <release-item>
+                <p>Lists can now be used outside of <id>p</id> and <id>text</id> tags for more flexible document structuring.</p>
+            </release-item>
+        </release-development-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <p>Replaced overzealous <code>perl -cW</code> check which failed on Perl 5.22 with <code>perl -cw</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Added Ubuntu 16.04 (Xenial) and Debian 8 (Jessie) to the regression suite.</p>
+            </release-item>
+
+            <release-item>
+                <p>Upgraded doc/test VM to Ubuntu 16.04. This will help catch Perl errors in the doc code since it is not run across multiple distributions like the core and test code. It is also to be hoped that a newer kernel will make Docker more stable.</p>
+            </release-item>
+
+            <release-item>
+                <p>Test release version against the executable using <file>change-log.xml</file> instead of <file>CHANGELOG.md</file>.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+</release>

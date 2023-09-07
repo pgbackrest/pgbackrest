@@ -1,0 +1,81 @@
+<release date="2016-04-14" version="1.00" title="New Repository Format and Configuration Scheme, Link Support">
+    <release-core-list>
+        <text>
+            <p><b>IMPORTANT NOTE</b>: This flag day release breaks compatibility with older versions of <backrest/>. The manifest format, on-disk structure, configuration scheme, and the exe/path names have all changed. You must create a new repository to hold backups for this version of <backrest/> and keep your older repository for a time in case you need to do a restore. Restores from the prior repository will require the prior version of <backrest/> but because of name changes it is possible to have <id>1.00</id> and a prior version of <backrest/> installed at the same time. See the notes below for more detailed information on what has changed.</p>
+        </text>
+
+        <release-feature-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="michael.renner"/>
+                    <!-- <release-item-contributor id="david.steele"/> -->
+                </release-item-contributor-list>
+
+                <p>Implemented a new configuration scheme which should be far simpler to use. See the User Guide and Configuration Reference for details but for a simple configuration all options can now be placed in the <setting>stanza</setting> section. Options that are shared between stanzas can be placed in the <setting>[global]</setting> section. More complex configurations can still make use of command sections though this should be a rare use case.</p>
+            </release-item>
+
+            <release-item>
+                <p>The <setting>repo-path</setting> option now always refers to the repository where backups and archive are stored, whether local or remote, so the <setting>repo-remote-path</setting> option has been removed. The new <setting>spool-path</setting> option can be used to define a location for queueing WAL segments when archiving asynchronously. A local repository is no longer required.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="michael.renner"/>
+                    <release-item-ideator id="stephen.frost"/>
+                    <!-- <release-item-contributor id="david.steele"/> -->
+                </release-item-contributor-list>
+
+                <p>The default configuration filename is now <file>pgbackrest.conf</file> instead of <file>pg_backrest.conf</file>. This was done for consistency with other naming changes but also to prevent old config files from being loaded accidentally when migrating to <id>1.00</id>.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="michael.renner"/>
+                    <release-item-ideator id="stephen.frost"/>
+                    <!-- <release-item-contributor id="david.steele"/> -->
+                </release-item-contributor-list>
+
+                <p>The default repository name was changed from <path>/var/lib/backup</path> to <path>/var/lib/pgbackrest</path>.</p>
+            </release-item>
+
+            <release-item>
+                <!-- <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list> -->
+
+                <p>Lock files are now stored in <path>/tmp/pgbackrest</path> by default. These days <path>/run/pgbackrest</path> is the preferred location but that would require init scripts which are not part of this release. The <setting>lock-path</setting> option can be used to configure the lock directory.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="stephen.frost"/>
+                    <!-- <release-item-contributor id="david.steele"/> -->
+                </release-item-contributor-list>
+
+                <p>Log files are now stored in <path>/var/log/pgbackrest</path> by default and no longer have the date appended so they can be managed with <id>logrotate</id>. The <setting>log-path</setting> option can be used to configure the log directory.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="michael.renner"/>
+                    <release-item-ideator id="stephen.frost"/>
+                    <!-- <release-item-contributor id="david.steele"/> -->
+                </release-item-contributor-list>
+
+                <p>Executable filename changed from <file>pg_backrest</file> to <file>pgbackrest</file>.</p>
+            </release-item>
+
+            <release-item>
+                <p>All files and directories linked from PGDATA are now included in the backup. By default links will be restored directly into PGDATA as files or directories. The <setting>{[dash]}-link-all</setting> option can be used to restore all links to their original locations. The <setting>{[dash]}-link-map</setting> option can be used to remap a link to a new location.</p>
+            </release-item>
+
+            <release-item>
+                <p>Removed <setting>{[dash]}-tablespace</setting> option and replaced with <setting>{[dash]}-tablespace-map-all</setting> option which should more clearly indicate its function.</p>
+            </release-item>
+
+            <release-item>
+                <p>Added <id>detail</id> log level which will output more information than <id>info</id> without being as verbose as <id>debug</id>.</p>
+            </release-item>
+        </release-feature-list>
+    </release-core-list>
+</release>

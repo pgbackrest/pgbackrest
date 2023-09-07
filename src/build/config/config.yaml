@@ -368,7 +368,8 @@ option:
       archive-get: {}
       archive-push: {}
       backup: {}
-      check: {}
+      check:
+        required: false
       expire: {}
       info:
         required: false
@@ -1544,7 +1545,9 @@ option:
       archive-push:
         required: false
       backup: {}
-      check: {}
+      check:
+        depend:
+          option: stanza
       manifest:
         required: false
       restore: {}

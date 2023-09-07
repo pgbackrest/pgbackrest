@@ -10,6 +10,7 @@ SFTP Storage
 #include "common/io/fd.h"
 #include "common/io/socket/client.h"
 #include "common/log.h"
+#include "common/regExp.h"
 #include "common/user.h"
 #include "storage/posix/storage.h"
 #include "storage/sftp/read.h"
@@ -522,10 +523,9 @@ storageSftpKnownHostsFilesList(const VariantList *const sftpKnownHosts)
                 // Get the trimmed file path
                 const String *const filePath = strTrim(strLstGet(lclList, listIdx));
 
-                // If leading tilde path, replace tilde with space, trim space, prepend user home path and add to the result list
-                // else add the full path to the list
                 if (strBeginsWithZ(filePath, "~/"))
                 {
+                    // Replace leading tilde with space, trim space, prepend user home path and add to the result list
                     strLstAddFmt(
                         result, "%s%s", strZ(userHome()), strZ(strTrim(strSub(filePath, (size_t)strChr(filePath, '~') + 1))));
                 }
@@ -537,6 +537,26 @@ storageSftpKnownHostsFilesList(const VariantList *const sftpKnownHosts)
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(STRING_LIST, result);
+}
+
+/**********************************************************************************************************************************/
+static String *
+storageSftpExpandTildePath(const String *const tildePath)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, tildePath);
+    FUNCTION_TEST_END();
+
+    String *const result = strNew();
+
+    // Append to user home directory path substring after the tilde
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        strCatFmt(result, "%s%s", strZ(userHome()), strZ(strSub(tildePath, (size_t)strChr(tildePath, '~') + 1)));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/
@@ -1108,8 +1128,8 @@ storageSftpNew(
             if (strcmp(fingerprint, strZ(param.hostFingerprint)) != 0)
             {
                 THROW_FMT(
-                        ServiceError, "host [%s] and configured fingerprint (repo-sftp-host-fingerprint) [%s] do not match",
-                        fingerprint, strZ(param.hostFingerprint));
+                    ServiceError, "host [%s] and configured fingerprint (repo-sftp-host-fingerprint) [%s] do not match",
+                    fingerprint, strZ(param.hostFingerprint));
             }
         }
         else
@@ -1245,13 +1265,21 @@ storageSftpNew(
             libssh2_knownhost_free(knownHostsList);
         }
 
-        // Perform public key authorization
+        // Perform public key authorization, expand leading tilde key file paths if needed
+        String *const privKeyPath = regExpMatchOne(STRDEF("^ *~"), keyPriv) ? storageSftpExpandTildePath(keyPriv) : strDup(keyPriv);
+        String *const pubKeyPath =
+            param.keyPub != NULL && regExpMatchOne(STRDEF("^ *~"), param.keyPub) ?
+                storageSftpExpandTildePath(param.keyPub) : strDup(param.keyPub);
+
         do
         {
             rc = libssh2_userauth_publickey_fromfile(
-                    this->session, strZ(user), strZNull(param.keyPub), strZNull(keyPriv), strZNull(param.keyPassphrase));
+                this->session, strZ(user), strZNull(pubKeyPath), strZ(privKeyPath), strZNull(param.keyPassphrase));
         }
         while (storageSftpWaitFd(this, rc));
+
+        strFree(privKeyPath);
+        strFree(pubKeyPath);
 
         if (rc != 0)
         {

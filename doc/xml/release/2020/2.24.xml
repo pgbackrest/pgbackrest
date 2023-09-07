@@ -1,0 +1,88 @@
+<release date="2020-02-25" version="2.24" title="Auto-Select Backup Set for Time Target">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="adam.brusselback"/>
+                    <release-item-ideator id="ejberdecia"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Prevent defunct processes in asynchronous archive commands.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="jesper.st.john"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Error when <cmd>archive-get</cmd>/<cmd>archive-push</cmd>/<cmd>restore</cmd> are not run on a <postgres/> host.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="christian.roux"/>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Read HTTP content to eof when size/encoding not specified.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="kacey.holston"/>
+                </release-item-contributor-list>
+
+                <p>Fix resume when the resumable backup was created by <proper>Perl</proper>.</p>
+
+                <p>In this case the resumable backup should be ignored, but the <proper>C</proper> code was not able to load the partial manifest written by <proper>Perl</proper> since the format differs slightly. Add validations to catch this case and continue gracefully.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Auto-select backup set on restore when time target is specified.</p>
+
+                <p>Auto-selection is performed only when <br-option>--set</br-option> is not specified. If a backup set for the given target time cannot not be found, the latest (default) backup set will be used.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="michael.paquier"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Skip <file>pg_internal.init</file> temp file during backup.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Add more validations to the manifest on <cmd>backup</cmd>.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="christoph.berg"/>
+                </release-item-contributor-list>
+
+                <p>Prevent <proper>lock-bot</proper> from adding comments to locked issues.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-doc-list>
+</release>

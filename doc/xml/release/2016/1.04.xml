@@ -1,0 +1,144 @@
+<release date="2016-07-30" version="1.04" title="Various Bug Fixes">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="michael.vitale"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue an where an extraneous remote was created causing threaded backup/restore to possibly timeout and/or throw a lock conflict.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="michael.vitale"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue where db-path was not required for the <cmd>check</cmd> command so an assert was raised when it was missing rather than a polite error message.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="david.steele"/>
+                    <release-item-contributor id="cynthia.shang"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fixed <cmd>check</cmd> command to throw an error when database version/id does not match that of the archive.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="sebastien.lardiere"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue where a remote could try to start its own remote when the <br-option>backup-host</br-option> option was not present in <file>pgbackrest.conf</file> on the database server.</p>
+            </release-item>
+
+            <release-item>
+                <p>Fixed an issue where the contents of <path>pg_xlog</path> were being backed up if the directory was symlinked. This didn't cause any issues during restore but was a waste of space.</p>
+            </release-item>
+
+            <release-item>
+                <p>Fixed an invalid <code>log()</code> call in lock routines.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <p>Experimental support for non-exclusive backups in <postgres/> 9.6 beta3. Changes to the control/catalog/WAL versions in subsequent betas may break compatibility but <backrest/> will be updated with each release to keep pace.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <p>Suppress banners on SSH protocol connections.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improved remote error messages to identify the host where the error was raised.</p>
+            </release-item>
+
+            <release-item>
+                <p>All remote types now take locks. The exceptions date to when the test harness and <backrest/> were running in the same VM and no longer apply.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Enhancements to the protocol layer for improved reliability and error handling.</p>
+            </release-item>
+
+            <release-item>
+                <p>Exceptions are now passed back from threads as messages when possible rather than raised directly.</p>
+            </release-item>
+
+            <release-item>
+                <p>Temp files created during backup are now placed in the same directory as the target file.</p>
+            </release-item>
+
+            <release-item>
+                <p>Output lock file name when a lock cannot be acquired to aid in debugging.</p>
+            </release-item>
+
+            <release-item>
+                <p>Reduce calls to <code>protocolGet()</code> in backup/restore.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-feature-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="michael.vitale"/>
+                </release-item-contributor-list>
+
+                <p>Added clarification on why the default for the <br-option>backrest-user</br-option> option is <id>backrest</id>.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="michael.vitale"/>
+                </release-item-contributor-list>
+
+                <p>Updated information about package availability on supported platforms.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Added <file>release.pl</file> to make releases reproducible. For now this only includes building and deploying documentation.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="adrian.vondendriesch"/>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>HTML footer dates are statically created in English in order to be reproducible.</p>
+            </release-item>
+        </release-development-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <p>Fixed a version checking issue in <file>test.pl</file>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Fixed an issue where multi-threaded tests were not being run when requested.</p>
+            </release-item>
+
+            <release-item>
+                <p>Reduce the frequency that certain tests are run to save time in regression.</p>
+            </release-item>
+
+            <release-item>
+                <p>Disable control master for older OS versions where it is less stable.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+</release>

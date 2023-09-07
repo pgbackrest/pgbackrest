@@ -2211,6 +2211,14 @@ test/src/common/harnessErrorRetry.h:
   class: test/harness
   type: c/h
 
+test/src/common/harnessFd.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessFd.h:
+  class: test/harness
+  type: c/h
+
 test/src/common/harnessFork.h:
   class: test/harness
   type: c/h
@@ -2370,10 +2378,6 @@ test/src/common/harnessStorage.h:
 test/src/common/harnessStorageHelper.c:
   class: test/harness
   type: c
-
-test/src/common/harnessStorageHelper.h:
-  class: test/harness
-  type: c/h
 
 test/src/common/harnessTest.c:
   class: test/harness

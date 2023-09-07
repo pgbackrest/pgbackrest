@@ -1,0 +1,90 @@
+<release date="XXXX-XX-XX" version="2.48dev" title="Under Development">
+    <release-core-list>
+        <release-feature-list>
+            <release-item>
+                <github-issue id="2007"/>
+                <github-pull-request id="2141"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="stefan.fercot"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add backup size completed/total to <cmd>info</cmd> command <proper>JSON</proper> output.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <github-pull-request id="2057"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Multi-stanza check command.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2162"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="reid.thompson"/>
+                </release-item-contributor-list>
+
+                <p>Improve <proper>GCS</proper> multi-part performance.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="tom.swartz"/>
+                    <release-item-reviewer id="david.christensen"/>
+                    <release-item-reviewer id="reid.thompson"/>
+                </release-item-contributor-list>
+
+                <p>Allow <cmd>archive-get</cmd> command to run when stanza is stopped.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2136"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="reid.thompson"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Accept leading tilde in paths for SFTP public/private keys.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2072"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="daniel.farina"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Reload GCS credentials before renewing authentication token.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-bug-list>
+            <release-item>
+                <github-pull-request id="2165"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="hartmut.goebel"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix configuration reference example for the <br-option>tls-server-address</br-option> option.</p>
+            </release-item>
+        </release-bug-list>
+    </release-doc-list>
+</release>

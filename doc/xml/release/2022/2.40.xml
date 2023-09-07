@@ -1,0 +1,212 @@
+<release date="2022-07-18" version="2.40" title="OpenSSL 3 Support">
+    <release-core-list>
+        <text>
+            <p><b>NOTE TO PACKAGERS</b>: An experimental <proper>meson</proper> build has been added but packagers should continue to use the <proper>autoconf</proper>/<proper>make</proper> build for the foreseeable future.</p>
+        </text>
+
+        <release-improvement-list>
+            <release-item>
+                <github-pull-request id="1767"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p><proper>OpenSSL 3</proper> support.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="1754"/>
+                <github-pull-request id="1805"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="john.morris"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Create snapshot when listing contents of a path.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="1814"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Force <br-option>target-timeline=current</br-option> when restore <br-option>type=immediate</br-option>.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="1758"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Truncate files during delta <cmd>restore</cmd> when they are larger than expected.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="1760"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="reid.thompson"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Disable incremental manifest save when <br-option>resume=n</br-option>.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="1759"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="reid.thompson"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Set backup percent complete to zero before copy start.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="1748"/>
+                <github-pull-request id="1783"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="christian.montagne"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="john.morris"/>
+                    <!-- Actually tester, but we don't have a tag for that yet -->
+                    <release-item-reviewer id="soulou"/>
+                </release-item-contributor-list>
+
+                <p>Use <proper>S3</proper> <id>IsTruncated</id> flag to determine list continuation.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <github-pull-request id="1771"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Automatically create <postgres/> version interfaces.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="1749"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="reid.thompson"/>
+                </release-item-contributor-list>
+
+                <p>Improve memory usage of mem contexts.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="1773"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="sam.bassaly"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add <code>FN_NO_RETURN</code> macro.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="1790"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="sam.bassaly"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add cast to handle compilers (e.g. <proper>MSVC</proper>) that coerce to signed int.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="1781"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="alexey.gordeev"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix hard-coded WAL size assertion in <code>walSegmentNext()</code>.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="francisco.miguel.biete"/>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Skip internal options in the configuration reference.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="julien.cigar"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Add link to <postgres/> configuration in repository host section.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-improvement-list>
+            <release-item>
+                <github-pull-request id="1765"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="eli.schwartz"/>
+                    <release-item-reviewer id="sam.bassaly"/>
+                </release-item-contributor-list>
+
+                <p>Add experimental <proper>Meson</proper> build.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="1764"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="andrey.sokolov"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Allow any path to be passed to the <br-option>--test-path</br-option> option.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="1775"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="andrey.sokolov"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix compile error when <code>DEBUG_EXEC_TIME</code> is defined without <code>DEBUG</code>.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-test-list>
+</release>

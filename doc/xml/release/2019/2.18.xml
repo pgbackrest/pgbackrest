@@ -1,0 +1,96 @@
+<release date="2019-10-01" version="2.18" title="PostgreSQL 12 Support">
+    <release-core-list>
+        <release-feature-list>
+            <release-item>
+                <p><postgres/> 12 support.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="stephen.frost"/>
+                    <release-item-ideator id="ejberdecia"/>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Add <cmd>info</cmd> command <br-option>set</br-option> option for detailed text output.</p>
+
+                <p>The additional details include databases that can be used for selective restore and a list of tablespaces and symlinks with their default destinations.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Add <id>standby</id> restore type.</p>
+
+                <p>This restore type automatically adds <pg-option>standby_mode=on</pg-option> to recovery.conf for <postgres/> &lt; 12 and creates <file>standby.signal</file> for <postgres/> &amp;ge; 12, creating a common interface between PostgreSQL versions.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>The <cmd>restore</cmd> command is implemented entirely in C.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Migrate backup manifest load/save to C.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Improve performance of info file load/save.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Add helper function for adding <code>CipherBlock</code> filters to groups.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="james.chanco.jr"/>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Document the relationship between <br-option>db-timeout</br-option> and <br-option>protocol-timeout</br-option>.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Add documentation clarifications regarding standby repositories.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Add FAQ for time-based Point-in-Time Recovery.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-doc-list>
+</release>

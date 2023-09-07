@@ -202,7 +202,7 @@ testRun(void)
             ServiceError, "requested ssh2 hostkey hash type (aes-256-cbc) not available");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("public key from file auth failure");
+        TEST_TITLE("public key from file auth failure leading - tilde key paths");
 
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
@@ -220,11 +220,33 @@ testRun(void)
             {.function = NULL}
         });
 
+        // Load configuration
+          StringList *argList = strLstNew();
+          hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+          hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+          hrnCfgArgRawZ(argList, cfgOptRepo, "1");
+          hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH);
+          hrnCfgArgRawZ(argList, cfgOptRepoSftpHostUser, TEST_USER);
+          hrnCfgArgRawZ(argList, cfgOptRepoType, "sftp");
+          hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
+          hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
+          hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, "~/.ssh/id_rsa");
+          hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyFile, "~/.ssh/id_rsa.pub");
+          hrnCfgArgRawZ(argList, cfgOptRepoSftpKnownHosts, KNOWNHOSTS_FILE_CSTR);
+          hrnCfgArgRawZ(argList, cfgOptRepoSftpHostFingerprint, "3132333435363738393039383736353433323130");
+          HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+
         TEST_ERROR(
             storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1,
-                .keyPub = KEYPUB, .hostFingerprint = STRDEF("3132333435363738393039383736353433323130"),
-                .sftpStrictHostKeyChecking = SFTP_STRICT_HOSTKEY_CHECKING_YES),
+                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), cfgOptionIdxStr(cfgOptRepoSftpHost, repoIdx),
+                cfgOptionIdxUInt(cfgOptRepoSftpHostPort, repoIdx), cfgOptionIdxStr(cfgOptRepoSftpHostUser, repoIdx),
+                cfgOptionUInt64(cfgOptIoTimeout), cfgOptionIdxStr(cfgOptRepoSftpPrivateKeyFile, repoIdx),
+                cfgOptionIdxStrId(cfgOptRepoSftpHostKeyHashType, repoIdx), .modeFile = STORAGE_MODE_FILE_DEFAULT,
+                .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
+                .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
+                .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             ServiceError,
             "public key authentication failed: libssh2 error [-16]\n"
             "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-key-file and"
@@ -244,11 +266,32 @@ testRun(void)
             {.function = NULL}
         });
 
+          argList = strLstNew();
+          hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+          hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+          hrnCfgArgRawZ(argList, cfgOptRepo, "1");
+          hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH);
+          hrnCfgArgRawZ(argList, cfgOptRepoSftpHostUser, TEST_USER);
+          hrnCfgArgRawZ(argList, cfgOptRepoType, "sftp");
+          hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
+          hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
+          hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, "~/.ssh/id_rsa");
+          hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyFile, "~/.ssh/id_rsa.pub");
+          hrnCfgArgRawZ(argList, cfgOptRepoSftpKnownHosts, KNOWNHOSTS_FILE_CSTR);
+          hrnCfgArgRawZ(argList, cfgOptRepoSftpHostFingerprint, "9132333435363738393039383736353433323130");
+          HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+
         TEST_ERROR(
             storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB,
-                .hostFingerprint = STRDEF("9132333435363738393039383736353433323130"),
-                .sftpStrictHostKeyChecking = SFTP_STRICT_HOSTKEY_CHECKING_YES),
+                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), cfgOptionIdxStr(cfgOptRepoSftpHost, repoIdx),
+                cfgOptionIdxUInt(cfgOptRepoSftpHostPort, repoIdx), cfgOptionIdxStr(cfgOptRepoSftpHostUser, repoIdx),
+                cfgOptionUInt64(cfgOptIoTimeout), cfgOptionIdxStr(cfgOptRepoSftpPrivateKeyFile, repoIdx),
+                cfgOptionIdxStrId(cfgOptRepoSftpHostKeyHashType, repoIdx), .modeFile = STORAGE_MODE_FILE_DEFAULT,
+                .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
+                .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
+                .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
             ServiceError,
             "host [3132333435363738393039383736353433323130] and configured fingerprint (repo-sftp-host-fingerprint)"
             " [9132333435363738393039383736353433323130] do not match");
@@ -265,10 +308,33 @@ testRun(void)
             {.function = NULL}
         });
 
+        // Load configuration
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostUser, TEST_USER);
+        hrnCfgArgRawZ(argList, cfgOptRepoType, "sftp");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, KEYPRIV_CSTR);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyFile, KEYPUB_CSTR);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpKnownHosts, KNOWNHOSTS_FILE_CSTR);
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+
         TEST_ERROR(
             storageSftpNewP(
-                TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1,
-                .sftpStrictHostKeyChecking = SFTP_STRICT_HOSTKEY_CHECKING_YES), ServiceError,
+                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), cfgOptionIdxStr(cfgOptRepoSftpHost, repoIdx),
+                cfgOptionIdxUInt(cfgOptRepoSftpHostPort, repoIdx), cfgOptionIdxStr(cfgOptRepoSftpHostUser, repoIdx),
+                cfgOptionUInt64(cfgOptIoTimeout), cfgOptionIdxStr(cfgOptRepoSftpPrivateKeyFile, repoIdx),
+                cfgOptionIdxStrId(cfgOptRepoSftpHostKeyHashType, repoIdx), .modeFile = STORAGE_MODE_FILE_DEFAULT,
+                .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
+                .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
+                .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpKnownHosts = cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx)),
+            ServiceError,
             "failure during libssh2_knownhost_init");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -287,7 +353,7 @@ testRun(void)
         });
 
         // Load configuration
-        StringList *argList = strLstNew();
+        argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         hrnCfgArgRawZ(argList, cfgOptRepo, "1");
@@ -6947,10 +7013,10 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoType, "sftp");
         hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
         hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, KEYPRIV_CSTR);
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyFile, KEYPUB_CSTR);
         hrnCfgArgRawZ(argList, cfgOptRepoSftpKnownHosts, KNOWNHOSTS_FILE_CSTR);
         hrnCfgArgRawZ(argList, cfgOptRepoSftpStrictHostKeyChecking, "no");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, "   ~/.ssh/id_rsa");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyFile, "               ~/.ssh/id_rsa.pub");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         const Storage *storage = NULL;

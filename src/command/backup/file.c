@@ -199,14 +199,16 @@ backupFile(
                     StorageRead *const read = storageNewReadP(
                         storagePg(), file->pgFile, .ignoreMissing = file->pgFileIgnoreMissing, .compressible = compressible,
                         .limit = file->pgFileCopyExactSize ? VARUINT64(file->pgFileSize) : NULL);
-                    ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(hashTypeSha1));
-                    ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), ioSizeNew());
+                    IoRead *const readIo = storageReadIo(read);
+
+                    ioFilterGroupAdd(ioReadFilterGroup(readIo), cryptoHashNew(hashTypeSha1));
+                    ioFilterGroupAdd(ioReadFilterGroup(readIo), ioSizeNew());
 
                     // Add page checksum filter
                     if (file->pgFileChecksumPage)
                     {
                         ioFilterGroupAdd(
-                            ioReadFilterGroup(storageReadIo(read)),
+                            ioReadFilterGroup(readIo),
                             pageChecksumNew(
                                 segmentNumber(file->pgFile), PG_SEGMENT_PAGE_DEFAULT, file->pgFilePageHeaderCheck,
                                 storagePathP(storagePg(), file->pgFile)));
@@ -251,7 +253,7 @@ backupFile(
 
                         // Add block incremental filter
                         ioFilterGroupAdd(
-                            ioReadFilterGroup(storageReadIo(read)),
+                            ioReadFilterGroup(readIo),
                             blockIncrNew(
                                 file->blockIncrSuperSize, file->blockIncrSize, file->blockIncrChecksumSize, blockIncrReference,
                                 bundleId, bundleOffset, blockMap, compress, encrypt));
@@ -264,27 +266,27 @@ backupFile(
                         // Add compress filter
                         if (compress != NULL)
                         {
-                            ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), compress);
+                            ioFilterGroupAdd(ioReadFilterGroup(readIo), compress);
                             repoChecksum = true;
                         }
 
                         // Add encrypt filter
                         if (encrypt != NULL)
                         {
-                            ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), encrypt);
+                            ioFilterGroupAdd(ioReadFilterGroup(readIo), encrypt);
                             repoChecksum = true;
                         }
                     }
 
                     // Capture checksum of file stored in the repo if filters that modify the output have been applied
                     if (repoChecksum)
-                        ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(hashTypeSha1));
+                        ioFilterGroupAdd(ioReadFilterGroup(readIo), cryptoHashNew(hashTypeSha1));
 
                     // Add size filter last to calculate repo size
-                    ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), ioSizeNew());
+                    ioFilterGroupAdd(ioReadFilterGroup(readIo), ioSizeNew());
 
                     // Open the source and destination and copy the file
-                    if (ioReadOpen(storageReadIo(read)))
+                    if (ioReadOpen(readIo))
                     {
                         // Setup the repo file for write. There is no need to write the file atomically (e.g. via a temp file on
                         // Posix) because checksums are tested on resume after a failed backup. The path does not need to be synced
@@ -303,42 +305,41 @@ backupFile(
                         }
 
                         // Copy data from source to destination
-                        ioCopyP(storageReadIo(read), storageWriteIo(write));
+                        ioCopyP(readIo, storageWriteIo(write));
 
                         // Close the source
-                        ioReadClose(storageReadIo(read));
+                        ioReadClose(readIo);
 
                         MEM_CONTEXT_BEGIN(lstMemContext(result))
                         {
                             // Get sizes and checksum
                             fileResult->copySize = pckReadU64P(
-                                ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), SIZE_FILTER_TYPE, .idx = 0));
+                                ioFilterGroupResultP(ioReadFilterGroup(readIo), SIZE_FILTER_TYPE, .idx = 0));
                             fileResult->bundleOffset = bundleOffset;
                             fileResult->copyChecksum = pckReadBinP(
-                                ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE, .idx = 0));
+                                ioFilterGroupResultP(ioReadFilterGroup(readIo), CRYPTO_HASH_FILTER_TYPE, .idx = 0));
                             fileResult->repoSize = pckReadU64P(
-                                ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), SIZE_FILTER_TYPE, .idx = 1));
+                                ioFilterGroupResultP(ioReadFilterGroup(readIo), SIZE_FILTER_TYPE, .idx = 1));
 
                             // Get results of page checksum validation
                             if (file->pgFileChecksumPage)
                             {
                                 fileResult->pageChecksumResult = pckDup(
-                                    ioFilterGroupResultPackP(ioReadFilterGroup(storageReadIo(read)), PAGE_CHECKSUM_FILTER_TYPE));
+                                    ioFilterGroupResultPackP(ioReadFilterGroup(readIo), PAGE_CHECKSUM_FILTER_TYPE));
                             }
 
                             // Get results of block incremental
                             if (file->blockIncrSize != 0)
                             {
                                 fileResult->blockIncrMapSize = pckReadU64P(
-                                    ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), BLOCK_INCR_FILTER_TYPE));
+                                    ioFilterGroupResultP(ioReadFilterGroup(readIo), BLOCK_INCR_FILTER_TYPE));
                             }
 
                             // Get repo checksum
                             if (repoChecksum)
                             {
                                 fileResult->repoChecksum = pckReadBinP(
-                                    ioFilterGroupResultP(
-                                        ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE, .idx = 1));
+                                    ioFilterGroupResultP(ioReadFilterGroup(readIo), CRYPTO_HASH_FILTER_TYPE, .idx = 1));
                             }
                         }
                         MEM_CONTEXT_END();

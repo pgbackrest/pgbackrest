@@ -1,0 +1,27 @@
+<release date="2017-02-13" version="1.15" title="Refactoring and Bug Fixes">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="navid.golpayegani"/>
+                </release-item-contributor-list>
+
+                <p>Fixed a regression introduced in <proper>v1.13</proper> that could cause backups to fail if files were removed (e.g. tables dropped) while the manifest was being built.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Refactor <code>FileCommon::fileManifest()</code> and <code>FileCommon::fileStat</code> to be more modular to allow complete branch/statement level coverage testing.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <p>Complete branch/statement level coverage testing for <code>FileCommon::fileManifest()</code> and <code>FileCommon::fileStat</code> functions and helper functions.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+</release>

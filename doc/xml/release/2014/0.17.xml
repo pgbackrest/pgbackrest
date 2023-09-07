@@ -1,0 +1,9 @@
+<release date="2014-04-03" version="0.17" title="Warn When Archive Directories Cannot Be Deleted">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <p>If an archive directory which should be empty could not be deleted backrest was throwing an error. There's a good fix for that coming, but for the time being it has been changed to a warning so processing can continue. This was impacting backups as sometimes the final archive file would not get pushed if the first archive file had been in a different directory (plus some bad luck).</p>
+            </release-item>
+        </release-bug-list>
+    </release-core-list>
+</release>

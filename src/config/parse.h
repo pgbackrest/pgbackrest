@@ -44,6 +44,8 @@ typedef struct CfgParseParam
 {
     VAR_PARAM_HEADER;
     bool noResetLogLevel;                                           // Do not reset log level
+    bool noConfigLoad;                                              // Do not reload the config file
+    const String *stanza;                                           // Load config as stanza
 } CfgParseParam;
 
 #define cfgParseP(storage, argListSize, argList, ...)                                                                              \
@@ -104,6 +106,8 @@ FN_EXTERN ConfigOptionDataType cfgParseOptionDataType(ConfigOption optionId);
 
 // Is the option required?
 FN_EXTERN bool cfgParseOptionRequired(ConfigCommand commandId, ConfigOption optionId);
+
+FN_EXTERN StringList *cfgParseStanzaList(void);
 
 // Is the option valid for the command?
 FN_EXTERN bool cfgParseOptionValid(ConfigCommand commandId, ConfigCommandRole commandRoleId, ConfigOption optionId);

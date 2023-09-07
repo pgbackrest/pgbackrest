@@ -1,0 +1,203 @@
+<release date="2016-12-12" version="1.12" title="Page Checksums, Configuration, and Bug Fixes">
+    <release-core-list>
+        <text>
+            <p><b>IMPORTANT NOTE</b>: In prior releases it was possible to specify options on the command-line that were invalid for the current command without getting an error. An error will now be generated for invalid options so it is important to carefully check command-line options in your environment to prevent disruption.</p>
+        </text>
+
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="nikhilchandra.kulkarni"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue where options that were invalid for the specified command could be provided on the command-line without generating an error. The options were ignored and did not cause any change in behavior, but it did lead to some confusion. Invalid options will now generate an error.</p>
+            </release-item>
+
+            <release-item>
+                <p>Fixed an issue where internal symlinks were not being created for tablespaces in the repository. This issue was only apparent when trying to bring up clusters in-place manually using filesystem snapshots and did not affect normal backup and restore.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="adrian.vondendriesch"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue that prevented errors from being output to the console before the logging system was initialized, i.e. while parsing options. Error codes were still being returned accurately so this would not have made a process look like it succeeded when it did not.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="michael.vitale"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue where the <br-option>db-port</br-option> option specified on the backup server would not be properly passed to the remote unless it was from the first configured database.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Added the <br-option>--checksum-page</br-option> option to allow pgBackRest to validate page checksums in data files when checksums are enabled on <postgres/> >= 9.3. Note that this functionality requires a C library which may not initially be available in OS packages. The option will automatically be enabled when the library is present and checksums are enabled on the cluster.</p>
+            </release-item>
+
+            <release-item>
+                <p>Added the <br-option>--repo-link</br-option> option to allow internal symlinks to be suppressed when the repository is located on a filesystem that does not support symlinks. This does not affect any <backrest/> functionality, but the convenience link <path>latest</path> will not be created and neither will internal tablespace symlinks, which will affect the ability to bring up clusters in-place manually using filesystem snapshots.</p>
+            </release-item>
+
+            <release-item>
+                <p>Added the <br-option>--repo-sync</br-option> option to allow directory syncs in the repository to be disabled for file systems that do not support them, e.g. NTFS.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="jens.wilke"/>
+                </release-item-contributor-list>
+
+                <p>Added a predictable log entry to signal that a command has completed successfully. For example a backup ends successfully with: <code>INFO: backup command end: completed successfully</code>.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <p>For simplicity, the <file>pg_control</file> file is now copied with the rest of the files instead of by itself of at the end of the process. The <cmd>backup</cmd> command does not require this behavior and the <cmd>restore</cmd> copies to a temporary file which is renamed at the end of the restore.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Abstracted code to determine which database cluster is the primary and which are standbys.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improved consistency and flexibility of the protocol layer by using JSON for all messages.</p>
+            </release-item>
+
+            <release-item>
+                <p>File copy protocol now accepts a function that can do additional processing on the copy buffers and return a result to the calling process.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improved <code>IO->bufferRead</code> to always return requested number of bytes until EOF.</p>
+            </release-item>
+
+            <release-item>
+                <p>Simplified the result hash of <code>File->manifest()</code>, <code>Db->tablespaceMapGet()</code>, and <code>Db->databaseMapGet()</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improved errors returned from child processes by removing redundant error level and code.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Code cleanup in preparation for improved <cmd>stanza-create</cmd> command.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improved parameter/result logging in debug/trace functions.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-bug-list>
+            <release-item>
+                <p>Fixed an issue that suppressed exceptions in PDF builds.</p>
+            </release-item>
+
+            <release-item>
+                <p>Fixed regression in section links introduced in <proper>v1.10</proper>.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <p>Added Retention to QuickStart section.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Allow a source to be included as a section so large documents can be broken up.</p>
+            </release-item>
+
+            <release-item>
+                <p>Added section link support to Markdown output.</p>
+            </release-item>
+
+            <release-item>
+                <p>Added list support to PDF output.</p>
+            </release-item>
+
+            <release-item>
+                <p>Added <setting>include</setting> option to explicitly build sources (complements the <setting>exclude</setting> option though both cannot be used in the same invocation).</p>
+            </release-item>
+
+            <release-item>
+                <p>Added <setting>keyword-add</setting> option to add keywords without overriding the <id>default</id> keyword.</p>
+            </release-item>
+
+            <release-item>
+                <p>Added <setting>debug</setting> option to <file>doc.pl</file> to easily add the <id>debug</id> keyword to documentation builds.</p>
+            </release-item>
+
+            <release-item>
+                <p>Added <setting>pre</setting> option to <file>doc.pl</file> to easily add the <id>pre</id> keyword to documentation builds.</p>
+            </release-item>
+
+            <release-item>
+                <p>Builds in <file>release.pl</file> now remove all docker containers to get consistent IP address assignments.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improvements to markdown rendering.</p>
+            </release-item>
+
+            <release-item>
+                <p>Remove code dependency on <id>project</id> variable, instead use <id>title</id> param.</p>
+            </release-item>
+        </release-development-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <p>Removed erroneous <br-option>--no-config</br-option> option in <id>help</id> test module.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Update control and WAL test files to <id>9.4</id> with matching system identifiers.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improved exception handling in file unit tests.</p>
+            </release-item>
+
+            <release-item>
+                <p>Changed the <br-option>--no-fork</br-option> test option to <br-option>--fork</br-option> with negation to match all other boolean parameters.</p>
+            </release-item>
+
+            <release-item>
+                <p>Various improvements to validation of backup and restore.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add more realistic data files to synthetic backup and restore tests.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+</release>

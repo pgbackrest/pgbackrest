@@ -1,0 +1,70 @@
+<release date="2019-04-18" version="2.13" title="Bug Fixes">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="brunre01"/>
+                    <release-item-ideator id="jens.wilke"/>
+                    <release-item-ideator id="tomasz.kontusz"/>
+                    <release-item-ideator id="guruguruguru"/>
+                </release-item-contributor-list>
+
+                <p>Fix zero-length reads causing problems for IO filters that did not expect them.</p>
+            </release-item>
+
+            <release-item>
+                <p>Fix reliability of error reporting from <cmd>local</cmd>/<cmd>remote</cmd> processes.</p>
+            </release-item>
+
+            <release-item>
+                <p>Fix <proper>Posix</proper>/<proper>CIFS</proper> error messages reporting the wrong filename on write/sync/close.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Harden IO filters against zero input and optimize zero output case.</p>
+            </release-item>
+
+            <release-item>
+                <p>Move <code>lockRelease()</code> to the end of <code>exitSafe()</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>CHECK()</code> macro for production assertions.</p>
+            </release-item>
+
+            <release-item>
+                <p>Automatically generate constants for command and option names.</p>
+            </release-item>
+
+            <release-item>
+                <p>Use a macro instead of a nested struct to create common <code>String</code> variables.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>STR()</code> macro to create constant <code>String</code> objects from runtime strings.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add macros to create constant <code>Variant</code> types.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Migrate <code>backupRegExp()</code> to C.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-development-list>
+            <release-item>
+                <p>Option to build documentation from current <proper>apt.postgres.org</proper> packages.</p>
+            </release-item>
+        </release-development-list>
+    </release-doc-list>
+</release>

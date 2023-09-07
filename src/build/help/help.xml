@@ -659,6 +659,8 @@
                                 <list-item><id>service</id> - Service account from locally stored key.</list-item>
                                 <list-item><id>token</id> - For local testing, e.g. <file>fakegcs</file>.</list-item>
                             </list>
+
+                            <p>When <br-option>repo-gcs-key-type=service</br-option> the credentials will be reloaded when the authentication token is renewed.</p>
                         </text>
 
                         <example>auto</example>
@@ -1657,7 +1659,7 @@
                             <p>IP address the server will listen on for client requests.</p>
                         </text>
 
-                        <example>::*</example>
+                        <example>*</example>
                     </config-key>
 
                     <config-key id="tls-server-port" name="TLS Server Port">

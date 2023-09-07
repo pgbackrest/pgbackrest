@@ -1,0 +1,169 @@
+<release date="2018-07-05" version="1.29" title="Critical Bug Fix for Backup Resume">
+    <release-core-list>
+        <text>
+            <p><b>IMPORTANT NOTE</b>: This release fixes a critical bug in the backup resume feature. All resumed backups prior to this release should be considered inconsistent. A backup will be resumed after a prior backup fails, unless <br-option>resume=n</br-option> has been specified. A resumed backup can be identified by checking the backup log for the message <quote>aborted backup of same type exists, will be cleaned to remove invalid files and resumed</quote>. If the message exists, do not use this backup or any backup in the same set for a restore and check the restore logs to see if a resumed backup was restored. If so, there may be inconsistent data in the cluster.</p>
+        </text>
+
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="david.youatt"/>
+                    <release-item-ideator id="yogesh.sharma"/>
+                    <release-item-ideator id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Fix critical bug in resume that resulted in inconsistent backups. A regression in <id>v0.82</id> removed the timestamp comparison when deciding which files from the aborted backup to keep on resume. See note above for more details.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="andrew.schwartz"/>
+                </release-item-contributor-list>
+
+                <p>Fix non-compliant ISO-8601 timestamp format in S3 authorization headers. AWS and some gateways were tolerant of space rather than zero-padded hours while others were not.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="craig.a.james"/>
+                </release-item-contributor-list>
+
+                <p>Fix directory syncs running recursively when only the specified directory should be synced.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="brad.nicholson"/>
+                </release-item-contributor-list>
+
+                <p>Fix <br-option>--target-action</br-option> and <br-option>--recovery-option</br-option> options being reported as invalid when restoring with <br-option>--type=immediate</br-option>.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="yummyliu"/>
+                    <release-item-ideator id="vitaliy.kukharik"/>
+                </release-item-contributor-list>
+
+                <p>Fix <br-option>archive-copy</br-option> throwing <quote>path not found</quote> error for incr/diff backups.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="vitaliy.kukharik"/>
+                </release-item-contributor-list>
+
+                <p>Fix failure in manifest build when two or more files in <id>PGDATA</id> are linked to the same directory.</p>
+            </release-item>
+
+            <release-item>
+                <p>Fix delta restore failing when a linked file was missing.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="nj.baliyan"/>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Fix error in selective restore when only one user database exists in the cluster.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="adam.k.sumner"/>
+                </release-item-contributor-list>
+
+                <p>Improve the HTTP client to set <id>content-length</id> to 0 when not specified by the server. S3 (and gateways) always set <id>content-length</id> or <id>transfer-encoding</id> but <id>HTTP 1.1</id> does not require it and proxies (e.g. <proper>HAProxy</proper>) may not include either.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improve performance of HTTPS client. Buffering now takes the <code>pending</code> bytes on the socket into account (when present) rather than relying entirely on <code>select()</code>. In some instances the final bytes would not be flushed until the connection was closed.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improve S3 delete performance. The constant <id>S3_BATCH_MAX</id> had been replaced with a hard-coded value of 2, probably during testing.</p>
+            </release-item>
+
+            <release-item>
+                <p>Make backup/restore path sync more efficient. Scanning the entire directory can be very expensive if there are a lot of small tables. The backup manifest contains the path list so use it to perform syncs instead of scanning the backup/restore path. Remove recursive path sync functionality since it is no longer used.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Make <path>backup.history</path> sync more efficient. Only the <path>backup.history/[year]</path> directory was being synced, so check if the <path>backup.history</path> is newly created and sync it as well.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add log-level-stderr option for stanza-* commands.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="viorel.tabara"/>
+                </release-item-contributor-list>
+
+                <p>Update docs with 32-bit support and caveats. 32-bit support was added in <proper>v1.26</proper>.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                <release-item-ideator id="david.youatt"/>
+            </release-item-contributor-list>
+
+                <p>Clarify that S3 buckets must be created by the user.</p>
+            </release-item>
+
+            <release-item>
+                <p>Update out-of-date description for the <br-option>spool-path</br-option> option.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Remove call to <file>lscpu</file> which can vary widely by build host.</p>
+            </release-item>
+        </release-development-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <p>Add new test for <code>Common::Io::Process</code> to show that output on stderr will raise an exception on <code>close()</code> even if the exit code is 0.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add zero-length file to <id>mock</id>/<id>all</id> test.</p>
+            </release-item>
+
+            <release-item>
+                <p>Disable package build tests since <id>v1</id> will no longer be packaged. Users installing packages should update to <id>v2</id>. <id>v1</id> builds are intended for users installing from source.</p>
+            </release-item>
+
+            <release-item>
+                <p>Update SSL error message test on CentOS 7.</p>
+            </release-item>
+
+            <release-item>
+                <p>Update URL for Debian package repository.</p>
+            </release-item>
+
+            <release-item>
+                <p>Make <file>ls</file> ordering deterministic in <id>mock</id>/<id>all</id> test.</p>
+            </release-item>
+
+            <release-item>
+                <p>Change backup test user from <id>backrest</id> to <id>pgbackrest</id>.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+</release>

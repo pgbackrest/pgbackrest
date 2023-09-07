@@ -1,0 +1,102 @@
+<release date="2017-09-03" version="1.23" title="Multiple Standbys and PostgreSQL 10 Support">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="jesper.st.john"/>
+                    <release-item-ideator id="aleksandr.rogozin"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue that could cause compression to abort on growing files.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="william.cox"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue with keep-alives not being sent to the remote from the local process.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Up to seven standbys can be configured for backup from standby.</p>
+            </release-item>
+
+            <release-item>
+                <p><postgres/> 10 support.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="victor.gdalevich"/>
+                </release-item-contributor-list>
+
+                <p>Allow <id>content-length</id> (in addition to chunked encoding) when reading XML data to improve compatibility with third-party S3 gateways.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <p>Increase HTTP timeout for S3.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add HTTP retries to harden against transient S3 network errors.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Configuration definitions are now pulled from the C library when present.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Fixed document generation to include section summaries on the Configuration page.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Move contributor list to the end of <file>release.xml</file> for convenience.</p>
+            </release-item>
+        </release-development-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <p>Change log test order to ignore unimportant log errors while shutting down <postgres/>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Drain <id>stderr</id> during test process execution as well as termination to prevent lockups if there is a lot of output.</p>
+            </release-item>
+
+            <release-item>
+                <p>Update Docker build in <file>Vagrantfile</file>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Update containers to support C library builds in the documentation.</p>
+            </release-item>
+
+            <release-item>
+                <p>Simplify smart logic for C Library and package builds.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+</release>

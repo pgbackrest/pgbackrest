@@ -775,7 +775,7 @@ sub check
         ' --config=' . $self->backrestConfig() .
         (defined($$oParam{iTimeout}) ? " --archive-timeout=$$oParam{iTimeout}" : '') .
         (defined($$oParam{strOptionalParam}) ? " $$oParam{strOptionalParam}" : '') .
-        ' --stanza=' . $self->stanza() . ' check',
+        (!defined($oParam->{bStanza}) || $oParam->{bStanza} ? ' --stanza=' . $self->stanza() : '') . ' check',
         {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus}, bLogOutput => $self->synthetic()});
 
     # Return from function and log return values if any
