@@ -33,7 +33,6 @@ Getters/Setters
 typedef struct ErrorRetryPub
 {
     const ErrorType *type;                                          // Error type
-    String *message;                                                // Error message
 } ErrorRetryPub;
 
 // Get error type
@@ -44,11 +43,7 @@ errRetryType(const ErrorRetry *const this)
 }
 
 // Get error message
-FN_INLINE_ALWAYS const String *
-errRetryMessage(const ErrorRetry *const this)
-{
-    return THIS_PUB(ErrorRetry)->message;
-}
+FN_EXTERN String *errRetryMessage(const ErrorRetry *this);
 
 /***********************************************************************************************************************************
 Destructor

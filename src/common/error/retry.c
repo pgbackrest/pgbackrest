@@ -3,9 +3,12 @@ Error Retry Message
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include "string.h"
+
 #include "common/debug.h"
 #include "common/error/retry.h"
 #include "common/time.h"
+#include "common/type/list.h"
 #include "common/type/string.h"
 
 /***********************************************************************************************************************************
@@ -14,9 +17,20 @@ Object type
 struct ErrorRetry
 {
     ErrorRetryPub pub;                                              // Publicly accessible variables
-    String *messageLast;                                            // Last error message
+    const String *message;                                          // First error message
+    List *list;                                                     // List of retry errors
     TimeMSec timeBegin;                                             // Time error retries began
 };
+
+// !!!
+typedef struct ErrorRetryItem
+{
+    String *message;                                                // Error message
+    unsigned int total;                                             // Total errors with this message
+    const ErrorType *type;                                          // Error type
+    TimeMSec retryFirst;                                            // First retry
+    TimeMSec retryLast;                                             // Last Retry
+} ErrorRetryItem;
 
 /**********************************************************************************************************************************/
 FN_EXTERN ErrorRetry *
@@ -29,11 +43,41 @@ errRetryNew(void)
         *this = (ErrorRetry)
         {
             .timeBegin = timeMSec(),
+            .list = lstNewP(sizeof(ErrorRetryItem), .comparator = lstComparatorStr),
         };
     }
     OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(ERROR_RETRY, this);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN String *
+errRetryMessage(const ErrorRetry *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ERROR_RETRY, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this->message != NULL);
+
+    String *const result = strCat(strNew(), this->message);
+
+    for (unsigned int listIdx = 0; listIdx < lstSize(this->list); listIdx++)
+    {
+        const ErrorRetryItem *const error = lstGet(this->list, listIdx);
+
+        strCatFmt(result, "\n    [%s] ", errorTypeName(error->type));
+
+        if (error->retryFirst == error->retryLast)
+            strCatFmt(result, "on retry at %" PRIu64, error->retryFirst);
+        else
+            strCatFmt(result, "on %u retries from %" PRIu64 "-%" PRIu64, error->total, error->retryFirst, error->retryLast);
+
+        strCatFmt(result, "ms: %s", strZ(error->message));
+    }
+
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/
@@ -44,37 +88,44 @@ errRetryAdd(ErrorRetry *const this)
         FUNCTION_TEST_PARAM(ERROR_RETRY, this);
     FUNCTION_TEST_END();
 
-    // If the first error
-    if (this->messageLast == NULL)
+    // Set type on first error
+    if (this->pub.type == NULL)
     {
         MEM_CONTEXT_OBJ_BEGIN(this)
         {
             this->pub.type = errorType();
-            this->pub.message = strCatZ(strNew(), errorMessage());
-            this->messageLast = strCatZ(strNew(), errorMessage());
+            this->message = strNewZ(errorMessage());
         }
         MEM_CONTEXT_OBJ_END();
     }
-    // Else on each retry
     else
     {
-        strCatFmt(
-            this->pub.message, "\n[%s] on retry after %" PRIu64 "ms: ", errorTypeName(errorType()),
-            timeMSec() - this->timeBegin);
+        // Search for the message
+        const String *const message = STR(errorMessage());
+        const TimeMSec retryTime = timeMSec() - this->timeBegin;
+        ErrorRetryItem *const error = lstFind(this->list, &message);
 
-        // If the message is the same as the last message
-        if (strEqZ(this->messageLast, errorMessage()))
+        if (error == NULL)
         {
-            strCatZ(this->pub.message, "[same message]");
+            MEM_CONTEXT_OBJ_BEGIN(this->list)
+            {
+                const ErrorRetryItem errorNew =
+                {
+                    .type = errorType(),
+                    .total = 1,
+                    .message = strDup(message),
+                    .retryFirst = retryTime,
+                    .retryLast = retryTime,
+                };
+
+                lstAdd(this->list, &errorNew);
+            }
+            MEM_CONTEXT_OBJ_END();
         }
-        // Else append new message
         else
         {
-            strCatZ(this->pub.message, errorMessage());
-
-            // Update last message
-            strTrunc(this->messageLast);
-            strCatZ(this->messageLast, errorMessage());
+            error->total++;
+            error->retryLast = retryTime;
         }
     }
 
