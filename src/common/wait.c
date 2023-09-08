@@ -74,22 +74,25 @@ waitMore(Wait *this)
         TimeMSec elapsedTime = timeMSec() - this->beginTime;
 
         // Is there more time to go?
-        if (elapsedTime + this->sleepTime < this->waitTime)
+        if (elapsedTime < this->waitTime)
         {
-            // Sleep required amount
-            sleepMSec(this->sleepTime);
+            // Calculate remaining sleep time
+            const TimeMSec remainTime = this->waitTime - elapsedTime;
 
             // Calculate sleep time as a sum of current and last (a Fibonacci-type sequence)
-            TimeMSec sleepNextTime = this->sleepTime + this->sleepPrevTime;
+            TimeMSec sleepTime = this->sleepTime + this->sleepPrevTime;
 
             // Make sure sleep time does not go beyond end time (this won't be negative because of the if condition above)
-            if (sleepNextTime > this->waitTime - elapsedTime)
-                sleepNextTime = this->waitTime - elapsedTime;
+            if (sleepTime > this->waitTime - elapsedTime)
+                sleepTime = this->waitTime - elapsedTime;
+
+            // Sleep required amount
+            sleepMSec(sleepTime);
 
             // Store new sleep times
             this->sleepPrevTime = this->sleepTime;
-            this->sleepTime = sleepNextTime;
-            this->pub.remainTime = this->waitTime - elapsedTime;
+            this->sleepTime = sleepTime;
+            this->pub.remainTime = remainTime;
 
             // Need to wait more
             result = true;
