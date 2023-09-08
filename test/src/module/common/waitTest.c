@@ -30,6 +30,8 @@ testRun(void)
         TEST_RESULT_BOOL(waitMore(wait), false, "    no wait more");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        begin = timeMSec();
+
         TEST_ASSIGN(wait, waitNew(200), "new wait = 0.2 sec");
         TEST_RESULT_UINT(waitRemaining(wait), 200, "    check remaining time");
         TEST_RESULT_UINT(wait->waitTime, 200, "    check wait time");
