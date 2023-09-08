@@ -164,26 +164,30 @@ storageSftpUpdateKnownHostsFile(StorageSftp *const this, const int hostKeyType, 
         }
         else
         {
-            // If user's known_hosts file is non-existant, create an empty one for libssh2 to operate on.
-            Storage *sshStorage =
-                storagePosixNewP(strNewFmt("%s%s", strZ(userHome()), "/.ssh"), .modeFile = 0644, .modePath = 0700, .write = true);
-
-            if (!storageExistsP(sshStorage, strNewFmt("%s", "known_hosts")))
-                storagePutP(storageNewWriteP(sshStorage, strNewFmt("%s", "known_hosts")), bufNew(0));
-
-            // Load the user's known_hosts file entries into the collection
+            // Read the user's known_hosts file entries into the collection. libssh2_knownhost_readfile() returns the number of
+            // successfully loaded hosts or a negative value on error, an empty known hosts file will return 0.
             if ((rc = libssh2_knownhost_readfile(userKnownHostsList, userKnownHostsFile, LIBSSH2_KNOWNHOST_FILE_OPENSSH)) < 0)
             {
-                // On readfile failure warn that we're unable to update the user's known_hosts file
-                rc = libssh2_session_last_error(this->session, &libSsh2ErrMsg, &libSsh2ErrMsgLen, 0);
+                // Missing known_hosts file will return LIBSSH2_ERROR_FILE. Possibly issues other than missing may return this.
+                if (rc == LIBSSH2_ERROR_FILE)
+                {
+                    // If user's known_hosts file is non-existant, create an empty one for libssh2 to operate on.
+                    Storage *sshStorage =
+                        storagePosixNewP(
+                            strNewFmt("%s%s", strZ(userHome()), "/.ssh"), .modeFile = 0644, .modePath = 0700, .write = true);
 
-                LOG_WARN_FMT(
-                    "libssh2 unable to open '%s' for update: libssh2 errno [%d] %s\n"
-                    "HINT: does '%s' exist with proper permissions?", userKnownHostsFile, rc, libSsh2ErrMsg, userKnownHostsFile);
+                    if (!storageExistsP(sshStorage, strNewFmt("%s", "known_hosts")))
+                        storagePutP(storageNewWriteP(sshStorage, strNewFmt("%s", "known_hosts")), NULL);
+
+                    // Try to load the user's known_hosts file entries into the collection again
+                    rc = libssh2_knownhost_readfile(userKnownHostsList, userKnownHostsFile, LIBSSH2_KNOWNHOST_FILE_OPENSSH);
+                }
             }
-            else
+
+            // If the user's known_hosts file was read successfully, add the host to the collection and rewrite the file.
+            if (rc >= 0)
             {
-                // Add the host to the user's internal known_hosts list and rewrite the user's updated known_hosts file
+                // Check for a supported known host key type
                 const int knownHostKeyType = storageSftpKnownHostKeyType(hostKeyType);
 
                 if (knownHostKeyType != 0)
@@ -206,6 +210,15 @@ storageSftpUpdateKnownHostsFile(StorageSftp *const this, const int hostKeyType, 
                 }
                 else
                     LOG_WARN_FMT("unsupported key type [%d], unable to update knownhosts for '%s'", hostKeyType, strZ(host));
+            }
+            else
+            {
+                // On readfile failure warn that we're unable to update the user's known_hosts file
+                rc = libssh2_session_last_error(this->session, &libSsh2ErrMsg, &libSsh2ErrMsgLen, 0);
+
+                LOG_WARN_FMT(
+                    "libssh2 unable to read '%s' for update: libssh2 errno [%d] %s\n"
+                    "HINT: does '%s' exist with proper permissions?", userKnownHostsFile, rc, libSsh2ErrMsg, userKnownHostsFile);
             }
         }
 
@@ -1153,7 +1166,9 @@ storageSftpNew(
             {
                 const char *const currentKnownHostFile = strZNull(strLstGet(knownHostsPathList, listIdx));
 
-                // Load the known hosts file entries into the collection, log message for readfile status
+                // Read the known hosts file entries into the collection, log message for readfile status.
+                // libssh2_knownhost_readfile() returns the number of successfully loaded hosts or a negative value on error, an
+                // empty known hosts file will return 0.
                 if ((rc = libssh2_knownhost_readfile(knownHostsList, currentKnownHostFile, LIBSSH2_KNOWNHOST_FILE_OPENSSH)) <= 0)
                 {
                     if (rc == 0)
