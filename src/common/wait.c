@@ -70,15 +70,15 @@ waitMore(Wait *this)
     // If sleep is 0 then the wait time has already ended
     if (this->sleepTime > 0)
     {
-        // Sleep required amount
-        sleepMSec(this->sleepTime);
-
-        // Get the end time
+        // Get the elapsed time
         TimeMSec elapsedTime = timeMSec() - this->beginTime;
 
         // Is there more time to go?
-        if (elapsedTime < this->waitTime)
+        if (elapsedTime + this->sleepTime < this->waitTime)
         {
+            // Sleep required amount
+            sleepMSec(this->sleepTime);
+
             // Calculate sleep time as a sum of current and last (a Fibonacci-type sequence)
             TimeMSec sleepNextTime = this->sleepTime + this->sleepPrevTime;
 
@@ -90,13 +90,13 @@ waitMore(Wait *this)
             this->sleepPrevTime = this->sleepTime;
             this->sleepTime = sleepNextTime;
             this->pub.remainTime = this->waitTime - elapsedTime;
+
+            // Need to wait more
+            result = true;
         }
         // Else set sleep to zero so next call will return false
         else
             this->sleepTime = 0;
-
-        // Need to wait more
-        result = true;
     }
 
     FUNCTION_LOG_RETURN(BOOL, result);

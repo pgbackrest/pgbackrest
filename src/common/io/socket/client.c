@@ -18,7 +18,6 @@ Socket Client
 #include "common/log.h"
 #include "common/stat.h"
 #include "common/type/object.h"
-#include "common/wait.h"
 
 /***********************************************************************************************************************************
 Statistics constants
@@ -74,8 +73,8 @@ sckClientOpen(THIS_VOID)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         bool retry;
-        Wait *const wait = waitNew(this->timeoutConnect);
         ErrorRetry *const errRetry = errRetryNew();
+        const TimeMSec timeBegin = timeMSec();
 
         // Get an address list for the host
         const AddressInfo *const addrInfo = addrInfoNew(this->host, this->port);
@@ -97,7 +96,7 @@ sckClientOpen(THIS_VOID)
                 THROW_ON_SYS_ERROR(fd == -1, HostConnectError, "unable to create socket");
 
                 sckOptionSet(fd);
-                sckConnect(fd, this->host, this->port, addressFound, waitRemaining(wait));
+                sckConnect(fd, this->host, this->port, addressFound, timeMSec() - timeBegin);
 
                 // Create the session
                 MEM_CONTEXT_PRIOR_BEGIN()
@@ -119,7 +118,7 @@ sckClientOpen(THIS_VOID)
                 errRetryAdd(errRetry);
 
                 // Retry if wait time has not expired
-                if (waitMore(wait))
+                if (timeMSec() - timeBegin + 1000 < this->timeoutConnect)
                 {
                     LOG_DEBUG_FMT("retry %s: %s", errorTypeName(errorType()), errorMessage());
                     retry = true;
@@ -128,7 +127,10 @@ sckClientOpen(THIS_VOID)
                     addrInfoIdx++;
 
                     if (addrInfoIdx >= addrInfoSize(addrInfo))
+                    {
                         addrInfoIdx = 0;
+                        sleepMSec(1000);
+                    }
 
                     statInc(SOCKET_STAT_RETRY_STR);
                 }
