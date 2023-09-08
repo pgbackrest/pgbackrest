@@ -120,10 +120,10 @@ groupNameFromId(gid_t groupId)
     FUNCTION_TEST_RETURN(STRING, NULL);
 }
 
+/**********************************************************************************************************************************/
 // Currently userHome() and userHomeFromId() are only used if we are building with libssh2
 #ifdef HAVE_LIBSSH2
 
-/**********************************************************************************************************************************/
 FN_EXTERN const String *
 userHome(void)
 {

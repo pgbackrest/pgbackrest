@@ -1052,6 +1052,7 @@ storageSftpNew(
     ASSERT(host != NULL);
     ASSERT(port != 0);
     ASSERT(user != NULL);
+    ASSERT(keyPriv != NULL);
     ASSERT(hostKeyHashType != 0);
     // Initialize user module
     userInit();

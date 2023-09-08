@@ -845,6 +845,8 @@ libssh2_sftp_seek64(LIBSSH2_SFTP_HANDLE *handle, libssh2_uint64_t offset)
             (HrnLibSsh2 *)handle);
     }
     MEM_CONTEXT_TEMP_END();
+
+    return;
 }
 
 /***********************************************************************************************************************************
