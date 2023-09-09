@@ -133,13 +133,12 @@ sckClientOpen(THIS_VOID)
                         addrInfoIdx = 0;
                         retry = waitMore(wait);
                     }
-
-                    if (retry)
-                        statInc(SOCKET_STAT_RETRY_STR);
                 }
 
                 // !!!
-                if (!retry)
+                if (retry)
+                    statInc(SOCKET_STAT_RETRY_STR);
+                else
                     THROWP(errRetryType(errRetry), strZ(errRetryMessage(errRetry)));
             }
             TRY_END();

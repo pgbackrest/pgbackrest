@@ -30,10 +30,20 @@ testRun(void)
         TEST_RESULT_BOOL(waitMore(wait), false, "    no wait more");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("100ms using only waitRemaining()");
+
+        TEST_ASSIGN(wait, waitNew(100), "new wait");
+        sleepMSec(100);
+        TEST_RESULT_UINT(waitRemaining(wait), 0, "    check remaining time");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("200ms wait");
+
         begin = timeMSec();
 
         TEST_ASSIGN(wait, waitNew(200), "new wait = 0.2 sec");
-        TEST_RESULT_UINT(waitRemaining(wait), 200, "    check remaining time");
+        TEST_RESULT_BOOL(waitRemaining(wait) <= 200, true, "    check remaining time upper range");
+        TEST_RESULT_BOOL(waitRemaining(wait) >= 150, true, "    check remaining time lowe range");
         TEST_RESULT_UINT(wait->waitTime, 200, "    check wait time");
         TEST_RESULT_UINT(wait->sleepTime, 20, "    check sleep time");
         TEST_RESULT_UINT(wait->sleepPrevTime, 0, "    check sleep prev time");
@@ -49,6 +59,8 @@ testRun(void)
         TEST_RESULT_VOID(waitFree(wait), "    free wait");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("1100ms wait");
+
         begin = timeMSec();
 
         TEST_ASSIGN(wait, waitNew(1100), "new wait = 1.1 sec");

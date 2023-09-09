@@ -12,7 +12,6 @@ Object type
 ***********************************************************************************************************************************/
 struct Wait
 {
-    WaitPub pub;                                                    // Publicly accessible variables
     TimeMSec waitTime;                                              // Total time to wait (in usec)
     TimeMSec sleepTime;                                             // Next sleep time (in usec)
     TimeMSec sleepPrevTime;                                         // Previous time slept (in usec)
@@ -21,7 +20,7 @@ struct Wait
 
 /**********************************************************************************************************************************/
 FN_EXTERN Wait *
-waitNew(TimeMSec waitTime)
+waitNew(const TimeMSec waitTime)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(TIMEMSEC, waitTime);
@@ -33,16 +32,14 @@ waitNew(TimeMSec waitTime)
     {
         *this = (Wait)
         {
-            .pub =
-            {
-                .remainTime = waitTime,
-            },
             .waitTime = waitTime,
         };
 
         // Calculate first sleep time -- start with 1/10th of a second for anything >= 1 second
         if (this->waitTime >= MSEC_PER_SEC)
+        {
             this->sleepTime = MSEC_PER_SEC / 10;
+        }
         // Unless the wait time is really small -- in that case divide wait time by 10
         else
             this->sleepTime = this->waitTime / 10;
@@ -56,8 +53,33 @@ waitNew(TimeMSec waitTime)
 }
 
 /**********************************************************************************************************************************/
+FN_EXTERN TimeMSec
+waitRemaining(Wait *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(WAIT, this);
+    FUNCTION_TEST_END();
+
+    TimeMSec result = 0;
+
+    // If any wait time remains
+    if (this->sleepTime > 0)
+    {
+        // Returning remaining time, if any, else set sleepTime to 0 so next call to waitMore will return false
+        const TimeMSec elapsedTime = timeMSec() - this->beginTime;
+
+        if (elapsedTime < this->waitTime)
+            result = this->waitTime - elapsedTime;
+        else
+            this->sleepTime = 0;
+    }
+
+    FUNCTION_TEST_RETURN(TIME_MSEC, result);
+}
+
+/**********************************************************************************************************************************/
 FN_EXTERN bool
-waitMore(Wait *this)
+waitMore(Wait *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(WAIT, this);
@@ -71,7 +93,7 @@ waitMore(Wait *this)
     if (this->sleepTime > 0)
     {
         // Get the elapsed time
-        TimeMSec elapsedTime = timeMSec() - this->beginTime;
+        const TimeMSec elapsedTime = timeMSec() - this->beginTime;
 
         // Is there more time to go?
         if (elapsedTime < this->waitTime)
@@ -82,9 +104,9 @@ waitMore(Wait *this)
             // Calculate sleep time as a sum of current and last (a Fibonacci-type sequence)
             TimeMSec sleepTime = this->sleepTime + this->sleepPrevTime;
 
-            // Make sure sleep time does not go beyond end time (this won't be negative because of the if condition above)
-            if (sleepTime > this->waitTime - elapsedTime)
-                sleepTime = this->waitTime - elapsedTime;
+            // Make sure sleep time does not go beyond remaining time (this won't be negative because of the if condition above)
+            if (sleepTime > remainTime)
+                sleepTime = remainTime;
 
             // Sleep required amount
             sleepMSec(sleepTime);
@@ -92,7 +114,6 @@ waitMore(Wait *this)
             // Store new sleep times
             this->sleepPrevTime = this->sleepTime;
             this->sleepTime = sleepTime;
-            this->pub.remainTime = remainTime;
 
             // Need to wait more
             result = true;

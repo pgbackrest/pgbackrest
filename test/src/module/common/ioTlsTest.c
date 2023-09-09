@@ -187,6 +187,12 @@ testRun(void)
         TEST_RESULT_Z(logBuf, zNewFmt("{list: [invalid, %s]}", strZ(addrInfoToStr(addrInfoGet(addrInfo, 1)))), "check log");
         TEST_RESULT_STR_Z(addrInfoToStr(addrInfoGet(addrInfo, 0)), "invalid", "check invalid");
 #endif
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("addrInfoToStr (invalid)");
+
+        struct addrinfo addrInfoInvalid = {0};
+
+        TEST_RESULT_STR_Z(addrInfoToStr(&addrInfoInvalid), "invalid", "check invalid");
     }
 
     // *****************************************************************************************************************************
@@ -352,7 +358,9 @@ testRun(void)
 
         TEST_ASSIGN(client, sckClientNew(STRDEF("localhost"), hrnServerPort(0), 100, 100), "new client");
         TEST_ERROR_FMT(
-            ioClientOpen(client), HostConnectError, "unable to connect to 'localhost:%u (127.0.0.1)': [111] Connection refused",
+            ioClientOpen(client), HostConnectError,
+            "unable to connect to 'localhost:%u (127.0.0.1)': [111] Connection refused\n"
+            "[RETRY DETAIL OMITTED]",
             hrnServerPort(0));
 
         // This address should not be in use in a test environment -- if it is the test will fail
@@ -435,7 +443,9 @@ testRun(void)
             client, tlsClientNewP(sckClientNew(STRDEF("localhost"), hrnServerPort(0), 100, 100), STRDEF("X"), 100, 100, true),
             "new client");
         TEST_ERROR_FMT(
-            ioClientOpen(client), HostConnectError, "unable to connect to 'localhost:%u (127.0.0.1)': [111] Connection refused",
+            ioClientOpen(client), HostConnectError,
+            "unable to connect to 'localhost:%u (127.0.0.1)': [111] Connection refused\n"
+            "[RETRY DETAIL OMITTED]",
             hrnServerPort(0));
 
         // -------------------------------------------------------------------------------------------------------------------------
