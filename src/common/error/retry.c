@@ -22,7 +22,7 @@ struct ErrorRetry
     TimeMSec timeBegin;                                             // Time error retries began
 };
 
-// !!!
+// Keep track of retries with the same error
 typedef struct ErrorRetryItem
 {
     String *message;                                                // Error message
@@ -61,8 +61,10 @@ errRetryMessage(const ErrorRetry *const this)
 
     ASSERT(this->message != NULL);
 
+    // Always include first message
     String *const result = strCat(strNew(), this->message);
 
+    // Add retries, varying the message depending on how many retries there were
     for (unsigned int listIdx = 0; listIdx < lstSize(this->list); listIdx++)
     {
         const ErrorRetryItem *const error = lstGet(this->list, listIdx);
@@ -100,7 +102,7 @@ errRetryAdd(ErrorRetry *const this)
     }
     else
     {
-        // Search for the message
+        // If error is not found then add it
         const String *const message = STR(errorMessage());
         const TimeMSec retryTime = timeMSec() - this->timeBegin;
         ErrorRetryItem *const error = lstFind(this->list, &message);
@@ -122,6 +124,7 @@ errRetryAdd(ErrorRetry *const this)
             }
             MEM_CONTEXT_OBJ_END();
         }
+        // Else update the error found
         else
         {
             error->total++;

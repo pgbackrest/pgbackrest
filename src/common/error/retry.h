@@ -2,7 +2,8 @@
 Error Retry Message
 
 Accumulate errors during retries to provide a single, coherent error message to the user that includes information about the
-original error and all the failed retries.
+original error and all the failed retries. Retries with the same error message are aggregated to keep the error message as short as
+possible.
 ***********************************************************************************************************************************/
 #ifndef COMMON_ERROR_RETRY_H
 #define COMMON_ERROR_RETRY_H
