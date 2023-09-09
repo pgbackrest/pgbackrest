@@ -3,6 +3,8 @@ Address Info
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <netinet/tcp.h>
+
 #include "common/debug.h"
 #include "common/io/socket/address.h"
 #include "common/log.h"
