@@ -17,32 +17,28 @@ static struct
 } hrnErrorRetryLocal;
 
 /**********************************************************************************************************************************/
-void
-errRetryAdd(ErrorRetry *const this)
+String *
+errRetryMessage(const ErrorRetry *const this)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(ERROR_RETRY, this);
     FUNCTION_HARNESS_END();
 
+    ASSERT(this->message != NULL);
+
+    String *result = NULL;
+
     if (!hrnErrorRetryLocal.detailEnable)
     {
-        if (this->messageLast == NULL)
-        {
-            MEM_CONTEXT_OBJ_BEGIN(this)
-            {
-                this->pub.type = errorType();
-                this->pub.message = strCatZ(strNew(), errorMessage());
-                this->messageLast = strNewZ(errorMessage());
-            }
-            MEM_CONTEXT_OBJ_END();
-        }
-        else if (strEq(this->pub.message, this->messageLast))
-            strCatFmt(this->pub.message, "\n[RETRY DETAIL OMITTED]");
+        result = strCat(strNew(), this->message);
+
+        if (lstSize(this->list) > 0)
+            strCatZ(result, "\n[RETRY DETAIL OMITTED]");
     }
     else
-        errRetryAdd_SHIMMED(this);
+        result = errRetryMessage_SHIMMED(this);
 
-    FUNCTION_HARNESS_RETURN_VOID();
+    FUNCTION_HARNESS_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/
