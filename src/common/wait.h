@@ -20,17 +20,8 @@ FN_EXTERN Wait *waitNew(TimeMSec waitTime);
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
-typedef struct WaitPub
-{
-    TimeMSec remainTime;                                            // Wait time remaining (in usec)
-} WaitPub;
-
 // How much time is remaining? Recalculated each time waitMore() is called.
-FN_INLINE_ALWAYS TimeMSec
-waitRemaining(const Wait *const this)
-{
-    return THIS_PUB(Wait)->remainTime;
-}
+FN_EXTERN TimeMSec waitRemaining(Wait *this);
 
 /***********************************************************************************************************************************
 Functions
