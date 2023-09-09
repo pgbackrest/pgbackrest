@@ -306,8 +306,7 @@ testRun(void)
 
         TEST_ERROR_FMT(
             httpRequestResponse(httpRequestNewP(client, STRDEF("GET"), STRDEF("/")), false), HostConnectError,
-            "unable to connect to 'localhost:%u': [111] Connection refused\n"
-            "[RETRY DETAIL OMITTED]",
+            "unable to connect to 'localhost:%u': [111] Connection refused",
             hrnServerPort(0));
 
         HRN_FORK_BEGIN()
