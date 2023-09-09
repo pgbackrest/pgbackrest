@@ -182,7 +182,8 @@ sckServerNew(const String *const address, const unsigned int port, const TimeMSe
         memContextCallbackSet(objMemContext(this), sckServerFreeResource, this);
 
         // Update server name to include address
-        strCatFmt(this->name, " (%s)", strZ(addrInfoToStr(addressFound)));
+        strTrunc(this->name);
+        strCat(this->name, addrInfoToName(this->address, this->port, addressFound));
 
         // Bind the address
         THROW_ON_SYS_ERROR(

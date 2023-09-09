@@ -101,7 +101,8 @@ sckClientOpen(THIS_VOID)
                 MEM_CONTEXT_PRIOR_END();
 
                 // Update client name to include address
-                strCatFmt(this->name, " (%s)", strZ(addrInfoToStr(addressFound)));
+                strTrunc(this->name);
+                strCat(this->name, addrInfoToName(this->host, this->port, addressFound));
             }
             CATCH_ANY()
             {

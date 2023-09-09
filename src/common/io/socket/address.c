@@ -100,27 +100,51 @@ addrInfoNew(const String *const host, unsigned int port)
     FUNCTION_LOG_RETURN(ADDRESS_INFO, this);
 }
 
-/**********************************************************************************************************************************/
+/***********************************************************************************************************************************
+Convert address to a zero-terminated string
+***********************************************************************************************************************************/
 #define ADDR_INFO_STR_BUFFER_SIZE                                   48
 
 static void
-addrInfoToZ(const struct addrinfo *const addrInfo, char *const buffer, const size_t bufferSize)
+addrInfoToZ(const struct addrinfo *const addrInfo, char *const address, const size_t addressSize)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, addrInfo);
-        FUNCTION_TEST_PARAM_P(CHAR, buffer);
-        FUNCTION_TEST_PARAM(SIZE, bufferSize);
+        FUNCTION_TEST_PARAM_P(CHAR, address);
+        FUNCTION_TEST_PARAM(SIZE, addressSize);
     FUNCTION_TEST_END();
 
-    if (getnameinfo(addrInfo->ai_addr, addrInfo->ai_addrlen, buffer, (socklen_t)bufferSize, 0, 0, NI_NUMERICHOST) != 0)
+    if (getnameinfo(addrInfo->ai_addr, addrInfo->ai_addrlen, address, (socklen_t)addressSize, 0, 0, NI_NUMERICHOST) != 0)
     {
-        strncpy(buffer, "invalid", bufferSize);
-        buffer[bufferSize - 1] = '\0';
+        strncpy(address, "invalid", addressSize);
+        address[addressSize - 1] = '\0';
     }
 
     FUNCTION_TEST_RETURN_VOID();
 }
 
+/**********************************************************************************************************************************/
+FN_EXTERN String *
+addrInfoToName(const String *const host, const unsigned int port, const struct addrinfo *const addrInfo)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, host);
+        FUNCTION_TEST_PARAM(UINT, port);
+        FUNCTION_TEST_PARAM_P(VOID, addrInfo);
+    FUNCTION_TEST_END();
+
+    String *const result = strCatFmt(strNew(), "%s:%u", strZ(host), port);
+    String *const address = addrInfoToStr(addrInfo);
+
+    if (!strEq(host, address))
+        strCatFmt(result, " (%s)", strZ(address));
+
+    strFree(address);
+
+    FUNCTION_TEST_RETURN(STRING, result);
+}
+
+/**********************************************************************************************************************************/
 FN_EXTERN String *
 addrInfoToStr(const struct addrinfo *const addrInfo)
 {
@@ -128,19 +152,21 @@ addrInfoToStr(const struct addrinfo *const addrInfo)
         FUNCTION_TEST_PARAM_P(VOID, addrInfo);
     FUNCTION_TEST_END();
 
-    char buffer[ADDR_INFO_STR_BUFFER_SIZE];
-    addrInfoToZ(addrInfo, buffer, sizeof(buffer));
+    char address[ADDR_INFO_STR_BUFFER_SIZE];
+    addrInfoToZ(addrInfo, address, sizeof(address));
 
-    FUNCTION_TEST_RETURN(STRING, strNewZ(buffer));
+    FUNCTION_TEST_RETURN(STRING, strNewZ(address));
 }
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
 addrInfoToLog(const AddressInfo *const this, StringStatic *const debugLog)
 {
-    char buffer[48];
+    char address[48];
 
-    strStcFmt(debugLog, "{list: [");
+    strStcFmt(debugLog, "{host: ");
+    strToLog(addrInfoHost(this), debugLog);
+    strStcFmt(debugLog, ", port: %u, list: [", addrInfoPort(this));
 
     for (unsigned int listIdx = 0; listIdx < addrInfoSize(this); listIdx++)
     {
@@ -149,8 +175,8 @@ addrInfoToLog(const AddressInfo *const this, StringStatic *const debugLog)
         if (listIdx != 0)
             strStcCat(debugLog, ", ");
 
-        addrInfoToZ(addrInfo, buffer, sizeof(buffer));
-        strStcCat(debugLog, buffer);
+        addrInfoToZ(addrInfo, address, sizeof(address));
+        strStcCat(debugLog, address);
     }
 
     strStcCat(debugLog, "]}");
