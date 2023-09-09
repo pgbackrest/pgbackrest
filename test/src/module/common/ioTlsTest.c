@@ -368,7 +368,7 @@ testRun(void)
 
         TEST_ASSIGN(client, sckClientNew(STRDEF("localhost"), hrnServerPort(0), 100, 100), "new client");
         TEST_ERROR_FMT(
-            ioClientOpen(client), HostConnectError, "unable to connect to 'localhost:%u': [111] Connection refused",
+            ioClientOpen(client), HostConnectError, "unable to connect to 'localhost:%u (127.0.0.1)': [111] Connection refused",
             hrnServerPort(0));
 
         // This address should not be in use in a test environment -- if it is the test will fail
@@ -451,7 +451,7 @@ testRun(void)
             client, tlsClientNewP(sckClientNew(STRDEF("localhost"), hrnServerPort(0), 100, 100), STRDEF("X"), 100, 100, true),
             "new client");
         TEST_ERROR_FMT(
-            ioClientOpen(client), HostConnectError, "unable to connect to 'localhost:%u': [111] Connection refused",
+            ioClientOpen(client), HostConnectError, "unable to connect to 'localhost:%u (127.0.0.1)': [111] Connection refused",
             hrnServerPort(0));
 
         // -------------------------------------------------------------------------------------------------------------------------
