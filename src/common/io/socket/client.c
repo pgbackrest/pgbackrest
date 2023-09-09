@@ -119,7 +119,6 @@ sckClientOpen(THIS_VOID)
                 errRetryAdd(errRetry);
 
                 // Retry if wait time has not expired
-                // !!! DO WE NEED MORE ACCURATE WAIT TIME REMAINING?
                 if (waitRemaining(wait) > 0)
                 {
                     LOG_DEBUG_FMT("retry %s: %s", errorTypeName(errorType()), errorMessage());
@@ -135,11 +134,11 @@ sckClientOpen(THIS_VOID)
                     }
                 }
 
-                // !!!
-                if (retry)
-                    statInc(SOCKET_STAT_RETRY_STR);
-                else
+                // Error when no retries remain
+                if (!retry)
                     THROWP(errRetryType(errRetry), strZ(errRetryMessage(errRetry)));
+
+                statInc(SOCKET_STAT_RETRY_STR);
             }
             TRY_END();
         }

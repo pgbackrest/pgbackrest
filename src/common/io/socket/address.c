@@ -163,8 +163,10 @@ FN_EXTERN void
 addrInfoToLog(const AddressInfo *const this, StringStatic *const debugLog)
 {
     char address[48];
-    // !!! ADD HOST AND PORT
-    strStcFmt(debugLog, "{list: [");
+
+    strStcFmt(debugLog, "{host: ");
+    strToLog(addrInfoHost(this), debugLog);
+    strStcFmt(debugLog, ", port: %u, list: [", addrInfoPort(this));
 
     for (unsigned int listIdx = 0; listIdx < addrInfoSize(this); listIdx++)
     {

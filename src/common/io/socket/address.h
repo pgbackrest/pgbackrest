@@ -83,7 +83,6 @@ Macros for function logging
 ***********************************************************************************************************************************/
 FN_EXTERN void addrInfoToLog(const AddressInfo *this, StringStatic *debugLog);
 
-// !!! Make this a real log function
 #define FUNCTION_LOG_ADDRESS_INFO_TYPE                                                                                             \
     AddressInfo *
 #define FUNCTION_LOG_ADDRESS_INFO_FORMAT(value, buffer, bufferSize)                                                                \
