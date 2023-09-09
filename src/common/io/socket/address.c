@@ -3,7 +3,7 @@ Address Info
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include <netinet/in.h>
+#include <sys/socket.h>
 
 #include "common/debug.h"
 #include "common/io/socket/address.h"
