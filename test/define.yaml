@@ -445,6 +445,7 @@ unit:
           - config/protocol
           - command/command
           - postgres/interface
+          - postgres/interface/crc32
           - postgres/interface/page
           - protocol/client
           - protocol/command
@@ -646,6 +647,7 @@ unit:
 
         coverage:
           - postgres/interface
+          - postgres/interface/crc32
           - postgres/interface/page
 
   # ********************************************************************************************************************************
