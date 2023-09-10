@@ -179,7 +179,7 @@ unit:
           shim:
             common/error/retry:
               function:
-                - errRetryAdd
+                - errRetryMessage
 
         coverage:
           - common/error/retry
