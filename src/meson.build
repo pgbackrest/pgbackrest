@@ -116,6 +116,7 @@ subdir('postgres')
 src_pgbackrest = [
 	'command/annotate/annotate.c',
 	'command/archive/common.c',
+	'command/archive/find.c',
 	'command/archive/get/file.c',
 	'command/archive/get/get.c',
 	'command/archive/get/protocol.c',
