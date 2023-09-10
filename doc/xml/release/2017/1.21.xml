@@ -1,0 +1,117 @@
+<release date="2017-08-08" version="1.21" title="Improved Info Output and SSH Port Option">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>The <path>archive_status</path> directory is now recreated on restore to support <postgres/> 8.3 which does not recreate it automatically like more recent versions do.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue that could cause the empty archive directory for an old <postgres/> version to be left behind after a <cmd>stanza-upgrade</cmd>.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Modified the <cmd>info</cmd> command (both text and JSON output) to display the archive ID and minimum/maximum WAL currently present in the archive for the current and prior, if any, database cluster version.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Added <br-option>--backup-ssh-port</br-option> and <br-option>--db-ssh-port</br-option> options to support non-default SSH ports.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <p>Retry when S3 returns an internal error (500).</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Add <id>bIgnoreMissing</id> parameter to <code>Local->manifest()</code>.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-bug-list>
+            <release-item>
+                <p>Fix description of <br-option>--online</br-option> based on the command context.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <p>Add creation of <file>/etc/pgbackrest.conf</file> to manual installation instructions.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Move repository options into a separate section in command/command-line help.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Reduce log verbosity when building documentation by only logging sections that contain an execute list directly or in a child section.</p>
+            </release-item>
+
+            <release-item>
+                <p>Debian/Ubuntu documentation now builds on Ubuntu 16.</p>
+            </release-item>
+
+            <release-item>
+                <p>Remove vestigial repository options from <cmd>backup</cmd> command.</p>
+            </release-item>
+        </release-development-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <p>Fix log checking after <postgres/> shuts down to include <id>FATAL</id> messages and disallow immediate shutdowns which can throw <id>FATAL</id> errors in the log.</p>
+            </release-item>
+
+            <release-item>
+                <p>Use Google DNS in test environment for consistency.</p>
+            </release-item>
+
+            <release-item>
+                <p>Use new Travis Trusty image.</p>
+            </release-item>
+
+            <release-item>
+                <p>Generate global fake cert in containers for testing.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Consolidate <id>stanza-create</id> and <id>stanza-upgrade</id> tests into new <id>stanza</id> test.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+</release>

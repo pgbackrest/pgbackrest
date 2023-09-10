@@ -388,7 +388,7 @@ testRun(void)
         // Connection errors
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(
-            client, tlsClientNewP(sckClientNew(STRDEF("99.99.99.99.99"), 7777, 0, 0), STRDEF("X"), 0, 0, true), "new client");
+            client, tlsClientNewP(sckClientNew(STRDEF("99.99.99.99.99"), 7777, 0, 0), STRDEF("X"), 100, 0, true), "new client");
         TEST_RESULT_STR_Z(ioClientName(client), "99.99.99.99.99:7777", " check name");
         TEST_ERROR(
             ioClientOpen(client), HostConnectError, "unable to get address for '99.99.99.99.99': [-2] Name or service not known");

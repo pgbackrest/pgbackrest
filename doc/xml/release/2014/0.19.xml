@@ -1,0 +1,15 @@
+<release date="2014-05-13" version="0.19" title="Improved Error Reporting/Handling">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <p>Found and squashed a nasty bug where <code>file_copy()</code> was defaulted to ignore errors. There was also an issue in <code>file_exists()</code> that was causing the test to fail when the file actually did exist. Together they could have resulted in a corrupt backup with no errors, though it is very unlikely.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Worked on improving error handling in the <code>File</code> object. This is not complete, but works well enough to find a few errors that have been causing us problems (notably, find is occasionally failing building the archive async manifest when system is under load).</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+</release>

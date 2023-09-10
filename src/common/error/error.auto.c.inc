@@ -81,7 +81,7 @@ ERROR_DEFINE(125, UnknownError, false, RuntimeError);
 /***********************************************************************************************************************************
 Error type array
 ***********************************************************************************************************************************/
-static const ErrorType *errorTypeList[] =
+static const ErrorType *const errorTypeList[] =
 {
     &AssertError,
     &ChecksumError,

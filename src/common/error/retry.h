@@ -2,7 +2,8 @@
 Error Retry Message
 
 Accumulate errors during retries to provide a single, coherent error message to the user that includes information about the
-original error and all the failed retries.
+original error and all the failed retries. Retries with the same error message are aggregated to keep the error message as short as
+possible.
 ***********************************************************************************************************************************/
 #ifndef COMMON_ERROR_RETRY_H
 #define COMMON_ERROR_RETRY_H
@@ -33,7 +34,6 @@ Getters/Setters
 typedef struct ErrorRetryPub
 {
     const ErrorType *type;                                          // Error type
-    String *message;                                                // Error message
 } ErrorRetryPub;
 
 // Get error type
@@ -44,11 +44,7 @@ errRetryType(const ErrorRetry *const this)
 }
 
 // Get error message
-FN_INLINE_ALWAYS const String *
-errRetryMessage(const ErrorRetry *const this)
-{
-    return THIS_PUB(ErrorRetry)->message;
-}
+FN_EXTERN String *errRetryMessage(const ErrorRetry *this);
 
 /***********************************************************************************************************************************
 Destructor

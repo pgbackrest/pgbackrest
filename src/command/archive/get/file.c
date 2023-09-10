@@ -36,9 +36,6 @@ archiveGetFile(
 
     ArchiveGetFileResult result = {.warnList = strLstNew()};
 
-    // Test for stop file
-    lockStopTest();
-
     // Check all files in the actual list and return as soon as one is copied
     bool copied = false;
 
