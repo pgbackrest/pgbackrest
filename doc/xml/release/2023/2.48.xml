@@ -27,6 +27,18 @@
             </release-item>
 
             <release-item>
+                <github-pull-request id="2131"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Retry reads of <file>pg_control</file> until checksum is valid.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2162"/>
 
                 <release-item-contributor-list>
