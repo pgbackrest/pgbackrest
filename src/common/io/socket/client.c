@@ -118,26 +118,25 @@ sckClientOpen(THIS_VOID)
                 // Add the error retry info
                 errRetryAdd(errRetry);
 
-                // Retry if wait time has not expired
-                if (waitRemaining(wait) > 0)
+                // Increment address info index and reset if the end has been reached. When the end has been reached sleep for a bit
+                // to hopefully have better chance at succeeding, otherwise continue right to the next address as long as there is
+                // some time left.
+                addrInfoIdx++;
+
+                if (addrInfoIdx >= addrInfoSize(addrInfo))
                 {
-                    LOG_DEBUG_FMT("retry %s: %s", errorTypeName(errorType()), errorMessage());
-                    retry = true;
-
-                    // Increment address info index and reset if the end has been reached
-                    addrInfoIdx++;
-
-                    if (addrInfoIdx >= addrInfoSize(addrInfo))
-                    {
-                        addrInfoIdx = 0;
-                        retry = waitMore(wait);
-                    }
+                    addrInfoIdx = 0;
+                    retry = waitMore(wait);
                 }
+                else
+                    retry = waitRemaining(wait) > 0;
 
                 // Error when no retries remain
                 if (!retry)
                     THROWP(errRetryType(errRetry), strZ(errRetryMessage(errRetry)));
 
+                // Log retry
+                LOG_DEBUG_FMT("retry %s: %s", errorTypeName(errorType()), errorMessage());
                 statInc(SOCKET_STAT_RETRY_STR);
             }
             TRY_END();
