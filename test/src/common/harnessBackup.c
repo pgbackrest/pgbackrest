@@ -78,7 +78,7 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
     pgControl.timeline = param.timeline;
 
     HRN_STORAGE_PUT(
-        storagePgIdxWrite(0), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer(0, pgControl),
+        storagePgIdxWrite(0), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer(0, 0, pgControl),
         .timeModified = backupTimeStart);
 
     // Update pg_control on primary with the backup time
@@ -205,7 +205,7 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
         ASSERT(!param.noArchiveCheck);
 
         // Save pg_control with updated info
-        HRN_STORAGE_PUT(storagePgIdxWrite(1), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer(0, pgControl));
+        HRN_STORAGE_PUT(storagePgIdxWrite(1), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer(0, 0, pgControl));
 
         if (param.noPriorWal)
         {

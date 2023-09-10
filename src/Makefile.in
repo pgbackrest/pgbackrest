@@ -162,6 +162,7 @@ SRCS = \
 	info/infoPg.c \
 	postgres/client.c \
 	postgres/interface.c \
+	postgres/interface/crc32.c \
 	postgres/interface/page.c \
 	protocol/client.c \
 	protocol/command.c \
