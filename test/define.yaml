@@ -362,7 +362,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: io-tls
-        total: 5
+        total: 6
         feature: SOCKET
         harness: server
         harness:
@@ -380,6 +380,7 @@ unit:
           - common/io/tls/common
           - common/io/tls/server
           - common/io/tls/session
+          - common/io/socket/address
           - common/io/socket/client
           - common/io/socket/common
           - common/io/socket/server
@@ -444,6 +445,7 @@ unit:
           - config/protocol
           - command/command
           - postgres/interface
+          - postgres/interface/crc32
           - postgres/interface/page
           - protocol/client
           - protocol/command
@@ -645,6 +647,7 @@ unit:
 
         coverage:
           - postgres/interface
+          - postgres/interface/crc32
           - postgres/interface/page
 
   # ********************************************************************************************************************************

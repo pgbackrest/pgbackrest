@@ -1990,6 +1990,7 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
                     pckWriteI32P(param, jobData->compressLevel);
                     pckWriteU64P(param, jobData->cipherSubPass == NULL ? cipherTypeNone : cipherTypeAes256Cbc);
                     pckWriteStrP(param, jobData->cipherSubPass);
+                    pckWriteStrP(param, cfgOptionStrNull(cfgOptPgVersionForce));
                 }
 
                 pckWriteStrP(param, manifestPathPg(file.name));
