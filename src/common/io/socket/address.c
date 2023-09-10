@@ -21,7 +21,7 @@ struct AddressInfo
 };
 
 /***********************************************************************************************************************************
-Free address list
+Free addrinfo linked list allocated by getaddrinfo()
 ***********************************************************************************************************************************/
 static void
 addrInfoFreeResource(THIS_VOID)
@@ -69,7 +69,7 @@ addrInfoNew(const String *const host, unsigned int port)
             struct addrinfo hints = (struct addrinfo)
             {
                 .ai_family = AF_UNSPEC,
-                .ai_flags = AI_PASSIVE,
+                .ai_flags = AI_PASSIVE | AI_NUMERICSERV,
                 .ai_socktype = SOCK_STREAM,
                 .ai_protocol = IPPROTO_TCP,
             };
