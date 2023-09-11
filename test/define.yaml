@@ -615,13 +615,13 @@ unit:
                 - fdReady
 
         coverage:
-          - storage/helper
           - storage/sftp/helper
           - storage/sftp/read
           - storage/sftp/storage
           - storage/sftp/write
 
         include:
+          - storage/helper
           - storage/read
           - storage/storage
           - storage/write

@@ -12,13 +12,8 @@ Storage Helper
 #include "config/config.h"
 #include "protocol/helper.h"
 #include "storage/helper.h"
-#include "storage/azure/storage.h"
-#include "storage/cifs/storage.h"
-#include "storage/gcs/storage.h"
 #include "storage/posix/storage.h"
 #include "storage/remote/storage.h"
-#include "storage/s3/storage.h"
-#include "storage/sftp/storage.h"
 
 /***********************************************************************************************************************************
 Storage path constants

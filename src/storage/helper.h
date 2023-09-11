@@ -27,16 +27,6 @@ STRING_DECLARE(STORAGE_PATH_ARCHIVE_STR);
 STRING_DECLARE(STORAGE_PATH_BACKUP_STR);
 
 /***********************************************************************************************************************************
-Optional repo types
-***********************************************************************************************************************************/
-typedef enum
-{
-    repoTypeTest,                                                   // Test value for full coverage
-    repoTypeBogus,                                                  // Bogus value for full coverage
-    repoTypeSftp,
-} RepoType;
-
-/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Initialize dry-run for the current command. No writes are allowed until dry-run has been initialized and no writes are allowed
