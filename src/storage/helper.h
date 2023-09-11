@@ -75,4 +75,7 @@ FN_EXTERN const Storage *storageSpoolWrite(void);
 // Free cached storage objects
 FN_EXTERN void storageHelperFree(void);
 
+// Check for optional storage repo type
+FN_EXTERN void optionalStorageRepoTypePresent(RepoType type);
+
 #endif

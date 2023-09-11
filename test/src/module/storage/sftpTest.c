@@ -17,6 +17,8 @@ Test SFTP Storage
 #include "common/harnessSocket.h"
 #include "common/harnessStorage.h"
 
+#ifdef HAVE_LIBSSH2
+
 /***********************************************************************************************************************************
 Struct array <optionalStorageRepoType> indicates whether an optional repo storage type is available.
 ***********************************************************************************************************************************/
@@ -505,6 +507,13 @@ testRun(void)
         TEST_RESULT_PTR(storageDriver(storageTest), storageTest->pub.driver, "check driver");
         TEST_RESULT_UINT(storageType(storageTest), storageTest->pub.type, "check type");
         TEST_RESULT_BOOL(storageFeature(storageTest, storageFeaturePath), true, "check path feature");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("exercise optionalStorageRepoTypePresent");
+
+        TEST_RESULT_VOID(optionalStorageRepoTypePresent(repoTypeSftp), "pgBackRest built with sftp");
+        TEST_ERROR(
+            optionalStorageRepoTypePresent(repoTypeBogus), OptionInvalidValueError, "pgBackRest not built with bogus support");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 #else
