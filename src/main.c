@@ -308,7 +308,6 @@ main(int argListSize, const char *argList[])
                 case cfgCmdVersion:
                     printf(PROJECT_NAME " " PROJECT_VERSION "\n");
                     fflush(stdout);
-                    optionalStorageRepoTypePresent(repoTypeTest);
                     break;
             }
         }
