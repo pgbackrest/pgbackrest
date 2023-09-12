@@ -149,7 +149,7 @@ storageSftpUpdateKnownHostsFile(
 
         // Init a known host collection for the user's known_hosts file
         const char *const userKnownHostsFile = strZ(strNewFmt("%s%s", strZ(userHome()), "/.ssh/known_hosts"));
-        LIBSSH2_KNOWNHOSTS *userKnownHostsList = libssh2_knownhost_init(this->session);
+        LIBSSH2_KNOWNHOSTS *const userKnownHostsList = libssh2_knownhost_init(this->session);
 
         LOG_WARN_FMT("host '%s' not found in known hosts files, attempting to add host to '%s'", strZ(host), userKnownHostsFile);
 
@@ -1145,7 +1145,7 @@ storageSftpNew(
         else
         {
             // Init the knownhost collection
-            LIBSSH2_KNOWNHOSTS *knownHostsList = libssh2_knownhost_init(this->session);
+            LIBSSH2_KNOWNHOSTS *const knownHostsList = libssh2_knownhost_init(this->session);
 
             if (knownHostsList == NULL)
                 THROW_FMT(ServiceError, "failure during libssh2_knownhost_init");
