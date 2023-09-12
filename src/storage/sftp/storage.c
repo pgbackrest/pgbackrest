@@ -130,8 +130,8 @@ storageSftpKnownHostCheckpFailureMsg(const int rc)
 Rewrite the user's known_hosts file with a new entry
 ***********************************************************************************************************************************/
 static void
-storageSftpUpdateKnownHostsFile(StorageSftp *const this, const int hostKeyType, const String *const host, const char *const hostKey,
-        const size_t hostKeyLen)
+storageSftpUpdateKnownHostsFile(
+    StorageSftp *const this, const int hostKeyType, const String *const host, const char *const hostKey, const size_t hostKeyLen)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_SFTP, this);
@@ -192,7 +192,8 @@ storageSftpUpdateKnownHostsFile(StorageSftp *const this, const int hostKeyType, 
                 if (knownHostKeyType != 0)
                 {
                     // Add host to the internal list
-                    if (libssh2_knownhost_addc(userKnownHostsList, strZ(host), NULL, hostKey, hostKeyLen,
+                    if (libssh2_knownhost_addc(
+                            userKnownHostsList, strZ(host), NULL, hostKey, hostKeyLen,
                             strZ(strNewZ("Generated from " PROJECT_NAME)), strlen(strZ(strNewZ("Generated from " PROJECT_NAME))),
                             LIBSSH2_KNOWNHOST_TYPE_PLAIN | LIBSSH2_KNOWNHOST_KEYENC_RAW | knownHostKeyType, NULL) == 0)
                     {
@@ -260,7 +261,7 @@ storageSftpLibSsh2SessionFreeResource(THIS_VOID)
                 THROW_FMT(
                     ServiceError, "failed to close sftpHandle: libssh2 errno [%d]%s", rc,
                     rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
-                        strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
+                    strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
             else
                 THROW_FMT(
                     ServiceError, "timeout closing sftpHandle: libssh2 errno [%d]", rc);
@@ -281,7 +282,7 @@ storageSftpLibSsh2SessionFreeResource(THIS_VOID)
                 THROW_FMT(
                     ServiceError, "failed to shutdown sftpSession: libssh2 errno [%d]%s", rc,
                     rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
-                       strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
+                    strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
             else
                 THROW_FMT(
                     ServiceError, "timeout shutting down sftpSession: libssh2 errno [%d]", rc);
@@ -515,7 +516,6 @@ storageSftpKnownHostsFilesList(const StringList *const sftpKnownHosts)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-
         if (strLstEmpty(sftpKnownHosts))
         {
             // Create default file list
@@ -1281,7 +1281,7 @@ storageSftpNew(
         String *const privKeyPath = regExpMatchOne(STRDEF("^ *~"), keyPriv) ? storageSftpExpandTildePath(keyPriv) : strDup(keyPriv);
         String *const pubKeyPath =
             param.keyPub != NULL && regExpMatchOne(STRDEF("^ *~"), param.keyPub) ?
-                storageSftpExpandTildePath(param.keyPub) : strDup(param.keyPub);
+            storageSftpExpandTildePath(param.keyPub) : strDup(param.keyPub);
 
         do
         {
