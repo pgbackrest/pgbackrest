@@ -506,10 +506,10 @@ Build known hosts file list. If sftpKnownHosts is empty build the default file l
 sftpKnownHosts requires full path and/or leading tilde path entries.
 ***********************************************************************************************************************************/
 static StringList *
-storageSftpKnownHostsFilesList(const VariantList *const sftpKnownHosts)
+storageSftpKnownHostsFilesList(const StringList *const sftpKnownHosts)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(VARIANT_LIST, sftpKnownHosts);
+        FUNCTION_LOG_PARAM(STRING_LIST, sftpKnownHosts);
     FUNCTION_LOG_END();
 
     StringList *result = strLstNew();
@@ -517,7 +517,7 @@ storageSftpKnownHostsFilesList(const VariantList *const sftpKnownHosts)
     MEM_CONTEXT_TEMP_BEGIN()
     {
 
-        if (varLstEmpty(sftpKnownHosts))
+        if (strLstEmpty(sftpKnownHosts))
         {
             // Create default file list
             strLstAddFmt(result, "%s%s", strZ(userHome()), "/.ssh/known_hosts");
@@ -527,14 +527,11 @@ storageSftpKnownHostsFilesList(const VariantList *const sftpKnownHosts)
         }
         else
         {
-            // Create user provided file list
-            const StringList *const lclList = strLstNewVarLst(sftpKnownHosts);
-
-            // Process the local list entries and add them to the result list
-            for (unsigned int listIdx = 0; listIdx < strLstSize(lclList); listIdx++)
+            // Process the sftpKnownHost list entries and add them to the result list
+            for (unsigned int listIdx = 0; listIdx < strLstSize(sftpKnownHosts); listIdx++)
             {
                 // Get the trimmed file path and add it to the result list
-                const String *const filePath = strTrim(strLstGet(lclList, listIdx));
+                const String *const filePath = strTrim(strLstGet(sftpKnownHosts, listIdx));
 
                 if (strBeginsWithZ(filePath, "~/"))
                 {
@@ -1044,7 +1041,7 @@ storageSftpNew(
         FUNCTION_LOG_PARAM(MODE, param.modePath);
         FUNCTION_LOG_PARAM(BOOL, param.write);
         FUNCTION_LOG_PARAM(FUNCTIONP, param.pathExpressionFunction);
-        FUNCTION_LOG_PARAM(VARIANT_LIST, param.sftpKnownHosts);
+        FUNCTION_LOG_PARAM(STRING_LIST, param.sftpKnownHosts);
         FUNCTION_LOG_PARAM(STRING_ID, param.sftpStrictHostKeyChecking);
     FUNCTION_LOG_END();
 
