@@ -75,6 +75,33 @@ testRun(void)
             "HINT: is this version of PostgreSQL supported?");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("invalid CRC");
+
+        HRN_PG_CONTROL_OVERRIDE_CRC_PUT(storageTest, PG_VERSION_11, 0xFADEFADE);
+
+        TEST_ERROR_FMT(
+            pgControlFromFile(storageTest, NULL), ChecksumError,
+            "calculated pg_control checksum does not match expected value\n"
+            "HINT: calculated 0x%x but expected value is 0xfadefade\n"
+            "HINT: is pg_control corrupt?\n"
+            "HINT: does pg_control have a different layout than expected?",
+            (uint32_t)(TEST_BIG_ENDIAN() ? 0x4e206eeb : (TEST_64BIT() ? 0x4ad387b2 : 0x3ca3a1ec)));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("invalid CRC on force control version");
+
+        HRN_PG_CONTROL_OVERRIDE_CRC_PUT(storageTest, PG_VERSION_13, 0xFADEFADE);
+
+        TEST_ERROR_FMT(
+            pgControlFromFile(storageTest, STRDEF(PG_VERSION_14_Z)), ChecksumError,
+            "calculated pg_control checksum does not match expected value\n"
+            "HINT: calculated 0x%x but expected value is 0x0\n"
+            "HINT: checksum values may be misleading due to forced version scan\n"
+            "HINT: is pg_control corrupt?\n"
+            "HINT: does pg_control have a different layout than expected?",
+            (uint32_t)(TEST_BIG_ENDIAN() ? 0x27dc2b85 : (TEST_64BIT() ? 0xa9264d94 : 0xb371302a)));
+
+        // -------------------------------------------------------------------------------------------------------------------------
         HRN_PG_CONTROL_PUT(
             storageTest, PG_VERSION_11, .systemId = 0xFACEFACE, .checkpoint = 0xEEFFEEFFAABBAABB, .timeline = 47,
             .walSegmentSize = 1024 * 1024);
@@ -133,6 +160,21 @@ testRun(void)
         TEST_RESULT_UINT(info.catalogVersion, 202211111, "check catalog version");
         TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
         TEST_RESULT_UINT(info.timeline, 88, "check timeline");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("CRC at greater offset on force control version");
+
+        // Start with an invalid crc but write a valid one at a greater offset to test the forced scan
+        Buffer *control = hrnPgControlToBuffer(0, 0xFADEFADE, (PgControl){.version = PG_VERSION_13, .systemId = 0xAAAA0AAAA});
+        size_t crcOffset = pgInterfaceVersion(PG_VERSION_13)->controlCrcOffset() + sizeof(uint32_t) * 4;
+        *((uint32_t *)(bufPtr(control) + crcOffset)) = crc32cOne(bufPtrConst(control), crcOffset);
+
+        HRN_STORAGE_PUT(storageTest, PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, control);
+
+        TEST_ASSIGN(info, pgControlFromFile(storageTest, STRDEF(PG_VERSION_14_Z)), "get control info force v14");
+        TEST_RESULT_UINT(info.systemId, 0xAAAA0AAAA, "check system id");
+        TEST_RESULT_UINT(info.version, PG_VERSION_14, "check version");
+        TEST_RESULT_UINT(info.catalogVersion, 202007201, "check catalog version");
     }
 
     // *****************************************************************************************************************************

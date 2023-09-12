@@ -20,7 +20,6 @@ Archive Common
 #include "postgres/interface.h"
 #include "postgres/version.h"
 #include "storage/helper.h"
-#include "storage/helper.h"
 
 /***********************************************************************************************************************************
 WAL segment constants
@@ -403,77 +402,6 @@ walIsSegment(const String *walSegment)
     }
 
     FUNCTION_LOG_RETURN(BOOL, regExpMatch(regExpSegment, walSegment));
-}
-
-/**********************************************************************************************************************************/
-FN_EXTERN String *
-walSegmentFind(const Storage *storage, const String *archiveId, const String *walSegment, TimeMSec timeout)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE, storage);
-        FUNCTION_LOG_PARAM(STRING, archiveId);
-        FUNCTION_LOG_PARAM(STRING, walSegment);
-        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
-    FUNCTION_LOG_END();
-
-    ASSERT(storage != NULL);
-    ASSERT(archiveId != NULL);
-    ASSERT(walSegment != NULL);
-    ASSERT(walIsSegment(walSegment));
-
-    String *result = NULL;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        Wait *wait = waitNew(timeout);
-
-        do
-        {
-            // Get a list of all WAL segments that match
-            StringList *list = storageListP(
-                storage, strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(strSubN(walSegment, 0, 16))),
-                .expression = strNewFmt(
-                    "^%s%s-[0-f]{40}" COMPRESS_TYPE_REGEXP "{0,1}$", strZ(strSubN(walSegment, 0, 24)),
-                    walIsPartial(walSegment) ? WAL_SEGMENT_PARTIAL_EXT : ""),
-                .nullOnMissing = true);
-
-            // If there are results
-            if (list != NULL && !strLstEmpty(list))
-            {
-                // Error if there is more than one match
-                if (strLstSize(list) > 1)
-                {
-                    THROW_FMT(
-                        ArchiveDuplicateError,
-                        "duplicates found in archive for WAL segment %s: %s\n"
-                        "HINT: are multiple primaries archiving to this stanza?",
-                        strZ(walSegment), strZ(strLstJoin(strLstSort(list, sortOrderAsc), ", ")));
-                }
-
-                // Copy file name of WAL segment found into the prior context
-                MEM_CONTEXT_PRIOR_BEGIN()
-                {
-                    result = strDup(strLstGet(list, 0));
-                }
-                MEM_CONTEXT_PRIOR_END();
-            }
-        }
-        while (result == NULL && waitMore(wait));
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    if (result == NULL && timeout != 0)
-    {
-        THROW_FMT(
-            ArchiveTimeoutError,
-            "WAL segment %s was not archived before the %" PRIu64 "ms timeout\n"
-            "HINT: check the archive_command to ensure that all options are correct (especially --stanza).\n"
-            "HINT: check the PostgreSQL server log for errors.\n"
-            "HINT: run the 'start' command if the stanza was previously stopped.",
-            strZ(walSegment), timeout);
-    }
-
-    FUNCTION_LOG_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/

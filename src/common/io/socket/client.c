@@ -10,6 +10,7 @@ Socket Client
 
 #include "common/debug.h"
 #include "common/io/client.h"
+#include "common/io/socket/address.h"
 #include "common/io/socket/client.h"
 #include "common/io/socket/common.h"
 #include "common/io/socket/session.h"
@@ -83,22 +84,14 @@ sckClientOpen(THIS_VOID)
             TRY_BEGIN()
             {
                 // Get an address for the host. We are only going to try the first address returned.
-                struct addrinfo *addressFound = sckHostLookup(this->host, this->port);
+                const struct addrinfo *const addressFound = addrInfoGet(addrInfoNew(this->host, this->port), 0);
 
                 // Connect to the host
-                TRY_BEGIN()
-                {
-                    fd = socket(addressFound->ai_family, addressFound->ai_socktype, addressFound->ai_protocol);
-                    THROW_ON_SYS_ERROR(fd == -1, HostConnectError, "unable to create socket");
+                fd = socket(addressFound->ai_family, addressFound->ai_socktype, addressFound->ai_protocol);
+                THROW_ON_SYS_ERROR(fd == -1, HostConnectError, "unable to create socket");
 
-                    sckOptionSet(fd);
-                    sckConnect(fd, this->host, this->port, addressFound, waitRemaining(wait));
-                }
-                FINALLY()
-                {
-                    freeaddrinfo(addressFound);
-                }
-                TRY_END();
+                sckOptionSet(fd);
+                sckConnect(fd, this->host, this->port, addressFound, waitRemaining(wait));
 
                 // Create the session
                 MEM_CONTEXT_PRIOR_BEGIN()
@@ -106,6 +99,10 @@ sckClientOpen(THIS_VOID)
                     result = sckSessionNew(ioSessionRoleClient, fd, this->host, this->port, this->timeoutSession);
                 }
                 MEM_CONTEXT_PRIOR_END();
+
+                // Update client name to include address
+                strTrunc(this->name);
+                strCat(this->name, addrInfoToName(this->host, this->port, addressFound));
             }
             CATCH_ANY()
             {
@@ -176,7 +173,7 @@ sckClientNew(const String *const host, const unsigned int port, const TimeMSec t
         {
             .host = strDup(host),
             .port = port,
-            .name = strNewFmt("%s:%u", strZ(host), port),
+            .name = strCatFmt(strNew(), "%s:%u", strZ(host), port),
             .timeoutConnect = timeoutConnect,
             .timeoutSession = timeoutSession,
         };

@@ -116,6 +116,7 @@ subdir('postgres')
 src_pgbackrest = [
 	'command/annotate/annotate.c',
 	'command/archive/common.c',
+	'command/archive/find.c',
 	'command/archive/get/file.c',
 	'command/archive/get/get.c',
 	'command/archive/get/protocol.c',
@@ -200,6 +201,7 @@ src_pgbackrest = [
     'common/io/limitRead.c',
 	'common/io/server.c',
 	'common/io/session.c',
+	'common/io/socket/address.c',
 	'common/io/socket/client.c',
 	'common/io/socket/common.c',
 	'common/io/socket/server.c',
@@ -228,6 +230,7 @@ src_pgbackrest = [
 	'info/infoPg.c',
 	'postgres/client.c',
 	'postgres/interface.c',
+	'postgres/interface/crc32.c',
 	'postgres/interface/page.c',
 	'protocol/client.c',
 	'protocol/command.c',

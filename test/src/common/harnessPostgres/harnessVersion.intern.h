@@ -6,6 +6,7 @@ Macros to create harness functions per PostgreSQL version.
 #ifndef TEST_COMMON_HARNESS_POSTGRES_VERSIONINTERN_H
 #define TEST_COMMON_HARNESS_POSTGRES_VERSIONINTERN_H
 
+#include "postgres/interface/crc32.h"
 #include "postgres/interface/version.vendor.h"
 
 #include "common/harnessPostgres.h"
@@ -35,7 +36,8 @@ Create a pg_control file
 
 #define HRN_PG_INTERFACE_CONTROL_TEST(version)                                                                                     \
     void                                                                                                                           \
-    hrnPgInterfaceControl##version(const unsigned int controlVersion, const PgControl pgControl, unsigned char *const buffer)      \
+    hrnPgInterfaceControl##version(                                                                                                \
+        const unsigned int controlVersion, const unsigned int crc, const PgControl pgControl, unsigned char *const buffer)         \
     {                                                                                                                              \
         ASSERT(buffer != NULL);                                                                                                    \
                                                                                                                                    \
@@ -53,6 +55,12 @@ Create a pg_control file
             .xlog_seg_size = pgControl.walSegmentSize,                                                                             \
             .data_checksum_version = pgControl.pageChecksum,                                                                       \
         };                                                                                                                         \
+                                                                                                                                   \
+        ((ControlFileData *)buffer)->crc =                                                                                         \
+            crc == 0 ?                                                                                                             \
+                (PG_VERSION > PG_VERSION_94 ?                                                                                      \
+                    crc32cOne(buffer, offsetof(ControlFileData, crc)) : crc32One(buffer, offsetof(ControlFileData, crc))) :        \
+                crc;                                                                                                               \
     }
 
 #endif
