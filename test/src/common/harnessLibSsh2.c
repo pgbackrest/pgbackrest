@@ -170,8 +170,8 @@ Shim for libssh2_knownhost_addc
 ***********************************************************************************************************************************/
 int
 libssh2_knownhost_addc(
-        LIBSSH2_KNOWNHOSTS *hosts, const char *host, const char *salt, const char *key, size_t keylen, const char *comment,
-        size_t commentlen, int typemask, struct libssh2_knownhost **store)
+    LIBSSH2_KNOWNHOSTS *hosts, const char *host, const char *salt, const char *key, size_t keylen, const char *comment,
+    size_t commentlen, int typemask, struct libssh2_knownhost **store)
 {
     // Avoid compiler complaining of unused param
     (void)store;
