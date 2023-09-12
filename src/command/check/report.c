@@ -18,6 +18,7 @@ extern char **environ;
 /***********************************************************************************************************************************
 Render config
 ***********************************************************************************************************************************/
+// Helper to render an individual config value
 static void
 checkReportConfigVal(JsonWrite *const json, const String *const optionName, const StringList *valueList, const bool env)
 {
@@ -38,20 +39,24 @@ checkReportConfigVal(JsonWrite *const json, const String *const optionName, cons
 
         CfgParseOptionResult option = cfgParseOptionP(optionName);
 
+        // Render value
         if (option.found)
         {
             jsonWriteKeyStrId(json, STRID5("val", 0x30360));
 
+            // Multiple values
             if (option.multi)
             {
                 ASSERT(strLstSize(valueList) >= 1);
 
+                // Split environment values
                 if (env)
                 {
                     ASSERT(strLstSize(valueList) == 1);
                     valueList = strLstNewSplitZ(strLstGet(valueList, 0), ":");
                 }
 
+                // Render each value
                 jsonWriteArrayBegin(json);
 
                 for (unsigned int valueIdx = 0; valueIdx < strLstSize(valueList); valueIdx++)
@@ -59,6 +64,7 @@ checkReportConfigVal(JsonWrite *const json, const String *const optionName, cons
 
                 jsonWriteArrayEnd(json);
             }
+            // Single value
             else
             {
                 ASSERT(strLstSize(valueList) == 1);
@@ -66,6 +72,7 @@ checkReportConfigVal(JsonWrite *const json, const String *const optionName, cons
             }
         }
 
+        // Warn on invalid options or option modifiers
         if (!option.found || option.negate || option.reset)
         {
             jsonWriteKeyStrId(json, STRID5("warn", 0x748370));
@@ -75,12 +82,12 @@ checkReportConfigVal(JsonWrite *const json, const String *const optionName, cons
             {
                 jsonWriteZ(json, "invalid option");
             }
-            // Warn if negate option found in env
+            // Warn if negate option
             else if (option.negate)
             {
                 jsonWriteZ(json, "invalid negate option");
             }
-            // Warn if reset option found in env
+            // Warn if reset option
             else
             {
                 ASSERT(option.reset);
@@ -96,6 +103,7 @@ checkReportConfigVal(JsonWrite *const json, const String *const optionName, cons
     FUNCTION_TEST_RETURN_VOID();
 }
 
+// Helper to render the environment
 static void
 checkReportConfigEnv(JsonWrite *const json)
 {
@@ -154,6 +162,7 @@ checkReportConfigEnv(JsonWrite *const json)
     FUNCTION_TEST_RETURN_VOID();
 }
 
+// Helper to render the config file
 static void
 checkReportConfigFile(JsonWrite *const json)
 {
@@ -169,10 +178,15 @@ checkReportConfigFile(JsonWrite *const json)
 
         jsonWriteKeyStrId(json, STRID5("file", 0x2b1260));
 
+        // If no config
         if (ini == NULL)
+        {
             jsonWriteNull(json);
+        }
+        // Else config exists
         else
         {
+            // Iterate config sections
             const StringList *const sectionList = strLstSort(iniSectionList(ini), sortOrderAsc);
 
             jsonWriteObjectBegin(json);
@@ -184,11 +198,14 @@ checkReportConfigFile(JsonWrite *const json)
                 jsonWriteKey(json, section);
                 jsonWriteObjectBegin(json);
 
+                // Iterate config keys
                 const StringList *const keyList = strLstSort(iniSectionKeyList(ini, section), sortOrderAsc);
 
                 for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)
                 {
                     const String *const key = strLstGet(keyList, keyIdx);
+
+                    // Render value
                     StringList *valueList;
 
                     if (iniSectionKeyIsList(ini, section, key))
