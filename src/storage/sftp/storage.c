@@ -119,7 +119,7 @@ storageSftpKnownHostCheckpFailureMsg(const int rc)
             break;
 
         default:
-            matchFailMsg = "experienced an unknown failure:";
+            matchFailMsg = "unknown failure";
             break;
     }
 
@@ -143,14 +143,13 @@ storageSftpUpdateKnownHostsFile(StorageSftp *const this, const int hostKeyType, 
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        LIBSSH2_KNOWNHOSTS *userKnownHostsList;
         char *libSsh2ErrMsg;
         int libSsh2ErrMsgLen;
         int rc;
 
         // Init a known host collection for the user's known_hosts file
         const char *const userKnownHostsFile = strZ(strNewFmt("%s%s", strZ(userHome()), "/.ssh/known_hosts"));
-        userKnownHostsList = libssh2_knownhost_init(this->session);
+        LIBSSH2_KNOWNHOSTS *userKnownHostsList = libssh2_knownhost_init(this->session);
 
         LOG_WARN_FMT("host '%s' not found in known hosts files, attempting to add host to '%s'", strZ(host), userKnownHostsFile);
 
@@ -174,7 +173,7 @@ storageSftpUpdateKnownHostsFile(StorageSftp *const this, const int hostKeyType, 
                     // If user's known_hosts file is non-existant, create an empty one for libssh2 to operate on.
                     Storage *sshStorage =
                         storagePosixNewP(
-                            strNewFmt("%s%s", strZ(userHome()), "/.ssh"), .modeFile = 0644, .modePath = 0700, .write = true);
+                            strNewFmt("%s%s", strZ(userHome()), "/.ssh"), .modeFile = 0600, .modePath = 0700, .write = true);
 
                     if (!storageExistsP(sshStorage, strNewFmt("%s", "known_hosts")))
                         storagePutP(storageNewWriteP(sshStorage, strNewFmt("%s", "known_hosts")), NULL);
@@ -261,7 +260,7 @@ storageSftpLibSsh2SessionFreeResource(THIS_VOID)
                 THROW_FMT(
                     ServiceError, "failed to close sftpHandle: libssh2 errno [%d]%s", rc,
                     rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
-                    strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
+                        strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
             else
                 THROW_FMT(
                     ServiceError, "timeout closing sftpHandle: libssh2 errno [%d]", rc);
@@ -282,7 +281,7 @@ storageSftpLibSsh2SessionFreeResource(THIS_VOID)
                 THROW_FMT(
                     ServiceError, "failed to shutdown sftpSession: libssh2 errno [%d]%s", rc,
                     rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
-                    strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
+                       strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
             else
                 THROW_FMT(
                     ServiceError, "timeout shutting down sftpSession: libssh2 errno [%d]", rc);
@@ -293,7 +292,7 @@ storageSftpLibSsh2SessionFreeResource(THIS_VOID)
     {
         do
         {
-            rc = libssh2_session_disconnect_ex(this->session, SSH_DISCONNECT_BY_APPLICATION, "pgBackRest instance shutdown", "");
+            rc = libssh2_session_disconnect_ex(this->session, SSH_DISCONNECT_BY_APPLICATION, PROJECT_NAME " instance shutdown", "");
         }
         while (storageSftpWaitFd(this, rc));
 
@@ -1145,13 +1144,8 @@ storageSftpNew(
         }
         else
         {
-            LIBSSH2_KNOWNHOSTS *knownHostsList;
-            const char *hostKey;
-            size_t hostKeyLen;
-            int hostKeyType;
-
             // Init the knownhost collection
-            knownHostsList = libssh2_knownhost_init(this->session);
+            LIBSSH2_KNOWNHOSTS *knownHostsList = libssh2_knownhost_init(this->session);
 
             if (knownHostsList == NULL)
                 THROW_FMT(ServiceError, "failure during libssh2_knownhost_init");
@@ -1188,7 +1182,9 @@ storageSftpNew(
             }
 
             // Get the remote host key
-            hostKey = libssh2_session_hostkey(this->session, &hostKeyLen, &hostKeyType);
+            size_t hostKeyLen;
+            int hostKeyType;
+            const char *hostKey = libssh2_session_hostkey(this->session, &hostKeyLen, &hostKeyType);
 
             // Check for a match in known hosts files else throw an error if no host key was retrieved
             if (hostKey != NULL)
@@ -1215,7 +1211,7 @@ storageSftpNew(
                     switch (param.sftpStrictHostKeyChecking)
                     {
                         case SFTP_STRICT_HOSTKEY_CHECKING_YES:
-
+                        {
                             // Throw an error when set to yes and we have any result other than match
                             libssh2_knownhost_free(knownHostsList);
 
@@ -1223,9 +1219,10 @@ storageSftpNew(
                                 ServiceError, "known hosts failure: '%s' %s [%d]: strict checking [%s]", strZ(host), matchFailMsg,
                                 rc, strZ(strIdToStr(param.sftpStrictHostKeyChecking)));
                             break;
+                        }
 
                         case SFTP_STRICT_HOSTKEY_CHECKING_ACCEPT_NEW:
-
+                        {
                             // Throw an error when set to accept-new and match fails or mismatches else add the new host key to the
                             // user's known_hosts file
                             if (rc == LIBSSH2_KNOWNHOST_CHECK_MISMATCH || rc == LIBSSH2_KNOWNHOST_CHECK_FAILURE)
@@ -1240,10 +1237,11 @@ storageSftpNew(
                             else
                                 storageSftpUpdateKnownHostsFile(this, hostKeyType, host, hostKey, hostKeyLen);
                             break;
+                        }
 
                         case SFTP_STRICT_HOSTKEY_CHECKING_NO:
                         case SFTP_STRICT_HOSTKEY_CHECKING_OFF:
-
+                        {
                             // When set to no/off, add key to the user's known_hosts file if host key is new, warn and continue when
                             // there is a mismatch, error on failure
                             if (rc == LIBSSH2_KNOWNHOST_CHECK_NOTFOUND)
@@ -1264,6 +1262,7 @@ storageSftpNew(
                                     matchFailMsg, rc, strZ(strIdToStr(param.sftpStrictHostKeyChecking)));
                             }
                             break;
+                        }
                     }
                 }
             }

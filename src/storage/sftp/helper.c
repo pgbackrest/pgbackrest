@@ -26,7 +26,7 @@ storageSftpHelper(const unsigned int repoIdx, const bool write, StoragePathExpre
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const StringList *sftpKnownHosts = strLstNewVarLst(cfgOptionIdxLst(cfgOptRepoSftpKnownHosts, repoIdx));
+        const StringList *sftpKnownHosts = strLstNewVarLst(cfgOptionIdxLst(cfgOptRepoSftpKnownHost, repoIdx));
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {

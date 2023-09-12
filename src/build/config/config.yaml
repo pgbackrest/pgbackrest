@@ -2399,7 +2399,7 @@ option:
     command: repo-type
     depend: repo-sftp-host
 
-  repo-sftp-known-hosts:
+  repo-sftp-known-host:
     section: global
     group: repo
     type: list

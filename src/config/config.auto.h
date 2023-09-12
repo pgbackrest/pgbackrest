@@ -522,7 +522,7 @@ typedef enum
     cfgOptRepoSftpHostKeyHashType,
     cfgOptRepoSftpHostPort,
     cfgOptRepoSftpHostUser,
-    cfgOptRepoSftpKnownHosts,
+    cfgOptRepoSftpKnownHost,
     cfgOptRepoSftpPrivateKeyFile,
     cfgOptRepoSftpPrivateKeyPassphrase,
     cfgOptRepoSftpPublicKeyFile,
