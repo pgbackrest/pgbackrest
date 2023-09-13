@@ -2579,7 +2579,7 @@
         <p>Commands are run exactly as if the repository were stored on a local disk.</p>
 
         <execute-list host="{[host-pg1]}">
-            <title>Add sftp-server fingerprint to known_hosts file since <br-option>repo4-sftp-strict-host-key-checking</br-option> defaults to <quote>yes</quote>.</title>
+            <title>Add sftp-server fingerprint to known_hosts file since <br-option>repo4-sftp-strict-host-key-checking</br-option> defaults to <quote>yes</quote></title>
 
             <execute user="postgres" user-force="y">
                 <exe-cmd>ssh-keyscan -H {[host-sftp]} >> {[pg-home-path]}/.ssh/known_hosts 2>/dev/null</exe-cmd>
