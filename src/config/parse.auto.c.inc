@@ -8637,99 +8637,99 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                          // opt/repo-sftp-public-key-file
     ),                                                                                              // opt/repo-sftp-public-key-file
     // -----------------------------------------------------------------------------------------------------------------------------
-    PARSE_RULE_OPTION                                                                      // opt/repo-sftp-strict-host-key-checking
-    (                                                                                      // opt/repo-sftp-strict-host-key-checking
-        PARSE_RULE_OPTION_NAME("repo-sftp-strict-host-key-checking"),                      // opt/repo-sftp-strict-host-key-checking
-        PARSE_RULE_OPTION_TYPE(cfgOptTypeStringId),                                        // opt/repo-sftp-strict-host-key-checking
-        PARSE_RULE_OPTION_RESET(true),                                                     // opt/repo-sftp-strict-host-key-checking
-        PARSE_RULE_OPTION_REQUIRED(true),                                                  // opt/repo-sftp-strict-host-key-checking
-        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),                                       // opt/repo-sftp-strict-host-key-checking
-        PARSE_RULE_OPTION_GROUP_MEMBER(true),                                              // opt/repo-sftp-strict-host-key-checking
-        PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),                                         // opt/repo-sftp-strict-host-key-checking
-                                                                                           // opt/repo-sftp-strict-host-key-checking
-        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                     // opt/repo-sftp-strict-host-key-checking
-        (                                                                                  // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                      // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                    // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                   // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                        // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                         // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)                                        // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                          // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdManifest)                                      // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                    // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)                                       // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)                                        // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)                                       // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)                                        // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                       // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                  // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                  // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                 // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                        // opt/repo-sftp-strict-host-key-checking
-        ),                                                                                 // opt/repo-sftp-strict-host-key-checking
-                                                                                           // opt/repo-sftp-strict-host-key-checking
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                    // opt/repo-sftp-strict-host-key-checking
-        (                                                                                  // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                    // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                   // opt/repo-sftp-strict-host-key-checking
-        ),                                                                                 // opt/repo-sftp-strict-host-key-checking
-                                                                                           // opt/repo-sftp-strict-host-key-checking
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                    // opt/repo-sftp-strict-host-key-checking
-        (                                                                                  // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                    // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                   // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                        // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                       // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                        // opt/repo-sftp-strict-host-key-checking
-        ),                                                                                 // opt/repo-sftp-strict-host-key-checking
-                                                                                           // opt/repo-sftp-strict-host-key-checking
-        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                   // opt/repo-sftp-strict-host-key-checking
-        (                                                                                  // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                      // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                    // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                   // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                         // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                          // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdManifest)                                      // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                    // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)                                       // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)                                        // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)                                       // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)                                        // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                       // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                  // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                  // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                 // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                        // opt/repo-sftp-strict-host-key-checking
-        ),                                                                                 // opt/repo-sftp-strict-host-key-checking
-                                                                                           // opt/repo-sftp-strict-host-key-checking
-        PARSE_RULE_OPTIONAL                                                                // opt/repo-sftp-strict-host-key-checking
-        (                                                                                  // opt/repo-sftp-strict-host-key-checking
-            PARSE_RULE_OPTIONAL_GROUP                                                      // opt/repo-sftp-strict-host-key-checking
-            (                                                                              // opt/repo-sftp-strict-host-key-checking
-                PARSE_RULE_OPTIONAL_DEPEND                                                 // opt/repo-sftp-strict-host-key-checking
-                (                                                                          // opt/repo-sftp-strict-host-key-checking
-                    PARSE_RULE_VAL_OPT(cfgOptRepoType),                                    // opt/repo-sftp-strict-host-key-checking
-                    PARSE_RULE_VAL_STRID(parseRuleValStrIdSftp),                           // opt/repo-sftp-strict-host-key-checking
-                ),                                                                         // opt/repo-sftp-strict-host-key-checking
-                                                                                           // opt/repo-sftp-strict-host-key-checking
-                PARSE_RULE_OPTIONAL_ALLOW_LIST                                             // opt/repo-sftp-strict-host-key-checking
-                (                                                                          // opt/repo-sftp-strict-host-key-checking
-                    PARSE_RULE_VAL_STRID(parseRuleValStrIdYes),                            // opt/repo-sftp-strict-host-key-checking
-                    PARSE_RULE_VAL_STRID(parseRuleValStrIdNo),                             // opt/repo-sftp-strict-host-key-checking
-                    PARSE_RULE_VAL_STRID(parseRuleValStrIdOff),                            // opt/repo-sftp-strict-host-key-checking
-                    PARSE_RULE_VAL_STRID(parseRuleValStrIdAcceptNew),                      // opt/repo-sftp-strict-host-key-checking
-                ),                                                                         // opt/repo-sftp-strict-host-key-checking
-                                                                                           // opt/repo-sftp-strict-host-key-checking
-                PARSE_RULE_OPTIONAL_DEFAULT                                                // opt/repo-sftp-strict-host-key-checking
-                (                                                                          // opt/repo-sftp-strict-host-key-checking
-                    PARSE_RULE_VAL_STRID(parseRuleValStrIdYes),                            // opt/repo-sftp-strict-host-key-checking
-                    PARSE_RULE_VAL_STR(parseRuleValStrQT_yes_QT),                          // opt/repo-sftp-strict-host-key-checking
-                ),                                                                         // opt/repo-sftp-strict-host-key-checking
-            ),                                                                             // opt/repo-sftp-strict-host-key-checking
-        ),                                                                                 // opt/repo-sftp-strict-host-key-checking
-    ),                                                                                     // opt/repo-sftp-strict-host-key-checking
+    PARSE_RULE_OPTION                                                                         // opt/repo-sftp-strict-host-key-check
+    (                                                                                         // opt/repo-sftp-strict-host-key-check
+        PARSE_RULE_OPTION_NAME("repo-sftp-strict-host-key-check"),                            // opt/repo-sftp-strict-host-key-check
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeStringId),                                           // opt/repo-sftp-strict-host-key-check
+        PARSE_RULE_OPTION_RESET(true),                                                        // opt/repo-sftp-strict-host-key-check
+        PARSE_RULE_OPTION_REQUIRED(true),                                                     // opt/repo-sftp-strict-host-key-check
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),                                          // opt/repo-sftp-strict-host-key-check
+        PARSE_RULE_OPTION_GROUP_MEMBER(true),                                                 // opt/repo-sftp-strict-host-key-check
+        PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),                                            // opt/repo-sftp-strict-host-key-check
+                                                                                              // opt/repo-sftp-strict-host-key-check
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                        // opt/repo-sftp-strict-host-key-check
+        (                                                                                     // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                         // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                       // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                      // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                           // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                            // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)                                           // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                             // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdManifest)                                         // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                       // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)                                          // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)                                           // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)                                          // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)                                           // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                          // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                     // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                     // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                    // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                           // opt/repo-sftp-strict-host-key-check
+        ),                                                                                    // opt/repo-sftp-strict-host-key-check
+                                                                                              // opt/repo-sftp-strict-host-key-check
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                       // opt/repo-sftp-strict-host-key-check
+        (                                                                                     // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                       // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                      // opt/repo-sftp-strict-host-key-check
+        ),                                                                                    // opt/repo-sftp-strict-host-key-check
+                                                                                              // opt/repo-sftp-strict-host-key-check
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                       // opt/repo-sftp-strict-host-key-check
+        (                                                                                     // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                       // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                      // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                           // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                          // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                           // opt/repo-sftp-strict-host-key-check
+        ),                                                                                    // opt/repo-sftp-strict-host-key-check
+                                                                                              // opt/repo-sftp-strict-host-key-check
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                      // opt/repo-sftp-strict-host-key-check
+        (                                                                                     // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                         // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                       // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                      // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                            // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                             // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdManifest)                                         // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                       // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)                                          // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)                                           // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)                                          // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)                                           // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                          // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                     // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                     // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                    // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                           // opt/repo-sftp-strict-host-key-check
+        ),                                                                                    // opt/repo-sftp-strict-host-key-check
+                                                                                              // opt/repo-sftp-strict-host-key-check
+        PARSE_RULE_OPTIONAL                                                                   // opt/repo-sftp-strict-host-key-check
+        (                                                                                     // opt/repo-sftp-strict-host-key-check
+            PARSE_RULE_OPTIONAL_GROUP                                                         // opt/repo-sftp-strict-host-key-check
+            (                                                                                 // opt/repo-sftp-strict-host-key-check
+                PARSE_RULE_OPTIONAL_DEPEND                                                    // opt/repo-sftp-strict-host-key-check
+                (                                                                             // opt/repo-sftp-strict-host-key-check
+                    PARSE_RULE_VAL_OPT(cfgOptRepoType),                                       // opt/repo-sftp-strict-host-key-check
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdSftp),                              // opt/repo-sftp-strict-host-key-check
+                ),                                                                            // opt/repo-sftp-strict-host-key-check
+                                                                                              // opt/repo-sftp-strict-host-key-check
+                PARSE_RULE_OPTIONAL_ALLOW_LIST                                                // opt/repo-sftp-strict-host-key-check
+                (                                                                             // opt/repo-sftp-strict-host-key-check
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdYes),                               // opt/repo-sftp-strict-host-key-check
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdNo),                                // opt/repo-sftp-strict-host-key-check
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdOff),                               // opt/repo-sftp-strict-host-key-check
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdAcceptNew),                         // opt/repo-sftp-strict-host-key-check
+                ),                                                                            // opt/repo-sftp-strict-host-key-check
+                                                                                              // opt/repo-sftp-strict-host-key-check
+                PARSE_RULE_OPTIONAL_DEFAULT                                                   // opt/repo-sftp-strict-host-key-check
+                (                                                                             // opt/repo-sftp-strict-host-key-check
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdYes),                               // opt/repo-sftp-strict-host-key-check
+                    PARSE_RULE_VAL_STR(parseRuleValStrQT_yes_QT),                             // opt/repo-sftp-strict-host-key-check
+                ),                                                                            // opt/repo-sftp-strict-host-key-check
+            ),                                                                                // opt/repo-sftp-strict-host-key-check
+        ),                                                                                    // opt/repo-sftp-strict-host-key-check
+    ),                                                                                        // opt/repo-sftp-strict-host-key-check
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                    // opt/repo-storage-ca-file
     (                                                                                                    // opt/repo-storage-ca-file
@@ -10878,7 +10878,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoSftpPrivateKeyFile,                                                                               // opt-resolve-order
     cfgOptRepoSftpPrivateKeyPassphrase,                                                                         // opt-resolve-order
     cfgOptRepoSftpPublicKeyFile,                                                                                // opt-resolve-order
-    cfgOptRepoSftpStrictHostKeyChecking,                                                                        // opt-resolve-order
+    cfgOptRepoSftpStrictHostKeyCheck,                                                                           // opt-resolve-order
     cfgOptRepoStorageCaFile,                                                                                    // opt-resolve-order
     cfgOptRepoStorageCaPath,                                                                                    // opt-resolve-order
     cfgOptRepoStorageHost,                                                                                      // opt-resolve-order

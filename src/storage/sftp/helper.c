@@ -39,7 +39,7 @@ storageSftpHelper(const unsigned int repoIdx, const bool write, StoragePathExpre
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyChecking, repoIdx),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyCheck, repoIdx),
                 .sftpKnownHosts = sftpKnownHosts);
         }
         MEM_CONTEXT_PRIOR_END();

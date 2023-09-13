@@ -276,14 +276,14 @@ Option value constants
 #define CFGOPTVAL_REPO_SFTP_HOST_KEY_HASH_TYPE_SHA256               STRID5("sha256", 0x3dde05130)
 #define CFGOPTVAL_REPO_SFTP_HOST_KEY_HASH_TYPE_SHA256_Z             "sha256"
 
-#define CFGOPTVAL_REPO_SFTP_STRICT_HOST_KEY_CHECKING_ACCEPT_NEW     STRID5("accept-new", 0x2e576e9028c610)
-#define CFGOPTVAL_REPO_SFTP_STRICT_HOST_KEY_CHECKING_ACCEPT_NEW_Z   "accept-new"
-#define CFGOPTVAL_REPO_SFTP_STRICT_HOST_KEY_CHECKING_NO             STRID5("no", 0x1ee0)
-#define CFGOPTVAL_REPO_SFTP_STRICT_HOST_KEY_CHECKING_NO_Z           "no"
-#define CFGOPTVAL_REPO_SFTP_STRICT_HOST_KEY_CHECKING_OFF            STRID5("off", 0x18cf0)
-#define CFGOPTVAL_REPO_SFTP_STRICT_HOST_KEY_CHECKING_OFF_Z          "off"
-#define CFGOPTVAL_REPO_SFTP_STRICT_HOST_KEY_CHECKING_YES            STRID5("yes", 0x4cb90)
-#define CFGOPTVAL_REPO_SFTP_STRICT_HOST_KEY_CHECKING_YES_Z          "yes"
+#define CFGOPTVAL_REPO_SFTP_STRICT_HOST_KEY_CHECK_ACCEPT_NEW        STRID5("accept-new", 0x2e576e9028c610)
+#define CFGOPTVAL_REPO_SFTP_STRICT_HOST_KEY_CHECK_ACCEPT_NEW_Z      "accept-new"
+#define CFGOPTVAL_REPO_SFTP_STRICT_HOST_KEY_CHECK_NO                STRID5("no", 0x1ee0)
+#define CFGOPTVAL_REPO_SFTP_STRICT_HOST_KEY_CHECK_NO_Z              "no"
+#define CFGOPTVAL_REPO_SFTP_STRICT_HOST_KEY_CHECK_OFF               STRID5("off", 0x18cf0)
+#define CFGOPTVAL_REPO_SFTP_STRICT_HOST_KEY_CHECK_OFF_Z             "off"
+#define CFGOPTVAL_REPO_SFTP_STRICT_HOST_KEY_CHECK_YES               STRID5("yes", 0x4cb90)
+#define CFGOPTVAL_REPO_SFTP_STRICT_HOST_KEY_CHECK_YES_Z             "yes"
 
 #define CFGOPTVAL_REPO_TYPE_AZURE                                   STRID5("azure", 0x5957410)
 #define CFGOPTVAL_REPO_TYPE_AZURE_Z                                 "azure"
@@ -526,7 +526,7 @@ typedef enum
     cfgOptRepoSftpPrivateKeyFile,
     cfgOptRepoSftpPrivateKeyPassphrase,
     cfgOptRepoSftpPublicKeyFile,
-    cfgOptRepoSftpStrictHostKeyChecking,
+    cfgOptRepoSftpStrictHostKeyCheck,
     cfgOptRepoStorageCaFile,
     cfgOptRepoStorageCaPath,
     cfgOptRepoStorageHost,

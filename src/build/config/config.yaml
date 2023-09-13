@@ -2431,7 +2431,7 @@ option:
     command: repo-type
     depend: repo-sftp-host
 
-  repo-sftp-strict-host-key-checking:
+  repo-sftp-strict-host-key-check:
     section: global
     group: repo
     type: string-id
