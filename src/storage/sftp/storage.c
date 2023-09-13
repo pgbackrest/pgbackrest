@@ -99,7 +99,7 @@ storageSftpLibSsh2SessionFreeResource(THIS_VOID)
     {
         do
         {
-            rc = libssh2_session_disconnect_ex(this->session, SSH_DISCONNECT_BY_APPLICATION, "pgbackrest instance shutdown", "");
+            rc = libssh2_session_disconnect_ex(this->session, SSH_DISCONNECT_BY_APPLICATION, PROJECT_NAME " instance shutdown", "");
         }
         while (storageSftpWaitFd(this, rc));
 
