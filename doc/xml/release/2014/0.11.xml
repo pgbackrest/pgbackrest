@@ -1,0 +1,17 @@
+<release date="2014-03-26" version="0.11" title="Minor Fixes">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Removed <setting>master_stderr_discard</setting> option on database SSH connections. There have been occasional lockups and they could be related to issues originally seen in the file code.</p>
+            </release-item>
+
+            <release-item>
+                <p>Changed lock file conflicts on <cmd>backup</cmd> and <cmd>expire</cmd> commands to <id>ERROR</id>. They were set to <id>DEBUG</id> due to a copy-and-paste from the archive locks.</p>
+            </release-item>
+        </release-bug-list>
+    </release-core-list>
+</release>

@@ -1,0 +1,13 @@
+<release date="2016-11-17" version="1.11" title="Bug Fix for Asynchronous Archiving Efficiency">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue where asynchronous archiving was transferring one file per execution instead of transferring files in batches. This regression was introduced in <proper>v1.09</proper> and affected efficiency only, all WAL segments were correctly archived in asynchronous mode.</p>
+            </release-item>
+        </release-bug-list>
+    </release-core-list>
+</release>

@@ -236,13 +236,13 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("no path or segment");
 
-        TEST_RESULT_STR(walSegmentFind(storageRepo(), STRDEF("9.6-2"), STRDEF("123456781234567812345678"), 0), NULL, "no path");
+        TEST_RESULT_STR(walSegmentFindOne(storageRepo(), STRDEF("9.6-2"), STRDEF("123456781234567812345678"), 0), NULL, "no path");
 
         HRN_STORAGE_PATH_CREATE(storageTest, "archive/db/9.6-2/1234567812345678");
         TEST_RESULT_STR(
-            walSegmentFind(storageRepo(), STRDEF("9.6-2"), STRDEF("123456781234567812345678"), 0), NULL, "no segment");
+            walSegmentFindOne(storageRepo(), STRDEF("9.6-2"), STRDEF("123456781234567812345678"), 0), NULL, "no segment");
         TEST_ERROR(
-            walSegmentFind(storageRepo(), STRDEF("9.6-2"), STRDEF("123456781234567812345678"), 100), ArchiveTimeoutError,
+            walSegmentFindOne(storageRepo(), STRDEF("9.6-2"), STRDEF("123456781234567812345678"), 100), ArchiveTimeoutError,
             "WAL segment 123456781234567812345678 was not archived before the 100ms timeout\n"
             "HINT: check the archive_command to ensure that all options are correct (especially --stanza).\n"
             "HINT: check the PostgreSQL server log for errors.\n"
@@ -267,7 +267,7 @@ testRun(void)
             HRN_FORK_PARENT_BEGIN()
             {
                 TEST_RESULT_STR_Z(
-                    walSegmentFind(storageRepo(), STRDEF("9.6-2"), STRDEF("123456781234567812345678"), 1000),
+                    walSegmentFindOne(storageRepo(), STRDEF("9.6-2"), STRDEF("123456781234567812345678"), 1000),
                     "123456781234567812345678-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "found segment");
             }
             HRN_FORK_PARENT_END();
@@ -281,19 +281,99 @@ testRun(void)
             storageTest, "archive/db/9.6-2/1234567812345678/123456781234567812345678-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.gz");
 
         TEST_ERROR(
-            walSegmentFind(storageRepo(), STRDEF("9.6-2"), STRDEF("123456781234567812345678"), 0),
+            walSegmentFindOne(storageRepo(), STRDEF("9.6-2"), STRDEF("123456781234567812345678"), 0),
             ArchiveDuplicateError,
             "duplicates found in archive for WAL segment 123456781234567812345678:"
             " 123456781234567812345678-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
             ", 123456781234567812345678-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.gz\n"
             "HINT: are multiple primaries archiving to this stanza?");
 
+        HRN_STORAGE_REMOVE(
+            storageTest, "archive/db/9.6-2/1234567812345678/123456781234567812345678-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.gz");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("partial not found");
 
         TEST_RESULT_STR(
-            walSegmentFind(storageRepo(), STRDEF("9.6-2"), STRDEF("123456781234567812345678.partial"), 0), NULL,
+            walSegmentFindOne(storageRepo(), STRDEF("9.6-2"), STRDEF("123456781234567812345678.partial"), 0), NULL,
             "did not find partial segment");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("find more than one segment with caching");
+
+        HRN_STORAGE_PUT_EMPTY(
+            storageTest, "archive/db/9.6-2/1234567812345678/123456781234567812345677-eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee.gz");
+        HRN_STORAGE_PUT_EMPTY(
+            storageTest, "archive/db/9.6-2/1234567812345678/123456781234567812345679-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.gz");
+        HRN_STORAGE_PUT_EMPTY(
+            storageTest, "archive/db/9.6-2/1234567812345678/12345678123456781234567A-cccccccccccccccccccccccccccccccccccccccc.gz");
+
+        WalSegmentFind *find;
+        TEST_ASSIGN(find, walSegmentFindNew(storageRepo(), STRDEF("9.6-2"), false, 500), "new find");
+
+        // First find will build the list
+        TEST_RESULT_STR_Z(
+            walSegmentFind(find, STRDEF("123456781234567812345678")),
+            "123456781234567812345678-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "find");
+        TEST_RESULT_STRLST_Z(
+            find->list == NULL ? strLstNew() : find->list,
+            "123456781234567812345679-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.gz\n"
+            "12345678123456781234567A-cccccccccccccccccccccccccccccccccccccccc.gz\n",
+            "list contents");
+
+        // Write this now to verify that it is not visible immediately since the list should be reused in the next test
+        HRN_STORAGE_PUT_EMPTY(
+            storageTest, "archive/db/9.6-2/1234567812345678/12345678123456781234567B-dddddddddddddddddddddddddddddddddddddddd.lz4");
+        HRN_STORAGE_PUT_EMPTY(
+            storageTest, "archive/db/9.6-2/1234567812345678/12345678123456781234567C-dddddddddddddddddddddddddddddddddddddddd.lz4");
+
+        // List is reused from prior call -- we know this because 12345678123456781234567B has not appeared
+        TEST_RESULT_STR_Z(
+            walSegmentFind(find, STRDEF("123456781234567812345679")),
+            "123456781234567812345679-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.gz", "find");
+        TEST_RESULT_STRLST_Z(
+            find->list == NULL ? strLstNew() : find->list,
+            "12345678123456781234567A-cccccccccccccccccccccccccccccccccccccccc.gz\n",
+            "list contents");
+
+        // Now this is a reload and 12345678123456781234567B appears
+        TEST_RESULT_STR_Z(
+            walSegmentFind(find, STRDEF("12345678123456781234567B")),
+            "12345678123456781234567B-dddddddddddddddddddddddddddddddddddddddd.lz4", "find");
+        TEST_RESULT_STRLST_Z(
+            find->list == NULL ? strLstNew() : find->list,
+            "12345678123456781234567C-dddddddddddddddddddddddddddddddddddddddd.lz4\n",
+            "list contents");
+
+        // Search for 12345678123456781234567B again
+        TEST_RESULT_STR_Z(
+            walSegmentFind(find, STRDEF("12345678123456781234567B")),
+            "12345678123456781234567B-dddddddddddddddddddddddddddddddddddddddd.lz4", "find");
+        TEST_RESULT_STRLST_Z(
+            find->list == NULL ? strLstNew() : find->list,
+            "12345678123456781234567C-dddddddddddddddddddddddddddddddddddddddd.lz4\n",
+            "list contents");
+
+        // Force load by finding WAL with a difference prefix
+        HRN_STORAGE_PUT_EMPTY(
+            storageTest, "archive/db/9.6-2/1234567812345679/123456781234567912345679-dddddddddddddddddddddddddddddddddddddddd.zst");
+
+        TEST_RESULT_STR_Z(
+            walSegmentFind(find, STRDEF("123456781234567912345679")),
+            "123456781234567912345679-dddddddddddddddddddddddddddddddddddddddd.zst", "find");
+        TEST_RESULT_STRLST_Z(find->list == NULL ? strLstNew() : find->list, NULL, "list contents");
+
+        // Error on duplicate WAL
+        HRN_STORAGE_PUT_EMPTY(
+            storageTest, "archive/db/9.6-2/1234567812345679/123456781234567912345679-eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee.gz");
+
+        TEST_ERROR(
+            walSegmentFind(find, STRDEF("123456781234567912345679")),
+            ArchiveDuplicateError,
+            "duplicates found in archive for WAL segment 123456781234567912345679:"
+            " 123456781234567912345679-dddddddddddddddddddddddddddddddddddddddd.zst"
+            ", 123456781234567912345679-eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee.gz\n"
+            "HINT: are multiple primaries archiving to this stanza?");
     }
 
     // *****************************************************************************************************************************

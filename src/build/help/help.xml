@@ -1649,7 +1649,7 @@
                             <p>IP address the server will listen on for client requests.</p>
                         </text>
 
-                        <example>::*</example>
+                        <example>*</example>
                     </config-key>
 
                     <config-key id="tls-server-port" name="TLS Server Port">

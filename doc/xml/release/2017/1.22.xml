@@ -1,0 +1,9 @@
+<release date="2017-08-09" version="1.22" title="Fixed S3 Retry">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <p>Fixed authentication issue in S3 retry.</p>
+            </release-item>
+        </release-bug-list>
+    </release-core-list>
+</release>

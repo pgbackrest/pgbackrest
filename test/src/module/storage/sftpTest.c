@@ -507,9 +507,6 @@ testRun(void)
              .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
             // Path missing
-            {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/missing\",0]",
-             .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
-            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "\",0]",
              .attrPerms = LIBSSH2_SFTP_S_IFDIR, .resultInt = LIBSSH2_ERROR_NONE},
             // Permission denied
@@ -4758,10 +4755,10 @@ testRun(void)
             {.function = HRNLIBSSH2_SESSION_BLOCK_DIRECTIONS, .resultInt = SSH2_NO_BLOCK_READING_WRITING},
 
             {.function = HRNLIBSSH2_SFTP_SHUTDOWN, .resultInt = LIBSSH2_ERROR_NONE},
-            {.function = HRNLIBSSH2_SESSION_DISCONNECT_EX, .param = "[11,\"pgbackrest instance shutdown\",\"\"]",
+            {.function = HRNLIBSSH2_SESSION_DISCONNECT_EX, .param = "[11,\"pgBackRest instance shutdown\",\"\"]",
              .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = HRNLIBSSH2_SESSION_BLOCK_DIRECTIONS, .resultInt = SSH2_NO_BLOCK_READING_WRITING},
-            {.function = HRNLIBSSH2_SESSION_DISCONNECT_EX, .param = "[11,\"pgbackrest instance shutdown\",\"\"]",
+            {.function = HRNLIBSSH2_SESSION_DISCONNECT_EX, .param = "[11,\"pgBackRest instance shutdown\",\"\"]",
              .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_FREE, .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = HRNLIBSSH2_SESSION_BLOCK_DIRECTIONS, .resultInt = SSH2_NO_BLOCK_READING_WRITING},
@@ -4950,7 +4947,7 @@ testRun(void)
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_SHUTDOWN, .resultInt = LIBSSH2_ERROR_NONE},
-            {.function = HRNLIBSSH2_SESSION_DISCONNECT_EX, .param = "[11,\"pgbackrest instance shutdown\",\"\"]",
+            {.function = HRNLIBSSH2_SESSION_DISCONNECT_EX, .param = "[11,\"pgBackRest instance shutdown\",\"\"]",
              .resultInt = LIBSSH2_ERROR_SOCKET_DISCONNECT},
             {.function = NULL},
         });
@@ -4971,7 +4968,7 @@ testRun(void)
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_SHUTDOWN, .resultInt = LIBSSH2_ERROR_NONE},
-            {.function = HRNLIBSSH2_SESSION_DISCONNECT_EX, .param = "[11,\"pgbackrest instance shutdown\",\"\"]",
+            {.function = HRNLIBSSH2_SESSION_DISCONNECT_EX, .param = "[11,\"pgBackRest instance shutdown\",\"\"]",
              .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = HRNLIBSSH2_SESSION_BLOCK_DIRECTIONS, .resultInt = SSH2_BLOCK_READING_WRITING},
             {.function = NULL},
@@ -4993,7 +4990,7 @@ testRun(void)
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_SHUTDOWN, .resultInt = LIBSSH2_ERROR_NONE},
-            {.function = HRNLIBSSH2_SESSION_DISCONNECT_EX, .param = "[11,\"pgbackrest instance shutdown\",\"\"]",
+            {.function = HRNLIBSSH2_SESSION_DISCONNECT_EX, .param = "[11,\"pgBackRest instance shutdown\",\"\"]",
              .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_FREE, .resultInt = LIBSSH2_ERROR_SOCKET_DISCONNECT},
             {.function = NULL},
@@ -5015,7 +5012,7 @@ testRun(void)
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_SHUTDOWN, .resultInt = LIBSSH2_ERROR_NONE},
-            {.function = HRNLIBSSH2_SESSION_DISCONNECT_EX, .param = "[11,\"pgbackrest instance shutdown\",\"\"]",
+            {.function = HRNLIBSSH2_SESSION_DISCONNECT_EX, .param = "[11,\"pgBackRest instance shutdown\",\"\"]",
              .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_FREE, .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = HRNLIBSSH2_SESSION_BLOCK_DIRECTIONS, .resultInt = SSH2_BLOCK_READING_WRITING},

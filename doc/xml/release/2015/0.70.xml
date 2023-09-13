@@ -1,0 +1,79 @@
+<release date="2015-06-01" version="0.70" title="Stability Improvements for Archiving, Improved Logging and Help">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="michael.renner"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue where <cmd>archive-copy</cmd> would fail on an incr/diff backup when <setting>hardlink=n</setting>. In this case the <path>pg_xlog</path> path does not already exist and must be created.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="michael.renner"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue in async archiving where <cmd>archive-push</cmd> was not properly returning 0 when <setting>archive-max-mb</setting> was reached and moved the async check after transfer to avoid having to remove the stop file twice. Also added unit tests for this case and improved error messages to make it clearer to the user what went wrong.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="michael.renner"/>
+                </release-item-contributor-list>
+
+                <p>Fixed a locking issue that could allow multiple operations of the same type against a single stanza. This appeared to be benign in terms of data integrity but caused spurious errors while archiving and could lead to errors in backup/restore.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <p>Allow duplicate WAL segments to be archived when the checksum matches. This is necessary for some recovery scenarios.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="michael.renner"/>
+                </release-item-contributor-list>
+
+                <p>Allow comments/disabling in <file>pg_backrest.conf</file> using the <id>#</id> character. Only <id>#</id> characters in the first character of the line are honored.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="michael.renner"/>
+                </release-item-contributor-list>
+
+                <p>Better logging before <id>pg_start_backup()</id> to make it clear when the backup is waiting on a checkpoint.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="michael.renner"/>
+                    <release-item-reviewer id="michael.renner"/>
+                </release-item-contributor-list>
+
+                <p>Various command behavior and logging fixes.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <p>Replaced <code>JSON</code> module with <code>JSON::PP</code> which ships with core Perl.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="michael.renner"/>
+                    <release-item-reviewer id="michael.renner"/>
+                </release-item-contributor-list>
+
+                <p>Various help fixes.</p>
+            </release-item>
+        </release-bug-list>
+    </release-doc-list>
+</release>
