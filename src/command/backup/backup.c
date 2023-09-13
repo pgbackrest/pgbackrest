@@ -8,7 +8,7 @@ Backup Command
 #include <time.h>
 #include <unistd.h>
 
-#include "command/archive/common.h"
+#include "command/archive/find.h"
 #include "command/backup/backup.h"
 #include "command/backup/common.h"
 #include "command/backup/file.h"
@@ -1118,7 +1118,7 @@ backupStart(BackupData *const backupData)
                     strEq(result.walSegmentName, dbBackupStartResult.walSegmentCheck) ? "" : "prior ",
                     strZ(dbBackupStartResult.walSegmentCheck));
 
-                walSegmentFind(
+                walSegmentFindOne(
                     storageRepo(), backupData->archiveId, dbBackupStartResult.walSegmentCheck,
                     cfgOptionUInt64(cfgOptArchiveTimeout));
             }
@@ -1990,6 +1990,7 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
                     pckWriteI32P(param, jobData->compressLevel);
                     pckWriteU64P(param, jobData->cipherSubPass == NULL ? cipherTypeNone : cipherTypeAes256Cbc);
                     pckWriteStrP(param, jobData->cipherSubPass);
+                    pckWriteStrP(param, cfgOptionStrNull(cfgOptPgVersionForce));
                 }
 
                 pckWriteStrP(param, manifestPathPg(file.name));
@@ -2337,16 +2338,16 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
             // Loop through all the segments in the lsn range
             const StringList *const walSegmentList = pgLsnRangeToWalSegmentList(
                 backupData->timeline, lsnStart, lsnStop, backupData->walSegmentSize);
+            WalSegmentFind *const find = walSegmentFindNew(
+                storageRepo(), backupData->archiveId, strLstSize(walSegmentList) == 1, cfgOptionUInt64(cfgOptArchiveTimeout));
 
             for (unsigned int walSegmentIdx = 0; walSegmentIdx < strLstSize(walSegmentList); walSegmentIdx++)
             {
                 MEM_CONTEXT_TEMP_BEGIN()
                 {
+                    // Find the actual wal segment file (including checksum compression extension) in the archive
                     const String *const walSegment = strLstGet(walSegmentList, walSegmentIdx);
-
-                    // Find the actual wal segment file in the archive
-                    const String *const archiveFile = walSegmentFind(
-                        storageRepo(), backupData->archiveId, walSegment, cfgOptionUInt64(cfgOptArchiveTimeout));
+                    const String *const archiveFile = walSegmentFind(find, walSegment);
 
                     if (cfgOptionBool(cfgOptArchiveCopy))
                     {

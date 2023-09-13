@@ -4,6 +4,7 @@ Archive Push File
 #include "build.auto.h"
 
 #include "command/archive/common.h"
+#include "command/archive/find.h"
 #include "command/archive/push/file.h"
 #include "command/control/common.h"
 #include "common/crypto/cipherBlock.h"
@@ -175,7 +176,7 @@ archivePushFile(
 
                 TRY_BEGIN()
                 {
-                    walSegmentFile = walSegmentFind(storageRepoIdx(repoData->repoIdx), repoData->archiveId, archiveFile, 0);
+                    walSegmentFile = walSegmentFindOne(storageRepoIdx(repoData->repoIdx), repoData->archiveId, archiveFile, 0);
                 }
                 CATCH_ANY()
                 {

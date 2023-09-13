@@ -77,6 +77,22 @@ Read the version specific pg_control into a general data structure
 #endif
 
 /***********************************************************************************************************************************
+Get control crc offset
+***********************************************************************************************************************************/
+#if PG_VERSION > PG_VERSION_MAX
+
+#elif PG_VERSION >= PG_VERSION_93
+
+#define PG_INTERFACE_CONTROL_CRC_OFFSET(version)                                                                                   \
+    static size_t                                                                                                                  \
+    pgInterfaceControlCrcOffset##version(void)                                                                                     \
+    {                                                                                                                              \
+        return offsetof(ControlFileData, crc);                                                                                     \
+    }
+
+#endif
+
+/***********************************************************************************************************************************
 Get the control version
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
