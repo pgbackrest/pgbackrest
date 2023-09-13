@@ -48,48 +48,48 @@ storageSftpKnownHostKeyType(const int hostKeyType)
         FUNCTION_TEST_PARAM(INT, hostKeyType);
     FUNCTION_TEST_END();
 
-    int knownHostKeyType;
+    int result;
 
     switch (hostKeyType)
     {
         case LIBSSH2_HOSTKEY_TYPE_RSA:
-            knownHostKeyType = LIBSSH2_KNOWNHOST_KEY_SSHRSA;
+            result = LIBSSH2_KNOWNHOST_KEY_SSHRSA;
             break;
 
         case LIBSSH2_HOSTKEY_TYPE_DSS:
-            knownHostKeyType = LIBSSH2_KNOWNHOST_KEY_SSHDSS;
+            result = LIBSSH2_KNOWNHOST_KEY_SSHDSS;
             break;
 
 #ifdef LIBSSH2_HOSTKEY_TYPE_ECDSA_256
         case LIBSSH2_HOSTKEY_TYPE_ECDSA_256:
-            knownHostKeyType = LIBSSH2_KNOWNHOST_KEY_ECDSA_256;
+            result = LIBSSH2_KNOWNHOST_KEY_ECDSA_256;
             break;
 #endif
 
 #ifdef LIBSSH2_HOSTKEY_TYPE_ECDSA_384
         case LIBSSH2_HOSTKEY_TYPE_ECDSA_384:
-            knownHostKeyType = LIBSSH2_KNOWNHOST_KEY_ECDSA_384;
+            result = LIBSSH2_KNOWNHOST_KEY_ECDSA_384;
             break;
 #endif
 
 #ifdef LIBSSH2_HOSTKEY_TYPE_ECDSA_521
         case LIBSSH2_HOSTKEY_TYPE_ECDSA_521:
-            knownHostKeyType = LIBSSH2_KNOWNHOST_KEY_ECDSA_521;
+            result = LIBSSH2_KNOWNHOST_KEY_ECDSA_521;
             break;
 #endif
 
 #ifdef LIBSSH2_HOSTKEY_TYPE_ED25519
         case LIBSSH2_HOSTKEY_TYPE_ED25519:
-            knownHostKeyType = LIBSSH2_KNOWNHOST_KEY_ED25519;
+            result = LIBSSH2_KNOWNHOST_KEY_ED25519;
             break;
 #endif
 
         default:
-            knownHostKeyType = 0;
+            result = 0;
             break;
     }
 
-    FUNCTION_TEST_RETURN(INT, knownHostKeyType);
+    FUNCTION_TEST_RETURN(INT, result);
 }
 
 /***********************************************************************************************************************************
@@ -102,28 +102,28 @@ storageSftpKnownHostCheckpFailureMsg(const int rc)
         FUNCTION_TEST_PARAM(INT, rc);
     FUNCTION_TEST_END();
 
-    const char *matchFailMsg;
+    const char *result;
 
     switch (rc)
     {
         case LIBSSH2_KNOWNHOST_CHECK_FAILURE:
-            matchFailMsg = "LIBSSH2_KNOWNHOST_CHECK_FAILURE";
+            result = "LIBSSH2_KNOWNHOST_CHECK_FAILURE";
             break;
 
         case LIBSSH2_KNOWNHOST_CHECK_NOTFOUND:
-            matchFailMsg = "not found in known hosts files: LIBSSH2_KNOWNHOST_CHECK_NOTFOUND";
+            result = "not found in known hosts files: LIBSSH2_KNOWNHOST_CHECK_NOTFOUND";
             break;
 
         case LIBSSH2_KNOWNHOST_CHECK_MISMATCH:
-            matchFailMsg = "mismatch in known hosts files: LIBSSH2_KNOWNHOST_CHECK_MISMATCH";
+            result = "mismatch in known hosts files: LIBSSH2_KNOWNHOST_CHECK_MISMATCH";
             break;
 
         default:
-            matchFailMsg = "unknown failure";
+            result = "unknown failure";
             break;
     }
 
-    FUNCTION_TEST_RETURN_CONST(STRINGZ, matchFailMsg);
+    FUNCTION_TEST_RETURN_CONST(STRINGZ, result);
 }
 
 /***********************************************************************************************************************************
@@ -171,7 +171,7 @@ storageSftpUpdateKnownHostsFile(
                 if (rc == LIBSSH2_ERROR_FILE)
                 {
                     // If user's known_hosts file is non-existant, create an empty one for libssh2 to operate on.
-                    Storage *sshStorage =
+                    const Storage *const sshStorage =
                         storagePosixNewP(
                             strNewFmt("%s%s", strZ(userHome()), "/.ssh"), .modeFile = 0600, .modePath = 0700, .write = true);
 
@@ -512,7 +512,7 @@ storageSftpKnownHostsFilesList(const StringList *const sftpKnownHosts)
         FUNCTION_LOG_PARAM(STRING_LIST, sftpKnownHosts);
     FUNCTION_LOG_END();
 
-    StringList *result = strLstNew();
+    StringList *const result = strLstNew();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -526,7 +526,7 @@ storageSftpKnownHostsFilesList(const StringList *const sftpKnownHosts)
         }
         else
         {
-            // Process the sftpKnownHost list entries and add them to the result list
+            // Process the known host list entries and add them to the result list
             for (unsigned int listIdx = 0; listIdx < strLstSize(sftpKnownHosts); listIdx++)
             {
                 // Get the trimmed file path and add it to the result list
@@ -1144,16 +1144,16 @@ storageSftpNew(
         }
         else
         {
-            // Init the knownhost collection
+            // Init the known host collection
             LIBSSH2_KNOWNHOSTS *const knownHostsList = libssh2_knownhost_init(this->session);
 
             if (knownHostsList == NULL)
                 THROW_FMT(ServiceError, "failure during libssh2_knownhost_init");
 
-            // Get the list of known_hosts files to search
+            // Get the list of known host files to search
             const StringList *const knownHostsPathList = storageSftpKnownHostsFilesList(param.sftpKnownHosts);
 
-            // Loop through the list of known_hosts files
+            // Loop through the list of known host files
             for (unsigned int listIdx = 0; listIdx < strLstSize(knownHostsPathList); listIdx++)
             {
                 const char *const currentKnownHostFile = strZNull(strLstGet(knownHostsPathList, listIdx));
@@ -1184,7 +1184,7 @@ storageSftpNew(
             // Get the remote host key
             size_t hostKeyLen;
             int hostKeyType;
-            const char *hostKey = libssh2_session_hostkey(this->session, &hostKeyLen, &hostKeyType);
+            const char *const hostKey = libssh2_session_hostkey(this->session, &hostKeyLen, &hostKeyType);
 
             // Check for a match in known hosts files else throw an error if no host key was retrieved
             if (hostKey != NULL)
