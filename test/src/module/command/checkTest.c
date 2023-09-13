@@ -39,9 +39,12 @@ testRun(void)
             "[global]\n"
             "repo1-path=" TEST_PATH "/repo1\n"
             "repo1-block=y\n"
+            "no-repo1-block=bogus\n"
+            "bogus=y\n"
             "\n"
             "[global:backup]\n"
             "start-fast=y\n"
+            "reset-start-fast=bogus\n"
             "\n"
             "[test2]\n"
             "pg1-path=" TEST_PATH "/test2-pg1\n"
@@ -143,6 +146,13 @@ testRun(void)
                         "},"
                         "\"file\":{"
                             "\"global\":{"
+                                "\"bogus\":{"
+                                    "\"warn\":\"invalid option\""
+                                "},"
+                                "\"no-repo1-block\":{"
+                                    "\"val\":\"bogus\","
+                                    "\"warn\":\"invalid negate option\""
+                                "},"
                                 "\"repo1-block\":{"
                                     "\"val\":\"y\""
                                 "},"
@@ -151,6 +161,11 @@ testRun(void)
                                 "}"
                             "},"
                             "\"global:backup\":{"
+                                "\"reset-start-fast\":"
+                                "{"
+                                    "\"val\":\"bogus\","
+                                    "\"warn\":\"invalid reset option\""
+                                "},"
                                 "\"start-fast\":{"
                                     "\"val\":\"y\""
                                 "}"
@@ -180,7 +195,9 @@ testRun(void)
             TEST_RESULT_LOG(
                 "P00   WARN: environment contains invalid option 'bogus'\n"
                 "P00   WARN: environment contains invalid negate option 'no-online'\n"
-                "P00   WARN: environment contains invalid reset option 'reset-compress-type'");
+                "P00   WARN: environment contains invalid reset option 'reset-compress-type'\n"
+                "P00   WARN: configuration file contains negate option 'no-repo1-block'\n"
+                "P00   WARN: configuration file contains invalid option 'bogus'");
 
             unsetenv(PGBACKREST_ENV "BOGUS");
             unsetenv(PGBACKREST_ENV "NO_ONLINE");
