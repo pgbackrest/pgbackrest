@@ -516,7 +516,7 @@ testRun(void)
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, "pgBackRest not built with sftp support");
+        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
@@ -637,7 +637,7 @@ testRun(void)
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, "pgBackRest not built with sftp support");
+        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
@@ -949,7 +949,7 @@ testRun(void)
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, "pgBackRest not built with sftp support");
+        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
@@ -1950,7 +1950,7 @@ testRun(void)
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, "pgBackRest not built with sftp support");
+        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
@@ -2158,7 +2158,7 @@ testRun(void)
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, "pgBackRest not built with sftp support");
+        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
@@ -2235,7 +2235,7 @@ testRun(void)
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, "pgBackRest not built with sftp support");
+        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
@@ -2398,7 +2398,7 @@ testRun(void)
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, "pgBackRest not built with sftp support");
+        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
@@ -2701,7 +2701,7 @@ testRun(void)
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, "pgBackRest not built with sftp support");
+        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
@@ -2770,7 +2770,7 @@ testRun(void)
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, "pgBackRest not built with sftp support");
+        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
@@ -2970,7 +2970,7 @@ testRun(void)
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, "pgBackRest not built with sftp support");
+        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
@@ -3477,7 +3477,7 @@ testRun(void)
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, "pgBackRest not built with sftp support");
+        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
@@ -4009,7 +4009,7 @@ testRun(void)
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, "pgBackRest not built with sftp support");
+        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
@@ -4230,7 +4230,7 @@ testRun(void)
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, "pgBackRest not built with sftp support");
+        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
@@ -4381,7 +4381,7 @@ testRun(void)
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, "pgBackRest not built with sftp support");
+        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
@@ -4647,7 +4647,7 @@ testRun(void)
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, "pgBackRest not built with sftp support");
+        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
@@ -4769,7 +4769,7 @@ testRun(void)
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storage)));
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, "pgBackRest not built with sftp support");
+        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
@@ -4833,7 +4833,7 @@ testRun(void)
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storage)));
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, "pgBackRest not built with sftp support");
+        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
@@ -5131,7 +5131,7 @@ testRun(void)
             memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest))), ServiceError,
             "timeout freeing libssh2 session: libssh2 errno [-37]");
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, "pgBackRest not built with sftp support");
+        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
@@ -5167,7 +5167,7 @@ testRun(void)
             FileRemoveError,
             "libssh2 error [-31]: sftp error [16]");
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, "pgBackRest not built with sftp support");
+        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
