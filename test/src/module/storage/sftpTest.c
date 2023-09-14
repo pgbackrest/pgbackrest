@@ -181,7 +181,7 @@ testRun(void)
             storageSftpNewP(
                 TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB,
                 .hostFingerprint = STRDEF("3132333435363738393039383736353433323130"),
-                .sftpStrictHostKeyChecking = SFTP_STRICT_HOSTKEY_CHECKING_YES),
+                .sftpStrictHostKeyChecking = SFTP_STRICT_HOSTKEY_CHECKING_FINGERPRINT),
             ServiceError, "libssh2 hostkey hash failed: libssh2 errno [-7]");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -232,7 +232,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
         hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, "~/.ssh/id_rsa");
         hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyFile, "~/.ssh/id_rsa.pub");
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpKnownHost, KNOWNHOSTS_FILE_CSTR);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpStrictHostKeyCheck, "fingerprint");
         hrnCfgArgRawZ(argList, cfgOptRepoSftpHostFingerprint, "3132333435363738393039383736353433323130");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
@@ -277,7 +277,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
         hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, "~/.ssh/id_rsa");
         hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyFile, "~/.ssh/id_rsa.pub");
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpKnownHost, KNOWNHOSTS_FILE_CSTR);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpStrictHostKeyCheck, "fingerprint");
         hrnCfgArgRawZ(argList, cfgOptRepoSftpHostFingerprint, "9132333435363738393039383736353433323130");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 

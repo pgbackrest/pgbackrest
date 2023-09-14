@@ -2370,7 +2370,11 @@ option:
     type: string
     required: false
     command: repo-type
-    depend: repo-sftp-host
+    depend:
+      option: repo-sftp-strict-host-key-check
+      list:
+        - fingerprint
+        - yes
 
   repo-sftp-host-key-hash-type:
     section: global
@@ -2405,7 +2409,12 @@ option:
     type: list
     required: false
     command: repo-type
-    depend: repo-sftp-host
+    depend:
+      option: repo-sftp-strict-host-key-check
+      list:
+        - accept-new
+        - no
+        - yes
 
   repo-sftp-private-key-file:
     section: global
@@ -2437,9 +2446,10 @@ option:
     type: string-id
     default: yes
     allow-list:
-      - yes
-      - no
       - accept-new
+      - fingerprint
+      - no
+      - yes
     command: repo-type
     depend: repo-sftp-host
 

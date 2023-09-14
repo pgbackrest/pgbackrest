@@ -1119,7 +1119,7 @@ storageSftpNew(
         }
 
         // Compare fingerprint if provided else check known hosts files for a match
-        if (param.hostFingerprint != NULL)
+        if (param.sftpStrictHostKeyChecking == SFTP_STRICT_HOSTKEY_CHECKING_FINGERPRINT)
         {
             const char *const binaryFingerprint = libssh2_hostkey_hash(this->session, hashType);
 
@@ -1238,8 +1238,10 @@ storageSftpNew(
                             break;
                         }
 
-                        case SFTP_STRICT_HOSTKEY_CHECKING_NO:
+                        default:
                         {
+                            ASSERT(param.sftpStrictHostKeyChecking == SFTP_STRICT_HOSTKEY_CHECKING_NO);
+
                             // When set to no, add key to the user's known_hosts file if host key is new, warn and continue when
                             // there is a mismatch, error on failure
                             if (rc == LIBSSH2_KNOWNHOST_CHECK_NOTFOUND)

@@ -134,6 +134,7 @@ static const StringId parseRuleValueStrId[] =
     STRID5("detail", 0x1890d0a40),                                                                                      // val/strid
     STRID5("diff", 0x319240),                                                                                           // val/strid
     STRID5("error", 0x127ca450),                                                                                        // val/strid
+    STRID5("fingerprint", 0x51c9942453b9260),                                                                           // val/strid
     STRID5("full", 0x632a60),                                                                                           // val/strid
     STRID5("gcs", 0x4c670),                                                                                             // val/strid
     STRID5("gz", 0x3470),                                                                                               // val/strid
@@ -194,6 +195,7 @@ typedef enum
     parseRuleValStrIdDetail,                                                                                       // val/strid/enum
     parseRuleValStrIdDiff,                                                                                         // val/strid/enum
     parseRuleValStrIdError,                                                                                        // val/strid/enum
+    parseRuleValStrIdFingerprint,                                                                                  // val/strid/enum
     parseRuleValStrIdFull,                                                                                         // val/strid/enum
     parseRuleValStrIdGcs,                                                                                          // val/strid/enum
     parseRuleValStrIdGz,                                                                                           // val/strid/enum
@@ -8049,8 +8051,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             (                                                                                      // opt/repo-sftp-host-fingerprint
                 PARSE_RULE_OPTIONAL_DEPEND                                                         // opt/repo-sftp-host-fingerprint
                 (                                                                                  // opt/repo-sftp-host-fingerprint
-                    PARSE_RULE_VAL_OPT(cfgOptRepoType),                                            // opt/repo-sftp-host-fingerprint
-                    PARSE_RULE_VAL_STRID(parseRuleValStrIdSftp),                                   // opt/repo-sftp-host-fingerprint
+                    PARSE_RULE_VAL_OPT(cfgOptRepoSftpStrictHostKeyCheck),                          // opt/repo-sftp-host-fingerprint
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdFingerprint),                            // opt/repo-sftp-host-fingerprint
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdYes),                                    // opt/repo-sftp-host-fingerprint
                 ),                                                                                 // opt/repo-sftp-host-fingerprint
             ),                                                                                     // opt/repo-sftp-host-fingerprint
         ),                                                                                         // opt/repo-sftp-host-fingerprint
@@ -8389,8 +8392,10 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             (                                                                                            // opt/repo-sftp-known-host
                 PARSE_RULE_OPTIONAL_DEPEND                                                               // opt/repo-sftp-known-host
                 (                                                                                        // opt/repo-sftp-known-host
-                    PARSE_RULE_VAL_OPT(cfgOptRepoType),                                                  // opt/repo-sftp-known-host
-                    PARSE_RULE_VAL_STRID(parseRuleValStrIdSftp),                                         // opt/repo-sftp-known-host
+                    PARSE_RULE_VAL_OPT(cfgOptRepoSftpStrictHostKeyCheck),                                // opt/repo-sftp-known-host
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdAcceptNew),                                    // opt/repo-sftp-known-host
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdNo),                                           // opt/repo-sftp-known-host
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdYes),                                          // opt/repo-sftp-known-host
                 ),                                                                                       // opt/repo-sftp-known-host
             ),                                                                                           // opt/repo-sftp-known-host
         ),                                                                                               // opt/repo-sftp-known-host
@@ -8716,9 +8721,10 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                               // opt/repo-sftp-strict-host-key-check
                 PARSE_RULE_OPTIONAL_ALLOW_LIST                                                // opt/repo-sftp-strict-host-key-check
                 (                                                                             // opt/repo-sftp-strict-host-key-check
-                    PARSE_RULE_VAL_STRID(parseRuleValStrIdYes),                               // opt/repo-sftp-strict-host-key-check
-                    PARSE_RULE_VAL_STRID(parseRuleValStrIdNo),                                // opt/repo-sftp-strict-host-key-check
                     PARSE_RULE_VAL_STRID(parseRuleValStrIdAcceptNew),                         // opt/repo-sftp-strict-host-key-check
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdFingerprint),                       // opt/repo-sftp-strict-host-key-check
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdNo),                                // opt/repo-sftp-strict-host-key-check
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdYes),                               // opt/repo-sftp-strict-host-key-check
                 ),                                                                            // opt/repo-sftp-strict-host-key-check
                                                                                               // opt/repo-sftp-strict-host-key-check
                 PARSE_RULE_OPTIONAL_DEFAULT                                                   // opt/repo-sftp-strict-host-key-check
@@ -10952,11 +10958,9 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoS3Token,                                                                                          // opt-resolve-order
     cfgOptRepoS3UriStyle,                                                                                       // opt-resolve-order
     cfgOptRepoSftpHost,                                                                                         // opt-resolve-order
-    cfgOptRepoSftpHostFingerprint,                                                                              // opt-resolve-order
     cfgOptRepoSftpHostKeyHashType,                                                                              // opt-resolve-order
     cfgOptRepoSftpHostPort,                                                                                     // opt-resolve-order
     cfgOptRepoSftpHostUser,                                                                                     // opt-resolve-order
-    cfgOptRepoSftpKnownHost,                                                                                    // opt-resolve-order
     cfgOptRepoSftpPrivateKeyFile,                                                                               // opt-resolve-order
     cfgOptRepoSftpPrivateKeyPassphrase,                                                                         // opt-resolve-order
     cfgOptRepoSftpPublicKeyFile,                                                                                // opt-resolve-order
@@ -10985,4 +10989,6 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoHostKeyFile,                                                                                      // opt-resolve-order
     cfgOptRepoS3Key,                                                                                            // opt-resolve-order
     cfgOptRepoS3KeySecret,                                                                                      // opt-resolve-order
+    cfgOptRepoSftpHostFingerprint,                                                                              // opt-resolve-order
+    cfgOptRepoSftpKnownHost,                                                                                    // opt-resolve-order
 };
