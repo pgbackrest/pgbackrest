@@ -1322,7 +1322,7 @@ sub configCreate
                 $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-host-user'} = TEST_USER;
                 $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-private-key-file'} = testRunGet()->basePath() . SSH_PRIVATE_KEY;
                 $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-public-key-file'} = testRunGet()->basePath() . SSH_PUBLIC_KEY;
-                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-strict-host-key-check'} = "off";
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-strict-host-key-check'} = "no";
                 $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-path'} = $self->repoPath();
 
                 # At what count do we hit diminishing returns
