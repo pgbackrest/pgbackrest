@@ -1061,7 +1061,7 @@
                         <summary>SFTP known hosts file.</summary>
 
                         <text>
-                            <p>A known hosts file to search for an SFTP host match during authentication. When unspecified, <backrest/> will default to searching ~/.ssh/known_hosts ~/.ssh/known_hosts2 /etc/ssh/ssh_known_hosts /etc/ssh/ssh_known_hosts2. If configured with one or more file paths, <backrest/> will search those for a match. File paths must be full or leading tilde paths. The <setting>repo-sftp-known-host</setting> option can be passed multiple times to specify more than one known hosts file to search. To utilize known hosts file checking <setting>repo-sftp-host-fingerprint</setting> must not be specified. See also <setting>repo-sftp-strict-host-check</setting> option.</p>
+                            <p>A known hosts file to search for an SFTP host match during authentication. When unspecified, <backrest/> will default to searching <file>~/.ssh/known_hosts</file>, <file>~/.ssh/known_hosts2</file>, <file>/etc/ssh/ssh_known_hosts</file>, and <file>/etc/ssh/ssh_known_hosts2</file>. If configured with one or more file paths, <backrest/> will search those for a match. File paths must be full or leading tilde paths. The <setting>repo-sftp-known-host</setting> option can be passed multiple times to specify more than one known hosts file to search. To utilize known hosts file checking <setting>repo-sftp-host-fingerprint</setting> must not be specified. See also <setting>repo-sftp-strict-host-check</setting> option.</p>
                         </text>
 
                         <example>/home/postgres/.ssh/known_hosts</example>
@@ -1097,8 +1097,8 @@
                         <example>~/.ssh/id_ed25519.pub</example>
                     </config-key>
 
-                    <config-key id="repo-sftp-strict-host-key-check" name="SFTP host key check type">
-                        <summary>SFTP host key check type.</summary>
+                    <config-key id="repo-sftp-strict-host-key-check" name="SFTP Host Key Check">
+                        <summary>SFTP host key check.</summary>
 
                         <text>
                             <p>The following SFTP host key check types are supported:</p>
