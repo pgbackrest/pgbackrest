@@ -33,6 +33,7 @@ typedef struct StorageAzureRequestAsyncParam
     const HttpHeader *header;                                       // Request headers
     const HttpQuery *query;                                         // Query parameters
     const Buffer *content;                                          // Request content
+    bool tag;                                                       // Add tags when available?
 } StorageAzureRequestAsyncParam;
 
 #define storageAzureRequestAsyncP(this, verb, ...)                                                                                 \
@@ -62,6 +63,7 @@ typedef struct StorageAzureRequestParam
     const Buffer *content;                                          // Request content
     bool allowMissing;                                              // Allow missing files (caller can check response code)
     bool contentIo;                                                 // Is IoRead interface required to read content?
+    bool tag;                                                       // Add tags when available?
 } StorageAzureRequestParam;
 
 #define storageAzureRequestP(this, verb, ...)                                                                                      \
