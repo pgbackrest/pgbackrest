@@ -2,6 +2,20 @@
     <release-core-list>
         <release-feature-list>
             <release-item>
+                <github-issue id="2150"/>
+                <github-pull-request id="2159"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                    <release-item-reviewer id="timothee.peignier"/>
+                </release-item-contributor-list>
+
+                <p>Add <br-option>--repo-storage-tag</br-option> option to create object tags.</p>
+            </release-item>
+
+            <release-item>
                 <commit subject="Adjust Wait object to be more accurate when nested."/>
                 <commit subject="Aggregate error retries in ErrorRetry output."/>
                 <commit subject="Refactor address list lookup to include all returned addresses.">

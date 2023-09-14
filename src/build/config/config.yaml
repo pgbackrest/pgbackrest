@@ -2509,6 +2509,19 @@ option:
       repo?-azure-port: {}
       repo?-s3-port: {}
 
+  repo-storage-tag:
+    section: global
+    group: repo
+    type: hash
+    required: false
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - azure
+        - gcs
+        - s3
+
   repo-storage-upload-chunk-size:
     section: global
     group: repo

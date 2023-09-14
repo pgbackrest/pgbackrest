@@ -30,6 +30,7 @@ typedef struct StorageWriteGcs
 
     HttpRequest *request;                                           // Async chunk upload request
     size_t chunkSize;                                               // Size of chunks for resumable upload
+    bool tag;                                                       // Are tags available?
     Buffer *chunkBuffer;                                            // Block buffer (stores data until chunkSize is reached)
     const String *uploadId;                                         // Id for resumable upload
     uint64_t uploadTotal;                                           // Total bytes uploaded
@@ -159,8 +160,6 @@ storageWriteGcsBlockAsync(StorageWriteGcs *this, bool done)
 
     ASSERT(this != NULL);
     ASSERT(this->chunkBuffer != NULL);
-    ASSERT(bufSize(this->chunkBuffer) > 0);
-    ASSERT(!done || this->uploadId != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -175,7 +174,8 @@ storageWriteGcsBlockAsync(StorageWriteGcs *this, bool done)
         // Get the upload id
         if (this->uploadId == NULL)
         {
-            HttpResponse *response = storageGcsRequestP(this->storage, HTTP_VERB_POST_STR, .upload = true, .query = query);
+            HttpResponse *response = storageGcsRequestP(
+                this->storage, HTTP_VERB_POST_STR, .upload = true, .tag = this->tag, .query = query);
 
             MEM_CONTEXT_OBJ_BEGIN(this)
             {
@@ -284,7 +284,7 @@ storageWriteGcsClose(THIS_VOID)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // If a resumable upload was started then finish that way
-            if (this->uploadId != NULL)
+            if (this->uploadId != NULL || this->tag)
             {
                 // Write what is left in the chunk buffer
                 storageWriteGcsBlockAsync(this, true);
@@ -322,12 +322,13 @@ storageWriteGcsClose(THIS_VOID)
 
 /**********************************************************************************************************************************/
 FN_EXTERN StorageWrite *
-storageWriteGcsNew(StorageGcs *const storage, const String *const name, const size_t chunkSize)
+storageWriteGcsNew(StorageGcs *const storage, const String *const name, const size_t chunkSize, const bool tag)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_GCS, storage);
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(UINT64, chunkSize);
+        FUNCTION_LOG_PARAM(BOOL, tag);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
@@ -339,6 +340,7 @@ storageWriteGcsNew(StorageGcs *const storage, const String *const name, const si
         {
             .storage = storage,
             .chunkSize = chunkSize,
+            .tag = tag,
 
             .interface = (StorageWriteInterface)
             {
