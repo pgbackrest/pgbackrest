@@ -326,7 +326,7 @@ testRun(void)
             "  --repo-sftp-private-key-file        SFTP private key file\n"
             "  --repo-sftp-private-key-passphrase  SFTP private key passphrase\n"
             "  --repo-sftp-public-key-file         SFTP public key file\n"
-            "  --repo-sftp-strict-host-key-check   SFTP host key check type [default=yes]\n"
+            "  --repo-sftp-strict-host-key-check   SFTP host key check [default=yes]\n"
             "  --repo-storage-ca-file              repository storage CA file\n"
             "  --repo-storage-ca-path              repository storage CA path\n"
             "  --repo-storage-host                 repository storage host\n"
