@@ -2439,7 +2439,6 @@ option:
     allow-list:
       - yes
       - no
-      - off
       - accept-new
     command: repo-type
     depend: repo-sftp-host

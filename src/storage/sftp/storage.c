@@ -1201,13 +1201,12 @@ storageSftpNew(
                     // We did not get a match, get an appropriate failure message
                     const char *const matchFailMsg = storageSftpKnownHostCheckpFailureMsg(rc);
 
-                    // Handle failure to match in the same manner as ssh_config StrictHostKeyChecking for yes/accept-new/no/off.
-                    // If this flag is set to yes, never automatically add host keys to the ~/.ssh/known_hosts file, and refuse to
-                    // connect to hosts whose host key has changed. This option forces the user to manually add all new hosts. If
-                    // this flag is set to “accept-new” then automatically add new host keys to the user known hosts files, but do
-                    // not permit connections to hosts with changed host keys. If this flag is set to “no” or “off”, automatically
-                    // add new host keys to the user known hosts files and allow connections to hosts with changed hostkeys to
-                    // proceed.
+                    // Handle failure to match in the same manner as ssh_config StrictHostKeyChecking for yes/accept-new/no. If this
+                    // flag is set to "yes", never automatically add host keys to the ~/.ssh/known_hosts file, and refuse to connect
+                    // to hosts whose host key has changed. This option forces the user to manually add all new hosts. If this flag
+                    // is set to "accept-new" then automatically add new host keys to the user known hosts files, but do not permit
+                    // connections to hosts with changed host keys. If this flag is set to "no", automatically add new host keys to
+                    // the user known hosts files and allow connections to hosts with changed hostkeys to proceed.
                     switch (param.sftpStrictHostKeyChecking)
                     {
                         case SFTP_STRICT_HOSTKEY_CHECKING_YES:
@@ -1240,9 +1239,8 @@ storageSftpNew(
                         }
 
                         case SFTP_STRICT_HOSTKEY_CHECKING_NO:
-                        case SFTP_STRICT_HOSTKEY_CHECKING_OFF:
                         {
-                            // When set to no/off, add key to the user's known_hosts file if host key is new, warn and continue when
+                            // When set to no, add key to the user's known_hosts file if host key is new, warn and continue when
                             // there is a mismatch, error on failure
                             if (rc == LIBSSH2_KNOWNHOST_CHECK_NOTFOUND)
                                 storageSftpUpdateKnownHostsFile(this, hostKeyType, host, hostKey, hostKeyLen);

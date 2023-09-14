@@ -1535,7 +1535,7 @@ testRun(void)
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("knownhost_checkp failure LIBSSH2_KNOWNHOST_CHECK_MISMATCH sftpStrictHostKeyChecking = off");
+        TEST_TITLE("knownhost_checkp failure LIBSSH2_KNOWNHOST_CHECK_MISMATCH sftpStrictHostKeyChecking = no");
 
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
@@ -1564,7 +1564,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
         hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, KEYPRIV_CSTR);
         hrnCfgArgRawZ(argList, cfgOptRepoSftpKnownHost, KNOWNHOSTS_FILE_CSTR);
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpStrictHostKeyCheck, "off");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpStrictHostKeyCheck, "no");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         TEST_ASSIGN(
@@ -1582,12 +1582,12 @@ testRun(void)
             "new storage (defaults)");
         TEST_RESULT_LOG(
             "P00   WARN: known hosts failure: 'localhost' mismatch in known hosts files: LIBSSH2_KNOWNHOST_CHECK_MISMATCH [1]: "
-            "strict checking [off]");
+            "strict checking [no]");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("knownhost_checkp failure LIBSSH2_KNOWNHOST_CHECK_FAILURE sftpStrictHostKeyChecking = off");
+        TEST_TITLE("knownhost_checkp failure LIBSSH2_KNOWNHOST_CHECK_FAILURE sftpStrictHostKeyChecking = no");
 
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
@@ -1613,7 +1613,7 @@ testRun(void)
                 .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
                 .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyCheck, repoIdx),
                 .sftpKnownHosts = strLstNewVarLst(cfgOptionIdxLst(cfgOptRepoSftpKnownHost, repoIdx))),
-            ServiceError, "known hosts failure: 'localhost': LIBSSH2_KNOWNHOST_CHECK_FAILURE [3]: strict checking [off]");
+            ServiceError, "known hosts failure: 'localhost': LIBSSH2_KNOWNHOST_CHECK_FAILURE [3]: strict checking [no]");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("knownhost_checkp failure LIBSSH2_KNOWNHOST_CHECK_FAILURE sftpStrictHostKeyChecking = accept-new");
@@ -1795,7 +1795,7 @@ testRun(void)
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("sftp session failure - libssh2_session_hostkey fail - sftpStrictHostKeyChecking = off");
+        TEST_TITLE("sftp session failure - libssh2_session_hostkey fail - sftpStrictHostKeyChecking = no");
 
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
@@ -1820,7 +1820,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
         hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, KEYPRIV_CSTR);
         hrnCfgArgRawZ(argList, cfgOptRepoSftpKnownHost, KNOWNHOSTS_FILE_CSTR);
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpStrictHostKeyCheck, "off");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpStrictHostKeyCheck, "no");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         TEST_ERROR(

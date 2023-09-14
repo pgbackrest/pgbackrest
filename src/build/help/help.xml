@@ -1101,9 +1101,15 @@
                         <summary>SFTP host key check type.</summary>
 
                         <text>
-                            <p>The default setting is <quote>yes</quote>. If this flag is set to <quote>yes</quote>, <backrest/> will never automatically add host keys to the ~/.ssh/known_hosts file, and refuses to connect to hosts whose host key has changed or is not found in the known hosts files. This option forces the user to manually add all new hosts. If this flag is set to <quote>accept-new</quote> then <backrest/> will automatically add new host keys to the user's known hosts file, but will not permit connections to hosts with changed host keys. If this flag is set to <quote>no</quote> or <quote>off</quote>, <backrest/> will automatically add new host keys to the user's known hosts file and allow connections to hosts with changed host keys to proceed.</p>
+                            <p>The following SFTP host key check types are supported:</p>
+                            <list>
+                                <list-item><id>yes</id> - <backrest/> will never automatically add host keys to the ~/.ssh/known_hosts file, and refuses to connect to hosts whose host key has changed or is not found in the known hosts files. This option forces the user to manually add all new hosts</list-item>
+                                <list-item><id>accept-new</id> - <backrest/> will automatically add new host keys to the user's known hosts file, but will not permit connections to hosts with changed host keys</list-item>
+                                <list-item><id>no</id> - <backrest/> will automatically add new host keys to the user's known hosts file and allow connections to hosts with changed host keys to proceed</list-item>
+                            </list>
                         </text>
 
+                        <default>yes</default>
                         <example>accept-new</example>
                     </config-key>
 

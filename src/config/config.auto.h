@@ -280,8 +280,6 @@ Option value constants
 #define CFGOPTVAL_REPO_SFTP_STRICT_HOST_KEY_CHECK_ACCEPT_NEW_Z      "accept-new"
 #define CFGOPTVAL_REPO_SFTP_STRICT_HOST_KEY_CHECK_NO                STRID5("no", 0x1ee0)
 #define CFGOPTVAL_REPO_SFTP_STRICT_HOST_KEY_CHECK_NO_Z              "no"
-#define CFGOPTVAL_REPO_SFTP_STRICT_HOST_KEY_CHECK_OFF               STRID5("off", 0x18cf0)
-#define CFGOPTVAL_REPO_SFTP_STRICT_HOST_KEY_CHECK_OFF_Z             "off"
 #define CFGOPTVAL_REPO_SFTP_STRICT_HOST_KEY_CHECK_YES               STRID5("yes", 0x4cb90)
 #define CFGOPTVAL_REPO_SFTP_STRICT_HOST_KEY_CHECK_YES_Z             "yes"
 

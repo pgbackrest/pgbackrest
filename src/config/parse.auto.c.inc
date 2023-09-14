@@ -8718,7 +8718,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 (                                                                             // opt/repo-sftp-strict-host-key-check
                     PARSE_RULE_VAL_STRID(parseRuleValStrIdYes),                               // opt/repo-sftp-strict-host-key-check
                     PARSE_RULE_VAL_STRID(parseRuleValStrIdNo),                                // opt/repo-sftp-strict-host-key-check
-                    PARSE_RULE_VAL_STRID(parseRuleValStrIdOff),                               // opt/repo-sftp-strict-host-key-check
                     PARSE_RULE_VAL_STRID(parseRuleValStrIdAcceptNew),                         // opt/repo-sftp-strict-host-key-check
                 ),                                                                            // opt/repo-sftp-strict-host-key-check
                                                                                               // opt/repo-sftp-strict-host-key-check
