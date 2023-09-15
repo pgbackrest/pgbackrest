@@ -361,6 +361,15 @@ option:
     command-role:
       main: {}
 
+  report:
+    type: boolean
+    internal: true
+    default: false
+    command:
+      check: {}
+    command-role:
+      main: {}
+
   stanza:
     type: string
     command:

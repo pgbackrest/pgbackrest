@@ -2131,6 +2131,18 @@
 
                     <!-- Note, linking to the User Guide is limited since it can cause a cyclical reference -->
                 </text>
+
+                <option-list>
+                    <option id="report" name="Report">
+                        <summary>Generate a check report.</summary>
+
+                        <text>
+                            <p>Generate a report based on the results of the check command.</p>
+                        </text>
+
+                        <example>y</example>
+                    </option>
+                </option-list>
             </command>
 
             <command id="expire" name="Expire">
