@@ -20,6 +20,7 @@ Constructors
 typedef struct HttpQueryNewParam
 {
     VAR_PARAM_HEADER;
+    const KeyValue *kv;                                                              // Initial query key/value list
     const StringList *redactList;                                                    // List of keys to redact values for
 } HttpQueryNewParam;
 

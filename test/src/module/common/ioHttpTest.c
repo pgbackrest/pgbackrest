@@ -183,6 +183,11 @@ testRun(void)
         TEST_RESULT_Z(logBuf, "{a/: '+b', c: 'd='}", "check log");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("new query from kv");
+
+        TEST_RESULT_STR_Z(httpQueryRenderP(httpQueryNewP(.kv = query->kv)), "key1=value%201%3F&key2=value2a", "new query");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("merge queries");
 
         TEST_RESULT_STR_Z(

@@ -22,6 +22,7 @@ FN_EXTERN HttpQuery *
 httpQueryNew(HttpQueryNewParam param)
 {
     FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(KEY_VALUE, param.kv);
         FUNCTION_TEST_PARAM(STRING_LIST, param.redactList);
     FUNCTION_TEST_END();
 
@@ -29,7 +30,7 @@ httpQueryNew(HttpQueryNewParam param)
     {
         *this = (HttpQuery)
         {
-            .kv = kvNew(),
+            .kv = param.kv != NULL ? kvDup(param.kv) : kvNew(),
             .redactList = strLstDup(param.redactList),
         };
     }

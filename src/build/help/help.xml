@@ -1127,6 +1127,18 @@
                         <example>9000</example>
                     </config-key>
 
+                    <config-key id="repo-storage-tag" name="Repository Storage Tag(s)">
+                        <summary>Repository storage tag(s).</summary>
+
+                        <text>
+                            <p>Specify tags that will be added to objects when the repository is an object store (e.g. S3). The option can be repeated to add multiple tags.</p>
+
+                            <p>There is no provision in <backrest/> to modify these tags so be sure to set them correctly before running <cmd>stanza-create</cmd> to ensure uniform tags across the entire repository.</p>
+                        </text>
+
+                        <example>key1=value1</example>
+                    </config-key>
+
                     <config-key id="repo-storage-upload-chunk-size" name="Repository Storage Upload Chunk Size">
                         <summary>Repository storage upload chunk size.</summary>
 
