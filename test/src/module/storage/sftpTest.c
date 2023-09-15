@@ -835,8 +835,6 @@ testRun(void)
                 .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpHostKeyCheckType, repoIdx),
                 .sftpKnownHosts = strLstNewVarLst(cfgOptionIdxLst(cfgOptRepoSftpKnownHost, repoIdx))),
             "new storage (defaults)");
-        TEST_RESULT_LOG(
-            "P00   WARN: host key checking disabled (repo-sftp-host-key-check-type=none), connections are not secure!");
 
         // Free context, otherwise callbacks to storageSftpLibSsh2SessionFreeResource() accumulate
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));

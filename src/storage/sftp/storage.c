@@ -1142,11 +1142,7 @@ storageSftpNew(
                     fingerprint, strZ(param.hostFingerprint));
             }
         }
-        else if (param.sftpStrictHostKeyChecking == SFTP_STRICT_HOSTKEY_CHECKING_NONE)
-        {
-            LOG_WARN_FMT("host key checking disabled (repo-sftp-host-key-check-type=none), connections are not secure!");
-        }
-        else
+        else if (param.sftpStrictHostKeyChecking != SFTP_STRICT_HOSTKEY_CHECKING_NONE)
         {
             // Init the known host collection
             LIBSSH2_KNOWNHOSTS *const knownHostsList = libssh2_knownhost_init(this->session);
