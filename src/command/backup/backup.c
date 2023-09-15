@@ -2552,6 +2552,12 @@ cmdBackup(void)
         // Check if there is a prior manifest when backup type is diff/incr
         Manifest *const manifestPrior = backupBuildIncrPrior(infoBackup);
 
+        // Remove files that would not be in a bundle
+        // !!!
+        if (cfgOptionStrId(cfgOptType) == backupTypeFull)
+        {
+        }
+
         // Start the backup
         const BackupStartResult backupStartResult = backupStart(backupData);
 
