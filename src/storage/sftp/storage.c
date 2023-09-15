@@ -39,7 +39,7 @@ struct StorageSftp
 };
 
 /***********************************************************************************************************************************
-Return known host key type based on host key type. LIBSSH_ constants defined in libssh2.h
+Return known host key type based on host key type
 ***********************************************************************************************************************************/
 static int
 storageSftpKnownHostKeyType(const int hostKeyType)
@@ -170,7 +170,7 @@ storageSftpUpdateKnownHostsFile(
                 // Missing known_hosts file will return LIBSSH2_ERROR_FILE. Possibly issues other than missing may return this.
                 if (rc == LIBSSH2_ERROR_FILE)
                 {
-                    // If user's known_hosts file is non-existant, create an empty one for libssh2 to operate on.
+                    // If user's known_hosts file is non-existant, create an empty one for libssh2 to operate on
                     const Storage *const sshStorage =
                         storagePosixNewP(
                             strNewFmt("%s%s", strZ(userHome()), "/.ssh"), .modeFile = 0600, .modePath = 0700, .write = true);
@@ -183,7 +183,7 @@ storageSftpUpdateKnownHostsFile(
                 }
             }
 
-            // If the user's known_hosts file was read successfully, add the host to the collection and rewrite the file.
+            // If the user's known_hosts file was read successfully, add the host to the collection and rewrite the file
             if (rc >= 0)
             {
                 // Check for a supported known host key type
@@ -1202,7 +1202,7 @@ storageSftpNew(
                     // "strict", never automatically add host keys to the ~/.ssh/known_hosts file, and refuse to connect to hosts
                     // whose host key has changed. This option forces the user to manually add all new hosts. If this flag is set to
                     // "accept-new" then automatically add new host keys to the user known hosts files, but do not permit
-                    // connections to hosts with changed host keys. If this flag is set to "none" then do no host key checking.
+                    // connections to hosts with changed host keys.
                     switch (param.hostKeyCheckType)
                     {
                         case SFTP_STRICT_HOSTKEY_CHECKING_STRICT:
