@@ -1142,6 +1142,10 @@ storageSftpNew(
                     fingerprint, strZ(param.hostFingerprint));
             }
         }
+        else if (param.sftpStrictHostKeyChecking == SFTP_STRICT_HOSTKEY_CHECKING_NO)
+        {
+            LOG_WARN_FMT("host key checking disabled (repo-sftp-strict-host-key-checking=no), connections are not secure!");
+        }
         else
         {
             // Init the known host collection
@@ -1235,32 +1239,6 @@ storageSftpNew(
                             }
                             else
                                 storageSftpUpdateKnownHostsFile(this, hostKeyType, host, hostKey, hostKeyLen);
-                            break;
-                        }
-
-                        default:
-                        {
-                            ASSERT(param.sftpStrictHostKeyChecking == SFTP_STRICT_HOSTKEY_CHECKING_NO);
-
-                            // When set to no, add key to the user's known_hosts file if host key is new, warn and continue when
-                            // there is a mismatch, error on failure
-                            if (rc == LIBSSH2_KNOWNHOST_CHECK_NOTFOUND)
-                                storageSftpUpdateKnownHostsFile(this, hostKeyType, host, hostKey, hostKeyLen);
-                            else if (rc == LIBSSH2_KNOWNHOST_CHECK_MISMATCH)
-                            {
-                                LOG_WARN_FMT(
-                                    "known hosts failure: '%s' %s [%d]: strict checking [%s]", strZ(host), matchFailMsg, rc,
-                                    strZ(strIdToStr(param.sftpStrictHostKeyChecking)));
-                            }
-                            else
-                            {
-                                // Free the known hosts list
-                                libssh2_knownhost_free(knownHostsList);
-
-                                THROW_FMT(
-                                    ServiceError, "known hosts failure: '%s': %s [%d]: strict checking [%s]", strZ(host),
-                                    matchFailMsg, rc, strZ(strIdToStr(param.sftpStrictHostKeyChecking)));
-                            }
                             break;
                         }
                     }

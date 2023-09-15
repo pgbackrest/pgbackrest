@@ -145,7 +145,7 @@ testRun(void)
             ServiceError, "libssh2 handshake failed [-1]");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("handshake failure");
+        TEST_TITLE("handshake failure - timeout during libssh2 handshake");
 
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
@@ -792,21 +792,13 @@ testRun(void)
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("libssh2_knownhost_init WARN init fail for user's known_hosts file for update, sftpStrictHostKeyChecking = no");
+        TEST_TITLE("knownhost_init WARN host key checking disabled, unsecure connections, sftpStrictHostKeyChecking = no");
 
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
             {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = LIBSSH2_ERROR_NONE},
-            {.function = HRNLIBSSH2_KNOWNHOST_INIT},
-            {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]",
-             .resultInt = LIBSSH2_ERROR_NONE},
-            {.function = HRNLIBSSH2_SESSION_HOSTKEY, .len = 20, .type = LIBSSH2_HOSTKEY_TYPE_RSA, .resultZ = HOSTKEY},
-            {.function = HRNLIBSSH2_KNOWNHOST_CHECKP, .param = "[\"localhost\",22,\"" HOSTKEY "\",20,65537]",
-             .resultInt = LIBSSH2_KNOWNHOST_CHECK_NOTFOUND},
-            {.function = HRNLIBSSH2_KNOWNHOST_INIT, .resultNull = true},
-            {.function = HRNLIBSSH2_SESSION_LAST_ERROR, .errMsg = (char *)"Failed to open file", .resultInt = LIBSSH2_ERROR_FILE},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
              .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",\"" KEYPUB_CSTR "\",\"" KEYPRIV_CSTR "\",null]",
              .resultInt = 0},
@@ -845,16 +837,76 @@ testRun(void)
                 .sftpKnownHosts = strLstNewVarLst(cfgOptionIdxLst(cfgOptRepoSftpKnownHost, repoIdx))),
             "new storage (defaults)");
         TEST_RESULT_LOG(
-            "P00   WARN: host 'localhost' not found in known hosts files, attempting to add host to "
-            "'/home/" TEST_USER "/.ssh/known_hosts'\n"
-            "P00   WARN: libssh2_knownhost_init failed for '/home/" TEST_USER "/.ssh/known_hosts' for update: libssh2 errno "
-            "[-16] Failed to open file");
+            "P00   WARN: host key checking disabled (repo-sftp-strict-host-key-checking=no), connections are not secure!");
 
         // Free context, otherwise callbacks to storageSftpLibSsh2SessionFreeResource() accumulate
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("knownhost_init WARN unable to read missing user's known_host file for update - sftpStrictHostKeyChecking = no");
+        TEST_TITLE("knownhost_init WARN init fail for user's known_hosts file for update, sftpStrictHostKeyChecking = accept-new");
+
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
+        {
+            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
+            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_KNOWNHOST_INIT},
+            {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]",
+             .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_SESSION_HOSTKEY, .len = 20, .type = LIBSSH2_HOSTKEY_TYPE_RSA, .resultZ = HOSTKEY},
+            {.function = HRNLIBSSH2_KNOWNHOST_CHECKP, .param = "[\"localhost\",22,\"" HOSTKEY "\",20,65537]",
+             .resultInt = LIBSSH2_KNOWNHOST_CHECK_NOTFOUND},
+            {.function = HRNLIBSSH2_KNOWNHOST_INIT, .resultNull = true},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERROR, .resultInt = LIBSSH2_ERROR_ALLOC,
+             .errMsg = (char *)"Unable to allocate memory for known-hosts collection"},
+            {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
+             .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",\"" KEYPUB_CSTR "\",\"" KEYPRIV_CSTR "\",null]",
+             .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_INIT},
+            HRNLIBSSH2_MACRO_SHUTDOWN()
+        });
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostUser, TEST_USER);
+        hrnCfgArgRawZ(argList, cfgOptRepoType, "sftp");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, KEYPRIV_CSTR);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyFile, KEYPUB_CSTR);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpKnownHost, KNOWNHOSTS_FILE_CSTR);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpStrictHostKeyCheck, "accept-new");
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+
+        storageTest = NULL;
+
+        TEST_ASSIGN(
+            storageTest,
+            storageSftpNewP(
+                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), cfgOptionIdxStr(cfgOptRepoSftpHost, repoIdx),
+                cfgOptionIdxUInt(cfgOptRepoSftpHostPort, repoIdx), cfgOptionIdxStr(cfgOptRepoSftpHostUser, repoIdx),
+                cfgOptionUInt64(cfgOptIoTimeout), cfgOptionIdxStr(cfgOptRepoSftpPrivateKeyFile, repoIdx),
+                cfgOptionIdxStrId(cfgOptRepoSftpHostKeyHashType, repoIdx), .modeFile = STORAGE_MODE_FILE_DEFAULT,
+                .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
+                .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
+                .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
+                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyCheck, repoIdx),
+                .sftpKnownHosts = strLstNewVarLst(cfgOptionIdxLst(cfgOptRepoSftpKnownHost, repoIdx))),
+            "new storage (defaults)");
+        TEST_RESULT_LOG(
+            "P00   WARN: host 'localhost' not found in known hosts files, attempting to add host to "
+            "'/home/" TEST_USER "/.ssh/known_hosts'\n"
+            "P00   WARN: libssh2_knownhost_init failed for '/home/" TEST_USER "/.ssh/known_hosts' for update: libssh2 errno [-6] "
+            "Unable to allocate memory for known-hosts collection");
+
+        // Free context, otherwise callbacks to storageSftpLibSsh2SessionFreeResource() accumulate
+        memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("knownhost_init WARN missing user's known_host file for update - sftpStrictHostKeyChecking = accept-new");
 
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
@@ -879,6 +931,21 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_INIT},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostUser, TEST_USER);
+        hrnCfgArgRawZ(argList, cfgOptRepoType, "sftp");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, KEYPRIV_CSTR);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyFile, KEYPUB_CSTR);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpKnownHost, KNOWNHOSTS_FILE_CSTR);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpStrictHostKeyCheck, "accept-new");
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         storageTest = NULL;
 
@@ -905,7 +972,7 @@ testRun(void)
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("knownhost_init WARN unable to read user's known_host file for update - sftpStrictHostKeyChecking = no");
+        TEST_TITLE("knownhost_init WARN unable to read user's known_host file for update - sftpStrictHostKeyChecking = accept-new");
 
         // Create known_hosts file so it can be found by storageExistsP(), i.e. file exists but is unreadable
         HRN_SYSTEM_FMT("touch %s", strZ(strNewFmt("%s/.ssh/known_hosts", strZ(userHome()))));
@@ -1012,7 +1079,7 @@ testRun(void)
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("sftp session init success - sftpStrictHostKeyChecking = no - add host to user's known_hosts file RSA");
+        TEST_TITLE("sftp session init success - sftpStrictHostKeyChecking = accept-new - add host to user's known_hosts file RSA");
 
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
@@ -1059,7 +1126,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
         hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, KEYPRIV_CSTR);
         hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyFile, KEYPUB_CSTR);
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpStrictHostKeyCheck, "no");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpStrictHostKeyCheck, "accept-new");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         storageTest = NULL;
@@ -1085,7 +1152,7 @@ testRun(void)
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("sftp session init success - sftpStrictHostKeyChecking = no - add host to user's known_hosts file DSS");
+        TEST_TITLE("sftp session init success - sftpStrictHostKeyChecking = accept-new - add host to user's known_hosts file DSS");
 
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
@@ -1142,7 +1209,7 @@ testRun(void)
 
 #ifdef LIBSSH2_HOSTKEY_TYPE_ECDSA_256
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("sftp session init success - sftpStrictHostKeyChecking = no - add host to user's known_hosts file ECDSA_256");
+        TEST_TITLE("sftp session init success - sftpStrictHostKeyChecking = accept-new - add host to user's known_hosts ECDSA_256");
 
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
@@ -1200,7 +1267,7 @@ testRun(void)
 
 #ifdef LIBSSH2_HOSTKEY_TYPE_ECDSA_384
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("sftp session init success - sftpStrictHostKeyChecking = no - add host to user's known_hosts file ECDSA_384");
+        TEST_TITLE("sftp session init success - sftpStrictHostKeyChecking = accept_new - add host to user's known_hosts ECDSA_384");
 
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
@@ -1258,7 +1325,7 @@ testRun(void)
 
 #ifdef LIBSSH2_HOSTKEY_TYPE_ECDSA_521
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("sftp session init success - sftpStrictHostKeyChecking = no - add host to user's known_hosts file ECDSA_521");
+        TEST_TITLE("sftp session init success - sftpStrictHostKeyChecking = accept-new - add host to user's known_hosts ECDSA_521");
 
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
@@ -1316,7 +1383,7 @@ testRun(void)
 
 #ifdef LIBSSH2_HOSTKEY_TYPE_ED25519
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("sftp session init success - sftpStrictHostKeyChecking = no - add host to user's known_hosts file ED25519");
+        TEST_TITLE("sftp session init success - sftpStrictHostKeyChecking = accept-new - add host to user's known_hosts ED25519");
 
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
@@ -1373,7 +1440,7 @@ testRun(void)
 #endif
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("sftp session init WARN - sftpStrictHostKeyChecking = no - fail to write user's known_hosts file");
+        TEST_TITLE("sftp session init WARN - sftpStrictHostKeyChecking = accept-new - fail to write user's known_hosts file");
 
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
@@ -1429,7 +1496,7 @@ testRun(void)
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("sftp session init WARN - sftpStrictHostKeyChecking = no - add to user's known_hosts file, unknown key type");
+        TEST_TITLE("sftp session init WARN - sftpStrictHostKeyChecking = accept-new, add to user's known_hosts - unknown key type");
 
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
@@ -1481,7 +1548,7 @@ testRun(void)
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("sftp session init WARN - sftpStrictHostKeyChecking = no - add host to user's known_hosts failure");
+        TEST_TITLE("sftp session init WARN - sftpStrictHostKeyChecking = accept-new - add host to user's known_hosts failure");
 
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
@@ -1533,87 +1600,6 @@ testRun(void)
             "P00   WARN: pgBackRest failed to add 'localhost' to known_hosts internal list");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("knownhost_checkp failure LIBSSH2_KNOWNHOST_CHECK_MISMATCH sftpStrictHostKeyChecking = no");
-
-        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
-        {
-            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
-            {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
-            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = LIBSSH2_ERROR_NONE},
-            {.function = HRNLIBSSH2_KNOWNHOST_INIT},
-            {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]", .resultInt = 5},
-            {.function = HRNLIBSSH2_SESSION_HOSTKEY, .len = 20, .type = LIBSSH2_HOSTKEY_TYPE_RSA, .resultZ = HOSTKEY},
-            {.function = HRNLIBSSH2_KNOWNHOST_CHECKP, .param = "[\"localhost\",22,\"" HOSTKEY "\",20,65537]",
-             .resultInt = LIBSSH2_KNOWNHOST_CHECK_MISMATCH},
-            {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
-             .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",null,\"" KEYPRIV_CSTR "\",null]", .resultInt = 0},
-            {.function = HRNLIBSSH2_SFTP_INIT},
-            HRNLIBSSH2_MACRO_SHUTDOWN()
-        });
-
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
-        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
-        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH);
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostUser, TEST_USER);
-        hrnCfgArgRawZ(argList, cfgOptRepoType, "sftp");
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, KEYPRIV_CSTR);
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpKnownHost, KNOWNHOSTS_FILE_CSTR);
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpStrictHostKeyCheck, "no");
-        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
-
-        TEST_ASSIGN(
-            storageTest,
-            storageSftpNewP(
-                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), cfgOptionIdxStr(cfgOptRepoSftpHost, repoIdx),
-                cfgOptionIdxUInt(cfgOptRepoSftpHostPort, repoIdx), cfgOptionIdxStr(cfgOptRepoSftpHostUser, repoIdx),
-                cfgOptionUInt64(cfgOptIoTimeout), cfgOptionIdxStr(cfgOptRepoSftpPrivateKeyFile, repoIdx),
-                cfgOptionIdxStrId(cfgOptRepoSftpHostKeyHashType, repoIdx), .modeFile = STORAGE_MODE_FILE_DEFAULT,
-                .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
-                .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
-                .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyCheck, repoIdx),
-                .sftpKnownHosts = strLstNewVarLst(cfgOptionIdxLst(cfgOptRepoSftpKnownHost, repoIdx))),
-            "new storage (defaults)");
-        TEST_RESULT_LOG(
-            "P00   WARN: known hosts failure: 'localhost' mismatch in known hosts files: LIBSSH2_KNOWNHOST_CHECK_MISMATCH [1]: "
-            "strict checking [no]");
-
-        memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("knownhost_checkp failure LIBSSH2_KNOWNHOST_CHECK_FAILURE sftpStrictHostKeyChecking = no");
-
-        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
-        {
-            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
-            {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
-            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = LIBSSH2_ERROR_NONE},
-            {.function = HRNLIBSSH2_KNOWNHOST_INIT},
-            {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]", .resultInt = 5},
-            {.function = HRNLIBSSH2_SESSION_HOSTKEY, .len = 20, .type = LIBSSH2_HOSTKEY_TYPE_RSA, .resultZ = HOSTKEY},
-            {.function = HRNLIBSSH2_KNOWNHOST_CHECKP, .param = "[\"localhost\",22,\"" HOSTKEY "\",20,65537]",
-             .resultInt = LIBSSH2_KNOWNHOST_CHECK_FAILURE},
-            {.function = NULL},
-        });
-
-        TEST_ERROR(
-            storageSftpNewP(
-                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), cfgOptionIdxStr(cfgOptRepoSftpHost, repoIdx),
-                cfgOptionIdxUInt(cfgOptRepoSftpHostPort, repoIdx), cfgOptionIdxStr(cfgOptRepoSftpHostUser, repoIdx),
-                cfgOptionUInt64(cfgOptIoTimeout), cfgOptionIdxStr(cfgOptRepoSftpPrivateKeyFile, repoIdx),
-                cfgOptionIdxStrId(cfgOptRepoSftpHostKeyHashType, repoIdx), .modeFile = STORAGE_MODE_FILE_DEFAULT,
-                .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
-                .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
-                .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyCheck, repoIdx),
-                .sftpKnownHosts = strLstNewVarLst(cfgOptionIdxLst(cfgOptRepoSftpKnownHost, repoIdx))),
-            ServiceError, "known hosts failure: 'localhost': LIBSSH2_KNOWNHOST_CHECK_FAILURE [3]: strict checking [no]");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("knownhost_checkp failure LIBSSH2_KNOWNHOST_CHECK_FAILURE sftpStrictHostKeyChecking = accept-new");
@@ -1795,7 +1781,7 @@ testRun(void)
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("sftp session failure - libssh2_session_hostkey fail - sftpStrictHostKeyChecking = no");
+        TEST_TITLE("sftp session failure - libssh2_session_hostkey fail - sftpStrictHostKeyChecking = accept-new");
 
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
@@ -1820,7 +1806,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
         hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, KEYPRIV_CSTR);
         hrnCfgArgRawZ(argList, cfgOptRepoSftpKnownHost, KNOWNHOSTS_FILE_CSTR);
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpStrictHostKeyCheck, "no");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpStrictHostKeyCheck, "accept-new");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         TEST_ERROR(
@@ -1836,63 +1822,6 @@ testRun(void)
                 .sftpKnownHosts = strLstNewVarLst(cfgOptionIdxLst(cfgOptRepoSftpKnownHost, repoIdx))),
             ServiceError,
             "libssh2_session_hostkey failed to get hostkey: libssh2 error [-7]");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("sftp session init success with sftpStrictHostKeyChecking = no");
-
-        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
-        {
-            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
-            {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
-            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = LIBSSH2_ERROR_NONE},
-            {.function = HRNLIBSSH2_KNOWNHOST_INIT},
-            {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]", .resultInt = 5},
-            {.function = HRNLIBSSH2_SESSION_HOSTKEY, .len = 20, .type = LIBSSH2_HOSTKEY_TYPE_RSA, .resultZ = HOSTKEY},
-            {.function = HRNLIBSSH2_KNOWNHOST_CHECKP, .param = "[\"localhost\",22,\"" HOSTKEY "\",20,65537]",
-             .resultInt = LIBSSH2_KNOWNHOST_CHECK_MISMATCH},
-            {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
-             .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",\"" KEYPUB_CSTR "\",\"" KEYPRIV_CSTR "\",null]", .resultInt = 0},
-            {.function = HRNLIBSSH2_SFTP_INIT},
-            HRNLIBSSH2_MACRO_SHUTDOWN()
-        });
-
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
-        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
-        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH);
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostUser, TEST_USER);
-        hrnCfgArgRawZ(argList, cfgOptRepoType, "sftp");
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, KEYPRIV_CSTR);
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyFile, KEYPUB_CSTR);
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpKnownHost, KNOWNHOSTS_FILE_CSTR);
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpStrictHostKeyCheck, "no");
-        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
-
-        storageTest = NULL;
-
-        TEST_ASSIGN(
-            storageTest,
-            storageSftpNewP(
-                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), cfgOptionIdxStr(cfgOptRepoSftpHost, repoIdx),
-                cfgOptionIdxUInt(cfgOptRepoSftpHostPort, repoIdx), cfgOptionIdxStr(cfgOptRepoSftpHostUser, repoIdx),
-                cfgOptionUInt64(cfgOptIoTimeout), cfgOptionIdxStr(cfgOptRepoSftpPrivateKeyFile, repoIdx),
-                cfgOptionIdxStrId(cfgOptRepoSftpHostKeyHashType, repoIdx), .modeFile = STORAGE_MODE_FILE_DEFAULT,
-                .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
-                .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
-                .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyCheck, repoIdx),
-                .sftpKnownHosts = strLstNewVarLst(cfgOptionIdxLst(cfgOptRepoSftpKnownHost, repoIdx))),
-            "new storage (defaults)");
-        TEST_RESULT_BOOL(storageTest->write, false, "check write");
-        TEST_RESULT_LOG(
-            "P00   WARN: known hosts failure: 'localhost' mismatch in known hosts files: LIBSSH2_KNOWNHOST_CHECK_MISMATCH [1]: "
-            "strict checking [no]");
-
-        // Free context, otherwise callbacks to storageSftpLibSsh2SessionFreeResource() accumulate
-        memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("sftp session init success timeout");
@@ -2028,7 +1957,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, KEYPRIV_CSTR);
         hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyFile, KEYPUB_CSTR);
         hrnCfgArgRawZ(argList, cfgOptRepoSftpKnownHost, "~/.ssh/known_hosts");
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpStrictHostKeyCheck, "no");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpStrictHostKeyCheck, "accept-new");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         TEST_ASSIGN(
@@ -5788,7 +5717,7 @@ testRun(void)
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("put - file with contents - timeout EAGAIN libssh2_sftp_write");
+        TEST_TITLE("put - file with contents - error other than EAGAIN libssh2_sftp_write");
 
         failBuffer = BUFSTRDEF("FAIL\n");
 
@@ -7120,7 +7049,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
         hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
         hrnCfgArgRawZ(argList, cfgOptRepoSftpKnownHost, KNOWNHOSTS_FILE_CSTR);
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpStrictHostKeyCheck, "no");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpStrictHostKeyCheck, "accept-new");
         hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, "   ~/.ssh/id_rsa");
         hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyFile, "               ~/.ssh/id_rsa.pub");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
