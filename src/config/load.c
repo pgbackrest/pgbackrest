@@ -389,38 +389,52 @@ cfgLoadUpdateOption(void)
         }
     }
 
-    // Error if repo-sftp-strict-host-key-check is explicitly set to anything other than fingerprint and repo-sftp-host-fingerprint
+    // Error if repo-sftp--host-key-check-type is explicitly set to anything other than fingerprint and repo-sftp-host-fingerprint
     // is also specified. For backward compatibility we need to allow repo-sftp-host-fingerprint when
-    // repo-sftp-strict-host-key-check defaults to yes, but emit a warning to let the user know to change the configuration. Also
-    // set repo-sftp-strict-host-key-check=fingerprint so other code does not need to know about this exception.
+    // repo-sftp-host-key-check-type defaults to yes, but emit a warning to let the user know to change the configuration. Also
+    // set repo-sftp-host-key-check-type=fingerprint so other code does not need to know about this exception.
     for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
     {
-        if (cfgOptionIdxTest(cfgOptRepoSftpHostFingerprint, repoIdx))
+        if (cfgOptionIdxTest(cfgOptRepoSftpHostKeyCheckType, repoIdx))
         {
-            if (cfgOptionIdxSource(cfgOptRepoSftpStrictHostKeyCheck, repoIdx) == cfgSourceDefault)
+            if (cfgOptionIdxTest(cfgOptRepoSftpHostFingerprint, repoIdx))
             {
-                LOG_WARN_FMT(
-                    "option '%s' without option '%s' = '" CFGOPTVAL_REPO_SFTP_STRICT_HOST_KEY_CHECK_FINGERPRINT_Z "' is"
-                    " deprecated\n"
-                    "HINT: set option '%s=" CFGOPTVAL_REPO_SFTP_STRICT_HOST_KEY_CHECK_FINGERPRINT_Z "'",
-                    cfgOptionIdxName(cfgOptRepoSftpHostFingerprint, repoIdx),
-                    cfgOptionIdxName(cfgOptRepoSftpStrictHostKeyCheck, repoIdx),
-                    cfgOptionIdxName(cfgOptRepoSftpStrictHostKeyCheck, repoIdx));
+                if (cfgOptionIdxSource(cfgOptRepoSftpHostKeyCheckType, repoIdx) == cfgSourceDefault)
+                {
+                    LOG_WARN_FMT(
+                        "option '%s' without option '%s' = '" CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_FINGERPRINT_Z "' is"
+                        " deprecated\n"
+                        "HINT: set option '%s=" CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_FINGERPRINT_Z "'",
+                        cfgOptionIdxName(cfgOptRepoSftpHostFingerprint, repoIdx),
+                        cfgOptionIdxName(cfgOptRepoSftpHostKeyCheckType, repoIdx),
+                        cfgOptionIdxName(cfgOptRepoSftpHostKeyCheckType, repoIdx));
 
-                cfgOptionIdxSet(
-                    cfgOptRepoSftpStrictHostKeyCheck, repoIdx, cfgSourceDefault,
-                    VARSTRZ(CFGOPTVAL_REPO_SFTP_STRICT_HOST_KEY_CHECK_FINGERPRINT_Z));
+                    cfgOptionIdxSet(
+                        cfgOptRepoSftpHostKeyCheckType, repoIdx, cfgSourceDefault,
+                        VARSTRZ(CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_FINGERPRINT_Z));
+                }
+                else
+                {
+                    if (cfgOptionIdxStrId(cfgOptRepoSftpHostKeyCheckType, repoIdx) !=
+                        CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_FINGERPRINT)
+                    {
+                        THROW_FMT(
+                            OptionInvalidError,
+                            "option '%s' not valid without option '%s' = '" CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_FINGERPRINT_Z
+                            "'",
+                            cfgOptionIdxName(cfgOptRepoSftpHostFingerprint, repoIdx),
+                            cfgOptionIdxName(cfgOptRepoSftpHostKeyCheckType, repoIdx));
+                    }
+                }
             }
             else
             {
-                if (cfgOptionIdxStrId(cfgOptRepoSftpStrictHostKeyCheck, repoIdx) !=
-                    CFGOPTVAL_REPO_SFTP_STRICT_HOST_KEY_CHECK_FINGERPRINT)
+                if (cfgOptionIdxStrId(cfgOptRepoSftpHostKeyCheckType, repoIdx) ==
+                    CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_FINGERPRINT)
                 {
                     THROW_FMT(
-                        OptionInvalidError,
-                        "option '%s' not valid without option '%s' = '" CFGOPTVAL_REPO_SFTP_STRICT_HOST_KEY_CHECK_FINGERPRINT_Z "'",
-                        cfgOptionIdxName(cfgOptRepoSftpHostFingerprint, repoIdx),
-                        cfgOptionIdxName(cfgOptRepoSftpStrictHostKeyCheck, repoIdx));
+                        OptionRequiredError, "%s command requires option: %s", cfgCommandName(),
+                        cfgOptionIdxName(cfgOptRepoSftpHostFingerprint, repoIdx));
                 }
             }
         }

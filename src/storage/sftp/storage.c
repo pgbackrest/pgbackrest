@@ -1142,9 +1142,9 @@ storageSftpNew(
                     fingerprint, strZ(param.hostFingerprint));
             }
         }
-        else if (param.sftpStrictHostKeyChecking == SFTP_STRICT_HOSTKEY_CHECKING_NO)
+        else if (param.sftpStrictHostKeyChecking == SFTP_STRICT_HOSTKEY_CHECKING_NONE)
         {
-            LOG_WARN_FMT("host key checking disabled (repo-sftp-strict-host-key-checking=no), connections are not secure!");
+            LOG_WARN_FMT("host key checking disabled (repo-sftp-host-key-check-type=none), connections are not secure!");
         }
         else
         {
@@ -1213,19 +1213,21 @@ storageSftpNew(
                     // the user known hosts files and allow connections to hosts with changed hostkeys to proceed.
                     switch (param.sftpStrictHostKeyChecking)
                     {
-                        case SFTP_STRICT_HOSTKEY_CHECKING_YES:
+                        case SFTP_STRICT_HOSTKEY_CHECKING_STRICT:
                         {
                             // Throw an error when set to yes and we have any result other than match
                             libssh2_knownhost_free(knownHostsList);
 
                             THROW_FMT(
-                                ServiceError, "known hosts failure: '%s' %s [%d]: strict checking [%s]", strZ(host), matchFailMsg,
+                                ServiceError, "known hosts failure: '%s' %s [%d]: check type [%s]", strZ(host), matchFailMsg,
                                 rc, strZ(strIdToStr(param.sftpStrictHostKeyChecking)));
                             break;
                         }
 
-                        case SFTP_STRICT_HOSTKEY_CHECKING_ACCEPT_NEW:
+                        default:
                         {
+                            ASSERT(param.sftpStrictHostKeyChecking == SFTP_STRICT_HOSTKEY_CHECKING_ACCEPT_NEW);
+
                             // Throw an error when set to accept-new and match fails or mismatches else add the new host key to the
                             // user's known_hosts file
                             if (rc == LIBSSH2_KNOWNHOST_CHECK_MISMATCH || rc == LIBSSH2_KNOWNHOST_CHECK_FAILURE)
@@ -1234,8 +1236,8 @@ storageSftpNew(
                                 libssh2_knownhost_free(knownHostsList);
 
                                 THROW_FMT(
-                                    ServiceError, "known hosts failure: '%s': %s [%d]: strict checking [%s]", strZ(host),
-                                    matchFailMsg, rc, strZ(strIdToStr(param.sftpStrictHostKeyChecking)));
+                                    ServiceError, "known hosts failure: '%s': %s [%d]: check type [%s]", strZ(host), matchFailMsg,
+                                    rc, strZ(strIdToStr(param.sftpStrictHostKeyChecking)));
                             }
                             else
                                 storageSftpUpdateKnownHostsFile(this, hostKeyType, host, hostKey, hostKeyLen);

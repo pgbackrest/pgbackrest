@@ -269,21 +269,21 @@ Option value constants
 #define CFGOPTVAL_REPO_S3_URI_STYLE_PATH                            STRID5("path", 0x450300)
 #define CFGOPTVAL_REPO_S3_URI_STYLE_PATH_Z                          "path"
 
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_ACCEPT_NEW          STRID5("accept-new", 0x2e576e9028c610)
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_ACCEPT_NEW_Z        "accept-new"
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_FINGERPRINT         STRID5("fingerprint", 0x51c9942453b9260)
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_FINGERPRINT_Z       "fingerprint"
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_NONE                STRID5("none", 0x2b9ee0)
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_NONE_Z              "none"
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_STRICT              STRID5("strict", 0x2834ca930)
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_STRICT_Z            "strict"
+
 #define CFGOPTVAL_REPO_SFTP_HOST_KEY_HASH_TYPE_MD5                  STRID5("md5", 0x748d0)
 #define CFGOPTVAL_REPO_SFTP_HOST_KEY_HASH_TYPE_MD5_Z                "md5"
 #define CFGOPTVAL_REPO_SFTP_HOST_KEY_HASH_TYPE_SHA1                 STRID6("sha1", 0x7412131)
 #define CFGOPTVAL_REPO_SFTP_HOST_KEY_HASH_TYPE_SHA1_Z               "sha1"
 #define CFGOPTVAL_REPO_SFTP_HOST_KEY_HASH_TYPE_SHA256               STRID5("sha256", 0x3dde05130)
 #define CFGOPTVAL_REPO_SFTP_HOST_KEY_HASH_TYPE_SHA256_Z             "sha256"
-
-#define CFGOPTVAL_REPO_SFTP_STRICT_HOST_KEY_CHECK_ACCEPT_NEW        STRID5("accept-new", 0x2e576e9028c610)
-#define CFGOPTVAL_REPO_SFTP_STRICT_HOST_KEY_CHECK_ACCEPT_NEW_Z      "accept-new"
-#define CFGOPTVAL_REPO_SFTP_STRICT_HOST_KEY_CHECK_FINGERPRINT       STRID5("fingerprint", 0x51c9942453b9260)
-#define CFGOPTVAL_REPO_SFTP_STRICT_HOST_KEY_CHECK_FINGERPRINT_Z     "fingerprint"
-#define CFGOPTVAL_REPO_SFTP_STRICT_HOST_KEY_CHECK_NO                STRID5("no", 0x1ee0)
-#define CFGOPTVAL_REPO_SFTP_STRICT_HOST_KEY_CHECK_NO_Z              "no"
-#define CFGOPTVAL_REPO_SFTP_STRICT_HOST_KEY_CHECK_YES               STRID5("yes", 0x4cb90)
-#define CFGOPTVAL_REPO_SFTP_STRICT_HOST_KEY_CHECK_YES_Z             "yes"
 
 #define CFGOPTVAL_REPO_TYPE_AZURE                                   STRID5("azure", 0x5957410)
 #define CFGOPTVAL_REPO_TYPE_AZURE_Z                                 "azure"
@@ -519,6 +519,7 @@ typedef enum
     cfgOptRepoS3UriStyle,
     cfgOptRepoSftpHost,
     cfgOptRepoSftpHostFingerprint,
+    cfgOptRepoSftpHostKeyCheckType,
     cfgOptRepoSftpHostKeyHashType,
     cfgOptRepoSftpHostPort,
     cfgOptRepoSftpHostUser,
@@ -526,7 +527,6 @@ typedef enum
     cfgOptRepoSftpPrivateKeyFile,
     cfgOptRepoSftpPrivateKeyPassphrase,
     cfgOptRepoSftpPublicKeyFile,
-    cfgOptRepoSftpStrictHostKeyCheck,
     cfgOptRepoStorageCaFile,
     cfgOptRepoStorageCaPath,
     cfgOptRepoStorageHost,
