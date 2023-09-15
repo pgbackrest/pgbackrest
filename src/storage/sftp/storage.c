@@ -502,21 +502,21 @@ storageSftpInfo(THIS_VOID, const String *const file, const StorageInfoLevel leve
 }
 
 /***********************************************************************************************************************************
-Build known hosts file list. If sftpKnownHosts is empty build the default file list, otherwise build the list provided.
-sftpKnownHosts requires full path and/or leading tilde path entries.
+Build known hosts file list. If knownHosts is empty build the default file list, otherwise build the list provided. knownHosts
+requires full path and/or leading tilde path entries.
 ***********************************************************************************************************************************/
 static StringList *
-storageSftpKnownHostsFilesList(const StringList *const sftpKnownHosts)
+storageSftpKnownHostsFilesList(const StringList *const knownHosts)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STRING_LIST, sftpKnownHosts);
+        FUNCTION_LOG_PARAM(STRING_LIST, knownHosts);
     FUNCTION_LOG_END();
 
     StringList *const result = strLstNew();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        if (strLstEmpty(sftpKnownHosts))
+        if (strLstEmpty(knownHosts))
         {
             // Create default file list
             strLstAddFmt(result, "%s%s", strZ(userHome()), "/.ssh/known_hosts");
@@ -527,10 +527,10 @@ storageSftpKnownHostsFilesList(const StringList *const sftpKnownHosts)
         else
         {
             // Process the known host list entries and add them to the result list
-            for (unsigned int listIdx = 0; listIdx < strLstSize(sftpKnownHosts); listIdx++)
+            for (unsigned int listIdx = 0; listIdx < strLstSize(knownHosts); listIdx++)
             {
                 // Get the trimmed file path and add it to the result list
-                const String *const filePath = strTrim(strLstGet(sftpKnownHosts, listIdx));
+                const String *const filePath = strTrim(strLstGet(knownHosts, listIdx));
 
                 if (strBeginsWithZ(filePath, "~/"))
                 {
@@ -1035,13 +1035,13 @@ storageSftpNew(
         FUNCTION_LOG_PARAM(STRING_ID, hostKeyHashType);
         FUNCTION_LOG_PARAM(STRING, param.keyPub);
         FUNCTION_TEST_PARAM(STRING, param.keyPassphrase);
+        FUNCTION_LOG_PARAM(STRING_ID, param.hostKeyCheckType);
         FUNCTION_LOG_PARAM(STRING, param.hostFingerprint);
+        FUNCTION_LOG_PARAM(STRING_LIST, param.knownHosts);
         FUNCTION_LOG_PARAM(MODE, param.modeFile);
         FUNCTION_LOG_PARAM(MODE, param.modePath);
         FUNCTION_LOG_PARAM(BOOL, param.write);
         FUNCTION_LOG_PARAM(FUNCTIONP, param.pathExpressionFunction);
-        FUNCTION_LOG_PARAM(STRING_LIST, param.sftpKnownHosts);
-        FUNCTION_LOG_PARAM(STRING_ID, param.sftpStrictHostKeyChecking);
     FUNCTION_LOG_END();
 
     ASSERT(path != NULL);
@@ -1119,7 +1119,7 @@ storageSftpNew(
         }
 
         // Compare fingerprint if provided else check known hosts files for a match
-        if (param.sftpStrictHostKeyChecking == SFTP_STRICT_HOSTKEY_CHECKING_FINGERPRINT)
+        if (param.hostKeyCheckType == SFTP_STRICT_HOSTKEY_CHECKING_FINGERPRINT)
         {
             const char *const binaryFingerprint = libssh2_hostkey_hash(this->session, hashType);
 
@@ -1142,7 +1142,7 @@ storageSftpNew(
                     fingerprint, strZ(param.hostFingerprint));
             }
         }
-        else if (param.sftpStrictHostKeyChecking != SFTP_STRICT_HOSTKEY_CHECKING_NONE)
+        else if (param.hostKeyCheckType != SFTP_STRICT_HOSTKEY_CHECKING_NONE)
         {
             // Init the known host collection
             LIBSSH2_KNOWNHOSTS *const knownHostsList = libssh2_knownhost_init(this->session);
@@ -1151,7 +1151,7 @@ storageSftpNew(
                 THROW_FMT(ServiceError, "failure during libssh2_knownhost_init");
 
             // Get the list of known host files to search
-            const StringList *const knownHostsPathList = storageSftpKnownHostsFilesList(param.sftpKnownHosts);
+            const StringList *const knownHostsPathList = storageSftpKnownHostsFilesList(param.knownHosts);
 
             // Loop through the list of known host files
             for (unsigned int listIdx = 0; listIdx < strLstSize(knownHostsPathList); listIdx++)
@@ -1198,31 +1198,28 @@ storageSftpNew(
                     LOG_DETAIL_FMT("known hosts match found for '%s'", strZ(host));
                 else
                 {
-                    // We did not get a match, get an appropriate failure message
-                    const char *const matchFailMsg = storageSftpKnownHostCheckpFailureMsg(rc);
-
-                    // Handle failure to match in the same manner as ssh_config StrictHostKeyChecking for yes/accept-new/no. If this
-                    // flag is set to "yes", never automatically add host keys to the ~/.ssh/known_hosts file, and refuse to connect
-                    // to hosts whose host key has changed. This option forces the user to manually add all new hosts. If this flag
-                    // is set to "accept-new" then automatically add new host keys to the user known hosts files, but do not permit
-                    // connections to hosts with changed host keys. If this flag is set to "no", automatically add new host keys to
-                    // the user known hosts files and allow connections to hosts with changed hostkeys to proceed.
-                    switch (param.sftpStrictHostKeyChecking)
+                    // Handle failure to match in a similar manner as ssh_config StrictHostKeyChecking. If this flag is set to
+                    // "strict", never automatically add host keys to the ~/.ssh/known_hosts file, and refuse to connect to hosts
+                    // whose host key has changed. This option forces the user to manually add all new hosts. If this flag is set to
+                    // "accept-new" then automatically add new host keys to the user known hosts files, but do not permit
+                    // connections to hosts with changed host keys. If this flag is set to "none" then do no host key checking.
+                    switch (param.hostKeyCheckType)
                     {
                         case SFTP_STRICT_HOSTKEY_CHECKING_STRICT:
                         {
-                            // Throw an error when set to yes and we have any result other than match
+                            // Throw an error when set to strict and we have any result other than match
                             libssh2_knownhost_free(knownHostsList);
 
                             THROW_FMT(
-                                ServiceError, "known hosts failure: '%s' %s [%d]: check type [%s]", strZ(host), matchFailMsg,
-                                rc, strZ(strIdToStr(param.sftpStrictHostKeyChecking)));
+                                ServiceError, "known hosts failure: '%s' %s [%d]: check type [%s]", strZ(host),
+                                storageSftpKnownHostCheckpFailureMsg(rc), rc, strZ(strIdToStr(param.hostKeyCheckType)));
+
                             break;
                         }
 
                         default:
                         {
-                            ASSERT(param.sftpStrictHostKeyChecking == SFTP_STRICT_HOSTKEY_CHECKING_ACCEPT_NEW);
+                            ASSERT(param.hostKeyCheckType == SFTP_STRICT_HOSTKEY_CHECKING_ACCEPT_NEW);
 
                             // Throw an error when set to accept-new and match fails or mismatches else add the new host key to the
                             // user's known_hosts file
@@ -1232,11 +1229,13 @@ storageSftpNew(
                                 libssh2_knownhost_free(knownHostsList);
 
                                 THROW_FMT(
-                                    ServiceError, "known hosts failure: '%s': %s [%d]: check type [%s]", strZ(host), matchFailMsg,
-                                    rc, strZ(strIdToStr(param.sftpStrictHostKeyChecking)));
+                                    ServiceError, "known hosts failure: '%s': %s [%d]: check type [%s]", strZ(host),
+                                    storageSftpKnownHostCheckpFailureMsg(rc), rc,
+                                    strZ(strIdToStr(param.hostKeyCheckType)));
                             }
                             else
                                 storageSftpUpdateKnownHostsFile(this, hostKeyType, host, hostKey, hostKeyLen);
+
                             break;
                         }
                     }

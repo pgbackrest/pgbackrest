@@ -33,9 +33,9 @@ typedef struct StorageSftpNewParam
     StoragePathExpressionCallback *pathExpressionFunction;
     const String *keyPub;
     const String *keyPassphrase;
+    StringId hostKeyCheckType;
     const String *hostFingerprint;
-    StringId sftpStrictHostKeyChecking;
-    const StringList *sftpKnownHosts;
+    const StringList *knownHosts;
 } StorageSftpNewParam;
 
 #define storageSftpNewP(path, host, port, user, timeout, keyPriv, hostKeyHashType, ...)                                            \

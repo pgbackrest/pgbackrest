@@ -26,7 +26,7 @@ storageSftpHelper(const unsigned int repoIdx, const bool write, StoragePathExpre
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const StringList *const sftpKnownHosts = strLstNewVarLst(cfgOptionIdxLst(cfgOptRepoSftpKnownHost, repoIdx));
+        const StringList *const knownHosts = strLstNewVarLst(cfgOptionIdxLst(cfgOptRepoSftpKnownHost, repoIdx));
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
@@ -38,9 +38,8 @@ storageSftpHelper(const unsigned int repoIdx, const bool write, StoragePathExpre
                 .pathExpressionFunction = pathExpressionCallback, .modeFile = STORAGE_MODE_FILE_DEFAULT,
                 .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
                 .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
-                .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
-                .sftpStrictHostKeyChecking = cfgOptionIdxStrId(cfgOptRepoSftpHostKeyCheckType, repoIdx),
-                .sftpKnownHosts = sftpKnownHosts);
+                .hostKeyCheckType = cfgOptionIdxStrId(cfgOptRepoSftpHostKeyCheckType, repoIdx),
+                .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx), .knownHosts = knownHosts);
         }
         MEM_CONTEXT_PRIOR_END();
     }
