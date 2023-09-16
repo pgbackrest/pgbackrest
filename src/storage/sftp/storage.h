@@ -14,6 +14,14 @@ Storage type
 #ifdef HAVE_LIBSSH2
 
 /***********************************************************************************************************************************
+SFTP StrictHostKeyChecking
+***********************************************************************************************************************************/
+#define SFTP_STRICT_HOSTKEY_CHECKING_ACCEPT_NEW                     STRID5("accept-new", 0x2e576e9028c610)
+#define SFTP_STRICT_HOSTKEY_CHECKING_FINGERPRINT                    STRID5("fingerprint", 0x51c9942453b9260)
+#define SFTP_STRICT_HOSTKEY_CHECKING_NONE                           STRID5("none", 0x2b9ee0)
+#define SFTP_STRICT_HOSTKEY_CHECKING_STRICT                         STRID5("strict", 0x2834ca930)
+
+/***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
 typedef struct StorageSftpNewParam
@@ -25,7 +33,9 @@ typedef struct StorageSftpNewParam
     StoragePathExpressionCallback *pathExpressionFunction;
     const String *keyPub;
     const String *keyPassphrase;
+    StringId hostKeyCheckType;
     const String *hostFingerprint;
+    const StringList *knownHosts;
 } StorageSftpNewParam;
 
 #define storageSftpNewP(path, host, port, user, timeout, keyPriv, hostKeyHashType, ...)                                            \

@@ -25,19 +25,31 @@ libssh2 authorization constants
 #define KEYPUB                                                      STRDEF("/home/" TEST_USER "/.ssh/id_rsa.pub")
 #define KEYPRIV_CSTR                                                "/home/" TEST_USER "/.ssh/id_rsa"
 #define KEYPUB_CSTR                                                 "/home/" TEST_USER "/.ssh/id_rsa.pub"
+#define KNOWNHOSTS_FILE_CSTR                                        "/home/" TEST_USER "/.ssh/known_hosts"
+#define KNOWNHOSTS2_FILE_CSTR                                       "/home/" TEST_USER "/.ssh/known_hosts2"
+#define ETC_KNOWNHOSTS_FILE_CSTR                                    "/etc/ssh/ssh_known_hosts"
+#define ETC_KNOWNHOSTS2_FILE_CSTR                                   "/etc/ssh/ssh_known_hosts2"
+#define HOSTKEY                                                     "12345678901234567890"
 
 /***********************************************************************************************************************************
 Function constants
 ***********************************************************************************************************************************/
 #define HRNLIBSSH2_HOSTKEY_HASH                                     "libssh2_hostkey_hash"
 #define HRNLIBSSH2_INIT                                             "libssh2_init"
-#define HRNLIBSSH2_SESSION_DISCONNECT_EX                            "libssh2_session_disconnect_ex"
+#define HRNLIBSSH2_KNOWNHOST_ADDC                                   "libssh2_knownhost_addc"
+#define HRNLIBSSH2_KNOWNHOST_CHECKP                                 "libssh2_knownhost_checkp"
+#define HRNLIBSSH2_KNOWNHOST_FREE                                   "libssh2_knownhost_free"
+#define HRNLIBSSH2_KNOWNHOST_INIT                                   "libssh2_knownhost_init"
+#define HRNLIBSSH2_KNOWNHOST_READFILE                               "libssh2_knownhost_readfile"
+#define HRNLIBSSH2_KNOWNHOST_WRITEFILE                              "libssh2_knownhost_writefile"
 #define HRNLIBSSH2_SESSION_BLOCK_DIRECTIONS                         "libssh2_session_block_directions"
+#define HRNLIBSSH2_SESSION_DISCONNECT_EX                            "libssh2_session_disconnect_ex"
 #define HRNLIBSSH2_SESSION_FREE                                     "libssh2_session_free"
 #define HRNLIBSSH2_SESSION_HANDSHAKE                                "libssh2_session_handshake"
+#define HRNLIBSSH2_SESSION_HOSTKEY                                  "libssh2_session_hostkey"
 #define HRNLIBSSH2_SESSION_INIT_EX                                  "libssh2_session_init_ex"
 #define HRNLIBSSH2_SESSION_LAST_ERRNO                               "libssh2_session_last_errno"
-#define HRNLIBSSH2_SESSION_SET_BLOCKING                             "libssh2_session_set_blocking"
+#define HRNLIBSSH2_SESSION_LAST_ERROR                               "libssh2_session_last_error"
 #define HRNLIBSSH2_SFTP_CLOSE_HANDLE                                "libssh2_sftp_close_handle"
 #define HRNLIBSSH2_SFTP_FSYNC                                       "libssh2_sftp_fsync"
 #define HRNLIBSSH2_SFTP_INIT                                        "libssh2_sftp_init"
@@ -64,7 +76,11 @@ Macros for defining groups of functions that implement commands
     {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = 0},                                                                 \
     {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},                                                    \
     {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = 0},                                          \
-    {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "12345678910123456789"},                                      \
+    {.function = HRNLIBSSH2_KNOWNHOST_INIT},                                                                                       \
+    {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]", .resultInt = 5},                      \
+    {.function = HRNLIBSSH2_SESSION_HOSTKEY, .len = 20, .type = LIBSSH2_HOSTKEY_TYPE_RSA, .resultZ = HOSTKEY},                     \
+    {.function = HRNLIBSSH2_KNOWNHOST_CHECKP, .param = "[\"localhost\",22,\"" HOSTKEY "\",20,65537]",                              \
+     .resultInt = LIBSSH2_KNOWNHOST_CHECK_MATCH},                                                                                  \
     {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,                                                                        \
     .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",\"" KEYPUB_CSTR "\",\"" KEYPRIV_CSTR "\",null]",                                \
     .resultInt = 0},                                                                                                               \
@@ -77,7 +93,7 @@ Macros for defining groups of functions that implement commands
     {.function = HRNLIBSSH2_SESSION_FREE, .resultInt = 0},                                                                         \
     {.function = NULL}                                                                                                             \
 
-// older systems do not support LIBSSH2_HOSTKEY_HASH_SHA256
+// Older systems do not support LIBSSH2_HOSTKEY_HASH_SHA256
 #ifdef LIBSSH2_HOSTKEY_HASH_SHA256
 #define HOSTKEY_HASH_ENTRY()                                                                                                       \
     {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[3]", .resultZ = "12345678910123456789"}
@@ -108,6 +124,9 @@ typedef struct HrnLibSsh2
     const String *fileName;                                         // libssh2_readdir* libssh2_stat* filename
     const String *readBuffer;                                       // what to copy into read buffer
     TimeMSec sleep;                                                 // Sleep specified milliseconds before returning from function
+    size_t len;                                                     // libssh2_session_hostkey len
+    int type;                                                       // libssh2_session_hostkey type
+    char *errMsg;                                                   // libssh2_session_last_error error msg
 } HrnLibSsh2;
 
 /***********************************************************************************************************************************

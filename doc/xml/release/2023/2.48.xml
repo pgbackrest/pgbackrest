@@ -16,6 +16,18 @@
             </release-item>
 
             <release-item>
+                <github-pull-request id="2125"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="reid.thompson"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add known hosts checking for <proper>SFTP</proper> storage driver.</p>
+            </release-item>
+
+            <release-item>
                 <commit subject="Adjust Wait object to be more accurate when nested."/>
                 <commit subject="Aggregate error retries in ErrorRetry output."/>
                 <commit subject="Refactor address list lookup to include all returned addresses.">
