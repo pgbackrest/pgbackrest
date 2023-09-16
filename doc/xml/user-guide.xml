@@ -2741,6 +2741,12 @@
                 <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-cert-file">/etc/pgbackrest/cert/server.crt</backrest-config-option>
                 <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-key-file">/etc/pgbackrest/cert/server.key</backrest-config-option>
 
+                <backrest-config-option section="global" key="repo1-cipher-type">{[backrest-repo-cipher-type]}</backrest-config-option>
+                <backrest-config-option section="global" key="repo1-cipher-pass">{[backrest-repo-cipher-pass]}</backrest-config-option>
+                <backrest-config-option section="global" key="repo1-bundle-limit">10MiB</backrest-config-option>
+                <backrest-config-option section="global" key="repo1-bundle-size">50MiB</backrest-config-option>
+                <backrest-config-option section="global" key="compress-type">lz4</backrest-config-option>
+
                 <backrest-config-option section="global" key="start-fast">y</backrest-config-option>
                 <backrest-config-option section="global" key="repo1-retention-full">2</backrest-config-option>
 
@@ -2767,6 +2773,12 @@
                 <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-ca-file">/etc/pgbackrest/cert/ca.crt</backrest-config-option>
                 <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-cert-file">/etc/pgbackrest/cert/server.crt</backrest-config-option>
                 <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-key-file">/etc/pgbackrest/cert/server.key</backrest-config-option>
+
+                <backrest-config-option section="global" key="repo1-cipher-type">{[backrest-repo-cipher-type]}</backrest-config-option>
+                <backrest-config-option section="global" key="repo1-cipher-pass">{[backrest-repo-cipher-pass]}</backrest-config-option>
+                <backrest-config-option section="global" key="repo1-bundle-limit">10MiB</backrest-config-option>
+                <backrest-config-option section="global" key="repo1-bundle-size">50MiB</backrest-config-option>
+                <backrest-config-option section="global" key="compress-type">lz4</backrest-config-option>
 
                 <backrest-config-option section="global" key="log-level-file">detail</backrest-config-option>
 
