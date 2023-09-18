@@ -215,7 +215,7 @@ restoreFile(
             MEM_CONTEXT_TEMP_BEGIN()
             {
                 const RestoreFile *const file = lstGet(fileList, fileIdx);
-                const RestoreFileResult *const fileResult = lstGet(result, fileIdx);
+                RestoreFileResult *const fileResult = lstGet(result, fileIdx);
 
                 // Copy file from repository to database
                 if (fileResult->result == restoreResultCopy)
@@ -336,6 +336,7 @@ restoreFile(
 
                                 // Write block
                                 ioWrite(storageWriteIo(pgFileWrite), deltaWrite->block);
+                                fileResult->blockIncrDeltaSize += bufUsed(deltaWrite->block);
 
                                 // Flush writes since we may seek to a new location for the next block
                                 ioWriteFlush(storageWriteIo(pgFileWrite));

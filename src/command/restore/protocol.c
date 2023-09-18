@@ -85,6 +85,7 @@ restoreFileProtocol(PackRead *const param, ProtocolServer *const server)
 
             pckWriteStrP(resultPack, fileResult->manifestFile);
             pckWriteU32P(resultPack, fileResult->result);
+            pckWriteU64P(resultPack, fileResult->blockIncrDeltaSize);
         }
 
         protocolServerDataPut(server, resultPack);
