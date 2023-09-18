@@ -1,5 +1,20 @@
 <release date="XXXX-XX-XX" version="2.48dev" title="Under Development">
     <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <github-issue id="2182"/>
+                <github-pull-request id="2184"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="threenotrump"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Fix issue with block incremental map lacking blocks.</p>
+            </release-item>
+        </release-bug-list>
+
         <release-feature-list>
             <release-item>
                 <github-issue id="2150"/>
