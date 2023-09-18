@@ -164,7 +164,7 @@ testRun(void)
             TEST_TITLE("single file block map from full");
 
             StringList *argList = strLstDup(argListCommon);
-            hrnCfgArgRawZ(argList, cfgOptFilter, PG_PATH_BASE "/1/2");
+            hrnCfgArgRawZ(argList, cfgOptFilter, MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/1/2");
             hrnCfgArgRawZ(argList, cfgOptSet, "20191002-070640F");
             HRN_CFG_LOAD(cfgCmdManifest, argList);
 
@@ -459,7 +459,7 @@ testRun(void)
             TEST_TITLE("single file block map from diff");
 
             argList = strLstDup(argListCommon);
-            hrnCfgArgRawZ(argList, cfgOptFilter, PG_PATH_BASE "/1/2");
+            hrnCfgArgRawZ(argList, cfgOptFilter, MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/1/2");
             HRN_CFG_LOAD(cfgCmdManifest, argList);
 
             TEST_RESULT_STR_Z(
@@ -487,7 +487,7 @@ testRun(void)
             TEST_TITLE("single file block map delta from diff");
 
             argList = strLstDup(argListCommon);
-            hrnCfgArgRawZ(argList, cfgOptFilter, PG_PATH_BASE "/1/2");
+            hrnCfgArgRawZ(argList, cfgOptFilter, MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/1/2");
             hrnCfgArgRawZ(argList, cfgOptRepo, "2");
             hrnCfgArgRawZ(argList, cfgOptPg, "1");
             HRN_CFG_LOAD(cfgCmdManifest, argList);
