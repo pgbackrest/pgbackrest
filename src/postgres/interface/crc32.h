@@ -1,15 +1,21 @@
 /***********************************************************************************************************************************
-GCS Storage File Write
-***********************************************************************************************************************************/
-#ifndef STORAGE_GCS_WRITE_H
-#define STORAGE_GCS_WRITE_H
+CRC-32 Calculation
 
-#include "storage/gcs/storage.intern.h"
-#include "storage/write.h"
+CRC-32 and CRC-32C calculations required to validate the integrity of pg_control.
+***********************************************************************************************************************************/
+#ifndef POSTGRES_INTERFACE_CRC32_H
+#define POSTGRES_INTERFACE_CRC32_H
+
+#include <inttypes.h>
+#include <stddef.h>
 
 /***********************************************************************************************************************************
-Constructors
+Functions
 ***********************************************************************************************************************************/
-FN_EXTERN StorageWrite *storageWriteGcsNew(StorageGcs *storage, const String *name, size_t chunkSize, bool tag);
+// Generate CRC-32 checksum (required by <= 9.4)
+FN_EXTERN uint32_t crc32One(const unsigned char *data, size_t size);
+
+// Generate CRC-32C checksum (required by >= 9.5)
+FN_EXTERN uint32_t crc32cOne(const unsigned char *data, size_t size);
 
 #endif

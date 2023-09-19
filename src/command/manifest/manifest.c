@@ -501,7 +501,7 @@ cmdManifestRender(void)
         // Single file
         if (filter != NULL)
         {
-            const ManifestFile file = manifestFileFind(manifest, strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strZ(filter)));
+            const ManifestFile file = manifestFileFind(manifest, filter);
 
             strCat(result, cmdManifestFileRender(manifest, &file, true, json));
         }

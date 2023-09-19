@@ -1,41 +1,36 @@
 /***********************************************************************************************************************************
-Azure Storage
-***********************************************************************************************************************************/
-#ifndef STORAGE_AZURE_STORAGE_H
-#define STORAGE_AZURE_STORAGE_H
+Archive Segment Find
 
+Find a WAL segment (or segments) in a repository. The code paths for finding single or multiple WAL segments are both optimized.
+***********************************************************************************************************************************/
+#ifndef COMMAND_ARCHIVE_FIND_H
+#define COMMAND_ARCHIVE_FIND_H
+
+/***********************************************************************************************************************************
+Object type
+***********************************************************************************************************************************/
+typedef struct WalSegmentFind WalSegmentFind;
+
+#include "common/type/string.h"
 #include "storage/storage.h"
-
-/***********************************************************************************************************************************
-Storage type
-***********************************************************************************************************************************/
-#define STORAGE_AZURE_TYPE                                          STRID5("azure", 0x5957410)
-
-/***********************************************************************************************************************************
-Key type
-***********************************************************************************************************************************/
-typedef enum
-{
-    storageAzureKeyTypeShared = STRID5("shared", 0x85905130),
-    storageAzureKeyTypeSas = STRID5("sas", 0x4c330),
-} StorageAzureKeyType;
-
-/***********************************************************************************************************************************
-URI style
-***********************************************************************************************************************************/
-typedef enum
-{
-    storageAzureUriStyleHost = STRID5("host", 0xa4de80),
-    storageAzureUriStylePath = STRID5("path", 0x450300),
-} StorageAzureUriStyle;
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN Storage *storageAzureNew(
-    const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *container,
-    const String *account, StorageAzureKeyType keyType, const String *key, size_t blockSize, const KeyValue *tag,
-    const String *endpoint, StorageAzureUriStyle uriStyle, unsigned int port, TimeMSec timeout, bool verifyPeer,
-    const String *caFile, const String *caPath);
+FN_EXTERN WalSegmentFind *walSegmentFindNew(const Storage *storage, const String *archiveId, bool single, TimeMSec timeout);
+
+/***********************************************************************************************************************************
+Functions
+***********************************************************************************************************************************/
+// Find a WAL segment in the repository. The file name can have several things appended such as a hash, compression extension, and
+// partial extension so it is possible to have multiple files that match the segment, though more than one match is not a good
+// thing.
+FN_EXTERN String *walSegmentFind(WalSegmentFind *this, const String *walSegment);
+
+/***********************************************************************************************************************************
+Helper functions
+***********************************************************************************************************************************/
+// Find a single WAL segment (see walSegmentFind() for details)
+FN_EXTERN String *walSegmentFindOne(const Storage *storage, const String *archiveId, const String *walSegment, TimeMSec timeout);
 
 #endif

@@ -168,8 +168,6 @@ testRun(void)
             {.function = HRNPQ_SENDQUERY, .param = "[\"" TEST_QUERY "\"]", .resultInt = 1},
             {.function = HRNPQ_CONSUMEINPUT, .sleep = 600},
             {.function = HRNPQ_ISBUSY, .resultInt = 1},
-            {.function = HRNPQ_CONSUMEINPUT},
-            {.function = HRNPQ_ISBUSY, .resultInt = 1},
             {.function = HRNPQ_GETCANCEL},
             {.function = HRNPQ_CANCEL, .resultInt = 1},
             {.function = HRNPQ_FREECANCEL},
@@ -196,9 +194,9 @@ testRun(void)
         harnessPqScriptSet((HarnessPq [])
         {
             {.function = HRNPQ_SENDQUERY, .param = "[\"" TEST_QUERY "\"]", .resultInt = 1},
-            {.function = HRNPQ_CONSUMEINPUT, .sleep = 600},
+            {.function = HRNPQ_CONSUMEINPUT, .sleep = 300},
             {.function = HRNPQ_ISBUSY, .resultInt = 1},
-            {.function = HRNPQ_CONSUMEINPUT},
+            {.function = HRNPQ_CONSUMEINPUT, .sleep = 300},
             {.function = HRNPQ_ISBUSY, .resultInt = 1},
             {.function = HRNPQ_GETCANCEL},
             {.function = HRNPQ_CANCEL, .resultInt = 0, .resultZ = TEST_PQ_ERROR},
@@ -224,8 +222,6 @@ testRun(void)
         {
             {.function = HRNPQ_SENDQUERY, .param = "[\"" TEST_QUERY "\"]", .resultInt = 1},
             {.function = HRNPQ_CONSUMEINPUT, .sleep = 600},
-            {.function = HRNPQ_ISBUSY, .resultInt = 1},
-            {.function = HRNPQ_CONSUMEINPUT},
             {.function = HRNPQ_ISBUSY, .resultInt = 1},
             {.function = HRNPQ_GETCANCEL, .resultNull = true},
             {.function = NULL}

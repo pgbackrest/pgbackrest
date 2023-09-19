@@ -1,15 +1,15 @@
 /***********************************************************************************************************************************
-GCS Storage File Write
+Check Command Report
 ***********************************************************************************************************************************/
-#ifndef STORAGE_GCS_WRITE_H
-#define STORAGE_GCS_WRITE_H
+#ifndef COMMAND_CHECK_REPORT_H
+#define COMMAND_CHECK_REPORT_H
 
-#include "storage/gcs/storage.intern.h"
-#include "storage/write.h"
+#include "common/type/string.h"
 
 /***********************************************************************************************************************************
-Constructors
+Functions
 ***********************************************************************************************************************************/
-FN_EXTERN StorageWrite *storageWriteGcsNew(StorageGcs *storage, const String *name, size_t chunkSize, bool tag);
+// Check report
+FN_EXTERN String *checkReport(void);
 
 #endif

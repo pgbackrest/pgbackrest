@@ -11,6 +11,7 @@ Backup File
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
+#include "common/io/bufferRead.h"
 #include "common/io/filter/group.h"
 #include "common/io/filter/size.h"
 #include "common/io/io.h"
@@ -41,7 +42,7 @@ FN_EXTERN List *
 backupFile(
     const String *const repoFile, const uint64_t bundleId, const bool bundleRaw, const unsigned int blockIncrReference,
     const CompressType repoFileCompressType, const int repoFileCompressLevel, const CipherType cipherType,
-    const String *const cipherPass, const List *const fileList)
+    const String *const cipherPass, const String *const pgVersionForce, const List *const fileList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, repoFile);                       // Repo file
@@ -52,6 +53,7 @@ backupFile(
         FUNCTION_LOG_PARAM(INT, repoFileCompressLevel);             // Compression level for repo file
         FUNCTION_LOG_PARAM(STRING_ID, cipherType);                  // Encryption type
         FUNCTION_TEST_PARAM(STRING, cipherPass);                    // Password to access the repo file if encrypted
+        FUNCTION_LOG_PARAM(STRING, pgVersionForce);                 // Force pg version
         FUNCTION_LOG_PARAM(LIST, fileList);                         // List of files to backup
     FUNCTION_LOG_END();
 
@@ -193,13 +195,20 @@ backupFile(
                 {
                     // Setup pg file for read. Only read as many bytes as passed in pgFileSize. If the file is growing it does no
                     // good to copy data past the end of the size recorded in the manifest since those blocks will need to be
-                    // replayed from WAL during recovery.
+                    // replayed from WAL during recovery. pg_control requires special handling since it needs to be retried on crc
+                    // validation failure.
                     bool repoChecksum = false;
+                    IoRead *readIo;
 
-                    StorageRead *const read = storageNewReadP(
-                        storagePg(), file->pgFile, .ignoreMissing = file->pgFileIgnoreMissing, .compressible = compressible,
-                        .limit = file->pgFileCopyExactSize ? VARUINT64(file->pgFileSize) : NULL);
-                    IoRead *const readIo = storageReadIo(read);
+                    if (strEqZ(file->pgFile, PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL))
+                        readIo = ioBufferReadNew(pgControlBufferFromFile(storagePg(), pgVersionForce));
+                    else
+                    {
+                        readIo = storageReadIo(
+                            storageNewReadP(
+                                storagePg(), file->pgFile, .ignoreMissing = file->pgFileIgnoreMissing, .compressible = compressible,
+                                .limit = file->pgFileCopyExactSize ? VARUINT64(file->pgFileSize) : NULL));
+                    }
 
                     ioFilterGroupAdd(ioReadFilterGroup(readIo), cryptoHashNew(hashTypeSha1));
                     ioFilterGroupAdd(ioReadFilterGroup(readIo), ioSizeNew());

@@ -87,6 +87,7 @@ struct StorageGcs
     const String *bucket;                                           // Bucket to store data in
     const String *endpoint;                                         // Endpoint
     size_t chunkSize;                                               // Block size for resumable upload
+    const Buffer *tag;                                              // Tags to be applied to objects
 
     StorageGcsKeyType keyType;                                      // Auth key type
     const String *key;                                              // Key (value depends on key type)
@@ -391,6 +392,7 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
         FUNCTION_LOG_PARAM(BOOL, param.noBucket);
         FUNCTION_LOG_PARAM(BOOL, param.upload);
         FUNCTION_LOG_PARAM(BOOL, param.noAuth);
+        FUNCTION_LOG_PARAM(BOOL, param.tag);
         FUNCTION_LOG_PARAM(STRING, param.object);
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
@@ -414,9 +416,19 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
         if (param.object != NULL)
             strCatFmt(path, "/%s", strZ(httpUriEncode(strSub(param.object, 1), false)));
 
-        // Create header list and add content length
+        // Create header list
         HttpHeader *requestHeader =
             param.header == NULL ? httpHeaderNew(this->headerRedactList) : httpHeaderDup(param.header, this->headerRedactList);
+
+        // Add tags
+        if (param.tag)
+        {
+            ASSERT(param.content == NULL);
+            ASSERT(this->tag != NULL);
+
+            httpHeaderPut(requestHeader, HTTP_HEADER_CONTENT_TYPE_STR, HTTP_HEADER_CONTENT_TYPE_JSON_STR);
+            param.content = this->tag;
+        }
 
         // Set host
         httpHeaderPut(requestHeader, HTTP_HEADER_HOST_STR, this->endpoint);
@@ -488,6 +500,7 @@ storageGcsRequest(StorageGcs *const this, const String *const verb, const Storag
         FUNCTION_LOG_PARAM(BOOL, param.noBucket);
         FUNCTION_LOG_PARAM(BOOL, param.upload);
         FUNCTION_LOG_PARAM(BOOL, param.noAuth);
+        FUNCTION_LOG_PARAM(BOOL, param.tag);
         FUNCTION_LOG_PARAM(STRING, param.object);
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
@@ -498,8 +511,8 @@ storageGcsRequest(StorageGcs *const this, const String *const verb, const Storag
     FUNCTION_LOG_END();
 
     HttpRequest *const request = storageGcsRequestAsyncP(
-        this, verb, .noBucket = param.noBucket, .upload = param.upload, .noAuth = param.noAuth, .object = param.object,
-        .header = param.header, .query = param.query, .content = param.content);
+        this, verb, .noBucket = param.noBucket, .upload = param.upload, .noAuth = param.noAuth, .tag = param.tag,
+        .object = param.object, .header = param.header, .query = param.query, .content = param.content);
     HttpResponse *const result = storageGcsResponseP(
         request, .allowMissing = param.allowMissing, .allowIncomplete = param.allowIncomplete, .contentIo = param.contentIo);
 
@@ -836,7 +849,7 @@ storageGcsNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWriteParam 
     ASSERT(param.group == NULL);
     ASSERT(param.timeModified == 0);
 
-    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteGcsNew(this, file, this->chunkSize));
+    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteGcsNew(this, file, this->chunkSize, this->tag != NULL));
 }
 
 /**********************************************************************************************************************************/
@@ -953,8 +966,9 @@ static const StorageInterface storageInterfaceGcs =
 FN_EXTERN Storage *
 storageGcsNew(
     const String *const path, const bool write, StoragePathExpressionCallback pathExpressionFunction, const String *const bucket,
-    const StorageGcsKeyType keyType, const String *const key, const size_t chunkSize, const String *const endpoint,
-    const TimeMSec timeout, const bool verifyPeer, const String *const caFile, const String *const caPath)
+    const StorageGcsKeyType keyType, const String *const key, const size_t chunkSize, const KeyValue *const tag,
+    const String *const endpoint, const TimeMSec timeout, const bool verifyPeer, const String *const caFile,
+    const String *const caPath)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -964,6 +978,7 @@ storageGcsNew(
         FUNCTION_LOG_PARAM(STRING_ID, keyType);
         FUNCTION_TEST_PARAM(STRING, key);
         FUNCTION_LOG_PARAM(SIZE, chunkSize);
+        FUNCTION_LOG_PARAM(KEY_VALUE, tag);
         FUNCTION_LOG_PARAM(STRING, endpoint);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
         FUNCTION_LOG_PARAM(BOOL, verifyPeer);
@@ -986,6 +1001,32 @@ storageGcsNew(
             .keyType = keyType,
             .chunkSize = chunkSize,
         };
+
+        // Create tag JSON buffer
+        if (write && tag != NULL)
+        {
+            MEM_CONTEXT_TEMP_BEGIN()
+            {
+                JsonWrite *const tagJson = jsonWriteObjectBegin(
+                    jsonWriteKeyStrId(jsonWriteObjectBegin(jsonWriteNewP()), STRID5("metadata", 0xd0240d0ad0)));
+                const StringList *const keyList = strLstSort(strLstNewVarLst(kvKeyList(tag)), sortOrderAsc);
+
+                for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)
+                {
+                    const String *const key = strLstGet(keyList, keyIdx);
+                    jsonWriteStr(jsonWriteKey(tagJson, key), varStr(kvGet(tag, VARSTR(key))));
+                }
+
+                const String *const tagStr = jsonWriteResult(jsonWriteObjectEnd(jsonWriteObjectEnd(tagJson)));
+
+                MEM_CONTEXT_PRIOR_BEGIN()
+                {
+                    this->tag = bufDup(BUFSTR(tagStr));
+                }
+                MEM_CONTEXT_PRIOR_END();
+            }
+            MEM_CONTEXT_TEMP_END();
+        }
 
         // Handle auth key types
         switch (keyType)

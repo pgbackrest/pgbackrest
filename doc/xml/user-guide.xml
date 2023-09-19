@@ -2529,6 +2529,7 @@
                         "Effect": "Allow",
                         "Action": [
                             "s3:PutObject",
+                            "s3:PutObjectTagging",
                             "s3:GetObject",
                             "s3:DeleteObject"
                         ],
@@ -2577,6 +2578,14 @@
         </block>
 
         <p>Commands are run exactly as if the repository were stored on a local disk.</p>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Add sftp-server fingerprint to known_hosts file since <br-option>repo4-sftp-host-key-check-type</br-option> defaults to <quote>strict</quote></title>
+
+            <execute user="postgres" user-force="y">
+                <exe-cmd>ssh-keyscan -H {[host-sftp]} >> {[pg-home-path]}/.ssh/known_hosts 2>/dev/null</exe-cmd>
+            </execute>
+        </execute-list>
 
         <execute-list host="{[host-pg1]}">
             <title>Create the stanza</title>

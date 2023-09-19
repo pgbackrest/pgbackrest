@@ -10,6 +10,7 @@ Socket Server
 
 #include "common/debug.h"
 #include "common/io/server.h"
+#include "common/io/socket/address.h"
 #include "common/io/socket/common.h"
 #include "common/io/socket/server.h"
 #include "common/io/socket/session.h"
@@ -159,39 +160,35 @@ sckServerNew(const String *const address, const unsigned int port, const TimeMSe
         {
             .address = strDup(address),
             .port = port,
-            .name = strNewFmt("%s:%u", strZ(address), port),
+            .name = strCatFmt(strNew(), "%s:%u", strZ(address), port),
             .timeout = timeout,
         };
 
         // Lookup address
-        struct addrinfo *const addressFound = sckHostLookup(this->address, this->port);
+        const struct addrinfo *const addressFound = addrInfoGet(addrInfoNew(this->address, this->port), 0);
 
-        TRY_BEGIN()
-        {
-            // Create socket
-            THROW_ON_SYS_ERROR(
-                (this->socket = socket(addressFound->ai_family, SOCK_STREAM, 0)) == -1, FileOpenError, "unable to create socket");
+        // Create socket
+        THROW_ON_SYS_ERROR(
+            (this->socket = socket(addressFound->ai_family, SOCK_STREAM, 0)) == -1, FileOpenError, "unable to create socket");
 
-            // Set the address as reusable so we can bind again quickly after a restart or crash
-            int reuseAddr = 1;
+        // Set the address as reusable so we can bind again quickly after a restart or crash
+        int reuseAddr = 1;
 
-            THROW_ON_SYS_ERROR(
-                setsockopt(this->socket, SOL_SOCKET, SO_REUSEADDR, &reuseAddr, sizeof(reuseAddr)) == -1, ProtocolError,
-                "unable to set SO_REUSEADDR");
+        THROW_ON_SYS_ERROR(
+            setsockopt(this->socket, SOL_SOCKET, SO_REUSEADDR, &reuseAddr, sizeof(reuseAddr)) == -1, ProtocolError,
+            "unable to set SO_REUSEADDR");
 
-            // Ensure file descriptor is closed
-            memContextCallbackSet(objMemContext(this), sckServerFreeResource, this);
+        // Ensure file descriptor is closed
+        memContextCallbackSet(objMemContext(this), sckServerFreeResource, this);
 
-            // Bind the address
-            THROW_ON_SYS_ERROR(
-                bind(this->socket, addressFound->ai_addr, addressFound->ai_addrlen) == -1, FileOpenError,
-                "unable to bind socket");
-        }
-        FINALLY()
-        {
-            freeaddrinfo(addressFound);
-        }
-        TRY_END();
+        // Update server name to include address
+        strTrunc(this->name);
+        strCat(this->name, addrInfoToName(this->address, this->port, addressFound));
+
+        // Bind the address
+        THROW_ON_SYS_ERROR(
+            bind(this->socket, addressFound->ai_addr, addressFound->ai_addrlen) == -1, FileOpenError,
+            "unable to bind socket");
 
         // Listen for client connections. It might be a good idea to make the backlog configurable but this value seems OK for now.
         THROW_ON_SYS_ERROR(listen(this->socket, 100) == -1, FileOpenError, "unable to listen on socket");

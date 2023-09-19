@@ -63,7 +63,8 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
     // Set LSN and WAL start/stop
     uint64_t lsnStart = ((uint64_t)backupTimeStart & 0xFFFFFF00) << 28;
     uint64_t lsnStop =
-        lsnStart + ((param.walTotal == 0 ? 0 : param.walTotal - 1) * pgControl.walSegmentSize) + (pgControl.walSegmentSize / 2);
+        lsnStart + ((uint64_t)(param.walTotal == 0 ? 0 : param.walTotal - 1) * (uint64_t)pgControl.walSegmentSize) +
+        (uint64_t)(pgControl.walSegmentSize / 2);
 
     const char *walSegmentPrior = strZ(
         pgLsnToWalSegment(param.timeline, lsnStart - pgControl.walSegmentSize, pgControl.walSegmentSize));
@@ -77,7 +78,7 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
     pgControl.timeline = param.timeline;
 
     HRN_STORAGE_PUT(
-        storagePgIdxWrite(0), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer(0, pgControl),
+        storagePgIdxWrite(0), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer(0, 0, pgControl),
         .timeModified = backupTimeStart);
 
     // Update pg_control on primary with the backup time
@@ -103,16 +104,20 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
 
         for (unsigned int walSegmentIdx = 0; walSegmentIdx < strLstSize(walSegmentList); walSegmentIdx++)
         {
-            StorageWrite *write = storageNewWriteP(
-                storageRepoWrite(),
-                strNewFmt(
-                    STORAGE_REPO_ARCHIVE "/%s/%s-%s%s", strZ(archiveId), strZ(strLstGet(walSegmentList, walSegmentIdx)),
-                    strZ(walChecksum), strZ(compressExtStr(param.walCompressType))));
+            MEM_CONTEXT_TEMP_BEGIN()
+            {
+                StorageWrite *write = storageNewWriteP(
+                    storageRepoWrite(),
+                    strNewFmt(
+                        STORAGE_REPO_ARCHIVE "/%s/%s-%s%s", strZ(archiveId), strZ(strLstGet(walSegmentList, walSegmentIdx)),
+                        strZ(walChecksum), strZ(compressExtStr(param.walCompressType))));
 
-            if (param.walCompressType != compressTypeNone)
-                ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(write)), compressFilterP(param.walCompressType, 1));
+                if (param.walCompressType != compressTypeNone)
+                    ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(write)), compressFilterP(param.walCompressType, 1));
 
-            storagePutP(write, walBuffer);
+                storagePutP(write, walBuffer);
+            }
+            MEM_CONTEXT_TEMP_END();
         }
     }
 
@@ -200,7 +205,7 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
         ASSERT(!param.noArchiveCheck);
 
         // Save pg_control with updated info
-        HRN_STORAGE_PUT(storagePgIdxWrite(1), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer(0, pgControl));
+        HRN_STORAGE_PUT(storagePgIdxWrite(1), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer(0, 0, pgControl));
 
         if (param.noPriorWal)
         {

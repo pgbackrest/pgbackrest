@@ -10,7 +10,6 @@ Command and Option Parse
 #include <unistd.h>
 
 #include "common/debug.h"
-#include "common/ini.h"
 #include "common/io/bufferRead.h"
 #include "common/log.h"
 #include "common/macro.h"
@@ -20,11 +19,6 @@ Command and Option Parse
 #include "config/config.intern.h"
 #include "config/parse.h"
 #include "version.h"
-
-/***********************************************************************************************************************************
-Define global section name
-***********************************************************************************************************************************/
-#define CFGDEF_SECTION_GLOBAL                                       "global"
 
 /***********************************************************************************************************************************
 The maximum number of keys that an indexed option can have, e.g. pg256-path would be the maximum pg-path option
@@ -48,12 +42,8 @@ Standard config file name and old default path and name
 STRING_STATIC(PGBACKREST_CONFIG_ORIG_PATH_FILE_STR,                 PGBACKREST_CONFIG_ORIG_PATH_FILE);
 
 /***********************************************************************************************************************************
-Prefix for environment variables
+In some environments this will not be externed
 ***********************************************************************************************************************************/
-#define PGBACKREST_ENV                                              "PGBACKREST_"
-#define PGBACKREST_ENV_SIZE                                         (sizeof(PGBACKREST_ENV) - 1)
-
-// In some environments this will not be externed
 extern char **environ;
 
 /***********************************************************************************************************************************
@@ -491,6 +481,14 @@ cfgParseCommandRoleName(const ConfigCommand commandId, const ConfigCommandRole c
 }
 
 /**********************************************************************************************************************************/
+FN_EXTERN const Ini *
+cfgParseIni(void)
+{
+    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_RETURN(INI, configParseLocal.ini);
+}
+
+/**********************************************************************************************************************************/
 FN_EXTERN StringList *
 cfgParseStanzaList(void)
 {
@@ -756,8 +754,9 @@ cfgParseOption(const String *const optionCandidate, const CfgParseOptionParam pa
             }
         }
 
-        // Set the beta flag
+        // Set flags
         result.beta = optionFound->beta;
+        result.multi = optionFound->multi;
 
         FUNCTION_TEST_RETURN_TYPE(CfgParseOptionResult, result);
     }
@@ -1699,7 +1698,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                     }
 
                     // Add the argument
-                    if (optionArg != NULL && parseRuleOption[option.id].multi)
+                    if (optionArg != NULL && option.multi)
                     {
                         strLstAdd(optionValue->valueList, optionArg);
                     }
@@ -1867,7 +1866,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                             THROW_FMT(OptionInvalidValueError, "environment boolean option '%s' must be 'y' or 'n'", strZ(key));
                     }
                     // Else split list/hash into separate values
-                    else if (parseRuleOption[option.id].multi)
+                    else if (option.multi)
                     {
                         optionValue->valueList = strLstNewSplitZ(value, ":");
                     }
@@ -2017,7 +2016,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                         if (iniSectionKeyIsList(configParseLocal.ini, section, key))
                         {
                             // Error if the option cannot be specified multiple times
-                            if (!parseRuleOption[option.id].multi)
+                            if (!option.multi)
                             {
                                 THROW_FMT(
                                     OptionInvalidError, "option '%s' cannot be set multiple times",

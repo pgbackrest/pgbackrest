@@ -179,7 +179,7 @@ unit:
           shim:
             common/error/retry:
               function:
-                - errRetryAdd
+                - errRetryMessage
 
         coverage:
           - common/error/retry
@@ -362,7 +362,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: io-tls
-        total: 5
+        total: 6
         feature: SOCKET
         harness: server
         harness:
@@ -380,6 +380,7 @@ unit:
           - common/io/tls/common
           - common/io/tls/server
           - common/io/tls/session
+          - common/io/socket/address
           - common/io/socket/client
           - common/io/socket/common
           - common/io/socket/server
@@ -444,6 +445,7 @@ unit:
           - config/protocol
           - command/command
           - postgres/interface
+          - postgres/interface/crc32
           - postgres/interface/page
           - protocol/client
           - protocol/command
@@ -597,9 +599,9 @@ unit:
           - storage/s3/read
           - storage/s3/storage
           - storage/s3/write
+          - storage/helper
 
         include:
-          - storage/helper
           - storage/storage
           - storage/write
 
@@ -645,6 +647,7 @@ unit:
 
         coverage:
           - postgres/interface
+          - postgres/interface/crc32
           - postgres/interface/page
 
   # ********************************************************************************************************************************
@@ -792,6 +795,7 @@ unit:
 
         coverage:
           - command/archive/common
+          - command/archive/find
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: archive-get
@@ -830,11 +834,12 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: check
-        total: 3
+        total: 4
 
         coverage:
           - command/check/common
           - command/check/check
+          - command/check/report
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: command

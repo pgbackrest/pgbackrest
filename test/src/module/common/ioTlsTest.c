@@ -152,6 +152,60 @@ testRun(void)
         chmod(HRN_SERVER_CLIENT_KEY, 0600) == -1, FileModeError, "unable to set mode on " HRN_SERVER_CLIENT_KEY);
 
     // *****************************************************************************************************************************
+    if (testBegin("AddressInfo"))
+    {
+#ifdef TEST_CONTAINER_REQUIRED
+        HRN_SYSTEM("echo \"127.0.0.1 test-addr-loop.pgbackrest.org\" | sudo tee -a /etc/hosts > /dev/null");
+        HRN_SYSTEM("echo \"::1 test-addr-loop.pgbackrest.org\" | sudo tee -a /etc/hosts > /dev/null");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("lookup address info");
+
+        AddressInfo *addrInfo = NULL;
+        TEST_ASSIGN(addrInfo, addrInfoNew(STRDEF("test-addr-loop.pgbackrest.org"), 443), "addr list");
+        TEST_RESULT_STR_Z(addrInfoHost(addrInfo), "test-addr-loop.pgbackrest.org", "check host");
+        TEST_RESULT_UINT(addrInfoPort(addrInfo), 443, "check port");
+        TEST_RESULT_UINT(addrInfoSize(addrInfo), 2, "check size");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("addrInfoToLog");
+
+        char logBuf[STACK_TRACE_PARAM_MAX];
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(addrInfo, addrInfoToLog, logBuf, sizeof(logBuf)), "addrInfoToLog");
+        TEST_RESULT_Z(
+            logBuf,
+            zNewFmt(
+                "{host: {\"test-addr-loop.pgbackrest.org\"}, port: 443, list: [%s, %s]}",
+                strZ(addrInfoToStr(addrInfoGet(addrInfo, 0))), strZ(addrInfoToStr(addrInfoGet(addrInfo, 1)))),
+            "check log");
+
+        // Munge address so it is invalid
+        (*(struct addrinfo **)lstGet(addrInfo->pub.list, 0))->ai_addr = NULL;
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(addrInfo, addrInfoToLog, logBuf, sizeof(logBuf)), "addrInfoToLog");
+        TEST_RESULT_Z(
+            logBuf,
+            zNewFmt(
+                "{host: {\"test-addr-loop.pgbackrest.org\"}, port: 443, list: [invalid, %s]}",
+                strZ(addrInfoToStr(addrInfoGet(addrInfo, 1)))),
+            "check log");
+        TEST_RESULT_STR_Z(addrInfoToStr(addrInfoGet(addrInfo, 0)), "invalid", "check invalid");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("free");
+
+        TEST_RESULT_VOID(addrInfoFree(addrInfo), "free");
+#endif
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("addrInfoToStr (invalid)");
+
+        struct addrinfo addrInfoInvalid = {0};
+
+        TEST_RESULT_STR_Z(addrInfoToStr(&addrInfoInvalid), "invalid", "check invalid");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("Socket Common"))
     {
         // Save socket settings
@@ -314,7 +368,9 @@ testRun(void)
 
         TEST_ASSIGN(client, sckClientNew(STRDEF("localhost"), hrnServerPort(0), 100, 100), "new client");
         TEST_ERROR_FMT(
-            ioClientOpen(client), HostConnectError, "unable to connect to 'localhost:%u': [111] Connection refused",
+            ioClientOpen(client), HostConnectError,
+            "unable to connect to 'localhost:%u (127.0.0.1)': [111] Connection refused\n"
+            "[RETRY DETAIL OMITTED]",
             hrnServerPort(0));
 
         // This address should not be in use in a test environment -- if it is the test will fail
@@ -388,7 +444,7 @@ testRun(void)
         // Connection errors
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(
-            client, tlsClientNewP(sckClientNew(STRDEF("99.99.99.99.99"), 7777, 0, 0), STRDEF("X"), 0, 0, true), "new client");
+            client, tlsClientNewP(sckClientNew(STRDEF("99.99.99.99.99"), 7777, 0, 0), STRDEF("X"), 100, 0, true), "new client");
         TEST_RESULT_STR_Z(ioClientName(client), "99.99.99.99.99:7777", " check name");
         TEST_ERROR(
             ioClientOpen(client), HostConnectError, "unable to get address for '99.99.99.99.99': [-2] Name or service not known");
@@ -397,7 +453,9 @@ testRun(void)
             client, tlsClientNewP(sckClientNew(STRDEF("localhost"), hrnServerPort(0), 100, 100), STRDEF("X"), 100, 100, true),
             "new client");
         TEST_ERROR_FMT(
-            ioClientOpen(client), HostConnectError, "unable to connect to 'localhost:%u': [111] Connection refused",
+            ioClientOpen(client), HostConnectError,
+            "unable to connect to 'localhost:%u (127.0.0.1)': [111] Connection refused\n"
+            "[RETRY DETAIL OMITTED]",
             hrnServerPort(0));
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -577,7 +635,8 @@ testRun(void)
                             sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true,
                             .caPath = STRDEF("/bogus"))),
                     CryptoError,
-                    "unable to verify certificate presented by 'localhost:%u': [20] unable to get local issuer certificate",
+                    "unable to verify certificate presented by 'localhost:%u (127.0.0.1)': [20] unable to get local issuer"
+                    " certificate",
                     hrnServerPort(0));
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -632,7 +691,8 @@ testRun(void)
                             sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true,
                             .caFile = STRDEF(HRN_SERVER_CERT))),
                     CryptoError,
-                    "unable to verify certificate presented by 'localhost:%u': [20] unable to get local issuer certificate",
+                    "unable to verify certificate presented by 'localhost:%u (127.0.0.1)': [20] unable to get local issuer"
+                    " certificate",
                     hrnServerPort(0));
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -680,7 +740,8 @@ testRun(void)
                     STRDEF(TEST_PATH "/server-cn-only.crt"), 5000);
                 IoSession *socketSession = NULL;
 
-                TEST_RESULT_STR(ioServerName(socketServer), strNewFmt("localhost:%u", hrnServerPort(0)), "socket server name");
+                TEST_RESULT_STR(
+                    ioServerName(socketServer), strNewFmt("localhost:%u (127.0.0.1)", hrnServerPort(0)), "socket server name");
                 TEST_RESULT_STR_Z(ioServerName(tlsServer), "localhost", "tls server name");
 
                 // Invalid client cert

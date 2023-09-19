@@ -9,7 +9,9 @@ Socket Client
 #include <unistd.h>
 
 #include "common/debug.h"
+#include "common/error/retry.h"
 #include "common/io/client.h"
+#include "common/io/socket/address.h"
 #include "common/io/socket/client.h"
 #include "common/io/socket/common.h"
 #include "common/io/socket/session.h"
@@ -71,8 +73,13 @@ sckClientOpen(THIS_VOID)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        Wait *const wait = waitNew(this->timeoutConnect);
+        ErrorRetry *const errRetry = errRetryNew();
         bool retry;
-        Wait *wait = waitNew(this->timeoutConnect);
+
+        // Get an address list for the host
+        const AddressInfo *const addrInfo = addrInfoNew(this->host, this->port);
+        unsigned int addrInfoIdx = 0;
 
         do
         {
@@ -82,23 +89,15 @@ sckClientOpen(THIS_VOID)
 
             TRY_BEGIN()
             {
-                // Get an address for the host. We are only going to try the first address returned.
-                struct addrinfo *addressFound = sckHostLookup(this->host, this->port);
+                // Get next address for the host
+                const struct addrinfo *const addressFound = addrInfoGet(addrInfo, addrInfoIdx);
 
                 // Connect to the host
-                TRY_BEGIN()
-                {
-                    fd = socket(addressFound->ai_family, addressFound->ai_socktype, addressFound->ai_protocol);
-                    THROW_ON_SYS_ERROR(fd == -1, HostConnectError, "unable to create socket");
+                fd = socket(addressFound->ai_family, addressFound->ai_socktype, addressFound->ai_protocol);
+                THROW_ON_SYS_ERROR(fd == -1, HostConnectError, "unable to create socket");
 
-                    sckOptionSet(fd);
-                    sckConnect(fd, this->host, this->port, addressFound, waitRemaining(wait));
-                }
-                FINALLY()
-                {
-                    freeaddrinfo(addressFound);
-                }
-                TRY_END();
+                sckOptionSet(fd);
+                sckConnect(fd, this->host, this->port, addressFound, waitRemaining(wait));
 
                 // Create the session
                 MEM_CONTEXT_PRIOR_BEGIN()
@@ -106,22 +105,39 @@ sckClientOpen(THIS_VOID)
                     result = sckSessionNew(ioSessionRoleClient, fd, this->host, this->port, this->timeoutSession);
                 }
                 MEM_CONTEXT_PRIOR_END();
+
+                // Update client name to include address
+                strTrunc(this->name);
+                strCat(this->name, addrInfoToName(this->host, this->port, addressFound));
             }
             CATCH_ANY()
             {
-                if (fd != -1)
-                    close(fd);
+                // Close socket
+                close(fd);
 
-                // Retry if wait time has not expired
-                if (waitMore(wait))
+                // Add the error retry info
+                errRetryAdd(errRetry);
+
+                // Increment address info index and reset if the end has been reached. When the end has been reached sleep for a bit
+                // to hopefully have better chance at succeeding, otherwise continue right to the next address as long as there is
+                // some time left.
+                addrInfoIdx++;
+
+                if (addrInfoIdx >= addrInfoSize(addrInfo))
                 {
-                    LOG_DEBUG_FMT("retry %s: %s", errorTypeName(errorType()), errorMessage());
-                    retry = true;
-
-                    statInc(SOCKET_STAT_RETRY_STR);
+                    addrInfoIdx = 0;
+                    retry = waitMore(wait);
                 }
                 else
-                    RETHROW();
+                    retry = waitRemaining(wait) > 0;
+
+                // Error when no retries remain
+                if (!retry)
+                    THROWP(errRetryType(errRetry), strZ(errRetryMessage(errRetry)));
+
+                // Log retry
+                LOG_DEBUG_FMT("retry %s: %s", errorTypeName(errorType()), errorMessage());
+                statInc(SOCKET_STAT_RETRY_STR);
             }
             TRY_END();
         }
@@ -176,7 +192,7 @@ sckClientNew(const String *const host, const unsigned int port, const TimeMSec t
         {
             .host = strDup(host),
             .port = port,
-            .name = strNewFmt("%s:%u", strZ(host), port),
+            .name = strCatFmt(strNew(), "%s:%u", strZ(host), port),
             .timeoutConnect = timeoutConnect,
             .timeoutSession = timeoutSession,
         };

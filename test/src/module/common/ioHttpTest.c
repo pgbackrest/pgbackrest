@@ -183,6 +183,11 @@ testRun(void)
         TEST_RESULT_Z(logBuf, "{a/: '+b', c: 'd='}", "check log");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("new query from kv");
+
+        TEST_RESULT_STR_Z(httpQueryRenderP(httpQueryNewP(.kv = query->kv)), "key1=value%201%3F&key2=value2a", "new query");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("merge queries");
 
         TEST_RESULT_STR_Z(
@@ -306,7 +311,7 @@ testRun(void)
 
         TEST_ERROR_FMT(
             httpRequestResponse(httpRequestNewP(client, STRDEF("GET"), STRDEF("/")), false), HostConnectError,
-            "unable to connect to 'localhost:%u': [111] Connection refused\n"
+            "unable to connect to 'localhost:%u (127.0.0.1)': [111] Connection refused\n"
             "[RETRY DETAIL OMITTED]",
             hrnServerPort(0));
 

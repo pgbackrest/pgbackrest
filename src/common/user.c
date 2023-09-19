@@ -121,7 +121,7 @@ groupNameFromId(gid_t groupId)
 }
 
 /**********************************************************************************************************************************/
-// Currently userHome() and userHomeFromId() are only used when building with libssh2
+// Currently userHome() and userHomeFromId() are only used if we are building with libssh2
 #ifdef HAVE_LIBSSH2
 
 FN_EXTERN const String *
