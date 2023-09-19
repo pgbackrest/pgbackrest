@@ -1255,7 +1255,7 @@
                 </text>
 
                 <config-key-list>
-                    <config-key id="annotation" name="Backup annotation(s)">
+                    <config-key id="annotation" name="Backup Annotation">
                         <summary>Annotate backup with user-defined key/value pairs.</summary>
 
                         <text>
