@@ -6,12 +6,12 @@
                 <github-pull-request id="2184"/>
 
                 <release-item-contributor-list>
-                    <release-item-ideator id="threenotrump"/>
+                    <release-item-ideator id="burak.yurdakul"/>
                     <release-item-contributor id="david.steele"/>
                     <release-item-reviewer id="stephen.frost"/>
                 </release-item-contributor-list>
 
-                <p>Fix issue with block incremental map lacking blocks.</p>
+                <p>Fix issue restoring block incremental without a block list.</p>
             </release-item>
         </release-bug-list>
 
