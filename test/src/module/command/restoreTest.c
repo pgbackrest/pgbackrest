@@ -3101,14 +3101,15 @@ testRun(void)
         TEST_TITLE("full backup with block incr");
 
         // Zeroed file large enough to use block incr
+        time_t timeBase = time(NULL);
         Buffer *relation = bufNew(256 * 1024);
         memset(bufPtr(relation), 0, bufSize(relation));
         bufUsedSet(relation, bufSize(relation));
 
-        HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation);
+        HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation, .timeModified = timeBase - 2);
 
         // Add postgresql.auto.conf to contain recovery settings
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF, .timeModified = timeBase - 1);
 
         // Backup
         argList = strLstNew();
@@ -3117,6 +3118,32 @@ testRun(void)
         hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
+        hrnCfgArgRawBool(argList, cfgOptRepoBundle, true);
+        hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
+        hrnCfgArgRawBool(argList, cfgOptOnline, false);
+        hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
+        hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        TEST_RESULT_VOID(hrnCmdBackup(), "backup");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("diff backup with block incr");
+
+        // Update timestamps so base/1/3 is slightly older than base/1/2. This will cause base/1/2 to be placed after base/1/3 in
+        // the bundle and since base/1/2 did not change it will be stored as a map only, which will cause restore to include it in a
+        // single read with base/1/3 (which is too small to be block incremental). This is to test for regression in the fix to
+        // separately decrypt block maps when they are in the middle/end of a bundle read.
+        HRN_STORAGE_TIME(storagePgWrite(), PG_PATH_BASE "/1/2", timeBase);
+        HRN_STORAGE_PUT_Z(storagePgWrite(), PG_PATH_BASE "/1/3", "contents", .timeModified = timeBase - 1);
+
+        // Backup
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+        hrnCfgArgRawStrId(argList, cfgOptType, backupTypeDiff);
         hrnCfgArgRawBool(argList, cfgOptRepoBundle, true);
         hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
         hrnCfgArgRawBool(argList, cfgOptOnline, false);
@@ -3148,6 +3175,7 @@ testRun(void)
             "base/\n"
             "base/1/\n"
             "base/1/2\n"
+            "base/1/3\n"
             "global/\n"
             "global/pg_control\n"
             "postgresql.auto.conf\n",
