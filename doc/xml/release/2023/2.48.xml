@@ -185,4 +185,21 @@
             </release-item>
         </release-bug-list>
     </release-doc-list>
+
+    <release-test-list>
+        <release-improvement-list>
+            <release-item>
+                <github-issue id="2163"/>
+                <github-pull-request id="2177"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="wu.ning"/>
+                    <release-item-contributor id="reid.thompson"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Allow <id>storage/sftp</id> unit test to run without <id>libssh2</id> installed.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-test-list>
 </release>
