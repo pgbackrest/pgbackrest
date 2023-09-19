@@ -193,6 +193,7 @@
                 <github-pull-request id="2177"/>
 
                 <release-item-contributor-list>
+                    <release-item-ideator id="wu.ning"/>
                     <release-item-contributor id="reid.thompson"/>
                     <release-item-reviewer id="david.steele"/>
                 </release-item-contributor-list>
