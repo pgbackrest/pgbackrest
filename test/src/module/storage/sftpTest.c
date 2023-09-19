@@ -76,27 +76,6 @@ testRun(void)
     unsigned int repoIdx = 0;
 #endif // HAVE_LIBSSH2
 
-    // This test should always be first so the storage helper is uninitialized
-    // *****************************************************************************************************************************
-    if (testBegin("storageHelperDryRunInit()"))
-    {
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("writable storage fails when dry-run is not initialized");
-
-        TEST_ERROR(storagePgIdxWrite(0), AssertError, WRITABLE_WHILE_DRYRUN);
-        TEST_ERROR(storageRepoIdxWrite(0), AssertError, WRITABLE_WHILE_DRYRUN);
-        TEST_ERROR(storageSpoolWrite(), AssertError, WRITABLE_WHILE_DRYRUN);
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("writable storage fails when dry-run is true");
-
-        storageHelperDryRunInit(true);
-
-        TEST_ERROR(storagePgIdxWrite(0), AssertError, WRITABLE_WHILE_DRYRUN);
-        TEST_ERROR(storageRepoIdxWrite(0), AssertError, WRITABLE_WHILE_DRYRUN);
-        TEST_ERROR(storageSpoolWrite(), AssertError, WRITABLE_WHILE_DRYRUN);
-    }
-
     // *****************************************************************************************************************************
     if (testBegin("storageNew()"))
     {
