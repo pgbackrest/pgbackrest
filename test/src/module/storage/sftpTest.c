@@ -18,33 +18,6 @@ Test SFTP Storage
 #include "common/harnessStorage.h"
 
 /***********************************************************************************************************************************
-Optional repo types
-***********************************************************************************************************************************/
-typedef enum
-{
-    repoTypeSftp,
-} RepoType;
-
-/***********************************************************************************************************************************
-Struct array <optionalStorageRepoType> indicates whether an optional repo storage type is available.
-***********************************************************************************************************************************/
-static const struct OptionalStorageRepoType
-{
-    StringId storageRepoTypeId;                                     // Storage repo type
-    bool exists;                                                    // Is this optional storage type available
-} optionalStorageRepoType[] =
-{
-    {
-        .storageRepoTypeId = STORAGE_SFTP_TYPE,
-#ifdef HAVE_LIBSSH2
-        .exists = true,
-#endif // HAVE_LIBSSH2
-    },
-};
-
-#ifdef HAVE_LIBSSH2
-
-/***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
 #define HANDSHAKE_PARAM                                             "["STRINGIFY(HRN_SCK_FILE_DESCRIPTOR)"]"
@@ -57,6 +30,8 @@ Constants
 /***********************************************************************************************************************************
 Test function for path expression
 ***********************************************************************************************************************************/
+#ifdef HAVE_LIBSSH2
+
 static String *
 storageTestPathExpression(const String *expression, const String *path)
 {
@@ -85,21 +60,21 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
+#ifdef HAVE_LIBSSH2
     // Install shim to return defined fd
     hrnSckClientOpenShimInstall();
     // Install shim to manage true/false return for fdReady
     hrnFdReadyShimInstall();
 
-#ifdef HAVE_LIBSSH2
     // Directory and file that cannot be accessed to test permissions errors
     const String *fileNoPerm = STRDEF(TEST_PATH "/noperm/noperm");
     String *pathNoPerm = strPath(fileNoPerm);
 
     // Write file for testing if storage is read-only
     const String *writeFile = STRDEF(TEST_PATH "/writefile");
-#endif // HAVE_LIBSSH2
 
     unsigned int repoIdx = 0;
+#endif // HAVE_LIBSSH2
 
     // This test should always be first so the storage helper is uninitialized
     // *****************************************************************************************************************************
@@ -2071,7 +2046,7 @@ testRun(void)
         TEST_RESULT_BOOL(
             unsetenv("PGBACKREST_REPO1_SFTP_PRIVATE_KEY_PASSPHRASE"), 0, "unset PGBACKREST_REPO1_SFTP_PRIVATE_KEY_PASSPHRASE");
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
+        TEST_LOG(PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
@@ -2212,7 +2187,7 @@ testRun(void)
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
+        TEST_LOG(PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
@@ -2595,7 +2570,7 @@ testRun(void)
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
+        TEST_LOG(PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
@@ -3668,7 +3643,7 @@ testRun(void)
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
+        TEST_LOG(PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
@@ -3892,7 +3867,7 @@ testRun(void)
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
+        TEST_LOG(PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
@@ -4015,7 +3990,7 @@ testRun(void)
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
+        TEST_LOG(PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
@@ -4208,7 +4183,7 @@ testRun(void)
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
+        TEST_LOG(PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
@@ -4543,7 +4518,7 @@ testRun(void)
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
+        TEST_LOG(PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
@@ -4620,7 +4595,7 @@ testRun(void)
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
+        TEST_LOG(PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
@@ -4884,7 +4859,7 @@ testRun(void)
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
+        TEST_LOG(PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
@@ -5519,7 +5494,7 @@ testRun(void)
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
+        TEST_LOG(PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
@@ -6211,7 +6186,7 @@ testRun(void)
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
+        TEST_LOG(PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
@@ -6518,7 +6493,7 @@ testRun(void)
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
+        TEST_LOG(PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
@@ -6697,7 +6672,7 @@ testRun(void)
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
+        TEST_LOG(PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
@@ -7103,7 +7078,7 @@ testRun(void)
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
+        TEST_LOG(PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
@@ -7261,7 +7236,7 @@ testRun(void)
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storage)));
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
+        TEST_LOG(PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
@@ -7337,7 +7312,7 @@ testRun(void)
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storage)));
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
+        TEST_LOG(PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
@@ -7756,7 +7731,7 @@ testRun(void)
             memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest))), ServiceError,
             "timeout freeing libssh2 session: libssh2 errno [-37]");
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
+        TEST_LOG(PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
@@ -7792,11 +7767,14 @@ testRun(void)
             FileRemoveError,
             "libssh2 error [-31]: sftp error [16]");
 #else
-        TEST_RESULT_BOOL(optionalStorageRepoType[repoTypeSftp].exists, false, PROJECT_NAME " not built with sftp support");
+        TEST_LOG(PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
     }
 
+#ifdef HAVE_LIBSSH2
     hrnFdReadyShimUninstall();
     hrnSckClientOpenShimUninstall();
+#endif // HAVE_LIBSSH2
+
     FUNCTION_HARNESS_RETURN_VOID();
 }

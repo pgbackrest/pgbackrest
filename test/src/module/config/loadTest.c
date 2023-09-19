@@ -117,8 +117,8 @@ testRun(void)
             hrnCfgLoadP(cfgCmdInfo, argList), OptionInvalidValueError,
             "local repo1 and repo2 paths are both '/var/lib/pgbackrest' but must be different");
 
-#ifdef HAVE_LIBSSH2
         // -------------------------------------------------------------------------------------------------------------------------
+#ifdef HAVE_LIBSSH2
         TEST_TITLE("local default repo paths for sftp repo type must be different");
 
         argList = strLstNew();
