@@ -183,6 +183,14 @@
 
                 <p>Fix configuration reference example for the <br-option>tls-server-address</br-option> option.</p>
             </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix command reference example for the <br-option>filter</br-option> option.</p>
+            </release-item>
         </release-bug-list>
     </release-doc-list>
 
