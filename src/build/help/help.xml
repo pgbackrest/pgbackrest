@@ -1074,7 +1074,7 @@
                         <example>pg-backup</example>
                     </config-key>
 
-                    <config-key id="repo-sftp-known-host" name="SFTP known hosts file">
+                    <config-key id="repo-sftp-known-host" name="SFTP Known Hosts File">
                         <summary>SFTP known hosts file.</summary>
 
                         <text>
@@ -1154,7 +1154,7 @@
                         <example>9000</example>
                     </config-key>
 
-                    <config-key id="repo-storage-tag" name="Repository Storage Tag(s)">
+                    <config-key id="repo-storage-tag" name="Repository Storage Tag">
                         <summary>Repository storage tag(s).</summary>
 
                         <text>
