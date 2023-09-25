@@ -1,5 +1,10 @@
 [
     {
+        "commit": "a7ab686d0e3d48b3200986d91ea3489488800382",
+        "date": "2023-09-25 09:32:15 -0400",
+        "subject": "v2.48: Repository Storage Tags"
+    },
+    {
         "commit": "cb3ff6ed4336af9e4c0643d8224d5bc3d790a655",
         "date": "2023-09-23 13:41:03 -0400",
         "subject": "Fix command reference example for the filter option.",
