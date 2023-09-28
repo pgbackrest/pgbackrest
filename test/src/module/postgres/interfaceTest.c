@@ -186,7 +186,7 @@ testRun(void)
 
         TEST_RESULT_VOID(pgControlCheckpointZero(control, NULL), "zero checkpoint");
         info = pgControlFromBuffer(control, NULL);
-        TEST_RESULT_UINT(info.checkpoint, 24, "check zero checkpoint");
+        TEST_RESULT_UINT(info.checkpoint, 0xFFFFFFFFFFFFFFFF, "check zero checkpoint");
     }
 
     // *****************************************************************************************************************************

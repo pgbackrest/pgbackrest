@@ -128,8 +128,8 @@ Zero control checkpoint
     static void                                                                                                                    \
     pgInterfaceControlCheckpointZero##version(unsigned char *const controlFile)                                                    \
     {                                                                                                                              \
-        ((ControlFileData *)controlFile)->checkPoint = 24;                                                                         \
-        ((ControlFileData *)controlFile)->checkPointCopy.redo = 24;                                                                \
+        ((ControlFileData *)controlFile)->checkPoint = 0xFFFFFFFFFFFFFFFF;                                                         \
+        ((ControlFileData *)controlFile)->checkPointCopy.redo = 0xFFFFFFFFFFFFFFFF;                                                \
     }
 
 #endif
