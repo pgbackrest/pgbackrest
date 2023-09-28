@@ -177,16 +177,16 @@ testRun(void)
         TEST_RESULT_UINT(info.catalogVersion, 202007201, "check catalog version");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("Zero checkpoint");
+        TEST_TITLE("Invalidate checkpoint");
 
         control = hrnPgControlToBuffer(0, 0, (PgControl){.version = PG_VERSION_13, .systemId = 0xAAAA0AAAA, .checkpoint = 777});
 
         info = pgControlFromBuffer(control, NULL);
         TEST_RESULT_UINT(info.checkpoint, 777, "check checkpoint");
 
-        TEST_RESULT_VOID(pgControlCheckpointZero(control, NULL), "zero checkpoint");
+        TEST_RESULT_VOID(pgControlCheckpointInvalidate(control, NULL), "invalidate checkpoint");
         info = pgControlFromBuffer(control, NULL);
-        TEST_RESULT_UINT(info.checkpoint, 0xFFFFFFFFFFFFFFFF, "check zero checkpoint");
+        TEST_RESULT_UINT(info.checkpoint, 0xFFFFFFFFFFFFFFFF, "check invalid checkpoint");
     }
 
     // *****************************************************************************************************************************

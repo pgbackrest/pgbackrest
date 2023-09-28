@@ -2257,6 +2257,13 @@ sub restoreCompare
         $self->manifestDefault($oExpectedManifestRef);
     }
 
+    # Remove pg_control checksum for online backups since it won't match due to invalidating the checkpoint
+    if ($oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ONLINE})
+    {
+       delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{"pg_data/global/pg_control"}{&MANIFEST_SUBKEY_CHECKSUM});
+       $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, "pg_data/global/pg_control", MANIFEST_SUBKEY_CHECKSUM);
+    }
+
     # Newer Perls will change this variable to a number whenever a numeric comparison is performed. It is expected to be a string so
     # make sure it is one before saving.
     $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} .= '';

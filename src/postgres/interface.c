@@ -74,8 +74,8 @@ typedef struct PgInterface
     // Update control crc
     void (*controlCrcUpdate)(unsigned char *);
 
-    // Zero control checkpoint
-    void (*controlCheckpointZero)(unsigned char *);
+    // Invalidate control checkpoint
+    void (*controlCheckpointInvalidate)(unsigned char *);
 
     // Get the control version for this version of PostgreSQL
     uint32_t (*controlVersion)(void);
@@ -382,7 +382,7 @@ pgControlFromFile(const Storage *const storage, const String *const pgVersionFor
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-pgControlCheckpointZero(Buffer *const buffer, const String *const pgVersionForce)
+pgControlCheckpointInvalidate(Buffer *const buffer, const String *const pgVersionForce)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BUFFER, buffer);
@@ -393,7 +393,7 @@ pgControlCheckpointZero(Buffer *const buffer, const String *const pgVersionForce
 
     const PgControl pgControl = pgControlFromBuffer(buffer, pgVersionForce);
 
-    pgInterfaceVersion(pgControl.version)->controlCheckpointZero(bufPtr(buffer));
+    pgInterfaceVersion(pgControl.version)->controlCheckpointInvalidate(bufPtr(buffer));
     pgInterfaceVersion(pgControl.version)->controlCrcUpdate(bufPtr(buffer));
 
     FUNCTION_LOG_RETURN_VOID();

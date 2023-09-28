@@ -118,15 +118,15 @@ Update control crc
 #endif
 
 /***********************************************************************************************************************************
-Zero control checkpoint
+Invalidate control checkpoint
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
 #elif PG_VERSION >= PG_VERSION_93
 
-#define PG_INTERFACE_CONTROL_CHECKPOINT_ZERO(version)                                                                              \
+#define PG_INTERFACE_CONTROL_CHECKPOINT_INVALIDATE(version)                                                                        \
     static void                                                                                                                    \
-    pgInterfaceControlCheckpointZero##version(unsigned char *const controlFile)                                                    \
+    pgInterfaceControlCheckpointInvalidate##version(unsigned char *const controlFile)                                              \
     {                                                                                                                              \
         ((ControlFileData *)controlFile)->checkPoint = 0xFFFFFFFFFFFFFFFF;                                                         \
         ((ControlFileData *)controlFile)->checkPointCopy.redo = 0xFFFFFFFFFFFFFFFF;                                                \
