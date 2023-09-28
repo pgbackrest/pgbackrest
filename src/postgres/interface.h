@@ -133,6 +133,9 @@ FN_EXTERN bool pgDbIsSystemId(unsigned int id);
 FN_EXTERN Buffer *pgControlBufferFromFile(const Storage *storage, const String *pgVersionForce);
 FN_EXTERN PgControl pgControlFromFile(const Storage *storage, const String *pgVersionForce);
 
+// Zero out checkpoint/redo records in pg_control !!!
+FN_EXTERN void pgControlCheckpointZero(Buffer *buffer, const String *pgVersionForce);
+
 // Get the control version for a PostgreSQL version
 FN_EXTERN uint32_t pgControlVersion(unsigned int pgVersion);
 

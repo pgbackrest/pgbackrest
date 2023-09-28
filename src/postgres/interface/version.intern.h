@@ -93,6 +93,48 @@ Get control crc offset
 #endif
 
 /***********************************************************************************************************************************
+Update control crc
+***********************************************************************************************************************************/
+#if PG_VERSION > PG_VERSION_MAX
+
+#elif PG_VERSION >= PG_VERSION_95
+
+#define PG_INTERFACE_CONTROL_CRC_UPDATE(version)                                                                                   \
+    static void                                                                                                                    \
+    pgInterfaceControlCrcUpdate##version(unsigned char *const controlFile)                                                         \
+    {                                                                                                                              \
+        ((ControlFileData *)controlFile)->crc = crc32cOne(controlFile, offsetof(ControlFileData, crc));                            \
+    }
+
+#elif PG_VERSION >= PG_VERSION_93
+
+#define PG_INTERFACE_CONTROL_CRC_UPDATE(version)                                                                                   \
+    static void                                                                                                                    \
+    pgInterfaceControlCrcUpdate##version(unsigned char *const controlFile)                                                         \
+    {                                                                                                                              \
+        ((ControlFileData *)controlFile)->crc = crc32One(controlFile, offsetof(ControlFileData, crc));                             \
+    }
+
+#endif
+
+/***********************************************************************************************************************************
+Zero control checkpoint
+***********************************************************************************************************************************/
+#if PG_VERSION > PG_VERSION_MAX
+
+#elif PG_VERSION >= PG_VERSION_93
+
+#define PG_INTERFACE_CONTROL_CHECKPOINT_ZERO(version)                                                                              \
+    static void                                                                                                                    \
+    pgInterfaceControlCheckpointZero##version(unsigned char *const controlFile)                                                    \
+    {                                                                                                                              \
+        ((ControlFileData *)controlFile)->checkPoint = 24;                                                                         \
+        ((ControlFileData *)controlFile)->checkPointCopy.redo = 24;                                                                \
+    }
+
+#endif
+
+/***********************************************************************************************************************************
 Get the control version
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX

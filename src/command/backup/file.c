@@ -201,7 +201,13 @@ backupFile(
                     IoRead *readIo;
 
                     if (strEqZ(file->pgFile, PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL))
-                        readIo = ioBufferReadNew(pgControlBufferFromFile(storagePg(), pgVersionForce));
+                    {
+                        Buffer *const pgControl = pgControlBufferFromFile(storagePg(), pgVersionForce);
+
+                        // !!!
+                        pgControlCheckpointZero(pgControl, NULL);
+                        readIo = ioBufferReadNew(pgControl);
+                    }
                     else
                     {
                         readIo = storageReadIo(

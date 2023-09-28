@@ -175,6 +175,18 @@ testRun(void)
         TEST_RESULT_UINT(info.systemId, 0xAAAA0AAAA, "check system id");
         TEST_RESULT_UINT(info.version, PG_VERSION_14, "check version");
         TEST_RESULT_UINT(info.catalogVersion, 202007201, "check catalog version");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("Zero checkpoint");
+
+        control = hrnPgControlToBuffer(0, 0, (PgControl){.version = PG_VERSION_13, .systemId = 0xAAAA0AAAA, .checkpoint = 777});
+
+        info = pgControlFromBuffer(control, NULL);
+        TEST_RESULT_UINT(info.checkpoint, 777, "check checkpoint");
+
+        TEST_RESULT_VOID(pgControlCheckpointZero(control, NULL), "zero checkpoint");
+        info = pgControlFromBuffer(control, NULL);
+        TEST_RESULT_UINT(info.checkpoint, 24, "check zero checkpoint");
     }
 
     // *****************************************************************************************************************************
