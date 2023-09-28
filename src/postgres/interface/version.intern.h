@@ -129,7 +129,6 @@ Invalidate control checkpoint
     pgInterfaceControlCheckpointInvalidate##version(unsigned char *const controlFile)                                              \
     {                                                                                                                              \
         ((ControlFileData *)controlFile)->checkPoint = 0xFFFFFFFFFFFFFFFF;                                                         \
-        ((ControlFileData *)controlFile)->checkPointCopy.redo = 0xFFFFFFFFFFFFFFFF;                                                \
     }
 
 #endif
