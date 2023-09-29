@@ -39,7 +39,8 @@ testRun(void)
 
     // Create help data
     const BldCfg bldCfg = bldCfgParse(storagePosixNewP(HRN_PATH_REPO_STR));
-    const Buffer *const helpData = bldHlpRenderHelpAutoCCmp(bldCfg, bldHlpParse(storagePosixNewP(HRN_PATH_REPO_STR), bldCfg));
+    const Buffer *const helpData = bldHlpRenderHelpAutoCCmp(
+        bldCfg, bldHlpParse(storagePosixNewP(HRN_PATH_REPO_STR), bldCfg, false));
 
     // Program name a version are used multiple times
     const char *helpVersion = PROJECT_NAME " " PROJECT_VERSION;

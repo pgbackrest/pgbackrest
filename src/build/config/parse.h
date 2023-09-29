@@ -4,7 +4,7 @@ Parse Configuration Yaml
 #ifndef BUILD_CONFIG_PARSE_H
 #define BUILD_CONFIG_PARSE_H
 
-#include "common/type/stringList.h"
+#include "storage/storage.h"
 
 /***********************************************************************************************************************************
 Command role constants
