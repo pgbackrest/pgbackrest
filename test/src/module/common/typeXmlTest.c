@@ -84,7 +84,7 @@ testRun(void)
 
         // Create an empty document, add data to it, and output xml
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(xmlDocument, xmlDocumentNew(STRDEF("CompleteMultipartUpload")), "new xml with root node");
+        TEST_ASSIGN(xmlDocument, xmlDocumentNewP(STRDEF("CompleteMultipartUpload")), "new xml with root node");
 
         XmlNode *partNode = NULL;
         TEST_ASSIGN(partNode, xmlNodeAdd(xmlDocumentRoot(xmlDocument), STRDEF("Part")), "create part node 1");
@@ -102,6 +102,38 @@ testRun(void)
             "<Part><PartNumber>1</PartNumber><ETag>E1</ETag></Part>"
             "<Part><PartNumber>2</PartNumber><ETag>E2</ETag></Part>"
             "</CompleteMultipartUpload>\n",
+            "get xml");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("copy xml between documents");
+
+        XmlDocument *xmlDocument2 = NULL;
+
+        TEST_ASSIGN(
+            xmlDocument, xmlDocumentNewP(STRDEF("doc1"), .dtdName = STRDEF("doc"), .dtdFile = STRDEF("doc.dtd")),
+            "new xml with dtd");
+        TEST_ASSIGN(
+            xmlDocument2,
+            xmlDocumentNewBuf(
+                BUFSTRDEF(
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                    "<doc2>\n"
+                    "    <!-- comment -->\n"
+                    "    text55\n"
+                    "    <name id=\"id55\">name55</name>\n"
+                    "</doc2>")),
+            "valid xml");
+
+        TEST_RESULT_VOID(xmlNodeChildAdd(xmlDocumentRoot(xmlDocument), xmlDocumentRoot(xmlDocument2)), "copy xml");
+        TEST_RESULT_STR_Z(
+            strNewBuf(xmlDocumentBuf(xmlDocument)),
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            "<!DOCTYPE doc SYSTEM \"doc.dtd\">\n"
+            "<doc1>\n"
+            "    \n"
+            "    text55\n"
+            "    <name id=\"id55\">name55</name>\n"
+            "</doc1>\n",
             "get xml");
     }
 
