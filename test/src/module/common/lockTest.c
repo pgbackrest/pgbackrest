@@ -303,7 +303,7 @@ testRun(void)
             lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)0,
             strZ(lockLocal.file[lockTypeBackup].name));
 
-        TEST_RESULT_BOOL(ftruncate(lockLocal.file[lockTypeBackup].fd, 0), 0, "truncate lockLocal.file[lockTypeBackup].fd");
+        TEST_RESULT_INT(ftruncate(lockLocal.file[lockTypeBackup].fd, 0), 0, "truncate lockLocal.file[lockTypeBackup].fd");
 
         IoWrite *const write = ioFdWriteNewOpen(lockLocal.file[lockTypeBackup].name, lockLocal.file[lockTypeBackup].fd, 0);
 
