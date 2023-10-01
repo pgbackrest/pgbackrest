@@ -449,8 +449,9 @@ testRun(void)
         TEST_ERROR(
             ioClientOpen(client), HostConnectError, "unable to get address for '99.99.99.99.99': [-2] Name or service not known");
 
+        // Set TLS client timeout higher than socket timeout to ensure that TLS retries are covered
         TEST_ASSIGN(
-            client, tlsClientNewP(sckClientNew(STRDEF("localhost"), hrnServerPort(0), 100, 100), STRDEF("X"), 100, 100, true),
+            client, tlsClientNewP(sckClientNew(STRDEF("localhost"), hrnServerPort(0), 100, 100), STRDEF("X"), 250, 250, true),
             "new client");
         TEST_ERROR_FMT(
             ioClientOpen(client), HostConnectError,
