@@ -889,20 +889,12 @@ sub helpOptionGet
     }
     else
     {
-        foreach my $strLine (split('\\|', $$oOptionHash{&CONFIG_HELP_EXAMPLE}))
+        if (defined($strCommand))
         {
-            if ($strExample ne '')
-            {
-                $strExample .= ' ';
-            }
-
-            if (defined($strCommand))
-            {
-                $strExample .= '--';
-            }
-
-            $strExample .= "${strOptionIndex}=${strLine}";
+            $strExample = '--';
         }
+
+        $strExample .= "${strOptionIndex}=" . $$oOptionHash{&CONFIG_HELP_EXAMPLE};
     }
 
     $strCodeBlock .= (defined($strCodeBlock) ? "\n" : '') . "example: ${strExample}";

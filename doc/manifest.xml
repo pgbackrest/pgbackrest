@@ -86,7 +86,7 @@
         <source key="index"/>
         <source key="user-guide-index"/>
         <source key="user-guide"/>
-        <source key="help" type="custom"/>
+        <source key="help" type="custom" file="../src/build/help/help.xml"/>
         <source key="release" type="custom"/>
         <source key="faq"/>
         <source key="metric"/>

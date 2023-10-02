@@ -238,12 +238,12 @@ pgbackrest/test/test.pl --dry-run
     P00   INFO: test begin on x86_64 - log level info
     P00   INFO: clean autogenerate code
     P00   INFO: builds required: bin
---> P00   INFO: 79 tests selected
+--> P00   INFO: 80 tests selected
                 
-    P00   INFO: P1-T01/79 - vm=none, module=common, test=error
-           [filtered 76 lines of output]
-    P00   INFO: P1-T78/79 - vm=none, module=performance, test=type
-    P00   INFO: P1-T79/79 - vm=none, module=performance, test=storage
+    P00   INFO: P1-T01/80 - vm=none, module=common, test=error
+           [filtered 77 lines of output]
+    P00   INFO: P1-T79/80 - vm=none, module=performance, test=type
+    P00   INFO: P1-T80/80 - vm=none, module=performance, test=storage
 --> P00   INFO: DRY RUN COMPLETED SUCCESSFULLY
 ```
 
@@ -264,7 +264,7 @@ pgbackrest/test/test.pl --vm-out --module=common --test=wait
                 
     P00   INFO: P1-T1/1 - vm=none, module=common, test=wait
                 
-        P00   INFO: test command begin 2.47: [common/wait] --log-level=info --no-log-timestamp --repo-path=/home/vagrant/test/repo --test-path=/home/vagrant/test --vm=none --vm-id=0
+        P00   INFO: test command begin 2.48: [common/wait] --log-level=info --no-log-timestamp --repo-path=/home/vagrant/test/repo --test-path=/home/vagrant/test --vm=none --vm-id=0
         P00   INFO: test command end: completed successfully
         run 1 - waitNew(), waitMore, and waitFree()
                       L0018     expect AssertError: assertion 'waitTime <= 999999000' failed
@@ -276,23 +276,32 @@ pgbackrest/test/test.pl --vm-out --module=common --test=wait
                       L0028         check sleep time
                       L0029         check sleep prev time
                       L0030         no wait more
-                      L0033     new wait = 0.2 sec
-                      L0034         check remaining time
-                      L0035         check wait time
-                      L0036         check sleep time
-                      L0037         check sleep prev time
-                      L0038         check begin time
-                      L0044         lower range check
-                      L0045         upper range check
-                      L0047         free wait
-                      L0052     new wait = 1.1 sec
-                      L0053         check wait time
-                      L0054         check sleep time
-                      L0055         check sleep prev time
-                      L0056         check begin time
-                      L0062         lower range check
-                      L0063         upper range check
-                      L0065         free wait
+        
+        run 1/2 ----- L0033 100ms using only waitRemaining()
+                      L0035     new wait
+                      L0037         check remaining time
+        
+        run 1/3 ----- L0040 200ms wait
+                      L0044     new wait = 0.2 sec
+                      L0045         check remaining time upper range
+                      L0046         check remaining time lowe range
+                      L0047         check wait time
+                      L0048         check sleep time
+                      L0049         check sleep prev time
+                      L0050         check begin time
+                      L0056         lower range check
+                      L0057         upper range check
+                      L0059         free wait
+        
+        run 1/4 ----- L0062 1100ms wait
+                      L0066     new wait = 1.1 sec
+                      L0067         check wait time
+                      L0068         check sleep time
+                      L0069         check sleep prev time
+                      L0070         check begin time
+                      L0076         lower range check
+                      L0077         upper range check
+                      L0079         free wait
         
         TESTS COMPLETED SUCCESSFULLY
     

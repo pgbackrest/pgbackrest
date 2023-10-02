@@ -144,7 +144,7 @@ protocolParallelJobToLog(const ProtocolParallelJob *const this, StringStatic *co
         FUNCTION_LOG_OBJECT_FORMAT(
             protocolParallelJobResult(this), pckReadToLog, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
 
-    strStcFmt(debugLog, "code: %d, message: ", protocolParallelJobErrorCode(this));
+    strStcFmt(debugLog, ", code: %d, message: ", protocolParallelJobErrorCode(this));
 
     strStcResultSizeInc(
         debugLog,

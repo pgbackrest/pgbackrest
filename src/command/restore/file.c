@@ -19,6 +19,7 @@ Restore File
 #include "common/io/filter/group.h"
 #include "common/io/filter/size.h"
 #include "common/io/io.h"
+#include "common/io/limitRead.h"
 #include "common/log.h"
 #include "config/config.h"
 #include "info/manifest.h"
@@ -215,7 +216,7 @@ restoreFile(
             MEM_CONTEXT_TEMP_BEGIN()
             {
                 const RestoreFile *const file = lstGet(fileList, fileIdx);
-                const RestoreFileResult *const fileResult = lstGet(result, fileIdx);
+                RestoreFileResult *const fileResult = lstGet(result, fileIdx);
 
                 // Copy file from repository to database
                 if (fileResult->result == restoreResultCopy)
@@ -265,15 +266,6 @@ restoreFile(
                                 .compressible = repoFileCompressType == compressTypeNone && cipherPass == NULL,
                                 .offset = file->offset, .limit = repoFileLimit != 0 ? VARUINT64(repoFileLimit) : NULL);
 
-                            // Add decryption filter for block incremental map
-                            if (cipherPass != NULL && file->blockIncrMapSize != 0)
-                            {
-                                ioFilterGroupAdd(
-                                    ioReadFilterGroup(storageReadIo(repoFileRead)),
-                                    cipherBlockNewP(
-                                        cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass), .raw = true));
-                            }
-
                             ioReadOpen(storageReadIo(repoFileRead));
                         }
                         MEM_CONTEXT_PRIOR_END();
@@ -294,8 +286,19 @@ restoreFile(
 
                         // Read block map. This will be compared to the block checksum list already created to determine which
                         // blocks need to be fetched from the repository. If we got here there must be at least one block to fetch.
+                        IoRead *const blockMapRead = ioLimitReadNew(storageReadIo(repoFileRead), varUInt64(file->limit));
+
+                        if (cipherPass != NULL)
+                        {
+                            ioFilterGroupAdd(
+                                ioReadFilterGroup(blockMapRead),
+                                cipherBlockNewP(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass), .raw = true));
+                        }
+
+                        ioReadOpen(blockMapRead);
+
                         const BlockMap *const blockMap = blockMapNewRead(
-                            storageReadIo(repoFileRead), file->blockIncrSize, file->blockIncrChecksumSize);
+                            blockMapRead, file->blockIncrSize, file->blockIncrChecksumSize);
 
                         // The repo file needs to be closed so that block lists can be read from the remote protocol
                         ioReadClose(storageReadIo(repoFileRead));
@@ -336,6 +339,7 @@ restoreFile(
 
                                 // Write block
                                 ioWrite(storageWriteIo(pgFileWrite), deltaWrite->block);
+                                fileResult->blockIncrDeltaSize += bufUsed(deltaWrite->block);
 
                                 // Flush writes since we may seek to a new location for the next block
                                 ioWriteFlush(storageWriteIo(pgFileWrite));

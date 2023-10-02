@@ -39,7 +39,8 @@ testRun(void)
 
     // Create help data
     const BldCfg bldCfg = bldCfgParse(storagePosixNewP(HRN_PATH_REPO_STR));
-    const Buffer *const helpData = bldHlpRenderHelpAutoCCmp(bldCfg, bldHlpParse(storagePosixNewP(HRN_PATH_REPO_STR), bldCfg));
+    const Buffer *const helpData = bldHlpRenderHelpAutoCCmp(
+        bldCfg, bldHlpParse(storagePosixNewP(HRN_PATH_REPO_STR), bldCfg, false));
 
     // Program name a version are used multiple times
     const char *helpVersion = PROJECT_NAME " " PROJECT_VERSION;
@@ -319,9 +320,11 @@ testRun(void)
             "  --repo-s3-uri-style                 S3 URI Style [default=host]\n"
             "  --repo-sftp-host                    SFTP repository host\n"
             "  --repo-sftp-host-fingerprint        SFTP repository host fingerprint\n"
+            "  --repo-sftp-host-key-check-type     SFTP host key check type [default=strict]\n"
             "  --repo-sftp-host-key-hash-type      SFTP repository host key hash type\n"
             "  --repo-sftp-host-port               SFTP repository host port [default=22]\n"
             "  --repo-sftp-host-user               SFTP repository host user\n"
+            "  --repo-sftp-known-host              SFTP known hosts file\n"
             "  --repo-sftp-private-key-file        SFTP private key file\n"
             "  --repo-sftp-private-key-passphrase  SFTP private key passphrase\n"
             "  --repo-sftp-public-key-file         SFTP public key file\n"

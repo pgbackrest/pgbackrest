@@ -1,5 +1,243 @@
 [
     {
+        "commit": "a7ab686d0e3d48b3200986d91ea3489488800382",
+        "date": "2023-09-25 09:32:15 -0400",
+        "subject": "v2.48: Repository Storage Tags"
+    },
+    {
+        "commit": "cb3ff6ed4336af9e4c0643d8224d5bc3d790a655",
+        "date": "2023-09-23 13:41:03 -0400",
+        "subject": "Fix command reference example for the filter option.",
+        "body": "This example was broken by 24f7252. Revert to (almost) the prior code to fix this example until something better can be committed. The something better is in progress but it adds new build requirements so it is too late to include it for the release.\n\nTechnically this breaks some other examples, but they are all internal and not visible in the user-facing documentation."
+    },
+    {
+        "commit": "6f0f2b371e6604552001b56e8931c6d15ceab41f",
+        "date": "2023-09-19 19:01:16 -0400",
+        "subject": "Update help title for the --annotation option.",
+        "body": "Fix capitalization and remove pluralization that is implied."
+    },
+    {
+        "commit": "c3c0834e170196a1241a368779162fcca65f9ad5",
+        "date": "2023-09-19 16:26:13 -0400",
+        "subject": "Allow storage/sftp unit test to run without libssh2 installed.",
+        "body": "Add missing #ifdefs and update tests to prevent test compilation failure and test run issues when libssh2 is not present."
+    },
+    {
+        "commit": "bb752cd111b1257088e57137bdbe6715e96eb292",
+        "date": "2023-09-19 12:08:09 -0400",
+        "subject": "Remove duplicate tests from storage/sftp unit test module.",
+        "body": "These tests are already run as part of storage/posix and do not need to be duplicated in storage/sftp."
+    },
+    {
+        "commit": "31de127cf42438b1fac04c161c47264aa1fb1060",
+        "date": "2023-09-19 11:30:29 -0400",
+        "subject": "Fix issue restoring block incremental without a block list.",
+        "body": "It is currently possible for a block map to be written without any accompanying blocks. This happens when a file timestamp is updated but the file has not changed. On restore, this caused problems when encryption was enabled, the block map was bundled after a file that had been stored without block incremental, and both files were included in a single bundle read. In this case the block map would not be decrypted and the encrypted data was passed to blockMapNewRead() with unpredictable results. In many cases built-in retries would rectify this problem as long as delta was enabled since block maps would move to the beginning of the bundle read and be decrypted properly. If enough files were affected, however, it could overwhelm the retries and throw an error. Subsequent delta restores would eventually be able to produce a valid result.\r\n\r\nFix this by moving block map decryption so it works correctly no matter where the block map is located in the read. This has the additional benefit of limiting how far the block map can read so it will error earlier if corrupt. Though in this case there was no repository corruption involved, it appeared that way to blockMapNewRead() since it was reading encrypted data.\r\n\r\nArguably block maps without blocks should not be written at all, but it would be better to consider that as a separate change. This pattern clearly exists in the wild and needs to be handled, plus the new implementation has other benefits."
+    },
+    {
+        "commit": "88edea4571d954e54a561247de587f747eaaadca",
+        "date": "2023-09-18 11:30:42 -0400",
+        "subject": "Add block incremental info to restore detail logging.",
+        "body": "Log that block incremental was used and the delta size if less than the entire file was updated."
+    },
+    {
+        "commit": "d27533b40f039ff8da3a284d77fccff101083492",
+        "date": "2023-09-17 17:06:42 -0400",
+        "subject": "Fix manifest command filter for files in a tablespace.",
+        "body": "pg_data/ was appended at the beginning of the filter, which meant that files in tablespaces could never be queried directly.\n\nUpdate the filter to require the full path, including pg_data/ or pg_tblspc/."
+    },
+    {
+        "commit": "ed88f0483e8c87fde6dc098102b1c49e281d96e1",
+        "date": "2023-09-16 09:35:27 -0400",
+        "subject": "Add missing comma in protocolParallelJobToLog()."
+    },
+    {
+        "commit": "ce9ba0fadee652d409488bee701ea6a51cafec75",
+        "date": "2023-09-15 20:22:38 -0400",
+        "subject": "Add known hosts checking for SFTP storage driver.",
+        "body": "By default require a known hosts match as part of the SFTP storage driver's authentication process, i.e. repo-sftp-host-key-check-type=strict. The match is expected to be found in the default list or in a list of known hosts files provided by the user. An exception is made if a fingerprint has been manually configured with repo-sftp-host-fingerprint or repo-sftp-host-key-check-type=accept-new can be used to automatically add new hosts.\r\n\r\nAlso allow host key verification to be skipped, as before, but require the user to explicitly set this (repo-sftp-host-key-check-type=none) rather than it being the default."
+    },
+    {
+        "commit": "f5c730fd03ff27088bd91c148ed285c63b5e7502",
+        "date": "2023-09-15 18:15:02 -0400",
+        "subject": "Add prefix to meson build target to avoid conflicts.",
+        "body": "Older versions of meson fail when a build target in a subproject has the same name as another subproject.\n\nThis has been fixed in newer versions, but we still need to support older versions and in any case this seems cleaner and the help build target is already prefixed in this fashion."
+    },
+    {
+        "commit": "9039d20b5bd73d3732ed6dac0a2bba4558176d8f",
+        "date": "2023-09-15 09:30:40 -0400",
+        "subject": "Add report option to check command.",
+        "body": "This option is intended to eventually create a comprehensive report about the state of the pgBackRest configuration based on the results of the check command.\r\n\r\nImplement a detailed report of the configuration options in the environment and configuration files. This should be useful information when debugging configuration errors, since invalid options and configurations are automatically noted. While custom config locations will not be found automatically, it will at least be clear that the config is not in a standard location.\r\n\r\nFor now keep this option internal since there is a lot of work to be done, but commit it so that it can be used when needed and tested in various environments.\r\n\r\nNote that for now when --report is specified, the check command is not being run at all. Only the config report is generated. This behavior will be improved in the future."
+    },
+    {
+        "commit": "657c1a3e069910106bc3642153c27b0542c61dc3",
+        "date": "2023-09-14 18:41:36 -0400",
+        "subject": "Finalize catalog number for PostgreSQL 16 release."
+    },
+    {
+        "commit": "1b4e0cce5f3ff5ea3ee0b889e6d4ce4de1430b04",
+        "date": "2023-09-14 08:22:21 -0400",
+        "subject": "Add --repo-storage-tag option to create object tags.",
+        "body": "This new option allows tags to be added to objects in S3, GCS, and Azure repositories.\r\n\r\nThis was fairly straightforward for S3 and Azure, but GCS does not allow tags for a simple upload using the JSON interface. If tags are required then the resumable interface must be used even if the file falls below the limit that usually triggers a resumable upload (i.e. size < repo-storage-upload-chunk-size).\r\n\r\nThis option is structured so that tags must be specified per-repo rather than globally for all repos. This seems logical since the tag keys and values may vary by service, e.g. S3 vs GCS.\r\n\r\nThese storage tags are independent of backup annotations since they are likely to be used for different purposes, e.g. billing, while the backup annotations are primarily intended for monitoring."
+    },
+    {
+        "commit": "3b9c31f6e3a0c23674f97b02c42133192fb51724",
+        "date": "2023-09-13 16:59:52 -0400",
+        "subject": "Use PROJECT_NAME constant instead of string literal."
+    },
+    {
+        "commit": "39bb8a0d3a96eef63219dff262a9306a4f59dae9",
+        "date": "2023-09-12 18:09:58 -0400",
+        "subject": "Support for dual stack connections.",
+        "body": "The prior code would only connect to the first address provided by getaddrinfo().\r\n\r\nInstead try each address in the list. If all connections fail then wait and try them all again until timeout.\r\n\r\nCurrently a round robin approach is used where each connection attempt must fail before the next connection is attempted. This works fine, for example, when an ipv6 address has no route to the host, but will work less well when a host answers but doesn't respond in a timely fashion.\r\n\r\nWe may consider a Happy Eyeballs approach in the future, but since pgBackRest is primarily a background process, it is not clear that slightly improved response time (in the case of failed connections) is worth the extra complexity."
+    },
+    {
+        "commit": "9d3a605900644059ff0e030d71a818b3965eb031",
+        "date": "2023-09-10 12:45:58 -0400",
+        "subject": "Optimize WAL segment check after successful backup.",
+        "body": "The prior code did one list command against the storage for each WAL segment. This led to a lot of lists and was especially inefficient when the WAL (or the majority of it) was already present.\r\n\r\nOptimize to keep the contents of a WAL directory and use them on a subsequent search. Leave the optimizations for a single WAL segment since other places still use that mode."
+    },
+    {
+        "commit": "edbd520c81f5d437963aaf42d1c79b2c51d01665",
+        "date": "2023-09-10 10:36:58 -0400",
+        "subject": "Refactor address list lookup to include all returned addresses.",
+        "body": "sckHostLookup() only returned the first address record returned from getaddrinfo(). The new AddressInfo object provides a full list of values returned from getaddrinfo(). Freeing the list is also handled by the object so there is no longer a need for FINALLY blocks to ensure the list is freed.\r\n\r\nAdd the selected address to the client/server names for debugging purposes.\r\n\r\nThis code does not attempt to connect to multiple addresses. It just lays the groundwork for a future commit to do so."
+    },
+    {
+        "commit": "f42d927d2dcd58cf5a80d68eaf6888bcf2c67a4b",
+        "date": "2023-09-10 09:47:49 -0400",
+        "subject": "Retry reads of pg_control until checksum is valid.",
+        "body": "On certain file systems (e.g. ext4) pg_control may appear torn if there is a concurrent write while reading the file. To prevent an invalid read, retry until the checksum matches the control data.\r\n\r\nSpecial handling is required for the pg-version-force feature since the offset of the checksum is not known. In this case, scan from the default position to the end of the data looking for a checksum match. This is a bit imprecise, but better than nothing, and the chance of a random collision in the control data seems very remote considering the ratio of data size (< 512 bytes) to checksum size (4 bytes).\r\n\r\nThis was discovered and a possible solution proposed for PostgreSQL in [1]. The proposed solution may work for backup, but pgBackRest needs to be able to read pg_control reliably outside of backup. So no matter what fix is adopted for PostgreSQL, pgBackRest need retries. Further adjustment may be required as the PostgreSQL fix evolves.\r\n\r\n[1] https://www.postgresql.org/message-id/20221123014224.xisi44byq3cf5psi%40awork3.anarazel.de"
+    },
+    {
+        "commit": "c1805134b370f0c5c54c40a2df8978599328784f",
+        "date": "2023-09-09 12:54:55 -0400",
+        "subject": "Aggregate error retries in ErrorRetry output.",
+        "body": "If there are a lot of retries then the output might be very large and even be truncated by the error module. Either way, it is not good information for the user.\n\nWhen a message is repeated, aggregate so that total retries and time range are output for the message. This provides helpful information about what happened without overwhelming the user with data."
+    },
+    {
+        "commit": "5314dbffc761bc7507db02693f2421c1578efe10",
+        "date": "2023-09-09 11:22:33 -0400",
+        "subject": "Adjust Wait object to be more accurate when nested.",
+        "body": "The prior code gave a \"free\" extra iteration at the end of the wait, functionality that was copied directly from the equivalent code in Perl. This works and is mostly negligible except when wait loops are nested, in which case outer loops will always run twice even if an inner loop times out, which has a multiplying effect. For example, three nested wait loops with a timeout of three seconds will result in the inner loop being run four times (for a total of twelve seconds) even if it times out each time.\n\nInstead make waitMore() stop exactly when time is up. This makes more sense because a complete failure and timeout of an inner loop means retrying an outer loop is probably a waste of time since that inner loop will likely continue to fail.\n\nAlso make waitRemaining() recalculate the remaining time rather than depending on the prior result.\n\nSome tests needed to be adjusted to take into account there being one less loop. In general this led to a simplification of the tests.\n\nReinit a begin value in the wait unit tests. This is not related to the current change but it does make the time measurements more accurate and less likely to fail on an edge case, which has been observed from time to time.\n\nThis change appears to have a benefit for test runtime, which seems plausible especially for nested waits, but a larger sample of CI runs are needed to be sure."
+    },
+    {
+        "commit": "d57900839addeac56b89a445352a8efc96a197f0",
+        "date": "2023-09-04 18:51:44 -0400",
+        "subject": "Improve backup test harness to handle very large quantities of WAL.",
+        "body": "The current tests only generate small quantities of WAL per backup but sometimes it is useful to generate large quantities for testing.\n\nFix the issues with generating large quantities of WAL and also improve memory management."
+    },
+    {
+        "commit": "43524a47a4c6a847f76514812f94b87cb7af4c05",
+        "date": "2023-09-04 13:39:11 -0400",
+        "subject": "Fix configuration reference example for the tls-server-address option.",
+        "body": "The prior example (::*) was not valid and would result in the following error:\r\n\r\nERROR: [049]: unable to get address for '::*': [-2] Name or service not known\r\n\r\nCorrect values are either * for IPv4 or :: for IPv6. The IPv4 value is used as the example since only one example is allowed."
+    },
+    {
+        "commit": "c0935b79924686ebf4efef99c7dc69aea9efb28d",
+        "date": "2023-09-04 12:00:06 -0400",
+        "subject": "Split release notes into individual files.",
+        "body": "The release.xml file was getting pretty unwieldy so break release notes into separate files. Also break contributors into a separate file.\n\nIn theory most of release.xml could now be generated automatically but adding a new release does not represent a serious maintenance burden, so for the time being it does not seem worth it."
+    },
+    {
+        "commit": "6cb9c40fb8ea18e6572bf3f6e44bbb1d8f922682",
+        "date": "2023-09-04 10:39:19 -0400",
+        "subject": "Improve GCS multi-part performance.",
+        "body": "The prior code avoided uploading a chunk if it was not clear whether the write was complete or not. This was primarily due to the GCS documentation being very vague on what to do in the case of a zero-size chunk.\r\n\r\nNow chunks are uploaded as they are available. This should improve performance and also reduces the diff against a future commit that absolutely requires zero-size chunks."
+    },
+    {
+        "commit": "fd9c6b0e9ddd38de57475d1325bc53b79833a983",
+        "date": "2023-09-01 12:03:39 -0400",
+        "subject": "Add missing const qualifier to errorTypeList."
+    },
+    {
+        "commit": "4f52015b14a1f4e5df9373707179a5447cb5a4a6",
+        "date": "2023-08-31 20:22:01 -0400",
+        "subject": "New CI container build for PostgreSQL 16 rc1."
+    },
+    {
+        "commit": "e3fcd8cd9e0be42a32fc4cbd2ae3db2c072eabcd",
+        "date": "2023-08-31 16:36:52 -0400",
+        "subject": "Add backup size completed/total to info command JSON output.",
+        "body": "This allows for backup progress to be monitored by external processes, whereas before backup progress was only available via text output."
+    },
+    {
+        "commit": "fbd992adc7b18db5e70774d675c160c8c8e2f031",
+        "date": "2023-08-29 13:49:49 -0400",
+        "subject": "Allow archive-get command to run when stanza is stopped.",
+        "body": "The restore command can run while the stanza is stopped so it makes sense for the archive-get command to follow the same rule.\n\nThe important thing is to ensure that all commands that write to the repository are stopped when the stanza is stopped."
+    },
+    {
+        "commit": "8424737697edfee7cbea195b3bccb4077e1c2ee5",
+        "date": "2023-08-29 12:35:29 -0400",
+        "subject": "Encode key in HTTP query.",
+        "body": "The key also needs to be encoded (not just the value).\n\nThis is not currently an issue because none of the keys in use require encoding."
+    },
+    {
+        "commit": "d24180e4da49a8e2ef2a10a02e76cd204fe1ae8f",
+        "date": "2023-08-29 12:28:02 -0400",
+        "subject": "Fix conflicting group in test containers.",
+        "body": "The tests expect the group name/id to match between the host system and the container. If there is a conflict rename the group with the required id to the expected name.\n\nThis could have unintended consequences but it seems reasonably safe since we control everything that runs in the container and there should never be any system processes running."
+    },
+    {
+        "commit": "1e6efd73e1fcf7bbe3d3f04d925fefde44847109",
+        "date": "2023-08-23 12:56:49 -0400",
+        "subject": "Refactor IoRead handling in backupFile().",
+        "body": "Store the value of storageReadIo() rather than calling it each time. This is slightly more efficient, but more importantly it will be needed for an upcoming commit."
+    },
+    {
+        "commit": "82c12fed123df057fce109757aa5c72dce605440",
+        "date": "2023-08-21 13:10:48 -0400",
+        "subject": "Adjust range check per Coverity complaint.",
+        "body": "Coverity complained that: Overrunning array \"optionGroupIndexKeep[optionGroupIdx]\" of 512 bytes at byte offset 4294967550 using index \"keyIdx\" (which evaluates to 4294967294).\n\nThis does not seem possible but adjust the code to make Coverity happy, as usual."
+    },
+    {
+        "commit": "eb32d6de5e1575a37efb166abbf7df400d93352e",
+        "date": "2023-08-08 08:41:34 +0100",
+        "subject": "Accept leading tilde in paths for SFTP public/private keys.",
+        "body": "The documentation indicates that leading tilde file paths for public/private keys are valid but the functionality was omitted from the original implementation."
+    },
+    {
+        "commit": "1141dc20708cf0c68296f83e74c872a7db9c2bd9",
+        "date": "2023-08-07 17:03:09 +0100",
+        "subject": "Multi-stanza check command.",
+        "body": "Check command now checks multiple stanzas when the stanza option is omitted.\r\n\r\nThe stanza list is extracted from the current configuration rather than scanning the repository like the info command. Scanning the repository is a problem because configuration for each stanza may not be present in the current configuration. Since this functionality is new for check there is no regression.\r\n\r\nAdd a new section to the user guide to cover multi-stanza configuration and provide additional coverage for this feature.\r\n\r\nAlso fix a small issue in the parser when an indexed option has a dependency on a non-indexed option. There were no examples of this case in the previous configuration."
+    },
+    {
+        "commit": "995a8e96691d23eaf3914a425669f89deb3ce002",
+        "date": "2023-08-07 13:30:50 +0100",
+        "subject": "Reload GCS credentials before renewing authentication token.",
+        "body": "This allows the service key to be updated while a command is running. The new key should be written atomically and ideally the old key should remain valid for some period of time to avoid a race condition if the old token happens to expire at the same time that the new key is being generated."
+    },
+    {
+        "commit": "cbafcfabf2eb593de9ee95483da93f278c9ff1ee",
+        "date": "2023-08-07 12:38:33 +0100",
+        "subject": "Remove UNCONSTIFY() from gz compression module.",
+        "body": "The ZLIB_CONST macro may be used since 1.2.5.2 (17 Dec 2011) to specify that the input buffers are const. This is sufficiently old to cover all non-EOL distributions, i.e. everything we test on.\n\nCompiling on older distributions may generate warnings but will continue to work."
+    },
+    {
+        "commit": "6c75c99d0b3024311ea7b254953f1c6a901bcb70",
+        "date": "2023-07-31 11:09:17 +0200",
+        "subject": "Update xxHash to v0.8.2.",
+        "body": "This release fixes compilation errors on some platforms and contains numerous performance improvements."
+    },
+    {
+        "commit": "f55c8f1b813fadbc7b19a1cc4eb8f90e36b2b18c",
+        "date": "2023-07-26 10:45:12 +0200",
+        "subject": "Rename HRN_PG_CONTROL_OVERRIDE_PUT().",
+        "body": "Rename to HRN_PG_CONTROL_OVERRIDE_VERSION_PUT() since other types of overrides are possible (and coming)."
+    },
+    {
+        "commit": "65fb3b3b2d89e2fc80698e52a8378395b18e6d2a",
+        "date": "2023-07-24 09:17:46 +0200",
+        "subject": "Update config.guess and config.sub to latest versions."
+    },
+    {
+        "commit": "c585ddaf48b806b5d038f0c90e7848875f7a533e",
+        "date": "2023-07-24 09:15:38 +0200",
+        "subject": "Begin v2.48 development."
+    },
+    {
         "commit": "b5b033cc1ce152d387f20681f023b5e1f7c3ed3b",
         "date": "2023-07-24 09:12:30 +0200",
         "subject": "v2.47: Performance Improvements and Bug Fixes"

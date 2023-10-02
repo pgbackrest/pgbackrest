@@ -139,6 +139,426 @@ doc/xml/release.xml:
   class: doc/source
   type: xml
 
+doc/xml/release/2014/0.10.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2014/0.11.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2014/0.15.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2014/0.16.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2014/0.17.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2014/0.18.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2014/0.19.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2014/0.30.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2015/0.50.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2015/0.60.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2015/0.61.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2015/0.65.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2015/0.70.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2015/0.75.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2015/0.77.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2015/0.78.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2015/0.80.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2015/0.82.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2015/0.85.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2015/0.87.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2015/0.88.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2015/0.89.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2016/0.90.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2016/0.91.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2016/0.92.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2016/1.00.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2016/1.01.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2016/1.02.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2016/1.03.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2016/1.04.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2016/1.05.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2016/1.06.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2016/1.07.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2016/1.08.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2016/1.09.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2016/1.10.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2016/1.11.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2016/1.12.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2017/1.13.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2017/1.14.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2017/1.15.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2017/1.16.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2017/1.17.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2017/1.18.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2017/1.19.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2017/1.20.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2017/1.21.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2017/1.22.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2017/1.23.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2017/1.24.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2017/1.25.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2017/1.26.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2017/1.27.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2018/1.28.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2018/1.29.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2018/2.00.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2018/2.01.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2018/2.02.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2018/2.03.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2018/2.04.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2018/2.05.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2018/2.06.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2018/2.07.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2019/2.08.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2019/2.09.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2019/2.10.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2019/2.11.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2019/2.12.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2019/2.13.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2019/2.14.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2019/2.15.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2019/2.16.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2019/2.17.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2019/2.18.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2019/2.19.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2019/2.20.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2020/2.21.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2020/2.22.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2020/2.23.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2020/2.24.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2020/2.25.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2020/2.26.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2020/2.27.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2020/2.28.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2020/2.29.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2020/2.30.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2020/2.31.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2021/2.32.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2021/2.33.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2021/2.34.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2021/2.35.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2021/2.36.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2022/2.37.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2022/2.38.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2022/2.39.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2022/2.40.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2022/2.41.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2022/2.42.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2022/2.43.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2023/2.44.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2023/2.45.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2023/2.46.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2023/2.47.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2023/2.48.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/contributor.xml:
+  class: doc/source
+  type: xml
+
 doc/xml/user-guide-index.xml:
   class: doc/source
   type: xml
@@ -323,6 +743,14 @@ src/command/archive/common.h:
   class: core
   type: c/h
 
+src/command/archive/find.c:
+  class: core
+  type: c
+
+src/command/archive/find.h:
+  class: core
+  type: c/h
+
 src/command/archive/get/file.c:
   class: core
   type: c
@@ -440,6 +868,14 @@ src/command/check/common.c:
   type: c
 
 src/command/check/common.h:
+  class: core
+  type: c/h
+
+src/command/check/report.c:
+  class: core
+  type: c
+
+src/command/check/report.h:
   class: core
   type: c/h
 
@@ -1123,6 +1559,14 @@ src/common/io/session.intern.h:
   class: core
   type: c/h
 
+src/common/io/socket/address.c:
+  class: core
+  type: c
+
+src/common/io/socket/address.h:
+  class: core
+  type: c/h
+
 src/common/io/socket/client.c:
   class: core
   type: c
@@ -1560,6 +2004,14 @@ src/postgres/interface.c:
   type: c
 
 src/postgres/interface.h:
+  class: core
+  type: c/h
+
+src/postgres/interface/crc32.c:
+  class: core
+  type: c
+
+src/postgres/interface/crc32.h:
   class: core
   type: c/h
 
@@ -2374,10 +2826,6 @@ test/src/common/harnessStorage.c:
 test/src/common/harnessStorage.h:
   class: test/harness
   type: c/h
-
-test/src/common/harnessStorageHelper.c:
-  class: test/harness
-  type: c
 
 test/src/common/harnessTest.c:
   class: test/harness

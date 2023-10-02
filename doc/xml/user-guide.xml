@@ -159,7 +159,7 @@
         <variable key="gcs-key">/etc/pgbackrest/gcs-key.json</variable>
 
         <!-- S3 Settings -->
-        <variable key="s3-image">minio/minio:RELEASE.2022-07-30T05-21-40Z</variable>    <!-- Minio docker image -->
+        <variable key="s3-image">minio/minio:RELEASE.2023-09-30T07-02-29Z</variable>    <!-- Minio docker image -->
         <variable key="s3-all">n</variable>                         <!-- Build all the documentation with S3? -->
         <variable key="s3-local">y</variable>
         <variable key="s3-bucket">demo-bucket</variable>
@@ -2578,6 +2578,14 @@
         </block>
 
         <p>Commands are run exactly as if the repository were stored on a local disk.</p>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Add sftp-server fingerprint to known_hosts file since <br-option>repo4-sftp-host-key-check-type</br-option> defaults to <quote>strict</quote></title>
+
+            <execute user="postgres" user-force="y">
+                <exe-cmd>ssh-keyscan -H {[host-sftp]} >> {[pg-home-path]}/.ssh/known_hosts 2>/dev/null</exe-cmd>
+            </execute>
+        </execute-list>
 
         <execute-list host="{[host-pg1]}">
             <title>Create the stanza</title>

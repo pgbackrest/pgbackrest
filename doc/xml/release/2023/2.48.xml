@@ -1,5 +1,22 @@
-<release date="XXXX-XX-XX" version="2.48dev" title="Under Development">
+<release date="2023-09-25" version="2.48" title="Repository Storage Tags">
     <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <github-issue id="2182"/>
+                <github-pull-request id="2184"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="burak.yurdakul"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                    <!-- Actually tester, but we don't have a tag for that yet -->
+                    <release-item-reviewer id="burak.yurdakul"/>
+                </release-item-contributor-list>
+
+                <p>Fix issue restoring block incremental without a block list.</p>
+            </release-item>
+        </release-bug-list>
+
         <release-feature-list>
             <release-item>
                 <github-issue id="2150"/>
@@ -13,6 +30,18 @@
                 </release-item-contributor-list>
 
                 <p>Add <br-option>--repo-storage-tag</br-option> option to create object tags.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2125"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="reid.thompson"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add known hosts checking for <proper>SFTP</proper> storage driver.</p>
             </release-item>
 
             <release-item>
@@ -154,6 +183,31 @@
 
                 <p>Fix configuration reference example for the <br-option>tls-server-address</br-option> option.</p>
             </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix command reference example for the <br-option>filter</br-option> option.</p>
+            </release-item>
         </release-bug-list>
     </release-doc-list>
+
+    <release-test-list>
+        <release-improvement-list>
+            <release-item>
+                <github-issue id="2163"/>
+                <github-pull-request id="2177"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="wu.ning"/>
+                    <release-item-contributor id="reid.thompson"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Allow <id>storage/sftp</id> unit test to run without <id>libssh2</id> installed.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-test-list>
 </release>
