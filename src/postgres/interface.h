@@ -63,9 +63,16 @@ STRING_DECLARE(PG_NAME_XLOG_STR);
 /***********************************************************************************************************************************
 Define default page size
 
-Page size can only be changed at compile time and is not known to be well-tested, so only the default page size is supported.
 ***********************************************************************************************************************************/
-#define PG_PAGE_SIZE_DEFAULT                                        ((unsigned int)(8 * 1024))
+enum
+{
+    PG_PAGE_SIZE_1  =  1 * 1024,
+    PG_PAGE_SIZE_2  =  2 * 1024,
+    PG_PAGE_SIZE_4  =  4 * 1024,
+    PG_PAGE_SIZE_8  =  8 * 1024,
+    PG_PAGE_SIZE_16 = 16 * 1024,
+    PG_PAGE_SIZE_32 = 32 * 1024
+};
 
 /***********************************************************************************************************************************
 Define default segment size and pages per segment
@@ -73,7 +80,6 @@ Define default segment size and pages per segment
 Segment size can only be changed at compile time and is not known to be well-tested, so only the default segment size is supported.
 ***********************************************************************************************************************************/
 #define PG_SEGMENT_SIZE_DEFAULT                                     ((unsigned int)(1 * 1024 * 1024 * 1024))
-#define PG_SEGMENT_PAGE_DEFAULT                                     (PG_SEGMENT_SIZE_DEFAULT / PG_PAGE_SIZE_DEFAULT)
 
 /***********************************************************************************************************************************
 WAL header size. It doesn't seem worth tracking the exact size of the WAL header across versions of PostgreSQL so just set it to
@@ -165,7 +171,7 @@ FN_EXTERN StringList *pgLsnRangeToWalSegmentList(
 FN_EXTERN const String *pgLsnName(unsigned int pgVersion);
 
 // Calculate the checksum for a page. Page cannot be const because the page header is temporarily modified during processing.
-FN_EXTERN uint16_t pgPageChecksum(unsigned char *page, uint32_t blockNo);
+FN_EXTERN uint16_t pgPageChecksum(const unsigned char *page, uint32_t blockNo, unsigned int pageSize);
 
 FN_EXTERN const String *pgWalName(unsigned int pgVersion);
 

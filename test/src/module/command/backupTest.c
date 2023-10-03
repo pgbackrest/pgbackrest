@@ -674,6 +674,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("PageChecksum"))
     {
+        #define PG_SEGMENT_PAGE_DEFAULT PG_SEGMENT_SIZE_DEFAULT/PG_PAGE_SIZE_8
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("segment page default");
 
@@ -686,13 +688,14 @@ testRun(void)
         bufUsedSet(buffer, bufSize(buffer));
         memset(bufPtr(buffer), 0, bufSize(buffer));
 
-        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0};
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_8 * 0x00)) = (PageHeaderData){.pd_upper = 0};
 
         Buffer *bufferOut = bufNew(513);
         IoWrite *write = ioBufferWriteNew(bufferOut);
         ioFilterGroupAdd(
             ioWriteFilterGroup(write),
-            pageChecksumNewPack(ioFilterParamList(pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, true, STRDEF(BOGUS_STR)))));
+            pageChecksumNewPack(
+                ioFilterParamList(pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_8,true, STRDEF(BOGUS_STR)))));
         ioWriteOpen(write);
         ioWrite(write, buffer);
         TEST_ERROR(ioWrite(write, buffer), AssertError, "should not be possible to see two misaligned pages in a row");
@@ -701,29 +704,29 @@ testRun(void)
         TEST_TITLE("retry a page with an invalid checksum");
 
         // Write to file with valid checksums
-        buffer = bufNew(PG_PAGE_SIZE_DEFAULT * 4);
+        buffer = bufNew(PG_PAGE_SIZE_8 * 4);
         memset(bufPtr(buffer), 0, bufSize(buffer));
         bufUsedSet(buffer, bufSize(buffer));
 
-        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0x00};
-        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x01)) = (PageHeaderData){.pd_upper = 0xFF};
-        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x01)))->pd_checksum = pgPageChecksum(
-            bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x01), 1);
-        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x02)) = (PageHeaderData){.pd_upper = 0x00};
-        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x03)) = (PageHeaderData){.pd_upper = 0xFE};
-        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x03)))->pd_checksum = pgPageChecksum(
-            bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x03), 3);
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_8 * 0x00)) = (PageHeaderData){.pd_upper = 0x00};
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_8 * 0x01)) = (PageHeaderData){.pd_upper = 0xFF};
+        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_8 * 0x01)))->pd_checksum = pgPageChecksum(
+            bufPtr(buffer) + (PG_PAGE_SIZE_8 * 0x01), 1, PG_PAGE_SIZE_8);
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_8 * 0x02)) = (PageHeaderData){.pd_upper = 0x00};
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_8 * 0x03)) = (PageHeaderData){.pd_upper = 0xFE};
+        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_8 * 0x03)))->pd_checksum = pgPageChecksum(
+            bufPtr(buffer) + (PG_PAGE_SIZE_8 * 0x03), 3, PG_PAGE_SIZE_8);
 
         HRN_STORAGE_PUT(storageTest, "relation", buffer);
 
         // Now break the checksum to force a retry
-        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x01)))->pd_checksum = 0;
-        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x03)))->pd_checksum = 0;
+        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_8 * 0x01)))->pd_checksum = 0;
+        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_8 * 0x03)))->pd_checksum = 0;
 
         write = ioBufferWriteNew(bufferOut);
         ioFilterGroupAdd(
             ioWriteFilterGroup(write),
-            pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, true, storagePathP(storageTest, STRDEF("relation"))));
+            pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, PG_PAGE_SIZE_8,true, storagePathP(storageTest, STRDEF("relation"))));
         ioWriteOpen(write);
         ioWrite(write, buffer);
         ioWriteClose(write);
@@ -1294,6 +1297,426 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("backupFile()"))
+    {
+        const String *pgFile = STRDEF("testfile");
+        const String *missingFile = STRDEF("missing");
+        const String *backupLabel = STRDEF("20190718-155825F");
+        const String *backupPathFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(backupLabel), strZ(pgFile));
+        BackupFileResult result = {0};
+
+        // Load Parameters
+        StringList *argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        // Create the pg path
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), NULL, .mode = 0700);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("pg file missing - ignoreMissing=true");
+
+        List *fileList = lstNewP(sizeof(BackupFile));
+
+        BackupFile file =
+        {
+            .pgFile = missingFile,
+            .pgFileIgnoreMissing = true,
+            .pgFileSize = 0,
+            .pgFileCopyExactSize = true,
+            .pgFileChecksum = NULL,
+            .pgFileChecksumPage = false,
+            .manifestFile = missingFile,
+            .manifestFileHasReference = false,
+        };
+
+        lstAdd(fileList, &file);
+
+        const String *repoFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(backupLabel), strZ(file.manifestFile));
+
+        TEST_ASSIGN(
+            result,
+            *(BackupFileResult *)lstGet(
+                backupFile(repoFile, 0, false, 0, compressTypeNone, 1, cipherTypeNone, NULL, NULL, PG_PAGE_SIZE_8, fileList), 0),
+            "pg file missing, ignoreMissing=true, no delta");
+        TEST_RESULT_UINT(result.copySize + result.repoSize, 0, "copy/repo size 0");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultSkip, "skip file");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("pg file missing - ignoreMissing=false");
+
+        fileList = lstNewP(sizeof(BackupFile));
+
+        file = (BackupFile)
+        {
+            .pgFile = missingFile,
+            .pgFileIgnoreMissing = false,
+            .pgFileSize = 0,
+            .pgFileCopyExactSize = true,
+            .pgFileChecksum = NULL,
+            .pgFileChecksumPage = false,
+            .manifestFile = missingFile,
+            .manifestFileHasReference = false,
+        };
+
+        lstAdd(fileList, &file);
+
+        TEST_ERROR(
+            backupFile(repoFile, 0, false, 0, compressTypeNone, 1, cipherTypeNone, NULL, NULL, PG_PAGE_SIZE_8, fileList),
+            FileMissingError, "unable to open missing file '" TEST_PATH "/pg/missing' for read");
+
+        // Create a pg file to backup
+        HRN_STORAGE_PUT_Z(storagePgWrite(), strZ(pgFile), "atestfile");
+
+        // Remove repo file
+        HRN_STORAGE_REMOVE(storageRepoWrite(), strZ(backupPathFile));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("test pagechecksum while db file grows");
+
+        // Increase the file size but most of the following tests will still treat the file as size 9. This tests the common case
+        // where a file grows while a backup is running.
+        HRN_STORAGE_PUT_Z(storagePgWrite(), strZ(pgFile), "atestfile###");
+
+        fileList = lstNewP(sizeof(BackupFile));
+
+        file = (BackupFile)
+        {
+            .pgFile = pgFile,
+            .pgFileIgnoreMissing = false,
+            .pgFileSize = 9,
+            .pgFileCopyExactSize = true,
+            .pgFileChecksum = NULL,
+            .pgFileChecksumPage = true,
+            .manifestFile = pgFile,
+            .manifestFileHasReference = false,
+        };
+
+        lstAdd(fileList, &file);
+
+        repoFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(backupLabel), strZ(file.manifestFile));
+
+        TEST_ASSIGN(
+            result,
+            *(BackupFileResult *)lstGet(
+                backupFile(repoFile, 0, false, 0, compressTypeNone, 1, cipherTypeNone, NULL, NULL, PG_PAGE_SIZE_8, fileList), 0),
+            "file checksummed with pageChecksum enabled");
+        TEST_RESULT_UINT(result.copySize, 9, "copy=pgFile size");
+        TEST_RESULT_UINT(result.repoSize, 9, "repo=pgFile size");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
+        TEST_RESULT_STR_Z(
+            strNewEncode(encodingHex, result.copyChecksum), "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67", "copy checksum matches");
+        TEST_RESULT_STR_Z(hrnPackToStr(result.pageChecksumResult), "2:bool:false, 3:bool:false", "pageChecksumResult");
+        TEST_STORAGE_EXISTS(storageRepoWrite(), strZ(backupPathFile), .remove = true, .comment = "check exists in repo, remove");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("pgFileSize, ignoreMissing=false, backupLabel, pgFileChecksumPage");
+
+        fileList = lstNewP(sizeof(BackupFile));
+
+        file = (BackupFile)
+        {
+            .pgFile = pgFile,
+            .pgFileIgnoreMissing = false,
+            .pgFileSize = 8,
+            .pgFileCopyExactSize = false,
+            .pgFileChecksum = NULL,
+            .pgFileChecksumPage = true,
+            .manifestFile = pgFile,
+            .manifestFileHasReference = false,
+        };
+
+        lstAdd(fileList, &file);
+
+        TEST_ASSIGN(
+            result,
+            *(BackupFileResult *)lstGet(
+                backupFile(repoFile, 0, false, 0, compressTypeNone, 1, cipherTypeNone, NULL, NULL,PG_PAGE_SIZE_8, fileList), 0),
+            "backup file");
+        TEST_RESULT_UINT(result.copySize, 12, "copy size");
+        TEST_RESULT_UINT(result.repoSize, 12, "repo size");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
+        TEST_RESULT_STR_Z(strNewEncode(encodingHex, result.copyChecksum), "c3ae4687ea8ccd47bfdb190dbe7fd3b37545fdb9", "checksum");
+        TEST_RESULT_STR_Z(hrnPackToStr(result.pageChecksumResult), "2:bool:false, 3:bool:false", "page checksum");
+        TEST_STORAGE_GET(storageRepo(), strZ(backupPathFile), "atestfile###");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("file exists in repo and db, checksum match - NOOP");
+
+        fileList = lstNewP(sizeof(BackupFile));
+
+        file = (BackupFile)
+        {
+            .pgFile = pgFile,
+            .pgFileDelta = true,
+            .pgFileIgnoreMissing = false,
+            .pgFileSize = 9,
+            .pgFileCopyExactSize = true,
+            .pgFileChecksum = bufNewDecode(encodingHex, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67")),
+            .pgFileChecksumPage = false,
+            .manifestFile = pgFile,
+            .manifestFileHasReference = true,
+        };
+
+        lstAdd(fileList, &file);
+
+        // File exists in repo and db, pg checksum match, delta set, ignoreMissing false, hasReference - NOOP
+        TEST_ASSIGN(
+            result,
+            *(BackupFileResult *)lstGet(
+                backupFile(repoFile, 0, false, 0, compressTypeNone, 1, cipherTypeNone, NULL, NULL,PG_PAGE_SIZE_8, fileList), 0),
+            "file in db and repo, checksum equal, no ignoreMissing, no pageChecksum, delta, hasReference");
+        TEST_RESULT_UINT(result.copySize, 9, "copy size set");
+        TEST_RESULT_UINT(result.repoSize, 0, "repo size not set since already exists in repo");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultNoOp, "noop file");
+        TEST_RESULT_STR_Z(
+            strNewEncode(encodingHex, result.copyChecksum), "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67", "copy checksum matches");
+        TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum result is NULL");
+        TEST_STORAGE_GET(storageRepo(), strZ(backupPathFile), "atestfile###", .comment = "file not modified");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("file exists in repo and db, checksum mismatch - COPY");
+
+        fileList = lstNewP(sizeof(BackupFile));
+
+        file = (BackupFile)
+        {
+            .pgFile = pgFile,
+            .pgFileDelta = true,
+            .pgFileIgnoreMissing = false,
+            .pgFileSize = 9,
+            .pgFileCopyExactSize = true,
+            .pgFileChecksum = bufNewDecode(encodingHex, STRDEF("1234567890123456789012345678901234567890")),
+            .pgFileChecksumPage = false,
+            .manifestFile = pgFile,
+            .manifestFileHasReference = true,
+        };
+
+        lstAdd(fileList, &file);
+
+        // File exists in repo and db, pg checksum mismatch, delta set, ignoreMissing false, hasReference - COPY
+        TEST_ASSIGN(
+            result,
+            *(BackupFileResult *)lstGet(
+                backupFile(repoFile, 0, false, 0, compressTypeNone, 1, cipherTypeNone, NULL, NULL, PG_PAGE_SIZE_8, fileList), 0),
+            "file in db and repo, pg checksum not equal, no ignoreMissing, no pageChecksum, delta, hasReference");
+        TEST_RESULT_UINT(result.copySize, 9, "copy 9 bytes");
+        TEST_RESULT_UINT(result.repoSize, 9, "repo=copy size");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
+        TEST_RESULT_STR_Z(
+            strNewEncode(encodingHex, result.copyChecksum), "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67",
+            "copy checksum for file size 9");
+        TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum result is NULL");
+        TEST_STORAGE_GET(storageRepo(), strZ(backupPathFile), "atestfile", .comment = "9 bytes copied");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("file exists in repo and pg, copy only exact file even if size passed is greater - COPY");
+
+        fileList = lstNewP(sizeof(BackupFile));
+
+        file = (BackupFile)
+        {
+            .pgFile = pgFile,
+            .pgFileDelta = true,
+            .pgFileIgnoreMissing = false,
+            .pgFileSize = 9999999,
+            .pgFileCopyExactSize = true,
+            .pgFileChecksum = bufNewDecode(encodingHex, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67")),
+            .pgFileChecksumPage = false,
+            .manifestFile = pgFile,
+            .manifestFileHasReference = true,
+        };
+
+        lstAdd(fileList, &file);
+
+        // File exists in repo and pg, pg checksum same, pg size passed is different, delta set, ignoreMissing false, hasReference
+        TEST_ASSIGN(
+            result,
+            *(BackupFileResult *)lstGet(
+                backupFile(repoFile, 0, false, 0, compressTypeNone, 1, cipherTypeNone, NULL, NULL, PG_PAGE_SIZE_8, fileList), 0),
+            "db & repo file, pg checksum same, pg size different, no ignoreMissing, no pageChecksum, delta, hasReference");
+        TEST_RESULT_UINT(result.copySize, 12, "copy=pgFile size");
+        TEST_RESULT_UINT(result.repoSize, 12, "repo=pgFile size");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
+        TEST_RESULT_STR_Z(
+            strNewEncode(encodingHex, result.copyChecksum), "c3ae4687ea8ccd47bfdb190dbe7fd3b37545fdb9", "copy checksum updated");
+        TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum result is NULL");
+        TEST_STORAGE_GET(storageRepo(), strZ(backupPathFile), "atestfile###", .comment = "confirm contents");
+
+        TEST_STORAGE_LIST(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20190718-155825F", "testfile\n", .remove = true,
+            .comment = "resumed file is missing in repo");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("file exists in repo but missing from db, checksum same in repo - SKIP");
+
+        fileList = lstNewP(sizeof(BackupFile));
+
+        file = (BackupFile)
+        {
+            .pgFile = missingFile,
+            .pgFileDelta = true,
+            .pgFileIgnoreMissing = true,
+            .pgFileSize = 9,
+            .pgFileCopyExactSize = true,
+            .pgFileChecksum = bufNewDecode(encodingHex, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67")),
+            .pgFileChecksumPage = false,
+            .manifestFile = pgFile,
+            .repoFileChecksum = bufNewDecode(encodingHex, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67")),
+            .repoFileSize = 9,
+            .manifestFileResume = true,
+            .manifestFileHasReference = false,
+        };
+
+        lstAdd(fileList, &file);
+
+        TEST_ASSIGN(
+            result,
+            *(BackupFileResult *)lstGet(
+                backupFile(repoFile, 0, false, 0, compressTypeNone, 1, cipherTypeNone, NULL, NULL, PG_PAGE_SIZE_8, fileList), 0),
+            "file in repo only, checksum in repo equal, ignoreMissing=true, no pageChecksum, delta, no hasReference");
+        TEST_RESULT_UINT(result.copySize + result.repoSize, 0, "copy=repo=0 size");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultSkip, "skip file");
+        TEST_RESULT_PTR(result.copyChecksum, NULL, "copy checksum NULL");
+        TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum result is NULL");
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_BACKUP "/20190718-155825F", NULL, .comment = "file removed from repo");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("compression set, all other boolean parameters false - COPY");
+
+        fileList = lstNewP(sizeof(BackupFile));
+
+        file = (BackupFile)
+        {
+            .pgFile = pgFile,
+            .pgFileIgnoreMissing = false,
+            .pgFileSize = 9,
+            .pgFileCopyExactSize = true,
+            .pgFileChecksum = NULL,
+            .pgFileChecksumPage = false,
+            .manifestFile = pgFile,
+            .manifestFileHasReference = false,
+        };
+
+        lstAdd(fileList, &file);
+
+        repoFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(backupLabel), strZ(file.manifestFile));
+
+        TEST_ASSIGN(
+            result,
+            *(BackupFileResult *)lstGet(
+                backupFile(repoFile, 0, false, 0, compressTypeGz, 3, cipherTypeNone, NULL, NULL, PG_PAGE_SIZE_8, fileList), 0),
+            "pg file exists, no checksum, no ignoreMissing, compression, no pageChecksum, no delta, no hasReference");
+        TEST_RESULT_UINT(result.copySize, 9, "copy=pgFile size");
+        TEST_RESULT_UINT(result.repoSize, 29, "repo compress size");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
+        TEST_RESULT_STR_Z(
+            strNewEncode(encodingHex, result.copyChecksum), "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67", "copy checksum");
+        TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum result is NULL");
+        TEST_STORAGE_EXISTS(
+            storageRepo(), zNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(backupLabel), strZ(pgFile)),
+            .comment = "copy file to repo compress success");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("create a zero sized file - checksum will be set but in backupManifestUpdate it will not be copied");
+
+        // Create zero sized file in pg
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "zerofile");
+
+        fileList = lstNewP(sizeof(BackupFile));
+
+        file = (BackupFile)
+        {
+            .pgFile = STRDEF("zerofile"),
+            .pgFileIgnoreMissing = false,
+            .pgFileSize = 0,
+            .pgFileCopyExactSize = true,
+            .pgFileChecksum = NULL,
+            .pgFileChecksumPage = false,
+            .manifestFile = STRDEF("zerofile"),
+            .manifestFileHasReference = false,
+        };
+
+        lstAdd(fileList, &file);
+
+        repoFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(backupLabel), strZ(file.manifestFile));
+
+        // No prior checksum, no compression, no pageChecksum, no delta, no hasReference
+        TEST_ASSIGN(
+            result,
+            *(BackupFileResult *)lstGet(
+                backupFile(repoFile, 0, false, 0, compressTypeNone, 1, cipherTypeNone, NULL, NULL, PG_PAGE_SIZE_8, fileList), 0),
+            "zero-sized pg file exists, no repo file, no ignoreMissing, no pageChecksum, no delta, no hasReference");
+        TEST_RESULT_UINT(result.copySize + result.repoSize, 0, "copy=repo=pgFile size 0");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
+        TEST_RESULT_PTR_NE(result.copyChecksum, NULL, "checksum set");
+        TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum result is NULL");
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_BACKUP "/20190718-155825F",
+            "testfile.gz\n"
+            "zerofile\n",
+            .comment = "copy zero file to repo success");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("copy file to encrypted repo");
+
+        // Load Parameters
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+        hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
+        hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
+        hrnCfgEnvRemoveRaw(cfgOptRepoCipherPass);
+
+        // Create the pg path and pg file to backup
+        HRN_STORAGE_PUT_Z(storagePgWrite(), strZ(pgFile), "atestfile");
+
+        fileList = lstNewP(sizeof(BackupFile));
+
+        file = (BackupFile)
+        {
+            .pgFile = pgFile,
+            .pgFileIgnoreMissing = false,
+            .pgFileSize = 9,
+            .pgFileCopyExactSize = true,
+            .pgFileChecksum = NULL,
+            .pgFileChecksumPage = false,
+            .manifestFile = pgFile,
+            .manifestFileHasReference = false,
+        };
+
+        lstAdd(fileList, &file);
+
+        repoFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(backupLabel), strZ(file.manifestFile));
+
+        // No prior checksum, no compression, no pageChecksum, no delta, no hasReference
+        TEST_ASSIGN(
+            result,
+            *(BackupFileResult *)lstGet(
+                backupFile(
+                    repoFile, 0, false, 0, compressTypeNone, 1, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS), NULL, PG_PAGE_SIZE_8,
+                    fileList),
+                0),
+            "pg file exists, no repo file, no ignoreMissing, no pageChecksum, no delta, no hasReference");
+        TEST_RESULT_UINT(result.copySize, 9, "copy size set");
+        TEST_RESULT_UINT(result.repoSize, 32, "repo size set");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
+        TEST_RESULT_STR_Z(
+            strNewEncode(encodingHex, result.copyChecksum), "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67", "copy checksum");
+        TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum NULL");
+        TEST_STORAGE_GET(
+            storageRepo(), strZ(backupPathFile), "atestfile", .cipherType = cipherTypeAes256Cbc,
+            .comment = "copy file to encrypted repo success");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("backupLabelCreate()"))
     {
         StringList *argList = strLstNew();
@@ -1808,7 +2231,8 @@ testRun(void)
         unsigned int currentPercentComplete = 0;
 
         TEST_ERROR(
-            backupJobResult((Manifest *)1, NULL, storageTest, strLstNew(), job, false, 0, NULL, &currentPercentComplete),
+            backupJobResult(
+                (Manifest *)1, NULL, storageTest, strLstNew(), job, false, 0, NULL, &currentPercentComplete,PG_PAGE_SIZE_8),
             AssertError, "error message");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1843,7 +2267,8 @@ testRun(void)
 
         TEST_RESULT_VOID(
             backupJobResult(
-                manifest, STRDEF("host"), storageTest, strLstNew(), job, false, 0, &sizeProgress, &currentPercentComplete),
+                manifest, STRDEF("host"), storageTest, strLstNew(), job, false, 0, &sizeProgress, &currentPercentComplete,
+                PG_PAGE_SIZE_8),
             "log noop result");
         TEST_RESULT_VOID(lockRelease(true), "release backup lock");
 
@@ -2791,49 +3216,49 @@ testRun(void)
             HRN_SYSTEM_FMT("ln -s %s-data %s ", strZ(pg1Path), strZ(pg1Path));
 
             // Zeroed file which passes page checksums
-            Buffer *relation = bufNew(PG_PAGE_SIZE_DEFAULT * 2);
+            Buffer *relation = bufNew(PG_PAGE_SIZE_8 * 2);
             memset(bufPtr(relation), 0, bufSize(relation));
             bufUsedSet(relation, bufSize(relation));
 
-            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0};
+            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_8 * 0x00)) = (PageHeaderData){.pd_upper = 0};
 
             HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/1", relation, .timeModified = backupTimeStart);
 
             // File which will fail on alignment
-            relation = bufNew(PG_PAGE_SIZE_DEFAULT + 512);
+            relation = bufNew(PG_PAGE_SIZE_8 + 512);
             memset(bufPtr(relation), 0, bufSize(relation));
             bufUsedSet(relation, bufSize(relation));
 
-            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0xFE};
-            ((PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x00)))->pd_checksum = pgPageChecksum(
-                bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x00), 0);
-            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x01)) = (PageHeaderData){.pd_upper = 0xFF};
+            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_8 * 0x00)) = (PageHeaderData){.pd_upper = 0xFE};
+            ((PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_8 * 0x00)))->pd_checksum = pgPageChecksum(
+                bufPtr(relation) + (PG_PAGE_SIZE_8 * 0x00), 0, PG_PAGE_SIZE_8);
+            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_8 * 0x01)) = (PageHeaderData){.pd_upper = 0xFF};
 
             HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation, .timeModified = backupTimeStart);
             const char *rel1_2Sha1 = strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, relation)));
 
             // File with bad page checksums
-            relation = bufNew(PG_PAGE_SIZE_DEFAULT * 5);
+            relation = bufNew(PG_PAGE_SIZE_8 * 5);
             memset(bufPtr(relation), 0, bufSize(relation));
-            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0xFF};
-            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x01)) = (PageHeaderData){.pd_upper = 0x00};
-            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x02)) = (PageHeaderData){.pd_upper = 0xFE};
-            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x03)) = (PageHeaderData){.pd_upper = 0xEF};
-            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x04)) = (PageHeaderData){.pd_upper = 0x00};
-            (bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x04))[PG_PAGE_SIZE_DEFAULT - 1] = 0xFF;
+            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_8 * 0x00)) = (PageHeaderData){.pd_upper = 0xFF};
+            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_8 * 0x01)) = (PageHeaderData){.pd_upper = 0x00};
+            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_8 * 0x02)) = (PageHeaderData){.pd_upper = 0xFE};
+            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_8 * 0x03)) = (PageHeaderData){.pd_upper = 0xEF};
+            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_8 * 0x04)) = (PageHeaderData){.pd_upper = 0x00};
+            (bufPtr(relation) + (PG_PAGE_SIZE_8 * 0x04))[PG_PAGE_SIZE_8 - 1] = 0xFF;
             bufUsedSet(relation, bufSize(relation));
 
             HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/3", relation, .timeModified = backupTimeStart);
             const char *rel1_3Sha1 = strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, relation)));
 
             // File with bad page checksum
-            relation = bufNew(PG_PAGE_SIZE_DEFAULT * 3);
+            relation = bufNew(PG_PAGE_SIZE_8 * 3);
             memset(bufPtr(relation), 0, bufSize(relation));
-            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0x00};
-            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x01)) = (PageHeaderData){.pd_upper = 0x08};
-            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x02)) = (PageHeaderData){.pd_upper = 0xFF};
-            ((PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x02)))->pd_checksum = pgPageChecksum(
-                bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x02), 2);
+            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_8 * 0x00)) = (PageHeaderData){.pd_upper = 0x00};
+            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_8 * 0x01)) = (PageHeaderData){.pd_upper = 0x08};
+            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_8 * 0x02)) = (PageHeaderData){.pd_upper = 0xFF};
+            ((PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_8 * 0x02)))->pd_checksum = pgPageChecksum(
+                bufPtr(relation) + (PG_PAGE_SIZE_8 * 0x02), 2, PG_PAGE_SIZE_8);
             bufUsedSet(relation, bufSize(relation));
 
             HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/4", relation, .timeModified = backupTimeStart);
@@ -3028,17 +3453,17 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // File with bad page checksum and header errors that will be ignored
-            Buffer *relation = bufNew(PG_PAGE_SIZE_DEFAULT * 4);
+            Buffer *relation = bufNew(PG_PAGE_SIZE_8 * 4);
             memset(bufPtr(relation), 0, bufSize(relation));
-            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0xFF};
-            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x01)) = (PageHeaderData){.pd_upper = 0x00};
-            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x02)) = (PageHeaderData){.pd_upper = 0x00};
-            (bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x02))[PG_PAGE_SIZE_DEFAULT - 1] = 0xFF;
-            ((PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x02)))->pd_checksum = pgPageChecksum(
-                bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x02), 2);
-            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x03)) = (PageHeaderData){.pd_upper = 0x00};
-            (bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x03))[PG_PAGE_SIZE_DEFAULT - 1] = 0xEE;
-            ((PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x03)))->pd_checksum = 1;
+            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_8 * 0x00)) = (PageHeaderData){.pd_upper = 0xFF};
+            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_8 * 0x01)) = (PageHeaderData){.pd_upper = 0x00};
+            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_8 * 0x02)) = (PageHeaderData){.pd_upper = 0x00};
+            (bufPtr(relation) + (PG_PAGE_SIZE_8 * 0x02))[PG_PAGE_SIZE_8 - 1] = 0xFF;
+            ((PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_8 * 0x02)))->pd_checksum = pgPageChecksum(
+                bufPtr(relation) + (PG_PAGE_SIZE_8 * 0x02), 2, PG_PAGE_SIZE_8);
+            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_8 * 0x03)) = (PageHeaderData){.pd_upper = 0x00};
+            (bufPtr(relation) + (PG_PAGE_SIZE_8 * 0x03))[PG_PAGE_SIZE_8 - 1] = 0xEE;
+            ((PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_8 * 0x03)))->pd_checksum = 1;
             bufUsedSet(relation, bufSize(relation));
 
             HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/3", relation, .timeModified = backupTimeStart);
@@ -3046,7 +3471,7 @@ testRun(void)
 
             // File will be truncated during backup to show that actual file size is copied no matter what original size is. This
             // will also cause an alignment error.
-            Buffer *relationAfter = bufNew(PG_PAGE_SIZE_DEFAULT + 15);
+            Buffer *relationAfter = bufNew(PG_PAGE_SIZE_8 + 15);
             memset(bufPtr(relationAfter), 0, bufSize(relationAfter));
             bufUsedSet(relationAfter, bufSize(relationAfter));
 
@@ -3180,14 +3605,14 @@ testRun(void)
                 .walSegmentSize = 1024 * 1024);
 
             // Set to a smaller values than the defaults allow
-            cfgOptionSet(cfgOptRepoBundleSize, cfgSourceParam, VARINT64(PG_PAGE_SIZE_DEFAULT));
-            cfgOptionSet(cfgOptRepoBundleLimit, cfgSourceParam, VARINT64(PG_PAGE_SIZE_DEFAULT));
+            cfgOptionSet(cfgOptRepoBundleSize, cfgSourceParam, VARINT64(PG_PAGE_SIZE_8));
+            cfgOptionSet(cfgOptRepoBundleLimit, cfgSourceParam, VARINT64(PG_PAGE_SIZE_8));
 
             // Zero-length file to be stored
             HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "zero", .timeModified = backupTimeStart);
 
             // Zeroed file which passes page checksums
-            Buffer *relation = bufNew(PG_PAGE_SIZE_DEFAULT * 3);
+            Buffer *relation = bufNew(PG_PAGE_SIZE_8 * 3);
             memset(bufPtr(relation), 0, bufSize(relation));
             bufUsedSet(relation, bufSize(relation));
 
@@ -3198,7 +3623,7 @@ testRun(void)
             HRN_STORAGE_PUT_Z(storagePgWrite(), "stuff.conf", "CONFIGSTUFF3", .timeModified = 1500000000);
 
             // File that will get skipped while bundling smaller files and end up a bundle by itself
-            Buffer *bigish = bufNew(PG_PAGE_SIZE_DEFAULT - 1);
+            Buffer *bigish = bufNew(PG_PAGE_SIZE_8 - 1);
             memset(bufPtr(bigish), 0, bufSize(bigish));
             bufUsedSet(bigish, bufSize(bigish));
 
@@ -3925,13 +4350,13 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // File that will grow during the backup
-            Buffer *const fileGrow = bufNew(PG_PAGE_SIZE_DEFAULT * 4);
-            memset(bufPtr(fileGrow), 0, PG_PAGE_SIZE_DEFAULT * 3);
-            bufUsedSet(fileGrow, PG_PAGE_SIZE_DEFAULT * 3);
+            Buffer *const fileGrow = bufNew(PG_PAGE_SIZE_8 * 4);
+            memset(bufPtr(fileGrow), 0, PG_PAGE_SIZE_8 * 3);
+            bufUsedSet(fileGrow, PG_PAGE_SIZE_8 * 3);
 
             HRN_STORAGE_PUT(storagePgWrite(), "global/1", fileGrow, .timeModified = backupTimeStart);
 
-            memset(bufPtr(fileGrow) + PG_PAGE_SIZE_DEFAULT * 3, 0xFF, PG_PAGE_SIZE_DEFAULT);
+            memset(bufPtr(fileGrow) + PG_PAGE_SIZE_8 * 3, 0xFF, PG_PAGE_SIZE_8);
             bufUsedSet(fileGrow, bufSize(fileGrow));
 
             // Also write a copy of it that will get a checksum error, just to be sure the read limit on global/1 is working

@@ -192,7 +192,7 @@ hrnPgControlToBuffer(const unsigned int controlVersion, const unsigned int crc, 
     ASSERT(pgControl.version != 0);
 
     // Set defaults if values are not passed
-    pgControl.pageSize = pgControl.pageSize == 0 ? PG_PAGE_SIZE_DEFAULT : pgControl.pageSize;
+    pgControl.pageSize = pgControl.pageSize == 0 ? PG_PAGE_SIZE_8 : pgControl.pageSize;
     pgControl.walSegmentSize = pgControl.walSegmentSize == 0 ? PG_WAL_SEGMENT_SIZE_DEFAULT : pgControl.walSegmentSize;
     pgControl.catalogVersion =
         pgControl.catalogVersion == 0 ? hrnPgInterfaceVersion(pgControl.version)->catalogVersion() : pgControl.catalogVersion;

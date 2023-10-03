@@ -20,6 +20,7 @@ Object type
 typedef struct PageChecksum
 {
     unsigned int segmentPageTotal;                                  // Total pages in a segment
+    unsigned int pageSize;                                          // Page size
     unsigned int pageNoOffset;                                      // Page number offset for subsequent segments
     bool headerCheck;                                               // Perform additional header checks?
     const String *fileName;                                         // Used to load the file to retry pages
@@ -59,13 +60,15 @@ pageChecksumProcess(THIS_VOID, const Buffer *const input)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
+    ASSERT(this->pageSize == PG_PAGE_SIZE_1 || this->pageSize == PG_PAGE_SIZE_2 || this->pageSize == PG_PAGE_SIZE_4 ||
+           this->pageSize == PG_PAGE_SIZE_8 || this->pageSize == PG_PAGE_SIZE_16 || this->pageSize == PG_PAGE_SIZE_32);
     ASSERT(input != NULL);
 
     // Calculate total pages in the buffer
-    unsigned int pageTotal = (unsigned int)(bufUsed(input) / PG_PAGE_SIZE_DEFAULT);
+    unsigned int pageTotal = (unsigned int)(bufUsed(input) / this->pageSize);
 
     // If there is a partial page make sure there is enough of it to validate the checksum
-    const unsigned int pageRemainder = (unsigned int)(bufUsed(input) % PG_PAGE_SIZE_DEFAULT);
+    const unsigned int pageRemainder = (unsigned int)(bufUsed(input) % this->pageSize);
 
     if (pageRemainder != 0)
     {
@@ -92,7 +95,7 @@ pageChecksumProcess(THIS_VOID, const Buffer *const input)
         for (unsigned int pageIdx = 0; pageIdx < pageTotal; pageIdx++)
         {
             // Get a pointer to the page header
-            const PageHeaderData *const pageHeader = (const PageHeaderData *)(bufPtrConst(input) + pageIdx * PG_PAGE_SIZE_DEFAULT);
+            const PageHeaderData *const pageHeader = (const PageHeaderData *)(bufPtrConst(input) + pageIdx * this->pageSize);
 
             // Block number relative to all segments in the relation
             const unsigned int blockNo = this->pageNoOffset + pageIdx;
@@ -107,7 +110,7 @@ pageChecksumProcess(THIS_VOID, const Buffer *const input)
                 if ((this->headerCheck && pageHeader->pd_upper == 0) || (!this->headerCheck && pageHeader->pd_checksum == 0))
                 {
                     // Check that the entire page is zero
-                    for (unsigned int pageIdx = 0; pageIdx < PG_PAGE_SIZE_DEFAULT / sizeof(size_t); pageIdx++)
+                    for (unsigned int pageIdx = 0; pageIdx < this->pageSize / sizeof(size_t); pageIdx++)
                     {
                         if (((size_t *)pageHeader)[pageIdx] != 0)
                         {
@@ -125,10 +128,10 @@ pageChecksumProcess(THIS_VOID, const Buffer *const input)
                 if (pageValid)
                 {
                     // Make a copy of the page since it will be modified by the page checksum function
-                    memcpy(this->pageBuffer, pageHeader, PG_PAGE_SIZE_DEFAULT);
+                    memcpy(this->pageBuffer, pageHeader, this->pageSize);
 
                     // Continue if the checksum matches
-                    if (pageHeader->pd_checksum == pgPageChecksum(this->pageBuffer, blockNo))
+                    if (pageHeader->pd_checksum == pgPageChecksum(this->pageBuffer, blockNo, this->pageSize))
                         continue;
                 }
 
@@ -141,11 +144,11 @@ pageChecksumProcess(THIS_VOID, const Buffer *const input)
                     const Buffer *const pageRetry = storageGetP(
                         storageNewReadP(
                             storagePosixNewP(FSLASH_STR), this->fileName,
-                            .offset = (blockNo % this->segmentPageTotal) * PG_PAGE_SIZE_DEFAULT,
-                            .limit = VARUINT64(PG_PAGE_SIZE_DEFAULT)));
+                            .offset = (uint64_t)(blockNo % this->segmentPageTotal) * this->pageSize,
+                            .limit = VARUINT64(this->pageSize)));
 
                     // Check if the page has changed since it was last read
-                    changed = !bufEq(pageRetry, BUF(pageHeader, PG_PAGE_SIZE_DEFAULT));
+                    changed = !bufEq(pageRetry, BUF(pageHeader, this->pageSize));
                 }
                 MEM_CONTEXT_TEMP_END();
 
@@ -226,11 +229,13 @@ pageChecksumResult(THIS_VOID)
 /**********************************************************************************************************************************/
 FN_EXTERN IoFilter *
 pageChecksumNew(
-    const unsigned int segmentNo, const unsigned int segmentPageTotal, const bool headerCheck, const String *const fileName)
+    const unsigned int segmentNo, const unsigned int segmentPageTotal, const unsigned int pageSize, const bool headerCheck,
+    const String *const fileName)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(UINT, segmentNo);
         FUNCTION_LOG_PARAM(UINT, segmentPageTotal);
+        FUNCTION_LOG_PARAM(UINT, pageSize);
         FUNCTION_LOG_PARAM(BOOL, headerCheck);
         FUNCTION_LOG_PARAM(STRING, fileName);
     FUNCTION_LOG_END();
@@ -240,10 +245,11 @@ pageChecksumNew(
         *this = (PageChecksum)
         {
             .segmentPageTotal = segmentPageTotal,
+            .pageSize = pageSize,
             .pageNoOffset = segmentNo * segmentPageTotal,
             .headerCheck = headerCheck,
             .fileName = strDup(fileName),
-            .pageBuffer = bufPtr(bufNew(PG_PAGE_SIZE_DEFAULT)),
+            .pageBuffer = bufPtr(bufNew(pageSize)),
             .valid = true,
             .align = true,
         };
@@ -259,6 +265,7 @@ pageChecksumNew(
 
         pckWriteU32P(packWrite, segmentNo);
         pckWriteU32P(packWrite, segmentPageTotal);
+        pckWriteU32P(packWrite, pageSize);
         pckWriteBoolP(packWrite, headerCheck);
         pckWriteStrP(packWrite, fileName);
         pckWriteEndP(packWrite);
@@ -282,10 +289,11 @@ pageChecksumNewPack(const Pack *const paramList)
         PackRead *const paramListPack = pckReadNew(paramList);
         const unsigned int segmentNo = pckReadU32P(paramListPack);
         const unsigned int segmentPageTotal = pckReadU32P(paramListPack);
+        const unsigned int pageSize = pckReadU32P(paramListPack);
         const bool headerCheck = pckReadBoolP(paramListPack);
         const String *const fileName = pckReadStrP(paramListPack);
 
-        result = ioFilterMove(pageChecksumNew(segmentNo, segmentPageTotal, headerCheck, fileName), memContextPrior());
+        result = ioFilterMove(pageChecksumNew(segmentNo, segmentPageTotal, pageSize, headerCheck, fileName), memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
