@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE doc SYSTEM "doc.dtd">
 <doc title="{[project]} Command &amp; Configuration Reference">
-    <config title="{[project]} Configuration Reference">
+    <config title="Configuration Reference">
         <description>The {[project]} Configuration Reference details all configuration options.</description>
 
         <text>
@@ -1909,7 +1909,7 @@
         </config-section-list>
     </config>
 
-    <operation title="{[project]} Command Reference">
+    <operation title="Command Reference">
         <description>The {[project]} Command Reference details all commands and options.</description>
 
         <text>
