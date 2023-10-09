@@ -2554,6 +2554,7 @@ cmdBackup(void)
 
         // Remove files that would not be in a bundle
         // !!!
+        // !!! DO WE NEED TO HAVE A BACKUP RUNNING DURING THE FIRST PASS
         if (cfgOptionStrId(cfgOptType) == backupTypeFull)
         {
         }
@@ -2577,6 +2578,8 @@ cmdBackup(void)
         // Build an incremental backup if type is not full (manifestPrior will be freed in this call)
         if (!backupBuildIncr(infoBackup, manifest, manifestPrior, backupStartResult.walSegmentName))
             manifestCipherSubPassSet(manifest, cipherPassGen(cfgOptionStrId(cfgOptRepoCipherType)));
+
+        // !!! CLEAR OUT PARTS OF THE INCREMENTAL THAT WILL NOT BE USED.
 
         // Set delta if it is not already set and the manifest requires it
         if (!cfgOptionBool(cfgOptDelta) && varBool(manifestData(manifest)->backupOptionDelta))
