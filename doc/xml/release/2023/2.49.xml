@@ -9,6 +9,7 @@
                 <commit subject="Use CSS to number sections in documentation."/>
                 <commit subject="Build command and configuration reference in C."/>
                 <commit subject="Simplify section titles in configuration reference."/>
+                <commit subject="Simplify description rendering in command and configuration reference."/>
 
                 <p>Build command and configuration reference in C.</p>
             </release-item>
