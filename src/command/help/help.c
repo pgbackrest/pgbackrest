@@ -429,8 +429,8 @@ helpRender(const Buffer *const helpData)
                         const String *section = optionData[optionId].section;
 
                         if (section == NULL ||
-                            (!strEqZ(section, "general") && !strEqZ(section, "log") && !strEqZ(section, "repository") &&
-                             !strEqZ(section, "stanza")))
+                            (!strEqZ(section, "general") && !strEqZ(section, "log") && !strEqZ(section, "maintainer") &&
+                             !strEqZ(section, "repository") && !strEqZ(section, "stanza")))
                         {
                             section = strNewZ("command");
                         }

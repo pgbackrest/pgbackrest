@@ -207,8 +207,11 @@ referenceCommandSection(const String *const section)
     if (section == NULL)
         FUNCTION_TEST_RETURN(STRING, strNewZ("general"));
 
-    if (!strEqZ(section, "general") && !strEqZ(section, "log") && !strEqZ(section, "repository") && !strEqZ(section, "stanza"))
+    if (!strEqZ(section, "general") && !strEqZ(section, "log") && !strEqZ(section, "maintainer") &&
+        !strEqZ(section, "repository") && !strEqZ(section, "stanza"))
+    {
         FUNCTION_TEST_RETURN(STRING, strNewZ("command"));
+    }
 
     FUNCTION_TEST_RETURN(STRING, strDup(section));
 }
