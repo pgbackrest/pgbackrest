@@ -168,9 +168,7 @@ referenceConfigurationRender(const BldCfg *const bldCfg, const BldHlp *const bld
             XmlNode *const xmlSectionTitle = xmlNodeAdd(xmlSection, STRDEF("title"));
 
             xmlNodeAttributeSet(xmlSection, STRDEF("id"), strNewFmt("section-%s", strZ(section->id)));
-            xmlNodeContentSet(xmlSectionTitle, strNewFmt("%s Options (", strZ(section->name)));
-            xmlNodeContentSet(xmlNodeAdd(xmlSectionTitle, STRDEF("id")), section->id);
-            xmlNodeContentSet(xmlSectionTitle, STRDEF(")"));
+            xmlNodeContentSet(xmlSectionTitle, strNewFmt("%s Options", strZ(section->name)));
             xmlNodeChildAdd(xmlNodeAdd(xmlSection, STRDEF("text")), section->introduction);
 
             for (unsigned int optIdx = 0; optIdx < lstSize(bldHlp->optList); optIdx++)

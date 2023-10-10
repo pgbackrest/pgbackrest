@@ -219,7 +219,7 @@ testRun(void)
                     "<text><p>config text</p></text>"
                 "</section>"
                 "<section id=\"section-general\">"
-                    "<title>General Options (<id>general</id>)</title>"
+                    "<title>General Options</title>"
                     "<text><p>general section</p></text>"
                     "<section id=\"option-buffer-size\">"
                         "<title>Buffer Size Option (<id>--buffer-size</id>)</title>"
