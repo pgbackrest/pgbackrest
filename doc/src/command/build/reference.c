@@ -41,7 +41,7 @@ referenceOptionRender(
         if (optCfg->beta)
             xmlNodeContentSet(xmlNodeAdd(xmlOption, STRDEF("p")), STRDEF("FOR BETA TESTING ONLY. DO NOT USE IN PRODUCTION."));
 
-        xmlNodeChildAdd(xmlNodeAdd(xmlOption, STRDEF("p")), optHlp->description);
+        xmlNodeChildAdd(xmlOption, optHlp->description);
 
         // Add default value
         StringList *const blockList = strLstNew();
@@ -159,7 +159,7 @@ referenceConfigurationRender(const BldCfg *const bldCfg, const BldHlp *const bld
 
         xmlNodeAttributeSet(xmlIntro, STRDEF("id"), STRDEF("introduction"));
         xmlNodeContentSet(xmlNodeAdd(xmlIntro, STRDEF("title")), STRDEF("Introduction"));
-        xmlNodeChildAdd(xmlNodeAdd(xmlIntro, STRDEF("text")), bldHlp->optIntroduction);
+        xmlNodeChildAdd(xmlIntro, bldHlp->optIntroduction);
 
         for (unsigned int sctIdx = 0; sctIdx < lstSize(bldHlp->sctList); sctIdx++)
         {
@@ -168,10 +168,8 @@ referenceConfigurationRender(const BldCfg *const bldCfg, const BldHlp *const bld
             XmlNode *const xmlSectionTitle = xmlNodeAdd(xmlSection, STRDEF("title"));
 
             xmlNodeAttributeSet(xmlSection, STRDEF("id"), strNewFmt("section-%s", strZ(section->id)));
-            xmlNodeContentSet(xmlSectionTitle, strNewFmt("%s Options (", strZ(section->name)));
-            xmlNodeContentSet(xmlNodeAdd(xmlSectionTitle, STRDEF("id")), section->id);
-            xmlNodeContentSet(xmlSectionTitle, STRDEF(")"));
-            xmlNodeChildAdd(xmlNodeAdd(xmlSection, STRDEF("text")), section->introduction);
+            xmlNodeContentSet(xmlSectionTitle, strNewFmt("%s Options", strZ(section->name)));
+            xmlNodeChildAdd(xmlSection, section->introduction);
 
             for (unsigned int optIdx = 0; optIdx < lstSize(bldHlp->optList); optIdx++)
             {
@@ -243,7 +241,7 @@ referenceCommandRender(const BldCfg *const bldCfg, const BldHlp *const bldHlp)
 
         xmlNodeAttributeSet(xmlIntro, STRDEF("id"), STRDEF("introduction"));
         xmlNodeContentSet(xmlNodeAdd(xmlIntro, STRDEF("title")), STRDEF("Introduction"));
-        xmlNodeChildAdd(xmlNodeAdd(xmlIntro, STRDEF("text")), bldHlp->cmdIntroduction);
+        xmlNodeChildAdd(xmlIntro, bldHlp->cmdIntroduction);
 
         for (unsigned int cmdIdx = 0; cmdIdx < lstSize(bldHlp->cmdList); cmdIdx++)
         {
@@ -262,7 +260,7 @@ referenceCommandRender(const BldCfg *const bldCfg, const BldHlp *const bldHlp)
             xmlNodeContentSet(xmlSectionTitle, strNewFmt("%s Command (", strZ(cmdHlp->title)));
             xmlNodeContentSet(xmlNodeAdd(xmlSectionTitle, STRDEF("id")), cmdHlp->name);
             xmlNodeContentSet(xmlSectionTitle, STRDEF(")"));
-            xmlNodeChildAdd(xmlNodeAdd(xmlSection, STRDEF("text")), cmdHlp->description);
+            xmlNodeChildAdd(xmlSection, cmdHlp->description);
 
             // Build option list for command
             StringList *const sctList = strLstNew();
