@@ -26,6 +26,7 @@ testRun(void)
 
         TEST_RESULT_STR_Z(referenceCommandSection(STRDEF("general")), "general", "general section no remap");
         TEST_RESULT_STR_Z(referenceCommandSection(STRDEF("log")), "log", "log section no remap");
+        TEST_RESULT_STR_Z(referenceCommandSection(STRDEF("maintainer")), "maintainer", "maintainer section no remap");
         TEST_RESULT_STR_Z(referenceCommandSection(STRDEF("repository")), "repository", "repository section no remap");
         TEST_RESULT_STR_Z(referenceCommandSection(STRDEF("stanza")), "stanza", "stanza section no remap");
 

@@ -1607,7 +1607,6 @@ option:
   pg-version-force:
     section: stanza
     type: string
-    internal: true
     required: false
     command:
       archive-get: {}

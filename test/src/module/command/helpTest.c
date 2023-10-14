@@ -266,6 +266,10 @@ testRun(void)
             "  --log-subprocess                    enable logging in subprocesses [default=n]\n"
             "  --log-timestamp                     enable timestamp in logging [default=y]\n"
             "\n",
+            "Maintainer Options:\n"
+            "\n"
+            "  --pg-version-force                  force PostgreSQL version\n"
+            "\n"
             "Repository Options:\n"
             "\n"
             "  --repo                              set repository\n"
