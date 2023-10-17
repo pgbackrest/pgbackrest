@@ -1021,6 +1021,13 @@ backupResume(Manifest *const manifest, const String *const cipherPassBackup)
                 storageNewItrP(storageRepo(), backupPath, .sortOrder = sortOrderAsc), manifest, manifestResume,
                 compressTypeEnum(cfgOptionStrId(cfgOptCompressType)), cfgOptionBool(cfgOptDelta), backupPath, NULL);
         }
+        // Else generate a new label for the backup
+        else
+        {
+            manifestBackupLabelSet(
+                manifest,
+                backupLabelCreate(manifestData(manifest)->backupType, manifestData(manifest)->backupLabelPrior, timestampStart));
+        }
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -2537,6 +2544,9 @@ cmdBackup(void)
                 cfgOptionGroupName(cfgOptGrpRepo, cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
         }
 
+        // Build block incremental maps using defaults and/or user-specified options
+        const ManifestBlockIncrMap blockIncrMap = backupBlockIncrMap();
+
         // Load backup.info
         InfoBackup *const infoBackup = infoBackupLoadFileReconstruct(
             storageRepo(), INFO_BACKUP_PATH_FILE_STR, cfgOptionStrId(cfgOptRepoCipherType), cfgOptionStrNull(cfgOptRepoCipherPass));
@@ -2549,9 +2559,6 @@ cmdBackup(void)
         // Get the start timestamp which will later be written into the manifest to track total backup time
         const time_t timestampStart = backupTime(backupData, false);
 
-        // Check if there is a prior manifest when backup type is diff/incr
-        Manifest *const manifestPrior = backupBuildIncrPrior(infoBackup);
-
         // Remove files that would not be in a bundle
         // !!!
         // !!! DO WE NEED TO HAVE A BACKUP RUNNING DURING THE FIRST PASS
@@ -2559,12 +2566,13 @@ cmdBackup(void)
         {
         }
 
+        // Check if there is a prior manifest when backup type is diff/incr
+        Manifest *const manifestPrior = backupBuildIncrPrior(infoBackup);
+
         // Start the backup
         const BackupStartResult backupStartResult = backupStart(backupData);
 
         // Build the manifest
-        const ManifestBlockIncrMap blockIncrMap = backupBlockIncrMap();
-
         Manifest *const manifest = manifestNewBuild(
             backupData->storagePrimary, infoPg.version, infoPg.catalogVersion, timestampStart, cfgOptionBool(cfgOptOnline),
             cfgOptionBool(cfgOptChecksumPage), cfgOptionBool(cfgOptRepoBundle), cfgOptionBool(cfgOptRepoBlock), &blockIncrMap,
@@ -2586,13 +2594,7 @@ cmdBackup(void)
             cfgOptionSet(cfgOptDelta, cfgSourceParam, BOOL_TRUE_VAR);
 
         // Resume a backup when possible
-        if (!backupResume(manifest, cipherPassBackup))
-        {
-            manifestBackupLabelSet(
-                manifest,
-                backupLabelCreate(
-                    (BackupType)cfgOptionStrId(cfgOptType), manifestData(manifest)->backupLabelPrior, timestampStart));
-        }
+        backupResume(manifest, cipherPassBackup);
 
         // Save the manifest before processing starts
         backupManifestSaveCopy(manifest, cipherPassBackup, false);
