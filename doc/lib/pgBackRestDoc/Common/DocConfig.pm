@@ -19,18 +19,11 @@ use pgBackRestDoc::ProjectInfo;
 ####################################################################################################################################
 # Help types
 ####################################################################################################################################
-use constant CONFIG_HELP_BETA                                       => 'beta';
 use constant CONFIG_HELP_COMMAND                                    => 'command';
     push @EXPORT, qw(CONFIG_HELP_COMMAND);
-use constant CONFIG_HELP_CURRENT                                    => 'current';
-use constant CONFIG_HELP_DEFAULT                                    => 'default';
 use constant CONFIG_HELP_DESCRIPTION                                => 'description';
     push @EXPORT, qw(CONFIG_HELP_DESCRIPTION);
-use constant CONFIG_HELP_EXAMPLE                                    => 'example';
 use constant CONFIG_HELP_INTERNAL                                   => 'internal';
-use constant CONFIG_HELP_NAME                                       => 'name';
-use constant CONFIG_HELP_NAME_ALT                                   => 'name-alt';
-    push @EXPORT, qw(CONFIG_HELP_NAME_ALT);
 use constant CONFIG_HELP_OPTION                                     => 'option';
     push @EXPORT, qw(CONFIG_HELP_OPTION);
 use constant CONFIG_HELP_SECTION                                    => 'section';
@@ -96,54 +89,6 @@ sub docConfigOptionDefault
 }
 
 push @EXPORT, qw(docConfigOptionDefault);
-
-####################################################################################################################################
-# Get the allowed setting range for the option if it exists
-####################################################################################################################################
-sub docConfigOptionRange
-{
-    my $strOption = shift;
-    my $strCommand = shift;
-
-    # Get the command define
-    my $oCommandDefine = docConfigCommandDefine($strOption, $strCommand);
-
-    # Check for default in command
-    if (defined($oCommandDefine) && defined($$oCommandDefine{&CFGDEF_ALLOW_RANGE}))
-    {
-        return $$oCommandDefine{&CFGDEF_ALLOW_RANGE}[0], $$oCommandDefine{&CFGDEF_ALLOW_RANGE}[1];
-    }
-
-    # If defined return, else try to grab the global default
-    return $rhConfigDefine->{$strOption}{&CFGDEF_ALLOW_RANGE}[0], $rhConfigDefine->{$strOption}{&CFGDEF_ALLOW_RANGE}[1];
-}
-
-push @EXPORT, qw(docConfigOptionRange);
-
-####################################################################################################################################
-# Get the option type
-####################################################################################################################################
-sub docConfigOptionType
-{
-    my $strOption = shift;
-
-    return $rhConfigDefine->{$strOption}{&CFGDEF_TYPE};
-}
-
-push @EXPORT, qw(docConfigOptionType);
-
-####################################################################################################################################
-# Test the option type
-####################################################################################################################################
-sub docConfigOptionTypeTest
-{
-    my $strOption = shift;
-    my $strType = shift;
-
-    return docConfigOptionType($strOption) eq $strType;
-}
-
-push @EXPORT, qw(docConfigOptionTypeTest);
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -317,41 +262,14 @@ sub process
 
             $$oCommandOption{&CONFIG_HELP_SUMMARY} = $oOptionDoc->nodeGet('summary')->textGet();
             $$oCommandOption{&CONFIG_HELP_DESCRIPTION} = $oOptionDoc->textGet();
-            $$oCommandOption{&CONFIG_HELP_EXAMPLE} = $oOptionDoc->fieldGet('example');
             $oCommandOption->{&CONFIG_HELP_INTERNAL} =
                 cfgDefineCommand()->{$strCommand}{&CFGDEF_INTERNAL} ? true : $oOptionDefine->{$strOption}{&CFGDEF_INTERNAL};
-            $oCommandOption->{&CONFIG_HELP_BETA} = $oOptionDefine->{$strOption}{&CFGDEF_BETA};
 
             # If internal is defined for the option/command it overrides everthing else
             if (defined($oOptionDefine->{$strOption}{&CFGDEF_COMMAND}{$strCommand}{&CFGDEF_INTERNAL}))
             {
                 $oCommandOption->{&CONFIG_HELP_INTERNAL} =
                     $oOptionDefine->{$strOption}{&CFGDEF_COMMAND}{$strCommand}{&CFGDEF_INTERNAL};
-            }
-
-            $$oCommandOption{&CONFIG_HELP_NAME} = $oOptionDoc->paramGet('name');
-
-            # Generate a list of alternate names
-            if (defined($rhConfigDefine->{$strOption}{&CFGDEF_DEPRECATE}))
-            {
-                my $rhNameAlt = {};
-
-                foreach my $strNameAlt (sort(keys(%{$rhConfigDefine->{$strOption}{&CFGDEF_DEPRECATE}})))
-                {
-                    $strNameAlt =~ s/\?//g;
-
-                    if ($strNameAlt ne $strOption)
-                    {
-                        $rhNameAlt->{$strNameAlt} = true;
-                    }
-                }
-
-                my @stryNameAlt = sort(keys(%{$rhNameAlt}));
-
-                if (@stryNameAlt > 0)
-                {
-                    $oCommandOption->{&CONFIG_HELP_NAME_ALT} = \@stryNameAlt;
-                }
             }
 
             # If the option did not come from the command also store in global option list. This prevents duplication of commonly
@@ -367,12 +285,8 @@ sub process
                     $$oOption{&CONFIG_HELP_SECTION} = $strSection;
                 }
 
-                $$oOption{&CONFIG_HELP_NAME} = $oOptionDoc->paramGet('name');
-                $oOption->{&CONFIG_HELP_NAME_ALT} = $oCommandOption->{&CONFIG_HELP_NAME_ALT};
                 $$oOption{&CONFIG_HELP_DESCRIPTION} = $$oCommandOption{&CONFIG_HELP_DESCRIPTION};
-                $$oOption{&CONFIG_HELP_EXAMPLE} = $oOptionDoc->fieldGet('example');
                 $oOption->{&CONFIG_HELP_INTERNAL} = $oOptionDefine->{$strOption}{&CFGDEF_INTERNAL};
-                $oOption->{&CONFIG_HELP_BETA} = $oOptionDefine->{$strOption}{&CFGDEF_BETA};
             }
         }
     }
@@ -601,315 +515,6 @@ sub manGetFormatText
     while (defined($strLine));
 
     return $strResult;
-}
-
-####################################################################################################################################
-# helpConfigDocGet
-#
-# Get the xml for configuration help.
-####################################################################################################################################
-sub helpConfigDocGet
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my $strOperation = logDebugParam(__PACKAGE__ . '->helpConfigDocGet');
-
-    # Build a hash of the sections
-    my $oConfigHash = $self->{oConfigHash};
-    my $oConfigDoc = $self->{oDoc}->nodeGet('config');
-    my $oSectionHash = {};
-
-    foreach my $strOption (sort(keys(%{$$oConfigHash{&CONFIG_HELP_OPTION}})))
-    {
-        my $oOption = $$oConfigHash{&CONFIG_HELP_OPTION}{$strOption};
-
-        if (defined($$oOption{&CONFIG_HELP_SECTION}))
-        {
-            $$oSectionHash{$$oOption{&CONFIG_HELP_SECTION}}{$strOption} = true;
-        }
-    }
-
-    my $oDoc = new pgBackRestDoc::Common::Doc();
-    $oDoc->paramSet('title', $oConfigDoc->paramGet('title'));
-
-    # set the description for use as a meta tag
-    $oDoc->fieldSet('description', $oConfigDoc->fieldGet('description'));
-
-    # Output the introduction
-    my $oIntroSectionDoc = $oDoc->nodeAdd('section', undef, {id => 'introduction'});
-    $oIntroSectionDoc->nodeAdd('title')->textSet('Introduction');
-    $oIntroSectionDoc->textSet($oConfigDoc->textGet());
-
-    foreach my $strSection (sort(keys(%{$oSectionHash})))
-    {
-        my $oSectionElement = $oDoc->nodeAdd('section', undef, {id => "section-${strSection}"});
-
-        my $oSectionDoc = $oConfigDoc->nodeGet('config-section-list')->nodeGetById('config-section', $strSection);
-
-        # Set the summary text for the section
-        $oSectionElement->textSet($oSectionDoc->textGet());
-
-        $oSectionElement->
-            nodeAdd('title')->textSet(
-                {name => 'text',
-                 children=> [$oSectionDoc->paramGet('name') . ' Options (', {name => 'id', value => $strSection}, ')']});
-
-        foreach my $strOption (sort(keys(%{$$oSectionHash{$strSection}})))
-        {
-            # Skip internal options
-            next if $oConfigHash->{&CONFIG_HELP_OPTION}{$strOption}{&CONFIG_HELP_INTERNAL};
-
-            $self->helpOptionGet(undef, $strOption, $oSectionElement, $$oConfigHash{&CONFIG_HELP_OPTION}{$strOption});
-        }
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'oDoc', value => $oDoc}
-    );
-}
-
-####################################################################################################################################
-# helpCommandDocGet
-#
-# Get the xml for command help.
-####################################################################################################################################
-sub helpCommandDocGet
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my $strOperation = logDebugParam(__PACKAGE__ . '->helpCommandDocGet');
-
-    # Working variables
-    my $oConfigHash = $self->{oConfigHash};
-    my $oOperationDoc = $self->{oDoc}->nodeGet('operation');
-    my $oOptionDefine = cfgDefine();
-
-    my $oDoc = new pgBackRestDoc::Common::Doc();
-    $oDoc->paramSet('title', $oOperationDoc->paramGet('title'));
-
-    # set the description for use as a meta tag
-    $oDoc->fieldSet('description', $oOperationDoc->fieldGet('description'));
-
-    # Output the introduction
-    my $oIntroSectionDoc = $oDoc->nodeAdd('section', undef, {id => 'introduction'});
-    $oIntroSectionDoc->nodeAdd('title')->textSet('Introduction');
-    $oIntroSectionDoc->textSet($oOperationDoc->textGet());
-
-    foreach my $strCommand (sort(keys(%{$$oConfigHash{&CONFIG_HELP_COMMAND}})))
-    {
-        # Skip internal commands
-        next if $oConfigHash->{&CONFIG_HELP_COMMAND}{$strCommand}{&CONFIG_HELP_INTERNAL};
-
-        my $oCommandHash = $$oConfigHash{&CONFIG_HELP_COMMAND}{$strCommand};
-        my $oSectionElement = $oDoc->nodeAdd('section', undef, {id => "command-${strCommand}"});
-
-        my $oCommandDoc = $oOperationDoc->nodeGet('command-list')->nodeGetById('command', $strCommand);
-
-        $oSectionElement->
-            nodeAdd('title')->textSet(
-                {name => 'text',
-                 children=> [$oCommandDoc->paramGet('name') . ' Command (', {name => 'id', value => $strCommand}, ')']});
-
-        $oSectionElement->textSet($$oCommandHash{&CONFIG_HELP_DESCRIPTION});
-
-        # use Data::doc;
-        # confess Dumper($oDoc->{oDoc});
-
-        if (defined($$oCommandHash{&CONFIG_HELP_OPTION}))
-        {
-            my $oCategory = {};
-
-            foreach my $strOption (sort(keys(%{$$oCommandHash{&CONFIG_HELP_OPTION}})))
-            {
-                # Skip internal options
-                next if $$oCommandHash{&CONFIG_HELP_OPTION}{$strOption}{&CONFIG_HELP_INTERNAL};
-
-                # Skip secure options that can't be defined on the command line
-                next if ($rhConfigDefine->{$strOption}{&CFGDEF_SECURE});
-
-                my ($oOption, $strCategory) = helpCommandDocGetOptionFind($oConfigHash, $oOptionDefine, $strCommand, $strOption);
-
-                $$oCategory{$strCategory}{$strOption} = $oOption;
-            }
-
-            # Iterate sections
-            foreach my $strCategory (sort(keys(%{$oCategory})))
-            {
-                my $oOptionListElement = $oSectionElement->nodeAdd(
-                    'section', undef, {id => "category-${strCategory}", toc => 'n'});
-
-                $oOptionListElement->
-                    nodeAdd('title')->textSet(ucfirst($strCategory) . ' Options');
-
-                # Iterate options
-                foreach my $strOption (sort(keys(%{$$oCategory{$strCategory}})))
-                {
-                    $self->helpOptionGet($strCommand, $strOption, $oOptionListElement,
-                                         $$oCommandHash{&CONFIG_HELP_OPTION}{$strOption});
-                }
-            }
-        }
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'oDoc', value => $oDoc}
-    );
-}
-
-# Helper function for helpCommandDocGet() to find options. The option may be stored with the command or in the option list depending
-# on whether it's generic or command-specific
-sub helpCommandDocGetOptionFind
-{
-    my $oConfigHelpData = shift;
-    my $oOptionDefine = shift;
-    my $strCommand = shift;
-    my $strOption = shift;
-
-    # Get section from the option
-    my $strSection = $oConfigHelpData->{&CONFIG_HELP_OPTION}{$strOption}{&CONFIG_HELP_SECTION};
-
-    # Get option from the command to start
-    my $oOption = $$oConfigHelpData{&CONFIG_HELP_COMMAND}{$strCommand}{&CONFIG_HELP_OPTION}{$strOption};
-
-    # If the option has a section (i.e. not command-line only) then it comes from the standard option reference
-    if ($$oOption{&CONFIG_HELP_SOURCE} eq CONFIG_HELP_SOURCE_SECTION)
-    {
-        $oOption = $$oConfigHelpData{&CONFIG_HELP_OPTION}{$strOption};
-    }
-
-    # Reduce the sections that are shown in the command help. This is the same logic as help.c.
-    if (!defined($strSection) ||
-        ($strSection ne 'general' && $strSection ne 'log' && $strSection ne 'repository' && $strSection ne 'stanza'))
-    {
-        $strSection = 'command';
-    }
-
-    return $oOption, $strSection;
-}
-
-####################################################################################################################################
-# helpOptionGet
-#
-# Get the xml for an option.
-####################################################################################################################################
-sub helpOptionGet
-{
-    my $self = shift;
-    my $strCommand = shift;
-    my $strOption = shift;
-    my $oParentElement = shift;
-    my $oOptionHash = shift;
-
-    # Create the option section
-    my $oOptionElement = $oParentElement->nodeAdd(
-        'section', undef, {id => "option-${strOption}", toc => defined($strCommand) ? 'n' : 'y'});
-
-    # Set the option section title
-    $oOptionElement->
-        nodeAdd('title')->textSet(
-            {name => 'text',
-             children=> [$$oOptionHash{&CONFIG_HELP_NAME} . ' Option (', {name => 'id', value => "--${strOption}"}, ')']});
-
-    # Add the option summary and description
-    $oOptionElement->
-        nodeAdd('p')->textSet($$oOptionHash{&CONFIG_HELP_SUMMARY});
-
-    # Add beta warning
-    if ($$oOptionHash{&CONFIG_HELP_BETA})
-    {
-        $oOptionElement->nodeAdd('p')->textSet({name => 'text', children => ['FOR BETA TESTING ONLY. DO NOT USE IN PRODUCTION.']});
-    }
-
-    $oOptionElement->
-        nodeAdd('p')->textSet($$oOptionHash{&CONFIG_HELP_DESCRIPTION});
-
-    # Get the default value (or required=n if there is no default)
-    my $strCodeBlock;
-
-    if (defined(docConfigOptionDefault($strOption, $strCommand)))
-    {
-        my $strDefault;
-
-        if ($strOption eq CFGOPT_REPO_HOST_CMD || $strOption eq CFGOPT_PG_HOST_CMD)
-        {
-            $strDefault = '[INSTALL-PATH]/' . PROJECT_EXE;
-        }
-        else
-        {
-            if (docConfigOptionTypeTest($strOption, CFGDEF_TYPE_BOOLEAN))
-            {
-                $strDefault = docConfigOptionDefault($strOption, $strCommand) ? 'y' : 'n';
-            }
-            else
-            {
-                $strDefault = docConfigOptionDefault($strOption, $strCommand);
-            }
-        }
-
-        $strCodeBlock = "default: ${strDefault}";
-    }
-    # This won't work correctly until there is some notion of dependency
-    # elsif (optionRequired($strOption, $strCommand))
-    # {
-    #     $strCodeBlock = 'required: y';
-    # }
-
-    # Get the allowed range if it exists
-    my ($strRangeMin, $strRangeMax) = docConfigOptionRange($strOption, $strCommand);
-
-    if (defined($strRangeMin))
-    {
-        $strCodeBlock .= (defined($strCodeBlock) ? "\n" : '') . "allowed: ${strRangeMin}-${strRangeMax}";
-    }
-
-    # Get the example
-    my $strExample = '';
-
-    my $strOptionPrefix = $rhConfigDefine->{$strOption}{&CFGDEF_GROUP};
-    my $strOptionIndex = defined($strOptionPrefix) ?
-        "${strOptionPrefix}1-" . substr($strOption, length($strOptionPrefix) + 1) : $strOption;
-
-    if (defined($strCommand) && docConfigOptionTypeTest($strOption, CFGDEF_TYPE_BOOLEAN))
-    {
-        if ($$oOptionHash{&CONFIG_HELP_EXAMPLE} ne 'n' && $$oOptionHash{&CONFIG_HELP_EXAMPLE} ne 'y')
-        {
-            confess &log(ERROR, "option ${strOption} example should be boolean but value is: " .
-                            $$oOptionHash{&CONFIG_HELP_EXAMPLE});
-        }
-
-        $strExample = '--' . ($$oOptionHash{&CONFIG_HELP_EXAMPLE} eq 'n' ? 'no-' : '') . $strOptionIndex;
-    }
-    else
-    {
-        if (defined($strCommand))
-        {
-            $strExample = '--';
-        }
-
-        $strExample .= "${strOptionIndex}=" . $$oOptionHash{&CONFIG_HELP_EXAMPLE};
-    }
-
-    $strCodeBlock .= (defined($strCodeBlock) ? "\n" : '') . "example: ${strExample}";
-
-    $oOptionElement->
-        nodeAdd('code-block')->valueSet($strCodeBlock);
-
-    # Output deprecated names
-    if (defined($oOptionHash->{&CONFIG_HELP_NAME_ALT}))
-    {
-        my $strCaption = 'Deprecated Name' . (@{$oOptionHash->{&CONFIG_HELP_NAME_ALT}} > 1 ? 's' : '');
-
-        $oOptionElement->
-            nodeAdd('p')->textSet("${strCaption}: " . join(', ', @{$oOptionHash->{&CONFIG_HELP_NAME_ALT}}));
-    }
 }
 
 1;

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE doc SYSTEM "doc.dtd">
 <doc title="{[project]} Command &amp; Configuration Reference">
-    <config title="{[project]} Configuration Reference">
+    <config title="Configuration Reference">
         <description>The {[project]} Configuration Reference details all configuration options.</description>
 
         <text>
@@ -428,6 +428,54 @@
                         </text>
 
                         <example>30</example>
+                    </config-key>
+                </config-key-list>
+            </config-section>
+
+            <config-section id="maintainer" name="Maintainer">
+                <text>
+                    <p>Maintainer options are intended to support <postgres/> forks. The proper settings should be determined by the fork maintainer and then communicated to users of the fork.</p>
+
+                    <admonition type="warning">Improper use of these options may lead to unexpected behavior or data corruption.</admonition>
+
+                    <p>It is the responsibility of the fork maintainer to test <backrest/> with the required options. <backrest/> does not guarantee compatibility with any fork.</p>
+                </text>
+
+                <config-key-list>
+                    <config-key id="archive-header-check" name="Check WAL Headers">
+                        <summary>Check PostgreSQL version/id in WAL headers.</summary>
+
+                        <text>
+                            <p>Enabled by default, this option checks the WAL header against the <postgres/> version and system identifier to ensure that the WAL is being copied to the correct stanza. This is in addition to checking <file>pg_control</file> against the stanza and verifying that WAL is being copied from the same <postgres/> data directory where <file>pg_control</file> is located.</p>
+
+                            <p>Therefore, disabling this check is fairly safe but should only be done when needed, e.g. if the WAL is encrypted.</p>
+                        </text>
+
+                        <example>n</example>
+                    </config-key>
+
+                    <config-key id="page-header-check" name="Page Header Check">
+                        <summary>Check PostgreSQL page headers.</summary>
+
+                        <text>
+                            <p>Enabled by default, this option adds page header checks.</p>
+
+                            <p>Disabling this option should be avoided except when necessary, e.g. if pages are encrypted.</p>
+                        </text>
+
+                        <example>n</example>
+                    </config-key>
+
+                    <config-key id="pg-version-force" name="Force PostgreSQL Version">
+                        <summary>Force <postgres/> version.</summary>
+
+                        <text>
+                            <p>The specified <postgres/> version will be used instead of the version automatically detected by reading <file>pg_control</file> or WAL headers. This is mainly useful for <postgres/> forks or development versions where those values are different from the release version. The version reported by <postgres/> via `server_version_num` must match the forced version.</p>
+
+                            <admonition type="warning">Be cautious when using this option because <file>pg_control</file> and WAL headers will still be read with the expected format for the specified version, i.e. the format from the official open-source version of <postgres/>. If the fork or development version changes the format of the fields that <backrest/> depends on it will lead to unexpected behavior. In general, this option will only work as expected if the fork adds all custom struct members <i>after</i> the standard <postgres/> members.</admonition>
+                        </text>
+
+                        <example>15</example>
                     </config-key>
                 </config-key-list>
             </config-section>
@@ -1375,18 +1423,6 @@
                         <example>y</example>
                     </config-key>
 
-                    <config-key id="page-header-check" name="Page Header Check">
-                        <summary>Check PostgreSQL page headers.</summary>
-
-                        <text>
-                            <p>Enabled by default, this option adds page header checks.</p>
-
-                            <p>Disabling this option should be avoided except when necessary, e.g. if pages are encrypted.</p>
-                        </text>
-
-                        <example>n</example>
-                    </config-key>
-
                     <config-key id="resume" name="Resume">
                         <summary>Allow resume of failed backup.</summary>
 
@@ -1451,18 +1487,6 @@
                         </text>
 
                         <example>1GiB</example>
-                    </config-key>
-
-                    <config-key id="archive-header-check" name="Check WAL Headers">
-                        <summary>Check PostgreSQL version/id in WAL headers.</summary>
-
-                        <text>
-                            <p>Enabled by default, this option checks the WAL header against the <postgres/> version and system identifier to ensure that the WAL is being copied to the correct stanza. This is in addition to checking <file>pg_control</file> against the stanza and verifying that WAL is being copied from the same <postgres/> data directory where <file>pg_control</file> is located.</p>
-
-                            <p>Therefore, disabling this check is fairly safe but should only be done when needed, e.g. if the WAL is encrypted.</p>
-                        </text>
-
-                        <example>n</example>
                     </config-key>
 
                     <config-key id="archive-missing-retry" name="Retry Missing WAL Segment">
@@ -1892,24 +1916,12 @@
 
                         <example>25</example>
                     </config-key>
-
-                    <config-key id="pg-version-force" name="Force PostgreSQL version">
-                        <summary>Force <postgres/> version.</summary>
-
-                        <text>
-                            <p>The specified <postgres/> version will be used instead of the version automatically detected by reading <file>pg_control</file> or WAL headers. This is mainly useful for <postgres/> forks or development versions where those values are different from the release version. The version reported by <postgres/> via `server_version_num` must match the forced version.</p>
-
-                            <admonition type="warning">Be cautious when using this option because <file>pg_control</file> and WAL headers will still be read with expected format for the specified version, i.e. the format from the official open-source version of <postgres/>. If the fork or development version changes the format of the fields that <backrest/> depends on it will lead to unexpected behavior.</admonition>
-                        </text>
-
-                        <example>15</example>
-                    </config-key>
                 </config-key-list>
             </config-section>
         </config-section-list>
     </config>
 
-    <operation title="{[project]} Command Reference">
+    <operation title="Command Reference">
         <description>The {[project]} Command Reference details all commands and options.</description>
 
         <text>
