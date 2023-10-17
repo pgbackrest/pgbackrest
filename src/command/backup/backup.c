@@ -2562,9 +2562,33 @@ cmdBackup(void)
         // Remove files that would not be in a bundle
         // !!!
         // !!! DO WE NEED TO HAVE A BACKUP RUNNING DURING THE FIRST PASS
-        if (cfgOptionStrId(cfgOptType) == backupTypeFull)
+        Manifest *manifestPrior;
+        bool resumePossible = true;
+
+        if (cfgOptionStrId(cfgOptType) == backupTypeFull && cfgOptionBool(cfgOptOnline))
         {
+            // !!! Wait for standby to sync to last checkpoint
+
+            // Build the manifest
+            manifestPrior = manifestNewBuild(
+                backupData->storagePrimary, infoPg.version, infoPg.catalogVersion, timestampStart, cfgOptionBool(cfgOptOnline),
+                cfgOptionBool(cfgOptChecksumPage), cfgOptionBool(cfgOptRepoBundle), cfgOptionBool(cfgOptRepoBlock), &blockIncrMap,
+                strLstNewVarLst(cfgOptionLst(cfgOptExclude)), dbTablespaceList(backupData->dbPrimary));
+
+            // Validate the manifest using the copy start time
+            manifestBuildValidate(
+                manifestPrior, cfgOptionBool(cfgOptDelta), backupTime(backupData, true),
+                compressTypeEnum(cfgOptionStrId(cfgOptCompressType)));
+
+            // Set cipher passphrase (if any)
+            manifestCipherSubPassSet(manifestPrior, cipherPassGen(cfgOptionStrId(cfgOptRepoCipherType)));
+
+            // Resume a backup when possible
+            backupResume(manifestPrior, cipherPassBackup);
+            resumePossible = false;
         }
+        else
+            manifestPrior = backupBuildIncrPrior(infoBackup);
 
         // Check if there is a prior manifest when backup type is diff/incr
         Manifest *const manifestPrior = backupBuildIncrPrior(infoBackup);
@@ -2593,8 +2617,9 @@ cmdBackup(void)
         if (!cfgOptionBool(cfgOptDelta) && varBool(manifestData(manifest)->backupOptionDelta))
             cfgOptionSet(cfgOptDelta, cfgSourceParam, BOOL_TRUE_VAR);
 
-        // Resume a backup when possible
-        backupResume(manifest, cipherPassBackup);
+        // Resume a backup when possible (full backups may have already have been resumed above)
+        if (resumePossible)
+            backupResume(manifest, cipherPassBackup);
 
         // Save the manifest before processing starts
         backupManifestSaveCopy(manifest, cipherPassBackup, false);
