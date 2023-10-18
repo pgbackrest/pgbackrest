@@ -1026,7 +1026,9 @@ backupResume(Manifest *const manifest, const String *const cipherPassBackup)
         {
             manifestBackupLabelSet(
                 manifest,
-                backupLabelCreate(manifestData(manifest)->backupType, manifestData(manifest)->backupLabelPrior, timestampStart));
+                backupLabelCreate(
+                    manifestData(manifest)->backupType, manifestData(manifest)->backupLabelPrior,
+                    manifestData(manifestResume)->backupTimestampStart));
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -2076,14 +2078,13 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
 
 static void
 backupProcess(
-    const BackupData *const backupData, Manifest *const manifest, const String *const lsnStart,
-    const String *const cipherPassBackup)
+    const BackupData *const backupData, Manifest *const manifest, const String *const cipherPassBackup, const bool preliminary)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
-        FUNCTION_LOG_PARAM(STRING, lsnStart);
         FUNCTION_TEST_PARAM(STRING, cipherPassBackup);
+        FUNCTION_TEST_PARAM(BOOL, preliminary);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
@@ -2136,9 +2137,9 @@ backupProcess(
         }
 
         // If this is a full backup or hard-linked and paths are supported then create all paths explicitly so that empty paths will
-        // exist in to repo. Also create tablespace symlinks when symlinks are available. This makes it possible for the user to
+        // exist in the repo. Also create tablespace symlinks when symlinks are available. This makes it possible for the user to
         // make a copy of the backup path and get a valid cluster.
-        if ((backupType == backupTypeFull && !jobData.bundle) || hardLink)
+        if (!preliminary && ((backupType == backupTypeFull && !jobData.bundle) || hardLink))
         {
             // Create paths when available
             if (storageFeature(storageRepoWrite(), storageFeaturePath))
@@ -2258,47 +2259,50 @@ backupProcess(
             manifestFileRemove(manifest, strLstGet(fileRemove, fileRemoveIdx));
 
         // Log references or create hardlinks for all files
-        const char *const compressExt = strZ(compressExtStr(jobData.compressType));
-
-        for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
+        if (!preliminary)
         {
-            const ManifestFile file = manifestFile(manifest, fileIdx);
+            const char *const compressExt = strZ(compressExtStr(jobData.compressType));
 
-            // If the file has a reference, then it was not copied since it can be retrieved from the referenced backup. However,
-            // if hardlinking is enabled the link will need to be created.
-            if (file.reference != NULL)
+            for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
             {
-                // If hardlinking is enabled then create a hardlink for files that have not changed since the last backup
-                if (hardLink)
+                const ManifestFile file = manifestFile(manifest, fileIdx);
+
+                // If the file has a reference, then it was not copied since it can be retrieved from the referenced backup.
+                // However, if hardlinking is enabled the link will need to be created.
+                if (file.reference != NULL)
                 {
-                    LOG_DETAIL_FMT("hardlink %s to %s", strZ(file.name), strZ(file.reference));
+                    // If hardlinking is enabled then create a hardlink for files that have not changed since the last backup
+                    if (hardLink)
+                    {
+                        LOG_DETAIL_FMT("hardlink %s to %s", strZ(file.name), strZ(file.reference));
 
-                    const String *const linkName = storagePathP(
-                        storageRepo(), strNewFmt("%s/%s%s", strZ(backupPathExp), strZ(file.name), compressExt));
-                    const String *const linkDestination = storagePathP(
-                        storageRepo(),
-                        strNewFmt(STORAGE_REPO_BACKUP "/%s/%s%s", strZ(file.reference), strZ(file.name), compressExt));
+                        const String *const linkName = storagePathP(
+                            storageRepo(), strNewFmt("%s/%s%s", strZ(backupPathExp), strZ(file.name), compressExt));
+                        const String *const linkDestination = storagePathP(
+                            storageRepo(),
+                            strNewFmt(STORAGE_REPO_BACKUP "/%s/%s%s", strZ(file.reference), strZ(file.name), compressExt));
 
-                    storageLinkCreateP(storageRepoWrite(), linkDestination, linkName, .linkType = storageLinkHard);
+                        storageLinkCreateP(storageRepoWrite(), linkDestination, linkName, .linkType = storageLinkHard);
+                    }
+                    // Else log the reference. With delta, it is possible that references may have been removed if a file needed to
+                    // be recopied.
+                    else
+                        LOG_DETAIL_FMT("reference %s to %s", strZ(file.name), strZ(file.reference));
                 }
-                // Else log the reference. With delta, it is possible that references may have been removed if a file needed to be
-                // recopied.
-                else
-                    LOG_DETAIL_FMT("reference %s to %s", strZ(file.name), strZ(file.reference));
             }
-        }
 
-        // Sync backup paths if required
-        if (storageFeature(storageRepoWrite(), storageFeaturePathSync))
-        {
-            for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(manifest); pathIdx++)
+            // Sync backup paths if required
+            if (storageFeature(storageRepoWrite(), storageFeaturePathSync))
             {
-                const String *const path = strNewFmt("%s/%s", strZ(backupPathExp), strZ(manifestPath(manifest, pathIdx)->name));
+                for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(manifest); pathIdx++)
+                {
+                    const String *const path = strNewFmt("%s/%s", strZ(backupPathExp), strZ(manifestPath(manifest, pathIdx)->name));
 
-                // Always sync the path if it exists or if the backup is full (without bundling) or hardlinked. In the latter cases
-                // the directory should always exist so we want to error if it does not.
-                if ((backupType == backupTypeFull && !jobData.bundle) || hardLink || storagePathExistsP(storageRepo(), path))
-                    storagePathSyncP(storageRepoWrite(), path);
+                    // Always sync the path if it exists or if the backup is full (without bundling) or hardlinked. In the latter
+                    // cases the directory should always exist so we want to error if it does not.
+                    if ((backupType == backupTypeFull && !jobData.bundle) || hardLink || storagePathExistsP(storageRepo(), path))
+                        storagePathSyncP(storageRepoWrite(), path);
+                }
             }
         }
     }
@@ -2575,9 +2579,28 @@ cmdBackup(void)
                 cfgOptionBool(cfgOptChecksumPage), cfgOptionBool(cfgOptRepoBundle), cfgOptionBool(cfgOptRepoBlock), &blockIncrMap,
                 strLstNewVarLst(cfgOptionLst(cfgOptExclude)), dbTablespaceList(backupData->dbPrimary));
 
+            // Remove files that do not need to be considered for the first pass (!!! SHOULD BE BUILT INTO MANIFEST?)
+            const bool bundle = cfgOptionBool(cfgOptRepoBundle);
+            const uint64_t bundleLimit = bundle ? cfgOptionUInt64(cfgOptRepoBundleLimit) : 0;
+            unsigned int fileIdx = 0;
+            const time_t timestampCopyStart = timestampStart - 3600;
+
+            for (; fileIdx < manifestFileTotal(manifestPrior); fileIdx++)
+            {
+                const ManifestFile file = manifestFile(manifestPrior, fileIdx);
+
+                if (file.timestamp > timestampCopyStart || bundle && file.size <= bundleLimit)
+                {
+                    manifestFileRemove(manifestPrior, file.name);
+                    continue;
+                }
+
+                fileIdx++;
+            }
+
             // Validate the manifest using the copy start time
             manifestBuildValidate(
-                manifestPrior, cfgOptionBool(cfgOptDelta), backupTime(backupData, true),
+                manifestPrior, cfgOptionBool(cfgOptDelta), timestampCopyStart,
                 compressTypeEnum(cfgOptionStrId(cfgOptCompressType)));
 
             // Set cipher passphrase (if any)
@@ -2587,11 +2610,9 @@ cmdBackup(void)
             backupResume(manifestPrior, cipherPassBackup);
             resumePossible = false;
         }
+        // else check if there is a prior manifest when backup type is diff/incr
         else
             manifestPrior = backupBuildIncrPrior(infoBackup);
-
-        // Check if there is a prior manifest when backup type is diff/incr
-        Manifest *const manifestPrior = backupBuildIncrPrior(infoBackup);
 
         // Start the backup
         const BackupStartResult backupStartResult = backupStart(backupData);
