@@ -2078,13 +2078,13 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
 
 static void
 backupProcess(
-    const BackupData *const backupData, Manifest *const manifest, const String *const cipherPassBackup, const bool preliminary)
+    const BackupData *const backupData, Manifest *const manifest, const bool preliminary, const String *const cipherPassBackup)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
+        FUNCTION_LOG_PARAM(BOOL, preliminary);
         FUNCTION_TEST_PARAM(STRING, cipherPassBackup);
-        FUNCTION_TEST_PARAM(BOOL, preliminary);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
@@ -2646,7 +2646,7 @@ cmdBackup(void)
         backupManifestSaveCopy(manifest, cipherPassBackup, false);
 
         // Process the backup manifest
-        backupProcess(backupData, manifest, backupStartResult.lsn, cipherPassBackup);
+        backupProcess(backupData, manifest, cipherPassBackup);
 
         // Check that the clusters are alive and correctly configured after the backup
         backupDbPing(backupData, true);
