@@ -1028,7 +1028,7 @@ backupResume(Manifest *const manifest, const String *const cipherPassBackup)
                 manifest,
                 backupLabelCreate(
                     manifestData(manifest)->backupType, manifestData(manifest)->backupLabelPrior,
-                    manifestData(manifestResume)->backupTimestampStart));
+                    manifestData(manifest)->backupTimestampStart));
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -2646,7 +2646,7 @@ cmdBackup(void)
         backupManifestSaveCopy(manifest, cipherPassBackup, false);
 
         // Process the backup manifest
-        backupProcess(backupData, manifest, cipherPassBackup);
+        backupProcess(backupData, manifest, false, cipherPassBackup);
 
         // Check that the clusters are alive and correctly configured after the backup
         backupDbPing(backupData, true);
