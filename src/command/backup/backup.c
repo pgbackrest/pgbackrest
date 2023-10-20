@@ -699,11 +699,12 @@ backupBuildIncr(
 /***********************************************************************************************************************************
 Check for a backup that can be resumed and merge into the manifest if found
 ***********************************************************************************************************************************/
-// Helper to clean invalid paths/files/links out of the resumable backup path
+// Recursive helper for backupResumeClean()
 static void
-backupResumeClean(
+backupResumeCleanRecurse(
     StorageIterator *const storageItr, Manifest *const manifest, const Manifest *const manifestResume,
-    const CompressType compressType, const bool delta, const String *const backupParentPath, const String *const manifestParentName)
+    const CompressType compressType, const bool delta, const bool resume, const String *const backupParentPath,
+    const String *const manifestParentName)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_ITERATOR, storageItr);           // Storage info
@@ -711,6 +712,7 @@ backupResumeClean(
         FUNCTION_LOG_PARAM(MANIFEST, manifestResume);               // Resumed manifest
         FUNCTION_LOG_PARAM(ENUM, compressType);                     // Backup compression type
         FUNCTION_LOG_PARAM(BOOL, delta);                            // Is this a delta backup?
+        FUNCTION_LOG_PARAM(BOOL, resume);                           // Should resume checking be done (not needed for full)?
         FUNCTION_LOG_PARAM(STRING, backupParentPath);               // Path to the current level of the backup being cleaned
         FUNCTION_LOG_PARAM(STRING, manifestParentName);             // Parent manifest name used to construct manifest name
     FUNCTION_LOG_END();
@@ -748,15 +750,16 @@ backupResumeClean(
                     // If the path was not found in the new manifest then remove it
                     if (manifestPathFindDefault(manifest, manifestName, NULL) == NULL)
                     {
+                        // !!! NEED TO CHANGE MESSAGES TO MATCH "PHASE 1" USAGE
                         LOG_DETAIL_FMT("remove path '%s' from resumed backup", strZ(storagePathP(storageRepo(), backupPath)));
                         storagePathRemoveP(storageRepoWrite(), backupPath, .recurse = true);
                     }
                     // Else recurse into the path
                     else
                     {
-                        backupResumeClean(
+                        backupResumeCleanRecurse(
                             storageNewItrP(storageRepo(), backupPath, .sortOrder = sortOrderAsc), manifest, manifestResume,
-                            compressType, delta, backupPath, manifestName);
+                            compressType, delta, resume, backupPath, manifestName);
                     }
 
                     break;
@@ -767,6 +770,7 @@ backupResumeClean(
                 case storageTypeFile:
                 {
                     // If the file is compressed then strip off the extension before doing the lookup
+                    // !!! NEEDS TO BE EXPANDED TO RESUME BLOCK INCREMENTAL
                     const CompressType fileCompressType = compressTypeFromName(manifestName);
 
                     if (fileCompressType != compressTypeNone)
@@ -814,8 +818,10 @@ backupResumeClean(
                                 file.checksumPage = fileResume.checksumPage;
                                 file.checksumPageError = fileResume.checksumPageError;
                                 file.checksumPageErrorList = fileResume.checksumPageErrorList;
-                                file.resume = true;
+                                // !!! NEEDS TO BE EXPANDED TO RESUME BLOCK INCREMENTAL
+                                file.resume = resume;
                                 file.delta = delta;
+                                file.copy = resume | delta;
 
                                 manifestFileUpdate(manifest, &file);
                             }
@@ -852,6 +858,37 @@ backupResumeClean(
 
         // Reset the memory context occasionally so we don't use too much memory or slow down processing
         MEM_CONTEXT_TEMP_RESET(1000);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+// Helper to clean invalid paths/files/links out of the resumable backup path
+static void
+backupResumeClean(Manifest *const manifest, const Manifest *const manifestResume, const bool resume)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(MANIFEST, manifest);
+        FUNCTION_LOG_PARAM(MANIFEST, manifestResume);
+        FUNCTION_LOG_PARAM(BOOL, resume);
+    FUNCTION_LOG_END();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Set the backup label to the resumed backup
+        manifestBackupLabelSet(manifest, manifestData(manifestResume)->backupLabel);
+
+        // If resuming a full backup then copy cipher subpass since it was used to encrypt the resumable files
+        if (manifestData(manifest)->backupType == backupTypeFull)
+            manifestCipherSubPassSet(manifest, manifestCipherSubPass(manifestResume));
+
+        // Clean resumed backup
+        const String *const backupPath = strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(manifestData(manifest)->backupLabel));
+
+        backupResumeCleanRecurse(
+            storageNewItrP(storageRepo(), backupPath, .sortOrder = sortOrderAsc), manifest, manifestResume,
+            compressTypeEnum(cfgOptionStrId(cfgOptCompressType)), cfgOptionBool(cfgOptDelta), resume, backupPath, NULL);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -1003,23 +1040,11 @@ backupResume(Manifest *const manifest, const String *const cipherPassBackup)
             // Resuming
             result = true;
 
-            // Set the backup label to the resumed backup
-            manifestBackupLabelSet(manifest, manifestData(manifestResume)->backupLabel);
-
             LOG_WARN_FMT(
                 "resumable backup %s of same type exists -- invalid files will be removed then the backup will resume",
-                strZ(manifestData(manifest)->backupLabel));
+                strZ(manifestData(manifestResume)->backupLabel));
 
-            // If resuming a full backup then copy cipher subpass since it was used to encrypt the resumable files
-            if (manifestData(manifest)->backupType == backupTypeFull)
-                manifestCipherSubPassSet(manifest, manifestCipherSubPass(manifestResume));
-
-            // Clean resumed backup
-            const String *const backupPath = strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(manifestData(manifest)->backupLabel));
-
-            backupResumeClean(
-                storageNewItrP(storageRepo(), backupPath, .sortOrder = sortOrderAsc), manifest, manifestResume,
-                compressTypeEnum(cfgOptionStrId(cfgOptCompressType)), cfgOptionBool(cfgOptDelta), backupPath, NULL);
+            backupResumeClean(manifest, manifestResume, true);
         }
         // Else generate a new label for the backup
         else
