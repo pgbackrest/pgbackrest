@@ -674,7 +674,7 @@ backupBuildIncr(
     bool result = false;
 
     // No incremental if no prior manifest
-    if (manifestPrior != NULL)
+    if (manifestPrior != NULL && cfgOptionStrId(cfgOptType) != backupTypeFull)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
@@ -873,6 +873,9 @@ backupResumeClean(Manifest *const manifest, const Manifest *const manifestResume
         FUNCTION_LOG_PARAM(MANIFEST, manifestResume);
         FUNCTION_LOG_PARAM(BOOL, resume);
     FUNCTION_LOG_END();
+
+    ASSERT(manifest != NULL);
+    ASSERT(manifestResume != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -1784,12 +1787,14 @@ backupProcessQueueComparator(const void *const item1, const void *const item2)
 
 // Helper to generate the backup queues
 static uint64_t
-backupProcessQueue(const BackupData *const backupData, Manifest *const manifest, BackupJobData *const jobData)
+backupProcessQueue(
+    const BackupData *const backupData, Manifest *const manifest, BackupJobData *const jobData, const bool preliminary)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
         FUNCTION_LOG_PARAM_P(VOID, jobData);
+        FUNCTION_LOG_PARAM(BOOL, preliminary);
     FUNCTION_LOG_END();
 
     FUNCTION_AUDIT_HELPER();
@@ -1888,7 +1893,7 @@ backupProcessQueue(const BackupData *const backupData, Manifest *const manifest,
         }
 
         // pg_control should always be in an online backup
-        if (!pgControlFound && cfgOptionBool(cfgOptOnline))
+        if (!preliminary && !pgControlFound && cfgOptionBool(cfgOptOnline))
         {
             THROW(
                 FileMissingError,
@@ -2199,7 +2204,7 @@ backupProcess(
         }
 
         // Generate processing queues
-        sizeTotal = backupProcessQueue(backupData, manifest, &jobData);
+        sizeTotal = backupProcessQueue(backupData, manifest, &jobData, preliminary);
 
         // Create the parallel executor
         ProtocolParallel *const parallelExec = protocolParallelNew(
@@ -2591,51 +2596,82 @@ cmdBackup(void)
         // Remove files that would not be in a bundle
         // !!!
         // !!! DO WE NEED TO HAVE A BACKUP RUNNING DURING THE FIRST PASS
-        Manifest *manifestPrior;
-        bool resumePossible = true;
+        Manifest *manifestPrior = NULL;
 
-        if (cfgOptionStrId(cfgOptType) == backupTypeFull && cfgOptionBool(cfgOptOnline))
+        if (cfgOptionStrId(cfgOptType) == backupTypeFull)
         {
-            // !!! Wait for standby to sync to last checkpoint
-
-            // Build the manifest
-            manifestPrior = manifestNewBuild(
-                backupData->storagePrimary, infoPg.version, infoPg.catalogVersion, timestampStart, cfgOptionBool(cfgOptOnline),
-                cfgOptionBool(cfgOptChecksumPage), cfgOptionBool(cfgOptRepoBundle), cfgOptionBool(cfgOptRepoBlock), &blockIncrMap,
-                strLstNewVarLst(cfgOptionLst(cfgOptExclude)), dbTablespaceList(backupData->dbPrimary));
-
-            // Remove files that do not need to be considered for the first pass (!!! SHOULD BE BUILT INTO MANIFEST?)
-            const bool bundle = cfgOptionBool(cfgOptRepoBundle);
-            const uint64_t bundleLimit = bundle ? cfgOptionUInt64(cfgOptRepoBundleLimit) : 0;
-            unsigned int fileIdx = 0;
-            const time_t timestampCopyStart = timestampStart - 3600;
-
-            for (; fileIdx < manifestFileTotal(manifestPrior); fileIdx++)
+            if (cfgOptionBool(cfgOptOnline))
             {
-                const ManifestFile file = manifestFile(manifestPrior, fileIdx);
-
-                if (file.timestamp > timestampCopyStart || bundle && file.size <= bundleLimit)
+                MEM_CONTEXT_TEMP_BEGIN()
                 {
-                    manifestFileRemove(manifestPrior, file.name);
-                    continue;
+                    // !!! WAIT FOR STANDBY TO SYNC TO LAST CHECKPOINT
+
+                    // Build the manifest
+                    Manifest *const manifestPrelim = manifestNewBuild(
+                        backupData->storagePrimary, infoPg.version, infoPg.catalogVersion, timestampStart, cfgOptionBool(cfgOptOnline),
+                        cfgOptionBool(cfgOptChecksumPage), cfgOptionBool(cfgOptRepoBundle), cfgOptionBool(cfgOptRepoBlock),
+                        &blockIncrMap, strLstNewVarLst(cfgOptionLst(cfgOptExclude)), dbTablespaceList(backupData->dbPrimary));
+
+                    // Remove files that do not need to be considered for the first pass (!!! SHOULD BE BUILT INTO MANIFEST?)
+                    const bool bundle = cfgOptionBool(cfgOptRepoBundle);
+                    const uint64_t bundleLimit = bundle ? cfgOptionUInt64(cfgOptRepoBundleLimit) : 0;
+                    unsigned int fileIdx = 0;
+                    // !!! SHOULD TIMESTAMP START BE BASED ON LAST CHECKPOINT TIME?
+                    const time_t timestampCopyStart = timestampStart - 3600;
+
+                    while (fileIdx < manifestFileTotal(manifestPrelim))
+                    {
+                        const ManifestFile file = manifestFile(manifestPrelim, fileIdx);
+
+                        fprintf(stdout, "!!!PRELIM FILE %s TIME %" PRId64 ", START %" PRId64 "\n", strZ(file.name), file.timestamp, timestampCopyStart);
+
+                        if (file.timestamp > timestampCopyStart || (bundle && file.size <= bundleLimit))
+                        {
+                            manifestFileRemove(manifestPrelim, file.name);
+
+                            fprintf(stdout, "!!!PRELIM REMOVE FILE %s\n", strZ(file.name));
+                            fflush(stdout);
+
+                            continue;
+                        }
+
+                        fileIdx++;
+                    }
+
+                    if (manifestFileTotal(manifestPrelim) > 0)
+                    {
+                        for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifestPrelim); fileIdx++)
+                        {
+                            const ManifestFile file = manifestFile(manifestPrelim, fileIdx);
+                            fprintf(stdout, "!!!PRELIM PROCESS FILE %s\n", strZ(file.name));
+                            fflush(stdout);
+                        }
+
+                        // Validate the manifest using the copy start time
+                        manifestBuildValidate(
+                            manifestPrelim, cfgOptionBool(cfgOptDelta), timestampCopyStart,
+                            compressTypeEnum(cfgOptionStrId(cfgOptCompressType)));
+
+                        // Set cipher passphrase (if any)
+                        manifestCipherSubPassSet(manifestPrelim, cipherPassGen(cfgOptionStrId(cfgOptRepoCipherType)));
+
+                        // Resume a backup when possible
+                        backupResume(manifestPrelim, cipherPassBackup);
+
+                        // Save the manifest before processing starts
+                        backupManifestSaveCopy(manifestPrelim, cipherPassBackup, false);
+
+                        // Process the backup manifest
+                        backupProcess(backupData, manifestPrelim, true, cipherPassBackup);
+
+                        // Move manifest to prior context
+                        manifestPrior = manifestMove(manifestPrelim, memContextPrior());
+                    }
                 }
-
-                fileIdx++;
+                MEM_CONTEXT_TEMP_END();
             }
-
-            // Validate the manifest using the copy start time
-            manifestBuildValidate(
-                manifestPrior, cfgOptionBool(cfgOptDelta), timestampCopyStart,
-                compressTypeEnum(cfgOptionStrId(cfgOptCompressType)));
-
-            // Set cipher passphrase (if any)
-            manifestCipherSubPassSet(manifestPrior, cipherPassGen(cfgOptionStrId(cfgOptRepoCipherType)));
-
-            // Resume a backup when possible
-            backupResume(manifestPrior, cipherPassBackup);
-            resumePossible = false;
         }
-        // else check if there is a prior manifest when backup type is diff/incr
+        // Else check if there is a prior manifest when backup type is diff/incr
         else
             manifestPrior = backupBuildIncrPrior(infoBackup);
 
@@ -2657,14 +2693,17 @@ cmdBackup(void)
         if (!backupBuildIncr(infoBackup, manifest, manifestPrior, backupStartResult.walSegmentName))
             manifestCipherSubPassSet(manifest, cipherPassGen(cfgOptionStrId(cfgOptRepoCipherType)));
 
-        // !!! CLEAR OUT PARTS OF THE INCREMENTAL THAT WILL NOT BE USED.
-
         // Set delta if it is not already set and the manifest requires it
         if (!cfgOptionBool(cfgOptDelta) && varBool(manifestData(manifest)->backupOptionDelta))
             cfgOptionSet(cfgOptDelta, cfgSourceParam, BOOL_TRUE_VAR);
 
-        // Resume a backup when possible (full backups may have already have been resumed above)
-        if (resumePossible)
+        // For a full backup with a preliminary copy do the equivalent of a resume cleanup
+        if (cfgOptionStrId(cfgOptType) == backupTypeFull && manifestPrior != NULL)
+        {
+            backupResumeClean(manifest, manifestPrior, false);
+        }
+        // Else normal resume of diff/incr backup
+        else
             backupResume(manifest, cipherPassBackup);
 
         // Save the manifest before processing starts
