@@ -1949,13 +1949,9 @@ testRun(void)
         hrnCfgArgRawBool(argList, cfgOptChecksumPage, true);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-        harnessPqScriptSet((HarnessPq [])
-        {
+        HRN_PQ_SCRIPT_SET(
             // Connect to primary
-            HRNPQ_MACRO_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_93, TEST_PATH "/pg1", false, NULL, NULL),
-
-            HRNPQ_MACRO_DONE()
-        });
+            HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_93, TEST_PATH "/pg1", false, NULL, NULL));
 
         TEST_RESULT_VOID(
             dbFree(
@@ -1980,13 +1976,9 @@ testRun(void)
         hrnCfgArgRawBool(argList, cfgOptChecksumPage, false);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-        harnessPqScriptSet((HarnessPq [])
-        {
+        HRN_PQ_SCRIPT_SET(
             // Connect to primary
-            HRNPQ_MACRO_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_93, TEST_PATH "/pg1", false, NULL, NULL),
-
-            HRNPQ_MACRO_DONE()
-        });
+            HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_93, TEST_PATH "/pg1", false, NULL, NULL));
 
         TEST_RESULT_VOID(
             dbFree(
@@ -1997,13 +1989,9 @@ testRun(void)
         // Create pg_control without page checksums
         HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_93);
 
-        harnessPqScriptSet((HarnessPq [])
-        {
+        HRN_PQ_SCRIPT_SET(
             // Connect to primary
-            HRNPQ_MACRO_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_93, TEST_PATH "/pg1", false, NULL, NULL),
-
-            HRNPQ_MACRO_DONE()
-        });
+            HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_93, TEST_PATH "/pg1", false, NULL, NULL));
 
         TEST_RESULT_VOID(
             dbFree(
@@ -2039,24 +2027,20 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-        harnessPqScriptSet((HarnessPq [])
-        {
+        HRN_PQ_SCRIPT_SET(
             // Connect to primary
-            HRNPQ_MACRO_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_93, TEST_PATH "/pg1", false, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_93, TEST_PATH "/pg1", false, NULL, NULL),
 
             // Advance the time slowly to force retries
-            HRNPQ_MACRO_TIME_QUERY(1, 1575392588998),
-            HRNPQ_MACRO_TIME_QUERY(1, 1575392588999),
-            HRNPQ_MACRO_TIME_QUERY(1, 1575392589001),
+            HRN_PQ_SCRIPT_TIME_QUERY(1, 1575392588998),
+            HRN_PQ_SCRIPT_TIME_QUERY(1, 1575392588999),
+            HRN_PQ_SCRIPT_TIME_QUERY(1, 1575392589001),
 
             // Stall time to force an error
-            HRNPQ_MACRO_TIME_QUERY(1, 1575392589998),
-            HRNPQ_MACRO_TIME_QUERY(1, 1575392589997),
-            HRNPQ_MACRO_TIME_QUERY(1, 1575392589998),
-            HRNPQ_MACRO_TIME_QUERY(1, 1575392589999),
-
-            HRNPQ_MACRO_DONE()
-        });
+            HRN_PQ_SCRIPT_TIME_QUERY(1, 1575392589998),
+            HRN_PQ_SCRIPT_TIME_QUERY(1, 1575392589997),
+            HRN_PQ_SCRIPT_TIME_QUERY(1, 1575392589998),
+            HRN_PQ_SCRIPT_TIME_QUERY(1, 1575392589999));
 
         BackupData *backupData = backupInit(
             infoBackupNew(PG_VERSION_93, HRN_PG_SYSTEMID_93, hrnPgCatalogVersion(PG_VERSION_93), NULL));
@@ -3076,7 +3060,8 @@ testRun(void)
 
             // Run backup but error on first archive check
             hrnBackupPqScriptP(
-                PG_VERSION_96, backupTimeStart, .noPriorWal = true, .backupStandby = true, .walCompressType = compressTypeGz);
+                PG_VERSION_96, backupTimeStart, .noPriorWal = true, .backupStandby = true, .walCompressType = compressTypeGz,
+                .startFast = true);
             TEST_ERROR(
                 hrnCmdBackup(), ArchiveTimeoutError,
                 "WAL segment 0000000105DA69BF000000FF was not archived before the 100ms timeout\n"
@@ -3086,7 +3071,8 @@ testRun(void)
 
             // Run backup but error on archive check
             hrnBackupPqScriptP(
-                PG_VERSION_96, backupTimeStart, .noWal = true, .backupStandby = true, .walCompressType = compressTypeGz);
+                PG_VERSION_96, backupTimeStart, .noWal = true, .backupStandby = true, .walCompressType = compressTypeGz,
+                .startFast = true);
             TEST_ERROR(
                 hrnCmdBackup(), ArchiveTimeoutError,
                 "WAL segment 0000000105DA69C000000000 was not archived before the 100ms timeout\n"
@@ -3106,7 +3092,8 @@ testRun(void)
             const String *archiveInfoContent = strNewBuf(storageGetP(storageNewReadP(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR)));
 
             // Run backup
-            hrnBackupPqScriptP(PG_VERSION_96, backupTimeStart, .backupStandby = true, .walCompressType = compressTypeGz);
+            hrnBackupPqScriptP(
+                PG_VERSION_96, backupTimeStart, .backupStandby = true, .walCompressType = compressTypeGz, .startFast = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             // Check archive.info/copy timestamp was updated but contents were not
@@ -3281,7 +3268,9 @@ testRun(void)
             ((Storage *)storageRepoWrite())->pub.interface.feature ^= 1 << storageFeatureHardLink;
 
             // Run backup
-            hrnBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 3);
+            hrnBackupPqScriptP(
+                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 3, .walSwitch = true,
+                .tablespace = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             // Reset storage features
@@ -3407,7 +3396,7 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Preserve prior timestamp on pg_control
-            hrnBackupPqScriptP(PG_VERSION_11, BACKUP_EPOCH + 2300000, .errorAfterStart = true);
+            hrnBackupPqScriptP(PG_VERSION_11, BACKUP_EPOCH + 2300000, .errorAfterStart = true, .tablespace = true);
             HRN_PG_CONTROL_TIME(storagePg(), backupTimeStart);
 
             // Run backup
@@ -3467,7 +3456,8 @@ testRun(void)
             const char *rel1_3Sha1 = strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, relation)));
 
             // Run backup. Make sure that the timeline selected converts to hexdecimal that can't be interpreted as decimal.
-            hrnBackupPqScriptP(PG_VERSION_11, backupTimeStart, .timeline = 0x2C, .walTotal = 2);
+            hrnBackupPqScriptP(
+                PG_VERSION_11, backupTimeStart, .timeline = 0x2C, .walTotal = 2, .walSwitch = true, .tablespace = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
@@ -3617,7 +3607,8 @@ testRun(void)
 
             // Run backup
             hrnBackupPqScriptP(
-                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2, .pgVersionForce = STRDEF("11"));
+                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2, .pgVersionForce = STRDEF("11"),
+                .walSwitch = true, .tablespace = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
@@ -3747,7 +3738,9 @@ testRun(void)
             HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "zero", .timeModified = backupTimeStart);
 
             // Run backup
-            hrnBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2);
+            hrnBackupPqScriptP(
+                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2, .walSwitch = true,
+                .tablespace = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
@@ -3858,7 +3851,9 @@ testRun(void)
             HRN_STORAGE_PUT(storagePgWrite(), "grow-to-block-incr", file, .timeModified = backupTimeStart);
 
             // Run backup
-            hrnBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2);
+            hrnBackupPqScriptP(
+                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2, .walSwitch = true,
+                .tablespace = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
@@ -3969,7 +3964,9 @@ testRun(void)
             HRN_STORAGE_PUT(storagePgWrite(), "grow-to-block-incr", file, .timeModified = backupTimeStart);
 
             // Run backup
-            hrnBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2);
+            hrnBackupPqScriptP(
+                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2, .walSwitch = true,
+                .tablespace = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
@@ -4093,7 +4090,7 @@ testRun(void)
             // Run backup
             hrnBackupPqScriptP(
                 PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherType = cipherTypeAes256Cbc,
-                .cipherPass = TEST_CIPHER_PASS, .walTotal = 2);
+                .cipherPass = TEST_CIPHER_PASS, .walTotal = 2, .walSwitch = true, .tablespace = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
@@ -4201,7 +4198,7 @@ testRun(void)
             // Run backup
             hrnBackupPqScriptP(
                 PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherType = cipherTypeAes256Cbc,
-                .cipherPass = TEST_CIPHER_PASS, .walTotal = 2);
+                .cipherPass = TEST_CIPHER_PASS, .walTotal = 2, .walSwitch = true, .tablespace = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(

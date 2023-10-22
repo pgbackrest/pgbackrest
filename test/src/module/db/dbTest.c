@@ -17,36 +17,36 @@ Test Database
 Macro to check that replay is making progress -- this does not seem useful enough to be included in the pq harness header
 ***********************************************************************************************************************************/
 #define                                                                                                                            \
-    HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS(                                                                                    \
+    HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_PROGRESS(                                                                                  \
         sessionParam, walNameParam, lsnNameParam, targetLsnParam, targetReachedParam, replayLsnParam, replayLastLsnParam,          \
         replayProgressParam, sleepParam)                                                                                           \
     {.session = sessionParam,                                                                                                      \
-        .function = HRNPQ_SENDQUERY,                                                                                               \
+        .function = HRN_PQ_SENDQUERY,                                                                                              \
         .param =                                                                                                                   \
             "[\"select replayLsn::text,\\n"                                                                                        \
             "       (replayLsn > '" targetLsnParam "')::bool as targetReached,\\n"                                                 \
             "       (replayLsn > '" replayLastLsnParam "')::bool as replayProgress\\n"                                             \
             "  from pg_catalog.pg_last_" walNameParam "_replay_" lsnNameParam "() as replayLsn\"]",                                \
         .resultInt = 1, .sleep = sleepParam},                                                                                      \
-    {.session = sessionParam, .function = HRNPQ_CONSUMEINPUT},                                                                     \
-    {.session = sessionParam, .function = HRNPQ_ISBUSY},                                                                           \
-    {.session = sessionParam, .function = HRNPQ_GETRESULT},                                                                        \
-    {.session = sessionParam, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},                                       \
-    {.session = sessionParam, .function = HRNPQ_NTUPLES, .resultInt = 1},                                                          \
-    {.session = sessionParam, .function = HRNPQ_NFIELDS, .resultInt = 3},                                                          \
-    {.session = sessionParam, .function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_TEXT},                              \
-    {.session = sessionParam, .function = HRNPQ_FTYPE, .param = "[1]", .resultInt = HRNPQ_TYPE_BOOL},                              \
-    {.session = sessionParam, .function = HRNPQ_FTYPE, .param = "[2]", .resultInt = HRNPQ_TYPE_BOOL},                              \
-    {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = replayLsnParam},                            \
-    {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,1]", .resultZ = cvtBoolToConstZ(targetReachedParam)},       \
-    {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,2]", .resultZ = cvtBoolToConstZ(replayProgressParam)},      \
-    {.session = sessionParam, .function = HRNPQ_CLEAR},                                                                            \
-    {.session = sessionParam, .function = HRNPQ_GETRESULT, .resultNull = true}
+    {.session = sessionParam, .function = HRN_PQ_CONSUMEINPUT},                                                                    \
+    {.session = sessionParam, .function = HRN_PQ_ISBUSY},                                                                          \
+    {.session = sessionParam, .function = HRN_PQ_GETRESULT},                                                                       \
+    {.session = sessionParam, .function = HRN_PQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},                                      \
+    {.session = sessionParam, .function = HRN_PQ_NTUPLES, .resultInt = 1},                                                         \
+    {.session = sessionParam, .function = HRN_PQ_NFIELDS, .resultInt = 3},                                                         \
+    {.session = sessionParam, .function = HRN_PQ_FTYPE, .param = "[0]", .resultInt = HRN_PQ_TYPE_TEXT},                            \
+    {.session = sessionParam, .function = HRN_PQ_FTYPE, .param = "[1]", .resultInt = HRN_PQ_TYPE_BOOL},                            \
+    {.session = sessionParam, .function = HRN_PQ_FTYPE, .param = "[2]", .resultInt = HRN_PQ_TYPE_BOOL},                            \
+    {.session = sessionParam, .function = HRN_PQ_GETVALUE, .param = "[0,0]", .resultZ = replayLsnParam},                           \
+    {.session = sessionParam, .function = HRN_PQ_GETVALUE, .param = "[0,1]", .resultZ = cvtBoolToConstZ(targetReachedParam)},      \
+    {.session = sessionParam, .function = HRN_PQ_GETVALUE, .param = "[0,2]", .resultZ = cvtBoolToConstZ(replayProgressParam)},     \
+    {.session = sessionParam, .function = HRN_PQ_CLEAR},                                                                           \
+    {.session = sessionParam, .function = HRN_PQ_GETRESULT, .resultNull = true}
 
 #define                                                                                                                            \
-    HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS_GE_10(                                                                              \
+    HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_PROGRESS_GE_10(                                                                            \
         sessionParam, targetLsnParam, targetReachedParam, replayLsnParam, replayLastLsnParam, replayProgressParam, sleepParam)     \
-    HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS(                                                                                    \
+    HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_PROGRESS(                                                                                  \
         sessionParam, "wal", "lsn", targetLsnParam, targetReachedParam, replayLsnParam, replayLastLsnParam, replayProgressParam,   \
         sleepParam)
 
@@ -59,7 +59,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // PQfinish() is strictly checked
-    harnessPqScriptStrictSet(true);
+    hrnPqScriptStrictSet(true);
 
     // *****************************************************************************************************************************
     if (testBegin("Db and dbProtocol()"))
@@ -79,28 +79,24 @@ testRun(void)
                 HRN_CFG_LOAD(cfgCmdBackup, argList, .role = cfgCmdRoleRemote);
 
                 // Set script
-                harnessPqScriptSet((HarnessPq [])
-                {
-                    HRNPQ_MACRO_OPEN(1, "dbname='testdb' port=5432"),
-                    HRNPQ_MACRO_SET_SEARCH_PATH(1),
-                    HRNPQ_MACRO_SET_CLIENT_ENCODING(1),
-                    HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_93, TEST_PATH "/pg", NULL, NULL),
-                    HRNPQ_MACRO_SET_APPLICATION_NAME(1),
-                    HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),
-                    HRNPQ_MACRO_CLOSE(1),
+                HRN_PQ_SCRIPT_SET(
+                    HRN_PQ_SCRIPT_OPEN(1, "dbname='testdb' port=5432"),
+                    HRN_PQ_SCRIPT_SET_SEARCH_PATH(1),
+                    HRN_PQ_SCRIPT_SET_CLIENT_ENCODING(1),
+                    HRN_PQ_SCRIPT_VALIDATE_QUERY(1, PG_VERSION_93, TEST_PATH "/pg", NULL, NULL),
+                    HRN_PQ_SCRIPT_SET_APPLICATION_NAME(1),
+                    HRN_PQ_SCRIPT_IS_STANDBY_QUERY(1, false),
+                    HRN_PQ_SCRIPT_CLOSE(1),
 
-                    HRNPQ_MACRO_OPEN(1, "dbname='testdb' port=5432"),
-                    HRNPQ_MACRO_SET_SEARCH_PATH(1),
-                    HRNPQ_MACRO_SET_CLIENT_ENCODING(1),
-                    HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_93, TEST_PATH "/pg", NULL, NULL),
-                    HRNPQ_MACRO_SET_APPLICATION_NAME(1),
-                    HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),
-                    HRNPQ_MACRO_CREATE_RESTORE_POINT(1, "2/3"),
-                    HRNPQ_MACRO_WAL_SWITCH(1, "xlog", "000000030000000200000003"),
-                    HRNPQ_MACRO_CLOSE(1),
-
-                    HRNPQ_MACRO_DONE()
-                });
+                    HRN_PQ_SCRIPT_OPEN(1, "dbname='testdb' port=5432"),
+                    HRN_PQ_SCRIPT_SET_SEARCH_PATH(1),
+                    HRN_PQ_SCRIPT_SET_CLIENT_ENCODING(1),
+                    HRN_PQ_SCRIPT_VALIDATE_QUERY(1, PG_VERSION_93, TEST_PATH "/pg", NULL, NULL),
+                    HRN_PQ_SCRIPT_SET_APPLICATION_NAME(1),
+                    HRN_PQ_SCRIPT_IS_STANDBY_QUERY(1, false),
+                    HRN_PQ_SCRIPT_CREATE_RESTORE_POINT(1, "2/3"),
+                    HRN_PQ_SCRIPT_WAL_SWITCH(1, "xlog", "000000030000000200000003"),
+                    HRN_PQ_SCRIPT_CLOSE(1));
 
                 // Create server
                 ProtocolServer *server = NULL;
@@ -215,50 +211,43 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when unable to select any pg_settings");
 
-        harnessPqScriptSet((HarnessPq [])
-        {
+        HRN_PQ_SCRIPT_SET(
             // Connect to primary
-            HRNPQ_MACRO_OPEN(1, "dbname='backupdb' port=5432"),
-            HRNPQ_MACRO_SET_SEARCH_PATH(1),
-            HRNPQ_MACRO_SET_CLIENT_ENCODING(1),
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='backupdb' port=5432"),
+            HRN_PQ_SCRIPT_SET_SEARCH_PATH(1),
+            HRN_PQ_SCRIPT_SET_CLIENT_ENCODING(1),
 
             // Return NULL for a row in pg_settings
-            {
-                .session = 1,
-                .function = HRNPQ_SENDQUERY,
-                .param =
-                    "[\"select (select setting from pg_catalog.pg_settings where name = 'server_version_num')::int4,"
-                    " (select setting from pg_catalog.pg_settings where name = 'data_directory')::text,"
-                    " (select setting from pg_catalog.pg_settings where name = 'archive_mode')::text,"
-                    " (select setting from pg_catalog.pg_settings where name = 'archive_command')::text,"
-                    " (select setting from pg_catalog.pg_settings where name = 'checkpoint_timeout')::int4\"]",
-                .resultInt = 1,
-            },
-            {.session = 1, .function = HRNPQ_CONSUMEINPUT},
-            {.session = 1, .function = HRNPQ_ISBUSY},
-            {.session = 1, .function = HRNPQ_GETRESULT},
-            {.session = 1, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},
-            {.session = 1, .function = HRNPQ_NTUPLES, .resultInt = 1},
-            {.session = 1, .function = HRNPQ_NFIELDS, .resultInt = 5},
-            {.session = 1, .function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_INT4},
-            {.session = 1, .function = HRNPQ_FTYPE, .param = "[1]", .resultInt = HRNPQ_TYPE_TEXT},
-            {.session = 1, .function = HRNPQ_FTYPE, .param = "[2]", .resultInt = HRNPQ_TYPE_TEXT},
-            {.session = 1, .function = HRNPQ_FTYPE, .param = "[3]", .resultInt = HRNPQ_TYPE_TEXT},
-            {.session = 1, .function = HRNPQ_FTYPE, .param = "[4]", .resultInt = HRNPQ_TYPE_INT4},
-            {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = "0"},
-            {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,1]", .resultZ = "value"},
-            {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,2]", .resultZ = "value"},
-            {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,3]", .resultZ = ""},
-            {.session = 1, .function = HRNPQ_GETISNULL, .param = "[0,3]", .resultInt = 1},
-            {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,4]", .resultZ = "300"},
-            {.session = 1, .function = HRNPQ_CLEAR},
-            {.session = 1, .function = HRNPQ_GETRESULT, .resultNull = true},
+            {.session = 1, .function = HRN_PQ_SENDQUERY,
+             .param =
+                 "[\"select (select setting from pg_catalog.pg_settings where name = 'server_version_num')::int4,"
+                 " (select setting from pg_catalog.pg_settings where name = 'data_directory')::text,"
+                 " (select setting from pg_catalog.pg_settings where name = 'archive_mode')::text,"
+                 " (select setting from pg_catalog.pg_settings where name = 'archive_command')::text,"
+                 " (select setting from pg_catalog.pg_settings where name = 'checkpoint_timeout')::int4\"]",
+             .resultInt = 1},
+            {.session = 1, .function = HRN_PQ_CONSUMEINPUT},
+            {.session = 1, .function = HRN_PQ_ISBUSY},
+            {.session = 1, .function = HRN_PQ_GETRESULT},
+            {.session = 1, .function = HRN_PQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},
+            {.session = 1, .function = HRN_PQ_NTUPLES, .resultInt = 1},
+            {.session = 1, .function = HRN_PQ_NFIELDS, .resultInt = 5},
+            {.session = 1, .function = HRN_PQ_FTYPE, .param = "[0]", .resultInt = HRN_PQ_TYPE_INT4},
+            {.session = 1, .function = HRN_PQ_FTYPE, .param = "[1]", .resultInt = HRN_PQ_TYPE_TEXT},
+            {.session = 1, .function = HRN_PQ_FTYPE, .param = "[2]", .resultInt = HRN_PQ_TYPE_TEXT},
+            {.session = 1, .function = HRN_PQ_FTYPE, .param = "[3]", .resultInt = HRN_PQ_TYPE_TEXT},
+            {.session = 1, .function = HRN_PQ_FTYPE, .param = "[4]", .resultInt = HRN_PQ_TYPE_INT4},
+            {.session = 1, .function = HRN_PQ_GETVALUE, .param = "[0,0]", .resultZ = "0"},
+            {.session = 1, .function = HRN_PQ_GETVALUE, .param = "[0,1]", .resultZ = "value"},
+            {.session = 1, .function = HRN_PQ_GETVALUE, .param = "[0,2]", .resultZ = "value"},
+            {.session = 1, .function = HRN_PQ_GETVALUE, .param = "[0,3]", .resultZ = ""},
+            {.session = 1, .function = HRN_PQ_GETISNULL, .param = "[0,3]", .resultInt = 1},
+            {.session = 1, .function = HRN_PQ_GETVALUE, .param = "[0,4]", .resultZ = "300"},
+            {.session = 1, .function = HRN_PQ_CLEAR},
+            {.session = 1, .function = HRN_PQ_GETRESULT, .resultNull = true},
 
             // Close primary
-            HRNPQ_MACRO_CLOSE(1),
-
-            HRNPQ_MACRO_DONE()
-        });
+            HRN_PQ_SCRIPT_CLOSE(1));
 
         TEST_ERROR(
             dbGet(true, true, false), DbConnectError,
@@ -275,32 +264,28 @@ testRun(void)
 
         HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_93, .checkpoint = pgLsnFromStr(STRDEF("2/3")));
 
-        harnessPqScriptSet((HarnessPq [])
-        {
+        HRN_PQ_SCRIPT_SET(
             // Connect to primary
-            HRNPQ_MACRO_OPEN_GE_93(1, "dbname='backupdb' port=5432", PG_VERSION_95, TEST_PATH "/pg1", false, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='backupdb' port=5432", PG_VERSION_95, TEST_PATH "/pg1", false, NULL, NULL),
 
             // Get start time
-            HRNPQ_MACRO_TIME_QUERY(1, 1000),
+            HRN_PQ_SCRIPT_TIME_QUERY(1, 1000),
 
             // Start backup errors on advisory lock
-            HRNPQ_MACRO_ADVISORY_LOCK(1, false),
+            HRN_PQ_SCRIPT_ADVISORY_LOCK(1, false),
 
             // Start backup
-            HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-            HRNPQ_MACRO_IS_IN_BACKUP(1, false),
-            HRNPQ_MACRO_START_BACKUP_LE_95(1, false, "2/3", "000000010000000200000003"),
-            HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
-            HRNPQ_MACRO_TABLESPACE_LIST_0(1),
+            HRN_PQ_SCRIPT_ADVISORY_LOCK(1, true),
+            HRN_PQ_SCRIPT_IS_IN_BACKUP(1, false),
+            HRN_PQ_SCRIPT_START_BACKUP_LE_95(1, false, "2/3", "000000010000000200000003"),
+            HRN_PQ_SCRIPT_DATABASE_LIST_1(1, "test1"),
+            HRN_PQ_SCRIPT_TABLESPACE_LIST_0(1),
 
             // Stop backup
-            HRNPQ_MACRO_STOP_BACKUP_LE_95(1, "2/4", "000000010000000200000004"),
+            HRN_PQ_SCRIPT_STOP_BACKUP_LE_95(1, "2/4", "000000010000000200000004"),
 
             // Close primary
-            HRNPQ_MACRO_CLOSE(1),
-
-            HRNPQ_MACRO_DONE()
-        });
+            HRN_PQ_SCRIPT_CLOSE(1));
 
         DbGetResult db = {0};
         TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
@@ -334,29 +319,25 @@ testRun(void)
 
         HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_93, .checkpoint = pgLsnFromStr(STRDEF("2/5")));
 
-        harnessPqScriptSet((HarnessPq [])
-        {
+        HRN_PQ_SCRIPT_SET(
             // Connect to primary
-            HRNPQ_MACRO_OPEN_GE_93(1, "dbname='backupdb' port=5432", PG_VERSION_95, TEST_PATH "/pg1", false, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='backupdb' port=5432", PG_VERSION_95, TEST_PATH "/pg1", false, NULL, NULL),
 
             // Start backup when backup is in progress
-            HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-            HRNPQ_MACRO_IS_IN_BACKUP(1, true),
+            HRN_PQ_SCRIPT_ADVISORY_LOCK(1, true),
+            HRN_PQ_SCRIPT_IS_IN_BACKUP(1, true),
 
             // Stop old backup
-            HRNPQ_MACRO_STOP_BACKUP_LE_95(1, "1/1", "000000010000000100000001"),
+            HRN_PQ_SCRIPT_STOP_BACKUP_LE_95(1, "1/1", "000000010000000100000001"),
 
             // Start backup
-            HRNPQ_MACRO_START_BACKUP_LE_95(1, true, "2/5", "000000010000000200000005"),
+            HRN_PQ_SCRIPT_START_BACKUP_LE_95(1, true, "2/5", "000000010000000200000005"),
 
             // Stop backup
-            HRNPQ_MACRO_STOP_BACKUP_LE_95(1, "2/6", "000000010000000200000006"),
+            HRN_PQ_SCRIPT_STOP_BACKUP_LE_95(1, "2/6", "000000010000000200000006"),
 
             // Close primary
-            HRNPQ_MACRO_CLOSE(1),
-
-            HRNPQ_MACRO_DONE()
-        });
+            HRN_PQ_SCRIPT_CLOSE(1));
 
         TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
 
@@ -375,34 +356,30 @@ testRun(void)
 
         HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_93, .checkpoint = pgLsnFromStr(STRDEF("3/3")));
 
-        harnessPqScriptSet((HarnessPq [])
-        {
+        HRN_PQ_SCRIPT_SET(
             // Connect to primary
-            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='backupdb' port=5432", PG_VERSION_96, TEST_PATH "/pg1", false, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='backupdb' port=5432", PG_VERSION_96, TEST_PATH "/pg1", false, NULL, NULL),
 
             // Start backup with timeline error
-            HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-            HRNPQ_MACRO_CURRENT_WAL_LE_96(1, "000000020000000300000002"),
-            HRNPQ_MACRO_START_BACKUP_96(1, false, "3/3", "000000020000000300000003"),
+            HRN_PQ_SCRIPT_ADVISORY_LOCK(1, true),
+            HRN_PQ_SCRIPT_CURRENT_WAL_LE_96(1, "000000020000000300000002"),
+            HRN_PQ_SCRIPT_START_BACKUP_96(1, false, "3/3", "000000020000000300000003"),
 
             // Start backup with checkpoint error
-            HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-            HRNPQ_MACRO_CURRENT_WAL_LE_96(1, "000000010000000400000003"),
-            HRNPQ_MACRO_START_BACKUP_96(1, false, "4/4", "000000010000000400000004"),
+            HRN_PQ_SCRIPT_ADVISORY_LOCK(1, true),
+            HRN_PQ_SCRIPT_CURRENT_WAL_LE_96(1, "000000010000000400000003"),
+            HRN_PQ_SCRIPT_START_BACKUP_96(1, false, "4/4", "000000010000000400000004"),
 
             // Start backup
-            HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-            HRNPQ_MACRO_CURRENT_WAL_LE_96(1, "000000010000000300000002"),
-            HRNPQ_MACRO_START_BACKUP_96(1, false, "3/3", "000000010000000300000003"),
+            HRN_PQ_SCRIPT_ADVISORY_LOCK(1, true),
+            HRN_PQ_SCRIPT_CURRENT_WAL_LE_96(1, "000000010000000300000002"),
+            HRN_PQ_SCRIPT_START_BACKUP_96(1, false, "3/3", "000000010000000300000003"),
 
             // Stop backup
-            HRNPQ_MACRO_STOP_BACKUP_96(1, "3/4", "000000010000000300000004", false),
+            HRN_PQ_SCRIPT_STOP_BACKUP_96(1, "3/4", "000000010000000300000004", false),
 
             // Close primary
-            HRNPQ_MACRO_CLOSE(1),
-
-            HRNPQ_MACRO_DONE()
-        });
+            HRN_PQ_SCRIPT_CLOSE(1));
 
         TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
 
@@ -440,39 +417,35 @@ testRun(void)
         HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_93, .timeline = 5, .checkpoint = pgLsnFromStr(STRDEF("5/4")));
         HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_93, .timeline = 5, .checkpoint = pgLsnFromStr(STRDEF("5/4")));
 
-        harnessPqScriptSet((HarnessPq [])
-        {
+        HRN_PQ_SCRIPT_SET(
             // Connect to primary
-            HRNPQ_MACRO_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_95, TEST_PATH "/pg1", false, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_95, TEST_PATH "/pg1", false, NULL, NULL),
 
             // Connect to standby
-            HRNPQ_MACRO_OPEN_GE_93(2, "dbname='postgres' port=5433", PG_VERSION_95, TEST_PATH "/pg2", true, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN_GE_93(2, "dbname='postgres' port=5433", PG_VERSION_95, TEST_PATH "/pg2", true, NULL, NULL),
 
             // Start backup
-            HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-            HRNPQ_MACRO_START_BACKUP_LE_95(1, false, "5/4", "000000050000000500000004"),
+            HRN_PQ_SCRIPT_ADVISORY_LOCK(1, true),
+            HRN_PQ_SCRIPT_START_BACKUP_LE_95(1, false, "5/4", "000000050000000500000004"),
 
             // Wait for standby to sync
-            HRNPQ_MACRO_REPLAY_WAIT_LE_95(2, "5/4"),
+            HRN_PQ_SCRIPT_REPLAY_WAIT_LE_95(2, "5/4"),
 
             // Ping
-            HRNPQ_MACRO_IS_STANDBY_QUERY(1, true),
-            HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),
-            HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),
+            HRN_PQ_SCRIPT_IS_STANDBY_QUERY(1, true),
+            HRN_PQ_SCRIPT_IS_STANDBY_QUERY(1, false),
+            HRN_PQ_SCRIPT_IS_STANDBY_QUERY(1, false),
 
-            HRNPQ_MACRO_IS_STANDBY_QUERY(2, false),
-            HRNPQ_MACRO_IS_STANDBY_QUERY(2, true),
-            HRNPQ_MACRO_IS_STANDBY_QUERY(2, true),
-            HRNPQ_MACRO_IS_STANDBY_QUERY(2, true),
+            HRN_PQ_SCRIPT_IS_STANDBY_QUERY(2, false),
+            HRN_PQ_SCRIPT_IS_STANDBY_QUERY(2, true),
+            HRN_PQ_SCRIPT_IS_STANDBY_QUERY(2, true),
+            HRN_PQ_SCRIPT_IS_STANDBY_QUERY(2, true),
 
             // Close standby
-            HRNPQ_MACRO_CLOSE(2),
+            HRN_PQ_SCRIPT_CLOSE(2),
 
             // Close primary
-            HRNPQ_MACRO_CLOSE(1),
-
-            HRNPQ_MACRO_DONE()
-        });
+            HRN_PQ_SCRIPT_CLOSE(1));
 
         TEST_ASSIGN(db, dbGet(false, true, true), "get primary and standby");
 
@@ -505,85 +478,78 @@ testRun(void)
         HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_93, .timeline = 5, .checkpoint = pgLsnFromStr(STRDEF("5/5")));
         HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_93, .timeline = 5, .checkpoint = pgLsnFromStr(STRDEF("5/5")));
 
-        harnessPqScriptSet((HarnessPq [])
-        {
+        HRN_PQ_SCRIPT_SET(
             // Connect to primary
-            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_10, TEST_PATH "/pg1", false, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_10, TEST_PATH "/pg1", false, NULL, NULL),
 
             // Connect to standby
-            HRNPQ_MACRO_OPEN_GE_96(2, "dbname='postgres' port=5433", PG_VERSION_10, TEST_PATH "/pg2", true, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN_GE_96(2, "dbname='postgres' port=5433", PG_VERSION_10, TEST_PATH "/pg2", true, NULL, NULL),
 
             // Start backup
-            HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-            HRNPQ_MACRO_CURRENT_WAL_GE_10(1, "000000050000000500000005"),
-            HRNPQ_MACRO_START_BACKUP_GE_10(1, false, "5/5", "000000050000000500000005"),
+            HRN_PQ_SCRIPT_ADVISORY_LOCK(1, true),
+            HRN_PQ_SCRIPT_CURRENT_WAL_GE_10(1, "000000050000000500000005"),
+            HRN_PQ_SCRIPT_START_BACKUP_GE_10(1, false, "5/5", "000000050000000500000005"),
 
             // Switch WAL segment so it can be checked
-            HRNPQ_MACRO_CREATE_RESTORE_POINT(1, "5/5"),
-            HRNPQ_MACRO_WAL_SWITCH(1, "wal", "000000050000000500000005"),
+            HRN_PQ_SCRIPT_CREATE_RESTORE_POINT(1, "5/5"),
+            HRN_PQ_SCRIPT_WAL_SWITCH(1, "wal", "000000050000000500000005"),
 
             // Standby returns NULL lsn
-            {
-                .session = 2,
-                .function = HRNPQ_SENDQUERY,
-                .param =
-                    "[\"select replayLsn::text,\\n"
-                    "       (replayLsn > '5/5')::bool as targetReached\\n"
-                    "  from pg_catalog.pg_last_wal_replay_lsn() as replayLsn\"]",
-                .resultInt = 1,
-            },
-            {.session = 2, .function = HRNPQ_CONSUMEINPUT},
-            {.session = 2, .function = HRNPQ_ISBUSY},
-            {.session = 2, .function = HRNPQ_GETRESULT},
-            {.session = 2, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},
-            {.session = 2, .function = HRNPQ_NTUPLES, .resultInt = 1},
-            {.session = 2, .function = HRNPQ_NFIELDS, .resultInt = 2},
-            {.session = 2, .function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_TEXT},
-            {.session = 2, .function = HRNPQ_FTYPE, .param = "[1]", .resultInt = HRNPQ_TYPE_BOOL},
-            {.session = 2, .function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = ""},
-            {.session = 2, .function = HRNPQ_GETISNULL, .param = "[0,0]", .resultInt = 1},
-            {.session = 2, .function = HRNPQ_GETVALUE, .param = "[0,1]", .resultZ = "false"},
-            {.session = 2, .function = HRNPQ_CLEAR},
-            {.session = 2, .function = HRNPQ_GETRESULT, .resultNull = true},
+            {.session = 2, .function = HRN_PQ_SENDQUERY,
+             .param =
+                 "[\"select replayLsn::text,\\n"
+                 "       (replayLsn > '5/5')::bool as targetReached\\n"
+                 "  from pg_catalog.pg_last_wal_replay_lsn() as replayLsn\"]",
+             .resultInt = 1},
+            {.session = 2, .function = HRN_PQ_CONSUMEINPUT},
+            {.session = 2, .function = HRN_PQ_ISBUSY},
+            {.session = 2, .function = HRN_PQ_GETRESULT},
+            {.session = 2, .function = HRN_PQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},
+            {.session = 2, .function = HRN_PQ_NTUPLES, .resultInt = 1},
+            {.session = 2, .function = HRN_PQ_NFIELDS, .resultInt = 2},
+            {.session = 2, .function = HRN_PQ_FTYPE, .param = "[0]", .resultInt = HRN_PQ_TYPE_TEXT},
+            {.session = 2, .function = HRN_PQ_FTYPE, .param = "[1]", .resultInt = HRN_PQ_TYPE_BOOL},
+            {.session = 2, .function = HRN_PQ_GETVALUE, .param = "[0,0]", .resultZ = ""},
+            {.session = 2, .function = HRN_PQ_GETISNULL, .param = "[0,0]", .resultInt = 1},
+            {.session = 2, .function = HRN_PQ_GETVALUE, .param = "[0,1]", .resultZ = "false"},
+            {.session = 2, .function = HRN_PQ_CLEAR},
+            {.session = 2, .function = HRN_PQ_GETRESULT, .resultNull = true},
 
             // Timeout waiting for sync
-            HRNPQ_MACRO_REPLAY_TARGET_REACHED_GE_10(2, "5/5", false, "5/3"),
-            HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", false, "5/3", "5/3", false, 100),
-            HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", false, "5/3", "5/3", false, 100),
+            HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_GE_10(2, "5/5", false, "5/3"),
+            HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", false, "5/3", "5/3", false, 100),
+            HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", false, "5/3", "5/3", false, 100),
 
             // Checkpoint target timeout waiting for sync
-            HRNPQ_MACRO_REPLAY_TARGET_REACHED_GE_10(2, "5/5", true, "5/5"),
-            HRNPQ_MACRO_CHECKPOINT(2),
-            HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED_GE_10(2, "5/5", false, "5/4", 100),
-            HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED_GE_10(2, "5/5", false, "5/4", 100),
+            HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_GE_10(2, "5/5", true, "5/5"),
+            HRN_PQ_SCRIPT_CHECKPOINT(2),
+            HRN_PQ_SCRIPT_CHECKPOINT_TARGET_REACHED_GE_10(2, "5/5", false, "5/4", 100),
+            HRN_PQ_SCRIPT_CHECKPOINT_TARGET_REACHED_GE_10(2, "5/5", false, "5/4", 100),
 
             // Wait for standby to sync
-            HRNPQ_MACRO_REPLAY_TARGET_REACHED_GE_10(2, "5/5", false, "5/3"),
-            HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", false, "5/3", "5/3", false, 0),
-            HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", false, "5/4", "5/3", true, 0),
-            HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", true, "5/5", "5/4", true, 0),
-            HRNPQ_MACRO_CHECKPOINT(2),
-            HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED_GE_10(2, "5/5", true, "X/X", 0),
+            HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_GE_10(2, "5/5", false, "5/3"),
+            HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", false, "5/3", "5/3", false, 0),
+            HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", false, "5/4", "5/3", true, 0),
+            HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", true, "5/5", "5/4", true, 0),
+            HRN_PQ_SCRIPT_CHECKPOINT(2),
+            HRN_PQ_SCRIPT_CHECKPOINT_TARGET_REACHED_GE_10(2, "5/5", true, "X/X", 0),
 
             // Fail on timeline mismatch
-            HRNPQ_MACRO_REPLAY_TARGET_REACHED_GE_10(2, "5/5", false, "5/3"),
-            HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", false, "5/3", "5/3", false, 0),
-            HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", false, "5/4", "5/3", true, 0),
-            HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", true, "5/5", "5/4", true, 0),
-            HRNPQ_MACRO_CHECKPOINT(2),
-            HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED_GE_10(2, "5/5", true, "X/X", 0),
+            HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_GE_10(2, "5/5", false, "5/3"),
+            HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", false, "5/3", "5/3", false, 0),
+            HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", false, "5/4", "5/3", true, 0),
+            HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", true, "5/5", "5/4", true, 0),
+            HRN_PQ_SCRIPT_CHECKPOINT(2),
+            HRN_PQ_SCRIPT_CHECKPOINT_TARGET_REACHED_GE_10(2, "5/5", true, "X/X", 0),
 
             // Close standby
-            HRNPQ_MACRO_CLOSE(2),
+            HRN_PQ_SCRIPT_CLOSE(2),
 
             // Stop backup
-            HRNPQ_MACRO_STOP_BACKUP_GE_10(1, "5/6", "000000050000000500000006", true),
+            HRN_PQ_SCRIPT_STOP_BACKUP_GE_10(1, "5/6", "000000050000000500000006", true),
 
             // Close primary
-            HRNPQ_MACRO_CLOSE(1),
-
-            HRNPQ_MACRO_DONE()
-        });
+            HRN_PQ_SCRIPT_CLOSE(1));
 
         TEST_ASSIGN(db, dbGet(false, true, true), "get primary and standby");
 
@@ -638,21 +604,17 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptDbTimeout, "299");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-        harnessPqScriptSet((HarnessPq [])
-        {
+        HRN_PQ_SCRIPT_SET(
             // Connect to primary
-            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_14, TEST_PATH "/pg1", false, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_14, TEST_PATH "/pg1", false, NULL, NULL),
 
             // Start backup
-            HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-            HRNPQ_MACRO_CURRENT_WAL_GE_10(1, "000000050000000500000004"),
-            HRNPQ_MACRO_START_BACKUP_GE_10(1, false, "5/5", "000000050000000500000005"),
+            HRN_PQ_SCRIPT_ADVISORY_LOCK(1, true),
+            HRN_PQ_SCRIPT_CURRENT_WAL_GE_10(1, "000000050000000500000004"),
+            HRN_PQ_SCRIPT_START_BACKUP_GE_10(1, false, "5/5", "000000050000000500000005"),
 
             // Close primary
-            HRNPQ_MACRO_CLOSE(1),
-
-            HRNPQ_MACRO_DONE()
-        });
+            HRN_PQ_SCRIPT_CLOSE(1));
 
         TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
         TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, false, true), "start backup");
@@ -674,24 +636,20 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg1");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-        harnessPqScriptSet((HarnessPq [])
-        {
+        HRN_PQ_SCRIPT_SET(
             // Connect to primary
-            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg1", false, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg1", false, NULL, NULL),
 
             // Start backup
-            HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-            HRNPQ_MACRO_CURRENT_WAL_GE_10(1, "000000060000000600000005"),
-            HRNPQ_MACRO_START_BACKUP_GE_15(1, false, "6/6", "000000060000000600000006"),
+            HRN_PQ_SCRIPT_ADVISORY_LOCK(1, true),
+            HRN_PQ_SCRIPT_CURRENT_WAL_GE_10(1, "000000060000000600000005"),
+            HRN_PQ_SCRIPT_START_BACKUP_GE_15(1, false, "6/6", "000000060000000600000006"),
 
             // Stop backup
-            HRNPQ_MACRO_STOP_BACKUP_GE_15(1, "6/7", "000000060000000600000006", false),
+            HRN_PQ_SCRIPT_STOP_BACKUP_GE_15(1, "6/7", "000000060000000600000006", false),
 
             // Close primary
-            HRNPQ_MACRO_CLOSE(1),
-
-            HRNPQ_MACRO_DONE()
-        });
+            HRN_PQ_SCRIPT_CLOSE(1));
 
         TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
         TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, false, true), "start backup");
@@ -727,14 +685,11 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error connecting to primary");
 
-        harnessPqScriptSet((HarnessPq [])
-        {
-            {.function = HRNPQ_CONNECTDB, .param = "[\"dbname='postgres' port=5432 user='bob'\"]"},
-            {.function = HRNPQ_STATUS, .resultInt = CONNECTION_BAD},
-            {.function = HRNPQ_ERRORMESSAGE, .resultZ = "error"},
-            {.function = HRNPQ_FINISH},
-            {.function = NULL}
-        });
+        HRN_PQ_SCRIPT_SET(
+            {.function = HRN_PQ_CONNECTDB, .param = "[\"dbname='postgres' port=5432 user='bob'\"]"},
+            {.function = HRN_PQ_STATUS, .resultInt = CONNECTION_BAD},
+            {.function = HRN_PQ_ERRORMESSAGE, .resultZ = "error"},
+            {.function = HRN_PQ_FINISH});
 
         TEST_ERROR(
             dbGet(true, true, false), DbConnectError,
@@ -747,17 +702,14 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("only available cluster is a standby");
 
-        harnessPqScriptSet((HarnessPq [])
-        {
-            HRNPQ_MACRO_OPEN(1, "dbname='postgres' port=5432 user='bob'"),
-            HRNPQ_MACRO_SET_SEARCH_PATH(1),
-            HRNPQ_MACRO_SET_CLIENT_ENCODING(1),
-            HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_94, TEST_PATH "/pg", NULL, NULL),
-            HRNPQ_MACRO_SET_APPLICATION_NAME(1),
-            HRNPQ_MACRO_IS_STANDBY_QUERY(1, true),
-            HRNPQ_MACRO_CLOSE(1),
-            HRNPQ_MACRO_DONE()
-        });
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432 user='bob'"),
+            HRN_PQ_SCRIPT_SET_SEARCH_PATH(1),
+            HRN_PQ_SCRIPT_SET_CLIENT_ENCODING(1),
+            HRN_PQ_SCRIPT_VALIDATE_QUERY(1, PG_VERSION_94, TEST_PATH "/pg", NULL, NULL),
+            HRN_PQ_SCRIPT_SET_APPLICATION_NAME(1),
+            HRN_PQ_SCRIPT_IS_STANDBY_QUERY(1, true),
+            HRN_PQ_SCRIPT_CLOSE(1));
 
         TEST_ERROR(
             dbGet(true, true, false), DbConnectError,
@@ -767,29 +719,24 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("standby cluster required but not found");
 
-        harnessPqScriptSet((HarnessPq [])
-        {
-            HRNPQ_MACRO_OPEN(1, "dbname='postgres' port=5432 user='bob'"),
-            HRNPQ_MACRO_SET_SEARCH_PATH(1),
-            HRNPQ_MACRO_SET_CLIENT_ENCODING(1),
-            HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_94, TEST_PATH "/pg", NULL, NULL),
-            HRNPQ_MACRO_SET_APPLICATION_NAME(1),
-            HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),
-            HRNPQ_MACRO_CLOSE(1),
-            HRNPQ_MACRO_DONE()
-        });
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432 user='bob'"),
+            HRN_PQ_SCRIPT_SET_SEARCH_PATH(1),
+            HRN_PQ_SCRIPT_SET_CLIENT_ENCODING(1),
+            HRN_PQ_SCRIPT_VALIDATE_QUERY(1, PG_VERSION_94, TEST_PATH "/pg", NULL, NULL),
+            HRN_PQ_SCRIPT_SET_APPLICATION_NAME(1),
+            HRN_PQ_SCRIPT_IS_STANDBY_QUERY(1, false),
+            HRN_PQ_SCRIPT_CLOSE(1));
 
         TEST_ERROR(dbGet(false, false, true), DbConnectError, "unable to find standby cluster - cannot proceed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("primary cluster found");
 
-        harnessPqScriptSet((HarnessPq [])
-        {
-            HRNPQ_MACRO_OPEN_GE_93(1, "dbname='postgres' port=5432 user='bob'", PG_VERSION_93, TEST_PATH "/pg1", false, NULL, NULL),
-            HRNPQ_MACRO_CLOSE(1),
-            HRNPQ_MACRO_DONE()
-        });
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN_GE_93(
+                1, "dbname='postgres' port=5432 user='bob'", PG_VERSION_93, TEST_PATH "/pg1", false, NULL, NULL),
+            HRN_PQ_SCRIPT_CLOSE(1));
 
         TEST_ASSIGN(result, dbGet(true, true, false), "get primary only");
 
@@ -816,32 +763,24 @@ testRun(void)
         // Create control file
         HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_93);
 
-        harnessPqScriptSet((HarnessPq [])
-        {
-            HRNPQ_MACRO_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_95, TEST_PATH "/pg1", false, NULL, NULL),
-            HRNPQ_MACRO_OPEN_GE_93(8, "dbname='postgres' port=5433", PG_VERSION_95, TEST_PATH "/pg8", false, NULL, NULL),
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_95, TEST_PATH "/pg1", false, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN_GE_93(8, "dbname='postgres' port=5433", PG_VERSION_95, TEST_PATH "/pg8", false, NULL, NULL),
 
-            HRNPQ_MACRO_CLOSE(1),
-            HRNPQ_MACRO_CLOSE(8),
-
-            HRNPQ_MACRO_DONE()
-        });
+            HRN_PQ_SCRIPT_CLOSE(1),
+            HRN_PQ_SCRIPT_CLOSE(8));
 
         TEST_ERROR(dbGet(true, true, false), DbConnectError, "more than one primary cluster found");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("two standbys found but no primary");
 
-        harnessPqScriptSet((HarnessPq [])
-        {
-            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_96, TEST_PATH "/pg1", true, NULL, NULL),
-            HRNPQ_MACRO_OPEN_GE_96(8, "dbname='postgres' port=5433", PG_VERSION_96, TEST_PATH "/pg8", true, NULL, NULL),
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_96, TEST_PATH "/pg1", true, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN_GE_96(8, "dbname='postgres' port=5433", PG_VERSION_96, TEST_PATH "/pg8", true, NULL, NULL),
 
-            HRNPQ_MACRO_CLOSE(8),
-            HRNPQ_MACRO_CLOSE(1),
-
-            HRNPQ_MACRO_DONE()
-        });
+            HRN_PQ_SCRIPT_CLOSE(8),
+            HRN_PQ_SCRIPT_CLOSE(1));
 
         TEST_ERROR(
             dbGet(false, true, false), DbConnectError,
@@ -851,16 +790,12 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("two standbys and primary not required");
 
-        harnessPqScriptSet((HarnessPq [])
-        {
-            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_10, TEST_PATH "/pg1", true, NULL, NULL),
-            HRNPQ_MACRO_OPEN_GE_96(8, "dbname='postgres' port=5433", PG_VERSION_10, TEST_PATH "/pg8", true, NULL, NULL),
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_10, TEST_PATH "/pg1", true, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN_GE_96(8, "dbname='postgres' port=5433", PG_VERSION_10, TEST_PATH "/pg8", true, NULL, NULL),
 
-            HRNPQ_MACRO_CLOSE(8),
-            HRNPQ_MACRO_CLOSE(1),
-
-            HRNPQ_MACRO_DONE()
-        });
+            HRN_PQ_SCRIPT_CLOSE(8),
+            HRN_PQ_SCRIPT_CLOSE(1));
 
         TEST_ASSIGN(result, dbGet(false, false, false), "get standbys");
 
@@ -887,26 +822,22 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 8, "5434");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-        harnessPqScriptSet((HarnessPq [])
-        {
-            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_12, TEST_PATH "/pg1", true, NULL, NULL),
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_12, TEST_PATH "/pg1", true, NULL, NULL),
 
             // pg4 error
-            {.session = 4, .function = HRNPQ_CONNECTDB, .param = "[\"dbname='postgres' port=5433\"]"},
-            {.session = 4, .function = HRNPQ_STATUS, .resultInt = CONNECTION_BAD},
-            {.session = 4, .function = HRNPQ_ERRORMESSAGE, .resultZ = "error"},
-            {.session = 4, .function = HRNPQ_FINISH},
+            {.session = 4, .function = HRN_PQ_CONNECTDB, .param = "[\"dbname='postgres' port=5433\"]"},
+            {.session = 4, .function = HRN_PQ_STATUS, .resultInt = CONNECTION_BAD},
+            {.session = 4, .function = HRN_PQ_ERRORMESSAGE, .resultZ = "error"},
+            {.session = 4, .function = HRN_PQ_FINISH},
 
-            HRNPQ_MACRO_OPEN_GE_96(8, "dbname='postgres' port=5434", PG_VERSION_12, TEST_PATH "/pg8", false, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN_GE_96(8, "dbname='postgres' port=5434", PG_VERSION_12, TEST_PATH "/pg8", false, NULL, NULL),
 
-            HRNPQ_MACRO_CREATE_RESTORE_POINT(8, "2/3"),
-            HRNPQ_MACRO_WAL_SWITCH(8, "wal", "000000010000000200000003"),
+            HRN_PQ_SCRIPT_CREATE_RESTORE_POINT(8, "2/3"),
+            HRN_PQ_SCRIPT_WAL_SWITCH(8, "wal", "000000010000000200000003"),
 
-            HRNPQ_MACRO_CLOSE(8),
-            HRNPQ_MACRO_CLOSE(1),
-
-            HRNPQ_MACRO_DONE()
-        });
+            HRN_PQ_SCRIPT_CLOSE(8),
+            HRN_PQ_SCRIPT_CLOSE(1));
 
         TEST_ASSIGN(result, dbGet(false, true, false), "get primary and standy");
 
