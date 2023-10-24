@@ -494,7 +494,15 @@ dbBackupStopQuery(unsigned int pgVersion)
         strZ(pgWalName(pgVersion)));
 
     // For PostgreSQL >= 9.6 the backup label and tablespace map are returned
-    if (pgVersion >= PG_VERSION_96)
+    if (pgVersion >= PG_VERSION_17)
+    {
+        strCatZ(
+            result,
+            ",\n"
+            "       encode(pg_control_file, 'base64')::text as pgcontrol_file,\n"
+            "       spcmapfile::text as tablespacemap_file");
+    }
+    else if (pgVersion >= PG_VERSION_96)
     {
         strCatZ(
             result,
