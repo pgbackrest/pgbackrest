@@ -655,6 +655,22 @@ sub containerBuild
                 "# Make " . TEST_USER . " home dir readable\n" .
                 '    chmod g+r,g+x /home/' . TEST_USER;
 
+            if ($strOS eq VM_U22)
+            {
+                $strScript .= sectionHeader() .
+                    "# Build PostgreSQL 17\n";
+
+                $strScript .=
+                    "    git clone https://git.postgresql.org/git/postgresql.git /root/postgresql\n" .
+                    "RUN apt-get update\n" .
+                    "RUN apt-get install -y libreadline-dev bison flex\n" .
+                    "RUN git -C /root/postgresql checkout 74e5ea1e0\n" .
+                    "COPY patch/pgcontrol.patch /root/pgcontrol.patch\n" .
+                    "RUN git -C /root/postgresql apply /root/pgcontrol.patch\n" .
+                    "RUN cd /root/postgresql && ./configure --prefix=/usr/lib/postgresql/17\n" .
+                    "RUN make -C /root/postgresql -j8 install\n";
+            }
+
             $strScript .= entryPointSetup($strOS);
 
             containerWrite(

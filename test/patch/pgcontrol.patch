@@ -1,0 +1,785 @@
+diff --git a/src/backend/access/transam/xlog.c b/src/backend/access/transam/xlog.c
+index 40461923ea3..62447c0cdfd 100644
+--- a/src/backend/access/transam/xlog.c
++++ b/src/backend/access/transam/xlog.c
+@@ -74,6 +74,7 @@
+ #include "pg_trace.h"
+ #include "pgstat.h"
+ #include "port/atomics.h"
++#include "port/pg_crc32c.h"
+ #include "port/pg_iovec.h"
+ #include "postmaster/bgwriter.h"
+ #include "postmaster/startup.h"
+@@ -5116,7 +5117,6 @@ StartupXLOG(void)
+ 	bool		wasShutdown;
+ 	bool		didCrash;
+ 	bool		haveTblspcMap;
+-	bool		haveBackupLabel;
+ 	XLogRecPtr	EndOfLog;
+ 	TimeLineID	EndOfLogTLI;
+ 	TimeLineID	newTLI;
+@@ -5245,8 +5245,7 @@ StartupXLOG(void)
+ 	 * starting checkpoint, and sets InRecovery and ArchiveRecoveryRequested.
+ 	 * It also applies the tablespace map file, if any.
+ 	 */
+-	InitWalRecovery(ControlFile, &wasShutdown,
+-					&haveBackupLabel, &haveTblspcMap);
++	InitWalRecovery(ControlFile, &wasShutdown, &haveTblspcMap);
+ 	checkPoint = ControlFile->checkPointCopy;
+ 
+ 	/* initialize shared memory variables from the checkpoint record */
+@@ -5389,20 +5388,6 @@ StartupXLOG(void)
+ 		 */
+ 		UpdateControlFile();
+ 
+-		/*
+-		 * If there was a backup label file, it's done its job and the info
+-		 * has now been propagated into pg_control.  We must get rid of the
+-		 * label file so that if we crash during recovery, we'll pick up at
+-		 * the latest recovery restartpoint instead of going all the way back
+-		 * to the backup start point.  It seems prudent though to just rename
+-		 * the file out of the way rather than delete it completely.
+-		 */
+-		if (haveBackupLabel)
+-		{
+-			unlink(BACKUP_LABEL_OLD);
+-			durable_rename(BACKUP_LABEL_FILE, BACKUP_LABEL_OLD, FATAL);
+-		}
+-
+ 		/*
+ 		 * If there was a tablespace_map file, it's done its job and the
+ 		 * symlinks have been created.  We must get rid of the map file so
+@@ -8730,6 +8715,26 @@ do_pg_backup_stop(BackupState *state, bool waitforarchive)
+ 
+ 	backup_stopped_in_recovery = RecoveryInProgress();
+ 
++	/*
++	 * Create a copy of control data that and update it with fields required for
++	 * recovery. Also recalculate the CRC.
++	 */
++	LWLockAcquire(ControlFileLock, LW_SHARED);
++	state->controlFile = *ControlFile;
++	LWLockRelease(ControlFileLock);
++
++	state->controlFile.backupRecoveryRequired = true;
++	state->controlFile.backupFromStandby = backup_stopped_in_recovery;
++	state->controlFile.backupEndRequired = true;
++	state->controlFile.backupCheckPoint = state->checkpointloc;
++	state->controlFile.backupStartPoint = state->startpoint;
++	state->controlFile.backupStartPointTLI = state->starttli;
++
++	INIT_CRC32C(state->controlFile.crc);
++	COMP_CRC32C(state->controlFile.crc, (char *)&state->controlFile,
++			    offsetof(ControlFileData, crc));
++	FIN_CRC32C(state->controlFile.crc);
++
+ 	/*
+ 	 * During recovery, we don't need to check WAL level. Because, if WAL
+ 	 * level is not sufficient, it's impossible to get here during recovery.
+@@ -8831,11 +8836,8 @@ do_pg_backup_stop(BackupState *state, bool waitforarchive)
+ 							 "Enable full_page_writes and run CHECKPOINT on the primary, "
+ 							 "and then try an online backup again.")));
+ 
+-
+-		LWLockAcquire(ControlFileLock, LW_SHARED);
+-		state->stoppoint = ControlFile->minRecoveryPoint;
+-		state->stoptli = ControlFile->minRecoveryPointTLI;
+-		LWLockRelease(ControlFileLock);
++		state->stoppoint = state->controlFile.minRecoveryPoint;
++		state->stoptli = state->controlFile.minRecoveryPointTLI;
+ 	}
+ 	else
+ 	{
+diff --git a/src/backend/access/transam/xlogfuncs.c b/src/backend/access/transam/xlogfuncs.c
+index 45a70668b1c..c3b05326815 100644
+--- a/src/backend/access/transam/xlogfuncs.c
++++ b/src/backend/access/transam/xlogfuncs.c
+@@ -133,7 +133,7 @@ pg_backup_stop(PG_FUNCTION_ARGS)
+ 	Datum		values[PG_BACKUP_STOP_V2_COLS] = {0};
+ 	bool		nulls[PG_BACKUP_STOP_V2_COLS] = {0};
+ 	bool		waitforarchive = PG_GETARG_BOOL(0);
+-	char	   *backup_label;
++	bytea	   *pg_control_bytea;
+ 	SessionBackupState status = get_backup_status();
+ 
+ 	/* Initialize attributes information in the tuple descriptor */
+@@ -152,16 +152,16 @@ pg_backup_stop(PG_FUNCTION_ARGS)
+ 	/* Stop the backup */
+ 	do_pg_backup_stop(backup_state, waitforarchive);
+ 
+-	/* Build the contents of backup_label */
+-	backup_label = build_backup_content(backup_state, false);
++	/* Build the contents of pg_control */
++	pg_control_bytea = (bytea *) palloc(PG_CONTROL_FILE_SIZE + VARHDRSZ);
++	SET_VARSIZE(pg_control_bytea, PG_CONTROL_FILE_SIZE + VARHDRSZ);
++	memset(VARDATA(pg_control_bytea), 0, PG_CONTROL_FILE_SIZE);
++	memcpy(VARDATA(pg_control_bytea), &backup_state->controlFile, sizeof(ControlFileData));
+ 
+ 	values[0] = LSNGetDatum(backup_state->stoppoint);
+-	values[1] = CStringGetTextDatum(backup_label);
++	values[1] = PointerGetDatum(pg_control_bytea);
+ 	values[2] = CStringGetTextDatum(tablespace_map->data);
+ 
+-	/* Deallocate backup-related variables */
+-	pfree(backup_label);
+-
+ 	/* Clean up the session-level state and its memory context */
+ 	backup_state = NULL;
+ 	tablespace_map = NULL;
+diff --git a/src/backend/access/transam/xlogrecovery.c b/src/backend/access/transam/xlogrecovery.c
+index 315e4b27cb8..06b4a3be733 100644
+--- a/src/backend/access/transam/xlogrecovery.c
++++ b/src/backend/access/transam/xlogrecovery.c
+@@ -388,9 +388,6 @@ static void ApplyWalRecord(XLogReaderState *xlogreader, XLogRecord *record, Time
+ static void EnableStandbyMode(void);
+ static void readRecoverySignalFile(void);
+ static void validateRecoveryParameters(void);
+-static bool read_backup_label(XLogRecPtr *checkPointLoc,
+-							  TimeLineID *backupLabelTLI,
+-							  bool *backupEndRequired, bool *backupFromStandby);
+ static bool read_tablespace_map(List **tablespaces);
+ 
+ static void xlogrecovery_redo(XLogReaderState *record, TimeLineID replayTLI);
+@@ -510,7 +507,7 @@ EnableStandbyMode(void)
+  */
+ void
+ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
+-				bool *haveBackupLabel_ptr, bool *haveTblspcMap_ptr)
++				bool *haveTblspcMap_ptr)
+ {
+ 	XLogPageReadPrivate *private;
+ 	struct stat st;
+@@ -518,7 +515,7 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
+ 	XLogRecord *record;
+ 	DBState		dbstate_at_startup;
+ 	bool		haveTblspcMap = false;
+-	bool		haveBackupLabel = false;
++	bool		backupRecoveryRequired = false;
+ 	CheckPoint	checkPoint;
+ 	bool		backupFromStandby = false;
+ 
+@@ -609,11 +606,27 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
+ 	replay_image_masked = (char *) palloc(BLCKSZ);
+ 	primary_image_masked = (char *) palloc(BLCKSZ);
+ 
+-	if (read_backup_label(&CheckPointLoc, &CheckPointTLI, &backupEndRequired,
+-						  &backupFromStandby))
++	if (ControlFile->backupRecoveryRequired)
+ 	{
+ 		List	   *tablespaces = NIL;
+ 
++		/* Initialize recovery from fields stored in pg_control */
++		CheckPointLoc = ControlFile->backupCheckPoint;
++		CheckPointTLI = ControlFile->backupStartPointTLI;
++		RedoStartLSN = ControlFile->backupStartPoint;
++		RedoStartTLI = ControlFile->backupStartPointTLI;
++		backupEndRequired = ControlFile->backupEndRequired;
++		backupFromStandby = ControlFile->backupFromStandby;
++
++		/* Clear fields used to initialize recovery */
++		ControlFile->backupCheckPoint = InvalidXLogRecPtr;
++		ControlFile->backupStartPointTLI = 0;
++		ControlFile->backupRecoveryRequired = false;
++		ControlFile->backupFromStandby = false;
++
++		/* Set a flag for later recovery logic */
++		backupRecoveryRequired = true;
++
+ 		/*
+ 		 * Archive recovery was requested, and thanks to the backup label
+ 		 * file, we know how far we need to replay to reach consistency. Enter
+@@ -668,8 +681,8 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
+ 			wasShutdown = false;	/* keep compiler quiet */
+ 		}
+ 
+-		/* Read the tablespace_map file if present and create symlinks. */
+-		if (read_tablespace_map(&tablespaces))
++	/* Read the tablespace_map file if present and create symlinks. */
++	if (read_tablespace_map(&tablespaces))
+ 		{
+ 			ListCell   *lc;
+ 
+@@ -681,15 +694,15 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
+ 				linkloc = psprintf("pg_tblspc/%u", ti->oid);
+ 
+ 				/*
+-				 * Remove the existing symlink if any and Create the symlink
+-				 * under PGDATA.
+-				 */
++					* Remove the existing symlink if any and Create the symlink
++					* under PGDATA.
++					*/
+ 				remove_tablespace_symlink(linkloc);
+ 
+ 				if (symlink(ti->path, linkloc) < 0)
+ 					ereport(ERROR,
+ 							(errcode_for_file_access(),
+-							 errmsg("could not create symbolic link \"%s\": %m",
++								errmsg("could not create symbolic link \"%s\": %m",
+ 									linkloc)));
+ 
+ 				pfree(ti->path);
+@@ -699,9 +712,6 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
+ 			/* tell the caller to delete it later */
+ 			haveTblspcMap = true;
+ 		}
+-
+-		/* tell the caller to delete it later */
+-		haveBackupLabel = true;
+ 	}
+ 	else
+ 	{
+@@ -732,60 +742,60 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
+ 								   TABLESPACE_MAP, TABLESPACE_MAP_OLD)));
+ 		}
+ 
+-		/*
+-		 * It's possible that archive recovery was requested, but we don't
+-		 * know how far we need to replay the WAL before we reach consistency.
+-		 * This can happen for example if a base backup is taken from a
+-		 * running server using an atomic filesystem snapshot, without calling
+-		 * pg_backup_start/stop. Or if you just kill a running primary server
+-		 * and put it into archive recovery by creating a recovery signal
+-		 * file.
+-		 *
+-		 * Our strategy in that case is to perform crash recovery first,
+-		 * replaying all the WAL present in pg_wal, and only enter archive
+-		 * recovery after that.
+-		 *
+-		 * But usually we already know how far we need to replay the WAL (up
+-		 * to minRecoveryPoint, up to backupEndPoint, or until we see an
+-		 * end-of-backup record), and we can enter archive recovery directly.
+-		 */
++	/*
++		* It's possible that archive recovery was requested, but we don't
++		* know how far we need to replay the WAL before we reach consistency.
++		* This can happen for example if a base backup is taken from a
++		* running server using an atomic filesystem snapshot, without calling
++		* pg_backup_start/stop. Or if you just kill a running primary server
++		* and put it into archive recovery by creating a recovery signal
++		* file.
++		*
++		* Our strategy in that case is to perform crash recovery first,
++		* replaying all the WAL present in pg_wal, and only enter archive
++		* recovery after that.
++		*
++		* But usually we already know how far we need to replay the WAL (up
++		* to minRecoveryPoint, up to backupEndPoint, or until we see an
++		* end-of-backup record), and we can enter archive recovery directly.
++		*/
+ 		if (ArchiveRecoveryRequested &&
+-			(ControlFile->minRecoveryPoint != InvalidXLogRecPtr ||
++		(ControlFile->minRecoveryPoint != InvalidXLogRecPtr ||
+ 			 ControlFile->backupEndRequired ||
+-			 ControlFile->backupEndPoint != InvalidXLogRecPtr ||
+-			 ControlFile->state == DB_SHUTDOWNED))
+-		{
+-			InArchiveRecovery = true;
+-			if (StandbyModeRequested)
+-				EnableStandbyMode();
+-		}
++			ControlFile->backupEndPoint != InvalidXLogRecPtr ||
++			ControlFile->state == DB_SHUTDOWNED))
++	{
++		InArchiveRecovery = true;
++		if (StandbyModeRequested)
++			EnableStandbyMode();
++	}
+ 
+-		/* Get the last valid checkpoint record. */
+-		CheckPointLoc = ControlFile->checkPoint;
+-		CheckPointTLI = ControlFile->checkPointCopy.ThisTimeLineID;
+-		RedoStartLSN = ControlFile->checkPointCopy.redo;
+-		RedoStartTLI = ControlFile->checkPointCopy.ThisTimeLineID;
+-		record = ReadCheckpointRecord(xlogprefetcher, CheckPointLoc,
+-									  CheckPointTLI);
+-		if (record != NULL)
+-		{
+-			ereport(DEBUG1,
+-					(errmsg_internal("checkpoint record is at %X/%X",
+-									 LSN_FORMAT_ARGS(CheckPointLoc))));
+-		}
+-		else
+-		{
+-			/*
+-			 * We used to attempt to go back to a secondary checkpoint record
+-			 * here, but only when not in standby mode. We now just fail if we
+-			 * can't read the last checkpoint because this allows us to
+-			 * simplify processing around checkpoints.
+-			 */
+-			ereport(PANIC,
++	/* Get the last valid checkpoint record. */
++	CheckPointLoc = ControlFile->checkPoint;
++	CheckPointTLI = ControlFile->checkPointCopy.ThisTimeLineID;
++	RedoStartLSN = ControlFile->checkPointCopy.redo;
++	RedoStartTLI = ControlFile->checkPointCopy.ThisTimeLineID;
++	record = ReadCheckpointRecord(xlogprefetcher, CheckPointLoc,
++									CheckPointTLI);
++	if (record != NULL)
++	{
++		ereport(DEBUG1,
++				(errmsg_internal("checkpoint record is at %X/%X",
++									LSN_FORMAT_ARGS(CheckPointLoc))));
++	}
++	else
++	{
++		/*
++		* We used to attempt to go back to a secondary checkpoint record
++		* here, but only when not in standby mode. We now just fail if we
++		* can't read the last checkpoint because this allows us to
++		* simplify processing around checkpoints.
++		*/
++		ereport(PANIC,
+ 					(errmsg("could not locate a valid checkpoint record")));
+-		}
+-		memcpy(&checkPoint, XLogRecGetData(xlogreader), sizeof(CheckPoint));
+-		wasShutdown = ((record->xl_info & ~XLR_INFO_MASK) == XLOG_CHECKPOINT_SHUTDOWN);
++	}
++	memcpy(&checkPoint, XLogRecGetData(xlogreader), sizeof(CheckPoint));
++	wasShutdown = ((record->xl_info & ~XLR_INFO_MASK) == XLOG_CHECKPOINT_SHUTDOWN);
+ 	}
+ 
+ 	/*
+@@ -932,7 +942,7 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
+ 		 * Any other state indicates that the backup somehow became corrupted
+ 		 * and we can't sensibly continue with recovery.
+ 		 */
+-		if (haveBackupLabel)
++		if (backupRecoveryRequired)
+ 		{
+ 			ControlFile->backupStartPoint = checkPoint.redo;
+ 			ControlFile->backupEndRequired = backupEndRequired;
+@@ -972,7 +982,6 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
+ 	missingContrecPtr = InvalidXLogRecPtr;
+ 
+ 	*wasShutdown_ptr = wasShutdown;
+-	*haveBackupLabel_ptr = haveBackupLabel;
+ 	*haveTblspcMap_ptr = haveTblspcMap;
+ }
+ 
+@@ -1145,154 +1154,6 @@ validateRecoveryParameters(void)
+ 	}
+ }
+ 
+-/*
+- * read_backup_label: check to see if a backup_label file is present
+- *
+- * If we see a backup_label during recovery, we assume that we are recovering
+- * from a backup dump file, and we therefore roll forward from the checkpoint
+- * identified by the label file, NOT what pg_control says.  This avoids the
+- * problem that pg_control might have been archived one or more checkpoints
+- * later than the start of the dump, and so if we rely on it as the start
+- * point, we will fail to restore a consistent database state.
+- *
+- * Returns true if a backup_label was found (and fills the checkpoint
+- * location and TLI into *checkPointLoc and *backupLabelTLI, respectively);
+- * returns false if not. If this backup_label came from a streamed backup,
+- * *backupEndRequired is set to true. If this backup_label was created during
+- * recovery, *backupFromStandby is set to true.
+- *
+- * Also sets the global variables RedoStartLSN and RedoStartTLI with the LSN
+- * and TLI read from the backup file.
+- */
+-static bool
+-read_backup_label(XLogRecPtr *checkPointLoc, TimeLineID *backupLabelTLI,
+-				  bool *backupEndRequired, bool *backupFromStandby)
+-{
+-	char		startxlogfilename[MAXFNAMELEN];
+-	TimeLineID	tli_from_walseg,
+-				tli_from_file;
+-	FILE	   *lfp;
+-	char		ch;
+-	char		backuptype[20];
+-	char		backupfrom[20];
+-	char		backuplabel[MAXPGPATH];
+-	char		backuptime[128];
+-	uint32		hi,
+-				lo;
+-
+-	/* suppress possible uninitialized-variable warnings */
+-	*checkPointLoc = InvalidXLogRecPtr;
+-	*backupLabelTLI = 0;
+-	*backupEndRequired = false;
+-	*backupFromStandby = false;
+-
+-	/*
+-	 * See if label file is present
+-	 */
+-	lfp = AllocateFile(BACKUP_LABEL_FILE, "r");
+-	if (!lfp)
+-	{
+-		if (errno != ENOENT)
+-			ereport(FATAL,
+-					(errcode_for_file_access(),
+-					 errmsg("could not read file \"%s\": %m",
+-							BACKUP_LABEL_FILE)));
+-		return false;			/* it's not there, all is fine */
+-	}
+-
+-	/*
+-	 * Read and parse the START WAL LOCATION and CHECKPOINT lines (this code
+-	 * is pretty crude, but we are not expecting any variability in the file
+-	 * format).
+-	 */
+-	if (fscanf(lfp, "START WAL LOCATION: %X/%X (file %08X%16s)%c",
+-			   &hi, &lo, &tli_from_walseg, startxlogfilename, &ch) != 5 || ch != '\n')
+-		ereport(FATAL,
+-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+-				 errmsg("invalid data in file \"%s\"", BACKUP_LABEL_FILE)));
+-	RedoStartLSN = ((uint64) hi) << 32 | lo;
+-	RedoStartTLI = tli_from_walseg;
+-	if (fscanf(lfp, "CHECKPOINT LOCATION: %X/%X%c",
+-			   &hi, &lo, &ch) != 3 || ch != '\n')
+-		ereport(FATAL,
+-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+-				 errmsg("invalid data in file \"%s\"", BACKUP_LABEL_FILE)));
+-	*checkPointLoc = ((uint64) hi) << 32 | lo;
+-	*backupLabelTLI = tli_from_walseg;
+-
+-	/*
+-	 * BACKUP METHOD lets us know if this was a typical backup ("streamed",
+-	 * which could mean either pg_basebackup or the pg_backup_start/stop
+-	 * method was used) or if this label came from somewhere else (the only
+-	 * other option today being from pg_rewind).  If this was a streamed
+-	 * backup then we know that we need to play through until we get to the
+-	 * end of the WAL which was generated during the backup (at which point we
+-	 * will have reached consistency and backupEndRequired will be reset to be
+-	 * false).
+-	 */
+-	if (fscanf(lfp, "BACKUP METHOD: %19s\n", backuptype) == 1)
+-	{
+-		if (strcmp(backuptype, "streamed") == 0)
+-			*backupEndRequired = true;
+-	}
+-
+-	/*
+-	 * BACKUP FROM lets us know if this was from a primary or a standby.  If
+-	 * it was from a standby, we'll double-check that the control file state
+-	 * matches that of a standby.
+-	 */
+-	if (fscanf(lfp, "BACKUP FROM: %19s\n", backupfrom) == 1)
+-	{
+-		if (strcmp(backupfrom, "standby") == 0)
+-			*backupFromStandby = true;
+-	}
+-
+-	/*
+-	 * Parse START TIME and LABEL. Those are not mandatory fields for recovery
+-	 * but checking for their presence is useful for debugging and the next
+-	 * sanity checks. Cope also with the fact that the result buffers have a
+-	 * pre-allocated size, hence if the backup_label file has been generated
+-	 * with strings longer than the maximum assumed here an incorrect parsing
+-	 * happens. That's fine as only minor consistency checks are done
+-	 * afterwards.
+-	 */
+-	if (fscanf(lfp, "START TIME: %127[^\n]\n", backuptime) == 1)
+-		ereport(DEBUG1,
+-				(errmsg_internal("backup time %s in file \"%s\"",
+-								 backuptime, BACKUP_LABEL_FILE)));
+-
+-	if (fscanf(lfp, "LABEL: %1023[^\n]\n", backuplabel) == 1)
+-		ereport(DEBUG1,
+-				(errmsg_internal("backup label %s in file \"%s\"",
+-								 backuplabel, BACKUP_LABEL_FILE)));
+-
+-	/*
+-	 * START TIMELINE is new as of 11. Its parsing is not mandatory, still use
+-	 * it as a sanity check if present.
+-	 */
+-	if (fscanf(lfp, "START TIMELINE: %u\n", &tli_from_file) == 1)
+-	{
+-		if (tli_from_walseg != tli_from_file)
+-			ereport(FATAL,
+-					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+-					 errmsg("invalid data in file \"%s\"", BACKUP_LABEL_FILE),
+-					 errdetail("Timeline ID parsed is %u, but expected %u.",
+-							   tli_from_file, tli_from_walseg)));
+-
+-		ereport(DEBUG1,
+-				(errmsg_internal("backup timeline %u in file \"%s\"",
+-								 tli_from_file, BACKUP_LABEL_FILE)));
+-	}
+-
+-	if (ferror(lfp) || FreeFile(lfp))
+-		ereport(FATAL,
+-				(errcode_for_file_access(),
+-				 errmsg("could not read file \"%s\": %m",
+-						BACKUP_LABEL_FILE)));
+-
+-	return true;
+-}
+-
+ /*
+  * read_tablespace_map: check to see if a tablespace_map file is present
+  *
+diff --git a/src/backend/backup/basebackup.c b/src/backend/backup/basebackup.c
+index b537f462197..6e26b891dd8 100644
+--- a/src/backend/backup/basebackup.c
++++ b/src/backend/backup/basebackup.c
+@@ -22,6 +22,7 @@
+ #include "backup/basebackup.h"
+ #include "backup/basebackup_sink.h"
+ #include "backup/basebackup_target.h"
++#include "catalog/pg_control.h"
+ #include "commands/defrem.h"
+ #include "common/compression.h"
+ #include "common/file_perm.h"
+@@ -94,7 +95,7 @@ static bool verify_page_checksum(Page page, XLogRecPtr start_lsn,
+ 								 BlockNumber blkno,
+ 								 uint16 *expected_checksum);
+ static void sendFileWithContent(bbsink *sink, const char *filename,
+-								const char *content,
++								const char *content, int len,
+ 								backup_manifest_info *manifest);
+ static int64 _tarWriteHeader(bbsink *sink, const char *filename,
+ 							 const char *linktarget, struct stat *statbuf,
+@@ -325,23 +326,16 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
+ 
+ 			if (ti->path == NULL)
+ 			{
+-				struct stat statbuf;
+ 				bool		sendtblspclinks = true;
+-				char	   *backup_label;
++				char		buffer[PG_CONTROL_FILE_SIZE];
+ 
+ 				bbsink_begin_archive(sink, "base.tar");
+ 
+-				/* In the main tar, include the backup_label first... */
+-				backup_label = build_backup_content(backup_state, false);
+-				sendFileWithContent(sink, BACKUP_LABEL_FILE,
+-									backup_label, &manifest);
+-				pfree(backup_label);
+-
+-				/* Then the tablespace_map file, if required... */
++				/* Send the tablespace_map file, if required... */
+ 				if (opt->sendtblspcmapfile)
+ 				{
+ 					sendFileWithContent(sink, TABLESPACE_MAP,
+-										tablespace_map->data, &manifest);
++										tablespace_map->data, -1, &manifest);
+ 					sendtblspclinks = false;
+ 				}
+ 
+@@ -349,14 +343,17 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
+ 				sendDir(sink, ".", 1, false, state.tablespaces,
+ 						sendtblspclinks, &manifest, InvalidOid);
+ 
+-				/* ... and pg_control after everything else. */
+-				if (lstat(XLOG_CONTROL_FILE, &statbuf) != 0)
+-					ereport(ERROR,
+-							(errcode_for_file_access(),
+-							 errmsg("could not stat file \"%s\": %m",
+-									XLOG_CONTROL_FILE)));
+-				sendFile(sink, XLOG_CONTROL_FILE, XLOG_CONTROL_FILE, &statbuf,
+-						 false, InvalidOid, InvalidOid, &manifest);
++				/* End the backup before sending pg_control */
++				basebackup_progress_wait_wal_archive(&state);
++				do_pg_backup_stop(backup_state, !opt->nowait);
++
++				/* Send copy of pg_control containing recovery info */
++				memset(buffer, 0, PG_CONTROL_FILE_SIZE);
++				memcpy(buffer, &backup_state->controlFile,
++					   sizeof(ControlFileData));
++
++				sendFileWithContent(sink, XLOG_CONTROL_FILE, buffer,
++									sizeof(buffer), &manifest);
+ 			}
+ 			else
+ 			{
+@@ -390,9 +387,6 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
+ 			}
+ 		}
+ 
+-		basebackup_progress_wait_wal_archive(&state);
+-		do_pg_backup_stop(backup_state, !opt->nowait);
+-
+ 		endptr = backup_state->stoppoint;
+ 		endtli = backup_state->stoptli;
+ 
+@@ -601,7 +595,7 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
+ 			 * complete segment.
+ 			 */
+ 			StatusFilePath(pathbuf, walFileName, ".done");
+-			sendFileWithContent(sink, pathbuf, "", &manifest);
++			sendFileWithContent(sink, pathbuf, "", -1, &manifest);
+ 		}
+ 
+ 		/*
+@@ -629,7 +623,7 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
+ 
+ 			/* unconditionally mark file as archived */
+ 			StatusFilePath(pathbuf, fname, ".done");
+-			sendFileWithContent(sink, pathbuf, "", &manifest);
++			sendFileWithContent(sink, pathbuf, "", -1, &manifest);
+ 		}
+ 
+ 		/* Properly terminate the tar file. */
+@@ -1040,18 +1034,18 @@ SendBaseBackup(BaseBackupCmd *cmd)
+  */
+ static void
+ sendFileWithContent(bbsink *sink, const char *filename, const char *content,
+-					backup_manifest_info *manifest)
++					int len, backup_manifest_info *manifest)
+ {
+ 	struct stat statbuf;
+-	int			bytes_done = 0,
+-				len;
++	int			bytes_done = 0;
+ 	pg_checksum_context checksum_ctx;
+ 
+ 	if (pg_checksum_init(&checksum_ctx, manifest->checksum_type) < 0)
+ 		elog(ERROR, "could not initialize checksum of file \"%s\"",
+ 			 filename);
+ 
+-	len = strlen(content);
++	if (len < 0)
++		len = strlen(content);
+ 
+ 	/*
+ 	 * Construct a stat struct for the backup_label file we're injecting in
+diff --git a/src/backend/catalog/system_functions.sql b/src/backend/catalog/system_functions.sql
+index 35d738d5763..d217bbc4437 100644
+--- a/src/backend/catalog/system_functions.sql
++++ b/src/backend/catalog/system_functions.sql
+@@ -390,7 +390,7 @@ CREATE OR REPLACE FUNCTION
+ 
+ CREATE OR REPLACE FUNCTION pg_backup_stop (
+         wait_for_archive boolean DEFAULT true, OUT lsn pg_lsn,
+-        OUT labelfile text, OUT spcmapfile text)
++        OUT pg_control_file bytea, OUT spcmapfile text)
+   RETURNS record STRICT VOLATILE LANGUAGE internal as 'pg_backup_stop'
+   PARALLEL RESTRICTED;
+ 
+diff --git a/src/bin/pg_basebackup/t/010_pg_basebackup.pl b/src/bin/pg_basebackup/t/010_pg_basebackup.pl
+index b9f5e1266b4..c655cb03352 100644
+--- a/src/bin/pg_basebackup/t/010_pg_basebackup.pl
++++ b/src/bin/pg_basebackup/t/010_pg_basebackup.pl
+@@ -171,8 +171,8 @@ SKIP:
+ 
+ # Write some files to test that they are not copied.
+ foreach my $filename (
+-	qw(backup_label tablespace_map postgresql.auto.conf.tmp
+-	current_logfiles.tmp global/pg_internal.init.123))
++	qw(tablespace_map postgresql.auto.conf.tmp current_logfiles.tmp
++	   global/pg_internal.init.123))
+ {
+ 	open my $file, '>>', "$pgdata/$filename";
+ 	print $file "DONOTCOPY";
+@@ -261,14 +261,13 @@ foreach my $filename (@tempRelationFiles)
+ 		"base/$postgresOid/$filename not copied");
+ }
+ 
+-# Make sure existing backup_label was ignored.
+-isnt(slurp_file("$tempdir/backup/backup_label"),
+-	'DONOTCOPY', 'existing backup_label not copied');
++# Make sure existing tablespace_map was ignored.
++ok(!-f "$tempdir/backup/tablespace_map", 'tablespace_map not in backup');
+ rmtree("$tempdir/backup");
+ 
+-# Now delete the bogus backup_label file since it will interfere with startup
+-unlink("$pgdata/backup_label")
+-  or BAIL_OUT("unable to unlink $pgdata/backup_label");
++# Now delete the bogus tablespace_map file since it will interfere with startup
++unlink("$pgdata/tablespace_map")
++  or BAIL_OUT("unable to unlink $pgdata/tablespace_map");
+ 
+ $node->command_ok(
+ 	[
+diff --git a/src/include/access/xlogbackup.h b/src/include/access/xlogbackup.h
+index 1611358137b..bd53405670e 100644
+--- a/src/include/access/xlogbackup.h
++++ b/src/include/access/xlogbackup.h
+@@ -15,6 +15,7 @@
+ #define XLOG_BACKUP_H
+ 
+ #include "access/xlogdefs.h"
++#include "catalog/pg_control.h"
+ #include "pgtime.h"
+ 
+ /* Structure to hold backup state. */
+@@ -33,6 +34,7 @@ typedef struct BackupState
+ 	XLogRecPtr	stoppoint;		/* backup stop WAL location */
+ 	TimeLineID	stoptli;		/* backup stop TLI */
+ 	pg_time_t	stoptime;		/* backup stop time */
++	ControlFileData controlFile;	/* Copy of control data */
+ } BackupState;
+ 
+ extern char *build_backup_content(BackupState *state,
+diff --git a/src/include/access/xlogrecovery.h b/src/include/access/xlogrecovery.h
+index 47c29350f5d..d74f5f788ee 100644
+--- a/src/include/access/xlogrecovery.h
++++ b/src/include/access/xlogrecovery.h
+@@ -80,8 +80,7 @@ extern Size XLogRecoveryShmemSize(void);
+ extern void XLogRecoveryShmemInit(void);
+ 
+ extern void InitWalRecovery(ControlFileData *ControlFile,
+-							bool *wasShutdown_ptr, bool *haveBackupLabel_ptr,
+-							bool *haveTblspcMap_ptr);
++							bool *wasShutdown_ptr, bool *haveTblspcMap_ptr);
+ extern void PerformWalRecovery(void);
+ 
+ /*
+diff --git a/src/include/catalog/pg_control.h b/src/include/catalog/pg_control.h
+index 11366132596..69802aff950 100644
+--- a/src/include/catalog/pg_control.h
++++ b/src/include/catalog/pg_control.h
+@@ -22,7 +22,7 @@
+ 
+ 
+ /* Version identifier for this pg_control format */
+-#define PG_CONTROL_VERSION	1300
++#define PG_CONTROL_VERSION	1700
+ 
+ /* Nonce key length, see below */
+ #define MOCK_AUTH_NONCE_LEN		32
+@@ -146,6 +146,9 @@ typedef struct ControlFileData
+ 	 * to disk, we mustn't start up until we reach X again. Zero when not
+ 	 * doing archive recovery.
+ 	 *
++	 * backupCheckPoint is the backup start checkpoint and is set to zero after
++	 * recovery is initialized.
++	 *
+ 	 * backupStartPoint is the redo pointer of the backup start checkpoint, if
+ 	 * we are recovering from an online backup and haven't reached the end of
+ 	 * backup yet. It is reset to zero when the end of backup is reached, and
+@@ -160,14 +163,25 @@ typedef struct ControlFileData
+ 	 * pg_control which was backed up last. It is reset to zero when the end
+ 	 * of backup is reached, and we mustn't start up before that.
+ 	 *
++	 * backupRecoveryRequired indicates that the pg_control file was provided
++	 * by a backup or pg_rewind and recovery settings need to be copied. It will
++	 * be set to false when the settings have been copied.
++	 *
++	 * backupFromStandby indicates that the backup was taken on a standby. It is
++	 * require to initialize recovery and set to false afterwards.
++	 *
+ 	 * If backupEndRequired is true, we know for sure that we're restoring
+ 	 * from a backup, and must see a backup-end record before we can safely
+ 	 * start up.
+ 	 */
+ 	XLogRecPtr	minRecoveryPoint;
+ 	TimeLineID	minRecoveryPointTLI;
++	XLogRecPtr	backupCheckPoint;
+ 	XLogRecPtr	backupStartPoint;
++	TimeLineID	backupStartPointTLI;
+ 	XLogRecPtr	backupEndPoint;
++	bool 		backupRecoveryRequired;
++	bool 		backupFromStandby;
+ 	bool		backupEndRequired;
+ 
+ 	/*
+diff --git a/src/include/catalog/pg_proc.dat b/src/include/catalog/pg_proc.dat
+index c92d0631a01..162bf94d810 100644
+--- a/src/include/catalog/pg_proc.dat
++++ b/src/include/catalog/pg_proc.dat
+@@ -6423,8 +6423,8 @@
+ { oid => '2739', descr => 'finish taking an online backup',
+   proname => 'pg_backup_stop', provolatile => 'v', proparallel => 'r',
+   prorettype => 'record', proargtypes => 'bool',
+-  proallargtypes => '{bool,pg_lsn,text,text}', proargmodes => '{i,o,o,o}',
+-  proargnames => '{wait_for_archive,lsn,labelfile,spcmapfile}',
++  proallargtypes => '{bool,pg_lsn,bytea,text}', proargmodes => '{i,o,o,o}',
++  proargnames => '{wait_for_archive,lsn,pg_control_file,spcmapfile}',
+   prosrc => 'pg_backup_stop' },
+ { oid => '3436', descr => 'promote standby server',
+   proname => 'pg_promote', provolatile => 'v', prorettype => 'bool',

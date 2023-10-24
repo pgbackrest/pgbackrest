@@ -63,6 +63,7 @@ sub run
         {pg =>  '14', dst =>  'sftp-srvr', tls => 0, stg =>  SFTP, enc => 0, cmp =>  LZ4, rt => 1, bnd => 1, bi => 0},
         {pg =>  '15', dst => 'db-standby', tls => 0, stg => AZURE, enc => 0, cmp => NONE, rt => 2, bnd => 1, bi => 1},
         {pg =>  '16', dst => 'db-standby', tls => 0, stg =>    S3, enc => 1, cmp => NONE, rt => 1, bnd => 0, bi => 0},
+        {pg =>  '17', dst => 'db-standby', tls => 0, stg => POSIX, enc => 0, cmp => NONE, rt => 1, bnd => 0, bi => 0},
     )
     {
         # Only run tests for this pg version

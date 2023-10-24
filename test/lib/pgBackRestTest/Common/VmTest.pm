@@ -270,6 +270,7 @@ my $oyVm =
             PG_VERSION_10,
             PG_VERSION_15,
             PG_VERSION_16,
+            PG_VERSION_17,
         ],
     },
 };
