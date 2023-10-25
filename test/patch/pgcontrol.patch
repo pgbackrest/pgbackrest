@@ -1,24 +1,35 @@
 diff --git a/doc/src/sgml/backup.sgml b/doc/src/sgml/backup.sgml
-index 8cb24d6ae54..6c93fd586af 100644
+index 8cb24d6ae54..7b5e3cb2fd3 100644
 --- a/doc/src/sgml/backup.sgml
 +++ b/doc/src/sgml/backup.sgml
-@@ -937,11 +937,12 @@ SELECT * FROM pg_backup_stop(wait_for_archive => true);
+@@ -935,19 +935,20 @@ SELECT * FROM pg_backup_stop(wait_for_archive => true);
+      ready to archive.
+     </para>
      <para>
-      <function>pg_backup_stop</function> will return one row with three
-      values. The second of these fields should be written to a file named
+-     <function>pg_backup_stop</function> will return one row with three
+-     values. The second of these fields should be written to a file named
 -     <filename>backup_label</filename> in the root directory of the backup. The
 -     third field should be written to a file named
 -     <filename>tablespace_map</filename> unless the field is empty. These files are
-+     <filename>pg_control</filename> in the <filename>global</filename>
-+     directory of the backup. The third field should be written to a file named
-+     <filename>tablespace_map</filename> if the root directory of the backup
-+     unless the field is empty. These files are
++     <function>pg_backup_stop</function> returns the
++     <filename>pg_control</filename> file, which must be stored in the
++     <filename>global</filename> directory of the backup. It also returns the
++     <filename>tablespace_map</filename> file, which should be written in the
++     root directory of the backup unless the field is empty. These files are
       vital to the backup working and must be written byte for byte without
 -     modification, which may require opening the file in binary mode.
 +     modification, which will require opening the file in binary mode.
      </para>
     </listitem>
     <listitem>
+     <para>
+      Once the WAL segment files active during the backup are archived, you are
+-     done.  The file identified by <function>pg_backup_stop</function>'s first return
++     done.  The file identified by <function>pg_backup_stop</function>'s
++     <parameter>lsn</parameter> return
+      value is the last segment that is required to form a complete set of
+      backup files.  On a primary, if <varname>archive_mode</varname> is enabled and the
+      <literal>wait_for_archive</literal> parameter is <literal>true</literal>,
 @@ -1062,12 +1063,7 @@ SELECT * FROM pg_backup_stop(wait_for_archive => true);
     </para>
  
@@ -34,16 +45,47 @@ index 8cb24d6ae54..6c93fd586af 100644
      <filename>pg_tblspc/</filename> and the full path of each symbolic link.
      These files are not merely for your information; their presence and
 diff --git a/doc/src/sgml/func.sgml b/doc/src/sgml/func.sgml
-index 7c3e940afef..3ed911e1617 100644
+index 7c3e940afef..01a2df1edcc 100644
 --- a/doc/src/sgml/func.sgml
 +++ b/doc/src/sgml/func.sgml
-@@ -26763,12 +26763,12 @@ LOG:  Grand total: 1651920 bytes in 201 blocks; 622360 free (88 chunks); 1029560
+@@ -26735,7 +26735,10 @@ LOG:  Grand total: 1651920 bytes in 201 blocks; 622360 free (88 chunks); 1029560
+           <parameter>label</parameter> <type>text</type>
+           <optional>, <parameter>fast</parameter> <type>boolean</type>
+           </optional> )
+-        <returnvalue>pg_lsn</returnvalue>
++        <returnvalue>record</returnvalue>
++        ( <parameter>lsn</parameter> <type>pg_lsn</type>,
++        <parameter>timeline_id</parameter> <type>int8</type>,
++        <parameter>start</parameter> <type>timestamptz</type> )
+        </para>
+        <para>
+         Prepares the server to begin an on-line backup.  The only required
+@@ -26747,6 +26750,13 @@ LOG:  Grand total: 1651920 bytes in 201 blocks; 622360 free (88 chunks); 1029560
+         as possible.  This forces an immediate checkpoint which will cause a
+         spike in I/O operations, slowing any concurrently executing queries.
+        </para>
++       <para>
++        The result columns contain information about the start of the backup
++        and can be ignored: the <parameter>lsn</parameter> column holds the
++        starting write-ahead log location, the
++        <parameter>timeline_id</parameter> column holds the starting timeline,
++        and the <parameter>stop</parameter> column holds the starting timestamp.
++       </para>
+        <para>
+         This function is restricted to superusers by default, but other users
+         can be granted EXECUTE to run the function.
+@@ -26762,13 +26772,15 @@ LOG:  Grand total: 1651920 bytes in 201 blocks; 622360 free (88 chunks); 1029560
+           <optional><parameter>wait_for_archive</parameter> <type>boolean</type>
            </optional> )
          <returnvalue>record</returnvalue>
-         ( <parameter>lsn</parameter> <type>pg_lsn</type>,
+-        ( <parameter>lsn</parameter> <type>pg_lsn</type>,
 -        <parameter>labelfile</parameter> <type>text</type>,
-+        <parameter>pg_control_file</parameter> <type>text</type>,
-         <parameter>spcmapfile</parameter> <type>text</type> )
+-        <parameter>spcmapfile</parameter> <type>text</type> )
++        ( <parameter>pg_control_file</parameter> <type>text</type>,
++        <parameter>tablespace_map_file</parameter> <type>text</type>,
++        <parameter>lsn</parameter> <type>pg_lsn</type>,
++        <parameter>timeline_id</parameter> <type>int8</type>,
++        <parameter>stop</parameter> <type>timestamptz</type> )
         </para>
         <para>
          Finishes performing an on-line backup.  The desired contents of the
@@ -52,15 +94,30 @@ index 7c3e940afef..3ed911e1617 100644
          the result of the function and must be written to files in the
          backup area.  These files must not be written to the live data directory
          (doing so will cause PostgreSQL to fail to restart in the event of a
-@@ -26803,7 +26803,7 @@ LOG:  Grand total: 1651920 bytes in 201 blocks; 622360 free (88 chunks); 1029560
-         The result of the function is a single record.
-         The <parameter>lsn</parameter> column holds the backup's ending
-         write-ahead log location (which again can be ignored).  The second
+@@ -26800,13 +26812,16 @@ LOG:  Grand total: 1651920 bytes in 201 blocks; 622360 free (88 chunks); 1029560
+         backup.
+        </para>
+        <para>
+-        The result of the function is a single record.
+-        The <parameter>lsn</parameter> column holds the backup's ending
+-        write-ahead log location (which again can be ignored).  The second
 -        column returns the contents of the backup label file, and the third
-+        column returns the contents of the pg_control file, and the third
-         column returns the contents of the tablespace map file.  These must be
-         stored as part of the backup and are required as part of the restore
-         process.
+-        column returns the contents of the tablespace map file.  These must be
+-        stored as part of the backup and are required as part of the restore
+-        process.
++        The result of the function is a single record. The first column returns
++        the contents of the <filename>pg_control</filename> file and the
++        second column returns the contents of the
++        <filename>tablespace_map</filename> file.  These must be stored as part
++        of the backup and are required as part of the restore process. The
++        remainder of the columns contain information about the end of the backup
++        and can be ignored: the <parameter>lsn</parameter> column holds the
++        ending write-ahead log location, the <parameter>timeline_id</parameter>
++        column holds the ending timeline, and the <parameter>stop</parameter>
++        column holds the ending timestamp.
+        </para>
+        <para>
+         This function is restricted to superusers by default, but other users
 diff --git a/src/backend/access/transam/xlog.c b/src/backend/access/transam/xlog.c
 index 40461923ea3..3a31f718e1f 100644
 --- a/src/backend/access/transam/xlog.c
