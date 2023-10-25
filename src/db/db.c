@@ -499,7 +499,7 @@ dbBackupStopQuery(unsigned int pgVersion)
         strCatZ(
             result,
             ",\n"
-            "       encode(pg_control_file, 'base64')::text as pgcontrol_file,\n"
+            "       encode(pg_control_file, 'hex')::text as pgcontrol_file,\n"
             "       spcmapfile::text as tablespacemap_file");
     }
     else if (pgVersion >= PG_VERSION_96)

@@ -1,5 +1,5 @@
 diff --git a/src/backend/access/transam/xlog.c b/src/backend/access/transam/xlog.c
-index 40461923ea3..62447c0cdfd 100644
+index 40461923ea3..493dbe07e4b 100644
 --- a/src/backend/access/transam/xlog.c
 +++ b/src/backend/access/transam/xlog.c
 @@ -74,6 +74,7 @@
@@ -49,7 +49,7 @@ index 40461923ea3..62447c0cdfd 100644
  		/*
  		 * If there was a tablespace_map file, it's done its job and the
  		 * symlinks have been created.  We must get rid of the map file so
-@@ -8730,6 +8715,26 @@ do_pg_backup_stop(BackupState *state, bool waitforarchive)
+@@ -8730,6 +8715,28 @@ do_pg_backup_stop(BackupState *state, bool waitforarchive)
  
  	backup_stopped_in_recovery = RecoveryInProgress();
  
@@ -57,26 +57,28 @@ index 40461923ea3..62447c0cdfd 100644
 +	 * Create a copy of control data that and update it with fields required for
 +	 * recovery. Also recalculate the CRC.
 +	 */
++	ControlFileData *controlFile = (ControlFileData *)state->controlFile;
++	memset(controlFile, 0, PG_CONTROL_MAX_SAFE_SIZE);
++
 +	LWLockAcquire(ControlFileLock, LW_SHARED);
-+	state->controlFile = *ControlFile;
++	memcpy(controlFile, ControlFile, sizeof(ControlFileData));
 +	LWLockRelease(ControlFileLock);
 +
-+	state->controlFile.backupRecoveryRequired = true;
-+	state->controlFile.backupFromStandby = backup_stopped_in_recovery;
-+	state->controlFile.backupEndRequired = true;
-+	state->controlFile.backupCheckPoint = state->checkpointloc;
-+	state->controlFile.backupStartPoint = state->startpoint;
-+	state->controlFile.backupStartPointTLI = state->starttli;
++	controlFile->backupRecoveryRequired = true;
++	controlFile->backupFromStandby = backup_stopped_in_recovery;
++	controlFile->backupEndRequired = true;
++	controlFile->backupCheckPoint = state->checkpointloc;
++	controlFile->backupStartPoint = state->startpoint;
++	controlFile->backupStartPointTLI = state->starttli;
 +
-+	INIT_CRC32C(state->controlFile.crc);
-+	COMP_CRC32C(state->controlFile.crc, (char *)&state->controlFile,
-+			    offsetof(ControlFileData, crc));
-+	FIN_CRC32C(state->controlFile.crc);
++	INIT_CRC32C(controlFile->crc);
++	COMP_CRC32C(controlFile->crc, controlFile, offsetof(ControlFileData, crc));
++	FIN_CRC32C(controlFile->crc);
 +
  	/*
  	 * During recovery, we don't need to check WAL level. Because, if WAL
  	 * level is not sufficient, it's impossible to get here during recovery.
-@@ -8831,11 +8836,8 @@ do_pg_backup_stop(BackupState *state, bool waitforarchive)
+@@ -8831,11 +8838,8 @@ do_pg_backup_stop(BackupState *state, bool waitforarchive)
  							 "Enable full_page_writes and run CHECKPOINT on the primary, "
  							 "and then try an online backup again.")));
  
@@ -85,13 +87,13 @@ index 40461923ea3..62447c0cdfd 100644
 -		state->stoppoint = ControlFile->minRecoveryPoint;
 -		state->stoptli = ControlFile->minRecoveryPointTLI;
 -		LWLockRelease(ControlFileLock);
-+		state->stoppoint = state->controlFile.minRecoveryPoint;
-+		state->stoptli = state->controlFile.minRecoveryPointTLI;
++		state->stoppoint = controlFile->minRecoveryPoint;
++		state->stoptli = controlFile->minRecoveryPointTLI;
  	}
  	else
  	{
 diff --git a/src/backend/access/transam/xlogfuncs.c b/src/backend/access/transam/xlogfuncs.c
-index 45a70668b1c..c3b05326815 100644
+index 45a70668b1c..78ad302b2cb 100644
 --- a/src/backend/access/transam/xlogfuncs.c
 +++ b/src/backend/access/transam/xlogfuncs.c
 @@ -133,7 +133,7 @@ pg_backup_stop(PG_FUNCTION_ARGS)
@@ -103,17 +105,16 @@ index 45a70668b1c..c3b05326815 100644
  	SessionBackupState status = get_backup_status();
  
  	/* Initialize attributes information in the tuple descriptor */
-@@ -152,16 +152,16 @@ pg_backup_stop(PG_FUNCTION_ARGS)
+@@ -152,16 +152,15 @@ pg_backup_stop(PG_FUNCTION_ARGS)
  	/* Stop the backup */
  	do_pg_backup_stop(backup_state, waitforarchive);
  
 -	/* Build the contents of backup_label */
 -	backup_label = build_backup_content(backup_state, false);
 +	/* Build the contents of pg_control */
-+	pg_control_bytea = (bytea *) palloc(PG_CONTROL_FILE_SIZE + VARHDRSZ);
-+	SET_VARSIZE(pg_control_bytea, PG_CONTROL_FILE_SIZE + VARHDRSZ);
-+	memset(VARDATA(pg_control_bytea), 0, PG_CONTROL_FILE_SIZE);
-+	memcpy(VARDATA(pg_control_bytea), &backup_state->controlFile, sizeof(ControlFileData));
++	pg_control_bytea = (bytea *) palloc(PG_CONTROL_MAX_SAFE_SIZE + VARHDRSZ);
++	SET_VARSIZE(pg_control_bytea, PG_CONTROL_MAX_SAFE_SIZE + VARHDRSZ);
++	memcpy(VARDATA(pg_control_bytea), backup_state->controlFile, PG_CONTROL_MAX_SAFE_SIZE);
  
  	values[0] = LSNGetDatum(backup_state->stoppoint);
 -	values[1] = CStringGetTextDatum(backup_label);
@@ -513,7 +514,7 @@ index 315e4b27cb8..06b4a3be733 100644
   * read_tablespace_map: check to see if a tablespace_map file is present
   *
 diff --git a/src/backend/backup/basebackup.c b/src/backend/backup/basebackup.c
-index b537f462197..6e26b891dd8 100644
+index b537f462197..c2e7dcbf9aa 100644
 --- a/src/backend/backup/basebackup.c
 +++ b/src/backend/backup/basebackup.c
 @@ -22,6 +22,7 @@
@@ -533,14 +534,13 @@ index b537f462197..6e26b891dd8 100644
  								backup_manifest_info *manifest);
  static int64 _tarWriteHeader(bbsink *sink, const char *filename,
  							 const char *linktarget, struct stat *statbuf,
-@@ -325,23 +326,16 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
+@@ -325,23 +326,15 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
  
  			if (ti->path == NULL)
  			{
 -				struct stat statbuf;
  				bool		sendtblspclinks = true;
 -				char	   *backup_label;
-+				char		buffer[PG_CONTROL_FILE_SIZE];
  
  				bbsink_begin_archive(sink, "base.tar");
  
@@ -560,7 +560,7 @@ index b537f462197..6e26b891dd8 100644
  					sendtblspclinks = false;
  				}
  
-@@ -349,14 +343,17 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
+@@ -349,14 +342,14 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
  				sendDir(sink, ".", 1, false, state.tablespaces,
  						sendtblspclinks, &manifest, InvalidOid);
  
@@ -577,16 +577,13 @@ index b537f462197..6e26b891dd8 100644
 +				do_pg_backup_stop(backup_state, !opt->nowait);
 +
 +				/* Send copy of pg_control containing recovery info */
-+				memset(buffer, 0, PG_CONTROL_FILE_SIZE);
-+				memcpy(buffer, &backup_state->controlFile,
-+					   sizeof(ControlFileData));
-+
-+				sendFileWithContent(sink, XLOG_CONTROL_FILE, buffer,
-+									sizeof(buffer), &manifest);
++				sendFileWithContent(sink, XLOG_CONTROL_FILE,
++								    backup_state->controlFile,
++									PG_CONTROL_MAX_SAFE_SIZE, &manifest);
  			}
  			else
  			{
-@@ -390,9 +387,6 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
+@@ -390,9 +383,6 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
  			}
  		}
  
@@ -596,7 +593,7 @@ index b537f462197..6e26b891dd8 100644
  		endptr = backup_state->stoppoint;
  		endtli = backup_state->stoptli;
  
-@@ -601,7 +595,7 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
+@@ -601,7 +591,7 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
  			 * complete segment.
  			 */
  			StatusFilePath(pathbuf, walFileName, ".done");
@@ -605,7 +602,7 @@ index b537f462197..6e26b891dd8 100644
  		}
  
  		/*
-@@ -629,7 +623,7 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
+@@ -629,7 +619,7 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
  
  			/* unconditionally mark file as archived */
  			StatusFilePath(pathbuf, fname, ".done");
@@ -614,7 +611,7 @@ index b537f462197..6e26b891dd8 100644
  		}
  
  		/* Properly terminate the tar file. */
-@@ -1040,18 +1034,18 @@ SendBaseBackup(BaseBackupCmd *cmd)
+@@ -1040,18 +1030,18 @@ SendBaseBackup(BaseBackupCmd *cmd)
   */
  static void
  sendFileWithContent(bbsink *sink, const char *filename, const char *content,
@@ -686,7 +683,7 @@ index b9f5e1266b4..c655cb03352 100644
  $node->command_ok(
  	[
 diff --git a/src/include/access/xlogbackup.h b/src/include/access/xlogbackup.h
-index 1611358137b..bd53405670e 100644
+index 1611358137b..7014ce4d928 100644
 --- a/src/include/access/xlogbackup.h
 +++ b/src/include/access/xlogbackup.h
 @@ -15,6 +15,7 @@
@@ -697,11 +694,20 @@ index 1611358137b..bd53405670e 100644
  #include "pgtime.h"
  
  /* Structure to hold backup state. */
-@@ -33,6 +34,7 @@ typedef struct BackupState
+@@ -33,6 +34,16 @@ typedef struct BackupState
  	XLogRecPtr	stoppoint;		/* backup stop WAL location */
  	TimeLineID	stoptli;		/* backup stop TLI */
  	pg_time_t	stoptime;		/* backup stop time */
-+	ControlFileData controlFile;	/* Copy of control data */
++
++	/*
++	 * After pg_backup_stop() returns this field will contain a copy of
++	 * pg_control that should be stored with the backup. Fields have been
++	 * updated for recovery and the CRC has been recalculated. The buffer
++	 * is padded to PG_CONTROL_MAX_SAFE_SIZE so that pg_control is always
++	 * a consistent size but smaller (and hopefully easier to handle) than
++	 * PG_CONTROL_FILE_SIZE. Bytes after sizeof(ControlFileData) are zeroed.
++	 */
++	uint8_t controlFile[PG_CONTROL_MAX_SAFE_SIZE];
  } BackupState;
  
  extern char *build_backup_content(BackupState *state,
@@ -720,18 +726,9 @@ index 47c29350f5d..d74f5f788ee 100644
  
  /*
 diff --git a/src/include/catalog/pg_control.h b/src/include/catalog/pg_control.h
-index 11366132596..69802aff950 100644
+index 11366132596..fda9e92c975 100644
 --- a/src/include/catalog/pg_control.h
 +++ b/src/include/catalog/pg_control.h
-@@ -22,7 +22,7 @@
- 
- 
- /* Version identifier for this pg_control format */
--#define PG_CONTROL_VERSION	1300
-+#define PG_CONTROL_VERSION	1700
- 
- /* Nonce key length, see below */
- #define MOCK_AUTH_NONCE_LEN		32
 @@ -146,6 +146,9 @@ typedef struct ControlFileData
  	 * to disk, we mustn't start up until we reach X again. Zero when not
  	 * doing archive recovery.

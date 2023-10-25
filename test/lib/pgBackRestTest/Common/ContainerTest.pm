@@ -664,7 +664,9 @@ sub containerBuild
                     "    git clone https://git.postgresql.org/git/postgresql.git /root/postgresql\n" .
                     "RUN apt-get update\n" .
                     "RUN apt-get install -y libreadline-dev bison flex\n" .
-                    "RUN git -C /root/postgresql checkout 74e5ea1e0\n" .
+                    "RUN git -C /root/postgresql fetch origin && git -C /root/postgresql checkout 9ba9c707\n" .
+                    "COPY patch/pgcontrol-version.patch /root/pgcontrol-version.patch\n" .
+                    "RUN git -C /root/postgresql apply /root/pgcontrol-version.patch\n" .
                     "COPY patch/pgcontrol.patch /root/pgcontrol.patch\n" .
                     "RUN git -C /root/postgresql apply /root/pgcontrol.patch\n" .
                     "RUN cd /root/postgresql && ./configure --prefix=/usr/lib/postgresql/17\n" .

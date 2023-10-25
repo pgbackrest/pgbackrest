@@ -116,7 +116,7 @@ typedef struct DbBackupStopResult
 {
     String *lsn;
     String *walSegmentName;
-    String *backupLabel;
+    String *backupLabel; // !!! RENAME?
     String *tablespaceMap;
 } DbBackupStopResult;
 
