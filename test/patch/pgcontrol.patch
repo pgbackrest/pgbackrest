@@ -1,5 +1,5 @@
 diff --git a/doc/src/sgml/backup.sgml b/doc/src/sgml/backup.sgml
-index 8cb24d6ae54..7b5e3cb2fd3 100644
+index 8cb24d6ae54..6be8fb902c5 100644
 --- a/doc/src/sgml/backup.sgml
 +++ b/doc/src/sgml/backup.sgml
 @@ -935,19 +935,20 @@ SELECT * FROM pg_backup_stop(wait_for_archive => true);
@@ -30,7 +30,24 @@ index 8cb24d6ae54..7b5e3cb2fd3 100644
       value is the last segment that is required to form a complete set of
       backup files.  On a primary, if <varname>archive_mode</varname> is enabled and the
       <literal>wait_for_archive</literal> parameter is <literal>true</literal>,
-@@ -1062,12 +1063,7 @@ SELECT * FROM pg_backup_stop(wait_for_archive => true);
+@@ -1013,7 +1014,15 @@ SELECT * FROM pg_backup_stop(wait_for_archive => true);
+    </para>
+ 
+    <para>
+-    You should, however, omit from the backup the files within the
++    You must exclude <filename>global/pg_control</filename> from your backup
++    and put the contents of the <parameter>pg_control_file</parameter> column
++    returned from <function>pg_backup_stop</function> in your backup at
++    <filename>global/pg_control</filename>. This file contains the information
++    required to safely recover.
++   </para>
++
++   <para>
++    You should also omit from the backup the files within the
+     cluster's <filename>pg_wal/</filename> subdirectory.  This
+     slight adjustment is worthwhile because it reduces the risk
+     of mistakes when restoring.  This is easy to arrange if
+@@ -1062,12 +1071,7 @@ SELECT * FROM pg_backup_stop(wait_for_archive => true);
     </para>
  
     <para>
@@ -119,7 +136,7 @@ index 7c3e940afef..01a2df1edcc 100644
         <para>
          This function is restricted to superusers by default, but other users
 diff --git a/src/backend/access/transam/xlog.c b/src/backend/access/transam/xlog.c
-index 40461923ea3..3a31f718e1f 100644
+index 40461923ea3..e149b8836cb 100644
 --- a/src/backend/access/transam/xlog.c
 +++ b/src/backend/access/transam/xlog.c
 @@ -74,6 +74,7 @@
@@ -187,12 +204,18 @@ index 40461923ea3..3a31f718e1f 100644
 -	 * pg_rewind (which creates a backup_label with a method of "pg_rewind")
 -	 * or snapshot-style backups (which don't), backupEndRequired will be set
 -	 * to false.
-+	 * we purposefully copy last when backing up from a replica).  For pg_rewind
-+	 * or snapshot-style backups, backupEndRequired will be set to false.
++	 * we purposefully copy last when backing up).  For pg_rewind or
++	 * snapshot-style backups, backupEndRequired will be set to false.
  	 *
  	 * Note: it is indeed okay to look at the local variable
  	 * LocalMinRecoveryPoint here, even though ControlFile->minRecoveryPoint
-@@ -8730,6 +8715,28 @@ do_pg_backup_stop(BackupState *state, bool waitforarchive)
+@@ -8725,11 +8710,33 @@ do_pg_backup_stop(BackupState *state, bool waitforarchive)
+ 	int			seconds_before_warning;
+ 	int			waits = 0;
+ 	bool		reported_waiting = false;
++	ControlFileData *controlFileCopy = (ControlFileData *)state->controlFile;
+ 
+ 	Assert(state != NULL);
  
  	backup_stopped_in_recovery = RecoveryInProgress();
  
@@ -200,23 +223,22 @@ index 40461923ea3..3a31f718e1f 100644
 +	 * Create a copy of control data that and update it with fields required for
 +	 * recovery. Also recalculate the CRC.
 +	 */
-+	ControlFileData *controlFile = (ControlFileData *)state->controlFile;
-+	memset(controlFile, 0, PG_CONTROL_MAX_SAFE_SIZE);
++	memset(controlFileCopy, 0, PG_CONTROL_MAX_SAFE_SIZE);
 +
 +	LWLockAcquire(ControlFileLock, LW_SHARED);
-+	memcpy(controlFile, ControlFile, sizeof(ControlFileData));
++	memcpy(controlFileCopy, ControlFile, sizeof(ControlFileData));
 +	LWLockRelease(ControlFileLock);
 +
-+	controlFile->backupRecoveryRequired = true;
-+	controlFile->backupFromStandby = backup_stopped_in_recovery;
-+	controlFile->backupEndRequired = true;
-+	controlFile->backupCheckPoint = state->checkpointloc;
-+	controlFile->backupStartPoint = state->startpoint;
-+	controlFile->backupStartPointTLI = state->starttli;
++	controlFileCopy->backupRecoveryRequired = true;
++	controlFileCopy->backupFromStandby = backup_stopped_in_recovery;
++	controlFileCopy->backupEndRequired = true;
++	controlFileCopy->backupCheckPoint = state->checkpointloc;
++	controlFileCopy->backupStartPoint = state->startpoint;
++	controlFileCopy->backupStartPointTLI = state->starttli;
 +
-+	INIT_CRC32C(controlFile->crc);
-+	COMP_CRC32C(controlFile->crc, controlFile, offsetof(ControlFileData, crc));
-+	FIN_CRC32C(controlFile->crc);
++	INIT_CRC32C(controlFileCopy->crc);
++	COMP_CRC32C(controlFileCopy->crc, controlFileCopy, offsetof(ControlFileData, crc));
++	FIN_CRC32C(controlFileCopy->crc);
 +
  	/*
  	 * During recovery, we don't need to check WAL level. Because, if WAL
@@ -230,8 +252,8 @@ index 40461923ea3..3a31f718e1f 100644
 -		state->stoppoint = ControlFile->minRecoveryPoint;
 -		state->stoptli = ControlFile->minRecoveryPointTLI;
 -		LWLockRelease(ControlFileLock);
-+		state->stoppoint = controlFile->minRecoveryPoint;
-+		state->stoptli = controlFile->minRecoveryPointTLI;
++		state->stoppoint = controlFileCopy->minRecoveryPoint;
++		state->stoptli = controlFileCopy->minRecoveryPointTLI;
  	}
  	else
  	{
@@ -318,7 +340,7 @@ index 21d68133ae1..b61ed02bbbe 100644
  	data = result->data;
  	pfree(result);
 diff --git a/src/backend/access/transam/xlogfuncs.c b/src/backend/access/transam/xlogfuncs.c
-index 45a70668b1c..9ca2623f75e 100644
+index 45a70668b1c..2388a60a5e5 100644
 --- a/src/backend/access/transam/xlogfuncs.c
 +++ b/src/backend/access/transam/xlogfuncs.c
 @@ -53,7 +53,7 @@ static MemoryContext backupcontext = NULL;
@@ -358,7 +380,7 @@ index 45a70668b1c..9ca2623f75e 100644
  
 -	PG_RETURN_LSN(backup_state->startpoint);
 +	values[0] = LSNGetDatum(backup_state->startpoint);
-+	values[1] = Int8GetDatum((int64)backup_state->starttli);
++	values[1] = Int64GetDatum(backup_state->starttli);
 +	values[2] = TimestampTzGetDatum(time_t_to_timestamptz(backup_state->starttime));
 +
 +	/* Returns the record as Datum */
@@ -421,13 +443,13 @@ index 45a70668b1c..9ca2623f75e 100644
 +	values[0] = PointerGetDatum(pg_control_bytea);
 +	values[1] = CStringGetTextDatum(tablespace_map->data);
 +	values[2] = LSNGetDatum(backup_state->stoppoint);
-+	values[3] = Int8GetDatum((int64)backup_state->stoptli);
++	values[3] = Int64GetDatum(backup_state->stoptli);
 +	values[4] = TimestampTzGetDatum(time_t_to_timestamptz(backup_state->stoptime));
  
  	/* Clean up the session-level state and its memory context */
  	backup_state = NULL;
 diff --git a/src/backend/access/transam/xlogrecovery.c b/src/backend/access/transam/xlogrecovery.c
-index 315e4b27cb8..24412fc6059 100644
+index 49bb3fe4520..a676066355d 100644
 --- a/src/backend/access/transam/xlogrecovery.c
 +++ b/src/backend/access/transam/xlogrecovery.c
 @@ -6,7 +6,7 @@
@@ -519,7 +541,7 @@ index 315e4b27cb8..24412fc6059 100644
 +		ControlFile->backupRecoveryRequired = false;
 +		ControlFile->backupFromStandby = false;
 +
-+		/* Set a flag for later recovery logic */
++		/* Indicate that recovery was requested */
 +		backupRecoveryRequired = true;
 +
  		/*
@@ -940,7 +962,7 @@ index 315e4b27cb8..24412fc6059 100644
   * read_tablespace_map: check to see if a tablespace_map file is present
   *
 diff --git a/src/backend/backup/basebackup.c b/src/backend/backup/basebackup.c
-index b537f462197..7b187dec2c6 100644
+index b537f462197..01d09dbdd21 100644
 --- a/src/backend/backup/basebackup.c
 +++ b/src/backend/backup/basebackup.c
 @@ -22,6 +22,7 @@
@@ -1017,7 +1039,7 @@ index b537f462197..7b187dec2c6 100644
 +
 +				/* Send copy of pg_control containing recovery info */
 +				sendFileWithContent(sink, XLOG_CONTROL_FILE,
-+								    backup_state->controlFile,
++								    (char *)backup_state->controlFile,
 +									PG_CONTROL_MAX_SAFE_SIZE, &manifest);
  			}
  			else
@@ -1137,26 +1159,6 @@ index b9f5e1266b4..c655cb03352 100644
  
  $node->command_ok(
  	[
-diff --git a/src/bin/pg_ctl/pg_ctl.c b/src/bin/pg_ctl/pg_ctl.c
-index 807d7023a99..4099d240e03 100644
---- a/src/bin/pg_ctl/pg_ctl.c
-+++ b/src/bin/pg_ctl/pg_ctl.c
-@@ -96,7 +96,6 @@ static time_t start_time;
- static char postopts_file[MAXPGPATH];
- static char version_file[MAXPGPATH];
- static char pid_file[MAXPGPATH];
--static char backup_file[MAXPGPATH];
- static char promote_file[MAXPGPATH];
- static char logrotate_file[MAXPGPATH];
- 
-@@ -2447,7 +2446,6 @@ main(int argc, char **argv)
- 		snprintf(postopts_file, MAXPGPATH, "%s/postmaster.opts", pg_data);
- 		snprintf(version_file, MAXPGPATH, "%s/PG_VERSION", pg_data);
- 		snprintf(pid_file, MAXPGPATH, "%s/postmaster.pid", pg_data);
--		snprintf(backup_file, MAXPGPATH, "%s/backup_label", pg_data);
- 
- 		/*
- 		 * Set mask based on PGDATA permissions,
 diff --git a/src/bin/pg_rewind/filemap.c b/src/bin/pg_rewind/filemap.c
 index ecadd69dc53..213f4e71b88 100644
 --- a/src/bin/pg_rewind/filemap.c
@@ -1285,7 +1287,7 @@ index bfd44a284e2..f42782e2eab 100644
   * Check CRC of control file
   */
 diff --git a/src/include/access/xlog.h b/src/include/access/xlog.h
-index 4ad572cb874..ef8aed3016d 100644
+index a14126d164f..3aac6839a70 100644
 --- a/src/include/access/xlog.h
 +++ b/src/include/access/xlog.h
 @@ -293,8 +293,6 @@ extern SessionBackupState get_backup_status(void);
@@ -1331,7 +1333,7 @@ index 1611358137b..b75411b7c3d 100644
  
  #endif							/* XLOG_BACKUP_H */
 diff --git a/src/include/access/xlogrecovery.h b/src/include/access/xlogrecovery.h
-index 47c29350f5d..d74f5f788ee 100644
+index ee0bc742782..981266f7340 100644
 --- a/src/include/access/xlogrecovery.h
 +++ b/src/include/access/xlogrecovery.h
 @@ -80,8 +80,7 @@ extern Size XLogRecoveryShmemSize(void);
@@ -1345,7 +1347,7 @@ index 47c29350f5d..d74f5f788ee 100644
  
  /*
 diff --git a/src/include/catalog/pg_control.h b/src/include/catalog/pg_control.h
-index 11366132596..fda9e92c975 100644
+index 2ae72e3b266..64bab07e056 100644
 --- a/src/include/catalog/pg_control.h
 +++ b/src/include/catalog/pg_control.h
 @@ -146,6 +146,9 @@ typedef struct ControlFileData
@@ -1385,7 +1387,7 @@ index 11366132596..fda9e92c975 100644
  
  	/*
 diff --git a/src/include/catalog/pg_proc.dat b/src/include/catalog/pg_proc.dat
-index c92d0631a01..433f63adb4d 100644
+index 06435e8b925..9dfdf79afa4 100644
 --- a/src/include/catalog/pg_proc.dat
 +++ b/src/include/catalog/pg_proc.dat
 @@ -6418,13 +6418,17 @@
