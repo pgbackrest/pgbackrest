@@ -136,7 +136,7 @@ index 7c3e940afef..01a2df1edcc 100644
         <para>
          This function is restricted to superusers by default, but other users
 diff --git a/src/backend/access/transam/xlog.c b/src/backend/access/transam/xlog.c
-index 40461923ea3..e149b8836cb 100644
+index 40461923ea3..b6e0e15ab2c 100644
 --- a/src/backend/access/transam/xlog.c
 +++ b/src/backend/access/transam/xlog.c
 @@ -74,6 +74,7 @@
@@ -162,7 +162,7 @@ index 40461923ea3..e149b8836cb 100644
 -	 * InitWalRecovery analyzes the control file and the backup label file, if
 -	 * any.  It updates the in-memory ControlFile buffer according to the
 -	 * starting checkpoint, and sets InRecovery and ArchiveRecoveryRequested.
-+	 * InitWalRecovery analyzes the control file and checks is backup recovery
++	 * InitWalRecovery analyzes the control file and checks if backup recovery
 +	 * has been requested.  It updates the in-memory ControlFile buffer
 +	 * according to the starting checkpoint, and sets InRecovery and
 +	 * ArchiveRecoveryRequested.
@@ -220,7 +220,7 @@ index 40461923ea3..e149b8836cb 100644
  	backup_stopped_in_recovery = RecoveryInProgress();
  
 +	/*
-+	 * Create a copy of control data that and update it with fields required for
++	 * Create a copy of control data and update it with fields required for
 +	 * recovery. Also recalculate the CRC.
 +	 */
 +	memset(controlFileCopy, 0, PG_CONTROL_MAX_SAFE_SIZE);
@@ -449,7 +449,7 @@ index 45a70668b1c..2388a60a5e5 100644
  	/* Clean up the session-level state and its memory context */
  	backup_state = NULL;
 diff --git a/src/backend/access/transam/xlogrecovery.c b/src/backend/access/transam/xlogrecovery.c
-index 49bb3fe4520..a676066355d 100644
+index 49bb3fe4520..359d4c32e2b 100644
 --- a/src/backend/access/transam/xlogrecovery.c
 +++ b/src/backend/access/transam/xlogrecovery.c
 @@ -6,7 +6,7 @@
@@ -576,7 +576,7 @@ index 49bb3fe4520..a676066355d 100644
  			 */
  			if (checkPoint.redo < CheckPointLoc)
  			{
-@@ -651,25 +665,21 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
+@@ -651,20 +665,16 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
  								checkPoint.ThisTimeLineID))
  					ereport(FATAL,
  							(errmsg("could not find redo location referenced by checkpoint record"),
@@ -601,34 +601,7 @@ index 49bb3fe4520..a676066355d 100644
  			wasShutdown = false;	/* keep compiler quiet */
  		}
  
--		/* Read the tablespace_map file if present and create symlinks. */
--		if (read_tablespace_map(&tablespaces))
-+	/* Read the tablespace_map file if present and create symlinks. */
-+	if (read_tablespace_map(&tablespaces))
- 		{
- 			ListCell   *lc;
- 
-@@ -681,15 +691,15 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
- 				linkloc = psprintf("pg_tblspc/%u", ti->oid);
- 
- 				/*
--				 * Remove the existing symlink if any and Create the symlink
--				 * under PGDATA.
--				 */
-+					* Remove the existing symlink if any and Create the symlink
-+					* under PGDATA.
-+					*/
- 				remove_tablespace_symlink(linkloc);
- 
- 				if (symlink(ti->path, linkloc) < 0)
- 					ereport(ERROR,
- 							(errcode_for_file_access(),
--							 errmsg("could not create symbolic link \"%s\": %m",
-+								errmsg("could not create symbolic link \"%s\": %m",
- 									linkloc)));
- 
- 				pfree(ti->path);
-@@ -699,93 +709,90 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
+@@ -699,35 +709,32 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
  			/* tell the caller to delete it later */
  			haveTblspcMap = true;
  		}
@@ -672,114 +645,6 @@ index 49bb3fe4520..a676066355d 100644
  						 errdetail("Could not rename file \"%s\" to \"%s\": %m.",
  								   TABLESPACE_MAP, TABLESPACE_MAP_OLD)));
  		}
- 
--		/*
--		 * It's possible that archive recovery was requested, but we don't
--		 * know how far we need to replay the WAL before we reach consistency.
--		 * This can happen for example if a base backup is taken from a
--		 * running server using an atomic filesystem snapshot, without calling
--		 * pg_backup_start/stop. Or if you just kill a running primary server
--		 * and put it into archive recovery by creating a recovery signal
--		 * file.
--		 *
--		 * Our strategy in that case is to perform crash recovery first,
--		 * replaying all the WAL present in pg_wal, and only enter archive
--		 * recovery after that.
--		 *
--		 * But usually we already know how far we need to replay the WAL (up
--		 * to minRecoveryPoint, up to backupEndPoint, or until we see an
--		 * end-of-backup record), and we can enter archive recovery directly.
--		 */
-+	/*
-+		* It's possible that archive recovery was requested, but we don't
-+		* know how far we need to replay the WAL before we reach consistency.
-+		* This can happen for example if a base backup is taken from a
-+		* running server using an atomic filesystem snapshot, without calling
-+		* pg_backup_start/stop. Or if you just kill a running primary server
-+		* and put it into archive recovery by creating a recovery signal
-+		* file.
-+		*
-+		* Our strategy in that case is to perform crash recovery first,
-+		* replaying all the WAL present in pg_wal, and only enter archive
-+		* recovery after that.
-+		*
-+		* But usually we already know how far we need to replay the WAL (up
-+		* to minRecoveryPoint, up to backupEndPoint, or until we see an
-+		* end-of-backup record), and we can enter archive recovery directly.
-+		*/
- 		if (ArchiveRecoveryRequested &&
--			(ControlFile->minRecoveryPoint != InvalidXLogRecPtr ||
-+		(ControlFile->minRecoveryPoint != InvalidXLogRecPtr ||
- 			 ControlFile->backupEndRequired ||
--			 ControlFile->backupEndPoint != InvalidXLogRecPtr ||
--			 ControlFile->state == DB_SHUTDOWNED))
--		{
--			InArchiveRecovery = true;
--			if (StandbyModeRequested)
--				EnableStandbyMode();
--		}
-+			ControlFile->backupEndPoint != InvalidXLogRecPtr ||
-+			ControlFile->state == DB_SHUTDOWNED))
-+	{
-+		InArchiveRecovery = true;
-+		if (StandbyModeRequested)
-+			EnableStandbyMode();
-+	}
- 
--		/* Get the last valid checkpoint record. */
--		CheckPointLoc = ControlFile->checkPoint;
--		CheckPointTLI = ControlFile->checkPointCopy.ThisTimeLineID;
--		RedoStartLSN = ControlFile->checkPointCopy.redo;
--		RedoStartTLI = ControlFile->checkPointCopy.ThisTimeLineID;
--		record = ReadCheckpointRecord(xlogprefetcher, CheckPointLoc,
--									  CheckPointTLI);
--		if (record != NULL)
--		{
--			ereport(DEBUG1,
--					(errmsg_internal("checkpoint record is at %X/%X",
--									 LSN_FORMAT_ARGS(CheckPointLoc))));
--		}
--		else
--		{
--			/*
--			 * We used to attempt to go back to a secondary checkpoint record
--			 * here, but only when not in standby mode. We now just fail if we
--			 * can't read the last checkpoint because this allows us to
--			 * simplify processing around checkpoints.
--			 */
--			ereport(PANIC,
-+	/* Get the last valid checkpoint record. */
-+	CheckPointLoc = ControlFile->checkPoint;
-+	CheckPointTLI = ControlFile->checkPointCopy.ThisTimeLineID;
-+	RedoStartLSN = ControlFile->checkPointCopy.redo;
-+	RedoStartTLI = ControlFile->checkPointCopy.ThisTimeLineID;
-+	record = ReadCheckpointRecord(xlogprefetcher, CheckPointLoc,
-+									CheckPointTLI);
-+	if (record != NULL)
-+	{
-+		ereport(DEBUG1,
-+				(errmsg_internal("checkpoint record is at %X/%X",
-+									LSN_FORMAT_ARGS(CheckPointLoc))));
-+	}
-+	else
-+	{
-+		/*
-+		* We used to attempt to go back to a secondary checkpoint record
-+		* here, but only when not in standby mode. We now just fail if we
-+		* can't read the last checkpoint because this allows us to
-+		* simplify processing around checkpoints.
-+		*/
-+		ereport(PANIC,
- 					(errmsg("could not locate a valid checkpoint record")));
--		}
--		memcpy(&checkPoint, XLogRecGetData(xlogreader), sizeof(CheckPoint));
--		wasShutdown = ((record->xl_info & ~XLR_INFO_MASK) == XLOG_CHECKPOINT_SHUTDOWN);
-+	}
-+	memcpy(&checkPoint, XLogRecGetData(xlogreader), sizeof(CheckPoint));
-+	wasShutdown = ((record->xl_info & ~XLR_INFO_MASK) == XLOG_CHECKPOINT_SHUTDOWN);
- 	}
- 
- 	/*
 @@ -932,7 +939,7 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
  		 * Any other state indicates that the backup somehow became corrupted
  		 * and we can't sensibly continue with recovery.
