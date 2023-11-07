@@ -259,8 +259,8 @@ testRun(void)
 
         // Two standbys found but no primary
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_93, "/pgdata", true, NULL, NULL),
-            HRN_PQ_SCRIPT_OPEN_GE_93(8, "dbname='postgres' port=5433", PG_VERSION_93, "/pgdata", true, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_94, "/pgdata", true, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN_GE_93(8, "dbname='postgres' port=5433", PG_VERSION_94, "/pgdata", true, NULL, NULL),
 
             HRN_PQ_SCRIPT_CLOSE(8),
             HRN_PQ_SCRIPT_CLOSE(1));

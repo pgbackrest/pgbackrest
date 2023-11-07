@@ -16,7 +16,7 @@ Get the catalog version
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_93
+#elif PG_VERSION >= PG_VERSION_94
 
 #define HRN_PG_INTERFACE_CATALOG_VERSION(version)                                                                                  \
     uint32_t                                                                                                                       \
@@ -32,7 +32,7 @@ Create a pg_control file
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_93
+#elif PG_VERSION >= PG_VERSION_94
 
 #define HRN_PG_INTERFACE_CONTROL_TEST(version)                                                                                     \
     void                                                                                                                           \
@@ -70,7 +70,7 @@ Create a WAL file
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_93
+#elif PG_VERSION >= PG_VERSION_94
 
 #define HRN_PG_INTERFACE_WAL_TEST(version)                                                                                         \
     void                                                                                                                           \

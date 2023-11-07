@@ -173,7 +173,7 @@ sub run
             #-----------------------------------------------------------------------------------------------------------------------
             $strDescription = 'Upgrade stanza and expire only earliest db backup and archive';
 
-            $oExpireTest->stanzaUpgrade($self->stanza(), PG_VERSION_93);
+            $oExpireTest->stanzaUpgrade($self->stanza(), PG_VERSION_94);
             $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
             $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_INCR, $lBaseTime += SECONDS_PER_DAY, 246);
             $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);

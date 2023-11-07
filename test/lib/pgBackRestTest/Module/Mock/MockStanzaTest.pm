@@ -85,7 +85,7 @@ sub run
 
         # Generate pg_control for stanza-create
         storageTest()->pathCreate(($oHostDbPrimary->dbBasePath() . '/' . DB_PATH_GLOBAL), {bCreateParent => true});
-        $self->controlGenerate($oHostDbPrimary->dbBasePath(), PG_VERSION_93);
+        $self->controlGenerate($oHostDbPrimary->dbBasePath(), PG_VERSION_94);
 
         # Fail stanza upgrade before stanza-create has been performed
         #--------------------------------------------------------------------------------------------------------------------------
@@ -111,7 +111,7 @@ sub run
             {iExpectedExitStatus => ERROR_FILE_INVALID, strOptionalParam => '--no-online --force'});
 
         # Restore pg_control
-        $self->controlGenerate($oHostDbPrimary->dbBasePath(), PG_VERSION_93);
+        $self->controlGenerate($oHostDbPrimary->dbBasePath(), PG_VERSION_94);
 
         # Perform a stanza upgrade which will indicate already up to date
         #--------------------------------------------------------------------------------------------------------------------------
@@ -125,7 +125,7 @@ sub run
         #--------------------------------------------------------------------------------------------------------------------------
         # Generate WAL then push to get valid archive data in the archive directory
         my $strArchiveFile = $self->walSegment(1, 1, 1);
-        my $strSourceFile = $self->walGenerate($strWalPath, PG_VERSION_93, 1, $strArchiveFile);
+        my $strSourceFile = $self->walGenerate($strWalPath, PG_VERSION_94, 1, $strArchiveFile);
 
         my $strCommand = $oHostDbPrimary->backrestExe() . ' --config=' . $oHostDbPrimary->backrestConfig() .
             ' --stanza=db archive-push';
@@ -148,7 +148,7 @@ sub run
         # Just before upgrading push one last WAL on the old version to ensure it can be retrieved later
         #--------------------------------------------------------------------------------------------------------------------------
         $strArchiveFile = $self->walSegment(1, 1, 2);
-        $strSourceFile = $self->walGenerate($strWalPath, PG_VERSION_93, 1, $strArchiveFile);
+        $strSourceFile = $self->walGenerate($strWalPath, PG_VERSION_94, 1, $strArchiveFile);
         $oHostDbPrimary->executeSimple($strCommand . " ${strSourceFile}");
 
         # Fail on archive push due to mismatch of DB since stanza not upgraded
@@ -173,7 +173,7 @@ sub run
         # Make sure that WAL from the old version can still be retrieved
         #--------------------------------------------------------------------------------------------------------------------------
         # Generate the old pg_control so it looks like the original db has been restored
-        $self->controlGenerate($oHostDbPrimary->dbBasePath(), PG_VERSION_93);
+        $self->controlGenerate($oHostDbPrimary->dbBasePath(), PG_VERSION_94);
 
         # Attempt to get the last archive log that was pushed to this repo
         $oHostDbPrimary->executeSimple(
@@ -217,7 +217,7 @@ sub run
         my $oArchiveInfo = new pgBackRestTest::Env::ArchiveInfo($oHostBackup->repoArchivePath());
         my $oBackupInfo = new pgBackRestTest::Env::BackupInfo($oHostBackup->repoBackupPath());
         $self->testResult(sub {$oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
-            PG_VERSION_93)}, true, 'archive at old pg version');
+            PG_VERSION_94)}, true, 'archive at old pg version');
         $self->testResult(sub {$oBackupInfo->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef,
             PG_VERSION_95)}, true, 'backup at new pg version');
 

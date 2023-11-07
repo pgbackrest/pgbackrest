@@ -940,7 +940,7 @@ manifestBuildInfo(
             if (strEq(manifestParentName, MANIFEST_TARGET_PGDATA_STR))
             {
                 // Skip pg_dynshmem/* since these files cannot be reused on recovery
-                if (strEqZ(info->name, PG_PATH_PGDYNSHMEM) && pgVersion >= PG_VERSION_94)
+                if (strEqZ(info->name, PG_PATH_PGDYNSHMEM))
                     FUNCTION_TEST_RETURN_VOID();
 
                 // Skip pg_notify/* since these files cannot be reused on recovery
@@ -948,7 +948,7 @@ manifestBuildInfo(
                     FUNCTION_TEST_RETURN_VOID();
 
                 // Skip pg_replslot/* since these files are generally not useful after a restore
-                if (strEqZ(info->name, PG_PATH_PGREPLSLOT) && pgVersion >= PG_VERSION_94)
+                if (strEqZ(info->name, PG_PATH_PGREPLSLOT))
                     FUNCTION_TEST_RETURN_VOID();
 
                 // Skip pg_serial/* since these files are reset
@@ -1031,7 +1031,7 @@ manifestBuildInfo(
                     ((strEqZ(info->name, PG_FILE_RECOVERYCONF) || strEqZ(info->name, PG_FILE_RECOVERYDONE)) &&
                      pgVersion < PG_VERSION_12) ||
                     // Skip temp file for safely writing postgresql.auto.conf
-                    (strEqZ(info->name, PG_FILE_POSTGRESQLAUTOCONFTMP) && pgVersion >= PG_VERSION_94) ||
+                    (strEqZ(info->name, PG_FILE_POSTGRESQLAUTOCONFTMP)) ||
                     // Skip backup_label in versions where non-exclusive backup is supported
                     (strEqZ(info->name, PG_FILE_BACKUPLABEL) && pgVersion >= PG_VERSION_96) ||
                     // Skip old backup labels

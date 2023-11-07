@@ -351,8 +351,7 @@ sub clusterCreate
     my $strWalPath = defined($$hParam{strWalPath}) ? $$hParam{strWalPath} : $self->dbPath() . '/pg_' . $self->walId();
 
     $self->executeSimple(
-        $self->pgBinPath() . '/initdb ' .
-        ($self->pgVersion() >= PG_VERSION_93 ? ' -k' : '') .
+        $self->pgBinPath() . '/initdb -k' .
         ($self->pgVersion() >= PG_VERSION_11 ? ' --wal-segsize=1' : '') .
         ' --' . $self->walId() . "dir=${strWalPath}" . ' --pgdata=' . $self->dbBasePath() . ' --auth=trust');
 
@@ -456,7 +455,7 @@ sub clusterStart
         ' -c log_rotation_age=0' .
         ' -c log_rotation_size=0' .
         ' -c log_error_verbosity=verbose' .
-        ' -c unix_socket_director' . ($self->pgVersion() < PG_VERSION_93 ? 'y=\'' : 'ies=\'') . $self->dbPath() . '\'"' .
+        ' -c unix_socket_directories=\'' . $self->dbPath() . '\'"' .
         ' -D ' . $self->dbBasePath() . ' -l ' . $self->pgLogFile() . ' -s';
 
     $self->executeSimple($strCommand);

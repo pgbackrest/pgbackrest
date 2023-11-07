@@ -231,11 +231,11 @@ testRun(void)
             TEST_MANIFEST_HEADER
             "\n"
             "[backup:db]\n"
-            "db-catalog-version=201306121\n"
-            "db-control-version=937\n"
+            "db-catalog-version=201608131\n"
+            "db-control-version=960\n"
             "db-id=1\n"
-            "db-system-id=" HRN_PG_SYSTEMID_94_Z "\n"
-            "db-version=\"9.3\"\n"
+            "db-system-id=" HRN_PG_SYSTEMID_94_Z "\n"               // 9.4 system id is used so version will trigger error
+            "db-version=\"9.6\"\n"
             TEST_MANIFEST_OPTION_ALL
             TEST_MANIFEST_TARGET
             TEST_MANIFEST_DB
@@ -256,7 +256,7 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152138F/backup.manifest.copy'"
             " for read\n"
-            "P00   INFO: '20181119-152138F' may not be recoverable - PG data (id 1, version 9.3, system-id"
+            "P00   INFO: '20181119-152138F' may not be recoverable - PG data (id 1, version 9.6, system-id"
             " " HRN_PG_SYSTEMID_94_Z ") is not in the backup.info history, skipping");
 
         // -------------------------------------------------------------------------------------------------------------------------

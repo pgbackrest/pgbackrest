@@ -1928,7 +1928,7 @@ testRun(void)
         TEST_TITLE("reset checksum-page when the cluster does not have checksums enabled");
 
         // Create pg_control
-        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_93);
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_94);
 
         // Create stanza
         argList = strLstNew();
@@ -1951,11 +1951,11 @@ testRun(void)
 
         HRN_PQ_SCRIPT_SET(
             // Connect to primary
-            HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_93, TEST_PATH "/pg1", false, NULL, NULL));
+            HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_94, TEST_PATH "/pg1", false, NULL, NULL));
 
         TEST_RESULT_VOID(
             dbFree(
-                backupInit(infoBackupNew(PG_VERSION_93, HRN_PG_SYSTEMID_93, hrnPgCatalogVersion(PG_VERSION_93), NULL))->dbPrimary),
+                backupInit(infoBackupNew(PG_VERSION_94, HRN_PG_SYSTEMID_94, hrnPgCatalogVersion(PG_VERSION_94), NULL))->dbPrimary),
             "backup init");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "check checksum-page");
 
@@ -1966,7 +1966,7 @@ testRun(void)
         TEST_TITLE("ok if cluster checksums are enabled and checksum-page is any value");
 
         // Create pg_control with page checksums
-        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_93, .pageChecksum = true);
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_94, .pageChecksum = true);
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -1978,24 +1978,24 @@ testRun(void)
 
         HRN_PQ_SCRIPT_SET(
             // Connect to primary
-            HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_93, TEST_PATH "/pg1", false, NULL, NULL));
+            HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_94, TEST_PATH "/pg1", false, NULL, NULL));
 
         TEST_RESULT_VOID(
             dbFree(
-                backupInit(infoBackupNew(PG_VERSION_93, HRN_PG_SYSTEMID_93, hrnPgCatalogVersion(PG_VERSION_93), NULL))->dbPrimary),
+                backupInit(infoBackupNew(PG_VERSION_94, HRN_PG_SYSTEMID_94, hrnPgCatalogVersion(PG_VERSION_94), NULL))->dbPrimary),
             "backup init");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "check checksum-page");
 
         // Create pg_control without page checksums
-        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_93);
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_94);
 
         HRN_PQ_SCRIPT_SET(
             // Connect to primary
-            HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_93, TEST_PATH "/pg1", false, NULL, NULL));
+            HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_94, TEST_PATH "/pg1", false, NULL, NULL));
 
         TEST_RESULT_VOID(
             dbFree(
-                backupInit(infoBackupNew(PG_VERSION_93, HRN_PG_SYSTEMID_93, hrnPgCatalogVersion(PG_VERSION_93), NULL))->dbPrimary),
+                backupInit(infoBackupNew(PG_VERSION_94, HRN_PG_SYSTEMID_94, hrnPgCatalogVersion(PG_VERSION_94), NULL))->dbPrimary),
             "backup init");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "check checksum-page");
     }
@@ -2007,7 +2007,7 @@ testRun(void)
         TEST_TITLE("sleep retries and stall error");
 
         // Create pg_control
-        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_93);
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_94);
 
         // Create stanza
         StringList *argList = strLstNew();
@@ -2029,7 +2029,7 @@ testRun(void)
 
         HRN_PQ_SCRIPT_SET(
             // Connect to primary
-            HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_93, TEST_PATH "/pg1", false, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_94, TEST_PATH "/pg1", false, NULL, NULL),
 
             // Advance the time slowly to force retries
             HRN_PQ_SCRIPT_TIME_QUERY(1, 1575392588998),
@@ -2043,7 +2043,7 @@ testRun(void)
             HRN_PQ_SCRIPT_TIME_QUERY(1, 1575392589999));
 
         BackupData *backupData = backupInit(
-            infoBackupNew(PG_VERSION_93, HRN_PG_SYSTEMID_93, hrnPgCatalogVersion(PG_VERSION_93), NULL));
+            infoBackupNew(PG_VERSION_94, HRN_PG_SYSTEMID_94, hrnPgCatalogVersion(PG_VERSION_94), NULL));
 
         TEST_RESULT_INT(backupTime(backupData, true), 1575392588, "multiple tries for sleep");
         TEST_ERROR(backupTime(backupData, true), KernelError, "PostgreSQL clock has not advanced to the next second after 3 tries");

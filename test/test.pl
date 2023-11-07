@@ -100,7 +100,7 @@ test.pl [options]
    --coverage-only      only run coverage tests (as a subset of selected tests) for the documentation
 
  Configuration Options:
-   --psql-bin           path to the psql executables (e.g. /usr/lib/postgresql/9.3/bin/)
+   --psql-bin           path to the psql executables (e.g. /usr/lib/postgresql/16/bin/)
    --test-path          path where tests are executed (defaults to ./test)
    --log-level          log level to use for test harness (and Perl tests) (defaults to INFO)
    --log-level-test     log level to use for C tests (defaults to OFF)
