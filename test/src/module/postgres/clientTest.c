@@ -153,6 +153,10 @@ testRun(void)
             {.function = HRN_PQ_SENDQUERY, .param = "[\"" TEST_QUERY "\"]", .resultInt = 1},
             {.function = HRN_PQ_CONSUMEINPUT, .sleep = 600},
             {.function = HRN_PQ_ISBUSY, .resultInt = 1},
+            {.function = HRN_PQ_CONSUMEINPUT},
+            {.function = HRN_PQ_ISBUSY, .resultInt = 1},
+            {.function = HRN_PQ_CONSUMEINPUT},
+            {.function = HRN_PQ_ISBUSY, .resultInt = 1},
             {.function = HRN_PQ_GETCANCEL},
             {.function = HRN_PQ_CANCEL, .resultInt = 1},
             {.function = HRN_PQ_FREECANCEL},
@@ -180,6 +184,8 @@ testRun(void)
             {.function = HRN_PQ_ISBUSY, .resultInt = 1},
             {.function = HRN_PQ_CONSUMEINPUT, .sleep = 300},
             {.function = HRN_PQ_ISBUSY, .resultInt = 1},
+            {.function = HRN_PQ_CONSUMEINPUT},
+            {.function = HRN_PQ_ISBUSY, .resultInt = 1},
             {.function = HRN_PQ_GETCANCEL},
             {.function = HRN_PQ_CANCEL, .resultInt = 0, .resultZ = TEST_PQ_ERROR},
             {.function = HRN_PQ_FREECANCEL});
@@ -201,6 +207,10 @@ testRun(void)
         HRN_PQ_SCRIPT_SET(
             {.function = HRN_PQ_SENDQUERY, .param = "[\"" TEST_QUERY "\"]", .resultInt = 1},
             {.function = HRN_PQ_CONSUMEINPUT, .sleep = 600},
+            {.function = HRN_PQ_ISBUSY, .resultInt = 1},
+            {.function = HRN_PQ_CONSUMEINPUT},
+            {.function = HRN_PQ_ISBUSY, .resultInt = 1},
+            {.function = HRN_PQ_CONSUMEINPUT},
             {.function = HRN_PQ_ISBUSY, .resultInt = 1},
             {.function = HRN_PQ_GETCANCEL, .resultNull = true});
 

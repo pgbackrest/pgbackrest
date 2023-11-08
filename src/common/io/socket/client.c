@@ -97,7 +97,7 @@ sckClientOpen(THIS_VOID)
                 THROW_ON_SYS_ERROR(fd == -1, HostConnectError, "unable to create socket");
 
                 sckOptionSet(fd);
-                sckConnect(fd, this->host, this->port, addressFound, waitRemaining(wait));
+                sckConnect(fd, this->host, this->port, addressFound, this->timeoutConnect);
 
                 // Create the session
                 MEM_CONTEXT_PRIOR_BEGIN()
@@ -129,7 +129,7 @@ sckClientOpen(THIS_VOID)
                     retry = waitMore(wait);
                 }
                 else
-                    retry = waitRemaining(wait) > 0;
+                    retry = waitRemaining(wait);
 
                 // Error when no retries remain
                 if (!retry)

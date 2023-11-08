@@ -16,6 +16,7 @@ struct Wait
     TimeMSec sleepTime;                                             // Next sleep time (in usec)
     TimeMSec sleepPrevTime;                                         // Previous time slept (in usec)
     TimeMSec beginTime;                                             // Time the wait began (in epoch usec)
+    unsigned int retry;                                             // Number of retries
 };
 
 /**********************************************************************************************************************************/
@@ -33,6 +34,7 @@ waitNew(const TimeMSec waitTime)
         *this = (Wait)
         {
             .waitTime = waitTime,
+            .retry = 2,
         };
 
         // Calculate first sleep time -- start with 1/10th of a second for anything >= 1 second
@@ -53,28 +55,14 @@ waitNew(const TimeMSec waitTime)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN TimeMSec
-waitRemaining(Wait *const this)
+FN_EXTERN bool
+waitRemaining(const Wait *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(WAIT, this);
     FUNCTION_TEST_END();
 
-    TimeMSec result = 0;
-
-    // If any wait time remains
-    if (this->sleepTime > 0)
-    {
-        // Returning remaining time, if any, else set sleepTime to 0 so next call to waitMore will return false
-        const TimeMSec elapsedTime = timeMSec() - this->beginTime;
-
-        if (elapsedTime < this->waitTime)
-            result = this->waitTime - elapsedTime;
-        else
-            this->sleepTime = 0;
-    }
-
-    FUNCTION_TEST_RETURN(TIME_MSEC, result);
+    FUNCTION_TEST_RETURN(TIME_MSEC, this->sleepTime > 0 && (this->retry != 0 || (timeMSec() - this->beginTime < this->waitTime)));
 }
 
 /**********************************************************************************************************************************/
@@ -114,13 +102,26 @@ waitMore(Wait *const this)
             // Store new sleep times
             this->sleepPrevTime = this->sleepTime;
             this->sleepTime = sleepTime;
-
-            // Need to wait more
-            result = true;
         }
-        // Else set sleep to zero so next call will return false
+        // Else are there retries left?
+        else if (this->retry != 0)
+        {
+            // Sleep using the last calculated time
+            sleepMSec(this->sleepTime);
+        }
+        // Else set sleep to zero so call will return false
         else
             this->sleepTime = 0;
+
+        // Caller can continue processing
+        if (this->sleepTime > 0)
+        {
+            // Decrement retries
+            if (this->retry != 0)
+                this->retry--;
+
+            result = true;
+        }
     }
 
     FUNCTION_LOG_RETURN(BOOL, result);
