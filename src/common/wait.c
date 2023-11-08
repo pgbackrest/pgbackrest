@@ -16,7 +16,7 @@ struct Wait
     TimeMSec sleepTime;                                             // Next sleep time (in usec)
     TimeMSec sleepPrevTime;                                         // Previous time slept (in usec)
     TimeMSec beginTime;                                             // Time the wait began (in epoch usec)
-    unsigned int retry;                                             // Number of retries
+    unsigned int retry;                                             // Retries remaining
 };
 
 /**********************************************************************************************************************************/
