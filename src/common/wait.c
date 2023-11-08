@@ -56,17 +56,6 @@ waitNew(const TimeMSec waitTime)
 
 /**********************************************************************************************************************************/
 FN_EXTERN bool
-waitRemaining(const Wait *const this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(WAIT, this);
-    FUNCTION_TEST_END();
-
-    FUNCTION_TEST_RETURN(TIME_MSEC, this->sleepTime > 0 && (this->retry != 0 || (timeMSec() - this->beginTime < this->waitTime)));
-}
-
-/**********************************************************************************************************************************/
-FN_EXTERN bool
 waitMore(Wait *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

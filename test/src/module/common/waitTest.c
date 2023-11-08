@@ -23,22 +23,20 @@ testRun(void)
         TimeMSec begin = timeMSec();
 
         TEST_ASSIGN(wait, waitNew(0), "new wait");
-        TEST_RESULT_BOOL(waitRemaining(wait), false, "    check remaining");
         TEST_RESULT_UINT(wait->waitTime, 0, "    check wait time");
         TEST_RESULT_UINT(wait->sleepTime, 0, "    check sleep time");
         TEST_RESULT_UINT(wait->sleepPrevTime, 0, "    check sleep prev time");
         TEST_RESULT_BOOL(waitMore(wait), false, "    no wait more");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("100ms using only waitRemaining()");
+        TEST_TITLE("100ms with retries after time expired");
 
         TEST_ASSIGN(wait, waitNew(100), "new wait");
         sleepMSec(100);
 
         TEST_RESULT_BOOL(waitMore(wait), true, "    time expired, first retry");
-        TEST_RESULT_BOOL(waitRemaining(wait), true, "    time expired, first retry");
         TEST_RESULT_BOOL(waitMore(wait), true, "    time expired, second retry");
-        TEST_RESULT_BOOL(waitRemaining(wait), false, "    time expired, second retry");
+        TEST_RESULT_BOOL(waitMore(wait), false, "    time expired, retries expired");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("200ms wait");

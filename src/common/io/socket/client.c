@@ -119,8 +119,7 @@ sckClientOpen(THIS_VOID)
                 errRetryAdd(errRetry);
 
                 // Increment address info index and reset if the end has been reached. When the end has been reached sleep for a bit
-                // to hopefully have better chance at succeeding, otherwise continue right to the next address as long as there is
-                // some time left.
+                // to hopefully have better chance at succeeding, otherwise continue right to the next address.
                 addrInfoIdx++;
 
                 if (addrInfoIdx >= addrInfoSize(addrInfo))
@@ -129,7 +128,7 @@ sckClientOpen(THIS_VOID)
                     retry = waitMore(wait);
                 }
                 else
-                    retry = waitRemaining(wait);
+                    retry = true;
 
                 // Error when no retries remain
                 if (!retry)
