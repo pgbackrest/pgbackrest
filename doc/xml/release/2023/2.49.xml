@@ -21,6 +21,19 @@
                 <p>Fix regression in retries.</p>
             </release-item>
         </release-bug-list>
+
+        <release-improvement-list>
+            <release-item>
+                <github-pull-request id="2220"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Remove support for <proper>PostgreSQL</proper> <id>9.3</id>.</p>
+            </release-item>
+        </release-improvement-list>
     </release-core-list>
 
     <release-doc-list>
