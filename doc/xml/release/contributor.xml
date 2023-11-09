@@ -525,6 +525,11 @@
     <contributor-id type="github">precision-software</contributor-id>
 </contributor>
 
+<contributor id="jordan.english">
+    <contributor-name-display>Jordan English</contributor-name-display>
+    <contributor-id type="github">jordanenglish</contributor-id>
+</contributor>
+
 <contributor id="julian.zhang">
     <contributor-name-display>Julian Zhang</contributor-name-display>
     <contributor-id type="github">julianzhang98</contributor-id>
@@ -760,6 +765,11 @@
     <contributor-id type="github">nj3110</contributor-id>
 </contributor>
 
+<contributor id="norman.adkins">
+    <contributor-name-display>Norman Adkins</contributor-name-display>
+    <contributor-id type="github">adkinsn</contributor-id>
+</contributor>
+
 <contributor id="nuno.pires">
     <contributor-name-display>Nuno Pires</contributor-name-display>
     <contributor-id type="github">nunopi</contributor-id>
@@ -903,6 +913,11 @@
 <contributor id="t.anastacio">
     <contributor-name-display>T.Anastacio</contributor-name-display>
     <contributor-id type="github">Tiago-Anastacio</contributor-id>
+</contributor>
+
+<contributor id="tanel.suurhans">
+    <contributor-name-display>Tanel Suurhans</contributor-name-display>
+    <contributor-id type="github">tanelsuurhans</contributor-id>
 </contributor>
 
 <contributor id="tim.garton">

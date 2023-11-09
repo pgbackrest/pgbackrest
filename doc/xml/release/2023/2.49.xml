@@ -1,4 +1,28 @@
 <release date="XXXX-XX-XX" version="2.49dev" title="UNDER DEVELOPMENT">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <commit subject="Remove unused header."/>
+                <commit subject="Fix regression in retries.">
+                    <github-issue id="2200"/>
+                    <github-issue id="2214"/>
+                    <github-pull-request id="2221"/>
+                </commit>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="norman.adkins"/>
+                    <release-item-ideator id="tanel.suurhans"/>
+                    <release-item-ideator id="jordan.english"/>
+                    <release-item-ideator id="timothee.peignier"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Fix regression in retries.</p>
+            </release-item>
+        </release-bug-list>
+    </release-core-list>
+
     <release-doc-list>
         <release-feature-list>
             <release-item>
