@@ -1,5 +1,10 @@
 /***********************************************************************************************************************************
 Wait Handler
+
+Used for operations that may fail due to an error or some unexpected condition such as file missing. When waitMore() is called it
+will wait (based on a Fibonacci backoff) before returning to give the error or condition time to clear. Even when the wait time has
+expired before waitMore() is called, there will still be two retries to compensate for operations that use up the entire time limit.
+Any number of retries are allowed within the time limit.
 ***********************************************************************************************************************************/
 #ifndef COMMON_WAIT_H
 #define COMMON_WAIT_H
@@ -18,15 +23,9 @@ Constructors
 FN_EXTERN Wait *waitNew(TimeMSec waitTime);
 
 /***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-// How much time is remaining? Recalculated each time waitMore() is called.
-FN_EXTERN TimeMSec waitRemaining(Wait *this);
-
-/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Wait and return whether the caller has more time left
+// Wait and return true if the caller has more time/retries left
 FN_EXTERN bool waitMore(Wait *this);
 
 /***********************************************************************************************************************************
