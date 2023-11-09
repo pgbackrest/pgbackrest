@@ -525,6 +525,7 @@ testRun(void)
             HRN_PQ_SCRIPT_CHECKPOINT(2),
             HRN_PQ_SCRIPT_CHECKPOINT_TARGET_REACHED_GE_10(2, "5/5", false, "5/4", 100),
             HRN_PQ_SCRIPT_CHECKPOINT_TARGET_REACHED_GE_10(2, "5/5", false, "5/4", 100),
+            HRN_PQ_SCRIPT_CHECKPOINT_TARGET_REACHED_GE_10(2, "5/5", false, "5/4", 100),
 
             // Wait for standby to sync
             HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_GE_10(2, "5/5", false, "5/3"),
