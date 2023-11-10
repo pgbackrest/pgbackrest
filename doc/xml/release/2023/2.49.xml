@@ -48,6 +48,14 @@
 
                 <p>Document maintainer options.</p>
             </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update point-in-time recovery documentation for <postgres/> &gt;= 13.</p>
+            </release-item>
         </release-feature-list>
 
         <release-development-list>
