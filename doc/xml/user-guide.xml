@@ -69,10 +69,6 @@
 
         <variable key="pg-version-nodot" eval="y">my $version = '{[pg-version]}'; $version =~ s/\.//g; return $version;</variable>
 
-        <!-- WAL level should be the minimum required for replication -->
-        <variable key="wal-level" if="{[pg-version]} &lt; 9.6">hot_standby</variable>
-        <variable key="wal-level" if="{[pg-version]} &gt;= 9.6">replica</variable>
-
         <variable key="pg-version-upgrade" if="{[os-type-is-debian]}">16</variable>
         <variable key="pg-version-upgrade" if="{[os-type-is-rhel]}">13</variable>
         <variable key="pg-version-upgrade-nodot" eval="y">my $version = '{[pg-version-upgrade]}'; $version =~ s/\.//g; return $version;</variable>
@@ -128,18 +124,12 @@
         <variable key="postgres-pgpass">{[pg-home-path]}/.pgpass</variable>
 
         <variable key="postgres-log-demo" if="{[os-type-is-debian]}">/var/log/postgresql/postgresql-{[pg-version]}-{[postgres-cluster-demo]}.log</variable>
-        <variable key="postgres-log-demo" if="{[os-type-is-rhel]} &amp;&amp; {[pg-version]} &lt; 10">{[pg-path]}/pg_log/postgresql.log</variable>
-        <variable key="postgres-log-demo" if="{[os-type-is-rhel]} &amp;&amp; {[pg-version]} &gt;= 10">{[pg-path]}/log/postgresql.log</variable>
+        <variable key="postgres-log-demo" if="{[os-type-is-rhel]}">{[pg-path]}/log/postgresql.log</variable>
 
         <variable key="postgres-log-pgstartup-demo" if="{[os-type-is-rhel]}">/var/lib/pgsql/{[pg-version]}/pgstartup.log</variable>
 
-        <variable key="pg-recovery-file-demo" if="{[pg-version]} &lt; 12">recovery.conf</variable>
-        <variable key="pg-recovery-file-demo" if="{[pg-version]} &gt;= 12">postgresql.auto.conf</variable>
+        <variable key="pg-recovery-file-demo">postgresql.auto.conf</variable>
         <variable key="pg-recovery-path-demo">{[pg-path]}/{[pg-recovery-file-demo]}</variable>
-
-        <!-- Select correct WAL switch function based on the version of PostgreSQL -->
-        <variable key="pg-switch-wal" if="{[pg-version]} &lt; 10">pg_switch_xlog</variable>
-        <variable key="pg-switch-wal" if="{[pg-version]} &gt;= 10">pg_switch_wal</variable>
 
         <!-- Azure Settings -->
         <variable key="azure-image">mcr.microsoft.com/azure-storage/azurite</variable>  <!-- Azurite docker image -->
@@ -1280,11 +1270,11 @@
 
                 <postgres-config-option key="archive_command">'{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} archive-push %p'</postgres-config-option>
                 <postgres-config-option key="archive_mode">on</postgres-config-option>
-                <postgres-config-option key="wal_level">{[wal-level]}</postgres-config-option>
+                <postgres-config-option key="wal_level">replica</postgres-config-option>
                 <postgres-config-option key="max_wal_senders">3</postgres-config-option>
             </postgres-config>
 
-            <p><id>%p</id> is how <postgres/> specifies the location of the WAL segment to be archived. Setting <pg-option>wal_level</pg-option> to at least <pg-setting>{[wal-level]}</pg-setting> and increasing <pg-option>max_wal_senders</pg-option> is a good idea even if there are currently no replicas as this will allow them to be added later without restarting the primary cluster.</p>
+            <p><id>%p</id> is how <postgres/> specifies the location of the WAL segment to be archived. Setting <pg-option>wal_level</pg-option> to at least <pg-setting>replica</pg-setting> and increasing <pg-option>max_wal_senders</pg-option> is a good idea even if there are currently no replicas as this will allow them to be added later without restarting the primary cluster.</p>
 
             <p>The <postgres/> cluster must be restarted after making these changes and before performing a backup.</p>
 
@@ -1879,8 +1869,8 @@
                 <!-- Push a few WAL segments to make the example below more interesting -->
                 <execute user="postgres" show="n">
                     <exe-cmd>psql -c "
-                        select pg_create_restore_point('generate WAL'); select {[pg-switch-wal]}();
-                        select pg_create_restore_point('generate WAL'); select {[pg-switch-wal]}();"</exe-cmd>
+                        select pg_create_restore_point('generate WAL'); select pg_switch_wal();
+                        select pg_create_restore_point('generate WAL'); select pg_switch_wal();"</exe-cmd>
                 </execute>
 
                 <execute user="postgres" output="y">
@@ -3146,7 +3136,7 @@
                 <postgres-config-option key="hot_standby">on</postgres-config-option>
                 <postgres-config-option key="archive_command">'{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} archive-push %p'</postgres-config-option>
                 <postgres-config-option key="archive_mode">on</postgres-config-option>
-                <postgres-config-option key="wal_level">{[wal-level]}</postgres-config-option>
+                <postgres-config-option key="wal_level">replica</postgres-config-option>
                 <postgres-config-option key="max_wal_senders">3</postgres-config-option>
                 <postgres-config-option if="{[os-type-is-rhel]}" key="log_filename">'postgresql.log'</postgres-config-option>
             </postgres-config>
@@ -3209,14 +3199,14 @@
 
             <p>So, what went wrong? Since <postgres/> is pulling WAL segments from the archive to perform replication, changes won't be seen on the standby until the WAL segment that contains those changes is pushed from <host>{[host-pg1]}</host>.</p>
 
-            <p>This can be done manually by calling <code>{[pg-switch-wal]}()</code> which pushes the current WAL segment to the archive (a new WAL segment is created to contain further changes).</p>
+            <p>This can be done manually by calling <code>pg_switch_wal()</code> which pushes the current WAL segment to the archive (a new WAL segment is created to contain further changes).</p>
 
             <execute-list host="{[host-pg1]}">
-                <title>Call <code>{[pg-switch-wal]}()</code></title>
+                <title>Call <code>pg_switch_wal()</code></title>
 
                 <execute user="postgres" output="y" filter="n">
                     <exe-cmd>
-                        psql -c "select *, current_timestamp from {[pg-switch-wal]}()";
+                        psql -c "select *, current_timestamp from pg_switch_wal()";
                     </exe-cmd>
                 </execute>
             </execute-list>
@@ -3363,7 +3353,7 @@
                 </execute>
             </execute-list>
 
-            <p>Now when a table is created on <host>{[host-pg1]}</host> it will appear on <host>{[host-pg2]}</host> quickly and without the need to call <code>{[pg-switch-wal]}()</code>.</p>
+            <p>Now when a table is created on <host>{[host-pg1]}</host> it will appear on <host>{[host-pg2]}</host> quickly and without the need to call <code>pg_switch_wal()</code>.</p>
 
             <execute-list host="{[host-pg1]}">
                 <title>Create a new table on the primary</title>
@@ -3507,7 +3497,7 @@
 
                 <postgres-config-option key="archive_command">'{[project-exe]} {[dash]}-stanza=demo-alt archive-push %p'</postgres-config-option>
                 <postgres-config-option key="archive_mode">on</postgres-config-option>
-                <postgres-config-option key="wal_level">{[wal-level]}</postgres-config-option>
+                <postgres-config-option key="wal_level">replica</postgres-config-option>
                 <postgres-config-option key="max_wal_senders">3</postgres-config-option>
                 <postgres-config-option if="{[os-type-is-rhel]}" key="log_filename">'postgresql.log'</postgres-config-option>
             </postgres-config>
@@ -3652,11 +3642,11 @@
                 <execute user="postgres" output="n">
                     <exe-cmd>
                         psql -c "
-                            select pg_create_restore_point('test async push'); select {[pg-switch-wal]}();
-                            select pg_create_restore_point('test async push'); select {[pg-switch-wal]}();
-                            select pg_create_restore_point('test async push'); select {[pg-switch-wal]}();
-                            select pg_create_restore_point('test async push'); select {[pg-switch-wal]}();
-                            select pg_create_restore_point('test async push'); select {[pg-switch-wal]}();"
+                            select pg_create_restore_point('test async push'); select pg_switch_wal();
+                            select pg_create_restore_point('test async push'); select pg_switch_wal();
+                            select pg_create_restore_point('test async push'); select pg_switch_wal();
+                            select pg_create_restore_point('test async push'); select pg_switch_wal();
+                            select pg_create_restore_point('test async push'); select pg_switch_wal();"
                     </exe-cmd>
                 </execute>
 
@@ -4146,7 +4136,7 @@
 
             <postgres-config-option key="archive_command">'{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} archive-push %p'</postgres-config-option>
             <postgres-config-option key="archive_mode">on</postgres-config-option>
-            <postgres-config-option key="wal_level">{[wal-level]}</postgres-config-option>
+            <postgres-config-option key="wal_level">replica</postgres-config-option>
             <postgres-config-option key="max_wal_senders">3</postgres-config-option>
             <postgres-config-option if="{[os-type-is-rhel]}" key="log_filename">'postgresql.log'</postgres-config-option>
         </postgres-config>
