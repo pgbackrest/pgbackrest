@@ -154,21 +154,16 @@ storageReadRemote(THIS_VOID, Buffer *buffer, bool block)
             // Read if not eof
             if (!this->eof)
             {
-                // If the buffer can contain all remaining bytes
-                if (bufRemains(buffer) >= this->remaining)
+                size_t remains = bufRemains(buffer);
+                if (this->remaining < remains)
+                    remains = this->remaining;
+                bufCatSub(buffer, this->block, bufUsed(this->block) - this->remaining, remains);
+                result += remains;
+                this->remaining -= remains;
+                if (this->remaining == 0)
                 {
-                    bufCatSub(buffer, this->block, bufUsed(this->block) - this->remaining, this->remaining);
-
-                    this->remaining = 0;
                     bufFree(this->block);
                     this->block = NULL;
-                }
-                // Else read what we can
-                else
-                {
-                    size_t remains = bufRemains(buffer);
-                    bufCatSub(buffer, this->block, bufUsed(this->block) - this->remaining, remains);
-                    this->remaining -= remains;
                 }
             }
         }
