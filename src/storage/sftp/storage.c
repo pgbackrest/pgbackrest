@@ -958,8 +958,16 @@ storageSftpPathRemove(THIS_VOID, const String *const path, const bool recurse, c
                             {
                                 storageInterfacePathRemoveP(this, file, true);
                             }
+                            // Throw with the sftp error
+                            else if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL)
+                            {
+                                THROW_FMT(
+                                    PathRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE " libssh sftp [%lu]", strZ(file),
+                                    libssh2_sftp_last_error(this->sftpSession));
+                            }
+                            // Throw with the ssh error
                             else
-                                THROW_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE, strZ(file));
+                                THROW_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE " libssh ssh [%d]", strZ(file), rc);
                         }
 
                         // Reset the memory context occasionally so we don't use too much memory or slow down processing
