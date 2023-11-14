@@ -63,10 +63,10 @@ index 8cb24d6ae54..584384875be 100644
      the symbolic link names as they exist in the directory
      <filename>pg_tblspc/</filename> and the full path of each symbolic link.
 diff --git a/doc/src/sgml/func.sgml b/doc/src/sgml/func.sgml
-index d963f0a0a00..ed3e5b9dce6 100644
+index 93f068edcf9..f751cdf7677 100644
 --- a/doc/src/sgml/func.sgml
 +++ b/doc/src/sgml/func.sgml
-@@ -26845,7 +26845,10 @@ LOG:  Grand total: 1651920 bytes in 201 blocks; 622360 free (88 chunks); 1029560
+@@ -26865,7 +26865,10 @@ LOG:  Grand total: 1651920 bytes in 201 blocks; 622360 free (88 chunks); 1029560
            <parameter>label</parameter> <type>text</type>
            <optional>, <parameter>fast</parameter> <type>boolean</type>
            </optional> )
@@ -78,7 +78,7 @@ index d963f0a0a00..ed3e5b9dce6 100644
         </para>
         <para>
          Prepares the server to begin an on-line backup.  The only required
-@@ -26857,6 +26860,13 @@ LOG:  Grand total: 1651920 bytes in 201 blocks; 622360 free (88 chunks); 1029560
+@@ -26877,6 +26880,13 @@ LOG:  Grand total: 1651920 bytes in 201 blocks; 622360 free (88 chunks); 1029560
          as possible.  This forces an immediate checkpoint which will cause a
          spike in I/O operations, slowing any concurrently executing queries.
         </para>
@@ -92,7 +92,7 @@ index d963f0a0a00..ed3e5b9dce6 100644
         <para>
          This function is restricted to superusers by default, but other users
          can be granted EXECUTE to run the function.
-@@ -26872,13 +26882,15 @@ LOG:  Grand total: 1651920 bytes in 201 blocks; 622360 free (88 chunks); 1029560
+@@ -26892,13 +26902,15 @@ LOG:  Grand total: 1651920 bytes in 201 blocks; 622360 free (88 chunks); 1029560
            <optional><parameter>wait_for_archive</parameter> <type>boolean</type>
            </optional> )
          <returnvalue>record</returnvalue>
@@ -112,7 +112,7 @@ index d963f0a0a00..ed3e5b9dce6 100644
          the result of the function and must be written to files in the
          backup area.  These files must not be written to the live data directory
          (doing so will cause PostgreSQL to fail to restart in the event of a
-@@ -26910,13 +26922,16 @@ LOG:  Grand total: 1651920 bytes in 201 blocks; 622360 free (88 chunks); 1029560
+@@ -26930,13 +26942,20 @@ LOG:  Grand total: 1651920 bytes in 201 blocks; 622360 free (88 chunks); 1029560
          backup.
         </para>
         <para>
@@ -127,17 +127,21 @@ index d963f0a0a00..ed3e5b9dce6 100644
 +        the contents of the <filename>pg_control</filename> file and the
 +        second column returns the contents of the
 +        <filename>tablespace_map</filename> file.  These must be stored as part
-+        of the backup and are required as part of the restore process. The
-+        remainder of the columns contain information about the end of the backup
-+        and can be ignored: the <parameter>lsn</parameter> column holds the
-+        ending write-ahead log location, the <parameter>timeline_id</parameter>
-+        column holds the ending timeline, and the <parameter>stop</parameter>
-+        column holds the ending timestamp.
++        of the backup and are required as part of the restore process. Note that
++        <filename>pg_control</filename> will be 512 bytes rather than 8192 bytes
++        as it is normally written on disk. <productname>PostgreSQL</productname>
++        only uses a subset of the first 512 bytes and this size makes the data
++        easier to manipulate. The remainder of the columns contain information
++        about the end of the backup and can be ignored: the
++        <parameter>lsn</parameter> column holds the ending write-ahead log
++        location, the <parameter>timeline_id</parameter> column holds the ending
++        timeline, and the <parameter>stop</parameter> column holds the ending
++        timestamp.
         </para>
         <para>
          This function is restricted to superusers by default, but other users
 diff --git a/doc/src/sgml/ref/pg_rewind.sgml b/doc/src/sgml/ref/pg_rewind.sgml
-index 8e0000d39fb..889add4c5e4 100644
+index 8e0000d39fb..404ce7c65ef 100644
 --- a/doc/src/sgml/ref/pg_rewind.sgml
 +++ b/doc/src/sgml/ref/pg_rewind.sgml
 @@ -400,7 +400,6 @@ GRANT EXECUTE ON function pg_catalog.pg_read_binary_file(text, bigint, bigint, b
@@ -148,17 +152,20 @@ index 8e0000d39fb..889add4c5e4 100644
        <filename>tablespace_map</filename>,
        <filename>pg_internal.init</filename>,
        <filename>postmaster.opts</filename>, and
-@@ -410,7 +409,7 @@ GRANT EXECUTE ON function pg_catalog.pg_read_binary_file(text, bigint, bigint, b
+@@ -410,9 +409,8 @@ GRANT EXECUTE ON function pg_catalog.pg_read_binary_file(text, bigint, bigint, b
      </step>
      <step>
       <para>
 -      Create a <filename>backup_label</filename> file to begin WAL replay at
+-      the checkpoint created at failover and configure the
+-      <filename>pg_control</filename> file with a minimum consistency LSN
 +      Update <filename>pg_control</filename> file to begin WAL replay at
-       the checkpoint created at failover and configure the
-       <filename>pg_control</filename> file with a minimum consistency LSN
++      the checkpoint created at failover and with a minimum consistency LSN
        defined as the result of <literal>pg_current_wal_insert_lsn()</literal>
+       when rewinding from a live source or the last checkpoint LSN when
+       rewinding from a stopped source.
 diff --git a/src/backend/access/transam/xlog.c b/src/backend/access/transam/xlog.c
-index b541be8eec2..34311cfc2b9 100644
+index 1159dff1a69..34b1c484280 100644
 --- a/src/backend/access/transam/xlog.c
 +++ b/src/backend/access/transam/xlog.c
 @@ -74,6 +74,7 @@
@@ -169,7 +176,7 @@ index b541be8eec2..34311cfc2b9 100644
  #include "port/pg_iovec.h"
  #include "postmaster/bgwriter.h"
  #include "postmaster/startup.h"
-@@ -5116,7 +5117,6 @@ StartupXLOG(void)
+@@ -5135,7 +5136,6 @@ StartupXLOG(void)
  	bool		wasShutdown;
  	bool		didCrash;
  	bool		haveTblspcMap;
@@ -177,7 +184,7 @@ index b541be8eec2..34311cfc2b9 100644
  	XLogRecPtr	EndOfLog;
  	TimeLineID	EndOfLogTLI;
  	TimeLineID	newTLI;
-@@ -5240,13 +5240,14 @@ StartupXLOG(void)
+@@ -5259,13 +5259,14 @@ StartupXLOG(void)
  	/*
  	 * Prepare for WAL recovery if needed.
  	 *
@@ -197,7 +204,7 @@ index b541be8eec2..34311cfc2b9 100644
  	checkPoint = ControlFile->checkPointCopy;
  
  	/* initialize shared memory variables from the checkpoint record */
-@@ -5389,20 +5390,6 @@ StartupXLOG(void)
+@@ -5408,20 +5409,6 @@ StartupXLOG(void)
  		 */
  		UpdateControlFile();
  
@@ -218,7 +225,7 @@ index b541be8eec2..34311cfc2b9 100644
  		/*
  		 * If there was a tablespace_map file, it's done its job and the
  		 * symlinks have been created.  We must get rid of the map file so
-@@ -5552,10 +5539,8 @@ StartupXLOG(void)
+@@ -5571,10 +5558,8 @@ StartupXLOG(void)
  	 * (at which point we reset backupStartPoint to be Invalid), for
  	 * backup-from-replica (which can't inject records into the WAL stream),
  	 * that point is when we reach the minRecoveryPoint in pg_control (which
@@ -231,7 +238,19 @@ index b541be8eec2..34311cfc2b9 100644
  	 *
  	 * Note: it is indeed okay to look at the local variable
  	 * LocalMinRecoveryPoint here, even though ControlFile->minRecoveryPoint
-@@ -8725,11 +8710,33 @@ do_pg_backup_stop(BackupState *state, bool waitforarchive)
+@@ -5951,8 +5936,11 @@ ReachedEndOfBackup(XLogRecPtr EndRecPtr, TimeLineID tli)
+ 		ControlFile->minRecoveryPointTLI = tli;
+ 	}
+ 
++	ControlFile->backupCheckPoint = InvalidXLogRecPtr;
+ 	ControlFile->backupStartPoint = InvalidXLogRecPtr;
++	ControlFile->backupStartPointTLI = 0;
+ 	ControlFile->backupEndPoint = InvalidXLogRecPtr;
++	ControlFile->backupFromStandby = false;
+ 	ControlFile->backupEndRequired = false;
+ 	UpdateControlFile();
+ 
+@@ -8744,11 +8732,33 @@ do_pg_backup_stop(BackupState *state, bool waitforarchive)
  	int			seconds_before_warning;
  	int			waits = 0;
  	bool		reported_waiting = false;
@@ -265,7 +284,7 @@ index b541be8eec2..34311cfc2b9 100644
  	/*
  	 * During recovery, we don't need to check WAL level. Because, if WAL
  	 * level is not sufficient, it's impossible to get here during recovery.
-@@ -8831,11 +8838,8 @@ do_pg_backup_stop(BackupState *state, bool waitforarchive)
+@@ -8850,11 +8860,8 @@ do_pg_backup_stop(BackupState *state, bool waitforarchive)
  							 "Enable full_page_writes and run CHECKPOINT on the primary, "
  							 "and then try an online backup again.")));
  
@@ -279,7 +298,7 @@ index b541be8eec2..34311cfc2b9 100644
  	}
  	else
  	{
-@@ -8877,7 +8881,7 @@ do_pg_backup_stop(BackupState *state, bool waitforarchive)
+@@ -8896,7 +8903,7 @@ do_pg_backup_stop(BackupState *state, bool waitforarchive)
  							histfilepath)));
  
  		/* Build and save the contents of the backup history file */
@@ -471,7 +490,7 @@ index 45a70668b1c..2388a60a5e5 100644
  	/* Clean up the session-level state and its memory context */
  	backup_state = NULL;
 diff --git a/src/backend/access/transam/xlogrecovery.c b/src/backend/access/transam/xlogrecovery.c
-index c61566666aa..f43ea39f963 100644
+index c61566666aa..d05ff41f605 100644
 --- a/src/backend/access/transam/xlogrecovery.c
 +++ b/src/backend/access/transam/xlogrecovery.c
 @@ -6,7 +6,7 @@
@@ -548,7 +567,7 @@ index c61566666aa..f43ea39f963 100644
  	 */
  	private = palloc0(sizeof(XLogPageReadPrivate));
  	xlogreader =
-@@ -585,18 +583,34 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
+@@ -585,18 +583,33 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
  	primary_image_masked = (char *) palloc(BLCKSZ);
  
  	/*
@@ -573,13 +592,12 @@ index c61566666aa..f43ea39f963 100644
 +		backupEndRequired = ControlFile->backupEndRequired;
 +		backupFromStandby = ControlFile->backupFromStandby;
 +
-+		/* Clear fields used to initialize recovery */
-+		ControlFile->backupCheckPoint = InvalidXLogRecPtr;
-+		ControlFile->backupStartPointTLI = 0;
++		/*
++		* Clear backupRecoveryRequired in ControlFile so we do not initialize
++		* recovery settings again, but also set a local variable so later logic
++		* knows that backup recovery was initialized.
++		*/
 +		ControlFile->backupRecoveryRequired = false;
-+		ControlFile->backupFromStandby = false;
-+
-+		/* Indicate that recovery was requested */
 +		backupRecoveryRequired = true;
 +
  		/*
@@ -590,7 +608,7 @@ index c61566666aa..f43ea39f963 100644
  		 * archive recovery directly.
  		 */
  		InArchiveRecovery = true;
-@@ -604,8 +618,9 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
+@@ -604,8 +617,9 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
  			EnableStandbyMode();
  
  		/*
@@ -602,7 +620,7 @@ index c61566666aa..f43ea39f963 100644
  		 */
  		record = ReadCheckpointRecord(xlogprefetcher, CheckPointLoc,
  									  CheckPointTLI);
-@@ -620,9 +635,8 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
+@@ -620,9 +634,8 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
  
  			/*
  			 * Make sure that REDO location exists. This may not be the case
@@ -614,7 +632,7 @@ index c61566666aa..f43ea39f963 100644
  			 */
  			if (checkPoint.redo < CheckPointLoc)
  			{
-@@ -631,20 +645,16 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
+@@ -631,20 +644,16 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
  								checkPoint.ThisTimeLineID))
  					ereport(FATAL,
  							(errmsg("could not find redo location referenced by checkpoint record"),
@@ -639,7 +657,7 @@ index c61566666aa..f43ea39f963 100644
  			wasShutdown = false;	/* keep compiler quiet */
  		}
  
-@@ -679,37 +689,32 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
+@@ -679,37 +688,32 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
  			/* tell the caller to delete it later */
  			haveTblspcMap = true;
  		}
@@ -685,7 +703,7 @@ index c61566666aa..f43ea39f963 100644
  						 errdetail("Could not rename file \"%s\" to \"%s\": %m.",
  								   TABLESPACE_MAP, TABLESPACE_MAP_OLD)));
  		}
-@@ -943,7 +948,7 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
+@@ -943,7 +947,7 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
  		 * Any other state indicates that the backup somehow became corrupted
  		 * and we can't sensibly continue with recovery.
  		 */
@@ -694,7 +712,7 @@ index c61566666aa..f43ea39f963 100644
  		{
  			ControlFile->backupStartPoint = checkPoint.redo;
  			ControlFile->backupEndRequired = backupEndRequired;
-@@ -953,7 +958,7 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
+@@ -953,7 +957,7 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
  				if (dbstate_at_startup != DB_IN_ARCHIVE_RECOVERY &&
  					dbstate_at_startup != DB_SHUTDOWNED_IN_RECOVERY)
  					ereport(FATAL,
@@ -703,7 +721,7 @@ index c61566666aa..f43ea39f963 100644
  							 errhint("This means that the backup is corrupted and you will "
  									 "have to use another backup for recovery.")));
  				ControlFile->backupEndPoint = ControlFile->minRecoveryPoint;
-@@ -983,7 +988,6 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
+@@ -983,7 +987,6 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
  	missingContrecPtr = InvalidXLogRecPtr;
  
  	*wasShutdown_ptr = wasShutdown;
@@ -711,7 +729,7 @@ index c61566666aa..f43ea39f963 100644
  	*haveTblspcMap_ptr = haveTblspcMap;
  }
  
-@@ -1156,154 +1160,6 @@ validateRecoveryParameters(void)
+@@ -1156,154 +1159,6 @@ validateRecoveryParameters(void)
  	}
  }
  
@@ -866,8 +884,45 @@ index c61566666aa..f43ea39f963 100644
  /*
   * read_tablespace_map: check to see if a tablespace_map file is present
   *
+diff --git a/src/backend/backup/backup_manifest.c b/src/backend/backup/backup_manifest.c
+index aeed362a9ad..5914d510d4f 100644
+--- a/src/backend/backup/backup_manifest.c
++++ b/src/backend/backup/backup_manifest.c
+@@ -56,7 +56,8 @@ IsManifestEnabled(backup_manifest_info *manifest)
+ void
+ InitializeBackupManifest(backup_manifest_info *manifest,
+ 						 backup_manifest_option want_manifest,
+-						 pg_checksum_type manifest_checksum_type)
++						 pg_checksum_type manifest_checksum_type,
++						 const char *label)
+ {
+ 	memset(manifest, 0, sizeof(backup_manifest_info));
+ 	manifest->checksum_type = manifest_checksum_type;
+@@ -78,9 +79,21 @@ InitializeBackupManifest(backup_manifest_info *manifest,
+ 	manifest->still_checksumming = true;
+ 
+ 	if (want_manifest != MANIFEST_OPTION_NO)
++	{
++		StringInfoData buf;
++
+ 		AppendToManifest(manifest,
+ 						 "{ \"PostgreSQL-Backup-Manifest-Version\": 1,\n"
+-						 "\"Files\": [");
++						 "\"Backup-Label\": ");
++
++		// JSON encode label and add it to manifest
++		initStringInfo(&buf);
++		escape_json(&buf, label);
++		AppendStringToManifest(manifest, buf.data);
++		pfree(buf.data);
++
++		AppendToManifest(manifest, ",\n\"Files\": [");
++	}
+ }
+ 
+ /*
 diff --git a/src/backend/backup/basebackup.c b/src/backend/backup/basebackup.c
-index b537f462197..01d09dbdd21 100644
+index 35dd79babcb..e87c019d371 100644
 --- a/src/backend/backup/basebackup.c
 +++ b/src/backend/backup/basebackup.c
 @@ -22,6 +22,7 @@
@@ -878,15 +933,6 @@ index b537f462197..01d09dbdd21 100644
  #include "commands/defrem.h"
  #include "common/compression.h"
  #include "common/file_perm.h"
-@@ -94,7 +95,7 @@ static bool verify_page_checksum(Page page, XLogRecPtr start_lsn,
- 								 BlockNumber blkno,
- 								 uint16 *expected_checksum);
- static void sendFileWithContent(bbsink *sink, const char *filename,
--								const char *content,
-+								const char *content, int len,
- 								backup_manifest_info *manifest);
- static int64 _tarWriteHeader(bbsink *sink, const char *filename,
- 							 const char *linktarget, struct stat *statbuf,
 @@ -192,10 +193,9 @@ static const struct exclude_list_item excludeFiles[] =
  	{RELCACHE_INIT_FILENAME, true},
  
@@ -900,7 +946,16 @@ index b537f462197..01d09dbdd21 100644
  	{TABLESPACE_MAP, false},
  
  	/*
-@@ -325,23 +325,15 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
+@@ -243,7 +243,7 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
+ 	backup_started_in_recovery = RecoveryInProgress();
+ 
+ 	InitializeBackupManifest(&manifest, opt->manifest,
+-							 opt->manifest_checksum_type);
++							 opt->manifest_checksum_type, opt->label);
+ 
+ 	total_checksum_failures = 0;
+ 
+@@ -308,19 +308,11 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
  
  			if (ti->path == NULL)
  			{
@@ -913,7 +968,7 @@ index b537f462197..01d09dbdd21 100644
 -				/* In the main tar, include the backup_label first... */
 -				backup_label = build_backup_content(backup_state, false);
 -				sendFileWithContent(sink, BACKUP_LABEL_FILE,
--									backup_label, &manifest);
+-									backup_label, -1, &manifest);
 -				pfree(backup_label);
 -
 -				/* Then the tablespace_map file, if required... */
@@ -921,12 +976,7 @@ index b537f462197..01d09dbdd21 100644
  				if (opt->sendtblspcmapfile)
  				{
  					sendFileWithContent(sink, TABLESPACE_MAP,
--										tablespace_map->data, &manifest);
-+										tablespace_map->data, -1, &manifest);
- 					sendtblspclinks = false;
- 				}
- 
-@@ -349,14 +341,14 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
+@@ -332,15 +324,14 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
  				sendDir(sink, ".", 1, false, state.tablespaces,
  						sendtblspclinks, &manifest, InvalidOid);
  
@@ -937,19 +987,20 @@ index b537f462197..01d09dbdd21 100644
 -							 errmsg("could not stat file \"%s\": %m",
 -									XLOG_CONTROL_FILE)));
 -				sendFile(sink, XLOG_CONTROL_FILE, XLOG_CONTROL_FILE, &statbuf,
--						 false, InvalidOid, InvalidOid, &manifest);
+-						 false, InvalidOid, InvalidOid,
+-						 InvalidRelFileNumber, 0, &manifest);
 +				/* End the backup before sending pg_control */
 +				basebackup_progress_wait_wal_archive(&state);
 +				do_pg_backup_stop(backup_state, !opt->nowait);
 +
 +				/* Send copy of pg_control containing recovery info */
 +				sendFileWithContent(sink, XLOG_CONTROL_FILE,
-+								    (char *)backup_state->controlFile,
++									(char *)backup_state->controlFile,
 +									PG_CONTROL_MAX_SAFE_SIZE, &manifest);
  			}
  			else
  			{
-@@ -390,9 +382,6 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
+@@ -374,9 +365,6 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
  			}
  		}
  
@@ -959,54 +1010,16 @@ index b537f462197..01d09dbdd21 100644
  		endptr = backup_state->stoppoint;
  		endtli = backup_state->stoptli;
  
-@@ -601,7 +590,7 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
- 			 * complete segment.
- 			 */
- 			StatusFilePath(pathbuf, walFileName, ".done");
--			sendFileWithContent(sink, pathbuf, "", &manifest);
-+			sendFileWithContent(sink, pathbuf, "", -1, &manifest);
- 		}
- 
- 		/*
-@@ -629,7 +618,7 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
- 
- 			/* unconditionally mark file as archived */
- 			StatusFilePath(pathbuf, fname, ".done");
--			sendFileWithContent(sink, pathbuf, "", &manifest);
-+			sendFileWithContent(sink, pathbuf, "", -1, &manifest);
- 		}
- 
- 		/* Properly terminate the tar file. */
-@@ -1040,22 +1029,21 @@ SendBaseBackup(BaseBackupCmd *cmd)
-  */
- static void
- sendFileWithContent(bbsink *sink, const char *filename, const char *content,
--					backup_manifest_info *manifest)
-+					int len, backup_manifest_info *manifest)
- {
- 	struct stat statbuf;
--	int			bytes_done = 0,
--				len;
-+	int			bytes_done = 0;
- 	pg_checksum_context checksum_ctx;
- 
- 	if (pg_checksum_init(&checksum_ctx, manifest->checksum_type) < 0)
- 		elog(ERROR, "could not initialize checksum of file \"%s\"",
- 			 filename);
- 
--	len = strlen(content);
-+	if (len < 0)
-+		len = strlen(content);
- 
+@@ -1044,7 +1032,6 @@ sendFileWithContent(bbsink *sink, const char *filename, const char *content,
  	/*
--	 * Construct a stat struct for the backup_label file we're injecting in
--	 * the tar.
-+	 * Construct a stat struct for the file we're injecting in the tar.
+ 	 * Construct a stat struct for the file we're injecting in the tar.
  	 */
+-
  	/* Windows doesn't have the concept of uid and gid */
  #ifdef WIN32
+ 	statbuf.st_uid = 0;
 diff --git a/src/backend/catalog/system_functions.sql b/src/backend/catalog/system_functions.sql
-index 35d738d5763..24bf34b45eb 100644
+index 4206752881d..1f37719cf25 100644
 --- a/src/backend/catalog/system_functions.sql
 +++ b/src/backend/catalog/system_functions.sql
 @@ -384,13 +384,15 @@ BEGIN ATOMIC
@@ -1029,6 +1042,52 @@ index 35d738d5763..24bf34b45eb 100644
    RETURNS record STRICT VOLATILE LANGUAGE internal as 'pg_backup_stop'
    PARALLEL RESTRICTED;
  
+diff --git a/src/backend/utils/misc/pg_controldata.c b/src/backend/utils/misc/pg_controldata.c
+index a1003a464dc..44c4e987ce9 100644
+--- a/src/backend/utils/misc/pg_controldata.c
++++ b/src/backend/utils/misc/pg_controldata.c
+@@ -163,8 +163,8 @@ pg_control_checkpoint(PG_FUNCTION_ARGS)
+ Datum
+ pg_control_recovery(PG_FUNCTION_ARGS)
+ {
+-	Datum		values[5];
+-	bool		nulls[5];
++	Datum		values[9];
++	bool		nulls[9];
+ 	TupleDesc	tupdesc;
+ 	HeapTuple	htup;
+ 	ControlFileData *ControlFile;
+@@ -187,15 +187,27 @@ pg_control_recovery(PG_FUNCTION_ARGS)
+ 	values[1] = Int32GetDatum(ControlFile->minRecoveryPointTLI);
+ 	nulls[1] = false;
+ 
+-	values[2] = LSNGetDatum(ControlFile->backupStartPoint);
++	values[2] = LSNGetDatum(ControlFile->backupCheckPoint);
+ 	nulls[2] = false;
+ 
+-	values[3] = LSNGetDatum(ControlFile->backupEndPoint);
++	values[3] = LSNGetDatum(ControlFile->backupStartPoint);
+ 	nulls[3] = false;
+ 
+-	values[4] = BoolGetDatum(ControlFile->backupEndRequired);
++	values[4] = Int32GetDatum(ControlFile->backupStartPointTLI);
+ 	nulls[4] = false;
+ 
++	values[5] = LSNGetDatum(ControlFile->backupEndPoint);
++	nulls[5] = false;
++
++	values[6] = BoolGetDatum(ControlFile->backupRecoveryRequired);
++	nulls[6] = false;
++
++	values[7] = BoolGetDatum(ControlFile->backupFromStandby);
++	nulls[7] = false;
++
++	values[8] = BoolGetDatum(ControlFile->backupEndRequired);
++	nulls[8] = false;
++
+ 	htup = heap_form_tuple(tupdesc, values, nulls);
+ 
+ 	PG_RETURN_DATUM(HeapTupleGetDatum(htup));
 diff --git a/src/bin/pg_basebackup/t/010_pg_basebackup.pl b/src/bin/pg_basebackup/t/010_pg_basebackup.pl
 index b9f5e1266b4..c655cb03352 100644
 --- a/src/bin/pg_basebackup/t/010_pg_basebackup.pl
@@ -1087,6 +1146,23 @@ index 93e0837947c..cc515b622ff 100644
  	printf(_("End-of-backup record required:        %s\n"),
  		   ControlFile->backupEndRequired ? _("yes") : _("no"));
  	printf(_("wal_level setting:                    %s\n"),
+diff --git a/src/bin/pg_resetwal/pg_resetwal.c b/src/bin/pg_resetwal/pg_resetwal.c
+index 3ae3fc06df2..255101ff3a1 100644
+--- a/src/bin/pg_resetwal/pg_resetwal.c
++++ b/src/bin/pg_resetwal/pg_resetwal.c
+@@ -870,8 +870,12 @@ RewriteControlFile(void)
+ 	ControlFile.checkPoint = ControlFile.checkPointCopy.redo;
+ 	ControlFile.minRecoveryPoint = 0;
+ 	ControlFile.minRecoveryPointTLI = 0;
++	ControlFile.backupCheckPoint = 0;
+ 	ControlFile.backupStartPoint = 0;
++	ControlFile.backupStartPointTLI = 0;
+ 	ControlFile.backupEndPoint = 0;
++	ControlFile.backupRecoveryRequired = false;
++	ControlFile.backupFromStandby = false;
+ 	ControlFile.backupEndRequired = false;
+ 
+ 	/*
 diff --git a/src/bin/pg_rewind/filemap.c b/src/bin/pg_rewind/filemap.c
 index ecadd69dc53..213f4e71b88 100644
 --- a/src/bin/pg_rewind/filemap.c
@@ -1107,7 +1183,7 @@ index ecadd69dc53..213f4e71b88 100644
  
  	/*
 diff --git a/src/bin/pg_rewind/pg_rewind.c b/src/bin/pg_rewind/pg_rewind.c
-index bfd44a284e2..f42782e2eab 100644
+index bfd44a284e2..6b23ed4a1c8 100644
 --- a/src/bin/pg_rewind/pg_rewind.c
 +++ b/src/bin/pg_rewind/pg_rewind.c
 @@ -39,9 +39,6 @@ static void perform_rewind(filemap_t *filemap, rewind_source *source,
@@ -1120,8 +1196,12 @@ index bfd44a284e2..f42782e2eab 100644
  static void digestControlFile(ControlFileData *ControlFile,
  							  const char *content, size_t size);
  static void getRestoreCommand(const char *argv0);
-@@ -654,7 +651,7 @@ perform_rewind(filemap_t *filemap, rewind_source *source,
- 		pg_log_info("creating backup label and updating control file");
+@@ -651,10 +648,10 @@ perform_rewind(filemap_t *filemap, rewind_source *source,
+ 	}
+ 
+ 	if (showprogress)
+-		pg_log_info("creating backup label and updating control file");
++		pg_log_info("updating control file");
  
  	/*
 -	 * Create a backup label file, to tell the target where to begin the WAL
@@ -1214,6 +1294,54 @@ index bfd44a284e2..f42782e2eab 100644
  /*
   * Check CRC of control file
   */
+diff --git a/src/bin/pg_verifybackup/parse_manifest.c b/src/bin/pg_verifybackup/parse_manifest.c
+index bf0227c6689..32b08b8c210 100644
+--- a/src/bin/pg_verifybackup/parse_manifest.c
++++ b/src/bin/pg_verifybackup/parse_manifest.c
+@@ -25,6 +25,7 @@ typedef enum
+ 	JM_EXPECT_TOPLEVEL_END,
+ 	JM_EXPECT_TOPLEVEL_FIELD,
+ 	JM_EXPECT_VERSION_VALUE,
++	JM_EXPECT_BACKUP_LABEL,
+ 	JM_EXPECT_FILES_START,
+ 	JM_EXPECT_FILES_NEXT,
+ 	JM_EXPECT_THIS_FILE_FIELD,
+@@ -68,6 +69,9 @@ typedef struct
+ 	JsonManifestParseContext *context;
+ 	JsonManifestSemanticState state;
+ 
++	/* This field is used for parsing the backup label. */
++	char	   *label;
++
+ 	/* These fields are used for parsing objects in the list of files. */
+ 	JsonManifestFileField file_field;
+ 	char	   *pathname;
+@@ -312,6 +316,13 @@ json_manifest_object_field_start(void *state, char *fname, bool isnull)
+ 				break;
+ 			}
+ 
++			/* Is this the backup label? */
++			if (strcmp(fname, "Backup-Label") == 0)
++			{
++				parse->state = JM_EXPECT_BACKUP_LABEL;
++				break;
++			}
++
+ 			/* Is this the list of files? */
+ 			if (strcmp(fname, "Files") == 0)
+ 			{
+@@ -410,6 +421,11 @@ json_manifest_scalar(void *state, char *token, JsonTokenType tokentype)
+ 			parse->state = JM_EXPECT_TOPLEVEL_FIELD;
+ 			break;
+ 
++		case JM_EXPECT_BACKUP_LABEL:
++			parse->label = token,
++			parse->state = JM_EXPECT_TOPLEVEL_FIELD;
++			break;
++
+ 		case JM_EXPECT_THIS_FILE_VALUE:
+ 			switch (parse->file_field)
+ 			{
 diff --git a/src/include/access/xlog.h b/src/include/access/xlog.h
 index a14126d164f..3aac6839a70 100644
 --- a/src/include/access/xlog.h
@@ -1274,8 +1402,22 @@ index ee0bc742782..981266f7340 100644
  extern void PerformWalRecovery(void);
  
  /*
+diff --git a/src/include/backup/backup_manifest.h b/src/include/backup/backup_manifest.h
+index bd7067ae42e..ae8cdda145c 100644
+--- a/src/include/backup/backup_manifest.h
++++ b/src/include/backup/backup_manifest.h
+@@ -37,7 +37,8 @@ typedef struct backup_manifest_info
+ 
+ extern void InitializeBackupManifest(backup_manifest_info *manifest,
+ 									 backup_manifest_option want_manifest,
+-									 pg_checksum_type manifest_checksum_type);
++									 pg_checksum_type manifest_checksum_type,
++									 const char *label);
+ extern void AddFileToBackupManifest(backup_manifest_info *manifest,
+ 									Oid spcoid,
+ 									const char *pathname, size_t size,
 diff --git a/src/include/catalog/pg_control.h b/src/include/catalog/pg_control.h
-index 2ae72e3b266..258da052563 100644
+index 2ae72e3b266..0ea2e733682 100644
 --- a/src/include/catalog/pg_control.h
 +++ b/src/include/catalog/pg_control.h
 @@ -146,6 +146,9 @@ typedef struct ControlFileData
@@ -1288,16 +1430,17 @@ index 2ae72e3b266..258da052563 100644
  	 * backupStartPoint is the redo pointer of the backup start checkpoint, if
  	 * we are recovering from an online backup and haven't reached the end of
  	 * backup yet. It is reset to zero when the end of backup is reached, and
-@@ -160,14 +163,27 @@ typedef struct ControlFileData
+@@ -160,14 +163,28 @@ typedef struct ControlFileData
  	 * pg_control which was backed up last. It is reset to zero when the end
  	 * of backup is reached, and we mustn't start up before that.
  	 *
 +	 * backupRecoveryRequired indicates that the pg_control file was provided
-+	 * by a backup or pg_rewind and recovery settings need to be copied. It will
-+	 * be set to false when the settings have been copied.
++	 * by a backup or pg_rewind and recovery settings need to be copied to the
++	 * appropriate fields. It will be set to false when the settings have been
++	 * copied.
 +	 *
 +	 * backupFromStandby indicates that the backup was taken on a standby. It is
-+	 * require to initialize recovery and set to false afterwards.
++	 * required to initialize recovery and set to false afterwards.
 +	 *
  	 * If backupEndRequired is true, we know for sure that we're restoring
  	 * from a backup, and must see a backup-end record before we can safely
@@ -1310,18 +1453,18 @@ index 2ae72e3b266..258da052563 100644
  	TimeLineID	minRecoveryPointTLI;
 +	XLogRecPtr	backupCheckPoint;
  	XLogRecPtr	backupStartPoint;
-+	TimeLineID	backupStartPointTLI;
  	XLogRecPtr	backupEndPoint;
++	TimeLineID	backupStartPointTLI;
 +	bool 		backupRecoveryRequired;
 +	bool 		backupFromStandby;
  	bool		backupEndRequired;
  
  	/*
 diff --git a/src/include/catalog/pg_proc.dat b/src/include/catalog/pg_proc.dat
-index f14aed422a7..cc8156c57e7 100644
+index fb58dee3bcd..16346f0540a 100644
 --- a/src/include/catalog/pg_proc.dat
 +++ b/src/include/catalog/pg_proc.dat
-@@ -6413,13 +6413,17 @@
+@@ -6427,13 +6427,17 @@
    prosrc => 'pg_terminate_backend' },
  { oid => '2172', descr => 'prepare for taking an online backup',
    proname => 'pg_backup_start', provolatile => 'v', proparallel => 'r',
@@ -1342,3 +1485,16 @@ index f14aed422a7..cc8156c57e7 100644
    prosrc => 'pg_backup_stop' },
  { oid => '3436', descr => 'promote standby server',
    proname => 'pg_promote', provolatile => 'v', prorettype => 'bool',
+@@ -11917,9 +11921,9 @@
+ { oid => '3443',
+   descr => 'pg_controldata recovery state information as a function',
+   proname => 'pg_control_recovery', provolatile => 'v', prorettype => 'record',
+-  proargtypes => '', proallargtypes => '{pg_lsn,int4,pg_lsn,pg_lsn,bool}',
+-  proargmodes => '{o,o,o,o,o}',
+-  proargnames => '{min_recovery_end_lsn,min_recovery_end_timeline,backup_start_lsn,backup_end_lsn,end_of_backup_record_required}',
++  proargtypes => '', proallargtypes => '{pg_lsn,int4,pg_lsn,pg_lsn,int4,pg_lsn,bool,bool,bool}',
++  proargmodes => '{o,o,o,o,o,o,o,o,o}',
++  proargnames => '{min_recovery_end_lsn,min_recovery_end_timeline,backup_checkpoint_lsn,backup_start_lsn,backup_start_tli,backup_end_lsn,backup_recovery_required,backup_from_standby,end_of_backup_record_required}',
+   prosrc => 'pg_control_recovery' },
+ 
+ { oid => '3444',
