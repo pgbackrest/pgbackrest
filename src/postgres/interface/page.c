@@ -1,5 +1,7 @@
 /***********************************************************************************************************************************
-PostgreSQL Page Interface
+PostgreSQL Page Checksum
+
+Adapted from PostgreSQL src/include/storage/checksum_impl.h.
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
@@ -7,65 +9,99 @@ PostgreSQL Page Interface
 
 #include "postgres/interface/static.vendor.h"
 
-/* number of checksums to calculate in parallel */
-#define N_SUMS 32
-/* prime multiplier of FNV-1a hash */
-#define FNV_PRIME 16777619
+/***********************************************************************************************************************************
+Page checksum calculation
+***********************************************************************************************************************************/
+// Number of checksums to calculate in parallel
+#define PARALLEL_SUM                                                32
 
-/*
- * Base offsets to initialize each of the parallel FNV hashes into a
- * different initial state.
- */
-static const uint32 checksumBaseOffsets[N_SUMS] = {
-    0x5B1F36E9, 0xB8525960, 0x02AB50AA, 0x1DE66D2A,
-    0x79FF467A, 0x9BB9F8A3, 0x217E7CD2, 0x83E13D2C,
-    0xF8D4474F, 0xE39EB970, 0x42C6AE16, 0x993216FA,
-    0x7B093B5D, 0x98DAFF3C, 0xF718902A, 0x0B1C9CDB,
-    0xE58F764B, 0x187636BC, 0x5D7B3BB1, 0xE73DE7DE,
-    0x92BEC979, 0xCCA6C0B2, 0x304A0979, 0x85AA43D4,
-    0x783125BB, 0x6CA8EAA2, 0xE407EAC6, 0x4B5CFC3E,
-    0x9FBF8C76, 0x15CA20BE, 0xF2CA9FD3, 0x959BD756
-};
+// Prime multiplier of FNV-1a hash
+#define FNV_PRIME                                                   16777619
 
-/*
- * Calculate one round of the checksum.
- */
-#define CHECKSUM_COMP(checksum, value) \
-do { \
-    uint32 __tmp = (checksum) ^ (value); \
-    (checksum) = __tmp * FNV_PRIME ^ (__tmp >> 17); \
-} while (0)
+// Calculate one round of the checksum
+#define CHECKSUM_ROUND(checksum, value)                                                                                            \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        const uint32_t tmp = (checksum) ^ (value);                                                                                 \
+        checksum = tmp * FNV_PRIME ^ (tmp >> 17);                                                                                  \
+    } while (0)
+
+// Main calculation loop
+#define CHECKSUM_CASE(pageSize)                                                                                                    \
+    case pageSize:                                                                                                                 \
+        for (uint32_t i = 0; i < (uint32) (pageSize / (sizeof(uint32) * PARALLEL_SUM)); i++)                                       \
+            for (uint32_t j = 0; j < PARALLEL_SUM; j++)                                                                            \
+                CHECKSUM_ROUND(sums[j], ((PgPageChecksum##pageSize *)page)->data[i][j]);                                           \
+                                                                                                                                   \
+        break;
 
 /***********************************************************************************************************************************
-Include the page checksum code
+Define unions that will make the code valid under strict aliasing for each page size
 ***********************************************************************************************************************************/
-#include "postgres/interface/pageChecksum.vendor.c.inc"
+#define CHECKSUM_UNION(pageSize)                                                                                                   \
+    typedef union                                                                                                                  \
+    {                                                                                                                              \
+        PageHeaderData phdr;                                                                                                       \
+        uint32_t data[pageSize / (sizeof(uint32_t) * PARALLEL_SUM)][PARALLEL_SUM];                                                 \
+    } PgPageChecksum##pageSize;
 
-ADD_PAGE_SIZE(pgPageSize1);
-ADD_PAGE_SIZE(pgPageSize2);
-ADD_PAGE_SIZE(pgPageSize4);
-ADD_PAGE_SIZE(pgPageSize8);
-ADD_PAGE_SIZE(pgPageSize16);
-ADD_PAGE_SIZE(pgPageSize32);
+CHECKSUM_UNION(pgPageSize1);
+CHECKSUM_UNION(pgPageSize2);
+CHECKSUM_UNION(pgPageSize4);
+CHECKSUM_UNION(pgPageSize8);
+CHECKSUM_UNION(pgPageSize16);
+CHECKSUM_UNION(pgPageSize32);
 
 /**********************************************************************************************************************************/
 FN_EXTERN uint16_t
-pgPageChecksum(const unsigned char *page, uint32_t blockNo, PgPageSize pageSize)
+pgPageChecksum(unsigned char *const page, const uint32_t blockNo, const PgPageSize pageSize)
 {
+    // Save pd_checksum and temporarily set it to zero, so that the checksum calculation isn't affected by the old checksum stored
+    // on the page. Restore it after, because actually updating the checksum is NOT part of the API of this function.
+    const uint16_t checksumPrior = ((PageHeaderData *)page)->pd_checksum;
+    ((PageHeaderData *)page)->pd_checksum = 0;
+
+    // Initialize partial checksums to their corresponding offsets
+    uint32_t sums[PARALLEL_SUM] =
+    {
+        0x5b1f36e9, 0xb8525960, 0x02ab50aa, 0x1de66d2a, 0x79ff467a, 0x9bb9f8a3, 0x217e7cd2, 0x83e13d2c,
+        0xf8d4474f, 0xe39eb970, 0x42c6ae16, 0x993216fa, 0x7b093b5d, 0x98daff3c, 0xf718902a, 0x0b1c9cdb,
+        0xe58f764b, 0x187636bc, 0x5d7b3bb1, 0xe73de7de, 0x92bec979, 0xcca6c0b2, 0x304a0979, 0x85aa43d4,
+        0x783125bb, 0x6ca8eaa2, 0xe407eac6, 0x4b5cfc3e, 0x9fbf8c76, 0x15ca20be, 0xf2ca9fd3, 0x959bd756,
+    };
+
+    // Main checksum calculation
     switch (pageSize)
     {
-        #define ADD_CASE(SZ) case SZ: return pg_checksum_page ## SZ((const char *)page, blockNo);
+        CHECKSUM_CASE(pgPageSize8);                                 // The default page size should be checked first
+        CHECKSUM_CASE(pgPageSize1);
+        CHECKSUM_CASE(pgPageSize2);
+        CHECKSUM_CASE(pgPageSize4);
+        CHECKSUM_CASE(pgPageSize16);
+        CHECKSUM_CASE(pgPageSize32);
 
-        ADD_CASE(pgPageSize8);     // The default page size should be checked first
-        ADD_CASE(pgPageSize1);
-        ADD_CASE(pgPageSize2);
-        ADD_CASE(pgPageSize4);
-        ADD_CASE(pgPageSize16);
-        ADD_CASE(pgPageSize32);
-
-        #undef ADD_CASE
+        default:
+            THROW(AssertError, "Invalid page size");
     }
 
-    THROW(AssertError, "Invalid page size");
-    return 0;
+    // Add in two rounds of zeroes for additional mixing
+    for (uint32_t i = 0; i < 2; i++)
+        for (uint32_t j = 0; j < PARALLEL_SUM; j++)
+            CHECKSUM_ROUND(sums[j], 0);
+
+    // Xor fold partial checksums together
+    uint32 result = 0;
+
+    for (uint32_t i = 0; i < PARALLEL_SUM; i++)
+        result ^= sums[i];
+
+    // Restore prior checksum
+    ((PageHeaderData *)page)->pd_checksum = checksumPrior;
+
+    // Mix in the block number to detect transposed pages
+    result ^= blockNo;
+
+    // Reduce to a uint16 (to fit in the pd_checksum field) with an offset of one. That avoids checksums of zero, which seems like a
+    // good idea.
+    return (uint16_t)((result % 65535) + 1);
 }

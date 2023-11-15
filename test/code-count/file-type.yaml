@@ -2019,10 +2019,6 @@ src/postgres/interface/page.c:
   class: core
   type: c
 
-src/postgres/interface/pageChecksum.vendor.c.inc:
-  class: core/vendor
-  type: c
-
 src/postgres/interface/static.vendor.h:
   class: core/vendor
   type: c/h
