@@ -41,12 +41,12 @@ Include the page checksum code
 ***********************************************************************************************************************************/
 #include "postgres/interface/pageChecksum.vendor.c.inc"
 
-ADD_PAGE_SIZE(PG_PAGE_SIZE_1);
-ADD_PAGE_SIZE(PG_PAGE_SIZE_2);
-ADD_PAGE_SIZE(PG_PAGE_SIZE_4);
-ADD_PAGE_SIZE(PG_PAGE_SIZE_8);
-ADD_PAGE_SIZE(PG_PAGE_SIZE_16);
-ADD_PAGE_SIZE(PG_PAGE_SIZE_32);
+ADD_PAGE_SIZE(pgPageSize1);
+ADD_PAGE_SIZE(pgPageSize2);
+ADD_PAGE_SIZE(pgPageSize4);
+ADD_PAGE_SIZE(pgPageSize8);
+ADD_PAGE_SIZE(pgPageSize16);
+ADD_PAGE_SIZE(pgPageSize32);
 
 /**********************************************************************************************************************************/
 FN_EXTERN uint16_t
@@ -56,12 +56,12 @@ pgPageChecksum(const unsigned char *page, uint32_t blockNo, unsigned int pageSiz
     {
         #define ADD_CASE(SZ) case SZ: return pg_checksum_page ## SZ((const char *)page, blockNo);
 
-        ADD_CASE(PG_PAGE_SIZE_8);     // The default page size should be checked first
-        ADD_CASE(PG_PAGE_SIZE_1);
-        ADD_CASE(PG_PAGE_SIZE_2);
-        ADD_CASE(PG_PAGE_SIZE_4);
-        ADD_CASE(PG_PAGE_SIZE_16);
-        ADD_CASE(PG_PAGE_SIZE_32);
+        ADD_CASE(pgPageSize8);     // The default page size should be checked first
+        ADD_CASE(pgPageSize1);
+        ADD_CASE(pgPageSize2);
+        ADD_CASE(pgPageSize4);
+        ADD_CASE(pgPageSize16);
+        ADD_CASE(pgPageSize32);
 
         #undef ADD_CASE
     }

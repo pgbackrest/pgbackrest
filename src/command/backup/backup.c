@@ -2102,7 +2102,7 @@ backupProcess(const BackupData *const backupData, Manifest *const manifest, cons
             .compressLevel = cfgOptionInt(cfgOptCompressLevel),
             .cipherType = cfgOptionStrId(cfgOptRepoCipherType),
             .cipherSubPass = manifestCipherSubPass(manifest),
-            .pageSize = backupData->dbPrimary ? dbPgControl(backupData->dbPrimary).pageSize : PG_PAGE_SIZE_8,
+            .pageSize = backupData->dbPrimary ? dbPgControl(backupData->dbPrimary).pageSize : pgPageSize8,
             .delta = cfgOptionBool(cfgOptDelta),
             .bundle = cfgOptionBool(cfgOptRepoBundle),
             .bundleId = 1,
