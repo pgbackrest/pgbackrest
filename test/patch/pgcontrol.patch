@@ -1,3 +1,24 @@
+diff --git a/doc/src/sgml/backup-manifest.sgml b/doc/src/sgml/backup-manifest.sgml
+index 771be1310a1..c113ff3970a 100644
+--- a/doc/src/sgml/backup-manifest.sgml
++++ b/doc/src/sgml/backup-manifest.sgml
+@@ -42,6 +42,16 @@
+     </listitem>
+    </varlistentry>
+ 
++   <varlistentry>
++    <term><literal>Backup-Label</literal></term>
++    <listitem>
++     <para>
++      Backup label specified by the user. This may be set to a default value
++      if no backup label was specified.
++     </para>
++    </listitem>
++   </varlistentry>
++
+    <varlistentry>
+     <term><literal>Files</literal></term>
+     <listitem>
 diff --git a/doc/src/sgml/backup.sgml b/doc/src/sgml/backup.sgml
 index 8cb24d6ae54..584384875be 100644
 --- a/doc/src/sgml/backup.sgml
@@ -63,7 +84,7 @@ index 8cb24d6ae54..584384875be 100644
      the symbolic link names as they exist in the directory
      <filename>pg_tblspc/</filename> and the full path of each symbolic link.
 diff --git a/doc/src/sgml/func.sgml b/doc/src/sgml/func.sgml
-index 93f068edcf9..f751cdf7677 100644
+index 93f068edcf9..5f27cce1610 100644
 --- a/doc/src/sgml/func.sgml
 +++ b/doc/src/sgml/func.sgml
 @@ -26865,7 +26865,10 @@ LOG:  Grand total: 1651920 bytes in 201 blocks; 622360 free (88 chunks); 1029560
@@ -112,7 +133,7 @@ index 93f068edcf9..f751cdf7677 100644
          the result of the function and must be written to files in the
          backup area.  These files must not be written to the live data directory
          (doing so will cause PostgreSQL to fail to restart in the event of a
-@@ -26930,13 +26942,20 @@ LOG:  Grand total: 1651920 bytes in 201 blocks; 622360 free (88 chunks); 1029560
+@@ -26930,13 +26942,18 @@ LOG:  Grand total: 1651920 bytes in 201 blocks; 622360 free (88 chunks); 1029560
          backup.
         </para>
         <para>
@@ -128,11 +149,9 @@ index 93f068edcf9..f751cdf7677 100644
 +        second column returns the contents of the
 +        <filename>tablespace_map</filename> file.  These must be stored as part
 +        of the backup and are required as part of the restore process. Note that
-+        <filename>pg_control</filename> will be 512 bytes rather than 8192 bytes
-+        as it is normally written on disk. <productname>PostgreSQL</productname>
-+        only uses a subset of the first 512 bytes and this size makes the data
-+        easier to manipulate. The remainder of the columns contain information
-+        about the end of the backup and can be ignored: the
++        <filename>pg_control</filename> will be 8192KiB to match the on-disk
++        size of <filename>pg_control</filename>. The remainder of the columns
++        contain information about the end of the backup and can be ignored: the
 +        <parameter>lsn</parameter> column holds the ending write-ahead log
 +        location, the <parameter>timeline_id</parameter> column holds the ending
 +        timeline, and the <parameter>stop</parameter> column holds the ending
@@ -165,7 +184,7 @@ index 8e0000d39fb..404ce7c65ef 100644
        when rewinding from a live source or the last checkpoint LSN when
        rewinding from a stopped source.
 diff --git a/src/backend/access/transam/xlog.c b/src/backend/access/transam/xlog.c
-index 1159dff1a69..34b1c484280 100644
+index 1159dff1a69..928cad06519 100644
 --- a/src/backend/access/transam/xlog.c
 +++ b/src/backend/access/transam/xlog.c
 @@ -74,6 +74,7 @@
@@ -264,7 +283,7 @@ index 1159dff1a69..34b1c484280 100644
 +	 * Create a copy of control data and update it with fields required for
 +	 * recovery. Also recalculate the CRC.
 +	 */
-+	memset(controlFileCopy, 0, PG_CONTROL_MAX_SAFE_SIZE);
++	memset(controlFileCopy, 0, PG_CONTROL_FILE_SIZE);
 +
 +	LWLockAcquire(ControlFileLock, LW_SHARED);
 +	memcpy(controlFileCopy, ControlFile, sizeof(ControlFileData));
@@ -381,7 +400,7 @@ index 21d68133ae1..22c95f3c4c9 100644
  	data = result->data;
  	pfree(result);
 diff --git a/src/backend/access/transam/xlogfuncs.c b/src/backend/access/transam/xlogfuncs.c
-index 45a70668b1c..2388a60a5e5 100644
+index 45a70668b1c..d81d36705f3 100644
 --- a/src/backend/access/transam/xlogfuncs.c
 +++ b/src/backend/access/transam/xlogfuncs.c
 @@ -53,7 +53,7 @@ static MemoryContext backupcontext = NULL;
@@ -475,9 +494,9 @@ index 45a70668b1c..2388a60a5e5 100644
 -	values[1] = CStringGetTextDatum(backup_label);
 -	values[2] = CStringGetTextDatum(tablespace_map->data);
 +	/* Build the contents of pg_control */
-+	pg_control_bytea = (bytea *) palloc(PG_CONTROL_MAX_SAFE_SIZE + VARHDRSZ);
-+	SET_VARSIZE(pg_control_bytea, PG_CONTROL_MAX_SAFE_SIZE + VARHDRSZ);
-+	memcpy(VARDATA(pg_control_bytea), backup_state->controlFile, PG_CONTROL_MAX_SAFE_SIZE);
++	pg_control_bytea = (bytea *) palloc(PG_CONTROL_FILE_SIZE + VARHDRSZ);
++	SET_VARSIZE(pg_control_bytea, PG_CONTROL_FILE_SIZE + VARHDRSZ);
++	memcpy(VARDATA(pg_control_bytea), backup_state->controlFile, PG_CONTROL_FILE_SIZE);
  
 -	/* Deallocate backup-related variables */
 -	pfree(backup_label);
@@ -885,7 +904,7 @@ index c61566666aa..d05ff41f605 100644
   * read_tablespace_map: check to see if a tablespace_map file is present
   *
 diff --git a/src/backend/backup/backup_manifest.c b/src/backend/backup/backup_manifest.c
-index aeed362a9ad..5914d510d4f 100644
+index aeed362a9ad..7348cc111e0 100644
 --- a/src/backend/backup/backup_manifest.c
 +++ b/src/backend/backup/backup_manifest.c
 @@ -56,7 +56,8 @@ IsManifestEnabled(backup_manifest_info *manifest)
@@ -910,7 +929,7 @@ index aeed362a9ad..5914d510d4f 100644
 -						 "\"Files\": [");
 +						 "\"Backup-Label\": ");
 +
-+		// JSON encode label and add it to manifest
++		/* JSON encode label and add it to manifest */
 +		initStringInfo(&buf);
 +		escape_json(&buf, label);
 +		AppendStringToManifest(manifest, buf.data);
@@ -922,7 +941,7 @@ index aeed362a9ad..5914d510d4f 100644
  
  /*
 diff --git a/src/backend/backup/basebackup.c b/src/backend/backup/basebackup.c
-index 35dd79babcb..e87c019d371 100644
+index 35dd79babcb..967ef58a30b 100644
 --- a/src/backend/backup/basebackup.c
 +++ b/src/backend/backup/basebackup.c
 @@ -22,6 +22,7 @@
@@ -996,7 +1015,7 @@ index 35dd79babcb..e87c019d371 100644
 +				/* Send copy of pg_control containing recovery info */
 +				sendFileWithContent(sink, XLOG_CONTROL_FILE,
 +									(char *)backup_state->controlFile,
-+									PG_CONTROL_MAX_SAFE_SIZE, &manifest);
++									PG_CONTROL_FILE_SIZE, &manifest);
  			}
  			else
  			{
@@ -1295,53 +1314,163 @@ index bfd44a284e2..6b23ed4a1c8 100644
   * Check CRC of control file
   */
 diff --git a/src/bin/pg_verifybackup/parse_manifest.c b/src/bin/pg_verifybackup/parse_manifest.c
-index bf0227c6689..32b08b8c210 100644
+index bf0227c6689..d1ebae3862a 100644
 --- a/src/bin/pg_verifybackup/parse_manifest.c
 +++ b/src/bin/pg_verifybackup/parse_manifest.c
 @@ -25,6 +25,7 @@ typedef enum
  	JM_EXPECT_TOPLEVEL_END,
  	JM_EXPECT_TOPLEVEL_FIELD,
  	JM_EXPECT_VERSION_VALUE,
-+	JM_EXPECT_BACKUP_LABEL,
++	JM_EXPECT_BACKUP_LABEL_VALUE,
  	JM_EXPECT_FILES_START,
  	JM_EXPECT_FILES_NEXT,
  	JM_EXPECT_THIS_FILE_FIELD,
-@@ -68,6 +69,9 @@ typedef struct
- 	JsonManifestParseContext *context;
- 	JsonManifestSemanticState state;
- 
-+	/* This field is used for parsing the backup label. */
-+	char	   *label;
-+
- 	/* These fields are used for parsing objects in the list of files. */
- 	JsonManifestFileField file_field;
- 	char	   *pathname;
-@@ -312,6 +316,13 @@ json_manifest_object_field_start(void *state, char *fname, bool isnull)
+@@ -312,6 +313,13 @@ json_manifest_object_field_start(void *state, char *fname, bool isnull)
  				break;
  			}
  
 +			/* Is this the backup label? */
 +			if (strcmp(fname, "Backup-Label") == 0)
 +			{
-+				parse->state = JM_EXPECT_BACKUP_LABEL;
++				parse->state = JM_EXPECT_BACKUP_LABEL_VALUE;
 +				break;
 +			}
 +
  			/* Is this the list of files? */
  			if (strcmp(fname, "Files") == 0)
  			{
-@@ -410,6 +421,11 @@ json_manifest_scalar(void *state, char *token, JsonTokenType tokentype)
+@@ -410,6 +418,11 @@ json_manifest_scalar(void *state, char *token, JsonTokenType tokentype)
  			parse->state = JM_EXPECT_TOPLEVEL_FIELD;
  			break;
  
-+		case JM_EXPECT_BACKUP_LABEL:
-+			parse->label = token,
++		case JM_EXPECT_BACKUP_LABEL_VALUE:
++			parse->context->label_cb(parse->context, token);
 +			parse->state = JM_EXPECT_TOPLEVEL_FIELD;
 +			break;
 +
  		case JM_EXPECT_THIS_FILE_VALUE:
  			switch (parse->file_field)
  			{
+diff --git a/src/bin/pg_verifybackup/parse_manifest.h b/src/bin/pg_verifybackup/parse_manifest.h
+index 7387a917a21..e7528dc4bac 100644
+--- a/src/bin/pg_verifybackup/parse_manifest.h
++++ b/src/bin/pg_verifybackup/parse_manifest.h
+@@ -21,6 +21,8 @@
+ struct JsonManifestParseContext;
+ typedef struct JsonManifestParseContext JsonManifestParseContext;
+ 
++typedef void (*json_manifest_label_callback) (JsonManifestParseContext *,
++											  char *label);
+ typedef void (*json_manifest_perfile_callback) (JsonManifestParseContext *,
+ 												char *pathname,
+ 												size_t size, pg_checksum_type checksum_type,
+@@ -35,6 +37,7 @@ typedef void (*json_manifest_error_callback) (JsonManifestParseContext *,
+ struct JsonManifestParseContext
+ {
+ 	void	   *private_data;
++	json_manifest_label_callback label_cb;
+ 	json_manifest_perfile_callback perfile_cb;
+ 	json_manifest_perwalrange_callback perwalrange_cb;
+ 	json_manifest_error_callback error_cb;
+diff --git a/src/bin/pg_verifybackup/pg_verifybackup.c b/src/bin/pg_verifybackup/pg_verifybackup.c
+index 059836f0e64..bfd18cef21d 100644
+--- a/src/bin/pg_verifybackup/pg_verifybackup.c
++++ b/src/bin/pg_verifybackup/pg_verifybackup.c
+@@ -99,6 +99,7 @@ typedef struct manifest_wal_range
+ typedef struct parser_context
+ {
+ 	manifest_files_hash *ht;
++	char *label;
+ 	manifest_wal_range *first_wal_range;
+ 	manifest_wal_range *last_wal_range;
+ } parser_context;
+@@ -115,10 +116,12 @@ typedef struct verifier_context
+ 	bool		saw_any_error;
+ } verifier_context;
+ 
+-static void parse_manifest_file(char *manifest_path,
++static void parse_manifest_file(char *manifest_path, char **label_p,
+ 								manifest_files_hash **ht_p,
+ 								manifest_wal_range **first_wal_range_p);
+ 
++static void record_manifest_details_for_label(JsonManifestParseContext *context,
++											  char *label);
+ static void record_manifest_details_for_file(JsonManifestParseContext *context,
+ 											 char *pathname, size_t size,
+ 											 pg_checksum_type checksum_type,
+@@ -187,6 +190,7 @@ main(int argc, char **argv)
+ 	verifier_context context;
+ 	manifest_wal_range *first_wal_range;
+ 	char	   *manifest_path = NULL;
++	char 	   *label = NULL;
+ 	bool		no_parse_wal = false;
+ 	bool		quiet = false;
+ 	char	   *wal_directory = NULL;
+@@ -338,7 +342,7 @@ main(int argc, char **argv)
+ 	 * the manifest as fatal; there doesn't seem to be much point in trying to
+ 	 * verify the backup directory against a corrupted manifest.
+ 	 */
+-	parse_manifest_file(manifest_path, &context.ht, &first_wal_range);
++	parse_manifest_file(manifest_path, &label, &context.ht, &first_wal_range);
+ 
+ 	/*
+ 	 * Now scan the files in the backup directory. At this stage, we verify
+@@ -386,7 +390,8 @@ main(int argc, char **argv)
+  * mentions.
+  */
+ static void
+-parse_manifest_file(char *manifest_path, manifest_files_hash **ht_p,
++parse_manifest_file(char *manifest_path, char **label_p,
++					manifest_files_hash **ht_p,
+ 					manifest_wal_range **first_wal_range_p)
+ {
+ 	int			fd;
+@@ -436,10 +441,12 @@ parse_manifest_file(char *manifest_path, manifest_files_hash **ht_p,
+ 	close(fd);
+ 
+ 	/* Parse the manifest. */
++	private_context.label = NULL;
+ 	private_context.ht = ht;
+ 	private_context.first_wal_range = NULL;
+ 	private_context.last_wal_range = NULL;
+ 	context.private_data = &private_context;
++	context.label_cb = record_manifest_details_for_label;
+ 	context.perfile_cb = record_manifest_details_for_file;
+ 	context.perwalrange_cb = record_manifest_details_for_wal_range;
+ 	context.error_cb = report_manifest_error;
+@@ -448,7 +455,8 @@ parse_manifest_file(char *manifest_path, manifest_files_hash **ht_p,
+ 	/* Done with the buffer. */
+ 	pfree(buffer);
+ 
+-	/* Return the file hash table and WAL range list we constructed. */
++	/* Return the label, file hash table, and WAL range list we constructed. */
++	*label_p = private_context.label;
+ 	*ht_p = ht;
+ 	*first_wal_range_p = private_context.first_wal_range;
+ }
+@@ -471,6 +479,22 @@ report_manifest_error(JsonManifestParseContext *context, const char *fmt,...)
+ 	exit(1);
+ }
+ 
++/*
++ * Record label extracted from the backup manifest.
++ */
++static void
++record_manifest_details_for_label(JsonManifestParseContext *context,
++								  char *label)
++{
++	parser_context *pcxt = context->private_data;
++
++	/* Allocate memory for the label. */
++	pcxt->label = palloc(strlen(label) + 1);
++
++	/* Initialize the label. */
++	strcpy(pcxt->label, label);
++}
++
+ /*
+  * Record details extracted from the backup manifest for one file.
+  */
 diff --git a/src/include/access/xlog.h b/src/include/access/xlog.h
 index a14126d164f..3aac6839a70 100644
 --- a/src/include/access/xlog.h
@@ -1356,7 +1485,7 @@ index a14126d164f..3aac6839a70 100644
  #define TABLESPACE_MAP			"tablespace_map"
  #define TABLESPACE_MAP_OLD		"tablespace_map.old"
 diff --git a/src/include/access/xlogbackup.h b/src/include/access/xlogbackup.h
-index 1611358137b..f2c3672fed6 100644
+index 1611358137b..9be80a4f7dd 100644
 --- a/src/include/access/xlogbackup.h
 +++ b/src/include/access/xlogbackup.h
 @@ -15,6 +15,7 @@
@@ -1367,7 +1496,7 @@ index 1611358137b..f2c3672fed6 100644
  #include "pgtime.h"
  
  /* Structure to hold backup state. */
-@@ -33,9 +34,18 @@ typedef struct BackupState
+@@ -33,9 +34,16 @@ typedef struct BackupState
  	XLogRecPtr	stoppoint;		/* backup stop WAL location */
  	TimeLineID	stoptli;		/* backup stop TLI */
  	pg_time_t	stoptime;		/* backup stop time */
@@ -1375,12 +1504,10 @@ index 1611358137b..f2c3672fed6 100644
 +	/*
 +	 * After pg_backup_stop() returns this field will contain a copy of
 +	 * pg_control that should be stored with the backup. Fields have been
-+	 * updated for recovery and the CRC has been recalculated. The buffer
-+	 * is padded to PG_CONTROL_MAX_SAFE_SIZE so that pg_control is always
-+	 * a consistent size but smaller (and hopefully easier to handle) than
-+	 * PG_CONTROL_FILE_SIZE. Bytes after sizeof(ControlFileData) are zeroed.
++	 * updated for recovery and the CRC has been recalculated. Bytes after
++	 * sizeof(ControlFileData) are zeroed.
 +	 */
-+	uint8_t controlFile[PG_CONTROL_MAX_SAFE_SIZE];
++	uint8_t controlFile[PG_CONTROL_FILE_SIZE];
  } BackupState;
  
 -extern char *build_backup_content(BackupState *state,
