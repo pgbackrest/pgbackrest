@@ -2232,7 +2232,7 @@ testRun(void)
 
         TEST_ERROR(
             backupJobResult(
-                (Manifest *)1, NULL, storageTest, strLstNew(), job, false, 0, NULL, &currentPercentComplete, pgPageSize8),
+                (Manifest *)1, NULL, storageTest, strLstNew(), job, false, pgPageSize8, 0, NULL, &currentPercentComplete),
             AssertError, "error message");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -2267,8 +2267,8 @@ testRun(void)
 
         TEST_RESULT_VOID(
             backupJobResult(
-                manifest, STRDEF("host"), storageTest, strLstNew(), job, false, 0, &sizeProgress, &currentPercentComplete,
-                pgPageSize8),
+                manifest, STRDEF("host"), storageTest, strLstNew(), job, false, pgPageSize8, 0, &sizeProgress,
+                &currentPercentComplete),
             "log noop result");
         TEST_RESULT_VOID(lockRelease(true), "release backup lock");
 

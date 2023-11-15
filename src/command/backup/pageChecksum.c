@@ -10,7 +10,6 @@ Page Checksum Filter
 #include "common/macro.h"
 #include "common/type/json.h"
 #include "common/type/object.h"
-#include "postgres/interface.h"
 #include "postgres/interface/static.vendor.h"
 #include "storage/posix/storage.h"
 
@@ -20,7 +19,7 @@ Object type
 typedef struct PageChecksum
 {
     unsigned int segmentPageTotal;                                  // Total pages in a segment
-    unsigned int pageSize;                                          // Page size
+    PgPageSize pageSize;                                            // Page size
     unsigned int pageNoOffset;                                      // Page number offset for subsequent segments
     bool headerCheck;                                               // Perform additional header checks?
     const String *fileName;                                         // Used to load the file to retry pages
@@ -227,13 +226,13 @@ pageChecksumResult(THIS_VOID)
 /**********************************************************************************************************************************/
 FN_EXTERN IoFilter *
 pageChecksumNew(
-    const unsigned int segmentNo, const unsigned int segmentPageTotal, const unsigned int pageSize, const bool headerCheck,
+    const unsigned int segmentNo, const unsigned int segmentPageTotal, const PgPageSize pageSize, const bool headerCheck,
     const String *const fileName)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(UINT, segmentNo);
         FUNCTION_LOG_PARAM(UINT, segmentPageTotal);
-        FUNCTION_LOG_PARAM(UINT, pageSize);
+        FUNCTION_LOG_PARAM(ENUM, pageSize);
         FUNCTION_LOG_PARAM(BOOL, headerCheck);
         FUNCTION_LOG_PARAM(STRING, fileName);
     FUNCTION_LOG_END();
@@ -290,7 +289,7 @@ pageChecksumNewPack(const Pack *const paramList)
         PackRead *const paramListPack = pckReadNew(paramList);
         const unsigned int segmentNo = pckReadU32P(paramListPack);
         const unsigned int segmentPageTotal = pckReadU32P(paramListPack);
-        const unsigned int pageSize = pckReadU32P(paramListPack);
+        const PgPageSize pageSize = (PgPageSize)pckReadU32P(paramListPack);
         const bool headerCheck = pckReadBoolP(paramListPack);
         const String *const fileName = pckReadStrP(paramListPack);
 

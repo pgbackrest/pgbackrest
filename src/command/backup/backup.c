@@ -167,7 +167,7 @@ typedef struct BackupData
     unsigned int timeline;                                          // Primary timeline
     unsigned int version;                                           // PostgreSQL version
     unsigned int walSegmentSize;                                    // PostgreSQL wal segment size
-    unsigned int pageSize;                                          // PostgreSQL page size
+    PgPageSize pageSize;                                            // PostgreSQL page size
 } BackupData;
 
 static BackupData *
@@ -1385,8 +1385,8 @@ Log the results of a job and throw errors
 static void
 backupJobResult(
     Manifest *const manifest, const String *const host, const Storage *const storagePg, StringList *const fileRemove,
-    ProtocolParallelJob *const job, const bool bundle, const uint64_t sizeTotal, uint64_t *const sizeProgress,
-    unsigned int *const currentPercentComplete, const unsigned int pageSize)
+    ProtocolParallelJob *const job, const bool bundle, const PgPageSize pageSize, const uint64_t sizeTotal,
+    uint64_t *const sizeProgress, unsigned int *const currentPercentComplete)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
@@ -1395,6 +1395,7 @@ backupJobResult(
         FUNCTION_LOG_PARAM(STRING_LIST, fileRemove);
         FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL_JOB, job);
         FUNCTION_LOG_PARAM(BOOL, bundle);
+        FUNCTION_LOG_PARAM(ENUM, pageSize);
         FUNCTION_LOG_PARAM(UINT64, sizeTotal);
         FUNCTION_LOG_PARAM_P(UINT64, sizeProgress);
         FUNCTION_LOG_PARAM_P(UINT, currentPercentComplete);
@@ -1678,7 +1679,7 @@ typedef struct BackupJobData
     RegExp *standbyExp;                                             // Identify files that may be copied from the standby
     const CipherType cipherType;                                    // Cipher type
     const String *const cipherSubPass;                              // Passphrase used to encrypt files in the backup
-    const unsigned int pageSize;                                    // Page size
+    const PgPageSize pageSize;                                      // Page size
     const CompressType compressType;                                // Backup compression type
     const int compressLevel;                                        // Compress level if backup is compressed
     const bool delta;                                               // Is this a checksum delta backup?
@@ -2218,7 +2219,7 @@ backupProcess(const BackupData *const backupData, Manifest *const manifest, cons
                         manifest,
                         backupStandby && protocolParallelJobProcessId(job) > 1 ? backupData->hostStandby : backupData->hostPrimary,
                         protocolParallelJobProcessId(job) > 1 ? storagePgIdx(pgIdx) : backupData->storagePrimary,
-                        fileRemove, job, jobData.bundle, sizeTotal, &sizeProgress, &currentPercentComplete, jobData.pageSize);
+                        fileRemove, job, jobData.bundle, jobData.pageSize, sizeTotal, &sizeProgress, &currentPercentComplete);
                 }
 
                 // A keep-alive is required here for the remote holding open the backup connection

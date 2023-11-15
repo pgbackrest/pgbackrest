@@ -7,6 +7,7 @@ Backup File
 #include "common/compress/helper.h"
 #include "common/crypto/common.h"
 #include "common/type/keyValue.h"
+#include "postgres/interface.h"
 
 /***********************************************************************************************************************************
 Backup file types
@@ -62,7 +63,7 @@ typedef struct BackupFileResult
 
 FN_EXTERN List *backupFile(
     const String *repoFile, uint64_t bundleId, bool bundleRaw, unsigned int blockIncrReference, CompressType repoFileCompressType,
-    int repoFileCompressLevel, CipherType cipherType, const String *cipherPass, const String *pgVersionForce, unsigned int pageSize,
+    int repoFileCompressLevel, CipherType cipherType, const String *cipherPass, const String *pgVersionForce, PgPageSize pageSize,
     const List *fileList);
 
 #endif

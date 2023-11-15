@@ -50,7 +50,7 @@ ADD_PAGE_SIZE(pgPageSize32);
 
 /**********************************************************************************************************************************/
 FN_EXTERN uint16_t
-pgPageChecksum(const unsigned char *page, uint32_t blockNo, unsigned int pageSize)
+pgPageChecksum(const unsigned char *page, uint32_t blockNo, PgPageSize pageSize)
 {
     switch (pageSize)
     {

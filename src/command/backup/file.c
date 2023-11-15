@@ -20,7 +20,6 @@ Backup File
 #include "common/type/convert.h"
 #include "common/type/json.h"
 #include "info/manifest.h"
-#include "postgres/interface.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
@@ -42,7 +41,7 @@ FN_EXTERN List *
 backupFile(
     const String *const repoFile, const uint64_t bundleId, const bool bundleRaw, const unsigned int blockIncrReference,
     const CompressType repoFileCompressType, const int repoFileCompressLevel, const CipherType cipherType,
-    const String *const cipherPass, const String *const pgVersionForce, const unsigned int pageSize, const List *const fileList)
+    const String *const cipherPass, const String *const pgVersionForce, const PgPageSize pageSize, const List *const fileList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, repoFile);                       // Repo file
@@ -53,7 +52,7 @@ backupFile(
         FUNCTION_LOG_PARAM(INT, repoFileCompressLevel);             // Compression level for repo file
         FUNCTION_LOG_PARAM(STRING_ID, cipherType);                  // Encryption type
         FUNCTION_TEST_PARAM(STRING, cipherPass);                    // Password to access the repo file if encrypted
-        FUNCTION_LOG_PARAM(UINT, pageSize);                         // Page size
+        FUNCTION_LOG_PARAM(ENUM, pageSize);                         // Page size
         FUNCTION_LOG_PARAM(STRING, pgVersionForce);                 // Force pg version
         FUNCTION_LOG_PARAM(LIST, fileList);                         // List of files to backup
     FUNCTION_LOG_END();
