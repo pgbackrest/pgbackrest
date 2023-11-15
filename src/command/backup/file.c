@@ -61,8 +61,6 @@ backupFile(
     ASSERT(repoFile != NULL);
     ASSERT((cipherType == cipherTypeNone && cipherPass == NULL) || (cipherType != cipherTypeNone && cipherPass != NULL));
     ASSERT(fileList != NULL && !lstEmpty(fileList));
-    ASSERT(pageSize == PG_PAGE_SIZE_1 || pageSize == PG_PAGE_SIZE_2 || pageSize == PG_PAGE_SIZE_4 ||
-           pageSize == PG_PAGE_SIZE_8 || pageSize == PG_PAGE_SIZE_16 || pageSize == PG_PAGE_SIZE_32);
 
     // Backup file results
     List *const result = lstNewP(sizeof(BackupFileResult));

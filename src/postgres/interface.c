@@ -276,9 +276,11 @@ pgControlFromBuffer(const Buffer *controlFile, const String *const pgVersionForc
     // Check the page size
     if (result.pageSize != PG_PAGE_SIZE_1 && result.pageSize != PG_PAGE_SIZE_2 && result.pageSize != PG_PAGE_SIZE_4 &&
         result.pageSize != PG_PAGE_SIZE_8 && result.pageSize != PG_PAGE_SIZE_16 && result.pageSize != PG_PAGE_SIZE_32)
+    {
         THROW_FMT(
-            FormatError, "page size is %u. Supported page sizes are %i, %i, %i, %i, %i, %i", result.pageSize,
+            FormatError, "page size is %u but only %i, %i, %i, %i, %i, and %i are supported", result.pageSize,
             PG_PAGE_SIZE_1, PG_PAGE_SIZE_2, PG_PAGE_SIZE_4, PG_PAGE_SIZE_8, PG_PAGE_SIZE_16, PG_PAGE_SIZE_32);
+    }
 
     FUNCTION_LOG_RETURN(PG_CONTROL, result);
 }

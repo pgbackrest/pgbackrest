@@ -60,8 +60,6 @@ pageChecksumProcess(THIS_VOID, const Buffer *const input)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->pageSize == PG_PAGE_SIZE_1 || this->pageSize == PG_PAGE_SIZE_2 || this->pageSize == PG_PAGE_SIZE_4 ||
-           this->pageSize == PG_PAGE_SIZE_8 || this->pageSize == PG_PAGE_SIZE_16 || this->pageSize == PG_PAGE_SIZE_32);
     ASSERT(input != NULL);
 
     // Calculate total pages in the buffer
@@ -239,6 +237,9 @@ pageChecksumNew(
         FUNCTION_LOG_PARAM(BOOL, headerCheck);
         FUNCTION_LOG_PARAM(STRING, fileName);
     FUNCTION_LOG_END();
+
+    ASSERT(this->pageSize > 0);
+    ASSERT(this->segmentPageTotal > 0 && this->segmentPageTotal % this->pageSize == 0);
 
     OBJ_NEW_BEGIN(PageChecksum, .childQty = MEM_CONTEXT_QTY_MAX)
     {
