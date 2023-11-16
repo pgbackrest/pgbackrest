@@ -375,7 +375,11 @@ testRun(void)
 
         // This address should not be in use in a test environment -- if it is the test will fail
         TEST_ASSIGN(client, sckClientNew(STRDEF("172.31.255.255"), hrnServerPort(0), 100, 100), "new client");
-        TEST_ERROR_FMT(ioClientOpen(client), HostConnectError, "timeout connecting to '172.31.255.255:%u'", hrnServerPort(0));
+        TEST_ERROR_FMT(
+            ioClientOpen(client), HostConnectError,
+            "timeout connecting to '172.31.255.255:%u'\n"
+            "[RETRY DETAIL OMITTED]",
+            hrnServerPort(0));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("sckServerAccept() returns NULL on interrupt");
@@ -449,8 +453,9 @@ testRun(void)
         TEST_ERROR(
             ioClientOpen(client), HostConnectError, "unable to get address for '99.99.99.99.99': [-2] Name or service not known");
 
+        // Set TLS client timeout higher than socket timeout to ensure that TLS retries are covered
         TEST_ASSIGN(
-            client, tlsClientNewP(sckClientNew(STRDEF("localhost"), hrnServerPort(0), 100, 100), STRDEF("X"), 100, 100, true),
+            client, tlsClientNewP(sckClientNew(STRDEF("localhost"), hrnServerPort(0), 100, 100), STRDEF("X"), 250, 250, true),
             "new client");
         TEST_ERROR_FMT(
             ioClientOpen(client), HostConnectError,

@@ -129,6 +129,10 @@ sub coverageExtract
         {
             $strModuleName =~ s/^test/src/mg;
         }
+        elsif ($strModuleName =~ /^doc/mg)
+        {
+            $strModuleName =~ s/^doc/doc\/src/mg;
+        }
 
         my $strModuleOutName = $strModuleName;
         my $bTest = false;
@@ -150,6 +154,10 @@ sub coverageExtract
         {
             $strModulePath .= 'test/src/module/' . substr(${strModuleOutName}, 5);
         }
+        elsif (${strModuleOutName} =~ /^doc\//)
+        {
+            $strModulePath .= "${strModuleOutName}";
+        }
         else
         {
             $strModulePath .= "src/${strModuleOutName}";
@@ -161,7 +169,7 @@ sub coverageExtract
         my $strModuleSourceFile = $strModulePath . '.c' . ($bInc ? '.inc' : '');
 
         executeTest(
-            "${strLCovExe}" . ($bTest ? ' --rc lcov_branch_coverage=0' : '') . " --extract=${strLCovOut} */${strModuleName}.c" .
+            "${strLCovExe}" . ($bTest ? ' --rc lcov_branch_coverage=0' : '') . " --extract=${strLCovOut} *${strModuleName}.c" .
             ($bInc ? '.inc' : '') . " --o=${strLCovOutTmp}");
 
         # Combine with prior run if there was one
@@ -315,6 +323,7 @@ sub coverageValidateAndGenerate
         {
             my $strCoverageFile = $strCodeModule;
             $strCoverageFile =~ s/^test/src/mg;
+            $strCoverageFile =~ s/^doc/doc\/src/mg;
             $strCoverageFile =~ s/^module/test/mg;
             $strCoverageFile = "${strTestResultCoveragePath}/raw/${strCoverageFile}.lcov";
 

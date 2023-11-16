@@ -52,7 +52,6 @@ sub run
 
     foreach my $rhRun
     (
-        {pg => '9.3', dst =>     'backup', tls => 0, stg => AZURE, enc => 0, cmp => NONE, rt => 2, bnd => 0, bi => 0},
         {pg => '9.4', dst => 'db-standby', tls => 0, stg => POSIX, enc => 1, cmp =>  LZ4, rt => 1, bnd => 1, bi => 0},
         {pg => '9.5', dst =>     'backup', tls => 1, stg =>   GCS, enc => 0, cmp =>  BZ2, rt => 1, bnd => 0, bi => 1},
         {pg => '9.6', dst =>     'backup', tls => 0, stg => POSIX, enc => 0, cmp => NONE, rt => 2, bnd => 1, bi => 1},
@@ -62,7 +61,7 @@ sub run
         {pg =>  '13', dst => 'db-standby', tls => 1, stg =>   GCS, enc => 0, cmp =>  ZST, rt => 1, bnd => 1, bi => 1},
         {pg =>  '14', dst =>  'sftp-srvr', tls => 0, stg =>  SFTP, enc => 0, cmp =>  LZ4, rt => 1, bnd => 1, bi => 0},
         {pg =>  '15', dst => 'db-standby', tls => 0, stg => AZURE, enc => 0, cmp => NONE, rt => 2, bnd => 1, bi => 1},
-        {pg =>  '16', dst => 'db-standby', tls => 0, stg =>    S3, enc => 1, cmp => NONE, rt => 1, bnd => 0, bi => 0},
+        {pg =>  '16', dst =>     'backup', tls => 0, stg =>    S3, enc => 1, cmp => NONE, rt => 1, bnd => 0, bi => 0},
     )
     {
         # Only run tests for this pg version
@@ -419,7 +418,7 @@ sub run
 
         # Start a backup so the next backup has to restart it. This test is not required for PostgreSQL >= 9.6 since backups are run
         # in non-exclusive mode.
-        if ($oHostDbPrimary->pgVersion() >= PG_VERSION_93 && $oHostDbPrimary->pgVersion() < PG_VERSION_96)
+        if ($oHostDbPrimary->pgVersion() < PG_VERSION_96)
         {
             $oHostDbPrimary->sqlSelectOne("select pg_start_backup('test backup that will cause an error', true)");
 

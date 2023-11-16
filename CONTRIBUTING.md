@@ -509,17 +509,13 @@ HRN_FORK_END();
 A PostgreSQL libpq shim is provided to simulate interactions with PostgreSQL. Below is a simple example. See [harnessPq.h](https://github.com/pgbackrest/pgbackrest/blob/main/test/src/common/harnessPq.h) for more details.
 ```
 // Set up two standbys but no primary
-harnessPqScriptSet((HarnessPq [])
-{
-    HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_96, "/pgdata", true, NULL, NULL),
-    HRNPQ_MACRO_OPEN_GE_96(8, "dbname='postgres' port=5433", PG_VERSION_96, "/pgdata", true, NULL, NULL),
+HRN_PQ_SCRIPT_SET(
+    HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_96, "/pgdata", true, NULL, NULL),
+    HRN_PQ_SCRIPT_OPEN_GE_96(8, "dbname='postgres' port=5433", PG_VERSION_96, "/pgdata", true, NULL, NULL),
 
     // Close the "inner" session first (8) then the outer (1)
-    HRNPQ_MACRO_CLOSE(8),
-    HRNPQ_MACRO_CLOSE(1),
-
-    HRNPQ_MACRO_DONE()
-});
+    HRN_PQ_SCRIPT_CLOSE(8),
+    HRN_PQ_SCRIPT_CLOSE(1));
 
 TEST_ERROR(cmdCheck(), ConfigError, "primary database not found\nHINT: check indexed pg-path/pg-host configurations");
 ```

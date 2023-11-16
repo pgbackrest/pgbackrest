@@ -39,7 +39,8 @@ testRun(void)
 
     // Create help data
     const BldCfg bldCfg = bldCfgParse(storagePosixNewP(HRN_PATH_REPO_STR));
-    const Buffer *const helpData = bldHlpRenderHelpAutoCCmp(bldCfg, bldHlpParse(storagePosixNewP(HRN_PATH_REPO_STR), bldCfg));
+    const Buffer *const helpData = bldHlpRenderHelpAutoCCmp(
+        bldCfg, bldHlpParse(storagePosixNewP(HRN_PATH_REPO_STR), bldCfg, false));
 
     // Program name a version are used multiple times
     const char *helpVersion = PROJECT_NAME " " PROJECT_VERSION;
@@ -265,6 +266,10 @@ testRun(void)
             "  --log-subprocess                    enable logging in subprocesses [default=n]\n"
             "  --log-timestamp                     enable timestamp in logging [default=y]\n"
             "\n",
+            "Maintainer Options:\n"
+            "\n"
+            "  --pg-version-force                  force PostgreSQL version\n"
+            "\n"
             "Repository Options:\n"
             "\n"
             "  --repo                              set repository\n"

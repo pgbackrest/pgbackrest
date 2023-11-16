@@ -138,17 +138,17 @@ testRun(void)
         HRN_INFO_PUT(
             storageTest, TEST_PATH "/repo/" STORAGE_PATH_BACKUP "/stanza1/" INFO_BACKUP_FILE,
             "[db]\n"
-            "db-catalog-version=201409291\n"
-            "db-control-version=942\n"
+            "db-catalog-version=201608131\n"
+            "db-control-version=960\n"
             "db-id=2\n"
             "db-system-id=6569239123849665679\n"
-            "db-version=\"9.4\"\n"
+            "db-version=\"9.6\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201306121,\"db-control-version\":937,\"db-system-id\":6569239123849665666"
-            ",\"db-version\":\"9.3\"}\n"
-            "2={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679"
-            ",\"db-version\":\"9.4\"}\n");
+            "1={\"db-catalog-version\":201510051,\"db-control-version\":960,\"db-system-id\":6569239123849665666"
+            ",\"db-version\":\"9.5\"}\n"
+            "2={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679"
+            ",\"db-version\":\"9.6\"}\n");
 
         TEST_RESULT_STR_Z(
             infoRender(),
@@ -218,16 +218,16 @@ testRun(void)
             "[db]\n"
             "db-id=3\n"
             "db-system-id=6569239123849665679\n"
-            "db-version=\"9.4\"\n"
+            "db-version=\"9.6\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"
-            "2={\"db-id\":6569239123849665666,\"db-version\":\"9.3\"}\n"
-            "3={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n");
+            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.6\"}\n"
+            "2={\"db-id\":6569239123849665666,\"db-version\":\"9.5\"}\n"
+            "3={\"db-id\":6569239123849665679,\"db-version\":\"9.6\"}\n");
 
-        // Create a WAL directory in 9.3-2 but since there are no WAL files or backups it will not show
+        // Create a WAL directory in 9.5-2 but since there are no WAL files or backups it will not show
         HRN_STORAGE_PATH_CREATE(
-            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/9.3-2/0000000100000000",
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/9.5-2/0000000100000000",
             .comment = "create empty db2 archive WAL1 directory");
 
         // archive section will cross reference backup db-id 2 to archive db-id 3 but db section will only use the db-ids from
@@ -266,7 +266,7 @@ testRun(void)
                                         "\"id\":2,"
                                         "\"repo-key\":1"
                                     "},"
-                                    "\"id\":\"9.4-3\","
+                                    "\"id\":\"9.6-3\","
                                     "\"max\":null,"
                                     "\"min\":null"
                                 "}"
@@ -278,13 +278,13 @@ testRun(void)
                                     "\"id\":1,"
                                     "\"repo-key\":1,"
                                     "\"system-id\":6569239123849665666,"
-                                    "\"version\":\"9.3\""
+                                    "\"version\":\"9.5\""
                                 "},"
                                 "{"
                                     "\"id\":2,"
                                     "\"repo-key\":1,"
                                     "\"system-id\":6569239123849665679,"
-                                    "\"version\":\"9.4\""
+                                    "\"version\":\"9.6\""
                                 "}"
                             "],"
                             "\"name\":\"stanza1\","
@@ -316,7 +316,7 @@ testRun(void)
                     "    cipher: none\n"
                     "\n"
                     "    db (current)\n"
-                    "        wal archive min/max (9.4): none present\n",
+                    "        wal archive min/max (9.6): none present\n",
                     "text - single stanza, no valid backups, backup/expire lock detected");
 
                 // Notify child to release lock
@@ -351,7 +351,7 @@ testRun(void)
         // Add WAL segment
         HRN_STORAGE_PUT_EMPTY(
             storageRepoIdxWrite(0),
-            STORAGE_REPO_ARCHIVE "/9.4-3/0000000300000000/000000030000000000000001-47dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
+            STORAGE_REPO_ARCHIVE "/9.6-3/0000000300000000/000000030000000000000001-47dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
             .comment = "write WAL db3 timeline 3 repo1");
 
         TEST_RESULT_STR_Z(
@@ -361,7 +361,7 @@ testRun(void)
             "    cipher: none\n"
             "\n"
             "    db (current)\n"
-            "        wal archive min/max (9.4): 000000030000000000000001/000000030000000000000001\n",
+            "        wal archive min/max (9.6): 000000030000000000000001/000000030000000000000001\n",
             "text - multi-repo, single stanza, one wal segment");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -370,34 +370,34 @@ testRun(void)
         // Db1 and Db3 (from above) have same system-id and db-version so consider them the same for WAL reporting
         HRN_STORAGE_PUT_EMPTY(
             storageRepoIdxWrite(0),
-            STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000002-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
+            STORAGE_REPO_ARCHIVE "/9.6-1/0000000100000000/000000010000000000000002-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
             .comment = "write WAL db1 timeline 1 repo1");
         HRN_STORAGE_PUT_EMPTY(
             storageRepoIdxWrite(0),
-            STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
+            STORAGE_REPO_ARCHIVE "/9.6-1/0000000100000000/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
             .comment = "write WAL db1 timeline 1 repo1");
         HRN_STORAGE_PUT_EMPTY(
             storageRepoIdxWrite(0),
-            STORAGE_REPO_ARCHIVE "/9.4-1/0000000200000000/000000020000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
+            STORAGE_REPO_ARCHIVE "/9.6-1/0000000200000000/000000020000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
             .comment = "write WAL db1 timeline 2 repo1");
         HRN_STORAGE_PATH_CREATE(
-            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000300000000",
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/9.6-1/0000000300000000",
             .comment = "create empty db1 timeline 3 directory");
 
-        // Create a WAL file in 9.3-2 so that a prior will show
+        // Create a WAL file in 9.5-2 so that a prior will show
         HRN_STORAGE_PUT_EMPTY(
             storageRepoIdxWrite(0),
-            STORAGE_REPO_ARCHIVE "/9.3-2/0000000100000000/000000010000000000000001-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
+            STORAGE_REPO_ARCHIVE "/9.5-2/0000000100000000/000000010000000000000001-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
             .comment = "write WAL db2 timeline 1 repo1");
 
         HRN_INFO_PUT(
             storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE,
             "[db]\n"
-            "db-catalog-version=201409291\n"
-            "db-control-version=942\n"
+            "db-catalog-version=201608131\n"
+            "db-control-version=960\n"
             "db-id=3\n"
             "db-system-id=6569239123849665679\n"
-            "db-version=\"9.4\"\n"
+            "db-version=\"9.6\"\n"
             "\n"
             "[backup:current]\n"
             "20181116-154756F={\"backrest-format\":5,\"backrest-version\":\"2.04\","
@@ -416,12 +416,12 @@ testRun(void)
             "\"option-online\":true}\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679"
-            ",\"db-version\":\"9.4\"}\n"
-            "2={\"db-catalog-version\":201306121,\"db-control-version\":937,\"db-system-id\":6569239123849665666"
-            ",\"db-version\":\"9.3\"}\n"
-            "3={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679"
-            ",\"db-version\":\"9.4\"}\n");
+            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679"
+            ",\"db-version\":\"9.6\"}\n"
+            "2={\"db-catalog-version\":201510051,\"db-control-version\":960,\"db-system-id\":6569239123849665666"
+            ",\"db-version\":\"9.5\"}\n"
+            "3={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679"
+            ",\"db-version\":\"9.6\"}\n");
 
         // Execute while a backup lock is held
         HRN_FORK_BEGIN()
@@ -459,7 +459,7 @@ testRun(void)
                                         "\"id\":1,"
                                         "\"repo-key\":1"
                                     "},"
-                                    "\"id\":\"9.4-1\","
+                                    "\"id\":\"9.6-1\","
                                     "\"max\":\"000000020000000000000003\","
                                     "\"min\":\"000000010000000000000002\""
                                 "},"
@@ -468,7 +468,7 @@ testRun(void)
                                         "\"id\":2,"
                                         "\"repo-key\":1"
                                     "},"
-                                    "\"id\":\"9.3-2\","
+                                    "\"id\":\"9.5-2\","
                                     "\"max\":\"000000010000000000000001\","
                                     "\"min\":\"000000010000000000000001\""
                                 "},"
@@ -477,7 +477,7 @@ testRun(void)
                                         "\"id\":3,"
                                         "\"repo-key\":1"
                                     "},"
-                                    "\"id\":\"9.4-3\","
+                                    "\"id\":\"9.6-3\","
                                     "\"max\":\"000000030000000000000001\","
                                     "\"min\":\"000000030000000000000001\""
                                 "}"
@@ -550,19 +550,19 @@ testRun(void)
                                     "\"id\":1,"
                                     "\"repo-key\":1,"
                                     "\"system-id\":6569239123849665679,"
-                                    "\"version\":\"9.4\""
+                                    "\"version\":\"9.6\""
                                 "},"
                                 "{"
                                     "\"id\":2,"
                                     "\"repo-key\":1,"
                                     "\"system-id\":6569239123849665666,"
-                                    "\"version\":\"9.3\""
+                                    "\"version\":\"9.5\""
                                 "},"
                                 "{"
                                     "\"id\":3,"
                                     "\"repo-key\":1,"
                                     "\"system-id\":6569239123849665679,"
-                                    "\"version\":\"9.4\""
+                                    "\"version\":\"9.6\""
                                 "}"
                             "],"
                             "\"name\":\"stanza1\","
@@ -594,10 +594,10 @@ testRun(void)
                     "    cipher: none\n"
                     "\n"
                     "    db (prior)\n"
-                    "        wal archive min/max (9.3): 000000010000000000000001/000000010000000000000001\n"
+                    "        wal archive min/max (9.5): 000000010000000000000001/000000010000000000000001\n"
                     "\n"
                     "    db (current)\n"
-                    "        wal archive min/max (9.4): 000000010000000000000002/000000030000000000000001\n"
+                    "        wal archive min/max (9.6): 000000010000000000000002/000000030000000000000001\n"
                     "\n"
                     "        full backup: 20181116-154756F\n"
                     "            timestamp start/stop: 2018-11-16 15:47:56+00 / 2018-11-16 15:48:09+00\n"
@@ -620,13 +620,27 @@ testRun(void)
         HRN_FORK_END();
 
         // Cleanup
-        HRN_STORAGE_PATH_REMOVE(storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE "/stanza1/9.3-2", .recurse = true);
-        HRN_STORAGE_PATH_REMOVE(storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE "/stanza1/9.4-3", .recurse = true);
+        HRN_STORAGE_PATH_REMOVE(storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE "/stanza1/9.6-1", .recurse = true);
+        HRN_STORAGE_PATH_REMOVE(storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE "/stanza1/9.5-2", .recurse = true);
+        HRN_STORAGE_PATH_REMOVE(storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE "/stanza1/9.6-3", .recurse = true);
 
         // backup.info/archive.info files exist, backups exist, archives exist, multi-repo (mixed) with one stanza existing on both
         // repos and the db history is different between the repos
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("mixed multi-repo, percent complete non-null");
+
+        HRN_STORAGE_PUT_EMPTY(
+            storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE
+            "/stanza1/9.4-1/0000000100000000/000000010000000000000002-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
+            .comment = "write WAL db1 timeline 1 repo1");
+        HRN_STORAGE_PUT_EMPTY(
+            storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE
+            "/stanza1/9.4-1/0000000100000000/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
+            .comment = "write WAL db1 timeline 1 repo1");
+        HRN_STORAGE_PUT_EMPTY(
+            storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE
+            "/stanza1/9.4-1/0000000200000000/000000020000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
+            .comment = "write WAL db1 timeline 2 repo1");
 
         HRN_INFO_PUT(
             storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE "/stanza1/" INFO_ARCHIVE_FILE,

@@ -250,14 +250,14 @@ sub sectionProcess
 
     if ($self->{bTocNumber})
     {
-        $oSectionHeaderElement->addNew(HTML_DIV, "section${iDepth}-number", {strContent => $strSectionNo});
+        $oSectionHeaderElement->addNew(HTML_DIV, "section${iDepth}-number");
     }
 
     $oSectionHeaderElement->addNew(HTML_DIV, "section${iDepth}-title", {strContent => $strSectionTitle});
 
     if ($self->{bTocNumber})
     {
-        $oSectionTocElement->addNew(HTML_DIV, "section${iDepth}-toc-number", {strContent => $strSectionNo});
+        $oSectionTocElement->addNew(HTML_DIV, "section${iDepth}-toc-number");
     }
 
     my $oTocSectionTitleElement = $oSectionTocElement->addNew(HTML_DIV, "section${iDepth}-toc-title");

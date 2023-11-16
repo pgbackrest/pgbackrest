@@ -206,6 +206,7 @@ testRun(void)
             "        include:\n"
             "          - common/error/error\n"
             "          - test/common/include\n"
+            "          - doc/command/build/build\n"
             "\n"
             "integration:\n"
             "  - name: mock\n"
@@ -258,6 +259,8 @@ testRun(void)
             "test/src/module/common/stackTraceTest.c",
             "test/src/test.c");
 
+        HRN_STORAGE_PUT_EMPTY(storageTest, "repo/doc/src/command/build/build.c");
+
         TEST_RESULT_VOID(
             cmdTest(
                 STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("none"), 3,
@@ -307,6 +310,7 @@ testRun(void)
                         "        include_directories(\n"
                         "            '.',\n"
                         "            '../../../repo/src',\n"
+                        "            '../../../repo/doc/src',\n"
                         "            '../../../repo/test/src',\n"
                         "        ),\n"
                         "    dependencies: [\n"
@@ -423,6 +427,7 @@ testRun(void)
                         "        include_directories(\n"
                         "            '.',\n"
                         "            '../../../repo/src',\n"
+                        "            '../../../repo/doc/src',\n"
                         "            '../../../repo/test/src',\n"
                         "        ),\n"
                         "    dependencies: [\n"
@@ -634,6 +639,7 @@ testRun(void)
                         "        include_directories(\n"
                         "            '.',\n"
                         "            '../../../repo/src',\n"
+                        "            '../../../repo/doc/src',\n"
                         "            '../../../repo/test/src',\n"
                         "        ),\n"
                         "    dependencies: [\n"
@@ -688,7 +694,8 @@ testRun(void)
                     STRDEF(
                         "#include \"test/src/common/harnessShim.c\"\n"
                         "#include \"test/src/common/harnessError.c\"\n"
-                        "#include \"../../../repo/test/src/common/include.c\""));
+                        "#include \"../../../repo/test/src/common/include.c\"\n"
+                        "#include \"../../../repo/doc/src/command/build/build.c\""));
                 strReplace(
                     testCDup, STRDEF("{[C_TEST_INCLUDE]}"), STRDEF("#include \"../../../repo/test/src/module/test/shimTest.c\""));
                 strReplace(
@@ -806,6 +813,7 @@ testRun(void)
                         "        include_directories(\n"
                         "            '.',\n"
                         "            '../../../repo/src',\n"
+                        "            '../../../repo/doc/src',\n"
                         "            '../../../repo/test/src',\n"
                         "        ),\n"
                         "    dependencies: [\n"
