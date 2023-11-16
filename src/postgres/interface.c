@@ -274,13 +274,7 @@ pgControlFromBuffer(const Buffer *controlFile, const String *const pgVersionForc
     pgWalSegmentSizeCheck(result.version, result.walSegmentSize);
 
     // Check the page size
-    if (result.pageSize != pgPageSize1 && result.pageSize != pgPageSize2 && result.pageSize != pgPageSize4 &&
-        result.pageSize != pgPageSize8 && result.pageSize != pgPageSize16 && result.pageSize != pgPageSize32)
-    {
-        THROW_FMT(
-            FormatError, "page size is %u but only %i, %i, %i, %i, %i, and %i are supported", result.pageSize, pgPageSize1,
-            pgPageSize2, pgPageSize4, pgPageSize8, pgPageSize16, pgPageSize32);
-    }
+    pgPageSizeCheck(result.pageSize);
 
     FUNCTION_LOG_RETURN(PG_CONTROL, result);
 }

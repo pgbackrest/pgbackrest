@@ -56,6 +56,12 @@ CHECKSUM_UNION(pgPageSize32);
 FN_EXTERN uint16_t
 pgPageChecksum(unsigned char *const page, const uint32_t blockNo, const PgPageSize pageSize)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(CHAR, page);
+        FUNCTION_TEST_PARAM(UINT, blockNo);
+        FUNCTION_TEST_PARAM(ENUM, pageSize);
+    FUNCTION_TEST_END();
+
     // Save pd_checksum and temporarily set it to zero, so that the checksum calculation isn't affected by the old checksum stored
     // on the page. Restore it after, because actually updating the checksum is NOT part of the API of this function.
     const uint16_t checksumPrior = ((PageHeaderData *)page)->pd_checksum;
@@ -73,7 +79,7 @@ pgPageChecksum(unsigned char *const page, const uint32_t blockNo, const PgPageSi
     // Main checksum calculation
     switch (pageSize)
     {
-        CHECKSUM_CASE(pgPageSize8);                                 // The default page size should be checked first
+        CHECKSUM_CASE(pgPageSize8);                                 // Default page size should be checked first
         CHECKSUM_CASE(pgPageSize1);
         CHECKSUM_CASE(pgPageSize2);
         CHECKSUM_CASE(pgPageSize4);
@@ -81,7 +87,7 @@ pgPageChecksum(unsigned char *const page, const uint32_t blockNo, const PgPageSi
         CHECKSUM_CASE(pgPageSize32);
 
         default:
-            THROW(AssertError, "Invalid page size");
+            pgPageSizeCheck(pageSize);
     }
 
     // Add in two rounds of zeroes for additional mixing
@@ -103,5 +109,45 @@ pgPageChecksum(unsigned char *const page, const uint32_t blockNo, const PgPageSi
 
     // Reduce to a uint16 (to fit in the pd_checksum field) with an offset of one. That avoids checksums of zero, which seems like a
     // good idea.
-    return (uint16_t)((result % 65535) + 1);
+    FUNCTION_TEST_RETURN(UINT16, (uint16_t)((result % 65535) + 1));
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN bool
+pgPageSizeValid(const PgPageSize pageSize)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, pageSize);
+    FUNCTION_TEST_END();
+
+    switch (pageSize)
+    {
+        case pgPageSize8:                                           // Default page size should be checked first
+        case pgPageSize1:
+        case pgPageSize2:
+        case pgPageSize4:
+        case pgPageSize16:
+        case pgPageSize32:
+            FUNCTION_TEST_RETURN(BOOL, true);
+    }
+
+    FUNCTION_TEST_RETURN(BOOL, false);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+pgPageSizeCheck(const PgPageSize pageSize)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, pageSize);
+    FUNCTION_TEST_END();
+
+    if (!pgPageSizeValid(pageSize))
+    {
+        THROW_FMT(
+            FormatError, "page size is %u but only %i, %i, %i, %i, %i, and %i are supported", pageSize, pgPageSize1, pgPageSize2,
+            pgPageSize4, pgPageSize8, pgPageSize16, pgPageSize32);
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
 }

@@ -172,6 +172,12 @@ FN_EXTERN const String *pgLsnName(unsigned int pgVersion);
 // Calculate the checksum for a page. Page cannot be const because the page header is temporarily modified during processing.
 FN_EXTERN uint16_t pgPageChecksum(unsigned char *page, uint32_t blockNo, PgPageSize pageSize);
 
+// Returns true if page size is valid, false otherwise
+FN_EXTERN bool pgPageSizeValid(PgPageSize pageSize);
+
+// Throws an error if page size is not valid
+FN_EXTERN void pgPageSizeCheck(PgPageSize pageSize);
+
 FN_EXTERN const String *pgWalName(unsigned int pgVersion);
 
 // Get wal path (this was changed in PostgreSQL 10 to avoid including "log" in the name)
