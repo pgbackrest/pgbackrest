@@ -51,11 +51,19 @@ typedef struct TestStorageExistsParam
     do                                                                                                                             \
     {                                                                                                                              \
         hrnTestLogPrefix(__LINE__);                                                                                                \
-        testStorageExists(storage, file, (TestStorageExistsParam){VAR_PARAM_INIT, __VA_ARGS__});                                   \
+        testStorageExists(storage, file, true, (TestStorageExistsParam){VAR_PARAM_INIT, __VA_ARGS__});                             \
     }                                                                                                                              \
     while (0)
 
-void testStorageExists(const Storage *const storage, const char *const file, const TestStorageExistsParam param);
+#define TEST_STORAGE_NOT_EXISTS(storage, file, ...)                                                                                \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        hrnTestLogPrefix(__LINE__);                                                                                                \
+        testStorageExists(storage, file, false, (TestStorageExistsParam){VAR_PARAM_INIT, __VA_ARGS__});                            \
+    }                                                                                                                              \
+    while (0)
+
+void testStorageExists(const Storage *const storage, const char *const file, bool exists, const TestStorageExistsParam param);
 
 /***********************************************************************************************************************************
 List files in a path and optionally remove them

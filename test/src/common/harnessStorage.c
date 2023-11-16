@@ -145,7 +145,7 @@ testStorageGet(const Storage *const storage, const char *const file, const char 
 
 /**********************************************************************************************************************************/
 void
-testStorageExists(const Storage *const storage, const char *const file, const TestStorageExistsParam param)
+testStorageExists(const Storage *const storage, const char *const file, bool exists, const TestStorageExistsParam param)
 {
     hrnTestResultBegin(__func__, false);
 
@@ -157,7 +157,7 @@ testStorageExists(const Storage *const storage, const char *const file, const Te
     printf("file exists '%s'", strZ(fileFull));
     hrnTestResultComment(param.comment);
 
-    hrnTestResultBool(storageExistsP(storage, fileFull), true);
+    hrnTestResultBool(storageExistsP(storage, fileFull), exists);
 
     if (param.remove)
         storageRemoveP(storage, fileFull, .errorOnMissing = true);

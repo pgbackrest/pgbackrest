@@ -294,61 +294,84 @@ backupFile(
                     // Add size filter last to calculate repo size
                     ioFilterGroupAdd(ioReadFilterGroup(readIo), ioSizeNew());
 
-                    // Open the source and destination and copy the file
+                    // Open the source
                     if (ioReadOpen(readIo))
                     {
-                        // Setup the repo file for write. There is no need to write the file atomically (e.g. via a temp file on
-                        // Posix) because checksums are tested on resume after a failed backup. The path does not need to be synced
-                        // for each file because all paths are synced at the end of the backup. It needs to be created in the prior
-                        // context because it will live longer than a single loop when more than one file is being written.
-                        if (write == NULL)
-                        {
-                            MEM_CONTEXT_PRIOR_BEGIN()
-                            {
-                                write = storageNewWriteP(
-                                    storageRepoWrite(), repoFile, .compressible = compressible, .noAtomic = true,
-                                    .noSyncPath = true);
-                                ioWriteOpen(storageWriteIo(write));
-                            }
-                            MEM_CONTEXT_PRIOR_END();
-                        }
+                        Buffer *const buffer = bufNew(ioBufferSize());
 
-                        // Copy data from source to destination
-                        ioCopyP(readIo, storageWriteIo(write));
+                        do
+                        {
+                            ioRead(readIo, buffer);
+                            // Copy the file in non-bundling mode or if the file size is not zero
+                            if (bundleId == 0 || ioReadInterface(readIo)->totalBytesRead != 0)
+                            {
+                                // Setup the repo file for write. There is no need to write the file atomically (e.g.
+                                // via a temp file on Posix) because checksums are tested on resume after a failed
+                                // backup. The path does not need to be synced for each file because all paths are
+                                // synced at the end of the backup. It needs to be created in the prior context because
+                                // it will live longer than a single loop when more than one file is being written.
+                                if (write == NULL)
+                                {
+                                    MEM_CONTEXT_PRIOR_BEGIN()
+                                    {
+                                        write = storageNewWriteP(
+                                            storageRepoWrite(), repoFile, .compressible = compressible, .noAtomic = true,
+                                            .noSyncPath = true);
+                                        ioWriteOpen(storageWriteIo(write));
+                                    }
+                                    MEM_CONTEXT_PRIOR_END();
+                                }
+
+                                ioWrite(storageWriteIo(write), buffer);
+                            }
+                            bufUsedZero(buffer);
+                        }
+                        while (!ioReadEof(readIo));
 
                         // Close the source
                         ioReadClose(readIo);
 
                         MEM_CONTEXT_BEGIN(lstMemContext(result))
                         {
-                            // Get sizes and checksum
+                            // Get size
                             fileResult->copySize = pckReadU64P(
                                 ioFilterGroupResultP(ioReadFilterGroup(readIo), SIZE_FILTER_TYPE, .idx = 0));
-                            fileResult->bundleOffset = bundleOffset;
-                            fileResult->copyChecksum = pckReadBinP(
-                                ioFilterGroupResultP(ioReadFilterGroup(readIo), CRYPTO_HASH_FILTER_TYPE, .idx = 0));
-                            fileResult->repoSize = pckReadU64P(
-                                ioFilterGroupResultP(ioReadFilterGroup(readIo), SIZE_FILTER_TYPE, .idx = 1));
 
-                            // Get results of page checksum validation
-                            if (file->pgFileChecksumPage)
+                            if (bundleId == 0 || fileResult->copySize != 0)
                             {
-                                fileResult->pageChecksumResult = pckDup(
-                                    ioFilterGroupResultPackP(ioReadFilterGroup(readIo), PAGE_CHECKSUM_FILTER_TYPE));
+                                // Get sizes and checksum
+                                fileResult->bundleOffset = bundleOffset;
+                                fileResult->copyChecksum = pckReadBinP(
+                                    ioFilterGroupResultP(ioReadFilterGroup(readIo), CRYPTO_HASH_FILTER_TYPE, .idx = 0));
+                                fileResult->repoSize = pckReadU64P(
+                                    ioFilterGroupResultP(ioReadFilterGroup(readIo), SIZE_FILTER_TYPE, .idx = 1));
+
+                                // Get results of page checksum validation
+                                if (file->pgFileChecksumPage)
+                                {
+                                    fileResult->pageChecksumResult = pckDup(
+                                        ioFilterGroupResultPackP(ioReadFilterGroup(readIo), PAGE_CHECKSUM_FILTER_TYPE));
+                                }
+
+                                // Get results of block incremental
+                                if (file->blockIncrSize != 0)
+                                {
+                                    fileResult->blockIncrMapSize = pckReadU64P(
+                                        ioFilterGroupResultP(ioReadFilterGroup(readIo), BLOCK_INCR_FILTER_TYPE));
+                                }
+
+                                // Get repo checksum
+                                if (repoChecksum)
+                                {
+                                    fileResult->repoChecksum = pckReadBinP(
+                                        ioFilterGroupResultP(
+                                            ioReadFilterGroup(readIo), CRYPTO_HASH_FILTER_TYPE, .idx = 1));
+                                }
                             }
-
-                            // Get results of block incremental
-                            if (file->blockIncrSize != 0)
+                            else
                             {
-                                fileResult->blockIncrMapSize = pckReadU64P(
-                                    ioFilterGroupResultP(ioReadFilterGroup(readIo), BLOCK_INCR_FILTER_TYPE));
-                            }
-
-                            // Get repo checksum
-                            if (repoChecksum)
-                            {
-                                fileResult->repoChecksum = pckReadBinP(
-                                    ioFilterGroupResultP(ioReadFilterGroup(readIo), CRYPTO_HASH_FILTER_TYPE, .idx = 1));
+                                fileResult->backupCopyResult = backupCopyResultTruncate;
+                                fileResult->copyChecksum = (Buffer *)HASH_TYPE_SHA1_ZERO_BUF;
                             }
                         }
                         MEM_CONTEXT_END();

@@ -1573,7 +1573,8 @@ backupJobResult(
                     file.checksumPageError = checksumPageError;
                     file.checksumPageErrorList =
                         checksumPageErrorList != NULL ? jsonFromVar(varNewVarLst(checksumPageErrorList)) : NULL;
-                    file.bundleId = bundleId;
+                    // Truncated file is not put in bundle
+                    file.bundleId = copyResult != backupCopyResultTruncate ? bundleId : 0;
                     file.bundleOffset = bundleOffset;
                     file.blockIncrMapSize = blockIncrMapSize;
 

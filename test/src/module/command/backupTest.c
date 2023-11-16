@@ -1659,6 +1659,35 @@ testRun(void)
             .comment = "copy zero file to repo success");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("file of non-zero size is truncated to zero size");
+
+        // Create zero sized file in pg
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "truncatedfile");
+
+        fileList = lstNewP(sizeof(BackupFile));
+
+        file = (BackupFile)
+        {
+            .pgFile = STRDEF("truncatedfile"),
+            .pgFileSize = 10,
+            .manifestFile = STRDEF("bundlefile"),
+        };
+
+        lstAdd(fileList, &file);
+
+        repoFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(backupLabel), strZ(file.manifestFile));
+
+        TEST_ASSIGN(
+            result,
+            *(BackupFileResult *)lstGet(
+                backupFile(repoFile, 1 /* bundle mode */, false, 0, compressTypeNone, 1, cipherTypeNone, NULL, NULL, fileList), 0),
+            "truncatedfile pg file exists, bundle mode");
+        TEST_RESULT_UINT(result.copySize, 0, "copy size is 0");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultTruncate, "truncated file");
+        TEST_RESULT_PTR(result.copyChecksum, HASH_TYPE_SHA1_ZERO_BUF, "checksum eq");
+        TEST_STORAGE_NOT_EXISTS(storageRepo(), strZ(repoFile), .comment = "truncated file is not added to bundle, bundle is not created");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("copy file to encrypted repo");
 
         // Load Parameters
@@ -2270,6 +2299,60 @@ testRun(void)
         TEST_RESULT_VOID(lockRelease(true), "release backup lock");
 
         TEST_RESULT_LOG("P00 DETAIL: match file from prior backup host:" TEST_PATH "/test (0B, 100.00%)");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("report host/100% progress on truncate result");
+
+        // Create job that skips file
+        job = protocolParallelJobNew(VARSTRDEF("pg_data/test1"), protocolCommandNew(strIdFromZ("x")));
+
+        PackWrite *const resultPack1 = protocolPackNew();
+        const BackupFileResult fileResult = {
+            .manifestFile = STRDEF("pg_data/test1"),
+            .backupCopyResult = backupCopyResultTruncate,
+            .copyChecksum = (Buffer *)HASH_TYPE_SHA1_ZERO_BUF,
+        };
+
+        pckWriteStrP(resultPack1, fileResult.manifestFile);
+        pckWriteU32P(resultPack1, fileResult.backupCopyResult);
+        pckWriteU64P(resultPack1, fileResult.copySize);
+        pckWriteU64P(resultPack1, fileResult.bundleOffset);
+        pckWriteU64P(resultPack1, fileResult.blockIncrMapSize);
+        pckWriteU64P(resultPack1, fileResult.repoSize);
+        pckWriteBinP(resultPack1, fileResult.copyChecksum);
+        pckWriteBinP(resultPack1, fileResult.repoChecksum);
+        pckWritePackP(resultPack1, fileResult.pageChecksumResult);
+
+        pckWriteEndP(resultPack1);
+
+        protocolParallelJobResultSet(job, pckReadNew(pckWriteResult(resultPack1)));
+
+        // Create manifest with file
+        OBJ_NEW_BASE_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
+        {
+            manifest = manifestNewInternal();
+            HRN_MANIFEST_FILE_ADD(manifest, .name = "pg_data/test1", .size = 10);
+        }
+        OBJ_NEW_END();
+
+        sizeProgress = 0;
+        currentPercentComplete = 4567;
+
+        lockInit(TEST_PATH_STR, cfgOptionStr(cfgOptExecId), cfgOptionStr(cfgOptStanza), lockTypeBackup);
+        TEST_RESULT_VOID(lockAcquireP(), "acquire backup lock");
+
+        TEST_RESULT_VOID(
+            backupJobResult(
+                manifest, STRDEF("host"), storageTest, strLstNew(), job, true, 0, &sizeProgress, &currentPercentComplete),
+            "log truncate result");
+        TEST_RESULT_VOID(lockRelease(true), "release backup lock");
+
+        ManifestFile file = manifestFileFind(manifest, STRDEF("pg_data/test1"));
+        TEST_RESULT_UINT(file.bundleId, 0, "check bundle");
+        TEST_RESULT_UINT(file.size, 0, "check size");
+        TEST_RESULT_BOOL(bufEq(HASH_TYPE_SHA1_ZERO_BUF, BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE)), true, "checksum eq");
+
+        TEST_RESULT_LOG("P00 DETAIL: backup file host:" TEST_PATH "/test1 (10B->0B, 100.00%)");
     }
 
     // Offline tests should only be used to test offline functionality and errors easily tested in offline mode

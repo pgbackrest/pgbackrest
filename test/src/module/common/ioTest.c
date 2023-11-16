@@ -279,6 +279,7 @@ testRun(void)
         TEST_RESULT_BOOL(ioReadOpen(read), true, "    open io object");
         TEST_RESULT_BOOL(ioReadReadyP(read), true, "read defaults to ready");
         TEST_RESULT_UINT(ioRead(read, buffer), 2, "    read 2 bytes");
+        TEST_RESULT_UINT(ioReadInterface(read)->totalBytesRead, 2, " read 2 bytes");
         TEST_RESULT_BOOL(ioReadEof(read), false, "    no eof");
         TEST_RESULT_VOID(ioReadClose(read), "    close io object");
         TEST_RESULT_BOOL(testIoReadCloseCalled, true, "    check io object closed");
