@@ -386,7 +386,9 @@ testRun(void)
             unsigned char page[64 * 1024];
             memset(page, 0xFF, sizeof(page));
 
-            TEST_ERROR(pgPageChecksum(page, 0, sizeof(page)), AssertError, "Invalid page size");
+            TEST_ERROR(
+                pgPageChecksum(page, 0, sizeof(page)), FormatError,
+                "page size is 65536 but only 1024, 2048, 4096, 8192, 16384, and 32768 are supported");
         }
     }
 
