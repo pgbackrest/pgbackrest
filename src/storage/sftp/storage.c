@@ -955,7 +955,7 @@ storageSftpPathRemove(THIS_VOID, const String *const path, const bool recurse, c
                             // Attempting to unlink a directory appears to return LIBSSH2_FX_FAILURE or LIBSSH2_FX_PERMISSION_DENIED
                             if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL)
                             {
-                                uint64_t sftpErrno = libssh2_sftp_last_error(this->sftpSession);
+                                const uint64_t sftpErrno = libssh2_sftp_last_error(this->sftpSession);
 
                                 if (sftpErrno == LIBSSH2_FX_FAILURE || sftpErrno == LIBSSH2_FX_PERMISSION_DENIED)
                                     storageInterfacePathRemoveP(this, file, true);
@@ -994,7 +994,7 @@ storageSftpPathRemove(THIS_VOID, const String *const path, const bool recurse, c
 
             if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL)
             {
-                uint64_t sftpErrno = libssh2_sftp_last_error(this->sftpSession);
+                const uint64_t sftpErrno = libssh2_sftp_last_error(this->sftpSession);
 
                 if (sftpErrno != LIBSSH2_FX_NO_SUCH_FILE)
                     THROW_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE " sftp error [%" PRIu64 "]", strZ(path), sftpErrno);
