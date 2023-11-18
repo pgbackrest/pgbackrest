@@ -630,6 +630,11 @@
     <contributor-id type="github">fluca1978</contributor-id>
 </contributor>
 
+<contributor id="luc.languagetools">
+    <contributor-name-display>Luc</contributor-name-display>
+    <contributor-id type="github">luc-languagetools</contributor-id>
+</contributor>
+
 <contributor id="lukas.ertl">
     <contributor-name-display>Lukas Ertl</contributor-name-display>
     <contributor-id type="github">lukasertl</contributor-id>
