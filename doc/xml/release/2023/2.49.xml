@@ -102,5 +102,18 @@
                 <p>Allow <id>config/load</id> unit test to run without <id>libssh2</id> installed.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <github-issue id="2228"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="georgy.shelkovy"/>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Remove unused fields from <code>backupJobResult()</code> test in command/backup unit.</p>
+            </release-item>
+        </release-development-list>
     </release-test-list>
 </release>

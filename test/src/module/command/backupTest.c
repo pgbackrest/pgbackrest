@@ -2239,10 +2239,7 @@ testRun(void)
         PackWrite *const resultPack = protocolPackNew();
         pckWriteStrP(resultPack, STRDEF("pg_data/test"));
         pckWriteU32P(resultPack, backupCopyResultNoOp);
-        pckWriteU64P(resultPack, 0);
-        pckWriteU64P(resultPack, 0);
-        pckWriteStrP(resultPack, NULL);
-        pckWriteStrP(resultPack, NULL);
+        // No more fields need to be written since noop will ignore them anyway
         pckWriteEndP(resultPack);
 
         protocolParallelJobResultSet(job, pckReadNew(pckWriteResult(resultPack)));
