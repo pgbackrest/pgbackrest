@@ -1,5 +1,5 @@
 diff --git a/doc/src/sgml/backup-manifest.sgml b/doc/src/sgml/backup-manifest.sgml
-index 771be1310a1..c113ff3970a 100644
+index 771be1310a..a80b79e587 100644
 --- a/doc/src/sgml/backup-manifest.sgml
 +++ b/doc/src/sgml/backup-manifest.sgml
 @@ -42,6 +42,16 @@
@@ -10,7 +10,7 @@ index 771be1310a1..c113ff3970a 100644
 +    <term><literal>Backup-Label</literal></term>
 +    <listitem>
 +     <para>
-+      Backup label specified by the user. This may be set to a default value
++      Backup label specified by the user. This will be set to a default value
 +      if no backup label was specified.
 +     </para>
 +    </listitem>
@@ -19,8 +19,61 @@ index 771be1310a1..c113ff3970a 100644
     <varlistentry>
      <term><literal>Files</literal></term>
      <listitem>
+@@ -67,6 +77,17 @@
+     </listitem>
+    </varlistentry>
+ 
++   <varlistentry>
++    <term><literal>Time-Range</literal></term>
++    <listitem>
++     <para>
++      The associated value is always an object describing the start/stop time
++      of the backup. The structure of this object is further described in
++      <xref linkend="backup-manifest-time-range" />.
++     </para>
++    </listitem>
++   </varlistentry>
++
+    <varlistentry>
+     <term><literal>Manifest-Checksum</literal></term>
+     <listitem>
+@@ -213,4 +234,34 @@
+    for the same timeline.
+   </para>
+  </sect1>
++
++ <sect1 id="backup-manifest-time-range">
++  <title>Backup Manifest Time Range Object</title>
++
++  <para>
++   The object which describes the time range always has three keys:
++  </para>
++
++  <variablelist>
++   <varlistentry>
++    <term><literal>Start-Time</literal></term>
++    <listitem>
++     <para>
++      The start time for the backup.
++     </para>
++    </listitem>
++   </varlistentry>
++
++   <varlistentry>
++    <term><literal>End-Time</literal></term>
++    <listitem>
++     <para>
++      The end time for the backup. This is when the backup was stopped in
++      <productname>PostgreSQL</productname> and represents the earliest time
++      that can be used for time-based Point-In-Time Recovery.
++     </para>
++    </listitem>
++   </varlistentry>
++  </variablelist>
++ </sect1>
+ </chapter>
 diff --git a/doc/src/sgml/backup.sgml b/doc/src/sgml/backup.sgml
-index 8cb24d6ae54..584384875be 100644
+index 8cb24d6ae5..584384875b 100644
 --- a/doc/src/sgml/backup.sgml
 +++ b/doc/src/sgml/backup.sgml
 @@ -935,19 +935,20 @@ SELECT * FROM pg_backup_stop(wait_for_archive => true);
@@ -84,7 +137,7 @@ index 8cb24d6ae54..584384875be 100644
      the symbolic link names as they exist in the directory
      <filename>pg_tblspc/</filename> and the full path of each symbolic link.
 diff --git a/doc/src/sgml/func.sgml b/doc/src/sgml/func.sgml
-index 93f068edcf9..5f27cce1610 100644
+index 93f068edcf..5f27cce161 100644
 --- a/doc/src/sgml/func.sgml
 +++ b/doc/src/sgml/func.sgml
 @@ -26865,7 +26865,10 @@ LOG:  Grand total: 1651920 bytes in 201 blocks; 622360 free (88 chunks); 1029560
@@ -160,7 +213,7 @@ index 93f068edcf9..5f27cce1610 100644
         <para>
          This function is restricted to superusers by default, but other users
 diff --git a/doc/src/sgml/ref/pg_rewind.sgml b/doc/src/sgml/ref/pg_rewind.sgml
-index 8e0000d39fb..404ce7c65ef 100644
+index 8e0000d39f..404ce7c65e 100644
 --- a/doc/src/sgml/ref/pg_rewind.sgml
 +++ b/doc/src/sgml/ref/pg_rewind.sgml
 @@ -400,7 +400,6 @@ GRANT EXECUTE ON function pg_catalog.pg_read_binary_file(text, bigint, bigint, b
@@ -184,7 +237,7 @@ index 8e0000d39fb..404ce7c65ef 100644
        when rewinding from a live source or the last checkpoint LSN when
        rewinding from a stopped source.
 diff --git a/src/backend/access/transam/xlog.c b/src/backend/access/transam/xlog.c
-index 1159dff1a69..928cad06519 100644
+index 1159dff1a6..928cad0651 100644
 --- a/src/backend/access/transam/xlog.c
 +++ b/src/backend/access/transam/xlog.c
 @@ -74,6 +74,7 @@
@@ -327,7 +380,7 @@ index 1159dff1a69..928cad06519 100644
  		pfree(history_file);
  
 diff --git a/src/backend/access/transam/xlogbackup.c b/src/backend/access/transam/xlogbackup.c
-index 21d68133ae1..22c95f3c4c9 100644
+index 21d68133ae..22c95f3c4c 100644
 --- a/src/backend/access/transam/xlogbackup.c
 +++ b/src/backend/access/transam/xlogbackup.c
 @@ -18,19 +18,19 @@
@@ -400,7 +453,7 @@ index 21d68133ae1..22c95f3c4c9 100644
  	data = result->data;
  	pfree(result);
 diff --git a/src/backend/access/transam/xlogfuncs.c b/src/backend/access/transam/xlogfuncs.c
-index 45a70668b1c..d81d36705f3 100644
+index 45a70668b1..d81d36705f 100644
 --- a/src/backend/access/transam/xlogfuncs.c
 +++ b/src/backend/access/transam/xlogfuncs.c
 @@ -53,7 +53,7 @@ static MemoryContext backupcontext = NULL;
@@ -509,7 +562,7 @@ index 45a70668b1c..d81d36705f3 100644
  	/* Clean up the session-level state and its memory context */
  	backup_state = NULL;
 diff --git a/src/backend/access/transam/xlogrecovery.c b/src/backend/access/transam/xlogrecovery.c
-index c61566666aa..d05ff41f605 100644
+index c61566666a..d05ff41f60 100644
 --- a/src/backend/access/transam/xlogrecovery.c
 +++ b/src/backend/access/transam/xlogrecovery.c
 @@ -6,7 +6,7 @@
@@ -904,7 +957,7 @@ index c61566666aa..d05ff41f605 100644
   * read_tablespace_map: check to see if a tablespace_map file is present
   *
 diff --git a/src/backend/backup/backup_manifest.c b/src/backend/backup/backup_manifest.c
-index aeed362a9ad..7348cc111e0 100644
+index aeed362a9a..9540f05964 100644
 --- a/src/backend/backup/backup_manifest.c
 +++ b/src/backend/backup/backup_manifest.c
 @@ -56,7 +56,8 @@ IsManifestEnabled(backup_manifest_info *manifest)
@@ -940,8 +993,54 @@ index aeed362a9ad..7348cc111e0 100644
  }
  
  /*
+@@ -308,6 +321,45 @@ AddWALInfoToBackupManifest(backup_manifest_info *manifest, XLogRecPtr startptr,
+ 	AppendStringToManifest(manifest, "\n],\n");
+ }
+ 
++/*
++ * Add backup start/end time information to the manifest.
++ */
++void
++AddTimeInfoToBackupManifest(backup_manifest_info *manifest, pg_time_t starttime,
++							pg_time_t endtime)
++{
++	StringInfoData buf;
++
++	if (!IsManifestEnabled(manifest))
++		return;
++
++	/* Start the time range. */
++	AppendStringToManifest(manifest, "\"Time-Range\": { ");
++
++	/*
++	 * Convert start/end time to strings and append them to the manifest. Since
++	 * it's not clear what time zone to use and since time zone definitions can
++	 * change, possibly causing confusion, use GMT always.
++	 */
++	initStringInfo(&buf);
++
++	appendStringInfoString(&buf, "\"Start-Time\": \"");
++	enlargeStringInfo(&buf, 128);
++	buf.len += pg_strftime(&buf.data[buf.len], 128, "%Y-%m-%d %H:%M:%S %Z",
++						   pg_gmtime(&starttime));
++	appendStringInfoString(&buf, "\", \"End-Time\": \"");
++	enlargeStringInfo(&buf, 128);
++	buf.len += pg_strftime(&buf.data[buf.len], 128, "%Y-%m-%d %H:%M:%S %Z",
++						   pg_gmtime(&endtime));
++	appendStringInfoString(&buf, "\" },\n");
++
++	/* Add to the manifest. */
++	AppendStringToManifest(manifest, buf.data);
++
++	/* Avoid leaking memory. */
++	pfree(buf.data);
++}
++
+ /*
+  * Finalize the backup manifest, and send it to the client.
+  */
 diff --git a/src/backend/backup/basebackup.c b/src/backend/backup/basebackup.c
-index 35dd79babcb..967ef58a30b 100644
+index 35dd79babc..f6cd7d954c 100644
 --- a/src/backend/backup/basebackup.c
 +++ b/src/backend/backup/basebackup.c
 @@ -22,6 +22,7 @@
@@ -965,7 +1064,16 @@ index 35dd79babcb..967ef58a30b 100644
  	{TABLESPACE_MAP, false},
  
  	/*
-@@ -243,7 +243,7 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
+@@ -225,6 +225,8 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
+ 	bbsink_state state;
+ 	XLogRecPtr	endptr;
+ 	TimeLineID	endtli;
++	pg_time_t	starttime;
++	pg_time_t	stoptime;
+ 	backup_manifest_info manifest;
+ 	BackupState *backup_state;
+ 	StringInfo	tablespace_map;
+@@ -243,7 +245,7 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
  	backup_started_in_recovery = RecoveryInProgress();
  
  	InitializeBackupManifest(&manifest, opt->manifest,
@@ -974,7 +1082,7 @@ index 35dd79babcb..967ef58a30b 100644
  
  	total_checksum_failures = 0;
  
-@@ -308,19 +308,11 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
+@@ -308,19 +310,11 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
  
  			if (ti->path == NULL)
  			{
@@ -995,7 +1103,7 @@ index 35dd79babcb..967ef58a30b 100644
  				if (opt->sendtblspcmapfile)
  				{
  					sendFileWithContent(sink, TABLESPACE_MAP,
-@@ -332,15 +324,14 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
+@@ -332,15 +326,14 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
  				sendDir(sink, ".", 1, false, state.tablespaces,
  						sendtblspclinks, &manifest, InvalidOid);
  
@@ -1019,7 +1127,7 @@ index 35dd79babcb..967ef58a30b 100644
  			}
  			else
  			{
-@@ -374,9 +365,6 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
+@@ -374,12 +367,13 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
  			}
  		}
  
@@ -1029,7 +1137,22 @@ index 35dd79babcb..967ef58a30b 100644
  		endptr = backup_state->stoppoint;
  		endtli = backup_state->stoptli;
  
-@@ -1044,7 +1032,6 @@ sendFileWithContent(bbsink *sink, const char *filename, const char *content,
++		/* Record start/stop time for manifest */
++		starttime = backup_state->starttime;
++		stoptime = backup_state->stoptime;
++
+ 		/* Deallocate backup-related variables. */
+ 		pfree(tablespace_map->data);
+ 		pfree(tablespace_map);
+@@ -629,6 +623,7 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
+ 
+ 	AddWALInfoToBackupManifest(&manifest, state.startptr, state.starttli,
+ 							   endptr, endtli);
++	AddTimeInfoToBackupManifest(&manifest, starttime, stoptime);
+ 
+ 	SendBackupManifest(&manifest, sink);
+ 
+@@ -1044,7 +1039,6 @@ sendFileWithContent(bbsink *sink, const char *filename, const char *content,
  	/*
  	 * Construct a stat struct for the file we're injecting in the tar.
  	 */
@@ -1038,7 +1161,7 @@ index 35dd79babcb..967ef58a30b 100644
  #ifdef WIN32
  	statbuf.st_uid = 0;
 diff --git a/src/backend/catalog/system_functions.sql b/src/backend/catalog/system_functions.sql
-index 4206752881d..1f37719cf25 100644
+index 4206752881..1f37719cf2 100644
 --- a/src/backend/catalog/system_functions.sql
 +++ b/src/backend/catalog/system_functions.sql
 @@ -384,13 +384,15 @@ BEGIN ATOMIC
@@ -1062,7 +1185,7 @@ index 4206752881d..1f37719cf25 100644
    PARALLEL RESTRICTED;
  
 diff --git a/src/backend/utils/misc/pg_controldata.c b/src/backend/utils/misc/pg_controldata.c
-index a1003a464dc..44c4e987ce9 100644
+index a1003a464d..44c4e987ce 100644
 --- a/src/backend/utils/misc/pg_controldata.c
 +++ b/src/backend/utils/misc/pg_controldata.c
 @@ -163,8 +163,8 @@ pg_control_checkpoint(PG_FUNCTION_ARGS)
@@ -1108,7 +1231,7 @@ index a1003a464dc..44c4e987ce9 100644
  
  	PG_RETURN_DATUM(HeapTupleGetDatum(htup));
 diff --git a/src/bin/pg_basebackup/t/010_pg_basebackup.pl b/src/bin/pg_basebackup/t/010_pg_basebackup.pl
-index b9f5e1266b4..c655cb03352 100644
+index b9f5e1266b..c655cb0335 100644
 --- a/src/bin/pg_basebackup/t/010_pg_basebackup.pl
 +++ b/src/bin/pg_basebackup/t/010_pg_basebackup.pl
 @@ -171,8 +171,8 @@ SKIP:
@@ -1143,7 +1266,7 @@ index b9f5e1266b4..c655cb03352 100644
  $node->command_ok(
  	[
 diff --git a/src/bin/pg_controldata/pg_controldata.c b/src/bin/pg_controldata/pg_controldata.c
-index 93e0837947c..cc515b622ff 100644
+index 93e0837947..cc515b622f 100644
 --- a/src/bin/pg_controldata/pg_controldata.c
 +++ b/src/bin/pg_controldata/pg_controldata.c
 @@ -277,10 +277,18 @@ main(int argc, char *argv[])
@@ -1166,7 +1289,7 @@ index 93e0837947c..cc515b622ff 100644
  		   ControlFile->backupEndRequired ? _("yes") : _("no"));
  	printf(_("wal_level setting:                    %s\n"),
 diff --git a/src/bin/pg_resetwal/pg_resetwal.c b/src/bin/pg_resetwal/pg_resetwal.c
-index 3ae3fc06df2..255101ff3a1 100644
+index 3ae3fc06df..255101ff3a 100644
 --- a/src/bin/pg_resetwal/pg_resetwal.c
 +++ b/src/bin/pg_resetwal/pg_resetwal.c
 @@ -870,8 +870,12 @@ RewriteControlFile(void)
@@ -1183,7 +1306,7 @@ index 3ae3fc06df2..255101ff3a1 100644
  
  	/*
 diff --git a/src/bin/pg_rewind/filemap.c b/src/bin/pg_rewind/filemap.c
-index ecadd69dc53..213f4e71b88 100644
+index ecadd69dc5..213f4e71b8 100644
 --- a/src/bin/pg_rewind/filemap.c
 +++ b/src/bin/pg_rewind/filemap.c
 @@ -139,11 +139,10 @@ static const struct exclude_list_item excludeFiles[] =
@@ -1202,7 +1325,7 @@ index ecadd69dc53..213f4e71b88 100644
  
  	/*
 diff --git a/src/bin/pg_rewind/pg_rewind.c b/src/bin/pg_rewind/pg_rewind.c
-index bfd44a284e2..6b23ed4a1c8 100644
+index bfd44a284e..6b23ed4a1c 100644
 --- a/src/bin/pg_rewind/pg_rewind.c
 +++ b/src/bin/pg_rewind/pg_rewind.c
 @@ -39,9 +39,6 @@ static void perform_rewind(filemap_t *filemap, rewind_source *source,
@@ -1314,7 +1437,7 @@ index bfd44a284e2..6b23ed4a1c8 100644
   * Check CRC of control file
   */
 diff --git a/src/bin/pg_verifybackup/parse_manifest.c b/src/bin/pg_verifybackup/parse_manifest.c
-index bf0227c6689..d1ebae3862a 100644
+index bf0227c668..408af88e58 100644
 --- a/src/bin/pg_verifybackup/parse_manifest.c
 +++ b/src/bin/pg_verifybackup/parse_manifest.c
 @@ -25,6 +25,7 @@ typedef enum
@@ -1325,7 +1448,37 @@ index bf0227c6689..d1ebae3862a 100644
  	JM_EXPECT_FILES_START,
  	JM_EXPECT_FILES_NEXT,
  	JM_EXPECT_THIS_FILE_FIELD,
-@@ -312,6 +313,13 @@ json_manifest_object_field_start(void *state, char *fname, bool isnull)
+@@ -33,6 +34,9 @@ typedef enum
+ 	JM_EXPECT_WAL_RANGES_NEXT,
+ 	JM_EXPECT_THIS_WAL_RANGE_FIELD,
+ 	JM_EXPECT_THIS_WAL_RANGE_VALUE,
++	JM_EXPECT_TIME_RANGE_START,
++	JM_EXPECT_THIS_TIME_RANGE_FIELD,
++	JM_EXPECT_THIS_TIME_RANGE_VALUE,
+ 	JM_EXPECT_MANIFEST_CHECKSUM_VALUE,
+ 	JM_EXPECT_EOF,
+ } JsonManifestSemanticState;
+@@ -188,6 +192,9 @@ json_manifest_object_start(void *state)
+ 			parse->start_lsn = NULL;
+ 			parse->end_lsn = NULL;
+ 			break;
++		case JM_EXPECT_TIME_RANGE_START:
++			parse->state = JM_EXPECT_THIS_TIME_RANGE_FIELD;
++			break;
+ 		default:
+ 			json_manifest_parse_failure(parse->context,
+ 										"unexpected object start");
+@@ -223,6 +230,9 @@ json_manifest_object_end(void *state)
+ 			json_manifest_finalize_wal_range(parse);
+ 			parse->state = JM_EXPECT_WAL_RANGES_NEXT;
+ 			break;
++		case JM_EXPECT_THIS_TIME_RANGE_FIELD:
++			parse->state = JM_EXPECT_TOPLEVEL_FIELD;
++			break;
+ 		default:
+ 			json_manifest_parse_failure(parse->context,
+ 										"unexpected object end");
+@@ -312,6 +322,13 @@ json_manifest_object_field_start(void *state, char *fname, bool isnull)
  				break;
  			}
  
@@ -1339,140 +1492,59 @@ index bf0227c6689..d1ebae3862a 100644
  			/* Is this the list of files? */
  			if (strcmp(fname, "Files") == 0)
  			{
-@@ -410,6 +418,11 @@ json_manifest_scalar(void *state, char *token, JsonTokenType tokentype)
+@@ -326,6 +343,13 @@ json_manifest_object_field_start(void *state, char *fname, bool isnull)
+ 				break;
+ 			}
+ 
++			/* Is this the time range? */
++			if (strcmp(fname, "Time-Range") == 0)
++			{
++				parse->state = JM_EXPECT_TIME_RANGE_START;
++				break;
++			}
++
+ 			/* Is this the manifest checksum? */
+ 			if (strcmp(fname, "Manifest-Checksum") == 0)
+ 			{
+@@ -372,6 +396,14 @@ json_manifest_object_field_start(void *state, char *fname, bool isnull)
+ 			parse->state = JM_EXPECT_THIS_WAL_RANGE_VALUE;
+ 			break;
+ 
++		case JM_EXPECT_THIS_TIME_RANGE_FIELD:
++			if (strcmp(fname, "Start-Time") != 0 &&
++				strcmp(fname, "End-Time") != 0)
++				json_manifest_parse_failure(parse->context,
++											"unexpected time range field");
++			parse->state = JM_EXPECT_THIS_TIME_RANGE_VALUE;
++			break;
++
+ 		default:
+ 			json_manifest_parse_failure(parse->context,
+ 										"unexpected object field");
+@@ -410,6 +442,10 @@ json_manifest_scalar(void *state, char *token, JsonTokenType tokentype)
  			parse->state = JM_EXPECT_TOPLEVEL_FIELD;
  			break;
  
 +		case JM_EXPECT_BACKUP_LABEL_VALUE:
-+			parse->context->label_cb(parse->context, token);
 +			parse->state = JM_EXPECT_TOPLEVEL_FIELD;
 +			break;
 +
  		case JM_EXPECT_THIS_FILE_VALUE:
  			switch (parse->file_field)
  			{
-diff --git a/src/bin/pg_verifybackup/parse_manifest.h b/src/bin/pg_verifybackup/parse_manifest.h
-index 7387a917a21..e7528dc4bac 100644
---- a/src/bin/pg_verifybackup/parse_manifest.h
-+++ b/src/bin/pg_verifybackup/parse_manifest.h
-@@ -21,6 +21,8 @@
- struct JsonManifestParseContext;
- typedef struct JsonManifestParseContext JsonManifestParseContext;
+@@ -451,6 +487,10 @@ json_manifest_scalar(void *state, char *token, JsonTokenType tokentype)
+ 			parse->state = JM_EXPECT_THIS_WAL_RANGE_FIELD;
+ 			break;
  
-+typedef void (*json_manifest_label_callback) (JsonManifestParseContext *,
-+											  char *label);
- typedef void (*json_manifest_perfile_callback) (JsonManifestParseContext *,
- 												char *pathname,
- 												size_t size, pg_checksum_type checksum_type,
-@@ -35,6 +37,7 @@ typedef void (*json_manifest_error_callback) (JsonManifestParseContext *,
- struct JsonManifestParseContext
- {
- 	void	   *private_data;
-+	json_manifest_label_callback label_cb;
- 	json_manifest_perfile_callback perfile_cb;
- 	json_manifest_perwalrange_callback perwalrange_cb;
- 	json_manifest_error_callback error_cb;
-diff --git a/src/bin/pg_verifybackup/pg_verifybackup.c b/src/bin/pg_verifybackup/pg_verifybackup.c
-index 059836f0e64..bfd18cef21d 100644
---- a/src/bin/pg_verifybackup/pg_verifybackup.c
-+++ b/src/bin/pg_verifybackup/pg_verifybackup.c
-@@ -99,6 +99,7 @@ typedef struct manifest_wal_range
- typedef struct parser_context
- {
- 	manifest_files_hash *ht;
-+	char *label;
- 	manifest_wal_range *first_wal_range;
- 	manifest_wal_range *last_wal_range;
- } parser_context;
-@@ -115,10 +116,12 @@ typedef struct verifier_context
- 	bool		saw_any_error;
- } verifier_context;
- 
--static void parse_manifest_file(char *manifest_path,
-+static void parse_manifest_file(char *manifest_path, char **label_p,
- 								manifest_files_hash **ht_p,
- 								manifest_wal_range **first_wal_range_p);
- 
-+static void record_manifest_details_for_label(JsonManifestParseContext *context,
-+											  char *label);
- static void record_manifest_details_for_file(JsonManifestParseContext *context,
- 											 char *pathname, size_t size,
- 											 pg_checksum_type checksum_type,
-@@ -187,6 +190,7 @@ main(int argc, char **argv)
- 	verifier_context context;
- 	manifest_wal_range *first_wal_range;
- 	char	   *manifest_path = NULL;
-+	char 	   *label = NULL;
- 	bool		no_parse_wal = false;
- 	bool		quiet = false;
- 	char	   *wal_directory = NULL;
-@@ -338,7 +342,7 @@ main(int argc, char **argv)
- 	 * the manifest as fatal; there doesn't seem to be much point in trying to
- 	 * verify the backup directory against a corrupted manifest.
- 	 */
--	parse_manifest_file(manifest_path, &context.ht, &first_wal_range);
-+	parse_manifest_file(manifest_path, &label, &context.ht, &first_wal_range);
- 
- 	/*
- 	 * Now scan the files in the backup directory. At this stage, we verify
-@@ -386,7 +390,8 @@ main(int argc, char **argv)
-  * mentions.
-  */
- static void
--parse_manifest_file(char *manifest_path, manifest_files_hash **ht_p,
-+parse_manifest_file(char *manifest_path, char **label_p,
-+					manifest_files_hash **ht_p,
- 					manifest_wal_range **first_wal_range_p)
- {
- 	int			fd;
-@@ -436,10 +441,12 @@ parse_manifest_file(char *manifest_path, manifest_files_hash **ht_p,
- 	close(fd);
- 
- 	/* Parse the manifest. */
-+	private_context.label = NULL;
- 	private_context.ht = ht;
- 	private_context.first_wal_range = NULL;
- 	private_context.last_wal_range = NULL;
- 	context.private_data = &private_context;
-+	context.label_cb = record_manifest_details_for_label;
- 	context.perfile_cb = record_manifest_details_for_file;
- 	context.perwalrange_cb = record_manifest_details_for_wal_range;
- 	context.error_cb = report_manifest_error;
-@@ -448,7 +455,8 @@ parse_manifest_file(char *manifest_path, manifest_files_hash **ht_p,
- 	/* Done with the buffer. */
- 	pfree(buffer);
- 
--	/* Return the file hash table and WAL range list we constructed. */
-+	/* Return the label, file hash table, and WAL range list we constructed. */
-+	*label_p = private_context.label;
- 	*ht_p = ht;
- 	*first_wal_range_p = private_context.first_wal_range;
- }
-@@ -471,6 +479,22 @@ report_manifest_error(JsonManifestParseContext *context, const char *fmt,...)
- 	exit(1);
- }
- 
-+/*
-+ * Record label extracted from the backup manifest.
-+ */
-+static void
-+record_manifest_details_for_label(JsonManifestParseContext *context,
-+								  char *label)
-+{
-+	parser_context *pcxt = context->private_data;
++		case JM_EXPECT_THIS_TIME_RANGE_VALUE:
++			parse->state = JM_EXPECT_THIS_TIME_RANGE_FIELD;
++			break;
 +
-+	/* Allocate memory for the label. */
-+	pcxt->label = palloc(strlen(label) + 1);
-+
-+	/* Initialize the label. */
-+	strcpy(pcxt->label, label);
-+}
-+
- /*
-  * Record details extracted from the backup manifest for one file.
-  */
+ 		case JM_EXPECT_MANIFEST_CHECKSUM_VALUE:
+ 			parse->state = JM_EXPECT_TOPLEVEL_END;
+ 			parse->manifest_checksum = token;
 diff --git a/src/include/access/xlog.h b/src/include/access/xlog.h
-index a14126d164f..3aac6839a70 100644
+index a14126d164..3aac6839a7 100644
 --- a/src/include/access/xlog.h
 +++ b/src/include/access/xlog.h
 @@ -293,8 +293,6 @@ extern SessionBackupState get_backup_status(void);
@@ -1485,7 +1557,7 @@ index a14126d164f..3aac6839a70 100644
  #define TABLESPACE_MAP			"tablespace_map"
  #define TABLESPACE_MAP_OLD		"tablespace_map.old"
 diff --git a/src/include/access/xlogbackup.h b/src/include/access/xlogbackup.h
-index 1611358137b..9be80a4f7dd 100644
+index 1611358137..9be80a4f7d 100644
 --- a/src/include/access/xlogbackup.h
 +++ b/src/include/access/xlogbackup.h
 @@ -15,6 +15,7 @@
@@ -1516,7 +1588,7 @@ index 1611358137b..9be80a4f7dd 100644
  
  #endif							/* XLOG_BACKUP_H */
 diff --git a/src/include/access/xlogrecovery.h b/src/include/access/xlogrecovery.h
-index ee0bc742782..981266f7340 100644
+index ee0bc74278..981266f734 100644
 --- a/src/include/access/xlogrecovery.h
 +++ b/src/include/access/xlogrecovery.h
 @@ -80,8 +80,7 @@ extern Size XLogRecoveryShmemSize(void);
@@ -1530,7 +1602,7 @@ index ee0bc742782..981266f7340 100644
  
  /*
 diff --git a/src/include/backup/backup_manifest.h b/src/include/backup/backup_manifest.h
-index bd7067ae42e..ae8cdda145c 100644
+index bd7067ae42..4ab1291bba 100644
 --- a/src/include/backup/backup_manifest.h
 +++ b/src/include/backup/backup_manifest.h
 @@ -37,7 +37,8 @@ typedef struct backup_manifest_info
@@ -1543,8 +1615,17 @@ index bd7067ae42e..ae8cdda145c 100644
  extern void AddFileToBackupManifest(backup_manifest_info *manifest,
  									Oid spcoid,
  									const char *pathname, size_t size,
+@@ -47,6 +48,8 @@ extern void AddWALInfoToBackupManifest(backup_manifest_info *manifest,
+ 									   XLogRecPtr startptr,
+ 									   TimeLineID starttli, XLogRecPtr endptr,
+ 									   TimeLineID endtli);
++extern void AddTimeInfoToBackupManifest(backup_manifest_info *manifest,
++										pg_time_t starttime, pg_time_t endtime);
+ 
+ extern void SendBackupManifest(backup_manifest_info *manifest, bbsink *sink);
+ extern void FreeBackupManifest(backup_manifest_info *manifest);
 diff --git a/src/include/catalog/pg_control.h b/src/include/catalog/pg_control.h
-index 2ae72e3b266..0ea2e733682 100644
+index 2ae72e3b26..0ea2e73368 100644
 --- a/src/include/catalog/pg_control.h
 +++ b/src/include/catalog/pg_control.h
 @@ -146,6 +146,9 @@ typedef struct ControlFileData
@@ -1588,7 +1669,7 @@ index 2ae72e3b266..0ea2e733682 100644
  
  	/*
 diff --git a/src/include/catalog/pg_proc.dat b/src/include/catalog/pg_proc.dat
-index fb58dee3bcd..16346f0540a 100644
+index fb58dee3bc..16346f0540 100644
 --- a/src/include/catalog/pg_proc.dat
 +++ b/src/include/catalog/pg_proc.dat
 @@ -6427,13 +6427,17 @@
