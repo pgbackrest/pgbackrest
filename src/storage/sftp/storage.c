@@ -952,14 +952,22 @@ storageSftpPathRemove(THIS_VOID, const String *const path, const bool recurse, c
                             if (rc == LIBSSH2_ERROR_EAGAIN)
                                 THROW_FMT(PathRemoveError, "timeout removing file '%s'", strZ(file));
 
-                            // Attempting to unlink a directory appears to return LIBSSH2_FX_FAILURE
-                            if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL &&
-                                libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_FAILURE)
+                            // Attempting to unlink a directory appears to return LIBSSH2_FX_FAILURE or LIBSSH2_FX_PERMISSION_DENIED
+                            if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL)
                             {
-                                storageInterfacePathRemoveP(this, file, true);
+                                const uint64_t sftpErrno = libssh2_sftp_last_error(this->sftpSession);
+
+                                if (sftpErrno == LIBSSH2_FX_FAILURE || sftpErrno == LIBSSH2_FX_PERMISSION_DENIED)
+                                    storageInterfacePathRemoveP(this, file, true);
+                                else
+                                {
+                                    THROW_FMT(
+                                        PathRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE " libssh sftp [%" PRIu64 "]", strZ(file),
+                                        sftpErrno);
+                                }
                             }
                             else
-                                THROW_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE, strZ(file));
+                                THROW_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE " libssh ssh [%d]", strZ(file), rc);
                         }
 
                         // Reset the memory context occasionally so we don't use too much memory or slow down processing
@@ -986,8 +994,10 @@ storageSftpPathRemove(THIS_VOID, const String *const path, const bool recurse, c
 
             if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL)
             {
-                if (libssh2_sftp_last_error(this->sftpSession) != LIBSSH2_FX_NO_SUCH_FILE)
-                    THROW_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE, strZ(path));
+                const uint64_t sftpErrno = libssh2_sftp_last_error(this->sftpSession);
+
+                if (sftpErrno != LIBSSH2_FX_NO_SUCH_FILE)
+                    THROW_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE " sftp error [%" PRIu64 "]", strZ(path), sftpErrno);
 
                 // Path does not exist
                 result = false;

@@ -14,8 +14,8 @@
         <variable key="os-rhel-title">RHEL</variable>
 
         <!-- Base PostgreSQL versions -->
-        <variable key="os-debian-pg-version">12</variable>
-        <variable key="os-rhel-pg-version">11</variable>
+        <variable key="os-debian-pg-version">15</variable>
+        <variable key="os-rhel-pg-version">12</variable>
 
         <!-- User-defined package to use in documentation (use "apt" to install the current PGDG apt package) -->
         <variable key="package">none</variable>
@@ -69,12 +69,8 @@
 
         <variable key="pg-version-nodot" eval="y">my $version = '{[pg-version]}'; $version =~ s/\.//g; return $version;</variable>
 
-        <!-- WAL level should be the minimum required for replication -->
-        <variable key="wal-level" if="{[pg-version]} &lt; 9.6">hot_standby</variable>
-        <variable key="wal-level" if="{[pg-version]} &gt;= 9.6">replica</variable>
-
-        <variable key="pg-version-upgrade" if="{[os-type-is-debian]}">14</variable>
-        <variable key="pg-version-upgrade" if="{[os-type-is-rhel]}">12</variable>
+        <variable key="pg-version-upgrade" if="{[os-type-is-debian]}">16</variable>
+        <variable key="pg-version-upgrade" if="{[os-type-is-rhel]}">13</variable>
         <variable key="pg-version-upgrade-nodot" eval="y">my $version = '{[pg-version-upgrade]}'; $version =~ s/\.//g; return $version;</variable>
 
         <variable key="pg-bin-path" if="{[os-type-is-debian]}">/usr/lib/postgresql/{[pg-version]}/bin</variable>
@@ -128,18 +124,12 @@
         <variable key="postgres-pgpass">{[pg-home-path]}/.pgpass</variable>
 
         <variable key="postgres-log-demo" if="{[os-type-is-debian]}">/var/log/postgresql/postgresql-{[pg-version]}-{[postgres-cluster-demo]}.log</variable>
-        <variable key="postgres-log-demo" if="{[os-type-is-rhel]} &amp;&amp; {[pg-version]} &lt; 10">{[pg-path]}/pg_log/postgresql.log</variable>
-        <variable key="postgres-log-demo" if="{[os-type-is-rhel]} &amp;&amp; {[pg-version]} &gt;= 10">{[pg-path]}/log/postgresql.log</variable>
+        <variable key="postgres-log-demo" if="{[os-type-is-rhel]}">{[pg-path]}/log/postgresql.log</variable>
 
         <variable key="postgres-log-pgstartup-demo" if="{[os-type-is-rhel]}">/var/lib/pgsql/{[pg-version]}/pgstartup.log</variable>
 
-        <variable key="pg-recovery-file-demo" if="{[pg-version]} &lt; 12">recovery.conf</variable>
-        <variable key="pg-recovery-file-demo" if="{[pg-version]} &gt;= 12">postgresql.auto.conf</variable>
+        <variable key="pg-recovery-file-demo">postgresql.auto.conf</variable>
         <variable key="pg-recovery-path-demo">{[pg-path]}/{[pg-recovery-file-demo]}</variable>
-
-        <!-- Select correct WAL switch function based on the version of PostgreSQL -->
-        <variable key="pg-switch-wal" if="{[pg-version]} &lt; 10">pg_switch_xlog</variable>
-        <variable key="pg-switch-wal" if="{[pg-version]} &gt;= 10">pg_switch_wal</variable>
 
         <!-- Azure Settings -->
         <variable key="azure-image">mcr.microsoft.com/azure-storage/azurite</variable>  <!-- Azurite docker image -->
@@ -1280,11 +1270,11 @@
 
                 <postgres-config-option key="archive_command">'{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} archive-push %p'</postgres-config-option>
                 <postgres-config-option key="archive_mode">on</postgres-config-option>
-                <postgres-config-option key="wal_level">{[wal-level]}</postgres-config-option>
+                <postgres-config-option key="wal_level">replica</postgres-config-option>
                 <postgres-config-option key="max_wal_senders">3</postgres-config-option>
             </postgres-config>
 
-            <p><id>%p</id> is how <postgres/> specifies the location of the WAL segment to be archived. Setting <pg-option>wal_level</pg-option> to at least <pg-setting>{[wal-level]}</pg-setting> and increasing <pg-option>max_wal_senders</pg-option> is a good idea even if there are currently no replicas as this will allow them to be added later without restarting the primary cluster.</p>
+            <p><id>%p</id> is how <postgres/> specifies the location of the WAL segment to be archived. Setting <pg-option>wal_level</pg-option> to at least <pg-setting>replica</pg-setting> and increasing <pg-option>max_wal_senders</pg-option> is a good idea even if there are currently no replicas as this will allow them to be added later without restarting the primary cluster.</p>
 
             <p>The <postgres/> cluster must be restarted after making these changes and before performing a backup.</p>
 
@@ -1879,8 +1869,8 @@
                 <!-- Push a few WAL segments to make the example below more interesting -->
                 <execute user="postgres" show="n">
                     <exe-cmd>psql -c "
-                        select pg_create_restore_point('generate WAL'); select {[pg-switch-wal]}();
-                        select pg_create_restore_point('generate WAL'); select {[pg-switch-wal]}();"</exe-cmd>
+                        select pg_create_restore_point('generate WAL'); select pg_switch_wal();
+                        select pg_create_restore_point('generate WAL'); select pg_switch_wal();"</exe-cmd>
                 </execute>
 
                 <execute user="postgres" output="y">
@@ -2145,14 +2135,10 @@
 
         <p><link section="/quickstart/perform-restore">Restore a Backup</link> in <link section="/quickstart">Quick Start</link> performed default recovery, which is to play all the way to the end of the WAL stream. In the case of a hardware failure this is usually the best choice but for data corruption scenarios (whether machine or human in origin) Point-in-Time Recovery (PITR) is often more appropriate.</p>
 
-        <p>Point-in-Time Recovery (PITR) allows the WAL to be played from the last backup to a specified lsn, time, transaction id, or recovery point. For common recovery scenarios time-based recovery is arguably the most useful. A typical recovery scenario is to restore a table that was accidentally dropped or data that was accidentally deleted. Recovering a dropped table is more dramatic so that's the example given here but deleted data would be recovered in exactly the same way.</p>
+        <p>Point-in-Time Recovery (PITR) allows the WAL to be played from a backup to a specified lsn, time, transaction id, or recovery point. For common recovery scenarios time-based recovery is arguably the most useful. A typical recovery scenario is to restore a table that was accidentally dropped or data that was accidentally deleted. Recovering a dropped table is more dramatic so that's the example given here but deleted data would be recovered in exactly the same way.</p>
 
         <execute-list host="{[host-pg1]}">
-            <title>Backup the {[postgres-cluster-demo]} cluster and create a table with very important data</title>
-
-            <execute user="postgres">
-                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --type=diff backup</exe-cmd>
-            </execute>
+            <title>Create a table with very important data</title>
 
             <execute user="postgres" output="y">
                 <exe-cmd>
@@ -2200,12 +2186,84 @@
             </execute>
         </execute-list>
 
-        <p>Now the restore can be performed with time-based recovery to bring back the missing table.</p>
+        <p>If the wrong backup is selected for restore then recovery to the required time target will fail. To demonstrate this a new incremental backup is performed where <id>important_table</id> does not exist.</p>
 
         <execute-list host="{[host-pg1]}">
-            <title>Stop <postgres/>, restore the {[postgres-cluster-demo]} cluster to <id>{[time-recovery-timestamp]}</id>, and display <file>{[pg-recovery-file-demo]}</file></title>
+            <title>Perform an incremental backup</title>
+
+            <execute user="postgres">
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-type=incr backup</exe-cmd>
+            </execute>
+
+            <execute user="postgres" show="n" variable-key="backup-last">
+                <exe-cmd>{[cmd-backup-last]}</exe-cmd>
+            </execute>
+
+            <execute user="postgres" output="y">
+                <exe-cmd>{[project-exe]} info</exe-cmd>
+                <exe-highlight>{[backup-last]}</exe-highlight>
+            </execute>
+        </execute-list>
+
+        <p>It will not be possible to recover the lost table from this backup since <postgres/> can only play forward, not backward.</p>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Attempt recovery from an incorrect backup</title>
 
             <execute user="root">
+                <exe-cmd>{[pg-cluster-stop]}</exe-cmd>
+            </execute>
+
+            <execute user="postgres">
+                <exe-cmd>
+                    {[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta
+                     {[dash]}-set={[backup-last]} {[dash]}-target-timeline=current
+                     {[dash]}-type=time "{[dash]}-target={[time-recovery-timestamp]}" {[dash]}-target-action=promote restore
+                </exe-cmd>
+            </execute>
+
+            <execute user="root" show="n">
+                <exe-cmd>rm {[postgres-log-demo]}</exe-cmd>
+            </execute>
+
+            <execute if="{[pg-version]} &gt; 12" user="root" output="y" err-expect="1">
+                <exe-cmd>{[pg-cluster-start]}</exe-cmd>
+                <exe-highlight>recovery ended before configured recovery target was reached</exe-highlight>
+            </execute>
+
+            <execute if="{[pg-version]} &lt;= 12" user="root">
+                <exe-cmd>{[pg-cluster-start]}</exe-cmd>
+            </execute>
+
+            <execute if="{[pg-version]} &lt;= 12" user="postgres" show="n">
+                <exe-cmd>{[pg-cluster-wait]}</exe-cmd>
+            </execute>
+
+            <execute if="{[pg-version]} &lt;= 12" user="postgres" output="y" err-expect="1">
+                <exe-cmd>psql -c "select * from important_table"</exe-cmd>
+                <exe-highlight>does not exist</exe-highlight>
+            </execute>
+        </execute-list>
+
+        <p if="{[pg-version]} &lt;= 12">Looking at the log output it's not obvious that recovery failed to restore the table. The key is to look for the presence of the <quote>recovery stopping before...</quote> and <quote>last completed transaction...</quote> log messages. If they are not present then the recovery to the specified point-in-time was not successful.</p>
+
+        <execute-list if="{[pg-version]} &lt;= 12" host="{[host-pg1]}">
+            <title>Examine the <postgres/> log output to discover the recovery was not successful</title>
+
+            <execute user="postgres" output="y">
+                <exe-cmd>cat {[postgres-log-demo]}</exe-cmd>
+                <exe-highlight>starting point-in-time recovery|consistent recovery state reached</exe-highlight>
+            </execute>
+        </execute-list>
+
+        <p>A reliable method is to allow <backrest/> to automatically select a backup capable of recovery to the time target, i.e. a backup that ended before the specified time.</p>
+
+        <admonition type="note"><backrest/> cannot automatically select a backup when the restore type is <id>xid</id> or <id>name</id>.</admonition>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Restore the {[postgres-cluster-demo]} cluster to <id>{[time-recovery-timestamp]}</id></title>
+
+            <execute if="{[pg-version]} &lt;= 12" user="root">
                 <exe-cmd>{[pg-cluster-stop]}</exe-cmd>
             </execute>
 
@@ -2225,7 +2283,7 @@
             </execute>
         </execute-list>
 
-        <p><backrest/> has automatically generated the recovery settings in <file>{[pg-recovery-file-demo]}</file> so <postgres/> can be started immediately. <id>%f</id> is how <postgres/> specifies the WAL segment it needs and <id>%p</id> is the location where it should be copied. Once <postgres/> has finished recovery the table will exist again and can be queried.</p>
+        <p><backrest/> has generated the recovery settings in <file>{[pg-recovery-file-demo]}</file> so <postgres/> can be started immediately. <id>%f</id> is how <postgres/> specifies the WAL segment it needs and <id>%p</id> is the location where it should be copied. Once <postgres/> has finished recovery the table will exist again and can be queried.</p>
 
         <execute-list host="{[host-pg1]}">
             <title>Start <postgres/> and check that the important table exists</title>
@@ -2248,127 +2306,6 @@
 
         <execute-list host="{[host-pg1]}">
             <title>Examine the <postgres/> log output</title>
-
-            <execute user="postgres" output="y">
-                <exe-cmd>cat {[postgres-log-demo]}</exe-cmd>
-                <exe-highlight>recovery stopping before|last completed transaction|starting point-in-time recovery</exe-highlight>
-            </execute>
-        </execute-list>
-
-        <p>This example was rigged to give the correct result. If a backup after the required time is chosen then <postgres/> will not be able to recover the lost table. <postgres/> can only play forward, not backward. To demonstrate this the important table must be dropped (again).</p>
-
-        <execute-list host="{[host-pg1]}">
-            <title>Drop the important table (again)</title>
-
-            <execute user="postgres" output="y" err-expect="1">
-                <exe-cmd>psql -c "begin;
-                                  drop table important_table;
-                                  commit;
-                                  select * from important_table;"</exe-cmd>
-                <exe-highlight>does not exist</exe-highlight>
-            </execute>
-        </execute-list>
-
-        <p>Now take a new backup and attempt recovery from the new backup by specifying the <br-option>{[dash]}-set</br-option> option. The <cmd>info</cmd> command can be used to find the new backup label.</p>
-
-        <execute-list host="{[host-pg1]}">
-            <title>Perform a backup and get backup info</title>
-
-            <execute user="postgres">
-                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-type=incr backup</exe-cmd>
-            </execute>
-
-            <execute user="postgres" show="n" variable-key="backup-last">
-                <exe-cmd>{[cmd-backup-last]}</exe-cmd>
-            </execute>
-
-            <execute user="postgres" filter="n" output="y">
-                <exe-cmd>{[project-exe]} info</exe-cmd>
-                <exe-highlight>{[backup-last]}</exe-highlight>
-            </execute>
-        </execute-list>
-
-        <execute-list host="{[host-pg1]}">
-            <title>Attempt recovery from the specified backup</title>
-
-            <execute user="root">
-                <exe-cmd>{[pg-cluster-stop]}</exe-cmd>
-            </execute>
-
-            <execute user="postgres">
-                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta
-                     {[dash]}-set={[backup-last]}
-                     {[dash]}-type=time "{[dash]}-target={[time-recovery-timestamp]}" {[dash]}-target-action=promote restore</exe-cmd>
-            </execute>
-
-            <execute user="root" show="n">
-                <exe-cmd>rm {[postgres-log-demo]}</exe-cmd>
-            </execute>
-
-            <execute user="root">
-                <exe-cmd>{[pg-cluster-start]}</exe-cmd>
-            </execute>
-
-            <execute user="postgres" show="n">
-                <exe-cmd>{[pg-cluster-wait]}</exe-cmd>
-            </execute>
-
-            <execute user="postgres" output="y" err-expect="1">
-                <exe-cmd>psql -c "select * from important_table"</exe-cmd>
-                <exe-highlight>does not exist</exe-highlight>
-            </execute>
-        </execute-list>
-
-        <p>Looking at the log output it's not obvious that recovery failed to restore the table. The key is to look for the presence of the <quote>recovery stopping before...</quote> and <quote>last completed transaction...</quote> log messages. If they are not present then the recovery to the specified point-in-time was not successful.</p>
-
-        <execute-list host="{[host-pg1]}">
-            <title>Examine the <postgres/> log output to discover the recovery was not successful</title>
-
-            <execute user="postgres" output="y">
-                <exe-cmd>cat {[postgres-log-demo]}</exe-cmd>
-                <exe-highlight>starting point-in-time recovery|consistent recovery state reached</exe-highlight>
-            </execute>
-        </execute-list>
-
-        <p>The default behavior for time-based restore, if the <br-option>{[dash]}-set</br-option> option is not specified, is to attempt to discover an earlier backup to play forward from. If a backup set cannot be found, then restore will default to the latest backup which, as shown earlier, may not give the desired result.</p>
-
-        <execute-list host="{[host-pg1]}">
-            <title>Stop <postgres/>, restore from auto-selected backup, and start <postgres/></title>
-
-            <execute user="root">
-                <exe-cmd>{[pg-cluster-stop]}</exe-cmd>
-            </execute>
-
-            <execute user="postgres">
-                <exe-cmd>
-                    {[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta
-                        {[dash]}-type=time "{[dash]}-target={[time-recovery-timestamp]}"
-                        {[dash]}-target-action=promote restore
-                </exe-cmd>
-            </execute>
-
-            <execute user="root" show="n">
-                <exe-cmd>rm {[postgres-log-demo]}</exe-cmd>
-            </execute>
-
-            <execute user="root">
-                <exe-cmd>{[pg-cluster-start]}</exe-cmd>
-            </execute>
-
-            <execute user="postgres" show="n">
-                <exe-cmd>{[pg-cluster-wait]}</exe-cmd>
-            </execute>
-
-            <execute user="postgres" output="y">
-                <exe-cmd>psql -c "select * from important_table"</exe-cmd>
-                <exe-highlight>{[test-table-data]}</exe-highlight>
-            </execute>
-        </execute-list>
-
-        <p>Now the log output will contain the expected <quote>recovery stopping before...</quote> and <quote>last completed transaction...</quote> messages showing that the recovery was successful.</p>
-
-        <execute-list host="{[host-pg1]}">
-            <title>Examine the <postgres/> log output for log messages indicating success</title>
 
             <execute user="postgres" output="y">
                 <exe-cmd>cat {[postgres-log-demo]}</exe-cmd>
@@ -3199,7 +3136,7 @@
                 <postgres-config-option key="hot_standby">on</postgres-config-option>
                 <postgres-config-option key="archive_command">'{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} archive-push %p'</postgres-config-option>
                 <postgres-config-option key="archive_mode">on</postgres-config-option>
-                <postgres-config-option key="wal_level">{[wal-level]}</postgres-config-option>
+                <postgres-config-option key="wal_level">replica</postgres-config-option>
                 <postgres-config-option key="max_wal_senders">3</postgres-config-option>
                 <postgres-config-option if="{[os-type-is-rhel]}" key="log_filename">'postgresql.log'</postgres-config-option>
             </postgres-config>
@@ -3262,14 +3199,14 @@
 
             <p>So, what went wrong? Since <postgres/> is pulling WAL segments from the archive to perform replication, changes won't be seen on the standby until the WAL segment that contains those changes is pushed from <host>{[host-pg1]}</host>.</p>
 
-            <p>This can be done manually by calling <code>{[pg-switch-wal]}()</code> which pushes the current WAL segment to the archive (a new WAL segment is created to contain further changes).</p>
+            <p>This can be done manually by calling <code>pg_switch_wal()</code> which pushes the current WAL segment to the archive (a new WAL segment is created to contain further changes).</p>
 
             <execute-list host="{[host-pg1]}">
-                <title>Call <code>{[pg-switch-wal]}()</code></title>
+                <title>Call <code>pg_switch_wal()</code></title>
 
                 <execute user="postgres" output="y" filter="n">
                     <exe-cmd>
-                        psql -c "select *, current_timestamp from {[pg-switch-wal]}()";
+                        psql -c "select *, current_timestamp from pg_switch_wal()";
                     </exe-cmd>
                 </execute>
             </execute-list>
@@ -3416,7 +3353,7 @@
                 </execute>
             </execute-list>
 
-            <p>Now when a table is created on <host>{[host-pg1]}</host> it will appear on <host>{[host-pg2]}</host> quickly and without the need to call <code>{[pg-switch-wal]}()</code>.</p>
+            <p>Now when a table is created on <host>{[host-pg1]}</host> it will appear on <host>{[host-pg2]}</host> quickly and without the need to call <code>pg_switch_wal()</code>.</p>
 
             <execute-list host="{[host-pg1]}">
                 <title>Create a new table on the primary</title>
@@ -3560,7 +3497,7 @@
 
                 <postgres-config-option key="archive_command">'{[project-exe]} {[dash]}-stanza=demo-alt archive-push %p'</postgres-config-option>
                 <postgres-config-option key="archive_mode">on</postgres-config-option>
-                <postgres-config-option key="wal_level">{[wal-level]}</postgres-config-option>
+                <postgres-config-option key="wal_level">replica</postgres-config-option>
                 <postgres-config-option key="max_wal_senders">3</postgres-config-option>
                 <postgres-config-option if="{[os-type-is-rhel]}" key="log_filename">'postgresql.log'</postgres-config-option>
             </postgres-config>
@@ -3705,11 +3642,11 @@
                 <execute user="postgres" output="n">
                     <exe-cmd>
                         psql -c "
-                            select pg_create_restore_point('test async push'); select {[pg-switch-wal]}();
-                            select pg_create_restore_point('test async push'); select {[pg-switch-wal]}();
-                            select pg_create_restore_point('test async push'); select {[pg-switch-wal]}();
-                            select pg_create_restore_point('test async push'); select {[pg-switch-wal]}();
-                            select pg_create_restore_point('test async push'); select {[pg-switch-wal]}();"
+                            select pg_create_restore_point('test async push'); select pg_switch_wal();
+                            select pg_create_restore_point('test async push'); select pg_switch_wal();
+                            select pg_create_restore_point('test async push'); select pg_switch_wal();
+                            select pg_create_restore_point('test async push'); select pg_switch_wal();
+                            select pg_create_restore_point('test async push'); select pg_switch_wal();"
                     </exe-cmd>
                 </execute>
 
@@ -4199,7 +4136,7 @@
 
             <postgres-config-option key="archive_command">'{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} archive-push %p'</postgres-config-option>
             <postgres-config-option key="archive_mode">on</postgres-config-option>
-            <postgres-config-option key="wal_level">{[wal-level]}</postgres-config-option>
+            <postgres-config-option key="wal_level">replica</postgres-config-option>
             <postgres-config-option key="max_wal_senders">3</postgres-config-option>
             <postgres-config-option if="{[os-type-is-rhel]}" key="log_filename">'postgresql.log'</postgres-config-option>
         </postgres-config>
