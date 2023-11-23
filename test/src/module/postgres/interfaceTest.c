@@ -187,6 +187,22 @@ testRun(void)
         TEST_RESULT_VOID(pgControlCheckpointInvalidate(control, NULL), "invalidate checkpoint");
         info = pgControlFromBuffer(control, NULL);
         TEST_RESULT_UINT(info.checkpoint, 0xFFFFFFFFFFFFFFFF, "check invalid checkpoint");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("Invalidate checkpoint on force control version");
+
+        // Start with an invalid crc but write a valid one at a greater offset to test the forced scan
+        control = hrnPgControlToBuffer(
+            0, 0xFADEFADE, (PgControl){.version = PG_VERSION_94, .systemId = 0xAAAA0AAAA, .checkpoint = 777});
+        crcOffset = pgInterfaceVersion(PG_VERSION_94)->controlCrcOffset() + sizeof(uint32_t) * 2;
+        *((uint32_t *)(bufPtr(control) + crcOffset)) = crc32One(bufPtrConst(control), crcOffset);
+
+        info = pgControlFromBuffer(control, STRDEF(PG_VERSION_94_Z));
+        TEST_RESULT_UINT(info.checkpoint, 777, "check checkpoint");
+
+        TEST_RESULT_VOID(pgControlCheckpointInvalidate(control, STRDEF(PG_VERSION_94_Z)), "invalidate checkpoint");
+        info = pgControlFromBuffer(control, STRDEF(PG_VERSION_94_Z));
+        TEST_RESULT_UINT(info.checkpoint, 0xFFFFFFFFFFFFFFFF, "check invalid checkpoint");
     }
 
     // *****************************************************************************************************************************

@@ -133,7 +133,7 @@ FN_EXTERN bool pgDbIsSystemId(unsigned int id);
 FN_EXTERN Buffer *pgControlBufferFromFile(const Storage *storage, const String *pgVersionForce);
 FN_EXTERN PgControl pgControlFromFile(const Storage *storage, const String *pgVersionForce);
 
-// Invalidate checkpoint/redo records in pg_control
+// Invalidate checkpoint record in pg_control
 FN_EXTERN void pgControlCheckpointInvalidate(Buffer *buffer, const String *pgVersionForce);
 
 // Get the control version for a PostgreSQL version
