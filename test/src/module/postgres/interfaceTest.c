@@ -186,7 +186,7 @@ testRun(void)
 
         TEST_RESULT_VOID(pgControlCheckpointInvalidate(control, NULL), "invalidate checkpoint");
         info = pgControlFromBuffer(control, NULL);
-        TEST_RESULT_UINT(info.checkpoint, 0xFFFFFFFFFFFFFFFF, "check invalid checkpoint");
+        TEST_RESULT_UINT(info.checkpoint, 0xDEAD, "check invalid checkpoint");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("Invalidate checkpoint on force control version");
@@ -202,7 +202,7 @@ testRun(void)
 
         TEST_RESULT_VOID(pgControlCheckpointInvalidate(control, STRDEF(PG_VERSION_94_Z)), "invalidate checkpoint");
         info = pgControlFromBuffer(control, STRDEF(PG_VERSION_94_Z));
-        TEST_RESULT_UINT(info.checkpoint, 0xFFFFFFFFFFFFFFFF, "check invalid checkpoint");
+        TEST_RESULT_UINT(info.checkpoint, 0xDEAD, "check invalid checkpoint");
     }
 
     // *****************************************************************************************************************************

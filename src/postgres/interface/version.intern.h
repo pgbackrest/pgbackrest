@@ -103,7 +103,8 @@ Invalidate control checkpoint
     static void                                                                                                                    \
     pgInterfaceControlCheckpointInvalidate##version(unsigned char *const controlFile)                                              \
     {                                                                                                                              \
-        ((ControlFileData *)controlFile)->checkPoint = 0xFFFFFFFFFFFFFFFF;                                                         \
+        /* PostgreSQL skips the first segment so any LSN in that segment is invalid */                                             \
+        ((ControlFileData *)controlFile)->checkPoint = 0xDEAD;                                                                     \
     }
 
 #endif
