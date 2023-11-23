@@ -93,7 +93,7 @@ Get control crc offset
 #endif
 
 /***********************************************************************************************************************************
-Invalidate control checkpoint
+Invalidate control checkpoint. PostgreSQL skips the first segment so any LSN in that segment is invalid.
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
@@ -103,7 +103,6 @@ Invalidate control checkpoint
     static void                                                                                                                    \
     pgInterfaceControlCheckpointInvalidate##version(unsigned char *const controlFile)                                              \
     {                                                                                                                              \
-        /* PostgreSQL skips the first segment so any LSN in that segment is invalid */                                             \
         ((ControlFileData *)controlFile)->checkPoint = 0xDEAD;                                                                     \
     }
 
