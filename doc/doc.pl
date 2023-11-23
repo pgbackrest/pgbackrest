@@ -220,6 +220,24 @@ eval
         $rhVariableOverride->{$strKey} = $rhKeyVariableOverride->{$strKey};
     }
 
+    # Build C code
+    my $strBuildPath = "${strBasePath}/output/build";
+    my $strRepoPath = dirname($strBasePath);
+    my $strBuildNinja = "${strBuildPath}/build.ninja";
+
+    &log(INFO, "build C helper");
+
+    if (!-e $strBuildNinja)
+    {
+        executeTest("meson setup -Dwerror=true -Dfatal-errors=true -Dbuildtype=debug ${strBuildPath} ${strRepoPath}");
+    }
+
+    executeTest("ninja -C ${strBuildPath} doc/src/doc-pgbackrest");
+    executeTest(
+        "${strBuildPath}/doc/src/doc-pgbackrest --repo-path=${strRepoPath}" .
+            ($strLogLevel ne 'info' ? " --log-level=${strLogLevel}" : ''),
+        {bShowOutputAsync => true});
+
     # Load the manifest
     my $oManifest = new pgBackRestDoc::Common::DocManifest(
         $oStorageDoc, \@stryRequire, \@stryInclude, \@stryExclude, $rhKeyVariableOverride, $rhVariableOverride,

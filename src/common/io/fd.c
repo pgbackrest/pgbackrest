@@ -11,7 +11,6 @@ File Descriptor Functions
 #include "common/debug.h"
 #include "common/io/fd.h"
 #include "common/log.h"
-#include "common/wait.h"
 
 /***********************************************************************************************************************************
 Use poll() to determine when data is ready to read/write on a socket. Retry after EINTR with whatever time is left on the timer.

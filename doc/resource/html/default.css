@@ -19,12 +19,15 @@ body
     width: 100%;
     text-align: justify;
     font-weight: 400;
+    counter-reset: section1-counter;
+    counter-reset: section1-toc-counter;
 }
 
 a:link, a:visited, a:hover, a:active
 {
     text-decoration: underline;
     color: black;
+    display: inline-block;
 }
 
 @media (min-width: 1000px)
@@ -154,7 +157,14 @@ Table of Contents
 {
     display: inline;
     font-size: 14pt;
-    margin-right: .5em;
+    margin-right: .75em;
+    counter-reset: section2-toc-counter;
+}
+
+.section1-toc-number:before
+{
+    counter-increment: section1-toc-counter;
+    content: counter(section1-toc-counter);
 }
 
 .section1-toc-title
@@ -171,7 +181,14 @@ Table of Contents
 .section2-toc-number
 {
     display: inline;
-    margin-right: .5em;
+    margin-right: .75em;
+    counter-reset: section3-toc-counter;
+}
+
+.section2-toc-number:before
+{
+    counter-increment: section2-toc-counter;
+    content: counter(section1-toc-counter) "." counter(section2-toc-counter);
 }
 
 .section2-toc-title
@@ -187,7 +204,13 @@ Table of Contents
 .section3-toc-number
 {
     display: inline;
-    margin-right: .5em;
+    margin-right: .75em;
+}
+
+.section3-toc-number:before
+{
+    counter-increment: section3-toc-counter;
+    content: counter(section1-toc-counter) "." counter(section2-toc-counter) "." counter(section3-toc-counter);
 }
 
 .section3-toc-title
@@ -201,6 +224,8 @@ Section
 .section1
 {
     margin-top: 2.5em;
+    counter-reset: section2-counter;
+    counter-increment: section1-counter;
 }
 
 .section1:first-of-type
@@ -211,6 +236,17 @@ Section
 .section2, .section3
 {
     margin-top: 1em;
+}
+
+.section2
+{
+    counter-reset: section3-counter;
+    counter-increment: section2-counter;
+}
+
+.section3
+{
+    counter-increment: section3-counter;
 }
 
 .section1-header, .section2-header, .section3-header, .page-toc-header
@@ -254,6 +290,11 @@ Section
     margin-top: 0px;
 }
 
+.section1-number:before
+{
+    content: counter(section1-counter);
+}
+
 .section1-subtitle
 {
     font-size: 16pt;
@@ -274,6 +315,11 @@ Section
     border-bottom: 2px #27689d solid;
     color: #27689d;
     font-size: 16pt;
+}
+
+.section2-number:before
+{
+    content: counter(section1-counter) "." counter(section2-counter);
 }
 
 .section2-subtitle, .section2-subtitle
@@ -303,6 +349,11 @@ Section
     font-size: 14pt;
     color: #27689d;
     border-bottom: 1px #27689d solid;
+}
+
+.section3-number:before
+{
+    content: counter(section1-counter) "." counter(section2-counter) "." counter(section3-counter);
 }
 
 .section-intro

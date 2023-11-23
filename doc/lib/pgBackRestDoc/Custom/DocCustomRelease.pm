@@ -15,7 +15,6 @@ use File::Basename qw(dirname);
 use pgBackRestDoc::Common::DocRender;
 use pgBackRestDoc::Common::Log;
 use pgBackRestDoc::Common::String;
-use pgBackRestDoc::Custom::DocConfigData;
 use pgBackRestDoc::ProjectInfo;
 
 ####################################################################################################################################

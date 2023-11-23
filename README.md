@@ -40,7 +40,7 @@ All operations utilize file and directory level fsync to ensure durability.
 
 ### Page Checksums
 
-PostgreSQL has supported page-level checksums since 9.3. If page checksums are enabled pgBackRest will validate the checksums for every file that is copied during a backup. All page checksums are validated during a full backup and checksums in files that have changed are validated during differential and incremental backups.
+If page checksums are enabled pgBackRest will validate the checksums for every file that is copied during a backup. All page checksums are validated during a full backup and checksums in files that have changed are validated during differential and incremental backups.
 
 Validation failures do not stop the backup process, but warnings with details of exactly which pages have failed validation are output to the console and file log.
 

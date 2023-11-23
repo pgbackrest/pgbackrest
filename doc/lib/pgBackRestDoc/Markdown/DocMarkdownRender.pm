@@ -15,7 +15,6 @@ use File::Basename qw(dirname);
 use File::Copy;
 use Storable qw(dclone);
 
-use pgBackRestDoc::Common::DocConfig;
 use pgBackRestDoc::Common::DocManifest;
 use pgBackRestDoc::Common::Log;
 use pgBackRestDoc::Common::String;

@@ -214,6 +214,8 @@ cmdBldPathModule(const String *const moduleName)
     {
         if (strBeginsWithZ(moduleName, "test/"))
             strCatFmt(result, "test/src%s", strZ(strSub(moduleName, 4)));
+        else if (strBeginsWithZ(moduleName, "doc/"))
+            strCatFmt(result, "doc/src%s", strZ(strSub(moduleName, 3)));
         else
             strCatFmt(result, "src/%s", strZ(moduleName));
     }
@@ -534,10 +536,11 @@ testBldUnit(TestBuild *const this)
             "        include_directories(\n"
             "            '.',\n"
             "            '%s/src',\n"
+            "            '%s/doc/src',\n"
             "            '%s/test/src',\n"
             "        ),\n"
             "    dependencies: [\n",
-            strZ(pathRepoRel), strZ(pathRepoRel));
+            strZ(pathRepoRel), strZ(pathRepoRel), strZ(pathRepoRel));
 
         if (testBldBackTrace(this))
         {
