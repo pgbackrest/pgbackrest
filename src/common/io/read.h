@@ -59,6 +59,9 @@ FN_EXTERN size_t ioRead(IoRead *this, Buffer *buffer);
 // Same as ioRead() but optimized for small reads (intended for making repetitive reads that are smaller than ioBufferSize())
 FN_EXTERN size_t ioReadSmall(IoRead *this, Buffer *buffer);
 
+// Returns total bytes read
+FN_EXTERN size_t ioReadTotalBytes(IoRead *this);
+
 // Read linefeed-terminated string and optionally error on eof
 FN_EXTERN String *ioReadLineParam(IoRead *this, bool allowEof);
 

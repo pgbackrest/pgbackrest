@@ -19,6 +19,7 @@ struct IoRead
     Buffer *input;                                                  // Input buffer
     Buffer *output;                                                 // Internal output buffer (extra output from buffered reads)
     size_t outputPos;                                               // Current position in the internal output buffer
+    size_t totalBytesRead;                                          // Total bytes read
 };
 
 /**********************************************************************************************************************************/
@@ -133,7 +134,7 @@ ioReadInternal(IoRead *this, Buffer *buffer, bool block)
                     if (ioReadBlock(this) && bufRemains(this->input) > bufRemains(buffer))
                         bufLimitSet(this->input, bufRemains(buffer));
 
-                    this->pub.interface.totalBytesRead += this->pub.interface.read(this->pub.driver, this->input, block);
+                    this->totalBytesRead += this->pub.interface.read(this->pub.driver, this->input, block);
                     bufLimitClear(this->input);
                 }
                 // Set input to NULL and flush (no need to actually free the buffer here as it will be freed with the mem context)
@@ -260,6 +261,15 @@ ioReadSmall(IoRead *this, Buffer *buffer)
     while (!bufFull(buffer) && !ioReadEof(this));
 
     FUNCTION_TEST_RETURN(SIZE, outputRemains - bufRemains(buffer));
+}
+
+/***********************************************************************************************************************************
+Returns total bytes read.
+***********************************************************************************************************************************/
+FN_EXTERN size_t
+ioReadTotalBytes(IoRead *this)
+{
+    return this->totalBytesRead;
 }
 
 /***********************************************************************************************************************************

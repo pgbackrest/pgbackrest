@@ -303,7 +303,7 @@ backupFile(
                         {
                             ioRead(readIo, buffer);
                             // Copy the file in non-bundling mode or if the file size is not zero
-                            if (bundleId == 0 || ioReadInterface(readIo)->totalBytesRead != 0)
+                            if (bundleId == 0 || ioReadTotalBytes(readIo) != 0)
                             {
                                 // Setup the repo file for write. There is no need to write the file atomically (e.g.
                                 // via a temp file on Posix) because checksums are tested on resume after a failed

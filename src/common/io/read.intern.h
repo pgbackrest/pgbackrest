@@ -15,7 +15,6 @@ Constructors
 typedef struct IoReadInterface
 {
     bool block;                                               // Do reads block when buffer is larger than available bytes?
-    size_t totalBytesRead;                                    // Total bytes read
 
     bool (*eof)(void *driver);
     void (*close)(void *driver);
