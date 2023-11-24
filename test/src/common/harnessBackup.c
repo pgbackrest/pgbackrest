@@ -12,15 +12,135 @@ Harness for Creating Test Backups
 #include "common/lock.h"
 #include "config/config.h"
 #include "info/infoArchive.h"
+#include "info/manifest.h"
 #include "postgres/interface.h"
 #include "storage/helper.h"
+#include "storage/posix/storage.h"
 
 #include "common/harnessBackup.h"
 #include "common/harnessDebug.h"
 #include "common/harnessPostgres.h"
 #include "common/harnessPq.h"
 #include "common/harnessStorage.h"
-#include "common/harnessTest.h"
+#include "common/harnessTest.intern.h"
+
+/***********************************************************************************************************************************
+Include shimmed C modules
+***********************************************************************************************************************************/
+{[SHIM_MODULE]}
+
+/***********************************************************************************************************************************
+Local variables
+***********************************************************************************************************************************/
+static struct HrnBackupLocal
+{
+    MemContext *memContext;                                         // Script mem context
+
+    // Script that defines how shim functions operate
+    HrnBackupScript script[1024];
+    unsigned int scriptSize;
+    unsigned int scriptIdx;
+} hrnBackupLocal;
+
+/**********************************************************************************************************************************/
+static void
+hrnBackupScriptAdd(const HrnBackupScript *const script, const unsigned int scriptSize)
+{
+    if (scriptSize == 0)
+        THROW(AssertError, "backup script must have entries");
+
+    if (hrnBackupLocal.scriptSize == 0)
+    {
+        MEM_CONTEXT_BEGIN(memContextTop())
+        {
+            MEM_CONTEXT_NEW_BEGIN(hrnBackupLocal, .childQty = MEM_CONTEXT_QTY_MAX)
+            {
+                hrnBackupLocal.memContext = MEM_CONTEXT_NEW();
+            }
+            MEM_CONTEXT_NEW_END();
+        }
+        MEM_CONTEXT_END();
+
+        hrnBackupLocal.scriptIdx = 0;
+    }
+
+    // Copy records into local storage
+    MEM_CONTEXT_BEGIN(hrnBackupLocal.memContext)
+    {
+        for (unsigned int scriptIdx = 0; scriptIdx < scriptSize; scriptIdx++)
+        {
+            ASSERT(script[scriptIdx].op != 0);
+            ASSERT(script[scriptIdx].file != NULL);
+
+            hrnBackupLocal.script[hrnBackupLocal.scriptSize] = script[scriptIdx];
+            hrnBackupLocal.script[hrnBackupLocal.scriptSize].file = strDup(script[scriptIdx].file);
+
+            if (script[scriptIdx].content != NULL)
+                hrnBackupLocal.script[hrnBackupLocal.scriptSize].content = bufDup(script[scriptIdx].content);
+
+            hrnBackupLocal.scriptSize++;
+        }
+    }
+    MEM_CONTEXT_END();
+}
+
+void
+hrnBackupScriptSet(const HrnBackupScript *const script, const unsigned int scriptSize)
+{
+    if (hrnBackupLocal.scriptSize != 0)
+        THROW(AssertError, "previous pq script has not yet completed");
+
+    hrnBackupScriptAdd(script, scriptSize);
+}
+
+/**********************************************************************************************************************************/
+static void
+backupProcess(const BackupData *const backupData, Manifest *const manifest, const String *const cipherPassBackup)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(BACKUP_DATA, backupData);
+        FUNCTION_HARNESS_PARAM(MANIFEST, manifest);
+        FUNCTION_HARNESS_PARAM(STRING, cipherPassBackup);
+    FUNCTION_HARNESS_END();
+
+    // If any file changes are scripted then make them
+    if (hrnBackupLocal.scriptSize != 0)
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            Storage *const storageTest = storagePosixNewP(strNewZ(testPath()), .write = true);
+
+            for (unsigned int scriptIdx = 0; scriptIdx < hrnBackupLocal.scriptSize; scriptIdx++)
+            {
+                switch (hrnBackupLocal.script[scriptIdx].op)
+                {
+                    // Update file
+                    case hrnBackupScriptOpUpdate:
+                        storagePutP(
+                            storageNewWriteP(
+                                storageTest, hrnBackupLocal.script[scriptIdx].file,
+                                .timeModified = hrnBackupLocal.script[scriptIdx].time),
+                            hrnBackupLocal.script[scriptIdx].content == NULL ?
+                                BUFSTRDEF("") : hrnBackupLocal.script[scriptIdx].content);
+                        break;
+
+                    default:
+                        THROW_FMT(
+                            AssertError, "unknown backup script op '%s'", strZ(strIdToStr(hrnBackupLocal.script[scriptIdx].op)));
+                }
+            }
+        }
+        MEM_CONTEXT_TEMP_END();
+
+        // Free script
+        memContextFree(hrnBackupLocal.memContext);
+        hrnBackupLocal.scriptSize = 0;
+    }
+
+    backupProcess_SHIMMED(backupData, manifest, cipherPassBackup);
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}
 
 /**********************************************************************************************************************************/
 void

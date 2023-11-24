@@ -3960,7 +3960,13 @@ testRun(void)
 
             HRN_STORAGE_PUT(storagePgWrite(), "grow-to-block-incr", file, .timeModified = backupTimeStart);
 
+            // File that gets truncated to zero during the backup
+            HRN_STORAGE_PUT(storagePgWrite(), "truncate-to-zero", BUFSTRDEF("DATA"), .timeModified = backupTimeStart);
+
             // Run backup
+            HRN_BACKUP_SCRIPT_SET(
+                {.op = hrnBackupScriptOpUpdate, .file = storagePathP(storagePg(), STRDEF("truncate-to-zero")),
+                 .time = backupTimeStart + 1});
             hrnBackupPqScriptP(
                 PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2, .walSwitch = true,
                 .tablespace = true);
@@ -3973,6 +3979,7 @@ testRun(void)
                 "P00   INFO: check archive for segment 0000000105DC213000000000\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-larger (1.4MB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (128KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/truncate-to-zero (bundle 1/0, 4B->0B, [PCT])\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-to-block-incr (bundle 1/0, 16KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/16411, 8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/24603, 16.0KB, [PCT]) checksum [SHA1]\n"
@@ -3983,7 +3990,7 @@ testRun(void)
                 "P00 DETAIL: wrote 'tablespace_map' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000000105DC213000000000:0000000105DC213000000001\n"
                 "P00   INFO: new backup label = 20191103-165320F_20191106-002640D\n"
-                "P00   INFO: diff backup size = [SIZE], file total = 8");
+                "P00   INFO: diff backup size = [SIZE], file total = 9");
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
@@ -3992,6 +3999,7 @@ testRun(void)
                 "bundle/1/pg_data/block-incr-shrink {file, s=16383}\n"
                 "bundle/1/pg_data/global/pg_control {file, s=8192}\n"
                 "bundle/1/pg_data/grow-to-block-incr {file, m=1:{0,1,2}, s=16385}\n"
+                "bundle/1/pg_data/truncate-to-zero {file, s=0}\n"
                 "pg_data {path}\n"
                 "pg_data/backup_label {file, s=17}\n"
                 "pg_data/block-incr-grow.pgbi {file, m=0:{0},1:{0},0:{2},1:{1,2,3,4,5,6,7,8,9,10,11,12,13}, s=131072}\n"
@@ -4018,6 +4026,7 @@ testRun(void)
                 "\"size\":16385,\"timestamp\":1573000000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
                 ",\"timestamp\":1573000002}\n"
+                "pg_data/truncate-to-zero={\"size\":0,\"szo\":4,\"timestamp\":1573000000}\n"
                 "\n"
                 "[target:path]\n"
                 "pg_data={}\n"
@@ -4028,6 +4037,7 @@ testRun(void)
             HRN_STORAGE_REMOVE(storagePgWrite(), "block-incr-larger");
             HRN_STORAGE_REMOVE(storagePgWrite(), "block-incr-shrink");
             HRN_STORAGE_REMOVE(storagePgWrite(), "grow-to-block-incr");
+            HRN_STORAGE_REMOVE(storagePgWrite(), "truncate-to-zero");
         }
 
         // It is better to put as few tests here as possible because cmp/enc makes tests more expensive (especially with valgrind)

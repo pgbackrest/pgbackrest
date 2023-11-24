@@ -11,6 +11,22 @@ Harness for Creating Test Backups
 #define BACKUP_EPOCH                                                1570000000
 
 /***********************************************************************************************************************************
+Structure for scripting backup storage changes
+***********************************************************************************************************************************/
+typedef enum
+{
+    hrnBackupScriptOpUpdate = STRID5("update", 0xb4092150),
+} HrnBackupScriptOp;
+
+typedef struct HrnBackupScript
+{
+    HrnBackupScriptOp op;                                           // Operation to perform
+    const String *file;                                             // File to operate on
+    const Buffer *content;                                          // New content (valid for update op)
+    time_t time;                                                    // New modified time (valid for update op)
+} HrnBackupScript;
+
+/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Create test backup and handle all the required locking. The backup configuration must already be loaded.
@@ -40,5 +56,17 @@ typedef struct HrnBackupPqScriptParam
     hrnBackupPqScript(pgVersion, backupStartTime, (HrnBackupPqScriptParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 void hrnBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, HrnBackupPqScriptParam param);
+
+// Generate storage scripts for modifying files during a backup. The modifications will happen after the manifest is built but
+// before backupProcess() is called so they can be used to simulate changes made by PostgreSQL while the backup is in progress.
+#define HRN_BACKUP_SCRIPT_SET(...)                                                                                                 \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        const HrnBackupScript script[] = {__VA_ARGS__};                                                                            \
+        hrnBackupScriptSet(script, LENGTH_OF(script));                                                                             \
+    }                                                                                                                              \
+    while (0)
+
+void hrnBackupScriptSet(const HrnBackupScript *script, unsigned int scriptSize);
 
 #endif

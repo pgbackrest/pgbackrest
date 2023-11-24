@@ -879,7 +879,12 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: backup
         total: 13
-        harness: backup
+        harness:
+          name: backup
+          shim:
+            command/backup/backup:
+              function:
+                - backupProcess
 
         coverage:
           - command/backup/backup
