@@ -114,6 +114,11 @@ backupProcess(const BackupData *const backupData, Manifest *const manifest, cons
             {
                 switch (hrnBackupLocal.script[scriptIdx].op)
                 {
+                    // Remove file
+                    case hrnBackupScriptOpRemove:
+                        storageRemoveP(storageTest, hrnBackupLocal.script[scriptIdx].file);
+                        break;
+
                     // Update file
                     case hrnBackupScriptOpUpdate:
                         storagePutP(
@@ -330,22 +335,26 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
                 if (param.backupStandby)
                     HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_IS_STANDBY_QUERY(2, true));
 
-                HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_IS_STANDBY_QUERY(1, false));
+                // Continue if there is no error after copy start
+                if (!param.errorAfterCopyStart)
+                {
+                    HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_IS_STANDBY_QUERY(1, false));
 
-                if (param.backupStandby)
-                    HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_IS_STANDBY_QUERY(2, true));
+                    if (param.backupStandby)
+                        HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_IS_STANDBY_QUERY(2, true));
 
-                // Stop backup
-                if (pgVersion <= PG_VERSION_95)
-                    HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_STOP_BACKUP_LE_95(1, lsnStopStr, walSegmentStop));
-                else if (pgVersion <= PG_VERSION_96)
-                    HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_STOP_BACKUP_96(1, lsnStopStr, walSegmentStop, false));
-                else
-                    HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_STOP_BACKUP_GE_10(1, lsnStopStr, walSegmentStop, true));
+                    // Stop backup
+                    if (pgVersion <= PG_VERSION_95)
+                        HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_STOP_BACKUP_LE_95(1, lsnStopStr, walSegmentStop));
+                    else if (pgVersion <= PG_VERSION_96)
+                        HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_STOP_BACKUP_96(1, lsnStopStr, walSegmentStop, false));
+                    else
+                        HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_STOP_BACKUP_GE_10(1, lsnStopStr, walSegmentStop, true));
 
-                // Get stop time
-                HRN_PQ_SCRIPT_ADD(
-                    HRN_PQ_SCRIPT_TIME_QUERY(1, ((int64_t)backupTimeStart + (param.noArchiveCheck ? 52427 : 2)) * 1000));
+                    // Get stop time
+                    HRN_PQ_SCRIPT_ADD(
+                        HRN_PQ_SCRIPT_TIME_QUERY(1, ((int64_t)backupTimeStart + (param.noArchiveCheck ? 52427 : 2)) * 1000));
+                }
             }
         }
     }

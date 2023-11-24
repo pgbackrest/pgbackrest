@@ -15,6 +15,7 @@ Structure for scripting backup storage changes
 ***********************************************************************************************************************************/
 typedef enum
 {
+    hrnBackupScriptOpRemove = STRID5("remove", 0xb67b4b20),
     hrnBackupScriptOpUpdate = STRID5("update", 0xb4092150),
 } HrnBackupScriptOp;
 
@@ -39,6 +40,7 @@ typedef struct HrnBackupPqScriptParam
     bool startFast;                                                 // Start backup fast
     bool backupStandby;                                             // Backup from standby
     bool errorAfterStart;                                           // Error after backup start
+    bool errorAfterCopyStart;                                       // Error after backup copy start
     bool noWal;                                                     // Don't write test WAL segments
     bool noPriorWal;                                                // Don't write prior test WAL segments
     bool noArchiveCheck;                                            // Do not check archive
