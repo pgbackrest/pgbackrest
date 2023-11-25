@@ -77,9 +77,11 @@ sckClientOpen(THIS_VOID)
         ErrorRetry *const errRetry = errRetryNew();
         bool retry;
 
-        // Get an address list for the host
-        const AddressInfo *const addrInfo = addrInfoNew(this->host, this->port);
+        // Get an address list for the host and sort it
+        AddressInfo *const addrInfo = addrInfoNew(this->host, this->port);
         unsigned int addrInfoIdx = 0;
+
+        addrInfoSort(addrInfo);
 
         do
         {
@@ -109,6 +111,9 @@ sckClientOpen(THIS_VOID)
                 // Update client name to include address
                 strTrunc(this->name);
                 strCat(this->name, addrInfoToName(this->host, this->port, addressFound));
+
+                // Set preferred address
+                addrInfoPrefer(addrInfo, addrInfoIdx);
             }
             CATCH_ANY()
             {

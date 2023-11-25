@@ -18,7 +18,24 @@ Object type
 struct AddressInfo
 {
     AddressInfoPub pub;                                             // Publicly accessible variables
+    struct addrinfo *info;                                          // Linked list of addresses
 };
+
+/***********************************************************************************************************************************
+Local variables
+***********************************************************************************************************************************/
+// Store preferred addresses for hosts
+typedef struct AddressInfoPreference
+{
+    const String *const host;                                       // Host
+    String *address;                                                // Preferred address for host
+} AddressInfoPreference;
+
+static struct AddressInfoLocal
+{
+    MemContext *memContext;                                         // Mem context
+    List *prefList;                                                 // List of preferred addresses for hosts
+} addressInfoLocal;
 
 /***********************************************************************************************************************************
 Free addrinfo linked list allocated by getaddrinfo()
@@ -34,9 +51,84 @@ addrInfoFreeResource(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    freeaddrinfo(((AddressInfoItem *)lstGet(this->pub.list, 0))->info);
+    freeaddrinfo(this->info);
 
     FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+addrInfoSort(AddressInfo *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ADDRESS_INFO, this);
+    FUNCTION_TEST_END();
+
+    // By default start with IPv6 and first address
+    int family = AF_INET6;
+    unsigned int addrIdx = 0;
+
+    // If a preferred address is in the list then move it to the first spot and update family
+    const AddressInfoPreference *const addrPref = lstFind(addressInfoLocal.prefList, &this->pub.host);
+
+    if (addrPref != NULL)
+    {
+        AddressInfoItem *const addrFindItem = lstFind(this->pub.list, &addrPref->address);
+
+        if (addrFindItem != NULL)
+        {
+            // Swap with first address if the address is not already first
+            AddressInfoItem *const addrFirstItem = lstGet(this->pub.list, 0);
+
+            if (addrFirstItem != addrFindItem)
+            {
+                const AddressInfoItem addrCopyItem = *addrFirstItem;
+                *addrFirstItem = *addrFindItem;
+                *addrFindItem = addrCopyItem;
+            }
+
+            // Set family and skip first address
+            family = addrFirstItem->info->ai_family == AF_INET6 ? AF_INET : AF_INET6;
+            addrIdx++;
+        }
+    }
+
+    // Alternate IPv6 and IPv4 addresses
+    for (; addrIdx < lstSize(this->pub.list); addrIdx++)
+    {
+        AddressInfoItem *const addrItem = lstGet(this->pub.list, addrIdx);
+
+        // If not the family we expect, search for one
+        if (addrItem->info->ai_family != family)
+        {
+            unsigned int addrFindIdx = addrIdx + 1;
+
+            for (; addrFindIdx < lstSize(this->pub.list); addrFindIdx++)
+            {
+                AddressInfoItem *const addrFindItem = lstGet(this->pub.list, addrFindIdx);
+
+                if (addrFindItem->info->ai_family == family)
+                {
+                    // Swap addresses
+                    const AddressInfoItem addrCopyItem = *addrItem;
+                    *addrItem = *addrFindItem;
+                    *addrFindItem = addrCopyItem;
+
+                    // Move on to next address
+                    break;
+                }
+            }
+
+            // Address of the required family not found so sorting is done
+            if (addrFindIdx == lstSize(this->pub.list))
+                break;
+        }
+
+        // Switch family
+        family = family == AF_INET6 ? AF_INET : AF_INET6;
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -50,6 +142,21 @@ addrInfoNew(const String *const host, unsigned int port)
 
     ASSERT(host != NULL);
     ASSERT(port != 0);
+
+    // Initialize mem context and preference list
+    if (addressInfoLocal.memContext == NULL)
+    {
+        MEM_CONTEXT_BEGIN(memContextTop())
+        {
+            MEM_CONTEXT_NEW_BEGIN(AddressInfo, .childQty = MEM_CONTEXT_QTY_MAX)
+            {
+                addressInfoLocal.memContext = MEM_CONTEXT_NEW();
+                addressInfoLocal.prefList = lstNewP(sizeof(AddressInfoPreference), .comparator = lstComparatorStr);
+            }
+            MEM_CONTEXT_NEW_END();
+        }
+        MEM_CONTEXT_END();
+    }
 
     OBJ_NEW_BEGIN(AddressInfo, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
@@ -79,19 +186,20 @@ addrInfoNew(const String *const host, unsigned int port)
             cvtUIntToZ(port, portZ, sizeof(portZ));
 
             // Do the lookup
-            struct addrinfo *info;
             int error;
 
-            if ((error = getaddrinfo(strZ(host), portZ, &hints, &info)) != 0)
+            if ((error = getaddrinfo(strZ(host), portZ, &hints, &this->info)) != 0)
                 THROW_FMT(HostConnectError, "unable to get address for '%s': [%d] %s", strZ(host), error, gai_strerror(error));
-
-            // Set free callback to ensure address info is freed
-            memContextCallbackSet(objMemContext(this), addrInfoFreeResource, this);
 
             // Convert address linked list to list
             MEM_CONTEXT_OBJ_BEGIN(this->pub.list)
             {
+                struct addrinfo *info = this->info;
+
                 lstAdd(this->pub.list, &(AddressInfoItem){.name = addrInfoToStr(info), .info = info});
+
+                // Set free callback to ensure address info is freed
+                memContextCallbackSet(objMemContext(this), addrInfoFreeResource, this);
 
                 while (info->ai_next != NULL)
                 {
@@ -106,6 +214,41 @@ addrInfoNew(const String *const host, unsigned int port)
     OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(ADDRESS_INFO, this);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+addrInfoPrefer(AddressInfo *this, unsigned int index)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(ADDRESS_INFO, this);
+        FUNCTION_LOG_PARAM(UINT, index);
+    FUNCTION_LOG_END();
+
+    AddressInfoPreference *const addrPref = lstFind(addressInfoLocal.prefList, &this->pub.host);
+    const String *const address = addrInfoGet(this, index)->name;
+
+    MEM_CONTEXT_OBJ_BEGIN(addressInfoLocal.prefList)
+    {
+        // If no preference set yet
+        if (addrPref == NULL)
+        {
+            lstAdd(addressInfoLocal.prefList, &(AddressInfoPreference){.host = strDup(this->pub.host), .address = strDup(address)});
+            lstSort(addressInfoLocal.prefList, sortOrderAsc);
+        }
+        // Else update address
+        else
+        {
+            // Free the old address
+            strFree(addrPref->address);
+
+            // Assign new address
+            addrPref->address = strDup(address);
+        }
+    }
+    MEM_CONTEXT_OBJ_END();
+
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************

@@ -168,7 +168,7 @@ testRun(void)
         TEST_RESULT_UINT(addrInfoSize(addrInfo), 2, "check size");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("addrInfoToLog");
+        TEST_TITLE("addrInfoToLog()");
 
         char logBuf[STACK_TRACE_PARAM_MAX];
 
@@ -183,6 +183,82 @@ testRun(void)
         // Munge address so it is invalid
         ((AddressInfoItem *)lstGet(addrInfo->pub.list, 0))->info->ai_addr = NULL;
         TEST_RESULT_STR_Z(addrInfoToStr(addrInfoGet(addrInfo, 0)->info), "invalid", "check invalid");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("addrInfoSort() break early");
+
+        struct addrinfo addr4 = {.ai_family = AF_INET};
+        struct addrinfo addr6 = {.ai_family = AF_INET6};
+
+        MEM_CONTEXT_OBJ_BEGIN(addrInfo)
+        {
+            addrInfo->pub.host = strNewZ("test");
+            lstClear(addrInfo->pub.list);
+
+            lstAdd(addrInfo->pub.list, &(AddressInfoItem){.name = strNewZ("127.0.0.1"), .info = &addr4});
+            lstAdd(addrInfo->pub.list, &(AddressInfoItem){.name = strNewZ("::1"), .info = &addr6});
+            lstAdd(addrInfo->pub.list, &(AddressInfoItem){.name = strNewZ("127.0.0.2"), .info = &addr4});
+            lstAdd(addrInfo->pub.list, &(AddressInfoItem){.name = strNewZ("::2"), .info = &addr6});
+            lstAdd(addrInfo->pub.list, &(AddressInfoItem){.name = strNewZ("::3"), .info = &addr6});
+            lstAdd(addrInfo->pub.list, &(AddressInfoItem){.name = strNewZ("::4"), .info = &addr6});
+            addrInfoSort(addrInfo);
+        }
+        MEM_CONTEXT_OBJ_END();
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(addrInfo, addrInfoToLog, logBuf, sizeof(logBuf)), "addrInfoToLog");
+        TEST_RESULT_Z(
+            logBuf, zNewFmt("{host: {\"test\"}, port: 443, list: [::1, 127.0.0.1, ::2, 127.0.0.2, ::3, ::4]}"), "check log");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("addrInfoSort()");
+
+        // Set a preference that won't be found
+        addrInfoPrefer(addrInfo, 5);
+
+        MEM_CONTEXT_OBJ_BEGIN(addrInfo)
+        {
+            lstClear(addrInfo->pub.list);
+
+            lstAdd(addrInfo->pub.list, &(AddressInfoItem){.name = strNewZ("127.0.0.1"), .info = &addr4});
+            lstAdd(addrInfo->pub.list, &(AddressInfoItem){.name = strNewZ("127.0.0.2"), .info = &addr4});
+            lstAdd(addrInfo->pub.list, &(AddressInfoItem){.name = strNewZ("::1"), .info = &addr6});
+            lstAdd(addrInfo->pub.list, &(AddressInfoItem){.name = strNewZ("::2"), .info = &addr6});
+            addrInfoSort(addrInfo);
+        }
+        MEM_CONTEXT_OBJ_END();
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(addrInfo, addrInfoToLog, logBuf, sizeof(logBuf)), "addrInfoToLog");
+        TEST_RESULT_Z(
+            logBuf, zNewFmt("{host: {\"test\"}, port: 443, list: [::1, 127.0.0.2, ::2, 127.0.0.1]}"), "check log");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("addrInfoSort() prefer v4");
+
+        addrInfoPrefer(addrInfo, 1);
+        addrInfoSort(addrInfo);
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(addrInfo, addrInfoToLog, logBuf, sizeof(logBuf)), "addrInfoToLog");
+        TEST_RESULT_Z(
+            logBuf, zNewFmt("{host: {\"test\"}, port: 443, list: [127.0.0.2, ::1, 127.0.0.1, ::2]}"), "check log");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("addrInfoSort() prefer v4 (already first)");
+
+        addrInfoSort(addrInfo);
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(addrInfo, addrInfoToLog, logBuf, sizeof(logBuf)), "addrInfoToLog");
+        TEST_RESULT_Z(
+            logBuf, zNewFmt("{host: {\"test\"}, port: 443, list: [127.0.0.2, ::1, 127.0.0.1, ::2]}"), "check log");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("addrInfoSort() prefer v6");
+
+        addrInfoPrefer(addrInfo, 3);
+        addrInfoSort(addrInfo);
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(addrInfo, addrInfoToLog, logBuf, sizeof(logBuf)), "addrInfoToLog");
+        TEST_RESULT_Z(
+            logBuf, zNewFmt("{host: {\"test\"}, port: 443, list: [::2, 127.0.0.1, ::1, 127.0.0.2]}"), "check log");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("free");

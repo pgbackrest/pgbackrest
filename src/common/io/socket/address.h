@@ -67,6 +67,15 @@ addrInfoSize(const AddressInfo *const this)
 }
 
 /***********************************************************************************************************************************
+Functions
+***********************************************************************************************************************************/
+// Sort addresses alternating between IPv6 and IPv4
+FN_EXTERN void addrInfoSort(AddressInfo *this);
+
+// Set preferred address for host, which will be preferred in future lookups
+FN_EXTERN void addrInfoPrefer(AddressInfo *this, unsigned int index);
+
+/***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
 FN_INLINE_ALWAYS void
