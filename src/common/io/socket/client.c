@@ -90,7 +90,7 @@ sckClientOpen(THIS_VOID)
             TRY_BEGIN()
             {
                 // Get next address for the host
-                const struct addrinfo *const addressFound = addrInfoGet(addrInfo, addrInfoIdx);
+                const struct addrinfo *const addressFound = addrInfoGet(addrInfo, addrInfoIdx)->info;
 
                 // Connect to the host
                 fd = socket(addressFound->ai_family, addressFound->ai_socktype, addressFound->ai_protocol);

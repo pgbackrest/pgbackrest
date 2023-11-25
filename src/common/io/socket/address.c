@@ -34,7 +34,7 @@ addrInfoFreeResource(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    freeaddrinfo(*(struct addrinfo **)lstGet(this->pub.list, 0));
+    freeaddrinfo(((AddressInfoItem *)lstGet(this->pub.list, 0))->info);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -59,7 +59,7 @@ addrInfoNew(const String *const host, unsigned int port)
             {
                 .host = strDup(host),
                 .port = port,
-                .list = lstNewP(sizeof(struct addrinfo *)),
+                .list = lstNewP(sizeof(AddressInfoItem), .comparator = lstComparatorStr),
             },
         };
 
@@ -79,23 +79,27 @@ addrInfoNew(const String *const host, unsigned int port)
             cvtUIntToZ(port, portZ, sizeof(portZ));
 
             // Do the lookup
-            struct addrinfo *result;
+            struct addrinfo *info;
             int error;
 
-            if ((error = getaddrinfo(strZ(host), portZ, &hints, &result)) != 0)
+            if ((error = getaddrinfo(strZ(host), portZ, &hints, &info)) != 0)
                 THROW_FMT(HostConnectError, "unable to get address for '%s': [%d] %s", strZ(host), error, gai_strerror(error));
 
             // Set free callback to ensure address info is freed
             memContextCallbackSet(objMemContext(this), addrInfoFreeResource, this);
 
             // Convert address linked list to list
-            lstAdd(this->pub.list, &result);
-
-            while (result->ai_next != NULL)
+            MEM_CONTEXT_OBJ_BEGIN(this->pub.list)
             {
-                lstAdd(this->pub.list, &result->ai_next);
-                result = result->ai_next;
+                lstAdd(this->pub.list, &(AddressInfoItem){.name = addrInfoToStr(info), .info = info});
+
+                while (info->ai_next != NULL)
+                {
+                    lstAdd(this->pub.list, &(AddressInfoItem){.name = addrInfoToStr(info), .info = info});
+                    info = info->ai_next;
+                }
             }
+            MEM_CONTEXT_OBJ_END();
         }
         MEM_CONTEXT_TEMP_END();
     }
@@ -166,21 +170,18 @@ addrInfoToStr(const struct addrinfo *const addrInfo)
 FN_EXTERN void
 addrInfoToLog(const AddressInfo *const this, StringStatic *const debugLog)
 {
-    char address[48];
-
     strStcFmt(debugLog, "{host: ");
     strToLog(addrInfoHost(this), debugLog);
     strStcFmt(debugLog, ", port: %u, list: [", addrInfoPort(this));
 
     for (unsigned int listIdx = 0; listIdx < addrInfoSize(this); listIdx++)
     {
-        const struct addrinfo *const addrInfo = addrInfoGet(this, listIdx);
+        const AddressInfoItem *const addrItem = addrInfoGet(this, listIdx);
 
         if (listIdx != 0)
             strStcCat(debugLog, ", ");
 
-        addrInfoToZ(addrInfo, address, sizeof(address));
-        strStcCat(debugLog, address);
+        strStcCat(debugLog, strZ(addrItem->name));
     }
 
     strStcCat(debugLog, "]}");

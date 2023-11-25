@@ -177,20 +177,12 @@ testRun(void)
             logBuf,
             zNewFmt(
                 "{host: {\"test-addr-loop.pgbackrest.org\"}, port: 443, list: [%s, %s]}",
-                strZ(addrInfoToStr(addrInfoGet(addrInfo, 0))), strZ(addrInfoToStr(addrInfoGet(addrInfo, 1)))),
+                strZ(addrInfoGet(addrInfo, 0)->name), strZ(addrInfoGet(addrInfo, 1)->name)),
             "check log");
 
         // Munge address so it is invalid
-        (*(struct addrinfo **)lstGet(addrInfo->pub.list, 0))->ai_addr = NULL;
-
-        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(addrInfo, addrInfoToLog, logBuf, sizeof(logBuf)), "addrInfoToLog");
-        TEST_RESULT_Z(
-            logBuf,
-            zNewFmt(
-                "{host: {\"test-addr-loop.pgbackrest.org\"}, port: 443, list: [invalid, %s]}",
-                strZ(addrInfoToStr(addrInfoGet(addrInfo, 1)))),
-            "check log");
-        TEST_RESULT_STR_Z(addrInfoToStr(addrInfoGet(addrInfo, 0)), "invalid", "check invalid");
+        ((AddressInfoItem *)lstGet(addrInfo->pub.list, 0))->info->ai_addr = NULL;
+        TEST_RESULT_STR_Z(addrInfoToStr(addrInfoGet(addrInfo, 0)->info), "invalid", "check invalid");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("free");

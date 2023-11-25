@@ -165,7 +165,7 @@ sckServerNew(const String *const address, const unsigned int port, const TimeMSe
         };
 
         // Lookup address
-        const struct addrinfo *const addressFound = addrInfoGet(addrInfoNew(this->address, this->port), 0);
+        const struct addrinfo *const addressFound = addrInfoGet(addrInfoNew(this->address, this->port), 0)->info;
 
         // Create socket
         THROW_ON_SYS_ERROR(
