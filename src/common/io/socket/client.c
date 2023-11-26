@@ -10,8 +10,8 @@ Socket Client
 
 #include "common/debug.h"
 #include "common/error/retry.h"
-#include "common/io/fd.h"
 #include "common/io/client.h"
+#include "common/io/fd.h"
 #include "common/io/socket/address.h"
 #include "common/io/socket/client.h"
 #include "common/io/socket/common.h"
@@ -80,15 +80,21 @@ sckClientOpenWait(const int fd, int errNo, const TimeMSec timeout, const char *c
     if (sckConnectInProgress(errNo))
     {
         // Wait for write-ready
-        if (!fdReadyWrite(fd, timeout))
-            THROW_FMT(HostConnectError, "timeout connecting to '%s'", name);
+        if (fdReadyWrite(fd, timeout))
+        {
+            // Check for success or error. If the connection was successful this will set errNo to 0.
+            socklen_t errNoLen = sizeof(errNo);
 
-        // Check for success or error. If the connection was successful this will set errNo to 0.
-        socklen_t errNoLen = sizeof(errNo);
+            THROW_ON_SYS_ERROR_FMT(
+                getsockopt(fd, SOL_SOCKET, SO_ERROR, &errNo, &errNoLen) == -1, HostConnectError,
+                "unable to get socket error for '%s'", name);
 
-        THROW_ON_SYS_ERROR(
-            getsockopt(
-                fd, SOL_SOCKET, SO_ERROR, &errNo, &errNoLen) == -1, HostConnectError, "unable to get socket error");
+            // Connect success
+            result = true;
+        }
+        // Clear error locally so we do not error below
+        else
+            errNo = 0;
     }
 
     // Throw error if it is still set
@@ -107,7 +113,6 @@ typedef struct SckClientOpenData
     const char *name;                                               // Combination of host, address, port
     int fd;                                                         // File descriptor for socket
     int errNo;                                                      // Current error (may just indicate to keep waiting)
-
 } SckClientOpenData;
 
 static IoSession *
@@ -162,12 +167,14 @@ sckClientOpen(THIS_VOID)
 
                 sckOptionSet(openData->fd);
 
-                 if (connect(openData->fd, openData->address->ai_addr, openData->address->ai_addrlen) == -1)
-                 {
-                    // Save the error and
+                if (connect(openData->fd, openData->address->ai_addr, openData->address->ai_addrlen) == -1)
+                {
+                    // Save the error and wait for connection
                     openData->errNo = errno;
-                    sckClientOpenWait(openData->fd, openData->errNo, this->timeoutConnect, openData->name);
-                 }
+
+                    if (!sckClientOpenWait(openData->fd, openData->errNo, 250, openData->name))
+                        THROW_FMT(HostConnectError, "timeout connecting to '%s'", openData->name);
+                }
 
                 // Create the session
                 MEM_CONTEXT_PRIOR_BEGIN()

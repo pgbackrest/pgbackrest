@@ -8,6 +8,7 @@ Test Tls Client
 #include "common/io/fdWrite.h"
 #include "storage/posix/storage.h"
 
+#include "common/harnessErrorRetry.h"
 #include "common/harnessFork.h"
 #include "common/harnessServer.h"
 #include "common/harnessStorage.h"
@@ -179,6 +180,11 @@ testRun(void)
                 "{host: {\"test-addr-loop.pgbackrest.org\"}, port: 443, list: [%s, %s]}",
                 strZ(addrInfoGet(addrInfo, 0)->name), strZ(addrInfoGet(addrInfo, 1)->name)),
             "check log");
+
+        addrInfoSort(addrInfo);
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(addrInfo, addrInfoToLog, logBuf, sizeof(logBuf)), "addrInfoToLog");
+        TEST_RESULT_Z(logBuf, "{host: {\"test-addr-loop.pgbackrest.org\"}, port: 443, list: [::1, 127.0.0.1]}", "check log");
 
         // Munge address so it is invalid
         ((AddressInfoItem *)lstGet(addrInfo->pub.list, 0))->info->ai_addr = NULL;
@@ -433,6 +439,11 @@ testRun(void)
     if (testBegin("SocketClient/SocketServer"))
     {
         IoClient *client = NULL;
+        AddressInfo *addrInfo = NULL;
+        const String *const ipLoop4 = STRDEF("127.0.0.1");
+
+        TEST_ASSIGN(addrInfo, addrInfoNew(STRDEF("localhost"), 443), "addr list");
+        TEST_RESULT_VOID(addrInfoPrefer(addrInfo, lstFindIdx(addrInfo->pub.list, &ipLoop4)), "prefer 127.0.0.1");
 
         TEST_ASSIGN(client, sckClientNew(STRDEF("localhost"), hrnServerPort(0), 100, 100), "new client");
         TEST_ERROR_FMT(
@@ -448,6 +459,22 @@ testRun(void)
             "timeout connecting to '172.31.255.255:%u'\n"
             "[RETRY DETAIL OMITTED]",
             hrnServerPort(0));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+// #ifdef TEST_CONTAINER_REQUIRED
+//         HRN_SYSTEM("echo \"127.0.0.1 test-addr-conn.pgbackrest.org\" | sudo tee -a /etc/hosts > /dev/null");
+//         HRN_SYSTEM("echo \"::1 test-addr-conn.pgbackrest.org\" | sudo tee -a /etc/hosts > /dev/null");
+//         HRN_SYSTEM("echo \"172.31.255.255 test-addr-conn.pgbackrest.org\" | sudo tee -a /etc/hosts > /dev/null");
+
+//         hrnErrorRetryDetailEnable();
+
+//         TEST_ASSIGN(client, sckClientNew(STRDEF("test-addr-conn.pgbackrest.org"), hrnServerPort(0), 100, 100), "new client");
+//         TEST_ERROR_FMT(
+//             ioClientOpen(client), HostConnectError,
+//             "timeout connecting to '172.31.255.255:%u'\n"
+//             "[RETRY DETAIL OMITTED]",
+//             hrnServerPort(0));
+// #endif
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("sckServerAccept() returns NULL on interrupt");

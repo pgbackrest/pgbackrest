@@ -203,8 +203,8 @@ addrInfoNew(const String *const host, unsigned int port)
 
                 while (info->ai_next != NULL)
                 {
-                    lstAdd(this->pub.list, &(AddressInfoItem){.name = addrInfoToStr(info), .info = info});
                     info = info->ai_next;
+                    lstAdd(this->pub.list, &(AddressInfoItem){.name = addrInfoToStr(info), .info = info});
                 }
             }
             MEM_CONTEXT_OBJ_END();
