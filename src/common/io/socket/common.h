@@ -18,7 +18,4 @@ FN_EXTERN void sckInit(bool block, bool keepAlive, int tcpKeepAliveCount, int tc
 // Set options on a socket
 FN_EXTERN void sckOptionSet(int fd);
 
-// Connect socket to an IP address
-FN_EXTERN void sckConnect(int fd, const String *host, unsigned int port, const struct addrinfo *hostAddress, TimeMSec timeout);
-
 #endif

@@ -10,6 +10,7 @@ Socket Client
 
 #include "common/debug.h"
 #include "common/error/retry.h"
+#include "common/io/fd.h"
 #include "common/io/client.h"
 #include "common/io/socket/address.h"
 #include "common/io/socket/client.h"
@@ -58,6 +59,57 @@ sckClientToLog(const THIS_VOID, StringStatic *const debugLog)
     FUNCTION_LOG_OBJECT_FORMAT(value, sckClientToLog, buffer, bufferSize)
 
 /**********************************************************************************************************************************/
+static bool
+sckConnectInProgress(int errNo)
+{
+    return errNo == EINPROGRESS || errNo == EINTR;
+}
+
+static bool
+sckClientOpenWait(const int fd, int errNo, const TimeMSec timeout, const char *const name)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(INT, fd);
+        FUNCTION_LOG_PARAM(INT, errNo);
+        FUNCTION_LOG_PARAM(STRINGZ, name);
+    FUNCTION_LOG_END();
+
+    bool result = false;
+
+    // The connection has started but since we are in non-blocking mode it has not completed yet
+    if (sckConnectInProgress(errNo))
+    {
+        // Wait for write-ready
+        if (!fdReadyWrite(fd, timeout))
+            THROW_FMT(HostConnectError, "timeout connecting to '%s'", name);
+
+        // Check for success or error. If the connection was successful this will set errNo to 0.
+        socklen_t errNoLen = sizeof(errNo);
+
+        THROW_ON_SYS_ERROR(
+            getsockopt(
+                fd, SOL_SOCKET, SO_ERROR, &errNo, &errNoLen) == -1, HostConnectError, "unable to get socket error");
+    }
+
+    // Throw error if it is still set
+    if (errNo != 0)
+    {
+        THROW_SYS_ERROR_CODE_FMT(
+            errNo, HostConnectError, "unable to connect to '%s'", name);
+    }
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+typedef struct SckClientOpenData
+{
+    const struct addrinfo *const address;                           // IP address
+    const char *name;                                               // Combination of host, address, port
+    int fd;                                                         // File descriptor for socket
+    int errNo;                                                      // Current error (may just indicate to keep waiting)
+
+} SckClientOpenData;
+
 static IoSession *
 sckClientOpen(THIS_VOID)
 {
@@ -79,38 +131,54 @@ sckClientOpen(THIS_VOID)
 
         // Get an address list for the host and sort it
         AddressInfo *const addrInfo = addrInfoNew(this->host, this->port);
-        unsigned int addrInfoIdx = 0;
-
         addrInfoSort(addrInfo);
+
+        // Try addresses until success or timeout
+        List *const openDataList = lstNewP(sizeof(SckClientOpenData));
+        unsigned int addrInfoIdx = 0;
 
         do
         {
             // Assume there will be no retry
             retry = false;
-            volatile int fd = -1;
 
+            // Create or get open data
+            SckClientOpenData *openData = NULL;
+
+            if (addrInfoIdx == lstSize(openDataList))
+            {
+                openData = lstAdd(openDataList, &(SckClientOpenData){.address = addrInfoGet(addrInfo, addrInfoIdx)->info});
+                openData->name = strZ(addrInfoToName(this->host, this->port, openData->address));
+            }
+            else
+                openData = lstGet(openDataList, addrInfoIdx);
+
+            // Try connection
             TRY_BEGIN()
             {
-                // Get next address for the host
-                const struct addrinfo *const addressFound = addrInfoGet(addrInfo, addrInfoIdx)->info;
-
                 // Connect to the host
-                fd = socket(addressFound->ai_family, addressFound->ai_socktype, addressFound->ai_protocol);
-                THROW_ON_SYS_ERROR(fd == -1, HostConnectError, "unable to create socket");
+                openData->fd = socket(openData->address->ai_family, openData->address->ai_socktype, openData->address->ai_protocol);
+                THROW_ON_SYS_ERROR(openData->fd == -1, HostConnectError, "unable to create socket");
 
-                sckOptionSet(fd);
-                sckConnect(fd, this->host, this->port, addressFound, this->timeoutConnect);
+                sckOptionSet(openData->fd);
+
+                 if (connect(openData->fd, openData->address->ai_addr, openData->address->ai_addrlen) == -1)
+                 {
+                    // Save the error and
+                    openData->errNo = errno;
+                    sckClientOpenWait(openData->fd, openData->errNo, this->timeoutConnect, openData->name);
+                 }
 
                 // Create the session
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {
-                    result = sckSessionNew(ioSessionRoleClient, fd, this->host, this->port, this->timeoutSession);
+                    result = sckSessionNew(ioSessionRoleClient, openData->fd, this->host, this->port, this->timeoutSession);
                 }
                 MEM_CONTEXT_PRIOR_END();
 
                 // Update client name to include address
                 strTrunc(this->name);
-                strCat(this->name, addrInfoToName(this->host, this->port, addressFound));
+                strCatZ(this->name, openData->name);
 
                 // Set preferred address
                 addrInfoPrefer(addrInfo, addrInfoIdx);
@@ -118,7 +186,8 @@ sckClientOpen(THIS_VOID)
             CATCH_ANY()
             {
                 // Close socket
-                close(fd);
+                close(openData->fd);
+                openData->fd = 0;
 
                 // Add the error retry info
                 errRetryAdd(errRetry);
