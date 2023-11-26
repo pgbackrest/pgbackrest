@@ -442,7 +442,7 @@ testRun(void)
         AddressInfo *addrInfo = NULL;
         const String *const ipLoop4 = STRDEF("127.0.0.1");
 
-        TEST_ASSIGN(addrInfo, addrInfoNew(STRDEF("localhost"), 443), "addr list");
+        TEST_ASSIGN(addrInfo, addrInfoNew(STRDEF("localhost"), 443), "localhost addr list");
         TEST_RESULT_VOID(addrInfoPrefer(addrInfo, lstFindIdx(addrInfo->pub.list, &ipLoop4)), "prefer 127.0.0.1");
 
         TEST_ASSIGN(client, sckClientNew(STRDEF("localhost"), hrnServerPort(0), 100, 100), "new client");

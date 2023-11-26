@@ -145,50 +145,71 @@ sckClientOpen(THIS_VOID)
         do
         {
             // Assume there will be no retry
+            SckClientOpenData *volatile openData = NULL;
             retry = false;
-
-            // Create or get open data
-            SckClientOpenData *openData = NULL;
-
-            if (addrInfoIdx == lstSize(openDataList))
-            {
-                openData = lstAdd(openDataList, &(SckClientOpenData){.address = addrInfoGet(addrInfo, addrInfoIdx)->info});
-                openData->name = strZ(addrInfoToName(this->host, this->port, openData->address));
-            }
-            else
-                openData = lstGet(openDataList, addrInfoIdx);
 
             // Try connection
             TRY_BEGIN()
             {
-                // Connect to the host
-                openData->fd = socket(openData->address->ai_family, openData->address->ai_socktype, openData->address->ai_protocol);
-                THROW_ON_SYS_ERROR(openData->fd == -1, HostConnectError, "unable to create socket");
-
-                sckOptionSet(openData->fd);
-
-                if (connect(openData->fd, openData->address->ai_addr, openData->address->ai_addrlen) == -1)
+                // Iterate running connections and see if any of them have completed
+                for (unsigned int openDataIdx = 0; openDataIdx < lstSize(openDataList); openDataIdx++)
                 {
-                    // Save the error and wait for connection
-                    openData->errNo = errno;
+                    SckClientOpenData *const openDataWait = lstGet(openDataList, openDataIdx);
 
-                    if (!sckClientOpenWait(openData->fd, openData->errNo, 250, openData->name))
-                        THROW_FMT(HostConnectError, "timeout connecting to '%s'", openData->name);
+                    if (openDataWait->fd != 0 && // {uncovered - !!! ALSO PUT THIS BACK ON ONE LINE}
+                        sckClientOpenWait(openData->fd, openData->errNo, 0, openData->name)) // {uncovered - !!!}
+                    {
+                        openData = openDataWait; // {uncovered - !!!}
+                        openData->errNo = 0; // {uncovered - !!!}
+                    }
                 }
 
-                // Create the session
-                MEM_CONTEXT_PRIOR_BEGIN()
+                if (openData == NULL)  // {uncovered - !!!}
                 {
-                    result = sckSessionNew(ioSessionRoleClient, openData->fd, this->host, this->port, this->timeoutSession);
+                    // Create or get open data
+                    if (addrInfoIdx == lstSize(openDataList))
+                    {
+                        openData = lstAdd(openDataList, &(SckClientOpenData){.address = addrInfoGet(addrInfo, addrInfoIdx)->info});
+                        openData->name = strZ(addrInfoToName(this->host, this->port, openData->address));
+                    }
+                    else
+                        openData = lstGet(openDataList, addrInfoIdx);
+
+                    // Connect to the host
+                    openData->fd = socket(
+                        openData->address->ai_family, openData->address->ai_socktype, openData->address->ai_protocol);
+                    THROW_ON_SYS_ERROR(openData->fd == -1, HostConnectError, "unable to create socket");
+
+                    sckOptionSet(openData->fd);
+
+                    if (connect(openData->fd, openData->address->ai_addr, openData->address->ai_addrlen) == -1)
+                    {
+                        // Save the error and wait for connection
+                        openData->errNo = errno;
+
+                        if (!sckClientOpenWait(openData->fd, openData->errNo, 250, openData->name))
+                            THROW_FMT(HostConnectError, "timeout connecting to '%s'", openData->name);
+
+                        openData->errNo = 0;
+                    }
                 }
-                MEM_CONTEXT_PRIOR_END();
 
-                // Update client name to include address
-                strTrunc(this->name);
-                strCatZ(this->name, openData->name);
+                if (openData->errNo == 0)  // {uncovered - !!!}
+                {
+                    // Create the session
+                    MEM_CONTEXT_PRIOR_BEGIN()
+                    {
+                        result = sckSessionNew(ioSessionRoleClient, openData->fd, this->host, this->port, this->timeoutSession);
+                    }
+                    MEM_CONTEXT_PRIOR_END();
 
-                // Set preferred address
-                addrInfoPrefer(addrInfo, addrInfoIdx);
+                    // Update client name to include address
+                    strTrunc(this->name);
+                    strCatZ(this->name, openData->name);
+
+                    // Set preferred address
+                    addrInfoPrefer(addrInfo, addrInfoIdx);
+                }
             }
             CATCH_ANY()
             {

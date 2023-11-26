@@ -404,6 +404,9 @@ unit:
           - common/io/http/session
           - common/io/http/url
 
+        include:
+          - common/io/socket/address
+
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: exec
         total: 1
