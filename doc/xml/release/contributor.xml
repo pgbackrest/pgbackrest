@@ -363,6 +363,11 @@
     <contributor-id type="github">geirra</contributor-id>
 </contributor>
 
+<contributor id="georgy.shelkovy">
+    <contributor-name-display>Georgy Shelkovy</contributor-name-display>
+    <contributor-id type="github">RekGRpth</contributor-id>
+</contributor>
+
 <contributor id="gkleen">
     <contributor-name-display>gkleen</contributor-name-display>
     <contributor-id type="github">gkleen</contributor-id>
@@ -628,6 +633,11 @@
 <contributor id="luca.ferrari">
     <contributor-name-display>Luca Ferrari</contributor-name-display>
     <contributor-id type="github">fluca1978</contributor-id>
+</contributor>
+
+<contributor id="luc.languagetools">
+    <contributor-name-display>Luc</contributor-name-display>
+    <contributor-id type="github">luc-languagetools</contributor-id>
 </contributor>
 
 <contributor id="lukas.ertl">

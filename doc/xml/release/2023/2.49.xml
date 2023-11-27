@@ -20,6 +20,19 @@
 
                 <p>Fix regression in retries.</p>
             </release-item>
+
+            <release-item>
+                <github-issue id="2219"/>
+                <github-pull-request id="2226"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="luc.languagetools"/>
+                    <release-item-contributor id="reid.thompson"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Fix recursive path remove in <proper>SFTP</proper> storage driver.</p>
+            </release-item>
         </release-bug-list>
 
         <release-improvement-list>
@@ -89,5 +102,18 @@
                 <p>Allow <id>config/load</id> unit test to run without <id>libssh2</id> installed.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <github-issue id="2228"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="georgy.shelkovy"/>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Remove unused fields from <code>backupJobResult()</code> test in command/backup unit.</p>
+            </release-item>
+        </release-development-list>
     </release-test-list>
 </release>
