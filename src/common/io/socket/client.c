@@ -164,6 +164,7 @@ sckClientOpen(THIS_VOID)
                     }
                 }
 
+                // Try or retry a connection since none of the waiting connections completed
                 if (openData == NULL)  // {uncovered - !!!}
                 {
                     // Create or get open data
@@ -214,6 +215,7 @@ sckClientOpen(THIS_VOID)
             CATCH_ANY()
             {
                 // Close socket
+                ASSERT(openData != NULL);
                 close(openData->fd);
                 openData->fd = 0;
 
