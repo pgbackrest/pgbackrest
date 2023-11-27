@@ -99,6 +99,54 @@ doc/resource/latex/preamble.tex:
   class: doc/core
   type: latex
 
+doc/src/build/config/config.yaml:
+  class: doc/core
+  type: yaml
+
+doc/src/build/help/help.xml:
+  class: doc/core
+  type: xml
+
+doc/src/command/build/build.c:
+  class: doc/core
+  type: c
+
+doc/src/command/build/build.h:
+  class: doc/core
+  type: c/h
+
+doc/src/command/build/reference.c:
+  class: doc/core
+  type: c
+
+doc/src/command/build/reference.h:
+  class: doc/core
+  type: c/h
+
+doc/src/command/help/meson.build:
+  class: doc/core
+  type: meson
+
+doc/src/config/load.c:
+  class: doc/core
+  type: c
+
+doc/src/config/load.h:
+  class: doc/core
+  type: c/h
+
+doc/src/config/meson.build:
+  class: doc/core
+  type: meson
+
+doc/src/main.c:
+  class: doc/core
+  type: c
+
+doc/src/meson.build:
+  class: doc/core
+  type: meson
+
 doc/xml/auto/metric-coverage-report.auto.xml:
   class: doc/source
   type: xml
@@ -552,6 +600,10 @@ doc/xml/release/2023/2.47.xml:
   type: xml
 
 doc/xml/release/2023/2.48.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2023/2.49.xml:
   class: doc/source
   type: xml
 
@@ -3124,6 +3176,10 @@ test/src/module/config/protocolTest.c:
   type: c
 
 test/src/module/db/dbTest.c:
+  class: test/module
+  type: c
+
+test/src/module/doc/buildTest.c:
   class: test/module
   type: c
 

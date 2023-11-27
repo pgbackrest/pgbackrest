@@ -1,4 +1,4 @@
-<release date="XXXX-XX-XX" version="2.49dev" title="UNDER DEVELOPMENT">
+<release date="2023-11-27" version="2.49" title="Remove PostgreSQL 9.3 Support">
     <release-core-list>
         <release-bug-list>
             <release-item>
@@ -47,6 +47,19 @@
                 <p>Remove support for <proper>PostgreSQL</proper> <id>9.3</id>.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <github-pull-request id="2224"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="georgy.shelkovy"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix <code>storageReadRemote()</code> to return actual read bytes.</p>
+            </release-item>
+        </release-development-list>
     </release-core-list>
 
     <release-doc-list>
