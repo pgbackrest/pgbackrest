@@ -122,10 +122,10 @@ pgPageSizeValid(const PgPageSize pageSize)
 
     switch (pageSize)
     {
-        case pgPageSize8:                                           // Default page size should be checked first
         case pgPageSize1:
         case pgPageSize2:
         case pgPageSize4:
+        case pgPageSize8:
         case pgPageSize16:
         case pgPageSize32:
             FUNCTION_TEST_RETURN(BOOL, true);
