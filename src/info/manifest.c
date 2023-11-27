@@ -3050,6 +3050,7 @@ manifestFileUpdate(Manifest *const this, const ManifestFile *const file)
         (!file->checksumPage && !file->checksumPageError && file->checksumPageErrorList == NULL) ||
         (file->checksumPage && !file->checksumPageError && file->checksumPageErrorList == NULL) ||
         (file->checksumPage && file->checksumPageError));
+    ASSERT(file->size != 0 || (file->bundleId == 0 && file->bundleOffset == 0));
 
     ManifestFilePack **const filePack = manifestFilePackFindInternal(this, file->name);
     manifestFilePackUpdate(this, filePack, file);
