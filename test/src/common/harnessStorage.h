@@ -55,6 +55,8 @@ typedef struct TestStorageExistsParam
     }                                                                                                                              \
     while (0)
 
+void testStorageExists(const Storage *const storage, const char *const file, const TestStorageExistsParam param);
+
 /***********************************************************************************************************************************
 List files in a path and optionally remove them
 ***********************************************************************************************************************************/
