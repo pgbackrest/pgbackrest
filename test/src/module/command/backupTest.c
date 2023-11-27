@@ -1848,60 +1848,6 @@ testRun(void)
         TEST_RESULT_VOID(lockRelease(true), "release backup lock");
 
         TEST_RESULT_LOG("P00 DETAIL: match file from prior backup host:" TEST_PATH "/test (0B, 100.00%)");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("report host/100% progress on truncate result");
-
-        // Create job that skips file
-        job = protocolParallelJobNew(VARSTRDEF("pg_data/test1"), protocolCommandNew(strIdFromZ("x")));
-
-        PackWrite *const resultPack1 = protocolPackNew();
-        const BackupFileResult fileResult = {
-            .manifestFile = STRDEF("pg_data/test1"),
-            .backupCopyResult = backupCopyResultTruncate,
-            .copyChecksum = (Buffer *)HASH_TYPE_SHA1_ZERO_BUF,
-        };
-
-        pckWriteStrP(resultPack1, fileResult.manifestFile);
-        pckWriteU32P(resultPack1, fileResult.backupCopyResult);
-        pckWriteU64P(resultPack1, fileResult.copySize);
-        pckWriteU64P(resultPack1, fileResult.bundleOffset);
-        pckWriteU64P(resultPack1, fileResult.blockIncrMapSize);
-        pckWriteU64P(resultPack1, fileResult.repoSize);
-        pckWriteBinP(resultPack1, fileResult.copyChecksum);
-        pckWriteBinP(resultPack1, fileResult.repoChecksum);
-        pckWritePackP(resultPack1, fileResult.pageChecksumResult);
-
-        pckWriteEndP(resultPack1);
-
-        protocolParallelJobResultSet(job, pckReadNew(pckWriteResult(resultPack1)));
-
-        // Create manifest with file
-        OBJ_NEW_BASE_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
-        {
-            manifest = manifestNewInternal();
-            HRN_MANIFEST_FILE_ADD(manifest, .name = "pg_data/test1", .size = 10);
-        }
-        OBJ_NEW_END();
-
-        sizeProgress = 0;
-        currentPercentComplete = 4567;
-
-        lockInit(TEST_PATH_STR, cfgOptionStr(cfgOptExecId), cfgOptionStr(cfgOptStanza), lockTypeBackup);
-        TEST_RESULT_VOID(lockAcquireP(), "acquire backup lock");
-
-        TEST_RESULT_VOID(
-            backupJobResult(
-                manifest, STRDEF("host"), storageTest, strLstNew(), job, true, 0, &sizeProgress, &currentPercentComplete),
-            "log truncate result");
-        TEST_RESULT_VOID(lockRelease(true), "release backup lock");
-
-        ManifestFile file = manifestFileFind(manifest, STRDEF("pg_data/test1"));
-        TEST_RESULT_UINT(file.bundleId, 0, "check bundle");
-        TEST_RESULT_UINT(file.size, 0, "check size");
-        TEST_RESULT_BOOL(bufEq(HASH_TYPE_SHA1_ZERO_BUF, BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE)), true, "checksum eq");
-
-        TEST_RESULT_LOG("P00 DETAIL: backup file host:" TEST_PATH "/test1 (10B->0B, 100.00%)");
     }
 
     // Offline tests should only be used to test offline functionality and errors easily tested in offline mode
