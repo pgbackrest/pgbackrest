@@ -1,5 +1,10 @@
 [
     {
+        "commit": "3cb891e3ca49ed1166fb0b513b126412448f5b09",
+        "date": "2023-11-27 08:55:56 -0300",
+        "subject": "v2.49: Remove PostgreSQL 9.3 Support"
+    },
+    {
         "commit": "7d51228bf5227494bf50327488032221bd3d30fa",
         "date": "2023-11-24 17:07:49 -0300",
         "subject": "Migrate backupFile() tests in command/backup module.",
