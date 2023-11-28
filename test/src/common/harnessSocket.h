@@ -11,6 +11,6 @@ Constants
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Install/uninstall the shims for testing
+// Install/uninstall shim for clientOpen() to use a fake file descriptor
 void hrnSckClientOpenShimInstall(void);
 void hrnSckClientOpenShimUninstall(void);
