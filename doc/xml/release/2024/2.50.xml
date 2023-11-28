@@ -1,2 +1,23 @@
 <release date="XXXX-XX-XX" version="2.50dev" title="Under Development">
+    <release-core-list>
+        <release-improvement-list>
+            <release-item>
+                <commit subject="Allow custom type/message for errRetryAdd()."/>
+                <commit subject="Improve comments in socket test harness."/>
+                <commit subject="Improved support for dual stack connections.">
+                    <github-issue id="2154"/>
+                    <!-- !!! PR NEEDED -->
+                </commit>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="timothee.peignier"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                    <!-- !!! UPDATE REVIEWERS -->
+                </release-item-contributor-list>
+
+                <p>Improved support for dual stack connections.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-core-list>
 </release>
