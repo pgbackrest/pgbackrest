@@ -371,6 +371,7 @@ unit:
             common/io/socket/client:
               function:
                 - sckClientOpen
+                - sckClientOpenWait
 
         coverage:
           - common/io/client

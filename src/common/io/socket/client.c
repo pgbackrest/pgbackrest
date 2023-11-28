@@ -71,6 +71,7 @@ sckClientOpenWait(const int fd, int errNo, const TimeMSec timeout, const char *c
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(INT, fd);
         FUNCTION_LOG_PARAM(INT, errNo);
+        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
         FUNCTION_LOG_PARAM(STRINGZ, name);
     FUNCTION_LOG_END();
 
@@ -146,6 +147,8 @@ sckClientOpen(THIS_VOID)
         {
             // Assume there will be no retry
             SckClientOpenData *volatile openData = NULL;
+            const ErrorType *errLastType = NULL;
+            String *errLastMessage = NULL;
             retry = false;
 
             // Try connection
@@ -156,16 +159,16 @@ sckClientOpen(THIS_VOID)
                 {
                     SckClientOpenData *const openDataWait = lstGet(openDataList, openDataIdx);
 
-                    if (openDataWait->fd != 0 && // {uncovered - !!! ALSO PUT THIS BACK ON ONE LINE}
-                        sckClientOpenWait(openData->fd, openData->errNo, 0, openData->name)) // {uncovered - !!!}
+                    if (openDataWait->fd != 0 &&
+                        sckClientOpenWait(openDataWait->fd, openDataWait->errNo, 0, openDataWait->name))
                     {
-                        openData = openDataWait; // {uncovered - !!!}
-                        openData->errNo = 0; // {uncovered - !!!}
+                        openData = openDataWait;
+                        openData->errNo = 0;
                     }
                 }
 
                 // Try or retry a connection since none of the waiting connections completed
-                if (openData == NULL)  // {uncovered - !!!}
+                if (openData == NULL)
                 {
                     // If connection does not exist yet then create it
                     if (addrInfoIdx == lstSize(openDataList))
@@ -186,12 +189,10 @@ sckClientOpen(THIS_VOID)
                                 break;
                             }
                         }
-
-                        openData = lstGet(openDataList, addrInfoIdx);
                     }
 
                     // Attempt connection to host
-                    if (openData != NULL) // {uncovered - !!!}
+                    if (openData != NULL)
                     {
                         openData->fd = socket(
                             openData->address->ai_family, openData->address->ai_socktype, openData->address->ai_protocol);
@@ -204,16 +205,14 @@ sckClientOpen(THIS_VOID)
                             // Save the error and wait for connection
                             openData->errNo = errno;
 
-                            if (!sckClientOpenWait(openData->fd, openData->errNo, 250, openData->name))
-                                THROW_FMT(HostConnectError, "timeout connecting to '%s'", openData->name);
-
-                            openData->errNo = 0;
+                            if (sckClientOpenWait(openData->fd, openData->errNo, 250, openData->name))
+                                openData->errNo = 0;
                         }
                     }
                 }
 
                 // Connection was successful so open session and return
-                if (openData != NULL && openData->errNo == 0) // {uncovered - !!!}
+                if (openData != NULL && openData->errNo == 0)
                 {
                     // Create the session
                     MEM_CONTEXT_PRIOR_BEGIN()
@@ -238,15 +237,18 @@ sckClientOpen(THIS_VOID)
 
                 // Clear connection so it can be retried
                 openData->fd = 0;
-                openData = NULL;
 
                 // Add the error retry info
-                errRetryAdd(errRetry);
+                errRetryAddP(errRetry);
+
+                // Store error info for possible logging
+                errLastType = errorType();
+                errLastMessage = strNewZ(errorMessage());
             }
             TRY_END();
 
-            // If the connection errored or all connections are waiting then wait and/or retry
-            if (openData == NULL)
+            // If the connection was not established then wait and/or retry
+            if (result == NULL)
             {
                 // Increment address info index and reset if the end has been reached. When the end has been reached sleep for a bit
                 // to hopefully have better chance at succeeding, otherwise continue right to the next address.
@@ -262,11 +264,30 @@ sckClientOpen(THIS_VOID)
 
                 // Error when no retries remain
                 if (!retry)
-                    THROWP(errRetryType(errRetry), strZ(errRetryMessage(errRetry)));
+                {
+                    for (unsigned int openDataIdx = 0; openDataIdx < lstSize(openDataList); openDataIdx++)
+                    {
+                        SckClientOpenData *const openDataTimeout = lstGet(openDataList, openDataIdx);
 
-                // Log retry
-                LOG_DEBUG_FMT("retry %s: %s", errorTypeName(errorType()), errorMessage());
-                statInc(SOCKET_STAT_RETRY_STR);
+                        if (openDataTimeout->fd != 0)
+                        {
+                            errRetryAddP(
+                                errRetry, .type = &HostConnectError,
+                                .message = strNewFmt("timeout connecting to '%s'", openDataTimeout->name));
+                        }
+                    }
+
+                    THROWP(errRetryType(errRetry), strZ(errRetryMessage(errRetry)));
+                }
+
+                // Log retry when there was an error
+                if (errLastType != NULL)
+                {
+                    LOG_DEBUG_FMT("retry %s: %s", errorTypeName(errLastType), strZ(errLastMessage));
+                    strFree(errLastMessage);
+
+                    statInc(SOCKET_STAT_RETRY_STR);
+                }
             }
         }
         while (retry);

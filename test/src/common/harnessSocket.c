@@ -17,9 +17,51 @@ Shim install state
 ***********************************************************************************************************************************/
 static struct
 {
-    // Local process shims
+    // Shim clientOpen() to use a fake file descriptor
     bool localShimSckClientOpen;
+
+    // Shim sckClientOpenWait() to return false for a name one time
+    const char *clientOpenWaitName;
 } hrnIoStatic;
+
+/**********************************************************************************************************************************/
+void
+hrnSckClientOpenWaitShimInstall(const char *const name)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STRINGZ, name);
+    FUNCTION_HARNESS_END();
+
+    hrnIoStatic.clientOpenWaitName = name;
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Shim sckClientOpen()
+***********************************************************************************************************************************/
+static bool
+sckClientOpenWait(const int fd, int errNo, const TimeMSec timeout, const char *const name)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(INT, fd);
+        FUNCTION_HARNESS_PARAM(INT, errNo);
+        FUNCTION_HARNESS_PARAM(TIME_MSEC, timeout);
+        FUNCTION_HARNESS_PARAM(STRINGZ, name);
+    FUNCTION_HARNESS_END();
+
+    bool result = false;
+
+    if (hrnIoStatic.clientOpenWaitName != NULL && strcmp(hrnIoStatic.clientOpenWaitName, name) == 0)
+    {
+        sleepMSec(timeout);
+        hrnIoStatic.clientOpenWaitName = NULL;
+    }
+    else
+        result = sckClientOpenWait_SHIMMED(fd, errNo, timeout, name);
+
+    FUNCTION_HARNESS_RETURN(BOOL, result);
+}
 
 /***********************************************************************************************************************************
 Shim sckClientOpen()
@@ -63,7 +105,6 @@ hrnSckClientOpenShimInstall(void)
     FUNCTION_HARNESS_RETURN_VOID();
 }
 
-/**********************************************************************************************************************************/
 void
 hrnSckClientOpenShimUninstall(void)
 {

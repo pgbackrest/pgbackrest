@@ -23,12 +23,6 @@ Constructor
 FN_EXTERN ErrorRetry *errRetryNew(void);
 
 /***********************************************************************************************************************************
-Functions
-***********************************************************************************************************************************/
-// Add retry error
-FN_EXTERN void errRetryAdd(ErrorRetry *this);
-
-/***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct ErrorRetryPub
@@ -45,6 +39,22 @@ errRetryType(const ErrorRetry *const this)
 
 // Get error message
 FN_EXTERN String *errRetryMessage(const ErrorRetry *this);
+
+/***********************************************************************************************************************************
+Functions
+***********************************************************************************************************************************/
+// Add retry error
+typedef struct ErrRetryAddParam
+{
+    VAR_PARAM_HEADER;
+    const ErrorType *type;
+    const String *message;
+} ErrRetryAddParam;
+
+#define errRetryAddP(this, ...)                                                                                                     \
+    errRetryAdd(this, (ErrRetryAddParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN void errRetryAdd(ErrorRetry *const this, ErrRetryAddParam param);
 
 /***********************************************************************************************************************************
 Destructor

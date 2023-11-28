@@ -454,27 +454,53 @@ testRun(void)
 
         // This address should not be in use in a test environment -- if it is the test will fail
         TEST_ASSIGN(client, sckClientNew(STRDEF("172.31.255.255"), hrnServerPort(0), 100, 100), "new client");
-        TEST_ERROR_FMT(
-            ioClientOpen(client), HostConnectError,
-            "timeout connecting to '172.31.255.255:%u'\n"
-            "[RETRY DETAIL OMITTED]",
-            hrnServerPort(0));
+        TEST_ERROR_FMT(ioClientOpen(client), HostConnectError, "timeout connecting to '172.31.255.255:%u'", hrnServerPort(0));
 
         // -------------------------------------------------------------------------------------------------------------------------
-// #ifdef TEST_CONTAINER_REQUIRED
-//         HRN_SYSTEM("echo \"127.0.0.1 test-addr-conn.pgbackrest.org\" | sudo tee -a /etc/hosts > /dev/null");
-//         HRN_SYSTEM("echo \"::1 test-addr-conn.pgbackrest.org\" | sudo tee -a /etc/hosts > /dev/null");
-//         HRN_SYSTEM("echo \"172.31.255.255 test-addr-conn.pgbackrest.org\" | sudo tee -a /etc/hosts > /dev/null");
+#ifdef TEST_CONTAINER_REQUIRED
+        HRN_SYSTEM("echo \"127.0.0.1 test-addr-conn.pgbackrest.org\" | sudo tee -a /etc/hosts > /dev/null");
+        HRN_SYSTEM("echo \"::1 test-addr-conn.pgbackrest.org\" | sudo tee -a /etc/hosts > /dev/null");
+        HRN_SYSTEM("echo \"172.31.255.255 test-addr-conn.pgbackrest.org\" | sudo tee -a /etc/hosts > /dev/null");
 
-//         hrnErrorRetryDetailEnable();
+        HRN_FORK_BEGIN()
+        {
+            HRN_FORK_CHILD_BEGIN(.prefix = "test server", .timeout = 5000)
+            {
+                // Start HTTP test server
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolSocket), "socket server run");
+            }
+            HRN_FORK_CHILD_END();
 
-//         TEST_ASSIGN(client, sckClientNew(STRDEF("test-addr-conn.pgbackrest.org"), hrnServerPort(0), 100, 100), "new client");
-//         TEST_ERROR_FMT(
-//             ioClientOpen(client), HostConnectError,
-//             "timeout connecting to '172.31.255.255:%u'\n"
-//             "[RETRY DETAIL OMITTED]",
-//             hrnServerPort(0));
-// #endif
+            HRN_FORK_PARENT_BEGIN()
+            {
+                IoWrite *http = hrnServerScriptBegin(HRN_FORK_PARENT_WRITE(0));
+                IoClient *client;
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("connect to 127.0.0.1 when ::1 errors and 172.31.255.255 never responds");
+
+                TEST_ASSIGN(
+                    client, sckClientNew(STRDEF("test-addr-conn.pgbackrest.org"), hrnServerPort(0), 1000, 1000), "new client");
+
+                hrnServerScriptAccept(http);
+
+                // Shim the server address to return false one time for write ready. This tests connections that take longer.
+                hrnSckClientOpenWaitShimInstall("test-addr-conn.pgbackrest.org:44443 (127.0.0.1)");
+
+                TEST_RESULT_VOID(ioClientOpen(client), "connection established");
+                TEST_RESULT_VOID(ioClientFree(client), "connection closed");
+
+                hrnServerScriptClose(http);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("end server process");
+
+                hrnServerScriptEnd(http);
+            }
+            HRN_FORK_PARENT_END();
+        }
+        HRN_FORK_END();
+#endif
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("sckServerAccept() returns NULL on interrupt");
