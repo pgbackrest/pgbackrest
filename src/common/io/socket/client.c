@@ -140,7 +140,7 @@ sckClientOpen(THIS_VOID)
 
         // Try addresses until success or timeout
         List *const openDataList = lstNewP(sizeof(SckClientOpenData));
-        unsigned int addrInfoIdx = 0;
+        volatile unsigned int addrInfoIdx = 0;
 
         do
         {
@@ -167,35 +167,53 @@ sckClientOpen(THIS_VOID)
                 // Try or retry a connection since none of the waiting connections completed
                 if (openData == NULL)  // {uncovered - !!!}
                 {
-                    // Create or get open data
+                    // If connection does not exist yet then create it
                     if (addrInfoIdx == lstSize(openDataList))
                     {
                         openData = lstAdd(openDataList, &(SckClientOpenData){.address = addrInfoGet(addrInfo, addrInfoIdx)->info});
                         openData->name = strZ(addrInfoToName(this->host, this->port, openData->address));
                     }
+                    // Else search for a connection that is not waiting
                     else
-                        openData = lstGet(openDataList, addrInfoIdx);
-
-                    // Connect to the host
-                    openData->fd = socket(
-                        openData->address->ai_family, openData->address->ai_socktype, openData->address->ai_protocol);
-                    THROW_ON_SYS_ERROR(openData->fd == -1, HostConnectError, "unable to create socket");
-
-                    sckOptionSet(openData->fd);
-
-                    if (connect(openData->fd, openData->address->ai_addr, openData->address->ai_addrlen) == -1)
                     {
-                        // Save the error and wait for connection
-                        openData->errNo = errno;
+                        for (; addrInfoIdx < lstSize(openDataList); addrInfoIdx++)
+                        {
+                            SckClientOpenData *const openDataNoWait = lstGet(openDataList, addrInfoIdx);
 
-                        if (!sckClientOpenWait(openData->fd, openData->errNo, 250, openData->name))
-                            THROW_FMT(HostConnectError, "timeout connecting to '%s'", openData->name);
+                            if (openDataNoWait->fd == 0)
+                            {
+                                openData = openDataNoWait;
+                                break;
+                            }
+                        }
 
-                        openData->errNo = 0;
+                        openData = lstGet(openDataList, addrInfoIdx);
+                    }
+
+                    // Attempt connection to host
+                    if (openData != NULL) // {uncovered - !!!}
+                    {
+                        openData->fd = socket(
+                            openData->address->ai_family, openData->address->ai_socktype, openData->address->ai_protocol);
+                        THROW_ON_SYS_ERROR(openData->fd == -1, HostConnectError, "unable to create socket");
+
+                        sckOptionSet(openData->fd);
+
+                        if (connect(openData->fd, openData->address->ai_addr, openData->address->ai_addrlen) == -1)
+                        {
+                            // Save the error and wait for connection
+                            openData->errNo = errno;
+
+                            if (!sckClientOpenWait(openData->fd, openData->errNo, 250, openData->name))
+                                THROW_FMT(HostConnectError, "timeout connecting to '%s'", openData->name);
+
+                            openData->errNo = 0;
+                        }
                     }
                 }
 
-                if (openData->errNo == 0)  // {uncovered - !!!}
+                // Connection was successful so open session and return
+                if (openData != NULL && openData->errNo == 0) // {uncovered - !!!}
                 {
                     // Create the session
                     MEM_CONTEXT_PRIOR_BEGIN()
@@ -217,11 +235,19 @@ sckClientOpen(THIS_VOID)
                 // Close socket
                 ASSERT(openData != NULL);
                 close(openData->fd);
+
+                // Clear connection so it can be retried
                 openData->fd = 0;
+                openData = NULL;
 
                 // Add the error retry info
                 errRetryAdd(errRetry);
+            }
+            TRY_END();
 
+            // If the connection errored or all connections are waiting then wait and/or retry
+            if (openData == NULL)
+            {
                 // Increment address info index and reset if the end has been reached. When the end has been reached sleep for a bit
                 // to hopefully have better chance at succeeding, otherwise continue right to the next address.
                 addrInfoIdx++;
@@ -242,7 +268,6 @@ sckClientOpen(THIS_VOID)
                 LOG_DEBUG_FMT("retry %s: %s", errorTypeName(errorType()), errorMessage());
                 statInc(SOCKET_STAT_RETRY_STR);
             }
-            TRY_END();
         }
         while (retry);
 

@@ -64,68 +64,72 @@ addrInfoSort(AddressInfo *const this)
         FUNCTION_TEST_PARAM(ADDRESS_INFO, this);
     FUNCTION_TEST_END();
 
-    // By default start with IPv6 and first address
-    int family = AF_INET6;
-    unsigned int addrIdx = 0;
-
-    // If a preferred address is in the list then move it to the first spot and update family
-    const AddressInfoPreference *const addrPref = lstFind(addressInfoLocal.prefList, &this->pub.host);
-
-    if (addrPref != NULL)
+    // Only sort if there is more than one value
+    if (lstSize(this->pub.list) > 1)
     {
-        AddressInfoItem *const addrFindItem = lstFind(this->pub.list, &addrPref->address);
+        // By default start with IPv6 and first address
+        int family = AF_INET6;
+        unsigned int addrIdx = 0;
 
-        if (addrFindItem != NULL)
+        // If a preferred address is in the list then move it to the first spot and update family
+        const AddressInfoPreference *const addrPref = lstFind(addressInfoLocal.prefList, &this->pub.host);
+
+        if (addrPref != NULL)
         {
-            // Swap with first address if the address is not already first
-            AddressInfoItem *const addrFirstItem = lstGet(this->pub.list, 0);
+            AddressInfoItem *const addrFindItem = lstFind(this->pub.list, &addrPref->address);
 
-            if (addrFirstItem != addrFindItem)
+            if (addrFindItem != NULL)
             {
-                const AddressInfoItem addrCopyItem = *addrFirstItem;
-                *addrFirstItem = *addrFindItem;
-                *addrFindItem = addrCopyItem;
-            }
+                // Swap with first address if the address is not already first
+                AddressInfoItem *const addrFirstItem = lstGet(this->pub.list, 0);
 
-            // Set family and skip first address
-            family = addrFirstItem->info->ai_family == AF_INET6 ? AF_INET : AF_INET6;
-            addrIdx++;
-        }
-    }
-
-    // Alternate IPv6 and IPv4 addresses
-    for (; addrIdx < lstSize(this->pub.list); addrIdx++)
-    {
-        AddressInfoItem *const addrItem = lstGet(this->pub.list, addrIdx);
-
-        // If not the family we expect, search for one
-        if (addrItem->info->ai_family != family)
-        {
-            unsigned int addrFindIdx = addrIdx + 1;
-
-            for (; addrFindIdx < lstSize(this->pub.list); addrFindIdx++)
-            {
-                AddressInfoItem *const addrFindItem = lstGet(this->pub.list, addrFindIdx);
-
-                if (addrFindItem->info->ai_family == family)
+                if (addrFirstItem != addrFindItem)
                 {
-                    // Swap addresses
-                    const AddressInfoItem addrCopyItem = *addrItem;
-                    *addrItem = *addrFindItem;
+                    const AddressInfoItem addrCopyItem = *addrFirstItem;
+                    *addrFirstItem = *addrFindItem;
                     *addrFindItem = addrCopyItem;
-
-                    // Move on to next address
-                    break;
                 }
-            }
 
-            // Address of the required family not found so sorting is done
-            if (addrFindIdx == lstSize(this->pub.list))
-                break;
+                // Set family and skip first address
+                family = addrFirstItem->info->ai_family == AF_INET6 ? AF_INET : AF_INET6;
+                addrIdx++;
+            }
         }
 
-        // Switch family
-        family = family == AF_INET6 ? AF_INET : AF_INET6;
+        // Alternate IPv6 and IPv4 addresses
+        for (; addrIdx < lstSize(this->pub.list); addrIdx++)
+        {
+            AddressInfoItem *const addrItem = lstGet(this->pub.list, addrIdx);
+
+            // If not the family we expect, search for one
+            if (addrItem->info->ai_family != family)
+            {
+                unsigned int addrFindIdx = addrIdx + 1;
+
+                for (; addrFindIdx < lstSize(this->pub.list); addrFindIdx++)
+                {
+                    AddressInfoItem *const addrFindItem = lstGet(this->pub.list, addrFindIdx);
+
+                    if (addrFindItem->info->ai_family == family)
+                    {
+                        // Swap addresses
+                        const AddressInfoItem addrCopyItem = *addrItem;
+                        *addrItem = *addrFindItem;
+                        *addrFindItem = addrCopyItem;
+
+                        // Move on to next address
+                        break;
+                    }
+                }
+
+                // Address of the required family not found so sorting is done
+                if (addrFindIdx == lstSize(this->pub.list))
+                    break;
+            }
+
+            // Switch family
+            family = family == AF_INET6 ? AF_INET : AF_INET6;
+        }
     }
 
     FUNCTION_TEST_RETURN_VOID();
