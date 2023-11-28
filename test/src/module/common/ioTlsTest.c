@@ -8,7 +8,6 @@ Test Tls Client
 #include "common/io/fdWrite.h"
 #include "storage/posix/storage.h"
 
-#include "common/harnessErrorRetry.h"
 #include "common/harnessFork.h"
 #include "common/harnessServer.h"
 #include "common/harnessStorage.h"

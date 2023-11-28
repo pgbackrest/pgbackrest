@@ -355,11 +355,7 @@ hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam param)
                 break;
 
             case hrnServerCmdSleep:
-                fprintf(stdout, "!!!SLEEP START %" PRIu64 "\n", timeMSec());
-                fflush(stdout);
                 sleepMSec(varUInt64Force(data));
-                fprintf(stdout, "!!!SLEEP STOP %" PRIu64 "\n", timeMSec());
-                fflush(stdout);
                 break;
         }
     }

@@ -64,14 +64,14 @@ addrInfoSort(AddressInfo *const this)
         FUNCTION_TEST_PARAM(ADDRESS_INFO, this);
     FUNCTION_TEST_END();
 
-    // Only sort if there is more than one value
+    // Only sort if there is more than one address
     if (lstSize(this->pub.list) > 1)
     {
         // By default start with IPv6 and first address
         int family = AF_INET6;
         unsigned int addrIdx = 0;
 
-        // If a preferred address is in the list then move it to the first spot and update family
+        // If a preferred address is in the list then move it to the first position and update family
         const AddressInfoPreference *const addrPref = lstFind(addressInfoLocal.prefList, &this->pub.host);
 
         if (addrPref != NULL)

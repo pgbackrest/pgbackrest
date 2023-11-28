@@ -58,7 +58,12 @@ sckClientToLog(const THIS_VOID, StringStatic *const debugLog)
 #define FUNCTION_LOG_SOCKET_CLIENT_FORMAT(value, buffer, bufferSize)                                                               \
     FUNCTION_LOG_OBJECT_FORMAT(value, sckClientToLog, buffer, bufferSize)
 
-/**********************************************************************************************************************************/
+/***********************************************************************************************************************************
+Connections are established using the "happy eyeballs" approach from RFC 8305, i.e. new addresses (if available) are tried if the
+prior address has already had a reasonable time to connect. This prevents waiting too long on a failed connection but does not try
+all the addresses at once. Prior connections that are still waiting are rechecked periodically if no subsequent connection is
+successful.
+***********************************************************************************************************************************/
 static bool
 sckConnectInProgress(int errNo)
 {
@@ -154,7 +159,7 @@ sckClientOpen(THIS_VOID)
             // Try connection
             TRY_BEGIN()
             {
-                // Iterate running connections and see if any of them have completed
+                // Iterate waiting connections and see if any of them have completed
                 for (unsigned int openDataIdx = 0; openDataIdx < lstSize(openDataList); openDataIdx++)
                 {
                     SckClientOpenData *const openDataWait = lstGet(openDataList, openDataIdx);
@@ -202,7 +207,8 @@ sckClientOpen(THIS_VOID)
 
                         if (connect(openData->fd, openData->address->ai_addr, openData->address->ai_addrlen) == -1)
                         {
-                            // Save the error and wait for connection
+                            // Save the error and wait for connection. The initial wait time will be fixed at 250ms, the default
+                            // value recommended by RFC 8305.
                             openData->errNo = errno;
 
                             if (sckClientOpenWait(openData->fd, openData->errNo, 250, openData->name))
@@ -211,7 +217,7 @@ sckClientOpen(THIS_VOID)
                     }
                 }
 
-                // Connection was successful so open session and return
+                // Connection was successful so open session and set result
                 if (openData != NULL && openData->errNo == 0)
                 {
                     // Create the session
@@ -221,15 +227,15 @@ sckClientOpen(THIS_VOID)
                     }
                     MEM_CONTEXT_PRIOR_END();
 
-                    // Clear socket so it will not be freed later
-                    openData->fd = 0;
-
                     // Update client name to include address
                     strTrunc(this->name);
                     strCatZ(this->name, openData->name);
 
                     // Set preferred address
                     addrInfoPrefer(addrInfo, addrInfoIdx);
+
+                    // Clear socket so it will not be freed later
+                    openData->fd = 0;
                 }
             }
             CATCH_ANY()
@@ -238,19 +244,19 @@ sckClientOpen(THIS_VOID)
                 ASSERT(openData != NULL);
                 close(openData->fd);
 
-                // Clear connection so it can be retried
+                // Clear socket so the connection can be retried
                 openData->fd = 0;
 
                 // Add the error retry info
                 errRetryAddP(errRetry);
 
-                // Store error info for possible logging
+                // Store error info for later logging
                 errLastType = errorType();
                 errLastMessage = strNewZ(errorMessage());
             }
             TRY_END();
 
-            // If the connection was not established then wait and/or retry
+            // If the connection was not completed then wait and/or retry
             if (result == NULL)
             {
                 // Increment address info index and reset if the end has been reached. When the end has been reached sleep for a bit
@@ -265,7 +271,7 @@ sckClientOpen(THIS_VOID)
                 else
                     retry = true;
 
-                // Error when no retries remain
+                // General timeout errors when no retries remain
                 if (!retry)
                 {
                     for (unsigned int openDataIdx = 0; openDataIdx < lstSize(openDataList); openDataIdx++)
@@ -293,7 +299,7 @@ sckClientOpen(THIS_VOID)
         }
         while (retry);
 
-        // Free any connections that were in progress but never established
+        // Free any connections that were in progress but never completed
         for (unsigned int openDataIdx = 0; openDataIdx < lstSize(openDataList); openDataIdx++)
         {
             SckClientOpenData *const openDataFree = lstGet(openDataList, openDataIdx);
@@ -302,7 +308,7 @@ sckClientOpen(THIS_VOID)
                 close(openDataFree->fd);
         }
 
-        // If no result then error
+        // Error when no result
         if (result == NULL)
             THROWP(errRetryType(errRetry), strZ(errRetryMessage(errRetry)));
 

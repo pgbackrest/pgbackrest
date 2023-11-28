@@ -43,15 +43,15 @@ FN_EXTERN String *errRetryMessage(const ErrorRetry *this);
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Add retry error
+// Add error
 typedef struct ErrRetryAddParam
 {
     VAR_PARAM_HEADER;
-    const ErrorType *type;
-    const String *message;
+    const ErrorType *type;                                          // Error type (defaults to errorType())
+    const String *message;                                          // Error message (defaults to errorMessage())
 } ErrRetryAddParam;
 
-#define errRetryAddP(this, ...)                                                                                                     \
+#define errRetryAddP(this, ...)                                                                                                    \
     errRetryAdd(this, (ErrRetryAddParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 FN_EXTERN void errRetryAdd(ErrorRetry *const this, ErrRetryAddParam param);
