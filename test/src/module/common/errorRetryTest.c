@@ -25,7 +25,7 @@ testRun(void)
             }
             CATCH_ANY()
             {
-                TEST_RESULT_VOID(errRetryAdd(retry), "add retry");
+                TEST_RESULT_VOID(errRetryAddP(retry), "add retry");
             }
             TRY_END();
 
@@ -35,7 +35,7 @@ testRun(void)
             }
             CATCH_ANY()
             {
-                TEST_RESULT_VOID(errRetryAdd(retry), "add retry");
+                TEST_RESULT_VOID(errRetryAddP(retry, errorType(), STR(errorMessage())), "add retry");
             }
             TRY_END();
 
@@ -63,7 +63,7 @@ testRun(void)
             }
             CATCH_ANY()
             {
-                TEST_RESULT_VOID(errRetryAdd(retry), "add retry");
+                TEST_RESULT_VOID(errRetryAddP(retry), "add retry");
             }
             TRY_END();
 
@@ -73,7 +73,7 @@ testRun(void)
             }
             CATCH_ANY()
             {
-                TEST_RESULT_VOID(errRetryAdd(retry), "add retry");
+                TEST_RESULT_VOID(errRetryAddP(retry), "add retry");
             }
             TRY_END();
 
@@ -83,7 +83,7 @@ testRun(void)
             }
             CATCH_ANY()
             {
-                TEST_RESULT_VOID(errRetryAdd(retry), "add retry");
+                TEST_RESULT_VOID(errRetryAddP(retry), "add retry");
             }
             TRY_END();
 
@@ -93,7 +93,7 @@ testRun(void)
             }
             CATCH_ANY()
             {
-                TEST_RESULT_VOID(errRetryAdd(retry), "add retry");
+                TEST_RESULT_VOID(errRetryAddP(retry), "add retry");
             }
             TRY_END();
 
