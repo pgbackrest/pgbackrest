@@ -221,6 +221,9 @@ sckClientOpen(THIS_VOID)
                     }
                     MEM_CONTEXT_PRIOR_END();
 
+                    // Clear socket so it will not be freed later
+                    openData->fd = 0;
+
                     // Update client name to include address
                     strTrunc(this->name);
                     strCatZ(this->name, openData->name);
@@ -276,8 +279,6 @@ sckClientOpen(THIS_VOID)
                                 .message = strNewFmt("timeout connecting to '%s'", openDataTimeout->name));
                         }
                     }
-
-                    THROWP(errRetryType(errRetry), strZ(errRetryMessage(errRetry)));
                 }
 
                 // Log retry when there was an error
@@ -291,6 +292,19 @@ sckClientOpen(THIS_VOID)
             }
         }
         while (retry);
+
+        // Free any connections that were in progress but never established
+        for (unsigned int openDataIdx = 0; openDataIdx < lstSize(openDataList); openDataIdx++)
+        {
+            SckClientOpenData *const openDataFree = lstGet(openDataList, openDataIdx);
+
+            if (openDataFree->fd != 0)
+                close(openDataFree->fd);
+        }
+
+        // If no result then error
+        if (result == NULL)
+            THROWP(errRetryType(errRetry), strZ(errRetryMessage(errRetry)));
 
         statInc(SOCKET_STAT_SESSION_STR);
     }
