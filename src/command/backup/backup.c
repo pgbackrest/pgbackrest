@@ -1490,8 +1490,8 @@ backupJobResult(
                     }
 
                     LOG_DETAIL_PID_FMT(processId, "%s %s (%s)%s",
-                        copyResult != backupCopyResultTruncate ? "backup file" : "store truncated file",
-                        strZ(fileLog), strZ(logProgress), strZ(logChecksum));
+                                       copyResult != backupCopyResultTruncate ? "backup file" : "store truncated file",
+                                       strZ(fileLog), strZ(logProgress), strZ(logChecksum));
 
                     // If the file had page checksums calculated during the copy
                     ASSERT((!file.checksumPage && checksumPageResult == NULL) || (file.checksumPage && checksumPageResult != NULL));
