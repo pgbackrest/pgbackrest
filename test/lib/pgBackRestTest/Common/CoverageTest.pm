@@ -372,17 +372,29 @@ sub coverageValidateAndGenerate
             &log(INFO, "tested modules have full coverage");
         }
 
-        if ($bCoverageReport)
+        # Always generate unified coverage report if there was missing coverage. This is useful for CI.
+        if ($bCoverageReport || $result != 0)
         {
             &log(INFO, 'writing C coverage report');
 
-            executeTest(
-                "genhtml ${strLCovFile} --config-file=${strTestResultCoveragePath}/raw/lcov.conf" .
-                    " --prefix=${strWorkPath}/repo" .
-                    " --output-directory=${strTestResultCoveragePath}/lcov");
+            if ($bCoverageReport)
+            {
+                executeTest(
+                    "genhtml ${strLCovFile} --config-file=${strTestResultCoveragePath}/raw/lcov.conf" .
+                        " --prefix=${strWorkPath}/repo" .
+                        " --output-directory=${strTestResultCoveragePath}/lcov");
+            }
 
             coverageGenerate(
-                $oStorage, "${strWorkPath}/repo", "${strTestResultCoveragePath}/raw", "${strTestResultCoveragePath}/coverage.html");
+                $oStorage, "${strWorkPath}/repo", "${strTestResultCoveragePath}/raw", "${strTestResultCoveragePath}/coverage.html",
+                $bCoverageReport);
+        }
+        # Else output report status in the HTML
+        else
+        {
+            $oStorage->put(
+                "${strTestResultCoveragePath}/coverage.html",
+                "<center>[ " . ($result == 0 ? "Coverage Complete" : "No Coverage Report") . " ]</center>");
         }
 
         if ($bCoverageSummary)
@@ -392,12 +404,6 @@ sub coverageValidateAndGenerate
             coverageDocSummaryGenerate(
                 $oStorage, "${strTestResultCoveragePath}/raw", "${strTestResultSummaryPath}/metric-coverage-report.auto.xml");
         }
-    }
-
-    # Remove coverage report when no coverage or no report to avoid confusion from looking at an old report
-    if (!$bCoverageReport || !$oStorage->exists($strLCovFile))
-    {
-        executeTest("rm -rf ${strTestResultCoveragePath}");
     }
 
     return $result;
@@ -437,6 +443,7 @@ sub coverageGenerate
     my $strBasePath = shift;
     my $strCoveragePath = shift;
     my $strOutFile = shift;
+    my $bCoverageReport = shift;
 
     # Track missing coverage
     my $rhCoverage = {};
@@ -446,6 +453,10 @@ sub coverageGenerate
 
     foreach my $strFileCov (sort(keys(%{$rhManifest})))
     {
+        # If a coverage report was not requested then skip coverage of test modules. If we are here it means there was missing
+        # coverage on CI and we want to keep the report as small as possible.
+        next if !$bCoverageReport && $strFileCov =~ /Test\.lcov$/;
+
         if ($strFileCov =~ /\.lcov$/)
         {
             my $strCoverage = ${$oStorage->get("${strCoveragePath}/${strFileCov}")};

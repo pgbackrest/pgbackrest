@@ -427,7 +427,9 @@ eval
             $oStorageTest->pathCreate(
                 "${strBackRestBase}/test/result/coverage", {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
             $oStorageBackRest->put(
-                "${strBackRestBase}/test/result/coverage/coverage.html", "<center>[ Generating New Report ]</center>");
+                "${strBackRestBase}/test/result/coverage/coverage.html",
+                "<center>[ " . ($bNoCoverage ? "No Coverage Testing" : "Generating Coverage Report") . " ]</center>");
+            executeTest("rm -rf ${strBackRestBase}/test/result/coverage/lcov");
 
             # Copy C code for coverage tests
             if (vmCoverageC($strVm) && !$bDryRun)
