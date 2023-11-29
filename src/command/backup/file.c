@@ -300,7 +300,7 @@ backupFile(
                         Buffer *const buffer = bufNew(ioBufferSize());
                         bool readEof = false;
 
-                        // Read the first buffer to determine if the file was truncated. We are only concerned with this when
+                        // Read the first buffer to determine if the file was truncated. Detecting truncation matters only when
                         // bundling is enabled as otherwise the file will be stored anyway.
                         ioRead(readIo, buffer);
 
