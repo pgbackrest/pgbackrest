@@ -64,6 +64,13 @@ jobs:
       - name: Run Test
         run: cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.pl ${{matrix.param}} --param=build-max=2
 
+      # Output the coverage report on failure in case the failure was caused by lack of coverage. This is not ideal since the report
+      # needs to be copied from the log output into an HTML file where it can be viewed, but better than nothing.
+      - name: Coverage Report
+        if: failure()
+        run: |
+          cat ${GITHUB_WORKSPACE?}/pgbackrest/test/result/coverage/coverage.html
+
   # Basic tests on other architectures using emulation. The emulation is so slow that running all the unit tests would be too
   # expensive, but this at least shows that the build works and some of the more complex tests run. In particular, it is good to
   # test on one big-endian architecture to be sure that checksums are correct.
