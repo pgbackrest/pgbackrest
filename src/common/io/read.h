@@ -47,6 +47,13 @@ ioReadFilterGroup(IoRead *const this)
 // File descriptor for the read object. Not all read objects have a file descriptor and -1 will be returned in that case.
 FN_EXTERN int ioReadFd(const IoRead *this);
 
+// Total bytes read
+FN_INLINE_ALWAYS uint64_t
+ioReadTotal(const IoRead *const this)
+{
+    return THIS_PUB(IoRead)->total;
+}
+
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
@@ -58,9 +65,6 @@ FN_EXTERN size_t ioRead(IoRead *this, Buffer *buffer);
 
 // Same as ioRead() but optimized for small reads (intended for making repetitive reads that are smaller than ioBufferSize())
 FN_EXTERN size_t ioReadSmall(IoRead *this, Buffer *buffer);
-
-// Returns total bytes read
-FN_EXTERN size_t ioReadTotalBytes(IoRead *this);
 
 // Read linefeed-terminated string and optionally error on eof
 FN_EXTERN String *ioReadLineParam(IoRead *this, bool allowEof);

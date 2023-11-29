@@ -1489,9 +1489,9 @@ backupJobResult(
                             strZ(file.name), strZ(strNewEncode(encodingHex, BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE))));
                     }
 
-                    LOG_DETAIL_PID_FMT(processId, "%s %s (%s)%s",
-                                       copyResult != backupCopyResultTruncate ? "backup file" : "store truncated file",
-                                       strZ(fileLog), strZ(logProgress), strZ(logChecksum));
+                    LOG_DETAIL_PID_FMT(
+                        processId, "%s file %s (%s)%s", copyResult != backupCopyResultTruncate ? "backup" : "store truncated",
+                        strZ(fileLog), strZ(logProgress), strZ(logChecksum));
 
                     // If the file had page checksums calculated during the copy
                     ASSERT((!file.checksumPage && checksumPageResult == NULL) || (file.checksumPage && checksumPageResult != NULL));
