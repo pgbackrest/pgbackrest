@@ -298,12 +298,25 @@ backupFile(
                     if (ioReadOpen(readIo))
                     {
                         Buffer *const buffer = bufNew(ioBufferSize());
+                        bool readEof = false;
 
-                        // Read the first buffer to determine if the file is zero-length
+                        // Read the first buffer to determine if the file was truncated. We are only concerned with this when
+                        // bundling is enabled as otherwise the file will be stored anyway.
                         ioRead(readIo, buffer);
 
+                        if (ioReadEof(readIo) && bundleId != 0)
+                        {
+                            // Close the source and set eof
+                            ioReadClose(readIo);
+                            readEof = true;
+
+                            // If the file is zero-length then it was truncated during the backup
+                            if (pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(readIo), SIZE_FILTER_TYPE, .idx = 0)) == 0)
+                                fileResult->backupCopyResult = backupCopyResultTruncate;
+                        }
+
                         // Copy the file in non-bundling mode or if the file is not zero-length
-                        if (bundleId == 0 || ioReadTotal(readIo) != 0)
+                        if (fileResult->backupCopyResult != backupCopyResultTruncate)
                         {
                             // Setup the repo file for write. There is no need to write the file atomically (e.g. via a temp file on
                             // Posix) because checksums are tested on resume after a failed backup. The path does not need to be
@@ -326,12 +339,15 @@ backupFile(
                             ioWrite(storageWriteIo(write), buffer);
                             bufFree(buffer);
 
-                            // Copy remainder of the file
-                            ioCopyP(readIo, storageWriteIo(write));
-                        }
+                            // Copy remainder of the file if not eof
+                            if (!readEof)
+                            {
+                                ioCopyP(readIo, storageWriteIo(write));
 
-                        // Close the source
-                        ioReadClose(readIo);
+                                // Close the source
+                                ioReadClose(readIo);
+                            }
+                        }
 
                         MEM_CONTEXT_BEGIN(lstMemContext(result))
                         {
@@ -342,7 +358,7 @@ backupFile(
                                 ioFilterGroupResultP(ioReadFilterGroup(readIo), CRYPTO_HASH_FILTER_TYPE, .idx = 0));
 
                             // If the file is not bundled or not zero-length then it was copied
-                            if (bundleId == 0 || fileResult->copySize != 0)
+                            if (fileResult->backupCopyResult != backupCopyResultTruncate)
                             {
                                 // Get bundle offset
                                 fileResult->bundleOffset = bundleOffset;
@@ -372,9 +388,6 @@ backupFile(
                                         ioFilterGroupResultP(ioReadFilterGroup(readIo), CRYPTO_HASH_FILTER_TYPE, .idx = 1));
                                 }
                             }
-                            // Else the file was truncated during the backup
-                            else
-                                fileResult->backupCopyResult = backupCopyResultTruncate;
                         }
                         MEM_CONTEXT_END();
 

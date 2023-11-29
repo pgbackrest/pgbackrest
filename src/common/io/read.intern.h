@@ -41,7 +41,6 @@ typedef struct IoReadPub
     IoReadInterface interface;                                      // Driver interface
     IoFilterGroup *filterGroup;                                     // IO filters
     bool eofAll;                                                    // Is the read done (read and filters complete)?
-    uint64_t total;                                                 // Total bytes read before applying filters
 
 #ifdef DEBUG
     bool opened;                                                    // Has the io been opened?

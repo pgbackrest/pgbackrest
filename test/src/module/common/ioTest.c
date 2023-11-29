@@ -279,7 +279,6 @@ testRun(void)
         TEST_RESULT_BOOL(ioReadOpen(read), true, "    open io object");
         TEST_RESULT_BOOL(ioReadReadyP(read), true, "read defaults to ready");
         TEST_RESULT_UINT(ioRead(read, buffer), 2, "    read 2 bytes");
-        TEST_RESULT_UINT(ioReadTotal(read), 2, "    total 2 bytes");
         TEST_RESULT_BOOL(ioReadEof(read), false, "    no eof");
         TEST_RESULT_VOID(ioReadClose(read), "    close io object");
         TEST_RESULT_BOOL(testIoReadCloseCalled, true, "    check io object closed");
@@ -453,7 +452,6 @@ testRun(void)
         // Nothing left to read
         TEST_ERROR(ioReadLine(read), FileReadError, "unexpected eof while reading line");
         TEST_RESULT_UINT(ioRead(read, buffer), 0, "read buffer");
-        TEST_RESULT_UINT(ioReadTotal(read), 26, "read total");
         TEST_RESULT_UINT(ioReadSmall(read, bufNew(55)), 0, "read buffer");
 
         // Error if buffer is full and there is no linefeed

@@ -47,13 +47,6 @@ ioReadFilterGroup(IoRead *const this)
 // File descriptor for the read object. Not all read objects have a file descriptor and -1 will be returned in that case.
 FN_EXTERN int ioReadFd(const IoRead *this);
 
-// Total bytes read before applying filters
-FN_INLINE_ALWAYS uint64_t
-ioReadTotal(const IoRead *const this)
-{
-    return THIS_PUB(IoRead)->total;
-}
-
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
