@@ -155,15 +155,17 @@ testRun(void)
     if (testBegin("AddressInfo"))
     {
 #ifdef TEST_CONTAINER_REQUIRED
-        HRN_SYSTEM("echo \"127.0.0.1 test-addr-loop.pgbackrest.org\" | sudo tee -a /etc/hosts > /dev/null");
-        HRN_SYSTEM("echo \"::1 test-addr-loop.pgbackrest.org\" | sudo tee -a /etc/hosts > /dev/null");
+        #define TEST_ADDR_LOOP_HOST                                 "test-addr-loop.pgbackrest.org"
+
+        HRN_SYSTEM("echo \"127.0.0.1 " TEST_ADDR_LOOP_HOST "\" | sudo tee -a /etc/hosts > /dev/null");
+        HRN_SYSTEM("echo \"::1 " TEST_ADDR_LOOP_HOST "\" | sudo tee -a /etc/hosts > /dev/null");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("lookup address info");
 
         AddressInfo *addrInfo = NULL;
-        TEST_ASSIGN(addrInfo, addrInfoNew(STRDEF("test-addr-loop.pgbackrest.org"), 443), "addr list");
-        TEST_RESULT_STR_Z(addrInfoHost(addrInfo), "test-addr-loop.pgbackrest.org", "check host");
+        TEST_ASSIGN(addrInfo, addrInfoNew(STRDEF(TEST_ADDR_LOOP_HOST, 443), "addr list");
+        TEST_RESULT_STR_Z(addrInfoHost(addrInfo), TEST_ADDR_LOOP_HOST, "check host");
         TEST_RESULT_UINT(addrInfoPort(addrInfo), 443, "check port");
         TEST_RESULT_UINT(addrInfoSize(addrInfo), 2, "check size");
 
@@ -176,14 +178,14 @@ testRun(void)
         TEST_RESULT_Z(
             logBuf,
             zNewFmt(
-                "{host: {\"test-addr-loop.pgbackrest.org\"}, port: 443, list: [%s, %s]}",
+                "{host: {\"" TEST_ADDR_LOOP_HOST "\"}, port: 443, list: [%s, %s]}",
                 strZ(addrInfoGet(addrInfo, 0)->name), strZ(addrInfoGet(addrInfo, 1)->name)),
             "check log");
 
         addrInfoSort(addrInfo);
 
         TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(addrInfo, addrInfoToLog, logBuf, sizeof(logBuf)), "addrInfoToLog");
-        TEST_RESULT_Z(logBuf, "{host: {\"test-addr-loop.pgbackrest.org\"}, port: 443, list: [::1, 127.0.0.1]}", "check log");
+        TEST_RESULT_Z(logBuf, "{host: {\"" TEST_ADDR_LOOP_HOST "\"}, port: 443, list: [::1, 127.0.0.1]}", "check log");
 
         // Munge address so it is invalid
         ((AddressInfoItem *)lstGet(addrInfo->pub.list, 0))->info->ai_addr = NULL;
@@ -452,9 +454,23 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
 #ifdef TEST_CONTAINER_REQUIRED
-        HRN_SYSTEM("echo \"127.0.0.1 test-addr-conn.pgbackrest.org\" | sudo tee -a /etc/hosts > /dev/null");
-        HRN_SYSTEM("echo \"::1 test-addr-conn.pgbackrest.org\" | sudo tee -a /etc/hosts > /dev/null");
-        HRN_SYSTEM("echo \"172.31.255.255 test-addr-conn.pgbackrest.org\" | sudo tee -a /etc/hosts > /dev/null");
+        #define TEST_ADDR_CONN_HOST                                 "test-addr-conn.pgbackrest.org"
+
+        HRN_SYSTEM("echo \"127.0.0.1 " TEST_ADDR_CONN_HOST "\" | sudo tee -a /etc/hosts > /dev/null");
+        HRN_SYSTEM("echo \"::1 " TEST_ADDR_CONN_HOST "\" | sudo tee -a /etc/hosts > /dev/null");
+        HRN_SYSTEM("echo \"172.31.255.255 " TEST_ADDR_CONN_HOST "\" | sudo tee -a /etc/hosts > /dev/null");
+
+        // Explicitly set the order of the address list for the test below. The first IP must not respond, the second must error,
+        // and only the last will succeed.
+        const String *ipPrefer = STRDEF("172.31.255.255");
+        TEST_ASSIGN(addrInfo, addrInfoNew(STRDEF(TEST_ADDR_CONN_HOST), 443), "localhost addr list");
+        TEST_RESULT_VOID(addrInfoPrefer(addrInfo, lstFindIdx(addrInfo->pub.list, &ipPrefer)), "prefer 172.31.255.255");
+
+        TEST_ASSIGN(addrInfo, addrInfoNew(STRDEF(TEST_ADDR_CONN_HOST), 443), "localhost addr list");
+        TEST_RESULT_VOID(addrInfoSort(addrInfo), "sort addresses");
+        TEST_RESULT_STR(addrInfoToStr(addrInfoGet(addrInfo, 0)->info), ipPrefer, "first 172.31.255.255");
+        TEST_RESULT_STR_Z(addrInfoToStr(addrInfoGet(addrInfo, 1)->info), "::1", "second ::1");
+        TEST_RESULT_STR_Z(addrInfoToStr(addrInfoGet(addrInfo, 2)->info), "127.0.0.1", "third 127.0.0.1");
 
         HRN_FORK_BEGIN()
         {
@@ -474,7 +490,7 @@ testRun(void)
                 TEST_TITLE("connect to 127.0.0.1 when ::1 errors and 172.31.255.255 never responds");
 
                 TEST_ASSIGN(
-                    client, sckClientNew(STRDEF("test-addr-conn.pgbackrest.org"), hrnServerPort(0), 1000, 1000), "new client");
+                    client, sckClientNew(STRDEF(TEST_ADDR_CONN_HOST), hrnServerPort(0), 1000, 1000), "new client");
 
                 hrnServerScriptAccept(server);
                 hrnServerScriptClose(server);
