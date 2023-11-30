@@ -90,6 +90,11 @@ WAL segment size is supported for versions below 11.
 #define PG_WAL_SEGMENT_SIZE_DEFAULT                                 ((unsigned int)(16 * 1024 * 1024))
 
 /***********************************************************************************************************************************
+Checkpoint written into pg_control on restore. This will prevent PostgreSQL from starting if backup_label is not present.
+***********************************************************************************************************************************/
+#define PG_CONTROL_CHECKPOINT_INVALID                               0xDEAD
+
+/***********************************************************************************************************************************
 PostgreSQL Control File Info
 ***********************************************************************************************************************************/
 typedef struct PgControl

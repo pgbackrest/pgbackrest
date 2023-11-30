@@ -384,6 +384,7 @@ sub clusterStart
     # Set defaults
     my $bHotStandby = defined($$hParam{bHotStandby}) ? $$hParam{bHotStandby} : false;
     my $bArchive = defined($$hParam{bArchive}) ? $$hParam{bArchive} : true;
+    my $iExpectedExitStatus = defined($$hParam{iExpectedExitStatus}) ? $$hParam{iExpectedExitStatus} : undef;
     my $bArchiveAlways = defined($$hParam{bArchiveAlways}) ? $$hParam{bArchiveAlways} : false;
     my $bArchiveInvalid = defined($$hParam{bArchiveInvalid}) ? $$hParam{bArchiveInvalid} : false;
     my $bArchiveEnabled = defined($$hParam{bArchiveEnabled}) ? $$hParam{bArchiveEnabled} : true;
@@ -458,10 +459,13 @@ sub clusterStart
         ' -c unix_socket_directories=\'' . $self->dbPath() . '\'"' .
         ' -D ' . $self->dbBasePath() . ' -l ' . $self->pgLogFile() . ' -s';
 
-    $self->executeSimple($strCommand);
+    $self->executeSimple($strCommand, {iExpectedExitStatus => $iExpectedExitStatus});
 
     # Connect user session
-    $self->sqlConnect();
+    if (!defined($iExpectedExitStatus) || $iExpectedExitStatus == 0)
+    {
+        $self->sqlConnect();
+    }
 }
 
 ####################################################################################################################################

@@ -136,9 +136,27 @@ testRun(void)
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("pg_control from backup is not valid without backup_label");
+
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_10, .checkpoint = PG_CONTROL_CHECKPOINT_INVALID);
+
+        strLstAddZ(argList, "000000010000000100000001");
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleAsync);
+
+        TEST_ERROR(
+            cmdArchiveGetAsync(), FormatError,
+            "pg_control from backup is not valid without backup_label\n"
+            "HINT: was the backup_label file removed?");
+
+        TEST_RESULT_LOG(
+            "P00   INFO: get 1 WAL file(s) from archive: 000000010000000100000001");
+        TEST_STORAGE_LIST(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "global.error\n", .remove = true);
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("no segments to find");
 
-        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_10);
+        // Success not that backup_label exists
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_BACKUPLABEL);
 
         HRN_INFO_PUT(
             storageRepoWrite(), INFO_ARCHIVE_PATH_FILE,
@@ -148,7 +166,6 @@ testRun(void)
             "[db:history]\n"
             "1={\"db-id\":" HRN_PG_SYSTEMID_10_Z ",\"db-version\":\"10\"}\n");
 
-        strLstAddZ(argList, "000000010000000100000001");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleAsync);
 
         TEST_RESULT_VOID(cmdArchiveGetAsync(), "get async");

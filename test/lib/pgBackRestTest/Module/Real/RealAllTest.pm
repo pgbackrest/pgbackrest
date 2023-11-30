@@ -604,13 +604,35 @@ sub run
             $oHostDbPrimary->sqlSelectOneTest('select message from test', ($strStandbyMessage));
         }
 
+        # Fail restore when backup label is missing
+        #---------------------------------------------------------------------------------------------------------------------------
+        &log(INFO, '    fail restore when backup label is missing');
+
+        $oHostDbPrimary->clusterStop();
+
+        $oHostDbPrimary->restore(
+            undef, 'latest',
+            {bDelta => true, strType => CFGOPTVAL_RESTORE_TYPE_TIME, strTarget => $strTimeTarget, strTargetAction => 'promote',
+                strTargetTimeline => 'latest', strBackupExpected => $strFullBackup});
+
+        # Remove backup_label
+        storageTest()->remove($oHostDbPrimary->dbBasePath() . "/backup_label", {bIgnoreMissing => false});
+
+        # Expect an error from startup
+        $oHostDbPrimary->clusterStart({iExpectedExitStatus => 1});
+
+        # Expect to see an error in the log
+        $oHostDbPrimary->executeSimple(
+            'grep "pg_control from backup is not valid without backup_label" ' . $oHostDbPrimary->pgLogFile());
+
+        # Remove log file with error
+        storageTest()->remove($oHostDbPrimary->pgLogFile(), {bIgnoreMissing => true});
+
         # Restore (restore type = xid, inclusive)
         #---------------------------------------------------------------------------------------------------------------------------
         my $strRecoveryFile = undef;
 
         &log(INFO, '    testing recovery type = ' . CFGOPTVAL_RESTORE_TYPE_XID);
-
-        $oHostDbPrimary->clusterStop();
 
         executeTest('rm -rf ' . $oHostDbPrimary->dbBasePath() . "/*");
         executeTest('rm -rf ' . $oHostDbPrimary->dbPath() . qw{/} . $oManifest->walPath() . '/*');
