@@ -448,8 +448,8 @@ testRun(void)
             "[RETRY DETAIL OMITTED]");
 
         // This address should not be in use in a test environment -- if it is the test will fail
-        TEST_ASSIGN(client, sckClientNew(STRDEF("172.31.255.255"), hrnServerPort(0), 100, 100), "new client");
-        TEST_ERROR_FMT(ioClientOpen(client), HostConnectError, "timeout connecting to '172.31.255.255:%u'", hrnServerPort(0));
+        TEST_ASSIGN(client, sckClientNew(STRDEF("172.31.255.255"), HRN_SERVER_PORT_BOGUS, 100, 100), "new client");
+        TEST_ERROR(ioClientOpen(client), HostConnectError, "timeout connecting to '172.31.255.255:34342'");
 
         // -------------------------------------------------------------------------------------------------------------------------
 #ifdef TEST_CONTAINER_REQUIRED
