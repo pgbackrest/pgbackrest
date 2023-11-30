@@ -116,7 +116,7 @@ sckClientOpen(THIS_VOID)
                 close(fd);
 
                 // Add the error retry info
-                errRetryAdd(errRetry);
+                errRetryAddP(errRetry);
 
                 // Increment address info index and reset if the end has been reached. When the end has been reached sleep for a bit
                 // to hopefully have better chance at succeeding, otherwise continue right to the next address.

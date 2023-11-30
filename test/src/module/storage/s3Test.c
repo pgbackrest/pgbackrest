@@ -250,8 +250,6 @@ testRun(void)
     const String *region = STRDEF("us-east-1");
     const String *endPoint = STRDEF("s3.amazonaws.com");
     const String *host = hrnServerHost();
-    const unsigned int port = hrnServerPort(0);
-    const unsigned int authPort = hrnServerPort(1);
     const String *accessKey = STRDEF("AKIAIOSFODNN7EXAMPLE");
     const String *secretAccessKey = STRDEF("wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY");
     const String *securityToken = STRDEF(
@@ -404,16 +402,18 @@ testRun(void)
     {
         HRN_FORK_BEGIN()
         {
+            const unsigned int testPort = hrnServerPortNext();
+            const unsigned int testPortAuth = hrnServerPortNext();
+
             HRN_FORK_CHILD_BEGIN(.prefix = "s3 server", .timeout = 5000)
             {
-                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls, .port = port), "s3 server run");
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls, testPort), "s3 server");
             }
             HRN_FORK_CHILD_END();
 
             HRN_FORK_CHILD_BEGIN(.prefix = "auth server", .timeout = 10000)
             {
-                TEST_RESULT_VOID(
-                    hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolSocket, .port = authPort), "auth server run");
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolSocket, testPortAuth), "auth server");
             }
             HRN_FORK_CHILD_END();
 
@@ -429,7 +429,7 @@ testRun(void)
                 TEST_TITLE("config with keys, token, and host with custom port");
 
                 StringList *argList = strLstDup(commonArgList);
-                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), port);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), testPort);
                 hrnCfgEnvRaw(cfgOptRepoS3Token, securityToken);
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
@@ -488,7 +488,7 @@ testRun(void)
                 hrnServerScriptClose(service);
 
                 argList = strLstDup(commonArgList);
-                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), port);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), testPort);
                 hrnCfgArgRaw(argList, cfgOptRepoS3Role, credRole);
                 hrnCfgArgRawStrId(argList, cfgOptRepoS3KeyType, storageS3KeyTypeAuto);
                 hrnCfgArgRawZ(argList, cfgOptRepoS3KmsKeyId, "kmskey1");
@@ -508,7 +508,7 @@ testRun(void)
 
                 // Testing requires the auth http client to be redirected
                 driver->credHost = hrnServerHost();
-                driver->credHttpClient = httpClientNew(sckClientNew(host, authPort, 5000, 5000), 5000);
+                driver->credHttpClient = httpClientNew(sckClientNew(host, testPortAuth, 5000, 5000), 5000);
 
                 // Now that we have checked the role when set explicitly, null it out to make sure it is retrieved automatically
                 driver->credRole = NULL;
@@ -926,7 +926,7 @@ testRun(void)
                 HRN_STORAGE_PUT_Z(storagePosixNewP(TEST_PATH_STR, .write = true), "web-id-token", TEST_SERVICE_TOKEN);
 
                 argList = strLstDup(commonArgList);
-                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), port);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), testPort);
                 hrnCfgArgRawStrId(argList, cfgOptRepoS3KeyType, storageS3KeyTypeWebId);
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
@@ -953,7 +953,7 @@ testRun(void)
 
                 // Testing requires the auth http client to be redirected
                 driver->credHost = hrnServerHost();
-                driver->credHttpClient = httpClientNew(sckClientNew(host, authPort, 5000, 5000), 5000);
+                driver->credHttpClient = httpClientNew(sckClientNew(host, testPortAuth, 5000, 5000), 5000);
 
                 hrnServerScriptAccept(service);
 
@@ -1243,7 +1243,7 @@ testRun(void)
                 argList = strLstDup(commonArgList);
                 hrnCfgArgRawStrId(argList, cfgOptRepoS3UriStyle, storageS3UriStylePath);
                 hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "https://%s", strZ(host));
-                hrnCfgArgRawFmt(argList, cfgOptRepoStoragePort, "%u", port);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStoragePort, "%u", testPort);
                 hrnCfgEnvRemoveRaw(cfgOptRepoS3Token);
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 

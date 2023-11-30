@@ -1,5 +1,178 @@
 [
     {
+        "commit": "3cb891e3ca49ed1166fb0b513b126412448f5b09",
+        "date": "2023-11-27 08:55:56 -0300",
+        "subject": "v2.49: Remove PostgreSQL 9.3 Support"
+    },
+    {
+        "commit": "7d51228bf5227494bf50327488032221bd3d30fa",
+        "date": "2023-11-24 17:07:49 -0300",
+        "subject": "Migrate backupFile() tests in command/backup module.",
+        "body": "The backupFile() tests were written before the bulk of the backup command had been migrated to C. Some of them have been migrated to the complete backup tests, but others were left because there was no way to make changes to files during a backup.\n\nNow that we have the backup script harness introduced in 337da35a it is now possible to migrate all the tests. The new tests are better because they not only test backupFile() but all the functions upstream and downstream of it."
+    },
+    {
+        "commit": "337da35ab278e058ec4cdffeb4319f1a1e2cb0df",
+        "date": "2023-11-24 12:25:40 -0300",
+        "subject": "Add test to show behavior of bundled files truncated during backup.",
+        "body": "This behavior violates an assertion but is completely possible with the current implementation. This behavior will be fixed in a future commit, but for now at least test how it works correctly and remove the assertion so the test runs without error.\n\nAlso add a new harness that allows changes during the backup to be scripted."
+    },
+    {
+        "commit": "ac78b965837440ee34f7b5bf0a039c6e9d78eeec",
+        "date": "2023-11-18 11:12:41 -0300",
+        "subject": "Remove unused fields from backupJobResult() test in command/backup unit.",
+        "body": "These fields were not used because of the noop so it was hard to keep them up to date. Rather than attempt to do so, just remove them and add a comment to explain why they are missing."
+    },
+    {
+        "commit": "c4dc4665f88e9d67a3b66f44cd59d6dd4bb5107f",
+        "date": "2023-11-18 10:47:58 -0300",
+        "subject": "Fix recursive path remove in SFTP storage driver.",
+        "body": "storageSftpPathRemove() used LIBSSH2_FX_FAILURE to determine when it was attempting to unlink a directory, but it appears that LIBSSH2_FX_PERMISSION_DENIED is also valid for this case.\r\n\r\nUpdate storageSftpPathRemove() to accept either error and adjust tests."
+    },
+    {
+        "commit": "e2b734eff97e3fac32895b799cc32126013aae27",
+        "date": "2023-11-16 12:50:09 -0300",
+        "subject": "Allow config/load unit test to run without libssh2 installed.",
+        "body": "Add additional #ifdef HAVE_LIBSSH2 wrapping around tests requiring libssh2 in loadTest.c."
+    },
+    {
+        "commit": "05207bb8e4f462cd2fd5c685d43ad8911b219077",
+        "date": "2023-11-15 09:41:40 -0300",
+        "subject": "Fix storageReadRemote() to return actual read bytes.",
+        "body": "All storage interface read methods should return actual read bytes. This patch refactors storageReadRemote() to eliminate duplicated code and return actual read bytes. The return value is calculated as the number of bytes written to the passed buffer.\r\n\r\nThis is technically a bug but does not express as an issue currently because this return value is not being used. It will be used in the future, though, so it needs to be fixed."
+    },
+    {
+        "commit": "ea317df5d9af66935175f7ec87845f30be4f5d36",
+        "date": "2023-11-11 10:33:09 -0300",
+        "subject": "Remove old version conditionals from user guide.",
+        "body": "The user guide does not need to build for EOL versions of PostgreSQL, so remove some conditionals used to support versions older than 12."
+    },
+    {
+        "commit": "eb69e2ee6339047f0145b751437ac2bec82bb5ab",
+        "date": "2023-11-10 17:00:57 -0300",
+        "subject": "Update point-in-time recovery documentation for PostgreSQL >= 13.",
+        "body": "PITR changed in PostgreSQL 13 to error when the recovery target is not reached. Update the documentation to work with PostgreSQL >= 13 as well as < 13.\n\nAlso update the versions built for RHEL and Debian since PostgreSQL 11 is now EOL."
+    },
+    {
+        "commit": "dcf078198761a2cfe9be6b4c7f4b4fb07ef53cbf",
+        "date": "2023-11-09 12:59:12 -0300",
+        "subject": "Remove support for PostgreSQL 9.3.",
+        "body": "Per our policy to support five EOL versions of PostgreSQL, 9.3 is no longer supported by pgBackRest.\r\n\r\nRemove all logic associated with 9.3 and update the tests."
+    },
+    {
+        "commit": "fa5b2d44ad9f7591517eecaaaaeb07e9500dd51c",
+        "date": "2023-11-09 12:04:25 -0300",
+        "subject": "Fix regression in retries.",
+        "body": "5314dbf aimed to make nested Wait objects more accurate with regard to wait time but it also got rid of the \"bonus\" retry that was implicit in the prior implementation. This meant that if an operation used up the entire allotted timeout, it would not be retried. Object stores especially are noisy places and some amount of retry should always be attempted. So even though removing the \"bonus\" retry was intended, it turned out not to be a good idea.\r\n\r\nInstead of an implicit retry, formalize two retries in the Wait object even if the wait time has expired. Any number of retries are allowed during the wait period. Also remove waitRemaining() since it is no longer needed.\r\n\r\nAdjust tests as needed to account for the extra timeouts.\r\n\r\nNote that there may still be an underlying issue here that is simply being masked by retries. That is, the issue expressing was that waiting for a socket to be writable was timing out and without a retry that caused a hard error. This patch does nothing to address the source of the write timeout and perhaps there is nothing we can do about it. It does seem similar to the write issue we had with our blocking TLS implementation, but it was never clear if that was a problem with TLS, the kernel, or a bug in pgBackRest itself. It cropped up after a kernel update and we switched to non-blocking TLS to address the issue (c88684e)."
+    },
+    {
+        "commit": "3c116e1829a0df62aaf50ce241c63d829eb438e0",
+        "date": "2023-11-04 14:43:11 -0300",
+        "subject": "Remove unused header."
+    },
+    {
+        "commit": "e0f5880b09624db2c9274a8a615a5309a0bddab1",
+        "date": "2023-10-22 13:55:56 -0400",
+        "subject": "Refactor of pq shim to allow more flexible scripting.",
+        "body": "The pq scripts were pretty static which had already led to a lot of code duplication in the backup test harness.\n\nInstead allow the scripts to be built dynamically, which allows for much more flexibility and reduces duplication. For now just make these changes in the backup harness, but they may be useful elsewhere.\n\nWhile we are making big changes, also update the macro/function names to hew closer to our current harness naming conventions."
+    },
+    {
+        "commit": "306fdff93a072c72d6a40aab728ceeb44cc7b23f",
+        "date": "2023-10-19 10:11:27 -0400",
+        "subject": "Remove unused parameter in backupProcess().",
+        "body": "Also fix a comment in the same function."
+    },
+    {
+        "commit": "04d92cca7eb42e0037e65701109da284b214c84f",
+        "date": "2023-10-19 09:54:34 -0400",
+        "subject": "Tidy and align site introduction and description.",
+        "body": "Make the description more concise and use it for both the site description and introduction."
+    },
+    {
+        "commit": "459d59615a18c147140b1ae94a804be66541c0ab",
+        "date": "2023-10-18 18:14:32 -0400",
+        "subject": "More efficient/compact calculations for encoded sizes.",
+        "body": "encodeToStrSizeBase64() is definitely more efficient (pulled from the PostgreSQL implementation).\n\nencodeToStrSizeBase64Url() is probably about as efficient as the prior implementation but is certainly more compact.\n\nAlso add tests for zero byte encoding sizes."
+    },
+    {
+        "commit": "21c8c8a66cb06eba714bfa41bed7239af3d14f08",
+        "date": "2023-10-14 16:22:09 -0400",
+        "subject": "Document maintainer options.",
+        "body": "Document maintainer options in a separate section with appropriate explanation and caveats.\r\n\r\nAlso make the pg-version-force option user visible now that maintainer caveats have been documented."
+    },
+    {
+        "commit": "81536cd486d716ebd10eb0637ef6b1b9a61d9dd0",
+        "date": "2023-10-10 16:49:05 -0400",
+        "subject": "Simplify description rendering in command and configuration reference.",
+        "body": "The reference documentation was still using a very old version of rendering from before the user guide was introduced. This was preserved in the initial C migration to reduce the diff between Perl and C for testing purposes. The old version used hard linefeeds to simulate paragraphs and reduce the amount of markup that needed to be used. In retrospect this was not a great idea.\n\nInstead use more natural rendering that does not depend on using hard linefeeds between paragraphs."
+    },
+    {
+        "commit": "45abea471ecec10a351bfd9e5fbed8737c32da42",
+        "date": "2023-10-10 13:02:50 -0400",
+        "subject": "Simplify section titles in configuration reference.",
+        "body": "For some reason the internal section id was included in the title. This was probably copied from another section title where it made more sense, e.g. including the option name after the title.\n\nAlso add release note missed in 1eb01622."
+    },
+    {
+        "commit": "1eb0162208b37f577d35ba775f007202b285900a",
+        "date": "2023-10-09 14:03:43 -0400",
+        "subject": "Build command and configuration reference in C.",
+        "body": "Migrate generation of these files from help.xml to the intermediate documentation format. This allows us to share a lot of code that is already in C and remove duplicated code in Perl. More duplicate code can be removed in Perl once man generation is migrated.\n\nAlso update the unit test harness to allow testing of modules in the doc directory."
+    },
+    {
+        "commit": "983cc1a9e3f2865bf5128b5065722fd995382ba1",
+        "date": "2023-10-01 16:32:27 -0400",
+        "subject": "Adjust timeouts in the common/io/tls test to fix flapping coverage.",
+        "body": "This test was failing coverage pretty regularly because the retry in tlsClientOpen() was not always being reached. Make the TLS timeouts longer to ensure reliable coverage."
+    },
+    {
+        "commit": "af4621894a20ca0333726d459e2e6409bd4ee1e0",
+        "date": "2023-09-30 12:47:15 -0400",
+        "subject": "Fix common/lock test failing with -Werror=unused-result.",
+        "body": "Wrap ftruncate() in TEST_RESULT_INT() to prevent this error."
+    },
+    {
+        "commit": "eccd9eed196ff9adc074061f26fec523eae2ba00",
+        "date": "2023-09-30 12:45:24 -0400",
+        "subject": "Update Minio test/documentation container version."
+    },
+    {
+        "commit": "33ba4db9cbd334c9a10f15880e13e3fb589c3b10",
+        "date": "2023-09-30 09:40:44 -0400",
+        "subject": "Use CSS to number sections in documentation.",
+        "body": "This reduces churn in the HTML when sections are added or removed from the documentation."
+    },
+    {
+        "commit": "1d5563288cf1839acb237a188b865ecb01fe97da",
+        "date": "2023-09-29 17:28:00 -0400",
+        "subject": "Parse defaults and text sections in help.xml.",
+        "body": "These will be required to build documentation in C."
+    },
+    {
+        "commit": "088026e6ffcd1b084099e11f8461fdd3895b2507",
+        "date": "2023-09-29 17:06:37 -0400",
+        "subject": "Allow documentation source file to be specified in manifest.",
+        "body": "The help source file had previously been hardcoded and now that is no longer needed.\n\nA future commit will introduce more sources outside of the xml path."
+    },
+    {
+        "commit": "55fda01733f2a7e71ee175345e26344a99989927",
+        "date": "2023-09-29 16:57:01 -0400",
+        "subject": "Remove unused references to DocConfig and DocConfigData Perl modules."
+    },
+    {
+        "commit": "217584a2c4134667e82b2de8032b5334214e08f1",
+        "date": "2023-09-29 16:52:08 -0400",
+        "subject": "Add new XML functions required for building documentation."
+    },
+    {
+        "commit": "8f319b6fd34f3430b5b527825bd502113f8a957d",
+        "date": "2023-09-25 09:43:30 -0400",
+        "subject": "Update config.guess and config.sub to latest versions."
+    },
+    {
+        "commit": "084c8e1691f59aa412b859f9004e188383826c58",
+        "date": "2023-09-25 09:40:45 -0400",
+        "subject": "Begin v2.49 development."
+    },
+    {
         "commit": "a7ab686d0e3d48b3200986d91ea3489488800382",
         "date": "2023-09-25 09:32:15 -0400",
         "subject": "v2.48: Repository Storage Tags"

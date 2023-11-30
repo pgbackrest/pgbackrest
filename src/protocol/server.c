@@ -203,7 +203,7 @@ protocolServerProcess(
                             CATCH_ANY()
                             {
                                 // Add the error retry info
-                                errRetryAdd(errRetry);
+                                errRetryAddP(errRetry);
 
                                 // On first error record the stack trace. Only the first error will contain a stack trace since
                                 // the first error is most likely to contain valuable information.
