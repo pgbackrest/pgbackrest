@@ -64,55 +64,6 @@ prior address has already had a reasonable time to connect. This prevents waitin
 all the addresses at once. Prior connections that are still waiting are rechecked periodically if no subsequent connection is
 successful.
 ***********************************************************************************************************************************/
-static bool
-sckConnectInProgress(int errNo)
-{
-    return errNo == EINPROGRESS || errNo == EINTR;
-}
-
-static bool
-sckClientOpenWait(const int fd, int errNo, const TimeMSec timeout, const char *const name)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(INT, fd);
-        FUNCTION_LOG_PARAM(INT, errNo);
-        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
-        FUNCTION_LOG_PARAM(STRINGZ, name);
-    FUNCTION_LOG_END();
-
-    bool result = false;
-
-    // The connection has started but since we are in non-blocking mode it has not completed yet
-    if (sckConnectInProgress(errNo))
-    {
-        // Wait for write-ready
-        if (fdReadyWrite(fd, timeout))
-        {
-            // Check for success or error. If the connection was successful this will set errNo to 0.
-            socklen_t errNoLen = sizeof(errNo);
-
-            THROW_ON_SYS_ERROR_FMT(
-                getsockopt(fd, SOL_SOCKET, SO_ERROR, &errNo, &errNoLen) == -1, HostConnectError,
-                "unable to get socket error for '%s'", name);
-
-            // Connect success
-            result = true;
-        }
-        // Clear error locally so we do not error below
-        else
-            errNo = 0;
-    }
-
-    // Throw error if it is still set
-    if (errNo != 0)
-    {
-        THROW_SYS_ERROR_CODE_FMT(
-            errNo, HostConnectError, "unable to connect to '%s'", name);
-    }
-
-    FUNCTION_LOG_RETURN(BOOL, result);
-}
-
 typedef struct SckClientOpenData
 {
     const struct addrinfo *const address;                           // IP address
@@ -120,6 +71,50 @@ typedef struct SckClientOpenData
     int fd;                                                         // File descriptor for socket
     int errNo;                                                      // Current error (may just indicate to keep waiting)
 } SckClientOpenData;
+
+// Helper to determine if non-blocking connection has been established
+static bool
+sckClientOpenWait(SckClientOpenData *const openData, const TimeMSec timeout)
+{
+    ASSERT(openData != NULL);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRINGZ, openData->name);
+        FUNCTION_LOG_PARAM(INT, openData->fd);
+        FUNCTION_LOG_PARAM(INT, openData->errNo);
+        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
+    FUNCTION_LOG_END();
+
+    ASSERT(openData->name != NULL);
+    ASSERT(openData->fd > 0);
+    ASSERT(openData->errNo != 0);
+
+    bool result = true;
+
+    // The connection has started but since we are in non-blocking mode it has not completed yet
+    if (openData->errNo == EINPROGRESS || openData->errNo == EINTR)
+    {
+        // Wait for write-ready
+        if (fdReadyWrite(openData->fd, timeout))
+        {
+            // Check for success or error. If the connection was successful this will set errNo to 0.
+            socklen_t errNoLen = sizeof(openData->errNo);
+
+            THROW_ON_SYS_ERROR_FMT(
+                getsockopt(openData->fd, SOL_SOCKET, SO_ERROR, &openData->errNo, &errNoLen) == -1, HostConnectError,
+                "unable to get socket error for '%s'", openData->name);
+        }
+        // Else still waiting on connection
+        else
+            result = false;
+    }
+
+    // Throw error if it is still set
+    if (result && openData->errNo != 0)
+        THROW_SYS_ERROR_CODE_FMT(openData->errNo, HostConnectError, "unable to connect to '%s'", openData->name);
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
 
 static IoSession *
 sckClientOpen(THIS_VOID)
@@ -164,11 +159,10 @@ sckClientOpen(THIS_VOID)
                 {
                     SckClientOpenData *const openDataWait = lstGet(openDataList, openDataIdx);
 
-                    if (openDataWait->fd != 0 &&
-                        sckClientOpenWait(openDataWait->fd, openDataWait->errNo, 0, openDataWait->name))
+                    if (openDataWait->fd != 0 && sckClientOpenWait(openDataWait, 0))
                     {
                         openData = openDataWait;
-                        openData->errNo = 0;
+                        break;
                     }
                 }
 
@@ -211,8 +205,7 @@ sckClientOpen(THIS_VOID)
                             // value recommended by RFC 8305.
                             openData->errNo = errno;
 
-                            if (sckClientOpenWait(openData->fd, openData->errNo, 250, openData->name))
-                                openData->errNo = 0;
+                            sckClientOpenWait(openData, 250);
                         }
                     }
                 }
@@ -246,6 +239,7 @@ sckClientOpen(THIS_VOID)
 
                 // Clear socket so the connection can be retried
                 openData->fd = 0;
+                openData->errNo = 0;
 
                 // Add the error retry info
                 errRetryAddP(errRetry);

@@ -11,8 +11,8 @@ Constants
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Install shim for sckClientOpenWait() to return false for a name one time
-void hrnSckClientOpenWaitShimInstall(const char *name);
+// Install shim for sckClientOpenWait() to return false for an address one time
+void hrnSckClientOpenWaitShimInstall(const char *address);
 
 // Install/uninstall shim for clientOpen() to use a fake file descriptor
 void hrnSckClientOpenShimInstall(void);

@@ -416,11 +416,6 @@ testRun(void)
             TEST_ERROR(
                 ioClientOpen(socketClient), HostConnectError, "unable to connect to '127.0.0.1:7777': [111] Connection refused");
             socketLocal.block = false;
-
-            // ---------------------------------------------------------------------------------------------------------------------
-            TEST_TITLE("uncovered conditions for sckConnect()");
-
-            TEST_RESULT_BOOL(sckConnectInProgress(EINTR), true, "connection in progress (EINTR)");
         }
         FINALLY()
         {
@@ -465,15 +460,15 @@ testRun(void)
         {
             HRN_FORK_CHILD_BEGIN(.prefix = "test server", .timeout = 5000)
             {
-                // Start HTTP test server
                 TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolSocket), "socket server run");
             }
             HRN_FORK_CHILD_END();
 
             HRN_FORK_PARENT_BEGIN()
             {
-                IoWrite *http = hrnServerScriptBegin(HRN_FORK_PARENT_WRITE(0));
+                IoWrite *server = hrnServerScriptBegin(HRN_FORK_PARENT_WRITE(0));
                 IoClient *client;
+                IoSession *session;
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("connect to 127.0.0.1 when ::1 errors and 172.31.255.255 never responds");
@@ -481,20 +476,23 @@ testRun(void)
                 TEST_ASSIGN(
                     client, sckClientNew(STRDEF("test-addr-conn.pgbackrest.org"), hrnServerPort(0), 1000, 1000), "new client");
 
-                hrnServerScriptAccept(http);
+                hrnServerScriptAccept(server);
+                hrnServerScriptClose(server);
 
                 // Shim the server address to return false one time for write ready. This tests connections that take longer.
-                hrnSckClientOpenWaitShimInstall("test-addr-conn.pgbackrest.org:44443 (127.0.0.1)");
+                hrnSckClientOpenWaitShimInstall("127.0.0.1");
 
-                TEST_RESULT_VOID(ioClientOpen(client), "connection established");
-                TEST_RESULT_VOID(ioClientFree(client), "connection closed");
-
-                hrnServerScriptClose(http);
+                TEST_ASSIGN(session, ioClientOpen(client), "connection established");
+                TEST_RESULT_VOID(
+                    sckClientOpenWait(
+                        &(SckClientOpenData){.name = "test", .fd = ((SocketSession *)session->pub.driver)->fd, .errNo = EINTR}, 99),
+                    "check EINTR wait condition");
+                TEST_RESULT_VOID(ioSessionFree(session), "connection closed");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("end server process");
 
-                hrnServerScriptEnd(http);
+                hrnServerScriptEnd(server);
             }
             HRN_FORK_PARENT_END();
         }

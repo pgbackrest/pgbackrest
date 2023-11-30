@@ -3,7 +3,6 @@ Harness for Io Testing
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include "common/harnessConfig.h"
 #include "common/harnessDebug.h"
 #include "common/harnessSocket.h"
 
@@ -20,19 +19,19 @@ static struct
     // Shim clientOpen() to use a fake file descriptor
     bool localShimSckClientOpen;
 
-    // Shim sckClientOpenWait() to return false for a name one time
-    const char *clientOpenWaitName;
+    // Shim sckClientOpenWait() to return false for an address one time
+    const char *clientOpenWaitAddress;
 } hrnIoStatic;
 
 /**********************************************************************************************************************************/
 void
-hrnSckClientOpenWaitShimInstall(const char *const name)
+hrnSckClientOpenWaitShimInstall(const char *const address)
 {
     FUNCTION_HARNESS_BEGIN();
-        FUNCTION_HARNESS_PARAM(STRINGZ, name);
+        FUNCTION_HARNESS_PARAM(STRINGZ, address);
     FUNCTION_HARNESS_END();
 
-    hrnIoStatic.clientOpenWaitName = name;
+    hrnIoStatic.clientOpenWaitAddress = address;
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
@@ -41,24 +40,35 @@ hrnSckClientOpenWaitShimInstall(const char *const name)
 Shim sckClientOpen()
 ***********************************************************************************************************************************/
 static bool
-sckClientOpenWait(const int fd, int errNo, const TimeMSec timeout, const char *const name)
+sckClientOpenWait(SckClientOpenData *const openData, const TimeMSec timeout)
 {
+    ASSERT(openData != NULL);
+
     FUNCTION_HARNESS_BEGIN();
-        FUNCTION_HARNESS_PARAM(INT, fd);
-        FUNCTION_HARNESS_PARAM(INT, errNo);
+        FUNCTION_HARNESS_PARAM(STRINGZ, openData->name);
+        FUNCTION_HARNESS_PARAM(INT, openData->fd);
+        FUNCTION_HARNESS_PARAM(INT, openData->errNo);
         FUNCTION_HARNESS_PARAM(TIME_MSEC, timeout);
-        FUNCTION_HARNESS_PARAM(STRINGZ, name);
     FUNCTION_HARNESS_END();
 
-    bool result = false;
+    bool result = sckClientOpenWait_SHIMMED(openData, timeout);
 
-    if (hrnIoStatic.clientOpenWaitName != NULL && strcmp(hrnIoStatic.clientOpenWaitName, name) == 0)
+    // If this is the shimmed address then return false and update error code
+    if (hrnIoStatic.clientOpenWaitAddress != NULL)
     {
-        sleepMSec(timeout);
-        hrnIoStatic.clientOpenWaitName = NULL;
+        String *const address = addrInfoToStr(openData->address);
+
+        if (strcmp(hrnIoStatic.clientOpenWaitAddress, strZ(address)) == 0)
+        {
+            result = false;
+            openData->errNo = EINPROGRESS;
+
+            // Reset the shim
+            hrnIoStatic.clientOpenWaitAddress = NULL;
+        }
+
+        strFree(address);
     }
-    else
-        result = sckClientOpenWait_SHIMMED(fd, errNo, timeout, name);
 
     FUNCTION_HARNESS_RETURN(BOOL, result);
 }
