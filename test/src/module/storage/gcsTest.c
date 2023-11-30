@@ -204,12 +204,6 @@ testRun(void)
 
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
-    // Get test host and ports
-    const String *const testHost = hrnServerHost();
-    const unsigned int testPort = hrnServerPort(0);
-    const unsigned int testPortAuth = hrnServerPort(1);
-    const unsigned int testPortMeta = hrnServerPort(2);
-
     // *****************************************************************************************************************************
     if (testBegin("storageRepoGet()"))
     {
@@ -292,27 +286,30 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("StorageGcs, StorageReadGcs, and StorageWriteGcs"))
     {
-        HRN_STORAGE_PUT(storageTest, TEST_KEY_FILE, BUFSTR(strNewFmt(TEST_KEY, strZ(testHost), testPortAuth)));
-
         HRN_FORK_BEGIN()
         {
+            const String *const testHost = hrnServerHost();
+            const unsigned int testPort = hrnServerPortNext();
+            const unsigned int testPortAuth = hrnServerPortNext();
+            const unsigned int testPortMeta = hrnServerPortNext();
+
+            HRN_STORAGE_PUT(storageTest, TEST_KEY_FILE, BUFSTR(strNewFmt(TEST_KEY, strZ(testHost), testPortAuth)));
+
             HRN_FORK_CHILD_BEGIN(.prefix = "gcs server", .timeout = 10000)
             {
-                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls, .port = testPort), "gcs server run");
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls, testPort), "gcs server");
             }
             HRN_FORK_CHILD_END();
 
             HRN_FORK_CHILD_BEGIN(.prefix = "auth server", .timeout = 10000)
             {
-                TEST_RESULT_VOID(
-                    hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls, .port = testPortAuth), "auth server run");
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls, testPortAuth), "auth server");
             }
             HRN_FORK_CHILD_END();
 
             HRN_FORK_CHILD_BEGIN(.prefix = "meta server", .timeout = 30000)
             {
-                TEST_RESULT_VOID(
-                    hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolSocket, .port = testPortMeta), "meta server run");
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolSocket, testPortMeta), "meta server");
             }
             HRN_FORK_CHILD_END();
 

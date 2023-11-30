@@ -23,9 +23,16 @@ typedef enum
 } HrnServerProtocol;
 
 /***********************************************************************************************************************************
-Maximum number of ports allowed for each test
+Port constants
 ***********************************************************************************************************************************/
-#define HRN_SERVER_PORT_MAX                                         4
+// Maximum number of ports allowed for each test
+#define HRN_SERVER_PORT_MAX                                         768
+
+// Bogus port to be used where the port does not matter or must fail
+#define HRN_SERVER_PORT_BOGUS                                       34342
+
+// Minimum port to be assigned to a test
+#define HRN_SERVER_PORT_MIN                                         (HRN_SERVER_PORT_BOGUS + 1)
 
 /***********************************************************************************************************************************
 Path and prefix for test certificates
@@ -47,16 +54,15 @@ void hrnServerInit(void);
 typedef struct HrnServerRunParam
 {
     VAR_PARAM_HEADER;
-    unsigned int port;                                              // Server port, defaults to hrnServerPort(0)
     const String *ca;                                               // TLS CA store when protocol = hrnServerProtocolTls
     const String *certificate;                                      // TLS certificate when protocol = hrnServerProtocolTls
     const String *key;                                              // TLS key when protocol = hrnServerProtocolTls
 } HrnServerRunParam;
 
-#define hrnServerRunP(read, protocol, ...)                                                                                         \
-    hrnServerRun(read, protocol, (HrnServerRunParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define hrnServerRunP(read, protocol, port, ...)                                                                                         \
+    hrnServerRun(read, protocol, port, (HrnServerRunParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam param);
+void hrnServerRun(IoRead *read, HrnServerProtocol protocol, unsigned int port, HrnServerRunParam param);
 
 // Begin/end server script
 IoWrite *hrnServerScriptBegin(IoWrite *write);
@@ -89,7 +95,7 @@ Getters/Setters
 const String *hrnServerHost(void);
 
 // Port to use for testing. This will be unique for each test running in parallel to avoid conflicts. A range is allocated to each
-// test so multiple ports can be requested.
-unsigned int hrnServerPort(unsigned int portIdx);
+// test so multiple ports can be requested and no port is ever reused to eliminate rebinding issues.
+unsigned int hrnServerPortNext(void);
 
 #endif
