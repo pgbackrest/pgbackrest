@@ -164,7 +164,7 @@ testRun(void)
         TEST_TITLE("lookup address info");
 
         AddressInfo *addrInfo = NULL;
-        TEST_ASSIGN(addrInfo, addrInfoNew(STRDEF(TEST_ADDR_LOOP_HOST, 443), "addr list");
+        TEST_ASSIGN(addrInfo, addrInfoNew(STRDEF(TEST_ADDR_LOOP_HOST), 443), "addr list");
         TEST_RESULT_STR_Z(addrInfoHost(addrInfo), TEST_ADDR_LOOP_HOST, "check host");
         TEST_RESULT_UINT(addrInfoPort(addrInfo), 443, "check port");
         TEST_RESULT_UINT(addrInfoSize(addrInfo), 2, "check size");
