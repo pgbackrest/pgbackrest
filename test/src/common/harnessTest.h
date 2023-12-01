@@ -323,6 +323,20 @@ Test log result
         TRY_END();                                                                                                                 \
     } while (0)
 
+#define TEST_RESULT_LOG_EMPTY_OR_CONTAINS(expected)                                                                                \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        TRY_BEGIN()                                                                                                                \
+        {                                                                                                                          \
+            harnessLogResultEmptyOrContains(expected);                                                                             \
+        }                                                                                                                          \
+        CATCH_ANY()                                                                                                                \
+        {                                                                                                                          \
+            THROW_FMT(AssertError, "LOG RESULT CONTAINS FAILED WITH:\n%s", errorMessage());                                        \
+        }                                                                                                                          \
+        TRY_END();                                                                                                                 \
+    } while (0)
+
 #define TEST_RESULT_LOG_FMT(...)                                                                                                   \
     do                                                                                                                             \
     {                                                                                                                              \
