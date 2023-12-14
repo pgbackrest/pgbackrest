@@ -84,28 +84,34 @@ errRetryMessage(const ErrorRetry *const this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-errRetryAdd(ErrorRetry *const this)
+errRetryAdd(ErrorRetry *const this, const ErrRetryAddParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ERROR_RETRY, this);
+        FUNCTION_TEST_PARAM(ERROR_TYPE, param.type);
+        FUNCTION_TEST_PARAM(STRING, param.message);
     FUNCTION_TEST_END();
+
+    // Set defaults
+    const ErrorType *const type = param.type == NULL ? errorType() : param.type;
+    const char *const message = param.message == NULL ? errorMessage() : strZ(param.message);
 
     // Set type on first error
     if (this->pub.type == NULL)
     {
         MEM_CONTEXT_OBJ_BEGIN(this)
         {
-            this->pub.type = errorType();
-            this->message = strNewZ(errorMessage());
+            this->pub.type = type;
+            this->message = strNewZ(message);
         }
         MEM_CONTEXT_OBJ_END();
     }
     else
     {
         // If error is not found then add it
-        const String *const message = STR(errorMessage());
+        const String *const messageFind = STR(message);
         const TimeMSec retryTime = timeMSec() - this->timeBegin;
-        ErrorRetryItem *const error = lstFind(this->list, &message);
+        ErrorRetryItem *const error = lstFind(this->list, &messageFind);
 
         if (error == NULL)
         {
@@ -113,9 +119,9 @@ errRetryAdd(ErrorRetry *const this)
             {
                 const ErrorRetryItem errorNew =
                 {
-                    .type = errorType(),
+                    .type = type,
                     .total = 1,
-                    .message = strDup(message),
+                    .message = strDup(messageFind),
                     .retryFirst = retryTime,
                     .retryLast = retryTime,
                 };
