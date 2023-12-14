@@ -65,10 +65,10 @@ Define allowed page sizes
 ***********************************************************************************************************************************/
 typedef enum
 {
-    pgPageSize1 =  1 * 1024,
-    pgPageSize2 =  2 * 1024,
-    pgPageSize4 =  4 * 1024,
-    pgPageSize8 =  8 * 1024,
+    pgPageSize1 = 1 * 1024,
+    pgPageSize2 = 2 * 1024,
+    pgPageSize4 = 4 * 1024,
+    pgPageSize8 = 8 * 1024,
     pgPageSize16 = 16 * 1024,
     pgPageSize32 = 32 * 1024,
 } PgPageSize;

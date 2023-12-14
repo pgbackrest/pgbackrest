@@ -220,7 +220,7 @@ backupFile(
                         ioFilterGroupAdd(
                             ioReadFilterGroup(readIo),
                             pageChecksumNew(
-                                segmentNumber(file->pgFile), PG_SEGMENT_SIZE_DEFAULT/pageSize, pageSize,
+                                segmentNumber(file->pgFile), PG_SEGMENT_SIZE_DEFAULT / pageSize, pageSize,
                                 file->pgFilePageHeaderCheck, storagePathP(storagePg(), file->pgFile)));
                     }
 
