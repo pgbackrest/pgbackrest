@@ -1439,7 +1439,7 @@ backupJobResult(
                 // Format log progress
                 String *const logProgress = strNew();
 
-                if (bundleId != 0 && copyResult != backupCopyResultNoOp)
+                if (bundleId != 0 && copyResult != backupCopyResultNoOp && copyResult != backupCopyResultTruncate)
                     strCatFmt(logProgress, "bundle %" PRIu64 "/%" PRIu64 ", ", bundleId, bundleOffset);
 
                 // Log original manifest size if copy size differs
@@ -1492,7 +1492,9 @@ backupJobResult(
                             strZ(file.name), strZ(strNewEncode(encodingHex, BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE))));
                     }
 
-                    LOG_DETAIL_PID_FMT(processId, "backup file %s (%s)%s", strZ(fileLog), strZ(logProgress), strZ(logChecksum));
+                    LOG_DETAIL_PID_FMT(
+                        processId, "%s file %s (%s)%s", copyResult != backupCopyResultTruncate ? "backup" : "store truncated",
+                        strZ(fileLog), strZ(logProgress), strZ(logChecksum));
 
                     // If the file had page checksums calculated during the copy
                     ASSERT((!file.checksumPage && checksumPageResult == NULL) || (file.checksumPage && checksumPageResult != NULL));
@@ -1576,7 +1578,8 @@ backupJobResult(
                     file.checksumPageError = checksumPageError;
                     file.checksumPageErrorList =
                         checksumPageErrorList != NULL ? jsonFromVar(varNewVarLst(checksumPageErrorList)) : NULL;
-                    file.bundleId = bundleId;
+                    // Truncated file is not put in bundle
+                    file.bundleId = copyResult != backupCopyResultTruncate ? bundleId : 0;
                     file.bundleOffset = bundleOffset;
                     file.blockIncrMapSize = blockIncrMapSize;
 

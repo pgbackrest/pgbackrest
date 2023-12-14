@@ -19,6 +19,7 @@ typedef enum
     backupCopyResultReCopy,
     backupCopyResultSkip,
     backupCopyResultNoOp,
+    backupCopyResultTruncate,
 } BackupCopyResult;
 
 /***********************************************************************************************************************************
