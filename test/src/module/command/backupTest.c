@@ -3910,7 +3910,8 @@ testRun(void)
             HRN_STORAGE_PATH_REMOVE(storageTest, "pg1", .recurse = true);
 
             // Update pg_control
-            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_11, .pageChecksum = true, .walSegmentSize = 2 * 1024 * 1024);
+            HRN_PG_CONTROL_PUT(
+                storagePgWrite(), PG_VERSION_11, .pageChecksum = true, .walSegmentSize = 2 * 1024 * 1024, .pageSize = pgPageSize4);
 
             // Update version
             HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_11_Z, .timeModified = backupTimeStart);
@@ -3930,13 +3931,13 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // File that will grow during the backup
-            Buffer *const fileGrow = bufNew(pgPageSize8 * 4);
-            memset(bufPtr(fileGrow), 0, pgPageSize8 * 3);
-            bufUsedSet(fileGrow, pgPageSize8 * 3);
+            Buffer *const fileGrow = bufNew(pgPageSize4 * 4);
+            memset(bufPtr(fileGrow), 0, pgPageSize4 * 3);
+            bufUsedSet(fileGrow, pgPageSize4 * 3);
 
             HRN_STORAGE_PUT(storagePgWrite(), "global/1", fileGrow, .timeModified = backupTimeStart);
 
-            memset(bufPtr(fileGrow) + pgPageSize8 * 3, 0xFF, pgPageSize8);
+            memset(bufPtr(fileGrow) + pgPageSize4 * 3, 0xFF, pgPageSize4);
             bufUsedSet(fileGrow, bufSize(fileGrow));
 
             // Also write a copy of it that will get a checksum error, just to be sure the read limit on global/1 is working
@@ -3952,15 +3953,15 @@ testRun(void)
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             // Make sure that global/1 grew as expected but the extra bytes were not copied
-            TEST_RESULT_UINT(storageInfoP(storagePgWrite(), STRDEF("global/1")).size, 32768, "check global/1 grew");
+            TEST_RESULT_UINT(storageInfoP(storagePgWrite(), STRDEF("global/1")).size, 16384, "check global/1 grew");
 
             TEST_RESULT_LOG(
                 "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DC9B4000000000, lsn = 5dc9b40/0\n"
                 "P00   INFO: check archive for segment 0000000105DC9B4000000000\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/2 (32KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/2 (16KB, [PCT]) checksum [SHA1]\n"
                 "P00   WARN: invalid page checksum found in file " TEST_PATH "/pg1/global/2 at page 3\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/1 (24KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/1 (12KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/0, 8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/8224, 2B, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
@@ -3982,8 +3983,8 @@ testRun(void)
                 "pg_data {path}\n"
                 "pg_data/backup_label {file, s=17}\n"
                 "pg_data/global {path}\n"
-                "pg_data/global/1 {file, s=24576}\n"
-                "pg_data/global/2 {file, s=32768}\n"
+                "pg_data/global/1 {file, s=12288}\n"
+                "pg_data/global/2 {file, s=16384}\n"
                 "pg_data/tablespace_map {file, s=19}\n"
                 "--------\n"
                 "[backup:target]\n"
@@ -3994,10 +3995,10 @@ testRun(void)
                 ",\"timestamp\":1573500000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"repo-size\":48,\"size\":17"
                 ",\"timestamp\":1573500002}\n"
-                "pg_data/global/1={\"checksum\":\"ebdd38b69cd5b9f2d00d273c981e16960fbbb4f7\",\"checksum-page\":true"
-                ",\"repo-size\":24608,\"size\":24576,\"timestamp\":1573500000}\n"
-                "pg_data/global/2={\"checksum\":\"bc807e211d8fe3b5c2f20a88d2a96257bc10ac44\",\"checksum-page\":false"
-                ",\"checksum-page-error\":[3],\"repo-size\":32800,\"size\":32768,\"timestamp\":1573500000}\n"
+                "pg_data/global/1={\"checksum\":\"7cb41fea50720b48be0c145e1473982b23e9ab77\",\"checksum-page\":true"
+                ",\"repo-size\":12320,\"size\":12288,\"timestamp\":1573500000}\n"
+                "pg_data/global/2={\"checksum\":\"02af87d042262a0313120317db0c285b3210209f\",\"checksum-page\":false"
+                ",\"checksum-page-error\":[3],\"repo-size\":16416,\"size\":16384,\"timestamp\":1573500000}\n"
                 "pg_data/global/pg_control={\"repo-size\":8224,\"size\":8192,\"timestamp\":1573500000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"repo-size\":48"
                 ",\"size\":19,\"timestamp\":1573500002}\n"
