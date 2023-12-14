@@ -11,6 +11,17 @@
 
                 <p>Add support for alternate compile-time page sizes.</p>
             </release-item>
+
+            <release-item>
+                <github-pull-request id="2227"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="georgy.shelkovy"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Skip files truncated during backup when bundling.</p>
+            </release-item>
         </release-improvement-list>
     </release-core-list>
 </release>
