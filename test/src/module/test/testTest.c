@@ -267,6 +267,9 @@ testRun(void)
                 STRDEF("common/stack-trace"), 0, 1, logLevelDebug, true, NULL, false, false, false, true),
             "new build");
 
+        // Older versions of ninja may error on a rebuild so a retry may occur
+        TEST_RESULT_LOG_EMPTY_OR_CONTAINS("WARN: build failed for unit");
+
         const Storage *storageUnit = storagePosixNewP(STRDEF(TEST_PATH "/test/unit-3/none"));
         StringList *fileList = testStorageList(storageUnit);
 
@@ -387,6 +390,9 @@ testRun(void)
                 STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("none"), 3,
                 STRDEF("common/error"), 5, 1, logLevelDebug, true, NULL, false, false, false, true),
             "new build");
+
+        // Older versions of ninja may error on a rebuild so a retry may occur
+        TEST_RESULT_LOG_EMPTY_OR_CONTAINS("WARN: build failed for unit");
 
         fileList = testStorageList(storageUnit);
 
@@ -578,6 +584,9 @@ testRun(void)
                 STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("uXX"), 3,
                 STRDEF("test/shim"), 0, 1, logLevelDebug, true, NULL, true, true, true, true),
             "new build");
+
+        // Older versions of ninja may error on a rebuild so a retry may occur
+        TEST_RESULT_LOG_EMPTY_OR_CONTAINS("WARN: build failed for unit");
 
         storageUnit = storagePosixNewP(STRDEF(TEST_PATH "/test/unit-3/uXX"));
         fileList = testStorageList(storageUnit);
@@ -884,6 +893,9 @@ testRun(void)
                 STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("uXX"), 3,
                 STRDEF("performance/type"), 0, 1, logLevelDebug, true, STRDEF("America/New_York"), false, false, false, false),
             "new build");
+
+        // Older versions of ninja may error on a rebuild so a retry may occur
+        TEST_RESULT_LOG_EMPTY_OR_CONTAINS("WARN: build failed for unit");
 
         storageUnit = storagePosixNewP(STRDEF(TEST_PATH "/test/unit-3/uXX"));
 
