@@ -342,7 +342,8 @@ storageSftpEvalLibSsh2Error(
     ASSERT(errorType != NULL);
 
     THROWP_FMT(
-        errorType, "%slibssh2 error [%d]%s%s", message != NULL ? zNewFmt("%s: ", strZ(message)) : "", ssh2Errno,
+        errorType, "%s%s%s%s", message != NULL ? zNewFmt("%s%s", strZ(message), ssh2Errno == 0 ? "" : ": ") : "",
+        ssh2Errno == 0 ? "" : zNewFmt("libssh2 error [%d]", ssh2Errno),
         ssh2Errno == LIBSSH2_ERROR_SFTP_PROTOCOL ? zNewFmt(": sftp error [%" PRIu64 "]", sftpErrno) : "",
         hint != NULL ? zNewFmt("\n%s", strZ(hint)) : "");
 
@@ -433,7 +434,10 @@ storageSftpInfo(THIS_VOID, const String *const file, const StorageInfoLevel leve
 
         // Throw libssh2 on errors other than no such file
         if (!storageSftpLibSsh2FxNoSuchFile(this, rc))
-            THROW_FMT(FileOpenError, STORAGE_ERROR_INFO, strZ(file));
+        {
+            storageSftpEvalLibSsh2Error(
+                rc, libssh2_sftp_last_error(this->sftpSession), &FileOpenError, strNewFmt(STORAGE_ERROR_INFO, strZ(file)), NULL);
+        }
     }
     // Else the file exists
     else
@@ -491,7 +495,11 @@ storageSftpInfo(THIS_VOID, const String *const file, const StorageInfoLevel leve
                     THROW_FMT(FileReadError, "timeout getting destination for link '%s'", strZ(file));
 
                 if (linkDestinationSize < 0)
-                    THROW_FMT(FileReadError, "unable to get destination for link '%s'", strZ(file));
+                {
+                    storageSftpEvalLibSsh2Error(
+                        (int)linkDestinationSize, libssh2_sftp_last_error(this->sftpSession), &FileReadError,
+                        strNewFmt("unable to get destination for link '%s'", strZ(file)), NULL);
+                }
 
                 result.linkDestination = strNewZN(linkDestination, (size_t)linkDestinationSize);
             }
@@ -706,7 +714,11 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
             if (rc != 0)
             {
                 if (rc != LIBSSH2_ERROR_EAGAIN)
-                    THROW_FMT(PathCloseError, "unable to close path '%s' after listing", strZ(path));
+                {
+                    storageSftpEvalLibSsh2Error(
+                        rc, libssh2_sftp_last_error(this->sftpSession), &PathCloseError,
+                        strNewFmt("unable to close path '%s' after listing", strZ(path)), NULL);
+                }
                 else
                     THROW_FMT(PathCloseError, "timeout closing path '%s' after listing", strZ(path));
             }
@@ -760,7 +772,11 @@ storageSftpRemove(THIS_VOID, const String *const file, const StorageInterfaceRem
         else
         {
             if (param.errorOnMissing)
-                THROW_FMT(FileRemoveError, "unable to remove '%s'", strZ(file));
+            {
+                storageSftpEvalLibSsh2Error(
+                    rc, libssh2_sftp_last_error(this->sftpSession), &FileRemoveError,
+                    strNewFmt("unable to remove '%s'", strZ(file)), NULL);
+            }
         }
     }
 
@@ -879,11 +895,15 @@ storageSftpPathCreate(
                 while (storageSftpWaitFd(this, rc));
 
                 if (rc == LIBSSH2_ERROR_EAGAIN)
-                    THROW_FMT(PathCreateError, "timeout stating path '%s'", strZ(path));
+                    THROW_FMT(PathCreateError, "timeout stat'ing path '%s'", strZ(path));
 
                 // If rc = 0 then already exists
                 if (rc == 0 && errorOnExists)
-                    THROW_FMT(PathCreateError, "unable to create path '%s': path already exists", strZ(path));
+                {
+                    storageSftpEvalLibSsh2Error(
+                        rc, libssh2_sftp_last_error(this->sftpSession), &PathCreateError,
+                        strNewFmt("unable to create path '%s': path already exists", strZ(path)), NULL);
+                }
             }
             // If the parent path does not exist then create it if allowed
             else if (sftpErrno == LIBSSH2_FX_NO_SUCH_FILE && !noParentCreate)
@@ -896,10 +916,17 @@ storageSftpPathCreate(
                 strFree(pathParent);
             }
             else if (sftpErrno != LIBSSH2_FX_FILE_ALREADY_EXISTS || errorOnExists)
-                THROW_FMT(PathCreateError, "sftp error unable to create path '%s'", strZ(path));
+            {
+                storageSftpEvalLibSsh2Error(
+                    rc, sftpErrno, &PathCreateError, strNewFmt("sftp error unable to create path '%s'", strZ(path)), NULL);
+            }
         }
         else
-            THROW_FMT(PathCreateError, "ssh2 error [%d] unable to create path '%s'", rc, strZ(path));
+        {
+            storageSftpEvalLibSsh2Error(
+                rc, libssh2_sftp_last_error(this->sftpSession), &PathCreateError,
+                strNewFmt("ssh2 error [%d] unable to create path '%s'", rc, strZ(path)), NULL);
+        }
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -1007,7 +1034,9 @@ storageSftpPathRemove(THIS_VOID, const String *const path, const bool recurse, c
                 // Path does not exist
                 result = false;
 
-                THROW_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE, strZ(path));
+                storageSftpEvalLibSsh2Error(
+                    rc, libssh2_sftp_last_error(this->sftpSession), &PathRemoveError,
+                    strNewFmt(STORAGE_ERROR_PATH_REMOVE, strZ(path)), NULL);
             }
         }
     }
@@ -1098,7 +1127,7 @@ storageSftpNew(
             THROW_FMT(ServiceError, "timeout during libssh2 handshake [%d]", rc);
 
         if (rc != 0)
-            THROW_FMT(ServiceError, "libssh2 handshake failed [%d]", rc);
+            THROW_FMT(ServiceError, "libssh2 handshake failed [%d]; man libssh2_session_handshake to map error", rc);
 
         int hashType = LIBSSH2_HOSTKEY_HASH_SHA1;
         size_t hashSize = 0;
@@ -1158,7 +1187,11 @@ storageSftpNew(
             LIBSSH2_KNOWNHOSTS *const knownHostsList = libssh2_knownhost_init(this->session);
 
             if (knownHostsList == NULL)
-                THROW_FMT(ServiceError, "failure during libssh2_knownhost_init");
+            {
+                THROW_FMT(
+                    ServiceError,
+                    "failure during libssh2_knownhost_init: libssh2 errno [%d]", libssh2_session_last_errno(this->session));
+            }
 
             // Get the list of known host files to search
             const StringList *const knownHostsPathList = storageSftpKnownHostsFilesList(param.knownHosts);
@@ -1305,7 +1338,11 @@ storageSftpNew(
             if (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_EAGAIN)
                 THROW_FMT(ServiceError, "timeout during init of libssh2_sftp session");
             else
-                THROW_FMT(ServiceError, "unable to init libssh2_sftp session");
+            {
+                storageSftpEvalLibSsh2Error(
+                    rc, libssh2_sftp_last_error(this->sftpSession), &ServiceError,
+                    strNewFmt("unable to init libssh2_sftp session"), NULL);
+            }
         }
 
         // Ensure libssh2/libssh2_sftp resources freed
