@@ -232,7 +232,7 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
             this->blockMapWrite = true;
         }
 
-        // Write the block map if done processing and at least one block was written
+        // Write the block map if done processing and there are new/changed blocks
         if (this->done && this->blockOutOffset == 0 && this->blockMapWrite)
         {
             MEM_CONTEXT_TEMP_BEGIN()
