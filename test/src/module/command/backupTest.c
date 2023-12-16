@@ -1246,6 +1246,27 @@ testRun(void)
             "check delta");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("diff/incr backup with identical data");
+
+        ioBufferSizeSet(3);
+
+        source = BUFSTRZ("ACCXYZ123@");
+        destination = bufNew(256);
+        write = ioBufferWriteNew(destination);
+
+        TEST_RESULT_VOID(
+            ioFilterGroupAdd(
+                ioWriteFilterGroup(write), blockIncrNewPack(ioFilterParamList(blockIncrNew(3, 3, 8, 3, 0, 0, map, NULL, NULL)))),
+            "block incr");
+        TEST_RESULT_VOID(ioWriteOpen(write), "open");
+        TEST_RESULT_VOID(ioWrite(write, source), "write");
+        TEST_RESULT_VOID(ioWriteClose(write), "close");
+
+        TEST_ASSIGN(mapSize, pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE)), "map size");
+        TEST_RESULT_UINT(mapSize, 0, "map size is zero");
+        TEST_RESULT_UINT(bufUsed(destination), 0, "repo size is zero");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("full backup with larger super block");
 
         ioBufferSizeSet(2);
@@ -3626,8 +3647,9 @@ testRun(void)
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-to-block-incr (bundle 1/0, 16KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/16411, 8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/24603, 16.0KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-same (bundle 1/40986, 16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/block-incr-same (16KB, [PCT]) checksum [SHA1]\n"
                 "P00 DETAIL: reference pg_data/PG_VERSION to 20191103-165320F\n"
+                "P00 DETAIL: reference pg_data/block-incr-same to 20191103-165320F\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DC213000000001, lsn = 5dc2130/300000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
@@ -3640,7 +3662,6 @@ testRun(void)
                 testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ". {link, d=20191103-165320F_20191106-002640D}\n"
                 "bundle {path}\n"
-                "bundle/1/pg_data/block-incr-same {file, m=0:{0,1}, s=16384}\n"
                 "bundle/1/pg_data/block-incr-shrink {file, s=16383}\n"
                 "bundle/1/pg_data/global/pg_control {file, s=8192}\n"
                 "bundle/1/pg_data/grow-to-block-incr {file, m=1:{0,1,2}, s=16385}\n"
@@ -3650,6 +3671,7 @@ testRun(void)
                 "pg_data/block-incr-larger.pgbi {file, m=1:{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15},1:{0,1,2,3,4,5,6}, s=1507328}\n"
                 "pg_data/tablespace_map {file, s=19}\n"
                 "20191103-165320F/bundle/1/pg_data/PG_VERSION {file, s=2}\n"
+                "20191103-165320F/bundle/1/pg_data/block-incr-same {file, m=0:{0,1}, s=16384}\n"
                 "--------\n"
                 "[backup:target]\n"
                 "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n"
@@ -3664,7 +3686,7 @@ testRun(void)
                 "pg_data/block-incr-larger={\"bi\":8,\"bic\":7,\"bim\":173"
                 ",\"checksum\":\"eec53a6da79c00b3c658a7e09f44b3e9efefd960\",\"size\":1507328,\"timestamp\":1573000000}\n"
                 "pg_data/block-incr-same={\"bi\":1,\"bim\":22,\"checksum\":\"5d389611c12c8b8d2c28d4e590799c016b9375be\""
-                ",\"size\":16384,\"timestamp\":1573000000}\n"
+                ",\"reference\":\"20191103-165320F\",\"size\":16384,\"timestamp\":1573000000}\n"
                 "pg_data/block-incr-shrink={\"checksum\":\"1c6a17f67562d8b3f64f1b5f2ee592a4c2809b3b\",\"size\":16383"
                 ",\"timestamp\":1573000000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1573000000}\n"

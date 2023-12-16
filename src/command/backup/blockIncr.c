@@ -229,7 +229,7 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
         }
 
         // Write the block map if done processing and at least one block was written
-        if (this->done && this->blockOutOffset == 0 && this->blockNo > 0)
+        if (this->done && this->blockOutOffset == 0 && this->blockOutList != NULL)
         {
             MEM_CONTEXT_TEMP_BEGIN()
             {

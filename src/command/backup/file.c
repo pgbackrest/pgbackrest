@@ -380,6 +380,14 @@ backupFile(
                                 {
                                     fileResult->blockIncrMapSize = pckReadU64P(
                                         ioFilterGroupResultP(ioReadFilterGroup(readIo), BLOCK_INCR_FILTER_TYPE));
+                                    ASSERT(fileResult->blockIncrMapSize > 0 || fileResult->repoSize == 0);
+
+                                    // If no map was written then the file did not change
+                                    if (fileResult->blockIncrMapSize == 0)
+                                    {
+                                        ASSERT(file->blockIncrMapPriorFile != NULL);
+                                        fileResult->backupCopyResult = backupCopyResultNoOp;
+                                    }
                                 }
 
                                 // Get repo checksum
