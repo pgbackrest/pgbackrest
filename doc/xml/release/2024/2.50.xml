@@ -22,6 +22,20 @@
 
                 <p>Skip files truncated during backup when bundling.</p>
             </release-item>
+
+            <release-item>
+                <commit subject="Add block incremental test where timestamp changes but file is the same."/>
+                <commit subject="Do not store block map when timestamp is updated but file is unchanged.">
+                    <github-pull-request id="2246"/>
+                </commit>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Do not store block map when timestamp is updated but file is unchanged.</p>
+            </release-item>
         </release-improvement-list>
     </release-core-list>
 </release>
