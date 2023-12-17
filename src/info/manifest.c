@@ -1663,21 +1663,20 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
             }
         }
 
-        // Find files to reference in the prior manifest:
-        // 1) that don't need to be copied because delta is disabled and the size and timestamp match or size matches and is zero
-        // 2) where delta is enabled and size matches so checksum will be verified during backup and the file copied on mismatch
+        // Find files to (possibly) reference in the prior manifest
         bool delta = varBool(this->pub.data.backupOptionDelta);
 
         for (unsigned int fileIdx = 0; fileIdx < lstSize(this->pub.fileList); fileIdx++)
         {
             ManifestFile file = manifestFile(this, fileIdx);
 
-            // Check if prior file can be used
+            // Check if a prior file exists
             if (manifestFileExists(manifestPrior, file.name))
             {
                 const ManifestFile filePrior = manifestFileFind(manifestPrior, file.name);
 
-                // If the file will be copied then copy values from the prior file when needed
+                // If the file will be copied then copy values from the prior file when needed. Some files may have been designated
+                // not to be copied at manifest build time, e.g. zero-length files when bundling.
                 if (file.copy)
                 {
                     // Perform delta if enabled and file size is equal to prior but not zero. Files of unequal length are always
@@ -1700,26 +1699,32 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                     // Copy values from prior file
                     ASSERT(file.copy || !file.delta);
 
-                    if (// Used unaltered since the file is not copied
+                    if (// Used unaltered since the file is preserved
                         !file.copy ||
                         // Used if file is unchanged when checked during the backup
                         file.delta ||
                         // Used for for block incremental
                         filePrior.blockIncrMapSize > 0)
                     {
+                        // Required when the file is preserved or may be preserved if it is found to be unchanged
+                        if (!file.copy || file.delta)
+                        {
+                            file.checksumSha1 = filePrior.checksumSha1;
+                            file.checksumPage = filePrior.checksumPage;
+                            file.checksumPageError = filePrior.checksumPageError;
+                            file.checksumPageErrorList = filePrior.checksumPageErrorList;
+                        }
+
+                        // Required if the file is preserved or block incremental is performed
                         file.sizeRepo = filePrior.sizeRepo;
-                        file.checksumSha1 = filePrior.checksumSha1;
                         file.reference = filePrior.reference != NULL ? filePrior.reference : manifestPrior->pub.data.backupLabel;
-                        file.checksumPage = filePrior.checksumPage;
-                        file.checksumPageError = filePrior.checksumPageError;
-                        file.checksumPageErrorList = filePrior.checksumPageErrorList;
                         file.bundleId = filePrior.bundleId;
                         file.bundleOffset = filePrior.bundleOffset;
 
                         // If a file was stored with block incremental in a prior backup then continue to use block incremental with
-                        // the same values. If the file has dropped below the size threshold then it might make sense to stop block
-                        // incremental but if it has gotten too old then it is better to keep block incremental. Rather than worry
-                        // about why this file did not get block incremental in the new manifest, it is simpler just to preserve it.
+                        // the same values. There is one case where this is not perfectly optimal, e.g. a file has been truncated
+                        // down to a single block which has been modified, but the cost of a single block map is very low, and the
+                        // case very unlikely overall. This seems a fair trade for keeping this logic simple.
                         if (filePrior.blockIncrMapSize > 0)
                         {
                             file.blockIncrSize = filePrior.blockIncrSize;
