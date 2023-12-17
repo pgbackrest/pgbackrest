@@ -1173,7 +1173,7 @@ testRun(void)
         lstClear(manifest->pub.fileList);
 
         HRN_MANIFEST_FILE_ADD(
-            manifest, .name = MANIFEST_TARGET_PGDATA "/FILE1", .copy = true, .size = 4, .sizeRepo = 4, .timestamp = 1482182859,
+            manifest, .name = MANIFEST_TARGET_PGDATA "/FILE1", .copy = true, .size = 0, .sizeRepo = 4, .timestamp = 1482182859,
             .group = "test", .user = "test");
 
         // Clear prior manifest and add a single file with later timestamp and checksum error
@@ -1209,8 +1209,8 @@ testRun(void)
                     "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
                     "\n"
                     "[target:file]\n"
-                    "pg_data/FILE1={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\",\"checksum-page\":false"
-                    ",\"checksum-page-error\":[77],\"reference\":\"20190101-010101F_20190202-010101D\",\"size\":4"
+                    "pg_data/FILE1={\"checksum-page\":false"
+                    ",\"checksum-page-error\":[77],\"reference\":\"20190101-010101F_20190202-010101D\",\"repo-size\":4,\"size\":0"
                     ",\"timestamp\":1482182859}\n"
                     TEST_MANIFEST_FILE_DEFAULT
                     "\n"

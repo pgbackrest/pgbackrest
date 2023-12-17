@@ -1691,15 +1691,15 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                     // be referenced to the prior file. Note that this is only for the case where zero-length files are being
                     // explicitly written to the repo. Bundled zero-length files disable copy at manifest build time and never
                     // reference the prior file, even if it is also zero-length.
-                    if (file.size == 0 && filePrior.size == 0) // {uncovered - !!!}
+                    if (file.size == 0 && filePrior.size == 0)
                         file.copy = false;
 
                     // If delta is disabled and size/timestamp are equal then the file does not need be copied
                     if (!file.delta && file.size == filePrior.size && file.timestamp == filePrior.timestamp)
                         file.copy = false;
 
-                    // Copy values from the prior value so if this file ends up being the equal to prior we can just keep the
-                    // manifest entry rather than copying the file
+                    // Copy values from prior file so if this file ends up being the equal to prior we can just keep the manifest
+                    // entry rather than copying the file
                     file.sizeRepo = filePrior.sizeRepo;
                     file.checksumSha1 = filePrior.checksumSha1;
                     file.checksumRepoSha1 = filePrior.checksumRepoSha1;
