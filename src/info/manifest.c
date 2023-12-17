@@ -1677,8 +1677,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
             {
                 const ManifestFile filePrior = manifestFileFind(manifestPrior, file.name);
 
-                // If the file will be copied then copy values from the prior file. These values may be overwritten during the
-                // backup but having the prior values allows deduplication and other optimizations.
+                // If the file will be copied then copy values from the prior file when needed
                 if (file.copy)
                 {
                     // Perform delta if enabled and file size is equal to prior but not zero. Files of unequal length are always
@@ -1699,13 +1698,17 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                         file.copy = false;
 
                     // Copy values from prior file
-                    if (!file.copy ||                               // Prior values used unaltered
-                        file.delta ||                               // Prior values used if file is unchanged
-                        filePrior.blockIncrMapSize > 0)             // Prior values required for block incremental
+                    ASSERT(file.copy || !file.delta);
+
+                    if (// Used unaltered since the file is not copied
+                        !file.copy ||
+                        // Used if file is unchanged when checked during the backup
+                        file.delta ||
+                        // Used for for block incremental
+                        filePrior.blockIncrMapSize > 0)
                     {
                         file.sizeRepo = filePrior.sizeRepo;
                         file.checksumSha1 = filePrior.checksumSha1;
-                        file.checksumRepoSha1 = filePrior.checksumRepoSha1;
                         file.reference = filePrior.reference != NULL ? filePrior.reference : manifestPrior->pub.data.backupLabel;
                         file.checksumPage = filePrior.checksumPage;
                         file.checksumPageError = filePrior.checksumPageError;
