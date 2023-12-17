@@ -1092,8 +1092,7 @@ testRun(void)
                     "[target:file]\n"
                     "pg_data/BOGUS={\"size\":6,\"timestamp\":1482182860}\n"
                     "pg_data/FILE3={\"reference\":\"20190101-010101F\",\"size\":0,\"timestamp\":1482182860}\n"
-                    "pg_data/FILE4={\"checksum\":\"ccccccccccaaaaaaaaaabbbbbbbbbbdddddddddd\",\"reference\":\"20190101-010101F\""
-                    ",\"size\":55,\"timestamp\":1482182861}\n"
+                    "pg_data/FILE4={\"size\":55,\"timestamp\":1482182861}\n"
                     "pg_data/PG_VERSION={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\""
                     ",\"reference\":\"20190101-010101F\",\"size\":4,\"timestamp\":1482182860}\n"
                     TEST_MANIFEST_FILE_DEFAULT
@@ -1172,9 +1171,10 @@ testRun(void)
         manifest->pub.data.backupOptionDelta = BOOL_FALSE_VAR;
         lstClear(manifest->pub.fileList);
 
+        // File goes to zero-length
         HRN_MANIFEST_FILE_ADD(
-            manifest, .name = MANIFEST_TARGET_PGDATA "/FILE1", .copy = true, .size = 0, .sizeRepo = 4, .timestamp = 1482182859,
-            .group = "test", .user = "test");
+            manifest, .name = MANIFEST_TARGET_PGDATA "/FILE1", .copy = true, .size = 0, .timestamp = 1482182859, .group = "test",
+            .user = "test");
 
         // Clear prior manifest and add a single file with later timestamp and checksum error
         lstClear(manifestPrior->pub.fileList);
@@ -1209,9 +1209,7 @@ testRun(void)
                     "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
                     "\n"
                     "[target:file]\n"
-                    "pg_data/FILE1={\"checksum-page\":false"
-                    ",\"checksum-page-error\":[77],\"reference\":\"20190101-010101F_20190202-010101D\",\"repo-size\":4,\"size\":0"
-                    ",\"timestamp\":1482182859}\n"
+                    "pg_data/FILE1={\"size\":0,\"timestamp\":1482182859}\n"
                     TEST_MANIFEST_FILE_DEFAULT
                     "\n"
                     "[target:path]\n"
@@ -1260,9 +1258,7 @@ testRun(void)
                     "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
                     "\n"
                     "[target:file]\n"
-                    "pg_data/FILE1={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\",\"checksum-page\":false"
-                    ",\"checksum-page-error\":[77],\"reference\":\"20190101-010101F_20190202-010101D\",\"repo-size\":4,\"size\":6"
-                    ",\"timestamp\":1482182861}\n"
+                    "pg_data/FILE1={\"size\":6,\"timestamp\":1482182861}\n"
                     "pg_data/FILE2={\"checksum\":\"ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa\""
                     ",\"reference\":\"20190101-010101F_20190202-010101D\",\"repo-size\":4,\"size\":6,\"timestamp\":1482182860}\n"
                     TEST_MANIFEST_FILE_DEFAULT
@@ -1325,9 +1321,7 @@ testRun(void)
                     "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
                     "\n"
                     "[target:file]\n"
-                    "pg_data/FILE1={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\",\"checksum-page\":false"
-                    ",\"checksum-page-error\":[77],\"reference\":\"20190101-010101F_20190202-010101D\",\"repo-size\":4,\"size\":6,"
-                    "\"timestamp\":1482182861}\n"
+                    "pg_data/FILE1={\"size\":6,\"timestamp\":1482182861}\n"
                     TEST_MANIFEST_FILE_DEFAULT
                     "\n"
                     "[target:path]\n"
@@ -1340,6 +1334,8 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("block incr delta");
+
+        manifest->pub.data.backupOptionDelta = BOOL_FALSE_VAR;
 
         lstClear(manifest->pub.fileList);
         lstClear(manifestPrior->pub.fileList);
@@ -1382,7 +1378,7 @@ testRun(void)
                     TEST_MANIFEST_HEADER_PRE
                     "backup-reference=\"20190101-010101F,20190101-010101F_20190202-010101D\"\n"
                     TEST_MANIFEST_HEADER_MID
-                    "option-delta=true\n"
+                    "option-delta=false\n"
                     "option-hardlink=false\n"
                     "option-online=true\n"
                     "\n"
@@ -1390,8 +1386,7 @@ testRun(void)
                     "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
                     "\n"
                     "[target:file]\n"
-                    "pg_data/block-incr-add={\"bi\":1,\"checksum\":\"ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa\""
-                    ",\"reference\":\"20190101-010101F\",\"repo-size\":4,\"size\":6,\"timestamp\":1482182861}\n"
+                    "pg_data/block-incr-add={\"bi\":1,\"size\":6,\"timestamp\":1482182861}\n"
                     "pg_data/block-incr-keep-size={\"bi\":1,\"bim\":31,\"checksum\":\"ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa\""
                     ",\"reference\":\"20190101-010101F\",\"repo-size\":4,\"size\":6,\"timestamp\":1482182861}\n"
                     "pg_data/block-incr-sub={\"bi\":1,\"bic\":1,\"bim\":66"

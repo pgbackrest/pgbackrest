@@ -1698,27 +1698,31 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                     if (!file.delta && file.size == filePrior.size && file.timestamp == filePrior.timestamp)
                         file.copy = false;
 
-                    // Copy values from prior file so if this file ends up being the equal to prior we can just keep the manifest
-                    // entry rather than copying the file
-                    file.sizeRepo = filePrior.sizeRepo;
-                    file.checksumSha1 = filePrior.checksumSha1;
-                    file.checksumRepoSha1 = filePrior.checksumRepoSha1;
-                    file.reference = filePrior.reference != NULL ? filePrior.reference : manifestPrior->pub.data.backupLabel;
-                    file.checksumPage = filePrior.checksumPage;
-                    file.checksumPageError = filePrior.checksumPageError;
-                    file.checksumPageErrorList = filePrior.checksumPageErrorList;
-                    file.bundleId = filePrior.bundleId;
-                    file.bundleOffset = filePrior.bundleOffset;
-
-                    // If a file was stored with block incremental in a prior backup then continue to use block incremental with the
-                    // same values. If the file has dropped below the size threshold then it might make sense to stop block
-                    // incremental but if it has gotten too old then it is better to keep block incremental. Rather than worry about
-                    // why this file did not get block incremental in the new manifest, it is simpler just to preserve it.
-                    if (filePrior.blockIncrMapSize > 0)
+                    // Copy values from prior file
+                    if (!file.copy ||                               // Prior values used unaltered
+                        file.delta ||                               // Prior values used if file is unchanged
+                        filePrior.blockIncrMapSize > 0)             // Prior values required for block incremental
                     {
-                        file.blockIncrSize = filePrior.blockIncrSize;
-                        file.blockIncrChecksumSize = filePrior.blockIncrChecksumSize;
-                        file.blockIncrMapSize = filePrior.blockIncrMapSize;
+                        file.sizeRepo = filePrior.sizeRepo;
+                        file.checksumSha1 = filePrior.checksumSha1;
+                        file.checksumRepoSha1 = filePrior.checksumRepoSha1;
+                        file.reference = filePrior.reference != NULL ? filePrior.reference : manifestPrior->pub.data.backupLabel;
+                        file.checksumPage = filePrior.checksumPage;
+                        file.checksumPageError = filePrior.checksumPageError;
+                        file.checksumPageErrorList = filePrior.checksumPageErrorList;
+                        file.bundleId = filePrior.bundleId;
+                        file.bundleOffset = filePrior.bundleOffset;
+
+                        // If a file was stored with block incremental in a prior backup then continue to use block incremental with
+                        // the same values. If the file has dropped below the size threshold then it might make sense to stop block
+                        // incremental but if it has gotten too old then it is better to keep block incremental. Rather than worry
+                        // about why this file did not get block incremental in the new manifest, it is simpler just to preserve it.
+                        if (filePrior.blockIncrMapSize > 0)
+                        {
+                            file.blockIncrSize = filePrior.blockIncrSize;
+                            file.blockIncrChecksumSize = filePrior.blockIncrChecksumSize;
+                            file.blockIncrMapSize = filePrior.blockIncrMapSize;
+                        }
                     }
 
                     manifestFileUpdate(this, &file);
