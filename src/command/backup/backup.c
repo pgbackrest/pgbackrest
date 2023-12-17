@@ -1443,8 +1443,8 @@ backupJobResult(
                     strCatFmt(logProgress, "bundle %" PRIu64 "/%" PRIu64 ", ", bundleId, bundleOffset);
 
                 // Log original manifest size if copy size differs
-                if (copySize != file.size)
-                    strCatFmt(logProgress, "%s->", strZ(strSizeFormat(file.size)));
+                if (copySize != file.sizeOriginal)
+                    strCatFmt(logProgress, "%s->", strZ(strSizeFormat(file.sizeOriginal)));
 
                 // Store percentComplete as an integer
                 percentComplete = sizeTotal == 0 ? 10000 : (unsigned int)(((double)*sizeProgress / (double)sizeTotal) * 10000);
