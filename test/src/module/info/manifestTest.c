@@ -1171,9 +1171,10 @@ testRun(void)
         manifest->pub.data.backupOptionDelta = BOOL_FALSE_VAR;
         lstClear(manifest->pub.fileList);
 
+        // File goes to zero-length
         HRN_MANIFEST_FILE_ADD(
-            manifest, .name = MANIFEST_TARGET_PGDATA "/FILE1", .copy = true, .size = 4, .sizeRepo = 4, .timestamp = 1482182859,
-            .group = "test", .user = "test");
+            manifest, .name = MANIFEST_TARGET_PGDATA "/FILE1", .copy = true, .size = 0, .timestamp = 1482182859, .group = "test",
+            .user = "test");
 
         // Clear prior manifest and add a single file with later timestamp and checksum error
         lstClear(manifestPrior->pub.fileList);
@@ -1208,9 +1209,7 @@ testRun(void)
                     "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
                     "\n"
                     "[target:file]\n"
-                    "pg_data/FILE1={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\",\"checksum-page\":false"
-                    ",\"checksum-page-error\":[77],\"reference\":\"20190101-010101F_20190202-010101D\",\"size\":4"
-                    ",\"timestamp\":1482182859}\n"
+                    "pg_data/FILE1={\"size\":0,\"timestamp\":1482182859}\n"
                     TEST_MANIFEST_FILE_DEFAULT
                     "\n"
                     "[target:path]\n"
@@ -1336,6 +1335,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("block incr delta");
 
+        manifest->pub.data.backupOptionDelta = BOOL_FALSE_VAR;
+
         lstClear(manifest->pub.fileList);
         lstClear(manifestPrior->pub.fileList);
 
@@ -1353,7 +1354,8 @@ testRun(void)
             .timestamp = 1482182861, .group = "test", .user = "test");
         HRN_MANIFEST_FILE_ADD(
             manifestPrior, .name = MANIFEST_TARGET_PGDATA "/block-incr-sub", .size = 4, .sizeRepo = 4, .blockIncrSize = 8192,
-            .blockIncrMapSize = 66, .timestamp = 1482182860, .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa");
+            .blockIncrMapSize = 66, .blockIncrChecksumSize = 1, .timestamp = 1482182860,
+            .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa");
 
         // Prior file has different block incr size
         HRN_MANIFEST_FILE_ADD(
@@ -1376,7 +1378,7 @@ testRun(void)
                     TEST_MANIFEST_HEADER_PRE
                     "backup-reference=\"20190101-010101F,20190101-010101F_20190202-010101D\"\n"
                     TEST_MANIFEST_HEADER_MID
-                    "option-delta=true\n"
+                    "option-delta=false\n"
                     "option-hardlink=false\n"
                     "option-online=true\n"
                     "\n"
