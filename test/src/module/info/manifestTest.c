@@ -1092,7 +1092,8 @@ testRun(void)
                     "[target:file]\n"
                     "pg_data/BOGUS={\"size\":6,\"timestamp\":1482182860}\n"
                     "pg_data/FILE3={\"reference\":\"20190101-010101F\",\"size\":0,\"timestamp\":1482182860}\n"
-                    "pg_data/FILE4={\"size\":55,\"timestamp\":1482182861}\n"
+                    "pg_data/FILE4={\"checksum\":\"ccccccccccaaaaaaaaaabbbbbbbbbbdddddddddd\",\"reference\":\"20190101-010101F\""
+                    ",\"size\":55,\"timestamp\":1482182861}\n"
                     "pg_data/PG_VERSION={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\""
                     ",\"reference\":\"20190101-010101F\",\"size\":4,\"timestamp\":1482182860}\n"
                     TEST_MANIFEST_FILE_DEFAULT
@@ -1259,7 +1260,9 @@ testRun(void)
                     "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
                     "\n"
                     "[target:file]\n"
-                    "pg_data/FILE1={\"size\":6,\"timestamp\":1482182861}\n"
+                    "pg_data/FILE1={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\",\"checksum-page\":false"
+                    ",\"checksum-page-error\":[77],\"reference\":\"20190101-010101F_20190202-010101D\",\"repo-size\":4,\"size\":6"
+                    ",\"timestamp\":1482182861}\n"
                     "pg_data/FILE2={\"checksum\":\"ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa\""
                     ",\"reference\":\"20190101-010101F_20190202-010101D\",\"repo-size\":4,\"size\":6,\"timestamp\":1482182860}\n"
                     TEST_MANIFEST_FILE_DEFAULT
@@ -1322,7 +1325,9 @@ testRun(void)
                     "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
                     "\n"
                     "[target:file]\n"
-                    "pg_data/FILE1={\"size\":6,\"timestamp\":1482182861}\n"
+                    "pg_data/FILE1={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\",\"checksum-page\":false"
+                    ",\"checksum-page-error\":[77],\"reference\":\"20190101-010101F_20190202-010101D\",\"repo-size\":4,\"size\":6,"
+                    "\"timestamp\":1482182861}\n"
                     TEST_MANIFEST_FILE_DEFAULT
                     "\n"
                     "[target:path]\n"
@@ -1353,7 +1358,8 @@ testRun(void)
             .timestamp = 1482182861, .group = "test", .user = "test");
         HRN_MANIFEST_FILE_ADD(
             manifestPrior, .name = MANIFEST_TARGET_PGDATA "/block-incr-sub", .size = 4, .sizeRepo = 4, .blockIncrSize = 8192,
-            .blockIncrMapSize = 66, .timestamp = 1482182860, .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa");
+            .blockIncrMapSize = 66, .blockIncrChecksumSize = 1, .timestamp = 1482182860,
+            .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa");
 
         // Prior file has different block incr size
         HRN_MANIFEST_FILE_ADD(
@@ -1384,10 +1390,13 @@ testRun(void)
                     "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
                     "\n"
                     "[target:file]\n"
-                    "pg_data/block-incr-add={\"bi\":1,\"size\":6,\"timestamp\":1482182861}\n"
+                    "pg_data/block-incr-add={\"bi\":1,\"checksum\":\"ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa\""
+                    ",\"reference\":\"20190101-010101F\",\"repo-size\":4,\"size\":6,\"timestamp\":1482182861}\n"
                     "pg_data/block-incr-keep-size={\"bi\":1,\"bim\":31,\"checksum\":\"ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa\""
                     ",\"reference\":\"20190101-010101F\",\"repo-size\":4,\"size\":6,\"timestamp\":1482182861}\n"
-                    "pg_data/block-incr-sub={\"size\":6,\"timestamp\":1482182861}\n"
+                    "pg_data/block-incr-sub={\"bi\":1,\"bic\":1,\"bim\":66"
+                    ",\"checksum\":\"ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa\",\"reference\":\"20190101-010101F\",\"repo-size\":4,"
+                    "\"size\":6,\"timestamp\":1482182861}\n"
                     TEST_MANIFEST_FILE_DEFAULT
                     "\n"
                     "[target:path]\n"

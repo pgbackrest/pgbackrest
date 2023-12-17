@@ -1677,10 +1677,29 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
             {
                 const ManifestFile filePrior = manifestFileFind(manifestPrior, file.name);
 
-                if (file.copy &&
-                    ((filePrior.blockIncrMapSize > 0 && file.blockIncrSize > 0) ||
-                     (file.size == filePrior.size && (delta || file.size == 0 || file.timestamp == filePrior.timestamp))))
+                // If the file will be copied then copy values from the prior file. These values may be overwritten during the
+                // backup but having the prior values allows deduplication and other optimizations.
+                if (file.copy)
                 {
+                    // Perform delta if enabled and file size is equal to prior but not zero. Files of unequal length are always
+                    // different while zero-length files are always the same, so it wastes time to check them. It is possible for
+                    // a file to be truncated down to equal the prior file during backup, but the overhead of checking for such an
+                    // unlikely event does not seem worth the possible space saved.
+                    file.delta = delta && file.size != 0 && file.size == filePrior.size;
+
+                    // Do not copy if size and prior size are both zero. Zero-length files are always equal so the file can simply
+                    // be referenced to the prior file. Note that this is only for the case where zero-length files are being
+                    // explicitly written to the repo. Bundled zero-length files disable copy at manifest build time and never
+                    // reference the prior file, even if it is also zero-length.
+                    if (file.size == 0 && filePrior.size == 0) // {uncovered - !!!}
+                        file.copy = false;
+
+                    // If delta is disabled and size/timestamp are equal then the file does not need be copied
+                    if (!file.delta && file.size == filePrior.size && file.timestamp == filePrior.timestamp)
+                        file.copy = false;
+
+                    // Copy values from the prior value so if this file ends up being the equal to prior we can just keep the
+                    // manifest entry rather than copying the file
                     file.sizeRepo = filePrior.sizeRepo;
                     file.checksumSha1 = filePrior.checksumSha1;
                     file.checksumRepoSha1 = filePrior.checksumRepoSha1;
@@ -1690,15 +1709,17 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                     file.checksumPageErrorList = filePrior.checksumPageErrorList;
                     file.bundleId = filePrior.bundleId;
                     file.bundleOffset = filePrior.bundleOffset;
-                    file.blockIncrSize = filePrior.blockIncrSize;
-                    file.blockIncrChecksumSize = filePrior.blockIncrChecksumSize;
-                    file.blockIncrMapSize = filePrior.blockIncrMapSize;
 
-                    // Perform delta if the file size is not zero
-                    file.delta = delta && file.size != 0;
-
-                    // Copy if the file has changed or delta
-                    file.copy = (file.size != 0 && file.timestamp != filePrior.timestamp) || file.delta;
+                    // If a file was stored with block incremental in a prior backup then continue to use block incremental with the
+                    // same values. If the file has dropped below the size threshold then it might make sense to stop block
+                    // incremental but if it has gotten too old then it is better to keep block incremental. Rather than worry about
+                    // why this file did not get block incremental in the new manifest, it is simpler just to preserve it.
+                    if (filePrior.blockIncrMapSize > 0)
+                    {
+                        file.blockIncrSize = filePrior.blockIncrSize;
+                        file.blockIncrChecksumSize = filePrior.blockIncrChecksumSize;
+                        file.blockIncrMapSize = filePrior.blockIncrMapSize;
+                    }
 
                     manifestFileUpdate(this, &file);
                 }
