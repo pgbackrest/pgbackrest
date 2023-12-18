@@ -45,6 +45,7 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
         while (!pckReadNullP(param))
         {
             BackupFile file = {.pgFile = pckReadStrP(param)};
+            file.pgFileEqual = pckReadBoolP(param);
             file.pgFileDelta = pckReadBoolP(param);
             file.pgFileIgnoreMissing = pckReadBoolP(param);
             file.pgFileSize = pckReadU64P(param);

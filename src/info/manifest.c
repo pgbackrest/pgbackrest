@@ -103,6 +103,7 @@ typedef enum
     manifestFilePackFlagBundle,
     manifestFilePackFlagBlockIncr,
     manifestFilePackFlagCopy,
+    manifestFilePackFlagEqual,
     manifestFilePackFlagDelta,
     manifestFilePackFlagResume,
     manifestFilePackFlagChecksumPage,
@@ -142,6 +143,9 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
 
     if (file->copy)
         flag |= 1 << manifestFilePackFlagCopy;
+
+    if (file->equal)
+        flag |= 1 << manifestFilePackFlagEqual;
 
     if (file->delta)
         flag |= 1 << manifestFilePackFlagDelta;
@@ -310,6 +314,7 @@ manifestFileUnpack(const Manifest *const manifest, const ManifestFilePack *const
     const uint64_t flag = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
 
     result.copy = (flag >> manifestFilePackFlagCopy) & 1;
+    result.equal = (flag >> manifestFilePackFlagEqual) & 1;
     result.delta = (flag >> manifestFilePackFlagDelta) & 1;
     result.resume = (flag >> manifestFilePackFlagResume) & 1;
 
@@ -1679,11 +1684,15 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                 // designated not to be copied at manifest build time, e.g. zero-length files when bundling.
                 if (file.copy)
                 {
+                    // Is file size equal to prior file size? If the sizes are equal then the file can be referenced instead of
+                    // copied if it has not changed (this must be determined during the backup).
+                    file.equal = file.size == filePrior.size;
+
                     // Perform delta if enabled and file size is equal to prior but not zero. Files of unequal length are always
                     // different while zero-length files are always the same, so it wastes time to check them. It is possible for
                     // a file to be truncated down to equal the prior file during backup, but the overhead of checking for such an
                     // unlikely event does not seem worth the possible space saved.
-                    file.delta = delta && file.size != 0 && file.size == filePrior.size;
+                    file.delta = delta && file.size != 0 && file.equal;
 
                     // Do not copy if size and prior size are both zero. Zero-length files are always equal so the file can simply
                     // be referenced to the prior file. Note that this is only for the case where zero-length files are being
@@ -1703,12 +1712,12 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                     ASSERT(file.copy || filePrior.size == file.size);
                     ASSERT(!file.delta || filePrior.size == file.size);
 
-                    if (!file.copy || file.delta || (filePrior.blockIncrMapSize > 0 && file.size > filePrior.blockIncrSize))
+                    if (!file.copy || file.equal || (filePrior.blockIncrMapSize > 0 && file.size > filePrior.blockIncrSize))
                     {
                         ASSERT(filePrior.blockIncrMapSize > 0 || filePrior.size == file.size);
 
                         // Only required when the file is (possibly) preserved
-                        if (!file.copy || file.delta)
+                        if (!file.copy || file.equal)
                         {
                             file.checksumSha1 = filePrior.checksumSha1;
                             file.checksumRepoSha1 = filePrior.checksumRepoSha1;

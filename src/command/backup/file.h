@@ -29,6 +29,7 @@ Functions
 typedef struct BackupFile
 {
     const String *pgFile;                                           // Pg file to backup
+    bool pgFileEqual;                                               // Pg file size is equal to prior size
     bool pgFileDelta;                                               // Checksum pg file before copying
     bool pgFileIgnoreMissing;                                       // Ignore missing pg file
     uint64_t pgFileSize;                                            // Expected pg file size

@@ -2804,6 +2804,13 @@ testRun(void)
 
             HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/1", relation, .timeModified = backupTimeStart);
 
+            // File which will change only in timestamp for the next backup
+            relation = bufNew(pgPageSize8);
+            memset(bufPtr(relation), 77, bufSize(relation));
+            bufUsedSet(relation, bufSize(relation));
+
+            HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/same", relation, .timeModified = backupTimeStart);
+
             // File which will fail on alignment
             relation = bufNew(pgPageSize8 + 512);
             memset(bufPtr(relation), 0, bufSize(relation));
@@ -2884,6 +2891,7 @@ testRun(void)
                 "P00   WARN: page misalignment in file " TEST_PATH "/pg1/base/1/2: file size 8704 is not divisible by page size"
                 " 8192\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/same (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/pg_tblspc/32768/PG_11_201809051/1/5 (0B, [PCT])\n"
@@ -2896,7 +2904,7 @@ testRun(void)
                 "P00 DETAIL: copy segment 0000000105DB5DE000000001 to backup\n"
                 "P00 DETAIL: copy segment 0000000105DB5DE000000002 to backup\n"
                 "P00   INFO: new backup label = 20191027-181320F\n"
-                "P00   INFO: full backup size = [SIZE], file total = 13");
+                "P00   INFO: full backup size = [SIZE], file total = 14");
 
             TEST_RESULT_STR(
                 testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191027-181320F")),
@@ -2910,6 +2918,7 @@ testRun(void)
                     "pg_data/base/1/2.gz {file, s=8704}\n"
                     "pg_data/base/1/3.gz {file, s=40960}\n"
                     "pg_data/base/1/4.gz {file, s=24576}\n"
+                    "pg_data/base/same.gz {file, s=8192}\n"
                     "pg_data/global {path}\n"
                     "pg_data/global/pg_control.gz {file, s=8192}\n"
                     "pg_data/pg_tblspc {path}\n"
@@ -2941,6 +2950,8 @@ testRun(void)
                     "pg_data/base/1/3={\"checksum\":\"%s\",\"checksum-page\":false,\"checksum-page-error\":[0,[2,4]]"
                     ",\"size\":40960,\"timestamp\":1572200000}\n"
                     "pg_data/base/1/4={\"checksum\":\"%s\",\"checksum-page\":false,\"checksum-page-error\":[1],\"size\":24576"
+                    ",\"timestamp\":1572200000}\n"
+                    "pg_data/base/same={\"checksum\":\"a172a6b43d14e6a222ba39d207944dea8be419d1\",\"size\":8192"
                     ",\"timestamp\":1572200000}\n"
                     "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1572200000}\n"
                     "pg_data/pg_wal/0000000105DB5DE000000000={\"size\":1048576,\"timestamp\":1572200002}\n"
@@ -3049,6 +3060,9 @@ testRun(void)
             HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/3", relation, .timeModified = backupTimeStart);
             const char *rel1_3Sha1 = strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, relation)));
 
+            // Change only the timestamp for this file
+            HRN_STORAGE_TIME(storagePgWrite(), PG_PATH_BASE "/same", backupTimeStart);
+
             // File will be truncated during backup to show that actual file size is copied no matter what original size is. This
             // will also cause an alignment error.
             Buffer *relationAfter = bufNew(pgPageSize8 + 15);
@@ -3076,9 +3090,11 @@ testRun(void)
                 "P00   WARN: page misalignment in file " TEST_PATH "/pg1/base/1/1: file size 8207 is not divisible by page size"
                 " 8192\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/base/same (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
                 "P00 DETAIL: hardlink pg_data/PG_VERSION to 20191027-181320F\n"
+                "P00 DETAIL: hardlink pg_data/base/same to 20191027-181320F\n"
                 "P00 DETAIL: hardlink pg_data/postgresql.conf to 20191027-181320F\n"
                 "P00 DETAIL: hardlink pg_tblspc/32768/PG_11_201809051/1/5 to 20191027-181320F\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
@@ -3087,7 +3103,7 @@ testRun(void)
                 "P00 DETAIL: wrote 'tablespace_map' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000002C05DB8EB000000000:0000002C05DB8EB000000001\n"
                 "P00   INFO: new backup label = 20191027-181320F_20191030-014640I\n"
-                "P00   INFO: incr backup size = [SIZE], file total = 8");
+                "P00   INFO: incr backup size = [SIZE], file total = 9");
 
             TEST_RESULT_STR(
                 testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
@@ -3100,6 +3116,7 @@ testRun(void)
                     "pg_data/base/1 {path}\n"
                     "pg_data/base/1/1.gz {file, s=8207}\n"
                     "pg_data/base/1/3.gz {file, s=32768}\n"
+                    "pg_data/base/same.gz {file, s=8192}\n"
                     "pg_data/global {path}\n"
                     "pg_data/global/pg_control.gz {file, s=8192}\n"
                     "pg_data/pg_tblspc {path}\n"
@@ -3127,6 +3144,8 @@ testRun(void)
                     ",\"size\":8207,\"szo\":16384,\"timestamp\":1572200000}\n"
                     "pg_data/base/1/3={\"checksum\":\"%s\",\"checksum-page\":false,\"checksum-page-error\":[0,3],\"size\":32768"
                     ",\"timestamp\":1572400000}\n"
+                    "pg_data/base/same={\"checksum\":\"a172a6b43d14e6a222ba39d207944dea8be419d1\""
+                    ",\"reference\":\"20191027-181320F\",\"size\":8192,\"timestamp\":1572400000}\n"
                     "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1572400000}\n"
                     "pg_data/postgresql.conf={\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\""
                     ",\"reference\":\"20191027-181320F\",\"size\":11,\"timestamp\":1570000000}\n"
@@ -3154,6 +3173,7 @@ testRun(void)
 
             // Remove test files
             HRN_STORAGE_REMOVE(storagePgWrite(), "base/1/3", .errorOnMissing = true);
+            HRN_STORAGE_REMOVE(storagePgWrite(), "base/same", .errorOnMissing = true);
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -3645,8 +3665,9 @@ testRun(void)
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/16411, 8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink-block (bundle 1/24603, 8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/32795, 16.0KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-same (bundle 1/41021, 16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/block-incr-same (16KB, [PCT]) checksum [SHA1]\n"
                 "P00 DETAIL: reference pg_data/PG_VERSION to 20191103-165320F\n"
+                "P00 DETAIL: reference pg_data/block-incr-same to 20191103-165320F\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DC213000000001, lsn = 5dc2130/300000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
@@ -3659,7 +3680,6 @@ testRun(void)
                 testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ". {link, d=20191103-165320F_20191106-002640D}\n"
                 "bundle {path}\n"
-                "bundle/1/pg_data/block-incr-same {file, m=0:{0,1}, s=16384}\n"
                 "bundle/1/pg_data/block-incr-shrink {file, m=0:{0},1:{0}, s=16383}\n"
                 "bundle/1/pg_data/block-incr-shrink-block {file, s=8192}\n"
                 "bundle/1/pg_data/global/pg_control {file, s=8192}\n"
@@ -3670,6 +3690,7 @@ testRun(void)
                 "pg_data/block-incr-larger.pgbi {file, m=1:{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15},1:{0,1,2,3,4,5,6}, s=1507328}\n"
                 "pg_data/tablespace_map {file, s=19}\n"
                 "20191103-165320F/bundle/1/pg_data/PG_VERSION {file, s=2}\n"
+                "20191103-165320F/bundle/1/pg_data/block-incr-same {file, m=0:{0,1}, s=16384}\n"
                 "--------\n"
                 "[backup:target]\n"
                 "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n"
@@ -3684,7 +3705,7 @@ testRun(void)
                 "pg_data/block-incr-larger={\"bi\":8,\"bic\":7,\"bim\":173"
                 ",\"checksum\":\"eec53a6da79c00b3c658a7e09f44b3e9efefd960\",\"size\":1507328,\"timestamp\":1573000000}\n"
                 "pg_data/block-incr-same={\"bi\":1,\"bim\":22,\"checksum\":\"5d389611c12c8b8d2c28d4e590799c016b9375be\""
-                ",\"size\":16384,\"timestamp\":1573000000}\n"
+                ",\"reference\":\"20191103-165320F\",\"size\":16384,\"timestamp\":1573000000}\n"
                 "pg_data/block-incr-shrink={\"bi\":1,\"bim\":35,\"checksum\":\"1c6a17f67562d8b3f64f1b5f2ee592a4c2809b3b\""
                 ",\"size\":16383,\"timestamp\":1573000000}\n"
                 "pg_data/block-incr-shrink-block={\"checksum\":\"b659cdc8436b0632a448ccf7492dfb5b2d366991\",\"size\":8192"

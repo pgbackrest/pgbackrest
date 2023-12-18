@@ -2002,6 +2002,7 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
                 }
 
                 pckWriteStrP(param, manifestPathPg(file.name));
+                pckWriteBoolP(param, file.equal);
                 pckWriteBoolP(param, file.delta);
                 pckWriteBoolP(param, !strEq(file.name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)));
                 pckWriteU64P(param, file.size);

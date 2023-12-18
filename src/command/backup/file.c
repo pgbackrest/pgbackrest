@@ -301,23 +301,40 @@ backupFile(
                         Buffer *const buffer = bufNew(ioBufferSize());
                         bool readEof = false;
 
-                        // Read the first buffer to determine if the file was truncated. Detecting truncation matters only when
-                        // bundling is enabled as otherwise the file will be stored anyway.
+                        // Read the first buffer to determine if the file was truncated or was not changed. Detecting truncation
+                        // matters only when bundling is enabled as otherwise the file will be stored anyway.
                         ioRead(readIo, buffer);
 
-                        if (ioReadEof(readIo) && bundleId != 0)
+                        if (ioReadEof(readIo))
                         {
                             // Close the source and set eof
                             ioReadClose(readIo);
                             readEof = true;
 
+                            // Get file size
+                            const uint64_t size = pckReadU64P(
+                                ioFilterGroupResultP(ioReadFilterGroup(readIo), SIZE_FILTER_TYPE, .idx = 0));
+
                             // If the file is zero-length then it was truncated during the backup
-                            if (pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(readIo), SIZE_FILTER_TYPE, .idx = 0)) == 0)
+                            if (bundleId != 0 && size == 0)
+                            {
                                 fileResult->backupCopyResult = backupCopyResultTruncate;
+                            }
+                            // Else check if size is equal to prior size
+                            else if (file->pgFileEqual && size == file->pgFileSize)
+                            {
+                                const Buffer *const pgTestChecksum = pckReadBinP(
+                                    ioFilterGroupResultP(ioReadFilterGroup(readIo), CRYPTO_HASH_FILTER_TYPE));
+
+                                // If checksum is also equal then no need to copy the file
+                                if (bufEq(file->pgFileChecksum, pgTestChecksum))
+                                    fileResult->backupCopyResult = backupCopyResultNoOp;
+                            }
                         }
 
                         // Copy the file in non-bundling mode or if the file is not zero-length
-                        if (fileResult->backupCopyResult != backupCopyResultTruncate)
+                        if (fileResult->backupCopyResult == backupCopyResultCopy ||
+                            fileResult->backupCopyResult == backupCopyResultReCopy)
                         {
                             // Setup the repo file for write. There is no need to write the file atomically (e.g. via a temp file on
                             // Posix) because checksums are tested on resume after a failed backup. The path does not need to be
