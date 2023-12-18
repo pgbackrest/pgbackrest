@@ -1707,7 +1707,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                     {
                         ASSERT(filePrior.blockIncrMapSize > 0 || filePrior.size == file.size);
 
-                        // Required when the file is (possibly) preserved
+                        // Only required when the file is (possibly) preserved
                         if (!file.copy || file.delta)
                         {
                             file.checksumSha1 = filePrior.checksumSha1;
@@ -1723,6 +1723,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                                 (file.checksumPage && file.checksumPageError && file.checksumPageErrorList != NULL));
                         }
 
+                        // Required when the file is (possibly) preserved or block incremental
                         file.sizeRepo = filePrior.sizeRepo;
                         file.reference =
                             filePrior.reference != NULL ? filePrior.reference : manifestPrior->pub.data.backupLabel;
