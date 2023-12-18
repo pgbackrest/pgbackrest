@@ -1357,13 +1357,13 @@ testRun(void)
             .blockIncrMapSize = 66, .blockIncrChecksumSize = 1, .timestamp = 1482182860,
             .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa");
 
-        // Prior file has different block incr size
+        // Prior file has different block incr size which is preserved and new file is large enough to be block incremental
         HRN_MANIFEST_FILE_ADD(
-            manifest, .name = MANIFEST_TARGET_PGDATA "/block-incr-keep-size", .copy = true, .size = 6, .sizeRepo = 6,
+            manifest, .name = MANIFEST_TARGET_PGDATA "/block-incr-keep-size", .copy = true, .size = 8193, .sizeRepo = 6,
             .blockIncrSize = 16384, .blockIncrChecksumSize = 6, .timestamp = 1482182861, .group = "test", .user = "test");
         HRN_MANIFEST_FILE_ADD(
-            manifestPrior, .name = MANIFEST_TARGET_PGDATA "/block-incr-keep-size", .size = 4, .sizeRepo = 4, .blockIncrSize = 8192,
-            .blockIncrChecksumSize = 6, .blockIncrMapSize = 31, .timestamp = 1482182860,
+            manifestPrior, .name = MANIFEST_TARGET_PGDATA "/block-incr-keep-size", .size = 16384, .sizeRepo = 4,
+            .blockIncrSize = 8192, .blockIncrChecksumSize = 6, .blockIncrMapSize = 31, .timestamp = 1482182860,
             .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa");
 
         TEST_RESULT_VOID(
@@ -1388,7 +1388,7 @@ testRun(void)
                     "[target:file]\n"
                     "pg_data/block-incr-add={\"bi\":1,\"size\":6,\"timestamp\":1482182861}\n"
                     "pg_data/block-incr-keep-size={\"bi\":1,\"bim\":31,\"checksum\":\"ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa\""
-                    ",\"reference\":\"20190101-010101F\",\"repo-size\":4,\"size\":6,\"timestamp\":1482182861}\n"
+                    ",\"reference\":\"20190101-010101F\",\"repo-size\":4,\"size\":8193,\"timestamp\":1482182861}\n"
                     "pg_data/block-incr-sub={\"size\":6,\"timestamp\":1482182861}\n"
                     TEST_MANIFEST_FILE_DEFAULT
                     "\n"
