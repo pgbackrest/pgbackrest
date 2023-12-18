@@ -1675,8 +1675,8 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
             {
                 const ManifestFile filePrior = manifestFileFind(manifestPrior, file.name);
 
-                // If the file will be copied then copy values from the prior file when needed. Some files may have been designated
-                // not to be copied at manifest build time, e.g. zero-length files when bundling.
+                // If the file will be copied then transfer values from the prior file when needed. Some files may have been
+                // designated not to be copied at manifest build time, e.g. zero-length files when bundling.
                 if (file.copy)
                 {
                     // Perform delta if enabled and file size is equal to prior but not zero. Files of unequal length are always
@@ -1696,48 +1696,48 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                     if (!file.delta && file.size == filePrior.size && file.timestamp == filePrior.timestamp)
                         file.copy = false;
 
-                    // Copy values from prior file
+                    // Transfer values from prior file if can (possibly) be preserved or if prior file is stored with block
+                    // incremental. Continue to use block incremental with the same values, except in the case where the file size
+                    // is now a single block or less.
                     ASSERT(file.copy || !file.delta);
+                    ASSERT(file.copy || filePrior.size == file.size);
+                    ASSERT(!file.delta || filePrior.size == file.size);
 
-                    if (// Used unaltered since the file is preserved
-                        !file.copy ||
-                        // Used if file is unchanged when checked during the backup
-                        file.delta ||
-                        // Used for for block incremental
-                        filePrior.blockIncrMapSize > 0)
+                    if (!file.copy || file.delta || (filePrior.blockIncrMapSize > 0 && file.size > filePrior.blockIncrSize))
                     {
-                        // File must be block incremental or equal to prior size
                         ASSERT(filePrior.blockIncrMapSize > 0 || filePrior.size == file.size);
 
-                        // Required when the file is preserved or may be preserved if it is found to be unchanged
+                        // Required when the file is (possibly) preserved
                         if (!file.copy || file.delta)
                         {
-                            ASSERT(filePrior.checksumSha1 != NULL);
-
                             file.checksumSha1 = filePrior.checksumSha1;
+                            file.checksumRepoSha1 = filePrior.checksumRepoSha1;
                             file.checksumPage = filePrior.checksumPage;
                             file.checksumPageError = filePrior.checksumPageError;
                             file.checksumPageErrorList = filePrior.checksumPageErrorList;
+
+                            ASSERT(file.checksumSha1 != NULL);
+                            ASSERT(
+                                (!file.checksumPage && !file.checksumPageError && file.checksumPageErrorList == NULL) ||
+                                (file.checksumPage && !file.checksumPageError && file.checksumPageErrorList == NULL) ||
+                                (file.checksumPage && file.checksumPageError && file.checksumPageErrorList != NULL));
                         }
 
-                        // If a file was stored with block incremental in a prior backup then continue to use block incremental with
-                        // the same values, except in the case where the file size is now a single block or less.
-                        if (!file.copy || (filePrior.blockIncrMapSize > 0 && file.size > filePrior.blockIncrSize))
-                        {
-                            file.blockIncrSize = filePrior.blockIncrSize;
-                            file.blockIncrChecksumSize = filePrior.blockIncrChecksumSize;
-                            file.blockIncrMapSize = filePrior.blockIncrMapSize;
-                        }
+                        file.sizeRepo = filePrior.sizeRepo;
+                        file.reference =
+                            filePrior.reference != NULL ? filePrior.reference : manifestPrior->pub.data.backupLabel;
+                        file.bundleId = filePrior.bundleId;
+                        file.bundleOffset = filePrior.bundleOffset;
+                        file.blockIncrSize = filePrior.blockIncrSize;
+                        file.blockIncrChecksumSize = filePrior.blockIncrChecksumSize;
+                        file.blockIncrMapSize = filePrior.blockIncrMapSize;
 
-                        // Required if the file is (possibly) preserved or block incremental is performed
-                        if (file.checksumSha1 != NULL || file.blockIncrMapSize > 0)
-                        {
-                            file.sizeRepo = filePrior.sizeRepo;
-                            file.reference =
-                                filePrior.reference != NULL ? filePrior.reference : manifestPrior->pub.data.backupLabel;
-                            file.bundleId = filePrior.bundleId;
-                            file.bundleOffset = filePrior.bundleOffset;
-                        }
+                        ASSERT(file.size == 0 || file.sizeRepo != 0);
+                        ASSERT(file.reference != NULL);
+                        ASSERT(file.bundleId != 0 || file.bundleOffset == 0);
+                        ASSERT(
+                            (file.blockIncrSize == 0 && file.blockIncrChecksumSize == 0 && file.blockIncrMapSize == 0) ||
+                            (file.blockIncrSize > 0 && file.blockIncrChecksumSize > 0 && file.blockIncrMapSize > 0));
                     }
 
                     manifestFileUpdate(this, &file);
