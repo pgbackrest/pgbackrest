@@ -323,8 +323,12 @@ backupFile(
                             // Else check if size is equal to prior size
                             else if (file->pgFileEqual && fileResult->copySize == file->pgFileSize)
                             {
-                                fileResult->copyChecksum = pckReadBinP(
-                                    ioFilterGroupResultP(ioReadFilterGroup(readIo), CRYPTO_HASH_FILTER_TYPE));
+                                MEM_CONTEXT_OBJ_BEGIN(result)
+                                {
+                                    fileResult->copyChecksum = pckReadBinP(
+                                        ioFilterGroupResultP(ioReadFilterGroup(readIo), CRYPTO_HASH_FILTER_TYPE));
+                                }
+                                MEM_CONTEXT_OBJ_END();
 
                                 // If checksum is also equal then no need to copy the file
                                 if (bufEq(file->pgFileChecksum, fileResult->copyChecksum))
