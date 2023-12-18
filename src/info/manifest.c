@@ -1706,6 +1706,9 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                         // Used for for block incremental
                         filePrior.blockIncrMapSize > 0)
                     {
+                        // File must be block incremental or equal to prior size
+                        ASSERT(filePrior.blockIncrMapSize > 0 || filePrior.size == file.size);
+
                         // Required when the file is preserved or may be preserved if it is found to be unchanged
                         if (!file.copy || file.delta)
                         {
@@ -1719,7 +1722,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
 
                         // If a file was stored with block incremental in a prior backup then continue to use block incremental with
                         // the same values, except in the case where the file size is now a single block or less.
-                        if (filePrior.blockIncrMapSize > 0 && file.size > filePrior.blockIncrSize)
+                        if (!file.copy || (filePrior.blockIncrMapSize > 0 && file.size > filePrior.blockIncrSize))
                         {
                             file.blockIncrSize = filePrior.blockIncrSize;
                             file.blockIncrChecksumSize = filePrior.blockIncrChecksumSize;
