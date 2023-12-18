@@ -1720,7 +1720,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                             ASSERT(
                                 (!file.checksumPage && !file.checksumPageError && file.checksumPageErrorList == NULL) ||
                                 (file.checksumPage && !file.checksumPageError && file.checksumPageErrorList == NULL) ||
-                                (file.checksumPage && file.checksumPageError && file.checksumPageErrorList != NULL));
+                                (file.checksumPage && file.checksumPageError));
                         }
 
                         // Required when the file is (possibly) preserved or block incremental
