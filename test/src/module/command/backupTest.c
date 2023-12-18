@@ -674,6 +674,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("PageChecksum"))
     {
+        #define PG_SEGMENT_PAGE_DEFAULT                             (PG_SEGMENT_SIZE_DEFAULT / pgPageSize8)
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("segment page default");
 
@@ -686,13 +688,14 @@ testRun(void)
         bufUsedSet(buffer, bufSize(buffer));
         memset(bufPtr(buffer), 0, bufSize(buffer));
 
-        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0};
+        *(PageHeaderData *)(bufPtr(buffer) + (pgPageSize8 * 0x00)) = (PageHeaderData){.pd_upper = 0};
 
         Buffer *bufferOut = bufNew(513);
         IoWrite *write = ioBufferWriteNew(bufferOut);
         ioFilterGroupAdd(
             ioWriteFilterGroup(write),
-            pageChecksumNewPack(ioFilterParamList(pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, true, STRDEF(BOGUS_STR)))));
+            pageChecksumNewPack(
+                ioFilterParamList(pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, pgPageSize8, true, STRDEF(BOGUS_STR)))));
         ioWriteOpen(write);
         ioWrite(write, buffer);
         TEST_ERROR(ioWrite(write, buffer), AssertError, "should not be possible to see two misaligned pages in a row");
@@ -701,29 +704,29 @@ testRun(void)
         TEST_TITLE("retry a page with an invalid checksum");
 
         // Write to file with valid checksums
-        buffer = bufNew(PG_PAGE_SIZE_DEFAULT * 4);
+        buffer = bufNew(pgPageSize8 * 4);
         memset(bufPtr(buffer), 0, bufSize(buffer));
         bufUsedSet(buffer, bufSize(buffer));
 
-        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0x00};
-        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x01)) = (PageHeaderData){.pd_upper = 0xFF};
-        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x01)))->pd_checksum = pgPageChecksum(
-            bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x01), 1);
-        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x02)) = (PageHeaderData){.pd_upper = 0x00};
-        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x03)) = (PageHeaderData){.pd_upper = 0xFE};
-        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x03)))->pd_checksum = pgPageChecksum(
-            bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x03), 3);
+        *(PageHeaderData *)(bufPtr(buffer) + (pgPageSize8 * 0x00)) = (PageHeaderData){.pd_upper = 0x00};
+        *(PageHeaderData *)(bufPtr(buffer) + (pgPageSize8 * 0x01)) = (PageHeaderData){.pd_upper = 0xFF};
+        ((PageHeaderData *)(bufPtr(buffer) + (pgPageSize8 * 0x01)))->pd_checksum = pgPageChecksum(
+            bufPtr(buffer) + (pgPageSize8 * 0x01), 1, pgPageSize8);
+        *(PageHeaderData *)(bufPtr(buffer) + (pgPageSize8 * 0x02)) = (PageHeaderData){.pd_upper = 0x00};
+        *(PageHeaderData *)(bufPtr(buffer) + (pgPageSize8 * 0x03)) = (PageHeaderData){.pd_upper = 0xFE};
+        ((PageHeaderData *)(bufPtr(buffer) + (pgPageSize8 * 0x03)))->pd_checksum = pgPageChecksum(
+            bufPtr(buffer) + (pgPageSize8 * 0x03), 3, pgPageSize8);
 
         HRN_STORAGE_PUT(storageTest, "relation", buffer);
 
         // Now break the checksum to force a retry
-        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x01)))->pd_checksum = 0;
-        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x03)))->pd_checksum = 0;
+        ((PageHeaderData *)(bufPtr(buffer) + (pgPageSize8 * 0x01)))->pd_checksum = 0;
+        ((PageHeaderData *)(bufPtr(buffer) + (pgPageSize8 * 0x03)))->pd_checksum = 0;
 
         write = ioBufferWriteNew(bufferOut);
         ioFilterGroupAdd(
             ioWriteFilterGroup(write),
-            pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, true, storagePathP(storageTest, STRDEF("relation"))));
+            pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, pgPageSize8, true, storagePathP(storageTest, STRDEF("relation"))));
         ioWriteOpen(write);
         ioWrite(write, buffer);
         ioWriteClose(write);
@@ -1808,7 +1811,8 @@ testRun(void)
         unsigned int currentPercentComplete = 0;
 
         TEST_ERROR(
-            backupJobResult((Manifest *)1, NULL, storageTest, strLstNew(), job, false, 0, NULL, &currentPercentComplete),
+            backupJobResult(
+                (Manifest *)1, NULL, storageTest, strLstNew(), job, false, pgPageSize8, 0, NULL, &currentPercentComplete),
             AssertError, "error message");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1843,7 +1847,8 @@ testRun(void)
 
         TEST_RESULT_VOID(
             backupJobResult(
-                manifest, STRDEF("host"), storageTest, strLstNew(), job, false, 0, &sizeProgress, &currentPercentComplete),
+                manifest, STRDEF("host"), storageTest, strLstNew(), job, false, pgPageSize8, 0, &sizeProgress,
+                &currentPercentComplete),
             "log noop result");
         TEST_RESULT_VOID(lockRelease(true), "release backup lock");
 
@@ -2791,49 +2796,49 @@ testRun(void)
             HRN_SYSTEM_FMT("ln -s %s-data %s ", strZ(pg1Path), strZ(pg1Path));
 
             // Zeroed file which passes page checksums
-            Buffer *relation = bufNew(PG_PAGE_SIZE_DEFAULT * 2);
+            Buffer *relation = bufNew(pgPageSize8 * 2);
             memset(bufPtr(relation), 0, bufSize(relation));
             bufUsedSet(relation, bufSize(relation));
 
-            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0};
+            *(PageHeaderData *)(bufPtr(relation) + (pgPageSize8 * 0x00)) = (PageHeaderData){.pd_upper = 0};
 
             HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/1", relation, .timeModified = backupTimeStart);
 
             // File which will fail on alignment
-            relation = bufNew(PG_PAGE_SIZE_DEFAULT + 512);
+            relation = bufNew(pgPageSize8 + 512);
             memset(bufPtr(relation), 0, bufSize(relation));
             bufUsedSet(relation, bufSize(relation));
 
-            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0xFE};
-            ((PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x00)))->pd_checksum = pgPageChecksum(
-                bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x00), 0);
-            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x01)) = (PageHeaderData){.pd_upper = 0xFF};
+            *(PageHeaderData *)(bufPtr(relation) + (pgPageSize8 * 0x00)) = (PageHeaderData){.pd_upper = 0xFE};
+            ((PageHeaderData *)(bufPtr(relation) + (pgPageSize8 * 0x00)))->pd_checksum = pgPageChecksum(
+                bufPtr(relation) + (pgPageSize8 * 0x00), 0, pgPageSize8);
+            *(PageHeaderData *)(bufPtr(relation) + (pgPageSize8 * 0x01)) = (PageHeaderData){.pd_upper = 0xFF};
 
             HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation, .timeModified = backupTimeStart);
             const char *rel1_2Sha1 = strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, relation)));
 
             // File with bad page checksums
-            relation = bufNew(PG_PAGE_SIZE_DEFAULT * 5);
+            relation = bufNew(pgPageSize8 * 5);
             memset(bufPtr(relation), 0, bufSize(relation));
-            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0xFF};
-            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x01)) = (PageHeaderData){.pd_upper = 0x00};
-            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x02)) = (PageHeaderData){.pd_upper = 0xFE};
-            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x03)) = (PageHeaderData){.pd_upper = 0xEF};
-            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x04)) = (PageHeaderData){.pd_upper = 0x00};
-            (bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x04))[PG_PAGE_SIZE_DEFAULT - 1] = 0xFF;
+            *(PageHeaderData *)(bufPtr(relation) + (pgPageSize8 * 0x00)) = (PageHeaderData){.pd_upper = 0xFF};
+            *(PageHeaderData *)(bufPtr(relation) + (pgPageSize8 * 0x01)) = (PageHeaderData){.pd_upper = 0x00};
+            *(PageHeaderData *)(bufPtr(relation) + (pgPageSize8 * 0x02)) = (PageHeaderData){.pd_upper = 0xFE};
+            *(PageHeaderData *)(bufPtr(relation) + (pgPageSize8 * 0x03)) = (PageHeaderData){.pd_upper = 0xEF};
+            *(PageHeaderData *)(bufPtr(relation) + (pgPageSize8 * 0x04)) = (PageHeaderData){.pd_upper = 0x00};
+            (bufPtr(relation) + (pgPageSize8 * 0x04))[pgPageSize8 - 1] = 0xFF;
             bufUsedSet(relation, bufSize(relation));
 
             HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/3", relation, .timeModified = backupTimeStart);
             const char *rel1_3Sha1 = strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, relation)));
 
             // File with bad page checksum
-            relation = bufNew(PG_PAGE_SIZE_DEFAULT * 3);
+            relation = bufNew(pgPageSize8 * 3);
             memset(bufPtr(relation), 0, bufSize(relation));
-            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0x00};
-            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x01)) = (PageHeaderData){.pd_upper = 0x08};
-            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x02)) = (PageHeaderData){.pd_upper = 0xFF};
-            ((PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x02)))->pd_checksum = pgPageChecksum(
-                bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x02), 2);
+            *(PageHeaderData *)(bufPtr(relation) + (pgPageSize8 * 0x00)) = (PageHeaderData){.pd_upper = 0x00};
+            *(PageHeaderData *)(bufPtr(relation) + (pgPageSize8 * 0x01)) = (PageHeaderData){.pd_upper = 0x08};
+            *(PageHeaderData *)(bufPtr(relation) + (pgPageSize8 * 0x02)) = (PageHeaderData){.pd_upper = 0xFF};
+            ((PageHeaderData *)(bufPtr(relation) + (pgPageSize8 * 0x02)))->pd_checksum = pgPageChecksum(
+                bufPtr(relation) + (pgPageSize8 * 0x02), 2, pgPageSize8);
             bufUsedSet(relation, bufSize(relation));
 
             HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/4", relation, .timeModified = backupTimeStart);
@@ -3028,17 +3033,17 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // File with bad page checksum and header errors that will be ignored
-            Buffer *relation = bufNew(PG_PAGE_SIZE_DEFAULT * 4);
+            Buffer *relation = bufNew(pgPageSize8 * 4);
             memset(bufPtr(relation), 0, bufSize(relation));
-            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0xFF};
-            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x01)) = (PageHeaderData){.pd_upper = 0x00};
-            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x02)) = (PageHeaderData){.pd_upper = 0x00};
-            (bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x02))[PG_PAGE_SIZE_DEFAULT - 1] = 0xFF;
-            ((PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x02)))->pd_checksum = pgPageChecksum(
-                bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x02), 2);
-            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x03)) = (PageHeaderData){.pd_upper = 0x00};
-            (bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x03))[PG_PAGE_SIZE_DEFAULT - 1] = 0xEE;
-            ((PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x03)))->pd_checksum = 1;
+            *(PageHeaderData *)(bufPtr(relation) + (pgPageSize8 * 0x00)) = (PageHeaderData){.pd_upper = 0xFF};
+            *(PageHeaderData *)(bufPtr(relation) + (pgPageSize8 * 0x01)) = (PageHeaderData){.pd_upper = 0x00};
+            *(PageHeaderData *)(bufPtr(relation) + (pgPageSize8 * 0x02)) = (PageHeaderData){.pd_upper = 0x00};
+            (bufPtr(relation) + (pgPageSize8 * 0x02))[pgPageSize8 - 1] = 0xFF;
+            ((PageHeaderData *)(bufPtr(relation) + (pgPageSize8 * 0x02)))->pd_checksum = pgPageChecksum(
+                bufPtr(relation) + (pgPageSize8 * 0x02), 2, pgPageSize8);
+            *(PageHeaderData *)(bufPtr(relation) + (pgPageSize8 * 0x03)) = (PageHeaderData){.pd_upper = 0x00};
+            (bufPtr(relation) + (pgPageSize8 * 0x03))[pgPageSize8 - 1] = 0xEE;
+            ((PageHeaderData *)(bufPtr(relation) + (pgPageSize8 * 0x03)))->pd_checksum = 1;
             bufUsedSet(relation, bufSize(relation));
 
             HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/3", relation, .timeModified = backupTimeStart);
@@ -3046,7 +3051,7 @@ testRun(void)
 
             // File will be truncated during backup to show that actual file size is copied no matter what original size is. This
             // will also cause an alignment error.
-            Buffer *relationAfter = bufNew(PG_PAGE_SIZE_DEFAULT + 15);
+            Buffer *relationAfter = bufNew(pgPageSize8 + 15);
             memset(bufPtr(relationAfter), 0, bufSize(relationAfter));
             bufUsedSet(relationAfter, bufSize(relationAfter));
 
@@ -3180,14 +3185,14 @@ testRun(void)
                 .walSegmentSize = 1024 * 1024);
 
             // Set to a smaller values than the defaults allow
-            cfgOptionSet(cfgOptRepoBundleSize, cfgSourceParam, VARINT64(PG_PAGE_SIZE_DEFAULT));
-            cfgOptionSet(cfgOptRepoBundleLimit, cfgSourceParam, VARINT64(PG_PAGE_SIZE_DEFAULT));
+            cfgOptionSet(cfgOptRepoBundleSize, cfgSourceParam, VARINT64(pgPageSize8));
+            cfgOptionSet(cfgOptRepoBundleLimit, cfgSourceParam, VARINT64(pgPageSize8));
 
             // Zero-length file to be stored
             HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "zero", .timeModified = backupTimeStart);
 
             // Zeroed file which passes page checksums
-            Buffer *relation = bufNew(PG_PAGE_SIZE_DEFAULT * 3);
+            Buffer *relation = bufNew(pgPageSize8 * 3);
             memset(bufPtr(relation), 0, bufSize(relation));
             bufUsedSet(relation, bufSize(relation));
 
@@ -3198,7 +3203,7 @@ testRun(void)
             HRN_STORAGE_PUT_Z(storagePgWrite(), "stuff.conf", "CONFIGSTUFF3", .timeModified = 1500000000);
 
             // File that will get skipped while bundling smaller files and end up a bundle by itself
-            Buffer *bigish = bufNew(PG_PAGE_SIZE_DEFAULT - 1);
+            Buffer *bigish = bufNew(pgPageSize8 - 1);
             memset(bufPtr(bigish), 0, bufSize(bigish));
             bufUsedSet(bigish, bufSize(bigish));
 
@@ -3603,7 +3608,7 @@ testRun(void)
                 "P00   INFO: check archive for segment 0000000105DC213000000000\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-larger (1.4MB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (128KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/truncate-to-zero (bundle 1/0, 4B->0B, [PCT])\n"
+                "P01 DETAIL: store truncated file " TEST_PATH "/pg1/truncate-to-zero (4B->0B, [PCT])\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-to-block-incr (bundle 1/0, 16KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/16411, 8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/24603, 16.0KB, [PCT]) checksum [SHA1]\n"
@@ -3623,7 +3628,6 @@ testRun(void)
                 "bundle/1/pg_data/block-incr-shrink {file, s=16383}\n"
                 "bundle/1/pg_data/global/pg_control {file, s=8192}\n"
                 "bundle/1/pg_data/grow-to-block-incr {file, m=1:{0,1,2}, s=16385}\n"
-                "bundle/1/pg_data/truncate-to-zero {file, s=0}\n"
                 "pg_data {path}\n"
                 "pg_data/backup_label {file, s=17}\n"
                 "pg_data/block-incr-grow.pgbi {file, m=0:{0},1:{0},0:{2},1:{1,2,3,4,5,6,7,8,9,10,11,12,13}, s=131072}\n"
@@ -3905,7 +3909,8 @@ testRun(void)
             HRN_STORAGE_PATH_REMOVE(storageTest, "pg1", .recurse = true);
 
             // Update pg_control
-            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_11, .pageChecksum = true, .walSegmentSize = 2 * 1024 * 1024);
+            HRN_PG_CONTROL_PUT(
+                storagePgWrite(), PG_VERSION_11, .pageChecksum = true, .walSegmentSize = 2 * 1024 * 1024, .pageSize = pgPageSize4);
 
             // Update version
             HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_11_Z, .timeModified = backupTimeStart);
@@ -3925,13 +3930,13 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // File that will grow during the backup
-            Buffer *const fileGrow = bufNew(PG_PAGE_SIZE_DEFAULT * 4);
-            memset(bufPtr(fileGrow), 0, PG_PAGE_SIZE_DEFAULT * 3);
-            bufUsedSet(fileGrow, PG_PAGE_SIZE_DEFAULT * 3);
+            Buffer *const fileGrow = bufNew(pgPageSize4 * 4);
+            memset(bufPtr(fileGrow), 0, pgPageSize4 * 3);
+            bufUsedSet(fileGrow, pgPageSize4 * 3);
 
             HRN_STORAGE_PUT(storagePgWrite(), "global/1", fileGrow, .timeModified = backupTimeStart);
 
-            memset(bufPtr(fileGrow) + PG_PAGE_SIZE_DEFAULT * 3, 0xFF, PG_PAGE_SIZE_DEFAULT);
+            memset(bufPtr(fileGrow) + pgPageSize4 * 3, 0xFF, pgPageSize4);
             bufUsedSet(fileGrow, bufSize(fileGrow));
 
             // Also write a copy of it that will get a checksum error, just to be sure the read limit on global/1 is working
@@ -3947,15 +3952,15 @@ testRun(void)
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             // Make sure that global/1 grew as expected but the extra bytes were not copied
-            TEST_RESULT_UINT(storageInfoP(storagePgWrite(), STRDEF("global/1")).size, 32768, "check global/1 grew");
+            TEST_RESULT_UINT(storageInfoP(storagePgWrite(), STRDEF("global/1")).size, 16384, "check global/1 grew");
 
             TEST_RESULT_LOG(
                 "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DC9B4000000000, lsn = 5dc9b40/0\n"
                 "P00   INFO: check archive for segment 0000000105DC9B4000000000\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/2 (32KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/2 (16KB, [PCT]) checksum [SHA1]\n"
                 "P00   WARN: invalid page checksum found in file " TEST_PATH "/pg1/global/2 at page 3\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/1 (24KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/1 (12KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/0, 8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/8224, 2B, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
@@ -3977,8 +3982,8 @@ testRun(void)
                 "pg_data {path}\n"
                 "pg_data/backup_label {file, s=17}\n"
                 "pg_data/global {path}\n"
-                "pg_data/global/1 {file, s=24576}\n"
-                "pg_data/global/2 {file, s=32768}\n"
+                "pg_data/global/1 {file, s=12288}\n"
+                "pg_data/global/2 {file, s=16384}\n"
                 "pg_data/tablespace_map {file, s=19}\n"
                 "--------\n"
                 "[backup:target]\n"
@@ -3989,10 +3994,10 @@ testRun(void)
                 ",\"timestamp\":1573500000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"repo-size\":48,\"size\":17"
                 ",\"timestamp\":1573500002}\n"
-                "pg_data/global/1={\"checksum\":\"ebdd38b69cd5b9f2d00d273c981e16960fbbb4f7\",\"checksum-page\":true"
-                ",\"repo-size\":24608,\"size\":24576,\"timestamp\":1573500000}\n"
-                "pg_data/global/2={\"checksum\":\"bc807e211d8fe3b5c2f20a88d2a96257bc10ac44\",\"checksum-page\":false"
-                ",\"checksum-page-error\":[3],\"repo-size\":32800,\"size\":32768,\"timestamp\":1573500000}\n"
+                "pg_data/global/1={\"checksum\":\"7cb41fea50720b48be0c145e1473982b23e9ab77\",\"checksum-page\":true"
+                ",\"repo-size\":12320,\"size\":12288,\"timestamp\":1573500000}\n"
+                "pg_data/global/2={\"checksum\":\"02af87d042262a0313120317db0c285b3210209f\",\"checksum-page\":false"
+                ",\"checksum-page-error\":[3],\"repo-size\":16416,\"size\":16384,\"timestamp\":1573500000}\n"
                 "pg_data/global/pg_control={\"repo-size\":8224,\"size\":8192,\"timestamp\":1573500000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"repo-size\":48"
                 ",\"size\":19,\"timestamp\":1573500002}\n"
