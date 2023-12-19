@@ -1092,8 +1092,8 @@ testRun(void)
                     "[target:file]\n"
                     "pg_data/BOGUS={\"size\":6,\"timestamp\":1482182860}\n"
                     "pg_data/FILE3={\"reference\":\"20190101-010101F\",\"size\":0,\"timestamp\":1482182860}\n"
-                    "pg_data/FILE4={\"checksum\":\"ccccccccccaaaaaaaaaabbbbbbbbbbdddddddddd\",\"reference\":\"20190101-010101F\","
-                    "\"size\":55,\"timestamp\":1482182861}\n"
+                    "pg_data/FILE4={\"checksum\":\"ccccccccccaaaaaaaaaabbbbbbbbbbdddddddddd\",\"reference\":\"20190101-010101F\""
+                    ",\"size\":55,\"timestamp\":1482182861}\n"
                     "pg_data/PG_VERSION={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\""
                     ",\"reference\":\"20190101-010101F\",\"size\":4,\"timestamp\":1482182860}\n"
                     TEST_MANIFEST_FILE_DEFAULT
