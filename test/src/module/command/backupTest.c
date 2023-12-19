@@ -1246,6 +1246,27 @@ testRun(void)
             "check delta");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("diff/incr backup with identical data");
+
+        ioBufferSizeSet(3);
+
+        source = BUFSTRZ("ACCXYZ123@");
+        destination = bufNew(256);
+        write = ioBufferWriteNew(destination);
+
+        TEST_RESULT_VOID(
+            ioFilterGroupAdd(
+                ioWriteFilterGroup(write), blockIncrNewPack(ioFilterParamList(blockIncrNew(3, 3, 8, 3, 0, 0, map, NULL, NULL)))),
+            "block incr");
+        TEST_RESULT_VOID(ioWriteOpen(write), "open");
+        TEST_RESULT_VOID(ioWrite(write, source), "write");
+        TEST_RESULT_VOID(ioWriteClose(write), "close");
+
+        TEST_ASSIGN(mapSize, pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE)), "map size");
+        TEST_RESULT_UINT(mapSize, 0, "map size is zero");
+        TEST_RESULT_UINT(bufUsed(destination), 0, "repo size is zero");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("full backup with larger super block");
 
         ioBufferSizeSet(2);

@@ -380,6 +380,7 @@ backupFile(
                             }
                         }
 
+                        // Retrieve results unless file was unchanged
                         if (fileResult->backupCopyResult != backupCopyResultNoOp)
                         {
                             MEM_CONTEXT_BEGIN(lstMemContext(result))
@@ -412,6 +413,7 @@ backupFile(
                                     {
                                         fileResult->blockIncrMapSize = pckReadU64P(
                                             ioFilterGroupResultP(ioReadFilterGroup(readIo), BLOCK_INCR_FILTER_TYPE));
+                                        ASSERT(fileResult->blockIncrMapSize > 0);
                                     }
 
                                     // Get repo checksum
