@@ -1679,11 +1679,15 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                 // designated not to be copied at manifest build time, e.g. zero-length files when bundling.
                 if (file.copy)
                 {
+                    // If file size is equal to prior size then the file can be referenced instead of copied if it has not changed
+                    // (this must be determined during the backup).
+                    const bool fileEqual = file.size == filePrior.size;
+
                     // Perform delta if enabled and file size is equal to prior but not zero. Files of unequal length are always
                     // different while zero-length files are always the same, so it wastes time to check them. It is possible for
                     // a file to be truncated down to equal the prior file during backup, but the overhead of checking for such an
                     // unlikely event does not seem worth the possible space saved.
-                    file.delta = delta && file.size != 0 && file.size == filePrior.size;
+                    file.delta = delta && fileEqual && file.size != 0;
 
                     // Do not copy if size and prior size are both zero. Zero-length files are always equal so the file can simply
                     // be referenced to the prior file. Note that this is only for the case where zero-length files are being
@@ -1692,23 +1696,23 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                     if (file.size == 0 && filePrior.size == 0)
                         file.copy = false;
 
-                    // If delta is disabled and size/timestamp are equal then the file does not need be copied
-                    if (!file.delta && file.size == filePrior.size && file.timestamp == filePrior.timestamp)
+                    // If delta is disabled and size/timestamp are equal then the file is not copied
+                    if (!file.delta && fileEqual && file.timestamp == filePrior.timestamp)
                         file.copy = false;
 
-                    // Transfer values from prior file if can (possibly) be preserved or if prior file is stored with block
-                    // incremental. Continue to use block incremental with the same values, except in the case where the file size
-                    // is now a single block or less.
+                    // Transfer values from prior file if can (possibly) be equal or if prior file is stored with block incremental.
+                    // Continue to use block incremental with the same values, except in the case where the file size is now a
+                    // single block or less.
                     ASSERT(file.copy || !file.delta);
                     ASSERT(file.copy || filePrior.size == file.size);
                     ASSERT(!file.delta || filePrior.size == file.size);
 
-                    if (!file.copy || file.delta || (filePrior.blockIncrMapSize > 0 && file.size > filePrior.blockIncrSize))
+                    if (fileEqual || (filePrior.blockIncrMapSize > 0 && file.size > filePrior.blockIncrSize))
                     {
                         ASSERT(filePrior.blockIncrMapSize > 0 || filePrior.size == file.size);
 
-                        // Only required when the file is (possibly) preserved
-                        if (!file.copy || file.delta)
+                        // Only required when the file is (possibly) equal
+                        if (fileEqual)
                         {
                             file.checksumSha1 = filePrior.checksumSha1;
                             file.checksumRepoSha1 = filePrior.checksumRepoSha1;
@@ -1723,7 +1727,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                                 (file.checksumPage && file.checksumPageError));
                         }
 
-                        // Required when the file is (possibly) preserved or block incremental
+                        // Required when the file is (possibly) equal or block incremental
                         file.sizeRepo = filePrior.sizeRepo;
                         file.reference =
                             filePrior.reference != NULL ? filePrior.reference : manifestPrior->pub.data.backupLabel;
