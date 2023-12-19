@@ -1730,7 +1730,6 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                     // with block incremental (so this file will also be stored with block incremental)
                     if (file.equal || filePrior.blockIncrMapSize > 0)
                     {
-
                         file.sizeRepo = filePrior.sizeRepo;
                         file.reference =
                             filePrior.reference != NULL ? filePrior.reference : manifestPrior->pub.data.backupLabel;
