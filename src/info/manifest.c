@@ -1675,7 +1675,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
             {
                 const ManifestFile filePrior = manifestFileFind(manifestPrior, file.name);
 
-                // If the file will be copied then transfer values from the prior file when needed. Some files may have been
+                // If the file will be copied then preserve values from the prior file when needed. Some files may have been
                 // designated not to be copied at manifest build time, e.g. zero-length files when bundling.
                 if (file.copy)
                 {
@@ -1700,34 +1700,32 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                     if (!file.delta && fileEqual && file.timestamp == filePrior.timestamp)
                         file.copy = false;
 
-                    // Transfer values from prior file if can (possibly) be equal or if prior file is stored with block incremental.
-                    // Continue to use block incremental with the same values, except in the case where the file size is now a
-                    // single block or less.
                     ASSERT(file.copy || !file.delta);
-                    ASSERT(file.copy || filePrior.size == file.size);
-                    ASSERT(!file.delta || filePrior.size == file.size);
+                    ASSERT(file.copy || fileEqual);
+                    ASSERT(!file.delta || fileEqual);
 
-                    if (fileEqual || (filePrior.blockIncrMapSize > 0 && file.size > filePrior.blockIncrSize))
+                    // Preserve values needed to determine file equality if the file is (possibly) equal. If the file is not copied
+                    // then infer equality from comparing file size and timestamp.
+                    if (fileEqual)
                     {
-                        ASSERT(filePrior.blockIncrMapSize > 0 || filePrior.size == file.size);
+                        file.checksumSha1 = filePrior.checksumSha1;
+                        file.checksumRepoSha1 = filePrior.checksumRepoSha1;
+                        file.checksumPage = filePrior.checksumPage;
+                        file.checksumPageError = filePrior.checksumPageError;
+                        file.checksumPageErrorList = filePrior.checksumPageErrorList;
 
-                        // Only required when the file is (possibly) equal
-                        if (fileEqual)
-                        {
-                            file.checksumSha1 = filePrior.checksumSha1;
-                            file.checksumRepoSha1 = filePrior.checksumRepoSha1;
-                            file.checksumPage = filePrior.checksumPage;
-                            file.checksumPageError = filePrior.checksumPageError;
-                            file.checksumPageErrorList = filePrior.checksumPageErrorList;
+                        ASSERT(file.checksumSha1 != NULL);
+                        ASSERT(
+                            (!file.checksumPage && !file.checksumPageError && file.checksumPageErrorList == NULL) ||
+                            (file.checksumPage && !file.checksumPageError && file.checksumPageErrorList == NULL) ||
+                            (file.checksumPage && file.checksumPageError));
+                    }
 
-                            ASSERT(file.checksumSha1 != NULL);
-                            ASSERT(
-                                (!file.checksumPage && !file.checksumPageError && file.checksumPageErrorList == NULL) ||
-                                (file.checksumPage && !file.checksumPageError && file.checksumPageErrorList == NULL) ||
-                                (file.checksumPage && file.checksumPageError));
-                        }
+                    // Preserve values needed to determine file equality if the file is (possibly) equal or if prior file is stored
+                    // with block incremental (so this file will also be stored with block incremental)
+                    if (fileEqual || filePrior.blockIncrMapSize > 0)
+                    {
 
-                        // Required when the file is (possibly) equal or prior file is stored with block incremental
                         file.sizeRepo = filePrior.sizeRepo;
                         file.reference =
                             filePrior.reference != NULL ? filePrior.reference : manifestPrior->pub.data.backupLabel;
