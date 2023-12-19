@@ -1390,7 +1390,8 @@ testRun(void)
                     "pg_data/block-incr-add={\"bi\":1,\"size\":6,\"timestamp\":1482182861}\n"
                     "pg_data/block-incr-keep-size={\"bi\":1,\"bim\":31,\"reference\":\"20190101-010101F\",\"repo-size\":4"
                     ",\"size\":8193,\"timestamp\":1482182861}\n"
-                    "pg_data/block-incr-sub={\"size\":6,\"timestamp\":1482182861}\n"
+                    "pg_data/block-incr-sub={\"bi\":1,\"bic\":1,\"bim\":66,\"reference\":\"20190101-010101F\",\"repo-size\":4"
+                    ",\"size\":6,\"timestamp\":1482182861}\n"
                     TEST_MANIFEST_FILE_DEFAULT
                     "\n"
                     "[target:path]\n"
