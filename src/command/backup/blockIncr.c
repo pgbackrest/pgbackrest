@@ -232,8 +232,10 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
             this->blockMapWrite = true;
         }
 
-        // Write the block map if done processing and there are new/changed blocks
-        if (this->done && this->blockOutOffset == 0 && this->blockMapWrite)
+        // Write the block map if done processing and there are new/changed blocks or block list has been truncated
+        if (this->done && this->blockOutOffset == 0 &&
+            (this->blockMapWrite ||
+             (this->blockMapPrior != NULL && blockMapSize(this->blockMapOut) < blockMapSize(this->blockMapPrior))))
         {
             MEM_CONTEXT_TEMP_BEGIN()
             {
