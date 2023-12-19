@@ -1727,7 +1727,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                                 (file.checksumPage && file.checksumPageError));
                         }
 
-                        // Required when the file is (possibly) equal or block incremental
+                        // Required when the file is (possibly) equal or prior file is stored with block incremental
                         file.sizeRepo = filePrior.sizeRepo;
                         file.reference =
                             filePrior.reference != NULL ? filePrior.reference : manifestPrior->pub.data.backupLabel;
