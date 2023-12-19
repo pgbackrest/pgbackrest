@@ -1688,11 +1688,19 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                     // (this must be determined during the backup).
                     file.equal = file.size == filePrior.size;
 
-                    // Perform delta if enabled and file size is equal to prior but not zero. Files of unequal length are always
-                    // different while zero-length files are always the same, so it wastes time to check them. It is possible for
-                    // a file to be truncated down to equal the prior file during backup, but the overhead of checking for such an
-                    // unlikely event does not seem worth the possible space saved.
-                    file.delta = delta && file.equal && file.size != 0;
+                    // If prior file was stored with block incremental then also store this file with block incremental. This rule
+                    // is currently pretty simple but more complex rules may be used in the future.
+                    const bool fileBlockIncrPreserve = filePrior.blockIncrMapSize > 0;
+
+                    // Perform delta if enabled, file size is equal to prior but not zero, and block incremental is not preserved.
+                    // Files of unequal length are always different while zero-length files are always the same, so it wastes time
+                    // to check them. Delta is not required when block incremental is preserved since the file can be compared
+                    // against the prior map, and if there are changed blocks they can immediately be compressed and stored. This
+                    // saves scanning the file twice in the case where it is not equal to the prior file.
+                    //
+                    // It is possible for a file to be truncated down to equal the prior file during backup, but the overhead of
+                    // checking for such an unlikely event does not seem worth the possible space saved.
+                    file.delta = delta && file.equal && file.size != 0 && !fileBlockIncrPreserve;
 
                     // Do not copy if size and prior size are both zero. Zero-length files are always equal so the file can simply
                     // be referenced to the prior file. Note that this is only for the case where zero-length files are being
@@ -1727,8 +1735,8 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                     }
 
                     // Preserve values needed to determine file equality if the file is (possibly) equal or if prior file is stored
-                    // with block incremental (so this file will also be stored with block incremental)
-                    if (file.equal || filePrior.blockIncrMapSize > 0)
+                    // with block incremental (and this file will also be stored with block incremental)
+                    if (file.equal || fileBlockIncrPreserve)
                     {
                         file.sizeRepo = filePrior.sizeRepo;
                         file.reference =
