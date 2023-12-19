@@ -1172,6 +1172,8 @@ testRun(void)
         write = ioBufferWriteNew(destination);
 
         TEST_RESULT_VOID(
+            ioFilterGroupAdd(ioWriteFilterGroup(write), ioBufferNew()), "buffer to force internal buffer size");
+        TEST_RESULT_VOID(
             ioFilterGroupAdd(
                 ioWriteFilterGroup(write),
                 blockIncrNewPack(ioFilterParamList(blockIncrNew(2, 3, 8, 2, 4, 5, NULL, NULL, NULL)))),
@@ -1212,6 +1214,8 @@ testRun(void)
         destination = bufNew(256);
         write = ioBufferWriteNew(destination);
 
+        TEST_RESULT_VOID(
+            ioFilterGroupAdd(ioWriteFilterGroup(write), ioBufferNew()), "buffer to force internal buffer size");
         TEST_RESULT_VOID(
             ioFilterGroupAdd(
                 ioWriteFilterGroup(write), blockIncrNewPack(ioFilterParamList(blockIncrNew(3, 3, 8, 3, 0, 0, map, NULL, NULL)))),
@@ -1254,6 +1258,8 @@ testRun(void)
         destination = bufNew(256);
         write = ioBufferWriteNew(destination);
 
+        TEST_RESULT_VOID(
+            ioFilterGroupAdd(ioWriteFilterGroup(write), ioBufferNew()), "buffer to force internal buffer size");
         TEST_RESULT_VOID(
             ioFilterGroupAdd(
                 ioWriteFilterGroup(write), blockIncrNewPack(ioFilterParamList(blockIncrNew(6, 3, 8, 2, 4, 5, NULL, NULL, NULL)))),
