@@ -1,5 +1,19 @@
 <release date="XXXX-XX-XX" version="2.50dev" title="Under Development">
     <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <github-issue id="2251"/>
+                <github-pull-request id="2252"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="robert.donovan"/>
+                    <release-item-reviewer id="joe.wildish"/>
+                </release-item-contributor-list>
+
+                <p>Fix overflow suppressing backup progress in <cmd>info</cmd> output.</p>
+            </release-item>
+        </release-bug-list>
+
         <release-improvement-list>
             <release-item>
                 <github-pull-request id="2197"/>
