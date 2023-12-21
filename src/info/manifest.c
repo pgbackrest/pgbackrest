@@ -1683,9 +1683,10 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                     // (this must be determined during the backup).
                     const bool fileEqual = file.size == filePrior.size;
 
-                    // If prior file was stored with block incremental then also store this file with block incremental. This rule
-                    // is currently pretty simple but more complex rules may be used in the future.
-                    const bool fileBlockIncrPreserve = filePrior.blockIncrMapSize > 0;
+                    // If prior file was stored with block incremental and this file will use block incremental then preserve the
+                    // prior value. It is not possible to change the block size in a backup set and the map info will be required to
+                    // compare against the prior block incremental.
+                    const bool fileBlockIncrPreserve = filePrior.blockIncrMapSize > 0 && file.blockIncrSize > 0;
 
                     // Perform delta if enabled and file size is equal to prior but not zero. Files of unequal length are always
                     // different while zero-length files are always the same, so it wastes time to check them. It is possible for
@@ -1708,36 +1709,28 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                     ASSERT(file.copy || fileEqual);
                     ASSERT(!file.delta || fileEqual);
 
-                    // Preserve values needed to determine file equality if the file is (possibly) equal. If the file is not copied
-                    // then infer equality from comparing file size and timestamp.
-                    if (fileEqual)
+                    // Preserve values if the file will not be copied, is possibly equal to the prior file, or will be stored with
+                    // block incremental and the prior file is also stored with block incremental
+                    if (!file.copy || file.delta || fileBlockIncrPreserve)
                     {
+                        file.sizeRepo = filePrior.sizeRepo;
                         file.checksumSha1 = filePrior.checksumSha1;
                         file.checksumRepoSha1 = filePrior.checksumRepoSha1;
+                        file.reference = filePrior.reference != NULL ? filePrior.reference : manifestPrior->pub.data.backupLabel;
                         file.checksumPage = filePrior.checksumPage;
                         file.checksumPageError = filePrior.checksumPageError;
                         file.checksumPageErrorList = filePrior.checksumPageErrorList;
-
-                        ASSERT(file.checksumSha1 != NULL);
-                        ASSERT(
-                            (!file.checksumPage && !file.checksumPageError && file.checksumPageErrorList == NULL) ||
-                            (file.checksumPage && !file.checksumPageError && file.checksumPageErrorList == NULL) ||
-                            (file.checksumPage && file.checksumPageError));
-                    }
-
-                    // Preserve values needed to determine file equality if the file is (possibly) equal or if prior file is stored
-                    // with block incremental (and this file will also be stored with block incremental)
-                    if (fileEqual || fileBlockIncrPreserve)
-                    {
-                        file.sizeRepo = filePrior.sizeRepo;
-                        file.reference =
-                            filePrior.reference != NULL ? filePrior.reference : manifestPrior->pub.data.backupLabel;
                         file.bundleId = filePrior.bundleId;
                         file.bundleOffset = filePrior.bundleOffset;
                         file.blockIncrSize = filePrior.blockIncrSize;
                         file.blockIncrChecksumSize = filePrior.blockIncrChecksumSize;
                         file.blockIncrMapSize = filePrior.blockIncrMapSize;
 
+                        ASSERT(file.checksumSha1 != NULL);
+                        ASSERT(
+                            (!file.checksumPage && !file.checksumPageError && file.checksumPageErrorList == NULL) ||
+                            (file.checksumPage && !file.checksumPageError && file.checksumPageErrorList == NULL) ||
+                            (file.checksumPage && file.checksumPageError));
                         ASSERT(file.size == 0 || file.sizeRepo != 0);
                         ASSERT(file.reference != NULL);
                         ASSERT(file.bundleId != 0 || file.bundleOffset == 0);
