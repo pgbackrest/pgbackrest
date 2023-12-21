@@ -1421,6 +1421,7 @@ backupJobResult(
             {
                 ManifestFile file = manifestFileFind(manifest, pckReadStrP(jobResult));
                 const BackupCopyResult copyResult = (BackupCopyResult)pckReadU32P(jobResult);
+                const bool repoInvalid = pckReadBoolP(jobResult);
                 const uint64_t copySize = pckReadU64P(jobResult);
                 const uint64_t bundleOffset = pckReadU64P(jobResult);
                 const uint64_t blockIncrMapSize = pckReadU64P(jobResult);
@@ -1482,8 +1483,10 @@ backupJobResult(
                     // If the file had to be recopied then warn that there may be an issue with corruption in the repository
                     // ??? This should really be below the message below for more context -- can be moved after the migration
                     // ??? The name should be a pg path not manifest name -- can be fixed after the migration
-                    if (copyResult == backupCopyResultReCopy)
+                    if (repoInvalid)
                     {
+                        ASSERT(copyResult == backupCopyResultCopy);
+
                         LOG_WARN_FMT(
                             "resumed backup file %s does not have expected checksum %s. The file will be recopied and backup will"
                             " continue but this may be an issue unless the resumed backup path in the repository is known to be"

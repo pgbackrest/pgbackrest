@@ -168,9 +168,9 @@ backupFile(
                             }
                             MEM_CONTEXT_END();
                         }
-                        // Else recopy when repo file is not as expected
+                        // Else copy when repo file is invalid
                         else
-                            fileResult->backupCopyResult = backupCopyResultReCopy;
+                            fileResult->repoInvalid = true;
                     }
                 }
             }
@@ -192,7 +192,7 @@ backupFile(
                 const BackupFile *const file = lstGet(fileList, fileIdx);
                 BackupFileResult *const fileResult = lstGet(result, fileIdx);
 
-                if (fileResult->backupCopyResult == backupCopyResultCopy || fileResult->backupCopyResult == backupCopyResultReCopy)
+                if (fileResult->backupCopyResult == backupCopyResultCopy)
                 {
                     // Setup pg file for read. Only read as many bytes as passed in pgFileSize. If the file is growing it does no
                     // good to copy data past the end of the size recorded in the manifest since those blocks will need to be

@@ -16,7 +16,6 @@ typedef enum
 {
     backupCopyResultChecksum,
     backupCopyResultCopy,
-    backupCopyResultReCopy,
     backupCopyResultSkip,
     backupCopyResultNoOp,
     backupCopyResultTruncate,
@@ -53,6 +52,7 @@ typedef struct BackupFileResult
 {
     const String *manifestFile;                                     // Manifest file
     BackupCopyResult backupCopyResult;
+    bool repoInvalid;                                               // File was recopied because repo file was invalid
     uint64_t copySize;
     Buffer *copyChecksum;
     Buffer *repoChecksum;                                           // Checksum repo file (including compression, etc.)
