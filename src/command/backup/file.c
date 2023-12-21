@@ -321,7 +321,7 @@ backupFile(
                                 fileResult->backupCopyResult = backupCopyResultTruncate;
                             }
                             // Else check if size is equal to prior size
-                            else if (file->manifestFileHasReference && (int64_t)fileResult->copySize == file->pgFileSizePrior)
+                            else if (file->manifestFileHasReference && fileResult->copySize == file->pgFileSizePrior)
                             {
                                 MEM_CONTEXT_OBJ_BEGIN(result)
                                 {
