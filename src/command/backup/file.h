@@ -16,7 +16,6 @@ typedef enum
 {
     backupCopyResultChecksum,
     backupCopyResultCopy,
-    backupCopyResultReCopy,
     backupCopyResultSkip,
     backupCopyResultNoOp,
     backupCopyResultTruncate,
@@ -29,7 +28,6 @@ Functions
 typedef struct BackupFile
 {
     const String *pgFile;                                           // Pg file to backup
-    bool pgFileEqual;                                               // Pg file size is equal to prior size
     bool pgFileDelta;                                               // Checksum pg file before copying
     bool pgFileIgnoreMissing;                                       // Ignore missing pg file
     uint64_t pgFileSize;                                            // Expected pg file size
@@ -54,6 +52,7 @@ typedef struct BackupFileResult
 {
     const String *manifestFile;                                     // Manifest file
     BackupCopyResult backupCopyResult;
+    bool repoInvalid;                                               // File was recopied because repo file was invalid
     uint64_t copySize;
     Buffer *copyChecksum;
     Buffer *repoChecksum;                                           // Checksum repo file (including compression, etc.)

@@ -16,6 +16,17 @@
 
         <release-improvement-list>
             <release-item>
+                <github-pull-request id="2254"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Preserve partial files during block incremental delta restore.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2197"/>
 
                 <release-item-contributor-list>
@@ -37,5 +48,18 @@
                 <p>Skip files truncated during backup when bundling.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <github-pull-request id="2253"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Refactor backup incremental manifest generation.</p>
+            </release-item>
+        </release-development-list>
     </release-core-list>
 </release>

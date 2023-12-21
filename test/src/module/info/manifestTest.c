@@ -1109,16 +1109,6 @@ testRun(void)
         manifest->pub.data.backupOptionDelta = BOOL_TRUE_VAR;
         strLstAddZ(manifestPrior->pub.referenceList, "20190101-010101F_20190202-010101D");
         lstClear(manifest->pub.fileList);
-
-        // Prior file is block incr so delta not required
-        HRN_MANIFEST_FILE_ADD(
-            manifest, .name = MANIFEST_TARGET_PGDATA "/block-incr-preserve", .copy = true, .size = 4,
-            .blockIncrSize = 16384, .blockIncrChecksumSize = 7, .timestamp = 1482182861, .group = "test", .user = "test");
-        HRN_MANIFEST_FILE_ADD(
-            manifestPrior, .name = MANIFEST_TARGET_PGDATA "/block-incr-preserve", .size = 4, .sizeRepo = 30,
-            .timestamp = 1482182860, .blockIncrSize = 8192, .blockIncrMapSize = 22, .blockIncrChecksumSize = 6,
-            .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa");
-
         HRN_MANIFEST_FILE_ADD(
             manifest, .name = MANIFEST_TARGET_PGDATA "/FILE1", .copy = true, .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
             .group = "test", .user = "test");
@@ -1168,18 +1158,12 @@ testRun(void)
                     ",\"reference\":\"20190101-010101F_20190202-010101D\",\"size\":4,\"timestamp\":1482182860}\n"
                     "pg_data/PG_VERSION={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\""
                     ",\"reference\":\"20190101-010101F\",\"size\":4,\"timestamp\":1482182860}\n"
-                    "pg_data/block-incr-preserve={\"bi\":1,\"bim\":22,\"checksum\":\"ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa\""
-                    ",\"reference\":\"20190101-010101F\",\"repo-size\":30,\"size\":4,\"timestamp\":1482182861}\n"
                     TEST_MANIFEST_FILE_DEFAULT
                     "\n"
                     "[target:path]\n"
                     "pg_data={}\n"
                     TEST_MANIFEST_PATH_DEFAULT)),
             "check manifest");
-
-        TEST_RESULT_BOOL(
-            manifestFileFind(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/block-incr-preserve")).delta, false, "no delta for bi");
-        TEST_RESULT_BOOL(manifestFileFind(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/FILE1")).delta, true, "delta for normal file");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("delta enabled by timestamp validation and copy checksum error");
@@ -1404,10 +1388,9 @@ testRun(void)
                     "\n"
                     "[target:file]\n"
                     "pg_data/block-incr-add={\"bi\":1,\"size\":6,\"timestamp\":1482182861}\n"
-                    "pg_data/block-incr-keep-size={\"bi\":1,\"bim\":31,\"reference\":\"20190101-010101F\",\"repo-size\":4"
-                    ",\"size\":8193,\"timestamp\":1482182861}\n"
-                    "pg_data/block-incr-sub={\"bi\":1,\"bic\":1,\"bim\":66,\"reference\":\"20190101-010101F\",\"repo-size\":4"
-                    ",\"size\":6,\"timestamp\":1482182861}\n"
+                    "pg_data/block-incr-keep-size={\"bi\":1,\"bim\":31,\"checksum\":\"ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa\""
+                    ",\"reference\":\"20190101-010101F\",\"repo-size\":4,\"size\":16384,\"szo\":8193,\"timestamp\":1482182861}\n"
+                    "pg_data/block-incr-sub={\"size\":6,\"timestamp\":1482182861}\n"
                     TEST_MANIFEST_FILE_DEFAULT
                     "\n"
                     "[target:path]\n"

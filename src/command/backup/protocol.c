@@ -45,7 +45,6 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
         while (!pckReadNullP(param))
         {
             BackupFile file = {.pgFile = pckReadStrP(param)};
-            file.pgFileEqual = pckReadBoolP(param);
             file.pgFileDelta = pckReadBoolP(param);
             file.pgFileIgnoreMissing = pckReadBoolP(param);
             file.pgFileSize = pckReadU64P(param);
@@ -91,6 +90,7 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
 
             pckWriteStrP(resultPack, fileResult->manifestFile);
             pckWriteU32P(resultPack, fileResult->backupCopyResult);
+            pckWriteBoolP(resultPack, fileResult->repoInvalid);
             pckWriteU64P(resultPack, fileResult->copySize);
             pckWriteU64P(resultPack, fileResult->bundleOffset);
             pckWriteU64P(resultPack, fileResult->blockIncrMapSize);

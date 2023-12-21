@@ -3081,8 +3081,9 @@ testRun(void)
         const String *pgPath = STRDEF(TEST_PATH "/pg");
         const String *repoPath = STRDEF(TEST_PATH "/repo");
 
-        // Created pg_control
+        // Created pg_control and PG_VERSION
         HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_15, .pageChecksum = false);
+        HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_15_Z);
 
         // Create encrypted stanza
         StringList *argList = strLstNew();
@@ -3172,6 +3173,7 @@ testRun(void)
 
         TEST_STORAGE_LIST(
             storagePg(), NULL,
+            "PG_VERSION\n"
             "base/\n"
             "base/1/\n"
             "base/1/2\n"
@@ -3180,6 +3182,46 @@ testRun(void)
             "global/pg_control\n"
             "postgresql.auto.conf\n",
             .level = storageInfoLevelType);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("delta restore with block incr");
+
+        // Use detail log level to catch block incremental restore message
+        harnessLogLevelSet(logLevelDetail);
+
+        // Shrink file to make sure block incremental delta will reuse it
+        relation = bufNew(128 * 1024);
+        memset(bufPtr(relation), 0, bufSize(relation));
+        bufUsedSet(relation, bufSize(relation));
+
+        HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation);
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH "/spool");
+        hrnCfgArgRawBool(argList, cfgOptDelta, true);
+        hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
+        hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        TEST_RESULT_VOID(cmdRestore(), "restore");
+
+        TEST_STORAGE_LIST(
+            storagePg(), NULL,
+            "PG_VERSION\n"
+            "base/\n"
+            "base/1/\n"
+            "base/1/2\n"
+            "base/1/3\n"
+            "global/\n"
+            "global/pg_control\n"
+            "postgresql.auto.conf\n",
+            .level = storageInfoLevelType);
+
+        // Check that file was restored to full size with a partial write
+        TEST_RESULT_LOG_EMPTY_OR_CONTAINS(", bi 128KB/256KB, ");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

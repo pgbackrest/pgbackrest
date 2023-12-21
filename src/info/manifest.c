@@ -103,7 +103,6 @@ typedef enum
     manifestFilePackFlagBundle,
     manifestFilePackFlagBlockIncr,
     manifestFilePackFlagCopy,
-    manifestFilePackFlagEqual,
     manifestFilePackFlagDelta,
     manifestFilePackFlagResume,
     manifestFilePackFlagChecksumPage,
@@ -143,9 +142,6 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
 
     if (file->copy)
         flag |= 1 << manifestFilePackFlagCopy;
-
-    if (file->equal)
-        flag |= 1 << manifestFilePackFlagEqual;
 
     if (file->delta)
         flag |= 1 << manifestFilePackFlagDelta;
@@ -314,7 +310,6 @@ manifestFileUnpack(const Manifest *const manifest, const ManifestFilePack *const
     const uint64_t flag = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
 
     result.copy = (flag >> manifestFilePackFlagCopy) & 1;
-    result.equal = (flag >> manifestFilePackFlagEqual) & 1;
     result.delta = (flag >> manifestFilePackFlagDelta) & 1;
     result.resume = (flag >> manifestFilePackFlagResume) & 1;
 
@@ -1686,21 +1681,18 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                 {
                     // If file size is equal to prior size then the file can be referenced instead of copied if it has not changed
                     // (this must be determined during the backup).
-                    file.equal = file.size == filePrior.size;
+                    const bool fileSizeEqual = file.size == filePrior.size;
 
-                    // If prior file was stored with block incremental then also store this file with block incremental. This rule
-                    // is currently pretty simple but more complex rules may be used in the future.
-                    const bool fileBlockIncrPreserve = filePrior.blockIncrMapSize > 0;
+                    // !!! If prior file was stored with block incremental and this file will use block incremental then preserve the
+                    // prior value. It is not possible to change the block size in a backup set and the map info will be required to
+                    // compare against the prior block incremental.
+                    const bool fileBlockIncrPreserve = filePrior.blockIncrMapSize > 0 && file.size >= filePrior.blockIncrSize;
 
-                    // Perform delta if enabled, file size is equal to prior but not zero, and block incremental is not preserved.
-                    // Files of unequal length are always different while zero-length files are always the same, so it wastes time
-                    // to check them. Delta is not required when block incremental is preserved since the file can be compared
-                    // against the prior map, and if there are changed blocks they can immediately be compressed and stored. This
-                    // saves scanning the file twice in the case where it is not equal to the prior file.
-                    //
-                    // It is possible for a file to be truncated down to equal the prior file during backup, but the overhead of
-                    // checking for such an unlikely event does not seem worth the possible space saved.
-                    file.delta = delta && file.equal && file.size != 0 && !fileBlockIncrPreserve;
+                    // Perform delta if enabled and file size is equal to prior but not zero. Files of unequal length are always
+                    // different while zero-length files are always the same, so it wastes time to check them. It is possible for
+                    // a file to be truncated down to equal the prior file during backup, but the overhead of checking for such an
+                    // unlikely event does not seem worth the possible space saved.
+                    file.delta = delta && fileSizeEqual && file.size != 0;
 
                     // Do not copy if size and prior size are both zero. Zero-length files are always equal so the file can simply
                     // be referenced to the prior file. Note that this is only for the case where zero-length files are being
@@ -1710,43 +1702,36 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                         file.copy = false;
 
                     // If delta is disabled and size/timestamp are equal then the file is not copied
-                    if (!file.delta && file.equal && file.timestamp == filePrior.timestamp)
+                    if (!file.delta && fileSizeEqual && file.timestamp == filePrior.timestamp)
                         file.copy = false;
 
                     ASSERT(file.copy || !file.delta);
-                    ASSERT(file.copy || file.equal);
-                    ASSERT(!file.delta || file.equal);
+                    ASSERT(file.copy || fileSizeEqual);
+                    ASSERT(!file.delta || fileSizeEqual);
 
-                    // Preserve values needed to determine file equality if the file is (possibly) equal. If the file is not copied
-                    // then infer equality from comparing file size and timestamp.
-                    if (file.equal)
+                    // Preserve values if the file will not be copied, is possibly equal to the prior file, or will be stored with
+                    // block incremental and the prior file is also stored with block incremental
+                    if (fileSizeEqual || fileBlockIncrPreserve)
                     {
+                        file.size = filePrior.size;
+                        file.sizeRepo = filePrior.sizeRepo;
                         file.checksumSha1 = filePrior.checksumSha1;
                         file.checksumRepoSha1 = filePrior.checksumRepoSha1;
+                        file.reference = filePrior.reference != NULL ? filePrior.reference : manifestPrior->pub.data.backupLabel;
                         file.checksumPage = filePrior.checksumPage;
                         file.checksumPageError = filePrior.checksumPageError;
                         file.checksumPageErrorList = filePrior.checksumPageErrorList;
-
-                        ASSERT(file.checksumSha1 != NULL);
-                        ASSERT(
-                            (!file.checksumPage && !file.checksumPageError && file.checksumPageErrorList == NULL) ||
-                            (file.checksumPage && !file.checksumPageError && file.checksumPageErrorList == NULL) ||
-                            (file.checksumPage && file.checksumPageError));
-                    }
-
-                    // Preserve values needed to determine file equality if the file is (possibly) equal or if prior file is stored
-                    // with block incremental (and this file will also be stored with block incremental)
-                    if (file.equal || fileBlockIncrPreserve)
-                    {
-                        file.sizeRepo = filePrior.sizeRepo;
-                        file.reference =
-                            filePrior.reference != NULL ? filePrior.reference : manifestPrior->pub.data.backupLabel;
                         file.bundleId = filePrior.bundleId;
                         file.bundleOffset = filePrior.bundleOffset;
                         file.blockIncrSize = filePrior.blockIncrSize;
                         file.blockIncrChecksumSize = filePrior.blockIncrChecksumSize;
                         file.blockIncrMapSize = filePrior.blockIncrMapSize;
 
+                        ASSERT(file.checksumSha1 != NULL);
+                        ASSERT(
+                            (!file.checksumPage && !file.checksumPageError && file.checksumPageErrorList == NULL) ||
+                            (file.checksumPage && !file.checksumPageError && file.checksumPageErrorList == NULL) ||
+                            (file.checksumPage && file.checksumPageError));
                         ASSERT(file.size == 0 || file.sizeRepo != 0);
                         ASSERT(file.reference != NULL);
                         ASSERT(file.bundleId != 0 || file.bundleOffset == 0);

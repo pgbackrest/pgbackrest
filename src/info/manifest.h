@@ -142,7 +142,6 @@ typedef struct ManifestFile
     const String *name;                                             // File name (must be first member in struct)
     bool copy : 1;                                                  // Should the file be copied (backup only)?
     bool delta : 1;                                                 // Verify checksum in PGDATA before copying (backup only)?
-    bool equal : 1;                                                 // Is file size equal to prior file (backup only)?
     bool resume : 1;                                                // Is the file being resumed (backup only)?
     bool checksumPage : 1;                                          // Does this file have page checksums?
     bool checksumPageError : 1;                                     // Is there an error in the page checksum?
