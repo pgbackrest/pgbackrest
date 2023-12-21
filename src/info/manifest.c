@@ -104,6 +104,7 @@ typedef enum
     manifestFilePackFlagBlockIncr,
     manifestFilePackFlagCopy,
     manifestFilePackFlagDelta,
+    manifestFilePackFlagSizePrior,
     manifestFilePackFlagResume,
     manifestFilePackFlagChecksumPage,
     manifestFilePackFlagChecksumPageError,
@@ -170,6 +171,9 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
     if (file->sizeOriginal != file->size)
         flag |= 1 << manifestFilePackFlagSizeOriginal;
 
+    if (file->sizePrior != -1)
+        flag |= 1 << manifestFilePackFlagSizePrior;
+
     if (file->mode != manifest->fileModeDefault)
         flag |= 1 << manifestFilePackFlagMode;
 
@@ -191,6 +195,10 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
     // Original size
     if (flag & (1 << manifestFilePackFlagSizeOriginal))
         cvtUInt64ToVarInt128(file->sizeOriginal, buffer, &bufferPos, sizeof(buffer));
+
+    // Prior size
+    if (flag & (1 << manifestFilePackFlagSizePrior))
+        cvtUInt64ToVarInt128((uint64_t)file->sizePrior, buffer, &bufferPos, sizeof(buffer));
 
     // Use the first timestamp that appears as the base for all other timestamps. Ideally we would like a timestamp as close to the
     // middle as possible but it doesn't seem worth doing the calculation.
@@ -321,6 +329,12 @@ manifestFileUnpack(const Manifest *const manifest, const ManifestFilePack *const
         result.sizeOriginal = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
     else
         result.sizeOriginal = result.size;
+
+    // Prior size
+    if (flag & (1 << manifestFilePackFlagSizePrior))
+        result.sizePrior = (int64_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
+    else
+        result.sizePrior = -1;
 
     // Timestamp
     result.timestamp =
@@ -1067,6 +1081,7 @@ manifestBuildInfo(
                 .group = info->group,
                 .size = info->size,
                 .sizeOriginal = info->size,
+                .sizePrior = -1,
                 .sizeRepo = info->size,
                 .timestamp = info->timeModified,
             };
@@ -1714,7 +1729,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                     // block incremental and the prior file is also stored with block incremental
                     if (fileSizeEqual || fileBlockIncrPreserve)
                     {
-                        file.size = filePrior.size;
+                        file.sizePrior = (int64_t)filePrior.size;
                         file.sizeRepo = filePrior.sizeRepo;
                         file.checksumSha1 = filePrior.checksumSha1;
                         file.checksumRepoSha1 = filePrior.checksumRepoSha1;

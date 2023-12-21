@@ -48,6 +48,7 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
             file.pgFileDelta = pckReadBoolP(param);
             file.pgFileIgnoreMissing = pckReadBoolP(param);
             file.pgFileSize = pckReadU64P(param);
+            file.pgFileSizePrior = pckReadI64P(param);
             file.pgFileCopyExactSize = pckReadBoolP(param);
             file.pgFileChecksum = pckReadBinP(param);
             file.pgFileChecksumPage = pckReadBoolP(param);
