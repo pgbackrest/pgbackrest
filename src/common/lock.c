@@ -156,10 +156,10 @@ lockReadFileData(const String *const lockFile, const int fd)
                 result.processId = jsonReadInt(jsonReadKeyRequireStrId(json, LOCK_KEY_PROCESS_ID));
 
                 if (jsonReadKeyExpectStrId(json, LOCK_KEY_SIZE))
-                    result.size = varNewUInt64(jsonReadUInt(json));
+                    result.size = varNewUInt64(jsonReadUInt64(json));
 
                 if (jsonReadKeyExpectStrId(json, LOCK_KEY_SIZE_COMPLETE))
-                    result.sizeComplete = varNewUInt64(jsonReadUInt(json));
+                    result.sizeComplete = varNewUInt64(jsonReadUInt64(json));
             }
             MEM_CONTEXT_PRIOR_END();
         }
