@@ -565,6 +565,11 @@
     <contributor-id type="github">JBromage</contributor-id>
 </contributor>
 
+<contributor id="joe.wildish">
+    <contributor-name-display>Joe Wildish</contributor-name-display>
+    <contributor-id type="github">joewildish</contributor-id>
+</contributor>
+
 <contributor id="keith.fiske">
     <contributor-name-display>Keith Fiske</contributor-name-display>
     <contributor-id type="github">keithf4</contributor-id>
@@ -838,6 +843,11 @@
 <contributor id="remi.vidier">
     <contributor-name-display>R&amp;eacute;mi Vidier</contributor-name-display>
     <contributor-id type="github">vidierr</contributor-id>
+</contributor>
+
+<contributor id="robert.donovan">
+    <contributor-name-display>Robert Donovan</contributor-name-display>
+    <contributor-id type="github">rob-donovan</contributor-id>
 </contributor>
 
 <contributor id="rohit.raveendran">
