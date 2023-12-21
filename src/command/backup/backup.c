@@ -1480,24 +1480,22 @@ backupJobResult(
                 // Else file was copied so update manifest
                 else
                 {
-                    // If the file had to be recopied then warn that there may be an issue with corruption in the repository
-                    // ??? This should really be below the message below for more context -- can be moved after the migration
-                    // ??? The name should be a pg path not manifest name -- can be fixed after the migration
+                    LOG_DETAIL_PID_FMT(
+                        processId, "%s file %s (%s)%s", copyResult != backupCopyResultTruncate ? "backup" : "store truncated",
+                        strZ(fileLog), strZ(logProgress), strZ(logChecksum));
+
+                    // If the repo file was invalid warn that there might be corruption in the repository
                     if (repoInvalid)
                     {
                         ASSERT(copyResult == backupCopyResultCopy);
 
                         LOG_WARN_FMT(
-                            "resumed backup file %s does not have expected checksum %s. The file will be recopied and backup will"
+                            "resumed backup file %s did not have expected checksum %s. The file was recopied and backup will"
                             " continue but this may be an issue unless the resumed backup path in the repository is known to be"
                             " corrupted.\n"
                             "NOTE: this does not indicate a problem with the PostgreSQL page checksums.",
                             strZ(file.name), strZ(strNewEncode(encodingHex, BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE))));
                     }
-
-                    LOG_DETAIL_PID_FMT(
-                        processId, "%s file %s (%s)%s", copyResult != backupCopyResultTruncate ? "backup" : "store truncated",
-                        strZ(fileLog), strZ(logProgress), strZ(logChecksum));
 
                     // If the file had page checksums calculated during the copy
                     ASSERT((!file.checksumPage && checksumPageResult == NULL) || (file.checksumPage && checksumPageResult != NULL));
