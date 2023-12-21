@@ -115,6 +115,12 @@ restoreFile(
 
                                     // Update info
                                     info = storageInfoP(storagePg(), file->name, .followLink = true);
+
+                                    // For block incremental it is very important that the file be exactly the expected size, so
+                                    // make sure the truncate worked as expected.
+                                    CHECK_FMT(
+                                        FileWriteError, info.size == file->size, "unable to truncate '%s' to %" PRIu64 " bytes",
+                                        strZ(file->name), file->size);
                                 }
 
                                 // Generate checksum for the file if size is not zero
@@ -124,8 +130,8 @@ restoreFile(
                                 {
                                     read = storageReadIo(storageNewReadP(storagePg(), file->name));
 
-                                    // Calculate checksum when there is chance for it to be equal
-                                    if (info.size >= file->size)
+                                    // Calculate checksum only when size matches
+                                    if (info.size == file->size)
                                         ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
 
                                     // Generate block checksum list if block incremental
@@ -139,9 +145,9 @@ restoreFile(
                                     ioReadDrain(read);
                                 }
 
-                                // If the checksum is the same (or file is zero size) then no need to copy the file
+                                // If size/checksum is the same (or file is zero size) then no need to copy the file
                                 if (file->size == 0 ||
-                                    (info.size >= file->size &&
+                                    (info.size == file->size &&
                                      bufEq(
                                          file->checksum,
                                          pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE)))))
