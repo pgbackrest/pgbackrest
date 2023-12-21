@@ -89,7 +89,7 @@ restoreFile(
                         else
                         {
                             // Only continue delta if the file size is as expected or larger
-                            if (info.size >= file->size)
+                            if (info.size >= file->size || file->blockIncrMapSize != 0)
                             {
                                 const char *const fileName = strZ(storagePathP(storagePg(), file->name));
 
@@ -123,7 +123,10 @@ restoreFile(
                                 if (file->size != 0)
                                 {
                                     read = storageReadIo(storageNewReadP(storagePg(), file->name));
-                                    ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
+
+                                    // Only calculate checksum when there is chance for it to be equal
+                                    if (info.size >= file->size)
+                                        ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
 
                                     // Generate block checksum list if block incremental
                                     if (file->blockIncrMapSize != 0)
@@ -138,9 +141,10 @@ restoreFile(
 
                                 // If the checksum is the same (or file is zero size) then no need to copy the file
                                 if (file->size == 0 ||
-                                    bufEq(
-                                        file->checksum,
-                                        pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE))))
+                                    (info.size >= file->size &&
+                                     bufEq(
+                                         file->checksum,
+                                         pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE)))))
                                 {
                                     // If the checksum/size are now the same but the time is not, then set the time back to the
                                     // backup time. This helps with unit testing, but also presents a pristine version of the
