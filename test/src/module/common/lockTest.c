@@ -237,9 +237,11 @@ testRun(void)
         TEST_RESULT_UINT(varUInt64(lockDataResult.sizeComplete), 1754824, "verify sizeProgress");
         TEST_RESULT_UINT(varUInt64(lockDataResult.size), 3159000, "verify sizeTotal");
 
+        // The size/sizeComplete values should be large enough to overflow a uint32 to ensure uint64 is used for read/write
         TEST_RESULT_VOID(
             lockWriteDataP(
-                lockTypeBackup, .percentComplete = VARUINT(8888), .sizeComplete = VARUINT64(3223802441008), .size = VARUINT64(6126216975438)),
+                lockTypeBackup, .percentComplete = VARUINT(8888), .sizeComplete = VARUINT64(3223802441008),
+                .size = VARUINT64(6126216975438)),
             "write lock data");
         THROW_ON_SYS_ERROR_FMT(
             lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)0,
