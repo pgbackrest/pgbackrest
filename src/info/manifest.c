@@ -1681,7 +1681,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                 {
                     // If file size is equal to prior size then the file can be referenced instead of copied if it has not changed
                     // (this must be determined during the backup).
-                    const bool fileEqual = file.size == filePrior.size;
+                    const bool fileSizeEqual = file.size == filePrior.size;
 
                     // If prior file was stored with block incremental and this file will use block incremental then preserve the
                     // prior value. It is not possible to change the block size in a backup set and the map info will be required to
@@ -1692,7 +1692,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                     // different while zero-length files are always the same, so it wastes time to check them. It is possible for
                     // a file to be truncated down to equal the prior file during backup, but the overhead of checking for such an
                     // unlikely event does not seem worth the possible space saved.
-                    file.delta = delta && fileEqual && file.size != 0;
+                    file.delta = delta && fileSizeEqual && file.size != 0;
 
                     // Do not copy if size and prior size are both zero. Zero-length files are always equal so the file can simply
                     // be referenced to the prior file. Note that this is only for the case where zero-length files are being
@@ -1702,12 +1702,12 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                         file.copy = false;
 
                     // If delta is disabled and size/timestamp are equal then the file is not copied
-                    if (!file.delta && fileEqual && file.timestamp == filePrior.timestamp)
+                    if (!file.delta && fileSizeEqual && file.timestamp == filePrior.timestamp)
                         file.copy = false;
 
                     ASSERT(file.copy || !file.delta);
-                    ASSERT(file.copy || fileEqual);
-                    ASSERT(!file.delta || fileEqual);
+                    ASSERT(file.copy || fileSizeEqual);
+                    ASSERT(!file.delta || fileSizeEqual);
 
                     // Preserve values if the file will not be copied, is possibly equal to the prior file, or will be stored with
                     // block incremental and the prior file is also stored with block incremental
