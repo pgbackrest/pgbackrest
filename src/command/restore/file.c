@@ -124,7 +124,7 @@ restoreFile(
                                 {
                                     read = storageReadIo(storageNewReadP(storagePg(), file->name));
 
-                                    // Only calculate checksum when there is chance for it to be equal
+                                    // Calculate checksum when there is chance for it to be equal
                                     if (info.size >= file->size)
                                         ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
 
