@@ -117,7 +117,7 @@ restoreFile(
                                     info = storageInfoP(storagePg(), file->name, .followLink = true);
 
                                     // For block incremental it is very important that the file be exactly the expected size, so
-                                    // make sure the truncate worked as expected.
+                                    // make sure the truncate worked as expected
                                     CHECK_FMT(
                                         FileWriteError, info.size == file->size, "unable to truncate '%s' to %" PRIu64 " bytes",
                                         strZ(file->name), file->size);
