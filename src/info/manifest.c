@@ -1683,9 +1683,10 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                     // (this must be determined during the backup).
                     const bool fileSizeEqual = file.size == filePrior.size;
 
-                    // !!! If prior file was stored with block incremental and this file will use block incremental then preserve the
-                    // prior value. It is not possible to change the block size in a backup set and the map info will be required to
-                    // compare against the prior block incremental.
+                    // If prior file was stored with block incremental and file size is at least prior file block size then preserve
+                    // prior values. If file size is less than prior file block size then the entire file will need to be stored and
+                    // the map will be useless as long as the file stays at this size. It is not possible to change the block size
+                    // in a backup set and the map info will be required to compare against the prior block incremental.
                     const bool fileBlockIncrPreserve = filePrior.blockIncrMapSize > 0 && file.size >= filePrior.blockIncrSize;
 
                     // Perform delta if enabled and file size is equal to prior but not zero. Files of unequal length are always
