@@ -51,7 +51,12 @@
 
         <release-development-list>
             <release-item>
-                <github-pull-request id="2253"/>
+                <commit subject="Refactor backup incremental manifest generation.">
+                    <github-pull-request id="2253"/>
+                </commit>
+                <commit subject="Do not preserve block incremental if file is less than prior block size.">
+                    <github-pull-request id="2255"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
