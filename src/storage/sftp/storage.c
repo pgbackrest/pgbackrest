@@ -1127,7 +1127,15 @@ storageSftpNew(
             THROW_FMT(ServiceError, "timeout during libssh2 handshake [%d]", rc);
 
         if (rc != 0)
-            THROW_FMT(ServiceError, "libssh2 handshake failed [%d]; man libssh2_session_handshake to map error", rc);
+        {
+            char *libSsh2ErrMsg;
+            int libSsh2ErrMsgLen;
+
+            // Get the libssh2 error message
+            rc = libssh2_session_last_error(this->session, &libSsh2ErrMsg, &libSsh2ErrMsgLen, 0);
+
+            THROW_FMT(ServiceError, "libssh2 handshake failed [%d]: %s", rc, libSsh2ErrMsg);
+        }
 
         int hashType = LIBSSH2_HOSTKEY_HASH_SHA1;
         size_t hashSize = 0;

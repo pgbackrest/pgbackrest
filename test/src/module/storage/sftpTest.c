@@ -120,7 +120,9 @@ testRun(void)
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
             {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = HRNLIBSSH2_SESSION_BLOCK_DIRECTIONS, .resultInt = SSH2_BLOCK_WRITING},
-            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = -1},
+            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = LIBSSH2_ERROR_BAD_SOCKET},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERROR, .resultInt = LIBSSH2_ERROR_BAD_SOCKET,
+             .errMsg = (char *)"Bad socket provided"},
             {.function = NULL}
         });
 
@@ -128,7 +130,7 @@ testRun(void)
             storageSftpNewP(
                 TEST_PATH_STR, STRDEF("localhost"), 22, TEST_USER_STR, 1000, KEYPRIV, hashTypeSha1, .keyPub = KEYPUB,
                 .hostKeyCheckType = SFTP_STRICT_HOSTKEY_CHECKING_STRICT),
-            ServiceError, "libssh2 handshake failed [-1]; man libssh2_session_handshake to map error");
+            ServiceError, "libssh2 handshake failed [-45]: Bad socket provided");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("handshake failure - timeout during libssh2 handshake");
