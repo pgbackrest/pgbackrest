@@ -38,7 +38,10 @@
             </release-item>
 
             <release-item>
-                <github-pull-request id="2227"/>
+                <commit subject="Skip files truncated during backup when bundling.">
+                    <github-pull-request id="2227"/>
+                </commit>
+                <commit subject="Allow const checksum buffers to be returned from backupFile()."/>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="georgy.shelkovy"/>
