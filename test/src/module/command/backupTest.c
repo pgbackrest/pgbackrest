@@ -3463,6 +3463,13 @@ testRun(void)
 
             HRN_STORAGE_PUT(storagePgWrite(), "block-incr-shrink-block", file, .timeModified = backupTimeStart);
 
+            // File that shrinks below the size of a single block
+            file = bufNew(BLOCK_MIN_FILE_SIZE);
+            memset(bufPtr(file), 43, bufSize(file));
+            bufUsedSet(file, bufSize(file));
+
+            HRN_STORAGE_PUT(storagePgWrite(), "block-incr-shrink-below", file, .timeModified = backupTimeStart);
+
             // Block incremental file that remains the same between backups
             file = bufNew(BLOCK_MIN_FILE_SIZE);
             memset(bufPtr(file), 33, bufSize(file));
@@ -3514,16 +3521,17 @@ testRun(void)
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-to-block-incr (bundle 1/4, 16.0KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/16387, 8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink-block (bundle 1/24579, 16KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/40985, 16KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-same (bundle 1/57399, 16KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/73805, 2B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink-below (bundle 1/40985, 16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/57391, 16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-same (bundle 1/73805, 16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/90211, 2B, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DBF06000000001, lsn = 5dbf060/300000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
                 "P00 DETAIL: wrote 'tablespace_map' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000000105DBF06000000000:0000000105DBF06000000001\n"
                 "P00   INFO: new backup label = 20191103-165320F\n"
-                "P00   INFO: full backup size = [SIZE], file total = 10");
+                "P00   INFO: full backup size = [SIZE], file total = 11");
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
@@ -3532,6 +3540,7 @@ testRun(void)
                 "bundle/1/pg_data/PG_VERSION {file, s=2}\n"
                 "bundle/1/pg_data/block-incr-same {file, m=0:{0,1}, s=16384}\n"
                 "bundle/1/pg_data/block-incr-shrink {file, m=0:{0,1,2}, s=16385}\n"
+                "bundle/1/pg_data/block-incr-shrink-below {file, m=0:{0,1}, s=16384}\n"
                 "bundle/1/pg_data/block-incr-shrink-block {file, m=0:{0,1}, s=16384}\n"
                 "bundle/1/pg_data/global/pg_control {file, s=8192}\n"
                 "bundle/1/pg_data/grow-to-block-incr {file, s=16383}\n"
@@ -3555,6 +3564,8 @@ testRun(void)
                 ",\"size\":16384,\"timestamp\":1572800000}\n"
                 "pg_data/block-incr-shrink={\"bi\":1,\"bim\":29,\"checksum\":\"ce5f8864058b1bb274244b512cb9641355987134\""
                 ",\"size\":16385,\"timestamp\":1572800000}\n"
+                "pg_data/block-incr-shrink-below={\"bi\":1,\"bim\":22,\"checksum\":\"eb6b081c4abb3bd08edbc5945c9b3ce969088538\""
+                ",\"size\":16384,\"timestamp\":1572800000}\n"
                 "pg_data/block-incr-shrink-block={\"bi\":1,\"bim\":22,\"checksum\":\"d6a2f1f82878bbcbe1697f89c2aa5ede4e945efc\","
                 "\"size\":16384,\"timestamp\":1572800000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1572800000}\n"
@@ -3624,6 +3635,13 @@ testRun(void)
 
             HRN_STORAGE_PUT(storagePgWrite(), "block-incr-shrink-block", file, .timeModified = backupTimeStart);
 
+            // Shrinks file below the size of a single block
+            file = bufNew(8);
+            memset(bufPtr(file), 44, bufSize(file));
+            bufUsedSet(file, bufSize(file));
+
+            HRN_STORAGE_PUT(storagePgWrite(), "block-incr-shrink-below", file, .timeModified = backupTimeStart);
+
             // Update timestamps without changing contents of the files
             HRN_STORAGE_TIME(storagePgWrite(), "block-incr-same", backupTimeStart);
             HRN_STORAGE_TIME(storagePgWrite(), "normal-same", backupTimeStart);
@@ -3659,8 +3677,9 @@ testRun(void)
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-to-block-incr (bundle 1/4, 16KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/16416, 8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink-block (bundle 1/24608, 8KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/32800, 16.0KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-same (bundle 1/49183, 16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink-below (bundle 1/24625, 8B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/24633, 16.0KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-same (bundle 1/32859, 16KB, [PCT]) checksum [SHA1]\n"
                 "P00 DETAIL: reference pg_data/PG_VERSION to 20191103-165320F\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DC213000000001, lsn = 5dc2130/300000\n"
@@ -3668,15 +3687,16 @@ testRun(void)
                 "P00 DETAIL: wrote 'tablespace_map' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000000105DC213000000000:0000000105DC213000000001\n"
                 "P00   INFO: new backup label = 20191103-165320F_20191106-002640D\n"
-                "P00   INFO: diff backup size = [SIZE], file total = 12");
+                "P00   INFO: diff backup size = [SIZE], file total = 13");
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ". {link, d=20191103-165320F_20191106-002640D}\n"
                 "bundle {path}\n"
                 "bundle/1/pg_data/block-incr-same {file, m=0:{0,1}, s=16384}\n"
-                "bundle/1/pg_data/block-incr-shrink {file, s=16383}\n"
-                "bundle/1/pg_data/block-incr-shrink-block {file, s=8192}\n"
+                "bundle/1/pg_data/block-incr-shrink {file, m=0:{0},1:{0}, s=16383}\n"
+                "bundle/1/pg_data/block-incr-shrink-below {file, s=8}\n"
+                "bundle/1/pg_data/block-incr-shrink-block {file, m=0:{0}, s=8192}\n"
                 "bundle/1/pg_data/global/pg_control {file, s=8192}\n"
                 "bundle/1/pg_data/grow-to-block-incr {file, m=1:{0,1,2}, s=16385}\n"
                 "bundle/1/pg_data/normal-same {file, s=4}\n"
@@ -3701,10 +3721,12 @@ testRun(void)
                 ",\"checksum\":\"eec53a6da79c00b3c658a7e09f44b3e9efefd960\",\"size\":1507328,\"timestamp\":1573000000}\n"
                 "pg_data/block-incr-same={\"bi\":1,\"bim\":22,\"checksum\":\"5d389611c12c8b8d2c28d4e590799c016b9375be\""
                 ",\"size\":16384,\"timestamp\":1573000000}\n"
-                "pg_data/block-incr-shrink={\"checksum\":\"1c6a17f67562d8b3f64f1b5f2ee592a4c2809b3b\",\"size\":16383"
+                "pg_data/block-incr-shrink={\"bi\":1,\"bim\":35,\"checksum\":\"1c6a17f67562d8b3f64f1b5f2ee592a4c2809b3b\""
+                ",\"size\":16383,\"timestamp\":1573000000}\n"
+                "pg_data/block-incr-shrink-below={\"checksum\":\"12fe190b16c245bd5c971e574352e43e4e703edc\",\"size\":8"
                 ",\"timestamp\":1573000000}\n"
-                "pg_data/block-incr-shrink-block={\"checksum\":\"b659cdc8436b0632a448ccf7492dfb5b2d366991\",\"size\":8192"
-                ",\"timestamp\":1573000000}\n"
+                "pg_data/block-incr-shrink-block={\"bi\":1,\"bim\":17,\"checksum\":\"b659cdc8436b0632a448ccf7492dfb5b2d366991\","
+                "\"size\":8192,\"timestamp\":1573000000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1573000000}\n"
                 "pg_data/grow-to-block-incr={\"bi\":1,\"bim\":27,\"checksum\":\"4f560611d9dc9212432970e5c4bec15d876c226e\","
                 "\"size\":16385,\"timestamp\":1573000000}\n"
@@ -3723,6 +3745,7 @@ testRun(void)
             HRN_STORAGE_REMOVE(storagePgWrite(), "block-incr-larger");
             HRN_STORAGE_REMOVE(storagePgWrite(), "block-incr-same");
             HRN_STORAGE_REMOVE(storagePgWrite(), "block-incr-shrink");
+            HRN_STORAGE_REMOVE(storagePgWrite(), "block-incr-shrink-below");
             HRN_STORAGE_REMOVE(storagePgWrite(), "block-incr-shrink-block");
             HRN_STORAGE_REMOVE(storagePgWrite(), "grow-to-block-incr");
             HRN_STORAGE_REMOVE(storagePgWrite(), "normal-same");
