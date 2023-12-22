@@ -305,19 +305,23 @@ backupFile(
                         // bundling is enabled as otherwise the file will be stored anyway.
                         ioRead(readIo, buffer);
 
-                        if (ioReadEof(readIo) && bundleId != 0)
+                        if (ioReadEof(readIo))
                         {
                             // Close the source and set eof
                             ioReadClose(readIo);
                             readEof = true;
 
-                            // If the file is zero-length then it was truncated during the backup
-                            if (pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(readIo), SIZE_FILTER_TYPE, .idx = 0)) == 0)
+                            // If file is zero-length then it was truncated during the backup. When bundling we can simply mark it
+                            // as truncated since no file needs to be stored.
+                            if (bundleId != 0 &&
+                                pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(readIo), SIZE_FILTER_TYPE, .idx = 0)) == 0)
+                            {
                                 fileResult->backupCopyResult = backupCopyResultTruncate;
+                            }
                         }
 
-                        // Copy the file in non-bundling mode or if the file is not zero-length
-                        if (fileResult->backupCopyResult != backupCopyResultTruncate)
+                        // Copy the file
+                        if (fileResult->backupCopyResult == backupCopyResultCopy)
                         {
                             // Setup the repo file for write. There is no need to write the file atomically (e.g. via a temp file on
                             // Posix) because checksums are tested on resume after a failed backup. The path does not need to be
@@ -358,8 +362,8 @@ backupFile(
                             fileResult->copyChecksum = pckReadBinP(
                                 ioFilterGroupResultP(ioReadFilterGroup(readIo), CRYPTO_HASH_FILTER_TYPE, .idx = 0));
 
-                            // If the file is not bundled or not zero-length then it was copied
-                            if (fileResult->backupCopyResult != backupCopyResultTruncate)
+                            // If the file was copied then get results
+                            if (fileResult->backupCopyResult == backupCopyResultCopy)
                             {
                                 // Get bundle offset
                                 fileResult->bundleOffset = bundleOffset;
