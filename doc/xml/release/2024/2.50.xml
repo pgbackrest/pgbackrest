@@ -42,6 +42,7 @@
                     <github-pull-request id="2227"/>
                 </commit>
                 <commit subject="Allow const checksum buffers to be returned from backupFile()."/>
+                <commit subject="Refactor skip files truncated during backup when bundling."/>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="georgy.shelkovy"/>
