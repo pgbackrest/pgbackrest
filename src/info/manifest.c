@@ -147,7 +147,7 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
     if (file->delta)
         flag |= 1 << manifestFilePackFlagDelta;
 
-    if (file->reference)
+    if (file->reference && file->sizePrior != 0)
         flag |= 1 << manifestFilePackFlagSizePrior;
 
     if (file->resume)
@@ -198,7 +198,7 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
 
     // Prior size
     if (flag & (1 << manifestFilePackFlagSizePrior))
-        cvtUInt64ToVarInt128(file->sizePrior, buffer, &bufferPos, sizeof(buffer));
+        cvtUInt64ToVarInt128(cvtInt64ToZigZag((int64_t)file->size - (int64_t)file->sizePrior), buffer, &bufferPos, sizeof(buffer));
 
     // Use the first timestamp that appears as the base for all other timestamps. Ideally we would like a timestamp as close to the
     // middle as possible but it doesn't seem worth doing the calculation.
@@ -332,7 +332,11 @@ manifestFileUnpack(const Manifest *const manifest, const ManifestFilePack *const
 
     // Prior size
     if (flag & (1 << manifestFilePackFlagSizePrior))
-        result.sizePrior = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
+    {
+        result.sizePrior =
+            (uint64_t)
+            ((int64_t)result.size - cvtInt64FromZigZag(cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX)));
+    }
 
     // Timestamp
     result.timestamp =

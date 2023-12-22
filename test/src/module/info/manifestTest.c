@@ -1370,6 +1370,14 @@ testRun(void)
         TEST_RESULT_VOID(
             manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, STRDEF("000000030000000300000003")), "incremental manifest");
 
+        TEST_RESULT_UINT(
+            manifestFileFind(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/block-incr-add")).sizePrior, 0, "check prior size");
+        TEST_RESULT_UINT(
+            manifestFileFind(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/block-incr-sub")).sizePrior, 0, "check prior size");
+        TEST_RESULT_UINT(
+            manifestFileFind(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/block-incr-keep-size")).sizePrior, 16384,
+            "check prior size");
+
         contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
         TEST_RESULT_STR(
