@@ -331,15 +331,11 @@ backupFile(
                             // Else check if size is equal to prior size
                             else if (file->manifestFileHasReference && fileResult->copySize == file->pgFileSizePrior)
                             {
-                                MEM_CONTEXT_OBJ_BEGIN(result)
-                                {
-                                    fileResult->copyChecksum = pckReadBinP(
-                                        ioFilterGroupResultP(ioReadFilterGroup(readIo), CRYPTO_HASH_FILTER_TYPE));
-                                }
-                                MEM_CONTEXT_OBJ_END();
+                                const Buffer *const copyChecksum = pckReadBinP(
+                                    ioFilterGroupResultP(ioReadFilterGroup(readIo), CRYPTO_HASH_FILTER_TYPE));
 
                                 // If checksum is also equal then no need to copy the file
-                                if (bufEq(file->pgFileChecksum, fileResult->copyChecksum))
+                                if (bufEq(file->pgFileChecksum, copyChecksum))
                                 {
                                     // If block incremental make sure no map was returned but a prior map was provided
                                     ASSERT(
@@ -349,6 +345,7 @@ backupFile(
                                          file->blockIncrMapPriorFile != NULL));
 
                                     fileResult->backupCopyResult = backupCopyResultNoOp;
+                                    fileResult->copyChecksum = file->pgFileChecksum;
                                 }
                             }
                         }
