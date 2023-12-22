@@ -115,8 +115,8 @@ backupFile(
                                 MEM_CONTEXT_BEGIN(lstMemContext(result))
                                 {
                                     fileResult->backupCopyResult = backupCopyResultNoOp;
-                                    fileResult->copySize = pgTestSize;
-                                    fileResult->copyChecksum = bufDup(pgTestChecksum);
+                                    fileResult->copySize = file->pgFileSize;
+                                    fileResult->copyChecksum = file->pgFileChecksum;
                                 }
                                 MEM_CONTEXT_END();
                             }
@@ -164,7 +164,7 @@ backupFile(
                             {
                                 fileResult->backupCopyResult = backupCopyResultChecksum;
                                 fileResult->copySize = file->pgFileSize;
-                                fileResult->copyChecksum = bufDup(file->pgFileChecksum);
+                                fileResult->copyChecksum = file->pgFileChecksum;
                             }
                             MEM_CONTEXT_END();
                         }
@@ -317,6 +317,13 @@ backupFile(
                                 pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(readIo), SIZE_FILTER_TYPE, .idx = 0)) == 0)
                             {
                                 fileResult->backupCopyResult = backupCopyResultTruncate;
+                                fileResult->copyChecksum = HASH_TYPE_SHA1_ZERO_BUF;
+
+                                ASSERT(
+                                    bufEq(
+                                        fileResult->copyChecksum,
+                                        pckReadBinP(
+                                            ioFilterGroupResultP(ioReadFilterGroup(readIo), CRYPTO_HASH_FILTER_TYPE, .idx = 0))));
                             }
                         }
 
@@ -352,19 +359,16 @@ backupFile(
                                 // Close the source
                                 ioReadClose(readIo);
                             }
-                        }
 
-                        MEM_CONTEXT_BEGIN(lstMemContext(result))
-                        {
-                            // Get size and checksum
-                            fileResult->copySize = pckReadU64P(
-                                ioFilterGroupResultP(ioReadFilterGroup(readIo), SIZE_FILTER_TYPE, .idx = 0));
-                            fileResult->copyChecksum = pckReadBinP(
-                                ioFilterGroupResultP(ioReadFilterGroup(readIo), CRYPTO_HASH_FILTER_TYPE, .idx = 0));
-
-                            // If the file was copied then get results
-                            if (fileResult->backupCopyResult == backupCopyResultCopy)
+                            // Get copy results
+                            MEM_CONTEXT_BEGIN(lstMemContext(result))
                             {
+                                // Get size and checksum
+                                fileResult->copySize = pckReadU64P(
+                                    ioFilterGroupResultP(ioReadFilterGroup(readIo), SIZE_FILTER_TYPE, .idx = 0));
+                                fileResult->copyChecksum = pckReadBinP(
+                                    ioFilterGroupResultP(ioReadFilterGroup(readIo), CRYPTO_HASH_FILTER_TYPE, .idx = 0));
+
                                 // Get bundle offset
                                 fileResult->bundleOffset = bundleOffset;
 
@@ -393,10 +397,10 @@ backupFile(
                                         ioFilterGroupResultP(ioReadFilterGroup(readIo), CRYPTO_HASH_FILTER_TYPE, .idx = 1));
                                 }
                             }
-                        }
-                        MEM_CONTEXT_END();
+                            MEM_CONTEXT_END();
 
-                        bundleOffset += fileResult->repoSize;
+                            bundleOffset += fileResult->repoSize;
+                        }
                     }
                     // Else if source file is missing and the read setup indicated ignore a missing file, the database removed it so
                     // skip it

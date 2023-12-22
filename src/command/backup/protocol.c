@@ -88,6 +88,10 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
         {
             const BackupFileResult *const fileResult = lstGet(result, resultIdx);
 
+            ASSERT(
+                fileResult->backupCopyResult == backupCopyResultSkip || fileResult->copySize != 0 ||
+                bufEq(fileResult->copyChecksum, HASH_TYPE_SHA1_ZERO_BUF));
+
             pckWriteStrP(resultPack, fileResult->manifestFile);
             pckWriteU32P(resultPack, fileResult->backupCopyResult);
             pckWriteBoolP(resultPack, fileResult->repoInvalid);
