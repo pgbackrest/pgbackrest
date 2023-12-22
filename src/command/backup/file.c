@@ -311,10 +311,13 @@ backupFile(
                             ioReadClose(readIo);
                             readEof = true;
 
+                            // Get file size
+                            fileResult->copySize = pckReadU64P(
+                                ioFilterGroupResultP(ioReadFilterGroup(readIo), SIZE_FILTER_TYPE, .idx = 0));
+
                             // If file is zero-length then it was truncated during the backup. When bundling we can simply mark it
                             // as truncated since no file needs to be stored.
-                            if (bundleId != 0 &&
-                                pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(readIo), SIZE_FILTER_TYPE, .idx = 0)) == 0)
+                            if (bundleId != 0 && fileResult->copySize == 0)
                             {
                                 fileResult->backupCopyResult = backupCopyResultTruncate;
                                 fileResult->copyChecksum = HASH_TYPE_SHA1_ZERO_BUF;

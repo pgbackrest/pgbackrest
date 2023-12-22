@@ -5,6 +5,7 @@ Backup Protocol Handler
 
 #include "command/backup/file.h"
 #include "command/backup/protocol.h"
+#include "common/crypto/hash.h"
 #include "common/debug.h"
 #include "common/io/io.h"
 #include "common/log.h"
