@@ -7,6 +7,7 @@ Block Restore
 #include "command/restore/blockDelta.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
+#include "common/io/io.h"
 #include "common/io/limitRead.h"
 #include "common/log.h"
 
@@ -228,7 +229,6 @@ blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, Io
         if (this->superBlockData == NULL)
         {
             // Free prior limit read and create limit read for current super block
-            ioReadFree(this->limitRead);
             this->superBlockData = lstGet(readDelta->superBlockList, this->superBlockIdx);
 
             MEM_CONTEXT_OBJ_BEGIN(this)
@@ -292,6 +292,23 @@ blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, Io
         // Break if there is a result
         if (result != NULL)
             break;
+
+        if (!ioReadEof(this->limitRead))
+        {
+            Buffer *const buffer = bufNew(ioBufferSize());
+            uint64_t unreadBytes = 0;
+
+            do
+            {
+                unreadBytes += ioRead(this->limitRead, buffer);
+                bufUsedZero(buffer);
+            }
+            while (!ioReadEof(this->limitRead));
+
+            CHECK_FMT(AssertError, unreadBytes == 0, "%" PRIu64 " super block bytes unread", unreadBytes);
+        }
+
+        ioReadFree(this->limitRead);
 
         this->superBlockData = NULL;
         this->superBlockIdx++;
