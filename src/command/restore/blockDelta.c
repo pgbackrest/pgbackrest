@@ -293,24 +293,8 @@ blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, Io
         if (result != NULL)
             break;
 
-        // !!! Detect if any bytes in the super block remain unread
-        if (!ioReadEof(this->limitRead))
-        {
-            Buffer *const buffer = bufNew(ioBufferSize());
-            uint64_t unreadBytes = 0;
-
-            do
-            {
-                unreadBytes += ioRead(this->limitRead, buffer);
-                bufUsedZero(buffer);
-            }
-            while (!ioReadEof(this->limitRead));
-
-            bufFree(buffer);
-
-            CHECK_FMT(AssertError, unreadBytes == 0, "%" PRIu64 " super block bytes unread", unreadBytes);
-        }
-
+        // Free limit read and error if any bytes remain unread
+        ioReadFlushP(this->limitRead, .errorOnBytes = true);
         ioReadFree(this->limitRead);
 
         this->superBlockData = NULL;

@@ -85,6 +85,18 @@ typedef struct IoReadReadyParam
 
 FN_EXTERN bool ioReadReady(IoRead *this, IoReadReadyParam param);
 
+// Read all remaining data and returns bytes read
+typedef struct IoReadFlushParam
+{
+    VAR_PARAM_HEADER;
+    bool errorOnBytes;                                              // Error when any bytes are found during flush
+} IoReadFlushParam;
+
+#define ioReadFlushP(this, ...)                                                                                                    \
+    ioReadFlush(this, (IoReadFlushParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN uint64_t ioReadFlush(IoRead *this, IoReadFlushParam param);
+
 // Close the IO
 FN_EXTERN void ioReadClose(IoRead *this);
 
