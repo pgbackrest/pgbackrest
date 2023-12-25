@@ -7,7 +7,6 @@ Block Restore
 #include "command/restore/blockDelta.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
-#include "common/io/io.h"
 #include "common/io/limitRead.h"
 #include "common/log.h"
 
@@ -229,6 +228,7 @@ blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, Io
         if (this->superBlockData == NULL)
         {
             // Free prior limit read and create limit read for current super block
+            ioReadFree(this->limitRead);
             this->superBlockData = lstGet(readDelta->superBlockList, this->superBlockIdx);
 
             MEM_CONTEXT_OBJ_BEGIN(this)
@@ -293,9 +293,10 @@ blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, Io
         if (result != NULL)
             break;
 
-        // Free limit read and error if any bytes remain unread
+        // Check that no bytes remain to be written. It is possible that some bytes remain to be read, however, since we may have
+        // gotten all the bytes we needed but just missed reading something important, e.g. an end of file marker. If we do not read
+        // the remaining bytes then the next read will start too early.
         ioReadFlushP(this->limitRead, .errorOnBytes = true);
-        ioReadFree(this->limitRead);
 
         this->superBlockData = NULL;
         this->superBlockIdx++;

@@ -452,11 +452,13 @@ ioReadFlush(IoRead *const this, const IoReadFlushParam param)
             bufUsedZero(buffer);
         }
         while (!ioReadEof(this));
+
+        bufFree(buffer);
     }
 
     // Error when bytes found and error requested
     if (result != 0 && param.errorOnBytes)
-        THROW_FMT(FileReadError, "expected EOF but found %" PRIu64 "bytes", result);
+        THROW_FMT(FileReadError, "expected EOF but flushed %" PRIu64 " byte(s)", result);
 
     FUNCTION_LOG_RETURN(UINT64, result);
 }
