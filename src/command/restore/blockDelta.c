@@ -293,9 +293,9 @@ blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, Io
         if (result != NULL)
             break;
 
-        // Check that no bytes remain to be written. It is possible that some bytes remain to be read, however, since we may have
-        // gotten all the bytes we needed but just missed reading something important, e.g. an end of file marker. If we do not read
-        // the remaining bytes then the next read will start too early.
+        // Check that no bytes remain to be written. It is possible that some bytes remain in the super block, however, since we may
+        // have gotten all the bytes we needed but just missed reading something important, e.g. an end of file marker. If we do not
+        // read the remaining bytes then the next read will start too early.
         ioReadFlushP(this->limitRead, .errorOnBytes = true);
 
         this->superBlockData = NULL;
