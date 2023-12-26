@@ -885,6 +885,10 @@ unit:
             command/backup/backup:
               function:
                 - backupProcess
+        harness:
+          name: blockDelta
+          shim:
+            command/restore/blockDelta: ~
 
         coverage:
           - command/backup/backup
@@ -903,7 +907,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: restore
-        total: 14
+        total: 15
 
         coverage:
           - command/restore/blockChecksum
