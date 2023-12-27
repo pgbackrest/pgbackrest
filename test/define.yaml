@@ -885,6 +885,10 @@ unit:
             command/backup/backup:
               function:
                 - backupProcess
+        harness:
+          name: blockIncr
+          shim:
+            command/restore/blockDelta: ~
 
         coverage:
           - command/backup/backup

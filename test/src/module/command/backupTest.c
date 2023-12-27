@@ -11,6 +11,7 @@ Test Backup Command
 #include "storage/posix/storage.h"
 
 #include "common/harnessBackup.h"
+#include "common/harnessBlockIncr.h"
 #include "common/harnessConfig.h"
 #include "common/harnessManifest.h"
 #include "common/harnessPack.h"
@@ -18,51 +19,6 @@ Test Backup Command
 #include "common/harnessPq.h"
 #include "common/harnessProtocol.h"
 #include "common/harnessStorage.h"
-
-/***********************************************************************************************************************************
-Test block delta
-***********************************************************************************************************************************/
-static String *
-testBlockDelta(const BlockMap *const blockMap, const size_t blockSize, const size_t checksumSize)
-{
-    FUNCTION_HARNESS_BEGIN();
-        FUNCTION_HARNESS_PARAM(BLOCK_MAP, blockMap);
-        FUNCTION_HARNESS_PARAM(SIZE, blockSize);
-        FUNCTION_HARNESS_PARAM(SIZE, checksumSize);
-    FUNCTION_HARNESS_END();
-
-    ASSERT(blockMap != NULL);
-    ASSERT(blockSize > 0);
-
-    String *const result = strNew();
-    BlockDelta *const blockDelta = blockDeltaNew(blockMap, blockSize, checksumSize, NULL, cipherTypeNone, NULL, compressTypeNone);
-
-    for (unsigned int readIdx = 0; readIdx < blockDeltaReadSize(blockDelta); readIdx++)
-    {
-        const BlockDeltaRead *const read = blockDeltaReadGet(blockDelta, readIdx);
-
-        strCatFmt(
-            result, "read {reference: %u, bundleId: %" PRIu64 ", offset: %" PRIu64 ", size: %" PRIu64 "}\n", read->reference,
-            read->bundleId, read->offset, read->size);
-
-        for (unsigned int superBlockIdx = 0; superBlockIdx < lstSize(read->superBlockList); superBlockIdx++)
-        {
-            const BlockDeltaSuperBlock *const superBlock = lstGet(read->superBlockList, superBlockIdx);
-
-            strCatFmt(
-                result, "  super block {max: %" PRIu64 ", size: %" PRIu64 "}\n", superBlock->superBlockSize, superBlock->size);
-
-            for (unsigned int blockIdx = 0; blockIdx < lstSize(superBlock->blockList); blockIdx++)
-            {
-                const BlockDeltaBlock *const block = lstGet(superBlock->blockList, blockIdx);
-
-                strCatFmt(result, "    block {no: %" PRIu64 ", offset: %" PRIu64 "}\n", block->no, block->offset);
-            }
-        }
-    }
-
-    FUNCTION_HARNESS_RETURN(STRING, result);
-}
 
 /***********************************************************************************************************************************
 Get a list of all files in the backup and a redacted version of the manifest that can be tested against a static string
@@ -877,7 +833,7 @@ testRun(void)
         TEST_TITLE("equal block delta");
 
         TEST_RESULT_STR_Z(
-            testBlockDelta(blockMapNewRead(ioBufferReadNewOpen(buffer), 1, 5), 1, 5),
+            hrnBlockDeltaRender(blockMapNewRead(ioBufferReadNewOpen(buffer), 1, 5), 1, 5),
             "read {reference: 128, bundleId: 0, offset: 0, size: 107}\n"
             "  super block {max: 1, size: 3}\n"
             "    block {no: 0, offset: 0}\n"
@@ -1075,7 +1031,7 @@ testRun(void)
         TEST_TITLE("unequal block delta");
 
         TEST_RESULT_STR_Z(
-            testBlockDelta(blockMapNewRead(ioBufferReadNewOpen(buffer), 3, 8), 3, 8),
+            hrnBlockDeltaRender(blockMapNewRead(ioBufferReadNewOpen(buffer), 3, 8), 3, 8),
             "read {reference: 2, bundleId: 0, offset: 0, size: 1}\n"
             "  super block {max: 2, size: 1}\n"
             "    block {no: 0, offset: 15}\n"
@@ -1158,7 +1114,7 @@ testRun(void)
         const Buffer *map = BUF(bufPtr(destination) + (bufUsed(destination) - (size_t)mapSize), (size_t)mapSize);
 
         TEST_RESULT_STR_Z(
-            testBlockDelta(blockMapNewRead(ioBufferReadNewOpen(map), 3, 8), 3, 8),
+            hrnBlockDeltaRender(blockMapNewRead(ioBufferReadNewOpen(map), 3, 8), 3, 8),
             "read {reference: 0, bundleId: 0, offset: 0, size: 2}\n"
             "  super block {max: 2, size: 2}\n"
             "    block {no: 0, offset: 0}\n",
@@ -1195,7 +1151,7 @@ testRun(void)
         map = BUF(bufPtr(destination) + (bufUsed(destination) - (size_t)mapSize), (size_t)mapSize);
 
         TEST_RESULT_STR_Z(
-            testBlockDelta(blockMapNewRead(ioBufferReadNewOpen(map), 3, 8), 3, 8),
+            hrnBlockDeltaRender(blockMapNewRead(ioBufferReadNewOpen(map), 3, 8), 3, 8),
             "read {reference: 2, bundleId: 4, offset: 5, size: 9}\n"
             "  super block {max: 3, size: 3}\n"
             "    block {no: 0, offset: 0}\n"
@@ -1236,7 +1192,7 @@ testRun(void)
         map = BUF(bufPtr(destination) + (bufUsed(destination) - (size_t)mapSize), (size_t)mapSize);
 
         TEST_RESULT_STR_Z(
-            testBlockDelta(blockMapNewRead(ioBufferReadNewOpen(map), 3, 8), 3, 8),
+            hrnBlockDeltaRender(blockMapNewRead(ioBufferReadNewOpen(map), 3, 8), 3, 8),
             "read {reference: 3, bundleId: 0, offset: 0, size: 4}\n"
             "  super block {max: 3, size: 3}\n"
             "    block {no: 0, offset: 0}\n"
@@ -1281,7 +1237,7 @@ testRun(void)
         map = BUF(bufPtr(destination) + (bufUsed(destination) - (size_t)mapSize), (size_t)mapSize);
 
         TEST_RESULT_STR_Z(
-            testBlockDelta(blockMapNewRead(ioBufferReadNewOpen(map), 3, 8), 3, 8),
+            hrnBlockDeltaRender(blockMapNewRead(ioBufferReadNewOpen(map), 3, 8), 3, 8),
             "read {reference: 2, bundleId: 4, offset: 5, size: 9}\n"
             "  super block {max: 6, size: 6}\n"
             "    block {no: 0, offset: 0}\n"
