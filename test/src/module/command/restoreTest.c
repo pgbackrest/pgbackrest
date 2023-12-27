@@ -7,11 +7,13 @@ Test Restore Command
 #include "command/stanza/create.h"
 #include "common/compress/helper.h"
 #include "common/crypto/cipherBlock.h"
+#include "common/io/bufferRead.h"
 #include "postgres/version.h"
 #include "storage/helper.h"
 #include "storage/posix/storage.h"
 
 #include "common/harnessBackup.h"
+#include "common/harnessBlockIncr.h"
 #include "common/harnessConfig.h"
 #include "common/harnessInfo.h"
 #include "common/harnessManifest.h"
@@ -204,6 +206,60 @@ testRun(void)
             "block checksum list");
 
         ioWriteFree(write);
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("BlockDelta"))
+    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("super blocks are read until the end");
+
+        // Write block incremental with multiple super blocks
+        const Buffer *source = BUFSTRZ("123456789ABC");
+        Buffer *destination = bufNew(256);
+        IoWrite *write = ioBufferWriteNew(destination);
+
+        ioFilterGroupAdd(
+            ioWriteFilterGroup(write), blockIncrNew(6, 3, 5, 0, 0, 0, NULL, compressFilterP(compressTypeGz, 1, .raw = true), NULL));
+        ioWriteOpen(write);
+        ioWrite(write, source);
+        ioWriteClose(write);
+
+        // Extract block map
+        uint64_t mapSize = pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE));
+        const BlockMap *blockMap = blockMapNewRead(
+            ioBufferReadNewOpen(BUF(bufPtr(destination) + (bufUsed(destination) - (size_t)mapSize), (size_t)mapSize)), 3, 5);
+
+        // Perform block delta
+        BlockDelta *blockDelta = blockDeltaNew(blockMap, 3, 5, NULL, cipherTypeNone, NULL, compressTypeGz);
+        const BlockDeltaRead *blockDeltaRead = blockDeltaReadGet(blockDelta, 0);
+        IoRead *read = ioBufferReadNewOpen(destination);
+
+        // Set buffer size to one to make sure super blocks are properly flushed
+        size_t bufferSizeOld = ioBufferSize();
+        ioBufferSizeSet(1);
+
+        // Read all blocks from multiple super blocks
+        TEST_RESULT_STR_Z(strNewBuf(blockDeltaNext(blockDelta, blockDeltaRead, read)->block), "123", "read block");
+        TEST_RESULT_STR_Z(strNewBuf(blockDeltaNext(blockDelta, blockDeltaRead, read)->block), "456", "read block");
+        TEST_RESULT_STR_Z(strNewBuf(blockDeltaNext(blockDelta, blockDeltaRead, read)->block), "789", "read block");
+        TEST_RESULT_STR_Z(strNewBuf(blockDeltaNext(blockDelta, blockDeltaRead, read)->block), "ABC", "read block");
+        TEST_RESULT_PTR(blockDeltaNext(blockDelta, blockDeltaRead, read), NULL, "no more blocks");
+
+        // Reset buffer size
+        ioBufferSizeSet(bufferSizeOld);
+
+        // Now test the block map to show that we are reading in the right position after multiple super blocks
+        TEST_RESULT_STR_Z(
+            hrnBlockDeltaRender(blockMapNewRead(read, 3, 5), 3, 5),
+            "read {reference: 0, bundleId: 0, offset: 0, size: 28}\n"
+            "  super block {max: 6, size: 14}\n"
+            "    block {no: 0, offset: 0}\n"
+            "    block {no: 1, offset: 3}\n"
+            "  super block {max: 6, size: 14}\n"
+            "    block {no: 0, offset: 6}\n"
+            "    block {no: 1, offset: 9}\n",
+            "check delta");
     }
 
     // *****************************************************************************************************************************

@@ -296,6 +296,31 @@ testRun(void)
         TEST_RESULT_BOOL(ioReadOpen(bufferRead), true, "    open");
         TEST_RESULT_BOOL(ioReadEof(bufferRead), false, "    not eof");
         TEST_RESULT_UINT(ioRead(bufferRead, buffer), 0, "    read 0 bytes");
+        TEST_RESULT_UINT(ioReadFlushP(bufferRead), 0, "    flush 0 bytes");
+        TEST_RESULT_BOOL(ioReadEof(bufferRead), true, "    now eof");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("read flush bytes");
+
+        ioBufferSizeSet(1);
+        bufferOriginal = bufNewC("123", 3);
+
+        TEST_ASSIGN(bufferRead, ioBufferReadNew(bufferOriginal), "create empty buffer read object");
+        TEST_RESULT_BOOL(ioReadOpen(bufferRead), true, "    open");
+        TEST_RESULT_BOOL(ioReadEof(bufferRead), false, "    not eof");
+        TEST_RESULT_UINT(ioReadFlushP(bufferRead), 3, "    flush 3 bytes");
+        TEST_RESULT_BOOL(ioReadEof(bufferRead), true, "    now eof");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("read flush bytes and error");
+
+        ioBufferSizeSet(1);
+        bufferOriginal = bufNewC("123", 3);
+
+        TEST_ASSIGN(bufferRead, ioBufferReadNew(bufferOriginal), "create empty buffer read object");
+        TEST_RESULT_BOOL(ioReadOpen(bufferRead), true, "    open");
+        TEST_RESULT_BOOL(ioReadEof(bufferRead), false, "    not eof");
+        TEST_ERROR(ioReadFlushP(bufferRead, .errorOnBytes = true), FileReadError, "expected EOF but flushed 3 byte(s)");
         TEST_RESULT_BOOL(ioReadEof(bufferRead), true, "    now eof");
 
         // -------------------------------------------------------------------------------------------------------------------------

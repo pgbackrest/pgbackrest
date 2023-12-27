@@ -2,6 +2,23 @@
     <release-core-list>
         <release-bug-list>
             <release-item>
+                <github-issue id="2215"/>
+                <github-issue id="2238"/>
+                <github-pull-request id="2256"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="adol.rodriguez"/>
+                    <release-item-ideator id="brent.graveland"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                    <!-- Actually tester, but we don't have a tag for that yet -->
+                    <release-item-reviewer id="brent.graveland"/>
+                </release-item-contributor-list>
+
+                <p>Fix short read in block incremental restore.</p>
+            </release-item>
+
+            <release-item>
                 <github-issue id="2251"/>
                 <github-pull-request id="2252"/>
 
