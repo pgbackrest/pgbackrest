@@ -975,7 +975,7 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             strNewEncode(encodingHex, buffer),
-            "00"                                        // Blocks are unequal
+            "00"                                        // Version 0
 
             "00"                                        // reference 0
             "22"                                        // size 4
