@@ -220,8 +220,7 @@ testRun(void)
         IoWrite *write = ioBufferWriteNew(destination);
 
         ioFilterGroupAdd(
-                ioWriteFilterGroup(write),
-                blockIncrNew(6, 3, 5, 0, 0, 0, NULL, compressFilterP(compressTypeGz, 1, .raw = true), NULL));
+            ioWriteFilterGroup(write), blockIncrNew(6, 3, 5, 0, 0, 0, NULL, compressFilterP(compressTypeGz, 1, .raw = true), NULL));
         ioWriteOpen(write);
         ioWrite(write, source);
         ioWriteClose(write);
