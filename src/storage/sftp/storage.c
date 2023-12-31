@@ -126,6 +126,29 @@ storageSftpKnownHostCheckpFailureMsg(const int rc)
     FUNCTION_TEST_RETURN_CONST(STRINGZ, result);
 }
 
+/**********************************************************************************************************************************/
+static String *
+storageSftpLibSsh2SessionLastError(LIBSSH2_SESSION *const libSsh2Session)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, libSsh2Session);
+    FUNCTION_TEST_END();
+
+    String *result;
+
+    char *libSsh2ErrMsg;
+    int libSsh2ErrMsgLen;
+
+    const int rc = libssh2_session_last_error(libSsh2Session, &libSsh2ErrMsg, &libSsh2ErrMsgLen, 0);
+
+    if (libSsh2ErrMsgLen != 0)
+        result = strNewZ(libSsh2ErrMsg);
+    else
+        result = strNewFmt("libssh2 no session error message provided [%d]", rc);
+
+    FUNCTION_TEST_RETURN(STRING, result);
+}
+
 /***********************************************************************************************************************************
 Rewrite the user's known_hosts file with a new entry
 ***********************************************************************************************************************************/
@@ -143,8 +166,6 @@ storageSftpUpdateKnownHostsFile(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        char *libSsh2ErrMsg;
-        int libSsh2ErrMsgLen;
         int rc;
 
         // Init a known host collection for the user's known_hosts file
@@ -156,10 +177,9 @@ storageSftpUpdateKnownHostsFile(
         if (userKnownHostsList == NULL)
         {
             // Get the libssh2 error message and emit warning
-            rc = libssh2_session_last_error(this->session, &libSsh2ErrMsg, &libSsh2ErrMsgLen, 0);
-
             LOG_WARN_FMT(
-                "libssh2_knownhost_init failed for '%s' for update: libssh2 errno [%d] %s", userKnownHostsFile, rc, libSsh2ErrMsg);
+                "libssh2_knownhost_init failed for '%s' for update: libssh2 errno [%d] %s", userKnownHostsFile,
+                libssh2_session_last_errno(this->session), strZ(storageSftpLibSsh2SessionLastError(this->session)));
         }
         else
         {
@@ -214,11 +234,10 @@ storageSftpUpdateKnownHostsFile(
             else
             {
                 // On readfile failure warn that we're unable to update the user's known_hosts file
-                rc = libssh2_session_last_error(this->session, &libSsh2ErrMsg, &libSsh2ErrMsgLen, 0);
-
                 LOG_WARN_FMT(
                     "libssh2 unable to read '%s' for update: libssh2 errno [%d] %s\n"
-                    "HINT: does '%s' exist with proper permissions?", userKnownHostsFile, rc, libSsh2ErrMsg, userKnownHostsFile);
+                    "HINT: does '%s' exist with proper permissions?", userKnownHostsFile, rc,
+                    strZ(storageSftpLibSsh2SessionLastError(this->session)), userKnownHostsFile);
             }
         }
 
@@ -1128,13 +1147,8 @@ storageSftpNew(
 
         if (rc != 0)
         {
-            char *libSsh2ErrMsg;
-            int libSsh2ErrMsgLen;
-
-            // Get the libssh2 error message
-            rc = libssh2_session_last_error(this->session, &libSsh2ErrMsg, &libSsh2ErrMsgLen, 0);
-
-            THROW_FMT(ServiceError, "libssh2 handshake failed [%d]: %s", rc, libSsh2ErrMsg);
+            THROW_FMT(
+                ServiceError, "libssh2 handshake failed [%d]: %s", rc, strZ(storageSftpLibSsh2SessionLastError(this->session)));
         }
 
         int hashType = LIBSSH2_HOSTKEY_HASH_SHA1;
@@ -1198,7 +1212,8 @@ storageSftpNew(
             {
                 THROW_FMT(
                     ServiceError,
-                    "failure during libssh2_knownhost_init: libssh2 errno [%d]", libssh2_session_last_errno(this->session));
+                    "failure during libssh2_knownhost_init: libssh2 errno [%d] %s", libssh2_session_last_errno(this->session),
+                    strZ(storageSftpLibSsh2SessionLastError(this->session)));
             }
 
             // Get the list of known host files to search
@@ -1218,14 +1233,9 @@ storageSftpNew(
                         LOG_DETAIL_FMT("libssh2 '%s' file is empty", currentKnownHostFile);
                     else
                     {
-                        char *libSsh2ErrMsg;
-                        int libSsh2ErrMsgLen;
-
-                        // Get the libssh2 error message
-                        rc = libssh2_session_last_error(this->session, &libSsh2ErrMsg, &libSsh2ErrMsgLen, 0);
-
                         LOG_DETAIL_FMT(
-                            "libssh2 read '%s' failed: libssh2 errno [%d] %s", currentKnownHostFile, rc, libSsh2ErrMsg);
+                            "libssh2 read '%s' failed: libssh2 errno [%d] %s", currentKnownHostFile, rc,
+                            strZ(storageSftpLibSsh2SessionLastError(this->session)));
                     }
                 }
                 else

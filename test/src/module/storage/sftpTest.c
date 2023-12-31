@@ -293,6 +293,8 @@ testRun(void)
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
             {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_KNOWNHOST_INIT, .resultNull = true},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERROR, .resultInt = LIBSSH2_ERROR_ALLOC,
+             .errMsg = (char *)"Unable to allocate memory for known-hosts collection"},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_ALLOC},
             {.function = NULL}
         });
@@ -324,7 +326,7 @@ testRun(void)
                 .hostKeyCheckType = cfgOptionIdxStrId(cfgOptRepoSftpHostKeyCheckType, repoIdx),
                 .knownHosts = strLstNewVarLst(cfgOptionIdxLst(cfgOptRepoSftpKnownHost, repoIdx))),
             ServiceError,
-            "failure during libssh2_knownhost_init: libssh2 errno [-6]");
+            "failure during libssh2_knownhost_init: libssh2 errno [-6] Unable to allocate memory for known-hosts collection");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("libssh2_session_hostkey fail - return NULL - hostKeyCheckType = yes");
@@ -847,6 +849,7 @@ testRun(void)
             {.function = HRNLIBSSH2_KNOWNHOST_INIT, .resultNull = true},
             {.function = HRNLIBSSH2_SESSION_LAST_ERROR, .resultInt = LIBSSH2_ERROR_ALLOC,
              .errMsg = (char *)"Unable to allocate memory for known-hosts collection"},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_ALLOC},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
              .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",\"" KEYPUB_CSTR "\",\"" KEYPRIV_CSTR "\",null]",
              .resultInt = 0},
@@ -1085,7 +1088,7 @@ testRun(void)
             {.function = HRNLIBSSH2_SESSION_LAST_ERROR, .errMsg = (char *)"Failed to open file", .resultInt = LIBSSH2_ERROR_FILE},
             {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" ETC_KNOWNHOSTS2_FILE_CSTR "\",1]",
              .resultInt = LIBSSH2_ERROR_FILE},
-            {.function = HRNLIBSSH2_SESSION_LAST_ERROR, .errMsg = (char *)"Failed to open file", .resultInt = LIBSSH2_ERROR_FILE},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERROR, .resultInt = LIBSSH2_ERROR_FILE},
             {.function = HRNLIBSSH2_SESSION_HOSTKEY, .len = 20, .type = LIBSSH2_HOSTKEY_TYPE_RSA, .resultZ = HOSTKEY},
             {.function = HRNLIBSSH2_KNOWNHOST_CHECKP, .param = "[\"localhost\",22,\"" HOSTKEY "\",20,65537]",
              .resultInt = LIBSSH2_KNOWNHOST_CHECK_NOTFOUND},
@@ -1119,6 +1122,7 @@ testRun(void)
 
         storageTest = NULL;
 
+        harnessLogLevelSet(logLevelDetail);
         TEST_ASSIGN(
             storageTest,
             storageSftpNewP(
@@ -1133,9 +1137,15 @@ testRun(void)
                 .knownHosts = strLstNewVarLst(cfgOptionIdxLst(cfgOptRepoSftpKnownHost, repoIdx))),
             "new storage (defaults)");
         TEST_RESULT_LOG(
+            "P00 DETAIL: libssh2 '/home/vagrant/.ssh/known_hosts' file is empty\n"
+            "P00 DETAIL: libssh2 read '/home/vagrant/.ssh/known_hosts2' failed: libssh2 errno [-16] Failed to open file\n"
+            "P00 DETAIL: libssh2 read '/etc/ssh/ssh_known_hosts' failed: libssh2 errno [-16] Failed to open file\n"
+            "P00 DETAIL: libssh2 read '/etc/ssh/ssh_known_hosts2' failed: libssh2 errno [-16] libssh2 no session error message provided [-16]\n"
             "P00   WARN: host 'localhost' not found in known hosts files, attempting to add host to "
             "'/home/" TEST_USER "/.ssh/known_hosts'\n"
             "P00   WARN: pgBackRest added new host 'localhost' to '/home/" TEST_USER "/.ssh/known_hosts'");
+
+        harnessLogLevelReset();
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
@@ -1255,7 +1265,7 @@ testRun(void)
 
 #ifdef LIBSSH2_HOSTKEY_TYPE_ECDSA_384
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("sftp session init success - hostKeyCheckType = accept_new - add host to user's known_hosts ECDSA_384");
+        TEST_TITLE("sftp session init success - hostKeyCheckType = accept-new - add host to user's known_hosts ECDSA_384");
 
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
