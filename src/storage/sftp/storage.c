@@ -177,9 +177,10 @@ storageSftpUpdateKnownHostsFile(
         if (userKnownHostsList == NULL)
         {
             // Get the libssh2 error message and emit warning
+            const int rc = libssh2_session_last_errno(this->session);
             LOG_WARN_FMT(
-                "libssh2_knownhost_init failed for '%s' for update: libssh2 errno [%d] %s", userKnownHostsFile,
-                libssh2_session_last_errno(this->session), strZ(storageSftpLibSsh2SessionLastError(this->session)));
+                "libssh2_knownhost_init failed for '%s' for update: libssh2 errno [%d] %s", userKnownHostsFile, rc,
+                strZ(storageSftpLibSsh2SessionLastError(this->session)));
         }
         else
         {
@@ -1210,9 +1211,11 @@ storageSftpNew(
 
             if (knownHostsList == NULL)
             {
+                const int rc = libssh2_session_last_errno(this->session);
+
                 THROW_FMT(
                     ServiceError,
-                    "failure during libssh2_knownhost_init: libssh2 errno [%d] %s", libssh2_session_last_errno(this->session),
+                    "failure during libssh2_knownhost_init: libssh2 errno [%d] %s", rc,
                     strZ(storageSftpLibSsh2SessionLastError(this->session)));
             }
 
