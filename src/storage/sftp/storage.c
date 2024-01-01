@@ -142,7 +142,7 @@ storageSftpLibSsh2SessionLastError(LIBSSH2_SESSION *const libSsh2Session)
     const int rc = libssh2_session_last_error(libSsh2Session, &libSsh2ErrMsg, &libSsh2ErrMsgLen, 0);
 
     if (libSsh2ErrMsgLen != 0)
-        result = strNewZ(libSsh2ErrMsg);
+        result = strNewZN(libSsh2ErrMsg, (size_t)libSsh2ErrMsgLen);
     else
         result = strNewFmt("libssh2 no session error message provided [%d]", rc);
 
