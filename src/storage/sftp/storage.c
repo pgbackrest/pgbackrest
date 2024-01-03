@@ -126,6 +126,28 @@ storageSftpKnownHostCheckpFailureMsg(const int rc)
     FUNCTION_TEST_RETURN_CONST(STRINGZ, result);
 }
 
+/**********************************************************************************************************************************/
+static String *
+storageSftpLibSsh2SessionLastError(LIBSSH2_SESSION *const libSsh2Session)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, libSsh2Session);
+    FUNCTION_TEST_END();
+
+    String *result;
+    char *libSsh2ErrMsg;
+    int libSsh2ErrMsgLen;
+
+    const int rc = libssh2_session_last_error(libSsh2Session, &libSsh2ErrMsg, &libSsh2ErrMsgLen, 0);
+
+    if (libSsh2ErrMsgLen != 0)
+        result = strNewZN(libSsh2ErrMsg, (size_t)libSsh2ErrMsgLen);
+    else
+        result = strNewFmt("libssh2 no session error message provided [%d]", rc);
+
+    FUNCTION_TEST_RETURN(STRING, result);
+}
+
 /***********************************************************************************************************************************
 Rewrite the user's known_hosts file with a new entry
 ***********************************************************************************************************************************/
@@ -143,8 +165,6 @@ storageSftpUpdateKnownHostsFile(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        char *libSsh2ErrMsg;
-        int libSsh2ErrMsgLen;
         int rc;
 
         // Init a known host collection for the user's known_hosts file
@@ -156,10 +176,10 @@ storageSftpUpdateKnownHostsFile(
         if (userKnownHostsList == NULL)
         {
             // Get the libssh2 error message and emit warning
-            rc = libssh2_session_last_error(this->session, &libSsh2ErrMsg, &libSsh2ErrMsgLen, 0);
-
+            const int rc = libssh2_session_last_errno(this->session);
             LOG_WARN_FMT(
-                "libssh2_knownhost_init failed for '%s' for update: libssh2 errno [%d] %s", userKnownHostsFile, rc, libSsh2ErrMsg);
+                "libssh2_knownhost_init failed for '%s' for update: libssh2 errno [%d] %s", userKnownHostsFile, rc,
+                strZ(storageSftpLibSsh2SessionLastError(this->session)));
         }
         else
         {
@@ -214,11 +234,10 @@ storageSftpUpdateKnownHostsFile(
             else
             {
                 // On readfile failure warn that we're unable to update the user's known_hosts file
-                rc = libssh2_session_last_error(this->session, &libSsh2ErrMsg, &libSsh2ErrMsgLen, 0);
-
                 LOG_WARN_FMT(
                     "libssh2 unable to read '%s' for update: libssh2 errno [%d] %s\n"
-                    "HINT: does '%s' exist with proper permissions?", userKnownHostsFile, rc, libSsh2ErrMsg, userKnownHostsFile);
+                    "HINT: does '%s' exist with proper permissions?", userKnownHostsFile, rc,
+                    strZ(storageSftpLibSsh2SessionLastError(this->session)), userKnownHostsFile);
             }
         }
 
@@ -342,7 +361,8 @@ storageSftpEvalLibSsh2Error(
     ASSERT(errorType != NULL);
 
     THROWP_FMT(
-        errorType, "%slibssh2 error [%d]%s%s", message != NULL ? zNewFmt("%s: ", strZ(message)) : "", ssh2Errno,
+        errorType, "%s%s%s%s", message != NULL ? zNewFmt("%s%s", strZ(message), ssh2Errno == 0 ? "" : ": ") : "",
+        ssh2Errno == 0 ? "" : zNewFmt("libssh2 error [%d]", ssh2Errno),
         ssh2Errno == LIBSSH2_ERROR_SFTP_PROTOCOL ? zNewFmt(": sftp error [%" PRIu64 "]", sftpErrno) : "",
         hint != NULL ? zNewFmt("\n%s", strZ(hint)) : "");
 
@@ -433,7 +453,10 @@ storageSftpInfo(THIS_VOID, const String *const file, const StorageInfoLevel leve
 
         // Throw libssh2 on errors other than no such file
         if (!storageSftpLibSsh2FxNoSuchFile(this, rc))
-            THROW_FMT(FileOpenError, STORAGE_ERROR_INFO, strZ(file));
+        {
+            storageSftpEvalLibSsh2Error(
+                rc, libssh2_sftp_last_error(this->sftpSession), &FileOpenError, strNewFmt(STORAGE_ERROR_INFO, strZ(file)), NULL);
+        }
     }
     // Else the file exists
     else
@@ -491,7 +514,11 @@ storageSftpInfo(THIS_VOID, const String *const file, const StorageInfoLevel leve
                     THROW_FMT(FileReadError, "timeout getting destination for link '%s'", strZ(file));
 
                 if (linkDestinationSize < 0)
-                    THROW_FMT(FileReadError, "unable to get destination for link '%s'", strZ(file));
+                {
+                    storageSftpEvalLibSsh2Error(
+                        (int)linkDestinationSize, libssh2_sftp_last_error(this->sftpSession), &FileReadError,
+                        strNewFmt("unable to get destination for link '%s'", strZ(file)), NULL);
+                }
 
                 result.linkDestination = strNewZN(linkDestination, (size_t)linkDestinationSize);
             }
@@ -706,7 +733,11 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
             if (rc != 0)
             {
                 if (rc != LIBSSH2_ERROR_EAGAIN)
-                    THROW_FMT(PathCloseError, "unable to close path '%s' after listing", strZ(path));
+                {
+                    storageSftpEvalLibSsh2Error(
+                        rc, libssh2_sftp_last_error(this->sftpSession), &PathCloseError,
+                        strNewFmt("unable to close path '%s' after listing", strZ(path)), NULL);
+                }
                 else
                     THROW_FMT(PathCloseError, "timeout closing path '%s' after listing", strZ(path));
             }
@@ -760,7 +791,11 @@ storageSftpRemove(THIS_VOID, const String *const file, const StorageInterfaceRem
         else
         {
             if (param.errorOnMissing)
-                THROW_FMT(FileRemoveError, "unable to remove '%s'", strZ(file));
+            {
+                storageSftpEvalLibSsh2Error(
+                    rc, libssh2_sftp_last_error(this->sftpSession), &FileRemoveError,
+                    strNewFmt("unable to remove '%s'", strZ(file)), NULL);
+            }
         }
     }
 
@@ -879,11 +914,15 @@ storageSftpPathCreate(
                 while (storageSftpWaitFd(this, rc));
 
                 if (rc == LIBSSH2_ERROR_EAGAIN)
-                    THROW_FMT(PathCreateError, "timeout stating path '%s'", strZ(path));
+                    THROW_FMT(PathCreateError, "timeout stat'ing path '%s'", strZ(path));
 
                 // If rc = 0 then already exists
                 if (rc == 0 && errorOnExists)
-                    THROW_FMT(PathCreateError, "unable to create path '%s': path already exists", strZ(path));
+                {
+                    storageSftpEvalLibSsh2Error(
+                        rc, libssh2_sftp_last_error(this->sftpSession), &PathCreateError,
+                        strNewFmt("unable to create path '%s': path already exists", strZ(path)), NULL);
+                }
             }
             // If the parent path does not exist then create it if allowed
             else if (sftpErrno == LIBSSH2_FX_NO_SUCH_FILE && !noParentCreate)
@@ -896,10 +935,17 @@ storageSftpPathCreate(
                 strFree(pathParent);
             }
             else if (sftpErrno != LIBSSH2_FX_FILE_ALREADY_EXISTS || errorOnExists)
-                THROW_FMT(PathCreateError, "sftp error unable to create path '%s'", strZ(path));
+            {
+                storageSftpEvalLibSsh2Error(
+                    rc, sftpErrno, &PathCreateError, strNewFmt("sftp error unable to create path '%s'", strZ(path)), NULL);
+            }
         }
         else
-            THROW_FMT(PathCreateError, "ssh2 error [%d] unable to create path '%s'", rc, strZ(path));
+        {
+            storageSftpEvalLibSsh2Error(
+                rc, libssh2_sftp_last_error(this->sftpSession), &PathCreateError,
+                strNewFmt("ssh2 error [%d] unable to create path '%s'", rc, strZ(path)), NULL);
+        }
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -1007,7 +1053,9 @@ storageSftpPathRemove(THIS_VOID, const String *const path, const bool recurse, c
                 // Path does not exist
                 result = false;
 
-                THROW_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE, strZ(path));
+                storageSftpEvalLibSsh2Error(
+                    rc, libssh2_sftp_last_error(this->sftpSession), &PathRemoveError,
+                    strNewFmt(STORAGE_ERROR_PATH_REMOVE, strZ(path)), NULL);
             }
         }
     }
@@ -1098,7 +1146,10 @@ storageSftpNew(
             THROW_FMT(ServiceError, "timeout during libssh2 handshake [%d]", rc);
 
         if (rc != 0)
-            THROW_FMT(ServiceError, "libssh2 handshake failed [%d]", rc);
+        {
+            THROW_FMT(
+                ServiceError, "libssh2 handshake failed [%d]: %s", rc, strZ(storageSftpLibSsh2SessionLastError(this->session)));
+        }
 
         int hashType = LIBSSH2_HOSTKEY_HASH_SHA1;
         size_t hashSize = 0;
@@ -1158,7 +1209,14 @@ storageSftpNew(
             LIBSSH2_KNOWNHOSTS *const knownHostsList = libssh2_knownhost_init(this->session);
 
             if (knownHostsList == NULL)
-                THROW_FMT(ServiceError, "failure during libssh2_knownhost_init");
+            {
+                const int rc = libssh2_session_last_errno(this->session);
+
+                THROW_FMT(
+                    ServiceError,
+                    "failure during libssh2_knownhost_init: libssh2 errno [%d] %s", rc,
+                    strZ(storageSftpLibSsh2SessionLastError(this->session)));
+            }
 
             // Get the list of known host files to search
             const StringList *const knownHostsPathList = storageSftpKnownHostsFilesList(param.knownHosts);
@@ -1177,14 +1235,9 @@ storageSftpNew(
                         LOG_DETAIL_FMT("libssh2 '%s' file is empty", currentKnownHostFile);
                     else
                     {
-                        char *libSsh2ErrMsg;
-                        int libSsh2ErrMsgLen;
-
-                        // Get the libssh2 error message
-                        rc = libssh2_session_last_error(this->session, &libSsh2ErrMsg, &libSsh2ErrMsgLen, 0);
-
                         LOG_DETAIL_FMT(
-                            "libssh2 read '%s' failed: libssh2 errno [%d] %s", currentKnownHostFile, rc, libSsh2ErrMsg);
+                            "libssh2 read '%s' failed: libssh2 errno [%d] %s", currentKnownHostFile, rc,
+                            strZ(storageSftpLibSsh2SessionLastError(this->session)));
                     }
                 }
                 else
@@ -1305,7 +1358,11 @@ storageSftpNew(
             if (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_EAGAIN)
                 THROW_FMT(ServiceError, "timeout during init of libssh2_sftp session");
             else
-                THROW_FMT(ServiceError, "unable to init libssh2_sftp session");
+            {
+                storageSftpEvalLibSsh2Error(
+                    rc, libssh2_sftp_last_error(this->sftpSession), &ServiceError,
+                    strNewFmt("unable to init libssh2_sftp session"), NULL);
+            }
         }
 
         // Ensure libssh2/libssh2_sftp resources freed
