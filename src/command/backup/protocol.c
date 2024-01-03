@@ -5,6 +5,7 @@ Backup Protocol Handler
 
 #include "command/backup/file.h"
 #include "command/backup/protocol.h"
+#include "common/crypto/hash.h"
 #include "common/debug.h"
 #include "common/io/io.h"
 #include "common/log.h"
@@ -88,8 +89,13 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
         {
             const BackupFileResult *const fileResult = lstGet(result, resultIdx);
 
+            ASSERT(
+                fileResult->backupCopyResult == backupCopyResultSkip || fileResult->copySize != 0 ||
+                bufEq(fileResult->copyChecksum, HASH_TYPE_SHA1_ZERO_BUF));
+
             pckWriteStrP(resultPack, fileResult->manifestFile);
             pckWriteU32P(resultPack, fileResult->backupCopyResult);
+            pckWriteBoolP(resultPack, fileResult->repoInvalid);
             pckWriteU64P(resultPack, fileResult->copySize);
             pckWriteU64P(resultPack, fileResult->bundleOffset);
             pckWriteU64P(resultPack, fileResult->blockIncrMapSize);

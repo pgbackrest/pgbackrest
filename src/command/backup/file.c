@@ -115,8 +115,8 @@ backupFile(
                                 MEM_CONTEXT_BEGIN(lstMemContext(result))
                                 {
                                     fileResult->backupCopyResult = backupCopyResultNoOp;
-                                    fileResult->copySize = pgTestSize;
-                                    fileResult->copyChecksum = bufDup(pgTestChecksum);
+                                    fileResult->copySize = file->pgFileSize;
+                                    fileResult->copyChecksum = file->pgFileChecksum;
                                 }
                                 MEM_CONTEXT_END();
                             }
@@ -164,13 +164,13 @@ backupFile(
                             {
                                 fileResult->backupCopyResult = backupCopyResultChecksum;
                                 fileResult->copySize = file->pgFileSize;
-                                fileResult->copyChecksum = bufDup(file->pgFileChecksum);
+                                fileResult->copyChecksum = file->pgFileChecksum;
                             }
                             MEM_CONTEXT_END();
                         }
-                        // Else recopy when repo file is not as expected
+                        // Else copy when repo file is invalid
                         else
-                            fileResult->backupCopyResult = backupCopyResultReCopy;
+                            fileResult->repoInvalid = true;
                     }
                 }
             }
@@ -192,7 +192,7 @@ backupFile(
                 const BackupFile *const file = lstGet(fileList, fileIdx);
                 BackupFileResult *const fileResult = lstGet(result, fileIdx);
 
-                if (fileResult->backupCopyResult == backupCopyResultCopy || fileResult->backupCopyResult == backupCopyResultReCopy)
+                if (fileResult->backupCopyResult == backupCopyResultCopy)
                 {
                     // Setup pg file for read. Only read as many bytes as passed in pgFileSize. If the file is growing it does no
                     // good to copy data past the end of the size recorded in the manifest since those blocks will need to be
@@ -305,19 +305,33 @@ backupFile(
                         // bundling is enabled as otherwise the file will be stored anyway.
                         ioRead(readIo, buffer);
 
-                        if (ioReadEof(readIo) && bundleId != 0)
+                        if (ioReadEof(readIo))
                         {
                             // Close the source and set eof
                             ioReadClose(readIo);
                             readEof = true;
 
-                            // If the file is zero-length then it was truncated during the backup
-                            if (pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(readIo), SIZE_FILTER_TYPE, .idx = 0)) == 0)
+                            // Get file size
+                            fileResult->copySize = pckReadU64P(
+                                ioFilterGroupResultP(ioReadFilterGroup(readIo), SIZE_FILTER_TYPE, .idx = 0));
+
+                            // If file is zero-length then it was truncated during the backup. When bundling we can simply mark it
+                            // as truncated since no file needs to be stored.
+                            if (bundleId != 0 && fileResult->copySize == 0)
+                            {
                                 fileResult->backupCopyResult = backupCopyResultTruncate;
+                                fileResult->copyChecksum = HASH_TYPE_SHA1_ZERO_BUF;
+
+                                ASSERT(
+                                    bufEq(
+                                        fileResult->copyChecksum,
+                                        pckReadBinP(
+                                            ioFilterGroupResultP(ioReadFilterGroup(readIo), CRYPTO_HASH_FILTER_TYPE, .idx = 0))));
+                            }
                         }
 
-                        // Copy the file in non-bundling mode or if the file is not zero-length
-                        if (fileResult->backupCopyResult != backupCopyResultTruncate)
+                        // Copy the file
+                        if (fileResult->backupCopyResult == backupCopyResultCopy)
                         {
                             // Setup the repo file for write. There is no need to write the file atomically (e.g. via a temp file on
                             // Posix) because checksums are tested on resume after a failed backup. The path does not need to be
@@ -348,19 +362,16 @@ backupFile(
                                 // Close the source
                                 ioReadClose(readIo);
                             }
-                        }
 
-                        MEM_CONTEXT_BEGIN(lstMemContext(result))
-                        {
-                            // Get size and checksum
-                            fileResult->copySize = pckReadU64P(
-                                ioFilterGroupResultP(ioReadFilterGroup(readIo), SIZE_FILTER_TYPE, .idx = 0));
-                            fileResult->copyChecksum = pckReadBinP(
-                                ioFilterGroupResultP(ioReadFilterGroup(readIo), CRYPTO_HASH_FILTER_TYPE, .idx = 0));
-
-                            // If the file is not bundled or not zero-length then it was copied
-                            if (fileResult->backupCopyResult != backupCopyResultTruncate)
+                            // Get copy results
+                            MEM_CONTEXT_BEGIN(lstMemContext(result))
                             {
+                                // Get size and checksum
+                                fileResult->copySize = pckReadU64P(
+                                    ioFilterGroupResultP(ioReadFilterGroup(readIo), SIZE_FILTER_TYPE, .idx = 0));
+                                fileResult->copyChecksum = pckReadBinP(
+                                    ioFilterGroupResultP(ioReadFilterGroup(readIo), CRYPTO_HASH_FILTER_TYPE, .idx = 0));
+
                                 // Get bundle offset
                                 fileResult->bundleOffset = bundleOffset;
 
@@ -389,10 +400,10 @@ backupFile(
                                         ioFilterGroupResultP(ioReadFilterGroup(readIo), CRYPTO_HASH_FILTER_TYPE, .idx = 1));
                                 }
                             }
-                        }
-                        MEM_CONTEXT_END();
+                            MEM_CONTEXT_END();
 
-                        bundleOffset += fileResult->repoSize;
+                            bundleOffset += fileResult->repoSize;
+                        }
                     }
                     // Else if source file is missing and the read setup indicated ignore a missing file, the database removed it so
                     // skip it
