@@ -135,7 +135,6 @@ storageSftpLibSsh2SessionLastError(LIBSSH2_SESSION *const libSsh2Session)
     FUNCTION_TEST_END();
 
     String *result;
-
     char *libSsh2ErrMsg;
     int libSsh2ErrMsgLen;
 
