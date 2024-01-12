@@ -2824,9 +2824,7 @@ testRun(void)
             ((Storage *)storageRepoWrite())->pub.interface.feature ^= 1 << storageFeatureHardLink;
 
             // Run backup
-            hrnBackupPqScriptP(
-                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 3, .walSwitch = true,
-                .tablespace = true);
+            hrnBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 3, .walSwitch = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             // Reset storage features
@@ -2952,7 +2950,7 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Preserve prior timestamp on pg_control
-            hrnBackupPqScriptP(PG_VERSION_11, BACKUP_EPOCH + 2300000, .errorAfterStart = true, .tablespace = true);
+            hrnBackupPqScriptP(PG_VERSION_11, BACKUP_EPOCH + 2300000, .errorAfterStart = true);
             HRN_PG_CONTROL_TIME(storagePg(), backupTimeStart);
 
             // Run backup
@@ -3021,8 +3019,7 @@ testRun(void)
             HRN_BACKUP_SCRIPT_SET(
                 {.op = hrnBackupScriptOpUpdate, .file = storagePathP(storagePg(), STRDEF(PG_PATH_BASE "/1/1")),
                  .time = backupTimeStart, .content = relationAfter});
-            hrnBackupPqScriptP(
-                PG_VERSION_11, backupTimeStart, .timeline = 0x2C, .walTotal = 2, .walSwitch = true, .tablespace = true);
+            hrnBackupPqScriptP(PG_VERSION_11, backupTimeStart, .timeline = 0x2C, .walTotal = 2, .walSwitch = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
@@ -3174,7 +3171,7 @@ testRun(void)
             // Run backup
             hrnBackupPqScriptP(
                 PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2, .pgVersionForce = STRDEF("11"),
-                .walSwitch = true, .tablespace = true);
+                .walSwitch = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
@@ -3306,9 +3303,7 @@ testRun(void)
             HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "zero", .timeModified = backupTimeStart);
 
             // Run backup
-            hrnBackupPqScriptP(
-                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2, .walSwitch = true,
-                .tablespace = true);
+            hrnBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2, .walSwitch = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
@@ -3324,10 +3319,9 @@ testRun(void)
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DBBF8000000001, lsn = 5dbbf80/300000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
-                "P00 DETAIL: wrote 'tablespace_map' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000000105DBBF8000000000:0000000105DBBF8000000001\n"
                 "P00   INFO: new backup label = 20191030-014640F_20191101-092000D\n"
-                "P00   INFO: diff backup size = [SIZE], file total = 5");
+                "P00   INFO: diff backup size = [SIZE], file total = 4");
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
@@ -3336,7 +3330,6 @@ testRun(void)
                 "bundle/1/pg_data/global/pg_control {file, s=8192}\n"
                 "pg_data {path}\n"
                 "pg_data/backup_label.gz {file, s=17}\n"
-                "pg_data/tablespace_map.gz {file, s=19}\n"
                 "20191030-014640F/bundle/1/pg_data/PG_VERSION {file, s=2}\n"
                 "--------\n"
                 "[backup:target]\n"
@@ -3348,8 +3341,6 @@ testRun(void)
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                 ",\"timestamp\":1572600002}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1572600000}\n"
-                "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
-                ",\"timestamp\":1572600002}\n"
                 "pg_data/zero={\"size\":0,\"timestamp\":1572600000}\n"
                 "\n"
                 "[target:path]\n"
@@ -3448,7 +3439,7 @@ testRun(void)
                 {.op = hrnBackupScriptOpRemove, .file = storagePathP(storagePg(), STRDEF("global/pg_control"))});
             hrnBackupPqScriptP(
                 PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2, .walSwitch = true,
-                .tablespace = true, .errorAfterCopyStart = true);
+                .errorAfterCopyStart = true);
             TEST_ERROR(
                 hrnCmdBackup(), FileMissingError,
                 "raised from local-1 shim protocol: unable to open missing file '" TEST_PATH "/pg1/global/pg_control' for read");
@@ -3462,9 +3453,7 @@ testRun(void)
             HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_11, .pageChecksum = false, .walSegmentSize = 2 * 1024 * 1024);
 
             // Run backup
-            hrnBackupPqScriptP(
-                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2, .walSwitch = true,
-                .tablespace = true);
+            hrnBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2, .walSwitch = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
@@ -3484,10 +3473,9 @@ testRun(void)
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DBF06000000001, lsn = 5dbf060/300000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
-                "P00 DETAIL: wrote 'tablespace_map' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000000105DBF06000000000:0000000105DBF06000000001\n"
                 "P00   INFO: new backup label = 20191103-165320F\n"
-                "P00   INFO: full backup size = [SIZE], file total = 11");
+                "P00   INFO: full backup size = [SIZE], file total = 10");
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
@@ -3504,7 +3492,6 @@ testRun(void)
                 "pg_data {path}\n"
                 "pg_data/backup_label {file, s=17}\n"
                 "pg_data/block-incr-grow.pgbi {file, m=0:{0,1,2}, s=24576}\n"
-                "pg_data/tablespace_map {file, s=19}\n"
                 "--------\n"
                 "[backup:target]\n"
                 "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n"
@@ -3529,8 +3516,6 @@ testRun(void)
                 ",\"timestamp\":1572800000}\n"
                 "pg_data/normal-same={\"checksum\":\"64b404a01e9e34e74c7509b3ab6adfe63e79d31c\",\"size\":4"
                 ",\"timestamp\":1572800000}\n"
-                "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
-                ",\"timestamp\":1572800002}\n"
                 "\n"
                 "[target:path]\n"
                 "pg_data={}\n"
@@ -3616,9 +3601,7 @@ testRun(void)
             HRN_BACKUP_SCRIPT_SET(
                 {.op = hrnBackupScriptOpUpdate, .file = storagePathP(storagePg(), STRDEF("truncate-to-zero")),
                  .time = backupTimeStart + 1});
-            hrnBackupPqScriptP(
-                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2, .walSwitch = true,
-                .tablespace = true);
+            hrnBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2, .walSwitch = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
@@ -3640,10 +3623,9 @@ testRun(void)
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DC213000000001, lsn = 5dc2130/300000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
-                "P00 DETAIL: wrote 'tablespace_map' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000000105DC213000000000:0000000105DC213000000001\n"
                 "P00   INFO: new backup label = 20191103-165320F_20191106-002640D\n"
-                "P00   INFO: diff backup size = [SIZE], file total = 13");
+                "P00   INFO: diff backup size = [SIZE], file total = 12");
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
@@ -3660,7 +3642,6 @@ testRun(void)
                 "pg_data/backup_label {file, s=17}\n"
                 "pg_data/block-incr-grow.pgbi {file, m=0:{0},1:{0},0:{2},1:{1,2,3,4,5,6,7,8,9,10,11,12,13}, s=131072}\n"
                 "pg_data/block-incr-larger.pgbi {file, m=1:{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15},1:{0,1,2,3,4,5,6}, s=1507328}\n"
-                "pg_data/tablespace_map {file, s=19}\n"
                 "20191103-165320F/bundle/1/pg_data/PG_VERSION {file, s=2}\n"
                 "--------\n"
                 "[backup:target]\n"
@@ -3688,8 +3669,6 @@ testRun(void)
                 "\"size\":16385,\"timestamp\":1573000000}\n"
                 "pg_data/normal-same={\"checksum\":\"64b404a01e9e34e74c7509b3ab6adfe63e79d31c\",\"size\":4"
                 ",\"timestamp\":1573000000}\n"
-                "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
-                ",\"timestamp\":1573000002}\n"
                 "pg_data/truncate-to-zero={\"size\":0,\"szo\":4,\"timestamp\":1573000000}\n"
                 "\n"
                 "[target:path]\n"
@@ -3765,7 +3744,7 @@ testRun(void)
             // Run backup
             hrnBackupPqScriptP(
                 PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherType = cipherTypeAes256Cbc,
-                .cipherPass = TEST_CIPHER_PASS, .walTotal = 2, .walSwitch = true, .tablespace = true);
+                .cipherPass = TEST_CIPHER_PASS, .walTotal = 2, .walSwitch = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
@@ -3779,10 +3758,9 @@ testRun(void)
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DC520000000001, lsn = 5dc5200/300000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
-                "P00 DETAIL: wrote 'tablespace_map' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000000105DC520000000000:0000000105DC520000000001\n"
                 "P00   INFO: new backup label = 20191108-080000F\n"
-                "P00   INFO: full backup size = [SIZE], file total = 6");
+                "P00   INFO: full backup size = [SIZE], file total = 5");
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(
@@ -3796,7 +3774,6 @@ testRun(void)
                 "pg_data/backup_label.gz {file, s=17}\n"
                 "pg_data/block-incr-grow.pgbi {file, m=0:{0,1,2}, s=24576}\n"
                 "pg_data/block-incr-wayback.pgbi {file, m=0:{0,1}, s=16384}\n"
-                "pg_data/tablespace_map.gz {file, s=19}\n"
                 "--------\n"
                 "[backup:target]\n"
                 "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n"
@@ -3811,8 +3788,6 @@ testRun(void)
                 "pg_data/block-incr-wayback={\"bi\":1,\"bim\":40,\"checksum\":\"897256b6709e1a4da9daba92b6bde39ccfccd8c1\""
                 ",\"size\":16384,\"timestamp\":1573200000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1573200000}\n"
-                "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
-                ",\"timestamp\":1573200002}\n"
                 "\n"
                 "[target:path]\n"
                 "pg_data={}\n"
@@ -3873,7 +3848,7 @@ testRun(void)
             // Run backup
             hrnBackupPqScriptP(
                 PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherType = cipherTypeAes256Cbc,
-                .cipherPass = TEST_CIPHER_PASS, .walTotal = 2, .walSwitch = true, .tablespace = true);
+                .cipherPass = TEST_CIPHER_PASS, .walTotal = 2, .walSwitch = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
@@ -3892,10 +3867,9 @@ testRun(void)
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DC82D000000001, lsn = 5dc82d0/300000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
-                "P00 DETAIL: wrote 'tablespace_map' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000000105DC82D000000000:0000000105DC82D000000001\n"
                 "P00   INFO: new backup label = 20191108-080000F_20191110-153320D\n"
-                "P00   INFO: diff backup size = [SIZE], file total = 8");
+                "P00   INFO: diff backup size = [SIZE], file total = 7");
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(
@@ -3909,7 +3883,6 @@ testRun(void)
                 "bundle/1/pg_data/global/pg_control {file, s=8192}\n"
                 "pg_data {path}\n"
                 "pg_data/backup_label.gz {file, s=17}\n"
-                "pg_data/tablespace_map.gz {file, s=19}\n"
                 "20191108-080000F/bundle/1/pg_data/PG_VERSION {file, s=2}\n"
                 "20191108-080000F/pg_data/block-incr-wayback.pgbi {file, m=0:{0,1}, s=16384}\n"
                 "--------\n"
@@ -3930,8 +3903,6 @@ testRun(void)
                 "pg_data/block-incr-wayback={\"bi\":1,\"bim\":40,\"checksum\":\"897256b6709e1a4da9daba92b6bde39ccfccd8c1\","
                 "\"reference\":\"20191108-080000F\",\"size\":16384,\"timestamp\":1573227200}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1573400000}\n"
-                "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
-                ",\"timestamp\":1573400002}\n"
                 "\n"
                 "[target:path]\n"
                 "pg_data={}\n"
@@ -3988,7 +3959,7 @@ testRun(void)
                  .time = backupTimeStart + 1, .content = fileGrow});
             hrnBackupPqScriptP(
                 PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherType = cipherTypeAes256Cbc,
-                .cipherPass = TEST_CIPHER_PASS, .walTotal = 2, .walSwitch = true, .tablespace = true);
+                .cipherPass = TEST_CIPHER_PASS, .walTotal = 2, .walSwitch = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             // Make sure that global/1 grew as expected but the extra bytes were not copied
@@ -4006,10 +3977,9 @@ testRun(void)
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DC9B4000000001, lsn = 5dc9b40/300000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
-                "P00 DETAIL: wrote 'tablespace_map' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000000105DC9B4000000000:0000000105DC9B4000000001\n"
                 "P00   INFO: new backup label = 20191111-192000F\n"
-                "P00   INFO: full backup size = [SIZE], file total = 6");
+                "P00   INFO: full backup size = [SIZE], file total = 5");
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(
@@ -4024,7 +3994,6 @@ testRun(void)
                 "pg_data/global {path}\n"
                 "pg_data/global/1 {file, s=12288}\n"
                 "pg_data/global/2 {file, s=16384}\n"
-                "pg_data/tablespace_map {file, s=19}\n"
                 "--------\n"
                 "[backup:target]\n"
                 "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n"
@@ -4039,8 +4008,6 @@ testRun(void)
                 "pg_data/global/2={\"checksum\":\"02af87d042262a0313120317db0c285b3210209f\",\"checksum-page\":false"
                 ",\"checksum-page-error\":[3],\"repo-size\":16416,\"size\":16384,\"timestamp\":1573500000}\n"
                 "pg_data/global/pg_control={\"repo-size\":8224,\"size\":8192,\"timestamp\":1573500000}\n"
-                "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"repo-size\":48"
-                ",\"size\":19,\"timestamp\":1573500002}\n"
                 "\n"
                 "[target:path]\n"
                 "pg_data={}\n"
