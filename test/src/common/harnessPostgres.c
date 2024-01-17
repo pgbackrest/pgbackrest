@@ -11,10 +11,6 @@ Harness for PostgreSQL Interface
 /***********************************************************************************************************************************
 Interface definition
 ***********************************************************************************************************************************/
-uint32_t hrnPgInterfaceCatalogVersion093(void);
-void hrnPgInterfaceControl093(unsigned int controlVersion, unsigned int crc, PgControl pgControl, unsigned char *buffer);
-void hrnPgInterfaceWal093(unsigned int magic, PgWal pgWal, unsigned char *buffer);
-
 uint32_t hrnPgInterfaceCatalogVersion094(void);
 void hrnPgInterfaceControl094(unsigned int controlVersion, unsigned int crc, PgControl pgControl, unsigned char *buffer);
 void hrnPgInterfaceWal094(unsigned int magic, PgWal pgWal, unsigned char *buffer);
@@ -142,13 +138,6 @@ static const HrnPgInterface hrnPgInterface[] =
         .control = hrnPgInterfaceControl094,
         .wal = hrnPgInterfaceWal094,
     },
-    {
-        .version = PG_VERSION_93,
-
-        .catalogVersion = hrnPgInterfaceCatalogVersion093,
-        .control = hrnPgInterfaceControl093,
-        .wal = hrnPgInterfaceWal093,
-    },
 };
 
 /***********************************************************************************************************************************
@@ -203,7 +192,7 @@ hrnPgControlToBuffer(const unsigned int controlVersion, const unsigned int crc, 
     ASSERT(pgControl.version != 0);
 
     // Set defaults if values are not passed
-    pgControl.pageSize = pgControl.pageSize == 0 ? PG_PAGE_SIZE_DEFAULT : pgControl.pageSize;
+    pgControl.pageSize = pgControl.pageSize == 0 ? pgPageSize8 : pgControl.pageSize;
     pgControl.walSegmentSize = pgControl.walSegmentSize == 0 ? PG_WAL_SEGMENT_SIZE_DEFAULT : pgControl.walSegmentSize;
     pgControl.catalogVersion =
         pgControl.catalogVersion == 0 ? hrnPgInterfaceVersion(pgControl.version)->catalogVersion() : pgControl.catalogVersion;

@@ -17,7 +17,11 @@ void hrnLogReplaceAdd(const char *expression, const char *expressionSub, const c
 // Clear (remove) all log replacements
 void hrnLogReplaceClear(void);
 
+// Compare log to a static string
 void harnessLogResult(const char *expected);
+
+// Check that log contains a substring
+void harnessLogResultEmptyOrContains(const char *const contains);
 
 /***********************************************************************************************************************************
 Getters/Setters

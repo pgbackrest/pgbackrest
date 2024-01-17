@@ -2,9 +2,9 @@
 
 ## Introduction
 
-pgBackRest aims to be a reliable, easy-to-use backup and restore solution that can seamlessly scale up to the largest databases and workloads by utilizing algorithms that are optimized for database-specific requirements.
+pgBackRest is a reliable backup and restore solution for PostgreSQL that seamlessly scales up to the largest databases and workloads.
 
-pgBackRest [v2.48](https://github.com/pgbackrest/pgbackrest/releases/tag/release/2.48) is the current stable release. Release notes are on the [Releases](http://www.pgbackrest.org/release.html) page.
+pgBackRest [v2.49](https://github.com/pgbackrest/pgbackrest/releases/tag/release/2.49) is the current stable release. Release notes are on the [Releases](http://www.pgbackrest.org/release.html) page.
 
 Please find us on [GitHub](https://github.com/pgbackrest/pgbackrest) and give us a star if you like pgBackRest!
 
@@ -40,7 +40,7 @@ All operations utilize file and directory level fsync to ensure durability.
 
 ### Page Checksums
 
-PostgreSQL has supported page-level checksums since 9.3. If page checksums are enabled pgBackRest will validate the checksums for every file that is copied during a backup. All page checksums are validated during a full backup and checksums in files that have changed are validated during differential and incremental backups.
+If page checksums are enabled pgBackRest will validate the checksums for every file that is copied during a backup. All page checksums are validated during a full backup and checksums in files that have changed are validated during differential and incremental backups.
 
 Validation failures do not stop the backup process, but warnings with details of exactly which pages have failed validation are output to the console and file log.
 

@@ -77,7 +77,6 @@ sub new
 my $oPgControlVersionHash =
 {
     # iControlVersion => {iCatalogVersion => strDbVersion}
-    937 => {201306121 => PG_VERSION_93},
     942 =>
     {
         201409291 => PG_VERSION_94,
@@ -390,8 +389,8 @@ sub backupCreate
 
     my $strManifestFile = "$$oStanza{strBackupClusterPath}/${strBackupLabel}/" . FILE_MANIFEST;
 
-    my $oManifest = new pgBackRestTest::Env::Manifest($strManifestFile, {bLoad => false, strDbVersion => PG_VERSION_93,
-        iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_93),
+    my $oManifest = new pgBackRestTest::Env::Manifest($strManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94,
+        iDbCatalogVersion => $self->dbCatalogVersion(PG_VERSION_94),
         strCipherPass => $strCipherPassManifest, strCipherPassSub => $strCipherPassBackupSet});
 
     # Store information about the backup into the backup section

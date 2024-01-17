@@ -7,6 +7,7 @@ Backup File
 #include "common/compress/helper.h"
 #include "common/crypto/common.h"
 #include "common/type/keyValue.h"
+#include "postgres/interface.h"
 
 /***********************************************************************************************************************************
 Backup file types
@@ -15,9 +16,9 @@ typedef enum
 {
     backupCopyResultChecksum,
     backupCopyResultCopy,
-    backupCopyResultReCopy,
     backupCopyResultSkip,
     backupCopyResultNoOp,
+    backupCopyResultTruncate,
 } BackupCopyResult;
 
 /***********************************************************************************************************************************
@@ -51,9 +52,10 @@ typedef struct BackupFileResult
 {
     const String *manifestFile;                                     // Manifest file
     BackupCopyResult backupCopyResult;
+    bool repoInvalid;                                               // File was recopied because repo file was invalid
     uint64_t copySize;
-    Buffer *copyChecksum;
-    Buffer *repoChecksum;                                           // Checksum repo file (including compression, etc.)
+    const Buffer *copyChecksum;                                     // Checksum of pg file
+    const Buffer *repoChecksum;                                     // Checksum of repo file (including compression, etc.)
     uint64_t bundleOffset;                                          // Offset in bundle if any
     uint64_t repoSize;
     uint64_t blockIncrMapSize;                                      // Size of block incremental map (0 if no map)
@@ -62,6 +64,7 @@ typedef struct BackupFileResult
 
 FN_EXTERN List *backupFile(
     const String *repoFile, uint64_t bundleId, bool bundleRaw, unsigned int blockIncrReference, CompressType repoFileCompressType,
-    int repoFileCompressLevel, CipherType cipherType, const String *cipherPass, const String *pgVersionForce, const List *fileList);
+    int repoFileCompressLevel, CipherType cipherType, const String *cipherPass, const String *pgVersionForce, PgPageSize pageSize,
+    const List *fileList);
 
 #endif

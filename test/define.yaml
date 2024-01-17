@@ -878,8 +878,17 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: backup
-        total: 13
-        harness: backup
+        total: 12
+        harness:
+          name: backup
+          shim:
+            command/backup/backup:
+              function:
+                - backupProcess
+        harness:
+          name: blockIncr
+          shim:
+            command/restore/blockDelta: ~
 
         coverage:
           - command/backup/backup
@@ -898,7 +907,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: restore
-        total: 14
+        total: 15
 
         coverage:
           - command/restore/blockChecksum

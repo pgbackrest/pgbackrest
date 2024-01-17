@@ -17,7 +17,7 @@ Shim install state
 ***********************************************************************************************************************************/
 static struct
 {
-    // Local process shims
+    // Shim clientOpen() to use a fake file descriptor
     bool localShimSckClientOpen;
 } hrnIoStatic;
 
@@ -63,7 +63,6 @@ hrnSckClientOpenShimInstall(void)
     FUNCTION_HARNESS_RETURN_VOID();
 }
 
-/**********************************************************************************************************************************/
 void
 hrnSckClientOpenShimUninstall(void)
 {

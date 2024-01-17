@@ -98,7 +98,11 @@ storageWriteSftpOpen(THIS_VOID)
             }
         }
         else
-            THROW_FMT(FileOpenError, STORAGE_ERROR_WRITE_OPEN, strZ(this->interface.name));
+        {
+            storageSftpEvalLibSsh2Error(
+                rc, libssh2_sftp_last_error(this->sftpSession), &FileOpenError,
+                strNewFmt(STORAGE_ERROR_WRITE_OPEN, strZ(this->interface.name)), NULL);
+        }
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -150,7 +154,11 @@ storageWriteSftp(THIS_VOID, const Buffer *const buffer)
         THROW_FMT(FileWriteError, "timeout writing '%s'", strZ(this->nameTmp));
 
     if (rc < 0)
-        THROW_FMT(FileWriteError, "unable to write '%s'", strZ(this->nameTmp));
+    {
+        storageSftpEvalLibSsh2Error(
+            (int)rc, libssh2_sftp_last_error(this->sftpSession), &FileWriteError,
+            strNewFmt("unable to write '%s'", strZ(this->nameTmp)), NULL);
+    }
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -261,7 +269,11 @@ storageWriteSftpClose(THIS_VOID)
                 if (rc == LIBSSH2_ERROR_EAGAIN)
                     THROW_FMT(FileSyncError, "timeout syncing file '%s'", strZ(this->nameTmp));
                 else
-                    THROW_FMT(FileSyncError, STORAGE_ERROR_WRITE_SYNC, strZ(this->nameTmp));
+                {
+                    storageSftpEvalLibSsh2Error(
+                        rc, libssh2_sftp_last_error(this->sftpSession), &FileSyncError,
+                        strNewFmt(STORAGE_ERROR_WRITE_SYNC, strZ(this->nameTmp)), NULL);
+                }
             }
         }
 

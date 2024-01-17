@@ -12,15 +12,140 @@ Harness for Creating Test Backups
 #include "common/lock.h"
 #include "config/config.h"
 #include "info/infoArchive.h"
+#include "info/manifest.h"
 #include "postgres/interface.h"
 #include "storage/helper.h"
+#include "storage/posix/storage.h"
 
 #include "common/harnessBackup.h"
 #include "common/harnessDebug.h"
 #include "common/harnessPostgres.h"
 #include "common/harnessPq.h"
 #include "common/harnessStorage.h"
-#include "common/harnessTest.h"
+#include "common/harnessTest.intern.h"
+
+/***********************************************************************************************************************************
+Include shimmed C modules
+***********************************************************************************************************************************/
+{[SHIM_MODULE]}
+
+/***********************************************************************************************************************************
+Local variables
+***********************************************************************************************************************************/
+static struct HrnBackupLocal
+{
+    MemContext *memContext;                                         // Script mem context
+
+    // Script that defines how shim functions operate
+    HrnBackupScript script[1024];
+    unsigned int scriptSize;
+    unsigned int scriptIdx;
+} hrnBackupLocal;
+
+/**********************************************************************************************************************************/
+static void
+hrnBackupScriptAdd(const HrnBackupScript *const script, const unsigned int scriptSize)
+{
+    if (scriptSize == 0)
+        THROW(AssertError, "backup script must have entries");
+
+    if (hrnBackupLocal.scriptSize == 0)
+    {
+        MEM_CONTEXT_BEGIN(memContextTop())
+        {
+            MEM_CONTEXT_NEW_BEGIN(hrnBackupLocal, .childQty = MEM_CONTEXT_QTY_MAX)
+            {
+                hrnBackupLocal.memContext = MEM_CONTEXT_NEW();
+            }
+            MEM_CONTEXT_NEW_END();
+        }
+        MEM_CONTEXT_END();
+
+        hrnBackupLocal.scriptIdx = 0;
+    }
+
+    // Copy records into local storage
+    MEM_CONTEXT_BEGIN(hrnBackupLocal.memContext)
+    {
+        for (unsigned int scriptIdx = 0; scriptIdx < scriptSize; scriptIdx++)
+        {
+            ASSERT(script[scriptIdx].op != 0);
+            ASSERT(script[scriptIdx].file != NULL);
+
+            hrnBackupLocal.script[hrnBackupLocal.scriptSize] = script[scriptIdx];
+            hrnBackupLocal.script[hrnBackupLocal.scriptSize].file = strDup(script[scriptIdx].file);
+
+            if (script[scriptIdx].content != NULL)
+                hrnBackupLocal.script[hrnBackupLocal.scriptSize].content = bufDup(script[scriptIdx].content);
+
+            hrnBackupLocal.scriptSize++;
+        }
+    }
+    MEM_CONTEXT_END();
+}
+
+void
+hrnBackupScriptSet(const HrnBackupScript *const script, const unsigned int scriptSize)
+{
+    if (hrnBackupLocal.scriptSize != 0)
+        THROW(AssertError, "previous pq script has not yet completed");
+
+    hrnBackupScriptAdd(script, scriptSize);
+}
+
+/**********************************************************************************************************************************/
+static void
+backupProcess(const BackupData *const backupData, Manifest *const manifest, const String *const cipherPassBackup)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(BACKUP_DATA, backupData);
+        FUNCTION_HARNESS_PARAM(MANIFEST, manifest);
+        FUNCTION_HARNESS_PARAM(STRING, cipherPassBackup);
+    FUNCTION_HARNESS_END();
+
+    // If any file changes are scripted then make them
+    if (hrnBackupLocal.scriptSize != 0)
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            Storage *const storageTest = storagePosixNewP(strNewZ(testPath()), .write = true);
+
+            for (unsigned int scriptIdx = 0; scriptIdx < hrnBackupLocal.scriptSize; scriptIdx++)
+            {
+                switch (hrnBackupLocal.script[scriptIdx].op)
+                {
+                    // Remove file
+                    case hrnBackupScriptOpRemove:
+                        storageRemoveP(storageTest, hrnBackupLocal.script[scriptIdx].file);
+                        break;
+
+                    // Update file
+                    case hrnBackupScriptOpUpdate:
+                        storagePutP(
+                            storageNewWriteP(
+                                storageTest, hrnBackupLocal.script[scriptIdx].file,
+                                .timeModified = hrnBackupLocal.script[scriptIdx].time),
+                            hrnBackupLocal.script[scriptIdx].content == NULL ?
+                                BUFSTRDEF("") : hrnBackupLocal.script[scriptIdx].content);
+                        break;
+
+                    default:
+                        THROW_FMT(
+                            AssertError, "unknown backup script op '%s'", strZ(strIdToStr(hrnBackupLocal.script[scriptIdx].op)));
+                }
+            }
+        }
+        MEM_CONTEXT_TEMP_END();
+
+        // Free script
+        memContextFree(hrnBackupLocal.memContext);
+        hrnBackupLocal.scriptSize = 0;
+    }
+
+    backupProcess_SHIMMED(backupData, manifest, cipherPassBackup);
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}
 
 /**********************************************************************************************************************************/
 void
@@ -83,8 +208,8 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
             storagePgIdxWrite(0), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer(0, 0, pgControl),
             .timeModified = backupTimeStart);
 
-        // Update pg_control on primary with the backup time
-        HRN_PG_CONTROL_TIME(storagePgIdxWrite(0), backupTimeStart);
+        // Determine if tablespaces are present
+        const bool tablespace = !strLstEmpty(storageListP(storagePgIdx(0), STRDEF(PG_PATH_PGTBLSPC)));
 
         // Write WAL segments to the archive
         // -------------------------------------------------------------------------------------------------------------------------
@@ -184,7 +309,7 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
         HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_DATABASE_LIST_1(1, "test1"));
 
         // Get tablespace list
-        if (param.tablespace)
+        if (tablespace)
             HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_TABLESPACE_LIST_1(1, 32768, "tblspc32768"));
         else
             HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_TABLESPACE_LIST_0(1));
@@ -210,22 +335,26 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
                 if (param.backupStandby)
                     HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_IS_STANDBY_QUERY(2, true));
 
-                HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_IS_STANDBY_QUERY(1, false));
+                // Continue if there is no error after copy start
+                if (!param.errorAfterCopyStart)
+                {
+                    HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_IS_STANDBY_QUERY(1, false));
 
-                if (param.backupStandby)
-                    HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_IS_STANDBY_QUERY(2, true));
+                    if (param.backupStandby)
+                        HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_IS_STANDBY_QUERY(2, true));
 
-                // Stop backup
-                if (pgVersion <= PG_VERSION_95)
-                    HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_STOP_BACKUP_LE_95(1, lsnStopStr, walSegmentStop));
-                else if (pgVersion <= PG_VERSION_96)
-                    HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_STOP_BACKUP_96(1, lsnStopStr, walSegmentStop, false));
-                else
-                    HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_STOP_BACKUP_GE_10(1, lsnStopStr, walSegmentStop, true));
+                    // Stop backup
+                    if (pgVersion <= PG_VERSION_95)
+                        HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_STOP_BACKUP_LE_95(1, lsnStopStr, walSegmentStop));
+                    else if (pgVersion <= PG_VERSION_96)
+                        HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_STOP_BACKUP_96(1, lsnStopStr, walSegmentStop, tablespace));
+                    else
+                        HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_STOP_BACKUP_GE_10(1, lsnStopStr, walSegmentStop, tablespace));
 
-                // Get stop time
-                HRN_PQ_SCRIPT_ADD(
-                    HRN_PQ_SCRIPT_TIME_QUERY(1, ((int64_t)backupTimeStart + (param.noArchiveCheck ? 52427 : 2)) * 1000));
+                    // Get stop time
+                    HRN_PQ_SCRIPT_ADD(
+                        HRN_PQ_SCRIPT_TIME_QUERY(1, ((int64_t)backupTimeStart + (param.noArchiveCheck ? 52427 : 2)) * 1000));
+                }
             }
         }
     }
