@@ -1556,6 +1556,9 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
 
         // Only the first non-option parameter should be treated as a command so track if the command has been set
         bool commandSet = false;
+        unsigned int argIgnore = 0;
+        bool help = false;
+        bool version = false;
 
         for (unsigned int argListIdx = 1; argListIdx < argListSize; argListIdx++)
         {
@@ -1589,7 +1592,25 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                 CfgParseOptionResult option = cfgParseOptionP(optionName, .prefixMatch = true);
 
                 if (!option.found)
-                    THROW_FMT(OptionInvalidError, "invalid option '--%s'", arg);
+                {
+                    // Check for --help shortcut to the help command
+                    if (strcmp(arg, CFGCMD_HELP) == 0)
+                    {
+                        help = true;
+                        argIgnore++;
+                        continue;
+                    }
+                    // Else check for --version shortcut to the version command
+                    else if (strcmp(arg, CFGCMD_VERSION) == 0)
+                    {
+                        version = true;
+                        argIgnore++;
+                        continue;
+                    }
+                    // Else invalid option
+                    else
+                        THROW_FMT(OptionInvalidError, "invalid option '--%s'", arg);
+                }
 
                 // If the option may have an argument (arguments are optional for boolean options)
                 if (!option.negate && !option.reset)
@@ -1749,13 +1770,6 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                         config->help = true;
                     else
                         commandSet = true;
-
-                    // Set command options
-                    config->lockRequired = parseRuleCommand[config->command].lockRequired;
-                    config->lockRemoteRequired = parseRuleCommand[config->command].lockRemoteRequired;
-                    config->lockType = (LockType)parseRuleCommand[config->command].lockType;
-                    config->logFile = parseRuleCommand[config->command].logFile;
-                    config->logLevelDefault = (LogLevel)parseRuleCommand[config->command].logLevelDefault;
                 }
                 // Additional arguments are command arguments
                 else
@@ -1778,11 +1792,27 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
         if (!commandSet && !config->help)
         {
             // If there are args then error
-            if (argListSize > 1)
+            if (argListSize - argIgnore > 1)
                 THROW_FMT(CommandRequiredError, "no command found");
 
-            // Otherwise set the command to help
-            config->help = true;
+            // Output help if --help specified or --version not specified
+            if (help || !version)
+            {
+                config->help = true;
+            }
+            // Else output version
+            else
+                config->command = cfgCmdVersion;
+        }
+
+        // Set command options
+        if (config->command != cfgCmdNone)
+        {
+            config->lockRequired = parseRuleCommand[config->command].lockRequired;
+            config->lockRemoteRequired = parseRuleCommand[config->command].lockRemoteRequired;
+            config->lockType = (LockType)parseRuleCommand[config->command].lockType;
+            config->logFile = parseRuleCommand[config->command].logFile;
+            config->logLevelDefault = (LogLevel)parseRuleCommand[config->command].logLevelDefault;
         }
 
         // Error when parameters found but the command does not allow parameters
@@ -1797,6 +1827,10 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
         // specific command and would like to display actual option values in the help.
         if (config->command != cfgCmdNone && config->command != cfgCmdVersion && config->command != cfgCmdHelp)
         {
+            // Error if --help or --version passed to command
+            if (help || version)
+                THROW_FMT(OptionInvalidError, "invalid option '--%s'", help ? CFGCMD_HELP : CFGCMD_VERSION);
+
             // Phase 2: parse environment variables
             // ---------------------------------------------------------------------------------------------------------------------
             unsigned int environIdx = 0;
