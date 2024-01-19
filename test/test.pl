@@ -771,69 +771,29 @@ eval
 
                 foreach my $strBuildVM (@stryBuildVm)
                 {
-                    if ($strBuildVM eq VM_NONE)
+                    my $strBuildPath = "${strTestPath}/build/${strBuildVM}";
+                    my $strBuildNinja = "${strBuildPath}/build.ninja";
+
+                    &log(
+                        INFO, "    " . (!-e $strBuildNinja ? 'clean ' : '') .
+                        "bin build for ${strBuildVM} (${strBuildPath})");
+
+                    # Setup build if it does not exist
+                    my $strBuildCommand = "ninja -C ${strBuildPath} src/pgbackrest";
+
+                    if (!-e $strBuildNinja)
                     {
-                        my $strBuildPath = "${strTestPath}/build/${strBuildVM}";
-                        my $strBuildNinja = "${strBuildPath}/build.ninja";
-
-                        &log(INFO, "    " . (!-e $strBuildNinja ? 'clean ' : '') . "bin build for ${strBuildVM} (${strBuildPath})");
-
-                        # Setup build if it does not exist
-                        my $strBuildCommand = "ninja -C ${strBuildPath} src/pgbackrest";
-
-                        if (!-e $strBuildNinja)
-                        {
-                            $strBuildCommand =
-                                "meson setup -Dwerror=true -Dfatal-errors=true -Dbuildtype=debug ${strBuildPath}" .
-                                    " ${strBackRestBase} && \\\n" .
-                                $strBuildCommand;
-                        }
-
-                        # Build code
-                        executeTest($strBuildCommand);
+                        $strBuildCommand =
+                            "meson setup -Dwerror=true -Dfatal-errors=true -Dbuildtype=debug ${strBuildPath}" .
+                                " ${strBackRestBase} && \\\n" .
+                            $strBuildCommand;
                     }
-                    else
-                    {
-                        my $strBinPath = "${strTestPath}/bin";
-                        my $strBuildPath = "${strBinPath}/${strBuildVM}";
 
-                        &log(INFO, "    bin build for ${strBuildVM} (${strBuildPath})");
-
-                        my $bRebuild = false;
-                        $rhBinBuild->{$strBuildVM} = false;
-
-                        # Build configure/compile options and see if they have changed from the previous build
-                        my $strCFlags = ($bDebugTestTrace ? ' -DDEBUG_TEST_TRACE' : '');
-                        my $strConfigOptions = (vmDebugIntegration($strBuildVM) ? ' --enable-test' : '');
-                        my $strBuildFlags = "CFLAGS_EXTRA=${strCFlags}\nCONFIGURE=${strConfigOptions}";
-                        my $strBuildFlagFile = "${strBinPath}/${strBuildVM}/build.flags";
-
-                        my $bBuildOptionsDiffer = buildPutDiffers($oStorageBackRest, $strBuildFlagFile, $strBuildFlags);
-
-                        if ($bBuildOptionsDiffer ||
-                            !-e "${strBuildPath}/Makefile" ||
-                            stat("${strBackRestBase}/src/Makefile.in")->mtime > stat("${strBuildPath}/Makefile")->mtime ||
-                            stat("${strBackRestBase}/src/configure")->mtime > stat("${strBuildPath}/Makefile")->mtime ||
-                            stat("${strBackRestBase}/src/build.auto.h.in")->mtime > stat("${strBuildPath}/Makefile")->mtime)
-                        {
-                            &log(INFO, '        bin dependencies have changed, rebuilding');
-
-                            # Remove old path if it exists and save the build flags
-                            executeTest("rm -rf ${strBuildPath}");
-                            buildPutDiffers($oStorageBackRest, $strBuildFlagFile, $strBuildFlags);
-
-                            executeTest(
-                                'docker exec -i -u ' . TEST_USER . ' test-build ' .
-                                "bash -c 'cd ${strBuildPath} && ${strBackRestBase}/src/configure -q${strConfigOptions}'",
-                                {bShowOutputAsync => $bLogDetail});
-                        }
-
-                        executeTest(
-                            'docker exec -i -u ' . TEST_USER . ' test-build ' .
-                            "${strMakeCmd} -s -j ${iBuildMax}" . ($bLogDetail ? '' : ' --silent') .
-                                " --directory ${strBuildPath} CFLAGS_EXTRA='${strCFlags}'",
-                            {bShowOutputAsync => $bLogDetail});
-                    }
+                    # Build code
+                    executeTest(
+                        ($strVm ne VM_NONE ? 'docker exec -i -u ' . TEST_USER . " test-build bash -c '" : '') . $strBuildCommand .
+                            ($strVm ne VM_NONE ? "'" : ''),
+                        {bShowOutputAsync => $bLogDetail});
                 }
             }
 
@@ -1190,8 +1150,8 @@ eval
         $strVm, $iVmId,                                             # Vm info
         $strBackRestBase,                                           # Base backrest directory
         $strTestPath,                                               # Path where the tests will run
-        dirname($strTestPath) . "/bin/${strVm}/" . PROJECT_EXE,     # Path to the pgbackrest binary
-        dirname($strTestPath) . "/build/" . VM_NONE . '/src/' . PROJECT_EXE,  # Path to the pgbackrest storage helper
+        dirname($strTestPath) . "/build/${strVm}/src/" . PROJECT_EXE,        # Path to the pgbackrest binary
+        dirname($strTestPath) . "/build/" . VM_NONE . '/src/' . PROJECT_EXE, # Path to the pgbackrest storage helper
         $strPgVersion ne 'minimal' ? $strPgSqlBin: undef,           # Pg bin path
         $strPgVersion ne 'minimal' ? $strPgVersion: undef,          # Pg version
         $stryModule[0], $stryModuleTest[0], \@iyModuleTestRun,      # Module info

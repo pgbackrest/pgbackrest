@@ -632,10 +632,7 @@ testBldUnit(TestBuild *const this)
 
         // Path to the project exe when it exists
         const String *const pathProjectExe = storagePathP(
-            testBldStorageTest(this),
-            strNewFmt(
-                "%s/%s%s/" PROJECT_BIN, strEqZ(testBldVm(this), "none") ? "build" : "bin", strZ(testBldVm(this)),
-                strEqZ(testBldVm(this), "none") ? "/src" : ""));
+            testBldStorageTest(this), strNewFmt("build/%s/src/" PROJECT_BIN, strZ(testBldVm(this))));
         strReplace(testC, STRDEF("{[C_TEST_PROJECT_EXE]}"), pathProjectExe);
 
         // Path to source -- used to construct __FILENAME__ tests

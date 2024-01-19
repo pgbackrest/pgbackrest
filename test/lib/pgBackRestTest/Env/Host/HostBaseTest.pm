@@ -103,7 +103,7 @@ sub new
 
     # Create the host
     my $strProjectPath = dirname(dirname(abs_path($0)));
-    my $strBinPath = dirname(dirname($strTestPath)) . '/bin/' . testRunGet()->vm() . '/' . PROJECT_EXE;
+    my $strBinPath = dirname(dirname($strTestPath)) . '/build/' . testRunGet()->vm() . '/src/' . PROJECT_EXE;
     my $strContainer = 'test-' . testRunGet()->vmId() . "-$strName";
 
     my $self = $class->SUPER::new(
