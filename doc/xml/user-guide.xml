@@ -3766,9 +3766,11 @@
 
     To initialize the build, run the following. This only needs to be done once per doc build or branch change, though running it more that once only costs additional time:
         docker exec -it doc-build bash -c 'rm -rf /build/dev && mkdir -p /build/dev && cd /build/dev && /pgbackrest/src/configure -\-enable-test'
+        docker exec -it doc-build bash -c 'rm -rf /build/dev && meson setup -Dbuildtype=debug /build/dev /pgbackrest'
 
     One each host where a new build is required, run the following. This will build pgbackrest, copy it to the host, and display the build time for sanity:
         docker exec -it <container> bash -c 'ssh build make -C /build/dev -j 8 && scp build:/build/dev/pgbackrest /usr/bin && ls -lah /usr/bin/pgbackrest'
+        docker exec -it <container> bash -c 'ssh build ninja -C /build/dev && scp build:/build/dev/src/pgbackrest /usr/bin && ls -lah /usr/bin/pgbackrest'
     ============================================================================================================================ -->
     <section id="stress" if="'{[stress]}' eq 'y'">
         <title>Stress Testing</title>
