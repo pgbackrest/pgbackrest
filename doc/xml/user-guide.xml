@@ -990,6 +990,10 @@
 
         <p>When building from source it is best to use a build host rather than building on production. Many of the tools required for the build should generally not be installed in production. <backrest/> consists of a single executable so it is easy to copy to a new host once it is built.</p>
 
+        <p if="{[os-type-is-rhel]}">The preferred build method is <proper>meson</proper>/<proper>ninja</proper>, see <link url="user-guide.html#build">Build</link>. The <proper>autoconf</proper>/<proper>make</proper> method is shown here for legacy purposes.</p>
+
+        <p if="{[os-type-is-debian]}">The preferred build method is <proper>meson</proper>/<proper>ninja</proper> as shown below. The <proper>autoconf</proper>/<proper>make</proper> method is also provided for legacy purposes, see <link url="user-guide-rhel.html#build">Build</link>.</p>
+
         <execute-list host="{[host-build]}">
             <title>Download version <id>{[version]}</id> of <backrest/> to <path>{[build-path]}</path> path</title>
 
