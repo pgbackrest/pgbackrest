@@ -213,7 +213,7 @@ sub run
                         ($self->{oTest}->{&TEST_C} ? " -v $self->{strDataPath}:$self->{strDataPath}" : '') .
                         " -v $self->{strBackRestBase}:$self->{strBackRestBase}" .
                         " -v $self->{strRepoPath}:$self->{strRepoPath}" .
-                        ($self->{oTest}->{&TEST_BIN_REQ} ? " -v ${strBuildPath}:${strBuildPath}:ro" : '') .
+                        ($self->{oTest}->{&TEST_C} ? " -v ${strBuildPath}:${strBuildPath}:ro" : '') .
                         ($self->{oTest}->{&TEST_C} ? " -v ${strCCachePath}:/home/${\TEST_USER}/.ccache" : '') .
                         ' ' . containerRepo() . ':' . $self->{oTest}->{&TEST_VM} . '-test',
                         {bSuppressStdErr => true});
