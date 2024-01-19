@@ -62,6 +62,7 @@
         <!-- Path where builds are performed -->
         <variable key="build-path">/build</variable>
         <variable key="build-br-path">{[build-path]}/pgbackrest-release-{[version]}</variable>
+        <variable key="build-meson-path">{[build-path]}/pgbackrest</variable>
 
         <!-- PostreSQL versions to run documentation for and min/max versions represented -->
         <variable key="pg-version" if="{[os-type-is-debian]}">{[os-debian-pg-version]}</variable>
@@ -581,7 +582,11 @@
         <execute-list host="{[br-install-host]}">
             <title>Copy <backrest/> binary from build host</title>
 
-            <execute user="root">
+            <execute if="{[os-type-is-debian]}" user="root">
+                <exe-cmd>scp {[host-build]}:{[build-meson-path]}/src/pgbackrest /usr/bin</exe-cmd>
+                <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
+            </execute>
+            <execute if="{[os-type-is-rhel]}" user="root">
                 <exe-cmd>scp {[host-build]}:{[build-br-path]}/src/pgbackrest /usr/bin</exe-cmd>
                 <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
             </execute>
@@ -1006,10 +1011,10 @@
                 <exe-cmd>mkdir -p {[build-br-path]}</exe-cmd>
             </execute>
             <execute user="root" show="n">
-                <exe-cmd>cp -r {[pgbackrest-repo-path]}/src {[build-br-path]}</exe-cmd>
+                <exe-cmd>cp -r {[pgbackrest-repo-path]}/* {[build-br-path]}</exe-cmd>
             </execute>
             <execute user="root" show="n">
-                <exe-cmd>chown -R {[host-build-user]} {[build-br-path]}</exe-cmd>
+                <exe-cmd>chown -R {[host-build-user]} {[build-path]}</exe-cmd>
             </execute>
         </execute-list>
 
@@ -1022,7 +1027,7 @@
 
             <execute if="{[os-type-is-debian]}" user="root" pre="y">
                 <exe-cmd>
-                    apt-get install make gcc libpq-dev libssl-dev libxml2-dev pkg-config
+                    apt-get install meson gcc libpq-dev libssl-dev libxml2-dev pkg-config
                     liblz4-dev libzstd-dev libbz2-dev libz-dev libyaml-dev libssh2-1-dev
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
@@ -1037,7 +1042,18 @@
             </execute>
         </execute-list>
 
-        <execute-list host="{[host-build]}">
+        <execute-list if="{[os-type-is-debian]}" host="{[host-build]}">
+            <title>Configure and compile <backrest/></title>
+
+            <execute>
+                <exe-cmd>meson setup {[build-meson-path]} {[build-br-path]}</exe-cmd>
+            </execute>
+            <execute>
+                <exe-cmd>ninja -C {[build-meson-path]}</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <execute-list if="{[os-type-is-rhel]}" host="{[host-build]}">
             <title>Configure and compile <backrest/></title>
 
             <execute>
