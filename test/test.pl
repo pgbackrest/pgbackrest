@@ -791,8 +791,8 @@ eval
 
                     # Build code
                     executeTest(
-                        ($strVm ne VM_NONE ? 'docker exec -i -u ' . TEST_USER . " test-build bash -c '" : '') . $strBuildCommand .
-                            ($strVm ne VM_NONE ? "'" : ''),
+                        ($strBuildVM ne VM_NONE ? 'docker exec -i -u ' . TEST_USER . " test-build bash -c '" : '') .
+                            $strBuildCommand . ($strBuildVM ne VM_NONE ? "'" : ''),
                         {bShowOutputAsync => $bLogDetail});
                 }
             }
