@@ -1,5 +1,10 @@
 [
     {
+        "commit": "1add35624dbf4061bcb19521022b318418b0bba5",
+        "date": "2024-01-22 09:54:59 -0300",
+        "subject": "v2.50: Performance Improvements and Bug Fixes"
+    },
+    {
         "commit": "fd8974914d8702e5d889f03e08eeda676435faa2",
         "date": "2024-01-12 13:55:08 -0300",
         "subject": "Cleanup tablespace tests in command/backup module.",
