@@ -289,7 +289,7 @@ helpRender(const Buffer *const helpData)
         const String *more = NULL;
 
         // Display general help
-        if (cfgCommand() == cfgCmdHelp || cfgCommand() == cfgCmdNone)
+        if (cfgCommand() == cfgCmdNone)
         {
             strCatZ(
                 result,
