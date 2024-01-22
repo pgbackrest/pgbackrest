@@ -3470,6 +3470,87 @@ rm -f core conftest.err conftest.$ac_objext conftest.beam \
 CPPFLAGS="${CPPFLAGS} -I."
 
 
+# Check backtrace library
+# ----------------------------------------------------------------------------------------------------------------------------------
+ac_header= ac_cache=
+for ac_item in $ac_header_c_list
+do
+  if test $ac_cache; then
+    ac_fn_c_check_header_compile "$LINENO" $ac_header ac_cv_header_$ac_cache "$ac_includes_default"
+    if eval test \"x\$ac_cv_header_$ac_cache\" = xyes; then
+      printf "%s\n" "#define $ac_item 1" >> confdefs.h
+    fi
+    ac_header= ac_cache=
+  elif test $ac_header; then
+    ac_cache=$ac_item
+  else
+    ac_header=$ac_item
+  fi
+done
+
+
+
+
+
+
+
+
+if test $ac_cv_header_stdlib_h = yes && test $ac_cv_header_string_h = yes
+then :
+
+printf "%s\n" "#define STDC_HEADERS 1" >>confdefs.h
+
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for backtrace_full in -lbacktrace" >&5
+printf %s "checking for backtrace_full in -lbacktrace... " >&6; }
+if test ${ac_cv_lib_backtrace_backtrace_full+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lbacktrace  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char backtrace_full ();
+int
+main (void)
+{
+return backtrace_full ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_backtrace_backtrace_full=yes
+else $as_nop
+  ac_cv_lib_backtrace_backtrace_full=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_backtrace_backtrace_full" >&5
+printf "%s\n" "$ac_cv_lib_backtrace_backtrace_full" >&6; }
+if test "x$ac_cv_lib_backtrace_backtrace_full" = xyes
+then :
+  ac_fn_c_check_header_compile "$LINENO" "backtrace.h" "ac_cv_header_backtrace_h" "$ac_includes_default"
+if test "x$ac_cv_header_backtrace_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_LIBBACKTRACE 1" >>confdefs.h
+ LIBS="${LIBS} -lbacktrace"
+
+else $as_nop
+  as_fn_error $? "header file <backtrace.h> is required" "$LINENO" 5
+fi
+
+fi
+
+
 # Check required pq library
 # ----------------------------------------------------------------------------------------------------------------------------------
 
@@ -3574,35 +3655,6 @@ else $as_nop
   as_fn_error $? "library 'pq' is required" "$LINENO" 5
 fi
 
-ac_header= ac_cache=
-for ac_item in $ac_header_c_list
-do
-  if test $ac_cache; then
-    ac_fn_c_check_header_compile "$LINENO" $ac_header ac_cv_header_$ac_cache "$ac_includes_default"
-    if eval test \"x\$ac_cv_header_$ac_cache\" = xyes; then
-      printf "%s\n" "#define $ac_item 1" >> confdefs.h
-    fi
-    ac_header= ac_cache=
-  elif test $ac_header; then
-    ac_cache=$ac_item
-  else
-    ac_header=$ac_item
-  fi
-done
-
-
-
-
-
-
-
-
-if test $ac_cv_header_stdlib_h = yes && test $ac_cv_header_string_h = yes
-then :
-
-printf "%s\n" "#define STDC_HEADERS 1" >>confdefs.h
-
-fi
 ac_fn_c_check_header_compile "$LINENO" "libpq-fe.h" "ac_cv_header_libpq_fe_h" "$ac_includes_default"
 if test "x$ac_cv_header_libpq_fe_h" = xyes
 then :
@@ -5698,4 +5750,4 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
 printf "%s\n" "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
-# Generated from src/build/configure.ac sha1 1aa1e1cd127b84774b180eea544cad43c2181d53
+# Generated from src/build/configure.ac sha1 e9fe59c2eda5217a0f6476af90083fafb8b24f94
