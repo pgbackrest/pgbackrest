@@ -1,5 +1,174 @@
 [
     {
+        "commit": "fd8974914d8702e5d889f03e08eeda676435faa2",
+        "date": "2024-01-12 13:55:08 -0300",
+        "subject": "Cleanup tablespace tests in command/backup module.",
+        "body": "Tablespaces were enabled for tests that did not have tablespaces, resulting in tablespace_map being present in backups even when it was not needed.\n\nInstead of specifying if tablespaces are present, automatically detect tablespaces in hrnBackupPqScript()."
+    },
+    {
+        "commit": "3926dd346ef7b6e239e939e9a046a4be8597c584",
+        "date": "2024-01-04 14:55:44 -0300",
+        "subject": "Update LICENSE.txt and PostgreSQL copyright for 2024."
+    },
+    {
+        "commit": "a484862763e85a7cc11b6a45366b3b78b06cd373",
+        "date": "2024-01-04 14:53:44 -0300",
+        "subject": "Remove installation of old yum.p.o repository key."
+    },
+    {
+        "commit": "55f22489630ae409f03a2ad9ec37c3e38a3f7ab2",
+        "date": "2024-01-03 18:15:50 -0300",
+        "subject": "Break up scripts in db unit test module.",
+        "body": "Long scripts followed by a number of tests are really challenging to debug and update.\n\nInstead, break up the scripts to be inline with the tests that they drive. This should make maintenance of the tests much simpler."
+    },
+    {
+        "commit": "7c17eec3db455d3e8e660f4f8247b6975517648f",
+        "date": "2024-01-03 13:01:50 -0300",
+        "subject": "Improve SFTP storage error messages.",
+        "body": "Use storageSftpEvalLibSsh2Error() in more locations to provide better error information. Also add storageSftpLibSsh2SessionLastError() for the same reason."
+    },
+    {
+        "commit": "802ae7914897f3d53788e526ce22562e434c92ea",
+        "date": "2024-01-03 12:43:50 -0300",
+        "subject": "Remove FreeBSD 12 and add FreeBSD 14 to Cirrus CI.",
+        "body": "FreeBSD 12 is now EOL.\n\nAlso update the image version for FreeBSD 13."
+    },
+    {
+        "commit": "8a8cfba62bfe2293d6355f68d44bab5323a91118",
+        "date": "2023-12-27 12:53:53 -0300",
+        "subject": "Remove resolved comment."
+    },
+    {
+        "commit": "f4a4af299bee93ab7dde599ccdb35becc1c2afad",
+        "date": "2023-12-27 12:49:47 -0300",
+        "subject": "Fix short read in block incremental restore.",
+        "body": "During restore it is possible to read all the blocks out of a compressed super block without reading all the input. This is because the compression format may have some trailing bytes that are not required for decompression but are required to indicate that data has ended. If a buffer aligned with the compressed data in a certain way, these last bytes might not be read.\r\n\r\nExplicitly read out any final bytes at the end of each super block to handle this case. This should always result in no additional data out and we check for that, but it does move the read position to the beginning of the next compressed super block so decompression can begin without error."
+    },
+    {
+        "commit": "c47b39acf67b375cbee9773904ad1afc6a1bb9ec",
+        "date": "2023-12-27 12:39:45 -0300",
+        "subject": "Fix incorrect test comment.",
+        "body": "Left over from an older implementation."
+    },
+    {
+        "commit": "4324b568a922105b272e2031559dae5f374a04da",
+        "date": "2023-12-26 21:07:56 -0300",
+        "subject": "Move block testBlockDelta() to harness module.",
+        "body": "This makes the function available to other test modules.\n\nAlso rename to hrnBlockDeltaRender()."
+    },
+    {
+        "commit": "9049fec2c02c4110e16ffdff7b56f83d8ff32b4a",
+        "date": "2023-12-22 13:16:45 -0300",
+        "subject": "Refactor skip files truncated during backup when bundling.",
+        "body": "Refactor 02eea555 to always close the file immediately on EOF and use backupCopyResultCopy to continue processing. Closing the file immediately saves a later EOF check and is friendlier to added logic in this area. Using backupCopyResultCopy to continue is clearer also makes it easier to add new logic.\n\nAlso store zero checksum so the bulk of results collection can be moved within the copy block."
+    },
+    {
+        "commit": "c8795094d418802a0e24d4d19da66973c71b00e5",
+        "date": "2023-12-22 12:48:01 -0300",
+        "subject": "Allow const checksum buffers to be returned from backupFile().",
+        "body": "This allows less duplication of buffers.\n\nFor delta check return file->pgFileSize/file->pgFileChecksum instead of pgTestSize/pgTestChecksum since this saves one buffer duplication and we know these values are equal since we just checked them.\n\nAlso add an assert to ensure copyChecksum is valid relative to size."
+    },
+    {
+        "commit": "4f760df417e17dc03ce07c0116dfaac506e04c84",
+        "date": "2023-12-22 00:59:12 -0300",
+        "subject": "Do not preserve block incremental if file is less than prior block size.",
+        "body": "If a file stored with block incremental shrinks below the prior block size then the map is useless and the entire file needs to be stored again.\r\n\r\nIn this case use the new block incremental values (even if none) rather than preserving the old ones."
+    },
+    {
+        "commit": "3cd8249dbaa085bd075464d420f68a2a8b34a165",
+        "date": "2023-12-21 15:28:37 -0300",
+        "subject": "Update warning for backup resume invalid repo file.",
+        "body": "This warning has had a note since the C migration that it should be moved below the backup file log message, so do that.\n\nAlso update the warning message a bit to correct for tense. This message was likely in a different place originally."
+    },
+    {
+        "commit": "701865eca1c8896a913e05f41a748c225b84af11",
+        "date": "2023-12-21 15:20:03 -0300",
+        "subject": "Refactor backupFile() to remove backupCopyResultReCopy.",
+        "body": "Having two enum values for file copy makes things a bit more complicated than they need to be (especially in an upcoming commit).\n\nInstead add a flag to indicate that the repository file was invalid since the only purpose is to trigger a warning message."
+    },
+    {
+        "commit": "a42614e8f3a9e6871c16331f01c2cd765ab181aa",
+        "date": "2023-12-21 15:08:07 -0300",
+        "subject": "Preserve partial files during block incremental delta restore.",
+        "body": "Previously files that were smaller than the expected size were not preserved for block incremental, even though it is possible that block incremental could make use of a partial file.\r\n\r\nOne example is when a restore encounters an error. On retry the partial file can be used as a starting point rather than copying again from the beginning. Another example is restoring a backup where a file is larger than what already exists in the data directory.\r\n\r\nPreserve any size file when block incremental will be used for the delta in order to reuse partial files when possible. If the file is smaller than expected then disable the whole-file checksum to reduce overhead."
+    },
+    {
+        "commit": "ad8febec0851473240f6f20bd4eb299b525a6d44",
+        "date": "2023-12-21 13:32:10 -0300",
+        "subject": "Refactor backup incremental manifest generation.",
+        "body": "This refactor should provide more clarity on what factors affect an incremental, rather that just having one big expression do it all. Overall this may be slightly more efficient since some values are reused that before were recalculated.\r\n\r\nNo behavioral changes are introduced."
+    },
+    {
+        "commit": "f3584e2143de518bda52151a7102ed638dcb0e95",
+        "date": "2023-12-21 11:20:10 -0300",
+        "subject": "Add tests to command/backup and info/manifest modules.",
+        "body": "These tests exercise various interesting cases and provide coverage for proposed improvements."
+    },
+    {
+        "commit": "25f14898babf4ad78baef3e8343933a863633975",
+        "date": "2023-12-21 10:16:13 -0300",
+        "subject": "Fix overflow suppressing backup progress in info output.",
+        "body": "Writing the sz and szCplt parameters in the lock file used jsonWriteUInt64() but reading these parameters used jsonReadUInt(). This caused a silent exception for any backups larger than MAX_UINT and prevented the info command from reporting progress.\r\n\r\nCorrect this so the reads are symmetric and verified before/after with a test."
+    },
+    {
+        "commit": "8af3c1c9acc7117a0cf8e3ce862c5639c82bf78d",
+        "date": "2023-12-17 13:15:03 -0300",
+        "subject": "Use original file size to log size changes during backup.",
+        "body": "c9703b35 added logging for file size changes during backup. Later 5ed6f8df added the sizeOriginal member to ManifestFile, which arguably is better to use for logging rather than size before backup since it will always contain the original size. Size could in theory be modified for deduplication purposes.\n\nUpdate logging to use sizeOriginal."
+    },
+    {
+        "commit": "bb6e5164ee6efd40fde73acd8f7b30c4afa1548d",
+        "date": "2023-12-16 11:42:27 -0300",
+        "subject": "Add block incremental test where timestamp changes but file is the same.",
+        "body": "If delta is not enabled, then the timestamp is used to determine if a file has changed. If the timestamp changes but the file is the same then the prior map will be stored unchanged in the new backup. This is not quite as bad as storing the entire file but it is obviously not ideal.\n\nThis will be fixed in a future commit, but add the test now to show the current behavior."
+    },
+    {
+        "commit": "02eea555c7169e99892fdbc8ce7cc1ee59f50509",
+        "date": "2023-12-14 14:21:06 -0300",
+        "subject": "Skip files truncated during backup when bundling.",
+        "body": "In bundle mode pgBackRest skips files of zero size, that is, it does not queue them for copying.\r\n\r\nAfter splitting the files into bundles, pgBackRest launches one or more processes that directly perform the backup, namely, read the files and, if necessary, write them to the bundles.\r\n\r\nIf during the time between the distribution of all files among bundles and the direct copying of a file to a bundle, this file of non-zero size was truncated to zero size (for example, when the table was truncated), then pgBackRest still unconditionally places such a zero-size file in the bundle, taking up space in it equal to the size of the headings, and additionally writes the original file size to the manifest.\r\n\r\nIn debug build an assertion was added, that does not allow zero-size files to be written to bundles, which leads to an error.\r\n\r\nTo solve the problem, this patch, when reading the next file, loads one buffer from the file to detect if it is zero-size. If so it marks the file as truncated and continues on to the next file.\r\n\r\nThe advantages of the solution are that, firstly, the assert will not fire on debug builds, and secondly, we will not place zero-size files in bundles, which exactly corresponds to the specification.\r\n\r\nThe patch adds the backupCopyResultTruncate value to the BackupCopyResult enumeration to use it to indicate the result when a non-zero size file is truncated to zero size during the backup process."
+    },
+    {
+        "commit": "89d5278b74ab0d880345575d7ac4c239cd1fce54",
+        "date": "2023-12-14 13:28:52 -0300",
+        "subject": "Add support for alternate compile-time page sizes.",
+        "body": "Alternate pages sizes can be selected at compile-time, .e.g. 4096. While compile-time settings are generally not well tested by core, some established forks such as Greenplum use them."
+    },
+    {
+        "commit": "d205a61949ae8491f5ce9b2019cda79d2fe7b216",
+        "date": "2023-12-01 11:54:30 -0300",
+        "subject": "Fix flapping test on older ninja versions in test unit.",
+        "body": "Older versions of ninja may fail to rebuild correctly when changes are made to the configuration. In this case there is an automatic retry but the unexpected log output would cause the test to fail.\n\nFor tests that are expected to succeed, check that the log is empty but also accept a retry message as long as the test does eventually succeed.\n\nAdd a new harness function, harnessLogResultEmptyOrContains(), to make this work and also clean up some adjacent code."
+    },
+    {
+        "commit": "7ce0f5a94c229abe415029ce80241a64665c93a2",
+        "date": "2023-11-30 16:43:09 -0300",
+        "subject": "Use unique port for each server unit test.",
+        "body": "If the same port is reused too quickly bind may fail with this error:\n\nFileOpenError: unable to bind socket: [98] Address already in use\n\nWe specify SO_REUSEADDR when creating the socket but apparently this is not always enough if the port is reused very rapidly.\n\nFix this (hopefully) by using a unique port for each test that needs one. This does in theory limit the number of tests that can use ports, but we allow 768 per test, whereas the test that uses the most ports is common/io-tls with 4."
+    },
+    {
+        "commit": "a14732789baacb4d35d5da6d0adf337ceea7f595",
+        "date": "2023-11-29 09:31:57 -0300",
+        "subject": "Output coverage report on test failure in CI.",
+        "body": "This allows analysis of coverage failures that only happen in CI. It is not ideal since the report needs to be copied from the log output into an HTML file where it can be viewed, but better than nothing."
+    },
+    {
+        "commit": "cb6bceb9f1074436b7d0b67a94d782113b5f2b35",
+        "date": "2023-11-28 16:38:42 -0300",
+        "subject": "Improve comments in socket test harness."
+    },
+    {
+        "commit": "70e15dacc77bcc2b7e4c2a222d683872d2180f5b",
+        "date": "2023-11-28 16:35:37 -0300",
+        "subject": "Allow custom type/message for errRetryAdd().",
+        "body": "It may be useful to customize the message or add a message that was never thrown. The latter case will be used in an upcoming commit."
+    },
+    {
+        "commit": "85bc9f27d8b70a879051f604861078034263b095",
+        "date": "2023-11-27 09:06:53 -0300",
+        "subject": "Begin v2.50 development."
+    },
+    {
         "commit": "3cb891e3ca49ed1166fb0b513b126412448f5b09",
         "date": "2023-11-27 08:55:56 -0300",
         "subject": "v2.49: Remove PostgreSQL 9.3 Support"

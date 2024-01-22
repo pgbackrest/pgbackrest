@@ -607,6 +607,10 @@ doc/xml/release/2023/2.49.xml:
   class: doc/source
   type: xml
 
+doc/xml/release/2024/2.50.xml:
+  class: doc/source
+  type: xml
+
 doc/xml/release/contributor.xml:
   class: doc/source
   type: xml
@@ -2680,6 +2684,14 @@ test/src/common/harnessBackup.c:
   type: c
 
 test/src/common/harnessBackup.h:
+  class: test/harness
+  type: c/h
+
+test/src/common/harnessBlockIncr.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessBlockIncr.h:
   class: test/harness
   type: c/h
 
