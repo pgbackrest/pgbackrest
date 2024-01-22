@@ -1,0 +1,136 @@
+<release date="2017-10-24" version="1.25" title="S3 Performance Improvements">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="jens.wilke"/>
+                </release-item-contributor-list>
+
+                <p>Fix custom settings for <br-option>compress-level</br-option> option being ignored.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="benoit.lobréau"/>
+                </release-item-contributor-list>
+
+                <p>Remove error when overlapping timelines are detected. Overlapping timelines are valid in many Point-in-Time-Recovery (PITR) scenarios.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="jason.odonnell"/>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Fix instances where <id>database-id</id> was not rendered as an integer in JSON info output.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="mihail.shvein"/>
+                </release-item-contributor-list>
+
+                <p>Improve performance of list requests on S3. Any beginning literal portion of a filter expression is used to generate a search prefix which often helps keep the request small enough to avoid rate limiting.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Improve protocol error handling. In particular, <quote>stop</quote> errors are no longer reported as <quote>unexpected</quote>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Allow functions with sensitive options to be logged at debug level with redactions. Previously, functions with sensitive options had to be logged at trace level to avoid exposing them. Trace level logging may still expose secrets so use with caution.</p>
+            </release-item>
+
+            <release-item>
+                <p>Replace dynamically built class hierarchies in I/O layer with fixed <code>parent()</code> calls.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improve labeling for errors in helper processes.</p>
+            </release-item>
+
+            <release-item>
+                <p>Update C naming conventions.</p>
+            </release-item>
+
+            <release-item>
+                <p>Use <id>int</id> datatype wherever possible.</p>
+            </release-item>
+
+            <release-item>
+                <p>Better separation of C source from Perl interface.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <file>LibC.template.pm</file> to simplify LibC module generation.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add C error handler.</p>
+            </release-item>
+
+            <release-item>
+                <p>Perl error handler recognizes errors thrown from the C library.</p>
+            </release-item>
+
+            <release-item>
+                <p>Page checksum module uses new C error handler.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add C memory contexts.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add base64 encode/decode.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-test-list>
+        <release-feature-list>
+            <release-item>
+                <p>Add I/O performance tests.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Add C unit test infrastructure.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add test macros for C results and errors.</p>
+            </release-item>
+
+            <release-item>
+                <p>Warnings in C builds treated as errors.</p>
+            </release-item>
+
+            <release-item>
+                <p>Run all tests on tempfs rather than local disk.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improve performance of test code. Wait when all tests have been assigned to reduce CPU load.</p>
+            </release-item>
+
+            <release-item>
+                <p>Remove Debian test repo after PostgreSQL 10 release.</p>
+            </release-item>
+
+            <release-item>
+                <p>Convert config and page checksum tests into C unit tests.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <postgres/> versions to Debian VMs for testing.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+</release>

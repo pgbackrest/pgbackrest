@@ -162,7 +162,7 @@ Macros for constant variants
 
 Frequently used constant variants can be declared with these macros at compile time rather than dynamically at run time.
 
-Note that variants created in this way are declared as const so can't be modified or freed by the var*() methods.  Casting to
+Note that variants created in this way are declared as const so can't be modified or freed by the var*() methods. Casting to
 Variant * will generally result in a segfault.
 
 By convention all variant constant identifiers are appended with _VAR.
@@ -220,11 +220,11 @@ VARIANT_DECLARE(BOOL_TRUE_VAR);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *varToLog(const Variant *this);
+FN_EXTERN void varToLog(const Variant *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_VARIANT_TYPE                                                                                                  \
     Variant *
 #define FUNCTION_LOG_VARIANT_FORMAT(value, buffer, bufferSize)                                                                     \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, varToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, varToLog, buffer, bufferSize)
 
 #endif

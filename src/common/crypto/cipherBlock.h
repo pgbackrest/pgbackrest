@@ -4,8 +4,8 @@ Block Cipher Header
 #ifndef COMMON_CRYPTO_CIPHERBLOCK_H
 #define COMMON_CRYPTO_CIPHERBLOCK_H
 
-#include "common/io/filter/group.h"
 #include "common/crypto/common.h"
+#include "common/io/filter/group.h"
 
 /***********************************************************************************************************************************
 Filter type constant

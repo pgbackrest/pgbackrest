@@ -1,9 +1,9 @@
 /***********************************************************************************************************************************
 IO Write Interface
 
-Objects that write to some IO destination (file, socket, etc.) are implemented using this interface.  All objects are required to
-implement IoWriteProcess and can optionally implement IoWriteOpen or IoWriteClose.  IoWriteOpen and IoWriteClose can be used to
-allocate/open or deallocate/free resources.  An example of an IoWrite object is IoBufferWrite.
+Objects that write to some IO destination (file, socket, etc.) are implemented using this interface. All objects are required to
+implement IoWriteProcess and can optionally implement IoWriteOpen or IoWriteClose. IoWriteOpen and IoWriteClose can be used to
+allocate/open or deallocate/free resources. An example of an IoWrite object is IoBufferWrite.
 ***********************************************************************************************************************************/
 #ifndef COMMON_IO_WRITE_H
 #define COMMON_IO_WRITE_H
@@ -23,7 +23,6 @@ Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct IoWritePub
 {
-    MemContext *memContext;                                         // Mem context
     IoFilterGroup *filterGroup;                                     // IO filters
 } IoWritePub;
 
@@ -82,7 +81,7 @@ Destructor
 FN_INLINE_ALWAYS void
 ioWriteFree(IoWrite *const this)
 {
-    objFreeContext(this);
+    objFree(this);
 }
 
 /***********************************************************************************************************************************
@@ -91,6 +90,6 @@ Macros for function logging
 #define FUNCTION_LOG_IO_WRITE_TYPE                                                                                                 \
     IoWrite *
 #define FUNCTION_LOG_IO_WRITE_FORMAT(value, buffer, bufferSize)                                                                    \
-    objToLog(value, "IoWrite", buffer, bufferSize)
+    objNameToLog(value, "IoWrite", buffer, bufferSize)
 
 #endif

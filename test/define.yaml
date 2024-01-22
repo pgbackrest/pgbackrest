@@ -3,8 +3,8 @@
 #
 # Contains definitions for all unit and integration tests.
 #
-# The definitions consist of modules and tests.  Modules group together tests that are related and allow common settings for all the
-# tests.  Every module and test must have a name.  Tests must also have a total.  If this total does not match the actual number of
+# The definitions consist of modules and tests. Modules group together tests that are related and allow common settings for all the
+# tests. Every module and test must have a name. Tests must also have a total. If this total does not match the actual number of
 # runs in a test then an error will be thrown.
 #
 # Most options can be set for modules and tests (test option will override module option if both are set):
@@ -52,11 +52,11 @@ unit:
         harness:
           name: error
           shim:
-            common/error: ~
+            common/error/error: ~
 
         coverage:
-          - common/error
-          - common/error.auto: noCode
+          - common/error/error
+          - common/error/error.auto: noCode
 
         depend:
           - common/stackTrace
@@ -65,19 +65,19 @@ unit:
       - name: stack-trace
         total: 4
         feature: stackTrace
+        harness:
+          name: stackTrace
+          shim:
+            common/stackTrace:
+              function:
+                - stackTraceBackCallback
 
         coverage:
           - common/stackTrace
 
         depend:
           - common/debug
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: type-convert
-        total: 12
-
-        coverage:
-          - common/type/convert
+          - common/type/stringStatic
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: assert-off
@@ -92,9 +92,6 @@ unit:
         total: 1
         define: -DNDEBUG
 
-        coverage:
-          - common/debug
-
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: assert-on
         feature: assert
@@ -105,7 +102,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: mem-context
-        total: 7
+        total: 8
         feature: memContext
 
         coverage:
@@ -115,8 +112,21 @@ unit:
           - common/type/convert
 
       # ----------------------------------------------------------------------------------------------------------------------------
+      - name: type-convert
+        total: 12
+
+        coverage:
+          - common/type/convert
+
+      # ----------------------------------------------------------------------------------------------------------------------------
       - name: time
         total: 3
+        harness:
+          name: time
+          shim:
+            common/time:
+              function:
+                - timeMSec
 
         coverage:
           - common/time
@@ -162,6 +172,19 @@ unit:
           - common/type/variantList
 
       # ----------------------------------------------------------------------------------------------------------------------------
+      - name: error-retry
+        total: 1
+        harness:
+          name: errorRetry
+          shim:
+            common/error/retry:
+              function:
+                - errRetryMessage
+
+        coverage:
+          - common/error/retry
+
+      # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-list
         total: 4
 
@@ -205,11 +228,12 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: debug-on
-        total: 3
+        total: 4
         feature: debug
 
         coverage:
           - common/debug
+          - common/type/stringStatic
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: fork
@@ -264,7 +288,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: io
-        total: 5
+        total: 6
         feature: IO
         harness: pack
 
@@ -280,6 +304,7 @@ unit:
           - common/io/filter/sink
           - common/io/filter/size
           - common/io/io
+          - common/io/limitRead
           - common/io/read
           - common/io/write
 
@@ -324,7 +349,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: crypto
-        total: 3
+        total: 4
         feature: STORAGE
         harness: storage
 
@@ -333,12 +358,19 @@ unit:
           - common/crypto/common
           - common/crypto/hash
           - common/crypto/md5.vendor: included
+          - common/crypto/xxhash
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: io-tls
-        total: 5
+        total: 6
         feature: SOCKET
         harness: server
+        harness:
+          name: socket
+          shim:
+            common/io/socket/client:
+              function:
+                - sckClientOpen
 
         coverage:
           - common/io/client
@@ -348,6 +380,7 @@ unit:
           - common/io/tls/common
           - common/io/tls/server
           - common/io/tls/session
+          - common/io/socket/address
           - common/io/socket/client
           - common/io/socket/common
           - common/io/socket/server
@@ -380,7 +413,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: ini
-        total: 4
+        total: 2
 
         coverage:
           - common/ini
@@ -388,11 +421,16 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: lock
         total: 3
-        harness: config
         harness:
-          name: storageHelper
+          name: config
           shim:
-            storage/helper: ~
+            config/load: ~
+        harness:
+          name: lock
+          shim:
+            common/lock:
+              function:
+                - lockInit
 
         coverage:
           - common/lock
@@ -407,6 +445,7 @@ unit:
           - config/protocol
           - command/command
           - postgres/interface
+          - postgres/interface/crc32
           - postgres/interface/page
           - protocol/client
           - protocol/command
@@ -560,9 +599,32 @@ unit:
           - storage/s3/read
           - storage/s3/storage
           - storage/s3/write
+          - storage/helper
+
+        include:
+          - storage/storage
+          - storage/write
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: sftp
+        total: 19
+        harness: libSsh2
+        harness:
+          name: fd
+          shim:
+            common/io/fd:
+              function:
+                - fdReady
+
+        coverage:
+          - storage/sftp/helper
+          - storage/sftp/read
+          - storage/sftp/storage
+          - storage/sftp/write
 
         include:
           - storage/helper
+          - storage/read
           - storage/storage
           - storage/write
 
@@ -585,6 +647,7 @@ unit:
 
         coverage:
           - postgres/interface
+          - postgres/interface/crc32
           - postgres/interface/page
 
   # ********************************************************************************************************************************
@@ -673,6 +736,10 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: manifest
         total: 6
+        harness:
+          name: manifest
+          shim:
+            info/manifest: ~
 
         coverage:
           - info/manifest
@@ -728,6 +795,7 @@ unit:
 
         coverage:
           - command/archive/common
+          - command/archive/find
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: archive-get
@@ -766,12 +834,12 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: check
-        total: 3
-        containerReq: true
+        total: 4
 
         coverage:
           - command/check/common
           - command/check/check
+          - command/check/report
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: command
@@ -810,15 +878,27 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: backup
-        total: 11
-        harness: backup
+        total: 12
+        harness:
+          name: backup
+          shim:
+            command/backup/backup:
+              function:
+                - backupProcess
+        harness:
+          name: blockIncr
+          shim:
+            command/restore/blockDelta: ~
 
         coverage:
           - command/backup/backup
+          - command/backup/blockIncr
+          - command/backup/blockMap
           - command/backup/common
           - command/backup/file
           - command/backup/pageChecksum
           - command/backup/protocol
+          - command/restore/blockDelta
 
         include:
           - info/info
@@ -827,9 +907,11 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: restore
-        total: 12
+        total: 15
 
         coverage:
+          - command/restore/blockChecksum
+          - command/restore/blockDelta
           - command/restore/file
           - command/restore/protocol
           - command/restore/restore
@@ -838,6 +920,13 @@ unit:
           - common/user
           - info/infoBackup
           - info/manifest
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: manifest
+        total: 1
+
+        include:
+          - command/manifest/manifest
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: repo
@@ -851,7 +940,7 @@ unit:
           - command/repo/rm
 
         include:
-          # command/repo/create is currently for testing purposes only so coverage is not provided except in integration.  In the
+          # command/repo/create is currently for testing purposes only so coverage is not provided except in integration. In the
           # future this will probably be rolled into a custom object store server implementation.
           - command/repo/create
 
@@ -893,11 +982,23 @@ unit:
           - command/server/ping
           - command/server/server
 
+  # ********************************************************************************************************************************
+  - name: doc
+
+    test:
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: build
+        total: 1
+
+        coverage:
+          - doc/command/build/build
+          - doc/command/build/reference
+
 # **********************************************************************************************************************************
 # Integration tests
 #
-# Integration tests are not run in a container.  They are expected to create their own containers since most integration runs will
-# create more than one.  For this reason each run is executed individually.
+# Integration tests are not run in a container. They are expected to create their own containers since most integration runs will
+# create more than one. For this reason each run is executed individually.
 # **********************************************************************************************************************************
 integration:
 

@@ -215,6 +215,7 @@ sub sshSetup
     }
 
     $strScript .=
+        "    cp ${strUserPath}/.ssh/authorized_keys ${strUserPath}/.ssh/id_rsa.pub && \\\n" .
         "    chown -R ${strUser}:${strGroup} ${strUserPath}/.ssh && \\\n" .
         "    chmod 700 ${strUserPath}/.ssh && \\\n" .
         "    chmod 600 ${strUserPath}/.ssh/*";
@@ -385,7 +386,8 @@ sub containerBuild
                 "    yum -y install openssh-server openssh-clients wget sudo valgrind git \\\n" .
                 "        perl perl-Digest-SHA perl-DBD-Pg perl-YAML-LibYAML openssl \\\n" .
                 "        gcc make perl-ExtUtils-MakeMaker perl-Test-Simple openssl-devel perl-ExtUtils-Embed rpm-build \\\n" .
-                "        libyaml-devel zlib-devel libxml2-devel lz4-devel lz4 bzip2-devel bzip2 perl-JSON-PP ccache meson";
+                "        libyaml-devel zlib-devel libxml2-devel lz4-devel lz4 bzip2-devel bzip2 perl-JSON-PP ccache meson \\\n" .
+                "        libssh2-devel";
         }
         else
         {
@@ -396,7 +398,8 @@ sub containerBuild
                 "        libdbd-pg-perl libhtml-parser-perl libssl-dev libperl-dev \\\n" .
                 "        libyaml-libyaml-perl tzdata devscripts lintian libxml-checker-perl txt2man debhelper \\\n" .
                 "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev libxml2-dev pkg-config \\\n" .
-                "        libbz2-dev bzip2 libyaml-dev libjson-pp-perl liblz4-dev liblz4-tool gnupg lsb-release ccache meson";
+                "        libbz2-dev bzip2 libyaml-dev libjson-pp-perl liblz4-dev liblz4-tool gnupg lsb-release ccache meson \\\n" .
+                "        libssh2-1-dev";
 
             # This package is required to build valgrind on 32-bit
             if ($oVm->{$strOS}{&VM_ARCH} eq VM_ARCH_I386)
@@ -447,7 +450,7 @@ sub containerBuild
         }
 
         #---------------------------------------------------------------------------------------------------------------------------
-        if ($strOS ne VM_U22 && $strOS ne VM_F36)
+        if ($strOS ne VM_U22)
         {
             my $strValgrind = 'valgrind-3.17.0';
 
@@ -492,11 +495,11 @@ sub containerBuild
                         "        https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-" . hostArch() . "/" .
                             "pgdg-redhat-repo-latest.noarch.rpm && \\\n";
                 }
-                elsif ($strOS eq VM_F36)
+                elsif ($strOS eq VM_F38)
                 {
                     $strScript .=
                         "    rpm -ivh \\\n" .
-                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-36-" . hostArch() . "/" .
+                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-38-" . hostArch() . "/" .
                             "pgdg-fedora-repo-latest.noarch.rpm && \\\n";
                 }
 
@@ -526,7 +529,7 @@ sub containerBuild
                 else
                 {
                     $strScript .= "    apt-get install -y --no-install-recommends";
-                }
+                 }
 
                 # Construct list of databases to install
                 foreach my $strDbVersion (@{$oOS->{&VM_DB}})
@@ -605,6 +608,20 @@ sub containerBuild
                 "    echo 'More banner after a blank line.'                 >> /etc/issue.net && \\\n" .
                 "    echo '***********************************************' >> /etc/issue.net && \\\n" .
                 "    echo 'Banner /etc/issue.net'                           >> /etc/ssh/sshd_config";
+
+            if ($strOS eq VM_U22)
+            {
+                $strScript .= sectionHeader() .
+                    "    echo '# Add PubkeyAcceptedAlgorithms (required for SFTP)'              >> /etc/ssh/sshd_config && \\\n" .
+                    "    echo 'HostKeyAlgorithms=+ssh-rsa,ssh-rsa-cert-v01\@openssh.com'        >> /etc/ssh/sshd_config && \\\n" .
+                    "    echo 'PubkeyAcceptedAlgorithms=+ssh-rsa,ssh-rsa-cert-v01\@openssh.com' >> /etc/ssh/sshd_config";
+            }
+
+            # Rename existing group that would conflict with our group name. This is pretty hacky but should be OK since we are the
+            # only thing running in the container.
+            $strScript .= sectionHeader() .
+                "# Rename conflicting group\n" .
+                '    sed -i s/.*\:x\:' . TEST_GROUP_ID . '\:$/' . TEST_GROUP . '\:x\:' . TEST_GROUP_ID . "\:/ /etc/group";
 
             $strScript .= sectionHeader() .
                 "# Create test user\n" .

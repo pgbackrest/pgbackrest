@@ -45,7 +45,7 @@ Integer types (packTypeMapData[type].valueMultiBit) when an unsigned value is > 
 
   Example: 5e021f
     5 = signed int 64 type
-    e = tag byte low bits:  1 1 1 0 meaning:
+    e = tag byte low bits: 1 1 1 0 meaning:
         "more value indicator bit set to 1" - the actual value is < -1 or > 0
         "more ID delta indicator bit" - there exists a gap (i.e. NULLs are not stored so there is a gap between the stored IDs)
         "ID delta low order bits" - here the bit 1 is set to 1 and bit 0 is not so the ID delta has the second low order bit set but
@@ -63,7 +63,7 @@ String, binary types, and boolean (packTypeMapData[type].valueSingleBit):
 
   Example: 8c090673616d706c65
     8 = string type
-    c = tag byte low bits:  1 1 0 0 meaning:
+    c = tag byte low bits: 1 1 0 0 meaning:
         "value bit" - there is data
         "more ID delta indicator bit" - there exists a gap (i.e. NULLs are not stored so there is a gap between the stored IDs)
     09 = since neither "ID delta low order bits" is set in the tag, they are both 0, so shifting 9 left by 2, the 2 low order bits
@@ -334,12 +334,8 @@ pckReadNewInternal(void)
 {
     FUNCTION_TEST_VOID();
 
-    PackRead *this = NULL;
-
     OBJ_NEW_BEGIN(PackRead, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (PackRead)
         {
             .tagStack = {.bottom = {.typeMap = pckTypeMapObj}},
@@ -1066,7 +1062,7 @@ pckReadPack(PackRead *const this, PckReadPackParam param)
     pckReadTag(this, &param.id, pckTypeMapPack, false);
 
     // Get the pack size
-    Buffer *result = bufNew(this->tagNextSize);
+    Buffer *const result = OBJ_NAME(bufNew(this->tagNextSize), Pack::Buffer);
 
     // Read the pack out in chunks
     while (bufUsed(result) < bufSize(result))
@@ -1242,11 +1238,11 @@ pckReadEnd(PackRead *this)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-pckReadToLog(const PackRead *this)
+FN_EXTERN void
+pckReadToLog(const PackRead *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{depth: %u, idLast: %u, tagNextId: %u, tagNextType: %u, tagNextValue %" PRIu64 "}", this->tagStack.depth,
+    strStcFmt(
+        debugLog, "{depth: %u, idLast: %u, tagNextId: %u, tagNextType: %u, tagNextValue %" PRIu64 "}", this->tagStack.depth,
         this->tagStack.top->idLast, this->tagNextId, this->tagNextTypeMap, this->tagNextValue);
 }
 
@@ -1257,12 +1253,8 @@ pckWriteNewInternal(void)
 {
     FUNCTION_TEST_VOID();
 
-    PackWrite *this = NULL;
-
     OBJ_NEW_BEGIN(PackWrite, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (PackWrite)
         {
             .tagStack = {.bottom = {.typeMap = pckTypeMapObj}},
@@ -1939,15 +1931,16 @@ pckWriteResult(PackWrite *const this)
     {
         ASSERT(this->tagStack.top == NULL);
 
-        result = (Pack *)this->buffer;
+        result = (Pack *)OBJ_NAME(this->buffer, Pack::Buffer);
     }
 
     FUNCTION_TEST_RETURN(PACK, result);
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-pckWriteToLog(const PackWrite *this)
+FN_EXTERN void
+pckWriteToLog(const PackWrite *const this, StringStatic *const debugLog)
 {
-    return strNewFmt("{depth: %u, idLast: %u}", this->tagStack.depth, this->tagStack.top == NULL ? 0 : this->tagStack.top->idLast);
+    strStcFmt(
+        debugLog, "{depth: %u, idLast: %u}", this->tagStack.depth, this->tagStack.top == NULL ? 0 : this->tagStack.top->idLast);
 }

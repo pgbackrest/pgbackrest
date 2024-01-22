@@ -19,7 +19,7 @@ Io server type
 Statistics constants
 ***********************************************************************************************************************************/
 #define TLS_STAT_SERVER                                             "tls.server"            // Servers created
-    STRING_DECLARE(TLS_STAT_SERVER_STR);
+STRING_DECLARE(TLS_STAT_SERVER_STR);
 
 /***********************************************************************************************************************************
 Constructors

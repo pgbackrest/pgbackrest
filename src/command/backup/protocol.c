@@ -5,6 +5,7 @@ Backup Protocol Handler
 
 #include "command/backup/file.h"
 #include "command/backup/protocol.h"
+#include "common/crypto/hash.h"
 #include "common/debug.h"
 #include "common/io/io.h"
 #include "common/log.h"
@@ -29,13 +30,18 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
     {
         // Backup options that apply to all files
         const String *const repoFile = pckReadStrP(param);
+        const uint64_t bundleId = pckReadU64P(param);
+        const bool bundleRaw = bundleId != 0 ? pckReadBoolP(param) : false;
+        const unsigned int blockIncrReference = (unsigned int)pckReadU64P(param);
         const CompressType repoFileCompressType = (CompressType)pckReadU32P(param);
         const int repoFileCompressLevel = pckReadI32P(param);
         const CipherType cipherType = (CipherType)pckReadU64P(param);
         const String *const cipherPass = pckReadStrP(param);
+        const PgPageSize pageSize = pckReadU32P(param);
+        const String *const pgVersionForce = pckReadStrP(param);
 
         // Build the file list
-        List *fileList = lstNewP(sizeof(BackupFile));
+        List *const fileList = lstNewP(sizeof(BackupFile));
 
         while (!pckReadNullP(param))
         {
@@ -46,6 +52,22 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
             file.pgFileCopyExactSize = pckReadBoolP(param);
             file.pgFileChecksum = pckReadBinP(param);
             file.pgFileChecksumPage = pckReadBoolP(param);
+            file.pgFilePageHeaderCheck = pckReadBoolP(param);
+            file.blockIncrSize = (size_t)pckReadU64P(param);
+
+            if (file.blockIncrSize > 0)
+            {
+                file.blockIncrChecksumSize = (size_t)pckReadU64P(param);
+                file.blockIncrSuperSize = pckReadU64P(param);
+                file.blockIncrMapPriorFile = pckReadStrP(param);
+
+                if (file.blockIncrMapPriorFile != NULL)
+                {
+                    file.blockIncrMapPriorOffset = pckReadU64P(param);
+                    file.blockIncrMapPriorSize = pckReadU64P(param);
+                }
+            }
+
             file.manifestFile = pckReadStrP(param);
             file.repoFileChecksum = pckReadBinP(param);
             file.repoFileSize = pckReadU64P(param);
@@ -57,7 +79,8 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
 
         // Backup file
         const List *const result = backupFile(
-            repoFile, repoFileCompressType, repoFileCompressLevel, cipherType, cipherPass, fileList);
+            repoFile, bundleId, bundleRaw, blockIncrReference, repoFileCompressType, repoFileCompressLevel, cipherType, cipherPass,
+            pgVersionForce, pageSize, fileList);
 
         // Return result
         PackWrite *const resultPack = protocolPackNew();
@@ -66,10 +89,16 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
         {
             const BackupFileResult *const fileResult = lstGet(result, resultIdx);
 
+            ASSERT(
+                fileResult->backupCopyResult == backupCopyResultSkip || fileResult->copySize != 0 ||
+                bufEq(fileResult->copyChecksum, HASH_TYPE_SHA1_ZERO_BUF));
+
             pckWriteStrP(resultPack, fileResult->manifestFile);
             pckWriteU32P(resultPack, fileResult->backupCopyResult);
+            pckWriteBoolP(resultPack, fileResult->repoInvalid);
             pckWriteU64P(resultPack, fileResult->copySize);
             pckWriteU64P(resultPack, fileResult->bundleOffset);
+            pckWriteU64P(resultPack, fileResult->blockIncrMapSize);
             pckWriteU64P(resultPack, fileResult->repoSize);
             pckWriteBinP(resultPack, fileResult->copyChecksum);
             pckWriteBinP(resultPack, fileResult->repoChecksum);

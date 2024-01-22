@@ -17,7 +17,11 @@ void hrnLogReplaceAdd(const char *expression, const char *expressionSub, const c
 // Clear (remove) all log replacements
 void hrnLogReplaceClear(void);
 
+// Compare log to a static string
 void harnessLogResult(const char *expected);
+
+// Check that log contains a substring
+void harnessLogResultEmptyOrContains(const char *const contains);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -39,15 +43,15 @@ void harnessLogLevelSet(LogLevel logLevel);
 
 // Set the process id used for logging. Ignore the request if the logging module is not active yet.
 #ifdef HRN_FEATURE_LOG
-    void hrnLogProcessIdSet(unsigned int processId);
+void hrnLogProcessIdSet(unsigned int processId);
 #else
-    #define hrnLogProcessIdSet(processId)
+#define hrnLogProcessIdSet(processId)
 #endif
 
 /***********************************************************************************************************************************
 Internal Setters
 ***********************************************************************************************************************************/
-// Set dry-run on or off.  This is usually called only from the config harness.
+// Set dry-run on or off. This is usually called only from the config harness.
 void harnessLogDryRunSet(bool dryRun);
 
 #endif

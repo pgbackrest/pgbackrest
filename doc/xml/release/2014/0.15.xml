@@ -1,0 +1,13 @@
+<release date="2014-03-29" version="0.15" title="Added archive-get">
+    <release-core-list>
+        <release-feature-list>
+            <release-item>
+                <p>Added <cmd>archive-get</cmd> functionality to aid in restores.</p>
+            </release-item>
+
+            <release-item>
+                <p>Added option to force a checkpoint when starting the backup, <setting>start-fast=y</setting>.</p>
+            </release-item>
+        </release-feature-list>
+    </release-core-list>
+</release>

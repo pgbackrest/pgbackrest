@@ -21,7 +21,6 @@ FN_EXTERN ProtocolCommand *protocolCommandNew(const StringId command);
 Functions
 ***********************************************************************************************************************************/
 // Move to a new parent mem context
-// Move to a new parent mem context
 FN_INLINE_ALWAYS ProtocolCommand *
 protocolCommandMove(ProtocolCommand *const this, MemContext *const parentNew)
 {
@@ -46,11 +45,11 @@ protocolCommandFree(ProtocolCommand *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *protocolCommandToLog(const ProtocolCommand *this);
+FN_EXTERN void protocolCommandToLog(const ProtocolCommand *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_PROTOCOL_COMMAND_TYPE                                                                                         \
     ProtocolCommand *
 #define FUNCTION_LOG_PROTOCOL_COMMAND_FORMAT(value, buffer, bufferSize)                                                            \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, protocolCommandToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, protocolCommandToLog, buffer, bufferSize)
 
 #endif

@@ -248,7 +248,7 @@ eval
         }
 
         # Generate deployment docs for Debian
-        if (!defined($strVm) || $strVm eq VM_U18)
+        if (!defined($strVm) || $strVm eq VM_U20)
         {
             &log(INFO, "Generate Debian/Ubuntu documentation");
 
@@ -311,8 +311,8 @@ eval
         }
 
         # Update permissions
-        executeTest("find ${strDeployPath} -type d -exec chmod 750 {} +");
-        executeTest("find ${strDeployPath} -type f -exec chmod 640 {} +");
+        executeTest("find ${strDeployPath} -path .git -prune -type d -exec chmod 750 {} +");
+        executeTest("find ${strDeployPath} -path .git -prune -type f -exec chmod 640 {} +");
     }
 
     # Exit with success

@@ -13,8 +13,8 @@ S3 Storage
 #include "common/io/tls/client.h"
 #include "common/log.h"
 #include "common/regExp.h"
-#include "common/type/object.h"
 #include "common/type/json.h"
+#include "common/type/object.h"
 #include "common/type/xml.h"
 #include "storage/s3/read.h"
 #include "storage/s3/write.h"
@@ -33,6 +33,7 @@ STRING_STATIC(S3_HEADER_TOKEN_STR,                                  "x-amz-secur
 STRING_STATIC(S3_HEADER_SRVSDENC_STR,                               "x-amz-server-side-encryption");
 STRING_STATIC(S3_HEADER_SRVSDENC_KMS_STR,                           "aws:kms");
 STRING_STATIC(S3_HEADER_SRVSDENC_KMSKEYID_STR,                      "x-amz-server-side-encryption-aws-kms-key-id");
+STRING_STATIC(S3_HEADER_TAGGING,                                    "x-amz-tagging");
 
 /***********************************************************************************************************************************
 S3 query tokens
@@ -56,7 +57,7 @@ STRING_STATIC(S3_XML_TAG_IS_TRUNCATED_STR,                          "IsTruncated
 STRING_STATIC(S3_XML_TAG_KEY_STR,                                   "Key");
 STRING_STATIC(S3_XML_TAG_LAST_MODIFIED_STR,                         "LastModified");
 #define S3_XML_TAG_NEXT_CONTINUATION_TOKEN                          "NextContinuationToken"
-    STRING_STATIC(S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR,           S3_XML_TAG_NEXT_CONTINUATION_TOKEN);
+STRING_STATIC(S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR,               S3_XML_TAG_NEXT_CONTINUATION_TOKEN);
 STRING_STATIC(S3_XML_TAG_OBJECT_STR,                                "Object");
 STRING_STATIC(S3_XML_TAG_PREFIX_STR,                                "Prefix");
 STRING_STATIC(S3_XML_TAG_QUIET_STR,                                 "Quiet");
@@ -66,10 +67,10 @@ STRING_STATIC(S3_XML_TAG_SIZE_STR,                                  "Size");
 AWS authentication v4 constants
 ***********************************************************************************************************************************/
 #define S3                                                          "s3"
-    BUFFER_STRDEF_STATIC(S3_BUF,                                    S3);
+BUFFER_STRDEF_STATIC(S3_BUF,                                        S3);
 #define AWS4                                                        "AWS4"
 #define AWS4_REQUEST                                                "aws4_request"
-    BUFFER_STRDEF_STATIC(AWS4_REQUEST_BUF,                          AWS4_REQUEST);
+BUFFER_STRDEF_STATIC(AWS4_REQUEST_BUF,                              AWS4_REQUEST);
 #define AWS4_HMAC_SHA256                                            "AWS4-HMAC-SHA256"
 
 /***********************************************************************************************************************************
@@ -94,6 +95,7 @@ struct StorageS3
     String *securityToken;                                          // Security token, if any
     const String *kmsKeyId;                                         // Server-side encryption key
     size_t partSize;                                                // Part size for multi-part upload
+    const String *tag;                                              // Tags to be applied to objects
     unsigned int deleteMax;                                         // Maximum objects that can be deleted in one request
     StorageS3UriStyle uriStyle;                                     // Path or host style URIs
     const String *bucketEndpoint;                                   // Set to {bucket}.{endpoint}
@@ -205,8 +207,8 @@ storageS3Auth(
             AWS4_HMAC_SHA256 "\n%s\n%s/%s/" S3 "/" AWS4_REQUEST "\n%s", strZ(dateTime), strZ(date), strZ(this->region),
             strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha256, BUFSTR(canonicalRequest)))));
 
-        // Generate signing key.  This key only needs to be regenerated every seven days but we'll do it once a day to keep the
-        // logic simple.  It's a relatively expensive operation so we'd rather not do it for every request.
+        // Generate signing key. This key only needs to be regenerated every seven days but we'll do it once a day to keep the
+        // logic simple. It's a relatively expensive operation so we'd rather not do it for every request.
         // If the cached signing key has expired (or has none been generated) then regenerate it
         if (!strEq(date, this->signingKeyDate))
         {
@@ -315,7 +317,7 @@ storageS3AuthAuto(StorageS3 *const this, HttpHeader *const header)
                 THROW(
                     ProtocolError,
                     "role to retrieve temporary credentials not found\n"
-                        "HINT: is a valid IAM role associated with this instance?");
+                    "HINT: is a valid IAM role associated with this instance?");
             }
             // Else an error that we can't handle
             else if (!httpResponseCodeOk(response))
@@ -340,7 +342,7 @@ storageS3AuthAuto(StorageS3 *const this, HttpHeader *const header)
             THROW_FMT(
                 ProtocolError,
                 "role '%s' not found\n"
-                    "HINT: is '%s' a valid IAM role associated with this instance?",
+                "HINT: is '%s' a valid IAM role associated with this instance?",
                 strZ(this->credRole), strZ(this->credRole));
         }
         // Else an error that we can't handle
@@ -453,6 +455,7 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
         FUNCTION_LOG_PARAM(BUFFER, param.content);
         FUNCTION_LOG_PARAM(BOOL, param.sseKms);
+        FUNCTION_LOG_PARAM(BOOL, param.tag);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -463,8 +466,8 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        HttpHeader *requestHeader = param.header == NULL ?
-            httpHeaderNew(this->headerRedactList) : httpHeaderDup(param.header, this->headerRedactList);
+        HttpHeader *requestHeader =
+            param.header == NULL ? httpHeaderNew(this->headerRedactList) : httpHeaderDup(param.header, this->headerRedactList);
 
         // Set content length
         httpHeaderAdd(
@@ -485,6 +488,10 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
             httpHeaderPut(requestHeader, S3_HEADER_SRVSDENC_STR, S3_HEADER_SRVSDENC_KMS_STR);
             httpHeaderPut(requestHeader, S3_HEADER_SRVSDENC_KMSKEYID_STR, this->kmsKeyId);
         }
+
+        // Set tags when requested and available
+        if (param.tag && this->tag != NULL)
+            httpHeaderPut(requestHeader, S3_HEADER_TAGGING, this->tag);
 
         // When using path-style URIs the bucket name needs to be prepended
         if (this->uriStyle == storageS3UriStylePath)
@@ -592,10 +599,12 @@ storageS3Request(StorageS3 *this, const String *verb, const String *path, Storag
         FUNCTION_LOG_PARAM(BOOL, param.allowMissing);
         FUNCTION_LOG_PARAM(BOOL, param.contentIo);
         FUNCTION_LOG_PARAM(BOOL, param.sseKms);
+        FUNCTION_LOG_PARAM(BOOL, param.tag);
     FUNCTION_LOG_END();
 
     HttpRequest *const request = storageS3RequestAsyncP(
-        this, verb, path, .header = param.header, .query = param.query, .content = param.content, .sseKms = param.sseKms);
+        this, verb, path, .header = param.header, .query = param.query, .content = param.content, .sseKms = param.sseKms,
+        .tag = param.tag);
     HttpResponse *const result = storageS3ResponseP(
         request, .allowMissing = param.allowMissing, .contentIo = param.contentIo);
 
@@ -621,6 +630,8 @@ storageS3ListInternal(
         FUNCTION_LOG_PARAM(FUNCTIONP, callback);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_CALLBACK();
 
     ASSERT(this != NULL);
     ASSERT(path != NULL);
@@ -1091,11 +1102,12 @@ static const StorageInterface storageInterfaceS3 =
 
 FN_EXTERN Storage *
 storageS3New(
-    const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
-    const String *endPoint, StorageS3UriStyle uriStyle, const String *region, StorageS3KeyType keyType, const String *accessKey,
-    const String *secretAccessKey, const String *securityToken, const String *const kmsKeyId, const String *credRole,
-    const String *const webIdToken, size_t partSize, const String *host, unsigned int port, TimeMSec timeout, bool verifyPeer,
-    const String *caFile, const String *caPath)
+    const String *const path, const bool write, StoragePathExpressionCallback pathExpressionFunction, const String *const bucket,
+    const String *const endPoint, const StorageS3UriStyle uriStyle, const String *const region, const StorageS3KeyType keyType,
+    const String *const accessKey, const String *const secretAccessKey, const String *const securityToken,
+    const String *const kmsKeyId, const String *const credRole, const String *const webIdToken, const size_t partSize,
+    const KeyValue *const tag, const String *host, const unsigned int port, const TimeMSec timeout, const bool verifyPeer,
+    const String *const caFile, const String *const caPath)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -1113,6 +1125,7 @@ storageS3New(
         FUNCTION_TEST_PARAM(STRING, credRole);
         FUNCTION_TEST_PARAM(STRING, webIdToken);
         FUNCTION_LOG_PARAM(SIZE, partSize);
+        FUNCTION_LOG_PARAM(KEY_VALUE, tag);
         FUNCTION_LOG_PARAM(STRING, host);
         FUNCTION_LOG_PARAM(UINT, port);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
@@ -1127,13 +1140,9 @@ storageS3New(
     ASSERT(region != NULL);
     ASSERT(partSize != 0);
 
-    Storage *this = NULL;
-
-    OBJ_NEW_BEGIN(StorageS3, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(StorageS3, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageS3 *driver = OBJ_NEW_ALLOC();
-
-        *driver = (StorageS3)
+        *this = (StorageS3)
         {
             .interface = storageInterfaceS3,
             .bucket = strDup(bucket),
@@ -1143,35 +1152,43 @@ storageS3New(
             .partSize = partSize,
             .deleteMax = STORAGE_S3_DELETE_MAX,
             .uriStyle = uriStyle,
-            .bucketEndpoint = uriStyle == storageS3UriStyleHost ?
-                strNewFmt("%s.%s", strZ(bucket), strZ(endPoint)) : strDup(endPoint),
+            .bucketEndpoint =
+                uriStyle == storageS3UriStyleHost ? strNewFmt("%s.%s", strZ(bucket), strZ(endPoint)) : strDup(endPoint),
 
             // Force the signing key to be generated on the first run
             .signingKeyDate = YYYYMMDD_STR,
         };
 
+        // Create tag query string
+        if (write && tag != NULL)
+        {
+            HttpQuery *const query = httpQueryNewP(.kv = tag);
+            this->tag = httpQueryRenderP(query);
+            httpQueryFree(query);
+        }
+
         // Create the HTTP client used to service requests
         if (host == NULL)
-            host = driver->bucketEndpoint;
+            host = this->bucketEndpoint;
 
-        driver->httpClient = httpClientNew(
+        this->httpClient = httpClientNew(
             tlsClientNewP(
                 sckClientNew(host, port, timeout, timeout), host, timeout, timeout, verifyPeer, .caFile = caFile, .caPath = caPath),
             timeout);
 
         // Initialize authentication
-        switch (driver->keyType)
+        switch (this->keyType)
         {
             // Create the HTTP client used to retrieve temporary security credentials
             case storageS3KeyTypeAuto:
             {
                 ASSERT(accessKey == NULL && secretAccessKey == NULL && securityToken == NULL);
 
-                driver->credRole = strDup(credRole);
-                driver->credHost = S3_CREDENTIAL_HOST_STR;
-                driver->credExpirationTime = time(NULL);
-                driver->credHttpClient = httpClientNew(
-                    sckClientNew(driver->credHost, S3_CREDENTIAL_PORT, timeout, timeout), timeout);
+                this->credRole = strDup(credRole);
+                this->credHost = S3_CREDENTIAL_HOST_STR;
+                this->credExpirationTime = time(NULL);
+                this->credHttpClient = httpClientNew(
+                    sckClientNew(this->credHost, S3_CREDENTIAL_PORT, timeout, timeout), timeout);
 
                 break;
             }
@@ -1183,13 +1200,13 @@ storageS3New(
                 ASSERT(credRole != NULL);
                 ASSERT(webIdToken != NULL);
 
-                driver->credRole = strDup(credRole);
-                driver->webIdToken = strDup(webIdToken);
-                driver->credHost = S3_STS_HOST_STR;
-                driver->credExpirationTime = time(NULL);
-                driver->credHttpClient = httpClientNew(
+                this->credRole = strDup(credRole);
+                this->webIdToken = strDup(webIdToken);
+                this->credHost = S3_STS_HOST_STR;
+                this->credExpirationTime = time(NULL);
+                this->credHttpClient = httpClientNew(
                     tlsClientNewP(
-                        sckClientNew(driver->credHost, S3_STS_PORT, timeout, timeout), driver->credHost, timeout, timeout, true,
+                        sckClientNew(this->credHost, S3_STS_PORT, timeout, timeout), this->credHost, timeout, timeout, true,
                         .caFile = caFile, .caPath = caPath),
                     timeout);
 
@@ -1199,26 +1216,24 @@ storageS3New(
             // Set shared key credentials
             default:
             {
-                ASSERT(driver->keyType == storageS3KeyTypeShared);
+                ASSERT(this->keyType == storageS3KeyTypeShared);
                 ASSERT(accessKey != NULL && secretAccessKey != NULL);
 
-                driver->accessKey = strDup(accessKey);
-                driver->secretAccessKey = strDup(secretAccessKey);
-                driver->securityToken = strDup(securityToken);
+                this->accessKey = strDup(accessKey);
+                this->secretAccessKey = strDup(secretAccessKey);
+                this->securityToken = strDup(securityToken);
 
                 break;
             }
         }
 
         // Create list of redacted headers
-        driver->headerRedactList = strLstNew();
-        strLstAdd(driver->headerRedactList, HTTP_HEADER_AUTHORIZATION_STR);
-        strLstAdd(driver->headerRedactList, S3_HEADER_DATE_STR);
-        strLstAdd(driver->headerRedactList, S3_HEADER_TOKEN_STR);
-
-        this = storageNew(STORAGE_S3_TYPE, path, 0, 0, write, pathExpressionFunction, driver, driver->interface);
+        this->headerRedactList = strLstNew();
+        strLstAdd(this->headerRedactList, HTTP_HEADER_AUTHORIZATION_STR);
+        strLstAdd(this->headerRedactList, S3_HEADER_DATE_STR);
+        strLstAdd(this->headerRedactList, S3_HEADER_TOKEN_STR);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE, this);
+    FUNCTION_LOG_RETURN(STORAGE, storageNew(STORAGE_S3_TYPE, path, 0, 0, write, pathExpressionFunction, this, this->interface));
 }

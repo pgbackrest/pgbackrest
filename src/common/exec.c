@@ -11,7 +11,6 @@ Execute Process
 #include <unistd.h>
 
 #include "common/debug.h"
-#include "common/log.h"
 #include "common/exec.h"
 #include "common/fork.h"
 #include "common/io/fdRead.h"
@@ -19,6 +18,7 @@ Execute Process
 #include "common/io/io.h"
 #include "common/io/read.h"
 #include "common/io/write.h"
+#include "common/log.h"
 #include "common/wait.h"
 
 /***********************************************************************************************************************************
@@ -46,7 +46,7 @@ struct Exec
 Macro to close file descriptors after dup2() in the child process
 
 If the parent process is daemomized and has closed stdout, stdin, and stderr or some combination of them, then the newly created
-descriptors might overlap stdout, stdin, or stderr.  In that case we don't want to accidentally close the descriptor that we have
+descriptors might overlap stdout, stdin, or stderr. In that case we don't want to accidentally close the descriptor that we have
 just copied.
 
 Note that this is pretty specific to the way that file descriptors are handled in this module and may not be generally applicable in
@@ -125,12 +125,8 @@ execNew(const String *command, const StringList *param, const String *name, Time
     ASSERT(name != NULL);
     ASSERT(timeout > 0);
 
-    Exec *this = NULL;
-
     OBJ_NEW_BEGIN(Exec, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (Exec)
         {
             .command = strDup(command),
@@ -152,7 +148,7 @@ execNew(const String *command, const StringList *param, const String *name, Time
 /***********************************************************************************************************************************
 Check if the process is still running
 
-This should be called when anything unexpected happens while reading or writing, including errors and eof.  If this function returns
+This should be called when anything unexpected happens while reading or writing, including errors and eof. If this function returns
 then the original error should be rethrown.
 ***********************************************************************************************************************************/
 static void
@@ -307,7 +303,7 @@ execOpen(Exec *this)
 
     ASSERT(this != NULL);
 
-    // Create pipes to communicate with the subprocess.  The names of the pipes are from the perspective of the parent process since
+    // Create pipes to communicate with the subprocess. The names of the pipes are from the perspective of the parent process since
     // the child process will use them only briefly before exec'ing.
     int pipeRead[2];
     int pipeWrite[2];
@@ -335,10 +331,10 @@ execOpen(Exec *this)
         // Assign stderr to the input side of the error pipe
         PIPE_DUP2(pipeError, 1, STDERR_FILENO);
 
-        // Execute the binary.  This statement will not return if it is successful
-        execvp(strZ(this->command), (char ** const)strLstPtr(this->param));
+        // Execute the binary. This statement will not return if it is successful
+        execvp(strZ(this->command), (char **const)strLstPtr(this->param));
 
-        // If we got here then there was an error.  We can't use a throw as we normally would because we have already shutdown
+        // If we got here then there was an error. We can't use a throw as we normally would because we have already shutdown
         // logging and we don't want to execute exit paths that might free parent resources which we still have references to.
         fprintf(stderr, "unable to execute '%s': [%d] %s\n", strZ(this->command), errno, strerror(errno));
         exit(errorTypeCode(&ExecuteError));

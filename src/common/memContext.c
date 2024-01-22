@@ -7,7 +7,6 @@ Memory Context Manager
 #include <string.h>
 
 #include "common/debug.h"
-#include "common/error.h"
 #include "common/macro.h"
 #include "common/memContext.h"
 
@@ -18,8 +17,8 @@ header by doing some pointer arithmetic. This is much faster than searching thro
 ***********************************************************************************************************************************/
 typedef struct MemContextAlloc
 {
-    unsigned int allocIdx:32;                                       // Index in the allocation list
-    unsigned int size:32;                                           // Allocation size (4GB max)
+    unsigned int allocIdx : 32;                                     // Index in the allocation list
+    unsigned int size : 32;                                         // Allocation size (4GB max)
 } MemContextAlloc;
 
 // Get the allocation buffer pointer given the allocation header pointer
@@ -52,15 +51,16 @@ struct MemContext
 {
 #ifdef DEBUG
     const char *name;                                               // Indicates what the context is being used for
-    bool active:1;                                                  // Is the context currently active?
+    uint64_t sequenceNew;                                           // Sequence when this context was created (used for audit)
+    bool active : 1;                                                // Is the context currently active?
 #endif
-    MemQty childQty:2;                                              // How many child contexts can this context have?
-    bool childInitialized:1;                                        // Has the child context list been initialized?
-    MemQty allocQty:2;                                              // How many allocations can this context have?
-    bool allocInitialized:1;                                        // Has the allocation list been initialized?
-    MemQty callbackQty:2;                                           // How many callbacks can this context have?
-    bool callbackInitialized:1;                                     // Has the callback been initialized?
-    size_t allocExtra:16;                                           // Size of extra allocation (1kB max)
+    MemQty childQty : 2;                                            // How many child contexts can this context have?
+    bool childInitialized : 1;                                      // Has the child context list been initialized?
+    MemQty allocQty : 2;                                            // How many allocations can this context have?
+    bool allocInitialized : 1;                                      // Has the allocation list been initialized?
+    MemQty callbackQty : 2;                                         // How many callbacks can this context have?
+    bool callbackInitialized : 1;                                   // Has the callback been initialized?
+    size_t allocExtra : 16;                                         // Size of extra allocation (1kB max)
 
     unsigned int contextParentIdx;                                  // Index in the parent context list
     MemContext *contextParent;                                      // All contexts have a parent except top
@@ -102,8 +102,9 @@ typedef struct MemContextCallbackOne
 } MemContextCallbackOne;
 
 /***********************************************************************************************************************************
-Possible sizes for the manifest based on options. Formatting has been compressed to save space.
+Possible sizes for the manifest based on options
 ***********************************************************************************************************************************/
+// {uncrustify_off - formatting compressed to save space}
 static const uint8_t memContextSizePossible[memQtyMany + 1][memQtyMany + 1][memQtyOne + 1] =
 {
     // child none
@@ -136,6 +137,7 @@ static const uint8_t memContextSizePossible[memQtyMany + 1][memQtyMany + 1][memQ
      {/* callback none */ sizeof(MemContextChildMany) + sizeof(MemContextAllocMany),
       /* callback one */ sizeof(MemContextChildMany) + sizeof(MemContextAllocMany) + sizeof(MemContextCallbackOne)}},
 };
+// {uncrustify_on}
 
 /***********************************************************************************************************************************
 Get pointers to optional parts of the manifest
@@ -176,14 +178,15 @@ static MemContextCallbackOne *
 memContextCallbackOne(MemContext *const memContext)
 {
     return
-        (MemContextCallbackOne *)((unsigned char *)(memContext + 1) +
-            memContextSizePossible[memContext->childQty][memContext->allocQty][0] + memContext->allocExtra);
+        (MemContextCallbackOne *)
+        ((unsigned char *)(memContext + 1) +
+         memContextSizePossible[memContext->childQty][memContext->allocQty][0] + memContext->allocExtra);
 }
 
 /***********************************************************************************************************************************
 Top context
 
-The top context always exists and can never be freed.  All other contexts are children of the top context. The top context is
+The top context always exists and can never be freed. All other contexts are children of the top context. The top context is
 generally used to allocate memory that exists for the life of the program.
 ***********************************************************************************************************************************/
 static struct MemContextTop
@@ -227,6 +230,165 @@ static struct MemContextStack
 
 static unsigned int memContextCurrentStackIdx = 0;
 static unsigned int memContextMaxStackIdx = 0;
+
+/***********************************************************************************************************************************
+***********************************************************************************************************************************/
+#ifdef DEBUG
+
+static uint64_t memContextSequence = 0;
+
+FN_EXTERN void
+memContextAuditBegin(MemContextAuditState *const state)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, state);
+    FUNCTION_TEST_END();
+
+    ASSERT(state != NULL);
+    ASSERT(state->memContext != NULL);
+    ASSERT(state->memContext == memContextTop() || state->memContext->sequenceNew != 0);
+
+    if (state->memContext->childInitialized)
+    {
+        ASSERT(state->memContext->childQty != memQtyNone);
+
+        if (state->memContext->childQty == memQtyOne)
+        {
+            MemContextChildOne *const memContextChild = memContextChildOne(state->memContext);
+
+            if (memContextChild->context != NULL)
+                state->sequenceContextNew = memContextChild->context->sequenceNew;
+        }
+        else
+        {
+            ASSERT(state->memContext->childQty == memQtyMany);
+            MemContextChildMany *const memContextChild = memContextChildMany(state->memContext);
+
+            for (unsigned int contextIdx = 0; contextIdx < memContextChild->listSize; contextIdx++)
+            {
+                if (memContextChild->list[contextIdx] != NULL &&
+                    memContextChild->list[contextIdx]->sequenceNew > state->sequenceContextNew)
+                {
+                    state->sequenceContextNew = memContextChild->list[contextIdx]->sequenceNew;
+                }
+            }
+        }
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+static bool
+memContextAuditNameMatch(const char *const actual, const char *const expected)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGZ, actual);
+        FUNCTION_TEST_PARAM(STRINGZ, expected);
+    FUNCTION_TEST_END();
+
+    ASSERT(actual != NULL);
+    ASSERT(expected != NULL);
+
+    unsigned int actualIdx = 0;
+
+    while (actual[actualIdx] != '\0' && actual[actualIdx] == expected[actualIdx])
+        actualIdx++;
+
+    FUNCTION_TEST_RETURN(
+        BOOL,
+        (actual[actualIdx] == '\0' || strncmp(actual + actualIdx, "::", 2) == 0) &&
+        (expected[actualIdx] == '\0' || strcmp(expected + actualIdx, " *") == 0));
+}
+
+FN_EXTERN void
+memContextAuditEnd(const MemContextAuditState *const state, const char *const returnType)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, state);
+        FUNCTION_TEST_PARAM(STRINGZ, returnType);
+    FUNCTION_TEST_END();
+
+    if (state->returnTypeAny)
+        FUNCTION_TEST_RETURN_VOID();
+
+    if (state->memContext->childInitialized)
+    {
+        ASSERT(state->memContext->childQty != memQtyNone);
+
+        const char *returnTypeInvalid = NULL;
+        const char *returnTypeFound = NULL;
+
+        if (state->memContext->childQty == memQtyOne)
+        {
+            MemContextChildOne *const memContextChild = memContextChildOne(state->memContext);
+
+            if (memContextChild->context != NULL && memContextChild->context->sequenceNew > state->sequenceContextNew &&
+                !memContextAuditNameMatch(memContextChild->context->name, returnType))
+            {
+                returnTypeInvalid = memContextChild->context->name;
+            }
+        }
+        else
+        {
+            ASSERT(state->memContext->childQty == memQtyMany);
+            MemContextChildMany *const memContextChild = memContextChildMany(state->memContext);
+
+            for (unsigned int contextIdx = 0; contextIdx < memContextChild->listSize; contextIdx++)
+            {
+                if (memContextChild->list[contextIdx] != NULL &&
+                    memContextChild->list[contextIdx]->sequenceNew > state->sequenceContextNew)
+                {
+                    if (memContextAuditNameMatch(memContextChild->list[contextIdx]->name, returnType))
+                    {
+                        if (returnTypeFound != NULL)
+                        {
+                            returnTypeInvalid = memContextChild->list[contextIdx]->name;
+                            break;
+                        }
+
+                        returnTypeFound = memContextChild->list[contextIdx]->name;
+                    }
+                    else
+                    {
+                        returnTypeInvalid = memContextChild->list[contextIdx]->name;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (returnTypeInvalid != NULL)
+        {
+            if (returnTypeFound != NULL)
+            {
+                THROW_FMT(
+                    AssertError, "expected return type '%s' already found but also found '%s'", returnTypeFound, returnTypeInvalid);
+            }
+            else
+            {
+                THROW_FMT(
+                    AssertError, "expected return type '%s' but found '%s'", returnType, returnTypeInvalid);
+            }
+        }
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+FN_EXTERN void *
+memContextAuditAllocExtraName(void *const allocExtra, const char *const name)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, allocExtra);
+        FUNCTION_TEST_PARAM(STRINGZ, name);
+    FUNCTION_TEST_END();
+
+    memContextFromAllocExtra(allocExtra)->name = name;
+
+    FUNCTION_TEST_RETURN_P(VOID, allocExtra);
+}
+
+#endif
 
 /***********************************************************************************************************************************
 Wrapper around malloc() with error handling
@@ -431,6 +593,9 @@ memContextNew(
 #ifdef DEBUG
         // Set the context name
         .name = name,
+
+        // Set audit sequence
+        .sequenceNew = ++memContextSequence,
 
         // Set new context active
         .active = true,

@@ -29,22 +29,25 @@ jobs:
       matrix:
         include:
           # All unit tests (without coverage) for 32-bit
-          - param: test --vm=u18 --param=no-performance --param=c-only
+          - param: test --vm=d10 --param=no-performance --param=c-only
 
           # All integration tests for 32-bit
-          - param: test --vm=u18 --param=module=mock --param=module=real
+          - param: test --vm=d10 --param=module=mock --param=module=real
 
           # Debian/Ubuntu documentation
-          - param: doc --vm=u18
+          - param: doc --vm=u20
 
           # All integration tests
           - param: test --vm=u22 --param=build-package --param=module=mock --param=module=real
 
-          # All unit tests with coverage and alternate timezone
-          - param: test --vm=u22 --param=c-only --param=tz=America/New_York
+          # All unit tests with coverage, backtrace and alternate timezone
+          - param: test --vm=u22 --param=c-only --param=no-valgrind --param=tz=America/New_York
+
+          # All unit tests with valgrind (disable coverage and backtrace for performance)
+          - param: test --vm=u22 --param=c-only --param=no-coverage --param=no-back-trace
 
           # All unit tests on the newest gcc available
-          - param: test --vm=f36 --param=c-only --param=no-valgrind --param=no-coverage --param=no-performance
+          - param: test --vm=f38 --param=c-only --param=no-valgrind --param=no-coverage --param=no-performance
 
           # RHEL documentation
           - param: doc --vm=rh8
@@ -54,12 +57,19 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: pgbackrest
 
       - name: Run Test
         run: cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.pl ${{matrix.param}} --param=build-max=2
+
+      # Output the coverage report on failure in case the failure was caused by lack of coverage. This is not ideal since the report
+      # needs to be copied from the log output into an HTML file where it can be viewed, but better than nothing.
+      - name: Coverage Report
+        if: failure()
+        run: |
+          cat ${GITHUB_WORKSPACE?}/pgbackrest/test/result/coverage/coverage.html
 
   # Basic tests on other architectures using emulation. The emulation is so slow that running all the unit tests would be too
   # expensive, but this at least shows that the build works and some of the more complex tests run. In particular, it is good to
@@ -77,12 +87,12 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: pgbackrest
 
       - name: Run Test
-        uses: uraimo/run-on-arch-action@v2.1.0
+        uses: uraimo/run-on-arch-action@v2
         id: runcmd
         with:
           arch: ${{matrix.arch}}
@@ -97,8 +107,8 @@ jobs:
 
           run: |
             git config --global --add safe.directory ${GITHUB_WORKSPACE?}/pgbackrest
-            ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=none --min-gen --no-valgrind --no-coverage --no-optimize --build-max=2 --module=command --test=backup
-            ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=none --min-gen --no-valgrind --no-coverage --no-optimize --build-max=2 --module=postgres --test=interface
+            ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --min-gen --no-valgrind --no-coverage --no-optimize --build-max=2 --module=command --test=backup
+            ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --min-gen --no-valgrind --no-coverage --no-optimize --build-max=2 --module=postgres --test=interface
 
   # Run meson unity build to check for errors, unused functions, and externed functions
   unity:
@@ -106,7 +116,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: pgbackrest
 
@@ -124,6 +134,20 @@ jobs:
         run: |
           diff ${GITHUB_WORKSPACE?}/pgbackrest/.github/workflows/symbol.out <(nm -gj --defined-only build/src/pgbackrest)
 
+  # Check that code is correctly formatted
+  code-format:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          path: pgbackrest
+
+      - name: Check
+        run: |
+          cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.pl test --param=code-format-check
+
   codeql:
     runs-on: ubuntu-latest
 
@@ -140,7 +164,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install Packages
         run: sudo apt-get install -y --no-install-recommends libyaml-dev

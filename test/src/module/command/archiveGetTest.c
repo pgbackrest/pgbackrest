@@ -84,7 +84,7 @@ testRun(void)
 
         TEST_RESULT_STRLST_Z(
             queueNeed(STRDEF("000000010000000A00000FFD"), true, queueSize, walSegmentSize, PG_VERSION_11),
-            "000000010000000B00000000\n000000010000000B00000001\n000000010000000B00000002\n", "queue has wal >= 9.3");
+            "000000010000000B00000000\n000000010000000B00000001\n000000010000000B00000002\n", "queue has wal");
 
         TEST_STORAGE_LIST(
             storageSpool(), STORAGE_SPOOL_ARCHIVE_IN,
@@ -170,7 +170,7 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000100000001\n"
             "P00   WARN: repo1: [PathOpenError] unable to list file info for path '" TEST_PATH "/repo/archive/test2/10-1"
-                "/0000000100000001': [13] Permission denied\n"
+            "/0000000100000001': [13] Permission denied\n"
             "P00   WARN: [RepoInvalidError] unable to find a valid repository");
 
         TEST_STORAGE_GET(
@@ -178,7 +178,7 @@ testRun(void)
             "103\n"
             "unable to find a valid repository\n"
             "repo1: [PathOpenError] unable to list file info for path '" TEST_PATH "/repo/archive/test2/10-1/0000000100000001':"
-                " [13] Permission denied",
+            " [13] Permission denied",
             .remove = true);
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
 
@@ -196,14 +196,14 @@ testRun(void)
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000100000001\n"
             "P01   WARN: [FileReadError] raised from local-1 shim protocol: unable to get 000000010000000100000001:\n"
             "            repo1: 10-1/0000000100000001/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz"
-                " [FormatError] unexpected eof in compressed data");
+            " [FormatError] unexpected eof in compressed data");
 
         TEST_STORAGE_GET(
             storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.error",
             "42\n"
             "raised from local-1 shim protocol: unable to get 000000010000000100000001:\n"
             "repo1: 10-1/0000000100000001/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz [FormatError]"
-                " unexpected eof in compressed data",
+            " unexpected eof in compressed data",
             .remove = true);
         TEST_STORAGE_LIST(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000001.pgbackrest.tmp\n");
 
@@ -251,14 +251,14 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000100000001\n"
             "P01   WARN: repo1: 10-2/0000000100000001/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz"
-                " [FormatError] unexpected eof in compressed data\n"
+            " [FormatError] unexpected eof in compressed data\n"
             "P01 DETAIL: found 000000010000000100000001 in the repo1: 10-1 archive");
 
         TEST_STORAGE_GET(
             storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok",
             "0\n"
             "repo1: 10-2/0000000100000001/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz [FormatError]"
-                " unexpected eof in compressed data",
+            " unexpected eof in compressed data",
             .remove = true);
         TEST_STORAGE_GET_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001", .remove = true);
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
@@ -289,14 +289,14 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000100000001\n"
             "P01   WARN: repo1: 10-2/0000000100000001/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz"
-                " [FormatError] unexpected eof in compressed data\n"
+            " [FormatError] unexpected eof in compressed data\n"
             "P01 DETAIL: found 000000010000000100000001 in the repo1: 10-1 archive");
 
         TEST_STORAGE_GET(
             storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok",
             "0\n"
             "repo1: 10-2/0000000100000001/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz [FormatError]"
-                " unexpected eof in compressed data",
+            " unexpected eof in compressed data",
             .remove = true);
         TEST_STORAGE_GET_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001", .remove = true);
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
@@ -338,7 +338,7 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   INFO: get 3 WAL file(s) from archive: 0000000100000001000000FE...000000010000000200000000\n"
             "P00   WARN: repo2: [ArchiveMismatchError] unable to retrieve the archive id for database version '10' and system-id"
-                " '" HRN_PG_SYSTEMID_10_Z "'\n"
+            " '" HRN_PG_SYSTEMID_10_Z "'\n"
             "P01 DETAIL: found 0000000100000001000000FE in the repo1: 10-1 archive\n"
             "P00 DETAIL: unable to find 0000000100000001000000FF in the archive");
 
@@ -379,14 +379,14 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   INFO: get 3 WAL file(s) from archive: 0000000100000001000000FE...000000010000000200000000\n"
             "P00   WARN: repo2: [PathOpenError] unable to list file info for path '" TEST_PATH "/repo2/archive/test2/10-1"
-                "/0000000100000001': [13] Permission denied\n"
+            "/0000000100000001': [13] Permission denied\n"
             "P00   WARN: repo2: [PathOpenError] unable to list file info for path '" TEST_PATH "/repo2/archive/test2/10-1"
-                "/0000000100000002': [13] Permission denied\n"
+            "/0000000100000002': [13] Permission denied\n"
             "P01 DETAIL: found 0000000100000001000000FE in the repo1: 10-1 archive\n"
             "P01 DETAIL: found 0000000100000001000000FF in the repo1: 10-1 archive\n"
             "P00   WARN: [ArchiveDuplicateError] duplicates found for WAL segment 000000010000000200000000:\n"
             "            repo1: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-                ", 10-1/0000000100000002/000000010000000200000000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
+            ", 10-1/0000000100000002/000000010000000200000000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
             "            HINT: are multiple primaries archiving to this stanza?");
 
         TEST_STORAGE_GET_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FE", .remove = true);
@@ -394,24 +394,24 @@ testRun(void)
             storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FE.ok",
             "0\n"
             "repo2: [PathOpenError] unable to list file info for path '" TEST_PATH "/repo2/archive/test2/10-1/0000000100000001':"
-                " [13] Permission denied",
+            " [13] Permission denied",
             .remove = true);
         TEST_STORAGE_GET_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FF", .remove = true);
         TEST_STORAGE_GET(
             storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FF.ok",
             "0\n"
             "repo2: [PathOpenError] unable to list file info for path '" TEST_PATH "/repo2/archive/test2/10-1/0000000100000001':"
-                " [13] Permission denied",
+            " [13] Permission denied",
             .remove = true);
         TEST_STORAGE_GET(
             storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000200000000.error",
             "45\n"
             "duplicates found for WAL segment 000000010000000200000000:\n"
             "repo1: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, 10-1/0000000100000002"
-                "/000000010000000200000000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
+            "/000000010000000200000000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
             "HINT: are multiple primaries archiving to this stanza?\n"
             "repo2: [PathOpenError] unable to list file info for path '" TEST_PATH "/repo2/archive/test2/10-1"                     \
-                "/0000000100000002': [13] Permission denied",
+            "/0000000100000002': [13] Permission denied",
             .remove = true);
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
 
@@ -430,7 +430,7 @@ testRun(void)
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000200000000\n"
             "P00   WARN: [ArchiveDuplicateError] duplicates found for WAL segment 000000010000000200000000:\n"
             "            repo1: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-                ", 10-1/0000000100000002/000000010000000200000000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
+            ", 10-1/0000000100000002/000000010000000200000000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
             "            HINT: are multiple primaries archiving to this stanza?");
 
         TEST_STORAGE_GET(
@@ -438,7 +438,7 @@ testRun(void)
             "45\n"
             "duplicates found for WAL segment 000000010000000200000000:\n"
             "repo1: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, 10-1/0000000100000002"
-                "/000000010000000200000000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
+            "/000000010000000200000000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
             "HINT: are multiple primaries archiving to this stanza?",
             .remove = true);
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
@@ -480,18 +480,18 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000200000000\n"
             "P00   WARN: repo3: [ArchiveMismatchError] unable to retrieve the archive id for database version '10' and system-id"
-                " '" HRN_PG_SYSTEMID_10_Z "'\n"
+            " '" HRN_PG_SYSTEMID_10_Z "'\n"
             "P01   WARN: repo1: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"
-                " [FormatError] unexpected eof in compressed data\n"
+            " [FormatError] unexpected eof in compressed data\n"
             "P01 DETAIL: found 000000010000000200000000 in the repo2: 10-1 archive");
 
         TEST_STORAGE_GET(
             storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000200000000.ok",
             "0\n"
             "repo3: [ArchiveMismatchError] unable to retrieve the archive id for database version '10' and system-id"
-                " '" HRN_PG_SYSTEMID_10_Z "'\n"
+            " '" HRN_PG_SYSTEMID_10_Z "'\n"
             "repo1: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"
-                " [FormatError] unexpected eof in compressed data",
+            " [FormatError] unexpected eof in compressed data",
             .remove = true);
         TEST_STORAGE_GET_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000200000000", .remove = true);
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
@@ -514,25 +514,25 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000200000000\n"
             "P00   WARN: repo3: [ArchiveMismatchError] unable to retrieve the archive id for database version '10' and system-id"
-                " '" HRN_PG_SYSTEMID_10_Z "'\n"
+            " '" HRN_PG_SYSTEMID_10_Z "'\n"
             "P01   WARN: [FileReadError] raised from local-1 shim protocol: unable to get 000000010000000200000000:\n"
             "            repo1: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"
-                " [FormatError] unexpected eof in compressed data\n"
+            " [FormatError] unexpected eof in compressed data\n"
             "            repo2: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"
-                " [FormatError] unexpected eof in compressed data\n"
-            "            [FileReadError] on retry after 0ms");
+            " [FormatError] unexpected eof in compressed data\n"
+            "            [RETRY DETAIL OMITTED]");
 
         TEST_STORAGE_GET(
             storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000200000000.error",
             "42\n"
             "raised from local-1 shim protocol: unable to get 000000010000000200000000:\n"
             "repo1: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"
-                " [FormatError] unexpected eof in compressed data\n"
+            " [FormatError] unexpected eof in compressed data\n"
             "repo2: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"
-                " [FormatError] unexpected eof in compressed data\n"
-            "[FileReadError] on retry after 0ms\n"
+            " [FormatError] unexpected eof in compressed data\n"
+            "[RETRY DETAIL OMITTED]\n"
             "repo3: [ArchiveMismatchError] unable to retrieve the archive id for database version '10' and system-id"
-                " '" HRN_PG_SYSTEMID_10_Z "'",
+            " '" HRN_PG_SYSTEMID_10_Z "'",
             .remove = true);
         TEST_STORAGE_LIST(
             storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000200000000.pgbackrest.tmp\n", .remove = true);
@@ -563,8 +563,8 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             strNewBuf(storageGetP(storageNewReadP(storageSpool(), STRDEF(STORAGE_SPOOL_ARCHIVE_IN "/global.error")))),
-            "102\nlocal-1 process terminated unexpectedly [102]: unable to execute 'pgbackrest-bogus': "
-                "[2] No such file or directory",
+            "102\nlocal-1 process terminated unexpectedly [102]: unable to execute 'pgbackrest-bogus':"
+            " [2] No such file or directory",
             "check global error");
 
         TEST_STORAGE_LIST(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "global.error\n", .remove = true);
@@ -618,16 +618,16 @@ testRun(void)
         TEST_ERROR(cmdArchiveGet(), RepoInvalidError, "unable to find a valid repository");
 
         TEST_RESULT_LOG(
-            "P00   WARN: repo1: [FileMissingError] unable to load info file '" TEST_PATH "/repo/archive/test1/archive.info' or '"
-                TEST_PATH "/repo/archive/test1/archive.info.copy':\n"
+            "P00   WARN: repo1: [FileMissingError] unable to load info file '" TEST_PATH "/repo/archive/test1/archive.info' or"
+            " '" TEST_PATH "/repo/archive/test1/archive.info.copy':\n"
             "            FileMissingError: unable to open missing file '" TEST_PATH "/repo/archive/test1/archive.info' for read\n"
             "            FileMissingError: unable to open missing file '" TEST_PATH "/repo/archive/test1/archive.info.copy' for"
-                " read\n"
+            " read\n"
             "            HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
             "            HINT: is archive_command configured correctly in postgresql.conf?\n"
             "            HINT: has a stanza-create been performed?\n"
             "            HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving"
-                " scheme.");
+            " scheme.");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("no valid repo - async");
@@ -641,16 +641,16 @@ testRun(void)
         TEST_ERROR(cmdArchiveGet(), RepoInvalidError, "unable to find a valid repository");
 
         TEST_RESULT_LOG(
-            "P00   WARN: repo1: [FileMissingError] unable to load info file '" TEST_PATH "/repo/archive/test1/archive.info' or '"
-                TEST_PATH "/repo/archive/test1/archive.info.copy':\n"
+            "P00   WARN: repo1: [FileMissingError] unable to load info file '" TEST_PATH "/repo/archive/test1/archive.info' or"
+            " '" TEST_PATH "/repo/archive/test1/archive.info.copy':\n"
             "            FileMissingError: unable to open missing file '" TEST_PATH "/repo/archive/test1/archive.info' for read\n"
             "            FileMissingError: unable to open missing file '" TEST_PATH "/repo/archive/test1/archive.info.copy' for"
-                " read\n"
+            " read\n"
             "            HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
             "            HINT: is archive_command configured correctly in postgresql.conf?\n"
             "            HINT: has a stanza-create been performed?\n"
             "            HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving"
-                " scheme.");
+            " scheme.");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("WAL not found - timeout");
@@ -725,11 +725,8 @@ testRun(void)
         {
             HRN_FORK_CHILD_BEGIN()
             {
-                TEST_RESULT_VOID(
-                    lockAcquire(
-                        cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), STRDEF("999-dededede"), cfgLockType(), 30000,
-                        true),
-                    "acquire lock");
+                lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("999-dededede"), cfgOptionStr(cfgOptStanza), cfgLockType());
+                TEST_RESULT_VOID(lockAcquireP(.timeout = 30000, .returnOnNoLock = true), "acquire lock");
 
                 // Notify parent that lock has been acquired
                 HRN_FORK_CHILD_NOTIFY_PUT();
@@ -793,7 +790,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: repo1: [ArchiveMismatchError] unable to retrieve the archive id for database version '11' and system-id"
-                " '" HRN_PG_SYSTEMID_11_Z "'");
+            " '" HRN_PG_SYSTEMID_11_Z "'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("pg system id does not match archive.info");
@@ -804,7 +801,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: repo1: [ArchiveMismatchError] unable to retrieve the archive id for database version '10' and system-id"
-                " '" HRN_PG_SYSTEMID_10_1_Z "'");
+            " '" HRN_PG_SYSTEMID_10_1_Z "'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("file is missing");
@@ -832,6 +829,30 @@ testRun(void)
 
         TEST_RESULT_LOG("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1: 10-1 archive");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("get WAL segment with a modified control/catalog version");
+
+        // Modify control/catalog version and use the --pg-version option
+        HRN_PG_CONTROL_OVERRIDE_VERSION_PUT(storagePgWrite(), PG_VERSION_10, 1501, .catalogVersion = 202211111);
+
+        TEST_ERROR(
+            cmdArchiveGet(), VersionNotSupportedError,
+            "unexpected control version = 1501 and catalog version = 202211111\n"
+            "HINT: is this version of PostgreSQL supported?");
+
+        StringList *argListTemp = strLstDup(argList);
+        hrnCfgArgRawZ(argListTemp, cfgOptPgVersionForce, "10");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp);
+
+        TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
+
+        TEST_RESULT_LOG("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1: 10-1 archive");
+
+        // Reset control file and command options
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_10);
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+
+        // Clean-up pg_wal directory
         TEST_RESULT_UINT(storageInfoP(storagePg(), STRDEF("pg_wal/RECOVERYXLOG")).size, 16 * 1024 * 1024, "check size");
         TEST_STORAGE_LIST(storagePgWrite(), "pg_wal", "RECOVERYXLOG\n", .remove = true);
 
@@ -845,7 +866,7 @@ testRun(void)
             cmdArchiveGet(), ArchiveDuplicateError,
             "duplicates found for WAL segment 01ABCDEF01ABCDEF01ABCDEF:\n"
             "repo1: 10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-                ", 10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
+            ", 10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
             "HINT: are multiple primaries archiving to this stanza?");
 
         TEST_STORAGE_LIST(storagePg(), "pg_wal", NULL);
@@ -979,16 +1000,16 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: repo1: [FileMissingError] unable to load info file '" TEST_PATH "/repo-bogus/archive/test1/archive.info'"
-                " or '" TEST_PATH "/repo-bogus/archive/test1/archive.info.copy':\n"
+            " or '" TEST_PATH "/repo-bogus/archive/test1/archive.info.copy':\n"
             "            FileMissingError: unable to open missing file '" TEST_PATH "/repo-bogus/archive/test1/archive.info'"
-                " for read\n"
+            " for read\n"
             "            FileMissingError: unable to open missing file '" TEST_PATH "/repo-bogus/archive/test1/archive.info.copy'"
-                " for read\n"
+            " for read\n"
             "            HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
             "            HINT: is archive_command configured correctly in postgresql.conf?\n"
             "            HINT: has a stanza-create been performed?\n"
             "            HINT: use --no-archive-check to disable archive checks during backup if you have an alternate"
-                " archiving scheme.\n"
+            " archiving scheme.\n"
             "P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo2: 10-1 archive");
 
         TEST_RESULT_UINT(storageInfoP(storagePg(), STRDEF("pg_wal/RECOVERYXLOG")).size, 16 * 1024 * 1024, "check size");
@@ -1011,7 +1032,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: repo1: [PathOpenError] unable to list file info for path '" TEST_PATH "/repo-bogus/archive/test1/10-2"
-                "/01ABCDEF01ABCDEF': [13] Permission denied\n"
+            "/01ABCDEF01ABCDEF': [13] Permission denied\n"
             "P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo2: 10-1 archive");
 
         TEST_STORAGE_LIST(storagePgWrite(), "pg_wal", "RECOVERYXLOG\n", .remove = true);
@@ -1025,9 +1046,9 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: repo1: [PathOpenError] unable to list file info for path '" TEST_PATH "/repo-bogus/archive/test1/10-2"
-                "/01ABCDEF01ABCDEF': [13] Permission denied\n"
+            "/01ABCDEF01ABCDEF': [13] Permission denied\n"
             "P00   WARN: repo2: [PathOpenError] unable to list file info for path '" TEST_PATH "/repo/archive/test1/10-1"
-                "/01ABCDEF01ABCDEF': [13] Permission denied");
+            "/01ABCDEF01ABCDEF': [13] Permission denied");
 
         HRN_STORAGE_MODE(storageRepoIdxWrite(0), STORAGE_REPO_ARCHIVE "/10-2");
         HRN_STORAGE_MODE(storageRepoIdxWrite(1), STORAGE_REPO_ARCHIVE "/10-1");
@@ -1043,7 +1064,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: repo1: 10-2/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"
-                " [FormatError] unexpected eof in compressed data\n"
+            " [FormatError] unexpected eof in compressed data\n"
             "P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo2: 10-1 archive");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1057,10 +1078,10 @@ testRun(void)
             cmdArchiveGet(), FileReadError,
             "unable to get 01ABCDEF01ABCDEF01ABCDEF:\n"
             "repo1: 10-2/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz [FormatError]"
-                " unexpected eof in compressed data\n"
+            " unexpected eof in compressed data\n"
             "repo2: 10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz [FileOpenError]"
-                " unable to open file '" TEST_PATH "/repo/archive/test1/10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF"
-                    "-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz' for read: [13] Permission denied");
+            " unable to open file '" TEST_PATH "/repo/archive/test1/10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF"
+            "-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz' for read: [13] Permission denied");
 
         HRN_STORAGE_MODE(
             storageRepoIdxWrite(1),

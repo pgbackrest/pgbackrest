@@ -24,7 +24,9 @@ typedef struct LockData
 {
     pid_t processId;                                                // Process holding the lock
     const String *execId;                                           // Exec id of process holding the lock
-    Variant *percentComplete;                                       // Percentage of backup complete * 100 (when not NULL)
+    const Variant *percentComplete;                                 // Percentage of backup complete * 100 (when not NULL)
+    const Variant *sizeComplete;                                    // Completed size of the backup in bytes
+    const Variant *size;                                            // Total size of the backup in bytes
 } LockData;
 
 #include "common/time.h"
@@ -37,10 +39,22 @@ Constants
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Acquire a lock type. This will involve locking one or more files on disk depending on the lock type.  Most operations only take a
+// Initialize lock module
+FN_EXTERN void lockInit(const String *path, const String *execId, const String *stanza, LockType type);
+
+// Acquire a lock type. This will involve locking one or more files on disk depending on the lock type. Most operations only take a
 // single lock (archive or backup), but the stanza commands all need to lock both.
-FN_EXTERN bool lockAcquire(
-    const String *lockPath, const String *stanza, const String *execId, LockType lockType, TimeMSec lockTimeout, bool failOnNoLock);
+typedef struct LockAcquireParam
+{
+    VAR_PARAM_HEADER;
+    TimeMSec timeout;                                               // Lock timeout
+    bool returnOnNoLock;                                            // Return when no lock acquired (rather than throw an error)
+} LockAcquireParam;
+
+#define lockAcquireP(...)                                                                                                          \
+    lockAcquire((LockAcquireParam) {VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN bool lockAcquire(LockAcquireParam param);
 
 // Release a lock
 FN_EXTERN bool lockRelease(bool failOnNoLock);
@@ -53,6 +67,8 @@ typedef struct LockWriteDataParam
 {
     VAR_PARAM_HEADER;
     const Variant *percentComplete;                                 // Percentage of backup complete * 100 (when not NULL)
+    const Variant *sizeComplete;                                    // Completed size of the backup in bytes
+    const Variant *size;                                            // Total size of the backup in bytes
 } LockWriteDataParam;
 
 #define lockWriteDataP(lockType, ...)                                                                                              \

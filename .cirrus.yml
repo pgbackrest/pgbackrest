@@ -25,29 +25,13 @@ arm64_task:
     - chown -R testuser ${CIRRUS_WORKING_DIR?}
 
   script:
-    - su - testuser -c "${CIRRUS_WORKING_DIR?}/test/ci.pl test --vm=none --sudo --no-tempfs --param=c-only --param=no-coverage"
-
-# FreeBSD 12
-# ----------------------------------------------------------------------------------------------------------------------------------
-freebsd_12_task:
-  freebsd_instance:
-    image_family: freebsd-12-3
-    cpu: 4
-    memory: 4G
-
-  install_script: pkg update && pkg upgrade -y libiconv && pkg install -y bash git postgresql-libpqxx pkgconf libxml2 gmake perl5 libyaml p5-YAML-LibYAML rsync meson
-
-  script:
-    - cd .. && perl ${CIRRUS_WORKING_DIR}/test/test.pl --min-gen --make-cmd=gmake --vm=none --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup
-
-  debug_script:
-    - ls -lah ${CIRRUS_WORKING_DIR}
+    - su - testuser -c "${CIRRUS_WORKING_DIR?}/test/ci.pl test --sudo --no-tempfs --param=c-only --param=no-coverage"
 
 # FreeBSD 13
 # ----------------------------------------------------------------------------------------------------------------------------------
 freebsd_13_task:
   freebsd_instance:
-    image_family: freebsd-13-1
+    image_family: freebsd-13-2
     cpu: 4
     memory: 4G
 
@@ -55,29 +39,46 @@ freebsd_13_task:
 
   script:
     - rsync --version
-    - cd .. && perl ${CIRRUS_WORKING_DIR}/test/test.pl --min-gen --make-cmd=gmake --vm=none --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup
+    - cd .. && perl ${CIRRUS_WORKING_DIR}/test/test.pl --min-gen --make-cmd=gmake --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup
 
   debug_script:
     - ls -lah ${CIRRUS_WORKING_DIR}
 
-# MacOS Monterey
+# FreeBSD 14
 # ----------------------------------------------------------------------------------------------------------------------------------
-# macos_monterey_task:
-#   osx_instance:
-#     image: monterey-xcode
+freebsd_14_task:
+  freebsd_instance:
+    image_family: freebsd-14-0
+    cpu: 4
+    memory: 4G
 
-#   environment:
-#     LDFLAGS: -L/usr/local/opt/openssl@1.1/lib -L/usr/local/opt/libpq/lib -L/usr/local/opt/libxml2/lib -L/usr/local/opt/libyaml/lib
-#     CPPFLAGS: -I/usr/local/opt/openssl@1.1/include -I/usr/local/opt/libpq/include -I/usr/local/opt/libxml2/include/libxml2 -I/usr/local/opt/libyaml/include
-#     PERL5LIB: /usr/local/opt/perl5/lib/perl5
-#     PKG_CONFIG_PATH: /usr/local/opt/libpq/lib/pkgconfig:/usr/local/opt/openssl@1.1/lib/pkgconfig
+  install_script: pkg update && pkg upgrade -y libiconv && pkg install -y bash git postgresql-libpqxx pkgconf libxml2 gmake perl5 libyaml p5-YAML-LibYAML rsync meson
 
-#   install_script:
-#     - brew install -q pkg-config openssl@1.1 libpq libxml2 libyaml cpanm meson
-#     - cpanm --local-lib=/usr/local/opt/perl5 install YAML::XS
+  script:
+    - cd .. && perl ${CIRRUS_WORKING_DIR}/test/test.pl --min-gen --make-cmd=gmake --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup
 
-#   script:
-#     - cd .. && ${CIRRUS_WORKING_DIR}/test/test.pl --min-gen --vm=none --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup
+  debug_script:
+    - ls -lah ${CIRRUS_WORKING_DIR}
 
-#   debug_script:
-#     - ls -lah ${CIRRUS_WORKING_DIR}
+# MacOS Ventura
+# ----------------------------------------------------------------------------------------------------------------------------------
+macos_ventura_task:
+  osx_instance:
+    image: ghcr.io/cirruslabs/macos-ventura-base:latest
+
+  environment:
+    LDFLAGS: -L/opt/homebrew/opt/openssl@1.1/lib -L/opt/homebrew/opt/libpq/lib -L/opt/homebrew/opt/libxml2/lib -L/opt/homebrew/opt/libyaml/lib
+    CPPFLAGS: -I/opt/homebrew/opt/openssl@1.1/include -I/opt/homebrew/opt/libpq/include -I/opt/homebrew/opt/libxml2/include/libxml2 -I/opt/homebrew/opt/libyaml/include
+    PERL5LIB: /opt/homebrew/opt/perl5/lib/perl5
+    PKG_CONFIG_PATH: /opt/homebrew/opt/libpq/lib/pkgconfig:/opt/homebrew/opt/openssl@1.1/lib/pkgconfig
+
+  install_script:
+     - brew install -q pkg-config openssl@1.1 libpq libxml2 libyaml meson
+
+  script:
+    - cd ..
+    - ${CIRRUS_WORKING_DIR}/test/test.pl --min-gen --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup --test=info
+
+  debug_script:
+    - ls -lah ${CIRRUS_WORKING_DIR}
+    - ls -lahR /opt/homebrew/opt

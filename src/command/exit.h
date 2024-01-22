@@ -4,8 +4,8 @@ Exit Routines
 #ifndef COMMAND_EXIT_H
 #define COMMAND_EXIT_H
 
-#include <stdbool.h>
 #include <signal.h>
+#include <stdbool.h>
 
 /***********************************************************************************************************************************
 Signal type

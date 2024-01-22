@@ -20,7 +20,6 @@ Archive Common
 #include "postgres/interface.h"
 #include "postgres/version.h"
 #include "storage/helper.h"
-#include "storage/helper.h"
 
 /***********************************************************************************************************************************
 WAL segment constants
@@ -35,10 +34,10 @@ STRING_EXTERN(WAL_TIMELINE_HISTORY_REGEXP_STR,                      WAL_TIMELINE
 Global error file constant
 ***********************************************************************************************************************************/
 #define STATUS_FILE_GLOBAL                                          "global"
-    STRING_STATIC(STATUS_FILE_GLOBAL_STR,                           STATUS_FILE_GLOBAL);
+STRING_STATIC(STATUS_FILE_GLOBAL_STR,                               STATUS_FILE_GLOBAL);
 
 #define STATUS_FILE_GLOBAL_ERROR                                    STATUS_FILE_GLOBAL STATUS_EXT_ERROR
-    STRING_STATIC(STATUS_FILE_GLOBAL_ERROR_STR,                         STATUS_FILE_GLOBAL_ERROR);
+STRING_STATIC(STATUS_FILE_GLOBAL_ERROR_STR,                         STATUS_FILE_GLOBAL_ERROR);
 
 /***********************************************************************************************************************************
 Get the correct spool queue based on the archive mode
@@ -119,7 +118,7 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throw
         if (okFileExists || errorFileExists)
         {
             // Get the status file content
-            const String *statusFile = okFileExists ? okFile: errorFile;
+            const String *statusFile = okFileExists ? okFile : errorFile;
 
             String *content = strNewBuf(
                 storageGetP(storageNewReadP(storageSpool(), strNewFmt("%s/%s", strZ(spoolQueue), strZ(statusFile)))));
@@ -263,9 +262,9 @@ archiveAsyncExec(ArchiveMode archiveMode, const StringList *commandExec)
         for (int fd = 3; fd < 1024; fd++)
             close(fd);
 
-        // Execute the binary.  This statement will not return if it is successful.
+        // Execute the binary. This statement will not return if it is successful.
         THROW_ON_SYS_ERROR_FMT(
-            execvp(strZ(strLstGet(commandExec, 0)), (char ** const)strLstPtr(commandExec)) == -1, ExecuteError,
+            execvp(strZ(strLstGet(commandExec, 0)), (char **const)strLstPtr(commandExec)) == -1, ExecuteError,
             "unable to execute asynchronous '%s'", archiveMode == archiveModeGet ? CFGCMD_ARCHIVE_GET : CFGCMD_ARCHIVE_PUSH);
     }
 
@@ -279,12 +278,12 @@ archiveAsyncExec(ArchiveMode archiveMode, const StringList *commandExec)
 
     THROW_ON_SYS_ERROR(waitpid(pid, &processStatus, 0) == -1, ExecuteError, "unable to wait for forked process");
 
-    // The first fork should exit with success.  If not, something went wrong during the second fork.
+    // The first fork should exit with success. If not, something went wrong during the second fork.
     CHECK(ExecuteError, WIFEXITED(processStatus) && WEXITSTATUS(processStatus) == 0, "error on first fork");
 
 #ifdef DEBUG_EXEC_TIME
-    // If the process does not exit immediately then something probably went wrong with the double fork.  It's possible that this
-    // test will fail on very slow systems so it may need to be tuned.  The idea is to make sure that the waitpid() above is not
+    // If the process does not exit immediately then something probably went wrong with the double fork. It's possible that this
+    // test will fail on very slow systems so it may need to be tuned. The idea is to make sure that the waitpid() above is not
     // waiting on the async process.
     CHECK(AssertError, timeMSec() - timeBegin < 10, "the process does not exit immediately");
 #endif
@@ -301,7 +300,7 @@ archiveIdComparator(const void *item1, const void *item2)
     int int1 = atoi(strZ(strLstGet(archiveSort1, 1)));
     int int2 = atoi(strZ(strLstGet(archiveSort2, 1)));
 
-    return (int1 - int2);
+    return int1 - int2;
 }
 
 /**********************************************************************************************************************************/
@@ -341,8 +340,8 @@ walPath(const String *walFile, const String *pgPath, const String *command)
             THROW_FMT(
                 OptionRequiredError,
                 "option '%s' must be specified when relative wal paths are used\n"
-                    "HINT: is %%f passed to %s instead of %%p?\n"
-                    "HINT: PostgreSQL may pass relative paths even with %%p depending on the environment.",
+                "HINT: is %%f passed to %s instead of %%p?\n"
+                "HINT: PostgreSQL may pass relative paths even with %%p depending on the environment.",
                 cfgOptionName(cfgOptPgPath), strZ(command));
         }
 
@@ -367,7 +366,7 @@ walPath(const String *walFile, const String *pgPath, const String *command)
                 THROW_FMT(
                     OptionInvalidValueError,
                     PG_NAME " working directory '%s' is not the same as option %s '%s'\n"
-                        "HINT: is the " PG_NAME " data_directory configured the same as the %s option?",
+                    "HINT: is the " PG_NAME " data_directory configured the same as the %s option?",
                     currentWorkDir, cfgOptionName(cfgOptPgPath), strZ(pgPath), cfgOptionName(cfgOptPgPath));
             }
         }
@@ -403,77 +402,6 @@ walIsSegment(const String *walSegment)
     }
 
     FUNCTION_LOG_RETURN(BOOL, regExpMatch(regExpSegment, walSegment));
-}
-
-/**********************************************************************************************************************************/
-FN_EXTERN String *
-walSegmentFind(const Storage *storage, const String *archiveId, const String *walSegment, TimeMSec timeout)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE, storage);
-        FUNCTION_LOG_PARAM(STRING, archiveId);
-        FUNCTION_LOG_PARAM(STRING, walSegment);
-        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
-    FUNCTION_LOG_END();
-
-    ASSERT(storage != NULL);
-    ASSERT(archiveId != NULL);
-    ASSERT(walSegment != NULL);
-    ASSERT(walIsSegment(walSegment));
-
-    String *result = NULL;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        Wait *wait = waitNew(timeout);
-
-        do
-        {
-            // Get a list of all WAL segments that match
-            StringList *list = storageListP(
-                storage, strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(strSubN(walSegment, 0, 16))),
-                .expression = strNewFmt(
-                    "^%s%s-[0-f]{40}" COMPRESS_TYPE_REGEXP "{0,1}$", strZ(strSubN(walSegment, 0, 24)),
-                        walIsPartial(walSegment) ? WAL_SEGMENT_PARTIAL_EXT : ""),
-                .nullOnMissing = true);
-
-            // If there are results
-            if (list != NULL && !strLstEmpty(list))
-            {
-                // Error if there is more than one match
-                if (strLstSize(list) > 1)
-                {
-                    THROW_FMT(
-                        ArchiveDuplicateError,
-                        "duplicates found in archive for WAL segment %s: %s\n"
-                            "HINT: are multiple primaries archiving to this stanza?",
-                        strZ(walSegment), strZ(strLstJoin(strLstSort(list, sortOrderAsc), ", ")));
-                }
-
-                // Copy file name of WAL segment found into the prior context
-                MEM_CONTEXT_PRIOR_BEGIN()
-                {
-                    result = strDup(strLstGet(list, 0));
-                }
-                MEM_CONTEXT_PRIOR_END();
-            }
-        }
-        while (result == NULL && waitMore(wait));
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    if (result == NULL && timeout != 0)
-    {
-        THROW_FMT(
-            ArchiveTimeoutError,
-            "WAL segment %s was not archived before the %" PRIu64 "ms timeout\n"
-                "HINT: check the archive_command to ensure that all options are correct (especially --stanza).\n"
-                "HINT: check the PostgreSQL server log for errors.\n"
-                "HINT: run the 'start' command if the stanza was previously stopped.",
-            strZ(walSegment), timeout);
-    }
-
-    FUNCTION_LOG_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/

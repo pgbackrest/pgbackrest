@@ -47,12 +47,8 @@ yamlNew(const Buffer *const buffer)
         FUNCTION_TEST_PARAM(BUFFER, buffer);
     FUNCTION_TEST_END();
 
-    Yaml *this = NULL;
-
     OBJ_NEW_BEGIN(Yaml, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        // Create object
-        this = OBJ_NEW_ALLOC();
         *this = (Yaml){{0}};                                        // Extra braces are required for older gcc versions
 
         // Initialize parser context
@@ -165,7 +161,6 @@ yamlEventPeek(Yaml *const this)
     FUNCTION_TEST_RETURN_TYPE(YamlEvent, this->eventNext);
 }
 
-
 YamlEvent
 yamlEventNext(Yaml *this)
 {
@@ -238,7 +233,7 @@ yamlScalarCheck(const YamlEvent event, const String *const value)
     if (event.type != yamlEventTypeScalar)
     {
         THROW_FMT(
-            FormatError, "expected scalar '%s' but got event  type '%s' at line %zu, column %zu", strZ(value),
+            FormatError, "expected scalar '%s' but got event type '%s' at line %zu, column %zu", strZ(value),
             strZ(strIdToStr(event.type)), event.line, event.column);
     }
 

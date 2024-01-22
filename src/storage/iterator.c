@@ -84,11 +84,15 @@ storageItrPathAdd(StorageIterator *const this, const String *const pathSub)
                 // Add path to top of stack
                 MEM_CONTEXT_OBJ_BEGIN(this->stack)
                 {
-                    OBJ_NEW_BEGIN(StorageIteratorInfo, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = 1)
+                    OBJ_NEW_BASE_BEGIN(StorageIteratorInfo, .childQty = MEM_CONTEXT_QTY_MAX)
                     {
                         StorageIteratorInfo *const listInfo = OBJ_NEW_ALLOC();
-                        *listInfo = (StorageIteratorInfo){
-                            .pathSub = strDup(pathSub), .list = storageLstMove(list, memContextCurrent())};
+
+                        *listInfo = (StorageIteratorInfo)
+                        {
+                            .pathSub = strDup(pathSub),
+                            .list = storageLstMove(list, memContextCurrent()),
+                        };
 
                         lstAdd(this->stack, &listInfo);
                     }
@@ -128,9 +132,8 @@ storageItrNew(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        OBJ_NEW_BEGIN(StorageIterator, .childQty = MEM_CONTEXT_QTY_MAX)
+        OBJ_NEW_BASE_BEGIN(StorageIterator, .childQty = MEM_CONTEXT_QTY_MAX)
         {
-            // Create object
             this = OBJ_NEW_ALLOC();
 
             *this = (StorageIterator)
@@ -259,7 +262,8 @@ storageItrMore(StorageIterator *const this)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN StorageInfo storageItrNext(StorageIterator *const this)
+FN_EXTERN StorageInfo
+storageItrNext(StorageIterator *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_ITERATOR, this);
@@ -274,8 +278,10 @@ FN_EXTERN StorageInfo storageItrNext(StorageIterator *const this)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-storageItrToLog(const StorageIterator *const this)
+FN_EXTERN void
+storageItrToLog(const StorageIterator *const this, StringStatic *const debugLog)
 {
-    return strNewFmt("{stack: %s}", strZ(lstToLog(this->stack)));
+    strStcCat(debugLog, "{stack: ");
+    lstToLog(this->stack, debugLog);
+    strStcCatChr(debugLog, '}');
 }

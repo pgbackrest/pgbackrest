@@ -33,7 +33,7 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_READ_POSIX_TYPE                                                                                       \
     StorageReadPosix *
 #define FUNCTION_LOG_STORAGE_READ_POSIX_FORMAT(value, buffer, bufferSize)                                                          \
-    objToLog(value, "StorageReadPosix", buffer, bufferSize)
+    objNameToLog(value, "StorageReadPosix", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Close file descriptor
@@ -141,8 +141,8 @@ storageReadPosix(THIS_VOID, Buffer *buffer, bool block)
         bufUsedInc(buffer, (size_t)actualBytes);
         this->current += (uint64_t)actualBytes;
 
-        // If less data than expected was read or the limit has been reached then EOF.  The file may not actually be EOF but we are
-        // not concerned with files that are growing.  Just read up to the point where the file is being extended.
+        // If less data than expected was read or the limit has been reached then EOF. The file may not actually be EOF but we are
+        // not concerned with files that are growing. Just read up to the point where the file is being extended.
         if ((size_t)actualBytes != expectedBytes || this->current == this->limit)
             this->eof = true;
     }
@@ -220,18 +220,14 @@ storageReadPosixNew(
 
     ASSERT(name != NULL);
 
-    StorageRead *this = NULL;
-
-    OBJ_NEW_BEGIN(StorageReadPosix, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(StorageReadPosix, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        StorageReadPosix *driver = OBJ_NEW_ALLOC();
-
-        *driver = (StorageReadPosix)
+        *this = (StorageReadPosix)
         {
             .storage = storage,
             .fd = -1,
 
-            // Rather than enable/disable limit checking just use a big number when there is no limit.  We can feel pretty confident
+            // Rather than enable/disable limit checking just use a big number when there is no limit. We can feel pretty confident
             // that no files will be > UINT64_MAX in size. This is a copy of the interface limit but it simplifies the code during
             // read so it seems worthwhile.
             .limit = limit == NULL ? UINT64_MAX : varUInt64(limit),
@@ -254,10 +250,8 @@ storageReadPosixNew(
                 },
             },
         };
-
-        this = storageReadNew(driver, &driver->interface);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_READ, this);
+    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadNew(this, &this->interface));
 }

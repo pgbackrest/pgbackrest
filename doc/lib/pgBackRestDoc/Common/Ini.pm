@@ -520,7 +520,7 @@ sub iniRender
         $bFirst = false;
     }
 
-    # If there is a checksum write it at the end of the file.  Having the checksum at the end of the file allows some major
+    # If there is a checksum write it at the end of the file. Having the checksum at the end of the file allows some major
     # performance optimizations which we won't implement in Perl, but will make the C code much more efficient.
     if (!$bRelaxed && defined($oContent->{&INI_SECTION_BACKREST}) && defined($oContent->{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM}))
     {
@@ -803,8 +803,8 @@ sub keys
 ####################################################################################################################################
 # test - test a value.
 #
-# Test a value to see if it equals the supplied test value.  If no test value is given, tests that the section, key, or subkey
-# is defined.
+# Test a value to see if it equals the supplied test value. If no test value is given, tests that the section, key, or subkey is
+# defined.
 ####################################################################################################################################
 sub test
 {

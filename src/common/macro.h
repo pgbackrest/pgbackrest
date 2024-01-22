@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 General Macros
 
-Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
+Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
 Portions Copyright (c) 1994, Regents of the University of California
 ***********************************************************************************************************************************/
 #ifndef COMMON_MACRO_H
@@ -41,27 +41,31 @@ Useful for ensuring coverage in cases where compared values may be always ascend
 If the "condition" (a compile-time-constant expression) evaluates to false then throw a compile error using the "message" (a string
 literal).
 
-gcc 4.6 and up supports _Static_assert(), but there are bizarre syntactic placement restrictions.  Macros STATIC_ASSERT_STMT() and
+gcc 4.6 and up supports _Static_assert(), but there are bizarre syntactic placement restrictions. Macros STATIC_ASSERT_STMT() and
 STATIC_ASSERT_EXP() make it safe to use as a statement or in an expression, respectively.
 
-Otherwise we fall back on a kluge that assumes the compiler will complain about a negative width for a struct bit-field.  This will
+Otherwise we fall back on a kluge that assumes the compiler will complain about a negative width for a struct bit-field. This will
 not include a helpful error message, but it beats not getting an error at all. Note that when std=c99 it looks like gcc is using the
 same kluge.
 
 Adapted from PostgreSQL src/include/c.h.
 ***********************************************************************************************************************************/
 #ifdef HAVE_STATIC_ASSERT
-    #define STATIC_ASSERT_STMT(condition, message)                                                                                 \
-        do {_Static_assert(condition, message);} while (0)
 
-    #define STATIC_ASSERT_EXPR(condition, message)                                                                                 \
-        ((void)({STATIC_ASSERT_STMT(condition, message); true;}))
+#define STATIC_ASSERT_STMT(condition, message)                                                                                     \
+    do {_Static_assert(condition, message);} while (0)
+
+#define STATIC_ASSERT_EXPR(condition, message)                                                                                     \
+    ((void)({STATIC_ASSERT_STMT(condition, message); true;}))
+
 #else
-    #define STATIC_ASSERT_STMT(condition, message)                                                                                 \
-        ((void)sizeof(struct {int static_assert_failure : (condition) ? 1 : -1;}))
 
-    #define STATIC_ASSERT_EXPR(condition, message)                                                                                 \
-        STATIC_ASSERT_STMT(condition, message)
+#define STATIC_ASSERT_STMT(condition, message)                                                                                     \
+    ((void)sizeof(struct {int static_assert_failure : (condition) ? 1 : -1;}))
+
+#define STATIC_ASSERT_EXPR(condition, message)                                                                                     \
+    STATIC_ASSERT_STMT(condition, message)
+
 #endif
 
 /***********************************************************************************************************************************
@@ -78,11 +82,11 @@ Note that this only works in function scope, not for global variables (it would 
 Adapted from PostgreSQL src/include/c.h.
 ***********************************************************************************************************************************/
 #ifdef HAVE_BUILTIN_TYPES_COMPATIBLE_P
-    #define UNCONSTIFY(type, expression)                                                                                           \
-        (STATIC_ASSERT_EXPR(__builtin_types_compatible_p(__typeof(expression), const type), "invalid cast"), (type)(expression))
+#define UNCONSTIFY(type, expression)                                                                                               \
+    (STATIC_ASSERT_EXPR(__builtin_types_compatible_p(__typeof(expression), const type), "invalid cast"), (type)(expression))
 #else
-    #define UNCONSTIFY(type, expression)                                                                                           \
-        ((type)(expression))
+#define UNCONSTIFY(type, expression)                                                                                               \
+    ((type)(expression))
 #endif
 
 /***********************************************************************************************************************************

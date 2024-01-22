@@ -17,22 +17,22 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct IoSize
 {
-    uint64_t size;                                                  // Total size of al input
+    uint64_t size;                                                  // Total size of all input
 } IoSize;
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-static String *
-ioSizeToLog(const IoSize *this)
+static void
+ioSizeToLog(const IoSize *const this, StringStatic *const debugLog)
 {
-    return strNewFmt("{size: %" PRIu64 "}", this->size);
+    strStcFmt(debugLog, "{size: %" PRIu64 "}", this->size);
 }
 
 #define FUNCTION_LOG_IO_SIZE_TYPE                                                                                                  \
     IoSize *
 #define FUNCTION_LOG_IO_SIZE_FORMAT(value, buffer, bufferSize)                                                                     \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, ioSizeToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, ioSizeToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Count bytes in the input
@@ -91,16 +91,11 @@ ioSizeNew(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
 
-    IoFilter *this = NULL;
-
-    OBJ_NEW_BEGIN(IoSize, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(IoSize)
     {
-        IoSize *driver = OBJ_NEW_ALLOC();
-        *driver = (IoSize){0};
-
-        this = ioFilterNewP(SIZE_FILTER_TYPE, driver, NULL, .in = ioSizeProcess, .result = ioSizeResult);
+        *this = (IoSize){0};
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_FILTER, this);
+    FUNCTION_LOG_RETURN(IO_FILTER, ioFilterNewP(SIZE_FILTER_TYPE, this, NULL, .in = ioSizeProcess, .result = ioSizeResult));
 }

@@ -6,9 +6,8 @@ Binary to String Encode/Decode
 #include <stdbool.h>
 #include <string.h>
 
-#include "common/encode.h"
 #include "common/debug.h"
-#include "common/error.h"
+#include "common/encode.h"
 
 /***********************************************************************************************************************************
 Assert that encoding type is valid. This needs to be kept up to date with the last item in the enum.
@@ -87,15 +86,8 @@ encodeToStrSizeBase64(size_t sourceSize)
         FUNCTION_TEST_PARAM(SIZE, sourceSize);
     FUNCTION_TEST_END();
 
-    // Calculate how many groups of three are in the source
-    size_t encodeGroupTotal = sourceSize / 3;
-
-    // Increase by one if there is a partial group
-    if (sourceSize % 3 != 0)
-        encodeGroupTotal++;
-
-    // Four characters are needed to encode each group
-    FUNCTION_TEST_RETURN(SIZE, encodeGroupTotal * 4);
+    // Four characters are needed to encode each 3 byte group (plus up to two bytes of padding)
+    FUNCTION_TEST_RETURN(SIZE, (sourceSize + 2) / 3 * 4);
 }
 
 /**********************************************************************************************************************************/
@@ -181,14 +173,16 @@ decodeToBinBase64(const char *source, unsigned char *destination)
         // Second character is optional
         if (source[sourceIdx + 2] != 0x3d)
         {
-            destination[destinationIdx++] = (unsigned char)
-                (decodeBase64Lookup[(int)source[sourceIdx + 1]] << 4 | decodeBase64Lookup[(int)source[sourceIdx + 2]] >> 2);
+            destination[destinationIdx++] =
+                (unsigned char)
+                ((decodeBase64Lookup[(int)source[sourceIdx + 1]] << 4) | (decodeBase64Lookup[(int)source[sourceIdx + 2]] >> 2));
         }
 
         // Third character is optional
         if (source[sourceIdx + 3] != 0x3d)
         {
-            destination[destinationIdx++] = (unsigned char)
+            destination[destinationIdx++] =
+                (unsigned char)
                 (((decodeBase64Lookup[(int)source[sourceIdx + 2]] << 6) & 0xc0) | decodeBase64Lookup[(int)source[sourceIdx + 3]]);
         }
     }
@@ -290,28 +284,8 @@ encodeToStrSizeBase64Url(size_t sourceSize)
         FUNCTION_TEST_PARAM(SIZE, sourceSize);
     FUNCTION_TEST_END();
 
-    // Calculate how many groups of three are in the source. Each group of three is encoded with four bytes.
-    size_t encodeTotal = sourceSize / 3 * 4;
-
-    // Determine additional required bytes for the partial group, if any
-    switch (sourceSize % 3)
-    {
-        // One byte requires two characters to encode
-        case 1:
-            encodeTotal += 2;
-            break;
-
-        // Two bytes require three characters to encode
-        case 2:
-            encodeTotal += 3;
-            break;
-
-        // If mod is zero then sourceSize was evenly divisible and no additional bytes are required
-        case 0:
-            break;
-    }
-
-    FUNCTION_TEST_RETURN(SIZE, encodeTotal);
+    // Four characters are needed to encode each 3 byte group, three characters for 2 bytes, and two characters for 1 byte
+    FUNCTION_TEST_RETURN(SIZE, sourceSize / 3 * 4 + (sourceSize % 3 == 0 ? 0 : sourceSize % 3 + 1));
 }
 
 /***********************************************************************************************************************************
@@ -358,6 +332,7 @@ encodeToStrSizeHex(const size_t sourceSize)
 }
 
 /**********************************************************************************************************************************/
+// {uncrustify_off - array alignment}
 static const int8_t decodeHexLookup[256] =
 {
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -377,6 +352,7 @@ static const int8_t decodeHexLookup[256] =
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 };
+// {uncrustify_on}
 
 static void
 decodeToBinValidateHex(const char *const source)

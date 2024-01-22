@@ -6,8 +6,8 @@ PostgreSQL Info Handler
 #include <limits.h>
 #include <stdarg.h>
 #include <stdarg.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "common/debug.h"
@@ -43,6 +43,8 @@ infoPgNewInternal(InfoPgType type)
         FUNCTION_TEST_PARAM(STRING_ID, type);
     FUNCTION_TEST_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     InfoPg *this = OBJ_NEW_ALLOC();
 
     *this = (InfoPg)
@@ -67,9 +69,9 @@ infoPgNew(InfoPgType type, const String *cipherPassSub)
         FUNCTION_TEST_PARAM(STRING, cipherPassSub);
     FUNCTION_LOG_END();
 
-    InfoPg *this = NULL;
+    InfoPg *this;
 
-    OBJ_NEW_BEGIN(InfoPg, .childQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BASE_BEGIN(InfoPg, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = infoPgNewInternal(type);
         this->pub.info = infoNew(cipherPassSub);
@@ -106,6 +108,8 @@ infoPgLoadCallback(void *const data, const String *const section, const String *
         FUNCTION_TEST_PARAM(STRING, value);
     FUNCTION_TEST_END();
 
+    FUNCTION_AUDIT_CALLBACK();
+
     ASSERT(data != NULL);
     ASSERT(section != NULL);
     ASSERT(key != NULL);
@@ -136,7 +140,7 @@ infoPgLoadCallback(void *const data, const String *const section, const String *
 
         // System id
         infoPgData.systemId = jsonReadUInt64(
-                jsonReadKeyRequireZ(json, loadData->infoPg->type == infoPgArchive ? INFO_KEY_DB_ID : INFO_KEY_DB_SYSTEM_ID));
+            jsonReadKeyRequireZ(json, loadData->infoPg->type == infoPgArchive ? INFO_KEY_DB_ID : INFO_KEY_DB_SYSTEM_ID));
 
         // PostgreSQL version
         infoPgData.version = pgVersionFromStr(jsonReadStr(jsonReadKeyRequireZ(json, INFO_KEY_DB_VERSION)));
@@ -165,9 +169,9 @@ infoPgNewLoad(IoRead *read, InfoPgType type, InfoLoadNewCallback *callbackFuncti
     ASSERT(type == infoPgBackup || type == infoPgArchive);
     ASSERT((callbackFunction == NULL && callbackData == NULL) || (callbackFunction != NULL && callbackData != NULL));
 
-    InfoPg *this = NULL;
+    InfoPg *this;
 
-    OBJ_NEW_BEGIN(InfoPg, .childQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BASE_BEGIN(InfoPg, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = infoPgNewInternal(type);
 
@@ -284,6 +288,8 @@ infoPgSaveCallback(void *const data, const String *const sectionNext, InfoSave *
         FUNCTION_TEST_PARAM(STRING, sectionNext);
         FUNCTION_TEST_PARAM(INFO_SAVE, infoSaveData);
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_CALLBACK();
 
     ASSERT(data != NULL);
     ASSERT(infoSaveData != NULL);
@@ -456,10 +462,10 @@ infoPgCurrentDataId(const InfoPg *this)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-infoPgDataToLog(const InfoPgData *this)
+FN_EXTERN void
+infoPgDataToLog(const InfoPgData *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{id: %u, version: %u, systemId: %" PRIu64 ", catalogVersion: %u}", this->id, this->version, this->systemId,
+    strStcFmt(
+        debugLog, "{id: %u, version: %u, systemId: %" PRIu64 ", catalogVersion: %u}", this->id, this->version, this->systemId,
         this->catalogVersion);
 }

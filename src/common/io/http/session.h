@@ -11,8 +11,8 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct HttpSession HttpSession;
 
-#include "common/io/read.h"
 #include "common/io/http/client.h"
+#include "common/io/read.h"
 #include "common/io/session.h"
 #include "common/io/write.h"
 #include "common/type/object.h"
@@ -68,6 +68,6 @@ Macros for function logging
 #define FUNCTION_LOG_HTTP_SESSION_TYPE                                                                                             \
     HttpSession *
 #define FUNCTION_LOG_HTTP_SESSION_FORMAT(value, buffer, bufferSize)                                                                \
-    objToLog(value, "HttpSession", buffer, bufferSize)
+    objNameToLog(value, "HttpSession", buffer, bufferSize)
 
 #endif

@@ -6,7 +6,7 @@ Macros to create harness functions per PostgreSQL version.
 #ifndef TEST_COMMON_HARNESS_POSTGRES_VERSIONINTERN_H
 #define TEST_COMMON_HARNESS_POSTGRES_VERSIONINTERN_H
 
-#include "postgres/version.h"
+#include "postgres/interface/crc32.h"
 #include "postgres/interface/version.vendor.h"
 
 #include "common/harnessPostgres.h"
@@ -16,7 +16,7 @@ Get the catalog version
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_93
+#elif PG_VERSION >= PG_VERSION_94
 
 #define HRN_PG_INTERFACE_CATALOG_VERSION(version)                                                                                  \
     uint32_t                                                                                                                       \
@@ -32,18 +32,19 @@ Create a pg_control file
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_93
+#elif PG_VERSION >= PG_VERSION_94
 
 #define HRN_PG_INTERFACE_CONTROL_TEST(version)                                                                                     \
     void                                                                                                                           \
-    hrnPgInterfaceControl##version(PgControl pgControl, unsigned char *buffer)                                                     \
+    hrnPgInterfaceControl##version(                                                                                                \
+        const unsigned int controlVersion, const unsigned int crc, const PgControl pgControl, unsigned char *const buffer)         \
     {                                                                                                                              \
         ASSERT(buffer != NULL);                                                                                                    \
                                                                                                                                    \
         *(ControlFileData *)buffer = (ControlFileData)                                                                             \
         {                                                                                                                          \
             .system_identifier = pgControl.systemId,                                                                               \
-            .pg_control_version = PG_CONTROL_VERSION,                                                                              \
+            .pg_control_version = controlVersion == 0 ? PG_CONTROL_VERSION : controlVersion,                                       \
             .catalog_version_no = pgControl.catalogVersion,                                                                        \
             .checkPoint = pgControl.checkpoint,                                                                                    \
             .checkPointCopy =                                                                                                      \
@@ -54,6 +55,12 @@ Create a pg_control file
             .xlog_seg_size = pgControl.walSegmentSize,                                                                             \
             .data_checksum_version = pgControl.pageChecksum,                                                                       \
         };                                                                                                                         \
+                                                                                                                                   \
+        ((ControlFileData *)buffer)->crc =                                                                                         \
+            crc == 0 ?                                                                                                             \
+                (PG_VERSION > PG_VERSION_94 ?                                                                                      \
+                    crc32cOne(buffer, offsetof(ControlFileData, crc)) : crc32One(buffer, offsetof(ControlFileData, crc))) :        \
+                crc;                                                                                                               \
     }
 
 #endif
@@ -63,13 +70,13 @@ Create a WAL file
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_93
+#elif PG_VERSION >= PG_VERSION_94
 
 #define HRN_PG_INTERFACE_WAL_TEST(version)                                                                                         \
     void                                                                                                                           \
-    hrnPgInterfaceWal##version(PgWal pgWal, unsigned char *buffer)                                                                 \
+    hrnPgInterfaceWal##version(const unsigned int magic, const PgWal pgWal, unsigned char *const buffer)                           \
     {                                                                                                                              \
-        ((XLogLongPageHeaderData *)buffer)->std.xlp_magic = XLOG_PAGE_MAGIC;                                                       \
+        ((XLogLongPageHeaderData *)buffer)->std.xlp_magic = magic == 0 ? XLOG_PAGE_MAGIC : (uint16)magic;                          \
         ((XLogLongPageHeaderData *)buffer)->std.xlp_info = XLP_LONG_HEADER;                                                        \
         ((XLogLongPageHeaderData *)buffer)->xlp_sysid = pgWal.systemId;                                                            \
         ((XLogLongPageHeaderData *)buffer)->xlp_seg_size = pgWal.size;                                                             \

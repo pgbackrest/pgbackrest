@@ -33,7 +33,6 @@ Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct IoSessionPub
 {
-    MemContext *memContext;                                         // Mem context
     void *driver;                                                   // Driver object
     const IoSessionInterface *interface;                            // Driver interface
     const String *peerName;                                         // Name of peer (exact meaning depends on driver)
@@ -102,7 +101,7 @@ ioSessionClose(IoSession *const this)
 FN_INLINE_ALWAYS IoSession *
 ioSessionMove(IoSession *const this, MemContext *const parentNew)
 {
-    return objMoveContext(this, parentNew);
+    return objMove(this, parentNew);
 }
 
 /***********************************************************************************************************************************
@@ -111,17 +110,17 @@ Destructor
 FN_INLINE_ALWAYS void
 ioSessionFree(IoSession *const this)
 {
-    objFreeContext(this);
+    objFree(this);
 }
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *ioSessionToLog(const IoSession *this);
+FN_EXTERN void ioSessionToLog(const IoSession *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_IO_SESSION_TYPE                                                                                               \
     IoSession *
 #define FUNCTION_LOG_IO_SESSION_FORMAT(value, buffer, bufferSize)                                                                  \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, ioSessionToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, ioSessionToLog, buffer, bufferSize)
 
 #endif

@@ -1,7 +1,7 @@
 # Initialize configuration
 # ----------------------------------------------------------------------------------------------------------------------------------
 AC_PREREQ([2.71])
-AC_INIT([pgBackRest], [2.44dev])
+AC_INIT([pgBackRest], [2.51dev])
 AC_CONFIG_SRCDIR([version.h])
 AC_CONFIG_AUX_DIR(build)
 
@@ -9,7 +9,7 @@ AC_CONFIG_AUX_DIR(build)
 # ----------------------------------------------------------------------------------------------------------------------------------
 : ${CFLAGS=""}
 
-# Build C standard based on the host type.  C99 is required and other flags are added depending on the host.
+# Build C standard based on the host type. C99 is required and other flags are added depending on the host.
 # ----------------------------------------------------------------------------------------------------------------------------------
 AC_PROG_CC
 AC_CANONICAL_HOST
@@ -112,6 +112,17 @@ AC_CHECK_LIB(
     [lz4], [LZ4F_isError],
     [AC_CHECK_HEADER(lz4frame.h, [AC_DEFINE(HAVE_LIBLZ4) AC_SUBST(LIBS, "${LIBS} -llz4")],
         [AC_MSG_ERROR([header file <lz4frame.h> is required])])])
+
+# Check optional libSSH2 library
+# ----------------------------------------------------------------------------------------------------------------------------------
+AC_CHECK_LIB(
+    [ssh2], [libssh2_init],
+    [AC_CHECK_HEADER(libssh2.h, [AC_DEFINE(HAVE_LIBSSH2) AC_SUBST(LIBS, "${LIBS} -lssh2")],
+        [AC_MSG_ERROR([header file <libssh2.h> is required])])])
+AC_CHECK_LIB(
+    [ssh2], [libssh2_sftp_init],
+    [AC_CHECK_HEADER(libssh2_sftp.h, [],
+        [AC_MSG_ERROR([header file <libssh2_sftp.h> is required])])])
 
 # Check optional zst library. Ignore any versions below 1.0.
 # ----------------------------------------------------------------------------------------------------------------------------------

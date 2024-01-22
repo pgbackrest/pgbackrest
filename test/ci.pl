@@ -56,7 +56,7 @@ test.pl [options] doc|test
 ####################################################################################################################################
 # Command line parameters
 ####################################################################################################################################
-my $strVm;
+my $strVm = "none";
 my @stryParam;
 my $bNoTempFs;
 my $bSudo;
@@ -119,12 +119,6 @@ eval
         pod2usage();
     }
 
-    # VM must be defined
-    if (!defined($strVm))
-    {
-        confess &log(ERROR, '--vm is required');
-    }
-
     ################################################################################################################################
     # Paths
     ################################################################################################################################
@@ -137,7 +131,7 @@ eval
     processBegin('install common packages');
     processExec('sudo apt-get -qq update', {bSuppressStdErr => true, bSuppressError => true});
     processExec(
-        'sudo DEBIAN_FRONTEND=noninteractive apt-get install -y libxml-checker-perl libyaml-perl', {bSuppressStdErr => true});
+        'sudo DEBIAN_FRONTEND=noninteractive apt-get install -y meson libxml-checker-perl libyaml-perl', {bSuppressStdErr => true});
     processEnd();
 
     if (!$bNoTempFs)
@@ -188,7 +182,8 @@ eval
     {
         # Build list of packages that need to be installed
         my $strPackage =
-            "make gcc ccache meson python3-pip git rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config";
+            "make gcc ccache python3-pip git rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config" .
+            " uncrustify libssh2-1-dev";
 
         # Add lcov when testing coverage
         if (vmCoverageC($strVm))

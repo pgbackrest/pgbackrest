@@ -3,8 +3,9 @@ Archive Push File
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include "command/archive/push/file.h"
 #include "command/archive/common.h"
+#include "command/archive/find.h"
+#include "command/archive/push/file.h"
 #include "command/control/common.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
@@ -109,6 +110,8 @@ archivePushFile(
         FUNCTION_LOG_PARAM(STRING_LIST, priorErrorList);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_STRUCT();
+
     ASSERT(walSource != NULL);
     ASSERT(archiveFile != NULL);
     ASSERT(repoList != NULL);
@@ -127,7 +130,7 @@ archivePushFile(
         // If this is a segment compare archive version and systemId to the WAL header
         if (headerCheck && isSegment)
         {
-            PgWal walInfo = pgWalFromFile(walSource, storageLocal());
+            PgWal walInfo = pgWalFromFile(walSource, storageLocal(), cfgOptionStrNull(cfgOptPgVersionForce));
 
             if (walInfo.version != pgVersion || walInfo.systemId != pgSystemId)
             {
@@ -173,7 +176,7 @@ archivePushFile(
 
                 TRY_BEGIN()
                 {
-                    walSegmentFile = walSegmentFind(storageRepoIdx(repoData->repoIdx), repoData->archiveId, archiveFile, 0);
+                    walSegmentFile = walSegmentFindOne(storageRepoIdx(repoData->repoIdx), repoData->archiveId, archiveFile, 0);
                 }
                 CATCH_ANY()
                 {
@@ -239,7 +242,7 @@ archivePushFile(
             if (isSegment && compressType != compressTypeNone)
             {
                 compressExtCat(archiveDestination, compressType);
-                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(source)), compressFilter(compressType, compressLevel));
+                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(source)), compressFilterP(compressType, compressLevel));
                 compressible = false;
             }
 

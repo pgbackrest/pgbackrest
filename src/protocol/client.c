@@ -88,12 +88,8 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
     ASSERT(read != NULL);
     ASSERT(write != NULL);
 
-    ProtocolClient *this = NULL;
-
     OBJ_NEW_BEGIN(ProtocolClient, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (ProtocolClient)
         {
             .pub =
@@ -140,7 +136,7 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
                     THROW_FMT(
                         ProtocolError,
                         "expected value '%s' for greeting key '%s' but got '%s'\n"
-                            "HINT: is the same version of " PROJECT_NAME " installed on the local and remote host?",
+                        "HINT: is the same version of " PROJECT_NAME " installed on the local and remote host?",
                         expected[expectedIdx].value, strZ(strIdToStr(expected[expectedIdx].key)), strZ(actualValue));
                 }
             }
@@ -403,8 +399,10 @@ protocolClientNoOp(ProtocolClient *this)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-protocolClientToLog(const ProtocolClient *this)
+FN_EXTERN void
+protocolClientToLog(const ProtocolClient *const this, StringStatic *const debugLog)
 {
-    return strNewFmt("{name: %s, state: %s}", strZ(this->name), strZ(strIdToStr(this->state)));
+    strStcFmt(debugLog, "{name: %s, state: ", strZ(this->name));
+    strStcResultSizeInc(debugLog, strIdToLog(this->state, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+    strStcCatChr(debugLog, '}');
 }

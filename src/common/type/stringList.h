@@ -21,7 +21,7 @@ Constructors
 FN_INLINE_ALWAYS StringList *
 strLstNew(void)
 {
-    return (StringList *)lstNewP(sizeof(String *), .comparator = lstComparatorStr);
+    return (StringList *)OBJ_NAME(lstNewP(sizeof(String *), .comparator = lstComparatorStr), StringList::List);
 }
 
 // Split a string into a string list based on a delimiter
@@ -76,7 +76,7 @@ strLstAddSub(StringList *const this, const String *const string, const size_t si
     return strLstAddSubN(this, string, 0, size);
 }
 
-FN_EXTERN String *strLstAddFmt(StringList *this, const char *format, ...) __attribute__((format(printf, 2, 3)));
+FN_EXTERN FN_PRINTF(2, 3) String *strLstAddFmt(StringList *this, const char *format, ...);
 FN_EXTERN String *strLstAddZ(StringList *this, const char *string);
 FN_EXTERN String *strLstAddZSubN(StringList *this, const char *string, size_t offset, size_t size);
 
@@ -174,11 +174,11 @@ strLstFree(StringList *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *strLstToLog(const StringList *this);
+FN_EXTERN void strLstToLog(const StringList *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_STRING_LIST_TYPE                                                                                              \
     StringList *
 #define FUNCTION_LOG_STRING_LIST_FORMAT(value, buffer, bufferSize)                                                                 \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, strLstToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, strLstToLog, buffer, bufferSize)
 
 #endif

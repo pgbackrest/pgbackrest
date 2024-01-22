@@ -22,19 +22,15 @@ FN_EXTERN HttpQuery *
 httpQueryNew(HttpQueryNewParam param)
 {
     FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(KEY_VALUE, param.kv);
         FUNCTION_TEST_PARAM(STRING_LIST, param.redactList);
     FUNCTION_TEST_END();
 
-    HttpQuery *this = NULL;
-
     OBJ_NEW_BEGIN(HttpQuery, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        // Allocate state and set context
-        this = OBJ_NEW_ALLOC();
-
         *this = (HttpQuery)
         {
-            .kv = kvNew(),
+            .kv = param.kv != NULL ? kvDup(param.kv) : kvNew(),
             .redactList = strLstDup(param.redactList),
         };
     }
@@ -53,12 +49,8 @@ httpQueryNewStr(const String *query)
 
     ASSERT(query != NULL);
 
-    HttpQuery *this = NULL;
-
     OBJ_NEW_BEGIN(HttpQuery, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (HttpQuery)
         {
             .kv = kvNew(),
@@ -104,23 +96,18 @@ httpQueryDup(const HttpQuery *query, HttpQueryDupParam param)
         FUNCTION_TEST_PARAM(STRING_LIST, param.redactList);
     FUNCTION_TEST_END();
 
-    HttpQuery *this = NULL;
+    if (query == NULL)
+        FUNCTION_TEST_RETURN(HTTP_QUERY, NULL);
 
-    if (query != NULL)
+    OBJ_NEW_BEGIN(HttpQuery, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        OBJ_NEW_BEGIN(HttpQuery, .childQty = MEM_CONTEXT_QTY_MAX)
+        *this = (HttpQuery)
         {
-            // Allocate state and set context
-            this = OBJ_NEW_ALLOC();
-
-            *this = (HttpQuery)
-            {
-                .kv = kvDup(query->kv),
-                .redactList = param.redactList != NULL ? strLstDup(param.redactList) : strLstDup(query->redactList),
-            };
-        }
-        OBJ_NEW_END();
+            .kv = kvDup(query->kv),
+            .redactList = param.redactList != NULL ? strLstDup(param.redactList) : strLstDup(query->redactList),
+        };
     }
+    OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(HTTP_QUERY, this);
 }
@@ -275,7 +262,7 @@ httpQueryRender(const HttpQuery *this, HttpQueryRenderParam param)
                         strCatZ(result, "&");
 
                     strCatFmt(
-                        result, "%s=%s", strZ(key),
+                        result, "%s=%s", strZ(httpUriEncode(key, false)),
                         param.redact && httpQueryRedact(this, key) ?
                             "<redacted>" : strZ(httpUriEncode(httpQueryGet(this, key), false)));
                 }
@@ -288,28 +275,25 @@ httpQueryRender(const HttpQuery *this, HttpQueryRenderParam param)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-httpQueryToLog(const HttpQuery *this)
+FN_EXTERN void
+httpQueryToLog(const HttpQuery *const this, StringStatic *const debugLog)
 {
-    String *result = strCatZ(strNew(), "{");
-    const StringList *keyList = httpQueryList(this);
+    const VariantList *const keyList = kvKeyList(this->kv);
 
-    for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)
+    strStcCatChr(debugLog, '{');
+
+    for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
     {
-        const String *key = strLstGet(keyList, keyIdx);
+        const String *const key = varStr(varLstGet(keyList, keyIdx));
 
-        if (strSize(result) != 1)
-            strCatZ(result, ", ");
-
-        strCatFmt(result, "%s: ", strZ(key));
+        if (keyIdx != 0)
+            strStcCat(debugLog, ", ");
 
         if (httpQueryRedact(this, key))
-            strCatZ(result, "<redacted>");
+            strStcFmt(debugLog, "%s: <redacted>", strZ(key));
         else
-            strCatFmt(result, "'%s'", strZ(httpQueryGet(this, key)));
+            strStcFmt(debugLog, "%s: '%s'", strZ(key), strZ(httpQueryGet(this, key)));
     }
 
-    strCatZ(result, "}");
-
-    return result;
+    strStcCatChr(debugLog, '}');
 }

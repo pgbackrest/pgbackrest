@@ -2,28 +2,33 @@
 Backup Manifest Handler
 
 The backup manifest stores a complete list of all files, links, and paths in a backup along with metadata such as checksums, sizes,
-timestamps, etc.  A list of databases is also included for selective restore.
+timestamps, etc. A list of databases is also included for selective restore.
 
 The purpose of the manifest is to allow the restore command to confidently reconstruct the PostgreSQL data directory and ensure that
-nothing is missing or corrupt.  It is also useful for reporting, e.g. size of backup, backup time, etc.
+nothing is missing or corrupt. It is also useful for reporting, e.g. size of backup, backup time, etc.
 ***********************************************************************************************************************************/
 #ifndef INFO_MANIFEST_H
 #define INFO_MANIFEST_H
+
+#include "common/type/string.h"
 
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
 #define BACKUP_MANIFEST_EXT                                         ".manifest"
 #define BACKUP_MANIFEST_FILE                                        "backup" BACKUP_MANIFEST_EXT
-    STRING_DECLARE(BACKUP_MANIFEST_FILE_STR);
+STRING_DECLARE(BACKUP_MANIFEST_FILE_STR);
 
 #define MANIFEST_PATH_BUNDLE                                        "bundle"
-    STRING_DECLARE(MANIFEST_PATH_BUNDLE_STR);
+STRING_DECLARE(MANIFEST_PATH_BUNDLE_STR);
 
 #define MANIFEST_TARGET_PGDATA                                      "pg_data"
-    STRING_DECLARE(MANIFEST_TARGET_PGDATA_STR);
+STRING_DECLARE(MANIFEST_TARGET_PGDATA_STR);
 #define MANIFEST_TARGET_PGTBLSPC                                    "pg_tblspc"
-    STRING_DECLARE(MANIFEST_TARGET_PGTBLSPC_STR);
+STRING_DECLARE(MANIFEST_TARGET_PGTBLSPC_STR);
+
+// Minimum size for the block incremental checksum
+#define BLOCK_INCR_CHECKSUM_SIZE_MIN                                6
 
 /***********************************************************************************************************************************
 Object type
@@ -34,8 +39,8 @@ typedef struct Manifest Manifest;
 #include "common/compress/helper.h"
 #include "common/crypto/common.h"
 #include "common/crypto/hash.h"
-#include "common/type/variant.h"
 #include "common/type/object.h"
+#include "common/type/variant.h"
 #include "info/info.h"
 #include "info/infoBackup.h"
 #include "storage/storage.h"
@@ -54,6 +59,8 @@ typedef struct ManifestData
     time_t backupTimestampStop;                                     // When did the backup stop?
     BackupType backupType;                                          // Type of backup: full, diff, incr
     bool bundle;                                                    // Does the backup bundle files?
+    bool bundleRaw;                                                 // Use raw compress/encrypt for bundling?
+    bool blockIncr;                                                 // Does the backup perform block incremental?
 
     // ??? Note that these fields are redundant and verbose since storing the start/stop lsn as a uint64 would be sufficient.
     // However, we currently lack the functions to transform these values back and forth so this will do for now.
@@ -84,6 +91,40 @@ typedef struct ManifestData
 } ManifestData;
 
 /***********************************************************************************************************************************
+Block incremental size maps
+***********************************************************************************************************************************/
+// Map file size to block size
+typedef struct ManifestBlockIncrSizeMap
+{
+    unsigned int fileSize;                                          // File size
+    unsigned int blockSize;                                         // Block size for files >= file size
+} ManifestBlockIncrSizeMap;
+
+// Map file age to block multiplier
+typedef struct ManifestBlockIncrAgeMap
+{
+    uint32_t fileAge;                                               // File age in seconds
+    uint32_t blockMultiplier;                                       // Block multiplier
+} ManifestBlockIncrAgeMap;
+
+// Map block size to checksum size
+typedef struct ManifestBlockIncrChecksumSizeMap
+{
+    uint32_t blockSize;
+    uint32_t checksumSize;
+} ManifestBlockIncrChecksumSizeMap;
+
+typedef struct ManifestBlockIncrMap
+{
+    const ManifestBlockIncrSizeMap *sizeMap;                        // Block size map
+    unsigned int sizeMapSize;                                       // Block size map size
+    const ManifestBlockIncrAgeMap *ageMap;                          // File age map
+    unsigned int ageMapSize;                                        // File age map size
+    const ManifestBlockIncrChecksumSizeMap *checksumSizeMap;        // Checksum size map
+    unsigned int checksumSizeMapSize;                               // Checksum size map size
+} ManifestBlockIncrMap;
+
+/***********************************************************************************************************************************
 Db type
 ***********************************************************************************************************************************/
 typedef struct ManifestDb
@@ -99,11 +140,11 @@ File type
 typedef struct ManifestFile
 {
     const String *name;                                             // File name (must be first member in struct)
-    bool copy:1;                                                    // Should the file be copied (backup only)?
-    bool delta:1;                                                   // Verify checksum in PGDATA before copying (backup only)?
-    bool resume:1;                                                  // Is the file being resumed (backup only)?
-    bool checksumPage:1;                                            // Does this file have page checksums?
-    bool checksumPageError:1;                                       // Is there an error in the page checksum?
+    bool copy : 1;                                                  // Should the file be copied (backup only)?
+    bool delta : 1;                                                 // Verify checksum in PGDATA before copying (backup only)?
+    bool resume : 1;                                                // Is the file being resumed (backup only)?
+    bool checksumPage : 1;                                          // Does this file have page checksums?
+    bool checksumPageError : 1;                                     // Is there an error in the page checksum?
     mode_t mode;                                                    // File mode
     const uint8_t *checksumSha1;                                    // SHA1 checksum
     const uint8_t *checksumRepoSha1;                                // SHA1 checksum as stored in repo (including compression, etc.)
@@ -113,7 +154,11 @@ typedef struct ManifestFile
     const String *reference;                                        // Reference to a prior backup
     uint64_t bundleId;                                              // Bundle id
     uint64_t bundleOffset;                                          // Bundle offset
-    uint64_t size;                                                  // Original size
+    size_t blockIncrSize;                                           // Size of incremental blocks
+    size_t blockIncrChecksumSize;                                   // Size of incremental block checksum
+    uint64_t blockIncrMapSize;                                      // Block incremental map size
+    uint64_t size;                                                  // Final size (after copy)
+    uint64_t sizeOriginal;                                          // Original size (from manifest build)
     uint64_t sizeRepo;                                              // Size in repo
     time_t timestamp;                                               // Original timestamp
 } ManifestFile;
@@ -164,8 +209,9 @@ Constructors
 ***********************************************************************************************************************************/
 // Build a new manifest for a PostgreSQL data directory
 FN_EXTERN Manifest *manifestNewBuild(
-    const Storage *storagePg, unsigned int pgVersion, unsigned int pgCatalogVersion, bool online, bool checksumPage, bool bundle,
-    const StringList *excludeList, const Pack *tablespaceList);
+    const Storage *storagePg, unsigned int pgVersion, unsigned int pgCatalogVersion, time_t timestampStart, bool online,
+    bool checksumPage, bool bundle, bool blockIncr, const ManifestBlockIncrMap *blockIncrMap, const StringList *excludeList,
+    const Pack *tablespaceList);
 
 // Load a manifest from IO
 FN_EXTERN Manifest *manifestNewLoad(IoRead *read);
@@ -227,11 +273,10 @@ FN_EXTERN void manifestBuildIncr(Manifest *this, const Manifest *prior, BackupTy
 
 // Set remaining values before the final save
 FN_EXTERN void manifestBuildComplete(
-    Manifest *this, time_t timestampStart, const String *lsnStart, const String *archiveStart, time_t timestampStop,
-    const String *lsnStop, const String *archiveStop, unsigned int pgId, uint64_t pgSystemId, const Pack *dbList,
-    bool optionArchiveCheck, bool optionArchiveCopy, size_t optionBufferSize, unsigned int optionCompressLevel,
-    unsigned int optionCompressLevelNetwork, bool optionHardLink, unsigned int optionProcessMax, bool optionStandby,
-    const KeyValue *annotation);
+    Manifest *this, const String *lsnStart, const String *archiveStart, time_t timestampStop, const String *lsnStop,
+    const String *archiveStop, unsigned int pgId, uint64_t pgSystemId, const Pack *dbList, bool optionArchiveCheck,
+    bool optionArchiveCopy, size_t optionBufferSize, unsigned int optionCompressLevel, unsigned int optionCompressLevelNetwork,
+    bool optionHardLink, unsigned int optionProcessMax, bool optionStandby, const KeyValue *annotation);
 
 /***********************************************************************************************************************************
 Functions
@@ -249,7 +294,7 @@ manifestMove(Manifest *const this, MemContext *const parentNew)
 // Manifest save
 FN_EXTERN void manifestSave(Manifest *this, IoWrite *write);
 
-// Validate a completed manifest.  Use strict mode only when saving the manifest after a backup.
+// Validate a completed manifest. Use strict mode only when saving the manifest after a backup.
 FN_EXTERN void manifestValidate(Manifest *this, bool strict);
 
 /***********************************************************************************************************************************
@@ -457,31 +502,31 @@ Macros for function logging
 #define FUNCTION_LOG_MANIFEST_TYPE                                                                                                 \
     Manifest *
 #define FUNCTION_LOG_MANIFEST_FORMAT(value, buffer, bufferSize)                                                                    \
-    objToLog(value, "Manifest", buffer, bufferSize)
+    objNameToLog(value, "Manifest", buffer, bufferSize)
 
 #define FUNCTION_LOG_MANIFEST_DB_TYPE                                                                                              \
     ManifestDb *
 #define FUNCTION_LOG_MANIFEST_DB_FORMAT(value, buffer, bufferSize)                                                                 \
-    objToLog(value, "ManifestDb", buffer, bufferSize)
+    objNameToLog(value, "ManifestDb", buffer, bufferSize)
 
 #define FUNCTION_LOG_MANIFEST_FILE_TYPE                                                                                            \
     ManifestFile *
 #define FUNCTION_LOG_MANIFEST_FILE_FORMAT(value, buffer, bufferSize)                                                               \
-    objToLog(value, "ManifestFile", buffer, bufferSize)
+    objNameToLog(value, "ManifestFile", buffer, bufferSize)
 
 #define FUNCTION_LOG_MANIFEST_LINK_TYPE                                                                                            \
     ManifestLink *
 #define FUNCTION_LOG_MANIFEST_LINK_FORMAT(value, buffer, bufferSize)                                                               \
-    objToLog(value, "ManifestLink", buffer, bufferSize)
+    objNameToLog(value, "ManifestLink", buffer, bufferSize)
 
 #define FUNCTION_LOG_MANIFEST_PATH_TYPE                                                                                            \
     ManifestPath *
 #define FUNCTION_LOG_MANIFEST_PATH_FORMAT(value, buffer, bufferSize)                                                               \
-    objToLog(value, "ManifestPath", buffer, bufferSize)
+    objNameToLog(value, "ManifestPath", buffer, bufferSize)
 
 #define FUNCTION_LOG_MANIFEST_TARGET_TYPE                                                                                          \
     ManifestTarget *
 #define FUNCTION_LOG_MANIFEST_TARGET_FORMAT(value, buffer, bufferSize)                                                             \
-    objToLog(value, "ManifestTarget", buffer, bufferSize)
+    objNameToLog(value, "ManifestTarget", buffer, bufferSize)
 
 #endif

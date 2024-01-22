@@ -46,7 +46,7 @@ testRun(void)
         TEST_RESULT_STR_Z(infoCipherPass(infoPgInfo(infoPg)), "123xyz", "  cipherPass set");
         TEST_RESULT_INT(infoPgDataCurrentId(infoPg), 0, "  0 historyCurrent");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(
             infoPg,
             infoPgSet(
@@ -73,7 +73,7 @@ testRun(void)
         TEST_RESULT_UINT(pgData.catalogVersion, 0, "  catalog version not set for archive");
         TEST_RESULT_STR(infoCipherPass(infoPgInfo(infoPg)), NULL, "  cipherPass not set");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(
             infoPg,
             infoPgSet(
@@ -94,7 +94,7 @@ testRun(void)
     if (testBegin("infoPgNewLoad(), infoPgFree(), infoPgDataCurrent(), infoPgDataToLog(), infoPgAdd(), infoPgSave()"))
     {
         // Archive info
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         const Buffer *contentLoad = harnessInfoChecksumZ(
             "[backup:current]\n"
             "20161219-212741F={}\n"
@@ -122,8 +122,8 @@ testRun(void)
         TEST_RESULT_STR_Z(
             callbackContent,
             "[backup:current] 20161219-212741F={}\n"
-                "[db:backup] key=\"value\"\n"
-                "[later] key=\"value\"\n",
+            "[db:backup] key=\"value\"\n"
+            "[later] key=\"value\"\n",
             "    check callback content");
         TEST_RESULT_INT(lstSize(infoPg->pub.history), 1, "    history record added");
 
@@ -141,7 +141,7 @@ testRun(void)
         TEST_RESULT_STR(strNewBuf(contentSave), strNewBuf(contentLoad), "   check save");
 
         // Backup info
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         #define CONTENT_DB                                                                                                         \
             "[db]\n"                                                                                                               \
             "db-catalog-version=201510051\n"                                                                                       \
@@ -190,7 +190,7 @@ testRun(void)
         TEST_RESULT_STR(strNewBuf(contentSave), strNewBuf(harnessInfoChecksumZ(CONTENT_DB CONTENT_DB_HISTORY)), "   check save");
 
         // infoPgAdd
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         pgData.id = 3;
         pgData.version = PG_VERSION_96;
         pgData.systemId = HRN_PG_SYSTEMID_96;
@@ -202,16 +202,17 @@ testRun(void)
         TEST_RESULT_UINT(pgDataTest.systemId, HRN_PG_SYSTEMID_96, "    system-id set");
 
         // infoPgDataToLog
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         // test max values
         pgDataTest.id = (unsigned int)4294967295;
         pgDataTest.version = (unsigned int)4294967295;
         pgDataTest.systemId = 18446744073709551615U;
         pgDataTest.catalogVersion = 200101011;
+        char logBuf[STACK_TRACE_PARAM_MAX];
 
-        TEST_RESULT_STR_Z(
-            infoPgDataToLog(&pgDataTest),
-            "{id: 4294967295, version: 4294967295, systemId: 18446744073709551615, catalogVersion: 200101011}",
-            "    check max format");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(&pgDataTest, infoPgDataToLog, logBuf, sizeof(logBuf)), "infoPgDataToLog");
+        TEST_RESULT_Z(
+            logBuf, "{id: 4294967295, version: 4294967295, systemId: 18446744073709551615, catalogVersion: 200101011}",
+            "check log");
     }
 }

@@ -33,7 +33,7 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_READ_GCS_TYPE                                                                                         \
     StorageReadGcs *
 #define FUNCTION_LOG_STORAGE_READ_GCS_FORMAT(value, buffer, bufferSize)                                                            \
-    objToLog(value, "StorageReadGcs", buffer, bufferSize)
+    objNameToLog(value, "StorageReadGcs", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Open the file
@@ -130,13 +130,9 @@ storageReadGcsNew(
     ASSERT(storage != NULL);
     ASSERT(name != NULL);
 
-    StorageRead *this = NULL;
-
-    OBJ_NEW_BEGIN(StorageReadGcs, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(StorageReadGcs, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageReadGcs *driver = OBJ_NEW_ALLOC();
-
-        *driver = (StorageReadGcs)
+        *this = (StorageReadGcs)
         {
             .storage = storage,
 
@@ -156,10 +152,8 @@ storageReadGcsNew(
                 },
             },
         };
-
-        this = storageReadNew(driver, &driver->interface);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_READ, this);
+    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadNew(this, &this->interface));
 }

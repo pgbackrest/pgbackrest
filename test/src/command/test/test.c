@@ -24,16 +24,20 @@ cmdTestExec(const String *const command)
     ASSERT(cmdTestExecLog != NULL);
     ASSERT(command != NULL);
 
-    LOG_DETAIL_FMT("exec: %s", strZ(command));
-
-    if (system(zNewFmt("%s > %s 2>&1", strZ(command), strZ(cmdTestExecLog))) != 0)
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        const Buffer *const buffer = storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), cmdTestExecLog));
+        LOG_DETAIL_FMT("exec: %s", strZ(command));
 
-        THROW_FMT(
-            ExecuteError, "unable to execute: %s > %s 2>&1:\n%s", strZ(command), strZ(cmdTestExecLog),
-            zNewFmt("\n%s", strZ(strTrim(strNewBuf(buffer)))));
+        if (system(zNewFmt("%s > %s 2>&1", strZ(command), strZ(cmdTestExecLog))) != 0)
+        {
+            const Buffer *const buffer = storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), cmdTestExecLog));
+
+            THROW_FMT(
+                ExecuteError, "unable to execute: %s > %s 2>&1:\n%s", strZ(command), strZ(cmdTestExecLog),
+                zNewFmt("\n%s", strZ(strTrim(strNewBuf(buffer)))));
+        }
     }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -46,6 +50,8 @@ cmdTestPathCreate(const Storage *const storage, const String *const path)
         FUNCTION_LOG_PARAM(STORAGE, storage);
         FUNCTION_LOG_PARAM(STRING, path);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     ASSERT(storage != NULL);
 
@@ -73,7 +79,7 @@ void
 cmdTest(
     const String *const pathRepo, const String *const pathTest, const String *const vm, const unsigned int vmId,
     const String *moduleName, const unsigned int test, const uint64_t scale, const LogLevel logLevel, const bool logTime,
-    const String *const timeZone, const bool coverage, const bool profile, const bool optimize)
+    const String *const timeZone, const bool coverage, const bool profile, const bool optimize, const bool backTrace)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, pathRepo);
@@ -89,6 +95,7 @@ cmdTest(
         FUNCTION_LOG_PARAM(BOOL, coverage);
         FUNCTION_LOG_PARAM(BOOL, profile);
         FUNCTION_LOG_PARAM(BOOL, optimize);
+        FUNCTION_LOG_PARAM(BOOL, backTrace);
     FUNCTION_LOG_END();
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -116,7 +123,8 @@ cmdTest(
             {
                 // Build unit
                 TestBuild *const testBld = testBldNew(
-                    pathRepo, pathTest, vm, vmId, module, test, scale, logLevel, logTime, timeZone, coverage, profile, optimize);
+                    pathRepo, pathTest, vm, vmId, module, test, scale, logLevel, logTime, timeZone, coverage, profile, optimize,
+                    backTrace);
                 testBldUnit(testBld);
 
                 // Meson setup
@@ -150,8 +158,9 @@ cmdTest(
                 }
 
                 // Remove old coverage data. Note that coverage can be in different paths depending on the meson version.
-                const String *const pathCoverage = storagePathExistsP(storageUnitBuild, STRDEF("test-unit.p")) ?
-                    STRDEF("test-unit.p") : STRDEF("test-unit@exe");
+                const String *const pathCoverage =
+                    storagePathExistsP(storageUnitBuild, STRDEF("test-unit.p")) ?
+                        STRDEF("test-unit.p") : STRDEF("test-unit@exe");
 
                 StorageIterator *const storageItr = storageNewItrP(
                     storageUnitBuild, pathCoverage, .expression = STRDEF("\\.gcda$"));

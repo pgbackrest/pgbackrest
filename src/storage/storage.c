@@ -8,10 +8,10 @@ Storage Interface
 
 #include "common/debug.h"
 #include "common/io/io.h"
-#include "common/type/list.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
+#include "common/type/list.h"
 #include "common/wait.h"
 #include "storage/storage.h"
 
@@ -21,7 +21,6 @@ Object type
 struct Storage
 {
     StoragePub pub;                                                 // Publicly accessible variables
-    MemContext *memContext;
     const String *path;
     mode_t modeFile;
     mode_t modePath;
@@ -32,8 +31,8 @@ struct Storage
 /**********************************************************************************************************************************/
 FN_EXTERN Storage *
 storageNew(
-    StringId type, const String *path, mode_t modeFile, mode_t modePath, bool write,
-    StoragePathExpressionCallback pathExpressionFunction, void *driver, StorageInterface interface)
+    const StringId type, const String *const path, const mode_t modeFile, const mode_t modePath, const bool write,
+    StoragePathExpressionCallback pathExpressionFunction, void *const driver, const StorageInterface interface)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING_ID, type);
@@ -46,6 +45,8 @@ storageNew(
         FUNCTION_LOG_PARAM(STORAGE_INTERFACE, interface);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     ASSERT(type != 0);
     ASSERT(strSize(path) >= 1 && strZ(path)[0] == '/');
     ASSERT(driver != NULL);
@@ -56,45 +57,46 @@ storageNew(
     ASSERT(interface.pathRemove != NULL);
     ASSERT(interface.remove != NULL);
 
-    Storage *this = (Storage *)memNew(sizeof(Storage));
-
-    *this = (Storage)
+    OBJ_NEW_BEGIN(Storage, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        .pub =
+        *this = (Storage)
         {
-            .type = type,
-            .driver = driver,
-            .interface = interface,
-        },
-        .memContext = memContextCurrent(),
-        .path = strDup(path),
-        .modeFile = modeFile,
-        .modePath = modePath,
-        .write = write,
-        .pathExpressionFunction = pathExpressionFunction,
-    };
+            .pub =
+            {
+                .type = type,
+                .driver = objMoveToInterface(driver, this, memContextPrior()),
+                .interface = interface,
+            },
+            .path = strDup(path),
+            .modeFile = modeFile,
+            .modePath = modePath,
+            .write = write,
+            .pathExpressionFunction = pathExpressionFunction,
+        };
 
-    // If path sync feature is enabled then path feature must be enabled
-    CHECK(
-        AssertError, !storageFeature(this, storageFeaturePathSync) || storageFeature(this, storageFeaturePath),
-        "path feature required");
+        // If path sync feature is enabled then path feature must be enabled
+        CHECK(
+            AssertError, !storageFeature(this, storageFeaturePathSync) || storageFeature(this, storageFeaturePath),
+            "path feature required");
 
-    // If hardlink feature is enabled then path feature must be enabled
-    CHECK(
-        AssertError, !storageFeature(this, storageFeatureHardLink) || storageFeature(this, storageFeaturePath),
-        "path feature required");
+        // If hardlink feature is enabled then path feature must be enabled
+        CHECK(
+            AssertError, !storageFeature(this, storageFeatureHardLink) || storageFeature(this, storageFeaturePath),
+            "path feature required");
 
-    // If symlink feature is enabled then path feature must be enabled
-    CHECK(
-        AssertError, !storageFeature(this, storageFeatureSymLink) || storageFeature(this, storageFeaturePath),
-        "path feature required");
+        // If symlink feature is enabled then path feature must be enabled
+        CHECK(
+            AssertError, !storageFeature(this, storageFeatureSymLink) || storageFeature(this, storageFeaturePath),
+            "path feature required");
 
-    // If link features are enabled then linkCreate must be implemented
-    CHECK(
-        AssertError,
-        (!storageFeature(this, storageFeatureSymLink) && !storageFeature(this, storageFeatureHardLink)) ||
+        // If link features are enabled then linkCreate must be implemented
+        CHECK(
+            AssertError,
+            (!storageFeature(this, storageFeatureSymLink) && !storageFeature(this, storageFeatureHardLink)) ||
             interface.linkCreate != NULL,
-        "linkCreate required");
+            "linkCreate required");
+    }
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(STORAGE, this);
 }
@@ -243,6 +245,8 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
         FUNCTION_LOG_PARAM(BOOL, param.noPathEnforce);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_STRUCT();
+
     ASSERT(this != NULL);
     ASSERT(this->pub.interface.info != NULL);
 
@@ -325,7 +329,8 @@ storageNewItr(const Storage *const this, const String *const pathExp, StorageNew
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN void storageLinkCreate(
+FN_EXTERN void
+storageLinkCreate(
     const Storage *const this, const String *const target, const String *const linkPath, const StorageLinkCreateParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -419,8 +424,8 @@ storageMove(const Storage *this, StorageRead *source, StorageWrite *destination)
             // Remove the source file
             storageInterfaceRemoveP(storageDriver(this), storageReadName(source));
 
-            // Sync source path if the destination path was synced.  We know the source and destination paths are different because
-            // the move did not succeed.  This will need updating when drivers other than Posix/CIFS are implemented because there's
+            // Sync source path if the destination path was synced. We know the source and destination paths are different because
+            // the move did not succeed. This will need updating when drivers other than Posix/CIFS are implemented because there's
             // no way to get coverage on it now.
             if (storageWriteSyncPath(destination))
                 storageInterfacePathSyncP(storageDriver(this), strPath(storageReadName(source)));
@@ -532,8 +537,9 @@ storagePath(const Storage *this, const String *pathExp, StoragePathParam param)
             // Make sure the base storage path is contained within the path expression
             if (!strEqZ(this->path, "/"))
             {
-                if (!param.noEnforce && (!strBeginsWith(pathExp, this->path) ||
-                    !(strSize(pathExp) == strSize(this->path) || *(strZ(pathExp) + strSize(this->path)) == '/')))
+                if (!param.noEnforce &&
+                    (!strBeginsWith(pathExp, this->path) ||
+                     !(strSize(pathExp) == strSize(this->path) || *(strZ(pathExp) + strSize(this->path)) == '/')))
                 {
                     THROW_FMT(AssertError, "absolute path '%s' is not in base path '%s'", strZ(pathExp), strZ(this->path));
                 }
@@ -688,7 +694,8 @@ storagePathRemove(const Storage *this, const String *pathExp, StoragePathRemoveP
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN void storagePathSync(const Storage *this, const String *pathExp)
+FN_EXTERN void
+storagePathSync(const Storage *this, const String *pathExp)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, this);
@@ -756,10 +763,10 @@ storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam par
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-storageToLog(const Storage *this)
+FN_EXTERN void
+storageToLog(const Storage *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{type: %s, path: %s, write: %s}", strZ(strIdToStr(storageType(this))), strZ(strToLog(this->path)),
-        cvtBoolToConstZ(this->write));
+    strStcCat(debugLog, "{type: "),
+    strStcResultSizeInc(debugLog, strIdToLog(storageType(this), strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+    strStcFmt(debugLog, ", path: %s, write: %s}", strZ(this->path), cvtBoolToConstZ(this->write));
 }

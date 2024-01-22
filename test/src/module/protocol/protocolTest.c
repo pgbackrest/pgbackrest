@@ -1,13 +1,13 @@
 /***********************************************************************************************************************************
 Test Protocol
 ***********************************************************************************************************************************/
-#include "common/io/fdRead.h"
-#include "common/io/fdWrite.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
+#include "common/io/fdRead.h"
+#include "common/io/fdWrite.h"
 #include "common/regExp.h"
-#include "storage/storage.h"
 #include "storage/posix/storage.h"
+#include "storage/storage.h"
 #include "version.h"
 
 #include "common/harnessConfig.h"
@@ -162,7 +162,8 @@ typedef struct TestParallelJobCallback
     bool clientSeen[2];                                             // Make sure the client idx was seen
 } TestParallelJobCallback;
 
-static ProtocolParallelJob *testParallelJobCallback(void *data, unsigned int clientIdx)
+static ProtocolParallelJob *
+testParallelJobCallback(void *data, unsigned int clientIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
@@ -281,16 +282,21 @@ testRun(void)
 
         IoWrite *write = ioFdWriteNewOpen(STRDEF("invalid"), 0, 0);
 
-        OBJ_NEW_BEGIN(ProtocolClient, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+        OBJ_NEW_BASE_BEGIN(ProtocolClient, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
         {
             protocolHelperClient.client = OBJ_NEW_ALLOC();
-            *protocolHelperClient.client = (ProtocolClient){
-                .name = strNewZ("test"), .state = protocolClientStateIdle, .write = write};
+            *protocolHelperClient.client = (ProtocolClient)
+            {
+                .name = strNewZ("test"),
+                .state = protocolClientStateIdle,
+                .write = write,
+            };
+
             memContextCallbackSet(memContextCurrent(), protocolClientFreeResource, protocolHelperClient.client);
         }
         OBJ_NEW_END();
 
-        OBJ_NEW_BEGIN(Exec, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+        OBJ_NEW_BASE_BEGIN(Exec, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
         {
             protocolHelperClient.exec = OBJ_NEW_ALLOC();
             *protocolHelperClient.exec = (Exec){.name = strNewZ("test"), .command = strNewZ("test"), .processId = INT_MAX};
@@ -319,7 +325,7 @@ testRun(void)
         TEST_RESULT_STRLST_Z(
             protocolLocalParam(protocolStorageTypeRepo, 0, 0),
             "--exec-id=1-test\n--log-level-console=off\n--log-level-file=off\n--log-level-stderr=error\n--pg1-path=/path/to/pg\n"
-                "--process=0\n--remote-type=repo\n--stanza=test1\narchive-get:local\n",
+            "--process=0\n--remote-type=repo\n--stanza=test1\narchive-get:local\n",
             "check config");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -335,7 +341,7 @@ testRun(void)
         TEST_RESULT_STRLST_Z(
             protocolLocalParam(protocolStorageTypePg, 0, 1),
             "--exec-id=1-test\n--log-level-console=off\n--log-level-file=info\n--log-level-stderr=error\n--log-subprocess\n--pg=1\n"
-                "--pg1-path=/pg\n--process=1\n--remote-type=pg\n--stanza=test1\nbackup:local\n",
+            "--pg1-path=/pg\n--process=1\n--remote-type=pg\n--stanza=test1\nbackup:local\n",
             "check config");
     }
 
@@ -361,8 +367,8 @@ testRun(void)
         TEST_RESULT_STRLST_Z(
             protocolRemoteParamSsh(protocolStorageTypeRepo, 0),
             "-o\nLogLevel=error\n-o\nCompression=no\n-o\nPasswordAuthentication=no\nrepo-host-user@repo-host\n"
-                TEST_PROJECT_EXE " --exec-id=1-test --log-level-console=off --log-level-file=off --log-level-stderr=error"
-                " --pg1-path=/path/to/pg --process=0 --remote-type=repo --repo=1 --stanza=test1 archive-get:remote\n",
+            TEST_PROJECT_EXE " --exec-id=1-test --log-level-console=off --log-level-file=off --log-level-stderr=error"
+            " --pg1-path=/path/to/pg --process=0 --remote-type=repo --repo=1 --stanza=test1 archive-get:remote\n",
             "check config");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -387,9 +393,9 @@ testRun(void)
         TEST_RESULT_STRLST_Z(
             protocolRemoteParamSsh(protocolStorageTypeRepo, 0),
             "-o\nLogLevel=error\n-o\nCompression=no\n-o\nPasswordAuthentication=no\n-p\n444\nrepo-host-user@repo-host\n"
-                TEST_PROJECT_EXE " --config=/path/pgbackrest.conf --config-include-path=/path/include --config-path=/path/config"
-                " --exec-id=1-test --log-level-console=off --log-level-file=info --log-level-stderr=error --log-subprocess"
-                " --pg1-path=/unused --process=0 --remote-type=repo --repo=1 --stanza=test1 check:remote\n",
+            TEST_PROJECT_EXE " --config=/path/pgbackrest.conf --config-include-path=/path/include --config-path=/path/config"
+            " --exec-id=1-test --log-level-console=off --log-level-file=info --log-level-stderr=error --log-subprocess"
+            " --pg1-path=/unused --process=0 --remote-type=repo --repo=1 --stanza=test1 check:remote\n",
             "check config");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -407,8 +413,8 @@ testRun(void)
         TEST_RESULT_STRLST_Z(
             protocolRemoteParamSsh(protocolStorageTypeRepo, 0),
             "-o\nLogLevel=error\n-o\nCompression=no\n-o\nPasswordAuthentication=no\npgbackrest@repo-host\n"
-                TEST_PROJECT_EXE " --exec-id=1-test --log-level-console=off --log-level-file=off --log-level-stderr=error"
-                " --pg1-path=/path/to/pg --process=3 --remote-type=repo --repo=1 --stanza=test1 archive-get:remote\n",
+            TEST_PROJECT_EXE " --exec-id=1-test --log-level-console=off --log-level-file=off --log-level-stderr=error"
+            " --pg1-path=/path/to/pg --process=3 --remote-type=repo --repo=1 --stanza=test1 archive-get:remote\n",
             "check config");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -424,8 +430,8 @@ testRun(void)
         TEST_RESULT_STRLST_Z(
             protocolRemoteParamSsh(protocolStorageTypePg, 0),
             "-o\nLogLevel=error\n-o\nCompression=no\n-o\nPasswordAuthentication=no\npostgres@pg1-host\n"
-                TEST_PROJECT_EXE " --exec-id=1-test --log-level-console=off --log-level-file=off --log-level-stderr=error"
-                " --pg1-path=/path/to/1 --process=0 --remote-type=pg --stanza=test1 backup:remote\n",
+            TEST_PROJECT_EXE " --exec-id=1-test --log-level-console=off --log-level-file=off --log-level-stderr=error"
+            " --pg1-path=/path/to/1 --process=0 --remote-type=pg --stanza=test1 backup:remote\n",
             "check config");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -446,8 +452,8 @@ testRun(void)
         TEST_RESULT_STRLST_Z(
             protocolRemoteParamSsh(protocolStorageTypePg, 1),
             "-o\nLogLevel=error\n-o\nCompression=no\n-o\nPasswordAuthentication=no\npostgres@pg2-host\n"
-                TEST_PROJECT_EXE " --exec-id=1-test --log-level-console=off --log-level-file=off --log-level-stderr=error"
-                " --pg1-path=/path/to/2 --process=4 --remote-type=pg --stanza=test1 backup:remote\n",
+            TEST_PROJECT_EXE " --exec-id=1-test --log-level-console=off --log-level-file=off --log-level-stderr=error"
+            " --pg1-path=/path/to/2 --process=4 --remote-type=pg --stanza=test1 backup:remote\n",
             "check config");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -468,9 +474,9 @@ testRun(void)
         TEST_RESULT_STRLST_Z(
             protocolRemoteParamSsh(protocolStorageTypePg, 1),
             "-o\nLogLevel=error\n-o\nCompression=no\n-o\nPasswordAuthentication=no\npostgres@pg3-host\n"
-                TEST_PROJECT_EXE " --exec-id=1-test --log-level-console=off --log-level-file=off --log-level-stderr=error"
-                " --pg1-path=/path/to/3 --pg1-port=3333 --pg1-socket-path=/socket3 --process=4 --remote-type=pg --stanza=test1"
-                " backup:remote\n",
+            TEST_PROJECT_EXE " --exec-id=1-test --log-level-console=off --log-level-file=off --log-level-stderr=error"
+            " --pg1-path=/path/to/3 --pg1-port=3333 --pg1-socket-path=/socket3 --process=4 --remote-type=pg --stanza=test1"
+            " backup:remote\n",
             "check config");
     }
 
@@ -696,8 +702,7 @@ testRun(void)
                 TEST_ERROR(
                     protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_ERROR), false), FormatError,
                     "raised from test client: ERR_MESSAGE\n"
-                    "[FormatError] on retry after 0ms\n"
-                    "[FormatError] on retry after 500ms: ERR_MESSAGE_RETRY");
+                    "[RETRY DETAIL OMITTED]");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("free client");
@@ -720,6 +725,8 @@ testRun(void)
 
         HRN_FORK_BEGIN()
         {
+            const unsigned int testPort = hrnServerPortNext();
+
             HRN_FORK_CHILD_BEGIN()
             {
                 // -----------------------------------------------------------------------------------------------------------------
@@ -727,7 +734,7 @@ testRun(void)
 
                 // Connect to server without any verification
                 IoClient *tlsClient = tlsClientNewP(
-                    sckClientNew(hrnServerHost(), hrnServerPort(0), 5000, 5000), hrnServerHost(), 5000, 5000, false);
+                    sckClientNew(hrnServerHost(), testPort, 5000, 5000), hrnServerHost(), 5000, 5000, false);
                 IoSession *tlsSession = ioClientOpen(tlsClient);
 
                 // Send ping
@@ -747,7 +754,7 @@ testRun(void)
                 hrnCfgArgRawZ(argList, cfgOptRepoHostType, "tls");
                 hrnCfgArgRawZ(argList, cfgOptRepoHostCertFile, HRN_SERVER_CLIENT_CERT);
                 hrnCfgArgRawZ(argList, cfgOptRepoHostKeyFile, HRN_SERVER_CLIENT_KEY);
-                hrnCfgArgRawFmt(argList, cfgOptRepoHostPort, "%u", hrnServerPort(0));
+                hrnCfgArgRawFmt(argList, cfgOptRepoHostPort, "%u", testPort);
                 hrnCfgArgRawZ(argList, cfgOptStanza, "db");
                 HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
@@ -778,7 +785,7 @@ testRun(void)
                 hrnCfgArgRawZ(argList, cfgOptRepoHostType, "tls");
                 hrnCfgArgRawZ(argList, cfgOptRepoHostCertFile, HRN_SERVER_CLIENT_CERT);
                 hrnCfgArgRawZ(argList, cfgOptRepoHostKeyFile, HRN_SERVER_CLIENT_KEY);
-                hrnCfgArgRawFmt(argList, cfgOptRepoHostPort, "%u", hrnServerPort(0));
+                hrnCfgArgRawFmt(argList, cfgOptRepoHostPort, "%u", testPort);
                 HRN_CFG_LOAD(cfgCmdInfo, argList);
 
                 TEST_ERROR_FMT(
@@ -795,7 +802,7 @@ testRun(void)
                 hrnCfgArgRawZ(argList, cfgOptPgHostType, "tls");
                 hrnCfgArgRawZ(argList, cfgOptPgHostCertFile, HRN_SERVER_CLIENT_CERT);
                 hrnCfgArgRawZ(argList, cfgOptPgHostKeyFile, HRN_SERVER_CLIENT_KEY);
-                hrnCfgArgRawFmt(argList, cfgOptPgHostPort, "%u", hrnServerPort(0));
+                hrnCfgArgRawFmt(argList, cfgOptPgHostPort, "%u", testPort);
                 hrnCfgArgRawZ(argList, cfgOptStanza, "db");
                 hrnCfgArgRawZ(argList, cfgOptProcess, "1");
                 HRN_CFG_LOAD(cfgCmdBackup, argList, .role = cfgCmdRoleLocal);
@@ -811,7 +818,7 @@ testRun(void)
             {
                 IoServer *const tlsServer = tlsServerNew(
                     STRDEF("localhost"), STRDEF(HRN_SERVER_CA), STRDEF(HRN_SERVER_KEY), STRDEF(HRN_SERVER_CERT), 5000);
-                IoServer *const socketServer = sckServerNew(STRDEF("localhost"), hrnServerPort(0), 5000);
+                IoServer *const socketServer = sckServerNew(STRDEF("localhost"), testPort, 5000);
                 ProtocolServer *server = NULL;
 
                 // Server ping
@@ -888,6 +895,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("ProtocolParallel and ProtocolParallelJob"))
     {
+        char logBuf[STACK_TRACE_PARAM_MAX];
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("job state transitions");
 
@@ -974,7 +983,9 @@ testRun(void)
                 TestParallelJobCallback data = {.jobList = lstNewP(sizeof(ProtocolParallelJob *))};
                 ProtocolParallel *parallel = NULL;
                 TEST_ASSIGN(parallel, protocolParallelNew(2000, testParallelJobCallback, &data), "create parallel");
-                TEST_RESULT_STR_Z(protocolParallelToLog(parallel), "{state: pending, clientTotal: 0, jobTotal: 0}", "check log");
+                TEST_RESULT_VOID(
+                    FUNCTION_LOG_OBJECT_FORMAT(parallel, protocolParallelToLog, logBuf, sizeof(logBuf)), "protocolParallelToLog");
+                TEST_RESULT_Z(logBuf, "{state: pending, clientTotal: 0, jobTotal: 0}", "check log");
 
                 // Add client
                 ProtocolClient *client[HRN_FORK_CHILD_MAX];

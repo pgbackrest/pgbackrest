@@ -6,11 +6,11 @@ Socket Session
 #include <unistd.h>
 
 #include "common/debug.h"
-#include "common/log.h"
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
-#include "common/io/socket/client.h"
 #include "common/io/session.h"
+#include "common/io/socket/client.h"
+#include "common/log.h"
 #include "common/type/object.h"
 
 /***********************************************************************************************************************************
@@ -31,18 +31,19 @@ typedef struct SocketSession
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-static String *
-sckSessionToLog(const THIS_VOID)
+static void
+sckSessionToLog(const THIS_VOID, StringStatic *const debugLog)
 {
     THIS(const SocketSession);
 
-    return strNewFmt("{fd %d, host: %s, port: %u, timeout: %" PRIu64 "}", this->fd, strZ(this->host), this->port, this->timeout);
+    strStcFmt(
+        debugLog, "{host: %s, port: %u, fd: %d, timeout: %" PRIu64 "}", strZ(this->host), this->port, this->fd, this->timeout);
 }
 
 #define FUNCTION_LOG_SOCKET_SESSION_TYPE                                                                                           \
     SocketSession *
 #define FUNCTION_LOG_SOCKET_SESSION_FORMAT(value, buffer, bufferSize)                                                              \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, sckSessionToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, sckSessionToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Free connection
@@ -163,7 +164,7 @@ static const IoSessionInterface sckSessionInterface =
 };
 
 FN_EXTERN IoSession *
-sckSessionNew(IoSessionRole role, int fd, const String *host, unsigned int port, TimeMSec timeout)
+sckSessionNew(const IoSessionRole role, const int fd, const String *const host, const unsigned int port, const TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING_ID, role);
@@ -176,15 +177,11 @@ sckSessionNew(IoSessionRole role, int fd, const String *host, unsigned int port,
     ASSERT(fd != -1);
     ASSERT(host != NULL);
 
-    IoSession *this = NULL;
-
-    OBJ_NEW_BEGIN(SocketSession, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(SocketSession, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        SocketSession *driver = OBJ_NEW_ALLOC();
+        String *const name = strNewFmt("%s:%u", strZ(host), port);
 
-        String *name = strNewFmt("%s:%u", strZ(host), port);
-
-        *driver = (SocketSession)
+        *this = (SocketSession)
         {
             .role = role,
             .fd = fd,
@@ -198,11 +195,9 @@ sckSessionNew(IoSessionRole role, int fd, const String *host, unsigned int port,
         strFree(name);
 
         // Ensure file descriptor is closed
-        memContextCallbackSet(objMemContext(driver), sckSessionFreeResource, driver);
-
-        this = ioSessionNew(driver, &sckSessionInterface);
+        memContextCallbackSet(objMemContext(this), sckSessionFreeResource, this);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_SESSION, this);
+    FUNCTION_LOG_RETURN(IO_SESSION, ioSessionNew(this, &sckSessionInterface));
 }

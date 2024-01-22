@@ -43,6 +43,7 @@ strIdBitFromZN(const StringIdBit bit, const char *const buffer, size_t size)
         case stringIdBit5:
         {
             // Map to convert characters to encoding
+            // {uncrustify_off - array alignment}
             static const uint8_t map[256] =
             {
                  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -62,6 +63,7 @@ strIdBitFromZN(const StringIdBit bit, const char *const buffer, size_t size)
                  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
                  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
             };
+            // {uncrustify_on}
 
             // Make sure the string is valid for this encoding
             for (size_t bufferIdx = 0; bufferIdx < size; bufferIdx++)
@@ -132,6 +134,7 @@ strIdBitFromZN(const StringIdBit bit, const char *const buffer, size_t size)
             ASSERT(bit == stringIdBit6);
 
             // Map to convert characters to encoding
+            // {uncrustify_off - array alignment}
             static const uint8_t map[256] =
             {
                  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -151,6 +154,7 @@ strIdBitFromZN(const StringIdBit bit, const char *const buffer, size_t size)
                  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
                  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
             };
+            // {uncrustify_on}
 
             // Make sure the string is valid for this encoding
             for (size_t bufferIdx = 0; bufferIdx < size; bufferIdx++)

@@ -42,6 +42,12 @@ testFunction1(
     FUNCTION_LOG_RETURN(INT, 1);
 }
 
+static void
+testObjToLog(const char *const object, StringStatic *const debugLog)
+{
+    strStcFmt(debugLog, "{%s}", object);
+}
+
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
@@ -51,30 +57,99 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // *****************************************************************************************************************************
-    if (testBegin("objToLog(), ptrToLog, and strzToLog()"))
+    if (testBegin("strStc*()"))
+    {
+        const char *test8 = "12345678";
+        char buffer9[9];
+
+        StringStatic debugLog = strStcInit(buffer9, sizeof(buffer9) - 1);
+        TEST_RESULT_UINT(strStcResultSize(strStcFmt(&debugLog, "%s", test8)), 7, "result size");
+        TEST_RESULT_UINT(strStcRemainsSize(&debugLog), 1, "buffer size");
+        TEST_RESULT_PTR(strStcRemains(&debugLog), buffer9 + 7, "buffer remains");
+        TEST_RESULT_Z(debugLog.buffer, "1234567", "check buffer");
+
+        debugLog = strStcInit(buffer9, sizeof(buffer9));
+        TEST_RESULT_UINT(strStcResultSize(strStcFmt(&debugLog, "%s", test8)), 8, "result size");
+        TEST_RESULT_UINT(strStcRemainsSize(&debugLog), 1, "buffer size");
+        TEST_RESULT_PTR(strStcRemains(&debugLog), buffer9 + 8, "buffer remains");
+        TEST_RESULT_Z(debugLog.buffer, "12345678", "check buffer");
+
+        TEST_RESULT_UINT(strStcResultSize(strStcFmt(&debugLog, "%s", test8)), 8, "result size");
+        TEST_RESULT_UINT(strStcRemainsSize(&debugLog), 1, "buffer size");
+        TEST_RESULT_PTR(strStcRemains(&debugLog), buffer9 + 8, "buffer remains");
+        TEST_RESULT_Z(debugLog.buffer, "12345678", "check buffer");
+
+        debugLog = strStcInit(buffer9, 4);
+        TEST_RESULT_VOID(strStcCat(&debugLog, "AA"), "cat all");
+        TEST_RESULT_UINT(strStcResultSize(&debugLog), 2, "result size");
+        TEST_RESULT_UINT(strStcRemainsSize(&debugLog), 2, "buffer size");
+        TEST_RESULT_PTR(strStcRemains(&debugLog), buffer9 + 2, "buffer remains");
+        TEST_RESULT_Z(debugLog.buffer, "AA", "check buffer");
+
+        TEST_RESULT_VOID(strStcCat(&debugLog, "BB"), "cat partial");
+        TEST_RESULT_UINT(strStcResultSize(&debugLog), 3, "result size");
+        TEST_RESULT_UINT(strStcRemainsSize(&debugLog), 1, "buffer size");
+        TEST_RESULT_PTR(strStcRemains(&debugLog), buffer9 + 3, "buffer remains");
+        TEST_RESULT_Z(debugLog.buffer, "AAB", "check buffer");
+
+        TEST_RESULT_VOID(strStcCat(&debugLog, "CC"), "cat none");
+        TEST_RESULT_UINT(strStcResultSize(&debugLog), 3, "result size");
+        TEST_RESULT_UINT(strStcRemainsSize(&debugLog), 1, "buffer size");
+        TEST_RESULT_PTR(strStcRemains(&debugLog), buffer9 + 3, "buffer remains");
+        TEST_RESULT_Z(debugLog.buffer, "AAB", "check buffer");
+
+        debugLog = strStcInit(buffer9, 2);
+        TEST_RESULT_VOID(strStcCatChr(&debugLog, 'Z'), "cat char");
+        TEST_RESULT_UINT(strStcResultSize(&debugLog), 1, "result size");
+        TEST_RESULT_UINT(strStcRemainsSize(&debugLog), 1, "buffer size");
+        TEST_RESULT_PTR(strStcRemains(&debugLog), buffer9 + 1, "buffer remains");
+        TEST_RESULT_Z(debugLog.buffer, "Z", "check buffer");
+
+        TEST_RESULT_VOID(strStcCatChr(&debugLog, 'Y'), "cat char");
+        TEST_RESULT_UINT(strStcResultSize(&debugLog), 1, "result size");
+        TEST_RESULT_UINT(strStcRemainsSize(&debugLog), 1, "buffer size");
+        TEST_RESULT_PTR(strStcRemains(&debugLog), buffer9 + 1, "buffer remains");
+        TEST_RESULT_Z(debugLog.buffer, "Z", "check buffer");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("objToLog(), objNameToLog(), ptrToLog, and strzToLog()"))
     {
         char buffer[STACK_TRACE_PARAM_MAX];
 
-        TEST_RESULT_UINT(objToLog(NULL, "Object", buffer, 4), 4, "truncated null");
-        TEST_RESULT_Z(buffer, "nul", "    check truncated null");
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("objToLog()");
 
-        TEST_RESULT_UINT(objToLog(NULL, "Object", buffer, sizeof(buffer)), 4, "full null");
+        TEST_RESULT_UINT(objToLog(NULL, (ObjToLogFormat)testObjToLog, buffer, sizeof(buffer)), 4, "null");
         TEST_RESULT_Z(buffer, "null", "    check full null");
 
-        TEST_RESULT_UINT(objToLog((void *)1, "Object", buffer, 4), 8, "truncated object");
+        TEST_RESULT_UINT(objToLog("test", (ObjToLogFormat)testObjToLog, buffer, 4), 3, "null");
+        TEST_RESULT_Z(buffer, "{te", "    check full null");
+
+        TEST_RESULT_UINT(objToLog("test", (ObjToLogFormat)testObjToLog, buffer, sizeof(buffer)), 6, "null");
+        TEST_RESULT_Z(buffer, "{test}", "    check full null");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_UINT(objNameToLog(NULL, "Object", buffer, 4), 3, "truncated null");
+        TEST_RESULT_Z(buffer, "nul", "    check truncated null");
+
+        TEST_RESULT_UINT(objNameToLog(NULL, "Object", buffer, sizeof(buffer)), 4, "full null");
+        TEST_RESULT_Z(buffer, "null", "    check full null");
+
+        TEST_RESULT_UINT(objNameToLog((void *)1, "Object", buffer, 4), 3, "truncated object");
         TEST_RESULT_Z(buffer, "{Ob", "    check truncated object");
 
-        TEST_RESULT_UINT(objToLog((void *)1, "Object", buffer, sizeof(buffer)), 8, "full object");
+        TEST_RESULT_UINT(objNameToLog((void *)1, "Object", buffer, sizeof(buffer)), 8, "full object");
         TEST_RESULT_Z(buffer, "{Object}", "    check full object");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_UINT(ptrToLog(NULL, "char *", buffer, 4), 4, "truncated null");
+        TEST_RESULT_UINT(ptrToLog(NULL, "char *", buffer, 4), 3, "truncated null");
         TEST_RESULT_Z(buffer, "nul", "    check truncated null");
 
         TEST_RESULT_UINT(ptrToLog(NULL, "char *", buffer, sizeof(buffer)), 4, "full null");
         TEST_RESULT_Z(buffer, "null", "    check full null");
 
-        TEST_RESULT_UINT(ptrToLog((void *)1, "char *", buffer, 4), 8, "truncated pointer");
+        TEST_RESULT_UINT(ptrToLog((void *)1, "char *", buffer, 4), 3, "truncated pointer");
         TEST_RESULT_Z(buffer, "(ch", "    check truncated pointer");
 
         TEST_RESULT_UINT(ptrToLog((void *)1, "char *", buffer, sizeof(buffer)), 8, "full pointer");
@@ -114,7 +189,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00  DEBUG:     " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction1: (paramInt: 99, paramBool: false,"
-                " paramBoolP: null, paramBoolPP: null, paramVoidP: null, paramDouble: 1.17, paramMode: 0755)\n"
+            " paramBoolP: null, paramBoolPP: null, paramVoidP: null, paramDouble: 1.17, paramMode: 0755)\n"
             "P00  TRACE:         " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction2: (void)\n"
             "P00  TRACE:         " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction2: => void\n"
             "P00  DEBUG:     " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction1: => 1");
@@ -129,7 +204,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00  DEBUG:     " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction1: (paramInt: 99, paramBool: false,"
-                " paramBoolP: *true, paramBoolPP: **true, paramVoidP: null, paramDouble: 1.17, paramMode: 0755)\n"
+            " paramBoolP: *true, paramBoolPP: **true, paramVoidP: null, paramDouble: 1.17, paramMode: 0755)\n"
             "P00  TRACE:         " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction2: (void)\n"
             "P00  TRACE:         " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction2: => void\n"
             "P00  DEBUG:     " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction1: => 1");
@@ -141,7 +216,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00  DEBUG:     " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction1: (paramInt: 99, paramBool: false,"
-                " paramBoolP: null, paramBoolPP: *null, paramVoidP: *void, paramDouble: 1.17, paramMode: 0755)\n"
+            " paramBoolP: null, paramBoolPP: *null, paramVoidP: *void, paramDouble: 1.17, paramMode: 0755)\n"
             "P00  TRACE:         " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction2: (void)\n"
             "P00  TRACE:         " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction2: => void\n"
             "P00  DEBUG:     " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction1: => 1");

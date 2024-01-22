@@ -21,7 +21,6 @@ Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct IoServerPub
 {
-    MemContext *memContext;                                         // Mem context
     void *driver;                                                   // Driver object
     const IoServerInterface *interface;                             // Driver interface
 } IoServerPub;
@@ -40,7 +39,7 @@ Functions
 FN_INLINE_ALWAYS IoServer *
 ioServerMove(IoServer *const this, MemContext *const parentNew)
 {
-    return objMoveContext(this, parentNew);
+    return objMove(this, parentNew);
 }
 
 // Open session
@@ -56,17 +55,17 @@ Destructor
 FN_INLINE_ALWAYS void
 ioServerFree(IoServer *const this)
 {
-    objFreeContext(this);
+    objFree(this);
 }
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *ioServerToLog(const IoServer *this);
+FN_EXTERN void ioServerToLog(const IoServer *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_IO_SERVER_TYPE                                                                                                \
     IoServer *
 #define FUNCTION_LOG_IO_SERVER_FORMAT(value, buffer, bufferSize)                                                                   \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, ioServerToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, ioServerToLog, buffer, bufferSize)
 
 #endif

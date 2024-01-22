@@ -14,13 +14,13 @@ Test Azure Storage
 Constants
 ***********************************************************************************************************************************/
 #define TEST_ACCOUNT                                                "account"
-    STRING_STATIC(TEST_ACCOUNT_STR,                                 TEST_ACCOUNT);
+STRING_STATIC(TEST_ACCOUNT_STR,                                     TEST_ACCOUNT);
 #define TEST_CONTAINER                                              "container"
-    STRING_STATIC(TEST_CONTAINER_STR,                               TEST_CONTAINER);
+STRING_STATIC(TEST_CONTAINER_STR,                                   TEST_CONTAINER);
 #define TEST_KEY_SAS                                                "?sig=key"
-    STRING_STATIC(TEST_KEY_SAS_STR,                                 TEST_KEY_SAS);
+STRING_STATIC(TEST_KEY_SAS_STR,                                     TEST_KEY_SAS);
 #define TEST_KEY_SHARED                                             "YXpLZXk="
-    STRING_STATIC(TEST_KEY_SHARED_STR,                              TEST_KEY_SHARED);
+STRING_STATIC(TEST_KEY_SHARED_STR,                                  TEST_KEY_SHARED);
 
 /***********************************************************************************************************************************
 Helper to build test requests
@@ -33,6 +33,7 @@ typedef struct TestRequestParam
     const char *content;
     const char *blobType;
     const char *range;
+    const char *tag;
 } TestRequestParam;
 
 #define testRequestP(write, verb, path, ...)                                                                                       \
@@ -94,9 +95,13 @@ testRequest(IoWrite *write, const char *verb, const char *path, TestRequestParam
     if (param.blobType != NULL)
         strCatFmt(request, "x-ms-blob-type:%s\r\n", param.blobType);
 
+    // Add tags
+    if (param.tag != NULL)
+        strCatFmt(request, "x-ms-tags:%s\r\n", param.tag);
+
     // Add version
     if (driver->sharedKey != NULL)
-        strCatZ(request, "x-ms-version:2019-02-02\r\n");
+        strCatZ(request, "x-ms-version:2019-12-12\r\n");
 
     // Complete headers
     strCatZ(request, "\r\n");
@@ -156,8 +161,8 @@ testResponse(IoWrite *write, TestResponseParam param)
         strCatFmt(
             response,
             "content-length:%zu\r\n"
-                "\r\n"
-                "%s",
+            "\r\n"
+            "%s",
             strlen(param.content), param.content);
     }
     else
@@ -382,6 +387,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storageAzureAuth()"))
     {
+        char logBuf[STACK_TRACE_PARAM_MAX];
+
         StorageAzure *storage = NULL;
         HttpHeader *header = NULL;
         const String *dateTime = STRDEF("Sun, 21 Jun 2020 12:46:19 GMT");
@@ -391,7 +398,7 @@ testRun(void)
             (StorageAzure *)storageDriver(
                 storageAzureNew(
                     STRDEF("/repo"), false, NULL, TEST_CONTAINER_STR, TEST_ACCOUNT_STR, storageAzureKeyTypeShared,
-                    TEST_KEY_SHARED_STR, 16, STRDEF("blob.core.windows.net"), storageAzureUriStyleHost, 443, 1000, true, NULL,
+                    TEST_KEY_SHARED_STR, 16, NULL, STRDEF("blob.core.windows.net"), storageAzureUriStyleHost, 443, 1000, true, NULL,
                     NULL)),
             "new azure storage - shared key");
 
@@ -401,10 +408,11 @@ testRun(void)
         header = httpHeaderAdd(httpHeaderNew(NULL), HTTP_HEADER_CONTENT_LENGTH_STR, ZERO_STR);
 
         TEST_RESULT_VOID(storageAzureAuth(storage, HTTP_VERB_GET_STR, STRDEF("/path"), NULL, dateTime, header), "auth");
-        TEST_RESULT_STR_Z(
-            httpHeaderToLog(header),
-            "{authorization: 'SharedKey account:edqgT7EhsiIN3q6Al2HCZlpXr2D5cJFavr2ZCkhG9R8=', content-length: '0'"
-                ", date: 'Sun, 21 Jun 2020 12:46:19 GMT', host: 'account.blob.core.windows.net', x-ms-version: '2019-02-02'}",
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(header, httpHeaderToLog, logBuf, sizeof(logBuf)), "httpHeaderToLog");
+        TEST_RESULT_Z(
+            logBuf,
+            "{content-length: '0', host: 'account.blob.core.windows.net', date: 'Sun, 21 Jun 2020 12:46:19 GMT'"
+            ", x-ms-version: '2019-12-12', authorization: 'SharedKey account:wZCOnSPB1KkkdjaQMcThkkKyUlfS0pPjwaIfd1cUh4Y='}",
             "check headers");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -416,11 +424,12 @@ testRun(void)
         HttpQuery *query = httpQueryAdd(httpQueryNewP(), STRDEF("a"), STRDEF("b"));
 
         TEST_RESULT_VOID(storageAzureAuth(storage, HTTP_VERB_GET_STR, STRDEF("/path/file"), query, dateTime, header), "auth");
-        TEST_RESULT_STR_Z(
-            httpHeaderToLog(header),
-            "{authorization: 'SharedKey account:5qAnroLtbY8IWqObx8+UVwIUysXujsfWZZav7PrBON0=', content-length: '44'"
-                ", content-md5: 'b64f49553d5c441652e95697a2c5949e', date: 'Sun, 21 Jun 2020 12:46:19 GMT'"
-                ", host: 'account.blob.core.windows.net', x-ms-version: '2019-02-02'}",
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(header, httpHeaderToLog, logBuf, sizeof(logBuf)), "httpHeaderToLog");
+        TEST_RESULT_Z(
+            logBuf,
+            "{content-length: '44', content-md5: 'b64f49553d5c441652e95697a2c5949e', host: 'account.blob.core.windows.net'"
+            ", date: 'Sun, 21 Jun 2020 12:46:19 GMT', x-ms-version: '2019-12-12'"
+            ", authorization: 'SharedKey account:Adr+lyGByiEpKrKPyhY3c1uLBDgB7hw0XW5Do6u79Nw='}",
             "check headers");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -431,15 +440,15 @@ testRun(void)
             (StorageAzure *)storageDriver(
                 storageAzureNew(
                     STRDEF("/repo"), false, NULL, TEST_CONTAINER_STR, TEST_ACCOUNT_STR, storageAzureKeyTypeSas, TEST_KEY_SAS_STR,
-                    16, STRDEF("blob.core.usgovcloudapi.net"), storageAzureUriStyleHost, 443, 1000, true, NULL, NULL)),
+                    16, NULL, STRDEF("blob.core.usgovcloudapi.net"), storageAzureUriStyleHost, 443, 1000, true, NULL, NULL)),
             "new azure storage - sas key");
 
         query = httpQueryAdd(httpQueryNewP(), STRDEF("a"), STRDEF("b"));
         header = httpHeaderAdd(httpHeaderNew(NULL), HTTP_HEADER_CONTENT_LENGTH_STR, STRDEF("66"));
 
         TEST_RESULT_VOID(storageAzureAuth(storage, HTTP_VERB_GET_STR, STRDEF("/path/file"), query, dateTime, header), "auth");
-        TEST_RESULT_STR_Z(
-            httpHeaderToLog(header), "{content-length: '66', host: 'account.blob.core.usgovcloudapi.net'}", "check headers");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(header, httpHeaderToLog, logBuf, sizeof(logBuf)), "httpHeaderToLog");
+        TEST_RESULT_Z(logBuf, "{content-length: '66', host: 'account.blob.core.usgovcloudapi.net'}", "check headers");
         TEST_RESULT_STR_Z(httpQueryRenderP(query), "a=b&sig=key", "check query");
     }
 
@@ -448,9 +457,11 @@ testRun(void)
     {
         HRN_FORK_BEGIN()
         {
+            const unsigned int testPort = hrnServerPortNext();
+
             HRN_FORK_CHILD_BEGIN(.prefix = "azure server", .timeout = 5000)
             {
-                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls), "azure server run");
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls, testPort), "azure server");
             }
             HRN_FORK_CHILD_END();
 
@@ -466,10 +477,12 @@ testRun(void)
                 hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
                 hrnCfgArgRawZ(argList, cfgOptRepoPath, "/");
                 hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
-                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "https://%s:%u", strZ(hrnServerHost()), hrnServerPort(0));
+                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "https://%s:%u", strZ(hrnServerHost()), testPort);
                 hrnCfgArgRawBool(argList, cfgOptRepoStorageVerifyTls, TEST_IN_CONTAINER);
                 hrnCfgEnvRawZ(cfgOptRepoAzureAccount, TEST_ACCOUNT);
                 hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SHARED);
+                hrnCfgArgRawZ(argList, cfgOptRepoStorageTag, "Key1=Value1");
+                hrnCfgArgRawZ(argList, cfgOptRepoStorageTag, " Key 2= Value 2");
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
                 Storage *storage = NULL;
@@ -543,7 +556,7 @@ testRun(void)
                     "content-length: 0\n"
                     "date: <redacted>\n"
                     "host: %s\n"
-                    "x-ms-version: 2019-02-02\n"
+                    "x-ms-version: 2019-12-12\n"
                     "*** Response Headers ***:\n"
                     "content-length: 7\n"
                     "*** Response Content ***:\n"
@@ -553,7 +566,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write error");
 
-                testRequestP(service, HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "ABCD");
+                testRequestP(
+                    service, HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "ABCD",
+                    .tag = "%20Key%202=%20Value%202&Key1=Value1");
                 testResponseP(service, .code = 403);
 
                 TEST_ERROR_FMT(
@@ -568,15 +583,20 @@ testRun(void)
                     "date: <redacted>\n"
                     "host: %s\n"
                     "x-ms-blob-type: BlockBlob\n"
-                    "x-ms-version: 2019-02-02",
+                    "x-ms-tags: %%20Key%%202=%%20Value%%202&Key1=Value1\n"
+                    "x-ms-version: 2019-12-12",
                     strZ(hrnServerHost()));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write file in one part (with retry)");
 
-                testRequestP(service, HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "ABCD");
+                testRequestP(
+                    service, HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "ABCD",
+                    .tag = "%20Key%202=%20Value%202&Key1=Value1");
                 testResponseP(service, .code = 503);
-                testRequestP(service, HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "ABCD");
+                testRequestP(
+                    service, HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "ABCD",
+                    .tag = "%20Key%202=%20Value%202&Key1=Value1");
                 testResponseP(service);
 
                 StorageWrite *write = NULL;
@@ -597,7 +617,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write zero-length file");
 
-                testRequestP(service, HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "");
+                testRequestP(
+                    service, HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "",
+                    .tag = "%20Key%202=%20Value%202&Key1=Value1");
                 testResponseP(service);
 
                 TEST_ASSIGN(write, storageNewWriteP(storage, STRDEF("file.txt")), "new write");
@@ -621,7 +643,8 @@ testRun(void)
                         "<BlockList>"
                         "<Uncommitted>0AAAAAAACCCCCCCCx0000000</Uncommitted>"
                         "<Uncommitted>0AAAAAAACCCCCCCCx0000001</Uncommitted>"
-                        "</BlockList>\n");
+                        "</BlockList>\n",
+                    .tag = "%20Key%202=%20Value%202&Key1=Value1");
                 testResponseP(service);
 
                 // Test needs a predictable file id
@@ -632,6 +655,9 @@ testRun(void)
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write file in chunks with something left over on close");
+
+                // Stop writing tags
+                driver->tag = NULL;
 
                 testRequestP(
                     service, HTTP_VERB_PUT, "/file.txt?blockid=0AAAAAAACCCCCCCDx0000000&comp=block", .content = "1234567890123456");

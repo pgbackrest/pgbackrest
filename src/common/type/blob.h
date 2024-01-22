@@ -17,7 +17,7 @@ memory requirements for large numbers of zero-terminated strings.
 Size of blocks allocated for blob data
 ***********************************************************************************************************************************/
 #ifndef BLOB_BLOCK_SIZE
-    #define BLOB_BLOCK_SIZE                                         (64 * 1024)
+#define BLOB_BLOCK_SIZE                                             (64 * 1024)
 #endif
 
 /***********************************************************************************************************************************
@@ -53,6 +53,6 @@ Macros for function logging
 #define FUNCTION_LOG_BLOB_TYPE                                                                                                     \
     Blob *
 #define FUNCTION_LOG_BLOB_FORMAT(value, buffer, bufferSize)                                                                        \
-    objToLog(value, "Blob", buffer, bufferSize)
+    objNameToLog(value, "Blob", buffer, bufferSize)
 
 #endif

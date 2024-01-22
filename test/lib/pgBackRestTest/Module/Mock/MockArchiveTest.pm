@@ -300,8 +300,7 @@ sub run
 
         $oHostDbPrimary->executeSimple($strCommandPush . " ${strWalPath}/${strSourceFile}", {iExpectedExitStatus => ERROR_STOP});
 
-        $oHostDbPrimary->executeSimple(
-            $strCommandGet . " ${strSourceFile1} ${strWalPath}/RECOVERYXLOG", {iExpectedExitStatus => ERROR_STOP});
+        $oHostDbPrimary->executeSimple($strCommandGet . " ${strSourceFile1} ${strWalPath}/RECOVERYXLOG");
 
         $oHostDbPrimary->start({strStanza => $oHostDbPrimary->stanza()});
 

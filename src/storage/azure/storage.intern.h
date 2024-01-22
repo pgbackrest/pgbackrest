@@ -16,11 +16,11 @@ typedef struct StorageAzure StorageAzure;
 Azure query tokens
 ***********************************************************************************************************************************/
 #define AZURE_QUERY_COMP                                            "comp"
-    STRING_DECLARE(AZURE_QUERY_COMP_STR);
+STRING_DECLARE(AZURE_QUERY_COMP_STR);
 #define AZURE_QUERY_RESTYPE                                         "restype"
-    STRING_DECLARE(AZURE_QUERY_RESTYPE_STR);
+STRING_DECLARE(AZURE_QUERY_RESTYPE_STR);
 #define AZURE_QUERY_VALUE_CONTAINER                                 "container"
-    STRING_DECLARE(AZURE_QUERY_VALUE_CONTAINER_STR);
+STRING_DECLARE(AZURE_QUERY_VALUE_CONTAINER_STR);
 
 /***********************************************************************************************************************************
 Perform an Azure Request
@@ -33,6 +33,7 @@ typedef struct StorageAzureRequestAsyncParam
     const HttpHeader *header;                                       // Request headers
     const HttpQuery *query;                                         // Query parameters
     const Buffer *content;                                          // Request content
+    bool tag;                                                       // Add tags when available?
 } StorageAzureRequestAsyncParam;
 
 #define storageAzureRequestAsyncP(this, verb, ...)                                                                                 \
@@ -62,6 +63,7 @@ typedef struct StorageAzureRequestParam
     const Buffer *content;                                          // Request content
     bool allowMissing;                                              // Allow missing files (caller can check response code)
     bool contentIo;                                                 // Is IoRead interface required to read content?
+    bool tag;                                                       // Add tags when available?
 } StorageAzureRequestParam;
 
 #define storageAzureRequestP(this, verb, ...)                                                                                      \
@@ -75,6 +77,6 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_AZURE_TYPE                                                                                            \
     StorageAzure *
 #define FUNCTION_LOG_STORAGE_AZURE_FORMAT(value, buffer, bufferSize)                                                               \
-    objToLog(value, "StorageAzure", buffer, bufferSize)
+    objNameToLog(value, "StorageAzure", buffer, bufferSize)
 
 #endif

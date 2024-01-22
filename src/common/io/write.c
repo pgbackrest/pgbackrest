@@ -29,7 +29,7 @@ struct IoWrite
 
 /**********************************************************************************************************************************/
 FN_EXTERN IoWrite *
-ioWriteNew(void *driver, IoWriteInterface interface)
+ioWriteNew(void *const driver, const IoWriteInterface interface)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM_P(VOID, driver);
@@ -39,20 +39,15 @@ ioWriteNew(void *driver, IoWriteInterface interface)
     ASSERT(driver != NULL);
     ASSERT(interface.write != NULL);
 
-    IoWrite *this = NULL;
-
     OBJ_NEW_BEGIN(IoWrite, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (IoWrite)
         {
             .pub =
             {
-                .memContext = memContextCurrent(),
                 .filterGroup = ioFilterGroupNew(),
             },
-            .driver = driver,
+            .driver = objMoveToInterface(driver, this, memContextPrior()),
             .interface = interface,
             .output = bufNew(ioBufferSize()),
         };
@@ -196,9 +191,6 @@ ioWriteStrLine(IoWrite *this, const String *string)
 }
 
 /**********************************************************************************************************************************/
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-function"
-
 FN_EXTERN void
 ioWriteVarIntU64(IoWrite *const this, const uint64_t value)
 {
@@ -217,8 +209,6 @@ ioWriteVarIntU64(IoWrite *const this, const uint64_t value)
 
     FUNCTION_LOG_RETURN_VOID();
 }
-
-#pragma GCC diagnostic pop
 
 /**********************************************************************************************************************************/
 FN_EXTERN void

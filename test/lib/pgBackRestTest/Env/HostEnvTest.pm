@@ -70,6 +70,10 @@ sub setup
     {
         $oHostObject = new pgBackRestTest::Env::Host::HostGcsTest();
     }
+    elsif ($oConfigParam->{strStorage} eq SFTP)
+    {
+        $oHostObject = new pgBackRestTest::Env::Host::HostSftpTest();
+    }
 
     # Get host group
     my $oHostGroup = hostGroupGet();
@@ -132,7 +136,7 @@ sub setup
     {
         $oHostGroup->hostAdd($oHostObject, {rstryHostName => ['pgbackrest-dev.s3.amazonaws.com', 's3.amazonaws.com']});
     }
-    elsif ($oConfigParam->{strStorage} eq AZURE || $oConfigParam->{strStorage} eq GCS)
+    elsif ($oConfigParam->{strStorage} eq AZURE || $oConfigParam->{strStorage} eq GCS || $oConfigParam->{strStorage} eq SFTP)
     {
         $oHostGroup->hostAdd($oHostObject);
     }
@@ -146,7 +150,8 @@ sub setup
         bArchiveAsync => $$oConfigParam{bArchiveAsync},
         strStorage => $oConfigParam->{strStorage},
         iRepoTotal => $oConfigParam->{iRepoTotal},
-        bBundle => $oConfigParam->{bBundle}});
+        bBundle => $oConfigParam->{bBundle},
+        bBlockIncr => $oConfigParam->{bBlockIncr}});
 
     # Create backup config if backup host exists
     if (defined($oHostBackup))
@@ -157,12 +162,14 @@ sub setup
             bHardlink => $$oConfigParam{bHardLink},
             strStorage => $oConfigParam->{strStorage},
             iRepoTotal => $oConfigParam->{iRepoTotal},
-            bBundle => $oConfigParam->{bBundle}});
+            bBundle => $oConfigParam->{bBundle},
+            bBlockIncr => $oConfigParam->{bBlockIncr}});
     }
     # If backup host is not defined set it to db-primary
     else
     {
-        $oHostBackup = $strBackupDestination eq HOST_DB_PRIMARY ? $oHostDbPrimary : $oHostDbStandby;
+        $oHostBackup = $strBackupDestination eq HOST_DB_PRIMARY || $strBackupDestination eq HOST_SFTP ? $oHostDbPrimary :
+            $oHostDbStandby;
     }
 
     storageRepoCommandSet(
@@ -170,7 +177,8 @@ sub setup
             ' --config=' . $oHostBackup->backrestConfig() . ' --stanza=' . $self->stanza() . ' --log-level-console=off' .
             ' --log-level-stderr=error' .
             ($oConfigParam->{strStorage} ne POSIX ?
-                " --no-repo1-storage-verify-tls --repo1-$oConfigParam->{strStorage}-" .
+                ($oConfigParam->{strStorage} ne SFTP ? " --no-repo1-storage-verify-tls" : '') .
+                " --repo1-$oConfigParam->{strStorage}-" .
                 ($oConfigParam->{strStorage} eq GCS ? 'endpoint' : 'host') . "=" . $oHostObject->ipGet() : '') .
                 ($oConfigParam->{strStorage} eq GCS ? ':' . HOST_GCS_PORT : ''),
         $oConfigParam->{strStorage} eq POSIX ? STORAGE_POSIX : STORAGE_OBJECT);
@@ -186,7 +194,8 @@ sub setup
             bArchiveAsync => $$oConfigParam{bArchiveAsync},
             strStorage => $oConfigParam->{strStorage},
             iRepoTotal => $oConfigParam->{iRepoTotal},
-            bBundle => $oConfigParam->{bBundle}});
+            bBundle => $oConfigParam->{bBundle},
+            bBlockIncr => $oConfigParam->{bBlockIncr}});
     }
 
     # Create object storage
@@ -241,7 +250,6 @@ sub dbCatalogVersion
 
     my $hCatalogVersion =
     {
-        &PG_VERSION_93 => 201306121,
         &PG_VERSION_94 => 201409291,
         &PG_VERSION_95 => 201510051,
         &PG_VERSION_96 => 201608131,
@@ -251,6 +259,7 @@ sub dbCatalogVersion
         &PG_VERSION_13 => 202007201,
         &PG_VERSION_14 => 202105121,
         &PG_VERSION_15 => 202209061,
+        &PG_VERSION_16 => 202307071,
     };
 
     if (!defined($hCatalogVersion->{$strPgVersion}))
@@ -259,47 +268,6 @@ sub dbCatalogVersion
     }
 
     return $hCatalogVersion->{$strPgVersion};
-}
-
-####################################################################################################################################
-# Get database control version for the db version
-####################################################################################################################################
-sub dbControlVersion
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strPgVersion,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->dbControlVersion', \@_,
-            {name => 'strPgVersion', trace => true},
-        );
-
-    my $hControlVersion =
-    {
-        &PG_VERSION_93 => 937,
-        &PG_VERSION_94 => 942,
-        &PG_VERSION_95 => 942,
-        &PG_VERSION_96 => 960,
-        &PG_VERSION_10 => 1002,
-        &PG_VERSION_11 => 1100,
-        &PG_VERSION_12 => 1201,
-        &PG_VERSION_13 => 1300,
-        &PG_VERSION_14 => 1300,
-        &PG_VERSION_15 => 1300,
-    };
-
-    if (!defined($hControlVersion->{$strPgVersion}))
-    {
-        confess &log(ASSERT, "no control version defined for pg version ${strPgVersion}");
-    }
-
-    return $hControlVersion->{$strPgVersion};
 }
 
 ####################################################################################################################################
@@ -321,48 +289,86 @@ sub controlGenerateContent
             {name => 'strPgVersion', trace => true},
         );
 
-    my $tControlContent = pack('Q', $self->dbSysId($strPgVersion));
-    $tControlContent .= pack('L', $self->dbControlVersion($strPgVersion));
-    $tControlContent .= pack('L', $self->dbCatalogVersion($strPgVersion));
-
-    # Offset to page size by architecture bits and version
-    my $rhOffsetToPageSize =
+    my $hControlContent =
     {
         32 =>
         {
-            '9.3' => 180 - length($tControlContent),
-            '9.4' => 188 - length($tControlContent),
-            '9.5' => 200 - length($tControlContent),
-            '9.6' => 200 - length($tControlContent),
-             '10' => 200 - length($tControlContent),
-             '11' => 192 - length($tControlContent),
-             '12' => 196 - length($tControlContent),
-             '13' => 196 - length($tControlContent),
+            &PG_VERSION_94 =>
+                "5e0064a7b3b6e00dae0300000b43010c00000000000000000000000001000000000000000000000000000000000000000000000001000000" .
+                "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" .
+                "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" .
+                "0000000000000000000000000000000000000000002000000000000000000000000000010000000000000000000000000000000000000000" .
+                "000000006b0756c8",
+            &PG_VERSION_95 =>
+                "5f0064a7b3b6e00dae030000a3cc020c00000000000000000000000001000000000000000000000000000000000000000000000001000000" .
+                "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" .
+                "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" .
+                "0000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000010000000000000000" .
+                "000000000000000000000000000000003bfe413a",
+            &PG_VERSION_96 =>
+                "600064a7b3b6e00dc0030000c34b040c00000000000000000000000001000000000000000000000000000000000000000000000001000000" .
+                "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" .
+                "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" .
+                "0000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000010000000000000000" .
+                "000000000000000000000000000000005d135da6",
+            &PG_VERSION_10 =>
+                "640064a7b3b6e00dea030000cbce050c00000000000000000000000001000000000000000000000000000000000000000000000001000000" .
+                "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" .
+                "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" .
+                "0000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000010000000000000000" .
+                "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f8556c34",
         },
-
         64 =>
         {
-            '9.3' => 192 - length($tControlContent),
-            '9.4' => 200 - length($tControlContent),
-            '9.5' => 216 - length($tControlContent),
-            '9.6' => 216 - length($tControlContent),
-             '10' => 216 - length($tControlContent),
-             '11' => 208 - length($tControlContent),
-             '12' => 212 - length($tControlContent),
-             '13' => 212 - length($tControlContent),
+            &PG_VERSION_94 =>
+                "5e0064a7b3b6e00dae0300000b43010c00000000000000000000000000000000010000000000000000000000000000000000000000000000" .
+                "0100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" .
+                "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" .
+                "0000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000010000000000000000" .
+                "00000000000000000000000000000000ee6cf996",
+            &PG_VERSION_95 =>
+                "5f0064a7b3b6e00dae030000a3cc020c00000000000000000000000000000000010000000000000000000000000000000000000000000000" .
+                "0100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" .
+                "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" .
+                "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020000000000000" .
+                "0000000000000001000000000000000000000000000000000000000000000000381ec2de",
+            &PG_VERSION_96 =>
+                "600064a7b3b6e00dc0030000c34b040c00000000000000000000000000000000010000000000000000000000000000000000000000000000" .
+                "0100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" .
+                "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" .
+                "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020000000000000" .
+                "00000000000000010000000000000000000000000000000000000000000000002d96a4c0",
+            &PG_VERSION_10 =>
+                "640064a7b3b6e00dea030000cbce050c00000000000000000000000000000000010000000000000000000000000000000000000000000000" .
+                "0100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" .
+                "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" .
+                "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020000000000000" .
+                "0000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" .
+                "00000000000000008d543cdf",
         },
     };
 
-    # Fill up to page size and set page size
-    $tControlContent .= ('C' x $rhOffsetToPageSize->{$self->archBits()}{$strPgVersion});
-    $tControlContent .= pack('L', 8192);
+    my $strControlContent = $hControlContent->{$self->archBits()}{$strPgVersion};
 
-    # Fill up to wal segment size and set wal segment size
-    $tControlContent .= ('C' x 8);
-    $tControlContent .= pack('L', 16 * 1024 * 1024);
+    if (!defined($strControlContent))
+    {
+        confess &log(ASSERT, "no control content defined for pg version ${strPgVersion}");
+    }
+
+    my $tControlContent = '';
+
+    for (my $iIdx = 0; $iIdx < length($strControlContent) / 2; $iIdx++)
+    {
+        my $iChar = hex(substr($strControlContent, $iIdx * 2, 2));
+        $tControlContent .= pack('C', $iChar);
+    }
+
 
     # Pad bytes
-    $tControlContent .= ('C' x (8192 - length($tControlContent)));
+    for (my $iIdx = length($tControlContent); $iIdx < 8192; $iIdx++)
+    {
+        $tControlContent .= pack('C', 0);
+    }
 
     return \$tControlContent;
 }
@@ -430,7 +436,6 @@ sub walGenerateContent
     # Get WAL magic for the PG version
     my $hWalMagic =
     {
-        &PG_VERSION_93 => hex('0xD075'),
         &PG_VERSION_94 => hex('0xD07E'),
         &PG_VERSION_95 => hex('0xD087'),
         &PG_VERSION_96 => hex('0xD093'),
@@ -446,7 +451,7 @@ sub walGenerateContent
     $tWalContent .= pack('S', 2);
 
     # Add junk (H for header) for the bytes that won't be read by the tests
-    my $iOffset = 12 + ($strPgVersion >= PG_VERSION_93 ? testRunGet()->archBits() / 8 : 0);
+    my $iOffset = 12 + (testRunGet()->archBits() / 8);
     $tWalContent .= ('H' x $iOffset);
 
     # Add the system identifier

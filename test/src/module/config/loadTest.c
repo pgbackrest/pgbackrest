@@ -118,6 +118,27 @@ testRun(void)
             "local repo1 and repo2 paths are both '/var/lib/pgbackrest' but must be different");
 
         // -------------------------------------------------------------------------------------------------------------------------
+#ifdef HAVE_LIBSSH2
+        TEST_TITLE("local default repo paths for sftp repo type must be different");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoType, 1, STORAGE_SFTP_TYPE);
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoType, 2, STORAGE_SFTP_TYPE);
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpHostUser, 1, "user1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpHostUser, 2, "user2");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpHost, 1, "host1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpHost, 2, "host2");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpHostKeyHashType, 1, "sha1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpHostKeyHashType, 2, "md5");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpPrivateKeyFile, 1, "/keyfile1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpPrivateKeyFile, 2, "/keyfile2");
+        TEST_ERROR(
+            hrnCfgLoadP(cfgCmdInfo, argList), OptionInvalidValueError,
+            "local repo1 and repo2 paths are both '/var/lib/pgbackrest' but must be different");
+#endif // HAVE_LIBSSH2
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("local repo paths same but types different");
 
         argList = strLstNew();
@@ -218,7 +239,7 @@ testRun(void)
         TEST_ERROR(
             hrnCfgLoadP(cfgCmdCheck, argList), OptionInvalidValueError,
             "'50.5' is not valid for 'protocol-timeout' option\n"
-                "HINT 'protocol-timeout' option (50.5) should be greater than 'db-timeout' option (100000).");
+            "HINT 'protocol-timeout' option (50.5) should be greater than 'db-timeout' option (100000).");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("very small protocol-timeout triggers db-timeout special handling");
@@ -280,9 +301,9 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdExpire, argList, .comment = "load config for retention warning");
         TEST_RESULT_LOG(
             "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out"
-                " of space\n"
+            " of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the"
-                " maximum.");
+            " maximum.");
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptRepoRetentionArchive), false, "repo1-retention-archive not set");
 
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
@@ -296,9 +317,9 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdExpire, argList, .comment = "multi-repo, load config for retention warning");
         TEST_RESULT_LOG(
             "P00   WARN: option 'repo2-retention-full' is not set for 'repo2-retention-full-type=count', the repository may run out"
-                " of space\n"
+            " of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option 'repo2-retention-full' to the"
-                " maximum.");
+            " maximum.");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-full warning, retention-archive-type incr - expire command");
@@ -311,11 +332,11 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out"
-                " of space\n"
+            " of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the"
-                " maximum.\n"
+            " maximum.\n"
             "P00   WARN: WAL segments will not be expired: option 'repo1-retention-archive-type=incr' but option"
-                " 'repo1-retention-archive' is not set");
+            " 'repo1-retention-archive' is not set");
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptRepoRetentionArchive), false, "repo1-retention-archive not set");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -329,11 +350,11 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out"
-                " of space\n"
+            " of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the"
-                " maximum.\n"
+            " maximum.\n"
             "P00   WARN: WAL segments will not be expired: option 'repo1-retention-archive-type=diff' but neither option"
-                " 'repo1-retention-archive' nor option 'repo1-retention-diff' is set");
+            " 'repo1-retention-archive' nor option 'repo1-retention-diff' is set");
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptRepoRetentionArchive), false, "repo1-retention-archive not set");
 
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionDiff, "2");
@@ -341,9 +362,9 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out"
-                " of space\n"
+            " of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the"
-                " maximum.");
+            " maximum.");
         TEST_RESULT_INT(cfgOptionInt(cfgOptRepoRetentionArchive), 2, "repo1-retention-archive set to retention-diff");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -360,7 +381,7 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   WARN: option 'repo1-retention-diff' is not set for 'repo1-retention-archive-type=diff'\n"
             "            HINT: to retain differential backups indefinitely (without warning), set option 'repo1-retention-diff'"
-                " to the maximum.");
+            " to the maximum.");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("no warning - expire command");
@@ -445,10 +466,10 @@ testRun(void)
 
         TEST_ERROR(
             hrnCfgLoadP(cfgCmdArchiveGet, argList), OptionInvalidValueError,
-            "'bogus.bucket' is not valid for option 'repo111-s3-bucket'"
-                "\nHINT: RFC-2818 forbids dots in wildcard matches."
-                "\nHINT: TLS/SSL verification cannot proceed with this bucket name."
-                "\nHINT: remove dots from the bucket name.");
+            "'bogus.bucket' is not valid for option 'repo111-s3-bucket'\n"
+            "HINT: RFC-2818 forbids dots in wildcard matches.\n"
+            "HINT: TLS/SSL verification cannot proceed with this bucket name.\n"
+            "HINT: remove dots from the bucket name.");
 
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3Key, 111);
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3KeySecret, 111);
@@ -621,6 +642,104 @@ testRun(void)
 
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoAzureAccount, 1);
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoAzureKey, 1);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+#ifdef HAVE_LIBSSH2
+        TEST_TITLE("error on missing SFTP fingerprint");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 1, "sftp");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostUser, TEST_USER);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, "/privatekey");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyCheckType, "fingerprint");
+
+        TEST_ERROR(
+            hrnCfgLoadP(cfgCmdArchivePush, argList), OptionRequiredError,
+            "archive-push command requires option: repo1-sftp-host-fingerprint");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("success on SFTP fingerprint not needed");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 1, "sftp");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostUser, TEST_USER);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, "/privatekey");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyCheckType, "accept-new");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on incorrect SFTP fingerprint check type");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 1, "sftp");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostUser, TEST_USER);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, "/privatekey");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostFingerprint, "xxx");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyCheckType, "strict");
+
+        TEST_ERROR(
+            hrnCfgLoadP(cfgCmdArchivePush, argList), OptionInvalidError,
+            "option 'repo1-sftp-host-fingerprint' not valid without option 'repo1-sftp-host-key-check-type' = 'fingerprint'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("warn on default SFTP fingerprint check type");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 1, "sftp");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostUser, TEST_USER);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, "/privatekey");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostFingerprint, "xxx");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        TEST_RESULT_LOG(
+            "P00   WARN: option 'repo1-sftp-host-fingerprint' without option 'repo1-sftp-host-key-check-type' = 'fingerprint' is"
+            " deprecated\n"
+            "            HINT: set option 'repo1-sftp-host-key-check-type=fingerprint'");
+
+        TEST_RESULT_UINT(
+            cfgOptionIdxStrId(cfgOptRepoSftpHostKeyCheckType, 0), CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_FINGERPRINT,
+            "check type updated");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("success on correct SFTP fingerprint check type");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 1, "sftp");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostUser, TEST_USER);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, "/privatekey");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostFingerprint, "xxx");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyCheckType, "fingerprint");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        TEST_RESULT_UINT(
+            cfgOptionIdxStrId(cfgOptRepoSftpHostKeyCheckType, 0), CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_FINGERPRINT,
+            "check type");
+#endif // HAVE_LIBSSH2
     }
 
     // *****************************************************************************************************************************
@@ -687,6 +806,12 @@ testRun(void)
         TEST_RESULT_BOOL(socketLocal.keepAlive, false, "check socketLocal.keepAlive");
         TEST_RESULT_UINT(ioTimeoutMs(), 60000, "check io timeout");
 
+        String *execId = strDup(cfgOptionStr(cfgOptExecId));
+
+        TEST_RESULT_VOID(cfgLoadStanza(STRDEF("test1")), "load config with stanza");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptStanza), "test1", "check stanza");
+        TEST_RESULT_STR(cfgOptionStr(cfgOptExecId), execId, "check execId");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("umask is reset, neutral-umask=y");
 
@@ -705,7 +830,6 @@ testRun(void)
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for neutral-umask");
         TEST_RESULT_INT(umask(0111), 0000, "umask was reset");
         TEST_RESULT_UINT(ioTimeoutMs(), 95500, "check io timeout");
-
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("umask is reset, neutral-umask=n");
@@ -732,7 +856,6 @@ testRun(void)
         strLstAddZ(argList, PROJECT_BIN);
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "no command");
-
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("help command only");
@@ -761,6 +884,17 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "2");
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "help command for backup");
+        TEST_RESULT_UINT(ioBufferSize(), 1048576, "buffer size set to option default");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("help command for help");
+
+        argList = strLstNew();
+        strLstAddZ(argList, PROJECT_BIN);
+        strLstAddZ(argList, "help");
+        strLstAddZ(argList, "help");
+
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config");
         TEST_RESULT_UINT(ioBufferSize(), 1048576, "buffer size set to option default");
 
         // -------------------------------------------------------------------------------------------------------------------------

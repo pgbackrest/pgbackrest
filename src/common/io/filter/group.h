@@ -1,11 +1,11 @@
 /***********************************************************************************************************************************
 IO Filter Group
 
-Process data through an arbitrary group of filters in the order added by the user using ioFilterGroupAdd().  After processing
-results can be gathered using ioFilterGroupResult() for any filters that produce results.
+Process data through an arbitrary group of filters in the order added by the user using ioFilterGroupAdd(). After processing results
+can be gathered using ioFilterGroupResult() for any filters that produce results.
 
-Processing is complex and asymmetric for read/write so should be done via the IoRead and IoWrite objects.  General users need
-only call ioFilterGroupNew(), ioFilterGroupAdd(), and ioFilterGroupResult().
+Processing is complex and asymmetric for read/write so should be done via the IoRead and IoWrite objects. General users need only
+call ioFilterGroupNew(), ioFilterGroupAdd(), and ioFilterGroupResult().
 ***********************************************************************************************************************************/
 #ifndef COMMON_IO_FILTER_GROUP_H
 #define COMMON_IO_FILTER_GROUP_H
@@ -122,11 +122,11 @@ ioFilterGroupFree(IoFilterGroup *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *ioFilterGroupToLog(const IoFilterGroup *this);
+FN_EXTERN void ioFilterGroupToLog(const IoFilterGroup *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_IO_FILTER_GROUP_TYPE                                                                                          \
     IoFilterGroup *
 #define FUNCTION_LOG_IO_FILTER_GROUP_FORMAT(value, buffer, bufferSize)                                                             \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, ioFilterGroupToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, ioFilterGroupToLog, buffer, bufferSize)
 
 #endif

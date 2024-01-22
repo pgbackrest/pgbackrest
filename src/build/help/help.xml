@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE doc SYSTEM "doc.dtd">
 <doc title="{[project]} Command &amp; Configuration Reference">
-    <config title="{[project]} Configuration Reference">
+    <config title="Configuration Reference">
         <description>The {[project]} Configuration Reference details all configuration options.</description>
 
         <text>
@@ -151,6 +151,16 @@
                 </text>
 
                 <config-key-list>
+                    <config-key id="beta" name="Allow Beta Features">
+                        <summary>Allow beta features.</summary>
+
+                        <text>
+                            <p>Allow beta features to be enabled but do not actually enable them. Beta features need to be separately enabled using related options.</p>
+                        </text>
+
+                        <example>2MiB</example>
+                    </config-key>
+
                     <config-key id="buffer-size" name="Buffer Size">
                         <summary>Buffer size for I/O operations.</summary>
 
@@ -239,7 +249,7 @@
                         <summary>Network compression level.</summary>
 
                         <text>
-                            <p>Sets the network compression level when <setting>compress-type=none</setting> and the command is not run on the same host as the repository. Compression is used to reduce network traffic but can be disabled by setting <setting>compress-level-network=0</setting>. When <setting>compress-type</setting> does not equal <id>none</id> the <setting>compress-level-network</setting> setting is ignored and <setting>compress-level</setting> is used instead so that the file is only compressed once. SSH compression is always disabled.</p>
+                            <p>Sets the network compression level when <setting>compress-type=none</setting> and the command is not run on the same host as the repository. Compression is used to reduce network traffic but can be disabled by setting <setting>compress-level-network=0</setting>. When <setting>compress-type</setting> does not equal <id>none</id> the <setting>compress-level-network</setting> setting is ignored and <setting>compress-level</setting> is used instead so that the file is only compressed once.</p>
                         </text>
 
                         <allow>0-9</allow>
@@ -422,6 +432,54 @@
                 </config-key-list>
             </config-section>
 
+            <config-section id="maintainer" name="Maintainer">
+                <text>
+                    <p>Maintainer options are intended to support <postgres/> forks. The proper settings should be determined by the fork maintainer and then communicated to users of the fork.</p>
+
+                    <admonition type="warning">Improper use of these options may lead to unexpected behavior or data corruption.</admonition>
+
+                    <p>It is the responsibility of the fork maintainer to test <backrest/> with the required options. <backrest/> does not guarantee compatibility with any fork.</p>
+                </text>
+
+                <config-key-list>
+                    <config-key id="archive-header-check" name="Check WAL Headers">
+                        <summary>Check PostgreSQL version/id in WAL headers.</summary>
+
+                        <text>
+                            <p>Enabled by default, this option checks the WAL header against the <postgres/> version and system identifier to ensure that the WAL is being copied to the correct stanza. This is in addition to checking <file>pg_control</file> against the stanza and verifying that WAL is being copied from the same <postgres/> data directory where <file>pg_control</file> is located.</p>
+
+                            <p>Therefore, disabling this check is fairly safe but should only be done when needed, e.g. if the WAL is encrypted.</p>
+                        </text>
+
+                        <example>n</example>
+                    </config-key>
+
+                    <config-key id="page-header-check" name="Page Header Check">
+                        <summary>Check PostgreSQL page headers.</summary>
+
+                        <text>
+                            <p>Enabled by default, this option adds page header checks.</p>
+
+                            <p>Disabling this option should be avoided except when necessary, e.g. if pages are encrypted.</p>
+                        </text>
+
+                        <example>n</example>
+                    </config-key>
+
+                    <config-key id="pg-version-force" name="Force PostgreSQL Version">
+                        <summary>Force <postgres/> version.</summary>
+
+                        <text>
+                            <p>The specified <postgres/> version will be used instead of the version automatically detected by reading <file>pg_control</file> or WAL headers. This is mainly useful for <postgres/> forks or development versions where those values are different from the release version. The version reported by <postgres/> via `server_version_num` must match the forced version.</p>
+
+                            <admonition type="warning">Be cautious when using this option because <file>pg_control</file> and WAL headers will still be read with the expected format for the specified version, i.e. the format from the official open-source version of <postgres/>. If the fork or development version changes the format of the fields that <backrest/> depends on it will lead to unexpected behavior. In general, this option will only work as expected if the fork adds all custom struct members <i>after</i> the standard <postgres/> members.</admonition>
+                        </text>
+
+                        <example>15</example>
+                    </config-key>
+                </config-key-list>
+            </config-section>
+
             <config-section id="repository" name="Repository">
                 <text>
                     <p>The <setting>repository</setting> section defines options used to configure the repository.</p>
@@ -506,6 +564,75 @@
                         <example>path</example>
                     </config-key>
 
+                    <config-key id="repo-block" name="Block Incremental Backup">
+                        <summary>Enable block incremental backup.</summary>
+
+                        <text>
+                            <p>Block incremental allows for more granular backups by splitting files into blocks that can be backed up independently. This saves space in the repository and can improve delta restore performance because individual blocks can be fetched without reading the entire file from the repository.</p>
+
+                            <admonition type="note">The <br-option>repo-bundle</br-option> option must be enabled before <br-option>repo-block</br-option> can be enabled.</admonition>
+
+                            <p>The block size for a file is determined based on the file size and age. Generally, older/larger files will get larger block sizes. If a file is old enough, it will not be backed up using block incremental.</p>
+
+                            <p>Block incremental is most efficient when enabled for all backup types, including full. This makes the full a bit larger but subsequent differential and incremental backups can make use of the block maps generated by the full backup to save space.</p>
+                       </text>
+
+                        <example>y</example>
+                    </config-key>
+
+                    <config-key id="repo-block-age-map" name="Block Incremental Age Map">
+                        <summary>Block incremental age map.</summary>
+
+                        <text>
+                            <p>Map file age (in days) to a block multiplier. Files that have not been modified recently are less likely to be modified in the future, so the block size is multiplied to reduce the map size. By default, if the file is old enough it will not be stored as a block incremental.</p>
+                       </text>
+
+                        <example>7=2</example>
+                        <example>14=4</example>
+                    </config-key>
+
+                    <config-key id="repo-block-checksum-size-map" name="Block Incremental Checksum Size Map">
+                        <summary>Block incremental checksum size map.</summary>
+
+                        <text>
+                            <p>Map block size to checksum size. Smaller checksums save space in the map but may not be able to reliably detect changes in the block.</p>
+                       </text>
+
+                        <example>32KiB=7</example>
+                        <example>128KiB=8</example>
+                    </config-key>
+
+                    <config-key id="repo-block-size-map" name="Block Incremental Size Map">
+                        <summary>Block incremental size map.</summary>
+
+                        <text>
+                            <p>Map file size to block size. Block size is the minimum unit that will be stored in the block incremental. Smaller sizes allow for more granular incremental backups but larger sizes mean smaller maps.</p>
+                       </text>
+
+                        <example>16KiB=8KiB</example>
+                        <example>128KiB=16KiB</example>
+                        <example>512KiB=32KiB</example>
+                    </config-key>
+
+                    <config-key id="repo-block-size-super" name="Block Incremental Super Block Size">
+                        <summary>Block incremental super block size.</summary>
+
+                        <text>
+                            <p>A super block contains multiple blocks to improve compression efficiency. The disadvantage is that block reads must read from the beginning of the super block.</p>
+                       </text>
+
+                        <example>2MiB</example>
+                    </config-key>
+
+                    <config-key id="repo-block-size-super-full" name="Block Incremental Full Super Block Size">
+                        <summary>Block incremental full super block size.</summary>
+
+                        <text>
+                            <p>Super block size for full backups. This is generally larger than <br-option>repo-block-size-super</br-option> because it is likely that many blocks will need to be restored from the full backup so the larger super block size is not a disadvantage.</p>
+                       </text>
+
+                        <example>8MiB</example>
+                    </config-key>
 
                     <config-key id="repo-bundle" name="Repository Bundles">
                         <summary>Bundle files in repository.</summary>
@@ -584,6 +711,8 @@
                                 <list-item><id>service</id> - Service account from locally stored key.</list-item>
                                 <list-item><id>token</id> - For local testing, e.g. <file>fakegcs</file>.</list-item>
                             </list>
+
+                            <p>When <br-option>repo-gcs-key-type=service</br-option> the credentials will be reloaded when the authentication token is renewed.</p>
                         </text>
 
                         <example>auto</example>
@@ -605,11 +734,9 @@
                     </config-key>
 
                     <config-key id="repo-host" name="Repository Host">
-                        <summary>Repository host when operating remotely via SSH.</summary>
+                        <summary>Repository host when operating remotely.</summary>
 
                         <text>
-                            <p>Make sure that trusted SSH authentication is configured between the <postgres/> host and the repository host.</p>
-
                             <p>When backing up and archiving to a locally mounted filesystem this setting is not required.</p>
                         </text>
 
@@ -711,7 +838,7 @@
                         <summary>Repository host port when <setting>repo-host</setting> is set.</summary>
 
                         <text>
-                            <p>Use this option to specify a non-default port for the repository host protocol. Currently only SSH is supported.</p>
+                            <p>Use this option to specify a non-default port for the repository host protocol.</p>
                         </text>
 
                         <example>25</example>
@@ -932,6 +1059,113 @@
                         <example>path</example>
                     </config-key>
 
+                    <config-key id="repo-sftp-host" name="SFTP Repository Host">
+                        <summary>SFTP repository host.</summary>
+
+                        <text>
+                            <p>The SFTP host containing the repository.</p>
+                        </text>
+
+                        <example>sftprepo.domain</example>
+                    </config-key>
+
+                    <config-key id="repo-sftp-host-fingerprint" name="SFTP Repository Host Fingerprint">
+                        <summary>SFTP repository host fingerprint.</summary>
+
+                        <text>
+                            <p>SFTP repository host fingerprint generation should match the <setting>repo-sftp-host-key-hash-type</setting>. Generate the fingerprint via <code>awk '{print $2}' ssh_host_xxx_key.pub | base64 -d | (md5sum or sha1sum) -b</code>. The ssh host keys are normally found in the <path>/etc/ssh</path> directory.</p>
+                        </text>
+
+                        <example>f84e172dfead7aeeeae6c1fdfb5aa8cf</example>
+                    </config-key>
+
+                    <config-key id="repo-sftp-host-key-check-type" name="SFTP Host Key Check Type">
+                        <summary>SFTP host key check type.</summary>
+
+                        <text>
+                            <p>The following SFTP host key check types are supported:</p>
+                            <list>
+                                <list-item><id>strict</id> - <backrest/> will never automatically add host keys to the ~/.ssh/known_hosts file, and refuses to connect to hosts whose host key has changed or is not found in the known hosts files. This option forces the user to manually add all new hosts.</list-item>
+                                <list-item><id>accept-new</id> - <backrest/> will automatically add new host keys to the user's known hosts file, but will not permit connections to hosts with changed host keys.</list-item>
+                                <list-item><id>fingerprint</id> - <backrest/> will check the host key against the fingerprint specified by the <br-option>repo-sftp-host-fingerprint</br-option> option.</list-item>
+                                <list-item><id>none</id> - no host key checking will be performed.</list-item>
+                            </list>
+                        </text>
+
+                        <default>yes</default>
+                        <example>accept-new</example>
+                    </config-key>
+
+                    <config-key id="repo-sftp-host-key-hash-type" name="SFTP Repository Host Key Hash Type">
+                        <summary>SFTP repository host key hash type.</summary>
+
+                        <text>
+                            <p>SFTP repository host key hash type. Declares the hash type to be used to compute the digest of the remote system's host key on SSH startup. Newer versions of <id>libssh2</id> support <id>sha256</id> in addition to md5 and sha1.</p>
+                        </text>
+
+                        <example>sha256</example>
+                    </config-key>
+
+                    <config-key id="repo-sftp-host-port" name="SFTP Repository Host Port">
+                        <summary>SFTP repository host port.</summary>
+
+                        <text>
+                            <p>SFTP repository host port.</p>
+                        </text>
+
+                        <example>22</example>
+                    </config-key>
+
+                    <config-key id="repo-sftp-host-user" name="SFTP Repository Host User">
+                        <summary>SFTP repository host user.</summary>
+
+                        <text>
+                            <p>User on the host used to store the repository.</p>
+                        </text>
+
+                        <example>pg-backup</example>
+                    </config-key>
+
+                    <config-key id="repo-sftp-known-host" name="SFTP Known Hosts File">
+                        <summary>SFTP known hosts file.</summary>
+
+                        <text>
+                            <p>A known hosts file to search for an SFTP host match during authentication. When unspecified, <backrest/> will default to searching <file>~/.ssh/known_hosts</file>, <file>~/.ssh/known_hosts2</file>, <file>/etc/ssh/ssh_known_hosts</file>, and <file>/etc/ssh/ssh_known_hosts2</file>. If configured with one or more file paths, <backrest/> will search those for a match. File paths must be full or leading tilde paths. The <setting>repo-sftp-known-host</setting> option can be passed multiple times to specify more than one known hosts file to search. To utilize known hosts file checking <setting>repo-sftp-host-fingerprint</setting> must not be specified. See also <setting>repo-sftp-host-check-type</setting> option.</p>
+                        </text>
+
+                        <example>/home/postgres/.ssh/known_hosts</example>
+                    </config-key>
+
+                    <config-key id="repo-sftp-private-key-file" name="SFTP Repository Private Key File">
+                        <summary>SFTP private key file.</summary>
+
+                        <text>
+                            <p>SFTP private key file used for authentication.</p>
+                        </text>
+
+                        <example>~/.ssh/id_ed25519</example>
+                    </config-key>
+
+                    <config-key id="repo-sftp-private-key-passphrase" name="SFTP Repository Private Key Passphrase">
+                        <summary>SFTP private key passphrase.</summary>
+
+                        <text>
+                            <p>Passphrase used to access the private key. This is an optional feature when creating an SSH public/private key pair.</p>
+                        </text>
+
+                        <example>BeSureToGenerateAndUseASecurePassphrase</example>
+                    </config-key>
+
+                    <config-key id="repo-sftp-public-key-file" name="SFTP Repository Public Key File">
+                        <summary>SFTP public key file.</summary>
+
+                        <text>
+                            <p>SFTP public key file used for authentication. Optional if compiled against OpenSSL, required if compiled against a different library.</p>
+                        </text>
+
+                        <example>~/.ssh/id_ed25519.pub</example>
+                    </config-key>
+
                     <config-key id="repo-storage-ca-file" name="Repository Storage CA File">
                         <summary>Repository storage CA file.</summary>
 
@@ -970,6 +1204,18 @@
                         </text>
 
                         <example>9000</example>
+                    </config-key>
+
+                    <config-key id="repo-storage-tag" name="Repository Storage Tag">
+                        <summary>Repository storage tag(s).</summary>
+
+                        <text>
+                            <p>Specify tags that will be added to objects when the repository is an object store (e.g. S3). The option can be repeated to add multiple tags.</p>
+
+                            <p>There is no provision in <backrest/> to modify these tags so be sure to set them correctly before running <cmd>stanza-create</cmd> to ensure uniform tags across the entire repository.</p>
+                        </text>
+
+                        <example>key1=value1</example>
                     </config-key>
 
                     <config-key id="repo-storage-upload-chunk-size" name="Repository Storage Upload Chunk Size">
@@ -1016,6 +1262,7 @@
                                 <list-item><id>gcs</id> - Google Cloud Storage</list-item>
                                 <list-item><id>posix</id> - Posix-compliant file systems</list-item>
                                 <list-item><id>s3</id> - AWS Simple Storage Service</list-item>
+                                <list-item><id>sftp</id> - Secure File Transfer Protocol</list-item>
                             </list>
 
                             <p>When an <proper>NFS</proper> mount is used as a <id>posix</id> repository, the same rules apply to <backrest/> as described in the <postgres/> documentation: <link url="https://www.postgresql.org/docs/current/creating-cluster.html#CREATING-CLUSTER-FILESYSTEM">Creating a Database Cluster - File Systems</link>.</p>
@@ -1060,7 +1307,7 @@
                 </text>
 
                 <config-key-list>
-                    <config-key id="annotation" name="Backup annotation(s)">
+                    <config-key id="annotation" name="Backup Annotation">
                         <summary>Annotate backup with user-defined key/value pairs.</summary>
 
                         <text>
@@ -1202,8 +1449,6 @@
                         <text>
                             <p>This will only be done if an exclusive advisory lock can be acquired to demonstrate that the prior failed backup process has really stopped.</p>
 
-                            <p>This feature relies on pg_is_in_backup() so only works on <postgres/> >= <id>9.3</id>.</p>
-
                             <p>This feature is not supported for <postgres/> >= <id>9.6</id> since backups are run in non-exclusive mode.</p>
 
                             <p>The setting is disabled by default because it assumes that <backrest/> is the only process doing exclusive online backups. It depends on an advisory lock that only <backrest/> sets so it may abort other processes that do exclusive online backups. Note that <cmd>base_backup</cmd> and <cmd>pg_dump</cmd> are safe to use with this setting because they do not call <code>pg_start_backup()</code> so are not exclusive.</p>
@@ -1240,18 +1485,6 @@
                         </text>
 
                         <example>1GiB</example>
-                    </config-key>
-
-                    <config-key id="archive-header-check" name="Check WAL Headers">
-                        <summary>Check PostgreSQL version/id in WAL headers.</summary>
-
-                        <text>
-                            <p>Enabled by default, this option checks the WAL header against the <postgres/> version and system identifier to ensure that the WAL is being copied to the correct stanza. This is in addition to checking <file>pg_control</file> against the stanza and verifying that WAL is being copied from the same <postgres/> data directory where <file>pg_control</file> is located.</p>
-
-                            <p>Therefore, disabling this check is fairly safe but should only be done when needed, e.g. if the WAL is encrypted.</p>
-                        </text>
-
-                        <example>n</example>
                     </config-key>
 
                     <config-key id="archive-missing-retry" name="Retry Missing WAL Segment">
@@ -1469,7 +1702,7 @@
                             <p>IP address the server will listen on for client requests.</p>
                         </text>
 
-                        <example>::*</example>
+                        <example>*</example>
                     </config-key>
 
                     <config-key id="tls-server-port" name="TLS Server Port">
@@ -1534,7 +1767,7 @@
                     </config-key>
 
                     <config-key id="pg-host" name="PostgreSQL Host">
-                        <summary><postgres/> host for operating remotely via SSH.</summary>
+                        <summary><postgres/> host for operating remotely.</summary>
 
                         <text>
                             <p>Used for backups where the <postgres/> host is different from the repository host.</p>
@@ -1676,7 +1909,7 @@
                         <summary><postgres/> host port when <setting>pg-host</setting> is set.</summary>
 
                         <text>
-                            <p>Use this option to specify a non-default port for the <postgres/> host protocol. Currently only SSH is supported.</p>
+                            <p>Use this option to specify a non-default port for the <postgres/> host protocol.</p>
                         </text>
 
                         <example>25</example>
@@ -1686,7 +1919,7 @@
         </config-section-list>
     </config>
 
-    <operation title="{[project]} Command Reference">
+    <operation title="Command Reference">
         <description>The {[project]} Command Reference details all commands and options.</description>
 
         <text>
@@ -1912,6 +2145,18 @@
 
                     <!-- Note, linking to the User Guide is limited since it can cause a cyclical reference -->
                 </text>
+
+                <option-list>
+                    <option id="report" name="Report">
+                        <summary>Generate a check report.</summary>
+
+                        <text>
+                            <p>Generate a report based on the results of the check command.</p>
+                        </text>
+
+                        <example>y</example>
+                    </option>
+                </option-list>
             </command>
 
             <command id="expire" name="Expire">
@@ -1931,6 +2176,71 @@
                             <p>The specified backup set (i.e. the backup label provided and all of its dependent backups, if any) will be expired regardless of backup retention rules except that at least one full backup must remain in the repository.</p>
 
                             <admonition type="warning">Use this option with extreme caution &amp;mdash; it will permanently remove all backups and archives not required to make a backup consistent from the <backrest/> repository for the specified backup set. This process may negate the ability to perform PITR. If <br-option>--repo-retention-full</br-option> and/or <br-option>--repo-retention-archive</br-option> options are configured, then it is recommended that you override these options by setting their values to the maximum while performing ad hoc expiration in order to prevent an unintended expiration of archives.</admonition>
+                        </text>
+
+                        <example>20150131-153358F_20150131-153401I</example>
+                    </option>
+                </option-list>
+            </command>
+
+            <command id="manifest" name="Query Manifest">
+                <summary>Query manifest.</summary>
+
+                <text>
+                    <p>Get information from a manifest including the restore strategy.</p>
+                </text>
+
+                <option-list>
+                    <option id="filter" name="Filter Output">
+                        <summary>Filter files in output.</summary>
+
+                        <text>
+                            <p>The filter currently only applies to files and must be specified relative to <id>PGDATA</id>.</p>
+                        </text>
+
+                        <example>base/13398/16397</example>
+                    </option>
+
+                    <option id="output" name="Output">
+                        <summary>Output format.</summary>
+
+                        <text>
+                            <p>The following output types are supported:</p>
+
+                            <list>
+                                <list-item><id>text</id></list-item>
+                                <list-item><id>json</id></list-item>
+                            </list>
+                        </text>
+
+                        <example>json</example>
+                    </option>
+
+                    <option id="pg" name="PostgreSQL Cluster">
+                        <summary>PostgreSQL Cluster</summary>
+
+                        <text>
+                            <p>Specify the PostgreSQL cluster to compare the manifest against.</p>
+                        </text>
+
+                        <example>1</example>
+                    </option>
+
+                    <option id="reference" name="Filter on Reference">
+                        <summary>Filter on reference.</summary>
+
+                        <text>
+                            <p>Show only files with the specified reference. Use <id>latest</id> for files that were updated in the backup specified by <br-option>--set</br-option>.</p>
+                        </text>
+
+                        <example>20150131-153358F_20150131-153401I</example>
+                    </option>
+
+                    <option id="set" name="Set">
+                        <summary>Manifest to query.</summary>
+
+                        <text>
+                            <p>When not specified the latest manifest will be queried.</p>
                         </text>
 
                         <example>20150131-153358F_20150131-153401I</example>
@@ -2126,6 +2436,10 @@
                                 <list-item><id>standby</id> - add <setting>standby_mode=on</setting> to <file>recovery.conf</file> file so cluster will start in standby mode.</list-item>
                                 <list-item><id>none</id> - no <file>recovery.conf</file> file is written so <postgres/> will attempt to achieve consistency using WAL segments present in <path>pg_xlog</path>/<path>pg_wal</path>. Provide the required WAL segments or use the <setting>archive-copy</setting> setting to include them with the backup.</list-item>
                             </list>
+
+                            <admonition type="warning">Recovery <br-option>type=none</br-option> should be avoided because the timeline will not be incremented at the end of recovery. This can lead to, for example, <postgres/> attempting to archive duplicate WAL, which will be rejected, and may cause the disk to fill up and result in a <postgres/> panic. In addition, tools like <id>pg_rewind</id> may not work correctly or may cause corruption.</admonition>
+
+                            <p>Note that the default restore <br-option>type</br-option> for offline backups is <id>none</id> since Point-in-Time-Recovery is not possible if <setting>wal_level=minimal</setting>. If <br-option>type</br-option> is set explicitly then it will be honored since Point-in-Time-Recovery is possible from offline backups as long as <setting>wal_level > minimal</setting>.</p>
                         </text>
 
                         <example>xid</example>
@@ -2355,7 +2669,9 @@
                 <summary>Create the required stanza data.</summary>
 
                 <text>
-                    <p>The <cmd>stanza-create</cmd> command must be run after the stanza has been configured in <file>pgbackrest.conf</file>. If there is more than one repository configured, the stanza will be created on each. See <link page="user-guide" section="/quickstart/create-stanza">Create the Stanza</link> for more information and an example.</p>
+                    <p>The <cmd>stanza-create</cmd> command must be run after the stanza has been configured in <file>pgbackrest.conf</file>. If there is more than one repository configured, the stanza will be created on each. Stanzas that have already been created will be skipped so it is always safe to run <cmd>stanza-create</cmd>, even when a new repository has been configured.</p>
+
+                    <p>See <link page="user-guide" section="/quickstart/create-stanza">Create the Stanza</link> for more information and an example.</p>
                 </text>
 
                 <option-list>
@@ -2385,7 +2701,7 @@
                 <summary>Upgrade a stanza.</summary>
 
                 <text>
-                    <p>Immediately after upgrading <postgres/> to a newer major version, the <br-option>pg-path</br-option> for all <backrest/> configurations must be set to the new database location and the <cmd>stanza-upgrade</cmd> command run. If there is more than one repository configured on the host, the stanza will be created on each. If the database is offline use the <br-option>--no-online</br-option> option.</p>
+                    <p>Immediately after upgrading <postgres/> to a newer major version, the <br-option>pg-path</br-option> for all <backrest/> configurations must be set to the new database location and the <cmd>stanza-upgrade</cmd> command run. If there is more than one repository configured on the host, the stanza will be upgraded on each. If the database is offline use the <br-option>--no-online</br-option> option.</p>
 
                     <!-- Note, linking to the User Guide is limited since it can cause a cyclical reference -->
                 </text>

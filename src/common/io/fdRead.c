@@ -29,7 +29,7 @@ Macros for function logging
 #define FUNCTION_LOG_IO_FD_READ_TYPE                                                                                               \
     IoFdRead *
 #define FUNCTION_LOG_IO_FD_READ_FORMAT(value, buffer, bufferSize)                                                                  \
-    objToLog(value, "IoFdRead", buffer, bufferSize)
+    objNameToLog(value, "IoFdRead", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Are there bytes ready to read immediately?
@@ -144,7 +144,7 @@ ioFdReadFd(const THIS_VOID)
 
 /**********************************************************************************************************************************/
 FN_EXTERN IoRead *
-ioFdReadNew(const String *name, int fd, TimeMSec timeout)
+ioFdReadNew(const String *const name, const int fd, const TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, name);
@@ -154,22 +154,17 @@ ioFdReadNew(const String *name, int fd, TimeMSec timeout)
 
     ASSERT(fd != -1);
 
-    IoRead *this = NULL;
-
-    OBJ_NEW_BEGIN(IoFdRead, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(IoFdRead, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        IoFdRead *driver = OBJ_NEW_ALLOC();
-
-        *driver = (IoFdRead)
+        *this = (IoFdRead)
         {
             .name = strDup(name),
             .fd = fd,
             .timeout = timeout,
         };
-
-        this = ioReadNewP(driver, .block = true, .eof = ioFdReadEof, .fd = ioFdReadFd, .read = ioFdRead, .ready = ioFdReadReady);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_READ, this);
+    FUNCTION_LOG_RETURN(
+        IO_READ, ioReadNewP(this, .block = true, .eof = ioFdReadEof, .fd = ioFdReadFd, .read = ioFdRead, .ready = ioFdReadReady));
 }

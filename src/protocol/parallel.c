@@ -45,12 +45,8 @@ protocolParallelNew(TimeMSec timeout, ParallelJobCallback *callbackFunction, voi
     ASSERT(callbackFunction != NULL);
     ASSERT(callbackData != NULL);
 
-    ProtocolParallel *this = NULL;
-
     OBJ_NEW_BEGIN(ProtocolParallel, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (ProtocolParallel)
         {
             .timeout = timeout,
@@ -139,7 +135,7 @@ protocolParallelProcess(ProtocolParallel *this)
         // If clients are running then wait for one to finish
         if (clientRunningTotal > 0)
         {
-            // Initialize timeout struct used for select.  Recreate this structure each time since Linux (at least) will modify it.
+            // Initialize timeout struct used for select. Recreate this structure each time since Linux (at least) will modify it.
             struct timeval timeoutSelect;
             timeoutSelect.tv_sec = (time_t)(this->timeout / MSEC_PER_SEC);
             timeoutSelect.tv_usec = (suseconds_t)(this->timeout % MSEC_PER_SEC * 1000);
@@ -275,10 +271,10 @@ protocolParallelDone(ProtocolParallel *this)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-protocolParallelToLog(const ProtocolParallel *this)
+FN_EXTERN void
+protocolParallelToLog(const ProtocolParallel *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{state: %s, clientTotal: %u, jobTotal: %u}", strZ(strIdToStr(this->state)), lstSize(this->clientList),
-        lstSize(this->jobList));
+    strStcCat(debugLog, "{state: ");
+    strStcResultSizeInc(debugLog, strIdToLog(this->state, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+    strStcFmt(debugLog, ", clientTotal: %u, jobTotal: %u}", lstSize(this->clientList), lstSize(this->jobList));
 }

@@ -13,7 +13,6 @@ Log Handler
 #include <unistd.h>
 
 #include "common/debug.h"
-#include "common/error.h"
 #include "common/log.h"
 #include "common/time.h"
 
@@ -472,7 +471,8 @@ logPost(LogPreResult *logData, LogLevel logLevel, LogLevel logRangeMin, LogLevel
     // Determine where to log the message based on log-level-stderr
     if (logLevel <= logLevelStdErr)
     {
-        if (logRange(logLevelStdErr, logRangeMin, logRangeMax))
+        if ((logLevelStdErr > logLevelStdOut && logRange(logLevelStdErr, logRangeMin, logRangeMax)) ||
+            (logLevelStdErr <= logLevelStdOut && logRange(logLevelStdOut, logRangeMin, logRangeMax)))
         {
             logWriteIndent(
                 logFdStdErr, logData->logBufferStdErr, logData->indentSize - (size_t)(logData->logBufferStdErr - logBuffer),

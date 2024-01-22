@@ -23,11 +23,13 @@ old context and then back. Below is a simplified example:
 
 #include <stdint.h>
 
+#include "common/debug.h"
+
 /***********************************************************************************************************************************
 Minimum number of extra bytes to allocate for strings that are growing or are likely to grow
 ***********************************************************************************************************************************/
 #ifndef STRING_EXTRA_MIN
-    #define STRING_EXTRA_MIN                                            64
+#define STRING_EXTRA_MIN                                            64
 #endif
 
 /***********************************************************************************************************************************
@@ -71,7 +73,7 @@ FN_EXTERN String *strNewDbl(double value);
 FN_EXTERN String *strNewEncode(EncodingType type, const Buffer *buffer);
 
 // Create a new fixed length string from a format string with parameters (i.e. sprintf)
-FN_EXTERN String *strNewFmt(const char *format, ...) __attribute__((format(printf, 1, 2)));
+FN_EXTERN FN_PRINTF(1, 2) String *strNewFmt(const char *format, ...);
 
 // Create a new fixed length string from a string
 FN_EXTERN String *strDup(const String *this);
@@ -81,8 +83,8 @@ Getters/setters
 ***********************************************************************************************************************************/
 typedef struct StringPub
 {
-    uint64_t size:32;                                               // Actual size of the string
-    uint64_t extra:32;                                              // Extra space allocated for expansion
+    uint64_t size : 32;                                             // Actual size of the string
+    uint64_t extra : 32;                                            // Extra space allocated for expansion
     char *buffer;                                                   // String buffer
 } StringPub;
 
@@ -128,7 +130,7 @@ FN_EXTERN String *strCatChr(String *this, char cat);
 FN_EXTERN String *strCatEncode(String *this, EncodingType type, const Buffer *buffer);
 
 // Append a formatted string
-FN_EXTERN String *strCatFmt(String *this, const char *format, ...) __attribute__((format(printf, 2, 3)));
+FN_EXTERN FN_PRINTF(2, 3) String *strCatFmt(String *this, const char *format, ...);
 
 // Append N characters from a zero-terminated string. Note that the string does not actually need to be zero-terminated as long as
 // N is <= the end of the string being concatenated.
@@ -213,8 +215,8 @@ Macros for constant strings
 
 Frequently used constant strings can be declared with these macros at compile time rather than dynamically at run time.
 
-Note that strings created in this way are declared as const so can't be modified or freed by the str*() methods.  Casting to
-String * will result in a segfault due to modifying read-only memory.
+Note that strings created in this way are declared as const so can't be modified or freed by the str*() methods. Casting to String *
+will result in a segfault due to modifying read-only memory.
 
 By convention all string constant identifiers are appended with _STR.
 ***********************************************************************************************************************************/
@@ -259,23 +261,13 @@ STRING_DECLARE(Y_STR);
 STRING_DECLARE(ZERO_STR);
 
 /***********************************************************************************************************************************
-Helper function/macro for object logging
-***********************************************************************************************************************************/
-typedef String *(*StrObjToLogFormat)(const void *object);
-
-FN_EXTERN size_t strObjToLog(const void *object, StrObjToLogFormat formatFunc, char *buffer, size_t bufferSize);
-
-#define FUNCTION_LOG_STRING_OBJECT_FORMAT(object, formatFunc, buffer, bufferSize)                                                  \
-    strObjToLog(object, (StrObjToLogFormat)formatFunc, buffer, bufferSize)
-
-/***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *strToLog(const String *this);
+FN_EXTERN void strToLog(const String *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_STRING_TYPE                                                                                                   \
     String *
 #define FUNCTION_LOG_STRING_FORMAT(value, buffer, bufferSize)                                                                      \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, strToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, strToLog, buffer, bufferSize)
 
 #endif

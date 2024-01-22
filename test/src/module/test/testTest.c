@@ -122,7 +122,7 @@ testRun(void)
         String *const harnessErrorC = strCat(
             strNew(), strNewBuf(storageGetP(storageNewReadP(storageRepo, STRDEF("test/src/common/harnessError.c")))));
 
-        strReplace(harnessErrorC, STRDEF("{[SHIM_MODULE]}"), STRDEF("#include \"" TEST_PATH "/repo/src/common/error.c\""));
+        strReplace(harnessErrorC, STRDEF("{[SHIM_MODULE]}"), STRDEF("#include \"" TEST_PATH "/repo/src/common/error/error.c\""));
 
         // Unit test harness
         // -------------------------------------------------------------------------------------------------------------------------
@@ -142,6 +142,7 @@ testRun(void)
         strReplace(testC, STRDEF("{[C_TEST_USER]}"), STRDEF(TEST_USER));
         strReplace(testC, STRDEF("{[C_TEST_USER_ID]}"), STRDEF(TEST_USER_ID_Z));
         strReplace(testC, STRDEF("{[C_TEST_USER_ID_Z]}"), STRDEF("\"" TEST_USER_ID_Z "\""));
+        strReplace(testC, STRDEF("{[C_TEST_USER_LEN]}"), strNewFmt("%zu", sizeof(TEST_USER) - 1));
 
         // Test definition
         // -------------------------------------------------------------------------------------------------------------------------
@@ -159,19 +160,27 @@ testRun(void)
             "        harness:\n"
             "          name: error\n"
             "          shim:\n"
-            "            common/error: ~\n"
+            "            common/error/error: ~\n"
             "        coverage:\n"
-            "          - common/error\n"
-            "          - common/error.auto: noCode\n"
-            "          - common/error.inc: included\n"
+            "          - common/error/error\n"
+            "          - common/error/error.auto: noCode\n"
+            "          - common/error/error.inc: included\n"
             "        depend:\n"
             "          - common/stackTrace\n"
+            "          - common/type/stringStatic\n"
             "\n"
             "      - name: stack-trace\n"
             "        total: 4\n"
             "        feature: stackTrace\n"
+            "        harness:\n"
+            "          name: stackTrace\n"
+            "          shim:\n"
+            "            common/stackTrace:\n"
+            "              function:\n"
+            "                - stackTraceBackCallback\n"
             "        coverage:\n"
             "          - common/stackTrace\n"
+            "          - common/type/stringStatic\n"
             "        depend:\n"
             "          - common/debug\n"
             "\n"
@@ -195,8 +204,9 @@ testRun(void)
             "          - test/common/shim\n"
             "          - test/common/shim2\n"
             "        include:\n"
-            "          - common/error\n"
+            "          - common/error/error\n"
             "          - test/common/include\n"
+            "          - doc/command/build/build\n"
             "\n"
             "integration:\n"
             "  - name: mock\n"
@@ -224,32 +234,41 @@ testRun(void)
             "src/common/assert.h",
             "src/common/debug.c",
             "src/common/debug.h",
-            "src/common/error.auto.c.inc",
-            "src/common/error.auto.h",
-            "src/common/error.c",
-            "src/common/error.h",
+            "src/common/error/error.auto.c.inc",
+            "src/common/error/error.auto.h",
+            "src/common/error/error.c",
+            "src/common/error/error.h",
             "src/common/logLevel.h",
             "src/common/macro.h",
             "src/common/stackTrace.c",
             "src/common/stackTrace.h",
             "src/common/type/convert.h",
             "src/common/type/param.h",
+            "src/common/type/stringStatic.h",
+            "src/common/type/stringStatic.c",
             "src/common/type/stringZ.h",
             "test/src/common/harnessDebug.h",
             "test/src/common/harnessLog.h",
             "test/src/common/harnessError.c",
             "test/src/common/harnessError.h",
+            "test/src/common/harnessStackTrace.h",
+            "test/src/common/harnessStackTrace.c",
             "test/src/common/harnessTest.c",
             "test/src/common/harnessTest.h",
             "test/src/common/harnessTest.intern.h",
             "test/src/module/common/stackTraceTest.c",
             "test/src/test.c");
 
+        HRN_STORAGE_PUT_EMPTY(storageTest, "repo/doc/src/command/build/build.c");
+
         TEST_RESULT_VOID(
             cmdTest(
                 STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("none"), 3,
-                STRDEF("common/stack-trace"), 0, 1, logLevelDebug, true, NULL, false, false, false),
+                STRDEF("common/stack-trace"), 0, 1, logLevelDebug, true, NULL, false, false, false, true),
             "new build");
+
+        // Older versions of ninja may error on a rebuild so a retry may occur
+        TEST_RESULT_LOG_EMPTY_OR_CONTAINS("WARN: build failed for unit");
 
         const Storage *storageUnit = storagePosixNewP(STRDEF(TEST_PATH "/test/unit-3/none"));
         StringList *fileList = testStorageList(storageUnit);
@@ -258,7 +277,9 @@ testRun(void)
             fileList,
             "meson.build\n"
             "meson_options.txt\n"
+            "src/common/stackTrace.c\n"
             "test/src/common/harnessError.c\n"
+            "test/src/common/harnessStackTrace.c\n"
             "test.c\n",
             "check files");
 
@@ -292,6 +313,7 @@ testRun(void)
                         "        include_directories(\n"
                         "            '.',\n"
                         "            '../../../repo/src',\n"
+                        "            '../../../repo/doc/src',\n"
                         "            '../../../repo/test/src',\n"
                         "        ),\n"
                         "    dependencies: [\n"
@@ -300,6 +322,7 @@ testRun(void)
                         "        lib_openssl,\n"
                         "        lib_lz4,\n"
                         "        lib_pq,\n"
+                        "        lib_ssh2,\n"
                         "        lib_xml,\n"
                         "        lib_yaml,\n"
                         "        lib_z,\n"
@@ -311,6 +334,10 @@ testRun(void)
             else if (strEqZ(file, "meson_options.txt"))
             {
                 TEST_STORAGE_GET(storageUnit, strZ(file), mesonOption);
+            }
+            else if (strEqZ(file, "src/common/stackTrace.c") || strEqZ(file, "test/src/common/harnessStackTrace.c"))
+            {
+                // No test needed
             }
             else if (strEqZ(file, "test/src/common/harnessError.c"))
             {
@@ -327,7 +354,12 @@ testRun(void)
                 strReplace(testCDup, STRDEF("{[C_TEST_PROJECT_EXE]}"), STRDEF(TEST_PATH "/test/build/none/src/pgbackrest"));
                 strReplace(testCDup, STRDEF("{[C_TEST_TZ]}"), STRDEF("// No timezone specified"));
 
-                strReplace(testCDup, STRDEF("{[C_INCLUDE]}"), STRDEF("#include \"../../../repo/src/common/stackTrace.c\""));
+                strReplace(
+                    testCDup, STRDEF("{[C_INCLUDE]}"),
+                    STRDEF(
+                        "#include \"test/src/common/harnessStackTrace.c\"\n"
+                        "#include \"../../../repo/src/common/type/stringStatic.c\""));
+                strReplace(testCDup, STRDEF("{[C_INCLUDE]}"), STRDEF("#include \"test/src/common/harnessStackTrace.c\""));
                 strReplace(
                     testCDup, STRDEF("{[C_TEST_INCLUDE]}"),
                     STRDEF("#include \"../../../repo/test/src/module/common/stackTraceTest.c\""));
@@ -356,8 +388,11 @@ testRun(void)
         TEST_RESULT_VOID(
             cmdTest(
                 STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("none"), 3,
-                STRDEF("common/error"), 5, 1, logLevelDebug, true, NULL, false, false, false),
+                STRDEF("common/error"), 5, 1, logLevelDebug, true, NULL, false, false, false, true),
             "new build");
+
+        // Older versions of ninja may error on a rebuild so a retry may occur
+        TEST_RESULT_LOG_EMPTY_OR_CONTAINS("WARN: build failed for unit");
 
         fileList = testStorageList(storageUnit);
 
@@ -386,6 +421,7 @@ testRun(void)
                         MESON_COMMENT_BLOCK "\n"
                         "src_unit = files(\n"
                         "    '../../../repo/src/common/stackTrace.c',\n"
+                        "    '../../../repo/src/common/type/stringStatic.c',\n"
                         "    '../../../repo/test/src/common/harnessTest.c',\n"
                         "    'test.c',\n"
                         ")\n"
@@ -397,6 +433,7 @@ testRun(void)
                         "        include_directories(\n"
                         "            '.',\n"
                         "            '../../../repo/src',\n"
+                        "            '../../../repo/doc/src',\n"
                         "            '../../../repo/test/src',\n"
                         "        ),\n"
                         "    dependencies: [\n"
@@ -405,6 +442,7 @@ testRun(void)
                         "        lib_openssl,\n"
                         "        lib_lz4,\n"
                         "        lib_pq,\n"
+                        "        lib_ssh2,\n"
                         "        lib_xml,\n"
                         "        lib_yaml,\n"
                         "        lib_z,\n"
@@ -544,8 +582,11 @@ testRun(void)
         TEST_RESULT_VOID(
             cmdTest(
                 STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("uXX"), 3,
-                STRDEF("test/shim"), 0, 1, logLevelDebug, true, NULL, true, true, true),
+                STRDEF("test/shim"), 0, 1, logLevelDebug, true, NULL, true, true, true, true),
             "new build");
+
+        // Older versions of ninja may error on a rebuild so a retry may occur
+        TEST_RESULT_LOG_EMPTY_OR_CONTAINS("WARN: build failed for unit");
 
         storageUnit = storagePosixNewP(STRDEF(TEST_PATH "/test/unit-3/uXX"));
         fileList = testStorageList(storageUnit);
@@ -554,8 +595,10 @@ testRun(void)
             fileList,
             "meson.build\n"
             "meson_options.txt\n"
+            "src/common/stackTrace.c\n"
             "test/src/common/harnessError.c\n"
             "test/src/common/harnessShim.c\n"
+            "test/src/common/harnessStackTrace.c\n"
             "test/src/common/shim.c\n"
             "test.c\n",
             "check files");
@@ -580,8 +623,9 @@ testRun(void)
                         "# Unit test\n"
                         MESON_COMMENT_BLOCK "\n"
                         "src_unit = files(\n"
-                        "    '../../../repo/src/common/stackTrace.c',\n"
+                        "    '../../../repo/src/common/type/stringStatic.c',\n"
                         "    '../../../repo/src/common/debug.c',\n"
+                        "    'test/src/common/harnessStackTrace.c',\n"
                         "    '../../../repo/test/src/common/harnessNoShim.c',\n"
                         "    '../../../repo/test/src/common/harnessShim/sub.c',\n"
                         "    '../../../repo/test/src/common/harnessTest.c',\n"
@@ -604,6 +648,7 @@ testRun(void)
                         "        include_directories(\n"
                         "            '.',\n"
                         "            '../../../repo/src',\n"
+                        "            '../../../repo/doc/src',\n"
                         "            '../../../repo/test/src',\n"
                         "        ),\n"
                         "    dependencies: [\n"
@@ -612,6 +657,7 @@ testRun(void)
                         "        lib_openssl,\n"
                         "        lib_lz4,\n"
                         "        lib_pq,\n"
+                        "        lib_ssh2,\n"
                         "        lib_xml,\n"
                         "        lib_yaml,\n"
                         "        lib_z,\n"
@@ -623,6 +669,10 @@ testRun(void)
             else if (strEqZ(file, "meson_options.txt"))
             {
                 TEST_STORAGE_GET(storageUnit, strZ(file), mesonOption);
+            }
+            else if (strEqZ(file, "src/common/stackTrace.c") || strEqZ(file, "test/src/common/harnessStackTrace.c"))
+            {
+                // No test needed
             }
             else if (strEqZ(file, "test/src/common/harnessError.c"))
             {
@@ -653,7 +703,8 @@ testRun(void)
                     STRDEF(
                         "#include \"test/src/common/harnessShim.c\"\n"
                         "#include \"test/src/common/harnessError.c\"\n"
-                        "#include \"../../../repo/test/src/common/include.c\""));
+                        "#include \"../../../repo/test/src/common/include.c\"\n"
+                        "#include \"../../../repo/doc/src/command/build/build.c\""));
                 strReplace(
                     testCDup, STRDEF("{[C_TEST_INCLUDE]}"), STRDEF("#include \"../../../repo/test/src/module/test/shimTest.c\""));
                 strReplace(
@@ -675,11 +726,15 @@ testRun(void)
         TEST_RESULT_VOID(
             cmdTest(
                 STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("uXX"), 3,
-                STRDEF("test/shim"), 0, 1, logLevelDebug, true, NULL, true, true, true),
+                STRDEF("test/shim"), 0, 1, logLevelDebug, true, NULL, true, true, true, true),
             "new build");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("Test performance/type");
+
+        strReplace(
+            mesonBuildRoot, STRDEF("    configuration.set('HAVE_LIBBACKTRACE'"),
+            STRDEF("#    configuration.set('HAVE_LIBBACKTRACE'"));
 
         HRN_STORAGE_PUT_Z(
             storageTest, "repo/test/src/module/performance/typeTest.c",
@@ -700,12 +755,12 @@ testRun(void)
         TEST_RESULT_VOID(
             cmdTest(
                 STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("uXX"), 3,
-                STRDEF("performance/type"), 0, 1, logLevelDebug, true, STRDEF("America/New_York"), false, true, false),
+                STRDEF("performance/type"), 0, 1, logLevelDebug, true, STRDEF("America/New_York"), false, true, false, false),
             "new build");
 
         TEST_RESULT_LOG(
             "P00   WARN: build failed for unit performance/type -- will retry: unable to list file info for path '" TEST_PATH
-                "/test/unit-3/uXX/build': [13] Permission denied");
+            "/test/unit-3/uXX/build': [13] Permission denied");
 
         storageUnit = storagePosixNewP(STRDEF(TEST_PATH "/test/unit-3/uXX"));
         fileList = testStorageList(storageUnit);
@@ -714,8 +769,10 @@ testRun(void)
             fileList,
             "meson.build\n"
             "meson_options.txt\n"
+            "src/common/stackTrace.c\n"
             "test/src/common/harnessError.c\n"
             "test/src/common/harnessShim.c\n"
+            "test/src/common/harnessStackTrace.c\n"
             "test/src/common/shim.c\n"
             "test.c\n",
             "check files");
@@ -738,9 +795,10 @@ testRun(void)
                         "# Unit test\n"
                         MESON_COMMENT_BLOCK "\n"
                         "src_unit = files(\n"
-                        "    '../../../repo/src/common/stackTrace.c',\n"
+                        "    '../../../repo/src/common/type/stringStatic.c',\n"
                         "    '../../../repo/src/common/debug.c',\n"
                         "    'test/src/common/harnessError.c',\n"
+                        "    'test/src/common/harnessStackTrace.c',\n"
                         "    '../../../repo/test/src/common/harnessNoShim.c',\n"
                         "    '../../../repo/test/src/common/harnessShim/sub.c',\n"
                         "    'test/src/common/harnessShim.c',\n"
@@ -764,14 +822,15 @@ testRun(void)
                         "        include_directories(\n"
                         "            '.',\n"
                         "            '../../../repo/src',\n"
+                        "            '../../../repo/doc/src',\n"
                         "            '../../../repo/test/src',\n"
                         "        ),\n"
                         "    dependencies: [\n"
-                        "        lib_backtrace,\n"
                         "        lib_bz2,\n"
                         "        lib_openssl,\n"
                         "        lib_lz4,\n"
                         "        lib_pq,\n"
+                        "        lib_ssh2,\n"
                         "        lib_xml,\n"
                         "        lib_yaml,\n"
                         "        lib_z,\n"
@@ -783,6 +842,10 @@ testRun(void)
             else if (strEqZ(file, "meson_options.txt"))
             {
                 TEST_STORAGE_GET(storageUnit, strZ(file), mesonOption);
+            }
+            else if (strEqZ(file, "src/common/stackTrace.c") || strEqZ(file, "test/src/common/harnessStackTrace.c"))
+            {
+                // No test needed
             }
             else if (strEqZ(file, "test/src/common/harnessError.c"))
             {
@@ -828,8 +891,11 @@ testRun(void)
         TEST_RESULT_VOID(
             cmdTest(
                 STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("uXX"), 3,
-                STRDEF("performance/type"), 0, 1, logLevelDebug, true, STRDEF("America/New_York"), false, false, false),
+                STRDEF("performance/type"), 0, 1, logLevelDebug, true, STRDEF("America/New_York"), false, false, false, false),
             "new build");
+
+        // Older versions of ninja may error on a rebuild so a retry may occur
+        TEST_RESULT_LOG_EMPTY_OR_CONTAINS("WARN: build failed for unit");
 
         storageUnit = storagePosixNewP(STRDEF(TEST_PATH "/test/unit-3/uXX"));
 
@@ -862,14 +928,14 @@ testRun(void)
         TEST_ERROR(
             cmdTest(
                 STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("uXX"), 3,
-                STRDEF("performance/type"), 0, 1, logLevelDebug, true, STRDEF("America/New_York"), false, false, false),
+                STRDEF("performance/type"), 0, 1, logLevelDebug, true, STRDEF("America/New_York"), false, false, false, false),
             FileOpenError,
             "build failed for unit performance/type: unable to open file '" TEST_PATH "/repo/meson.build' for read: [13] Permission"
-                " denied");
+            " denied");
 
         TEST_RESULT_LOG(
             "P00   WARN: build failed for unit performance/type -- will retry: unable to open file '" TEST_PATH "/repo/meson.build'"
-                " for read: [13] Permission denied");
+            " for read: [13] Permission denied");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

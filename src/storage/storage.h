@@ -23,11 +23,11 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct Storage Storage;
 
-#include "common/type/buffer.h"
-#include "common/type/stringList.h"
 #include "common/io/filter/group.h"
 #include "common/time.h"
+#include "common/type/buffer.h"
 #include "common/type/param.h"
+#include "common/type/stringList.h"
 #include "storage/info.h"
 #include "storage/iterator.h"
 #include "storage/read.h"
@@ -39,20 +39,20 @@ Storage feature
 ***********************************************************************************************************************************/
 typedef enum
 {
-    // Does the storage support paths/directories as something that needs to be created and deleted?  Object stores (e.g. S3) often
-    // do not have paths/directories -- they are only inferred by the object name.  Therefore it doesn't make sense to create or
+    // Does the storage support paths/directories as something that needs to be created and deleted? Object stores (e.g. S3) often
+    // do not have paths/directories -- they are only inferred by the object name. Therefore it doesn't make sense to create or
     // remove directories since this implies something is happening on the storage and in the case of objects stores it would be a
-    // noop.  We'll error on any path operation (e.g. pathExists(), pathCreate(), non-recursive removes, error on missing paths,
+    // noop. We'll error on any path operation (e.g. pathExists(), pathCreate(), non-recursive removes, error on missing paths,
     // etc.) for storage that does not support paths.
     storageFeaturePath,
 
-    // Do paths need to be synced to ensure contents are durable?  storeageFeaturePath must also be enabled.
+    // Do paths need to be synced to ensure contents are durable? storeageFeaturePath must also be enabled.
     storageFeaturePathSync,
 
-    // Does the storage support hardlinks?  Hardlinks allow the same file to be linked into multiple paths to save space.
+    // Does the storage support hardlinks? Hardlinks allow the same file to be linked into multiple paths to save space.
     storageFeatureHardLink,
 
-    // Does the storage support symlinks?  Symlinks allow paths/files/links to be accessed from another path.
+    // Does the storage support symlinks? Symlinks allow paths/files/links to be accessed from another path.
     storageFeatureSymLink,
 
     // Does the storage support detailed info, i.e. user, group, mode, link destination, etc.
@@ -292,11 +292,11 @@ storageType(const Storage *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *storageToLog(const Storage *this);
+FN_EXTERN void storageToLog(const Storage *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_STORAGE_TYPE                                                                                                  \
     Storage *
 #define FUNCTION_LOG_STORAGE_FORMAT(value, buffer, bufferSize)                                                                     \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, storageToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, storageToLog, buffer, bufferSize)
 
 #endif

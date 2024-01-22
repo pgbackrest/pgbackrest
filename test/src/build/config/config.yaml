@@ -32,6 +32,13 @@ optionGroup:
 option:
   # General options
   #---------------------------------------------------------------------------------------------------------------------------------
+  back-trace:
+    type: boolean
+    default: true
+    negate: true
+    command:
+      test: {}
+
   buffer-size:
     type: size
     internal: true
@@ -145,6 +152,7 @@ option:
 
   # Options that are not used but must be present for modules to compile. All must have a default or not be required.
   #---------------------------------------------------------------------------------------------------------------------------------
+  beta: {type: boolean, default: false, command: {noop: {}}}
   compress-level-network: {type: string, required: false, command: {noop: {}}}
   config: {
     type: string, internal: true, default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_FILE, default-literal: true, negate: true}

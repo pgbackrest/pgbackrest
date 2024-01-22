@@ -19,7 +19,7 @@ incurs extra cost, but depending on the field type larger gaps may require addit
 
 The standard default is the C default for that type (e.g. bool = false, int = 0) but can be changed with the .defaultValue
 parameter. For example, pckWriteBoolP(write, false, .defaultWrite = true) will write a 0 (i.e. false) with a field ID into the pack,
-but pckWriteBoolP(write, false) will not write to the pack, it will simply skip the ID.  Note that
+but pckWriteBoolP(write, false) will not write to the pack, it will simply skip the ID. Note that
 pckWriteStrP(packWrite, NULL, .defaultWrite = true) is not valid since there is no way to explicitly write a NULL.
 
 NULLs are not stored in a pack and are therefore not typed. A NULL is essentially just a gap in the field IDs. Fields that are
@@ -94,7 +94,7 @@ cumulative field ID. At the end of a container the numbering will continue from 
 Minimum number of extra bytes to allocate for packs that are growing or are likely to grow
 ***********************************************************************************************************************************/
 #ifndef PACK_EXTRA_MIN
-    #define PACK_EXTRA_MIN                                          128
+#define PACK_EXTRA_MIN                                              128
 #endif
 
 /***********************************************************************************************************************************
@@ -137,7 +137,7 @@ Pack Functions
 FN_INLINE_ALWAYS Pack *
 pckDup(const Pack *const this)
 {
-    return (Pack *)bufDup((const Buffer *)this);
+    return (Pack *)OBJ_NAME(bufDup((const Buffer *)this), Pack::Buffer);
 }
 
 // Cast Buffer to Pack
@@ -661,20 +661,20 @@ Macros for function logging
 #define FUNCTION_LOG_PACK_TYPE                                                                                                     \
     Pack *
 #define FUNCTION_LOG_PACK_FORMAT(value, buffer, bufferSize)                                                                        \
-    objToLog(value, "Pack", buffer, bufferSize)
+    objNameToLog(value, "Pack", buffer, bufferSize)
 
-FN_EXTERN String *pckReadToLog(const PackRead *this);
+FN_EXTERN void pckReadToLog(const PackRead *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_PACK_READ_TYPE                                                                                                \
     PackRead *
 #define FUNCTION_LOG_PACK_READ_FORMAT(value, buffer, bufferSize)                                                                   \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, pckReadToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, pckReadToLog, buffer, bufferSize)
 
-FN_EXTERN String *pckWriteToLog(const PackWrite *this);
+FN_EXTERN void pckWriteToLog(const PackWrite *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_PACK_WRITE_TYPE                                                                                               \
     PackWrite *
 #define FUNCTION_LOG_PACK_WRITE_FORMAT(value, buffer, bufferSize)                                                                  \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, pckWriteToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, pckWriteToLog, buffer, bufferSize)
 
 #endif

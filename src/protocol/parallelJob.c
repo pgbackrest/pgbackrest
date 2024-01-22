@@ -25,12 +25,8 @@ protocolParallelJobNew(const Variant *key, ProtocolCommand *command)
         FUNCTION_LOG_PARAM(PROTOCOL_COMMAND, command);
     FUNCTION_LOG_END();
 
-    ProtocolParallelJob *this = NULL;
-
     OBJ_NEW_BEGIN(ProtocolParallelJob, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (ProtocolParallelJob)
         {
             .pub =
@@ -130,13 +126,29 @@ protocolParallelJobStateSet(ProtocolParallelJob *this, ProtocolParallelJobState 
     FUNCTION_LOG_RETURN_VOID();
 }
 
-FN_EXTERN String *
-protocolParallelJobToLog(const ProtocolParallelJob *this)
+FN_EXTERN void
+protocolParallelJobToLog(const ProtocolParallelJob *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{state: %s, key: %s, command: %s, code: %d, message: %s, result: %s}",
-        strZ(strIdToStr(protocolParallelJobState(this))), strZ(varToLog(protocolParallelJobKey(this))),
-        strZ(protocolCommandToLog(protocolParallelJobCommand(this))), protocolParallelJobErrorCode(this),
-        strZ(strToLog(protocolParallelJobErrorMessage(this))),
-        protocolParallelJobResult(this) == NULL ? NULL_Z : strZ(pckReadToLog(protocolParallelJobResult(this))));
+    strStcCat(debugLog, "{state: ");
+    strStcResultSizeInc(debugLog, strIdToLog(protocolParallelJobState(this), strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+
+    strStcCat(debugLog, ", key: ");
+    varToLog(protocolParallelJobKey(this), debugLog);
+
+    strStcCat(debugLog, ", command: ");
+    protocolCommandToLog(protocolParallelJobCommand(this), debugLog);
+
+    strStcCat(debugLog, ", result: ");
+    strStcResultSizeInc(
+        debugLog,
+        FUNCTION_LOG_OBJECT_FORMAT(
+            protocolParallelJobResult(this), pckReadToLog, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+
+    strStcFmt(debugLog, ", code: %d, message: ", protocolParallelJobErrorCode(this));
+
+    strStcResultSizeInc(
+        debugLog,
+        FUNCTION_LOG_OBJECT_FORMAT(
+            protocolParallelJobErrorMessage(this), strToLog, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+    strStcCatChr(debugLog, '}');
 }

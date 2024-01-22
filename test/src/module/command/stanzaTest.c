@@ -44,7 +44,7 @@ testRun(void)
         TEST_ERROR(
             hrnCfgLoadP(cfgCmdStanzaCreate, argList), OptionInvalidError, "option 'repo' not valid for command 'stanza-create'");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("stanza-create: stop file error");
 
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argListBase);
@@ -54,7 +54,7 @@ testRun(void)
         TEST_ERROR(cmdStanzaCreate(), StopError, "stop file exists for stanza db");
         HRN_STORAGE_REMOVE(storageHrn, strZ(lockStopFileName(cfgOptionStr(cfgOptStanza))));
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("stanza-create: validate info files created");
 
         argList = strLstDup(argListBase);
@@ -78,12 +78,12 @@ testRun(void)
             .comment = "put archive info to test file");
 
         TEST_RESULT_BOOL(
-            (bufEq(
+            bufEq(
                 storageGetP(storageNewReadP(storageRepoIdx(0), INFO_ARCHIVE_PATH_FILE_STR)),
                 storageGetP(storageNewReadP(storageRepoIdx(0), STRDEF(INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT)))) &&
             bufEq(
                 storageGetP(storageNewReadP(storageRepoIdx(0), INFO_ARCHIVE_PATH_FILE_STR)),
-                storageGetP(storageNewReadP(storageHrn, STRDEF("test.info"))))),
+                storageGetP(storageNewReadP(storageHrn, STRDEF("test.info")))),
             true, "test and stanza archive info files are equal");
 
         HRN_INFO_PUT(
@@ -96,20 +96,20 @@ testRun(void)
             "db-version=\"9.6\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":" HRN_PG_SYSTEMID_96_Z ","
-                "\"db-version\":\"9.6\"}\n",
+            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":" HRN_PG_SYSTEMID_96_Z
+            ",\"db-version\":\"9.6\"}\n",
             .comment = "put backup info to test file");
 
         TEST_RESULT_BOOL(
-            (bufEq(
+            bufEq(
                 storageGetP(storageNewReadP(storageRepoIdx(0), INFO_BACKUP_PATH_FILE_STR)),
                 storageGetP(storageNewReadP(storageRepoIdx(0), STRDEF(INFO_BACKUP_PATH_FILE INFO_COPY_EXT)))) &&
             bufEq(
                 storageGetP(storageNewReadP(storageRepoIdx(0), INFO_BACKUP_PATH_FILE_STR)),
-                storageGetP(storageNewReadP(storageHrn, STRDEF("test.info"))))),
+                storageGetP(storageNewReadP(storageHrn, STRDEF("test.info")))),
             true, "test and stanza backup info files are equal");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cmdStanzaCreate success - multi-repo and encryption");
 
         argList = strLstDup(argListBase);
@@ -132,8 +132,9 @@ testRun(void)
 
         InfoArchive *infoArchive = NULL;
         TEST_ASSIGN(
-            infoArchive, infoArchiveLoadFile(storageRepoIdx(1), INFO_ARCHIVE_PATH_FILE_STR, cipherTypeAes256Cbc,
-            STRDEF("12345678")), "load archive info from encrypted repo2");
+            infoArchive,
+            infoArchiveLoadFile(storageRepoIdx(1), INFO_ARCHIVE_PATH_FILE_STR, cipherTypeAes256Cbc, STRDEF("12345678")),
+            "load archive info from encrypted repo2");
         TEST_RESULT_PTR_NE(infoArchiveCipherPass(infoArchive), NULL, "cipher sub set");
 
         InfoBackup *infoBackup = NULL;
@@ -159,8 +160,9 @@ testRun(void)
 
         // Confirm other repo encrypted with different password
         TEST_ASSIGN(
-            infoArchive, infoArchiveLoadFile(storageRepoIdx(3), INFO_ARCHIVE_PATH_FILE_STR, cipherTypeAes256Cbc,
-            STRDEF("87654321")), "load archive info from encrypted repo4");
+            infoArchive,
+            infoArchiveLoadFile(storageRepoIdx(3), INFO_ARCHIVE_PATH_FILE_STR, cipherTypeAes256Cbc, STRDEF("87654321")),
+            "load archive info from encrypted repo4");
         TEST_RESULT_PTR_NE(infoArchiveCipherPass(infoArchive), NULL, "cipher sub set");
 
         TEST_ASSIGN(
@@ -168,7 +170,7 @@ testRun(void)
             "load backup info from encrypted repo4");
         TEST_RESULT_PTR_NE(infoBackupCipherPass(infoBackup), NULL, "cipher sub set");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cmdStanzaCreate missing files - multi-repo and encryption");
 
         // Remove backup.info on repo1
@@ -203,23 +205,23 @@ testRun(void)
                 storageGetP(storageNewReadP(storageRepoIdx(1), STRDEF(INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT)))),
             true, "archive.info repo2 recreated from archive.info.copy");
         TEST_RESULT_BOOL(
-            (bufEq(
+            bufEq(
                 storageGetP(storageNewReadP(storageRepoIdx(2), INFO_BACKUP_PATH_FILE_STR)),
                 storageGetP(storageNewReadP(storageRepoIdx(2), STRDEF(INFO_BACKUP_PATH_FILE INFO_COPY_EXT)))) &&
             bufEq(
                 storageGetP(storageNewReadP(storageRepoIdx(2), INFO_ARCHIVE_PATH_FILE_STR)),
-                storageGetP(storageNewReadP(storageRepoIdx(2), STRDEF(INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT))))),
+                storageGetP(storageNewReadP(storageRepoIdx(2), STRDEF(INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT)))),
             true, "info files recreated repo3 from copy files");
         TEST_RESULT_BOOL(
-            (bufEq(
+            bufEq(
                 storageGetP(storageNewReadP(storageRepoIdx(3), INFO_BACKUP_PATH_FILE_STR)),
                 storageGetP(storageNewReadP(storageRepoIdx(3), STRDEF(INFO_BACKUP_PATH_FILE INFO_COPY_EXT)))) &&
             bufEq(
                 storageGetP(storageNewReadP(storageRepoIdx(3), INFO_ARCHIVE_PATH_FILE_STR)),
-                storageGetP(storageNewReadP(storageRepoIdx(3), STRDEF(INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT))))),
+                storageGetP(storageNewReadP(storageRepoIdx(3), STRDEF(INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT)))),
             true, "copy files recreated repo4 from info files");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cmdStanzaDelete - multi-repo and encryption, delete");
 
         StringList *argListCmd = strLstNew();
@@ -285,7 +287,7 @@ testRun(void)
 
         TEST_STORAGE_LIST(storageTest, "repo3", "archive/\nbackup/\n", .comment = "stanza deleted");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cmdStanzaCreate errors");
 
         argList = strLstDup(argListBase);
@@ -384,7 +386,7 @@ testRun(void)
             "HINT: this may be a symptom of repository corruption!");
         TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("checkStanzaInfo() - already checked in checkTest so just a sanity check here");
 
         // Create a corrupted backup file - db id
@@ -398,8 +400,8 @@ testRun(void)
             "db-version=\"9.6\"\n"
             "\n"
             "[db:history]\n"
-            "2={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":" HRN_PG_SYSTEMID_96_Z ","
-                "\"db-version\":\"9.6\"}\n",
+            "2={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":" HRN_PG_SYSTEMID_96_Z
+            ",\"db-version\":\"9.6\"}\n",
             .comment = "put backup info to file - bad db-id");
 
         TEST_ERROR(
@@ -410,7 +412,7 @@ testRun(void)
             "HINT: this may be a symptom of repository corruption!");
         TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("archive.info file and backup.info files that match but do not match the current database version");
 
         // Copy files may or may not exist - remove
@@ -429,8 +431,8 @@ testRun(void)
             "db-version=\"9.5\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":" HRN_PG_SYSTEMID_96_Z ","
-                "\"db-version\":\"9.5\"}\n");
+            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":" HRN_PG_SYSTEMID_96_Z
+            ",\"db-version\":\"9.5\"}\n");
 
         HRN_INFO_PUT(
             storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE,
@@ -449,7 +451,7 @@ testRun(void)
             "HINT: did an error occur during stanza-upgrade?");
         TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("archive.info and backup.info files that match but do not match the current database system-id");
 
         HRN_INFO_PUT(
@@ -472,8 +474,8 @@ testRun(void)
             "db-version=\"9.6\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665999,"
-                "\"db-version\":\"9.6\"}\n");
+            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665999"
+            ",\"db-version\":\"9.6\"}\n");
 
         TEST_ERROR(
             cmdStanzaCreate(), FileInvalidError,
@@ -501,7 +503,7 @@ testRun(void)
         TEST_ERROR(cmdStanzaCreate(), PathNotEmptyError, "archive directory not empty");
         TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("repeat last test using --force (deprecated)");
 
         hrnCfgArgRawBool(argList, cfgOptForce, true);
@@ -510,6 +512,41 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   WARN: option --force is no longer supported\n"
             "P00   INFO: stanza-create for stanza 'db' on repo1");
+
+        // Clean-up file in archive directory
+        HRN_STORAGE_REMOVE(storageRepoIdxWrite(0), STORAGE_REPO_ARCHIVE "/somefile", .comment = "remove old test file");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("stanza-create forcing another PG version");
+
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptPgVersionForce, "15");
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
+
+        HRN_PG_CONTROL_OVERRIDE_VERSION_PUT(storagePgWrite(), PG_VERSION_15, 1501, .catalogVersion = 202211111);
+
+        TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - forcing another PG version");
+        TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
+
+        HRN_INFO_PUT(
+            storageHrn, "test.info",
+            "[db]\n"
+            "db-catalog-version=202211111\n"
+            "db-control-version=1300\n"
+            "db-id=1\n"
+            "db-system-id=" HRN_PG_SYSTEMID_15_Z "\n"
+            "db-version=\"15\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":202211111,\"db-control-version\":1300,\"db-system-id\":" HRN_PG_SYSTEMID_15_Z
+            ",\"db-version\":\"15\"}\n",
+            .comment = "put backup info to test file, control version for PG 15, catalog version forced from pg_control");
+
+        TEST_RESULT_BOOL(
+            bufEq(
+                storageGetP(storageNewReadP(storageRepoIdx(0), INFO_BACKUP_PATH_FILE_STR)),
+                storageGetP(storageNewReadP(storageHrn, STRDEF("test.info")))),
+            true, "test and stanza backup info files are equal");
     }
 
     // *****************************************************************************************************************************
@@ -522,17 +559,14 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("pgControl and database match");
 
         // Create pg_control
-        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_93);
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_94);
 
-        harnessPqScriptSet((HarnessPq [])
-        {
-            HRNPQ_MACRO_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_93, TEST_PATH "/pg", false, NULL, NULL),
-            HRNPQ_MACRO_DONE()
-        });
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_94, TEST_PATH "/pg", false, NULL, NULL));
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - db online");
         TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
@@ -549,54 +583,45 @@ testRun(void)
             .comment = "stanza created");
 
         HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
-        harnessPqScriptSet((HarnessPq [])
-        {
-            HRNPQ_MACRO_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_93, TEST_PATH "/pg", false, NULL, NULL),
-            HRNPQ_MACRO_DONE()
-        });
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_94, TEST_PATH "/pg", false, NULL, NULL));
 
         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - db online");
         TEST_RESULT_LOG(
             "P00   INFO: stanza-upgrade for stanza 'db' on repo1\n"
             "P00   INFO: stanza 'db' on repo1 is already up to date");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("pg_control and version mismatch");
 
         // Create pg_control with different version
         HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_10);
 
-        harnessPqScriptSet((HarnessPq [])
-        {
-            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_11, TEST_PATH "/pg", false, NULL, NULL),
-            HRNPQ_MACRO_DONE()
-        });
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_11, TEST_PATH "/pg", false, NULL, NULL));
 
         TEST_ERROR(
             pgValidate(), DbMismatchError,
-            "version '" PG_VERSION_11_STR "' and path '" TEST_PATH "/pg' queried from cluster do not match version '"
-            PG_VERSION_10_STR "' and '" TEST_PATH "/pg' read from '" TEST_PATH "/pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
+            "version '" PG_VERSION_11_Z "' and path '" TEST_PATH "/pg' queried from cluster do not match version '" PG_VERSION_10_Z
+            "' and '" TEST_PATH "/pg' read from '" TEST_PATH "/pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
             "HINT: the pg1-path and pg1-port settings likely reference different clusters.");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("pg_control and path mismatch");
 
         // Create pg_control
         HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_15);
 
-        harnessPqScriptSet((HarnessPq [])
-        {
-            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg2", false, NULL, NULL),
-            HRNPQ_MACRO_DONE()
-        });
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg2", false, NULL, NULL));
 
         TEST_ERROR(
             pgValidate(), DbMismatchError,
-            "version '" PG_VERSION_15_STR "' and path '" TEST_PATH "/pg2' queried from cluster do not match version '"
-                PG_VERSION_15_STR "' and '" TEST_PATH "/pg' read from '" TEST_PATH "/pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL
-            "'\nHINT: the pg1-path and pg1-port settings likely reference different clusters.");
+            "version '" PG_VERSION_15_Z "' and path '" TEST_PATH "/pg2' queried from cluster do not match version '" PG_VERSION_15_Z
+            "' and '" TEST_PATH "/pg' read from '" TEST_PATH "/pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
+            "HINT: the pg1-path and pg1-port settings likely reference different clusters.");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("primary at pg2");
 
         argList = strLstNew();
@@ -614,12 +639,9 @@ testRun(void)
         // Create pg_control for standby
         HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_94);
 
-        harnessPqScriptSet((HarnessPq [])
-        {
-            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_13, TEST_PATH "/pg", true, NULL, NULL),
-            HRNPQ_MACRO_OPEN_GE_96(2, "dbname='postgres' port=5434", PG_VERSION_13, TEST_PATH "/pg1", false, NULL, NULL),
-            HRNPQ_MACRO_DONE()
-        });
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_13, TEST_PATH "/pg", true, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN_GE_96(2, "dbname='postgres' port=5434", PG_VERSION_13, TEST_PATH "/pg1", false, NULL, NULL));
 
         PgControl pgControl = {0};
         TEST_ASSIGN(pgControl, pgValidate(), "validate primary on pg2");
@@ -631,7 +653,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("cmdStanzaUpgrade()"))
     {
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("stanza-upgrade - config errors");
 
         // Load Parameters
@@ -650,11 +672,11 @@ testRun(void)
         TEST_ERROR(cmdStanzaUpgrade(), StopError, "stop file exists for stanza db");
         HRN_STORAGE_REMOVE(storageHrn, strZ(lockStopFileName(cfgOptionStr(cfgOptStanza))));
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         // Create pg_control for the rest of the tests
         HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_96);
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("stanza-upgrade - info file mismatch: db-id");
 
         // Stanza with only archive.info and backup.info but no .copy files
@@ -668,8 +690,8 @@ testRun(void)
             "db-version=\"9.6\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":" HRN_PG_SYSTEMID_96_Z ","
-                "\"db-version\":\"9.6\"}\n");
+            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":" HRN_PG_SYSTEMID_96_Z
+            ",\"db-version\":\"9.6\"}\n");
 
         // backup info up to date but archive info db-id mismatch
         HRN_INFO_PUT(
@@ -690,7 +712,7 @@ testRun(void)
             "HINT: this may be a symptom of repository corruption!");
         TEST_RESULT_LOG("P00   INFO: stanza-upgrade for stanza 'db' on repo1");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("stanza-upgrade - info file mismatch: archive version");
 
         // backup info up to date but archive info version is not
@@ -704,10 +726,10 @@ testRun(void)
             "db-version=\"9.6\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6569239123849665999,"
-                "\"db-version\":\"9.5\"}\n"
-            "2={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":" HRN_PG_SYSTEMID_96_Z ","
-                "\"db-version\":\"9.6\"}\n");
+            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6569239123849665999"
+            ",\"db-version\":\"9.5\"}\n"
+            "2={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":" HRN_PG_SYSTEMID_96_Z
+            ",\"db-version\":\"9.6\"}\n");
         HRN_INFO_PUT(
             storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE,
             "[db]\n"
@@ -734,15 +756,15 @@ testRun(void)
             .comment = "put archive info to test file");
 
         TEST_RESULT_BOOL(
-            (bufEq(
+            bufEq(
                 storageGetP(storageNewReadP(storageRepoIdx(0), INFO_ARCHIVE_PATH_FILE_STR)),
                 storageGetP(storageNewReadP(storageRepoIdx(0), STRDEF(INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT)))) &&
             bufEq(
                 storageGetP(storageNewReadP(storageRepoIdx(0), INFO_ARCHIVE_PATH_FILE_STR)),
-                storageGetP(storageNewReadP(storageHrn, STRDEF("test.info"))))),
+                storageGetP(storageNewReadP(storageHrn, STRDEF("test.info")))),
             true, "test and stanza archive info files are equal");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("stanza-upgrade - info file mismatch: backup version");
 
         // archive info up to date but backup info version is not
@@ -756,8 +778,8 @@ testRun(void)
             "db-version=\"9.5\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":" HRN_PG_SYSTEMID_96_Z ","
-                "\"db-version\":\"9.5\"}\n");
+            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":" HRN_PG_SYSTEMID_96_Z
+            ",\"db-version\":\"9.5\"}\n");
 
         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - backup.info file upgraded - version");
         TEST_RESULT_LOG("P00   INFO: stanza-upgrade for stanza 'db' on repo1");
@@ -772,22 +794,22 @@ testRun(void)
             "db-version=\"9.6\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":" HRN_PG_SYSTEMID_96_Z ","
-                "\"db-version\":\"9.5\"}\n"
-            "2={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":" HRN_PG_SYSTEMID_96_Z ","
-                "\"db-version\":\"9.6\"}\n",
+            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":" HRN_PG_SYSTEMID_96_Z
+            ",\"db-version\":\"9.5\"}\n"
+            "2={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":" HRN_PG_SYSTEMID_96_Z
+            ",\"db-version\":\"9.6\"}\n",
             .comment = "put backup info to test file");
 
         TEST_RESULT_BOOL(
-            (bufEq(
+            bufEq(
                 storageGetP(storageNewReadP(storageRepoIdx(0), INFO_BACKUP_PATH_FILE_STR)),
                 storageGetP(storageNewReadP(storageRepoIdx(0), STRDEF(INFO_BACKUP_PATH_FILE INFO_COPY_EXT)))) &&
             bufEq(
                 storageGetP(storageNewReadP(storageRepoIdx(0), INFO_BACKUP_PATH_FILE_STR)),
-                storageGetP(storageNewReadP(storageHrn, STRDEF("test.info"))))),
+                storageGetP(storageNewReadP(storageHrn, STRDEF("test.info")))),
             true, "test and stanza backup info files are equal");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("stanza-upgrade - info file mismatch: archive system-id");
 
         // backup info up to date but archive info system-id is not
@@ -801,10 +823,10 @@ testRun(void)
             "db-version=\"9.6\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6569239123849665999,"
-                "\"db-version\":\"9.5\"}\n"
-            "2={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":" HRN_PG_SYSTEMID_96_Z ","
-                "\"db-version\":\"9.6\"}\n");
+            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6569239123849665999"
+            ",\"db-version\":\"9.5\"}\n"
+            "2={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":" HRN_PG_SYSTEMID_96_Z
+            ",\"db-version\":\"9.6\"}\n");
         HRN_INFO_PUT(
             storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE,
             "[db]\n"
@@ -831,15 +853,15 @@ testRun(void)
             .comment = "put archive info to test file");
 
         TEST_RESULT_BOOL(
-            (bufEq(
+            bufEq(
                 storageGetP(storageNewReadP(storageRepoIdx(0), INFO_ARCHIVE_PATH_FILE_STR)),
                 storageGetP(storageNewReadP(storageRepoIdx(0), STRDEF(INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT)))) &&
             bufEq(
                 storageGetP(storageNewReadP(storageRepoIdx(0), INFO_ARCHIVE_PATH_FILE_STR)),
-                storageGetP(storageNewReadP(storageHrn, STRDEF("test.info"))))),
+                storageGetP(storageNewReadP(storageHrn, STRDEF("test.info")))),
             true, "test and stanza archive info files are equal");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("stanza-upgrade - info file mismatch: backup system-id");
 
         // archive info up to date but backup info system-id is not
@@ -853,8 +875,8 @@ testRun(void)
             "db-version=\"9.6\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665999,"
-                "\"db-version\":\"9.6\"}\n");
+            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665999"
+            ",\"db-version\":\"9.6\"}\n");
 
         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - backup.info file upgraded - system-id");
         TEST_RESULT_LOG("P00   INFO: stanza-upgrade for stanza 'db' on repo1");
@@ -869,18 +891,93 @@ testRun(void)
             "db-version=\"9.6\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665999,"
-                "\"db-version\":\"9.6\"}\n"
-            "2={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":" HRN_PG_SYSTEMID_96_Z ","
-                "\"db-version\":\"9.6\"}\n",
+            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665999"
+            ",\"db-version\":\"9.6\"}\n"
+            "2={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":" HRN_PG_SYSTEMID_96_Z
+            ",\"db-version\":\"9.6\"}\n",
             .comment = "put backup info to test file");
         TEST_RESULT_BOOL(
-            (bufEq(
+            bufEq(
                 storageGetP(storageNewReadP(storageRepoIdx(0), INFO_BACKUP_PATH_FILE_STR)),
                 storageGetP(storageNewReadP(storageRepoIdx(0), STRDEF(INFO_BACKUP_PATH_FILE INFO_COPY_EXT)))) &&
             bufEq(
                 storageGetP(storageNewReadP(storageRepoIdx(0), INFO_BACKUP_PATH_FILE_STR)),
-                storageGetP(storageNewReadP(storageHrn, STRDEF("test.info"))))),
+                storageGetP(storageNewReadP(storageHrn, STRDEF("test.info")))),
+            true, "test and stanza backup info files are equal");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("stanza-upgrade forcing another PG version");
+
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptPgVersionForce, "15");
+        HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
+
+        HRN_PG_CONTROL_OVERRIDE_VERSION_PUT(storagePgWrite(), PG_VERSION_15, 1501, .catalogVersion = 202211111);
+
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE,
+            "[db]\n"
+            "db-catalog-version=201608131\n"
+            "db-control-version=960\n"
+            "db-id=1\n"
+            "db-system-id=6569239123849665999\n"
+            "db-version=\"9.6\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665999"
+            ",\"db-version\":\"9.6\"}\n");
+
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE,
+            "[db]\n"
+            "db-id=1\n"
+            "db-system-id=6569239123849665999\n"
+            "db-version=\"9.6\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":6569239123849665999,\"db-version\":\"9.6\"}\n");
+
+        TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - forcing another PG version");
+        TEST_RESULT_LOG("P00   INFO: stanza-upgrade for stanza 'db' on repo1");
+
+        HRN_INFO_PUT(
+            storageHrn, "test.info",
+            "[db]\n"
+            "db-id=2\n"
+            "db-system-id=" HRN_PG_SYSTEMID_15_Z "\n"
+            "db-version=\"15\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":6569239123849665999,\"db-version\":\"9.6\"}\n"
+            "2={\"db-id\":" HRN_PG_SYSTEMID_15_Z ",\"db-version\":\"15\"}\n",
+            .comment = "put archive info to test file");
+
+        TEST_RESULT_BOOL(
+            bufEq(
+                storageGetP(storageNewReadP(storageRepoIdx(0), INFO_ARCHIVE_PATH_FILE_STR)),
+                storageGetP(storageNewReadP(storageHrn, STRDEF("test.info")))),
+            true, "test and stanza archive info files are equal");
+
+        HRN_INFO_PUT(
+            storageHrn, "test.info",
+            "[db]\n"
+            "db-catalog-version=202211111\n"
+            "db-control-version=1300\n"
+            "db-id=2\n"
+            "db-system-id=" HRN_PG_SYSTEMID_15_Z "\n"
+            "db-version=\"15\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665999"
+            ",\"db-version\":\"9.6\"}\n"
+            "2={\"db-catalog-version\":202211111,\"db-control-version\":1300,\"db-system-id\":" HRN_PG_SYSTEMID_15_Z
+            ",\"db-version\":\"15\"}\n",
+            .comment = "put backup info to test file, control version for PG 15, catalog version forced from pg_control");
+
+        TEST_RESULT_BOOL(
+            bufEq(
+                storageGetP(storageNewReadP(storageRepoIdx(0), INFO_BACKUP_PATH_FILE_STR)),
+                storageGetP(storageNewReadP(storageHrn, STRDEF("test.info")))),
             true, "test and stanza backup info files are equal");
     }
 
@@ -909,20 +1006,20 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg");
         HRN_CFG_LOAD(cfgCmdStanzaDelete, argList);
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("stanza-delete - stanza already deleted");
 
         TEST_RESULT_VOID(cmdStanzaDelete(), "stanza delete - success on stanza does not exist");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("stanza-delete - only archive exists");
 
         // Confirm stanza does not exist
         TEST_STORAGE_LIST(
-            storageTest, "repo/archive", "otherstanza/\n", .noRecurse=true,
+            storageTest, "repo/archive", "otherstanza/\n", .noRecurse = true,
             .comment = "stanza '" TEST_STANZA "' archive does not exist");
         TEST_STORAGE_LIST(
-            storageTest, "repo/backup", "otherstanza/\n", .noRecurse=true,
+            storageTest, "repo/backup", "otherstanza/\n", .noRecurse = true,
             .comment = "stanza '" TEST_STANZA "' backup does not exist");
 
         // Create stanza archive only
@@ -937,9 +1034,9 @@ testRun(void)
         TEST_RESULT_VOID(cmdStanzaDelete(), "stanza delete - archive only");
 
         TEST_STORAGE_LIST(
-            storageTest, "repo/archive", "otherstanza/\n", .noRecurse=true, .comment = "stanza '" TEST_STANZA "' deleted");
+            storageTest, "repo/archive", "otherstanza/\n", .noRecurse = true, .comment = "stanza '" TEST_STANZA "' deleted");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("stanza-delete - only backup exists");
 
         // Create stanza backup only
@@ -955,9 +1052,9 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdStanzaDelete(), "stanza delete - backup only");
         TEST_STORAGE_LIST(
-            storageTest, "repo/backup", "otherstanza/\n", .noRecurse=true, .comment = "stanza '" TEST_STANZA "' deleted");
+            storageTest, "repo/backup", "otherstanza/\n", .noRecurse = true, .comment = "stanza '" TEST_STANZA "' deleted");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("stanza-delete - empty directories");
 
         TEST_RESULT_VOID(cmdStanzaDelete(), "remove stanza '" TEST_STANZA "'");
@@ -968,9 +1065,9 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdStanzaDelete(), "stanza delete - empty directories");
         TEST_STORAGE_LIST(
-            storageTest, "repo/archive", "otherstanza/\n", .noRecurse=true, .comment = "stanza '" TEST_STANZA "' deleted");
+            storageTest, "repo/archive", "otherstanza/\n", .noRecurse = true, .comment = "stanza '" TEST_STANZA "' deleted");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("delete errors when pg appears to be running");
 
         HRN_STORAGE_PUT_EMPTY(
@@ -994,7 +1091,7 @@ testRun(void)
             cmdStanzaDelete(), PgRunningError, PG_FILE_POSTMTRPID " exists - looks like " PG_NAME " is running. "
             "To delete stanza 'db' on repo2, shut down " PG_NAME " for stanza 'db' and try again, or use --force.");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("force delete when pg appears to be running, multi-repo");
 
         argList = strLstDup(argListCmd);
@@ -1009,7 +1106,7 @@ testRun(void)
         TEST_RESULT_BOOL(storagePathExistsP(storageTest, strNewZ("repo/backup/" TEST_STANZA)), false, "repo1: stanza deleted");
         TEST_RESULT_BOOL(storagePathExistsP(storageTest, strNewZ("repo2/backup/" TEST_STANZA)), true, "repo2: stanza not deleted");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("ensure other stanza never deleted from repo1");
 
         TEST_STORAGE_LIST(

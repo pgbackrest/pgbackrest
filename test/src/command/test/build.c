@@ -31,7 +31,7 @@ TestBuild *
 testBldNew(
     const String *const pathRepo, const String *const pathTest, const String *const vm, const unsigned int vmId,
     const TestDefModule *const module, const unsigned int test, const uint64_t scale, const LogLevel logLevel, const bool logTime,
-    const String *const timeZone, const bool coverage, const bool profile, const bool optimize)
+    const String *const timeZone, const bool coverage, const bool profile, const bool optimize, const bool backTrace)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, pathRepo);
@@ -47,6 +47,7 @@ testBldNew(
         FUNCTION_LOG_PARAM(BOOL, coverage);
         FUNCTION_LOG_PARAM(BOOL, profile);
         FUNCTION_LOG_PARAM(BOOL, optimize);
+        FUNCTION_LOG_PARAM(BOOL, backTrace);
     FUNCTION_LOG_END();
 
     ASSERT(pathRepo != NULL);
@@ -55,13 +56,8 @@ testBldNew(
     ASSERT(module != NULL);
     ASSERT(scale != 0);
 
-    TestBuild *this = NULL;
-
     OBJ_NEW_BEGIN(TestBuild, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        // Create object
-        this = OBJ_NEW_ALLOC();
-
         *this = (TestBuild)
         {
             .pub =
@@ -79,6 +75,7 @@ testBldNew(
                 .coverage = coverage,
                 .profile = profile,
                 .optimize = optimize,
+                .backTrace = backTrace,
             },
         };
 
@@ -217,6 +214,8 @@ cmdBldPathModule(const String *const moduleName)
     {
         if (strBeginsWithZ(moduleName, "test/"))
             strCatFmt(result, "test/src%s", strZ(strSub(moduleName, 4)));
+        else if (strBeginsWithZ(moduleName, "doc/"))
+            strCatFmt(result, "doc/src%s", strZ(strSub(moduleName, 3)));
         else
             strCatFmt(result, "src/%s", strZ(moduleName));
     }
@@ -377,6 +376,13 @@ testBldUnit(TestBuild *const this)
         // Comment out subdirs that are not used for testing
         strReplace(mesonBuild, STRDEF("subdir('"), STRDEF("# subdir('"));
 
+        if (!testBldBackTrace(this))
+        {
+            strReplace(
+                mesonBuild, STRDEF("    configuration.set('HAVE_LIBBACKTRACE'"),
+                STRDEF("#    configuration.set('HAVE_LIBBACKTRACE'"));
+        }
+
         // Write build.auto.in
         strCatZ(
             mesonBuild,
@@ -530,21 +536,32 @@ testBldUnit(TestBuild *const this)
             "        include_directories(\n"
             "            '.',\n"
             "            '%s/src',\n"
+            "            '%s/doc/src',\n"
             "            '%s/test/src',\n"
             "        ),\n"
-            "    dependencies: [\n"
-            "        lib_backtrace,\n"
+            "    dependencies: [\n",
+            strZ(pathRepoRel), strZ(pathRepoRel), strZ(pathRepoRel));
+
+        if (testBldBackTrace(this))
+        {
+            strCatZ(
+                mesonBuild,
+                "        lib_backtrace,\n");
+        }
+
+        strCatZ(
+            mesonBuild,
             "        lib_bz2,\n"
             "        lib_openssl,\n"
             "        lib_lz4,\n"
             "        lib_pq,\n"
+            "        lib_ssh2,\n"
             "        lib_xml,\n"
             "        lib_yaml,\n"
             "        lib_z,\n"
             "        lib_zstd,\n"
             "    ],\n"
-            ")\n",
-            strZ(pathRepoRel), strZ(pathRepoRel));
+            ")\n");
 
         testBldWrite(storageUnit, storageUnitList, "meson.build", BUFSTR(mesonBuild));
 
@@ -648,6 +665,7 @@ testBldUnit(TestBuild *const this)
         strReplace(testC, STRDEF("{[C_TEST_GROUP]}"), groupName());
         strReplace(testC, STRDEF("{[C_TEST_GROUP_ID]}"), strNewFmt("%u", groupId()));
         strReplace(testC, STRDEF("{[C_TEST_USER]}"), userName());
+        strReplace(testC, STRDEF("{[C_TEST_USER_LEN]}"), strNewFmt("%zu", strSize(userName())));
         strReplace(testC, STRDEF("{[C_TEST_USER_ID]}"), strNewFmt("%u", userId()));
 
         // Test id

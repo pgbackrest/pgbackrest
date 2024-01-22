@@ -56,11 +56,13 @@ VARIANT_STRDEF_STATIC(KEY_ARCHIVE_VAR,                              "archive");
 VARIANT_STRDEF_STATIC(KEY_CIPHER_VAR,                               "cipher");
 VARIANT_STRDEF_STATIC(KEY_DATABASE_VAR,                             "database");
 VARIANT_STRDEF_STATIC(KEY_DELTA_VAR,                                "delta");
+VARIANT_STRDEF_STATIC(KEY_DELTA_MAP_VAR,                            "delta-map");
 VARIANT_STRDEF_STATIC(KEY_DESTINATION_VAR,                          "destination");
 VARIANT_STRDEF_STATIC(KEY_NAME_VAR,                                 "name");
 VARIANT_STRDEF_STATIC(KEY_OID_VAR,                                  "oid");
 VARIANT_STRDEF_STATIC(KEY_REPO_KEY_VAR,                             "repo-key");
 VARIANT_STRDEF_STATIC(KEY_SIZE_VAR,                                 "size");
+VARIANT_STRDEF_STATIC(KEY_SIZE_MAP_VAR,                             "size-map");
 VARIANT_STRDEF_STATIC(KEY_START_VAR,                                "start");
 VARIANT_STRDEF_STATIC(KEY_STOP_VAR,                                 "stop");
 VARIANT_STRDEF_STATIC(REPO_KEY_KEY_VAR,                             "key");
@@ -73,6 +75,8 @@ VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_VAR,                          "lock");
 VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_BACKUP_VAR,                   "backup");
 VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_BACKUP_HELD_VAR,              "held");
 VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_BACKUP_PERCENT_COMPLETE_VAR,  "pct-cplt");
+VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_BACKUP_SIZE_COMPLETE_VAR,     "size-cplt");
+VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_BACKUP_SIZE_VAR,              "size");
 VARIANT_STRDEF_STATIC(STATUS_KEY_MESSAGE_VAR,                       "message");
 
 #define INFO_STANZA_STATUS_OK                                       "ok"
@@ -121,7 +125,7 @@ typedef struct InfoRepoData
 #define FUNCTION_LOG_INFO_REPO_DATA_TYPE                                                                                           \
     InfoRepoData *
 #define FUNCTION_LOG_INFO_REPO_DATA_FORMAT(value, buffer, bufferSize)                                                              \
-    objToLog(value, "InfoRepoData", buffer, bufferSize)
+    objNameToLog(value, "InfoRepoData", buffer, bufferSize)
 
 // Stanza with repository list of information for each repository
 typedef struct InfoStanzaRepo
@@ -132,13 +136,15 @@ typedef struct InfoStanzaRepo
     bool backupLockChecked;                                         // Has the check for a backup lock already been performed?
     bool backupLockHeld;                                            // Is backup lock held on the system where info command is run?
     const Variant *percentComplete;                                 // Percentage of backup complete * 100 (when not NULL)
+    const Variant *sizeComplete;                                    // Completed size of the backup in bytes
+    const Variant *size;                                            // Total size of the backup in bytes
     InfoRepoData *repoList;                                         // List of configured repositories
 } InfoStanzaRepo;
 
 #define FUNCTION_LOG_INFO_STANZA_REPO_TYPE                                                                                         \
     InfoStanzaRepo *
 #define FUNCTION_LOG_INFO_STANZA_REPO_FORMAT(value, buffer, bufferSize)                                                            \
-    objToLog(value, "InfoStanzaRepo", buffer, bufferSize)
+    objNameToLog(value, "InfoStanzaRepo", buffer, bufferSize)
 
 // Group all databases with the same system-id and version together regardless of db-id or repo
 typedef struct DbGroup
@@ -154,7 +160,7 @@ typedef struct DbGroup
 #define FUNCTION_LOG_DB_GROUP_TYPE                                                                                                 \
     DbGroup *
 #define FUNCTION_LOG_DB_GROUP_FORMAT(value, buffer, bufferSize)                                                                    \
-    objToLog(value, "DbGroup", buffer, bufferSize)
+    objNameToLog(value, "DbGroup", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Helper function for reporting errors
@@ -237,6 +243,12 @@ stanzaStatus(const int code, const InfoStanzaRepo *const stanzaData, Variant *st
     if (stanzaData->percentComplete != NULL && cfgOptionStrId(cfgOptOutput) != CFGOPTVAL_OUTPUT_JSON)
         kvPut(backupLockKv, STATUS_KEY_LOCK_BACKUP_PERCENT_COMPLETE_VAR, stanzaData->percentComplete);
 
+    if (stanzaData->sizeComplete != NULL)
+        kvPut(backupLockKv, STATUS_KEY_LOCK_BACKUP_SIZE_COMPLETE_VAR, stanzaData->sizeComplete);
+
+    if (stanzaData->size != NULL)
+        kvPut(backupLockKv, STATUS_KEY_LOCK_BACKUP_SIZE_VAR, stanzaData->size);
+
     FUNCTION_TEST_RETURN_VOID();
 }
 
@@ -305,6 +317,8 @@ archiveDbList(
         FUNCTION_TEST_PARAM(UINT, repoIdx);
         FUNCTION_TEST_PARAM(UINT, repoKey);
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     ASSERT(stanza != NULL);
     ASSERT(pgData != NULL);
@@ -397,6 +411,8 @@ backupListAdd(
         FUNCTION_TEST_PARAM(INFO_REPO_DATA, repoData);              // The repo data where this backup is located
     FUNCTION_TEST_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     ASSERT(backupSection != NULL);
     ASSERT(backupData != NULL);
     ASSERT(repoData != NULL);
@@ -447,8 +463,16 @@ backupListAdd(
     // info:repository section
     KeyValue *repoInfo = kvPutKv(infoInfo, INFO_KEY_REPOSITORY_VAR);
 
-    kvPut(repoInfo, KEY_SIZE_VAR, VARUINT64(backupData->backupInfoRepoSize));
+    if (backupData->backupInfoRepoSizeMap == NULL)
+        kvPut(repoInfo, KEY_SIZE_VAR, VARUINT64(backupData->backupInfoRepoSize));
+
     kvPut(repoInfo, KEY_DELTA_VAR, VARUINT64(backupData->backupInfoRepoSizeDelta));
+
+    if (outputJson && backupData->backupInfoRepoSizeMap != NULL)
+    {
+        kvPut(repoInfo, KEY_SIZE_MAP_VAR, backupData->backupInfoRepoSizeMap);
+        kvPut(repoInfo, KEY_DELTA_MAP_VAR, backupData->backupInfoRepoSizeMapDelta);
+    }
 
     // timestamp section
     KeyValue *timeInfo = kvPutKv(varKv(backupInfo), BACKUP_KEY_TIMESTAMP_VAR);
@@ -520,8 +544,9 @@ backupListAdd(
                 {
                     kvPut(varKv(link), KEY_NAME_VAR, varNewStr(target->file));
                     kvPut(
-                        varKv(link), KEY_DESTINATION_VAR, varNewStr(strNewFmt("%s/%s", strZ(target->path),
-                        strZ(target->file))));
+                        varKv(link), KEY_DESTINATION_VAR,
+                        varNewStr(strNewFmt("%s/%s", strZ(target->path), strZ(target->file))));
+
                     varLstAdd(linkSection, link);
                 }
                 else
@@ -585,6 +610,8 @@ backupList(
         FUNCTION_TEST_PARAM(UINT, repoIdxMin);                      // The start index of the repo array to begin checking
         FUNCTION_TEST_PARAM(UINT, repoIdxMax);                      // The index of the last repo to check
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     ASSERT(backupSection != NULL);
     ASSERT(stanzaData != NULL);
@@ -657,6 +684,8 @@ stanzaInfoList(List *stanzaRepoList, const String *const backupLabel, const unsi
         FUNCTION_TEST_PARAM(UINT, repoIdxMin);
         FUNCTION_TEST_PARAM(UINT, repoIdxMax);
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     ASSERT(stanzaRepoList != NULL);
 
@@ -796,6 +825,51 @@ stanzaInfoList(List *stanzaRepoList, const String *const backupLabel, const unsi
 /***********************************************************************************************************************************
 Format the text output for archive and backups for a database group of a stanza
 ***********************************************************************************************************************************/
+// Helper to format date/time with timezone offset
+static String *
+formatTextBackupDateTime(const time_t epoch)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(TIME, epoch);
+    FUNCTION_TEST_END();
+
+    // Construct date/time
+    String *const result = strNew();
+    struct tm timePart;
+    char timeBuffer[20];
+
+    strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", localtime_r(&epoch, &timePart));
+    strCatZ(result, timeBuffer);
+
+    // Add timezone offset. Since this is not directly available in Posix-compliant APIs, use the difference between gmtime_r() and
+    // localtime_r to determine the offset. Handle minute offsets when present.
+    struct tm timePartGm;
+
+    gmtime_r(&epoch, &timePartGm);
+
+    timePart.tm_isdst = -1;
+    timePartGm.tm_isdst = -1;
+    time_t offset = mktime(&timePart) - mktime(&timePartGm);
+
+    if (offset >= 0)
+        strCatChr(result, '+');
+    else
+    {
+        offset *= -1;
+        strCatChr(result, '-');
+    }
+
+    const unsigned int minute = (unsigned int)(offset / 60);
+    const unsigned int hour = minute / 60;
+
+    strCatFmt(result, "%02u", hour);
+
+    if (minute % 60 != 0)
+        strCatFmt(result, ":%02u", minute - (hour * 60));
+
+    FUNCTION_TEST_RETURN(STRING, result);
+}
+
 static void
 formatTextBackup(const DbGroup *dbGroup, String *resultStr)
 {
@@ -803,6 +877,8 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr)
         FUNCTION_TEST_PARAM(DB_GROUP, dbGroup);
         FUNCTION_TEST_PARAM(STRING, resultStr);
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     ASSERT(dbGroup != NULL);
 
@@ -822,21 +898,16 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr)
             resultStr, "\n        %s backup: %s\n", strZ(varStr(kvGet(backupInfo, BACKUP_KEY_TYPE_VAR))),
             strZ(varStr(kvGet(backupInfo, BACKUP_KEY_LABEL_VAR))));
 
-        // Get and format the backup start/stop time
-        KeyValue *timestampInfo = varKv(kvGet(backupInfo, BACKUP_KEY_TIMESTAMP_VAR));
+        // Get and format backup start/stop time
+        const KeyValue *const timestampInfo = varKv(kvGet(backupInfo, BACKUP_KEY_TIMESTAMP_VAR));
 
-        struct tm timePart;
-        char timeBufferStart[20];
-        char timeBufferStop[20];
-        time_t timeStart = (time_t)varUInt64(kvGet(timestampInfo, KEY_START_VAR));
-        time_t timeStop = (time_t)varUInt64(kvGet(timestampInfo, KEY_STOP_VAR));
-
-        strftime(timeBufferStart, sizeof(timeBufferStart), "%Y-%m-%d %H:%M:%S", localtime_r(&timeStart, &timePart));
-        strftime(timeBufferStop, sizeof(timeBufferStop), "%Y-%m-%d %H:%M:%S", localtime_r(&timeStop, &timePart));
-
-        strCatFmt(resultStr, "            timestamp start/stop: %s / %s\n", timeBufferStart, timeBufferStop);
+        strCatFmt(
+            resultStr, "            timestamp start/stop: %s / %s\n",
+            strZ(formatTextBackupDateTime((time_t)varUInt64(kvGet(timestampInfo, KEY_START_VAR)))),
+            strZ(formatTextBackupDateTime((time_t)varUInt64(kvGet(timestampInfo, KEY_STOP_VAR)))));
         strCatZ(resultStr, "            wal start/stop: ");
 
+        // Get and format WAL start/stop
         KeyValue *archiveBackupInfo = varKv(kvGet(backupInfo, KEY_ARCHIVE_VAR));
 
         if (kvGet(archiveBackupInfo, KEY_START_VAR) != NULL && kvGet(archiveBackupInfo, KEY_STOP_VAR) != NULL)
@@ -866,12 +937,14 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr)
             strZ(strSizeFormat(varUInt64Force(kvGet(info, KEY_DELTA_VAR)))));
 
         KeyValue *repoInfo = varKv(kvGet(info, INFO_KEY_REPOSITORY_VAR));
+        const Variant *const repoSizeInfo = kvGet(repoInfo, KEY_SIZE_VAR);
 
-        strCatFmt(
-            resultStr, "            repo%u: backup set size: %s, backup size: %s\n",
-            varUInt(kvGet(varKv(kvGet(backupInfo, KEY_DATABASE_VAR)), KEY_REPO_KEY_VAR)),
-            strZ(strSizeFormat(varUInt64Force(kvGet(repoInfo, KEY_SIZE_VAR)))),
-            strZ(strSizeFormat(varUInt64Force(kvGet(repoInfo, KEY_DELTA_VAR)))));
+        strCatFmt(resultStr, "            repo%u: ", varUInt(kvGet(varKv(kvGet(backupInfo, KEY_DATABASE_VAR)), KEY_REPO_KEY_VAR)));
+
+        if (repoSizeInfo != NULL)
+            strCatFmt(resultStr, "backup set size: %s, ", strZ(strSizeFormat(varUInt64Force(kvGet(repoInfo, KEY_SIZE_VAR)))));
+
+        strCatFmt(resultStr, "backup size: %s\n", strZ(strSizeFormat(varUInt64Force(kvGet(repoInfo, KEY_DELTA_VAR)))));
 
         if (kvGet(backupInfo, BACKUP_KEY_REFERENCE_VAR) != NULL)
         {
@@ -1001,6 +1074,8 @@ formatTextDb(
         FUNCTION_TEST_PARAM(STRING, currentPgVersion);
         FUNCTION_TEST_PARAM(UINT64, currentPgSystemId);
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     ASSERT(stanzaInfo != NULL);
     ASSERT(currentPgVersion != NULL);
@@ -1162,6 +1237,8 @@ infoUpdateStanza(
         FUNCTION_TEST_PARAM(STRING, backupLabel);
     FUNCTION_TEST_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     ASSERT(storage != NULL);
     ASSERT(stanzaRepo != NULL);
 
@@ -1223,8 +1300,10 @@ infoUpdateStanza(
 
                     if (stanzaRepo->backupLockHeld)
                     {
-                        stanzaRepo->percentComplete =
-                            lockRead(cfgOptionStr(cfgOptLockPath), stanzaRepo->name, lockTypeBackup).data.percentComplete;
+                        const LockData lockData = lockRead(cfgOptionStr(cfgOptLockPath), stanzaRepo->name, lockTypeBackup).data;
+                        stanzaRepo->percentComplete = lockData.percentComplete;
+                        stanzaRepo->sizeComplete = lockData.sizeComplete;
+                        stanzaRepo->size = lockData.size;
                     }
                 }
             }
@@ -1479,9 +1558,10 @@ infoRender(void)
                     KeyValue *backupLockKv = varKv(kvGet(lockKv, STATUS_KEY_LOCK_BACKUP_VAR));
                     bool backupLockHeld = varBool(kvGet(backupLockKv, STATUS_KEY_LOCK_BACKUP_HELD_VAR));
                     const Variant *const percentComplete = kvGet(backupLockKv, STATUS_KEY_LOCK_BACKUP_PERCENT_COMPLETE_VAR);
-                    const String *const percentCompleteStr = percentComplete != NULL ?
-                        strNewFmt(" - %u.%02u%% complete", varUInt(percentComplete) / 100, varUInt(percentComplete) % 100) :
-                        EMPTY_STR;
+                    const String *const percentCompleteStr =
+                        percentComplete != NULL ?
+                            strNewFmt(" - %u.%02u%% complete", varUInt(percentComplete) / 100, varUInt(percentComplete) % 100) :
+                            EMPTY_STR;
 
                     if (statusCode != INFO_STANZA_STATUS_CODE_OK)
                     {
@@ -1530,7 +1610,6 @@ infoRender(void)
                                     }
                                     else
                                     {
-
                                         strCatFmt(
                                             resultStr, INFO_STANZA_STATUS_ERROR " (%s)\n",
                                             strZ(varStr(kvGet(repoStatus, STATUS_KEY_MESSAGE_VAR))));

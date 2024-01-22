@@ -115,7 +115,7 @@ cvtZSubNToUInt(const char *const value, const size_t offset, const size_t size)
 FN_EXTERN size_t cvtUInt64ToZ(uint64_t value, char *buffer, size_t bufferSize);
 FN_EXTERN uint64_t cvtZToUInt64(const char *value);
 FN_EXTERN uint64_t cvtZToUInt64Base(const char *value, int base);
-FN_EXTERN uint64_t cvtZSubNToUInt64Base(const char* value, size_t offset, size_t size, int base);
+FN_EXTERN uint64_t cvtZSubNToUInt64Base(const char *value, size_t offset, size_t size, int base);
 
 FN_INLINE_ALWAYS uint64_t
 cvtZSubNToUInt64(const char *const value, const size_t offset, const size_t size)

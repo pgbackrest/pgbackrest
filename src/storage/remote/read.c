@@ -13,9 +13,9 @@ Remote Storage Read
 #include "common/log.h"
 #include "common/type/convert.h"
 #include "common/type/object.h"
+#include "storage/read.intern.h"
 #include "storage/remote/protocol.h"
 #include "storage/remote/read.h"
-#include "storage/read.intern.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -42,7 +42,7 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_READ_REMOTE_TYPE                                                                                      \
     StorageReadRemote *
 #define FUNCTION_LOG_STORAGE_READ_REMOTE_FORMAT(value, buffer, bufferSize)                                                         \
-    objToLog(value, "StorageReadRemote", buffer, bufferSize)
+    objNameToLog(value, "StorageReadRemote", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Clear protocol if the entire file is not read or an error occurs before the read is complete. This is required to clear the
@@ -154,21 +154,19 @@ storageReadRemote(THIS_VOID, Buffer *buffer, bool block)
             // Read if not eof
             if (!this->eof)
             {
-                // If the buffer can contain all remaining bytes
-                if (bufRemains(buffer) >= this->remaining)
-                {
-                    bufCatSub(buffer, this->block, bufUsed(this->block) - this->remaining, this->remaining);
+                // Copy as much as possible into the output buffer
+                const size_t remains = this->remaining < bufRemains(buffer) ? this->remaining : bufRemains(buffer);
 
-                    this->remaining = 0;
+                bufCatSub(buffer, this->block, bufUsed(this->block) - this->remaining, remains);
+
+                result += remains;
+                this->remaining -= remains;
+
+                // If there is no more to copy from the block buffer then free it
+                if (this->remaining == 0)
+                {
                     bufFree(this->block);
                     this->block = NULL;
-                }
-                // Else read what we can
-                else
-                {
-                    size_t remains = bufRemains(buffer);
-                    bufCatSub(buffer, this->block, bufUsed(this->block) - this->remaining, remains);
-                    this->remaining -= remains;
                 }
             }
         }
@@ -217,7 +215,8 @@ storageReadRemoteOpen(THIS_VOID)
         if (this->interface.compressible)
         {
             ioFilterGroupAdd(
-                ioReadFilterGroup(storageReadIo(this->read)), compressFilter(compressTypeGz, (int)this->interface.compressLevel));
+                ioReadFilterGroup(storageReadIo(this->read)),
+                compressFilterP(compressTypeGz, (int)this->interface.compressLevel, .raw = true));
         }
 
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_OPEN_READ);
@@ -246,7 +245,7 @@ storageReadRemoteOpen(THIS_VOID)
 
             // If the file is compressible add decompression filter locally
             if (this->interface.compressible)
-                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(this->read)), decompressFilter(compressTypeGz));
+                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(this->read)), decompressFilterP(compressTypeGz, .raw = true));
 
             // Set free callback to ensure the protocol is cleared on a short read
             memContextCallbackSet(objMemContext(this), storageReadRemoteFreeResource, this);
@@ -302,12 +301,8 @@ storageReadRemoteNew(
     ASSERT(client != NULL);
     ASSERT(name != NULL);
 
-    StorageReadRemote *this = NULL;
-
-    OBJ_NEW_BEGIN(StorageReadRemote, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(StorageReadRemote, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (StorageReadRemote)
         {
             .storage = storage,
@@ -333,7 +328,7 @@ storageReadRemoteNew(
             },
         };
 
-        this->read = storageReadNew(this, &this->interface);
+        this->read = storageReadNew(OBJ_NAME(this, StorageRead::StorageReadRemote), &this->interface);
     }
     OBJ_NEW_END();
 

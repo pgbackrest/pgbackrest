@@ -1,8 +1,8 @@
 /***********************************************************************************************************************************
 Command and Option Configuration
 
-This module serves as a database for the configuration options.  The configuration rules reside in config/define.c and
-config/parse.c sets the command and options and determines which options are valid for a command.
+This module serves as a database for the configuration options. The configuration rules reside in config/define.c and config/parse.c
+sets the command and options and determines which options are valid for a command.
 ***********************************************************************************************************************************/
 #ifndef CONFIG_CONFIG_H
 #define CONFIG_CONFIG_H
@@ -16,7 +16,7 @@ config/parse.c sets the command and options and determines which options are val
 /***********************************************************************************************************************************
 Command Role Enum
 
-Commands may have multiple processes that work together to implement their functionality.  These roles allow each process to know
+Commands may have multiple processes that work together to implement their functionality. These roles allow each process to know
 what it is supposed to do.
 ***********************************************************************************************************************************/
 typedef enum
@@ -24,11 +24,11 @@ typedef enum
     // Called directly by the user. This is the main process of the command that may or may not spawn other command roles.
     cfgCmdRoleMain = 0,
 
-    // Async worker that is spawned so the main process can return a result while work continues.  An async worker may spawn local
-    // or remote workers.
+    // Async worker that is spawned so the main process can return a result while work continues. An async worker may spawn local or
+    // remote workers.
     cfgCmdRoleAsync,
 
-    // Local worker for parallelizing jobs.  A local work may spawn a remote worker.
+    // Local worker for parallelizing jobs. A local work may spawn a remote worker.
     cfgCmdRoleLocal,
 
     // Remote worker for accessing resources on another host
@@ -221,7 +221,7 @@ FN_EXTERN bool cfgOptionIdxTest(ConfigOption optionId, unsigned int optionIdx);
 /***********************************************************************************************************************************
 Option Source Enum
 
-Defines where an option was sourced from.  The source is only needed when determining what parameters should be passed to a remote
+Defines where an option was sourced from. The source is only needed when determining what parameters should be passed to a remote
 process.
 ***********************************************************************************************************************************/
 typedef enum
@@ -234,7 +234,7 @@ typedef enum
 /***********************************************************************************************************************************
 Load Functions
 
-Used primarily by modules that need to manipulate the configuration.  These modules include, but are not limited to, config/parse.c,
+Used primarily by modules that need to manipulate the configuration. These modules include, but are not limited to, config/parse.c,
 config/load.c.
 ***********************************************************************************************************************************/
 // Was help requested?
@@ -245,8 +245,8 @@ FN_EXTERN void cfgCommandSet(ConfigCommand commandId, ConfigCommandRole commandR
 // pgBackRest exe
 FN_EXTERN const String *cfgExe(void);
 
-// Set option default. Option defaults are generally not set in advance because the vast majority of them are never used.  It is
-// more efficient to generate them when they are requested. Some defaults are (e.g. the exe path) are set at runtime.
+// Set option default. Option defaults are generally not set in advance because the vast majority of them are never used. It is more
+// efficient to generate them when they are requested. Some defaults are (e.g. the exe path) are set at runtime.
 FN_EXTERN void cfgOptionDefaultSet(ConfigOption optionId, const Variant *defaultValue);
 
 // Was the option negated?

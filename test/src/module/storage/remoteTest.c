@@ -265,6 +265,24 @@ testRun(void)
             "raised from remote-0 shim protocol: " STORAGE_ERROR_READ_MISSING, TEST_PATH "/pg256/test.txt");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("raw read file without compression");
+
+        HRN_STORAGE_PUT(storageTest, TEST_PATH "/repo128/test.txt", contentBuf);
+
+        // Disable protocol compression in the storage object
+        ((StorageRemote *)storageDriver(storageRepo))->compressLevel = 0;
+
+        Buffer *buffer = bufNew(bufUsed(contentBuf));
+        size_t size;
+        StorageRead *fileReadRaw;
+        TEST_ASSIGN(fileReadRaw, storageNewReadP(storageRepo, STRDEF("test.txt")), "new file");
+        TEST_RESULT_BOOL(ioReadOpen(storageReadIo(fileReadRaw)), true, "open read");
+        TEST_ASSIGN(size, storageReadRemote(fileReadRaw->driver, buffer, true), "read file and save returned size");
+        TEST_RESULT_UINT(size, bufUsed(buffer), "check returned size");
+        TEST_RESULT_UINT(size, bufUsed(contentBuf), "returned size should be the same as the file size");
+        TEST_RESULT_VOID(ioReadClose(storageReadIo(fileReadRaw)), "close");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read file without compression");
 
         HRN_STORAGE_PUT(storageTest, TEST_PATH "/repo128/test.txt", contentBuf);
@@ -295,7 +313,7 @@ testRun(void)
 
         size_t bufferOld = ioBufferSize();
         ioBufferSizeSet(11);
-        Buffer *buffer = bufNew(11);
+        buffer = bufNew(11);
 
         TEST_ASSIGN(fileRead, storageNewReadP(storageRepo, STRDEF("test.txt"), .limit = VARUINT64(11)), "get file");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(fileRead)), true, "open read");
@@ -346,15 +364,15 @@ testRun(void)
         ioFilterGroupAdd(filterGroup, cryptoHashNew(hashTypeSha1));
         ioFilterGroupAdd(filterGroup, cipherBlockNewP(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRZ("x")));
         ioFilterGroupAdd(filterGroup, cipherBlockNewP(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTRZ("x")));
-        ioFilterGroupAdd(filterGroup, compressFilter(compressTypeGz, 3));
-        ioFilterGroupAdd(filterGroup, decompressFilter(compressTypeGz));
+        ioFilterGroupAdd(filterGroup, compressFilterP(compressTypeGz, 3));
+        ioFilterGroupAdd(filterGroup, decompressFilterP(compressTypeGz));
 
         TEST_RESULT_STR_Z(strNewBuf(storageGetP(fileRead)), "TESTDATA", "check contents");
 
         TEST_RESULT_STR_Z(
             hrnPackToStr(ioFilterGroupResultAll(filterGroup)),
             "1:strid:size, 2:pack:<1:u64:8>, 3:strid:hash, 4:pack:<1:bin:bbbcf2c59433f68f22376cd2439d6cd309378df6>,"
-                " 5:strid:cipher-blk, 7:strid:cipher-blk, 9:strid:gz-cmp, 11:strid:gz-dcmp, 13:strid:buffer",
+            " 5:strid:cipher-blk, 7:strid:cipher-blk, 9:strid:gz-cmp, 11:strid:gz-dcmp, 13:strid:buffer",
             "filter results");
 
         // Check protocol function directly (file exists but all data goes to sink)
@@ -376,7 +394,7 @@ testRun(void)
         TEST_RESULT_STR_Z(
             hrnPackToStr(ioFilterGroupResultAll(filterGroup)),
             "1:strid:size, 2:pack:<1:u64:8>, 3:strid:hash, 4:pack:<1:bin:bbbcf2c59433f68f22376cd2439d6cd309378df6>, 5:strid:sink,"
-                " 7:strid:buffer",
+            " 7:strid:buffer",
             "filter results");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -484,7 +502,7 @@ testRun(void)
         TEST_ERROR(
             storagePathCreateP(storageRepoWrite, STRDEF("parent/testpath"), .noParentCreate = true), PathCreateError,
             "raised from remote-0 shim protocol: unable to create path '" TEST_PATH "/repo128/parent/testpath': [2] No such"
-                " file or directory");
+            " file or directory");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("create parent/path with non-default mode");
@@ -686,8 +704,7 @@ testRun(void)
                 strNewFmt("%s/%s", strZ(storagePathP(storageRepo, NULL)), strZ(latestLabel)), .linkType = storageLinkHard),
             FileOpenError,
             "raised from remote-0 shim protocol: unable to create hardlink '" TEST_PATH "/repo128/latest' to"
-                " '" TEST_PATH "/repo128/20181119-152138F': [1] Operation not permitted");
-
+            " '" TEST_PATH "/repo128/20181119-152138F': [1] Operation not permitted");
     }
 
     // When clients are freed by protocolClientFree() they do not wait for a response. We need to wait for a response here to be

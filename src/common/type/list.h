@@ -46,6 +46,9 @@ typedef int ListComparator(const void *item1, const void *item2);
 // General purpose list comparator for Strings or structs with a String as the first member
 FN_EXTERN int lstComparatorStr(const void *item1, const void *item2);
 
+// General purpose list comparator for unsigned int or structs with an unsigned int as the first member
+FN_EXTERN int lstComparatorUInt(const void *item1, const void *item2);
+
 // General purpose list comparator for zero-terminated strings or structs with a zero-terminated string as the first member
 FN_EXTERN int lstComparatorZ(const void *item1, const void *item2);
 
@@ -158,11 +161,11 @@ lstFree(List *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *lstToLog(const List *this);
+FN_EXTERN void lstToLog(const List *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_LIST_TYPE                                                                                                     \
     List *
 #define FUNCTION_LOG_LIST_FORMAT(value, buffer, bufferSize)                                                                        \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, lstToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, lstToLog, buffer, bufferSize)
 
 #endif

@@ -204,22 +204,7 @@ sub new
                 new pgBackRestDoc::Common::DocConfig(${$self->{oManifest}->sourceGet('help')}{doc}, $self);
         }
 
-        if (defined($$oRenderOut{source}) && $$oRenderOut{source} eq 'help' && $self->{oManifest}->isBackRest())
-        {
-            if ($self->{strRenderOutKey} eq 'configuration')
-            {
-                $self->{oDoc} = $self->{oReference}->helpConfigDocGet();
-            }
-            elsif ($self->{strRenderOutKey} eq 'command')
-            {
-                $self->{oDoc} = $self->{oReference}->helpCommandDocGet();
-            }
-            else
-            {
-                confess &log(ERROR, "cannot render $self->{strRenderOutKey} from source $$oRenderOut{source}");
-            }
-        }
-        elsif (defined($$oRenderOut{source}) && $$oRenderOut{source} eq 'release' && $self->{oManifest}->isBackRest())
+        if (defined($$oRenderOut{source}) && $$oRenderOut{source} eq 'release' && $self->{oManifest}->isBackRest())
         {
             require pgBackRestDoc::Custom::DocCustomRelease;
             pgBackRestDoc::Custom::DocCustomRelease->import();
@@ -475,7 +460,7 @@ sub build
             $oNode->paramSet('depend-default', $strDependPrev);
         }
 
-        # Set log to true if this section has an execute list.  This helps reduce the info logging by only showing sections that are
+        # Set log to true if this section has an execute list. This helps reduce the info logging by only showing sections that are
         # likely to take a log time.
         $oNode->paramSet('log', $self->{bExe} && $oNode->nodeList('execute-list', false) > 0 ? true : false);
 

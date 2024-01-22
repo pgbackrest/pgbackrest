@@ -3,9 +3,9 @@ Stanza Create Command
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
-#include <inttypes.h>
 
 #include "command/check/common.h"
 #include "command/control/common.h"
@@ -144,9 +144,9 @@ cmdStanzaCreate(void)
                 THROW_FMT(
                     FileMissingError,
                     "%s on %s\n"
-                        "HINT: this may be a symptom of repository corruption!",
-                    ((archiveInfoFileExists || archiveInfoFileCopyExists) ?
-                        "archive.info exists but backup.info is missing" : "backup.info exists but archive.info is missing"),
+                    "HINT: this may be a symptom of repository corruption!",
+                    (archiveInfoFileExists || archiveInfoFileCopyExists) ?
+                        "archive.info exists but backup.info is missing" : "backup.info exists but archive.info is missing",
                     cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
             }
         }

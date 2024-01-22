@@ -157,8 +157,8 @@ Macros for constant buffers
 
 Frequently used constant buffers can be declared with these macros at compile time rather than dynamically at run time.
 
-Note that buffers created in this way are declared as const so can't be modified or freed by the buf*() methods.  Casting to
-Buffer * will result in a segfault.
+Note that buffers created in this way are declared as const so can't be modified or freed by the buf*() methods. Casting to Buffer *
+will result in a segfault.
 
 By convention all buffer constant identifiers are appended with _BUF.
 ***********************************************************************************************************************************/
@@ -210,11 +210,11 @@ BUFFER_DECLARE(QUOTED_BUF);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *bufToLog(const Buffer *this);
+FN_EXTERN void bufToLog(const Buffer *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_BUFFER_TYPE                                                                                                   \
     Buffer *
 #define FUNCTION_LOG_BUFFER_FORMAT(value, buffer, bufferSize)                                                                      \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, bufToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, bufToLog, buffer, bufferSize)
 
 #endif

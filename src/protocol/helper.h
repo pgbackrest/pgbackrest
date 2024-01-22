@@ -22,9 +22,9 @@ typedef enum
 Constants
 ***********************************************************************************************************************************/
 #define PROTOCOL_SERVICE_LOCAL                                      "local"
-    STRING_DECLARE(PROTOCOL_SERVICE_LOCAL_STR);
+STRING_DECLARE(PROTOCOL_SERVICE_LOCAL_STR);
 #define PROTOCOL_SERVICE_REMOTE                                     "remote"
-    STRING_DECLARE(PROTOCOL_SERVICE_REMOTE_STR);
+STRING_DECLARE(PROTOCOL_SERVICE_REMOTE_STR);
 
 /***********************************************************************************************************************************
 Getters/Setters

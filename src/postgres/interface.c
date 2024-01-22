@@ -9,7 +9,9 @@ PostgreSQL Interface
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
+#include "common/time.h"
 #include "postgres/interface.h"
+#include "postgres/interface/crc32.h"
 #include "postgres/interface/static.vendor.h"
 #include "postgres/version.h"
 #include "storage/helper.h"
@@ -38,14 +40,16 @@ STRING_STATIC(PG_PATH_PGXLOG_STR,                                   "pg_xlog");
 STRING_STATIC(PG_PATH_PGCLOG_STR,                                   "pg_clog");
 STRING_STATIC(PG_PATH_PGXACT_STR,                                   "pg_xact");
 
-// Lsn name used in functions depnding on version
+// Lsn name used in functions depending on version
 STRING_STATIC(PG_NAME_LSN_STR,                                      "lsn");
 STRING_STATIC(PG_NAME_LOCATION_STR,                                 "location");
 
 /***********************************************************************************************************************************
 The control file is 8192 bytes but only the first 512 bytes are used to prevent torn pages even on really old storage with 512-byte
-sectors. This is true across all versions of PostgreSQL.
+sectors. This is true across all versions of PostgreSQL. Unfortunately, this is not sufficient to prevent torn pages during
+concurrent reads and writes so retries are required.
 ***********************************************************************************************************************************/
+#define PG_CONTROL_SIZE                                             8192
 #define PG_CONTROL_DATA_SIZE                                        512
 
 /***********************************************************************************************************************************
@@ -63,6 +67,9 @@ typedef struct PgInterface
 
     // Convert pg_control to a common data structure
     PgControl (*control)(const unsigned char *);
+
+    // Get control crc offset
+    size_t (*controlCrcOffset)(void);
 
     // Get the control version for this version of PostgreSQL
     uint32_t (*controlVersion)(void);
@@ -111,7 +118,13 @@ pgInterfaceVersion(unsigned int pgVersion)
 
     // If the version was not found then error
     if (result == NULL)
-        THROW_FMT(AssertError, "invalid " PG_NAME " version %u", pgVersion);
+    {
+        THROW_FMT(
+            VersionNotSupportedError,
+            "invalid " PG_NAME " version %u\n"
+            "HINT: is this version of PostgreSQL supported?",
+            pgVersion);
+    }
 
     FUNCTION_TEST_RETURN_TYPE_CONST_P(PgInterface, result);
 }
@@ -163,7 +176,7 @@ pgWalSegmentSizeCheck(unsigned int pgVersion, unsigned int walSegmentSize)
     if (pgVersion < PG_VERSION_11 && walSegmentSize != PG_WAL_SEGMENT_SIZE_DEFAULT)
     {
         THROW_FMT(
-            FormatError, "wal segment size is %u but must be %u for " PG_NAME " <= " PG_VERSION_10_STR, walSegmentSize,
+            FormatError, "wal segment size is %u but must be %u for " PG_NAME " <= " PG_VERSION_10_Z, walSegmentSize,
             PG_WAL_SEGMENT_SIZE_DEFAULT);
     }
 
@@ -172,10 +185,11 @@ pgWalSegmentSizeCheck(unsigned int pgVersion, unsigned int walSegmentSize)
 
 /**********************************************************************************************************************************/
 static PgControl
-pgControlFromBuffer(const Buffer *controlFile)
+pgControlFromBuffer(const Buffer *controlFile, const String *const pgVersionForce)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(BUFFER, controlFile);
+        FUNCTION_LOG_PARAM(STRING, pgVersionForce);
     FUNCTION_LOG_END();
 
     ASSERT(controlFile != NULL);
@@ -183,61 +197,178 @@ pgControlFromBuffer(const Buffer *controlFile)
     // Search for the version of PostgreSQL that uses this control file
     const PgInterface *interface = NULL;
 
-    for (unsigned int interfaceIdx = 0; interfaceIdx < LENGTH_OF(pgInterface); interfaceIdx++)
+    if (pgVersionForce != NULL)
+        interface = pgInterfaceVersion(pgVersionFromStr(pgVersionForce));
+    else
     {
-        if (pgInterface[interfaceIdx].controlIs(bufPtrConst(controlFile)))
+        for (unsigned int interfaceIdx = 0; interfaceIdx < LENGTH_OF(pgInterface); interfaceIdx++)
         {
-            interface = &pgInterface[interfaceIdx];
-            break;
+            if (pgInterface[interfaceIdx].controlIs(bufPtrConst(controlFile)))
+            {
+                interface = &pgInterface[interfaceIdx];
+                break;
+            }
+        }
+
+        // If the version was not found then error with the control and catalog version that were found
+        if (interface == NULL)
+        {
+            const PgControlCommon *controlCommon = (const PgControlCommon *)bufPtrConst(controlFile);
+
+            THROW_FMT(
+                VersionNotSupportedError,
+                "unexpected control version = %u and catalog version = %u\n"
+                "HINT: is this version of PostgreSQL supported?",
+                controlCommon->controlVersion, controlCommon->catalogVersion);
         }
     }
 
-    // If the version was not found then error with the control and catalog version that were found
-    if (interface == NULL)
-    {
-        const PgControlCommon *controlCommon = (const PgControlCommon *)bufPtrConst(controlFile);
-
-        THROW_FMT(
-            VersionNotSupportedError,
-            "unexpected control version = %u and catalog version = %u\n"
-                "HINT: is this version of PostgreSQL supported?",
-            controlCommon->controlVersion, controlCommon->catalogVersion);
-    }
-
     // Get info from the control file
+    ASSERT(pgVersionForce != NULL || interface->controlIs(bufPtrConst(controlFile)));
+
     PgControl result = interface->control(bufPtrConst(controlFile));
     result.version = interface->version;
+
+    // Check CRC
+    size_t crcOffset = interface->controlCrcOffset();
+
+    do
+    {
+        // Calculate CRC and retrieve expected CRC
+        const uint32_t crcCalculated =
+            result.version > PG_VERSION_94 ?
+                crc32cOne(bufPtrConst(controlFile), crcOffset) : crc32One(bufPtrConst(controlFile), crcOffset);
+        const uint32_t crcExpected = *((uint32_t *)(bufPtrConst(controlFile) + crcOffset));
+
+        // If CRC does not match
+        if (crcCalculated != crcExpected)
+        {
+            // If version is forced then the CRC might be later in the file (assuming the fork added extra fields to pg_control).
+            // Increment the offset by CRC data size and continue to try again.
+            if (pgVersionForce != NULL)
+            {
+                crcOffset += sizeof(uint32_t);
+
+                if (crcOffset <= bufUsed(controlFile) - sizeof(uint32_t))
+                    continue;
+            }
+
+            // If no retry then error
+            THROW_FMT(
+                ChecksumError,
+                "calculated " PG_FILE_PGCONTROL " checksum does not match expected value\n"
+                "HINT: calculated 0x%x but expected value is 0x%x\n"
+                "%s"
+                "HINT: is " PG_FILE_PGCONTROL " corrupt?\n"
+                "HINT: does " PG_FILE_PGCONTROL " have a different layout than expected?",
+                crcCalculated, crcExpected,
+                pgVersionForce == NULL ? "" : "HINT: checksum values may be misleading due to forced version scan\n");
+        }
+
+        // Do not retry if the CRC is valid
+        break;
+    }
+    while (true);
 
     // Check the segment size
     pgWalSegmentSizeCheck(result.version, result.walSegmentSize);
 
     // Check the page size
-    if (result.pageSize != PG_PAGE_SIZE_DEFAULT)
-        THROW_FMT(FormatError, "page size is %u but must be %u", result.pageSize, PG_PAGE_SIZE_DEFAULT);
+    pgPageSizeCheck(result.pageSize);
 
     FUNCTION_LOG_RETURN(PG_CONTROL, result);
 }
 
-FN_EXTERN PgControl
-pgControlFromFile(const Storage *storage)
+// Helper to compare control data to last read
+static bool
+pgControlBufferEq(const Buffer *const last, const Buffer *const current)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BUFFER, last);
+        FUNCTION_TEST_PARAM(BUFFER, current);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(BOOL, last != NULL && bufEq(last, current));
+}
+
+FN_EXTERN Buffer *
+pgControlBufferFromFile(const Storage *const storage, const String *const pgVersionForce)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storage);
+        FUNCTION_LOG_PARAM(STRING, pgVersionForce);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
 
-    PgControl result = {0};
+    Buffer *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Read control file
-        Buffer *controlFile = storageGetP(
-            storageNewReadP(storage, STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)), .exactSize = PG_CONTROL_DATA_SIZE);
+        // On filesystems that do not implement atomicity of concurrent reads and writes, we might get garbage if the server is
+        // writing the pg_control file at the same time as we try to read it. Keep trying until success or we read the same data
+        // twice in a row. Do not use a timeout here because there are plenty of other errors that can happen and we don't want to
+        // wait for them.
+        Buffer *controlFileLast = NULL;
+        bool done = false;
 
-        result = pgControlFromBuffer(controlFile);
+        do
+        {
+            // Read control file
+            Buffer *const controlFile = storageGetP(
+                storageNewReadP(storage, STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)), .exactSize = PG_CONTROL_DATA_SIZE);
+
+            TRY_BEGIN()
+            {
+                // Check that control data is valid
+                pgControlFromBuffer(controlFile, pgVersionForce);
+
+                // Create a buffer of the correct size to hold pg_control and zero out the remaining portion
+                result = bufNew(PG_CONTROL_SIZE);
+
+                bufCat(result, controlFile);
+                memset(bufPtr(result) + bufUsed(controlFile), 0, bufSize(result) - bufUsed(controlFile));
+                bufUsedSet(result, bufSize(result));
+                bufMove(result, memContextPrior());
+
+                done = true;
+            }
+            CATCH_ANY()
+            {
+                // If we get the same bad data twice in a row then error
+                if (pgControlBufferEq(controlFileLast, controlFile))
+                    RETHROW();
+
+                // Copy data to last
+                bufFree(controlFileLast);
+                controlFileLast = controlFile;
+
+                // Sleep to let data stabilize
+                sleepMSec(50);
+            }
+            TRY_END();
+        }
+        while (!done);
     }
     MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(BUFFER, result);
+}
+
+FN_EXTERN PgControl
+pgControlFromFile(const Storage *const storage, const String *const pgVersionForce)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
+        FUNCTION_LOG_PARAM(STRING, pgVersionForce);
+    FUNCTION_LOG_END();
+
+    ASSERT(storage != NULL);
+
+    Buffer *const buffer = pgControlBufferFromFile(storage, pgVersionForce);
+    PgControl result = pgControlFromBuffer(buffer, pgVersionForce);
+
+    bufFree(buffer);
 
     FUNCTION_LOG_RETURN(PG_CONTROL, result);
 }
@@ -267,10 +398,11 @@ typedef struct PgWalCommon
 
 /**********************************************************************************************************************************/
 FN_EXTERN PgWal
-pgWalFromBuffer(const Buffer *walBuffer)
+pgWalFromBuffer(const Buffer *walBuffer, const String *const pgVersionForce)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(BUFFER, walBuffer);
+        FUNCTION_LOG_PARAM(STRING, pgVersionForce);
     FUNCTION_LOG_END();
 
     ASSERT(walBuffer != NULL);
@@ -282,26 +414,33 @@ pgWalFromBuffer(const Buffer *walBuffer)
     // Search for the version of PostgreSQL that uses this WAL magic
     const PgInterface *interface = NULL;
 
-    for (unsigned int interfaceIdx = 0; interfaceIdx < LENGTH_OF(pgInterface); interfaceIdx++)
+    if (pgVersionForce != NULL)
+        interface = pgInterfaceVersion(pgVersionFromStr(pgVersionForce));
+    else
     {
-        if (pgInterface[interfaceIdx].walIs(bufPtrConst(walBuffer)))
+        for (unsigned int interfaceIdx = 0; interfaceIdx < LENGTH_OF(pgInterface); interfaceIdx++)
         {
-            interface = &pgInterface[interfaceIdx];
-            break;
+            if (pgInterface[interfaceIdx].walIs(bufPtrConst(walBuffer)))
+            {
+                interface = &pgInterface[interfaceIdx];
+                break;
+            }
+        }
+
+        // If the version was not found then error with the magic that was found
+        if (interface == NULL)
+        {
+            THROW_FMT(
+                VersionNotSupportedError,
+                "unexpected WAL magic %u\n"
+                "HINT: is this version of PostgreSQL supported?",
+                ((const PgWalCommon *)bufPtrConst(walBuffer))->magic);
         }
     }
 
-    // If the version was not found then error with the magic that was found
-    if (interface == NULL)
-    {
-        THROW_FMT(
-            VersionNotSupportedError,
-            "unexpected WAL magic %u\n"
-                "HINT: is this version of PostgreSQL supported?",
-            ((const PgWalCommon *)bufPtrConst(walBuffer))->magic);
-    }
-
     // Get info from the control file
+    ASSERT(pgVersionForce != NULL || interface->walIs(bufPtrConst(walBuffer)));
+
     PgWal result = interface->wal(bufPtrConst(walBuffer));
     result.version = interface->version;
 
@@ -312,10 +451,11 @@ pgWalFromBuffer(const Buffer *walBuffer)
 }
 
 FN_EXTERN PgWal
-pgWalFromFile(const String *walFile, const Storage *storage)
+pgWalFromFile(const String *walFile, const Storage *storage, const String *const pgVersionForce)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, walFile);
+        FUNCTION_LOG_PARAM(STRING, pgVersionForce);
     FUNCTION_LOG_END();
 
     ASSERT(walFile != NULL);
@@ -327,7 +467,7 @@ pgWalFromFile(const String *walFile, const Storage *storage)
         // Read WAL segment header
         Buffer *walBuffer = storageGetP(storageNewReadP(storage, walFile), .exactSize = PG_WAL_HEADER_SIZE);
 
-        result = pgWalFromBuffer(walBuffer);
+        result = pgWalFromBuffer(walBuffer, pgVersionForce);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -521,9 +661,9 @@ pgXactPath(unsigned int pgVersion)
 FN_EXTERN unsigned int
 pgVersionFromStr(const String *const version)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STRING, version);
-    FUNCTION_LOG_END();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, version);
+    FUNCTION_TEST_END();
 
     ASSERT(version != NULL);
 
@@ -535,37 +675,37 @@ pgVersionFromStr(const String *const version)
     const int idxStart = strChr(version, '.');
 
     if (idxStart == -1)
-        FUNCTION_LOG_RETURN(UINT, cvtZToUInt(strZ(version)) * 10000);
+        FUNCTION_TEST_RETURN(UINT, cvtZToUInt(strZ(version)) * 10000);
 
     // Major and minor version are needed
-    FUNCTION_LOG_RETURN(
+    FUNCTION_TEST_RETURN(
         UINT, cvtZSubNToUInt(strZ(version), 0, (size_t)idxStart) * 10000 + cvtZToUInt(strZ(version) + (size_t)idxStart + 1) * 100);
 }
 
 FN_EXTERN String *
 pgVersionToStr(unsigned int version)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(UINT, version);
-    FUNCTION_LOG_END();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, version);
+    FUNCTION_TEST_END();
 
-    String *result = version >= PG_VERSION_10 ?
-        strNewFmt("%u", version / 10000) : strNewFmt("%u.%u", version / 10000, version % 10000 / 100);
-
-    FUNCTION_LOG_RETURN(STRING, result);
+    FUNCTION_TEST_RETURN(
+        STRING,
+        version >= PG_VERSION_10 ?
+            strNewFmt("%u", version / 10000) : strNewFmt("%u.%u", version / 10000, version % 10000 / 100));
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-pgControlToLog(const PgControl *pgControl)
+FN_EXTERN void
+pgControlToLog(const PgControl *const pgControl, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{version: %u, systemId: %" PRIu64 ", walSegmentSize: %u, pageChecksum: %s}", pgControl->version, pgControl->systemId,
-        pgControl->walSegmentSize, cvtBoolToConstZ(pgControl->pageChecksum));
+    strStcFmt(
+        debugLog, "{version: %u, systemId: %" PRIu64 ", walSegmentSize: %u, pageChecksum: %s}", pgControl->version,
+        pgControl->systemId, pgControl->walSegmentSize, cvtBoolToConstZ(pgControl->pageChecksum));
 }
 
-FN_EXTERN String *
-pgWalToLog(const PgWal *pgWal)
+FN_EXTERN void
+pgWalToLog(const PgWal *const pgWal, StringStatic *const debugLog)
 {
-    return strNewFmt("{version: %u, systemId: %" PRIu64 "}", pgWal->version, pgWal->systemId);
+    strStcFmt(debugLog, "{version: %u, systemId: %" PRIu64 "}", pgWal->version, pgWal->systemId);
 }

@@ -7,6 +7,7 @@ Check all pages in a PostgreSQL relation to ensure the checksums are valid.
 #define COMMAND_BACKUP_PAGE_CHECKSUM_H
 
 #include "common/io/filter/filter.h"
+#include "postgres/interface.h"
 
 /***********************************************************************************************************************************
 Filter type constant
@@ -16,7 +17,8 @@ Filter type constant
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN IoFilter *pageChecksumNew(unsigned int segmentNo, unsigned int segmentPageTotal, const String *fileName);
+FN_EXTERN IoFilter *pageChecksumNew(
+    unsigned int segmentNo, unsigned int segmentPageTotal, PgPageSize pageSize, bool headerCheck, const String *fileName);
 FN_EXTERN IoFilter *pageChecksumNewPack(const Pack *paramList);
 
 #endif

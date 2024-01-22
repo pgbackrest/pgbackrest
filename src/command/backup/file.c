@@ -5,11 +5,13 @@ Backup File
 
 #include <string.h>
 
+#include "command/backup/blockIncr.h"
 #include "command/backup/file.h"
 #include "command/backup/pageChecksum.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
+#include "common/io/bufferRead.h"
 #include "common/io/filter/group.h"
 #include "common/io/filter/size.h"
 #include "common/io/io.h"
@@ -18,49 +20,53 @@ Backup File
 #include "common/type/convert.h"
 #include "common/type/json.h"
 #include "info/manifest.h"
-#include "postgres/interface.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
 Helper functions
 ***********************************************************************************************************************************/
 static unsigned int
-segmentNumber(const String *pgFile)
+segmentNumber(const String *const pgFile)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, pgFile);
     FUNCTION_TEST_END();
 
-    // Determine which segment number this is by checking for a numeric extension.  No extension means segment 0.
+    // Determine which segment number this is by checking for a numeric extension. No extension means segment 0.
     FUNCTION_TEST_RETURN(UINT, regExpMatchOne(STRDEF("\\.[0-9]+$"), pgFile) ? cvtZToUInt(strrchr(strZ(pgFile), '.') + 1) : 0);
 }
 
 /**********************************************************************************************************************************/
 FN_EXTERN List *
 backupFile(
-    const String *const repoFile, const CompressType repoFileCompressType, const int repoFileCompressLevel,
-    const CipherType cipherType, const String *const cipherPass, const List *const fileList)
+    const String *const repoFile, const uint64_t bundleId, const bool bundleRaw, const unsigned int blockIncrReference,
+    const CompressType repoFileCompressType, const int repoFileCompressLevel, const CipherType cipherType,
+    const String *const cipherPass, const String *const pgVersionForce, const PgPageSize pageSize, const List *const fileList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, repoFile);                       // Repo file
+        FUNCTION_LOG_PARAM(UINT64, bundleId);                       // Bundle id (0 if none)
+        FUNCTION_LOG_PARAM(BOOL, bundleRaw);                        // Raw compress/encrypt format in bundles?
+        FUNCTION_LOG_PARAM(UINT, blockIncrReference);               // Block incremental reference to use in map
         FUNCTION_LOG_PARAM(ENUM, repoFileCompressType);             // Compress type for repo file
         FUNCTION_LOG_PARAM(INT, repoFileCompressLevel);             // Compression level for repo file
         FUNCTION_LOG_PARAM(STRING_ID, cipherType);                  // Encryption type
         FUNCTION_TEST_PARAM(STRING, cipherPass);                    // Password to access the repo file if encrypted
+        FUNCTION_LOG_PARAM(ENUM, pageSize);                         // Page size
+        FUNCTION_LOG_PARAM(STRING, pgVersionForce);                 // Force pg version
         FUNCTION_LOG_PARAM(LIST, fileList);                         // List of files to backup
     FUNCTION_LOG_END();
 
     ASSERT(repoFile != NULL);
     ASSERT((cipherType == cipherTypeNone && cipherPass == NULL) || (cipherType != cipherTypeNone && cipherPass != NULL));
     ASSERT(fileList != NULL && !lstEmpty(fileList));
+    ASSERT(pgPageSizeValid(pageSize));
 
     // Backup file results
-    List *result = NULL;
+    List *const result = lstNewP(sizeof(BackupFileResult));
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = lstNewP(sizeof(BackupFileResult));
-
         // Check files to determine which ones need to be copied
         for (unsigned int fileIdx = 0; fileIdx < lstSize(fileList); fileIdx++)
         {
@@ -84,7 +90,7 @@ backupFile(
                     // Generate checksum/size for the pg file. Only read as many bytes as passed in pgFileSize. If the file has
                     // grown since the manifest was built we don't need to consider the extra bytes since they will be replayed from
                     // WAL during recovery.
-                    IoRead *read = storageReadIo(
+                    IoRead *const read = storageReadIo(
                         storageNewReadP(
                             storagePg(), file->pgFile, .ignoreMissing = file->pgFileIgnoreMissing,
                             .limit = file->pgFileCopyExactSize ? VARUINT64(file->pgFileSize) : NULL));
@@ -96,7 +102,7 @@ backupFile(
                     {
                         const Buffer *const pgTestChecksum = pckReadBinP(
                             ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE));
-                        uint64_t pgTestSize = pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(read), SIZE_FILTER_TYPE));
+                        const uint64_t pgTestSize = pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(read), SIZE_FILTER_TYPE));
 
                         // Does the pg file match?
                         if (file->pgFileSize == pgTestSize && bufEq(file->pgFileChecksum, pgTestChecksum))
@@ -109,8 +115,8 @@ backupFile(
                                 MEM_CONTEXT_BEGIN(lstMemContext(result))
                                 {
                                     fileResult->backupCopyResult = backupCopyResultNoOp;
-                                    fileResult->copySize = pgTestSize;
-                                    fileResult->copyChecksum = bufDup(pgTestChecksum);
+                                    fileResult->copySize = file->pgFileSize;
+                                    fileResult->copyChecksum = file->pgFileChecksum;
                                 }
                                 MEM_CONTEXT_END();
                             }
@@ -137,7 +143,7 @@ backupFile(
                     else if (!file->pgFileDelta || pgFileMatch)
                     {
                         // Generate checksum/size for the repo file
-                        IoRead *read = storageReadIo(storageNewReadP(storageRepo(), repoFile));
+                        IoRead *const read = storageReadIo(storageNewReadP(storageRepo(), repoFile));
                         ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
                         ioFilterGroupAdd(ioReadFilterGroup(read), ioSizeNew());
                         ioReadDrain(read);
@@ -145,7 +151,7 @@ backupFile(
                         // Test checksum/size
                         const Buffer *const pgTestChecksum = pckReadBinP(
                             ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE));
-                        uint64_t pgTestSize = pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(read), SIZE_FILTER_TYPE));
+                        const uint64_t pgTestSize = pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(read), SIZE_FILTER_TYPE));
 
                         // No need to recopy if checksum/size match. When the repo checksum is missing still compare to repo size
                         // since the repo checksum should only be missing when the repo file was not compressed/encrypted, i.e. the
@@ -158,13 +164,13 @@ backupFile(
                             {
                                 fileResult->backupCopyResult = backupCopyResultChecksum;
                                 fileResult->copySize = file->pgFileSize;
-                                fileResult->copyChecksum = bufDup(file->pgFileChecksum);
+                                fileResult->copyChecksum = file->pgFileChecksum;
                             }
                             MEM_CONTEXT_END();
                         }
-                        // Else recopy when repo file is not as expected
+                        // Else copy when repo file is invalid
                         else
-                            fileResult->backupCopyResult = backupCopyResultReCopy;
+                            fileResult->repoInvalid = true;
                     }
                 }
             }
@@ -186,108 +192,218 @@ backupFile(
                 const BackupFile *const file = lstGet(fileList, fileIdx);
                 BackupFileResult *const fileResult = lstGet(result, fileIdx);
 
-                if (fileResult->backupCopyResult == backupCopyResultCopy || fileResult->backupCopyResult == backupCopyResultReCopy)
+                if (fileResult->backupCopyResult == backupCopyResultCopy)
                 {
-                    // Setup pg file for read. Only read as many bytes as passed in pgFileSize.  If the file is growing it does no
+                    // Setup pg file for read. Only read as many bytes as passed in pgFileSize. If the file is growing it does no
                     // good to copy data past the end of the size recorded in the manifest since those blocks will need to be
-                    // replayed from WAL during recovery.
+                    // replayed from WAL during recovery. pg_control requires special handling since it needs to be retried on crc
+                    // validation failure.
                     bool repoChecksum = false;
+                    IoRead *readIo;
 
-                    StorageRead *read = storageNewReadP(
-                        storagePg(), file->pgFile, .ignoreMissing = file->pgFileIgnoreMissing, .compressible = compressible,
-                        .limit = file->pgFileCopyExactSize ? VARUINT64(file->pgFileSize) : NULL);
-                    ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(hashTypeSha1));
-                    ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), ioSizeNew());
+                    if (strEqZ(file->pgFile, PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL))
+                        readIo = ioBufferReadNew(pgControlBufferFromFile(storagePg(), pgVersionForce));
+                    else
+                    {
+                        readIo = storageReadIo(
+                            storageNewReadP(
+                                storagePg(), file->pgFile, .ignoreMissing = file->pgFileIgnoreMissing, .compressible = compressible,
+                                .limit = file->pgFileCopyExactSize ? VARUINT64(file->pgFileSize) : NULL));
+                    }
+
+                    ioFilterGroupAdd(ioReadFilterGroup(readIo), cryptoHashNew(hashTypeSha1));
+                    ioFilterGroupAdd(ioReadFilterGroup(readIo), ioSizeNew());
 
                     // Add page checksum filter
                     if (file->pgFileChecksumPage)
                     {
                         ioFilterGroupAdd(
-                            ioReadFilterGroup(storageReadIo(read)),
+                            ioReadFilterGroup(readIo),
                             pageChecksumNew(
-                                segmentNumber(file->pgFile), PG_SEGMENT_PAGE_DEFAULT, storagePathP(storagePg(), file->pgFile)));
+                                segmentNumber(file->pgFile), PG_SEGMENT_SIZE_DEFAULT / pageSize, pageSize,
+                                file->pgFilePageHeaderCheck, storagePathP(storagePg(), file->pgFile)));
                     }
 
-                    // Add compression
-                    if (repoFileCompressType != compressTypeNone)
+                    // Compress filter
+                    IoFilter *const compress =
+                        repoFileCompressType != compressTypeNone ?
+                            compressFilterP(
+                                repoFileCompressType, repoFileCompressLevel, .raw = bundleRaw || file->blockIncrSize != 0) :
+                            NULL;
+
+                    // Encrypt filter
+                    IoFilter *const encrypt =
+                        cipherType != cipherTypeNone ?
+                            cipherBlockNewP(
+                                cipherModeEncrypt, cipherType, BUFSTR(cipherPass), .raw = bundleRaw || file->blockIncrSize != 0) :
+                            NULL;
+
+                    // If block incremental then add the filter and pass compress/encrypt filters to it since each block is
+                    // compressed/encrypted separately
+                    if (file->blockIncrSize != 0)
                     {
+                        // Read prior block map
+                        const Buffer *blockMap = NULL;
+
+                        if (file->blockIncrMapPriorFile != NULL)
+                        {
+                            StorageRead *const blockMapRead = storageNewReadP(
+                                storageRepo(), file->blockIncrMapPriorFile, .offset = file->blockIncrMapPriorOffset,
+                                .limit = VARUINT64(file->blockIncrMapPriorSize));
+
+                            if (cipherType != cipherTypeNone)
+                            {
+                                ioFilterGroupAdd(
+                                    ioReadFilterGroup(storageReadIo(blockMapRead)),
+                                    cipherBlockNewP(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), .raw = true));
+                            }
+
+                            blockMap = storageGetP(blockMapRead);
+                        }
+
+                        // Add block incremental filter
                         ioFilterGroupAdd(
-                            ioReadFilterGroup(storageReadIo(read)), compressFilter(repoFileCompressType, repoFileCompressLevel));
+                            ioReadFilterGroup(readIo),
+                            blockIncrNew(
+                                file->blockIncrSuperSize, file->blockIncrSize, file->blockIncrChecksumSize, blockIncrReference,
+                                bundleId, bundleOffset, blockMap, compress, encrypt));
 
                         repoChecksum = true;
                     }
-
-                    // If there is a cipher then add the encrypt filter
-                    if (cipherType != cipherTypeNone)
+                    // Else apply compress/encrypt filters to the entire file
+                    else
                     {
-                        ioFilterGroupAdd(
-                            ioReadFilterGroup(storageReadIo(read)),
-                            cipherBlockNewP(cipherModeEncrypt, cipherType, BUFSTR(cipherPass)));
+                        // Add compress filter
+                        if (compress != NULL)
+                        {
+                            ioFilterGroupAdd(ioReadFilterGroup(readIo), compress);
+                            repoChecksum = true;
+                        }
 
-                        repoChecksum = true;
+                        // Add encrypt filter
+                        if (encrypt != NULL)
+                        {
+                            ioFilterGroupAdd(ioReadFilterGroup(readIo), encrypt);
+                            repoChecksum = true;
+                        }
                     }
 
                     // Capture checksum of file stored in the repo if filters that modify the output have been applied
                     if (repoChecksum)
-                        ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(hashTypeSha1));
+                        ioFilterGroupAdd(ioReadFilterGroup(readIo), cryptoHashNew(hashTypeSha1));
 
                     // Add size filter last to calculate repo size
-                    ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), ioSizeNew());
+                    ioFilterGroupAdd(ioReadFilterGroup(readIo), ioSizeNew());
 
-                    // Open the source and destination and copy the file
-                    if (ioReadOpen(storageReadIo(read)))
+                    // Open the source
+                    if (ioReadOpen(readIo))
                     {
-                        // Setup the repo file for write. There is no need to write the file atomically (e.g. via a temp file on
-                        // Posix) because checksums are tested on resume after a failed backup. The path does not need to be synced
-                        // for each file because all paths are synced at the end of the backup. It needs to be created in the prior
-                        // context because it will live longer than a single loop when more than one file is being written.
-                        if (write == NULL)
+                        Buffer *const buffer = bufNew(ioBufferSize());
+                        bool readEof = false;
+
+                        // Read the first buffer to determine if the file was truncated. Detecting truncation matters only when
+                        // bundling is enabled as otherwise the file will be stored anyway.
+                        ioRead(readIo, buffer);
+
+                        if (ioReadEof(readIo))
                         {
-                            MEM_CONTEXT_PRIOR_BEGIN()
-                            {
-                                write = storageNewWriteP(
-                                    storageRepoWrite(), repoFile, .compressible = compressible, .noAtomic = true,
-                                    .noSyncPath = true);
-                                ioWriteOpen(storageWriteIo(write));
-                            }
-                            MEM_CONTEXT_PRIOR_END();
-                        }
+                            // Close the source and set eof
+                            ioReadClose(readIo);
+                            readEof = true;
 
-                        // Copy data from source to destination
-                        ioCopyP(storageReadIo(read), storageWriteIo(write));
-
-                        // Close the source
-                        ioReadClose(storageReadIo(read));
-
-                        MEM_CONTEXT_BEGIN(lstMemContext(result))
-                        {
-                            // Get sizes and checksum
+                            // Get file size
                             fileResult->copySize = pckReadU64P(
-                                ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), SIZE_FILTER_TYPE, .idx = 0));
-                            fileResult->bundleOffset = bundleOffset;
-                            fileResult->copyChecksum = pckReadBinP(
-                                ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE, .idx = 0));
-                            fileResult->repoSize = pckReadU64P(
-                                ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), SIZE_FILTER_TYPE, .idx = 1));
+                                ioFilterGroupResultP(ioReadFilterGroup(readIo), SIZE_FILTER_TYPE, .idx = 0));
 
-                            // Get results of page checksum validation
-                            if (file->pgFileChecksumPage)
+                            // If file is zero-length then it was truncated during the backup. When bundling we can simply mark it
+                            // as truncated since no file needs to be stored.
+                            if (bundleId != 0 && fileResult->copySize == 0)
                             {
-                                fileResult->pageChecksumResult = pckDup(
-                                    ioFilterGroupResultPackP(ioReadFilterGroup(storageReadIo(read)), PAGE_CHECKSUM_FILTER_TYPE));
-                            }
+                                fileResult->backupCopyResult = backupCopyResultTruncate;
+                                fileResult->copyChecksum = HASH_TYPE_SHA1_ZERO_BUF;
 
-                            // Get repo checksum
-                            if (repoChecksum)
-                            {
-                                fileResult->repoChecksum = pckReadBinP(
-                                    ioFilterGroupResultP(
-                                        ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE, .idx = 1));
+                                ASSERT(
+                                    bufEq(
+                                        fileResult->copyChecksum,
+                                        pckReadBinP(
+                                            ioFilterGroupResultP(ioReadFilterGroup(readIo), CRYPTO_HASH_FILTER_TYPE, .idx = 0))));
                             }
                         }
-                        MEM_CONTEXT_END();
 
-                        bundleOffset += fileResult->repoSize;
+                        // Copy the file
+                        if (fileResult->backupCopyResult == backupCopyResultCopy)
+                        {
+                            // Setup the repo file for write. There is no need to write the file atomically (e.g. via a temp file on
+                            // Posix) because checksums are tested on resume after a failed backup. The path does not need to be
+                            // synced for each file because all paths are synced at the end of the backup. It needs to be created in
+                            // the prior context because it will live longer than a single loop when more than one file is being
+                            // written.
+                            if (write == NULL)
+                            {
+                                MEM_CONTEXT_PRIOR_BEGIN()
+                                {
+                                    write = storageNewWriteP(
+                                        storageRepoWrite(), repoFile, .compressible = compressible, .noAtomic = true,
+                                        .noSyncPath = true);
+                                    ioWriteOpen(storageWriteIo(write));
+                                }
+                                MEM_CONTEXT_PRIOR_END();
+                            }
+
+                            // Write the first buffer
+                            ioWrite(storageWriteIo(write), buffer);
+                            bufFree(buffer);
+
+                            // Copy remainder of the file if not eof
+                            if (!readEof)
+                            {
+                                ioCopyP(readIo, storageWriteIo(write));
+
+                                // Close the source
+                                ioReadClose(readIo);
+                            }
+
+                            // Get copy results
+                            MEM_CONTEXT_BEGIN(lstMemContext(result))
+                            {
+                                // Get size and checksum
+                                fileResult->copySize = pckReadU64P(
+                                    ioFilterGroupResultP(ioReadFilterGroup(readIo), SIZE_FILTER_TYPE, .idx = 0));
+                                fileResult->copyChecksum = pckReadBinP(
+                                    ioFilterGroupResultP(ioReadFilterGroup(readIo), CRYPTO_HASH_FILTER_TYPE, .idx = 0));
+
+                                // Get bundle offset
+                                fileResult->bundleOffset = bundleOffset;
+
+                                // Get repo size
+                                fileResult->repoSize = pckReadU64P(
+                                    ioFilterGroupResultP(ioReadFilterGroup(readIo), SIZE_FILTER_TYPE, .idx = 1));
+
+                                // Get results of page checksum validation
+                                if (file->pgFileChecksumPage)
+                                {
+                                    fileResult->pageChecksumResult = pckDup(
+                                        ioFilterGroupResultPackP(ioReadFilterGroup(readIo), PAGE_CHECKSUM_FILTER_TYPE));
+                                }
+
+                                // Get results of block incremental
+                                if (file->blockIncrSize != 0)
+                                {
+                                    fileResult->blockIncrMapSize = pckReadU64P(
+                                        ioFilterGroupResultP(ioReadFilterGroup(readIo), BLOCK_INCR_FILTER_TYPE));
+                                }
+
+                                // Get repo checksum
+                                if (repoChecksum)
+                                {
+                                    fileResult->repoChecksum = pckReadBinP(
+                                        ioFilterGroupResultP(ioReadFilterGroup(readIo), CRYPTO_HASH_FILTER_TYPE, .idx = 1));
+                                }
+                            }
+                            MEM_CONTEXT_END();
+
+                            bundleOffset += fileResult->repoSize;
+                        }
                     }
                     // Else if source file is missing and the read setup indicated ignore a missing file, the database removed it so
                     // skip it
@@ -301,8 +417,6 @@ backupFile(
         // Close the repository file if it was opened
         if (write != NULL)
             ioWriteClose(storageWriteIo(write));
-
-        lstMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 

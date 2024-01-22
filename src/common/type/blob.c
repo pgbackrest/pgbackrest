@@ -24,12 +24,8 @@ blbNew(void)
 {
     FUNCTION_TEST_VOID();
 
-    Blob *this = NULL;
-
     OBJ_NEW_BEGIN(Blob, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (Blob)
         {
             .block = memNew(BLOB_BLOCK_SIZE),
@@ -84,5 +80,4 @@ blbAdd(Blob *const this, const void *const data, const size_t size)
     MEM_CONTEXT_OBJ_END();
 
     FUNCTION_TEST_RETURN_P(VOID, result);
-
 }

@@ -1,17 +1,17 @@
 /***********************************************************************************************************************************
 PostgreSQL Client
 
-Connect to a PostgreSQL database and run queries.  This is not intended to be a general purpose client but is suitable for
-pgBackRest's limited needs.  In particular, data type support is limited to text, int, and bool types so it may be necessary to add
+Connect to a PostgreSQL database and run queries. This is not intended to be a general purpose client but is suitable for
+pgBackRest's limited needs. In particular, data type support is limited to text, int, and bool types so it may be necessary to add
 casts to queries to output one of these types.
 ***********************************************************************************************************************************/
 #ifndef POSTGRES_QUERY_H
 #define POSTGRES_QUERY_H
 
+#include "common/time.h"
 #include "common/type/object.h"
 #include "common/type/pack.h"
 #include "common/type/string.h"
-#include "common/time.h"
 
 /***********************************************************************************************************************************
 Query result types
@@ -113,11 +113,11 @@ pgClientFree(PgClient *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *pgClientToLog(const PgClient *this);
+FN_EXTERN void pgClientToLog(const PgClient *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_PG_CLIENT_TYPE                                                                                                \
     PgClient *
 #define FUNCTION_LOG_PG_CLIENT_FORMAT(value, buffer, bufferSize)                                                                   \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, pgClientToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, pgClientToLog, buffer, bufferSize)
 
 #endif

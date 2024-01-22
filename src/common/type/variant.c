@@ -207,12 +207,8 @@ varNewBool(bool data)
         FUNCTION_TEST_PARAM(BOOL, data);
     FUNCTION_TEST_END();
 
-    VariantBool *this = NULL;
-
     OBJ_NEW_BEGIN(VariantBool)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (VariantBool)
         {
             .pub =
@@ -224,7 +220,7 @@ varNewBool(bool data)
     }
     OBJ_NEW_END();
 
-    FUNCTION_TEST_RETURN(VARIANT, (Variant *)this);
+    FUNCTION_TEST_RETURN(VARIANT, (Variant *)OBJ_NAME(this, Variant::VariantBool));
 }
 
 /**********************************************************************************************************************************/
@@ -268,7 +264,7 @@ varBoolForce(const Variant *this)
 
         case varTypeString:
         {
-            // List of false/true boolean string values.  Note that false/true values must be equal.
+            // List of false/true boolean string values. Note that false/true values must be equal.
             static const char *const boolString[] =
             {
                 "n", "f", "0",  "no", FALSE_Z, "off",
@@ -316,12 +312,8 @@ varNewInt(int data)
         FUNCTION_TEST_PARAM(INT, data);
     FUNCTION_TEST_END();
 
-    VariantInt *this = NULL;
-
     OBJ_NEW_BEGIN(VariantInt)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (VariantInt)
         {
             .pub =
@@ -333,7 +325,7 @@ varNewInt(int data)
     }
     OBJ_NEW_END();
 
-    FUNCTION_TEST_RETURN(VARIANT, (Variant *)this);
+    FUNCTION_TEST_RETURN(VARIANT, (Variant *)OBJ_NAME(this, Variant::VariantInt));
 }
 
 /**********************************************************************************************************************************/
@@ -432,12 +424,8 @@ varNewInt64(int64_t data)
         FUNCTION_TEST_PARAM(INT64, data);
     FUNCTION_TEST_END();
 
-    VariantInt64 *this = NULL;
-
     OBJ_NEW_BEGIN(VariantInt64)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (VariantInt64)
         {
             .pub =
@@ -449,7 +437,7 @@ varNewInt64(int64_t data)
     }
     OBJ_NEW_END();
 
-    FUNCTION_TEST_RETURN(VARIANT, (Variant *)this);
+    FUNCTION_TEST_RETURN(VARIANT, (Variant *)OBJ_NAME(this, Variant::VariantInt64));
 }
 
 /**********************************************************************************************************************************/
@@ -532,12 +520,8 @@ varNewUInt(unsigned int data)
         FUNCTION_TEST_PARAM(UINT, data);
     FUNCTION_TEST_END();
 
-    VariantUInt *this = NULL;
-
     OBJ_NEW_BEGIN(VariantUInt)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (VariantUInt)
         {
             .pub =
@@ -549,7 +533,7 @@ varNewUInt(unsigned int data)
     }
     OBJ_NEW_END();
 
-    FUNCTION_TEST_RETURN(VARIANT, (Variant *)this);
+    FUNCTION_TEST_RETURN(VARIANT, (Variant *)OBJ_NAME(this, Variant::VariantUInt));
 }
 
 /**********************************************************************************************************************************/
@@ -657,12 +641,8 @@ varNewUInt64(uint64_t data)
         FUNCTION_TEST_PARAM(UINT64, data);
     FUNCTION_TEST_END();
 
-    VariantUInt64 *this = NULL;
-
     OBJ_NEW_BEGIN(VariantUInt64)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (VariantUInt64)
         {
             .pub =
@@ -674,7 +654,7 @@ varNewUInt64(uint64_t data)
     }
     OBJ_NEW_END();
 
-    FUNCTION_TEST_RETURN(VARIANT, (Variant *)this);
+    FUNCTION_TEST_RETURN(VARIANT, (Variant *)OBJ_NAME(this, Variant::VariantUInt64));
 }
 
 /**********************************************************************************************************************************/
@@ -769,12 +749,8 @@ varNewKv(KeyValue *data)
         FUNCTION_TEST_PARAM(KEY_VALUE, data);
     FUNCTION_TEST_END();
 
-    VariantKeyValue *this = NULL;
-
     OBJ_NEW_BEGIN(VariantKeyValue, .childQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (VariantKeyValue)
         {
             .type = varTypeKeyValue,
@@ -785,7 +761,7 @@ varNewKv(KeyValue *data)
     }
     OBJ_NEW_END();
 
-    FUNCTION_TEST_RETURN(VARIANT, (Variant *)this);
+    FUNCTION_TEST_RETURN(VARIANT, (Variant *)OBJ_NAME(this, Variant::VariantKeyValue));
 }
 
 /**********************************************************************************************************************************/
@@ -815,8 +791,6 @@ varNewStr(const String *data)
         FUNCTION_TEST_PARAM(STRING, data);
     FUNCTION_TEST_END();
 
-    VariantString *this = NULL;
-
     // If the variant is larger than the extra allowed with a mem context then allocate the buffer separately
     size_t allocExtra = sizeof(VariantString) + (data != NULL ? sizeof(StringPub) + strSize(data) + 1 : 0);
 
@@ -826,8 +800,6 @@ varNewStr(const String *data)
 
         OBJ_NEW_BEGIN(VariantString, .childQty = 1)
         {
-            this = OBJ_NEW_ALLOC();
-
             *this = (VariantString)
             {
                 .pub =
@@ -839,13 +811,11 @@ varNewStr(const String *data)
         }
         OBJ_NEW_END();
 
-        FUNCTION_TEST_RETURN(VARIANT, (Variant *)this);
+        FUNCTION_TEST_RETURN(VARIANT, (Variant *)OBJ_NAME(this, Variant::VariantString));
     }
 
     OBJ_NEW_EXTRA_BEGIN(VariantString, (uint16_t)(allocExtra))
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (VariantString)
         {
             .pub =
@@ -874,7 +844,7 @@ varNewStr(const String *data)
     }
     OBJ_NEW_END();
 
-    FUNCTION_TEST_RETURN(VARIANT, (Variant *)this);
+    FUNCTION_TEST_RETURN(VARIANT, (Variant *)OBJ_NAME(this, Variant::VariantString));
 }
 
 FN_EXTERN Variant *
@@ -978,12 +948,8 @@ varNewVarLst(const VariantList *data)
         FUNCTION_TEST_PARAM(VARIANT_LIST, data);
     FUNCTION_TEST_END();
 
-    VariantVariantList *this = NULL;
-
     OBJ_NEW_BEGIN(VariantVariantList, .childQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (VariantVariantList)
         {
             .type = varTypeVariantList,
@@ -994,7 +960,7 @@ varNewVarLst(const VariantList *data)
     }
     OBJ_NEW_END();
 
-    FUNCTION_TEST_RETURN(VARIANT, (Variant *)this);
+    FUNCTION_TEST_RETURN(VARIANT, (Variant *)OBJ_NAME(this, Variant::VariantVariantList));
 }
 
 /**********************************************************************************************************************************/
@@ -1017,40 +983,43 @@ varVarLst(const Variant *this)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-varToLog(const Variant *this)
+FN_EXTERN void
+varToLog(const Variant *const this, StringStatic *const debugLog)
 {
-    String *result = NULL;
-
-    if (this == NULL)
-        result = strDup(NULL_STR);
-    else
+    switch (varType(this))
     {
-        switch (varType(this))
-        {
-            case varTypeString:
-                result = strToLog(varStr(this));
-                break;
+        case varTypeString:
+            strStcResultSizeInc(
+                debugLog,
+                FUNCTION_LOG_OBJECT_FORMAT(varStr(this), strToLog, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+            break;
 
-            case varTypeKeyValue:
-                result = strNewZ("{KeyValue}");
-                break;
+        case varTypeKeyValue:
+            strStcCat(debugLog, "{KeyValue}");
+            break;
 
-            case varTypeVariantList:
-                result = strNewZ("{VariantList}");
-                break;
+        case varTypeVariantList:
+            strStcCat(debugLog, "{VariantList}");
+            break;
 
-            case varTypeBool:
-            case varTypeInt:
-            case varTypeInt64:
-            case varTypeUInt:
-            case varTypeUInt64:
-            {
-                result = strNewFmt("{%s}", strZ(varStrForce(this)));
-                break;
-            }
-        }
+        case varTypeBool:
+            strStcFmt(debugLog, "{%s}", cvtBoolToConstZ(varBool(this)));
+            break;
+
+        case varTypeInt:
+            strStcFmt(debugLog, "{%d}", varInt(this));
+            break;
+
+        case varTypeInt64:
+            strStcFmt(debugLog, "{%" PRId64 "}", varInt64(this));
+            break;
+
+        case varTypeUInt:
+            strStcFmt(debugLog, "{%u}", varUInt(this));
+            break;
+
+        case varTypeUInt64:
+            strStcFmt(debugLog, "{%" PRIu64 "}", varUInt64(this));
+            break;
     }
-
-    return result;
 }

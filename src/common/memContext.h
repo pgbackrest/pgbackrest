@@ -1,10 +1,10 @@
 /***********************************************************************************************************************************
 Memory Context Manager
 
-Memory is allocated inside contexts and all allocations (and child memory contexts) are freed when the context is freed.  The goal
+Memory is allocated inside contexts and all allocations (and child memory contexts) are freed when the context is freed. The goal
 is to make memory management both easier and more performant.
 
-Memory context management is encapsulated in macros so there is rarely any need to call the functions directly.  Memory allocations
+Memory context management is encapsulated in macros so there is rarely any need to call the functions directly. Memory allocations
 are mostly performed in the constructors of objects and reallocated as needed.
 
 See the sections on memory context management and memory allocations below for more details.
@@ -12,6 +12,7 @@ See the sections on memory context management and memory allocations below for m
 #ifndef COMMON_MEMCONTEXT_H
 #define COMMON_MEMCONTEXT_H
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -20,23 +21,51 @@ Memory context object
 ***********************************************************************************************************************************/
 typedef struct MemContext MemContext;
 
-#include "common/error.h"
 #include "common/type/param.h"
 
 /***********************************************************************************************************************************
 Define initial number of memory contexts
 
-No space is reserved for child contexts when a new context is created because most contexts will be leaves.  When a child context is
-requested then space will be reserved for this many child contexts initially.  When more space is needed the size will be doubled.
+No space is reserved for child contexts when a new context is created because most contexts will be leaves. When a child context is
+requested then space will be reserved for this many child contexts initially. When more space is needed the size will be doubled.
 ***********************************************************************************************************************************/
 #define MEM_CONTEXT_INITIAL_SIZE                                    4
 
 /***********************************************************************************************************************************
 Define initial number of memory allocations
 
-Space is reserved for this many allocations when a context is created.  When more space is needed the size will be doubled.
+Space is reserved for this many allocations when a context is created. When more space is needed the size will be doubled.
 ***********************************************************************************************************************************/
 #define MEM_CONTEXT_ALLOC_INITIAL_SIZE                              4
+
+/***********************************************************************************************************************************
+Functions and macros to audit a mem context by detecting new child contexts/allocations that were created begin the begin/end but
+are not the expected return type.
+***********************************************************************************************************************************/
+#if defined(DEBUG)
+
+typedef struct MemContextAuditState
+{
+    MemContext *memContext;                                         // Mem context to audit
+
+    bool returnTypeAny;                                             // Skip auditing for this mem context
+    uint64_t sequenceContextNew;                                    // Max sequence for new contexts at beginning
+} MemContextAuditState;
+
+// Begin the audit
+FN_EXTERN void memContextAuditBegin(MemContextAuditState *state);
+
+// End the audit and make sure the return type is as expected
+FN_EXTERN void memContextAuditEnd(const MemContextAuditState *state, const char *returnTypeDefault);
+
+// Rename a mem context using the extra allocation pointer
+#define MEM_CONTEXT_AUDIT_ALLOC_EXTRA_NAME(this, name)              memContextAuditAllocExtraName(this, #name)
+
+FN_EXTERN void *memContextAuditAllocExtraName(void *allocExtra, const char *name);
+
+#else
+#define MEM_CONTEXT_AUDIT_ALLOC_EXTRA_NAME(this, name)              this
+#endif
 
 /***********************************************************************************************************************************
 Memory management functions
@@ -49,7 +78,7 @@ FN_EXTERN void *memNew(size_t size);
 // Allocate requested number of pointers and initialize them to NULL
 FN_EXTERN void *memNewPtrArray(size_t size);
 
-// Reallocate to the new size.  Original buffer pointer is undefined on return.
+// Reallocate to the new size. Original buffer pointer is undefined on return.
 FN_EXTERN void *memResize(const void *buffer, size_t size);
 
 // Free memory allocation
@@ -70,12 +99,10 @@ MEM_CONTEXT_END();
 #define MEM_CONTEXT_BEGIN(memContext)                                                                                              \
     do                                                                                                                             \
     {                                                                                                                              \
-        /* Switch to the new memory context */                                                                                     \
-        memContextSwitch(memContext);
+        memContextSwitch(memContext); /* Switch to the new memory context */
 
 #define MEM_CONTEXT_END()                                                                                                          \
-        /* Switch back to the prior context */                                                                                     \
-        memContextSwitchBack();                                                                                                    \
+        memContextSwitchBack(); /* Switch back to the prior context */                                                             \
     }                                                                                                                              \
     while (0)
 
@@ -194,7 +221,7 @@ memContextSwitchBack();
 <The memory context must now be kept or discarded>
 memContextKeep()/memContextDiscard();
 
-There is no need to implement any error handling.  The mem context system will automatically clean up any mem contexts that were
+There is no need to implement any error handling. The mem context system will automatically clean up any mem contexts that were
 created but not marked as keep when an error occurs and reset the current mem context to whatever it was at the beginning of the
 nearest try block.
 
@@ -218,11 +245,11 @@ typedef struct MemContextNewParam
 #define MEM_CONTEXT_QTY_MAX                                         UINT8_MAX
 
 #ifdef DEBUG
-    #define memContextNewP(name, ...)                                                                                              \
-        memContextNew(name, (MemContextNewParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define memContextNewP(name, ...)                                                                                                  \
+    memContextNew(name, (MemContextNewParam){VAR_PARAM_INIT, __VA_ARGS__})
 #else
-    #define memContextNewP(name, ...)                                                                                              \
-        memContextNew((MemContextNewParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define memContextNewP(name, ...)                                                                                                  \
+    memContextNew((MemContextNewParam){VAR_PARAM_INIT, __VA_ARGS__})
 #endif
 
 FN_EXTERN MemContext *memContextNew(
@@ -256,8 +283,8 @@ FN_EXTERN void memContextMove(MemContext *this, MemContext *parentNew);
 // Set a function that will be called when this mem context is freed
 FN_EXTERN void memContextCallbackSet(MemContext *this, void (*callbackFunction)(void *), void *);
 
-// Clear the callback function so it won't be called when the mem context is freed.  This is usually done in the object free method
-// after resources have been freed but before memContextFree() is called.  The goal is to prevent the object free method from being
+// Clear the callback function so it won't be called when the mem context is freed. This is usually done in the object free method
+// after resources have been freed but before memContextFree() is called. The goal is to prevent the object free method from being
 // called more than once.
 FN_EXTERN void memContextCallbackClear(MemContext *this);
 
@@ -279,13 +306,13 @@ FN_EXTERN MemContext *memContextCurrent(void);
 // Prior context, i.e. the context that was current before the last memContextSwitch()
 FN_EXTERN MemContext *memContextPrior(void);
 
-// "top" context.  This context is created at initialization and is always present, i.e. it is never freed.  The top context is a
-// good place to put long-lived mem contexts since they won't be automatically freed until the program exits.
+// "top" context. This context is created at initialization and is always present, i.e. it is never freed. The top context is a good
+// place to put long-lived mem contexts since they won't be automatically freed until the program exits.
 FN_EXTERN MemContext *memContextTop(void);
 
 // Get total size of mem context and all children
 #ifdef DEBUG
-    FN_EXTERN size_t memContextSize(const MemContext *this);
+FN_EXTERN size_t memContextSize(const MemContext *this);
 #endif // DEBUG
 
 /***********************************************************************************************************************************
@@ -294,12 +321,12 @@ Macros for function logging
 #define FUNCTION_LOG_MEM_CONTEXT_TYPE                                                                                              \
     MemContext *
 #define FUNCTION_LOG_MEM_CONTEXT_FORMAT(value, buffer, bufferSize)                                                                 \
-    objToLog(value, "MemContext", buffer, bufferSize)
+    objNameToLog(value, "MemContext", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Internal functions
 ***********************************************************************************************************************************/
-// Clean up mem contexts after an error.  Should only be called from error handling routines.
+// Clean up mem contexts after an error. Should only be called from error handling routines.
 FN_EXTERN void memContextClean(unsigned int tryDepth, bool fatal);
 
 #endif

@@ -22,8 +22,9 @@ Azure Storage
 /***********************************************************************************************************************************
 Azure http headers
 ***********************************************************************************************************************************/
+STRING_STATIC(AZURE_HEADER_TAGS,                                    "x-ms-tags");
 STRING_STATIC(AZURE_HEADER_VERSION_STR,                             "x-ms-version");
-STRING_STATIC(AZURE_HEADER_VERSION_VALUE_STR,                       "2019-02-02");
+STRING_STATIC(AZURE_HEADER_VERSION_VALUE_STR,                       "2019-12-12");
 
 /***********************************************************************************************************************************
 Azure query tokens
@@ -66,6 +67,7 @@ struct StorageAzure
     const HttpQuery *sasKey;                                        // SAS key
     const String *host;                                             // Host name
     size_t blockSize;                                               // Block size for multi-block upload
+    const String *tag;                                              // Tags to be applied to objects
     const String *pathPrefix;                                       // Account/container prefix
 
     uint64_t fileId;                                                // Id to used to make file block identifiers unique
@@ -165,8 +167,10 @@ storageAzureAuth(
 
             // Generate authorization header
             httpHeaderPut(
-                httpHeader, HTTP_HEADER_AUTHORIZATION_STR, strNewFmt("SharedKey %s:%s", strZ(this->account),
-                strZ(strNewEncode(encodingBase64, cryptoHmacOne(hashTypeSha256, this->sharedKey, BUFSTR(stringToSign))))));
+                httpHeader, HTTP_HEADER_AUTHORIZATION_STR,
+                strNewFmt(
+                    "SharedKey %s:%s", strZ(this->account),
+                    strZ(strNewEncode(encodingBase64, cryptoHmacOne(hashTypeSha256, this->sharedKey, BUFSTR(stringToSign))))));
         }
         // SAS authentication
         else
@@ -190,6 +194,7 @@ storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureReq
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
         FUNCTION_LOG_PARAM(BUFFER, param.content);
+        FUNCTION_LOG_PARAM(BOOL, param.tag);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -203,8 +208,8 @@ storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureReq
         param.path = param.path == NULL ? this->pathPrefix : strNewFmt("%s%s", strZ(this->pathPrefix), strZ(param.path));
 
         // Create header list and add content length
-        HttpHeader *requestHeader = param.header == NULL ?
-            httpHeaderNew(this->headerRedactList) : httpHeaderDup(param.header, this->headerRedactList);
+        HttpHeader *requestHeader =
+            param.header == NULL ? httpHeaderNew(this->headerRedactList) : httpHeaderDup(param.header, this->headerRedactList);
 
         // Set content length
         httpHeaderAdd(
@@ -218,6 +223,10 @@ storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureReq
                 requestHeader, HTTP_HEADER_CONTENT_MD5_STR,
                 strNewEncode(encodingBase64, cryptoHashOne(hashTypeMd5, param.content)));
         }
+
+        // Set tags when requested and available
+        if (param.tag && this->tag != NULL)
+            httpHeaderPut(requestHeader, AZURE_HEADER_TAGS, this->tag);
 
         // Encode path
         const String *const path = httpUriEncode(param.path, true);
@@ -286,10 +295,11 @@ storageAzureRequest(StorageAzure *this, const String *verb, StorageAzureRequestP
         FUNCTION_LOG_PARAM(BUFFER, param.content);
         FUNCTION_LOG_PARAM(BOOL, param.allowMissing);
         FUNCTION_LOG_PARAM(BOOL, param.contentIo);
+        FUNCTION_LOG_PARAM(BOOL, param.tag);
     FUNCTION_LOG_END();
 
     HttpRequest *const request = storageAzureRequestAsyncP(
-        this, verb, .path = param.path, .header = param.header, .query = param.query, .content = param.content);
+        this, verb, .path = param.path, .header = param.header, .query = param.query, .content = param.content, .tag = param.tag);
     HttpResponse *const result = storageAzureResponseP(request, .allowMissing = param.allowMissing, .contentIo = param.contentIo);
 
     httpRequestFree(request);
@@ -314,6 +324,8 @@ storageAzureListInternal(
         FUNCTION_LOG_PARAM(FUNCTIONP, callback);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_CALLBACK();
 
     ASSERT(this != NULL);
     ASSERT(path != NULL);
@@ -702,8 +714,8 @@ FN_EXTERN Storage *
 storageAzureNew(
     const String *const path, const bool write, StoragePathExpressionCallback pathExpressionFunction, const String *const container,
     const String *const account, const StorageAzureKeyType keyType, const String *const key, const size_t blockSize,
-    const String *const endpoint, const StorageAzureUriStyle uriStyle, const unsigned int port, const TimeMSec timeout,
-    const bool verifyPeer, const String *const caFile, const String *const caPath)
+    const KeyValue *const tag, const String *const endpoint, const StorageAzureUriStyle uriStyle, const unsigned int port,
+    const TimeMSec timeout, const bool verifyPeer, const String *const caFile, const String *const caPath)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -714,6 +726,7 @@ storageAzureNew(
         FUNCTION_LOG_PARAM(STRING_ID, keyType);
         FUNCTION_TEST_PARAM(STRING, key);
         FUNCTION_LOG_PARAM(SIZE, blockSize);
+        FUNCTION_LOG_PARAM(KEY_VALUE, tag);
         FUNCTION_LOG_PARAM(STRING, endpoint);
         FUNCTION_LOG_PARAM(ENUM, uriStyle);
         FUNCTION_LOG_PARAM(UINT, port);
@@ -730,51 +743,54 @@ storageAzureNew(
     ASSERT(key != NULL);
     ASSERT(blockSize != 0);
 
-    Storage *this = NULL;
-
-    OBJ_NEW_BEGIN(StorageAzure, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(StorageAzure, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageAzure *driver = OBJ_NEW_ALLOC();
-
-        *driver = (StorageAzure)
+        *this = (StorageAzure)
         {
             .interface = storageInterfaceAzure,
             .container = strDup(container),
             .account = strDup(account),
             .blockSize = blockSize,
             .host = uriStyle == storageAzureUriStyleHost ? strNewFmt("%s.%s", strZ(account), strZ(endpoint)) : strDup(endpoint),
-            .pathPrefix = uriStyle == storageAzureUriStyleHost ?
-                strNewFmt("/%s", strZ(container)) : strNewFmt("/%s/%s", strZ(account), strZ(container)),
+            .pathPrefix =
+                uriStyle == storageAzureUriStyleHost ?
+                    strNewFmt("/%s", strZ(container)) : strNewFmt("/%s/%s", strZ(account), strZ(container)),
         };
+
+        // Create tag query string
+        if (tag != NULL)
+        {
+            HttpQuery *const query = httpQueryNewP(.kv = tag);
+            this->tag = httpQueryRenderP(query);
+            httpQueryFree(query);
+        }
 
         // Store shared key or parse sas query
         if (keyType == storageAzureKeyTypeShared)
-            driver->sharedKey = bufNewDecode(encodingBase64, key);
+            this->sharedKey = bufNewDecode(encodingBase64, key);
         else
-            driver->sasKey = httpQueryNewStr(key);
+            this->sasKey = httpQueryNewStr(key);
 
         // Create the http client used to service requests
-        driver->httpClient = httpClientNew(
+        this->httpClient = httpClientNew(
             tlsClientNewP(
-                sckClientNew(driver->host, port, timeout, timeout), driver->host, timeout, timeout, verifyPeer, .caFile = caFile,
+                sckClientNew(this->host, port, timeout, timeout), this->host, timeout, timeout, verifyPeer, .caFile = caFile,
                 .caPath = caPath),
             timeout);
 
         // Create list of redacted headers
-        driver->headerRedactList = strLstNew();
-        strLstAdd(driver->headerRedactList, HTTP_HEADER_AUTHORIZATION_STR);
-        strLstAdd(driver->headerRedactList, HTTP_HEADER_DATE_STR);
+        this->headerRedactList = strLstNew();
+        strLstAdd(this->headerRedactList, HTTP_HEADER_AUTHORIZATION_STR);
+        strLstAdd(this->headerRedactList, HTTP_HEADER_DATE_STR);
 
         // Create list of redacted query keys
-        driver->queryRedactList = strLstNew();
-        strLstAdd(driver->queryRedactList, AZURE_QUERY_SIG_STR);
+        this->queryRedactList = strLstNew();
+        strLstAdd(this->queryRedactList, AZURE_QUERY_SIG_STR);
 
         // Generate starting file id
-        cryptoRandomBytes((unsigned char *)&driver->fileId, sizeof(driver->fileId));
-
-        this = storageNew(STORAGE_AZURE_TYPE, path, 0, 0, write, pathExpressionFunction, driver, driver->interface);
+        cryptoRandomBytes((unsigned char *)&this->fileId, sizeof(this->fileId));
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE, this);
+    FUNCTION_LOG_RETURN(STORAGE, storageNew(STORAGE_AZURE_TYPE, path, 0, 0, write, pathExpressionFunction, this, this->interface));
 }

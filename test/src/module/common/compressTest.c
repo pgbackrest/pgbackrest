@@ -1,9 +1,9 @@
 /***********************************************************************************************************************************
 Test Compression
 ***********************************************************************************************************************************/
-#include "common/io/filter/group.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
+#include "common/io/filter/group.h"
 #include "common/io/io.h"
 #include "storage/posix/storage.h"
 
@@ -24,7 +24,7 @@ testCompress(IoFilter *compress, Buffer *decompressed, size_t inputSize, size_t 
     // Compress input data
     while (inputTotal < bufSize(decompressed))
     {
-        // Generate the input buffer based on input size.  This breaks the data up into chunks as it would be in a real scenario.
+        // Generate the input buffer based on input size. This breaks the data up into chunks as it would be in a real scenario.
         Buffer *input = bufNewC(
             bufPtr(decompressed) + inputTotal,
             inputSize > bufSize(decompressed) - inputTotal ? bufSize(decompressed) - inputTotal : inputSize);
@@ -73,14 +73,16 @@ testDecompress(IoFilter *decompress, Buffer *compressed, size_t inputSize, size_
 Standard test suite to be applied to all compression types
 ***********************************************************************************************************************************/
 static void
-testSuite(CompressType type, const char *decompressCmd)
+testSuite(CompressType type, const char *decompressCmd, size_t rawDelta)
 {
     const char *simpleData = "A simple string";
     Buffer *compressed = NULL;
+    Buffer *compressedRaw = NULL;
     Buffer *decompressed = bufNewC(simpleData, strlen(simpleData));
 
     PackWrite *packWrite = pckWriteNewP();
     pckWriteI32P(packWrite, 1);
+    pckWriteBoolP(packWrite, false);
     pckWriteEndP(packWrite);
 
     // Create default storage object for testing
@@ -95,6 +97,20 @@ testSuite(CompressType type, const char *decompressCmd)
             256 * 1024 * 1024),
         "simple data - compress large in/large out buffer");
 
+    packWrite = pckWriteNewP();
+    pckWriteI32P(packWrite, 1);
+    pckWriteBoolP(packWrite, true);
+    pckWriteEndP(packWrite);
+
+    TEST_ASSIGN(
+        compressedRaw,
+        testCompress(
+            compressFilterPack(compressHelperLocal[type].compressType, pckWriteResult(packWrite)), decompressed, 1024,
+            1024),
+        "simple data - compress large in/large out buffer (raw)");
+
+    TEST_RESULT_UINT(bufUsed(compressed) - rawDelta, bufUsed(compressedRaw), "compare to raw");
+
     // -------------------------------------------------------------------------------------------------------------------------
     TEST_TITLE("compressed output can be decompressed with command-line tool");
 
@@ -103,39 +119,60 @@ testSuite(CompressType type, const char *decompressCmd)
     TEST_RESULT_BOOL(bufEq(decompressed, storageGetP(storageNewReadP(storageTest, STRDEF("test.out")))), true, "check output");
 
     TEST_RESULT_BOOL(
-        bufEq(compressed, testCompress(compressFilter(type, 1), decompressed, 1024, 1)), true,
+        bufEq(compressed, testCompress(compressFilterP(type, 1), decompressed, 1024, 1)), true,
         "simple data - compress large in/small out buffer");
 
     TEST_RESULT_BOOL(
-        bufEq(compressed, testCompress(compressFilter(type, 1), decompressed, 1, 1024)), true,
+        bufEq(compressed, testCompress(compressFilterP(type, 1), decompressed, 1, 1024)), true,
         "simple data - compress small in/large out buffer");
 
     TEST_RESULT_BOOL(
-        bufEq(compressed, testCompress(compressFilter(type, 1), decompressed, 1, 1)), true,
+        bufEq(compressed, testCompress(compressFilterP(type, 1), decompressed, 1, 1)), true,
         "simple data - compress small in/small out buffer");
+
+    TEST_RESULT_BOOL(
+        bufEq(compressedRaw, testCompress(compressFilterP(type, 1, .raw = true), decompressed, 1, 1)), true,
+        "simple data - compress small in/small out buffer (raw)");
+
+    packWrite = pckWriteNewP();
+    pckWriteBoolP(packWrite, false);
+    pckWriteEndP(packWrite);
 
     TEST_RESULT_BOOL(
         bufEq(
             decompressed,
-            testDecompress(compressFilterPack(compressHelperLocal[type].decompressType, NULL), compressed, 1024, 1024)),
-        true, "simple data - decompress large in/large out buffer");
+            testDecompress(
+                compressFilterPack(compressHelperLocal[type].decompressType, pckWriteResult(packWrite)), compressed, 1024, 1024)),
+        true, "simple data - decompress large in/small out buffer");
+
+    packWrite = pckWriteNewP();
+    pckWriteBoolP(packWrite, true);
+    pckWriteEndP(packWrite);
 
     TEST_RESULT_BOOL(
-        bufEq(decompressed, testDecompress(decompressFilter(type), compressed, 1024, 1)), true,
+        bufEq(
+            decompressed,
+            testDecompress(
+                compressFilterPack(
+                    compressHelperLocal[type].decompressType, pckWriteResult(packWrite)), compressedRaw, 1024, 1024)),
+        true, "simple data - decompress large in/large out buffer (raw)");
+
+    TEST_RESULT_BOOL(
+        bufEq(decompressed, testDecompress(decompressFilterP(type), compressed, 1024, 1)), true,
         "simple data - decompress large in/small out buffer");
 
     TEST_RESULT_BOOL(
-        bufEq(decompressed, testDecompress(decompressFilter(type), compressed, 1, 1024)), true,
+        bufEq(decompressed, testDecompress(decompressFilterP(type), compressed, 1, 1024)), true,
         "simple data - decompress small in/large out buffer");
 
     TEST_RESULT_BOOL(
-        bufEq(decompressed, testDecompress(decompressFilter(type), compressed, 1, 1)), true,
+        bufEq(decompressed, testDecompress(decompressFilterP(type), compressed, 1, 1)), true,
         "simple data - decompress small in/small out buffer");
 
     // -------------------------------------------------------------------------------------------------------------------------
     TEST_TITLE("error on no compression data");
 
-    TEST_ERROR(testDecompress(decompressFilter(type), bufNew(0), 1, 1), FormatError, "unexpected eof in compressed data");
+    TEST_ERROR(testDecompress(decompressFilterP(type), bufNew(0), 1, 1), FormatError, "unexpected eof in compressed data");
 
     // -------------------------------------------------------------------------------------------------------------------------
     TEST_TITLE("error on truncated compression data");
@@ -144,7 +181,7 @@ testSuite(CompressType type, const char *decompressCmd)
     bufCatSub(truncated, compressed, 0, bufUsed(compressed) - 1);
 
     TEST_RESULT_UINT(bufUsed(truncated), bufUsed(compressed) - 1, "check truncated buffer size");
-    TEST_ERROR(testDecompress(decompressFilter(type), truncated, 512, 512), FormatError, "unexpected eof in compressed data");
+    TEST_ERROR(testDecompress(decompressFilterP(type), truncated, 512, 512), FormatError, "unexpected eof in compressed data");
 
     // -------------------------------------------------------------------------------------------------------------------------
     TEST_TITLE("compress a large non-zero input buffer into small output buffer");
@@ -160,11 +197,11 @@ testSuite(CompressType type, const char *decompressCmd)
     bufUsedSet(decompressed, bufSize(decompressed));
 
     TEST_ASSIGN(
-        compressed, testCompress(compressFilter(type, 3), decompressed, bufSize(decompressed), 32),
+        compressed, testCompress(compressFilterP(type, 3), decompressed, bufSize(decompressed), 32),
         "non-zero data - compress large in/small out buffer");
 
     TEST_RESULT_BOOL(
-        bufEq(decompressed, testDecompress(decompressFilter(type), compressed, bufSize(compressed), 1024 * 256)), true,
+        bufEq(decompressed, testDecompress(decompressFilterP(type), compressed, bufSize(compressed), 1024 * 256)), true,
         "non-zero data - decompress large in/small out buffer");
 }
 
@@ -180,7 +217,7 @@ testRun(void)
     if (testBegin("gz"))
     {
         // Run standard test suite
-        testSuite(compressTypeGz, "gzip -dc");
+        testSuite(compressTypeGz, "gzip -dc", 12);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("gzError()");
@@ -206,21 +243,25 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("gzDecompressToLog() and gzCompressToLog()");
 
-        GzDecompress *decompress = (GzDecompress *)ioFilterDriver(gzDecompressNew());
+        char buffer[STACK_TRACE_PARAM_MAX];
 
-        TEST_RESULT_STR_Z(gzDecompressToLog(decompress), "{inputSame: false, done: false, availIn: 0}", "format object");
+        GzDecompress *decompress = (GzDecompress *)ioFilterDriver(gzDecompressNew(false));
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(decompress, gzDecompressToLog, buffer, sizeof(buffer)), "gzDecompressToLog");
+        TEST_RESULT_Z(buffer, "{inputSame: false, done: false, availIn: 0}", "check log");
 
         decompress->inputSame = true;
         decompress->done = true;
 
-        TEST_RESULT_STR_Z(gzDecompressToLog(decompress), "{inputSame: true, done: true, availIn: 0}", "format object");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(decompress, gzDecompressToLog, buffer, sizeof(buffer)), "gzDecompressToLog");
+        TEST_RESULT_Z(buffer, "{inputSame: true, done: true, availIn: 0}", "check log");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("bz2"))
     {
         // Run standard test suite
-        testSuite(compressTypeBz2, "bzip2 -dc");
+        testSuite(compressTypeBz2, "bzip2 -dc", 0);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("bz2Error()");
@@ -251,19 +292,22 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("bz2DecompressToLog() and bz2CompressToLog()");
 
-        Bz2Compress *compress = (Bz2Compress *)ioFilterDriver(bz2CompressNew(1));
+        char buffer[STACK_TRACE_PARAM_MAX];
+
+        Bz2Compress *compress = (Bz2Compress *)ioFilterDriver(bz2CompressNew(1, false));
 
         compress->stream.avail_in = 999;
 
-        TEST_RESULT_STR_Z(
-            bz2CompressToLog(compress), "{inputSame: false, done: false, flushing: false, avail_in: 999}", "format object");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(compress, bz2CompressToLog, buffer, sizeof(buffer)), "bz2CompressToLog");
+        TEST_RESULT_Z(buffer, "{inputSame: false, done: false, flushing: false, avail_in: 999}", "check log");
 
-        Bz2Decompress *decompress = (Bz2Decompress *)ioFilterDriver(bz2DecompressNew());
+        Bz2Decompress *decompress = (Bz2Decompress *)ioFilterDriver(bz2DecompressNew(false));
 
         decompress->inputSame = true;
         decompress->done = true;
 
-        TEST_RESULT_STR_Z(bz2DecompressToLog(decompress), "{inputSame: true, done: true, avail_in: 0}", "format object");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(decompress, bz2DecompressToLog, buffer, sizeof(buffer)), "bz2DecompressToLog");
+        TEST_RESULT_Z(buffer, "{inputSame: true, done: true, avail_in: 0}", "check log");
     }
 
     // *****************************************************************************************************************************
@@ -271,7 +315,7 @@ testRun(void)
     {
 #ifdef HAVE_LIBLZ4
         // Run standard test suite
-        testSuite(compressTypeLz4, "lz4 -dc");
+        testSuite(compressTypeLz4, "lz4 -dc", 4);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("lz4Error()");
@@ -289,25 +333,26 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("lz4DecompressToLog() and lz4CompressToLog()");
 
-        Lz4Compress *compress = (Lz4Compress *)ioFilterDriver(lz4CompressNew(7));
+        char buffer[STACK_TRACE_PARAM_MAX];
+
+        Lz4Compress *compress = (Lz4Compress *)ioFilterDriver(lz4CompressNew(7, false));
 
         compress->inputSame = true;
         compress->flushing = true;
 
-        TEST_RESULT_STR_Z(
-            lz4CompressToLog(compress), "{level: 7, first: true, inputSame: true, flushing: true}", "format object");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(compress, lz4CompressToLog, buffer, sizeof(buffer)), "lz4CompressToLog");
+        TEST_RESULT_Z(buffer, "{level: 7, first: true, inputSame: true, flushing: true}", "check log");
 
-        Lz4Decompress *decompress = (Lz4Decompress *)ioFilterDriver(lz4DecompressNew());
+        Lz4Decompress *decompress = (Lz4Decompress *)ioFilterDriver(lz4DecompressNew(false));
 
         decompress->inputSame = true;
         decompress->done = true;
         decompress->inputOffset = 999;
 
-        TEST_RESULT_STR_Z(
-            lz4DecompressToLog(decompress), "{inputSame: true, inputOffset: 999, frameDone false, done: true}",
-            "format object");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(decompress, lz4DecompressToLog, buffer, sizeof(buffer)), "lz4DecompressToLog");
+        TEST_RESULT_Z(buffer, "{inputSame: true, inputOffset: 999, frameDone false, done: true}", "check log");
 #else
-        TEST_ERROR(compressTypePresent(compressTypeLz4), OptionInvalidValueError, "pgBackRest not compiled with lz4 support");
+        TEST_ERROR(compressTypePresent(compressTypeLz4), OptionInvalidValueError, "pgBackRest not built with lz4 support");
 #endif // HAVE_LIBLZ4
     }
 
@@ -316,7 +361,7 @@ testRun(void)
     {
 #ifdef HAVE_LIBZST
         // Run standard test suite
-        testSuite(compressTypeZst, "zstd -dc");
+        testSuite(compressTypeZst, "zstd -dc", 0);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("zstError()");
@@ -334,26 +379,27 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("zstDecompressToLog() and zstCompressToLog()");
 
-        ZstCompress *compress = (ZstCompress *)ioFilterDriver(zstCompressNew(14));
+        char buffer[STACK_TRACE_PARAM_MAX];
+
+        ZstCompress *compress = (ZstCompress *)ioFilterDriver(zstCompressNew(14, false));
 
         compress->inputSame = true;
         compress->inputOffset = 49;
         compress->flushing = true;
 
-        TEST_RESULT_STR_Z(
-            zstCompressToLog(compress), "{level: 14, inputSame: true, inputOffset: 49, flushing: true}", "format object");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(compress, zstCompressToLog, buffer, sizeof(buffer)), "zstCompressToLog");
+        TEST_RESULT_Z(buffer, "{level: 14, inputSame: true, inputOffset: 49, flushing: true}", "check log");
 
-        ZstDecompress *decompress = (ZstDecompress *)ioFilterDriver(zstDecompressNew());
+        ZstDecompress *decompress = (ZstDecompress *)ioFilterDriver(zstDecompressNew(false));
 
         decompress->inputSame = true;
         decompress->done = true;
         decompress->inputOffset = 999;
 
-        TEST_RESULT_STR_Z(
-            zstDecompressToLog(decompress), "{inputSame: true, inputOffset: 999, frameDone false, done: true}",
-            "format object");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(decompress, zstDecompressToLog, buffer, sizeof(buffer)), "zstDecompressToLog");
+        TEST_RESULT_Z(buffer, "{inputSame: true, inputOffset: 999, frameDone false, done: true}", "check log");
 #else
-        TEST_ERROR(compressTypePresent(compressTypeZst), OptionInvalidValueError, "pgBackRest not compiled with zst support");
+        TEST_ERROR(compressTypePresent(compressTypeZst), OptionInvalidValueError, "pgBackRest not built with zst support");
 #endif // HAVE_LIBZST
     }
 
@@ -376,7 +422,7 @@ testRun(void)
         TEST_TITLE("compressTypePresent()");
 
         TEST_RESULT_VOID(compressTypePresent(compressTypeNone), "type none always present");
-        TEST_ERROR(compressTypePresent(compressTypeXz), OptionInvalidValueError, "pgBackRest not compiled with xz support");
+        TEST_ERROR(compressTypePresent(compressTypeXz), OptionInvalidValueError, "pgBackRest not built with xz support");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("compressTypeFromName()");

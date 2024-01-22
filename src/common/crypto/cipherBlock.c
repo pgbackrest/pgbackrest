@@ -5,8 +5,8 @@ Block Cipher
 
 #include <string.h>
 
-#include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
 
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/common.h"
@@ -18,7 +18,7 @@ Block Cipher
 /***********************************************************************************************************************************
 Header constants and sizes
 ***********************************************************************************************************************************/
-// Magic constant for salted encrypt.  Only salted encrypt is done here, but this constant is required for compatibility with the
+// Magic constant for salted encrypt. Only salted encrypt is done here, but this constant is required for compatibility with the
 // openssl command-line tool.
 #define CIPHER_BLOCK_MAGIC                                          "Salted__"
 #define CIPHER_BLOCK_MAGIC_SIZE                                     (sizeof(CIPHER_BLOCK_MAGIC) - 1)
@@ -35,8 +35,7 @@ typedef struct CipherBlock
     bool raw;                                                       // Omit header magic to save space
     bool saltDone;                                                  // Has the salt been read/generated?
     bool processDone;                                               // Has any data been processed?
-    size_t passSize;                                                // Size of passphrase in bytes
-    unsigned char *pass;                                            // Passphrase used to generate encryption key
+    const Buffer *pass;                                             // Passphrase used to generate encryption key
     size_t headerSize;                                              // Size of header read during decrypt
     unsigned char header[CIPHER_BLOCK_HEADER_SIZE];                 // Buffer to hold partial header during decrypt
     const EVP_CIPHER *cipher;                                       // Cipher object
@@ -51,17 +50,16 @@ typedef struct CipherBlock
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *
-cipherBlockToLog(const CipherBlock *this)
+FN_EXTERN void
+cipherBlockToLog(const CipherBlock *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{inputSame: %s, done: %s}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done));
+    strStcFmt(debugLog, "{inputSame: %s, done: %s}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done));
 }
 
 #define FUNCTION_LOG_CIPHER_BLOCK_TYPE                                                                                             \
     CipherBlock *
 #define FUNCTION_LOG_CIPHER_BLOCK_FORMAT(value, buffer, bufferSize)                                                                \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, cipherBlockToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, cipherBlockToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Free cipher context
@@ -163,8 +161,8 @@ cipherBlockProcessBlock(CipherBlock *this, const unsigned char *source, size_t s
                 source += headerExpected - this->headerSize;
                 sourceSize -= headerExpected - this->headerSize;
 
-                // The first bytes of the file to decrypt should be equal to the magic.  If not then this is not an
-                // encrypted file, or at least not in a format we recognize.
+                // The first bytes of the file to decrypt should be equal to the magic. If not then this is not an encrypted file,
+                // or at least not in a format we recognize.
                 if (!this->raw && memcmp(this->header, CIPHER_BLOCK_MAGIC, CIPHER_BLOCK_MAGIC_SIZE) != 0)
                     THROW(CryptoError, "cipher header invalid");
             }
@@ -186,8 +184,7 @@ cipherBlockProcessBlock(CipherBlock *this, const unsigned char *source, size_t s
             unsigned char key[EVP_MAX_KEY_LENGTH];
             unsigned char initVector[EVP_MAX_IV_LENGTH];
 
-            EVP_BytesToKey(
-                this->cipher, this->digest, salt, (unsigned char *)this->pass, (int)this->passSize, 1, key, initVector);
+            EVP_BytesToKey(this->cipher, this->digest, salt, bufPtrConst(this->pass), (int)bufSize(this->pass), 1, key, initVector);
 
             // Create context to track cipher
             cryptoError(!(this->cipherContext = EVP_CIPHER_CTX_new()), "unable to create context");
@@ -197,9 +194,8 @@ cipherBlockProcessBlock(CipherBlock *this, const unsigned char *source, size_t s
 
             // Initialize cipher
             cryptoError(
-                !EVP_CipherInit_ex(
-                    this->cipherContext, this->cipher, NULL, key, initVector, this->mode == cipherModeEncrypt),
-                    "unable to initialize cipher");
+                !EVP_CipherInit_ex(this->cipherContext, this->cipher, NULL, key, initVector, this->mode == cipherModeEncrypt),
+                "unable to initialize cipher");
 
             this->saltDone = true;
         }
@@ -325,8 +321,8 @@ cipherBlockProcess(THIS_VOID, const Buffer *source, Buffer *destination)
 
         if (source == NULL)
         {
-            // If salt was not generated it means that process() was never called with any data.  It's OK to encrypt a zero byte
-            // file but we need to call process to generate the header.
+            // If salt was not generated it means that process() was never called with any data. It's OK to encrypt a zero byte file
+            // but we need to call process to generate the header.
             if (!this->saltDone)
             {
                 destinationSizeActual = cipherBlockProcessBlock(this, NULL, 0, bufRemainsPtr(outputActual));
@@ -388,7 +384,7 @@ cipherBlockInputSame(const THIS_VOID)
 
 /**********************************************************************************************************************************/
 FN_EXTERN IoFilter *
-cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, CipherBlockNewParam param)
+cipherBlockNew(const CipherMode mode, const CipherType cipherType, const Buffer *const pass, const CipherBlockNewParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING_ID, mode);
@@ -404,8 +400,8 @@ cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, Ciphe
     // Init crypto subsystem
     cryptoInit();
 
-    // Lookup cipher by name.  This means the ciphers passed in must exactly match a name expected by OpenSSL.  This is a good
-    // thing since the name required by the openssl command-line tool will match what is used by pgBackRest.
+    // Lookup cipher by name. This means the ciphers passed in must exactly match a name expected by OpenSSL. This is a good thing
+    // since the name required by the openssl command-line tool will match what is used by pgBackRest.
     String *const cipherTypeStr = strIdToStr(cipherType);
     const EVP_CIPHER *cipher = EVP_get_cipherbyname(strZ(cipherTypeStr));
 
@@ -414,7 +410,7 @@ cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, Ciphe
 
     strFree(cipherTypeStr);
 
-    // Lookup digest.  If not defined it will be set to sha1.
+    // Lookup digest. If not defined it will be set to sha1.
     const EVP_MD *digest = NULL;
 
     if (param.digest)
@@ -425,52 +421,42 @@ cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, Ciphe
     if (!digest)
         THROW_FMT(AssertError, "unable to load digest '%s'", strZ(param.digest));
 
-    // Allocate memory to hold process state
-    IoFilter *this = NULL;
-
-    OBJ_NEW_BEGIN(CipherBlock, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(CipherBlock, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        CipherBlock *driver = OBJ_NEW_ALLOC();
-
-        *driver = (CipherBlock)
+        *this = (CipherBlock)
         {
             .mode = mode,
             .raw = param.raw,
             .cipher = cipher,
             .digest = digest,
-            .passSize = bufUsed(pass),
+            .pass = bufDup(pass),
         };
-
-        // Store the passphrase
-        driver->pass = memNew(driver->passSize);
-        memcpy(driver->pass, bufPtrConst(pass), driver->passSize);
-
-        // Create param list
-        Pack *paramList = NULL;
-
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            PackWrite *const packWrite = pckWriteNewP();
-
-            pckWriteU64P(packWrite, mode);
-            pckWriteU64P(packWrite, cipherType);
-            pckWriteBinP(packWrite, pass);
-            pckWriteStrP(packWrite, param.digest);
-            pckWriteBoolP(packWrite, param.raw);
-            pckWriteEndP(packWrite);
-
-            paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
-        }
-        MEM_CONTEXT_TEMP_END();
-
-        // Create filter interface
-        this = ioFilterNewP(
-            CIPHER_BLOCK_FILTER_TYPE, driver, paramList, .done = cipherBlockDone, .inOut = cipherBlockProcess,
-            .inputSame = cipherBlockInputSame);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_FILTER, this);
+    // Create param list
+    Pack *paramList;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackWrite *const packWrite = pckWriteNewP();
+
+        pckWriteU64P(packWrite, mode);
+        pckWriteU64P(packWrite, cipherType);
+        pckWriteBinP(packWrite, pass);
+        pckWriteStrP(packWrite, param.digest);
+        pckWriteBoolP(packWrite, param.raw);
+        pckWriteEndP(packWrite);
+
+        paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(
+        IO_FILTER,
+        ioFilterNewP(
+            CIPHER_BLOCK_FILTER_TYPE, this, paramList, .done = cipherBlockDone, .inOut = cipherBlockProcess,
+            .inputSame = cipherBlockInputSame));
 }
 
 FN_EXTERN IoFilter *

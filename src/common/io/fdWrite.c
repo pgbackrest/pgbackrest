@@ -28,7 +28,7 @@ Macros for function logging
 #define FUNCTION_LOG_IO_FD_WRITE_TYPE                                                                                              \
     IoFdWrite *
 #define FUNCTION_LOG_IO_FD_WRITE_FORMAT(value, buffer, bufferSize)                                                                 \
-    objToLog(value, "IoFdWrite", buffer, bufferSize)
+    objNameToLog(value, "IoFdWrite", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 // Can bytes be written immediately?
@@ -102,7 +102,7 @@ ioFdWriteFd(const THIS_VOID)
 
 /**********************************************************************************************************************************/
 FN_EXTERN IoWrite *
-ioFdWriteNew(const String *name, int fd, TimeMSec timeout)
+ioFdWriteNew(const String *const name, const int fd, const TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, name);
@@ -110,24 +110,18 @@ ioFdWriteNew(const String *name, int fd, TimeMSec timeout)
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
     FUNCTION_LOG_END();
 
-    IoWrite *this = NULL;
-
-    OBJ_NEW_BEGIN(IoFdWrite, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(IoFdWrite, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        IoFdWrite *driver = OBJ_NEW_ALLOC();
-
-        *driver = (IoFdWrite)
+        *this = (IoFdWrite)
         {
             .name = strDup(name),
             .fd = fd,
             .timeout = timeout,
         };
-
-        this = ioWriteNewP(driver, .fd = ioFdWriteFd, .ready = ioFdWriteReady, .write = ioFdWrite);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_WRITE, this);
+    FUNCTION_LOG_RETURN(IO_WRITE, ioWriteNewP(this, .fd = ioFdWriteFd, .ready = ioFdWriteReady, .write = ioFdWrite));
 }
 
 /**********************************************************************************************************************************/

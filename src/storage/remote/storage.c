@@ -44,6 +44,8 @@ storageRemoteInfoGet(StorageRemoteInfoData *const data, PackRead *const read, St
         FUNCTION_TEST_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     ASSERT(data != NULL);
     ASSERT(read != NULL);
     ASSERT(info != NULL);
@@ -125,6 +127,8 @@ storageRemoteInfo(THIS_VOID, const String *file, StorageInfoLevel level, Storage
         FUNCTION_LOG_PARAM(ENUM, level);
         FUNCTION_LOG_PARAM(BOOL, param.followLink);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_STRUCT();
 
     ASSERT(this != NULL);
 
@@ -466,8 +470,8 @@ static const StorageInterface storageInterfaceRemote =
 
 FN_EXTERN Storage *
 storageRemoteNew(
-    mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction, ProtocolClient *client,
-    unsigned int compressLevel)
+    const mode_t modeFile, const mode_t modePath, const bool write, StoragePathExpressionCallback pathExpressionFunction,
+    ProtocolClient *const client, const unsigned int compressLevel)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MODE, modeFile);
@@ -482,26 +486,22 @@ storageRemoteNew(
     ASSERT(modePath != 0);
     ASSERT(client != NULL);
 
-    Storage *this = NULL;
+    const String *path;
 
-    OBJ_NEW_BEGIN(StorageRemote, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(StorageRemote, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageRemote *driver = OBJ_NEW_ALLOC();
-
-        *driver = (StorageRemote)
+        *this = (StorageRemote)
         {
             .client = client,
             .compressLevel = compressLevel,
             .interface = storageInterfaceRemote,
         };
 
-        const String *path = NULL;
-
         // Get storage features from the remote
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Execute command and get result
-            PackRead *result = protocolClientExecute(driver->client, protocolCommandNew(PROTOCOL_COMMAND_STORAGE_FEATURE), true);
+            PackRead *result = protocolClientExecute(this->client, protocolCommandNew(PROTOCOL_COMMAND_STORAGE_FEATURE), true);
 
             // Get path in parent context
             MEM_CONTEXT_PRIOR_BEGIN()
@@ -510,13 +510,12 @@ storageRemoteNew(
             }
             MEM_CONTEXT_PRIOR_END();
 
-            driver->interface.feature = pckReadU64P(result);
+            this->interface.feature = pckReadU64P(result);
         }
         MEM_CONTEXT_TEMP_END();
-
-        this = storageNew(STORAGE_REMOTE_TYPE, path, modeFile, modePath, write, pathExpressionFunction, driver, driver->interface);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE, this);
+    FUNCTION_LOG_RETURN(
+        STORAGE, storageNew(STORAGE_REMOTE_TYPE, path, modeFile, modePath, write, pathExpressionFunction, this, this->interface));
 }

@@ -35,25 +35,29 @@ testRun(void)
         TEST_TITLE("xml to text");
 
         TEST_RESULT_STR_Z(
-            bldHlpRenderXml(xmlDocumentRoot(xmlDocumentNewBuf(BUFSTRDEF(
-                "<doc>"
-                "<p><backrest/> <postgres/> {[dash]} "
-                    "<b><br-option><cmd><code><exe><file><host><i><id><link><path><pg-setting><proper><setting>"
-                    "<!-- COMMENT -->"
-                    "info"
-                    "</setting></proper></pg-setting></path></link></id></i></host></file></exe></code></cmd></br-option></b></p>\n"
-                "\n"
-                "<admonition>think <quote>about</quote> it</admonition>\n"
-                "\n"
-                "<p>List:</p>\n"
-                "\n"
-                "<list>\n"
-                  "<list-item>item1</list-item>\n"
-                  "<list-item>item2</list-item>\n"
-                "</list>\n"
-                "\n"
-                "<p>last para</p>"
-                "</doc>")))),
+            bldHlpRenderXml(
+                xmlDocumentRoot(
+                    xmlDocumentNewBuf(
+                        BUFSTRDEF(
+                            "<doc>"
+                            "<p><backrest/> <postgres/> {[dash]} "
+                            "<b><br-option><cmd><code><exe><file><host><i><id><link><path><pg-setting><proper><setting>"
+                            "<!-- COMMENT -->"
+                            "info"
+                            "</setting></proper></pg-setting></path></link></id></i></host></file></exe></code></cmd>"
+                            "</br-option></b></p>\n"
+                            "\n"
+                            "<admonition>think <quote>about</quote> it</admonition>\n"
+                            "\n"
+                            "<p>List:</p>\n"
+                            "\n"
+                            "<list>\n"
+                            "<list-item>item1</list-item>\n"
+                            "<list-item>item2</list-item>\n"
+                            "</list>\n"
+                            "\n"
+                            "<p>last para</p>"
+                            "</doc>")))),
             "pgBackRest PostgreSQL - info\n"
             "\n"
             "NOTE: think \"about\" it\n"
@@ -118,7 +122,7 @@ testRun(void)
             "    </operation>\n"
             "</doc>\n");
 
-        TEST_ERROR(bldHlpParse(storageTest, bldCfgErr), FormatError, "command 'backup' must have help");
+        TEST_ERROR(bldHlpParse(storageTest, bldCfgErr, false), FormatError, "command 'backup' must have help");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on missing config option");
@@ -149,7 +153,7 @@ testRun(void)
             "    </operation>\n"
             "</doc>\n");
 
-        TEST_ERROR(bldHlpParse(storageTest, bldCfgErr), FormatError, "option 'buffer' must have help for command 'backup'");
+        TEST_ERROR(bldHlpParse(storageTest, bldCfgErr, false), FormatError, "option 'buffer' must have help for command 'backup'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on missing command-line option");
@@ -191,7 +195,7 @@ testRun(void)
             "    </operation>\n"
             "</doc>\n");
 
-        TEST_ERROR(bldHlpParse(storageTest, bldCfgErr), FormatError, "option 'stanza' must have help for command 'backup'");
+        TEST_ERROR(bldHlpParse(storageTest, bldCfgErr, false), FormatError, "option 'stanza' must have help for command 'backup'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("parse and render");
@@ -234,6 +238,7 @@ testRun(void)
             "\n"
             "  force:\n"
             "    type: boolean\n"
+            "    internal: true\n"
             "    command:\n"
             "      check: {}\n"
             "      restore: {}\n"
@@ -262,6 +267,9 @@ testRun(void)
             "                       <text>\n"
             "                           <p>Buffer.</p>\n"
             "                       </text>\n"
+            "\n"
+            "                       <example>128KiB</example>\n"
+            "                       <example>256KiB</example>\n"
             "                   </config-key>\n"
             "\n"
             "                   <config-key id=\"stanza\" name=\"Stanza\">\n"
@@ -270,6 +278,8 @@ testRun(void)
             "                       <text>\n"
             "                           <p>Stanza.</p>\n"
             "                       </text>\n"
+            "\n"
+            "                       <example>test_stanza</example>\n"
             "                   </config-key>\n"
             "               </config-key-list>\n"
             "           </config-section>\n"
@@ -338,7 +348,9 @@ testRun(void)
             "</doc>\n");
 
         TEST_RESULT_STR_Z(
-            hrnPackReadToStr(pckReadNew(pckWriteResult(bldHlpRenderHelpAutoCPack(bldCfg, bldHlpParse(storageTest, bldCfg))))),
+            hrnPackReadToStr(
+                pckReadNew(pckWriteResult(bldHlpRenderHelpAutoCPack(bldCfg, bldHlpParse(storageTest, bldCfg, false))))),
+            // {uncrustify_off - indentation}
             "1:array:"
             "["
                 // backup command
@@ -371,6 +383,7 @@ testRun(void)
                     "}"
                 "]"
                 // force option
+                ", 13:bool:true"
                 ", 18:array:"
                 "["
                     // check command override
@@ -396,12 +409,13 @@ testRun(void)
                     ", 2:str:stanza2"
                 "]"
             "]",
+            // {uncrustify_on}
             "parse and render");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check help file");
 
-        TEST_RESULT_VOID(bldHlpRender(storageTest, bldCfg, bldHlpParse(storageTest, bldCfg)), "write file");
+        TEST_RESULT_VOID(bldHlpRender(storageTest, bldCfg, bldHlpParse(storageTest, bldCfg, false)), "write file");
         TEST_STORAGE_EXISTS(storageTest, "src/command/help/help.auto.c.inc");
     }
 

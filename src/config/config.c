@@ -7,7 +7,6 @@ Command and Option Configuration
 #include <string.h>
 
 #include "common/debug.h"
-#include "common/error.h"
 #include "common/memContext.h"
 #include "config/config.intern.h"
 #include "config/parse.h"
@@ -460,7 +459,6 @@ cfgOptionDefaultSet(ConfigOption optionId, const Variant *defaultValue)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-
 /**********************************************************************************************************************************/
 FN_EXTERN const String *
 cfgOptionDisplayVar(const Variant *const value, const ConfigOptionType optionType)
@@ -523,7 +521,6 @@ cfgOptionIdxDisplay(const ConfigOption optionId, const unsigned int optionIdx)
         option->display = cfgOptionDisplayVar(cfgOptionIdxVar(optionId, optionIdx), cfgParseOptionType(optionId));
     }
     MEM_CONTEXT_END();
-
 
     FUNCTION_TEST_RETURN_CONST(STRING, option->display);
 }

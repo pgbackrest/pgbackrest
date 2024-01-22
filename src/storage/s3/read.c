@@ -7,8 +7,8 @@ S3 Storage Read
 #include "common/io/http/client.h"
 #include "common/log.h"
 #include "common/type/object.h"
-#include "storage/s3/read.h"
 #include "storage/read.intern.h"
+#include "storage/s3/read.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -30,7 +30,7 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_READ_S3_TYPE                                                                                          \
     StorageReadS3 *
 #define FUNCTION_LOG_STORAGE_READ_S3_FORMAT(value, buffer, bufferSize)                                                             \
-    objToLog(value, "StorageReadS3", buffer, bufferSize)
+    objNameToLog(value, "StorageReadS3", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Open the file
@@ -126,13 +126,9 @@ storageReadS3New(
     ASSERT(name != NULL);
     ASSERT(limit == NULL || varUInt64(limit) > 0);
 
-    StorageRead *this = NULL;
-
-    OBJ_NEW_BEGIN(StorageReadS3, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(StorageReadS3, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageReadS3 *driver = OBJ_NEW_ALLOC();
-
-        *driver = (StorageReadS3)
+        *this = (StorageReadS3)
         {
             .storage = storage,
 
@@ -152,10 +148,8 @@ storageReadS3New(
                 },
             },
         };
-
-        this = storageReadNew(driver, &driver->interface);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_READ, this);
+    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadNew(this, &this->interface));
 }

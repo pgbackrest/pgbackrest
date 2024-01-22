@@ -16,29 +16,29 @@ typedef struct StorageGcs StorageGcs;
 HTTP headers
 ***********************************************************************************************************************************/
 #define GCS_HEADER_UPLOAD_ID                                        "x-guploader-uploadid"
-    STRING_DECLARE(GCS_HEADER_UPLOAD_ID_STR);
+STRING_DECLARE(GCS_HEADER_UPLOAD_ID_STR);
 
 /***********************************************************************************************************************************
 Query tokens
 ***********************************************************************************************************************************/
 #define GCS_QUERY_FIELDS                                            "fields"
-    STRING_DECLARE(GCS_QUERY_FIELDS_STR);
+STRING_DECLARE(GCS_QUERY_FIELDS_STR);
 #define GCS_QUERY_MEDIA                                             "media"
-    STRING_DECLARE(GCS_QUERY_MEDIA_STR);
+STRING_DECLARE(GCS_QUERY_MEDIA_STR);
 #define GCS_QUERY_NAME                                              "name"
-    STRING_DECLARE(GCS_QUERY_NAME_STR);
+STRING_DECLARE(GCS_QUERY_NAME_STR);
 #define GCS_QUERY_UPLOAD_ID                                         "upload_id"
-    STRING_DECLARE(GCS_QUERY_UPLOAD_ID_STR);
+STRING_DECLARE(GCS_QUERY_UPLOAD_ID_STR);
 
 /***********************************************************************************************************************************
 JSON tokens
 ***********************************************************************************************************************************/
 #define GCS_JSON_MD5_HASH                                           "md5Hash"
-    VARIANT_DECLARE(GCS_JSON_MD5_HASH_VAR);
+VARIANT_DECLARE(GCS_JSON_MD5_HASH_VAR);
 #define GCS_JSON_NAME                                               "name"
-    VARIANT_DECLARE(GCS_JSON_NAME_VAR);
+VARIANT_DECLARE(GCS_JSON_NAME_VAR);
 #define GCS_JSON_SIZE                                               "size"
-    VARIANT_DECLARE(GCS_JSON_SIZE_VAR);
+VARIANT_DECLARE(GCS_JSON_SIZE_VAR);
 
 /***********************************************************************************************************************************
 Perform a GCS Request
@@ -50,6 +50,7 @@ typedef struct StorageGcsRequestAsyncParam
     bool noBucket;                                                  // Exclude bucket from the URI?
     bool upload;                                                    // Is an object upload?
     bool noAuth;                                                    // Exclude authentication header?
+    bool tag;                                                       // Add tags when available?
     const String *object;                                           // Object to include in URI
     const HttpHeader *header;                                       // Request headers
     const HttpQuery *query;                                         // Query parameters
@@ -81,6 +82,7 @@ typedef struct StorageGcsRequestParam
     bool noBucket;                                                  // Exclude bucket from the URI?
     bool upload;                                                    // Is an object upload?
     bool noAuth;                                                    // Exclude authentication header?
+    bool tag;                                                       // Add tags when available?
     const String *object;                                           // Object to include in URI
     const HttpHeader *header;                                       // Request headers
     const HttpQuery *query;                                         // Query parameters
@@ -101,6 +103,6 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_GCS_TYPE                                                                                              \
     StorageGcs *
 #define FUNCTION_LOG_STORAGE_GCS_FORMAT(value, buffer, bufferSize)                                                                 \
-    objToLog(value, "StorageGcs", buffer, bufferSize)
+    objNameToLog(value, "StorageGcs", buffer, bufferSize)
 
 #endif

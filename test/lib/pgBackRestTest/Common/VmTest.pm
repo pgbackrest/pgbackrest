@@ -76,21 +76,21 @@ use constant VM_ALL                                                 => 'all';
 use constant VM_NONE                                                => 'none';
     push @EXPORT, qw(VM_NONE);
 
+use constant VM_D10                                                 => 'd10';
+    push @EXPORT, qw(VM_D10);
 use constant VM_RH7                                                 => 'rh7';
     push @EXPORT, qw(VM_RH7);
 use constant VM_RH8                                                 => 'rh8';
     push @EXPORT, qw(VM_RH8);
-use constant VM_F36                                                 => 'f36';
-    push @EXPORT, qw(VM_F36);
-use constant VM_U18                                                 => 'u18';
-    push @EXPORT, qw(VM_U18);
+use constant VM_F38                                                 => 'f38';
+    push @EXPORT, qw(VM_F38);
 use constant VM_U20                                                 => 'u20';
     push @EXPORT, qw(VM_U20);
 use constant VM_U22                                                 => 'u22';
     push @EXPORT, qw(VM_U22);
 
 # VM aliases for run matrices (numbered oldest to newest)
-use constant VM2                                                    => VM_U18;
+use constant VM2                                                    => VM_D10;
     push @EXPORT, qw(VM2);
 use constant VM3                                                    => VM_RH7;
     push @EXPORT, qw(VM3);
@@ -124,6 +124,30 @@ my $oyVm =
         ],
     },
 
+    # Debian 10
+    &VM_D10 =>
+    {
+        &VM_OS_BASE => VM_OS_BASE_DEBIAN,
+        &VM_IMAGE => 'i386/debian:10',
+        &VM_ARCH => VM_ARCH_I386,
+        &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
+
+        &VMDEF_WITH_ZST => true,
+
+        &VM_DB =>
+        [
+            PG_VERSION_94,
+            PG_VERSION_95,
+            PG_VERSION_96,
+        ],
+
+        &VM_DB_TEST =>
+        [
+            PG_VERSION_94,
+            PG_VERSION_96,
+        ],
+    },
+
     # RHEL 7
     &VM_RH7 =>
     {
@@ -137,16 +161,15 @@ my $oyVm =
 
         &VM_DB =>
         [
-            PG_VERSION_10,
             PG_VERSION_11,
             PG_VERSION_12,
             PG_VERSION_13,
             PG_VERSION_14,
+            PG_VERSION_15,
         ],
 
         &VM_DB_TEST =>
         [
-            PG_VERSION_10,
             PG_VERSION_11,
             PG_VERSION_12,
             PG_VERSION_13,
@@ -154,8 +177,8 @@ my $oyVm =
         ],
     },
 
-    # Fedora 36
-    &VM_F36 =>
+    # Fedora 38
+    &VM_F38 =>
     {
         &VM_OS_BASE => VM_OS_BASE_RHEL,
         &VM_IMAGE => 'fedora:36',
@@ -168,41 +191,15 @@ my $oyVm =
 
         &VM_DB =>
         [
-            PG_VERSION_10,
-            PG_VERSION_11,
             PG_VERSION_12,
             PG_VERSION_13,
             PG_VERSION_14,
+            PG_VERSION_15,
         ],
 
         &VM_DB_TEST =>
         [
-            PG_VERSION_12,
-        ],
-    },
-
-    # Ubuntu 18.04
-    &VM_U18 =>
-    {
-        &VM_OS_BASE => VM_OS_BASE_DEBIAN,
-        &VM_IMAGE => 'i386/ubuntu:18.04',
-        &VM_ARCH => VM_ARCH_I386,
-        &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
-
-        &VMDEF_WITH_ZST => true,
-
-        &VM_DB =>
-        [
-            PG_VERSION_93,
-            PG_VERSION_94,
-            PG_VERSION_95,
-            PG_VERSION_96,
-        ],
-
-        &VM_DB_TEST =>
-        [
-            PG_VERSION_93,
-            PG_VERSION_94,
+            PG_VERSION_15,
         ],
     },
 
@@ -219,7 +216,6 @@ my $oyVm =
 
         &VM_DB =>
         [
-            PG_VERSION_93,
             PG_VERSION_94,
             PG_VERSION_95,
             PG_VERSION_96,
@@ -252,7 +248,6 @@ my $oyVm =
 
         &VM_DB =>
         [
-            PG_VERSION_93,
             PG_VERSION_94,
             PG_VERSION_95,
             PG_VERSION_96,
@@ -262,13 +257,15 @@ my $oyVm =
             PG_VERSION_13,
             PG_VERSION_14,
             PG_VERSION_15,
+            PG_VERSION_16,
         ],
 
         &VM_DB_TEST =>
         [
             PG_VERSION_95,
-            PG_VERSION_96,
+            PG_VERSION_10,
             PG_VERSION_15,
+            PG_VERSION_16,
         ],
     },
 };
@@ -342,7 +339,7 @@ sub vmValid
 push @EXPORT, qw(vmValid);
 
 ####################################################################################################################################
-# Which vm to use for the test matrix.  If one of the standard four, then use that, else use VM4.
+# Which vm to use for the test matrix. If one of the standard four, then use that, else use VM4.
 ####################################################################################################################################
 sub vmTest
 {

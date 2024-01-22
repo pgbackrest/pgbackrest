@@ -4,7 +4,7 @@ The certificates in this directory are used for documentation generation only an
 
 ## pgBackRest CA
 
-Generate a CA that will be used to sign documentation certificates.  It can be installed in the documentation containers to make certificates signed by it valid.
+Generate a CA that will be used to sign documentation certificates. It can be installed in the documentation containers to make certificates signed by it valid.
 
 ```
 cd [pgbackrest-root]/doc/resource/fake-cert

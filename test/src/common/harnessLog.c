@@ -4,10 +4,10 @@ Log Test Harness
 #include "build.auto.h"
 
 #include <fcntl.h>
-#include <unistd.h>
 #include <regex.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "build/common/regExp.h"
 #include "common/log.h"
@@ -95,7 +95,8 @@ hrnLogLevelFile(void)
     return logLevelFile;
 }
 
-void hrnLogLevelFileSet(unsigned int logLevel)
+void
+hrnLogLevelFileSet(unsigned int logLevel)
 {
     logLevelFile = logLevel;
 }
@@ -106,7 +107,8 @@ hrnLogLevelStdOut(void)
     return logLevelStdOut;
 }
 
-void hrnLogLevelStdOutSet(unsigned int logLevel)
+void
+hrnLogLevelStdOutSet(unsigned int logLevel)
 {
     logLevelStdOut = logLevel;
 }
@@ -117,7 +119,8 @@ hrnLogLevelStdErr(void)
     return logLevelStdErr;
 }
 
-void hrnLogLevelStdErrSet(unsigned int logLevel)
+void
+hrnLogLevelStdErrSet(unsigned int logLevel)
 {
     logLevelStdErr = logLevel;
 }
@@ -173,7 +176,8 @@ harnessLogLevelDefaultSet(LogLevel logLevel)
 }
 
 /**********************************************************************************************************************************/
-void hrnLogProcessIdSet(unsigned int processId)
+void
+hrnLogProcessIdSet(unsigned int processId)
 {
     logProcessId = processId;
 }
@@ -253,7 +257,7 @@ hrnLogReplaceAdd(const char *expression, const char *expressionSub, const char *
     {
         MEM_CONTEXT_BEGIN(memContextTop())
         {
-            MEM_CONTEXT_NEW_BEGIN(HarnessLog, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+            MEM_CONTEXT_NEW_BEGIN(HarnessLog, .childQty = MEM_CONTEXT_QTY_MAX)
             {
                 harnessLog.memContext = MEM_CONTEXT_NEW();
             }
@@ -349,7 +353,7 @@ hrnLogReplace(void)
                         match = regExpMatchStr(logReplace->regExpSub, match);
                     }
 
-                    // Build replacement string.  If versioned then append the version number.
+                    // Build replacement string. If versioned then append the version number.
                     String *replace = strCatFmt(strNew(), "[%s", strZ(logReplace->replacement));
 
                     if (logReplace->version)
@@ -386,19 +390,15 @@ hrnLogReplace(void)
     FUNCTION_HARNESS_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Compare log to a static string
-
-After the comparison the log is cleared so the next result can be compared.
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
 harnessLogResult(const char *expected)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(STRINGZ, expected);
-
-        FUNCTION_HARNESS_ASSERT(expected != NULL);
     FUNCTION_HARNESS_END();
+
+    ASSERT(expected != NULL);
 
     harnessLogLoad(logFile);
     hrnLogReplace();
@@ -408,6 +408,32 @@ harnessLogResult(const char *expected)
         THROW_FMT(
             AssertError, "\nACTUAL LOG:\n\n%s\n\nBUT DIFF FROM EXPECTED IS (- remove from expected, + add to expected):\n\n%s",
             harnessLogBuffer, hrnDiff(expected, harnessLogBuffer));
+    }
+
+    close(logFdFile);
+    logFdFile = harnessLogOpen(logFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+harnessLogResultEmptyOrContains(const char *const contains)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STRINGZ, contains);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(contains != NULL);
+
+    harnessLogLoad(logFile);
+    hrnLogReplace();
+
+    if (strlen(harnessLogBuffer) != 0 && strstr(harnessLogBuffer, contains) == NULL)
+    {
+        THROW_FMT(
+            AssertError, "\nLOG MUST CONTAIN:\n\n%s\n\nBUT WAS ACTUALLY:\n\n%s",
+            contains, harnessLogBuffer);
     }
 
     close(logFdFile);

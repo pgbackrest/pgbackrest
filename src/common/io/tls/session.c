@@ -34,20 +34,20 @@ typedef struct TlsSession
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-static String *
-tlsSessionToLog(const THIS_VOID)
+static void
+tlsSessionToLog(const THIS_VOID, StringStatic *const debugLog)
 {
     THIS(const TlsSession);
 
-    return strNewFmt(
-        "{ioSession: %s, timeout: %" PRIu64", shutdownOnClose: %s}", strZ(ioSessionToLog(this->ioSession)), this->timeout,
-        cvtBoolToConstZ(this->shutdownOnClose));
+    strStcCat(debugLog, "{ioSession: ");
+    ioSessionToLog(this->ioSession, debugLog);
+    strStcFmt(debugLog, ", timeout: %" PRIu64 ", shutdownOnClose: %s}", this->timeout, cvtBoolToConstZ(this->shutdownOnClose));
 }
 
 #define FUNCTION_LOG_TLS_SESSION_TYPE                                                                                              \
     TlsSession *
 #define FUNCTION_LOG_TLS_SESSION_FORMAT(value, buffer, bufferSize)                                                                 \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, tlsSessionToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, tlsSessionToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Free connection
@@ -350,7 +350,7 @@ static const IoSessionInterface tlsSessionInterface =
 };
 
 FN_EXTERN IoSession *
-tlsSessionNew(SSL *session, IoSession *ioSession, TimeMSec timeout)
+tlsSessionNew(SSL *const session, IoSession *const ioSession, const TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM_P(VOID, session);
@@ -361,25 +361,21 @@ tlsSessionNew(SSL *session, IoSession *ioSession, TimeMSec timeout)
     ASSERT(session != NULL);
     ASSERT(ioSession != NULL);
 
-    IoSession *this = NULL;
-
-    OBJ_NEW_BEGIN(TlsSession, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(TlsSession, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        TlsSession *driver = OBJ_NEW_ALLOC();
-
-        *driver = (TlsSession)
+        *this = (TlsSession)
         {
             .session = session,
-            .ioSession = ioSessionMove(ioSession, MEM_CONTEXT_NEW()),
+            .ioSession = ioSessionMove(ioSession, objMemContext(this)),
             .timeout = timeout,
             .shutdownOnClose = true,
         };
 
         // Ensure session is freed
-        memContextCallbackSet(objMemContext(driver), tlsSessionFreeResource, driver);
+        memContextCallbackSet(objMemContext(this), tlsSessionFreeResource, this);
 
         // Assign file descriptor to TLS session
-        cryptoError(SSL_set_fd(driver->session, ioSessionFd(driver->ioSession)) != 1, "unable to add fd to TLS session");
+        cryptoError(SSL_set_fd(this->session, ioSessionFd(this->ioSession)) != 1, "unable to add fd to TLS session");
 
         // Negotiate TLS session. The error queue must be cleared before this operation.
         int result = 0;
@@ -388,22 +384,19 @@ tlsSessionNew(SSL *session, IoSession *ioSession, TimeMSec timeout)
         {
             ERR_clear_error();
 
-            if (ioSessionRole(driver->ioSession) == ioSessionRoleClient)
-                result = tlsSessionResult(driver, SSL_connect(driver->session), false);
+            if (ioSessionRole(this->ioSession) == ioSessionRoleClient)
+                result = tlsSessionResult(this, SSL_connect(this->session), false);
             else
-                result = tlsSessionResult(driver, SSL_accept(driver->session), false);
+                result = tlsSessionResult(this, SSL_accept(this->session), false);
         }
 
         // Create read and write interfaces
-        driver->write = ioWriteNewP(driver, .write = tlsSessionWrite);
-        ioWriteOpen(driver->write);
-        driver->read = ioReadNewP(driver, .block = true, .eof = tlsSessionEof, .read = tlsSessionRead);
-        ioReadOpen(driver->read);
-
-        // Create session interface
-        this = ioSessionNew(driver, &tlsSessionInterface);
+        this->write = ioWriteNewP(this, .write = tlsSessionWrite);
+        ioWriteOpen(this->write);
+        this->read = ioReadNewP(this, .block = true, .eof = tlsSessionEof, .read = tlsSessionRead);
+        ioReadOpen(this->read);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_SESSION, this);
+    FUNCTION_LOG_RETURN(IO_SESSION, ioSessionNew(this, &tlsSessionInterface));
 }

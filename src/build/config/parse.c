@@ -42,6 +42,7 @@ STRING_EXTERN(OPT_TYPE_TIME_STR,                                    OPT_TYPE_TIM
 /***********************************************************************************************************************************
 Option constants
 ***********************************************************************************************************************************/
+STRING_EXTERN(OPT_BETA_STR,                                         OPT_BETA);
 STRING_EXTERN(OPT_STANZA_STR,                                       OPT_STANZA);
 
 /***********************************************************************************************************************************
@@ -190,20 +191,20 @@ bldCfgParseCommandList(Yaml *const yaml)
 
             MEM_CONTEXT_BEGIN(lstMemContext(result))
             {
-                lstAdd(
-                    result,
-                    &(BldCfgCommand)
-                    {
-                        .name = strDup(cmdRaw.name),
-                        .internal = cmdRaw.internal,
-                        .logFile = cmdRaw.logFile,
-                        .logLevelDefault = strDup(cmdRaw.logLevelDefault),
-                        .lockRequired = cmdRaw.lockRequired,
-                        .lockRemoteRequired = cmdRaw.lockRemoteRequired,
-                        .lockType = strDup(cmdRaw.lockType),
-                        .parameterAllowed = cmdRaw.parameterAllowed,
-                        .roleList = strLstDup(cmdRaw.roleList),
-                    });
+                const BldCfgCommand bldCfgCommand =
+                {
+                    .name = strDup(cmdRaw.name),
+                    .internal = cmdRaw.internal,
+                    .logFile = cmdRaw.logFile,
+                    .logLevelDefault = strDup(cmdRaw.logLevelDefault),
+                    .lockRequired = cmdRaw.lockRequired,
+                    .lockRemoteRequired = cmdRaw.lockRemoteRequired,
+                    .lockType = strDup(cmdRaw.lockType),
+                    .parameterAllowed = cmdRaw.parameterAllowed,
+                    .roleList = strLstDup(cmdRaw.roleList)
+                };
+
+                lstAdd(result, &bldCfgCommand);
             }
             MEM_CONTEXT_END();
 
@@ -287,7 +288,7 @@ typedef struct BldCfgOptionCommandRaw
     const Variant *required;
     const String *defaultValue;
     const BldCfgOptionDependRaw *depend;
-    const StringList *allowList;
+    const List *allowList;
     const StringList *roleList;
 } BldCfgOptionCommandRaw;
 
@@ -297,6 +298,7 @@ typedef struct BldCfgOptionRaw
     const String *type;
     const String *section;
     bool internal;
+    bool beta;
     const Variant *required;
     const Variant *negate;
     bool reset;
@@ -305,7 +307,7 @@ typedef struct BldCfgOptionRaw
     const String *group;
     bool secure;
     const BldCfgOptionDependRaw *depend;
-    const StringList *allowList;
+    const List *allowList;
     const String *allowRangeMin;
     const String *allowRangeMax;
     const List *cmdList;
@@ -314,10 +316,35 @@ typedef struct BldCfgOptionRaw
 } BldCfgOptionRaw;
 
 // Helper to parse allow list
-static const StringList *
+static List *
+bldCfgParseAllowListDup(const List *const allowList)
+{
+    List *result = NULL;
+
+    if (allowList != NULL)
+    {
+        result = lstNewP(sizeof(BldCfgOptionValue));
+
+        for (unsigned int valueIdx = 0; valueIdx < lstSize(allowList); valueIdx++)
+        {
+            const BldCfgOptionValue *const bldCfgOptionValue = lstGet(allowList, valueIdx);
+            const BldCfgOptionValue bldCfgOptionValueCopy =
+            {
+                .value = strDup(bldCfgOptionValue->value),
+                .condition = strDup(bldCfgOptionValue->condition),
+            };
+
+            lstAdd(result, &bldCfgOptionValueCopy);
+        }
+    }
+
+    return result;
+}
+
+static const List *
 bldCfgParseAllowList(Yaml *const yaml, const List *const optList)
 {
-    StringList *result = NULL;
+    List *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -330,14 +357,30 @@ bldCfgParseAllowList(Yaml *const yaml, const List *const optList)
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {
-                result = strLstNew();
+                result = lstNewP(sizeof(BldCfgOptionValue));
             }
             MEM_CONTEXT_PRIOR_END();
 
             do
             {
-                yamlEventCheck(allowListVal, yamlEventTypeScalar);
-                strLstAdd(result, allowListVal.value);
+                BldCfgOptionValue bldCfgOptionValue;
+
+                if (allowListVal.type == yamlEventTypeScalar)
+                {
+                    bldCfgOptionValue.value = allowListVal.value;
+                    bldCfgOptionValue.condition = NULL;
+                }
+                else
+                {
+                    yamlEventCheck(allowListVal, yamlEventTypeMapBegin);
+
+                    bldCfgOptionValue.value = yamlEventNextCheck(yaml, yamlEventTypeScalar).value;
+                    bldCfgOptionValue.condition = yamlEventNextCheck(yaml, yamlEventTypeScalar).value;
+
+                    yamlEventNextCheck(yaml, yamlEventTypeMapEnd);
+                }
+
+                lstAdd(result, &bldCfgOptionValue);
 
                 allowListVal = yamlEventNext(yaml);
             }
@@ -354,7 +397,7 @@ bldCfgParseAllowList(Yaml *const yaml, const List *const optList)
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {
-                result = strLstDup(optInherit->allowList);
+                result = bldCfgParseAllowListDup(optInherit->allowList);
             }
             MEM_CONTEXT_PRIOR_END();
         }
@@ -496,13 +539,12 @@ bldCfgParseDependReconcile(
             THROW_FMT(FormatError, "dependency on undefined option '%s'", strZ(optDependRaw->option));
 
         result = memNew(sizeof(BldCfgOptionDepend));
-
-        memcpy(
-            result,
-            &(BldCfgOptionDepend){
-                .option = optDepend, .defaultValue = strDup(optDependRaw->defaultValue),
-                .valueList = strLstDup(optDependRaw->valueList)},
-            sizeof(BldCfgOptionDepend));
+        *result = (BldCfgOptionDepend)
+        {
+            .option = optDepend,
+            .defaultValue = strDup(optDependRaw->defaultValue),
+            .valueList = strLstDup(optDependRaw->valueList)
+        };
     }
 
     return result;
@@ -582,15 +624,14 @@ bldCfgParseOptionDeprecateReconcile(const List *const optDeprecateRawList)
         for (unsigned int optDeprecateRawIdx = 0; optDeprecateRawIdx < lstSize(optDeprecateRawList); optDeprecateRawIdx++)
         {
             const BldCfgOptionDeprecateRaw *const optDeprecateRaw = lstGet(optDeprecateRawList, optDeprecateRawIdx);
+            const BldCfgOptionDeprecate bldCfgOptionDeprecate =
+            {
+                .name = strDup(optDeprecateRaw->name),
+                .indexed = optDeprecateRaw->indexed,
+                .unindexed = optDeprecateRaw->unindexed,
+            };
 
-            lstAdd(
-                result,
-                &(BldCfgOptionDeprecate)
-                {
-                    .name = strDup(optDeprecateRaw->name),
-                    .indexed = optDeprecateRaw->indexed,
-                    .unindexed = optDeprecateRaw->unindexed,
-                });
+            lstAdd(result, &bldCfgOptionDeprecate);
         }
     }
 
@@ -680,18 +721,18 @@ bldCfgParseOptionCommandList(Yaml *const yaml, const List *const optList)
 
                 MEM_CONTEXT_BEGIN(lstMemContext(optCmdRawList))
                 {
-                    lstAdd(
-                        optCmdRawList,
-                        &(BldCfgOptionCommandRaw)
-                        {
-                            .name = strDup(optCmdRaw.name),
-                            .internal = varDup(optCmdRaw.internal),
-                            .required = varDup(optCmdRaw.required),
-                            .defaultValue = strDup(optCmdRaw.defaultValue),
-                            .depend = optCmdRaw.depend,
-                            .allowList = strLstDup(optCmdRaw.allowList),
-                            .roleList = strLstDup(optCmdRaw.roleList),
-                        });
+                    const BldCfgOptionCommandRaw bldCfgOptionCommandRaw =
+                    {
+                        .name = strDup(optCmdRaw.name),
+                        .internal = varDup(optCmdRaw.internal),
+                        .required = varDup(optCmdRaw.required),
+                        .defaultValue = strDup(optCmdRaw.defaultValue),
+                        .depend = optCmdRaw.depend,
+                        .allowList = bldCfgParseAllowListDup(optCmdRaw.allowList),
+                        .roleList = strLstDup(optCmdRaw.roleList),
+                    };
+
+                    lstAdd(optCmdRawList, &bldCfgOptionCommandRaw);
                 }
                 MEM_CONTEXT_END();
 
@@ -817,6 +858,10 @@ bldCfgParseOptionList(Yaml *const yaml, const List *const cmdList, const List *c
                     {
                         optRaw.internal = yamlBoolParse(optDefVal);
                     }
+                    else if (strEqZ(optDef.value, "beta"))
+                    {
+                        optRaw.beta = yamlBoolParse(optDefVal);
+                    }
                     else if (strEqZ(optDef.value, "negate"))
                     {
                         optRaw.negate = varNewBool(yamlBoolParse(optDefVal));
@@ -900,26 +945,27 @@ bldCfgParseOptionList(Yaml *const yaml, const List *const cmdList, const List *c
 
             MEM_CONTEXT_BEGIN(lstMemContext(result))
             {
-                lstAdd(
-                    result,
-                    &(BldCfgOption)
-                    {
-                        .name = strDup(optRaw->name),
-                        .type = strDup(optRaw->type),
-                        .section = strDup(optRaw->section),
-                        .internal = optRaw->internal,
-                        .required = varBool(optRaw->required),
-                        .negate = varBool(optRaw->negate),
-                        .reset = optRaw->reset,
-                        .defaultValue = strDup(optRaw->defaultValue),
-                        .defaultLiteral = optRaw->defaultLiteral,
-                        .group = strDup(optRaw->group),
-                        .secure = optRaw->secure,
-                        .allowList = strLstDup(optRaw->allowList),
-                        .allowRangeMin = strDup(optRaw->allowRangeMin),
-                        .allowRangeMax = strDup(optRaw->allowRangeMax),
-                        .deprecateList = bldCfgParseOptionDeprecateReconcile(optRaw->deprecateList),
-                });
+                const BldCfgOption bldCfgOption =
+                {
+                    .name = strDup(optRaw->name),
+                    .type = strDup(optRaw->type),
+                    .section = strDup(optRaw->section),
+                    .internal = optRaw->internal,
+                    .beta = optRaw->beta,
+                    .required = varBool(optRaw->required),
+                    .negate = varBool(optRaw->negate),
+                    .reset = optRaw->reset,
+                    .defaultValue = strDup(optRaw->defaultValue),
+                    .defaultLiteral = optRaw->defaultLiteral,
+                    .group = strDup(optRaw->group),
+                    .secure = optRaw->secure,
+                    .allowList = bldCfgParseAllowListDup(optRaw->allowList),
+                    .allowRangeMin = strDup(optRaw->allowRangeMin),
+                    .allowRangeMax = strDup(optRaw->allowRangeMax),
+                    .deprecateList = bldCfgParseOptionDeprecateReconcile(optRaw->deprecateList),
+                };
+
+                lstAdd(result, &bldCfgOption);
             }
             MEM_CONTEXT_END();
         }
@@ -981,18 +1027,18 @@ bldCfgParseOptionList(Yaml *const yaml, const List *const cmdList, const List *c
 
                 MEM_CONTEXT_BEGIN(lstMemContext(cmdOptList))
                 {
-                    lstAdd(
-                        cmdOptList,
-                        &(BldCfgOptionCommand)
-                        {
-                            .name = strDup(optCmd.name),
-                            .internal = varBool(optCmd.internal),
-                            .required = varBool(optCmd.required),
-                            .defaultValue = strDup(optCmd.defaultValue),
-                            .depend = bldCfgParseDependReconcile(optRaw, optCmd.depend, result),
-                            .allowList = strLstDup(optCmd.allowList),
-                            .roleList = strLstDup(optCmd.roleList),
-                        });
+                    BldCfgOptionCommand bldCfgOptionCommand =
+                    {
+                        .name = strDup(optCmd.name),
+                        .internal = varBool(optCmd.internal),
+                        .required = varBool(optCmd.required),
+                        .defaultValue = strDup(optCmd.defaultValue),
+                        .depend = bldCfgParseDependReconcile(optRaw, optCmd.depend, result),
+                        .allowList = bldCfgParseAllowListDup(optCmd.allowList),
+                        .roleList = strLstDup(optCmd.roleList),
+                    };
+
+                    lstAdd(cmdOptList, &bldCfgOptionCommand);
                 }
                 MEM_CONTEXT_END();
             }

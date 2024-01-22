@@ -82,13 +82,8 @@ storageLstNew(const StorageInfoLevel level)
 
     ASSERT(level != storageInfoLevelDefault);
 
-    StorageList *this = NULL;
-
     OBJ_NEW_BEGIN(StorageList, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        // Create object
-        this = OBJ_NEW_ALLOC();
-
         *this = (StorageList)
         {
             .pub =
@@ -208,8 +203,8 @@ storageLstGet(StorageList *const this, const unsigned int idx)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-storageLstToLog(const StorageList *const this)
+FN_EXTERN void
+storageLstToLog(const StorageList *const this, StringStatic *const debugLog)
 {
-    return strNewFmt("{size: %u}", lstSize(this->pub.list));
+    strStcFmt(debugLog, "{size: %u}", lstSize(this->pub.list));
 }

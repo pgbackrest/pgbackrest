@@ -20,65 +20,91 @@ Code Builder
 int
 main(const int argListSize, const char *const argList[])
 {
-    // Check parameters
-    CHECK(ParamInvalidError, argListSize >= 2 && argListSize <= 4, "only one to three parameters allowed");
+    // Set stack trace and mem context error cleanup handlers
+    static const ErrorHandlerFunction errorHandlerList[] = {stackTraceClean, memContextClean};
+    errorHandlerSet(errorHandlerList, LENGTH_OF(errorHandlerList));
 
-    // Initialize logging
-    logInit(logLevelWarn, logLevelError, logLevelOff, false, 0, 1, false);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INT, argListSize);
+        FUNCTION_LOG_PARAM(CHARPY, argList);
+    FUNCTION_LOG_END();
 
-    // Get current working directory
-    char currentWorkDir[1024];
-    THROW_ON_SYS_ERROR(getcwd(currentWorkDir, sizeof(currentWorkDir)) == NULL, FormatError, "unable to get cwd");
+    int result = 0;
 
-    // Get repo path (cwd if it was not passed)
-    const String *pathRepo = strPath(STR(currentWorkDir));
-    String *pathBuild = strCat(strNew(), pathRepo);
-
-    if (argListSize >= 3)
+    TRY_BEGIN()
     {
-        const String *const pathArg = STR(argList[2]);
+        // Check parameters
+        CHECK(ParamInvalidError, argListSize >= 2 && argListSize <= 4, "only one to three parameters allowed");
 
-        if (strBeginsWith(pathArg, FSLASH_STR))
-            pathRepo = strPath(pathArg);
-        else
-            pathRepo = strPathAbsolute(pathArg, STR(currentWorkDir));
+        // Initialize logging
+        logInit(logLevelWarn, logLevelError, logLevelOff, false, 0, 1, false);
 
-        pathBuild = strDup(pathRepo);
+        // Get current working directory
+        char currentWorkDir[1024];
+        THROW_ON_SYS_ERROR(getcwd(currentWorkDir, sizeof(currentWorkDir)) == NULL, FormatError, "unable to get cwd");
+
+        // Get repo path (cwd if it was not passed)
+        const String *pathRepo = strPath(STR(currentWorkDir));
+        String *pathBuild = strCat(strNew(), pathRepo);
+
+        if (argListSize >= 3)
+        {
+            const String *const pathArg = STR(argList[2]);
+
+            if (strBeginsWith(pathArg, FSLASH_STR))
+                pathRepo = strPath(pathArg);
+            else
+                pathRepo = strPathAbsolute(pathArg, STR(currentWorkDir));
+
+            pathBuild = strDup(pathRepo);
+        }
+
+        // If the build path was specified
+        if (argListSize >= 4)
+        {
+            const String *const pathArg = STR(argList[3]);
+
+            if (strBeginsWith(pathArg, FSLASH_STR))
+                pathBuild = strDup(pathArg);
+            else
+                pathBuild = strPathAbsolute(pathArg, STR(currentWorkDir));
+        }
+
+        // Repo and build storage
+        const Storage *const storageRepo = storagePosixNewP(pathRepo);
+        const Storage *const storageBuild = storagePosixNewP(pathBuild, .write = true);
+
+        // Config
+        if (strEqZ(STRDEF("config"), argList[1]))
+            bldCfgRender(storageBuild, bldCfgParse(storageRepo), true);
+
+        // Error
+        if (strEqZ(STRDEF("error"), argList[1]))
+            bldErrRender(storageBuild, bldErrParse(storageRepo));
+
+        // Help
+        if (strEqZ(STRDEF("help"), argList[1]))
+        {
+            const BldCfg bldCfg = bldCfgParse(storageRepo);
+            bldHlpRender(storageBuild, bldCfg, bldHlpParse(storageRepo, bldCfg, false));
+        }
+
+        // PostgreSQL
+        if (strEqZ(STRDEF("postgres"), argList[1]))
+            bldPgRender(storageBuild, bldPgParse(storageRepo));
+
+        if (strEqZ(STRDEF("postgres-version"), argList[1]))
+            bldPgVersionRender(storageBuild, bldPgParse(storageRepo));
     }
-
-    // If the build path was specified
-    if (argListSize >= 4)
+    CATCH_FATAL()
     {
-        const String *const pathArg = STR(argList[3]);
+        LOG_FMT(
+            errorCode() == errorTypeCode(&AssertError) ? logLevelAssert : logLevelError, errorCode(), "%s\n%s", errorMessage(),
+            errorStackTrace());
 
-        if (strBeginsWith(pathArg, FSLASH_STR))
-            pathBuild = strDup(pathArg);
-        else
-            pathBuild = strPathAbsolute(pathArg, STR(currentWorkDir));
+        result = errorCode();
     }
+    TRY_END();
 
-    // Repo and build storage
-    const Storage *const storageRepo = storagePosixNewP(pathRepo);
-    const Storage *const storageBuild = storagePosixNewP(pathBuild, .write = true);
-
-    // Config
-    if (strEqZ(STRDEF("config"), argList[1]))
-        bldCfgRender(storageBuild, bldCfgParse(storageRepo), true);
-
-    // Error
-    if (strEqZ(STRDEF("error"), argList[1]))
-        bldErrRender(storageBuild, bldErrParse(storageRepo));
-
-    // Help
-    if (strEqZ(STRDEF("help"), argList[1]))
-    {
-        const BldCfg bldCfg = bldCfgParse(storageRepo);
-        bldHlpRender(storageBuild, bldCfg, bldHlpParse(storageRepo, bldCfg));
-    }
-
-    // PostgreSQL
-    if (strEqZ(STRDEF("postgres"), argList[1]))
-        bldPgRender(storageBuild, bldPgParse(storageRepo));
-
-    return 0;
+    FUNCTION_LOG_RETURN(INT, result);
 }

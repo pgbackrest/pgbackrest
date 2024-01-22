@@ -11,8 +11,8 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct HttpUrl HttpUrl;
 
-#include "common/type/param.h"
 #include "common/type/object.h"
+#include "common/type/param.h"
 #include "common/type/string.h"
 
 /***********************************************************************************************************************************
@@ -100,12 +100,12 @@ Macros for function logging
 ***********************************************************************************************************************************/
 #ifdef DEBUG
 
-FN_EXTERN String *httpUrlToLog(const HttpUrl *this);
+FN_EXTERN void httpUrlToLog(const HttpUrl *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_HTTP_URL_TYPE                                                                                               \
     HttpUrl *
 #define FUNCTION_LOG_HTTP_URL_FORMAT(value, buffer, bufferSize)                                                                  \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, httpUrlToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, httpUrlToLog, buffer, bufferSize)
 
 #endif // DEBUG
 

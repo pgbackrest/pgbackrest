@@ -21,7 +21,6 @@ Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct IoClientPub
 {
-    MemContext *memContext;                                         // Mem context
     void *driver;                                                   // Driver object
     const IoClientInterface *interface;                             // Driver interface
 } IoClientPub;
@@ -40,7 +39,7 @@ Functions
 FN_INLINE_ALWAYS IoClient *
 ioClientMove(IoClient *const this, MemContext *const parentNew)
 {
-    return objMoveContext(this, parentNew);
+    return objMove(this, parentNew);
 }
 
 // Open session
@@ -56,17 +55,17 @@ Destructor
 FN_INLINE_ALWAYS void
 ioClientFree(IoClient *const this)
 {
-    objFreeContext(this);
+    objFree(this);
 }
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *ioClientToLog(const IoClient *this);
+FN_EXTERN void ioClientToLog(const IoClient *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_IO_CLIENT_TYPE                                                                                                \
     IoClient *
 #define FUNCTION_LOG_IO_CLIENT_FORMAT(value, buffer, bufferSize)                                                                   \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, ioClientToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, ioClientToLog, buffer, bufferSize)
 
 #endif

@@ -22,27 +22,27 @@ Defines for various Postgres paths and files
 #define PG_FILE_PGFILENODEMAP                                       "pg_filenode.map"
 #define PG_FILE_PGINTERNALINIT                                      "pg_internal.init"
 #define PG_FILE_PGVERSION                                           "PG_VERSION"
-    STRING_DECLARE(PG_FILE_PGVERSION_STR);
+STRING_DECLARE(PG_FILE_PGVERSION_STR);
 #define PG_FILE_POSTGRESQLAUTOCONF                                  "postgresql.auto.conf"
-    STRING_DECLARE(PG_FILE_POSTGRESQLAUTOCONF_STR);
+STRING_DECLARE(PG_FILE_POSTGRESQLAUTOCONF_STR);
 #define PG_FILE_POSTGRESQLAUTOCONFTMP                               "postgresql.auto.conf.tmp"
 #define PG_FILE_POSTMTROPTS                                         "postmas""ter.opts"
 #define PG_FILE_POSTMTRPID                                          "postmas""ter.pid"
-    STRING_DECLARE(PG_FILE_POSTMTRPID_STR);
+STRING_DECLARE(PG_FILE_POSTMTRPID_STR);
 #define PG_FILE_RECOVERYCONF                                        "recovery.conf"
-    STRING_DECLARE(PG_FILE_RECOVERYCONF_STR);
+STRING_DECLARE(PG_FILE_RECOVERYCONF_STR);
 #define PG_FILE_RECOVERYDONE                                        "recovery.done"
-    STRING_DECLARE(PG_FILE_RECOVERYDONE_STR);
+STRING_DECLARE(PG_FILE_RECOVERYDONE_STR);
 #define PG_FILE_RECOVERYSIGNAL                                      "recovery.signal"
-    STRING_DECLARE(PG_FILE_RECOVERYSIGNAL_STR);
+STRING_DECLARE(PG_FILE_RECOVERYSIGNAL_STR);
 #define PG_FILE_STANDBYSIGNAL                                       "standby.signal"
-    STRING_DECLARE(PG_FILE_STANDBYSIGNAL_STR);
+STRING_DECLARE(PG_FILE_STANDBYSIGNAL_STR);
 #define PG_FILE_TABLESPACEMAP                                       "tablespace_map"
 
 #define PG_PATH_ARCHIVE_STATUS                                      "archive_status"
 #define PG_PATH_BASE                                                "base"
 #define PG_PATH_GLOBAL                                              "global"
-    STRING_DECLARE(PG_PATH_GLOBAL_STR);
+STRING_DECLARE(PG_PATH_GLOBAL_STR);
 #define PG_PATH_PGMULTIXACT                                         "pg_multixact"
 #define PG_PATH_PGDYNSHMEM                                          "pg_dynshmem"
 #define PG_PATH_PGNOTIFY                                            "pg_notify"
@@ -56,16 +56,22 @@ Defines for various Postgres paths and files
 #define PG_PREFIX_PGSQLTMP                                          "pgsql_tmp"
 
 #define PG_NAME_WAL                                                 "wal"
-    STRING_DECLARE(PG_NAME_WAL_STR);
+STRING_DECLARE(PG_NAME_WAL_STR);
 #define PG_NAME_XLOG                                                "xlog"
-    STRING_DECLARE(PG_NAME_XLOG_STR);
+STRING_DECLARE(PG_NAME_XLOG_STR);
 
 /***********************************************************************************************************************************
-Define default page size
-
-Page size can only be changed at compile time and is not known to be well-tested, so only the default page size is supported.
+Define allowed page sizes
 ***********************************************************************************************************************************/
-#define PG_PAGE_SIZE_DEFAULT                                        ((unsigned int)(8 * 1024))
+typedef enum
+{
+    pgPageSize1 = 1 * 1024,
+    pgPageSize2 = 2 * 1024,
+    pgPageSize4 = 4 * 1024,
+    pgPageSize8 = 8 * 1024,
+    pgPageSize16 = 16 * 1024,
+    pgPageSize32 = 32 * 1024,
+} PgPageSize;
 
 /***********************************************************************************************************************************
 Define default segment size and pages per segment
@@ -73,7 +79,6 @@ Define default segment size and pages per segment
 Segment size can only be changed at compile time and is not known to be well-tested, so only the default segment size is supported.
 ***********************************************************************************************************************************/
 #define PG_SEGMENT_SIZE_DEFAULT                                     ((unsigned int)(1 * 1024 * 1024 * 1024))
-#define PG_SEGMENT_PAGE_DEFAULT                                     (PG_SEGMENT_SIZE_DEFAULT / PG_PAGE_SIZE_DEFAULT)
 
 /***********************************************************************************************************************************
 WAL header size. It doesn't seem worth tracking the exact size of the WAL header across versions of PostgreSQL so just set it to
@@ -101,7 +106,7 @@ typedef struct PgControl
     uint64_t checkpoint;                                            // Last checkpoint LSN
     uint32_t timeline;                                              // Current timeline
 
-    unsigned int pageSize;
+    PgPageSize pageSize;
     unsigned int walSegmentSize;
 
     bool pageChecksum;
@@ -130,7 +135,8 @@ FN_EXTERN bool pgDbIsSystem(const String *name);
 FN_EXTERN bool pgDbIsSystemId(unsigned int id);
 
 // Get info from pg_control
-FN_EXTERN PgControl pgControlFromFile(const Storage *storage);
+FN_EXTERN Buffer *pgControlBufferFromFile(const Storage *storage, const String *pgVersionForce);
+FN_EXTERN PgControl pgControlFromFile(const Storage *storage, const String *pgVersionForce);
 
 // Get the control version for a PostgreSQL version
 FN_EXTERN uint32_t pgControlVersion(unsigned int pgVersion);
@@ -140,8 +146,8 @@ FN_EXTERN unsigned int pgVersionFromStr(const String *version);
 FN_EXTERN String *pgVersionToStr(unsigned int version);
 
 // Get info from WAL header
-FN_EXTERN PgWal pgWalFromFile(const String *walFile, const Storage *storage);
-FN_EXTERN PgWal pgWalFromBuffer(const Buffer *walBuffer);
+FN_EXTERN PgWal pgWalFromFile(const String *walFile, const Storage *storage, const String *pgVersionForce);
+FN_EXTERN PgWal pgWalFromBuffer(const Buffer *walBuffer, const String *pgVersionForce);
 
 // Get the tablespace identifier used to distinguish versions in a tablespace directory, e.g. PG_15_202209061
 FN_EXTERN String *pgTablespaceId(unsigned int pgVersion, unsigned int pgCatalogVersion);
@@ -164,7 +170,13 @@ FN_EXTERN StringList *pgLsnRangeToWalSegmentList(
 FN_EXTERN const String *pgLsnName(unsigned int pgVersion);
 
 // Calculate the checksum for a page. Page cannot be const because the page header is temporarily modified during processing.
-FN_EXTERN uint16_t pgPageChecksum(unsigned char *page, uint32_t blockNo);
+FN_EXTERN uint16_t pgPageChecksum(unsigned char *page, uint32_t blockNo, PgPageSize pageSize);
+
+// Returns true if page size is valid, false otherwise
+FN_EXTERN bool pgPageSizeValid(PgPageSize pageSize);
+
+// Throws an error if page size is not valid
+FN_EXTERN void pgPageSizeCheck(PgPageSize pageSize);
 
 FN_EXTERN const String *pgWalName(unsigned int pgVersion);
 
@@ -177,17 +189,17 @@ FN_EXTERN const String *pgXactPath(unsigned int pgVersion);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *pgControlToLog(const PgControl *pgControl);
-FN_EXTERN String *pgWalToLog(const PgWal *pgWal);
+FN_EXTERN void pgControlToLog(const PgControl *pgControl, StringStatic *debugLog);
+FN_EXTERN void pgWalToLog(const PgWal *pgWal, StringStatic *debugLog);
 
 #define FUNCTION_LOG_PG_CONTROL_TYPE                                                                                               \
     PgControl
 #define FUNCTION_LOG_PG_CONTROL_FORMAT(value, buffer, bufferSize)                                                                  \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(&value, pgControlToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(&value, pgControlToLog, buffer, bufferSize)
 
 #define FUNCTION_LOG_PG_WAL_TYPE                                                                                                   \
     PgWal
 #define FUNCTION_LOG_PG_WAL_FORMAT(value, buffer, bufferSize)                                                                      \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(&value, pgWalToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(&value, pgWalToLog, buffer, bufferSize)
 
 #endif

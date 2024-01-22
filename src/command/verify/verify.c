@@ -42,12 +42,12 @@ Data Types and Structures
 #define FUNCTION_LOG_VERIFY_ARCHIVE_RESULT_TYPE                                                                                    \
     VerifyArchiveResult
 #define FUNCTION_LOG_VERIFY_ARCHIVE_RESULT_FORMAT(value, buffer, bufferSize)                                                       \
-    objToLog(&value, "VerifyArchiveResult", buffer, bufferSize)
+    objNameToLog(&value, "VerifyArchiveResult", buffer, bufferSize)
 
 #define FUNCTION_LOG_VERIFY_BACKUP_RESULT_TYPE                                                                                     \
     VerifyBackupResult
 #define FUNCTION_LOG_VERIFY_BACKUP_RESULT_FORMAT(value, buffer, bufferSize)                                                        \
-    objToLog(&value, "VerifyBackupResult", buffer, bufferSize)
+    objNameToLog(&value, "VerifyBackupResult", buffer, bufferSize)
 
 // Structure for verifying repository info files
 typedef struct VerifyInfoFile
@@ -184,7 +184,7 @@ verifyFileLoad(const String *pathFileName, const String *cipherPass)
 
     // If the file is compressed, add a decompression filter
     if (compressTypeFromName(pathFileName) != compressTypeNone)
-        ioFilterGroupAdd(ioReadFilterGroup(read), decompressFilter(compressTypeFromName(pathFileName)));
+        ioFilterGroupAdd(ioReadFilterGroup(read), decompressFilterP(compressTypeFromName(pathFileName)));
 
     FUNCTION_TEST_RETURN(STORAGE_READ, result);
 }
@@ -200,6 +200,8 @@ verifyInfoFile(const String *pathFileName, bool keepFile, const String *cipherPa
         FUNCTION_LOG_PARAM(BOOL, keepFile);                         // Should the file be kept in memory?
         FUNCTION_TEST_PARAM(STRING, cipherPass);                    // Password to open file if encrypted
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_STRUCT();
 
     ASSERT(pathFileName != NULL);
 
@@ -424,7 +426,7 @@ verifyManifestFile(
                     result = verifyManifestInfoCopy.manifest;
                 }
                 else if (verifyManifestInfo.errorCode == errorTypeCode(&FileMissingError) &&
-                    verifyManifestInfoCopy.errorCode == errorTypeCode(&FileMissingError))
+                         verifyManifestInfoCopy.errorCode == errorTypeCode(&FileMissingError))
                 {
                     backupResult->status = backupMissingManifest;
 
@@ -463,7 +465,7 @@ verifyManifestFile(
             {
                 LOG_INFO_FMT(
                     "'%s' may not be recoverable - PG data (id %u, version %s, system-id %" PRIu64 ") is not in the backup.info"
-                        " history, skipping",
+                    " history, skipping",
                     strZ(backupResult->backupLabel), manData->pgId, strZ(pgVersionToStr(manData->pgVersion)), manData->pgSystemId);
 
                 manifestFree(result);
@@ -542,6 +544,8 @@ verifyCreateArchiveIdRange(VerifyArchiveResult *archiveIdResult, StringList *wal
         FUNCTION_TEST_PARAM(STRING_LIST, walFileList);                  // Sorted (ascending) list of WAL files in a timeline
         FUNCTION_TEST_PARAM_P(UINT, jobErrorTotal);                     // Pointer to the overall job error total
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     ASSERT(archiveIdResult != NULL);
     ASSERT(walFileList != NULL);
@@ -719,7 +723,8 @@ verifyArchive(VerifyJobData *const jobData)
                                         strZ(strLstGet(jobData->walFileList, 0))),
                                     jobData->walCipherPass);
 
-                                PgWal walInfo = pgWalFromBuffer(storageGetP(walRead, .exactSize = PG_WAL_HEADER_SIZE));
+                                PgWal walInfo = pgWalFromBuffer(
+                                    storageGetP(walRead, .exactSize = PG_WAL_HEADER_SIZE), cfgOptionStrNull(cfgOptPgVersionForce));
 
                                 archiveResult->pgWalInfo.size = walInfo.size;
                                 archiveResult->pgWalInfo.version = walInfo.version;
@@ -972,27 +977,21 @@ verifyBackup(VerifyJobData *const jobData)
                             // Set up the job
                             ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE);
                             PackWrite *const param = protocolCommandParam(command);
+                            const String *const filePathName = backupFileRepoPathP(
+                                fileBackupLabel, .manifestName = fileData.name, .bundleId = fileData.bundleId,
+                                .compressType = manifestData(jobData->manifest)->backupOptionCompressType,
+                                .blockIncr = fileData.blockIncrMapSize != 0);
 
-                            const String *const filePathName = strNewFmt(
-                                    STORAGE_REPO_BACKUP "/%s/%s%s", strZ(fileBackupLabel), strZ(fileData.name),
-                                    strZ(compressExtStr((manifestData(jobData->manifest))->backupOptionCompressType)));
+                            pckWriteStrP(param, filePathName);
 
                             if (fileData.bundleId != 0)
                             {
-                                pckWriteStrP(
-                                    param,
-                                    strNewFmt(
-                                        STORAGE_REPO_BACKUP "/%s/" MANIFEST_PATH_BUNDLE "/%" PRIu64, strZ(fileBackupLabel),
-                                        fileData.bundleId));
                                 pckWriteBoolP(param, true);
                                 pckWriteU64P(param, fileData.bundleOffset);
                                 pckWriteU64P(param, fileData.sizeRepo);
                             }
                             else
-                            {
-                                pckWriteStrP(param, filePathName);
                                 pckWriteBoolP(param, false);
-                            }
 
                             // Use the repo checksum when present
                             if (fileData.checksumRepoSha1 != NULL)
@@ -1322,6 +1321,8 @@ verifyRender(const List *const archiveIdResultList, const List *const backupResu
         FUNCTION_TEST_PARAM(BOOL, verboseText);                     // Is verbose output requested?
     FUNCTION_TEST_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     ASSERT(archiveIdResultList != NULL);
     ASSERT(backupResultList != NULL);
 
@@ -1335,6 +1336,7 @@ verifyRender(const List *const archiveIdResultList, const List *const backupResu
         for (unsigned int archiveIdx = 0; archiveIdx < lstSize(archiveIdResultList); archiveIdx++)
         {
             VerifyArchiveResult *archiveIdResult = lstGet(archiveIdResultList, archiveIdx);
+
             if (verboseText || archiveIdResult->totalWalFile - archiveIdResult->totalValidWal != 0)
             {
                 strCatFmt(
@@ -1625,8 +1627,8 @@ verifyProcess(const bool verboseText)
                                         // Add invalid file to the WAL range
                                         verifyAddInvalidWalFile(
                                             archiveIdResult->walRangeList, verifyResult, filePathName,
-                                            strSubN(strLstGet(filePathLst, strLstSize(filePathLst) - 1), 0,
-                                            WAL_SEGMENT_NAME_SIZE));
+                                            strSubN(
+                                                strLstGet(filePathLst, strLstSize(filePathLst) - 1), 0, WAL_SEGMENT_NAME_SIZE));
                                     }
                                 }
                                 else

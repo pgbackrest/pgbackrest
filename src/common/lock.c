@@ -35,6 +35,8 @@ Constants
 #define LOCK_KEY_EXEC_ID                                            STRID6("execId", 0x12e0c56051)
 #define LOCK_KEY_PERCENT_COMPLETE                                   STRID6("pctCplt", 0x14310a140d01)
 #define LOCK_KEY_PROCESS_ID                                         STRID5("pid", 0x11300)
+#define LOCK_KEY_SIZE_COMPLETE                                      STRID6("szCplt", 0x50c4286931)
+#define LOCK_KEY_SIZE                                               STRID5("sz", 0x3530)
 
 /***********************************************************************************************************************************
 Lock type names
@@ -51,18 +53,48 @@ Mem context and local variables
 static struct LockLocal
 {
     MemContext *memContext;                                         // Mem context for locks
-    LockType held;                                                  // Current lock type held
+    const String *path;                                             // Lock path
     const String *execId;                                           // Process exec id
+    const String *stanza;                                           // Stanza
+    LockType type;                                                  // Lock type
+    bool held;                                                      // Is the lock being held?
 
     struct
     {
         String *name;                                               // Name of lock file
         int fd;                                                     // File descriptor for lock file
     } file[lockTypeAll];
-} lockLocal =
+} lockLocal;
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+lockInit(const String *const path, const String *const execId, const String *const stanza, const LockType type)
 {
-    .held = lockTypeNone,
-};
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(STRING, execId);
+        FUNCTION_LOG_PARAM(ENUM, type);
+    FUNCTION_LOG_END();
+
+    ASSERT(lockLocal.memContext == NULL);
+
+    // Allocate a mem context to hold lock info
+    MEM_CONTEXT_BEGIN(memContextTop())
+    {
+        MEM_CONTEXT_NEW_BEGIN(Lock, .childQty = MEM_CONTEXT_QTY_MAX)
+        {
+            lockLocal.memContext = MEM_CONTEXT_NEW();
+            lockLocal.path = strDup(path);
+            lockLocal.execId = strDup(execId);
+            lockLocal.stanza = strDup(stanza);
+            lockLocal.type = type;
+        }
+        MEM_CONTEXT_NEW_END();
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
@@ -93,6 +125,8 @@ lockReadFileData(const String *const lockFile, const int fd)
         FUNCTION_LOG_PARAM(INT, fd);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_STRUCT();
+
     ASSERT(lockFile != NULL);
     ASSERT(fd != -1);
 
@@ -120,6 +154,12 @@ lockReadFileData(const String *const lockFile, const int fd)
                     result.percentComplete = varNewUInt(jsonReadUInt(json));
 
                 result.processId = jsonReadInt(jsonReadKeyRequireStrId(json, LOCK_KEY_PROCESS_ID));
+
+                if (jsonReadKeyExpectStrId(json, LOCK_KEY_SIZE))
+                    result.size = varNewUInt64(jsonReadUInt64(json));
+
+                if (jsonReadKeyExpectStrId(json, LOCK_KEY_SIZE_COMPLETE))
+                    result.sizeComplete = varNewUInt64(jsonReadUInt64(json));
             }
             MEM_CONTEXT_PRIOR_END();
         }
@@ -142,6 +182,8 @@ lockReadFile(const String *const lockFile, const LockReadFileParam param)
         FUNCTION_LOG_PARAM(STRING, lockFile);
         FUNCTION_LOG_PARAM(BOOL, param.remove);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_STRUCT();
 
     ASSERT(lockFile != NULL);
 
@@ -204,6 +246,8 @@ lockRead(const String *const lockPath, const String *const stanza, const LockTyp
         FUNCTION_LOG_PARAM(ENUM, lockType);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_STRUCT();
+
     LockReadResult result = {0};
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -230,6 +274,8 @@ lockWriteData(const LockType lockType, const LockWriteDataParam param)
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(ENUM, lockType);
         FUNCTION_LOG_PARAM(VARIANT, param.percentComplete);
+        FUNCTION_LOG_PARAM(VARIANT, param.sizeComplete);
+        FUNCTION_LOG_PARAM(VARIANT, param.size);
     FUNCTION_LOG_END();
 
     ASSERT(lockType < lockTypeAll);
@@ -249,9 +295,15 @@ lockWriteData(const LockType lockType, const LockWriteDataParam param)
 
         jsonWriteInt(jsonWriteKeyStrId(json, LOCK_KEY_PROCESS_ID), getpid());
 
+        if (param.size != NULL)
+            jsonWriteUInt64(jsonWriteKeyStrId(json, LOCK_KEY_SIZE), varUInt64(param.size));
+
+        if (param.sizeComplete != NULL)
+            jsonWriteUInt64(jsonWriteKeyStrId(json, LOCK_KEY_SIZE_COMPLETE), varUInt64(param.sizeComplete));
+
         jsonWriteObjectEnd(json);
 
-        if (lockType == lockTypeBackup && lockLocal.held != lockTypeNone)
+        if (lockType == lockTypeBackup && lockLocal.held)
         {
             // Seek to beginning of backup lock file
             THROW_ON_SYS_ERROR_FMT(
@@ -385,69 +437,43 @@ lockAcquireFile(const String *const lockFile, const TimeMSec lockTimeout, const 
 }
 
 FN_EXTERN bool
-lockAcquire(
-    const String *lockPath, const String *stanza, const String *execId, LockType lockType, TimeMSec lockTimeout, bool failOnNoLock)
+lockAcquire(const LockAcquireParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STRING, lockPath);
-        FUNCTION_LOG_PARAM(STRING, stanza);
-        FUNCTION_LOG_PARAM(STRING, execId);
-        FUNCTION_LOG_PARAM(ENUM, lockType);
-        FUNCTION_LOG_PARAM(TIMEMSEC, lockTimeout);
-        FUNCTION_LOG_PARAM(BOOL, failOnNoLock);
+        FUNCTION_LOG_PARAM(TIMEMSEC, param.timeout);
+        FUNCTION_LOG_PARAM(BOOL, param.returnOnNoLock);
     FUNCTION_LOG_END();
 
-    ASSERT(lockPath != NULL);
-    ASSERT(stanza != NULL);
-    ASSERT(execId != NULL);
+    ASSERT(lockLocal.memContext != NULL);
 
     bool result = true;
 
-    // Don't allow failures when locking more than one file.  This makes cleanup difficult and there are no known use cases.
-    ASSERT(failOnNoLock || lockType != lockTypeAll);
+    // Don't allow failures when locking more than one file. This makes cleanup difficult and there are no known use cases.
+    ASSERT(!param.returnOnNoLock || lockLocal.type != lockTypeAll);
 
     // Don't allow another lock if one is already held
-    if (lockLocal.held != lockTypeNone)
+    if (lockLocal.held)
         THROW(AssertError, "lock is already held by this process");
 
-    // Allocate a mem context to hold lock filenames if one does not already exist
-    if (lockLocal.memContext == NULL)
-    {
-        MEM_CONTEXT_BEGIN(memContextTop())
-        {
-            MEM_CONTEXT_NEW_BEGIN(Lock, .childQty = MEM_CONTEXT_QTY_MAX)
-            {
-                lockLocal.memContext = MEM_CONTEXT_NEW();
-                lockLocal.execId = strDup(execId);
-            }
-            MEM_CONTEXT_NEW_END();
-        }
-        MEM_CONTEXT_END();
-    }
-
-    // Exec id should never change
-    ASSERT(strEq(execId, lockLocal.execId));
-
     // Lock files
-    LockType lockMin = lockType == lockTypeAll ? lockTypeArchive : lockType;
-    LockType lockMax = lockType == lockTypeAll ? (lockTypeAll - 1) : lockType;
+    LockType lockMin = lockLocal.type == lockTypeAll ? lockTypeArchive : lockLocal.type;
+    LockType lockMax = lockLocal.type == lockTypeAll ? (lockTypeAll - 1) : lockLocal.type;
 
     for (LockType lockIdx = lockMin; lockIdx <= lockMax; lockIdx++)
     {
         MEM_CONTEXT_BEGIN(lockLocal.memContext)
         {
-            lockLocal.file[lockIdx].name = strNewFmt("%s/%s", strZ(lockPath), strZ(lockFileName(stanza, lockIdx)));
+            strFree(lockLocal.file[lockIdx].name);
+            lockLocal.file[lockIdx].name = strNewFmt("%s/%s", strZ(lockLocal.path), strZ(lockFileName(lockLocal.stanza, lockIdx)));
         }
         MEM_CONTEXT_END();
 
-        lockLocal.file[lockIdx].fd = lockAcquireFile(lockLocal.file[lockIdx].name, lockTimeout, failOnNoLock);
+        lockLocal.file[lockIdx].fd = lockAcquireFile(lockLocal.file[lockIdx].name, param.timeout, !param.returnOnNoLock);
 
         if (lockLocal.file[lockIdx].fd == -1)
         {
-            // Free the lock context and reset lock data
-            memContextFree(lockLocal.memContext);
-            lockLocal = (struct LockLocal){.held = lockTypeNone};
-
+            // Free the lock
+            lockLocal.held = false;
             result = false;
             break;
         }
@@ -457,7 +483,7 @@ lockAcquire(
     }
 
     if (result)
-        lockLocal.held = lockType;
+        lockLocal.held = true;
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }
@@ -490,13 +516,13 @@ lockReleaseFile(const int lockFd, const String *const lockFile)
 FN_EXTERN bool
 lockRelease(bool failOnNoLock)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(BOOL, failOnNoLock);
     FUNCTION_LOG_END();
 
     bool result = false;
 
-    if (lockLocal.held == lockTypeNone)
+    if (!lockLocal.held)
     {
         if (failOnNoLock)
             THROW(AssertError, "no lock is held by this process");
@@ -504,8 +530,8 @@ lockRelease(bool failOnNoLock)
     else
     {
         // Release locks
-        LockType lockMin = lockLocal.held == lockTypeAll ? lockTypeArchive : lockLocal.held;
-        LockType lockMax = lockLocal.held == lockTypeAll ? (lockTypeAll - 1) : lockLocal.held;
+        LockType lockMin = lockLocal.type == lockTypeAll ? lockTypeArchive : lockLocal.type;
+        LockType lockMax = lockLocal.type == lockTypeAll ? (lockTypeAll - 1) : lockLocal.type;
 
         for (LockType lockIdx = lockMin; lockIdx <= lockMax; lockIdx++)
         {
@@ -513,10 +539,8 @@ lockRelease(bool failOnNoLock)
                 lockReleaseFile(lockLocal.file[lockIdx].fd, lockLocal.file[lockIdx].name);
         }
 
-        // Free the lock context and reset lock data
-        memContextFree(lockLocal.memContext);
-        lockLocal = (struct LockLocal){.held = lockTypeNone};
-
+        // Free the lock context
+        lockLocal.held = false;
         result = true;
     }
 

@@ -33,13 +33,8 @@ lstNew(size_t itemSize, ListParam param)
         FUNCTION_TEST_PARAM(FUNCTIONP, param.comparator);
     FUNCTION_TEST_END();
 
-    List *this = NULL;
-
     OBJ_NEW_BEGIN(List, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        // Create object
-        this = OBJ_NEW_ALLOC();
-
         *this = (List)
         {
             .itemSize = itemSize,
@@ -90,6 +85,27 @@ lstComparatorStr(const void *item1, const void *item2)
     ASSERT(item2 != NULL);
 
     FUNCTION_TEST_RETURN(INT, strCmp(*(String **)item1, *(String **)item2));
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN int
+lstComparatorUInt(const void *const item1, const void *const item2)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, item1);
+        FUNCTION_TEST_PARAM_P(VOID, item2);
+    FUNCTION_TEST_END();
+
+    ASSERT(item1 != NULL);
+    ASSERT(item2 != NULL);
+
+    if (*(unsigned int *)item1 < *(unsigned int *)item2)
+        FUNCTION_TEST_RETURN(INT, -1);
+
+    if (*(unsigned int *)item1 > *(unsigned int *)item2)
+        FUNCTION_TEST_RETURN(INT, 1);
+
+    FUNCTION_TEST_RETURN(INT, 0);
 }
 
 /**********************************************************************************************************************************/
@@ -218,7 +234,7 @@ lstFindDefault(const List *this, const void *item, void *itemDefault)
     ASSERT(this != NULL);
     ASSERT(item != NULL);
 
-    void *result= lstFind(this, item);
+    void *result = lstFind(this, item);
 
     FUNCTION_TEST_RETURN_P(VOID, result == NULL ? itemDefault : result);
 }
@@ -236,9 +252,9 @@ lstIdx(const List *this, const void *item)
     ASSERT(item != NULL);
 
     // Item pointers should always be aligned with the beginning of an item in the list
-    ASSERT((size_t)((unsigned char * const)item - this->list) % this->itemSize == 0);
+    ASSERT((size_t)((unsigned char *const)item - this->list) % this->itemSize == 0);
 
-    size_t result = (size_t)((unsigned char * const)item - this->list) / this->itemSize;
+    size_t result = (size_t)((unsigned char *const)item - this->list) / this->itemSize;
 
     // Item pointers should always be in range
     ASSERT(result < lstSize(this));
@@ -430,8 +446,8 @@ lstComparatorSet(List *this, ListComparator *comparator)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-lstToLog(const List *this)
+FN_EXTERN void
+lstToLog(const List *const this, StringStatic *const debugLog)
 {
-    return strNewFmt("{size: %u}", lstSize(this));
+    strStcFmt(debugLog, "{size: %u}", lstSize(this));
 }

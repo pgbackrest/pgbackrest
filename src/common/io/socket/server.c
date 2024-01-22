@@ -4,16 +4,17 @@ Socket Server
 #include "build.auto.h"
 
 #include <netinet/in.h>
-#include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include "common/debug.h"
-#include "common/log.h"
 #include "common/io/server.h"
-#include "common/io/socket/server.h"
+#include "common/io/socket/address.h"
 #include "common/io/socket/common.h"
+#include "common/io/socket/server.h"
 #include "common/io/socket/session.h"
+#include "common/log.h"
 #include "common/memContext.h"
 #include "common/stat.h"
 #include "common/type/object.h"
@@ -40,18 +41,18 @@ typedef struct SocketServer
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-static String *
-sckServerToLog(const THIS_VOID)
+static void
+sckServerToLog(const THIS_VOID, StringStatic *const debugLog)
 {
     THIS(const SocketServer);
 
-    return strNewFmt("{address: %s, port: %u, timeout: %" PRIu64 "}", strZ(this->address), this->port, this->timeout);
+    strStcFmt(debugLog, "{address: %s, port: %u, timeout: %" PRIu64 "}", strZ(this->address), this->port, this->timeout);
 }
 
 #define FUNCTION_LOG_SOCKET_SERVER_TYPE                                                                                            \
     SocketServer *
 #define FUNCTION_LOG_SOCKET_SERVER_FORMAT(value, buffer, bufferSize)                                                               \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, sckServerToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, sckServerToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Free connection
@@ -153,58 +154,48 @@ sckServerNew(const String *const address, const unsigned int port, const TimeMSe
     ASSERT(address != NULL);
     ASSERT(port > 0);
 
-    IoServer *this = NULL;
-
-    OBJ_NEW_BEGIN(SocketServer, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(SocketServer, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        SocketServer *const driver = OBJ_NEW_ALLOC();
-
-        *driver = (SocketServer)
+        *this = (SocketServer)
         {
             .address = strDup(address),
             .port = port,
-            .name = strNewFmt("%s:%u", strZ(address), port),
+            .name = strCatFmt(strNew(), "%s:%u", strZ(address), port),
             .timeout = timeout,
         };
 
         // Lookup address
-        struct addrinfo *addressFound = sckHostLookup(driver->address, driver->port);
+        const struct addrinfo *const addressFound = addrInfoGet(addrInfoNew(this->address, this->port), 0);
 
-        TRY_BEGIN()
-        {
-            // Create socket
-            THROW_ON_SYS_ERROR(
-                (driver->socket = socket(addressFound->ai_family, SOCK_STREAM, 0)) == -1, FileOpenError, "unable to create socket");
+        // Create socket
+        THROW_ON_SYS_ERROR(
+            (this->socket = socket(addressFound->ai_family, SOCK_STREAM, 0)) == -1, FileOpenError, "unable to create socket");
 
-            // Set the address as reusable so we can bind again quickly after a restart or crash
-            int reuseAddr = 1;
+        // Set the address as reusable so we can bind again quickly after a restart or crash
+        int reuseAddr = 1;
 
-            THROW_ON_SYS_ERROR(
-                setsockopt(driver->socket, SOL_SOCKET, SO_REUSEADDR, &reuseAddr, sizeof(reuseAddr)) == -1, ProtocolError,
-                "unable to set SO_REUSEADDR");
+        THROW_ON_SYS_ERROR(
+            setsockopt(this->socket, SOL_SOCKET, SO_REUSEADDR, &reuseAddr, sizeof(reuseAddr)) == -1, ProtocolError,
+            "unable to set SO_REUSEADDR");
 
-            // Ensure file descriptor is closed
-            memContextCallbackSet(objMemContext(driver), sckServerFreeResource, driver);
+        // Ensure file descriptor is closed
+        memContextCallbackSet(objMemContext(this), sckServerFreeResource, this);
 
-            // Bind the address
-            THROW_ON_SYS_ERROR(
-                bind(driver->socket, addressFound->ai_addr, addressFound->ai_addrlen) == -1, FileOpenError,
-                "unable to bind socket");
-        }
-        FINALLY()
-        {
-            freeaddrinfo(addressFound);
-        }
-        TRY_END();
+        // Update server name to include address
+        strTrunc(this->name);
+        strCat(this->name, addrInfoToName(this->address, this->port, addressFound));
+
+        // Bind the address
+        THROW_ON_SYS_ERROR(
+            bind(this->socket, addressFound->ai_addr, addressFound->ai_addrlen) == -1, FileOpenError,
+            "unable to bind socket");
 
         // Listen for client connections. It might be a good idea to make the backlog configurable but this value seems OK for now.
-        THROW_ON_SYS_ERROR(listen(driver->socket, 100) == -1, FileOpenError, "unable to listen on socket");
-
-        statInc(SOCKET_STAT_SERVER_STR);
-
-        this = ioServerNew(driver, &sckServerInterface);
+        THROW_ON_SYS_ERROR(listen(this->socket, 100) == -1, FileOpenError, "unable to listen on socket");
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_SERVER, this);
+    statInc(SOCKET_STAT_SERVER_STR);
+
+    FUNCTION_LOG_RETURN(IO_SERVER, ioServerNew(this, &sckServerInterface));
 }

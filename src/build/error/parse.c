@@ -92,14 +92,14 @@ bldErrParseErrorList(Yaml *const yaml)
             // Add to list
             MEM_CONTEXT_BEGIN(lstMemContext(result))
             {
-                lstAdd(
-                    result,
-                    &(BldErrError)
-                    {
-                        .name = strDup(errRaw.name),
-                        .code = errRaw.code,
-                        .fatal = errRaw.fatal,
-                    });
+                const BldErrError bldErrError =
+                {
+                    .name = strDup(errRaw.name),
+                    .code = errRaw.code,
+                    .fatal = errRaw.fatal,
+                };
+
+                lstAdd(result, &bldErrError);
             }
             MEM_CONTEXT_END();
 

@@ -49,7 +49,7 @@ testRun(void)
         TEST_RESULT_VOID(yamlScalarNextCheck(yaml, STRDEF("test")), "scalar event");
         TEST_ERROR(
             yamlScalarCheck(yamlEventPeek(yaml), STRDEF("test")), FormatError,
-            "expected scalar 'test' but got event  type 'map-begin' at line 2, column 4");
+            "expected scalar 'test' but got event type 'map-begin' at line 2, column 4");
         TEST_RESULT_VOID(yamlEventNextCheck(yaml, yamlEventTypeMapBegin), "map begin event");
         TEST_RESULT_VOID(yamlEventNextCheck(yaml, yamlEventTypeScalar), "scalar event");
         TEST_RESULT_VOID(yamlEventNextCheck(yaml, yamlEventTypeSeqBegin), "seq begin event");
@@ -78,7 +78,7 @@ testRun(void)
 
         TEST_ERROR(
             yamlEventCheck((YamlEvent){.type = yamlEventTypeAlias}, yamlEventTypeScalar), FormatError,
-                "expected event type 'scalar' but got 'alias' at line 0, column 0");
+            "expected event type 'scalar' but got 'alias' at line 0, column 0");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

@@ -20,7 +20,7 @@ Functions
 FN_INLINE_ALWAYS StorageRead *
 storageReadMove(StorageRead *const this, MemContext *const parentNew)
 {
-    return objMoveContext(this, parentNew);
+    return objMove(this, parentNew);
 }
 
 /***********************************************************************************************************************************
@@ -28,7 +28,6 @@ Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct StorageReadPub
 {
-    MemContext *memContext;                                         // Mem context
     const StorageReadInterface *interface;                          // File data (name, driver type, etc.)
     IoRead *io;                                                     // Read interface
 } StorageReadPub;
@@ -81,17 +80,17 @@ Destructor
 FN_INLINE_ALWAYS void
 storageReadFree(StorageRead *const this)
 {
-    objFreeContext(this);
+    objFree(this);
 }
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *storageReadToLog(const StorageRead *this);
+FN_EXTERN void storageReadToLog(const StorageRead *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_STORAGE_READ_TYPE                                                                                             \
     StorageRead *
 #define FUNCTION_LOG_STORAGE_READ_FORMAT(value, buffer, bufferSize)                                                                \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, storageReadToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, storageReadToLog, buffer, bufferSize)
 
 #endif

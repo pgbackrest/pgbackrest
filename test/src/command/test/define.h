@@ -4,8 +4,8 @@ Parse Define Yaml
 #ifndef TEST_COMMAND_TEST_DEFINE_H
 #define TEST_COMMAND_TEST_DEFINE_H
 
-#include "common/type/list.h"
 #include "build/common/string.h"
+#include "common/type/list.h"
 #include "storage/storage.h"
 
 // Test definition types

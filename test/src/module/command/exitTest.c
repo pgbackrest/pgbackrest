@@ -1,7 +1,6 @@
 /***********************************************************************************************************************************
 Test Exit Routines
 ***********************************************************************************************************************************/
-#include "common/error.h"
 #include "common/log.h"
 #include "config/config.h"
 #include "version.h"
@@ -107,8 +106,6 @@ testRun(void)
                 "            ERR_STACK_TRACE\n"
                 "            --------------------------------------------------------------------\n"
                 "P00   INFO: archive-push:async command end: aborted with exception [122]\n"
-                "P00  DEBUG:     " TEST_PGB_PATH "/src/common/lock::lockRelease: (failOnNoLock: false)\n"
-                "P00  DEBUG:     " TEST_PGB_PATH "/src/common/lock::lockRelease: => false\n"
                 "P00  DEBUG:     " TEST_PGB_PATH "/src/command/exit::exitSafe: => 122");
         }
         TRY_END();

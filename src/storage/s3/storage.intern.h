@@ -23,6 +23,7 @@ typedef struct StorageS3RequestAsyncParam
     const HttpQuery *query;                                         // Query parameters
     const Buffer *content;                                          // Request content
     bool sseKms;                                                    // Enable server-side encryption?
+    bool tag;                                                       // Add tags when available?
 } StorageS3RequestAsyncParam;
 
 #define storageS3RequestAsyncP(this, verb, path, ...)                                                                              \
@@ -53,6 +54,7 @@ typedef struct StorageS3RequestParam
     bool allowMissing;                                              // Allow missing files (caller can check response code)
     bool contentIo;                                                 // Is IoRead interface required to read content?
     bool sseKms;                                                    // Enable server-side encryption?
+    bool tag;                                                       // Add tags when available?
 } StorageS3RequestParam;
 
 #define storageS3RequestP(this, verb, path, ...)                                                                                   \
@@ -66,6 +68,6 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_S3_TYPE                                                                                               \
     StorageS3 *
 #define FUNCTION_LOG_STORAGE_S3_FORMAT(value, buffer, bufferSize)                                                                  \
-    objToLog(value, "StorageS3", buffer, bufferSize)
+    objNameToLog(value, "StorageS3", buffer, bufferSize)
 
 #endif

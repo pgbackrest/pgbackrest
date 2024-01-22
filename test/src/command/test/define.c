@@ -23,6 +23,8 @@ testDefParseModuleList(Yaml *const yaml, List *const moduleList)
         FUNCTION_LOG_PARAM(LIST, moduleList);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     // Global lists to be copied to next test
     StringList *const globalDependList = strLstNew();
     StringList *const globalFeatureList = strLstNew();
@@ -251,14 +253,13 @@ testDefParseModuleList(Yaml *const yaml, List *const moduleList)
                             for (unsigned int harnessIdx = 0; harnessIdx < lstSize(globalHarnessList); harnessIdx++)
                             {
                                 const TestDefHarness *const globalHarness = lstGet(globalHarnessList, harnessIdx);
+                                const TestDefHarness testDefHarness =
+                                {
+                                    .name = strDup(globalHarness->name),
+                                    .includeList = strLstDup(globalHarness->includeList),
+                                };
 
-                                lstAdd(
-                                    harnessList,
-                                    &(TestDefHarness)
-                                    {
-                                        .name = strDup(globalHarness->name),
-                                        .includeList = strLstDup(globalHarness->includeList),
-                                    });
+                                lstAdd(harnessList, &testDefHarness);
                             }
                         }
                         MEM_CONTEXT_OBJ_END();
@@ -273,14 +274,13 @@ testDefParseModuleList(Yaml *const yaml, List *const moduleList)
                             for (unsigned int shimIdx = 0; shimIdx < lstSize(globalShimList); shimIdx++)
                             {
                                 const TestDefShim *const globalShim = lstGet(globalShimList, shimIdx);
+                                const TestDefShim testDefShim =
+                                {
+                                    .name = strDup(globalShim->name),
+                                    .functionList = strLstDup(globalShim->functionList),
+                                };
 
-                                lstAdd(
-                                    shimList,
-                                    &(TestDefShim)
-                                    {
-                                        .name = strDup(globalShim->name),
-                                        .functionList = strLstDup(globalShim->functionList),
-                                    });
+                                lstAdd(shimList, &testDefShim);
                             }
                         }
                         MEM_CONTEXT_OBJ_END();
@@ -312,6 +312,8 @@ testDefParse(const Storage *const storageRepo)
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storageRepo);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_STRUCT();
 
     // Module list
     List *const moduleList = lstNewP(sizeof(TestDefModule), .comparator = lstComparatorStr);

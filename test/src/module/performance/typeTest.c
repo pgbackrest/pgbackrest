@@ -1,11 +1,11 @@
 /***********************************************************************************************************************************
 Test Type Performance
 
-Test the performance of various types and data structures.  Generally speaking, the starting values should be high enough to "blow
+Test the performance of various types and data structures. Generally speaking, the starting values should be high enough to "blow
 up" in terms of execution time if there are performance problems without taking very long if everything is running smoothly.
 
-These starting values can then be scaled up for profiling and stress testing as needed.  In general we hope to scale to 1000 without
-running out of memory on the test systems or taking an undue amount of time.  It should be noted that in this context scaling to
+These starting values can then be scaled up for profiling and stress testing as needed. In general we hope to scale to 1000 without
+running out of memory on the test systems or taking an undue amount of time. It should be noted that in this context scaling to
 1000 is nowhere near turning it up to 11.
 ***********************************************************************************************************************************/
 #include <unistd.h>
@@ -44,18 +44,6 @@ testComparator(const void *item1, const void *item2)
 }
 
 /***********************************************************************************************************************************
-Test callback to count ini load results
-***********************************************************************************************************************************/
-static void
-testIniLoadCountCallback(void *const data, const String *const section, const String *const key, const String *const value)
-{
-    (*(unsigned int *)data)++;
-    (void)section;
-    (void)key;
-    (void)value;
-}
-
-/***********************************************************************************************************************************
 Driver to test manifestNewBuild(). Generates files for a valid-looking PostgreSQL cluster that can be scaled to any size.
 ***********************************************************************************************************************************/
 typedef struct
@@ -69,7 +57,9 @@ STRING_STATIC(TEST_MANIFEST_PATH_USER_STR,                          "test");
 static StorageInfo
 storageTestManifestNewBuildInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageInterfaceInfoParam param)
 {
-    (void)thisVoid; (void)level; (void)param;
+    (void)thisVoid;
+    (void)level;
+    (void)param;
 
     StorageInfo result =
     {
@@ -97,7 +87,10 @@ static StorageList *
 storageTestManifestNewBuildList(THIS_VOID, const String *path, StorageInfoLevel level, StorageInterfaceListParam param)
 {
     THIS(StorageTestManifestNewBuild);
-    (void)path; (void)level; (void)param;
+
+    (void)path;
+    (void)level;
+    (void)param;
 
     StorageList *const result = storageLstNew(storageInfoLevelDetail);
 
@@ -220,7 +213,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("iniLoad()"))
+    if (testBegin("iniValueNext()"))
     {
         ASSERT(TEST_SCALE <= 10000);
 
@@ -233,11 +226,19 @@ testRun(void)
         TEST_LOG_FMT("ini size = %s, keys = %u", strZ(strSizeFormat(strSize(iniStr))), iniMax);
 
         TimeMSec timeBegin = timeMSec();
-        unsigned int iniTotal = 0;
+        Ini *ini = iniNewP(ioBufferReadNew(BUFSTR(iniStr)), .strict = true);
 
-        TEST_RESULT_VOID(iniLoad(ioBufferReadNew(BUFSTR(iniStr)), testIniLoadCountCallback, &iniTotal), "parse ini");
+        unsigned int iniTotal = 0;
+        const IniValue *value = iniValueNext(ini);
+
+        while (value != NULL)
+        {
+            iniTotal++;
+            value = iniValueNext(ini);
+        }
+
+        TEST_RESULT_INT(iniTotal, iniMax, "check ini value total");
         TEST_LOG_FMT("parse completed in %ums", (unsigned int)(timeMSec() - timeBegin));
-        TEST_RESULT_INT(iniTotal, iniMax, "    check ini total");
     }
 
     // Build/load/save a larger manifest to test performance and memory usage. The default sizing is for a "typical" large cluster
@@ -248,17 +249,25 @@ testRun(void)
         ASSERT(TEST_SCALE <= 1000000);
 
         // Create a storage driver to test manifest build with an arbitrary number of files
-        StorageTestManifestNewBuild driver =
-        {
-            .interface = storageInterfaceTestDummy,
-            .fileTotal = 100000 * (unsigned int)TEST_SCALE,
-        };
+        StorageTestManifestNewBuild *driver = NULL;
 
-        driver.interface.info = storageTestManifestNewBuildInfo;
-        driver.interface.list = storageTestManifestNewBuildList;
+        OBJ_NEW_BASE_BEGIN(StorageTestManifestNewBuild, .childQty = MEM_CONTEXT_QTY_MAX)
+        {
+            driver = OBJ_NEW_ALLOC();
+
+            *driver = (StorageTestManifestNewBuild)
+            {
+                .interface = storageInterfaceTestDummy,
+                .fileTotal = 100000 * (unsigned int)TEST_SCALE,
+            };
+        }
+        OBJ_NEW_END();
+
+        driver->interface.info = storageTestManifestNewBuildInfo;
+        driver->interface.list = storageTestManifestNewBuildList;
 
         const Storage *const storagePg = storageNew(
-            strIdFromZ("test"), STRDEF("/pg"), 0, 0, false, NULL, &driver, driver.interface);
+            strIdFromZ("test"), STRDEF("/pg"), 0, 0, false, NULL, driver, driver->interface);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("build manifest");
@@ -271,14 +280,15 @@ testRun(void)
         MEM_CONTEXT_BEGIN(testContext)
         {
             TEST_ASSIGN(
-                manifest, manifestNewBuild(storagePg, PG_VERSION_15, 999999999, false, false, false, NULL, NULL), "build files");
+                manifest, manifestNewBuild(storagePg, PG_VERSION_15, 999999999, 0, false, false, false, false, NULL, NULL, NULL),
+                "build files");
         }
         MEM_CONTEXT_END();
 
         TEST_LOG_FMT("completed in %ums", (unsigned int)(timeMSec() - timeBegin));
         // TEST_LOG_FMT("memory used %zu", memContextSize(testContext));
 
-        TEST_RESULT_UINT(manifestFileTotal(manifest), driver.fileTotal, "   check file total");
+        TEST_RESULT_UINT(manifestFileTotal(manifest), driver->fileTotal, "   check file total");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("save manifest");
@@ -308,7 +318,7 @@ testRun(void)
         TEST_LOG_FMT("completed in %ums", (unsigned int)(timeMSec() - timeBegin));
         // TEST_LOG_FMT("memory used %zu", memContextSize(testContext));
 
-        TEST_RESULT_UINT(manifestFileTotal(manifest), driver.fileTotal, "   check file total");
+        TEST_RESULT_UINT(manifestFileTotal(manifest), driver->fileTotal, "   check file total");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("find all files");

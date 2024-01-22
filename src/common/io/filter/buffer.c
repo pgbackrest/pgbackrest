@@ -28,16 +28,16 @@ typedef struct IoBuffer
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-static String *
-ioBufferToLog(const IoBuffer *this)
+static void
+ioBufferToLog(const IoBuffer *const this, StringStatic *const debugLog)
 {
-    return strNewFmt("{inputSame: %s, inputPos: %zu}", cvtBoolToConstZ(this->inputSame), this->inputPos);
+    strStcFmt(debugLog, "{inputSame: %s, inputPos: %zu}", cvtBoolToConstZ(this->inputSame), this->inputPos);
 }
 
 #define FUNCTION_LOG_IO_BUFFER_TYPE                                                                                                \
     IoBuffer *
 #define FUNCTION_LOG_IO_BUFFER_FORMAT(value, buffer, bufferSize)                                                                   \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, ioBufferToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, ioBufferToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Move data from the input buffer to the output buffer
@@ -108,16 +108,12 @@ ioBufferNew(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
 
-    IoFilter *this = NULL;
-
-    OBJ_NEW_BEGIN(IoBuffer, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(IoBuffer)
     {
-        IoBuffer *driver = OBJ_NEW_ALLOC();
-        *driver = (IoBuffer){0};
-
-        this = ioFilterNewP(BUFFER_FILTER_TYPE, driver, NULL, .inOut = ioBufferProcess, .inputSame = ioBufferInputSame);
+        *this = (IoBuffer){0};
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_FILTER, this);
+    FUNCTION_LOG_RETURN(
+        IO_FILTER, ioFilterNewP(BUFFER_FILTER_TYPE, this, NULL, .inOut = ioBufferProcess, .inputSame = ioBufferInputSame));
 }

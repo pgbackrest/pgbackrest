@@ -34,13 +34,8 @@ kvNew(void)
 {
     FUNCTION_TEST_VOID();
 
-    KeyValue *this = NULL;
-
     OBJ_NEW_BEGIN(KeyValue, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        // Allocate state and set context
-        this = OBJ_NEW_ALLOC();
-
         *this = (KeyValue)
         {
             .pub =
@@ -130,6 +125,8 @@ kvPutInternal(KeyValue *this, const Variant *key, Variant *value)
 
     ASSERT(this != NULL);
     ASSERT(key != NULL);
+
+    FUNCTION_AUDIT_HELPER();
 
     // Find the key
     unsigned int listIdx = kvGetIdx(this, key);

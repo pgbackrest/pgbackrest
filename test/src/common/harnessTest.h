@@ -8,7 +8,6 @@ C Test Harness
 
 #include "common/assert.h"
 #include "common/debug.h"
-#include "common/error.h"
 
 #include "common/harnessTest.intern.h"
 
@@ -21,15 +20,17 @@ Constants
 Make sure ASSERT() always exists for tests to use, even when DEBUG is disabled for performance
 ***********************************************************************************************************************************/
 #ifdef HRN_FEATURE_ASSERT
-    #undef ASSERT
 
-    #define ASSERT(condition)                                                                                                      \
-        do                                                                                                                         \
-        {                                                                                                                          \
-            if (!(condition))                                                                                                      \
-                THROW_FMT(AssertError, "assertion '%s' failed", #condition);                                                       \
-        }                                                                                                                          \
-        while (0)
+#undef ASSERT
+
+#define ASSERT(condition)                                                                                                          \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        if (!(condition))                                                                                                          \
+            THROW_FMT(AssertError, "assertion '%s' failed", #condition);                                                           \
+    }                                                                                                                              \
+    while (0)
+
 #endif
 
 /***********************************************************************************************************************************
@@ -62,7 +63,7 @@ const char *testExe(void);
 // Is this test running in a container?
 bool testContainer(void);
 
-// Get the 0-based index of the test.  Useful for modifying resources like port numbers to avoid conflicts when running tests in
+// Get the 0-based index of the test. Useful for modifying resources like port numbers to avoid conflicts when running tests in
 // parallel.
 unsigned int testIdx(void);
 
@@ -71,13 +72,15 @@ Test that an expected error is actually thrown and error when it isn't
 ***********************************************************************************************************************************/
 // Wrap the error in a temp mem context (when available) to free memory and execute callbacks after CATCH_FATAL()
 #ifdef HRN_FEATURE_MEMCONTEXT
-    #include "common/memContext.h"
 
-    #define TEST_ERROR_MEM_CONTEXT_BEGIN()                          MEM_CONTEXT_TEMP_BEGIN()
-    #define TEST_ERROR_MEM_CONTEXT_END()                            MEM_CONTEXT_TEMP_END()
+#include "common/memContext.h"
+
+#define TEST_ERROR_MEM_CONTEXT_BEGIN()                              MEM_CONTEXT_TEMP_BEGIN()
+#define TEST_ERROR_MEM_CONTEXT_END()                                MEM_CONTEXT_TEMP_END()
+
 #else
-    #define TEST_ERROR_MEM_CONTEXT_BEGIN()
-    #define TEST_ERROR_MEM_CONTEXT_END()
+#define TEST_ERROR_MEM_CONTEXT_BEGIN()
+#define TEST_ERROR_MEM_CONTEXT_END()
 #endif
 
 #define TEST_ERROR(statement, errorTypeExpected, errorMessageExpected)                                                             \
@@ -320,6 +323,20 @@ Test log result
         TRY_END();                                                                                                                 \
     } while (0)
 
+#define TEST_RESULT_LOG_EMPTY_OR_CONTAINS(expected)                                                                                \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        TRY_BEGIN()                                                                                                                \
+        {                                                                                                                          \
+            harnessLogResultEmptyOrContains(expected);                                                                             \
+        }                                                                                                                          \
+        CATCH_ANY()                                                                                                                \
+        {                                                                                                                          \
+            THROW_FMT(AssertError, "LOG RESULT CONTAINS FAILED WITH:\n%s", errorMessage());                                        \
+        }                                                                                                                          \
+        TRY_END();                                                                                                                 \
+    } while (0)
+
 #define TEST_RESULT_LOG_FMT(...)                                                                                                   \
     do                                                                                                                             \
     {                                                                                                                              \
@@ -374,7 +391,7 @@ Test title macro
     } while (0)
 
 /***********************************************************************************************************************************
-Is this a 64-bit system?  If not then it is 32-bit since 16-bit systems are not supported.
+Is this a 64-bit system? If not then it is 32-bit since 16-bit systems are not supported.
 ***********************************************************************************************************************************/
 #define TEST_64BIT()                                                                                                               \
     (sizeof(size_t) == 8)

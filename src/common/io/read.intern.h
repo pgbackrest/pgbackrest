@@ -37,7 +37,6 @@ Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct IoReadPub
 {
-    MemContext *memContext;                                         // Mem context
     void *driver;                                                   // Driver object
     IoReadInterface interface;                                      // Driver interface
     IoFilterGroup *filterGroup;                                     // IO filters
@@ -69,6 +68,6 @@ Macros for function logging
 #define FUNCTION_LOG_IO_READ_INTERFACE_TYPE                                                                                        \
     IoReadInterface
 #define FUNCTION_LOG_IO_READ_INTERFACE_FORMAT(value, buffer, bufferSize)                                                           \
-    objToLog(&value, "IoReadInterface", buffer, bufferSize)
+    objNameToLog(&value, "IoReadInterface", buffer, bufferSize)
 
 #endif

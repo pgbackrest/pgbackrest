@@ -76,10 +76,10 @@ testRun(void)
 
         TEST_ERROR(timePartsValid(-1,  0,  0), FormatError, "invalid time -1:00:00");
         TEST_ERROR(timePartsValid(24,  0,  0), FormatError, "invalid time 24:00:00");
-        TEST_ERROR(timePartsValid( 0, -1,  0), FormatError, "invalid time 00:-1:00");
-        TEST_ERROR(timePartsValid( 0, 60,  0), FormatError, "invalid time 00:60:00");
-        TEST_ERROR(timePartsValid( 0,  0, -1), FormatError, "invalid time 00:00:-1");
-        TEST_ERROR(timePartsValid( 0,  0, 60), FormatError, "invalid time 00:00:60");
+        TEST_ERROR(timePartsValid(0, -1,  0), FormatError, "invalid time 00:-1:00");
+        TEST_ERROR(timePartsValid(0, 60,  0), FormatError, "invalid time 00:60:00");
+        TEST_ERROR(timePartsValid(0,  0, -1), FormatError, "invalid time 00:00:-1");
+        TEST_ERROR(timePartsValid(0,  0, 60), FormatError, "invalid time 00:00:60");
         TEST_RESULT_VOID(timePartsValid(23, 59, 59), "valid time");
 
         // -------------------------------------------------------------------------------------------------------------------------

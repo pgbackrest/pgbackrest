@@ -4,19 +4,19 @@ TLS Server
 #include "build.auto.h"
 
 #include <netinet/in.h>
-#include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include <openssl/err.h>
 
 #include "common/crypto/common.h"
 #include "common/debug.h"
-#include "common/log.h"
 #include "common/io/server.h"
 #include "common/io/tls/common.h"
 #include "common/io/tls/server.h"
 #include "common/io/tls/session.h"
+#include "common/log.h"
 #include "common/stat.h"
 #include "common/type/object.h"
 
@@ -39,18 +39,18 @@ typedef struct TlsServer
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-static String *
-tlsServerToLog(const THIS_VOID)
+static void
+tlsServerToLog(const THIS_VOID, StringStatic *const debugLog)
 {
     THIS(const TlsServer);
 
-    return strNewFmt("{host: %s, timeout: %" PRIu64 "}", strZ(this->host), this->timeout);
+    strStcFmt(debugLog, "{host: %s, timeout: %" PRIu64 "}", strZ(this->host), this->timeout);
 }
 
 #define FUNCTION_LOG_TLS_SERVER_TYPE                                                                                               \
     TlsServer *
 #define FUNCTION_LOG_TLS_SERVER_FORMAT(value, buffer, bufferSize)                                                                  \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, tlsServerToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, tlsServerToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Free context
@@ -83,6 +83,7 @@ https://en.wikipedia.org/wiki/Logjam_(computer_security).
 // Hardcoded DH parameters, used in ephemeral DH keying. This is the 2048-bit DH parameter from RFC 3526. The generation of the
 // prime is specified in RFC 2412 Appendix E, which also discusses the design choice of the generator. Note that when loaded with
 // OpenSSL this causes DH_check() to fail on DH_NOT_SUITABLE_GENERATOR, where leaking a bit is preferred.
+// {uncrustify_off - comment inside string}
 #define DH_2048                                                                                                                    \
     "-----BEGIN DH PARAMETERS-----\n"                                                                                              \
     "MIIBCAKCAQEA///////////JD9qiIWjCNMTGYouA3BzRKQJOCIpnzHQCC76mOxOb\n"                                                           \
@@ -92,6 +93,7 @@ https://en.wikipedia.org/wiki/Logjam_(computer_security).
     "fDKQXkYuNs474553LBgOhgObJ4Oi7Aeij7XFXfBvTFLJ3ivL9pVYFxg5lUl86pVq\n"                                                           \
     "5RXSJhiY+gUQFXKOWoqsqmj//////////wIBAg==\n"                                                                                   \
     "-----END DH PARAMETERS-----"
+// {uncrustify_on}
 
 static void
 tlsServerDh(SSL_CTX *const context)
@@ -102,14 +104,14 @@ tlsServerDh(SSL_CTX *const context)
 
     SSL_CTX_set_options(context, SSL_OP_SINGLE_DH_USE);
 
-	BIO *const bio = BIO_new_mem_buf(DH_2048, sizeof(DH_2048));
+    BIO *const bio = BIO_new_mem_buf(DH_2048, sizeof(DH_2048));
     cryptoError(bio == NULL, "unable create buffer for DH parameters");
 
     TRY_BEGIN()
     {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-    	DH *const dh = PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
+        DH *const dh = PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
 #pragma GCC diagnostic pop
 
         TRY_BEGIN()
@@ -292,13 +294,9 @@ tlsServerNew(
     ASSERT(keyFile != NULL);
     ASSERT(certFile != NULL);
 
-    IoServer *this = NULL;
-
-    OBJ_NEW_BEGIN(TlsServer, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(TlsServer, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        TlsServer *const driver = OBJ_NEW_ALLOC();
-
-        *driver = (TlsServer)
+        *this = (TlsServer)
         {
             .host = strDup(host),
             .context = tlsContext(),
@@ -306,31 +304,32 @@ tlsServerNew(
         };
 
         // Set callback to free context
-        memContextCallbackSet(objMemContext(driver), tlsServerFreeResource, driver);
+        memContextCallbackSet(objMemContext(this), tlsServerFreeResource, this);
 
         // Set options
-        SSL_CTX_set_options(driver->context,
+        SSL_CTX_set_options(
+            this->context,
             // Disable SSL and TLS v1/v1.1
             SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 |
             // Let server set cipher order
             SSL_OP_CIPHER_SERVER_PREFERENCE |
 #ifdef SSL_OP_NO_RENEGOTIATION
-	        // Disable renegotiation, available since 1.1.0h. This affects only TLSv1.2 and older protocol versions as TLSv1.3 has
+            // Disable renegotiation, available since 1.1.0h. This affects only TLSv1.2 and older protocol versions as TLSv1.3 has
             // no support for renegotiation.
-	        SSL_OP_NO_RENEGOTIATION |
+            SSL_OP_NO_RENEGOTIATION |
 #endif
-        	// Disable session tickets
-	        SSL_OP_NO_TICKET);
+            // Disable session tickets
+            SSL_OP_NO_TICKET);
 
         // Disable session caching
-        SSL_CTX_set_session_cache_mode(driver->context, SSL_SESS_CACHE_OFF);
+        SSL_CTX_set_session_cache_mode(this->context, SSL_SESS_CACHE_OFF);
 
         // Setup ephemeral DH and ECDH keys
-        tlsServerDh(driver->context);
-        tlsServerEcdh(driver->context);
+        tlsServerDh(this->context);
+        tlsServerEcdh(this->context);
 
         // Load certificate and key
-        tlsCertKeyLoad(driver->context, certFile, keyFile);
+        tlsCertKeyLoad(this->context, certFile, keyFile);
 
         // If a CA store is specified then client certificates will be verified
         // -------------------------------------------------------------------------------------------------------------------------
@@ -338,7 +337,7 @@ tlsServerNew(
         {
             // Load CA store
             cryptoError(                                                                                            // {vm_covered}
-                SSL_CTX_load_verify_locations(driver->context, strZ(caFile), NULL) != 1,                            // {vm_covered}
+                SSL_CTX_load_verify_locations(this->context, strZ(caFile), NULL) != 1,                              // {vm_covered}
                 zNewFmt("unable to load CA file '%s'", strZ(caFile)));                                              // {vm_covered}
 
             // Tell OpenSSL to send the list of root certs we trust to clients in CertificateRequests. This lets a client with a
@@ -347,22 +346,20 @@ tlsServerNew(
             STACK_OF(X509_NAME) *rootCertList = SSL_load_client_CA_file(strZ(caFile));                              // {vm_covered}
             cryptoError(rootCertList == NULL, zNewFmt("unable to generate CA list from '%s'", strZ(caFile)));       // {vm_covered}
 
-            SSL_CTX_set_client_CA_list(driver->context, rootCertList);                                              // {vm_covered}
+            SSL_CTX_set_client_CA_list(this->context, rootCertList);                                                // {vm_covered}
 
             // Always ask for SSL client cert, but don't fail when not presented. In this case the server will disconnect after
             // sending a data end message to the client. The client can use this to verify that the server is running without the
             // need to authenticate.
-            SSL_CTX_set_verify(driver->context, SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE, NULL);                    // {vm_covered}
+            SSL_CTX_set_verify(this->context, SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE, NULL);                      // {vm_covered}
 
             // Set a flag so the client cert will be checked later
-            driver->verifyPeer = true;                                                                              // {vm_covered}
+            this->verifyPeer = true;                                                                                // {vm_covered}
         }
-
-        statInc(TLS_STAT_SERVER_STR);
-
-        this = ioServerNew(driver, &tlsServerInterface);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_SERVER, this);
+    statInc(TLS_STAT_SERVER_STR);
+
+    FUNCTION_LOG_RETURN(IO_SERVER, ioServerNew(this, &tlsServerInterface));
 }

@@ -6,6 +6,7 @@ Protocol Server
 #include <string.h>
 
 #include "common/debug.h"
+#include "common/error/retry.h"
 #include "common/log.h"
 #include "common/time.h"
 #include "common/type/json.h"
@@ -40,12 +41,8 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
     ASSERT(read != NULL);
     ASSERT(write != NULL);
 
-    ProtocolServer *this = NULL;
-
     OBJ_NEW_BEGIN(ProtocolServer, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (ProtocolServer)
         {
             .read = read,
@@ -76,7 +73,7 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
 FN_EXTERN void
 protocolServerError(ProtocolServer *this, int code, const String *message, const String *stack)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
         FUNCTION_LOG_PARAM(INT, code);
         FUNCTION_LOG_PARAM(STRING, message);
@@ -112,6 +109,8 @@ protocolServerCommandGet(ProtocolServer *const this)
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_STRUCT();
 
     ProtocolServerCommandGetResult result = {0};
 
@@ -184,9 +183,7 @@ protocolServerProcess(
                     MEM_CONTEXT_TEMP_BEGIN()
                     {
                         // Variables to store first error message and retry messages
-                        const ErrorType *errType = NULL;
-                        String *errMessage = NULL;
-                        const String *errMessageFirst = NULL;
+                        ErrorRetry *const errRetry = errRetryNew();
                         const String *errStackTrace = NULL;
 
                         // Initialize retries in case of command failure
@@ -205,27 +202,13 @@ protocolServerProcess(
                             }
                             CATCH_ANY()
                             {
-                                // On first error record the error details. Only the first error will contain a stack trace since
-                                // the first error is most likely to contain valuable information.
-                                if (errType == NULL)
-                                {
-                                    errType = errorType();
-                                    errMessage = strCatZ(strNew(), errorMessage());
-                                    errMessageFirst = strNewZ(errorMessage());
-                                    errStackTrace = strNewZ(errorStackTrace());
-                                }
-                                // Else on a retry error only record the error type and message. Retry errors are less likely to
-                                // contain valuable information but may be helpful for debugging.
-                                else
-                                {
-                                    strCatFmt(
-                                        errMessage, "\n[%s] on retry after %" PRIu64 "ms", errorTypeName(errorType()),
-                                        retrySleepMs);
+                                // Add the error retry info
+                                errRetryAddP(errRetry);
 
-                                    // Only append the message if it differs from the first message
-                                    if (!strEqZ(errMessageFirst, errorMessage()))
-                                        strCatFmt(errMessage, ": %s", errorMessage());
-                                }
+                                // On first error record the stack trace. Only the first error will contain a stack trace since
+                                // the first error is most likely to contain valuable information.
+                                if (errStackTrace == NULL)
+                                    errStackTrace = strNewZ(errorStackTrace());
 
                                 // Are there retries remaining?
                                 if (retryRemaining > 0)
@@ -251,7 +234,10 @@ protocolServerProcess(
                                 }
                                 // Else report error to the client
                                 else
-                                    protocolServerError(this, errorTypeCode(errType), errMessage, errStackTrace);
+                                {
+                                    protocolServerError(
+                                        this, errorTypeCode(errRetryType(errRetry)), errRetryMessage(errRetry), errStackTrace);
+                                }
                             }
                             TRY_END();
                         }
@@ -279,7 +265,7 @@ protocolServerProcess(
                 }
 
                 // Send keep-alive to remotes. When a local process is doing work that does not involve the remote it is important
-                // that the remote does not timeout.  This will send a keep alive once per unit of work that is performed by the
+                // that the remote does not timeout. This will send a keep alive once per unit of work that is performed by the
                 // local process.
                 protocolKeepAlive();
             }
@@ -383,8 +369,8 @@ protocolServerDataEndPut(ProtocolServer *const this)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-protocolServerToLog(const ProtocolServer *this)
+FN_EXTERN void
+protocolServerToLog(const ProtocolServer *const this, StringStatic *const debugLog)
 {
-    return strNewFmt("{name: %s}", strZ(this->name));
+    strStcFmt(debugLog, "{name: %s}", strZ(this->name));
 }

@@ -17,6 +17,7 @@ Command constants
 #define CFGCMD_EXPIRE                                               "expire"
 #define CFGCMD_HELP                                                 "help"
 #define CFGCMD_INFO                                                 "info"
+#define CFGCMD_MANIFEST                                             "manifest"
 #define CFGCMD_REPO_CREATE                                          "repo-create"
 #define CFGCMD_REPO_GET                                             "repo-get"
 #define CFGCMD_REPO_LS                                              "repo-ls"
@@ -33,7 +34,7 @@ Command constants
 #define CFGCMD_VERIFY                                               "verify"
 #define CFGCMD_VERSION                                              "version"
 
-#define CFG_COMMAND_TOTAL                                           23
+#define CFG_COMMAND_TOTAL                                           24
 
 /***********************************************************************************************************************************
 Option group constants
@@ -55,6 +56,7 @@ Option constants
 #define CFGOPT_ARCHIVE_PUSH_QUEUE_MAX                               "archive-push-queue-max"
 #define CFGOPT_ARCHIVE_TIMEOUT                                      "archive-timeout"
 #define CFGOPT_BACKUP_STANDBY                                       "backup-standby"
+#define CFGOPT_BETA                                                 "beta"
 #define CFGOPT_BUFFER_SIZE                                          "buffer-size"
 #define CFGOPT_CHECKSUM_PAGE                                        "checksum-page"
 #define CFGOPT_CIPHER_PASS                                          "cipher-pass"
@@ -94,15 +96,19 @@ Option constants
 #define CFGOPT_NEUTRAL_UMASK                                        "neutral-umask"
 #define CFGOPT_ONLINE                                               "online"
 #define CFGOPT_OUTPUT                                               "output"
+#define CFGOPT_PAGE_HEADER_CHECK                                    "page-header-check"
 #define CFGOPT_PG                                                   "pg"
+#define CFGOPT_PG_VERSION_FORCE                                     "pg-version-force"
 #define CFGOPT_PROCESS                                              "process"
 #define CFGOPT_PROCESS_MAX                                          "process-max"
 #define CFGOPT_PROTOCOL_TIMEOUT                                     "protocol-timeout"
 #define CFGOPT_RAW                                                  "raw"
 #define CFGOPT_RECOVERY_OPTION                                      "recovery-option"
 #define CFGOPT_RECURSE                                              "recurse"
+#define CFGOPT_REFERENCE                                            "reference"
 #define CFGOPT_REMOTE_TYPE                                          "remote-type"
 #define CFGOPT_REPO                                                 "repo"
+#define CFGOPT_REPORT                                               "report"
 #define CFGOPT_RESUME                                               "resume"
 #define CFGOPT_SCK_BLOCK                                            "sck-block"
 #define CFGOPT_SCK_KEEP_ALIVE                                       "sck-keep-alive"
@@ -130,7 +136,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
 #define CFGOPT_VERBOSE                                              "verbose"
 
-#define CFG_OPTION_TOTAL                                            157
+#define CFG_OPTION_TOTAL                                            179
 
 /***********************************************************************************************************************************
 Option value constants
@@ -264,6 +270,22 @@ Option value constants
 #define CFGOPTVAL_REPO_S3_URI_STYLE_PATH                            STRID5("path", 0x450300)
 #define CFGOPTVAL_REPO_S3_URI_STYLE_PATH_Z                          "path"
 
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_ACCEPT_NEW          STRID5("accept-new", 0x2e576e9028c610)
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_ACCEPT_NEW_Z        "accept-new"
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_FINGERPRINT         STRID5("fingerprint", 0x51c9942453b9260)
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_FINGERPRINT_Z       "fingerprint"
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_NONE                STRID5("none", 0x2b9ee0)
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_NONE_Z              "none"
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_STRICT              STRID5("strict", 0x2834ca930)
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_STRICT_Z            "strict"
+
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_HASH_TYPE_MD5                  STRID5("md5", 0x748d0)
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_HASH_TYPE_MD5_Z                "md5"
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_HASH_TYPE_SHA1                 STRID6("sha1", 0x7412131)
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_HASH_TYPE_SHA1_Z               "sha1"
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_HASH_TYPE_SHA256               STRID5("sha256", 0x3dde05130)
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_HASH_TYPE_SHA256_Z             "sha256"
+
 #define CFGOPTVAL_REPO_TYPE_AZURE                                   STRID5("azure", 0x5957410)
 #define CFGOPTVAL_REPO_TYPE_AZURE_Z                                 "azure"
 #define CFGOPTVAL_REPO_TYPE_CIFS                                    STRID5("cifs", 0x999230)
@@ -274,6 +296,8 @@ Option value constants
 #define CFGOPTVAL_REPO_TYPE_POSIX_Z                                 "posix"
 #define CFGOPTVAL_REPO_TYPE_S3                                      STRID6("s3", 0x7d31)
 #define CFGOPTVAL_REPO_TYPE_S3_Z                                    "s3"
+#define CFGOPTVAL_REPO_TYPE_SFTP                                    STRID5("sftp", 0x850d30)
+#define CFGOPTVAL_REPO_TYPE_SFTP_Z                                  "sftp"
 
 #define CFGOPTVAL_SORT_ASC                                          STRID5("asc", 0xe610)
 #define CFGOPTVAL_SORT_ASC_Z                                        "asc"
@@ -327,6 +351,7 @@ typedef enum
     cfgCmdExpire,
     cfgCmdHelp,
     cfgCmdInfo,
+    cfgCmdManifest,
     cfgCmdRepoCreate,
     cfgCmdRepoGet,
     cfgCmdRepoLs,
@@ -371,6 +396,7 @@ typedef enum
     cfgOptArchivePushQueueMax,
     cfgOptArchiveTimeout,
     cfgOptBackupStandby,
+    cfgOptBeta,
     cfgOptBufferSize,
     cfgOptChecksumPage,
     cfgOptCipherPass,
@@ -410,6 +436,7 @@ typedef enum
     cfgOptNeutralUmask,
     cfgOptOnline,
     cfgOptOutput,
+    cfgOptPageHeaderCheck,
     cfgOptPg,
     cfgOptPgDatabase,
     cfgOptPgHost,
@@ -429,12 +456,14 @@ typedef enum
     cfgOptPgPort,
     cfgOptPgSocketPath,
     cfgOptPgUser,
+    cfgOptPgVersionForce,
     cfgOptProcess,
     cfgOptProcessMax,
     cfgOptProtocolTimeout,
     cfgOptRaw,
     cfgOptRecoveryOption,
     cfgOptRecurse,
+    cfgOptReference,
     cfgOptRemoteType,
     cfgOptRepo,
     cfgOptRepoAzureAccount,
@@ -443,6 +472,12 @@ typedef enum
     cfgOptRepoAzureKey,
     cfgOptRepoAzureKeyType,
     cfgOptRepoAzureUriStyle,
+    cfgOptRepoBlock,
+    cfgOptRepoBlockAgeMap,
+    cfgOptRepoBlockChecksumSizeMap,
+    cfgOptRepoBlockSizeMap,
+    cfgOptRepoBlockSizeSuper,
+    cfgOptRepoBlockSizeSuperFull,
     cfgOptRepoBundle,
     cfgOptRepoBundleLimit,
     cfgOptRepoBundleSize,
@@ -483,13 +518,25 @@ typedef enum
     cfgOptRepoS3Role,
     cfgOptRepoS3Token,
     cfgOptRepoS3UriStyle,
+    cfgOptRepoSftpHost,
+    cfgOptRepoSftpHostFingerprint,
+    cfgOptRepoSftpHostKeyCheckType,
+    cfgOptRepoSftpHostKeyHashType,
+    cfgOptRepoSftpHostPort,
+    cfgOptRepoSftpHostUser,
+    cfgOptRepoSftpKnownHost,
+    cfgOptRepoSftpPrivateKeyFile,
+    cfgOptRepoSftpPrivateKeyPassphrase,
+    cfgOptRepoSftpPublicKeyFile,
     cfgOptRepoStorageCaFile,
     cfgOptRepoStorageCaPath,
     cfgOptRepoStorageHost,
     cfgOptRepoStoragePort,
+    cfgOptRepoStorageTag,
     cfgOptRepoStorageUploadChunkSize,
     cfgOptRepoStorageVerifyTls,
     cfgOptRepoType,
+    cfgOptReport,
     cfgOptResume,
     cfgOptSckBlock,
     cfgOptSckKeepAlive,

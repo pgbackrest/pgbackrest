@@ -195,6 +195,8 @@ protocolLocalExec(
         FUNCTION_TEST_PARAM(UINT, processId);
     FUNCTION_TEST_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     ASSERT(helper != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -442,8 +444,9 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
             // Ack the config command
             protocolServerDataEndPut(result);
 
-            ioSessionMove(tlsSession, memContextPrior());
+            // Move result to prior context and move session into result so there is only one return value
             protocolServerMove(result, memContextPrior());
+            ioSessionMove(tlsSession, objMemContext(result));
         }
         // Else the client can only detect that the server is alive
         else
@@ -556,8 +559,8 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
                 }
             }
 
-            // Remove options that have been marked for removal if they are not already null or invalid. This is more efficient because
-            // cfgExecParam() won't have to search through as large a list looking for overrides.
+            // Remove options that have been marked for removal if they are not already null or invalid. This is more efficient
+            // because cfgExecParam() won't have to search through as large a list looking for overrides.
             if (remove)
             {
                 // Loop through option indexes
@@ -669,6 +672,8 @@ protocolRemoteExec(
         FUNCTION_TEST_PARAM(UINT, hostIdx);
         FUNCTION_TEST_PARAM(UINT, processId);
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     ASSERT(helper != NULL);
 
@@ -813,7 +818,7 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx)
         MEM_CONTEXT_END();
     }
 
-    // Determine protocol id for the remote.  If the process option is set then use that since we want the remote protocol id to
+    // Determine protocol id for the remote. If the process option is set then use that since we want the remote protocol id to
     // match the local protocol id. Otherwise set to 0 since the remote is being started from a main process and there should only
     // be one remote per host.
     unsigned int processId = 0;

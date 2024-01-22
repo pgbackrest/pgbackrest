@@ -47,7 +47,7 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_WRITE_S3_TYPE                                                                                         \
     StorageWriteS3 *
 #define FUNCTION_LOG_STORAGE_WRITE_S3_FORMAT(value, buffer, bufferSize)                                                            \
-    objToLog(value, "StorageWriteS3", buffer, bufferSize)
+    objNameToLog(value, "StorageWriteS3", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Open the file
@@ -127,7 +127,8 @@ storageWriteS3PartAsync(StorageWriteS3 *this)
                     httpResponseContent(
                         storageS3RequestP(
                             this->storage, HTTP_VERB_POST_STR, this->interface.name,
-                            .query = httpQueryAdd(httpQueryNewP(), S3_QUERY_UPLOADS_STR, EMPTY_STR), .sseKms = true))));
+                            .query = httpQueryAdd(httpQueryNewP(), S3_QUERY_UPLOADS_STR, EMPTY_STR), .sseKms = true,
+                            .tag = true))));
 
             // Store the upload id
             MEM_CONTEXT_OBJ_BEGIN(this)
@@ -178,8 +179,10 @@ storageWriteS3(THIS_VOID, const Buffer *buffer)
     do
     {
         // Copy as many bytes as possible into the part buffer
-        size_t bytesNext = bufRemains(this->partBuffer) > bufUsed(buffer) - bytesTotal ?
-            bufUsed(buffer) - bytesTotal : bufRemains(this->partBuffer);
+        const size_t bytesNext =
+            bufRemains(this->partBuffer) > bufUsed(buffer) - bytesTotal ?
+                bufUsed(buffer) - bytesTotal : bufRemains(this->partBuffer);
+
         bufCatSub(this->partBuffer, buffer, bytesTotal, bytesNext);
         bytesTotal += bytesNext;
 
@@ -241,7 +244,7 @@ storageWriteS3Close(THIS_VOID)
                     .content = xmlDocumentBuf(partList));
                 HttpResponse *response = storageS3ResponseP(request);
 
-                // Error if there is no etag in the result. This indicates that the request did not succeed despite the success code.
+                // Error when no etag in the result. This indicates that the request did not succeed despite the success code.
                 if (xmlNodeChild(
                         xmlDocumentRoot(xmlDocumentNewBuf(httpResponseContent(response))), S3_XML_TAG_ETAG_STR, false) == NULL)
                 {
@@ -252,7 +255,8 @@ storageWriteS3Close(THIS_VOID)
             else
             {
                 storageS3RequestP(
-                    this->storage, HTTP_VERB_PUT_STR, this->interface.name, .content = this->partBuffer, .sseKms = true);
+                    this->storage, HTTP_VERB_PUT_STR, this->interface.name, .content = this->partBuffer, .sseKms = true,
+                    .tag = true);
             }
 
             bufFree(this->partBuffer);
@@ -266,7 +270,7 @@ storageWriteS3Close(THIS_VOID)
 
 /**********************************************************************************************************************************/
 FN_EXTERN StorageWrite *
-storageWriteS3New(StorageS3 *storage, const String *name, size_t partSize)
+storageWriteS3New(StorageS3 *const storage, const String *const name, const size_t partSize)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_S3, storage);
@@ -276,13 +280,9 @@ storageWriteS3New(StorageS3 *storage, const String *name, size_t partSize)
     ASSERT(storage != NULL);
     ASSERT(name != NULL);
 
-    StorageWrite *this = NULL;
-
-    OBJ_NEW_BEGIN(StorageWriteS3, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(StorageWriteS3, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageWriteS3 *driver = OBJ_NEW_ALLOC();
-
-        *driver = (StorageWriteS3)
+        *this = (StorageWriteS3)
         {
             .storage = storage,
             .partSize = partSize,
@@ -305,10 +305,8 @@ storageWriteS3New(StorageS3 *storage, const String *name, size_t partSize)
                 },
             },
         };
-
-        this = storageWriteNew(driver, &driver->interface);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_WRITE, this);
+    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteNew(this, &this->interface));
 }

@@ -23,7 +23,7 @@ Macros for function logging
 #define FUNCTION_LOG_IO_BUFFER_WRITE_TYPE                                                                                          \
     IoBufferWrite *
 #define FUNCTION_LOG_IO_BUFFER_WRITE_FORMAT(value, buffer, bufferSize)                                                             \
-    objToLog(value, "IoBufferWrite", buffer, bufferSize)
+    objNameToLog(value, "IoBufferWrite", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Write to the buffer
@@ -48,7 +48,7 @@ ioBufferWrite(THIS_VOID, const Buffer *buffer)
 
 /**********************************************************************************************************************************/
 FN_EXTERN IoWrite *
-ioBufferWriteNew(Buffer *buffer)
+ioBufferWriteNew(Buffer *const buffer)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(BUFFER, buffer);
@@ -56,20 +56,14 @@ ioBufferWriteNew(Buffer *buffer)
 
     ASSERT(buffer != NULL);
 
-    IoWrite *this = NULL;
-
-    OBJ_NEW_BEGIN(IoBufferWrite, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(IoBufferWrite, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        IoBufferWrite *driver = OBJ_NEW_ALLOC();
-
-        *driver = (IoBufferWrite)
+        *this = (IoBufferWrite)
         {
             .write = buffer,
         };
-
-        this = ioWriteNewP(driver, .write = ioBufferWrite);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_WRITE, this);
+    FUNCTION_LOG_RETURN(IO_WRITE, ioWriteNewP(this, .write = ioBufferWrite));
 }

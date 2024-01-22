@@ -14,7 +14,7 @@ Log Handler
 Max size allowed for a single log message including header
 ***********************************************************************************************************************************/
 #ifndef LOG_BUFFER_SIZE
-    #define LOG_BUFFER_SIZE                                         ((size_t)(32 * 1024))
+#define LOG_BUFFER_SIZE                                             ((size_t)(32 * 1024))
 #endif
 
 /***********************************************************************************************************************************
@@ -49,13 +49,13 @@ call site by supplying commonly-used values.
 Note that it's possible that not all the macros below will appear in the code. In particular the ERROR and ASSERT macros should not
 be used directly. They are included for completeness and future usage.
 ***********************************************************************************************************************************/
-// Define a macro to test logAny() that can be removed when performing coverage testing.  Checking logAny() saves a function call
-// for logging calls that won't be output anywhere, but since the macro contains a branch it causes coverage problems.
+// Define a macro to test logAny() that can be removed when performing coverage testing. Checking logAny() saves a function call for
+// logging calls that won't be output anywhere, but since the macro contains a branch it causes coverage problems.
 #ifdef DEBUG_COVERAGE
-    #define IF_LOG_ANY(logLevel)
+#define IF_LOG_ANY(logLevel)
 #else
-    #define IF_LOG_ANY(logLevel)                                                                                                   \
-        if (logAny(logLevel))
+#define IF_LOG_ANY(logLevel)                                                                                                       \
+    if (logAny(logLevel))
 #endif
 
 #define LOG_INTERNAL(logLevel, logRangeMin, logRangeMax, processId, code, message)                                                 \
@@ -157,8 +157,8 @@ FN_EXTERN void logInternal(
     const char *functionName, int code, const char *message);
 
 // Log function with formatting
-FN_EXTERN void logInternalFmt(
+FN_EXTERN FN_PRINTF(8, 9) void logInternalFmt(
     LogLevel logLevel, LogLevel logRangeMin, LogLevel logRangeMax, unsigned int processId, const char *fileName,
-    const char *functionName, int code, const char *format, ...) __attribute__((format(printf, 8, 9)));
+    const char *functionName, int code, const char *format, ...);
 
 #endif

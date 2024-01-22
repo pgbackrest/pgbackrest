@@ -10,6 +10,7 @@ Socket Common Functions
 
 #include "common/debug.h"
 #include "common/io/fd.h"
+#include "common/io/socket/address.h"
 #include "common/io/socket/common.h"
 #include "common/log.h"
 #include "common/wait.h"
@@ -56,41 +57,6 @@ sckInit(bool block, bool keepAlive, int tcpKeepAliveCount, int tcpKeepAliveIdle,
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN struct addrinfo *
-sckHostLookup(const String *const host, unsigned int port)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STRING, host);
-        FUNCTION_LOG_PARAM(UINT, port);
-    FUNCTION_LOG_END();
-
-    ASSERT(host != NULL);
-    ASSERT(port != 0);
-
-    // Set hints that narrow the type of address we are looking for -- we'll take ipv4 or ipv6
-    struct addrinfo hints = (struct addrinfo)
-    {
-        .ai_family = AF_UNSPEC,
-        .ai_flags = AI_PASSIVE,
-        .ai_socktype = SOCK_STREAM,
-        .ai_protocol = IPPROTO_TCP,
-    };
-
-    // Convert the port to a zero-terminated string for use with getaddrinfo()
-    char portZ[CVT_BASE10_BUFFER_SIZE];
-    cvtUIntToZ(port, portZ, sizeof(portZ));
-
-    // Do the lookup
-    struct addrinfo *result;
-    int error;
-
-    if ((error = getaddrinfo(strZ(host), portZ, &hints, &result)) != 0)
-        THROW_FMT(HostConnectError, "unable to get address for '%s': [%d] %s", strZ(host), error, gai_strerror(error));
-
-    FUNCTION_LOG_RETURN_P(VOID, result);
-}
-
-/**********************************************************************************************************************************/
 FN_EXTERN void
 sckOptionSet(int fd)
 {
@@ -121,7 +87,7 @@ sckOptionSet(int fd)
     // Automatically close the socket (in the child process) on a successful execve() call. Connections are never shared between
     // processes so there is no reason to leave them open.
 #ifdef F_SETFD
-	THROW_ON_SYS_ERROR(fcntl(fd, F_SETFD, FD_CLOEXEC) == -1, ProtocolError, "unable to set FD_CLOEXEC");
+    THROW_ON_SYS_ERROR(fcntl(fd, F_SETFD, FD_CLOEXEC) == -1, ProtocolError, "unable to set FD_CLOEXEC");
 #endif
 
     // Enable TCP keepalives
@@ -156,7 +122,7 @@ sckOptionSet(int fd)
         }
 #endif
 
-    // Set TCP_KEEPINTVL when available
+        // Set TCP_KEEPINTVL when available
 #ifdef TCP_KEEPIDLE
         if (socketLocal.tcpKeepAliveInterval > 0)
         {
@@ -204,7 +170,7 @@ sckConnect(int fd, const String *host, unsigned int port, const struct addrinfo 
         {
             // Wait for write-ready
             if (!fdReadyWrite(fd, timeout))
-                THROW_FMT(HostConnectError, "timeout connecting to '%s:%u'", strZ(host), port);
+                THROW_FMT(HostConnectError, "timeout connecting to '%s'", strZ(addrInfoToName(host, port, hostAddress)));
 
             // Check for success or error. If the connection was successful this will set errNo to 0.
             socklen_t errNoLen = sizeof(errNo);
@@ -215,7 +181,10 @@ sckConnect(int fd, const String *host, unsigned int port, const struct addrinfo 
 
         // Throw error if it is still set
         if (errNo != 0)
-            THROW_SYS_ERROR_CODE_FMT(errNo, HostConnectError, "unable to connect to '%s:%u'", strZ(host), port);
+        {
+            THROW_SYS_ERROR_CODE_FMT(
+                errNo, HostConnectError, "unable to connect to '%s'", strZ(addrInfoToName(host, port, hostAddress)));
+        }
     }
 
     FUNCTION_LOG_RETURN_VOID();

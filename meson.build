@@ -4,7 +4,7 @@
 project(
     'pgbackrest',
     ['c'],
-    version: '2.44dev',
+    version: '2.51dev',
     license: 'MIT',
     meson_version: '>=0.45',
     default_options: [
@@ -165,6 +165,15 @@ lib_yaml = dependency('yaml-0.1')
 # Find required gz library
 lib_z = dependency('zlib')
 
+configuration.set('ZLIB_CONST', true, description: 'Require zlib const input buffer')
+
+# Find optional libssh2 library
+lib_ssh2 = dependency('libssh2', required: false)
+
+if lib_ssh2.found()
+    configuration.set('HAVE_LIBSSH2', true, description: 'Is libssh2 present?')
+endif
+
 # Find optional zstd library
 lib_zstd = dependency('libzstd', version: '>=1.0', required: false)
 
@@ -194,8 +203,15 @@ configuration.set(
     description: 'Indicate that a function should always be inlined'
 )
 
+# Set FN_PRINTF macro
+configuration.set(
+    'FN_PRINTF(fmt, args)', '__attribute__((format(printf, fmt, args)))',
+    description: 'Indicate that a function is formatted like printf (and provide format and args position)'
+)
+
 ####################################################################################################################################
 # Include subdirs
 ####################################################################################################################################
 subdir('src')
+subdir('doc/src')
 subdir('test/src')

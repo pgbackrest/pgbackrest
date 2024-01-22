@@ -23,7 +23,7 @@ Macros for function logging
 #define FUNCTION_LOG_IO_SINK_TYPE                                                                                                  \
     IoSink *
 #define FUNCTION_LOG_IO_SINK_FORMAT(value, buffer, bufferSize)                                                                     \
-    objToLog(value, "IoSink", buffer, bufferSize)
+    objNameToLog(value, "IoSink", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Discard all input
@@ -52,14 +52,10 @@ ioSinkNew(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
 
-    IoFilter *this = NULL;
-
-    OBJ_NEW_BEGIN(IoSink, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(IoSink)
     {
-        IoSink *driver = OBJ_NEW_ALLOC();
-        this = ioFilterNewP(SINK_FILTER_TYPE, driver, NULL, .inOut = ioSinkProcess);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_FILTER, this);
+    FUNCTION_LOG_RETURN(IO_FILTER, ioFilterNewP(SINK_FILTER_TYPE, this, NULL, .inOut = ioSinkProcess));
 }

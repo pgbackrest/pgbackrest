@@ -28,6 +28,8 @@ storageListRenderInfo(const StorageInfo *const info, IoWrite *const write, const
         FUNCTION_TEST_PARAM(BOOL, json);
     FUNCTION_TEST_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     ASSERT(info != NULL);
     ASSERT(write != NULL);
 
@@ -83,6 +85,8 @@ storageListRender(IoWrite *write)
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_WRITE, write);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     // Get sort order
     SortOrder sortOrder = sortOrderAsc;
@@ -184,9 +188,9 @@ cmdStorageList(void)
         {
             storageListRender(ioFdWriteNew(STRDEF("stdout"), STDOUT_FILENO, cfgOptionUInt64(cfgOptIoTimeout)));
         }
-        // Ignore write errors because it's possible (even likely) that this output is being piped to something like head which
-        // will exit when it gets what it needs and leave us writing to a broken pipe.  It would be better to just ignore the broken
-        // pipe error but currently we don't store system error codes.
+        // Ignore write errors because it's possible (even likely) that this output is being piped to something like head which will
+        // exit when it gets what it needs and leave us writing to a broken pipe. It would be better to just ignore the broken pipe
+        // error but currently we don't store system error codes.
         CATCH(FileWriteError)
         {
         }

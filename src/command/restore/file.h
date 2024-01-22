@@ -33,17 +33,22 @@ typedef struct RestoreFile
     const String *group;                                            // Original group
     uint64_t offset;                                                // Offset into repo file where pg file is located
     const Variant *limit;                                           // Limit for read in the repo file
+    uint64_t blockIncrMapSize;                                      // Block incremental map size (0 if not incremental)
+    size_t blockIncrSize;                                           // Block incremental size (when map size > 0)
+    size_t blockIncrChecksumSize;                                   // Checksum size (when map size > 0)
     const String *manifestFile;                                     // Manifest file
+    const Buffer *blockChecksum;                                    // Checksums for block incremental restore, set in restoreFile()
 } RestoreFile;
 
 typedef struct RestoreFileResult
 {
     const String *manifestFile;                                     // Manifest file
     RestoreResult result;                                           // Restore result (e.g. preserve, copy)
+    uint64_t blockIncrDeltaSize;                                    // Size restored by block incremental delta
 } RestoreFileResult;
 
 FN_EXTERN List *restoreFile(
     const String *repoFile, unsigned int repoIdx, CompressType repoFileCompressType, time_t copyTimeBegin, bool delta,
-    bool deltaForce, const String *cipherPass, const List *fileList);
+    bool deltaForce, bool bundleRaw, const String *cipherPass, const StringList *referenceList, List *fileList);
 
 #endif

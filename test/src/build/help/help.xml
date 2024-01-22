@@ -6,6 +6,7 @@
     <operation>
         <operation-general>
             <option-list>
+                <option id="beta"><summary></summary><text><p></p></text></option>
                 <option id="config"><summary></summary><text><p></p></text></option>
                 <option id="config-path"><summary></summary><text><p></p></text></option>
                 <option id="config-include-path"><summary></summary><text><p></p></text></option>
@@ -20,6 +21,16 @@
                 <option id="repo-type"><summary></summary><text><p></p></text></option>
                 <option id="spool-path"><summary></summary><text><p></p></text></option>
                 <option id="stanza"><summary></summary><text><p></p></text></option>
+
+                <option id="back-trace">
+                    <summary>Enable back trace.</summary>
+
+                    <text>
+                        <p>Back tracing helps with debugging by showing more detail about were an error happened.</p>
+                    </text>
+
+                    <example>false</example>
+                </option>
 
                 <option id="buffer-size">
                     <summary>Buffer size for I/O operations.</summary>

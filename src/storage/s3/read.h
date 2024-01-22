@@ -4,8 +4,8 @@ S3 Storage Read
 #ifndef STORAGE_S3_READ_H
 #define STORAGE_S3_READ_H
 
-#include "storage/s3/storage.intern.h"
 #include "storage/read.h"
+#include "storage/s3/storage.intern.h"
 
 /***********************************************************************************************************************************
 Constructors

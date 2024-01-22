@@ -38,12 +38,13 @@ struct XmlDocument
 /***********************************************************************************************************************************
 Error handler
 
-For now this is a noop until more detailed error messages are needed.  The function is called multiple times per error, so the
+For now this is a noop until more detailed error messages are needed. The function is called multiple times per error, so the
 messages need to be accumulated and then returned together.
 
-This empty function is required because without it libxml2 will dump errors to stdout.  Really.
+This empty function is required because without it libxml2 will dump errors to stdout. Really.
 ***********************************************************************************************************************************/
-static void xmlErrorHandler(void *ctx, const char *format, ...)
+static void
+xmlErrorHandler(void *ctx, const char *format, ...)
 {
     (void)ctx;
     (void)format;
@@ -64,9 +65,8 @@ xmlInit(void)
     {
         LIBXML_TEST_VERSION;
 
-        // It's a pretty weird that we can't just pass a handler function but instead have to assign it to a var...
-        static xmlGenericErrorFunc xmlErrorHandlerFunc = xmlErrorHandler;
-        initGenericErrorDefaultFunc(&xmlErrorHandlerFunc);
+        // Set error handler
+        xmlSetGenericErrorFunc(NULL, xmlErrorHandler);
 
         xmlInit = true;
     }
@@ -79,7 +79,7 @@ static XmlNodeList *
 xmlNodeLstNew(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(XML_NODE_LIST, (XmlNodeList *)lstNewP(sizeof(XmlNode *)));
+    FUNCTION_TEST_RETURN(XML_NODE_LIST, (XmlNodeList *)OBJ_NAME(lstNewP(sizeof(XmlNode *)), XmlNodeList::List));
 }
 
 /**********************************************************************************************************************************/
@@ -92,12 +92,14 @@ xmlNodeNew(xmlNodePtr node)
 
     ASSERT(node != NULL);
 
-    XmlNode *this = memNew(sizeof(XmlNode));
-
-    *this = (XmlNode)
+    OBJ_NEW_BEGIN(XmlNode)
     {
-        .node = node,
-    };
+        *this = (XmlNode)
+        {
+            .node = node,
+        };
+    }
+    OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(XML_NODE, this);
 }
@@ -270,13 +272,8 @@ xmlDocumentNew(const String *rootName)
 
     xmlInit();
 
-    // Create object
-    XmlDocument *this = NULL;
-
-    OBJ_NEW_BEGIN(XmlDocument, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(XmlDocument, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (XmlDocument)
         {
             .xml = xmlNewDoc(BAD_CAST "1.0"),
@@ -306,12 +303,8 @@ xmlDocumentNewBuf(const Buffer *buffer)
 
     xmlInit();
 
-    // Create object
-    XmlDocument *this = NULL;
-
-    OBJ_NEW_BEGIN(XmlDocument, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(XmlDocument, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
         *this = (XmlDocument){{0}};                                 // Extra braces are required for older gcc versions
 
         if ((this->xml = xmlReadMemory((const char *)bufPtrConst(buffer), (int)bufUsed(buffer), "noname.xml", NULL, 0)) == NULL)

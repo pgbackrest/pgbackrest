@@ -152,10 +152,10 @@ sub backupLabel
     # Create backup label
     my $strBackupLabel = backupLabelFormat($strType, $strBackupLabelLast, $lTimestampStart);
 
-    # Make sure that the timestamp has not already been used by a prior backup.  This is unlikely for online backups since there is
+    # Make sure that the timestamp has not already been used by a prior backup. This is unlikely for online backups since there is
     # already a wait after the manifest is built but it's still possible if the remote and local systems don't have synchronized
-    # clocks.  In practice this is most useful for making offline testing faster since it allows the wait after manifest build to
-    # be skipped by dealing with any backup label collisions here.
+    # clocks. In practice this is most useful for making offline testing faster since it allows the wait after manifest build to be
+    # skipped by dealing with any backup label collisions here.
     if ($oStorageRepo->list(
         $strRepoBackupPath,
              {strExpression =>
@@ -233,7 +233,7 @@ sub run
             {bHostBackup => $bRemote, bTls => $bTls, strStorage => $strStorage, bRepoEncrypt => $bEncrypt,
                 strCompressType => NONE});
 
-        # If S3 set process max to 2.  This seems like the best place for parallel testing since it will help speed S3 processing
+        # If S3 set process max to 2. This seems like the best place for parallel testing since it will help speed S3 processing
         # without slowing down the other tests too much.
         if ($strStorage eq S3)
         {
@@ -372,7 +372,7 @@ sub run
 
         $oHostDbPrimary->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_PGCONTROL, '[replaceme]',
-            $self->archBits() == 32 ? '8107e546c59c72a8c1818fc3610d7cc1e5623660' : '4c77c900f7af0d9ab13fa9982051a42e0b637f6c',
+            $self->archBits() == 32 ? '59331420592064afff045f352de3a1ce53b0dd21' : 'e8bd9ef18a0b58f89aed7e98a1c32119f03727ee',
             $lTime - 100, undef, true);
 
         # Copy pg_control
@@ -435,7 +435,7 @@ sub run
             $oHostDbPrimary->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/t333_44000', 'IGNORE');
         }
 
-        # Help and Version.  These have complete unit tests, so here just make sure there is output from the command line.
+        # Help and Version. These have complete unit tests, so here just make sure there is output from the command line.
         #---------------------------------------------------------------------------------------------------------------------------
         if ($self->runCurrent() == 1)
         {
@@ -1088,7 +1088,7 @@ sub run
         $oManifest{&MANIFEST_SECTION_BACKUP_TARGET}{'pg_tblspc/2'}{&MANIFEST_SUBKEY_PATH} = '../../tablespace/ts2';
         $oManifest{&MANIFEST_SECTION_TARGET_LINK}{'pg_data/pg_tblspc/2'}{&MANIFEST_SUBKEY_DESTINATION} = '../../tablespace/ts2';
 
-        # Dump out history path at the end to verify all history files are being recorded.  This test is only performed locally
+        # Dump out history path at the end to verify all history files are being recorded. This test is only performed locally
         # because for some reason sort order is different when this command is executed via ssh (even though the content of the
         # directory is identical).
         #---------------------------------------------------------------------------------------------------------------------------

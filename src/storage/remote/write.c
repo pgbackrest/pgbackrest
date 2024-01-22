@@ -34,7 +34,7 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_WRITE_REMOTE_TYPE                                                                                     \
     StorageWriteRemote *
 #define FUNCTION_LOG_STORAGE_WRITE_REMOTE_FORMAT(value, buffer, bufferSize)                                                        \
-    objToLog(value, "StorageWriteRemote", buffer, bufferSize)
+    objNameToLog(value, "StorageWriteRemote", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Close file on the remote
@@ -78,7 +78,7 @@ storageWriteRemoteOpen(THIS_VOID)
     {
         // If the file is compressible add decompression filter on the remote
         if (this->interface.compressible)
-            ioFilterGroupInsert(ioWriteFilterGroup(storageWriteIo(this->write)), 0, decompressFilter(compressTypeGz));
+            ioFilterGroupInsert(ioWriteFilterGroup(storageWriteIo(this->write)), 0, decompressFilterP(compressTypeGz));
 
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE);
         PackWrite *const param = protocolCommandParam(command);
@@ -106,7 +106,7 @@ storageWriteRemoteOpen(THIS_VOID)
         {
             ioFilterGroupAdd(
                 ioWriteFilterGroup(storageWriteIo(this->write)),
-                compressFilter(compressTypeGz, (int)this->interface.compressLevel));
+                compressFilterP(compressTypeGz, (int)this->interface.compressLevel));
         }
 
         // Set free callback to ensure remote file is freed
@@ -209,12 +209,8 @@ storageWriteRemoteNew(
     ASSERT(modeFile != 0);
     ASSERT(modePath != 0);
 
-    StorageWriteRemote *this = NULL;
-
-    OBJ_NEW_BEGIN(StorageWriteRemote, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(StorageWriteRemote, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (StorageWriteRemote)
         {
             .storage = storage,
@@ -246,7 +242,7 @@ storageWriteRemoteNew(
             },
         };
 
-        this->write = storageWriteNew(this, &this->interface);
+        this->write = storageWriteNew(OBJ_NAME(this, StorageWrite::StorageWriteRemote), &this->interface);
     }
     OBJ_NEW_END();
 

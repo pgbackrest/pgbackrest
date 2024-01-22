@@ -23,7 +23,7 @@ testRun(void)
         TEST_RESULT_STR_Z(
             bldCfgRenderLabel(STRDEF("line"), true, STRDEF("label")),
             "line                                                                                                                  "
-                "      // label",
+            "      // label",
             "render");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -33,10 +33,10 @@ testRun(void)
             bldCfgRenderLabel(
                 STRDEF(
                     "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890"
-                        "12345678901234567890"),
+                    "12345678901234567890"),
                 true, STRDEF("label")),
             "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678"
-                "901234567890",
+            "901234567890",
             "render");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -285,7 +285,7 @@ testRun(void)
             "          - 32768\n"
             "    allow-list:\n"
             "      - 8192\n"
-            "      - 16384\n"
+            "      - 16384: HAVE_LARGE_MEM\n"
             "    command-role:\n"
             "      main: {}\n"
             "\n"
@@ -401,6 +401,7 @@ testRun(void)
             "  backup-standby:\n"
             "    section: global\n"
             "    type: boolean\n"
+            "    beta: true\n"
             "    default: false\n"
             "    depend:\n"
             "      option: online\n"
@@ -759,6 +760,7 @@ testRun(void)
             "    (\n"
             "        PARSE_RULE_OPTION_NAME(\"backup-standby\"),\n"
             "        PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),\n"
+            "        PARSE_RULE_OPTION_BETA(true),\n"
             "        PARSE_RULE_OPTION_NEGATE(true),\n"
             "        PARSE_RULE_OPTION_RESET(true),\n"
             "        PARSE_RULE_OPTION_REQUIRED(true),\n"
@@ -829,6 +831,9 @@ testRun(void)
             "                (\n"
             "                    PARSE_RULE_VAL_INT(parseRuleValInt8192),\n"
             "                    PARSE_RULE_VAL_INT(parseRuleValInt16384),\n"
+            "#ifndef HAVE_LARGE_MEM\n"
+            "                        PARSE_RULE_BOOL_FALSE,\n"
+            "#endif\n"
             "                ),\n"
             "            ),\n"
             "        ),\n"

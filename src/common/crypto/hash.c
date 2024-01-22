@@ -5,17 +5,17 @@ Cryptographic Hash
 
 #include <string.h>
 
-#include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
 #include <openssl/hmac.h>
 
+#include "common/crypto/common.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
 #include "common/io/filter/filter.h"
 #include "common/log.h"
 #include "common/type/object.h"
 #include "common/type/pack.h"
-#include "common/crypto/common.h"
 
 /***********************************************************************************************************************************
 Hashes for zero-length files (i.e., seed value)
@@ -39,7 +39,7 @@ typedef struct CryptoHash
 {
     const EVP_MD *hashType;                                         // Hash type (sha1, md5, etc.)
     EVP_MD_CTX *hashContext;                                        // Message hash context
-    MD5_CTX *md5Context;                                            // MD5 context (used to bypass FIPS restrictions)
+    MD5_CTX md5Context;                                             // MD5 context (used to bypass FIPS restrictions)
     Buffer *hash;                                                   // Hash in binary form
 } CryptoHash;
 
@@ -49,7 +49,7 @@ Macros for function logging
 #define FUNCTION_LOG_CRYPTO_HASH_TYPE                                                                                              \
     CryptoHash *
 #define FUNCTION_LOG_CRYPTO_HASH_FORMAT(value, buffer, bufferSize)                                                                 \
-    objToLog(value, "CryptoHash", buffer, bufferSize)
+    objNameToLog(value, "CryptoHash", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Free hash context
@@ -94,7 +94,7 @@ cryptoHashProcess(THIS_VOID, const Buffer *message)
     }
     // Else local MD5 implementation
     else
-        MD5_Update(this->md5Context, bufPtrConst(message), bufUsed(message));
+        MD5_Update(&this->md5Context, bufPtrConst(message), bufUsed(message));
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -125,7 +125,7 @@ cryptoHash(CryptoHash *this)
             else
             {
                 this->hash = bufNew(HASH_TYPE_M5_SIZE);
-                MD5_Final(bufPtr(this->hash), this->md5Context);
+                MD5_Final(bufPtr(this->hash), &this->md5Context);
             }
 
             bufUsedSet(this->hash, bufSize(this->hash));
@@ -179,22 +179,16 @@ cryptoHashNew(const HashType type)
     // Init crypto subsystem
     cryptoInit();
 
-    // Allocate memory to hold process state
-    IoFilter *this = NULL;
-
-    OBJ_NEW_BEGIN(CryptoHash, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(CryptoHash, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        CryptoHash *driver = OBJ_NEW_ALLOC();
-        *driver = (CryptoHash){0};
+        *this = (CryptoHash){0};
 
         // Use local MD5 implementation since FIPS-enabled systems do not allow MD5. This is a bit misguided since there are valid
         // cases for using MD5 which do not involve, for example, password hashes. Since popular object stores, e.g. S3, require
         // MD5 for verifying payload integrity we are simply forced to provide MD5 functionality.
         if (type == hashTypeMd5)
         {
-            driver->md5Context = memNew(sizeof(MD5_CTX));
-
-            MD5_Init(driver->md5Context);
+            MD5_Init(&this->md5Context);
         }
         // Else use the standard OpenSSL implementation
         else
@@ -203,39 +197,37 @@ cryptoHashNew(const HashType type)
             char typeZ[STRID_MAX + 1];
             strIdToZ(type, typeZ);
 
-            if ((driver->hashType = EVP_get_digestbyname(typeZ)) == NULL)
+            if ((this->hashType = EVP_get_digestbyname(typeZ)) == NULL)
                 THROW_FMT(AssertError, "unable to load hash '%s'", typeZ);
 
             // Create context
-            cryptoError((driver->hashContext = EVP_MD_CTX_create()) == NULL, "unable to create hash context");
+            cryptoError((this->hashContext = EVP_MD_CTX_create()) == NULL, "unable to create hash context");
 
             // Set free callback to ensure hash context is freed
-            memContextCallbackSet(objMemContext(driver), cryptoHashFreeResource, driver);
+            memContextCallbackSet(objMemContext(this), cryptoHashFreeResource, this);
 
             // Initialize context
-            cryptoError(!EVP_DigestInit_ex(driver->hashContext, driver->hashType, NULL), "unable to initialize hash context");
+            cryptoError(!EVP_DigestInit_ex(this->hashContext, this->hashType, NULL), "unable to initialize hash context");
         }
-
-        // Create param list
-        Pack *paramList = NULL;
-
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            PackWrite *const packWrite = pckWriteNewP();
-
-            pckWriteStrIdP(packWrite, type);
-            pckWriteEndP(packWrite);
-
-            paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
-        }
-        MEM_CONTEXT_TEMP_END();
-
-        // Create filter interface
-        this = ioFilterNewP(CRYPTO_HASH_FILTER_TYPE, driver, paramList, .in = cryptoHashProcess, .result = cryptoHashResult);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_FILTER, this);
+    // Create param list
+    Pack *paramList;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackWrite *const packWrite = pckWriteNewP();
+
+        pckWriteStrIdP(packWrite, type);
+        pckWriteEndP(packWrite);
+
+        paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(
+        IO_FILTER, ioFilterNewP(CRYPTO_HASH_FILTER_TYPE, this, paramList, .in = cryptoHashProcess, .result = cryptoHashResult));
 }
 
 FN_EXTERN IoFilter *

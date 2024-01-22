@@ -11,9 +11,9 @@ Storage Helper
 #include "common/regExp.h"
 #include "config/config.h"
 #include "protocol/helper.h"
+#include "storage/helper.h"
 #include "storage/posix/storage.h"
 #include "storage/remote/storage.h"
-#include "storage/helper.h"
 
 /***********************************************************************************************************************************
 Storage path constants
@@ -54,7 +54,7 @@ static struct StorageHelperLocal
 
     String *stanza;                                                 // Stanza for storage
     bool stanzaInit;                                                // Has the stanza been initialized?
-    bool dryRunInit;                                                // Has dryRun been initialized?  If not disallow writes.
+    bool dryRunInit;                                                // Has dryRun been initialized? If not disallow writes.
     bool dryRun;                                                    // Disallow writes in dry-run mode.
     RegExp *walRegExp;                                              // Regular expression for identifying wal files
 } storageHelper;
@@ -84,7 +84,8 @@ storageHelperContextInit(void)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN void storageHelperInit(const StorageHelper *const helperList)
+FN_EXTERN void
+storageHelperInit(const StorageHelper *const helperList)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, helperList);
@@ -339,7 +340,7 @@ storageRepoPathExpression(const String *const expression, const String *const pa
     else
         THROW_FMT(AssertError, "invalid expression '%s'", strZ(expression));
 
-    ASSERT(result != 0);
+    ASSERT(result != NULL);
 
     FUNCTION_TEST_RETURN(STRING, result);
 }
@@ -566,4 +567,18 @@ storageSpoolWrite(void)
     }
 
     FUNCTION_TEST_RETURN_CONST(STORAGE, storageHelper.storageSpoolWrite);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+storageHelperFree(void)
+{
+    FUNCTION_TEST_VOID();
+
+    if (storageHelper.memContext != NULL)
+        memContextFree(storageHelper.memContext);
+
+    storageHelper = (struct StorageHelperLocal){.memContext = NULL, .helperList = storageHelper.helperList};
+
+    FUNCTION_TEST_RETURN_VOID();
 }

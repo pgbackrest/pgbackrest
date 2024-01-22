@@ -53,12 +53,8 @@ pgClientNew(const String *host, const unsigned int port, const String *database,
     ASSERT(port >= 1 && port <= 65535);
     ASSERT(database != NULL);
 
-    PgClient *this = NULL;
-
     OBJ_NEW_BEGIN(PgClient, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (PgClient)
         {
             .pub =
@@ -294,7 +290,7 @@ pgClientQuery(PgClient *const this, const String *const query, const PgClientQue
                         // Else convert the value to a variant
                         else
                         {
-                            // Convert column type.  Not all PostgreSQL types are supported but these should suffice.
+                            // Convert column type. Not all PostgreSQL types are supported but these should suffice.
                             switch (columnType[columnIdx])
                             {
                                 // Boolean type
@@ -377,10 +373,22 @@ pgClientClose(PgClient *this)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-pgClientToLog(const PgClient *this)
+FN_EXTERN void
+pgClientToLog(const PgClient *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{host: %s, port: %u, database: %s, user: %s, queryTimeout %" PRIu64 "}", strZ(strToLog(pgClientHost(this))),
-        pgClientPort(this), strZ(strToLog(pgClientDatabase(this))), strZ(strToLog(pgClientUser(this))), pgClientTimeout(this));
+    strStcCat(debugLog, "{host: ");
+    strStcResultSizeInc(
+        debugLog,
+        FUNCTION_LOG_OBJECT_FORMAT(pgClientHost(this), strToLog, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+
+    strStcCat(debugLog, ", database: ");
+    strToLog(pgClientDatabase(this), debugLog);
+
+    strStcCat(debugLog, ", user: ");
+    strStcResultSizeInc(
+        debugLog,
+        FUNCTION_LOG_OBJECT_FORMAT(pgClientUser(this), strToLog, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+
+    strStcFmt(
+        debugLog, ", port: %u, queryTimeout %" PRIu64 "}", pgClientPort(this), pgClientTimeout(this));
 }

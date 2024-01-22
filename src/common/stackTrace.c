@@ -8,12 +8,11 @@ Stack Trace Handler
 #include <string.h>
 
 #ifdef HAVE_LIBBACKTRACE
-    #include <backtrace.h>
     #include <backtrace-supported.h>
+    #include <backtrace.h>
 #endif
 
 #include "common/assert.h"
-#include "common/error.h"
 #include "common/macro.h"
 #include "common/stackTrace.h"
 
@@ -153,7 +152,7 @@ stackTraceParamIdx(int stackIdx)
 }
 
 FN_EXTERN const char *
-stackTraceParam()
+stackTraceParam(void)
 {
     return stackTraceParamIdx(stackTraceLocal.stackSize - 1);
 }
@@ -175,7 +174,7 @@ stackTraceParamBuffer(const char *paramName)
         data->paramOverflow = true;
 
         // There's no way to stop the parameter from being formatted so we reserve a space at the end where the format can safely
-        // take place and not disturb the rest of the buffer.  Hopefully overflows just won't happen but we need to be prepared in
+        // take place and not disturb the rest of the buffer. Hopefully overflows just won't happen but we need to be prepared in
         // case of runaway recursion or some other issue that fills the buffer because we don't want a segfault.
         return stackTraceLocal.functionParamBuffer + sizeof(stackTraceLocal.functionParamBuffer) - STACK_TRACE_PARAM_MAX;
     }
@@ -251,7 +250,7 @@ stackTracePop(void)
 /***********************************************************************************************************************************
 Stack trace format
 ***********************************************************************************************************************************/
-__attribute__((format(printf, 4, 5))) static size_t
+static FN_PRINTF(4, 5) size_t
 stackTraceFmt(char *buffer, size_t bufferSize, size_t bufferUsed, const char *format, ...)
 {
     va_list argumentList;
@@ -291,12 +290,8 @@ static int
 stackTraceBackCallback(
     void *const dataVoid, const uintptr_t pc, const char *fileName, const int fileLine, const char *const functionName)
 {
-    (void)(pc);
+    (void)pc;
     StackTraceBackData *const data = dataVoid;
-
-    // Stop if the stack has been exhausted
-    if (data->stackIdx < 0)
-        return true;
 
     // Catch any unset parameters which indicates the debug data is not available
     if (fileName == NULL || fileLine == 0 || functionName == NULL)
@@ -314,13 +309,12 @@ stackTraceBackCallback(
     data->firstCall = false;
 
     // If the function name matches combine backtrace data with stack data
-    const StackTraceData *const traceData = &stackTraceLocal.stack[data->stackIdx];
-
-    if (strcmp(functionName, traceData->functionName) == 0)
+    if (data->stackIdx >= 0 && strcmp(functionName, stackTraceLocal.stack[data->stackIdx].functionName) == 0)
     {
         data->result += stackTraceFmt(
             data->buffer, data->bufferSize, data->result, "%s%s:%s:%d:(%s)", data->firstLine ? "" : "\n",
-            stackTraceTrimSrc(traceData->fileName), functionName, fileLine, stackTraceParamIdx(data->stackIdx));
+            stackTraceTrimSrc(stackTraceLocal.stack[data->stackIdx].fileName), functionName, fileLine,
+            stackTraceParamIdx(data->stackIdx));
 
         data->stackIdx--;
     }
@@ -329,7 +323,7 @@ stackTraceBackCallback(
     {
         fileName = stackTraceTrimSrc(fileName);
 
-        if (strcmp(fileName, "common/error.c") == 0)
+        if (strcmp(fileName, "common/error/error.c") == 0)
             return false;
 
         data->result += stackTraceFmt(
@@ -355,18 +349,31 @@ stackTraceBackErrorCallback(void *data, const char *msg, int errnum)
 
 #endif
 
-// Helper to build stack trace when backtrace is not available
+FN_EXTERN size_t
+stackTraceToZ(
+    char *const buffer, const size_t bufferSize, const char *fileName, const char *const functionName, const unsigned int fileLine)
+{
 #ifdef HAVE_LIBBACKTRACE
-    static size_t
-        stackTraceToZDefault(
-#else
-    FN_EXTERN size_t
-        stackTraceToZ(
+    // Attempt to use backtrace data
+    StackTraceBackData data =
+    {
+        .firstCall = true,
+        .firstLine = true,
+        .stackIdx = stackTraceLocal.stackSize - 1,
+        .result = 0,
+        .buffer = buffer,
+        .bufferSize = bufferSize,
+    };
+
+    if (stackTraceLocal.backTraceState == NULL)
+        stackTraceLocal.backTraceState = backtrace_create_state(NULL, false, NULL, NULL);
+
+    backtrace_full(stackTraceLocal.backTraceState, 2, stackTraceBackCallback, stackTraceBackErrorCallback, &data);
+
+    if (data.result != 0)
+        return data.result;
 #endif // HAVE_LIBBACKTRACE
 
-    char *const buffer, const size_t bufferSize, const char *fileName, const char *const functionName,
-    const unsigned int fileLine)
-{
     size_t result = 0;
     const char *param = "test build required for parameters";
     int stackIdx = stackTraceLocal.stackSize - 1;
@@ -407,38 +414,6 @@ stackTraceBackErrorCallback(void *data, const char *msg, int errnum)
 
     return result;
 }
-
-#ifdef HAVE_LIBBACKTRACE
-
-FN_EXTERN size_t
-stackTraceToZ(
-    char *const buffer, const size_t bufferSize, const char *const fileName, const char *const functionName,
-    const unsigned int fileLine)
-{
-    // Attempt to use backtrace data
-    StackTraceBackData data =
-    {
-        .firstCall = true,
-        .firstLine = true,
-        .stackIdx = stackTraceLocal.stackSize - 1,
-        .result = 0,
-        .buffer = buffer,
-        .bufferSize = bufferSize,
-    };
-
-    if (stackTraceLocal.backTraceState == NULL)
-        stackTraceLocal.backTraceState = backtrace_create_state(NULL, false, NULL, NULL);
-
-    backtrace_full(stackTraceLocal.backTraceState, 2, stackTraceBackCallback, stackTraceBackErrorCallback, &data);
-
-    // If the backtrace was not available generate default stack trace
-    if (data.result == 0)
-        return stackTraceToZDefault(buffer, bufferSize, fileName, functionName, fileLine);
-
-    return data.result;
-}
-
-#endif // HAVE_LIBBACKTRACE
 
 /**********************************************************************************************************************************/
 FN_EXTERN void

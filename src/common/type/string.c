@@ -74,12 +74,8 @@ strNew(void)
 {
     FUNCTION_TEST_VOID();
 
-    String *this = NULL;
-
     OBJ_NEW_BEGIN(String, .allocQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (String)
         {
             .pub =
@@ -106,8 +102,6 @@ strNewFixed(const size_t size)
 
     CHECK_SIZE(size);
 
-    String *this = NULL;
-
     // If the string is larger than the extra allowed with a mem context then allocate the buffer separately
     size_t allocExtra = sizeof(String) + size + 1;
 
@@ -115,8 +109,6 @@ strNewFixed(const size_t size)
     {
         OBJ_NEW_BEGIN(String, .allocQty = 1)
         {
-            this = OBJ_NEW_ALLOC();
-
             *this = (String)
             {
                 .pub =
@@ -133,8 +125,6 @@ strNewFixed(const size_t size)
 
     OBJ_NEW_EXTRA_BEGIN(String, (uint16_t)(allocExtra))
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (String)
         {
             .pub =
@@ -170,7 +160,8 @@ strNewZ(const char *const string)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *strNewDbl(double value)
+FN_EXTERN String *
+strNewDbl(double value)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(DOUBLE, value);
@@ -779,8 +770,8 @@ strPathAbsolute(const String *this, const String *base)
     {
         result = strDup(this);
     }
-    // Else we'll need to construct the absolute path.  You would hope we could use realpath() here but it is so broken in the
-    // Posix spec that is seems best avoided.
+    // Else we'll need to construct the absolute path. You would hope we could use realpath() here but it is so broken in the Posix
+    // spec that is seems best avoided.
     else
     {
         ASSERT(base != NULL);
@@ -998,27 +989,11 @@ strTruncIdx(String *this, int idx)
     FUNCTION_TEST_RETURN(STRING, this);
 }
 
-/***********************************************************************************************************************************
-Convert an object to a zero-terminated string for logging
-***********************************************************************************************************************************/
-FN_EXTERN size_t strObjToLog(const void *object, StrObjToLogFormat formatFunc, char *buffer, size_t bufferSize)
-{
-    size_t result = 0;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        result = (size_t)snprintf(buffer, bufferSize, "%s", object == NULL ? NULL_Z : strZ(formatFunc(object)));
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    return result;
-}
-
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-strToLog(const String *this)
+FN_EXTERN void
+strToLog(const String *const this, StringStatic *const debugLog)
 {
-    return this == NULL ? strDup(NULL_STR) : strNewFmt("{\"%s\"}", strZ(this));
+    strStcFmt(debugLog, "{\"%s\"}", strZ(this));
 }
 
 /**********************************************************************************************************************************/

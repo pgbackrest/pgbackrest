@@ -35,7 +35,7 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_WRITE_POSIX_TYPE                                                                                      \
     StorageWritePosix *
 #define FUNCTION_LOG_STORAGE_WRITE_POSIX_FORMAT(value, buffer, bufferSize)                                                         \
-    objToLog(value, "StorageWritePosix", buffer, bufferSize)
+    objNameToLog(value, "StorageWritePosix", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 File open constants
@@ -66,6 +66,18 @@ storageWritePosixFreeResource(THIS_VOID)
 /***********************************************************************************************************************************
 Open the file
 ***********************************************************************************************************************************/
+static const char *
+storageWritePosixOpenOwner(const String *const owner, const char *const defaultOwner)
+{
+    return owner == NULL ? defaultOwner : strZ(owner);
+}
+
+static const char *
+storageWritePosixOpenOwnerId(const String *const owner, const unsigned int ownerId)
+{
+    return owner == NULL ? "" : zNewFmt("[%u]", ownerId);
+}
+
 static void
 storageWritePosixOpen(THIS_VOID)
 {
@@ -86,7 +98,7 @@ storageWritePosixOpen(THIS_VOID)
     // Attempt to create the path if it is missing
     if (this->fd == -1 && errno == ENOENT && this->interface.createPath)                                            // {vm_covered}
     {
-         // Create the path
+        // Create the path
         storageInterfacePathCreateP(this->storage, this->path, false, false, this->interface.modePath);
 
         // Open file again
@@ -108,19 +120,35 @@ storageWritePosixOpen(THIS_VOID)
     // Update user/group owner
     if (this->interface.user != NULL || this->interface.group != NULL)
     {
-        uid_t updateUserId = userIdFromName(this->interface.user);
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            const StorageInfo info = storageInterfaceInfoP(
+                this->storage, this->nameTmp, storageInfoLevelDetail, .followLink = true);
+            ASSERT(info.exists);
+            uid_t updateUserId = userIdFromName(this->interface.user);
+            gid_t updateGroupId = groupIdFromName(this->interface.group);
 
-        if (updateUserId == userId())
-            updateUserId = (uid_t)-1;
+            if (updateUserId == (uid_t)-1)
+                updateUserId = info.userId;
 
-        gid_t updateGroupId = groupIdFromName(this->interface.group);
+            if (updateGroupId == (gid_t)-1)
+                updateGroupId = info.groupId;
 
-        if (updateGroupId == groupId())
-            updateGroupId = (gid_t)-1;
-
-        THROW_ON_SYS_ERROR_FMT(
-            chown(strZ(this->nameTmp), updateUserId, updateGroupId) == -1, FileOwnerError, "unable to set ownership for '%s'",
-            strZ(this->nameTmp));
+            // Continue if one of the owners would be changed
+            if (updateUserId != info.userId || updateGroupId != info.groupId)
+            {
+                THROW_ON_SYS_ERROR_FMT(
+                    chown(strZ(this->nameTmp), updateUserId, updateGroupId) == -1, FileOwnerError,
+                    "unable to set ownership for '%s' to %s%s:%s%s from %s[%u]:%s[%u]", strZ(this->nameTmp),
+                    storageWritePosixOpenOwner(this->interface.user, "[none]"),
+                    storageWritePosixOpenOwnerId(this->interface.user, updateUserId),
+                    storageWritePosixOpenOwner(this->interface.group, "[none]"),
+                    storageWritePosixOpenOwnerId(this->interface.group, updateGroupId),
+                    storageWritePosixOpenOwner(info.user, "[unknown]"), info.userId,
+                    storageWritePosixOpenOwner(info.group, "[unknown]"), info.groupId);
+            }
+        }
+        MEM_CONTEXT_TEMP_END();
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -245,13 +273,9 @@ storageWritePosixNew(
     ASSERT(modeFile != 0);
     ASSERT(modePath != 0);
 
-    StorageWrite *this = NULL;
-
-    OBJ_NEW_BEGIN(StorageWritePosix, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(StorageWritePosix, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        StorageWritePosix *driver = OBJ_NEW_ALLOC();
-
-        *driver = (StorageWritePosix)
+        *this = (StorageWritePosix)
         {
             .storage = storage,
             .path = strPath(name),
@@ -283,11 +307,9 @@ storageWritePosixNew(
         };
 
         // Create temp file name
-        driver->nameTmp = atomic ? strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strZ(name)) : driver->interface.name;
-
-        this = storageWriteNew(driver, &driver->interface);
+        this->nameTmp = atomic ? strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strZ(name)) : this->interface.name;
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_WRITE, this);
+    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteNew(this, &this->interface));
 }

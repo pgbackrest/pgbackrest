@@ -79,7 +79,7 @@ testRun(void)
                 StringList *option = strLstNew();
                 strLstAddZ(option, "-b");
 
-                TEST_ASSIGN(exec, execNew(STRDEF("cat"), option , STRDEF("cat"), 1000), "new cat exec");
+                TEST_ASSIGN(exec, execNew(STRDEF("cat"), option, STRDEF("cat"), 1000), "new cat exec");
                 TEST_RESULT_VOID(execOpen(exec), "open cat exec");
 
                 TEST_RESULT_VOID(ioWriteStrLine(execIoWrite(exec), message), "write cat exec");
@@ -95,7 +95,7 @@ testRun(void)
         option = strLstNew();
         strLstAddZ(option, "2");
 
-        TEST_ASSIGN(exec, execNew(STRDEF("sleep"), option, STRDEF("sleep"), 1000), "new sleep exec");
+        TEST_ASSIGN(exec, execNew(STRDEF("sleep"), option, STRDEF("sleep"), 1500), "new sleep exec");
         TEST_RESULT_VOID(execOpen(exec), "open cat exec");
 
         TEST_ERROR(execFreeResource(exec), ExecuteError, "sleep did not exit when expected");

@@ -17,12 +17,9 @@ objMove(THIS_VOID, MemContext *parentNew)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void *
-objMoveContext(THIS_VOID, MemContext *parentNew)
+objMoveToInterface(THIS_VOID, void *const interfaceVoid, const MemContext *const current)
 {
-    if (thisVoid != NULL)
-        memContextMove(*(MemContext **)thisVoid, parentNew);
-
-    return thisVoid;
+    return objMemContext(thisVoid) != current ? objMove(thisVoid, objMemContext(interfaceVoid)) : thisVoid;
 }
 
 /**********************************************************************************************************************************/
@@ -31,12 +28,4 @@ objFree(THIS_VOID)
 {
     if (thisVoid != NULL)
         memContextFree(memContextFromAllocExtra(thisVoid));
-}
-
-/**********************************************************************************************************************************/
-FN_EXTERN void
-objFreeContext(THIS_VOID)
-{
-    if (thisVoid != NULL)
-        memContextFree(*(MemContext **)thisVoid);
 }

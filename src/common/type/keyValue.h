@@ -98,6 +98,6 @@ Macros for function logging
 #define FUNCTION_LOG_KEY_VALUE_TYPE                                                                                                \
     KeyValue *
 #define FUNCTION_LOG_KEY_VALUE_FORMAT(value, buffer, bufferSize)                                                                   \
-    objToLog(value, "KeyValue", buffer, bufferSize)
+    objNameToLog(value, "KeyValue", buffer, bufferSize)
 
 #endif

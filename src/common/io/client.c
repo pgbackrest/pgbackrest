@@ -17,7 +17,7 @@ struct IoClient
 
 /**********************************************************************************************************************************/
 FN_EXTERN IoClient *
-ioClientNew(void *driver, const IoClientInterface *interface)
+ioClientNew(void *const driver, const IoClientInterface *const interface)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM_P(VOID, driver);
@@ -31,25 +31,30 @@ ioClientNew(void *driver, const IoClientInterface *interface)
     ASSERT(interface->open != NULL);
     ASSERT(interface->toLog != NULL);
 
-    IoClient *this = memNew(sizeof(IoClient));
-
-    *this = (IoClient)
+    OBJ_NEW_BEGIN(IoClient, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        .pub =
+        *this = (IoClient)
         {
-            .memContext = memContextCurrent(),
-            .driver = driver,
-            .interface = interface,
-        },
-    };
+            .pub =
+            {
+                .driver = objMoveToInterface(driver, this, memContextPrior()),
+                .interface = interface,
+            },
+        };
+    }
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_CLIENT, this);
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-ioClientToLog(const IoClient *this)
+FN_EXTERN void
+ioClientToLog(const IoClient *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{type: %s, driver: %s}", strZ(strIdToStr(this->pub.interface->type)), strZ(this->pub.interface->toLog(this->pub.driver)));
+    strStcCat(debugLog, "{type: ");
+    strStcResultSizeInc(debugLog, strIdToLog(this->pub.interface->type, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+
+    strStcCat(debugLog, ", driver: ");
+    this->pub.interface->toLog(this->pub.driver, debugLog);
+    strStcCatChr(debugLog, '}');
 }

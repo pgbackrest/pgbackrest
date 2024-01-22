@@ -31,15 +31,29 @@ bldHlpParseOption(XmlNodeList *const xmlOptList, List *const optList, const Stri
         // Add option to list
         MEM_CONTEXT_BEGIN(lstMemContext(optList))
         {
-            lstAdd(
-                optList,
-                &(BldHlpOption)
-                {
-                    .name = xmlNodeAttribute(xmlOpt, STRDEF("id")),
-                    .section = strDup(section),
-                    .summary = xmlNodeChild(xmlOpt, STRDEF("summary"), true),
-                    .description = xmlNodeChild(xmlOpt, STRDEF("text"), true),
-                });
+            BldHlpOption bldHlpOption =
+            {
+                .name = xmlNodeAttribute(xmlOpt, STRDEF("id")),
+                .section = strDup(section),
+                .title = xmlNodeAttribute(xmlOpt, STRDEF("name")),
+                .summary = xmlNodeChild(xmlOpt, STRDEF("summary"), true),
+                .description = xmlNodeChild(xmlOpt, STRDEF("text"), true),
+            };
+
+            // Add examples
+            const XmlNodeList *const exampleList = xmlNodeChildList(xmlOpt, STRDEF("example"));
+
+            if (xmlNodeLstSize(exampleList) > 0)
+            {
+                StringList *const exampleListBuild = strLstNew();
+
+                for (unsigned int exampleIdx = 0; exampleIdx < xmlNodeLstSize(exampleList); exampleIdx++)
+                    strLstAdd(exampleListBuild, xmlNodeContent(xmlNodeLstGet(exampleList, exampleIdx)));
+
+                bldHlpOption.exampleList = exampleListBuild;
+            }
+
+            lstAdd(optList, &bldHlpOption);
         }
         MEM_CONTEXT_END();
     }
@@ -106,17 +120,48 @@ bldHlpParseCommandList(XmlNode *const xml)
         // Add command to list
         MEM_CONTEXT_BEGIN(lstMemContext(result))
         {
-            lstAdd(
-                result,
-                &(BldHlpCommand)
-                {
-                    .name = xmlNodeAttribute(xmlCmd, STRDEF("id")),
-                    .summary = xmlNodeChild(xmlCmd, STRDEF("summary"), true),
-                    .description = xmlNodeChild(xmlCmd, STRDEF("text"), true),
-                    .optList = lstMove(cmdOptList, memContextCurrent()),
-                });
+            const BldHlpCommand bldHlpCommand =
+            {
+                .name = xmlNodeAttribute(xmlCmd, STRDEF("id")),
+                .title = xmlNodeAttribute(xmlCmd, STRDEF("name")),
+                .summary = xmlNodeChild(xmlCmd, STRDEF("summary"), true),
+                .description = xmlNodeChild(xmlCmd, STRDEF("text"), true),
+                .optList = lstMove(cmdOptList, memContextCurrent()),
+            };
+
+            lstAdd(result, &bldHlpCommand);
         }
         MEM_CONTEXT_END();
+    }
+
+    lstSort(result, sortOrderAsc);
+
+    return result;
+}
+
+/***********************************************************************************************************************************
+Build section list
+***********************************************************************************************************************************/
+static List *
+bldHlpParseSectionList(XmlNode *const xml, const bool detail)
+{
+    List *const result = lstNewP(sizeof(BldHlpSection), .comparator = lstComparatorStr);
+
+    // Build section list
+    const XmlNodeList *const xmlSectionList = xmlNodeChildList(
+        xmlNodeChild(xmlNodeChild(xml, STRDEF("config"), true), STRDEF("config-section-list"), true), STRDEF("config-section"));
+
+    for (unsigned int sectionIdx = 0; sectionIdx < xmlNodeLstSize(xmlSectionList); sectionIdx++)
+    {
+        const XmlNode *const xmlSection = xmlNodeLstGet(xmlSectionList, sectionIdx);
+        const BldHlpSection bldHlpSection =
+        {
+            .id = xmlNodeAttribute(xmlSection, STRDEF("id")),
+            .name = xmlNodeAttribute(xmlSection, STRDEF("name")),
+            .introduction = xmlNodeChild(xmlSection, STRDEF("text"), detail),
+        };
+
+        lstAdd(result, &bldHlpSection);
     }
 
     lstSort(result, sortOrderAsc);
@@ -170,7 +215,7 @@ bldHlpValidate(const BldHlp bldHlp, const BldCfg bldCfg)
 
 /**********************************************************************************************************************************/
 BldHlp
-bldHlpParse(const Storage *const storageRepo, const BldCfg bldCfg)
+bldHlpParse(const Storage *const storageRepo, const BldCfg bldCfg, const bool detail)
 {
     // Initialize xml
     XmlNode *const xml = xmlDocumentRoot(
@@ -179,8 +224,17 @@ bldHlpParse(const Storage *const storageRepo, const BldCfg bldCfg)
     // Parse help
     BldHlp result =
     {
+        .sctList = bldHlpParseSectionList(xml, detail),
+
+        .cmdTitle = xmlNodeAttribute(xmlNodeChild(xml, STRDEF("operation"), true), STRDEF("title")),
+        .cmdDescription = xmlNodeContent(xmlNodeChild(xmlNodeChild(xml, STRDEF("operation"), true), STRDEF("description"), detail)),
+        .cmdIntroduction = xmlNodeChild(xmlNodeChild(xml, STRDEF("operation"), true), STRDEF("text"), detail),
         .cmdList = bldHlpParseCommandList(
             xmlNodeChild(xmlNodeChild(xml, STRDEF("operation"), true), STRDEF("command-list"), true)),
+
+        .optTitle = xmlNodeAttribute(xmlNodeChild(xml, STRDEF("config"), true), STRDEF("title")),
+        .optDescription = xmlNodeContent(xmlNodeChild(xmlNodeChild(xml, STRDEF("config"), true), STRDEF("description"), detail)),
+        .optIntroduction = xmlNodeChild(xmlNodeChild(xml, STRDEF("config"), true), STRDEF("text"), detail),
         .optList = bldHlpParseOptionList(xml)
     };
 

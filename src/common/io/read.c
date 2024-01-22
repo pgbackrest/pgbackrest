@@ -23,7 +23,7 @@ struct IoRead
 
 /**********************************************************************************************************************************/
 FN_EXTERN IoRead *
-ioReadNew(void *driver, IoReadInterface interface)
+ioReadNew(void *const driver, const IoReadInterface interface)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM_P(VOID, driver);
@@ -33,18 +33,13 @@ ioReadNew(void *driver, IoReadInterface interface)
     ASSERT(driver != NULL);
     ASSERT(interface.read != NULL);
 
-    IoRead *this = NULL;
-
     OBJ_NEW_BEGIN(IoRead, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (IoRead)
         {
             .pub =
             {
-                .memContext = memContextCurrent(),
-                .driver = driver,
+                .driver = objMoveToInterface(driver, this, memContextPrior()),
                 .interface = interface,
                 .filterGroup = ioFilterGroupNew(),
             },
@@ -217,11 +212,11 @@ ioReadSmall(IoRead *this, Buffer *buffer)
     // Allocate the internal output buffer if it has not already been allocated
     if (this->output == NULL)
     {
-        MEM_CONTEXT_BEGIN(this->pub.memContext)
+        MEM_CONTEXT_OBJ_BEGIN(this)
         {
             this->output = bufNew(ioBufferSize());
         }
-        MEM_CONTEXT_END();
+        MEM_CONTEXT_OBJ_END();
     }
 
     // Store size of remaining portion of buffer to calculate total read at the end
@@ -281,15 +276,15 @@ ioReadLineParam(IoRead *this, bool allowEof)
     ASSERT(this != NULL);
     ASSERT(this->pub.opened && !this->pub.closed);
 
-    // Allocate the output buffer if it has not already been allocated.  This buffer is not allocated at object creation because it
+    // Allocate the output buffer if it has not already been allocated. This buffer is not allocated at object creation because it
     // is not always used.
     if (this->output == NULL)
     {
-        MEM_CONTEXT_BEGIN(this->pub.memContext)
+        MEM_CONTEXT_OBJ_BEGIN(this)
         {
             this->output = bufNew(ioBufferSize());
         }
-        MEM_CONTEXT_END();
+        MEM_CONTEXT_OBJ_END();
     }
 
     // Search for a linefeed
@@ -366,11 +361,11 @@ ioReadVarIntU64(IoRead *const this)
     // Allocate the internal output buffer if it has not already been allocated
     if (this->output == NULL)
     {
-        MEM_CONTEXT_BEGIN(this->pub.memContext)
+        MEM_CONTEXT_OBJ_BEGIN(this)
         {
             this->output = bufNew(ioBufferSize());
         }
-        MEM_CONTEXT_END();
+        MEM_CONTEXT_OBJ_END();
     }
 
     uint64_t result = 0;
@@ -430,6 +425,42 @@ ioReadReady(IoRead *this, IoReadReadyParam param)
         result = this->pub.interface.ready(this->pub.driver, param.error);
 
     FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN uint64_t
+ioReadFlush(IoRead *const this, const IoReadFlushParam param)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_READ, this);
+        FUNCTION_LOG_PARAM(BOOL, param.errorOnBytes);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->pub.opened && !this->pub.closed);
+
+    // Flush remaining data
+    uint64_t result = 0;
+
+    if (!ioReadEof(this))
+    {
+        Buffer *const buffer = bufNew(ioBufferSize());
+
+        do
+        {
+            result += ioRead(this, buffer);
+            bufUsedZero(buffer);
+        }
+        while (!ioReadEof(this));
+
+        bufFree(buffer);
+    }
+
+    // Error when bytes found and error requested
+    if (result != 0 && param.errorOnBytes)
+        THROW_FMT(FileReadError, "expected EOF but flushed %" PRIu64 " byte(s)", result);
+
+    FUNCTION_LOG_RETURN(UINT64, result);
 }
 
 /**********************************************************************************************************************************/

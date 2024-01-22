@@ -6,8 +6,8 @@ Protocol Command
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/type/keyValue.h"
-#include "protocol/command.h"
 #include "protocol/client.h"
+#include "protocol/command.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -28,12 +28,8 @@ protocolCommandNew(const StringId command)
 
     ASSERT(command != 0);
 
-    ProtocolCommand *this = NULL;
-
     OBJ_NEW_BEGIN(ProtocolCommand, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (ProtocolCommand)
         {
             .command = command,
@@ -57,12 +53,12 @@ protocolCommandPut(ProtocolCommand *const this, IoWrite *const write)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Write the command and flush to be sure the command gets sent immediately
+        // Write the command
         PackWrite *commandPack = pckWriteNewIo(write);
         pckWriteU32P(commandPack, protocolMessageTypeCommand, .defaultWrite = true);
         pckWriteStrIdP(commandPack, this->command);
 
-        // Only write params if there were any
+        // Write parameters
         if (this->pack != NULL)
         {
             pckWriteEndP(this->pack);
@@ -102,8 +98,10 @@ protocolCommandParam(ProtocolCommand *this)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-protocolCommandToLog(const ProtocolCommand *this)
+FN_EXTERN void
+protocolCommandToLog(const ProtocolCommand *const this, StringStatic *const debugLog)
 {
-    return strNewFmt("{command: %s}", strZ(strIdToStr(this->command)));
+    strStcFmt(debugLog, "{name: ");
+    strStcResultSizeInc(debugLog, strIdToLog(this->command, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+    strStcCatChr(debugLog, '}');
 }

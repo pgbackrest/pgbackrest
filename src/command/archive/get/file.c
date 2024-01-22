@@ -3,8 +3,8 @@ Archive Get File
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include "command/archive/get/file.h"
 #include "command/archive/common.h"
+#include "command/archive/get/file.h"
 #include "command/control/common.h"
 #include "common/compress/helper.h"
 #include "common/crypto/cipherBlock.h"
@@ -28,14 +28,13 @@ archiveGetFile(
         FUNCTION_LOG_PARAM(STRING, walDestination);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_STRUCT();
+
     ASSERT(request != NULL);
     ASSERT(actualList != NULL && !lstEmpty(actualList));
     ASSERT(walDestination != NULL);
 
     ArchiveGetFileResult result = {.warnList = strLstNew()};
-
-    // Test for stop file
-    lockStopTest();
 
     // Check all files in the actual list and return as soon as one is copied
     bool copied = false;
@@ -68,7 +67,7 @@ archiveGetFile(
 
                 if (compressType != compressTypeNone)
                 {
-                    ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(destination)), decompressFilter(compressType));
+                    ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(destination)), decompressFilterP(compressType));
                     compressible = false;
                 }
 

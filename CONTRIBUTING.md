@@ -65,7 +65,7 @@ Memory is allocated inside contexts and can be long lasting (for objects) or tem
 
 Logging is used for debugging with the built-in macros `FUNCTION_LOG_*()` and `FUNCTION_TEST_*()` which are used to trace parameters passed to/returned from functions. `FUNCTION_LOG_*()` macros are used for production logging whereas `FUNCTION_TEST_*()` macros will be compiled out of production code. For functions where no parameter is valuable enough to justify the cost of debugging in production, use `FUNCTION_TEST_BEGIN()/FUNCTION_TEST_END()`, else use `FUNCTION_LOG_BEGIN(someLogLevel)/FUNCTION_LOG_END()`. See [debug.h](https://github.com/pgbackrest/pgbackrest/blob/main/src/common/debug.h) for more details and the [Coding Example](#coding-example) below.
 
-Logging is also used for providing information to the user via the `LOG_*()` macros, such as `LOG_INFO("some informational message")` and `LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strZ(cfgOptionDisplay(cfgOptType)))` and also via `THROW_*()` macros for throwing an error. See [log.h](https://github.com/pgbackrest/pgbackrest/blob/main/src/common/log.h) and [error.h](https://github.com/pgbackrest/pgbackrest/blob/main/src/common/error.h) for more details and the [Coding Example](#coding-example) below.
+Logging is also used for providing information to the user via the `LOG_*()` macros, such as `LOG_INFO("some informational message")` and `LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strZ(cfgOptionDisplay(cfgOptType)))` and also via `THROW_*()` macros for throwing an error. See [log.h](https://github.com/pgbackrest/pgbackrest/blob/main/src/common/log.h) and [error.h](https://github.com/pgbackrest/pgbackrest/blob/main/src/common/error/error.h) for more details and the [Coding Example](#coding-example) below.
 
 ### Coding Example
 
@@ -74,7 +74,7 @@ The example below is not structured like an actual implementation and is intende
 #### Example: hypothetical basic object construction
 ```c
 /*
- *  HEADER FILE - see db.h for a complete implementation example
+ * HEADER FILE - see db.h for a complete implementation example
  */
 
 // Typedef the object declared in the C file
@@ -108,7 +108,7 @@ myObjFree(MyObj *const this)
 #define FUNCTION_LOG_MY_OBJ_TYPE                                            \
     MyObj *
 #define FUNCTION_LOG_MY_OBJ_FORMAT(value, buffer, bufferSize)               \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, myObjToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, myObjToLog, buffer, bufferSize)
 
 /*
  * C FILE - see db.c for a more complete and actual implementation example
@@ -132,12 +132,8 @@ myObjNew(unsigned int myData, const String *secretName)
 
     ASSERT(secretName != NULL || myData > 0);       // Development-only assertions (will be compiled out of production code)
 
-    MyObj *this = NULL;                 // Declare the object in the parent memory context: it will live only as long as the parent
-
     OBJ_NEW_BEGIN(MyObj)                // Create a long lasting memory context with the name of the object
     {
-        this = OBJ_NEW_ALLOC();         // Allocate the memory required by the object
-
         *this = (MyObj)                 // Initialize the object
         {
             .pub =
@@ -231,29 +227,29 @@ pgbackrest/doc/doc.pl --help
 
 #### Without Docker
 
-If Docker is not installed, then the available tests can be listed using `--vm=none`, and each test must then be run with `--vm=none`.
+If Docker is not installed, then the available tests can be listed using `--dry-run`. Some tests require containers and will only be available when Docker is installed.
 
 pgbackrest-dev => List tests that don't require a container
 ```
-pgbackrest/test/test.pl --vm=none --dry-run
+pgbackrest/test/test.pl --dry-run
 
 --- output ---
 
     P00   INFO: test begin on x86_64 - log level info
     P00   INFO: clean autogenerate code
     P00   INFO: builds required: bin
---> P00   INFO: 75 tests selected
+--> P00   INFO: 81 tests selected
                 
-    P00   INFO: P1-T01/75 - vm=none, module=common, test=error
-           [filtered 72 lines of output]
-    P00   INFO: P1-T74/75 - vm=none, module=performance, test=type
-    P00   INFO: P1-T75/75 - vm=none, module=performance, test=storage
+    P00   INFO: P1-T01/81 - vm=none, module=common, test=error
+           [filtered 78 lines of output]
+    P00   INFO: P1-T80/81 - vm=none, module=performance, test=type
+    P00   INFO: P1-T81/81 - vm=none, module=performance, test=storage
 --> P00   INFO: DRY RUN COMPLETED SUCCESSFULLY
 ```
 
 pgbackrest-dev => Run a test
 ```
-pgbackrest/test/test.pl --vm=none --vm-out --module=common --test=wait
+pgbackrest/test/test.pl --vm-out --module=common --test=wait
 
 --- output ---
 
@@ -268,35 +264,48 @@ pgbackrest/test/test.pl --vm=none --vm-out --module=common --test=wait
                 
     P00   INFO: P1-T1/1 - vm=none, module=common, test=wait
                 
-        2022-11-28 09:25:06.417 P00   INFO: test command begin 2.43: [common/wait] --log-level=info --repo-path=/home/vagrant/test/repo --test-path=/home/vagrant/test --vm=none --vm-id=0
-        2022-11-28 09:25:08.806 P00   INFO: test command end: completed successfully (2389ms)
+        P00   INFO: test command begin 2.50: [common/wait] --log-level=info --no-log-timestamp --repo-path=/home/vagrant/test/repo --test-path=/home/vagrant/test --vm=none --vm-id=0
+        P00   INFO: test command end: completed successfully
         run 1 - waitNew(), waitMore, and waitFree()
-            000.010s          L0018     expect AssertError: assertion 'waitTime <= 999999000' failed
+                      L0018     expect AssertError: assertion 'waitTime <= 999999000' failed
         
-        run 1/1 ------------- L0021 0ms wait
-            000.050s 000.040s L0025     new wait
-            000.056s 000.006s L0026         check remaining time
-            000.057s 000.001s L0027         check wait time
-            000.058s 000.001s L0028         check sleep time
-            000.059s 000.001s L0029         check sleep prev time
-            000.060s 000.001s L0030         no wait more
-            000.064s 000.004s L0033     new wait = 0.2 sec
-            000.065s 000.001s L0034         check remaining time
-            000.066s 000.001s L0035         check wait time
-            000.067s 000.001s L0036         check sleep time
-            000.067s 000.000s L0037         check sleep prev time
-            000.068s 000.001s L0038         check begin time
-            000.266s 000.198s L0044         lower range check
-            000.267s 000.001s L0045         upper range check
-            000.268s 000.001s L0047         free wait
-            000.270s 000.002s L0052     new wait = 1.1 sec
-            000.271s 000.001s L0053         check wait time
-            000.272s 000.001s L0054         check sleep time
-            000.273s 000.001s L0055         check sleep prev time
-            000.274s 000.001s L0056         check begin time
-            001.372s 001.098s L0062         lower range check
-            001.373s 000.001s L0063         upper range check
-            001.373s 000.000s L0065         free wait
+        run 1/1 ----- L0021 0ms wait
+                      L0025     new wait
+                      L0026         check wait time
+                      L0027         check sleep time
+                      L0028         check sleep prev time
+                      L0029         no wait more
+        
+        run 1/2 ----- L0032 100ms with retries after time expired
+                      L0034     new wait
+                      L0037         time expired, first retry
+                      L0038         time expired, second retry
+                      L0039         time expired, retries expired
+        
+        run 1/3 ----- L0042 200ms wait
+                      L0046     new wait = 0.2 sec
+                      L0047         check wait time
+                      L0048         check sleep time
+                      L0049         check sleep prev time
+                      L0050         check begin time
+                      L0052         first retry
+                      L0053         check retry
+                      L0055         second retry
+                      L0056         check retry
+                      L0058         still going because of time
+                      L0064         lower range check
+                      L0065         upper range check
+                      L0067         free wait
+        
+        run 1/4 ----- L0070 1100ms wait
+                      L0074     new wait = 1.1 sec
+                      L0075         check wait time
+                      L0076         check sleep time
+                      L0077         check sleep prev time
+                      L0078         check begin time
+                      L0084         lower range check
+                      L0085         upper range check
+                      L0087         free wait
         
         TESTS COMPLETED SUCCESSFULLY
     
@@ -310,7 +319,7 @@ An entire module can be run by using only the `--module` option.
 
 pgbackrest-dev => Run a module
 ```
-pgbackrest/test/test.pl --vm=none --module=postgres
+pgbackrest/test/test.pl --module=postgres
 
 --- output ---
 
@@ -341,7 +350,7 @@ pgbackrest/test/test.pl --vm-build --vm=u20
 --- output ---
 
     P00   INFO: test begin on x86_64 - log level info
-    P00   INFO: Building pgbackrest/test:u20-base image (5f3dc325901f5274f9e21399ef6d3facd606d85a) ...
+    P00   INFO: Using cached pgbackrest/test:u20-base-20231109A image (51041e6806d2d05ccefbd8a2ab23f2c9e42a7997) ...
     P00   INFO: Building pgbackrest/test:u20-test image ...
     P00   INFO: Build Complete
 ```
@@ -463,9 +472,7 @@ HRN_FORK_BEGIN()
 {
     HRN_FORK_CHILD_BEGIN()
     {
-        TEST_RESULT_INT_NE(
-            lockAcquire(cfgOptionStr(cfgOptLockPath), STRDEF("stanza1"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
-            -1, "create backup/expire lock");
+        TEST_RESULT_INT_NE(lockAcquireP(), -1, "create backup/expire lock");
 
         // Notify parent that lock has been acquired
         HRN_FORK_CHILD_NOTIFY_PUT();
@@ -506,17 +513,13 @@ HRN_FORK_END();
 A PostgreSQL libpq shim is provided to simulate interactions with PostgreSQL. Below is a simple example. See [harnessPq.h](https://github.com/pgbackrest/pgbackrest/blob/main/test/src/common/harnessPq.h) for more details.
 ```
 // Set up two standbys but no primary
-harnessPqScriptSet((HarnessPq [])
-{
-    HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_96, "/pgdata", true, NULL, NULL),
-    HRNPQ_MACRO_OPEN_GE_96(8, "dbname='postgres' port=5433", PG_VERSION_96, "/pgdata", true, NULL, NULL),
+HRN_PQ_SCRIPT_SET(
+    HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_96, "/pgdata", true, NULL, NULL),
+    HRN_PQ_SCRIPT_OPEN_GE_96(8, "dbname='postgres' port=5433", PG_VERSION_96, "/pgdata", true, NULL, NULL),
 
     // Close the "inner" session first (8) then the outer (1)
-    HRNPQ_MACRO_CLOSE(8),
-    HRNPQ_MACRO_CLOSE(1),
-
-    HRNPQ_MACRO_DONE()
-});
+    HRN_PQ_SCRIPT_CLOSE(8),
+    HRN_PQ_SCRIPT_CLOSE(1));
 
 TEST_ERROR(cmdCheck(), ConfigError, "primary database not found\nHINT: check indexed pg-path/pg-host configurations");
 ```
@@ -652,7 +655,7 @@ To add an option, add the following to the `<option-list>` section; if it does n
 <option id="force" name="Force">
     <summary>Force a restore.</summary>
 
-    <text>By itself this option forces the <postgres/> data and tablespace paths to be completely overwritten.  In combination with <br-option>--delta</br-option> a timestamp/size delta will be performed instead of using checksums.</text>
+    <text>By itself this option forces the <postgres/> data and tablespace paths to be completely overwritten. In combination with <br-option>--delta</br-option> a timestamp/size delta will be performed instead of using checksums.</text>
 
     <example>y</example>
 </option>
@@ -667,7 +670,7 @@ pgbackrest/test/test.pl --module=command --test=help --vm-out
 ```
 To verify the `help` command output, build the pgBackRest executable:
 ```
-pgbackrest/test/test.pl --vm=none --build-only
+pgbackrest/test/test.pl --build-only
 ```
 Use the pgBackRest executable to test the help output:
 ```

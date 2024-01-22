@@ -3,17 +3,17 @@ Archive Info Handler
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <inttypes.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-#include <inttypes.h>
 
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
-#include "common/log.h"
 #include "common/ini.h"
 #include "common/io/bufferWrite.h"
 #include "common/io/io.h"
+#include "common/log.h"
 #include "info/infoArchive.h"
 #include "info/infoPg.h"
 #include "postgres/interface.h"
@@ -67,9 +67,9 @@ infoArchiveNew(unsigned int pgVersion, uint64_t pgSystemId, const String *cipher
 
     ASSERT(pgVersion > 0 && pgSystemId > 0);
 
-    InfoArchive *this = NULL;
+    InfoArchive *this;
 
-    OBJ_NEW_BEGIN(InfoArchive, .childQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BASE_BEGIN(InfoArchive, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = infoArchiveNewInternal();
 
@@ -92,9 +92,9 @@ infoArchiveNewLoad(IoRead *read)
 
     ASSERT(read != NULL);
 
-    InfoArchive *this = NULL;
+    InfoArchive *this;
 
-    OBJ_NEW_BEGIN(InfoArchive, .childQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BASE_BEGIN(InfoArchive, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = infoArchiveNewInternal();
         this->pub.infoPg = infoPgNewLoad(read, infoPgArchive, NULL, NULL);

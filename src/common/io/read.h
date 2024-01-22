@@ -1,10 +1,10 @@
 /***********************************************************************************************************************************
 IO Read Interface
 
-Objects that read from some IO source (file, socket, etc.) are implemented using this interface.  All objects are required to
-implement IoReadProcess and can optionally implement IoReadOpen, IoReadClose, or IoReadEof.  IoReadOpen and IoReadClose can be used
-to allocate/open or deallocate/free resources.  If IoReadEof is not implemented then ioReadEof() will always return false.  An
-example of an IoRead object is IoBufferRead.
+Objects that read from some IO source (file, socket, etc.) are implemented using this interface. All objects are required to
+implement IoReadProcess and can optionally implement IoReadOpen, IoReadClose, or IoReadEof. IoReadOpen and IoReadClose can be used
+to allocate/open or deallocate/free resources. If IoReadEof is not implemented then ioReadEof() will always return false. An example
+of an IoRead object is IoBufferRead.
 ***********************************************************************************************************************************/
 #ifndef COMMON_IO_READ_H
 #define COMMON_IO_READ_H
@@ -85,6 +85,18 @@ typedef struct IoReadReadyParam
 
 FN_EXTERN bool ioReadReady(IoRead *this, IoReadReadyParam param);
 
+// Flush all remaining bytes and return bytes flushed. Optionally error when bytes are flushed.
+typedef struct IoReadFlushParam
+{
+    VAR_PARAM_HEADER;
+    bool errorOnBytes;                                              // Error when any bytes are found during flush
+} IoReadFlushParam;
+
+#define ioReadFlushP(this, ...)                                                                                                    \
+    ioReadFlush(this, (IoReadFlushParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN uint64_t ioReadFlush(IoRead *this, IoReadFlushParam param);
+
 // Close the IO
 FN_EXTERN void ioReadClose(IoRead *this);
 
@@ -94,7 +106,7 @@ Destructor
 FN_INLINE_ALWAYS void
 ioReadFree(IoRead *const this)
 {
-    objFreeContext(this);
+    objFree(this);
 }
 
 /***********************************************************************************************************************************
@@ -103,6 +115,6 @@ Macros for function logging
 #define FUNCTION_LOG_IO_READ_TYPE                                                                                                  \
     IoRead *
 #define FUNCTION_LOG_IO_READ_FORMAT(value, buffer, bufferSize)                                                                     \
-    objToLog(value, "IoRead", buffer, bufferSize)
+    objNameToLog(value, "IoRead", buffer, bufferSize)
 
 #endif

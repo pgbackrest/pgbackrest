@@ -32,25 +32,30 @@ ioServerNew(void *const driver, const IoServerInterface *const interface)
     ASSERT(interface->accept != NULL);
     ASSERT(interface->toLog != NULL);
 
-    IoServer *this = memNew(sizeof(IoServer));
-
-    *this = (IoServer)
+    OBJ_NEW_BEGIN(IoServer, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        .pub =
+        *this = (IoServer)
         {
-            .memContext = memContextCurrent(),
-            .driver = driver,
-            .interface = interface,
-        },
-    };
+            .pub =
+            {
+                .driver = objMoveToInterface(driver, this, memContextPrior()),
+                .interface = interface,
+            },
+        };
+    }
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_SERVER, this);
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-ioServerToLog(const IoServer *const this)
+FN_EXTERN void
+ioServerToLog(const IoServer *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{type: %s, driver: %s}", strZ(strIdToStr(this->pub.interface->type)), strZ(this->pub.interface->toLog(this->pub.driver)));
+    strStcCat(debugLog, "{type: ");
+    strStcResultSizeInc(debugLog, strIdToLog(this->pub.interface->type, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+
+    strStcCat(debugLog, ", driver: ");
+    this->pub.interface->toLog(this->pub.driver, debugLog);
+    strStcCatChr(debugLog, '}');
 }

@@ -90,12 +90,8 @@ jsonReadNew(const String *const json)
         FUNCTION_TEST_PARAM(STRING, json);
     FUNCTION_TEST_END();
 
-    JsonRead *this = NULL;
-
     OBJ_NEW_BEGIN(JsonRead, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (JsonRead)
         {
             .json = strZ(json),
@@ -572,7 +568,7 @@ jsonReadKeyZN(JsonRead *const this)
             THROW(JsonFormatError, "expected '\"' but found null delimiter");
 
         this->json++;
-    };
+    }
 
     // Set key size
     result.size = (size_t)(this->json - result.buffer);
@@ -845,7 +841,7 @@ jsonReadSkipStr(JsonRead *const this)
             THROW(JsonFormatError, "expected '\"' but found null delimiter");
 
         this->json++;
-    };
+    }
 
     // Advance the character array pointer to the next element after the string
     this->json++;
@@ -1301,10 +1297,10 @@ jsonValidate(const String *const json)
 /**********************************************************************************************************************************/
 #ifdef DEBUG
 
-FN_EXTERN String *
-jsonReadToLog(const JsonRead *const this)
+FN_EXTERN void
+jsonReadToLog(const JsonRead *const this, StringStatic *const debugLog)
 {
-    return strNewFmt("{json: %s}", this->json);
+    strStcFmt(debugLog, "{json: %s}", this->json);
 }
 
 #endif // DEBUG
@@ -1317,12 +1313,8 @@ jsonWriteNew(JsonWriteNewParam param)
         FUNCTION_TEST_PARAM(STRING, param.json);
     FUNCTION_TEST_END();
 
-    JsonWrite *this = NULL;
-
     OBJ_NEW_BEGIN(JsonWrite, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = OBJ_NEW_ALLOC();
-
         *this = (JsonWrite)
         {
             .json = param.json == NULL ? strNew() : param.json,
@@ -2053,10 +2045,10 @@ jsonFromVar(const Variant *const value)
 /**********************************************************************************************************************************/
 #ifdef DEBUG
 
-FN_EXTERN String *
-jsonWriteToLog(const JsonWrite *const this)
+FN_EXTERN void
+jsonWriteToLog(const JsonWrite *const this, StringStatic *const debugLog)
 {
-    return strNewFmt("{size: %zu}", strSize(this->json));
+    strStcFmt(debugLog, "{size: %zu}", strSize(this->json));
 }
 
 #endif // DEBUG

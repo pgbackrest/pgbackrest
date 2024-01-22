@@ -25,7 +25,7 @@
 
 <!ELEMENT option-list (option+)>
 
-<!ELEMENT option (summary, text, example)>
+<!ELEMENT option (summary, text, example+)>
     <!ATTLIST option id CDATA #REQUIRED>
     <!ATTLIST option section CDATA "">
     <!ATTLIST option name CDATA #REQUIRED>
@@ -45,7 +45,7 @@
 
 <!ELEMENT config-key-list (config-key+)>
 
-<!ELEMENT config-key (summary, text, default?, allow?, example)>
+<!ELEMENT config-key (summary, text, default?, allow?, example+)>
     <!ATTLIST config-key id CDATA #REQUIRED>
     <!ATTLIST config-key name CDATA #REQUIRED>
 
@@ -53,7 +53,7 @@
     <!ATTLIST execute-list host CDATA #REQUIRED>
     <!ATTLIST execute-list if CDATA "">
     <!ATTLIST execute-list show CDATA "">
-<!ELEMENT execute (exe-cmd, exe-cmd-extra?, exe-user?,  exe-var?, exe-retry?, exe-output?, (exe-highlight-type?, exe-highlight)?,
+<!ELEMENT execute (exe-cmd, exe-cmd-extra?, exe-user?, exe-var?, exe-retry?, exe-output?, (exe-highlight-type?, exe-highlight)?,
                    exe-err-expect?, exe-err-suppress?, exe-err-suppress-stderr?)>
     <!ATTLIST execute if CDATA "">
     <!ATTLIST execute pre CDATA "">
@@ -112,7 +112,7 @@
     <!ATTLIST cmd-description key CDATA #REQUIRED>
 
 <!ELEMENT section (title?,
-                   ((p|list|table|host-add|execute-list|backrest-config|postgres-config|cmd-description|
+                   ((p|text|list|table|host-add|execute-list|backrest-config|postgres-config|cmd-description|
                      option-description|code-block|block|section|admonition)*))>
     <!ATTLIST section id CDATA #REQUIRED>
     <!ATTLIST section if CDATA "">

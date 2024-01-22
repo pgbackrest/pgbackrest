@@ -1,10 +1,10 @@
 # pgBackRest Test Certificates
 
-The certificates in this directory are used for testing purposes only and are not used for actual services.  They are used only by the unit and integration tests and there should be no reason to modify them unless new tests are required.
+The certificates in this directory are used for testing purposes only and are not used for actual services. They are used only by the unit and integration tests and there should be no reason to modify them unless new tests are required.
 
 ## Generating the Test CA (pgbackrest-test-ca.crt/key)
 
-This is a self-signed CA that is used to sign all server certificates.  No intermediate CAs will be generated since they are not needed for testing.
+This is a self-signed CA that is used to sign all server certificates. No intermediate CAs will be generated since they are not needed for testing.
 
 ```
 cd [pgbackrest-root]/test/certificate
@@ -25,7 +25,7 @@ openssl genrsa -out pgbackrest-test-server.key 4096
 
 ## Generating the Server Test Certificate (pgbackrest-test-server.crt/key)
 
-This certificate will be used in unit and integration tests.  It is expected to pass verification but won't be subjected to extensive testing.
+This certificate will be used in unit and integration tests. It is expected to pass verification but won't be subjected to extensive testing.
 
 ```
 cd [pgbackrest-root]/test/certificate

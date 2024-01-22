@@ -65,6 +65,7 @@ sub new
         $self->{bShowOutputAsync},
         $self->{bNoCleanup},
         $self->{iRetry},
+        $self->{bBackTraceUnit},
         $self->{bValgrindUnit},
         $self->{bCoverageUnit},
         $self->{bCoverageSummary},
@@ -97,6 +98,7 @@ sub new
             {name => 'bShowOutputAsync'},
             {name => 'bNoCleanup'},
             {name => 'iRetry'},
+            {name => 'bBackTraceUnit'},
             {name => 'bValgrindUnit'},
             {name => 'bCoverageUnit'},
             {name => 'bCoverageSummary'},
@@ -261,7 +263,9 @@ sub run
                         ' --repo-path=' . $self->{strTestPath} . '/repo' . ' --test-path=' . $self->{strTestPath} .
                         " --log-level=$self->{strLogLevel}" . ' --vm=' . $self->{oTest}->{&TEST_VM} .
                         ' --vm-id=' . $self->{iVmIdx} . ($self->{bProfile} ? ' --profile' : '') .
-                        ($bCoverage ? '' : ' --no-coverage') . ' test ' .
+                        ($self->{bLogTimestamp} ? '' : ' --no-log-timestamp') .
+                        ($self->{strTimeZone} ? " --tz='$self->{strTimeZone}'" : '') .
+                        ($self->{bBackTraceUnit} ? '' : ' --no-back-trace') . ($bCoverage ? '' : ' --no-coverage') . ' test ' .
                         $self->{oTest}->{&TEST_MODULE} . '/' . $self->{oTest}->{&TEST_NAME} . " && \\\n" .
                     # Allow stderr to be copied to stderr and stdout
                     "exec 3>&1 && \\\n" .
