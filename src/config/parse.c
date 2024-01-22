@@ -1766,8 +1766,11 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                     if (!(parseRuleCommand[config->command].commandRoleValid & ((unsigned int)1 << config->commandRole)))
                         THROW_FMT(CommandInvalidError, "invalid command/role combination '%s'", arg);
 
-                    if (config->command == cfgCmdHelp)
+                    if (config->command == cfgCmdHelp && !config->help)
+                    {
+                        config->command = cfgCmdNone;
                         config->help = true;
+                    }
                     else
                         commandSet = true;
                 }
