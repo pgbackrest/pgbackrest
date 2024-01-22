@@ -12,6 +12,17 @@
 
                 <p>Allow <br-setting>--version</br-setting> and <br-setting>--help</br-setting> for version and help.</p>
             </release-item>
+
+            <release-item>
+                <github-pull-request id="1970"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Add detailed backtrace to <proper>autoconf</proper>/<proper>make</proper> build.</p>
+            </release-item>
         </release-improvement-list>
     </release-core-list>
 </release>
