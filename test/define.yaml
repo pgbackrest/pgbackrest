@@ -992,6 +992,7 @@ unit:
 
         coverage:
           - doc/command/build/build
+          - doc/command/build/man
           - doc/command/build/reference
 
 # **********************************************************************************************************************************
