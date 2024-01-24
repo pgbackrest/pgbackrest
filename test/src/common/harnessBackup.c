@@ -95,7 +95,8 @@ hrnBackupScriptSet(const HrnBackupScript *const script, const unsigned int scrip
 
 /**********************************************************************************************************************************/
 static void
-backupProcess(const BackupData *const backupData, Manifest *const manifest, const String *const cipherPassBackup)
+backupProcess(
+    const BackupData *const backupData, Manifest *const manifest, const bool preliminary, const String *const cipherPassBackup)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(BACKUP_DATA, backupData);
@@ -142,7 +143,7 @@ backupProcess(const BackupData *const backupData, Manifest *const manifest, cons
         hrnBackupLocal.scriptSize = 0;
     }
 
-    backupProcess_SHIMMED(backupData, manifest, cipherPassBackup);
+    backupProcess_SHIMMED(backupData, manifest, preliminary, cipherPassBackup);
 
     FUNCTION_HARNESS_RETURN_VOID();
 }

@@ -2610,7 +2610,7 @@ cmdBackup(void)
 
         if (cfgOptionStrId(cfgOptType) == backupTypeFull)
         {
-            if (cfgOptionBool(cfgOptOnline))
+            if (cfgOptionBool(cfgOptBackupFullIncr))
             {
                 MEM_CONTEXT_TEMP_BEGIN()
                 {
