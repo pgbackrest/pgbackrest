@@ -1361,6 +1361,16 @@
                         <example>n</example>
                     </config-key>
 
+                    <config-key id="backup-full-incr" name="Backup using Full/Incr Hybrid">
+                        <summary>Backup using full/incr hybrid.</summary>
+
+                        <text>
+                            <p>!!!</p>
+                        </text>
+
+                        <example>y</example>
+                    </config-key>
+
                     <config-key id="backup-standby" name="Backup from Standby">
                         <summary>Backup from the standby cluster.</summary>
 
