@@ -774,10 +774,16 @@ backupResumeClean(
                     if (fileCompressType != compressTypeNone)
                         manifestName = compressExtStrip(manifestName, fileCompressType);
 
+                    // If the file is block incremental then strip off the extension before doing the lookup
+                    const bool blockIncr = strEndsWithZ(manifestName, BACKUP_BLOCK_INCR_EXT);
+
+                    if (blockIncr)
+                        manifestName = strSubN(manifestName, 0, strSize(manifestName) - (sizeof(BACKUP_BLOCK_INCR_EXT) - 1));
+
                     // Check if the file can be resumed or must be removed
                     const char *removeReason = NULL;
 
-                    if (fileCompressType != compressType)
+                    if (fileCompressType != compressType && !blockIncr)
                         removeReason = "mismatched compression type";
                     else if (!manifestFileExists(manifest, manifestName))
                         removeReason = "missing in manifest";
@@ -813,6 +819,9 @@ backupResumeClean(
                                 file.sizeRepo = fileResume.sizeRepo;
                                 file.checksumSha1 = fileResume.checksumSha1;
                                 file.checksumRepoSha1 = fileResume.checksumRepoSha1;
+                                file.blockIncrSize = fileResume.blockIncrSize;
+                                file.blockIncrChecksumSize = fileResume.blockIncrChecksumSize;
+                                file.blockIncrMapSize = fileResume.blockIncrMapSize;
                                 file.checksumPage = fileResume.checksumPage;
                                 file.checksumPageError = fileResume.checksumPageError;
                                 file.checksumPageErrorList = fileResume.checksumPageErrorList;
@@ -2018,7 +2027,7 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
                     pckWriteU64P(param, file.blockIncrChecksumSize);
                     pckWriteU64P(param, jobData->blockIncrSizeSuper);
 
-                    if (file.blockIncrMapSize != 0)
+                    if (file.blockIncrMapSize != 0 && !file.resume)
                     {
                         pckWriteStrP(
                             param,
