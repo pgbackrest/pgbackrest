@@ -2506,7 +2506,7 @@ testRun(void)
             HRN_STORAGE_REMOVE(storagePgWrite(), "content-mismatch", .errorOnMissing = true);
             HRN_STORAGE_REMOVE(storagePgWrite(), "repo-size-mismatch", .errorOnMissing = true);
 
-            // Remove main manifest
+            // Remove main manifest to make this backup look resumable
             HRN_STORAGE_REMOVE(storageRepoWrite(), "backup/test1/20191003-105321F/backup.manifest");
 
             // Save the resume manifest with diff type
