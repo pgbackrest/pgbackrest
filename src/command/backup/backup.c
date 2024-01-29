@@ -2027,7 +2027,7 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
                     pckWriteU64P(param, file.blockIncrChecksumSize);
                     pckWriteU64P(param, jobData->blockIncrSizeSuper);
 
-                    if (file.blockIncrMapSize != 0 && file.reference != NULL)
+                    if (file.blockIncrMapSize != 0 && !file.resume)
                     {
                         pckWriteStrP(
                             param,
