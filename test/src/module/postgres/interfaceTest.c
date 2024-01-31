@@ -83,7 +83,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("invalid CRC");
 
-        HRN_PG_CONTROL_OVERRIDE_CRC_PUT(storageTest, PG_VERSION_11, 0xFADEFADE, .checkpointTime = 1);
+        HRN_PG_CONTROL_OVERRIDE_CRC_PUT(storageTest, PG_VERSION_11, 0xFADEFADE);
 
         TEST_ERROR_FMT(
             pgControlFromFile(storageTest, NULL), ChecksumError,
@@ -91,12 +91,12 @@ testRun(void)
             "HINT: calculated 0x%x but expected value is 0xfadefade\n"
             "HINT: is pg_control corrupt?\n"
             "HINT: does pg_control have a different layout than expected?",
-            (uint32_t)(TEST_BIG_ENDIAN() ? 0x4e206eeb : (TEST_64BIT() ? 0xe1a97898 : 0x3ca3a1ec)));
+            (uint32_t)(TEST_BIG_ENDIAN() ? 0x4e206eeb : (TEST_64BIT() ? 0x4ad387b2 : 0x3ca3a1ec)));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("invalid CRC on force control version");
 
-        HRN_PG_CONTROL_OVERRIDE_CRC_PUT(storageTest, PG_VERSION_13, 0xFADEFADE, .checkpointTime = 1);
+        HRN_PG_CONTROL_OVERRIDE_CRC_PUT(storageTest, PG_VERSION_13, 0xFADEFADE);
 
         TEST_ERROR_FMT(
             pgControlFromFile(storageTest, STRDEF(PG_VERSION_14_Z)), ChecksumError,
@@ -105,12 +105,12 @@ testRun(void)
             "HINT: checksum values may be misleading due to forced version scan\n"
             "HINT: is pg_control corrupt?\n"
             "HINT: does pg_control have a different layout than expected?",
-            (uint32_t)(TEST_BIG_ENDIAN() ? 0x27dc2b85 : (TEST_64BIT() ? 0xa00562b7 : 0xb371302a)));
+            (uint32_t)(TEST_BIG_ENDIAN() ? 0x27dc2b85 : (TEST_64BIT() ? 0xa9264d94 : 0xb371302a)));
 
         // -------------------------------------------------------------------------------------------------------------------------
         HRN_PG_CONTROL_PUT(
-            storageTest, PG_VERSION_11, .systemId = 0xFACEFACE, .checkpoint = 0xEEFFEEFFAABBAABB, .timeline = 47,
-            .walSegmentSize = 1024 * 1024);
+            storageTest, PG_VERSION_11, .systemId = 0xFACEFACE, .checkpoint = 0xEEFFEEFFAABBAABB, .checkpointTime = 555,
+            .timeline = 47, .walSegmentSize = 1024 * 1024);
 
         PgControl info = {0};
         TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info v11");
@@ -118,6 +118,7 @@ testRun(void)
         TEST_RESULT_UINT(info.version, PG_VERSION_11, "   check version");
         TEST_RESULT_UINT(info.catalogVersion, 201809051, "   check catalog version");
         TEST_RESULT_UINT(info.checkpoint, 0xEEFFEEFFAABBAABB, "check checkpoint");
+        TEST_RESULT_INT(info.checkpointTime, 555, "check checkpoint time");
         TEST_RESULT_UINT(info.timeline, 47, "check timeline");
 
         // -------------------------------------------------------------------------------------------------------------------------

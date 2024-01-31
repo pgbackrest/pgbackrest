@@ -1371,6 +1371,16 @@
                         <example>y</example>
                     </config-key>
 
+                    <config-key id="backup-full-incr-limit" name="Time limit for Full/Incr Hybrid">
+                        <summary>Time limit for full/incr hybrid.</summary>
+
+                        <text>
+                            <p>!!!</p>
+                        </text>
+
+                        <example>y</example>
+                    </config-key>
+
                     <config-key id="backup-standby" name="Backup from Standby">
                         <summary>Backup from the standby cluster.</summary>
 

@@ -165,6 +165,8 @@ typedef struct BackupData
     const String *archiveId;                                        // Archive where backup WAL will be stored
 
     unsigned int timeline;                                          // Primary timeline
+    uint64_t checkpoint;                                            // Last checkpoint LSN
+    time_t checkpointTime;                                          // Last checkpoint time
     unsigned int version;                                           // PostgreSQL version
     unsigned int walSegmentSize;                                    // PostgreSQL wal segment size
     PgPageSize pageSize;                                            // PostgreSQL page size
@@ -228,6 +230,8 @@ backupInit(const InfoBackup *const infoBackup)
     result->hostPrimary = cfgOptionIdxStrNull(cfgOptPgHost, result->pgIdxPrimary);
 
     result->timeline = pgControl.timeline;
+    result->checkpoint = pgControl.checkpoint;
+    result->checkpointTime = pgControl.checkpointTime;
     result->version = pgControl.version;
     result->walSegmentSize = pgControl.walSegmentSize;
     result->pageSize = pgControl.pageSize;
@@ -2635,9 +2639,8 @@ cmdBackup(void)
                 // Remove files that do not need to be considered for the first pass (!!! SHOULD BE BUILT INTO MANIFEST?)
                 const bool bundle = cfgOptionBool(cfgOptRepoBundle);
                 const uint64_t bundleLimit = bundle ? cfgOptionUInt64(cfgOptRepoBundleLimit) : 0; // {uncovered - !!!}
+                const time_t timestampCopyStart = backupData->checkpointTime - (time_t)cfgOptionInt64(cfgOptBackupFullIncrLimit);
                 unsigned int fileIdx = 0;
-                // TIMESTAMP START BE BASED ON LAST CHECKPOINT TIME?
-                const time_t timestampCopyStart = timestampStart - 3600;
 
                 while (fileIdx < manifestFileTotal(manifestPrelim))
                 {
@@ -2720,7 +2723,7 @@ cmdBackup(void)
         {
             backupResumeClean(manifest, manifestPrior, false);
         }
-        // Else normal resume of diff/incr backup
+        // Else normal resume
         else
             backupResume(manifest, cipherPassBackup);
 

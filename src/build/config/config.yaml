@@ -1215,6 +1215,20 @@ option:
     command-role:
       main: {}
 
+  backup-full-incr-limit:
+    section: global
+    type: integer
+    default: 3600
+    allow-range: [300, 86400]
+    command:
+      backup:
+        depend:
+          option: backup-full-incr
+          list:
+            - true
+    command-role:
+      main: {}
+
   backup-standby:
     section: global
     type: boolean

@@ -247,6 +247,7 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
 
         // Save pg_control with updated info
         pgControl.checkpoint = lsnStart;
+        pgControl.checkpointTime = backupTimeStart - 60;
         pgControl.timeline = param.timeline;
 
         HRN_STORAGE_PUT(

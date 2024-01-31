@@ -3237,21 +3237,29 @@ testRun(void)
 
             // File removed before final copy. This file will still end up in the final backup since it was not changed when the
             // final manifest was built. This is OK since it will be removed during replay.
-            file = bufNew(BLOCK_MIN_SIZE  + 1);
+            file = bufNew(BLOCK_MIN_SIZE + 1);
             memset(bufPtr(file), 71, bufSize(file));
             bufUsedSet(file, bufSize(file));
 
-            HRN_STORAGE_PUT(storagePgWrite(), "rm-before-final-cp", file, .timeModified = backupTimeStart - 7200);
+            HRN_STORAGE_PUT(storagePgWrite(), "rm-before-final-cp", file, .timeModified = backupTimeStart - 420);
 
             // File removed after prelim copy and before final manifest build
-            file = bufNew(BLOCK_MIN_SIZE  + 2);
+            file = bufNew(BLOCK_MIN_SIZE + 2);
             memset(bufPtr(file), 71, bufSize(file));
             bufUsedSet(file, bufSize(file));
 
-            HRN_STORAGE_PUT(storagePgWrite(), "rm-after-prelim-cp", file, .timeModified = backupTimeStart - 7200);
+            HRN_STORAGE_PUT(storagePgWrite(), "rm-after-prelim-cp", file, .timeModified = backupTimeStart - 420);
+
+            // File just over the full/incr time limit
+            file = bufNew(BLOCK_MIN_SIZE + 3);
+            memset(bufPtr(file), 33, bufSize(file));
+            bufUsedSet(file, bufSize(file));
+
+            HRN_STORAGE_PUT(storagePgWrite(), "below-fi-limit", file, .timeModified = backupTimeStart - 419);
 
             // Add full/incr option
             hrnCfgArgRawBool(argList, cfgOptBackupFullIncr, true);
+            hrnCfgArgRawZ(argList, cfgOptBackupFullIncrLimit, "360");
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Run backup
@@ -3279,6 +3287,7 @@ testRun(void)
                 " backup (missing in manifest)\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-no-resume (24KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (24KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/below-fi-limit (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/0, 8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/8192, 2B, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
@@ -3286,7 +3295,7 @@ testRun(void)
                 "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000000105DBF06000000000:0000000105DBF06000000001\n"
                 "P00   INFO: new backup label = 20191103-165320F\n"
-                "P00   INFO: full backup size = [SIZE], file total = 6");
+                "P00   INFO: full backup size = [SIZE], file total = 7");
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
@@ -3294,15 +3303,17 @@ testRun(void)
                 "bundle/1/pg_data/PG_VERSION {s=2}\n"
                 "bundle/1/pg_data/global/pg_control {s=8192}\n"
                 "pg_data/backup_label {s=17, ts=+2}\n"
+                "pg_data/below-fi-limit {s=8195, ts=-419}\n"
                 "pg_data/block-incr-grow.pgbi {s=24576, m=0:{0,1,2}}\n"
                 "pg_data/block-incr-no-resume.pgbi {s=24576, m=0:{0,1,2}}\n"
-                "pg_data/rm-before-final-cp {s=8193, ts=-7200}\n"
+                "pg_data/rm-before-final-cp {s=8193, ts=-420}\n"
                 "--------\n"
                 "[backup:target]\n"
                 "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n",
                 "compare file list");
 
             HRN_STORAGE_REMOVE(storagePgWrite(), "rm-before-final-cp");
+            HRN_STORAGE_REMOVE(storagePgWrite(), "below-fi-limit");
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -3391,6 +3402,8 @@ testRun(void)
                 " will resume\n"
                 "P00 DETAIL: remove path '" TEST_PATH "/repo/backup/test1/20191103-165320F/bundle' from resumed backup\n"
                 "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191103-165320F/pg_data/backup_label' from resumed"
+                " backup (missing in manifest)\n"
+                "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191103-165320F/pg_data/below-fi-limit' from resumed"
                 " backup (missing in manifest)\n"
                 "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191103-165320F/pg_data/rm-before-final-cp' from resumed"
                 " backup (missing in manifest)\n"
