@@ -198,6 +198,7 @@ hrnPgControlToBuffer(const unsigned int controlVersion, const unsigned int crc, 
         pgControl.catalogVersion == 0 ? hrnPgInterfaceVersion(pgControl.version)->catalogVersion() : pgControl.catalogVersion;
     pgControl.systemId = pgControl.systemId < 100 ? hrnPgSystemId(pgControl.version) + pgControl.systemId : pgControl.systemId;
     pgControl.checkpoint = pgControl.checkpoint == 0 ? 1 : pgControl.checkpoint;
+    pgControl.checkpointTime = pgControl.checkpointTime == 0 ? time(NULL) - 60 : pgControl.checkpointTime;
     pgControl.timeline = pgControl.timeline == 0 ? 1 : pgControl.timeline;
 
     // Create the buffer and clear it

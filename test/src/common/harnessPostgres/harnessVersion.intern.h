@@ -49,6 +49,7 @@ Create a pg_control file
             .checkPoint = pgControl.checkpoint,                                                                                    \
             .checkPointCopy =                                                                                                      \
             {                                                                                                                      \
+                .time = (pg_time_t)pgControl.checkpointTime,                                                                       \
                 .ThisTimeLineID = pgControl.timeline,                                                                              \
             },                                                                                                                     \
             .blcksz = pgControl.pageSize,                                                                                          \
