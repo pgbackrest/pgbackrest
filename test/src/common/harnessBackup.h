@@ -22,6 +22,8 @@ typedef enum
 typedef struct HrnBackupScript
 {
     HrnBackupScriptOp op;                                           // Operation to perform
+    unsigned int exec;                                              // Which function execution to perform the op (default is 1)
+    bool after;                                                     // Perform op after function instead of before
     const String *file;                                             // File to operate on
     const Buffer *content;                                          // New content (valid for update op)
     time_t time;                                                    // New modified time (valid for update op)
@@ -45,6 +47,7 @@ typedef struct HrnBackupPqScriptParam
     bool noPriorWal;                                                // Don't write prior test WAL segments
     bool noArchiveCheck;                                            // Do not check archive
     bool walSwitch;                                                 // WAL switch is required
+    bool fullIncrNoOp;                                              // Full/incr will not find any files for prelim copy
     CompressType walCompressType;                                   // Compress type for the archive files
     CipherType cipherType;                                          // Cipher type
     const char *cipherPass;                                         // Cipher pass

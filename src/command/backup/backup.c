@@ -885,15 +885,15 @@ backupResumeClean(Manifest *const manifest, const Manifest *const manifestResume
 
     ASSERT(manifest != NULL);
     ASSERT(manifestResume != NULL);
+    ASSERT(manifestData(manifest)->backupType == backupTypeFull);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Set the backup label to the resumed backup
         manifestBackupLabelSet(manifest, manifestData(manifestResume)->backupLabel);
 
-        // If resuming a full backup then copy cipher subpass since it was used to encrypt the resumable files
-        if (manifestData(manifest)->backupType == backupTypeFull)
-            manifestCipherSubPassSet(manifest, manifestCipherSubPass(manifestResume));
+        // Copy cipher subpass since it was used to encrypt the resumable files
+        manifestCipherSubPassSet(manifest, manifestCipherSubPass(manifestResume));
 
         // Clean resumed backup
         const String *const backupPath = strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(manifestData(manifest)->backupLabel));
@@ -2617,82 +2617,77 @@ cmdBackup(void)
         const time_t timestampStart = backupTime(backupData, false);
 
         // Remove files that would not be in a bundle
-        // !!!
-        // !!! DO WE NEED TO HAVE A BACKUP RUNNING DURING THE FIRST PASS
         Manifest *manifestPrior = NULL;
 
-        if (cfgOptionStrId(cfgOptType) == backupTypeFull)
+        if (cfgOptionStrId(cfgOptType) == backupTypeFull && cfgOptionBool(cfgOptBackupFullIncr))
         {
-            if (cfgOptionBool(cfgOptBackupFullIncr))
+            MEM_CONTEXT_TEMP_BEGIN()
             {
-                MEM_CONTEXT_TEMP_BEGIN()
+                // !!! WAIT FOR STANDBY TO SYNC TO LAST CHECKPOINT
+
+                // Build the manifest
+                Manifest *const manifestPrelim = manifestNewBuild(
+                    backupData->storagePrimary, infoPg.version, infoPg.catalogVersion, timestampStart,
+                    cfgOptionBool(cfgOptOnline), cfgOptionBool(cfgOptChecksumPage), cfgOptionBool(cfgOptRepoBundle),
+                    cfgOptionBool(cfgOptRepoBlock), &blockIncrMap, strLstNewVarLst(cfgOptionLst(cfgOptExclude)),
+                    dbTablespaceList(backupData->dbPrimary));
+
+                // Remove files that do not need to be considered for the first pass (!!! SHOULD BE BUILT INTO MANIFEST?)
+                const bool bundle = cfgOptionBool(cfgOptRepoBundle);
+                const uint64_t bundleLimit = bundle ? cfgOptionUInt64(cfgOptRepoBundleLimit) : 0; // {uncovered - !!!}
+                unsigned int fileIdx = 0;
+                // TIMESTAMP START BE BASED ON LAST CHECKPOINT TIME?
+                const time_t timestampCopyStart = timestampStart - 3600;
+
+                while (fileIdx < manifestFileTotal(manifestPrelim))
                 {
-                    // !!! WAIT FOR STANDBY TO SYNC TO LAST CHECKPOINT
+                    const ManifestFile file = manifestFile(manifestPrelim, fileIdx);
 
-                    // Build the manifest
-                    Manifest *const manifestPrelim = manifestNewBuild(
-                        backupData->storagePrimary, infoPg.version, infoPg.catalogVersion, timestampStart, cfgOptionBool(cfgOptOnline),
-                        cfgOptionBool(cfgOptChecksumPage), cfgOptionBool(cfgOptRepoBundle), cfgOptionBool(cfgOptRepoBlock),
-                        &blockIncrMap, strLstNewVarLst(cfgOptionLst(cfgOptExclude)), dbTablespaceList(backupData->dbPrimary));
-
-                    // Remove files that do not need to be considered for the first pass (!!! SHOULD BE BUILT INTO MANIFEST?)
-                    const bool bundle = cfgOptionBool(cfgOptRepoBundle);
-                    const uint64_t bundleLimit = bundle ? cfgOptionUInt64(cfgOptRepoBundleLimit) : 0;
-                    unsigned int fileIdx = 0;
-                    // !!! SHOULD TIMESTAMP START BE BASED ON LAST CHECKPOINT TIME?
-                    const time_t timestampCopyStart = timestampStart - 3600;
-
-                    while (fileIdx < manifestFileTotal(manifestPrelim))
+                    if (file.timestamp > timestampCopyStart || (bundle && file.size <= bundleLimit)) // {uncovered - !!!}
                     {
-                        const ManifestFile file = manifestFile(manifestPrelim, fileIdx);
+                        manifestFileRemove(manifestPrelim, file.name);
 
-                        // fprintf(stdout, "!!!PRELIM FILE %s TIME %" PRId64 ", START %" PRId64 "\n", strZ(file.name), file.timestamp, timestampCopyStart);
-
-                        if (file.timestamp > timestampCopyStart || (bundle && file.size <= bundleLimit))
-                        {
-                            manifestFileRemove(manifestPrelim, file.name);
-
-                            // fprintf(stdout, "!!!PRELIM REMOVE FILE %s\n", strZ(file.name));
-                            // fflush(stdout);
-
-                            continue;
-                        }
-
-                        fileIdx++;
+                        continue;
                     }
 
-                    if (manifestFileTotal(manifestPrelim) > 0)
-                    {
-                        // for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifestPrelim); fileIdx++)
-                        // {
-                        //     const ManifestFile file = manifestFile(manifestPrelim, fileIdx);
-                        //     fprintf(stdout, "!!!PRELIM PROCESS FILE %s\n", strZ(file.name));
-                        //     fflush(stdout);
-                        // }
-
-                        // Validate the manifest using the copy start time
-                        manifestBuildValidate(
-                            manifestPrelim, cfgOptionBool(cfgOptDelta), timestampCopyStart,
-                            compressTypeEnum(cfgOptionStrId(cfgOptCompressType)));
-
-                        // Set cipher passphrase (if any)
-                        manifestCipherSubPassSet(manifestPrelim, cipherPassGen(cfgOptionStrId(cfgOptRepoCipherType)));
-
-                        // Resume a backup when possible
-                        backupResume(manifestPrelim, cipherPassBackup);
-
-                        // Save the manifest before processing starts
-                        backupManifestSaveCopy(manifestPrelim, cipherPassBackup, false);
-
-                        // Process the backup manifest
-                        backupProcess(backupData, manifestPrelim, true, cipherPassBackup);
-
-                        // Move manifest to prior context
-                        manifestPrior = manifestMove(manifestPrelim, memContextPrior());
-                    }
+                    fileIdx++;
                 }
-                MEM_CONTEXT_TEMP_END();
+
+                if (manifestFileTotal(manifestPrelim) > 0)
+                {
+                    LOG_INFO("full/incr backup first pass");
+
+                    // for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifestPrelim); fileIdx++)
+                    // {
+                    //     const ManifestFile file = manifestFile(manifestPrelim, fileIdx);
+                    //     fprintf(stdout, "!!!PRELIM PROCESS FILE %s\n", strZ(file.name));
+                    //     fflush(stdout);
+                    // }
+
+                    // Validate the manifest using the copy start time
+                    manifestBuildValidate(
+                        manifestPrelim, cfgOptionBool(cfgOptDelta), timestampCopyStart,
+                        compressTypeEnum(cfgOptionStrId(cfgOptCompressType)));
+
+                    // Set cipher passphrase (if any)
+                    manifestCipherSubPassSet(manifestPrelim, cipherPassGen(cfgOptionStrId(cfgOptRepoCipherType)));
+
+                    // Resume a backup when possible
+                    backupResume(manifestPrelim, cipherPassBackup);
+
+                    // Save the manifest before processing starts
+                    backupManifestSaveCopy(manifestPrelim, cipherPassBackup, false);
+
+                    // Process the backup manifest
+                    backupProcess(backupData, manifestPrelim, true, cipherPassBackup);
+
+                    // Move manifest to prior context
+                    manifestPrior = manifestMove(manifestPrelim, memContextPrior());
+
+                    LOG_INFO("full/incr backup second pass");
+                }
             }
+            MEM_CONTEXT_TEMP_END();
         }
         // Else check if there is a prior manifest when backup type is diff/incr
         else
