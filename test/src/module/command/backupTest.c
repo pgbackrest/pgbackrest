@@ -1978,7 +1978,7 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
             "P00   WARN: incr backup cannot alter 'checksum-page' option to 'true', reset to 'false' from [FULL-1]\n"
-            "P00   WARN: backup '[DIFF-1]' cannot be resumed: new backup type 'incr' does not match resumable backup type 'diff'\n"
+            "P00   INFO: backup '[DIFF-1]' cannot be resumed: resume only valid for full backup\n"
             "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (3B, 100.00%) checksum c8663c2525f44b6d9c687fbceb4aafc63ed8b451\n"
             "P00 DETAIL: reference pg_data/global/pg_control to [FULL-1]\n"
             "P00 DETAIL: reference pg_data/postgresql.conf to [FULL-1]\n"
@@ -2366,7 +2366,7 @@ testRun(void)
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("online resumed compressed 9.5 diff backup");
+        TEST_TITLE("online resumed compressed 9.5 full delta backup");
 
         backupTimeStart = BACKUP_EPOCH + 200000;
 
@@ -2376,38 +2376,21 @@ testRun(void)
             hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-            hrnCfgArgRawStrId(argList, cfgOptType, backupTypeDiff);
-            hrnCfgArgRawBool(argList, cfgOptCompress, false);
+            hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
+            hrnCfgArgRawBool(argList, cfgOptDelta, true);
             hrnCfgArgRawBool(argList, cfgOptStopAuto, true);
             hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
-
-            // Load the previous manifest and null out the checksum-page option to be sure it gets set to false in this backup
-            const String *manifestPriorFile = STRDEF(STORAGE_REPO_BACKUP "/latest/" BACKUP_MANIFEST_FILE);
-            Manifest *manifestPrior = manifestNewLoad(storageReadIo(storageNewReadP(storageRepo(), manifestPriorFile)));
-            ((ManifestData *)manifestData(manifestPrior))->backupOptionChecksumPage = NULL;
-            manifestSave(manifestPrior, storageWriteIo(storageNewWriteP(storageRepoWrite(), manifestPriorFile)));
 
             // Create a backup manifest that looks like a halted backup manifest
             Manifest *manifestResume = manifestNewBuild(
                 storagePg(), PG_VERSION_95, hrnPgCatalogVersion(PG_VERSION_95), 0, true, false, false, false, NULL, NULL, NULL);
             ManifestData *manifestResumeData = (ManifestData *)manifestData(manifestResume);
 
-            manifestResumeData->backupType = backupTypeDiff;
-            manifestResumeData->backupLabelPrior = manifestData(manifestPrior)->backupLabel;
             manifestResumeData->backupOptionCompressType = compressTypeGz;
-            const String *resumeLabel = backupLabelCreate(
-                backupTypeDiff, manifestData(manifestPrior)->backupLabel, backupTimeStart);
+            const String *resumeLabel = backupLabelCreate(backupTypeFull, NULL, backupTimeStart - 100000);
             manifestBackupLabelSet(manifestResume, resumeLabel);
             strLstAddZ(manifestResume->pub.referenceList, "BOGUS");
-
-            // Reference in manifest
-            HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), zNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/PG_VERSION.gz", strZ(resumeLabel)));
-
-            // Reference in resumed manifest
-            HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "resume-ref", .timeModified = backupTimeStart);
-            HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), zNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/resume-ref.gz", strZ(resumeLabel)));
-            HRN_MANIFEST_FILE_ADD(manifestResume, .name = "pg_data/resume-ref", .reference = "BOGUS");
 
             // Time does not match between cluster and resume manifest (but resume because time is in future so delta enabled). Note
             // also that the repo file is intentionally corrupt to generate a warning about corruption in the repository.
@@ -2456,7 +2439,9 @@ testRun(void)
                 "mkfifo -m 666 %s",
                 strZ(storagePathP(storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/pipe", strZ(resumeLabel)))));
 
-            // Save the resume manifest
+            // Save the resume manifest with full type
+            manifestResumeData->backupType = backupTypeFull;
+
             manifestSave(
                 manifestResume,
                 storageWriteIo(
@@ -2472,23 +2457,15 @@ testRun(void)
 
             // Check log
             TEST_RESULT_LOG(
-                "P00   INFO: last backup label = 20191003-105320F, version = " PROJECT_VERSION "\n"
-                "P00   WARN: diff backup cannot alter compress-type option to 'none', reset to value in 20191003-105320F\n"
                 "P00   INFO: execute exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105D9759000000000, lsn = 5d97590/0\n"
                 "P00   INFO: check archive for prior segment 0000000105D9758F000000FF\n"
-                "P00   WARN: file 'time-mismatch2' has timestamp (1570200100) in the future (relative to copy start 1570200000),"
-                " enabling delta checksum\n"
-                "P00   WARN: resumable backup 20191003-105320F_20191004-144000D of same type exists -- invalid files will be"
-                " removed then the backup will resume\n"
-                "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191003-105320F_20191004-144000D/pg_data/PG_VERSION.gz'"
-                " from resumed backup (reference in manifest)\n"
-                "P00   WARN: remove special file '" TEST_PATH "/repo/backup/test1/20191003-105320F_20191004-144000D/pg_data/pipe'"
-                " from resumed backup\n"
-                "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191003-105320F_20191004-144000D/pg_data/resume-ref.gz'"
-                " from resumed backup (reference in resumed manifest)\n"
+                "P00   WARN: resumable backup 20191003-105321F of same type exists -- invalid files will be removed then the backup"
+                " will resume\n"
+                "P00   WARN: remove special file '" TEST_PATH "/repo/backup/test1/20191003-105321F/pg_data/pipe' from resumed"
+                " backup\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/time-mismatch2 (4B, [PCT]) checksum [SHA1]\n"
                 "P00   WARN: resumed backup file pg_data/time-mismatch2 did not have expected checksum"
                 " 984816fd329622876e14907634264e6f332e9fb3. The file was recopied and backup will continue but this may be an issue"
@@ -2501,27 +2478,23 @@ testRun(void)
                 "            NOTE: this does not indicate a problem with the PostgreSQL page checksums.\n"
                 "P01 DETAIL: skip file removed by database " TEST_PATH "/pg1/removed-during\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/content-mismatch (4B, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/resume-ref (0B, [PCT])\n"
-                "P00 DETAIL: hardlink pg_data/PG_VERSION to 20191003-105320F\n"
-                "P00 DETAIL: hardlink pg_data/postgresql.conf to 20191003-105320F\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: execute exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105D9759000000000, lsn = 5d97590/800000\n"
                 "P00   INFO: check archive for segment(s) 0000000105D9759000000000:0000000105D9759000000000\n"
-                "P00   INFO: new backup label = 20191003-105320F_20191004-144000D\n"
-                "P00   INFO: diff backup size = [SIZE], file total = 7");
+                "P00   INFO: new backup label = 20191003-105321F\n"
+                "P00   INFO: full backup size = [SIZE], file total = 6");
 
             // Check repo directory
             TEST_RESULT_STR_Z(
                 testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
-                ".> {d=20191003-105320F_20191004-144000D}\n"
+                ".> {d=20191003-105321F}\n"
                 "pg_data/PG_VERSION.gz {s=3, ts=-200000}\n"
                 "pg_data/content-mismatch.gz {s=4}\n"
                 "pg_data/global/pg_control.gz {s=8192}\n"
                 "pg_data/pg_xlog/\n"
                 "pg_data/postgresql.conf.gz {s=11, ts=-200000}\n"
                 "pg_data/repo-size-mismatch.gz {s=4}\n"
-                "pg_data/resume-ref.gz {s=0}\n"
                 "pg_data/time-mismatch2.gz {s=4, ts=+100}\n"
                 "--------\n"
                 "[backup:target]\n"
@@ -2529,10 +2502,43 @@ testRun(void)
                 "compare file list");
 
             // Remove test files
-            HRN_STORAGE_REMOVE(storagePgWrite(), "resume-ref", .errorOnMissing = true);
             HRN_STORAGE_REMOVE(storagePgWrite(), "time-mismatch2", .errorOnMissing = true);
             HRN_STORAGE_REMOVE(storagePgWrite(), "content-mismatch", .errorOnMissing = true);
             HRN_STORAGE_REMOVE(storagePgWrite(), "repo-size-mismatch", .errorOnMissing = true);
+
+            // Remove main manifest to make this backup look resumable
+            HRN_STORAGE_REMOVE(storageRepoWrite(), "backup/test1/20191003-105321F/backup.manifest");
+
+            // Save the resume manifest with diff type
+            manifestResumeData->backupType = backupTypeDiff;
+
+            manifestSave(
+                manifestResume,
+                storageWriteIo(
+                    storageNewWriteP(
+                        storageRepoWrite(),
+                        strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strZ(resumeLabel)))));
+
+            // Back errors on backup type
+            hrnBackupPqScriptP(PG_VERSION_95, backupTimeStart);
+            TEST_RESULT_VOID(hrnCmdBackup(), "backup");
+
+            // Check log
+            TEST_RESULT_LOG(
+                "P00   WARN: backup '20191003-105321F' missing manifest removed from backup.info\n"
+                "P00   INFO: execute exclusive backup start: backup begins after the next regular checkpoint completes\n"
+                "P00   INFO: backup start archive = 0000000105D9759000000000, lsn = 5d97590/0\n"
+                "P00   INFO: check archive for prior segment 0000000105D9758F000000FF\n"
+                "P00   WARN: backup '20191003-105321F' cannot be resumed: new backup type 'full' does not match resumable backup"
+                " type 'diff'\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
+                "P00   INFO: execute exclusive backup stop and wait for all WAL segments to archive\n"
+                "P00   INFO: backup stop archive = 0000000105D9759000000000, lsn = 5d97590/800000\n"
+                "P00   INFO: check archive for segment(s) 0000000105D9759000000000:0000000105D9759000000000\n"
+                "P00   INFO: new backup label = 20191004-144000F\n"
+                "P00   INFO: full backup size = [SIZE], file total = 3");
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -3200,6 +3206,98 @@ testRun(void)
 
             HRN_STORAGE_PUT(storagePgWrite(), "block-incr-grow", file, .timeModified = backupTimeStart);
 
+            // File that uses block incr and will not be resumed
+            file = bufNew(BLOCK_MIN_SIZE * 3);
+            memset(bufPtr(file), 0, bufSize(file));
+            bufUsedSet(file, bufSize(file));
+
+            HRN_STORAGE_PUT(storagePgWrite(), "block-incr-no-resume", file, .timeModified = backupTimeStart);
+
+            // Error when pg_control is missing after backup start
+            HRN_BACKUP_SCRIPT_SET(
+                {.op = hrnBackupScriptOpRemove, .file = storagePathP(storagePg(), STRDEF("global/pg_control"))});
+            hrnBackupPqScriptP(
+                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2, .walSwitch = true,
+                .errorAfterCopyStart = true);
+            TEST_ERROR(
+                hrnCmdBackup(), FileMissingError,
+                "raised from local-1 shim protocol: unable to open missing file '" TEST_PATH "/pg1/global/pg_control' for read");
+
+            TEST_RESULT_LOG(
+                "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
+                "P00   INFO: backup start archive = 0000000105DBF06000000000, lsn = 5dbf060/0\n"
+                "P00   INFO: check archive for segment 0000000105DBF06000000000\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-no-resume (24KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (24KB, [PCT]) checksum [SHA1]");
+
+            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_11, .pageChecksum = false, .walSegmentSize = 2 * 1024 * 1024);
+
+            // Run backup
+            hrnBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2, .walSwitch = true);
+            TEST_RESULT_VOID(hrnCmdBackup(), "backup");
+
+            TEST_RESULT_LOG(
+                "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
+                "P00   INFO: backup start archive = 0000000105DBF06000000000, lsn = 5dbf060/0\n"
+                "P00   INFO: check archive for segment 0000000105DBF06000000000\n"
+                "P00   INFO: backup '20191103-165320F' cannot be resumed: partially deleted by prior resume or invalid\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-no-resume (24KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (24KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/0, 8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/8192, 2B, [PCT]) checksum [SHA1]\n"
+                "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
+                "P00   INFO: backup stop archive = 0000000105DBF06000000001, lsn = 5dbf060/300000\n"
+                "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
+                "P00   INFO: check archive for segment(s) 0000000105DBF06000000000:0000000105DBF06000000001\n"
+                "P00   INFO: new backup label = 20191103-165320F\n"
+                "P00   INFO: full backup size = [SIZE], file total = 5");
+
+            TEST_RESULT_STR_Z(
+                testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
+                ".> {d=20191103-165320F}\n"
+                "bundle/1/pg_data/PG_VERSION {s=2}\n"
+                "bundle/1/pg_data/global/pg_control {s=8192}\n"
+                "pg_data/backup_label {s=17, ts=+2}\n"
+                "pg_data/block-incr-grow.pgbi {s=24576, m=0:{0,1,2}}\n"
+                "pg_data/block-incr-no-resume.pgbi {s=24576, m=0:{0,1,2}}\n"
+                "--------\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n",
+                "compare file list");
+        }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("online 11 full backup with block incr resume");
+
+        backupTimeStart = BACKUP_EPOCH + 2900000;
+
+        {
+            // Load options
+            StringList *argList = strLstNew();
+            hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+            hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+            hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+            hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+            hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
+            hrnCfgArgRawZ(argList, cfgOptCompressType, "none");
+            hrnCfgArgRawBool(argList, cfgOptRepoBundle, true);
+            hrnCfgArgRawZ(argList, cfgOptRepoBundleLimit, "23kB");
+            hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
+            hrnCfgArgRawZ(argList, cfgOptRepoBlockSizeMap, STRINGIFY(BLOCK_MAX_FILE_SIZE) "b=" STRINGIFY(BLOCK_MAX_SIZE) "b");
+            hrnCfgArgRawZ(argList, cfgOptRepoBlockSizeMap, STRINGIFY(BLOCK_MIN_FILE_SIZE) "=" STRINGIFY(BLOCK_MIN_SIZE));
+            hrnCfgArgRawZ(argList, cfgOptRepoBlockSizeMap, STRINGIFY(BLOCK_MID_FILE_SIZE) "=" STRINGIFY(BLOCK_MID_SIZE));
+            HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+            // Make this backup look resumable
+            HRN_STORAGE_REMOVE(storageTest, "repo/backup/test1/20191103-165320F/backup.manifest");
+
+            // Corrupt file that uses block incr and will not be resumed
+            Buffer *file = bufNew(BLOCK_MIN_SIZE * 3);
+            memset(bufPtr(file), 99, bufSize(file));
+            bufUsedSet(file, bufSize(file));
+
+            HRN_STORAGE_PUT(storageRepoWrite(), "backup/test1/20191103-165320F/pg_data/block-incr-no-resume.pgbi", file);
+
             // File that shrinks below the limit where it would get block incremental if it were new
             file = bufNew(BLOCK_MIN_FILE_SIZE + 1);
             memset(bufPtr(file), 55, bufSize(file));
@@ -3238,53 +3336,45 @@ testRun(void)
 
             HRN_STORAGE_PUT(storagePgWrite(), "grow-to-block-incr", file, .timeModified = backupTimeStart);
 
-            // Error when pg_control is missing after backup start
-            HRN_BACKUP_SCRIPT_SET(
-                {.op = hrnBackupScriptOpRemove, .file = storagePathP(storagePg(), STRDEF("global/pg_control"))});
-            hrnBackupPqScriptP(
-                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2, .walSwitch = true,
-                .errorAfterCopyStart = true);
-            TEST_ERROR(
-                hrnCmdBackup(), FileMissingError,
-                "raised from local-1 shim protocol: unable to open missing file '" TEST_PATH "/pg1/global/pg_control' for read");
-
-            TEST_RESULT_LOG(
-                "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
-                "P00   INFO: backup start archive = 0000000105DBF06000000000, lsn = 5dbf060/0\n"
-                "P00   INFO: check archive for segment 0000000105DBF06000000000\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (24KB, [PCT]) checksum [SHA1]");
-
-            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_11, .pageChecksum = false, .walSegmentSize = 2 * 1024 * 1024);
-
             // Run backup
             hrnBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2, .walSwitch = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
+                "P00   WARN: backup '20191103-165320F' missing manifest removed from backup.info\n"
                 "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
-                "P00   INFO: backup start archive = 0000000105DBF06000000000, lsn = 5dbf060/0\n"
-                "P00   INFO: check archive for segment 0000000105DBF06000000000\n"
-                "P00   INFO: backup '20191103-165320F' cannot be resumed: partially deleted by prior resume or invalid\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (24KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/normal-same (bundle 1/0, 4B, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-to-block-incr (bundle 1/4, 16.0KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/16387, 8KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink-block (bundle 1/24579, 16KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink-below (bundle 1/40985, 16KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/57391, 16KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-same (bundle 1/73805, 16KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/90211, 2B, [PCT]) checksum [SHA1]\n"
+                "P00   INFO: backup start archive = 0000000105DC08C000000000, lsn = 5dc08c0/0\n"
+                "P00   INFO: check archive for segment 0000000105DC08C000000000\n"
+                "P00   WARN: resumable backup 20191103-165320F of same type exists -- invalid files will be removed then the backup"
+                " will resume\n"
+                "P00 DETAIL: remove path '" TEST_PATH "/repo/backup/test1/20191103-165320F/bundle' from resumed backup\n"
+                "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191103-165320F/pg_data/backup_label' from resumed"
+                " backup (missing in manifest)\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-no-resume (24KB, [PCT]) checksum [SHA1]\n"
+                "P00   WARN: resumed backup file pg_data/block-incr-no-resume did not have expected checksum"
+                " ebdd38b69cd5b9f2d00d273c981e16960fbbb4f7. The file was recopied and backup will continue but this may be an issue"
+                " unless the resumed backup path in the repository is known to be corrupted.\n"
+                "            NOTE: this does not indicate a problem with the PostgreSQL page checksums.\n"
+                "P01 DETAIL: checksum resumed file " TEST_PATH "/pg1/block-incr-grow (24KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/0, 2B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/normal-same (bundle 1/2, 4B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-to-block-incr (bundle 1/6, 16.0KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/16389, 8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink-block (bundle 1/24581, 16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink-below (bundle 1/40987, 16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/57393, 16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-same (bundle 1/73807, 16KB, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
-                "P00   INFO: backup stop archive = 0000000105DBF06000000001, lsn = 5dbf060/300000\n"
+                "P00   INFO: backup stop archive = 0000000105DC08C000000001, lsn = 5dc08c0/300000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
-                "P00   INFO: check archive for segment(s) 0000000105DBF06000000000:0000000105DBF06000000001\n"
+                "P00   INFO: check archive for segment(s) 0000000105DC08C000000000:0000000105DC08C000000001\n"
                 "P00   INFO: new backup label = 20191103-165320F\n"
-                "P00   INFO: full backup size = [SIZE], file total = 10");
+                "P00   INFO: full backup size = [SIZE], file total = 11");
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ".> {d=20191103-165320F}\n"
-                "bundle/1/pg_data/PG_VERSION {s=2}\n"
+                "bundle/1/pg_data/PG_VERSION {s=2, ts=-100000}\n"
                 "bundle/1/pg_data/block-incr-same {s=16384, m=0:{0,1}}\n"
                 "bundle/1/pg_data/block-incr-shrink {s=16385, m=0:{0,1,2}}\n"
                 "bundle/1/pg_data/block-incr-shrink-below {s=16384, m=0:{0,1}}\n"
@@ -3293,11 +3383,14 @@ testRun(void)
                 "bundle/1/pg_data/grow-to-block-incr {s=16383}\n"
                 "bundle/1/pg_data/normal-same {s=4}\n"
                 "pg_data/backup_label {s=17, ts=+2}\n"
-                "pg_data/block-incr-grow.pgbi {s=24576, m=0:{0,1,2}}\n"
+                "pg_data/block-incr-grow.pgbi {s=24576, m=0:{0,1,2}, ts=-100000}\n"
+                "pg_data/block-incr-no-resume.pgbi {s=24576, m=0:{0,1,2}, ts=-100000}\n"
                 "--------\n"
                 "[backup:target]\n"
                 "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n",
                 "compare file list");
+
+            HRN_STORAGE_REMOVE(storagePgWrite(), "block-incr-no-resume");
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -3306,6 +3399,12 @@ testRun(void)
         backupTimeStart = BACKUP_EPOCH + 3000000;
 
         {
+            // Load the previous manifest and null out the checksum-page option to be sure it gets set to false in this backup
+            const String *manifestPriorFile = STRDEF(STORAGE_REPO_BACKUP "/20191103-165320F/" BACKUP_MANIFEST_FILE);
+            Manifest *manifestPrior = manifestNewLoad(storageReadIo(storageNewReadP(storageRepo(), manifestPriorFile)));
+            ((ManifestData *)manifestData(manifestPrior))->backupOptionChecksumPage = NULL;
+            manifestSave(manifestPrior, storageWriteIo(storageNewWriteP(storageRepoWrite(), manifestPriorFile)));
+
             // Load options
             StringList *argList = strLstNew();
             hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -3481,12 +3580,12 @@ testRun(void)
 
             HRN_STORAGE_PUT(storagePgWrite(), "block-incr-grow", file, .timeModified = backupTimeStart);
 
-            // File that will later have a timestamp far enough in the past to make the block size zero
-            file = bufNew((size_t)(BLOCK_MIN_FILE_SIZE));
+            // File that uses block incr and will not be resumed
+            file = bufNew((size_t)(BLOCK_MIN_FILE_SIZE * 1.5));
             memset(bufPtr(file), 0, bufSize(file));
             bufUsedSet(file, bufSize(file));
 
-            HRN_STORAGE_PUT(storagePgWrite(), "block-incr-wayback", file, .timeModified = backupTimeStart);
+            HRN_STORAGE_PUT(storagePgWrite(), "block-incr-no-resume", file, .timeModified = backupTimeStart);
 
             // Run backup
             hrnBackupPqScriptP(
@@ -3498,8 +3597,8 @@ testRun(void)
                 "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DC520000000000, lsn = 5dc5200/0\n"
                 "P00   INFO: check archive for segment 0000000105DC520000000000\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-no-resume (24KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (24KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-wayback (16KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/0, 2B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/24, 8KB, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
@@ -3518,11 +3617,100 @@ testRun(void)
                 "bundle/1/pg_data/global/pg_control {s=8192}\n"
                 "pg_data/backup_label.gz {s=17, ts=+2}\n"
                 "pg_data/block-incr-grow.pgbi {s=24576, m=0:{0,1,2}}\n"
+                "pg_data/block-incr-no-resume.pgbi {s=24576, m=0:{0,1,2}}\n"
+                "--------\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n",
+                "compare file list");
+        }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("online 11 full backup with comp/enc resume");
+
+        backupTimeStart = BACKUP_EPOCH + 3300000;
+
+        {
+            // Load options
+            StringList *argList = strLstNew();
+            hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+            hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+            hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+            hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+            hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
+            hrnCfgArgRawBool(argList, cfgOptDelta, true);
+            hrnCfgArgRawBool(argList, cfgOptRepoBundle, true);
+            hrnCfgArgRawZ(argList, cfgOptRepoBundleLimit, "8KiB");
+            hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
+            hrnCfgArgRawZ(argList, cfgOptRepoBlockSizeMap, STRINGIFY(BLOCK_MAX_FILE_SIZE) "=" STRINGIFY(BLOCK_MAX_SIZE));
+            hrnCfgArgRawZ(argList, cfgOptRepoBlockSizeMap, STRINGIFY(BLOCK_MIN_FILE_SIZE) "=" STRINGIFY(BLOCK_MIN_SIZE));
+            hrnCfgArgRawZ(argList, cfgOptRepoBlockSizeMap, STRINGIFY(BLOCK_MID_FILE_SIZE) "=" STRINGIFY(BLOCK_MID_SIZE));
+            hrnCfgArgRawZ(argList, cfgOptBufferSize, "16KiB");
+            hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
+            hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
+            HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+            // Make this backup look resumable
+            HRN_STORAGE_REMOVE(storageTest, "repo/backup/test1/20191108-080000F/backup.manifest");
+
+            // File that will later have a timestamp far enough in the past to make the block size zero
+            Buffer *file = bufNew((size_t)(BLOCK_MIN_FILE_SIZE));
+            memset(bufPtr(file), 0, bufSize(file));
+            bufUsedSet(file, bufSize(file));
+
+            HRN_STORAGE_PUT(storagePgWrite(), "block-incr-wayback", file, .timeModified = backupTimeStart);
+
+            // Modify file that uses block incr and will not be resumed so it is caught by delta
+            file = bufNew((size_t)(BLOCK_MIN_FILE_SIZE * 1.5));
+            memset(bufPtr(file), 0xFE, bufSize(file));
+            bufUsedSet(file, bufSize(file));
+
+            HRN_STORAGE_PUT(storagePgWrite(), "block-incr-no-resume", file, .timeModified = backupTimeStart - 100000);
+
+            // Run backup
+            hrnBackupPqScriptP(
+                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherType = cipherTypeAes256Cbc,
+                .cipherPass = TEST_CIPHER_PASS, .walTotal = 2, .walSwitch = true);
+            TEST_RESULT_VOID(hrnCmdBackup(), "backup");
+
+            TEST_RESULT_LOG(
+                "P00   WARN: backup '20191108-080000F' missing manifest removed from backup.info\n"
+                "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
+                "P00   INFO: backup start archive = 0000000105DC6A7000000000, lsn = 5dc6a70/0\n"
+                "P00   INFO: check archive for segment 0000000105DC6A7000000000\n"
+                "P00   WARN: resumable backup 20191108-080000F of same type exists -- invalid files will be removed then the backup"
+                " will resume\n"
+                "P00 DETAIL: remove path '" TEST_PATH "/repo/backup/test1/20191108-080000F/bundle' from resumed backup\n"
+                "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191108-080000F/pg_data/backup_label.gz' from resumed"
+                " backup (missing in manifest)\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-no-resume (24KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: checksum resumed file " TEST_PATH "/pg1/block-incr-grow (24KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-wayback (16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/0, 2B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/24, 8KB, [PCT]) checksum [SHA1]\n"
+                "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
+                "P00   INFO: backup stop archive = 0000000105DC6A7000000001, lsn = 5dc6a70/300000\n"
+                "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
+                "P00   INFO: check archive for segment(s) 0000000105DC6A7000000000:0000000105DC6A7000000001\n"
+                "P00   INFO: new backup label = 20191108-080000F\n"
+                "P00   INFO: full backup size = [SIZE], file total = 6");
+
+            TEST_RESULT_STR_Z(
+                testBackupValidateP(
+                    storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest"), .cipherType = cipherTypeAes256Cbc,
+                    .cipherPass = TEST_CIPHER_PASS),
+                ".> {d=20191108-080000F}\n"
+                "bundle/1/pg_data/PG_VERSION {s=2, ts=-500000}\n"
+                "bundle/1/pg_data/global/pg_control {s=8192}\n"
+                "pg_data/backup_label.gz {s=17, ts=+2}\n"
+                "pg_data/block-incr-grow.pgbi {s=24576, m=0:{0,1,2}, ts=-100000}\n"
+                "pg_data/block-incr-no-resume.pgbi {s=24576, m=0:{0,1,2}, ts=-100000}\n"
                 "pg_data/block-incr-wayback.pgbi {s=16384, m=0:{0,1}}\n"
                 "--------\n"
                 "[backup:target]\n"
                 "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n",
                 "compare file list");
+
+            HRN_STORAGE_REMOVE(storagePgWrite(), "block-incr-no-resume");
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -3538,10 +3726,10 @@ testRun(void)
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             hrnCfgArgRawStrId(argList, cfgOptType, backupTypeDiff);
+            hrnCfgArgRawZ(argList, cfgOptCompressType, "bz2");
             hrnCfgArgRawBool(argList, cfgOptRepoBundle, true);
             hrnCfgArgRawZ(argList, cfgOptRepoBundleLimit, "4MiB");
             hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
-            hrnCfgArgRawBool(argList, cfgOptDelta, true);
             hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
             hrnCfgArgRawZ(argList, cfgOptRepoBlockAgeMap, "1=2");
             hrnCfgArgRawZ(argList, cfgOptRepoBlockAgeMap, "2=0");
@@ -3556,7 +3744,7 @@ testRun(void)
             memset(bufPtr(file) + (BLOCK_MIN_SIZE * 2), 1, BLOCK_MIN_SIZE);
             bufUsedSet(file, bufSize(file));
 
-            HRN_STORAGE_PUT(storagePgWrite(), "block-incr-grow", file, .timeModified = backupTimeStart);
+            HRN_STORAGE_PUT(storagePgWrite(), "block-incr-grow", file, .timeModified = backupTimeStart - 200000);
 
             // File with age multiplier
             file = bufNew(BLOCK_MIN_FILE_SIZE * 2);
@@ -3583,15 +3771,18 @@ testRun(void)
 
             TEST_RESULT_LOG(
                 "P00   INFO: last backup label = 20191108-080000F, version = " PROJECT_VERSION "\n"
+                "P00   WARN: diff backup cannot alter compress-type option to 'bz2', reset to value in 20191108-080000F\n"
                 "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DC82D000000000, lsn = 5dc82d0/0\n"
                 "P00   INFO: check archive for segment 0000000105DC82D000000000\n"
+                "P00   WARN: file 'block-incr-grow' has same timestamp (1573200000) as prior but different size (prior 24576,"
+                " current 49152), enabling delta checksum\n"
                 "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (bundle 1/0, 48KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/block-incr-wayback (16KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-age-to-zero (bundle 1/0, 16KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-age-multiplier (bundle 1/56, 32KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/184, 8KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (bundle 1/288, 48KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-age-to-zero (bundle 1/128, 16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-age-multiplier (bundle 1/184, 32KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/312, 8KB, [PCT]) checksum [SHA1]\n"
                 "P00 DETAIL: reference pg_data/PG_VERSION to 20191108-080000F\n"
                 "P00 DETAIL: reference pg_data/block-incr-wayback to 20191108-080000F\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
@@ -3608,7 +3799,7 @@ testRun(void)
                 ".> {d=20191108-080000F_20191110-153320D}\n"
                 "bundle/1/pg_data/block-age-multiplier {s=32768, m=1:{0,1}, ts=-86400}\n"
                 "bundle/1/pg_data/block-age-to-zero {s=16384, ts=-172800}\n"
-                "bundle/1/pg_data/block-incr-grow {s=49152, m=0:{0,1},1:{0,1,2,3}}\n"
+                "bundle/1/pg_data/block-incr-grow {s=49152, m=0:{0,1},1:{0,1,2,3}, ts=-200000}\n"
                 "bundle/1/pg_data/global/pg_control {s=8192}\n"
                 "pg_data/backup_label.gz {s=17, ts=+2}\n"
                 "20191108-080000F/bundle/1/pg_data/PG_VERSION {s=2, ts=-600000}\n"
