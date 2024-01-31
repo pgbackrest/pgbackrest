@@ -1209,6 +1209,7 @@ option:
       backup:
         depend:
           option: online
+          default: false
           list:
             - true
     command-role:

@@ -1143,6 +1143,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                              // opt/backup-full-incr
                 PARSE_RULE_OPTIONAL_DEPEND                                                                   // opt/backup-full-incr
                 (                                                                                            // opt/backup-full-incr
+                    PARSE_RULE_OPTIONAL_DEPEND_DEFAULT(PARSE_RULE_VAL_BOOL_FALSE),                           // opt/backup-full-incr
                     PARSE_RULE_VAL_OPT(cfgOptOnline),                                                        // opt/backup-full-incr
                     PARSE_RULE_VAL_BOOL_TRUE,                                                                // opt/backup-full-incr
                 ),                                                                                           // opt/backup-full-incr

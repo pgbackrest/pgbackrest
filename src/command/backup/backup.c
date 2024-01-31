@@ -2646,14 +2646,14 @@ cmdBackup(void)
                     {
                         const ManifestFile file = manifestFile(manifestPrelim, fileIdx);
 
-                        fprintf(stdout, "!!!PRELIM FILE %s TIME %" PRId64 ", START %" PRId64 "\n", strZ(file.name), file.timestamp, timestampCopyStart);
+                        // fprintf(stdout, "!!!PRELIM FILE %s TIME %" PRId64 ", START %" PRId64 "\n", strZ(file.name), file.timestamp, timestampCopyStart);
 
                         if (file.timestamp > timestampCopyStart || (bundle && file.size <= bundleLimit))
                         {
                             manifestFileRemove(manifestPrelim, file.name);
 
-                            fprintf(stdout, "!!!PRELIM REMOVE FILE %s\n", strZ(file.name));
-                            fflush(stdout);
+                            // fprintf(stdout, "!!!PRELIM REMOVE FILE %s\n", strZ(file.name));
+                            // fflush(stdout);
 
                             continue;
                         }
@@ -2663,12 +2663,12 @@ cmdBackup(void)
 
                     if (manifestFileTotal(manifestPrelim) > 0)
                     {
-                        for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifestPrelim); fileIdx++)
-                        {
-                            const ManifestFile file = manifestFile(manifestPrelim, fileIdx);
-                            fprintf(stdout, "!!!PRELIM PROCESS FILE %s\n", strZ(file.name));
-                            fflush(stdout);
-                        }
+                        // for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifestPrelim); fileIdx++)
+                        // {
+                        //     const ManifestFile file = manifestFile(manifestPrelim, fileIdx);
+                        //     fprintf(stdout, "!!!PRELIM PROCESS FILE %s\n", strZ(file.name));
+                        //     fflush(stdout);
+                        // }
 
                         // Validate the manifest using the copy start time
                         manifestBuildValidate(
