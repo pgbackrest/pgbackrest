@@ -2138,6 +2138,7 @@ testRun(void)
             hrnCfgArgRawBool(argList, cfgOptStopAuto, true);
             hrnCfgArgRawBool(argList, cfgOptCompress, false);
             hrnCfgArgRawBool(argList, cfgOptArchiveCheck, false);
+            hrnCfgArgRawBool(argList, cfgOptBackupFullIncr, true);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Add files
@@ -2176,7 +2177,7 @@ testRun(void)
                         strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strZ(resumeLabel)))));
 
             // Run backup
-            hrnBackupPqScriptP(PG_VERSION_95, backupTimeStart, .noArchiveCheck = true, .noWal = true);
+            hrnBackupPqScriptP(PG_VERSION_95, backupTimeStart, .noArchiveCheck = true, .noWal = true, .fullIncrNoOp = true);
 
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
@@ -2785,7 +2786,8 @@ testRun(void)
             ((Storage *)storageRepoWrite())->pub.interface.feature ^= 1 << storageFeatureHardLink;
 
             // Run backup
-            hrnBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 3, .walSwitch = true);
+            hrnBackupPqScriptP(
+                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 3, .walSwitch = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             // Reset storage features
@@ -3002,7 +3004,6 @@ testRun(void)
             hrnCfgArgRawZ(argList, cfgOptBufferSize, "16K");
             hrnCfgArgRawBool(argList, cfgOptRepoBundle, true);
             hrnCfgArgRawBool(argList, cfgOptResume, false);
-            hrnCfgArgRawBool(argList, cfgOptBackupFullIncr, true);
             hrnCfgArgRawZ(argList, cfgOptAnnotation, "extra key=this is an annotation");
             hrnCfgArgRawZ(argList, cfgOptAnnotation, "source=this is another annotation");
             hrnCfgArgRawZ(argList, cfgOptPgVersionForce, "11");
@@ -3041,7 +3042,7 @@ testRun(void)
             // Run backup
             hrnBackupPqScriptP(
                 PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2, .pgVersionForce = STRDEF("11"),
-                .walSwitch = true, .fullIncrNoOp = true);
+                .walSwitch = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
@@ -3272,19 +3273,20 @@ testRun(void)
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
-                "P00   INFO: full/incr backup first pass\n"
+                "P00   INFO: full/incr backup preliminary copy\n"
                 "P00   INFO: backup '20191103-165320F' cannot be resumed: partially deleted by prior resume or invalid\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (24KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/rm-after-prelim-cp (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/rm-before-final-cp (8KB, [PCT]) checksum [SHA1]\n"
-                "P00   INFO: full/incr backup second pass\n"
                 "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DBF06000000000, lsn = 5dbf060/0\n"
                 "P00   INFO: check archive for segment 0000000105DBF06000000000\n"
+                "P00   INFO: full/incr backup cleanup\n"
                 "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191103-165320F/pg_data/block-incr-grow.pgbi' from"
-                " resumed backup (mismatched timestamp)\n"
-                "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191103-165320F/pg_data/rm-after-prelim-cp' from resumed"
-                " backup (missing in manifest)\n"
+                " backup (mismatched timestamp)\n"
+                "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191103-165320F/pg_data/rm-after-prelim-cp' from backup"
+                " (missing in manifest)\n"
+                "P00   INFO: full/incr backup preliminary copy\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-no-resume (24KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (24KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/below-fi-limit (8KB, [PCT]) checksum [SHA1]\n"

@@ -746,6 +746,9 @@ backupResumeCleanRecurse(
             // Build the backup path used to remove files/links/paths that are invalid
             const String *const backupPath = strNewFmt("%s/%s", strZ(backupParentPath), strZ(info.name));
 
+            // Add/resume resumed based on resume flag
+            const char *resumeZ = resume ? " resumed" : "";
+
             // Process file types
             switch (info.type)
             {
@@ -756,8 +759,7 @@ backupResumeCleanRecurse(
                     // If the path was not found in the new manifest then remove it
                     if (manifestPathFindDefault(manifest, manifestName, NULL) == NULL)
                     {
-                        // !!! NEED TO CHANGE MESSAGES TO MATCH "PHASE 1" USAGE
-                        LOG_DETAIL_FMT("remove path '%s' from resumed backup", strZ(storagePathP(storageRepo(), backupPath)));
+                        LOG_DETAIL_FMT("remove path '%s' from%s backup", strZ(storagePathP(storageRepo(), backupPath)), resumeZ);
                         storagePathRemoveP(storageRepoWrite(), backupPath, .recurse = true);
                     }
                     // Else recurse into the path
@@ -776,7 +778,6 @@ backupResumeCleanRecurse(
                 case storageTypeFile:
                 {
                     // If the file is compressed then strip off the extension before doing the lookup
-                    // !!! NEEDS TO BE EXPANDED TO RESUME BLOCK INCREMENTAL
                     const CompressType fileCompressType = compressTypeFromName(manifestName);
 
                     if (fileCompressType != compressTypeNone)
@@ -801,14 +802,14 @@ backupResumeCleanRecurse(
                         ASSERT(file.reference == NULL);
 
                         if (!manifestFileExists(manifestResume, manifestName))
-                            removeReason = "missing in resumed manifest";
+                            removeReason = zNewFmt("missing in%s manifest", resumeZ);
                         else
                         {
                             const ManifestFile fileResume = manifestFileFind(manifestResume, manifestName);
                             ASSERT(fileResume.reference == NULL);
 
                             if (fileResume.checksumSha1 == NULL)
-                                removeReason = "no checksum in resumed manifest";
+                                removeReason = zNewFmt("no checksum in%s manifest", resumeZ);
                             else if (file.size != fileResume.size)
                                 removeReason = "mismatched size";
                             else if (!delta && file.timestamp != fileResume.timestamp)
@@ -831,7 +832,7 @@ backupResumeCleanRecurse(
                                 file.checksumPage = fileResume.checksumPage;
                                 file.checksumPageError = fileResume.checksumPageError;
                                 file.checksumPageErrorList = fileResume.checksumPageErrorList;
-                                // !!! NEEDS TO BE EXPANDED TO RESUME BLOCK INCREMENTAL
+
                                 file.resume = resume;
                                 file.delta = delta;
                                 file.copy = resume | delta;
@@ -845,7 +846,7 @@ backupResumeCleanRecurse(
                     if (removeReason != NULL)
                     {
                         LOG_DETAIL_FMT(
-                            "remove file '%s' from resumed backup (%s)", strZ(storagePathP(storageRepo(), backupPath)),
+                            "remove file '%s' from%s backup (%s)", strZ(storagePathP(storageRepo(), backupPath)), resumeZ,
                             removeReason);
                         storageRemoveP(storageRepoWrite(), backupPath);
                     }
@@ -863,7 +864,7 @@ backupResumeCleanRecurse(
                 // Remove special files
                 // -----------------------------------------------------------------------------------------------------------------
                 case storageTypeSpecial:
-                    LOG_WARN_FMT("remove special file '%s' from resumed backup", strZ(storagePathP(storageRepo(), backupPath)));
+                    LOG_WARN_FMT("remove special file '%s' from%s backup", strZ(storagePathP(storageRepo(), backupPath)), resumeZ);
                     storageRemoveP(storageRepoWrite(), backupPath);
                     break;
             }
@@ -2636,36 +2637,16 @@ cmdBackup(void)
                     cfgOptionBool(cfgOptRepoBlock), &blockIncrMap, strLstNewVarLst(cfgOptionLst(cfgOptExclude)),
                     dbTablespaceList(backupData->dbPrimary));
 
-                // Remove files that do not need to be considered for the first pass (!!! SHOULD BE BUILT INTO MANIFEST?)
-                const bool bundle = cfgOptionBool(cfgOptRepoBundle);
-                const uint64_t bundleLimit = bundle ? cfgOptionUInt64(cfgOptRepoBundleLimit) : 0; // {uncovered - !!!}
+                // Remove files that do not need to be considered for the preliminary copy
                 const time_t timestampCopyStart = backupData->checkpointTime - (time_t)cfgOptionInt64(cfgOptBackupFullIncrLimit);
-                unsigned int fileIdx = 0;
 
-                while (fileIdx < manifestFileTotal(manifestPrelim))
-                {
-                    const ManifestFile file = manifestFile(manifestPrelim, fileIdx);
-
-                    if (file.timestamp > timestampCopyStart || (bundle && file.size <= bundleLimit)) // {uncovered - !!!}
-                    {
-                        manifestFileRemove(manifestPrelim, file.name);
-
-                        continue;
-                    }
-
-                    fileIdx++;
-                }
+                manifestBuildFullIncr(
+                    manifestPrelim, backupData->checkpointTime - (time_t)cfgOptionInt64(cfgOptBackupFullIncrLimit),
+                    cfgOptionBool(cfgOptRepoBundle) ? cfgOptionUInt64(cfgOptRepoBundleLimit) : 0);
 
                 if (manifestFileTotal(manifestPrelim) > 0)
                 {
-                    LOG_INFO("full/incr backup first pass");
-
-                    // for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifestPrelim); fileIdx++)
-                    // {
-                    //     const ManifestFile file = manifestFile(manifestPrelim, fileIdx);
-                    //     fprintf(stdout, "!!!PRELIM PROCESS FILE %s\n", strZ(file.name));
-                    //     fflush(stdout);
-                    // }
+                    LOG_INFO("full/incr backup preliminary copy");
 
                     // Validate the manifest using the copy start time
                     manifestBuildValidate(
@@ -2686,8 +2667,6 @@ cmdBackup(void)
 
                     // Move manifest to prior context
                     manifestPrior = manifestMove(manifestPrelim, memContextPrior());
-
-                    LOG_INFO("full/incr backup second pass");
                 }
             }
             MEM_CONTEXT_TEMP_END();
@@ -2721,7 +2700,9 @@ cmdBackup(void)
         // For a full backup with a preliminary copy do the equivalent of a resume cleanup
         if (cfgOptionStrId(cfgOptType) == backupTypeFull && manifestPrior != NULL)
         {
+            LOG_INFO("full/incr backup cleanup");
             backupResumeClean(manifest, manifestPrior, false);
+            LOG_INFO("full/incr backup preliminary copy");
         }
         // Else normal resume
         else
