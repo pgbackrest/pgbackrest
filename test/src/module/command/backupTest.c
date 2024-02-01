@@ -3250,21 +3250,21 @@ testRun(void)
             memset(bufPtr(file), 71, bufSize(file));
             bufUsedSet(file, bufSize(file));
 
-            HRN_STORAGE_PUT(storagePgWrite(), "rm-before-final-cp", file, .timeModified = backupTimeStart - 420);
+            HRN_STORAGE_PUT(storagePgWrite(), "rm-before-final-cp", file, .timeModified = backupTimeStart - 120);
 
             // File removed after prelim copy and before final manifest build
             file = bufNew(BLOCK_MIN_SIZE + 2);
             memset(bufPtr(file), 71, bufSize(file));
             bufUsedSet(file, bufSize(file));
 
-            HRN_STORAGE_PUT(storagePgWrite(), "rm-after-prelim-cp", file, .timeModified = backupTimeStart - 420);
+            HRN_STORAGE_PUT(storagePgWrite(), "rm-after-prelim-cp", file, .timeModified = backupTimeStart - 120);
 
             // File just over the full/incr time limit
             file = bufNew(BLOCK_MIN_SIZE + 3);
             memset(bufPtr(file), 33, bufSize(file));
             bufUsedSet(file, bufSize(file));
 
-            HRN_STORAGE_PUT(storagePgWrite(), "below-fi-limit", file, .timeModified = backupTimeStart - 419);
+            HRN_STORAGE_PUT(storagePgWrite(), "below-fi-limit", file, .timeModified = backupTimeStart - 119);
 
             // Add full/incr option
             hrnCfgArgRawBool(argList, cfgOptBackupFullIncr, true);
@@ -3313,10 +3313,10 @@ testRun(void)
                 "bundle/1/pg_data/PG_VERSION {s=2}\n"
                 "bundle/1/pg_data/global/pg_control {s=8192}\n"
                 "pg_data/backup_label {s=17, ts=+2}\n"
-                "pg_data/below-fi-limit {s=8195, ts=-419}\n"
+                "pg_data/below-fi-limit {s=8195, ts=-119}\n"
                 "pg_data/block-incr-grow.pgbi {s=24576, m=0:{0,1,2}}\n"
                 "pg_data/block-incr-no-resume.pgbi {s=24576, m=0:{0,1,2}}\n"
-                "pg_data/rm-before-final-cp {s=8193, ts=-420}\n"
+                "pg_data/rm-before-final-cp {s=8193, ts=-120}\n"
                 "--------\n"
                 "[backup:target]\n"
                 "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n",

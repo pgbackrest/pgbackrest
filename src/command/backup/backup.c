@@ -703,6 +703,40 @@ backupBuildIncr(
 }
 
 /***********************************************************************************************************************************
+Get the last full backup time in order to set the limit for full/incr preliminary copy
+***********************************************************************************************************************************/
+static time_t
+backupFullIncrLimit(InfoBackup *const infoBackup)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
+    FUNCTION_LOG_END();
+
+    ASSERT(infoBackup != NULL);
+
+    // Default to one day if no full backup can be found
+    time_t result = SEC_PER_DAY;
+
+    // Get the limit from the last full backup if it exists
+    for (unsigned int backupIdx = infoBackupDataTotal(infoBackup) - 1; backupIdx + 1 > 0 ; backupIdx--)
+    {
+        InfoBackupData backupData = infoBackupData(infoBackup, backupIdx);
+
+        if (backupData.backupType == backupTypeFull)
+        {
+            result = backupData.backupTimestampStop - backupData.backupTimestampStart;
+            break;
+        }
+    }
+
+    // Round up to the nearest minute (ensures we do not have a zero limit). This is a bit imprecise since an interval exactly
+    // divisible by a minute will be rounded up another minute, but it seems fine for this purpose.
+    result = (result / SEC_PER_MIN + 1) * SEC_PER_MIN;
+
+    FUNCTION_LOG_RETURN(TIME, result);
+}
+
+/***********************************************************************************************************************************
 Check for a backup that can be resumed and merge into the manifest if found
 ***********************************************************************************************************************************/
 // Recursive helper for backupResumeClean()
@@ -2642,10 +2676,10 @@ cmdBackup(void)
                     dbTablespaceList(backupData->dbPrimary));
 
                 // Remove files that do not need to be considered for the preliminary copy
-                const time_t timestampCopyStart = backupData->checkpointTime - (time_t)cfgOptionInt64(cfgOptBackupFullIncrLimit);
+                const time_t timestampCopyStart = backupData->checkpointTime - backupFullIncrLimit(infoBackup);
 
                 manifestBuildFullIncr(
-                    manifestPrelim, backupData->checkpointTime - (time_t)cfgOptionInt64(cfgOptBackupFullIncrLimit),
+                    manifestPrelim, timestampCopyStart,
                     cfgOptionBool(cfgOptRepoBundle) ? cfgOptionUInt64(cfgOptRepoBundleLimit) : 0);
 
                 fprintf(stdout, "!!!COPY START %zu\n", (size_t)timestampCopyStart); fflush(stdout);
