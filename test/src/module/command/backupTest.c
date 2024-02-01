@@ -2584,7 +2584,7 @@ testRun(void)
 
             // Create file to copy from the standby. This file will be zero-length on the primary and non-zero-length on the standby
             // but no bytes will be copied.
-            HRN_STORAGE_PUT_EMPTY(storagePgIdxWrite(0), PG_PATH_BASE "/1/1", .timeModified = backupTimeStart);
+            HRN_STORAGE_PUT_EMPTY(storagePgIdxWrite(0), PG_PATH_BASE "/1/1", .timeModified = backupTimeStart - 7200);
             HRN_STORAGE_PUT_Z(storagePgIdxWrite(1), PG_PATH_BASE "/1/1", "1234");
 
             // Create file to copy from the standby. This file will be smaller on the primary than the standby and have no common
@@ -2616,6 +2616,9 @@ testRun(void)
                 "HINT: check the PostgreSQL server log for errors.\n"
                 "HINT: run the 'start' command if the stanza was previously stopped.");
 
+            TEST_RESULT_LOG(
+                "P00   WARN: no prior backup exists, incr backup has been changed to full");
+
             // Run backup but error on archive check
             hrnBackupPqScriptP(
                 PG_VERSION_96, backupTimeStart, .noWal = true, .backupStandby = true, .walCompressType = compressTypeGz,
@@ -2639,6 +2642,11 @@ testRun(void)
             const String *archiveInfoContent = strNewBuf(storageGetP(storageNewReadP(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR)));
 
             // Run backup
+            hrnCfgArgRawBool(argList, cfgOptBackupFullIncr, true);
+            HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+            fprintf(stdout, "!!!BACKUP START %zu\n", (size_t)backupTimeStart); fflush(stdout);
+
             hrnBackupPqScriptP(
                 PG_VERSION_96, backupTimeStart, .backupStandby = true, .walCompressType = compressTypeGz, .startFast = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
@@ -2662,7 +2670,7 @@ testRun(void)
                 ".> {d=20191016-042640F}\n"
                 "pg_data/PG_VERSION {s=3}\n"
                 "pg_data/backup_label {s=17, ts=+2}\n"
-                "pg_data/base/1/1 {s=0}\n"
+                "pg_data/base/1/1 {s=0, ts=-7200}\n"
                 "pg_data/base/1/2 {s=2}\n"
                 "pg_data/base/1/3 {s=3, so=4}\n"
                 "pg_data/global/pg_control {s=8192}\n"

@@ -328,6 +328,10 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
 
             if (!param.fullIncrNoOp)
             {
+                // Wait for standby to sync
+                if (param.backupStandby)
+                    HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_REPLAY_WAIT_96(2, lsnStartStr));
+
                 // Ping to check standby mode
                 HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_IS_STANDBY_QUERY(1, false));
 

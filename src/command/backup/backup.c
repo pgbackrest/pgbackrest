@@ -2621,15 +2621,19 @@ cmdBackup(void)
         // Get the start timestamp which will later be written into the manifest to track total backup time
         const time_t timestampStart = backupTime(backupData, false);
 
-        // Remove files that would not be in a bundle
-        Manifest *manifestPrior = NULL;
+        // Check if there is a prior manifest when backup type is diff/incr
+        Manifest *manifestPrior = backupBuildIncrPrior(infoBackup);
+
+        // Perform preliminary copy of full/incr backup
+
+        fprintf(stdout, "!!!CHECK FULL/INCR FULL %d INCR %d\n", cfgOptionStrId(cfgOptType) == backupTypeFull, cfgOptionBool(cfgOptBackupFullIncr)); fflush(stdout);
 
         if (cfgOptionStrId(cfgOptType) == backupTypeFull && cfgOptionBool(cfgOptBackupFullIncr))
         {
+            ASSERT(manifestPrior == NULL);
+
             MEM_CONTEXT_TEMP_BEGIN()
             {
-                // !!! WAIT FOR STANDBY TO SYNC TO LAST CHECKPOINT
-
                 // Build the manifest
                 Manifest *const manifestPrelim = manifestNewBuild(
                     backupData->storagePrimary, infoPg.version, infoPg.catalogVersion, timestampStart,
@@ -2644,9 +2648,24 @@ cmdBackup(void)
                     manifestPrelim, backupData->checkpointTime - (time_t)cfgOptionInt64(cfgOptBackupFullIncrLimit),
                     cfgOptionBool(cfgOptRepoBundle) ? cfgOptionUInt64(cfgOptRepoBundleLimit) : 0);
 
+                fprintf(stdout, "!!!COPY START %zu\n", (size_t)timestampCopyStart); fflush(stdout);
+
                 if (manifestFileTotal(manifestPrelim) > 0)
                 {
+                    fprintf(stdout, "!!!GOT HERE\n"); fflush(stdout);
+
                     LOG_INFO("full/incr backup preliminary copy");
+
+                    // Wait for replay on the standby to catch up
+                    const String *const checkpointLsn = pgLsnToStr(backupData->checkpoint);
+
+                    if (cfgOptionBool(cfgOptBackupStandby))
+                    {
+                        LOG_INFO_FMT("wait for replay on the standby to reach %s", strZ(checkpointLsn));
+                        dbReplayWait(
+                            backupData->dbStandby, checkpointLsn, backupData->timeline, cfgOptionUInt64(cfgOptArchiveTimeout));
+                        LOG_INFO_FMT("replay on the standby reached %s", strZ(checkpointLsn));
+                    }
 
                     // Validate the manifest using the copy start time
                     manifestBuildValidate(
@@ -2671,9 +2690,6 @@ cmdBackup(void)
             }
             MEM_CONTEXT_TEMP_END();
         }
-        // Else check if there is a prior manifest when backup type is diff/incr
-        else
-            manifestPrior = backupBuildIncrPrior(infoBackup);
 
         // Start the backup
         const BackupStartResult backupStartResult = backupStart(backupData);
