@@ -2645,8 +2645,6 @@ testRun(void)
             hrnCfgArgRawBool(argList, cfgOptBackupFullIncr, true);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-            fprintf(stdout, "!!!BACKUP START %zu\n", (size_t)backupTimeStart); fflush(stdout);
-
             hrnBackupPqScriptP(
                 PG_VERSION_96, backupTimeStart, .backupStandby = true, .walCompressType = compressTypeGz, .startFast = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");

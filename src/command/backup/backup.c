@@ -718,7 +718,7 @@ backupFullIncrLimit(InfoBackup *const infoBackup)
     time_t result = SEC_PER_DAY;
 
     // Get the limit from the last full backup if it exists
-    for (unsigned int backupIdx = infoBackupDataTotal(infoBackup) - 1; backupIdx + 1 > 0 ; backupIdx--)
+    for (unsigned int backupIdx = infoBackupDataTotal(infoBackup) - 1; backupIdx + 1 > 0; backupIdx--)
     {
         InfoBackupData backupData = infoBackupData(infoBackup, backupIdx);
 
