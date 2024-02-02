@@ -2265,7 +2265,7 @@ backupProcess(
             }
         }
 
-        // Generate processing queues
+        // Generate processing queues !!! NEED TO FIX SIZE TOTAL FOR FULL/INCR
         sizeTotal = backupProcessQueue(backupData, manifest, &jobData, preliminary);
 
         // Create the parallel executor
@@ -2659,9 +2659,6 @@ cmdBackup(void)
         Manifest *manifestPrior = backupBuildIncrPrior(infoBackup);
 
         // Perform preliminary copy of full/incr backup
-
-        fprintf(stdout, "!!!CHECK FULL/INCR FULL %d INCR %d\n", cfgOptionStrId(cfgOptType) == backupTypeFull, cfgOptionBool(cfgOptBackupFullIncr)); fflush(stdout);
-
         if (cfgOptionStrId(cfgOptType) == backupTypeFull && cfgOptionBool(cfgOptBackupFullIncr))
         {
             ASSERT(manifestPrior == NULL);
@@ -2682,12 +2679,8 @@ cmdBackup(void)
                     manifestPrelim, timestampCopyStart,
                     cfgOptionBool(cfgOptRepoBundle) ? cfgOptionUInt64(cfgOptRepoBundleLimit) : 0);
 
-                fprintf(stdout, "!!!COPY START %zu\n", (size_t)timestampCopyStart); fflush(stdout);
-
                 if (manifestFileTotal(manifestPrelim) > 0)
                 {
-                    fprintf(stdout, "!!!GOT HERE\n"); fflush(stdout);
-
                     LOG_INFO("full/incr backup preliminary copy");
 
                     // Wait for replay on the standby to catch up
