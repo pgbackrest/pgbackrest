@@ -177,7 +177,8 @@ backupProcessScript(const bool after)
 
 static void
 backupProcess(
-    const BackupData *const backupData, Manifest *const manifest, const bool preliminary, const String *const cipherPassBackup)
+    const BackupData *const backupData, Manifest *const manifest, const bool preliminary, const String *const cipherPassBackup,
+    const uint64_t copySizePrelim, const uint64_t copySizeFinal)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(BACKUP_DATA, backupData);
@@ -186,7 +187,7 @@ backupProcess(
     FUNCTION_HARNESS_END();
 
     backupProcessScript(false);
-    backupProcess_SHIMMED(backupData, manifest, preliminary, cipherPassBackup);
+    backupProcess_SHIMMED(backupData, manifest, preliminary, cipherPassBackup, copySizePrelim, copySizeFinal);
     backupProcessScript(true);
 
     FUNCTION_HARNESS_RETURN_VOID();

@@ -3292,7 +3292,7 @@ testRun(void)
                 " backup (mismatched timestamp)\n"
                 "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191103-165320F/pg_data/rm-after-prelim-cp' from backup"
                 " (missing in manifest)\n"
-                "P00   INFO: full/incr backup preliminary copy\n"
+                "P00   INFO: full/incr backup final copy\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-no-resume (24KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (24KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/below-fi-limit (8KB, [PCT]) checksum [SHA1]\n"

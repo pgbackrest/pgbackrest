@@ -703,6 +703,31 @@ backupBuildIncr(
 }
 
 /***********************************************************************************************************************************
+Get size of files to be copied in a manifest
+***********************************************************************************************************************************/
+static uint64_t
+backupManifestCopySize(Manifest *const manifest)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(MANIFEST, manifest);
+    FUNCTION_LOG_END();
+
+    ASSERT(manifest != NULL);
+
+    uint64_t result = 0;
+
+    for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
+    {
+        const ManifestFile file = manifestFile(manifest, fileIdx);
+
+        if (file.copy) // {uncovered - !!!}
+            result += file.size;
+    }
+
+    FUNCTION_LOG_RETURN(UINT64, result);
+}
+
+/***********************************************************************************************************************************
 Get the last full backup time in order to set the limit for full/incr preliminary copy
 ***********************************************************************************************************************************/
 static time_t
@@ -2109,7 +2134,7 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
                     pckWriteU64P(param, file.blockIncrChecksumSize);
                     pckWriteU64P(param, jobData->blockIncrSizeSuper);
 
-                    if (file.blockIncrMapSize != 0 && !file.resume)
+                    if (file.blockIncrMapSize != 0 && file.reference != NULL)
                     {
                         pckWriteStrP(
                             param,
@@ -2169,7 +2194,8 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
 
 static void
 backupProcess(
-    const BackupData *const backupData, Manifest *const manifest, const bool preliminary, const String *const cipherPassBackup)
+    const BackupData *const backupData, Manifest *const manifest, const bool preliminary, const String *const cipherPassBackup,
+    const uint64_t copySizePrelim, const uint64_t copySizeFinal)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
@@ -2178,7 +2204,9 @@ backupProcess(
         FUNCTION_TEST_PARAM(STRING, cipherPassBackup);
     FUNCTION_LOG_END();
 
+    ASSERT(backupData != NULL);
     ASSERT(manifest != NULL);
+    ASSERT(copySizePrelim == 0 || copySizeFinal == 0);
 
     uint64_t sizeTotal = 0;
 
@@ -2266,7 +2294,7 @@ backupProcess(
         }
 
         // Generate processing queues !!! NEED TO FIX SIZE TOTAL FOR FULL/INCR
-        sizeTotal = backupProcessQueue(backupData, manifest, &jobData, preliminary);
+        sizeTotal = backupProcessQueue(backupData, manifest, &jobData, preliminary) + copySizePrelim + copySizeFinal;
 
         // Create the parallel executor
         ProtocolParallel *const parallelExec = protocolParallelNew(
@@ -2294,7 +2322,7 @@ backupProcess(
             manifestSaveSize = cfgOptionUInt64(cfgOptManifestSaveThreshold);
 
         // Process jobs
-        uint64_t sizeProgress = 0;
+        uint64_t sizeProgress = 0 + copySizePrelim;
 
         // Initialize percent complete and bytes completed/total
         unsigned int currentPercentComplete = 0;
@@ -2657,6 +2685,7 @@ cmdBackup(void)
 
         // Check if there is a prior manifest when backup type is diff/incr
         Manifest *manifestPrior = backupBuildIncrPrior(infoBackup);
+        uint64_t copySizePrelim = 0;
 
         // Perform preliminary copy of full/incr backup
         if (cfgOptionStrId(cfgOptType) == backupTypeFull && cfgOptionBool(cfgOptBackupFullIncr))
@@ -2672,15 +2701,27 @@ cmdBackup(void)
                     cfgOptionBool(cfgOptRepoBlock), &blockIncrMap, strLstNewVarLst(cfgOptionLst(cfgOptExclude)),
                     dbTablespaceList(backupData->dbPrimary));
 
+                // Calculate the expected size of the final copy
+                uint64_t copySizeFinal = backupManifestCopySize(manifestPrelim);
+
                 // Remove files that do not need to be considered for the preliminary copy
-                const time_t timestampCopyStart = backupData->checkpointTime - backupFullIncrLimit(infoBackup);
+                time_t timestampCopyStart = backupData->checkpointTime - backupFullIncrLimit(infoBackup);
 
                 manifestBuildFullIncr(
                     manifestPrelim, timestampCopyStart,
                     cfgOptionBool(cfgOptRepoBundle) ? cfgOptionUInt64(cfgOptRepoBundleLimit) : 0);
 
+                // Calculate the expected size of the preliminary copy
+                copySizePrelim = backupManifestCopySize(manifestPrelim);
+
+                // If not delta, then reduce final copy size by the prelim copy size
+                if (!cfgOptionBool(cfgOptDelta)) // {uncovered - !!!}
+                    copySizeFinal -= copySizePrelim;
+
+                // Perform preliminary copy if there are any files to copy
                 if (manifestFileTotal(manifestPrelim) > 0)
                 {
+                    // !!! ADD TIME OF COPY LIMIT HERE
                     LOG_INFO("full/incr backup preliminary copy");
 
                     // Wait for replay on the standby to catch up
@@ -2709,7 +2750,7 @@ cmdBackup(void)
                     backupManifestSaveCopy(manifestPrelim, cipherPassBackup, false);
 
                     // Process the backup manifest
-                    backupProcess(backupData, manifestPrelim, true, cipherPassBackup);
+                    backupProcess(backupData, manifestPrelim, true, cipherPassBackup, 0, copySizeFinal);
 
                     // Move manifest to prior context
                     manifestPrior = manifestMove(manifestPrelim, memContextPrior());
@@ -2745,7 +2786,7 @@ cmdBackup(void)
         {
             LOG_INFO("full/incr backup cleanup");
             backupResumeClean(manifest, manifestPrior, false);
-            LOG_INFO("full/incr backup preliminary copy");
+            LOG_INFO("full/incr backup final copy");
         }
         // Else normal resume
         else
@@ -2755,7 +2796,7 @@ cmdBackup(void)
         backupManifestSaveCopy(manifest, cipherPassBackup, false);
 
         // Process the backup manifest
-        backupProcess(backupData, manifest, false, cipherPassBackup);
+        backupProcess(backupData, manifest, false, cipherPassBackup, copySizePrelim, 0);
 
         // Check that the clusters are alive and correctly configured after the backup
         backupDbPing(backupData, true);
