@@ -26,8 +26,8 @@ Get a list of all files in the backup and a redacted version of the manifest tha
 static String *
 testBackupValidateFile(
     const Storage *const storage, const String *const path, Manifest *const manifest, const ManifestData *const manifestData,
-    const String *const fileName, uint64_t fileSize, ManifestFilePack **const filePack, const time_t backupTimeStart,
-    const CipherType cipherType, const String *const cipherPass)
+    const String *const fileName, uint64_t fileSize, ManifestFilePack **const filePack, const CipherType cipherType,
+    const String *const cipherPass)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(STORAGE, storage);
@@ -37,7 +37,6 @@ testBackupValidateFile(
         FUNCTION_HARNESS_PARAM(STRING, fileName);
         FUNCTION_HARNESS_PARAM(UINT64, fileSize);
         FUNCTION_HARNESS_PARAM_P(VOID, filePack);
-        FUNCTION_HARNESS_PARAM(TIME, backupTimeStart);
         FUNCTION_HARNESS_PARAM(STRING_ID, cipherType);
         FUNCTION_HARNESS_PARAM(STRING, cipherPass);
     FUNCTION_HARNESS_END();
@@ -203,11 +202,11 @@ testBackupValidateFile(
 
     // Timestamp
     // -------------------------------------------------------------------------------------------------------------
-    if (file.timestamp != backupTimeStart)
+    if (file.timestamp != manifestData->backupTimestampStart)
     {
         strCatFmt(
-            result, ", ts=%s%" PRId64, file.timestamp > backupTimeStart ? "+" : "",
-            (int64_t)file.timestamp - (int64_t)backupTimeStart);
+            result, ", ts=%s%" PRId64, file.timestamp > manifestData->backupTimestampStart ? "+" : "",
+            (int64_t)file.timestamp - (int64_t)manifestData->backupTimestampStart);
     }
 
     // Page checksum
@@ -248,8 +247,7 @@ testBackupValidateFile(
 static String *
 testBackupValidateList(
     const Storage *const storage, const String *const path, Manifest *const manifest, const ManifestData *const manifestData,
-    StringList *const manifestFileList, const time_t backupTimeStart, const CipherType cipherType, const String *const cipherPass,
-    String *const result)
+    StringList *const manifestFileList, const CipherType cipherType, const String *const cipherPass, String *const result)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(STORAGE, storage);
@@ -257,7 +255,6 @@ testBackupValidateList(
         FUNCTION_HARNESS_PARAM(MANIFEST, manifest);
         FUNCTION_HARNESS_PARAM_P(VOID, manifestData);
         FUNCTION_HARNESS_PARAM(STRING_LIST, manifestFileList);
-        FUNCTION_HARNESS_PARAM(TIME, backupTimeStart);
         FUNCTION_HARNESS_PARAM(STRING_ID, cipherType);
         FUNCTION_HARNESS_PARAM(STRING, cipherPass);
         FUNCTION_HARNESS_PARAM(STRING, result);
@@ -351,8 +348,7 @@ testBackupValidateList(
                     strCat(
                         result,
                         testBackupValidateFile(
-                            storage, path, manifest, manifestData, info.name, info.size, filePack, backupTimeStart, cipherType,
-                            cipherPass));
+                            storage, path, manifest, manifestData, info.name, info.size, filePack, cipherType, cipherPass));
                 }
 
                 break;
@@ -403,16 +399,14 @@ typedef struct TestBackupValidateParam
 } TestBackupValidateParam;
 
 #define testBackupValidateP(storage, path, ...)                                                                                    \
-    testBackupValidate(storage, path, backupTimeStart, (TestBackupValidateParam){VAR_PARAM_INIT, __VA_ARGS__})
+    testBackupValidate(storage, path, (TestBackupValidateParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 static String *
-testBackupValidate(
-    const Storage *const storage, const String *const path, const time_t backupTimeStart, const TestBackupValidateParam param)
+testBackupValidate(const Storage *const storage, const String *const path, const TestBackupValidateParam param)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(STORAGE, storage);
         FUNCTION_HARNESS_PARAM(STRING, path);
-        FUNCTION_HARNESS_PARAM(TIME, backupTimeStart);
         FUNCTION_HARNESS_PARAM(UINT64, param.cipherType);
         FUNCTION_HARNESS_PARAM(STRINGZ, param.cipherPass);
     FUNCTION_HARNESS_END();
@@ -443,8 +437,7 @@ testBackupValidate(
         const CipherType cipherType = param.cipherType == 0 ? cipherTypeNone : param.cipherType;
         const String *const cipherPass = param.cipherPass == NULL ? NULL : manifestCipherSubPass(manifest);
 
-        testBackupValidateList(
-            storage, path, manifest, manifestData(manifest), manifestFileList, backupTimeStart, cipherType, cipherPass, result);
+        testBackupValidateList(storage, path, manifest, manifestData(manifest), manifestFileList, cipherType, cipherPass, result);
 
         // Check remaining files in the manifest -- these should all be references
         for (unsigned int manifestFileIdx = 0; manifestFileIdx < strLstSize(manifestFileList); manifestFileIdx++)
@@ -472,7 +465,7 @@ testBackupValidate(
                             .compressType = manifestData(manifest)->backupOptionCompressType,
                             .blockIncr = file.blockIncrMapSize != 0),
                         sizeof(STORAGE_REPO_BACKUP)),
-                    file.sizeRepo, filePack, backupTimeStart, cipherType, cipherPass));
+                    file.sizeRepo, filePack, cipherType, cipherPass));
         }
 
         // Make sure both backup.manifest files exist since we skipped them in the callback above
