@@ -98,7 +98,7 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Backup to repo1
-            hrnBackupPqScriptP(PG_VERSION_95, backupTimeStart, .noArchiveCheck = true, .noWal = true);
+            hrnBackupPqScriptP(PG_VERSION_95, backupTimeStart, .noArchiveCheck = true, .noWal = true, .fullIncrNoOp = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup repo1");
 
             // Backup to repo2
@@ -106,8 +106,8 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             hrnBackupPqScriptP(
-                PG_VERSION_95, backupTimeStart, .noArchiveCheck = true, .noWal = true, .cipherType = cipherTypeAes256Cbc,
-                .cipherPass = TEST_CIPHER_PASS);
+                PG_VERSION_95, backupTimeStart, .noArchiveCheck = true, .noWal = true, .fullIncrNoOp = true,
+                .cipherType = cipherTypeAes256Cbc, .cipherPass = TEST_CIPHER_PASS);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup repo2");
         }
 
