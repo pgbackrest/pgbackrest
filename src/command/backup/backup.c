@@ -2743,7 +2743,7 @@ cmdBackup(void)
                     // Set cipher passphrase (if any)
                     manifestCipherSubPassSet(manifestPrelim, cipherPassGen(cfgOptionStrId(cfgOptRepoCipherType)));
 
-                    // Resume a backup when possible
+                    // Resume a backup when possible !!! NEED TO ADD TIME CHECKS TO RESUME LIKE INCR HAS (TO ENABLE DELTA)
                     backupResume(manifestPrelim, cipherPassBackup);
 
                     // Save the manifest before processing starts
