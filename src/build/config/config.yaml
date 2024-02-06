@@ -1204,26 +1204,13 @@ option:
   backup-full-incr:
     section: global
     type: boolean
-    default: false
+    default: true
+    internal: true
     command:
       backup:
         depend:
           option: online
           default: false
-          list:
-            - true
-    command-role:
-      main: {}
-
-  backup-full-incr-limit:
-    section: global
-    type: integer
-    default: 3600
-    allow-range: [300, 86400]
-    command:
-      backup:
-        depend:
-          option: backup-full-incr
           list:
             - true
     command-role:

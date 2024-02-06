@@ -47,6 +47,7 @@ typedef struct HrnBackupPqScriptParam
     bool noPriorWal;                                                // Don't write prior test WAL segments
     bool noArchiveCheck;                                            // Do not check archive
     bool walSwitch;                                                 // WAL switch is required
+    bool fullIncr;                                                  // Full/incr runs but cannot be auto-detected
     bool fullIncrNoOp;                                              // Full/incr will not find any files for prelim copy
     CompressType walCompressType;                                   // Compress type for the archive files
     CipherType cipherType;                                          // Cipher type

@@ -28,7 +28,6 @@ static const StringPub parseRuleValueStr[] =
     PARSE_RULE_STRPUB("256KiB"),                                                                                          // val/str
     PARSE_RULE_STRPUB("2MiB"),                                                                                            // val/str
     PARSE_RULE_STRPUB("3"),                                                                                               // val/str
-    PARSE_RULE_STRPUB("3600"),                                                                                            // val/str
     PARSE_RULE_STRPUB("443"),                                                                                             // val/str
     PARSE_RULE_STRPUB("5432"),                                                                                            // val/str
     PARSE_RULE_STRPUB("60"),                                                                                              // val/str
@@ -81,7 +80,6 @@ typedef enum
     parseRuleValStrQT_256KiB_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_2MiB_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_3_QT,                                                                                          // val/str/enum
-    parseRuleValStrQT_3600_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_443_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_5432_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_60_QT,                                                                                         // val/str/enum
@@ -256,7 +254,6 @@ static const int64_t parseRuleValueInt[] =
     32,                                                                                                                   // val/int
     100,                                                                                                                  // val/int
     256,                                                                                                                  // val/int
-    300,                                                                                                                  // val/int
     360,                                                                                                                  // val/int
     443,                                                                                                                  // val/int
     900,                                                                                                                  // val/int
@@ -273,7 +270,6 @@ static const int64_t parseRuleValueInt[] =
     60000,                                                                                                                // val/int
     65535,                                                                                                                // val/int
     65536,                                                                                                                // val/int
-    86400,                                                                                                                // val/int
     131072,                                                                                                               // val/int
     262144,                                                                                                               // val/int
     524288,                                                                                                               // val/int
@@ -308,7 +304,6 @@ typedef enum
     parseRuleValInt32,                                                                                               // val/int/enum
     parseRuleValInt100,                                                                                              // val/int/enum
     parseRuleValInt256,                                                                                              // val/int/enum
-    parseRuleValInt300,                                                                                              // val/int/enum
     parseRuleValInt360,                                                                                              // val/int/enum
     parseRuleValInt443,                                                                                              // val/int/enum
     parseRuleValInt900,                                                                                              // val/int/enum
@@ -325,7 +320,6 @@ typedef enum
     parseRuleValInt60000,                                                                                            // val/int/enum
     parseRuleValInt65535,                                                                                            // val/int/enum
     parseRuleValInt65536,                                                                                            // val/int/enum
-    parseRuleValInt86400,                                                                                            // val/int/enum
     parseRuleValInt131072,                                                                                           // val/int/enum
     parseRuleValInt262144,                                                                                           // val/int/enum
     parseRuleValInt524288,                                                                                           // val/int/enum
@@ -1156,7 +1150,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                              // opt/backup-full-incr
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                  // opt/backup-full-incr
                 (                                                                                            // opt/backup-full-incr
-                    PARSE_RULE_VAL_BOOL_FALSE,                                                               // opt/backup-full-incr
+                    PARSE_RULE_VAL_BOOL_TRUE,                                                                // opt/backup-full-incr
                 ),                                                                                           // opt/backup-full-incr
             ),                                                                                               // opt/backup-full-incr
                                                                                                              // opt/backup-full-incr
@@ -1164,69 +1158,11 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             (                                                                                                // opt/backup-full-incr
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                  // opt/backup-full-incr
                 (                                                                                            // opt/backup-full-incr
-                    PARSE_RULE_VAL_BOOL_FALSE,                                                               // opt/backup-full-incr
+                    PARSE_RULE_VAL_BOOL_TRUE,                                                                // opt/backup-full-incr
                 ),                                                                                           // opt/backup-full-incr
             ),                                                                                               // opt/backup-full-incr
         ),                                                                                                   // opt/backup-full-incr
     ),                                                                                                       // opt/backup-full-incr
-    // -----------------------------------------------------------------------------------------------------------------------------
-    PARSE_RULE_OPTION                                                                                  // opt/backup-full-incr-limit
-    (                                                                                                  // opt/backup-full-incr-limit
-        PARSE_RULE_OPTION_NAME("backup-full-incr-limit"),                                              // opt/backup-full-incr-limit
-        PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),                                                     // opt/backup-full-incr-limit
-        PARSE_RULE_OPTION_RESET(true),                                                                 // opt/backup-full-incr-limit
-        PARSE_RULE_OPTION_REQUIRED(true),                                                              // opt/backup-full-incr-limit
-        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),                                                   // opt/backup-full-incr-limit
-                                                                                                       // opt/backup-full-incr-limit
-        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                 // opt/backup-full-incr-limit
-        (                                                                                              // opt/backup-full-incr-limit
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                    // opt/backup-full-incr-limit
-        ),                                                                                             // opt/backup-full-incr-limit
-                                                                                                       // opt/backup-full-incr-limit
-        PARSE_RULE_OPTIONAL                                                                            // opt/backup-full-incr-limit
-        (                                                                                              // opt/backup-full-incr-limit
-            PARSE_RULE_OPTIONAL_GROUP                                                                  // opt/backup-full-incr-limit
-            (                                                                                          // opt/backup-full-incr-limit
-                PARSE_RULE_FILTER_CMD                                                                  // opt/backup-full-incr-limit
-                (                                                                                      // opt/backup-full-incr-limit
-                    PARSE_RULE_VAL_CMD(cfgCmdBackup),                                                  // opt/backup-full-incr-limit
-                ),                                                                                     // opt/backup-full-incr-limit
-                                                                                                       // opt/backup-full-incr-limit
-                PARSE_RULE_OPTIONAL_DEPEND                                                             // opt/backup-full-incr-limit
-                (                                                                                      // opt/backup-full-incr-limit
-                    PARSE_RULE_VAL_OPT(cfgOptBackupFullIncr),                                          // opt/backup-full-incr-limit
-                    PARSE_RULE_VAL_BOOL_TRUE,                                                          // opt/backup-full-incr-limit
-                ),                                                                                     // opt/backup-full-incr-limit
-                                                                                                       // opt/backup-full-incr-limit
-                PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                        // opt/backup-full-incr-limit
-                (                                                                                      // opt/backup-full-incr-limit
-                    PARSE_RULE_VAL_INT(parseRuleValInt300),                                            // opt/backup-full-incr-limit
-                    PARSE_RULE_VAL_INT(parseRuleValInt86400),                                          // opt/backup-full-incr-limit
-                ),                                                                                     // opt/backup-full-incr-limit
-                                                                                                       // opt/backup-full-incr-limit
-                PARSE_RULE_OPTIONAL_DEFAULT                                                            // opt/backup-full-incr-limit
-                (                                                                                      // opt/backup-full-incr-limit
-                    PARSE_RULE_VAL_INT(parseRuleValInt3600),                                           // opt/backup-full-incr-limit
-                    PARSE_RULE_VAL_STR(parseRuleValStrQT_3600_QT),                                     // opt/backup-full-incr-limit
-                ),                                                                                     // opt/backup-full-incr-limit
-            ),                                                                                         // opt/backup-full-incr-limit
-                                                                                                       // opt/backup-full-incr-limit
-            PARSE_RULE_OPTIONAL_GROUP                                                                  // opt/backup-full-incr-limit
-            (                                                                                          // opt/backup-full-incr-limit
-                PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                        // opt/backup-full-incr-limit
-                (                                                                                      // opt/backup-full-incr-limit
-                    PARSE_RULE_VAL_INT(parseRuleValInt300),                                            // opt/backup-full-incr-limit
-                    PARSE_RULE_VAL_INT(parseRuleValInt86400),                                          // opt/backup-full-incr-limit
-                ),                                                                                     // opt/backup-full-incr-limit
-                                                                                                       // opt/backup-full-incr-limit
-                PARSE_RULE_OPTIONAL_DEFAULT                                                            // opt/backup-full-incr-limit
-                (                                                                                      // opt/backup-full-incr-limit
-                    PARSE_RULE_VAL_INT(parseRuleValInt3600),                                           // opt/backup-full-incr-limit
-                    PARSE_RULE_VAL_STR(parseRuleValStrQT_3600_QT),                                     // opt/backup-full-incr-limit
-                ),                                                                                     // opt/backup-full-incr-limit
-            ),                                                                                         // opt/backup-full-incr-limit
-        ),                                                                                             // opt/backup-full-incr-limit
-    ),                                                                                                 // opt/backup-full-incr-limit
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                          // opt/backup-standby
     (                                                                                                          // opt/backup-standby
@@ -11049,7 +10985,6 @@ static const uint8_t optionResolveOrder[] =
     cfgOptArchiveCopy,                                                                                          // opt-resolve-order
     cfgOptArchiveModeCheck,                                                                                     // opt-resolve-order
     cfgOptBackupFullIncr,                                                                                       // opt-resolve-order
-    cfgOptBackupFullIncrLimit,                                                                                  // opt-resolve-order
     cfgOptForce,                                                                                                // opt-resolve-order
     cfgOptPgDatabase,                                                                                           // opt-resolve-order
     cfgOptPgHost,                                                                                               // opt-resolve-order

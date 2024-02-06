@@ -319,7 +319,10 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
         HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_TIME_QUERY(1, (int64_t)backupTimeStart * 1000));
 
         // First phase of full/incr backup
-        if (cfgOptionBool(cfgOptBackupFullIncr))
+        const bool backupfullIncr =
+            param.fullIncr || (cfgOptionBool(cfgOptBackupFullIncr) && cfgOptionStrId(cfgOptType) == backupTypeFull);
+
+        if (backupfullIncr)
         {
             // Tablespace check
             if (tablespace)
@@ -400,7 +403,7 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
             if (!param.errorAfterStart)
             {
                 // If full/incr then the first ping has already been done
-                if (!cfgOptionBool(cfgOptBackupFullIncr) || param.fullIncrNoOp)
+                if (!backupfullIncr || param.fullIncrNoOp)
                 {
                     // Ping to check standby mode
                     HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_IS_STANDBY_QUERY(1, false));
