@@ -60,7 +60,7 @@ archivePushDropWarning(const String *const walFile, const uint64_t queueMax)
 Determine if the WAL process list has become large enough to drop
 ***********************************************************************************************************************************/
 static bool
-archivePushDrop(const String *walPath, const StringList *const processList)
+archivePushDrop(const String *const walPath, const StringList *const processList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, walPath);
@@ -75,7 +75,7 @@ archivePushDrop(const String *walPath, const StringList *const processList)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        if (strLstSize(processList) > 0)
+        if (!strLstEmpty(processList))
         {
             queueSize = storageInfoP(
                 storagePg(), strNewFmt("%s/%s", strZ(walPath), strZ(strLstGet(processList, 0)))).size * strLstSize(processList);
