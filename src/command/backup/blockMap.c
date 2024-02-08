@@ -79,7 +79,7 @@ lstComparatorBlockMapReference(const void *const blockMapRef1, const void *const
     const unsigned int reference1 = ((BlockMapReference *)blockMapRef1)->reference;
     const unsigned int reference2 = ((BlockMapReference *)blockMapRef2)->reference;
 
-    FUNCTION_TEST_RETURN(INT, (reference1 > reference2) - (reference1 < reference2));
+    FUNCTION_TEST_RETURN(INT, LST_COMPARATOR_CMP(reference1, reference2));
 }
 
 FN_EXTERN BlockMap *
