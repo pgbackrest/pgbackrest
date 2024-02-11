@@ -23,6 +23,7 @@ typedef struct StorageS3RequestAsyncParam
     const HttpQuery *query;                                         // Query parameters
     const Buffer *content;                                          // Request content
     bool sseKms;                                                    // Enable server-side encryption?
+    bool sseC;                                                      // Enable server-side encryption with customer-provided keys (SSE-C) ?
     bool tag;                                                       // Add tags when available?
 } StorageS3RequestAsyncParam;
 
