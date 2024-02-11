@@ -34,6 +34,10 @@ STRING_STATIC(S3_HEADER_SRVSDENC_STR,                               "x-amz-serve
 STRING_STATIC(S3_HEADER_SRVSDENC_KMS_STR,                           "aws:kms");
 STRING_STATIC(S3_HEADER_SRVSDENC_KMSKEYID_STR,                      "x-amz-server-side-encryption-aws-kms-key-id");
 STRING_STATIC(S3_HEADER_TAGGING,                                    "x-amz-tagging");
+STRING_STATIC(S3_HEADER_SSE_C_ALGO,                                 "x-amz-server-side-encryption-customer-algorithm");
+STRING_STATIC(S3_HEADER_SSE_C_AES256,                               "AES256");
+STRING_STATIC(S3_HEADER_SSE_C_KEY,                                  "x-amz-server-side-encryption-customer-key");
+STRING_STATIC(S3_HEADER_SSE_C_KEY_MD5,                              "x-amz-server-side-encryption-customer-key-MD5");
 
 /***********************************************************************************************************************************
 S3 query tokens
@@ -94,6 +98,8 @@ struct StorageS3
     String *secretAccessKey;                                        // Secret access key
     String *securityToken;                                          // Security token, if any
     const String *kmsKeyId;                                         // Server-side encryption key
+    const String *sseCKey;                                          // Base64 of SSE-C encryption key
+    const String *sseCKeyMD5;                                       // Base64 of MD5 of SSE-C key
     size_t partSize;                                                // Part size for multi-part upload
     const String *tag;                                              // Tags to be applied to objects
     unsigned int deleteMax;                                         // Maximum objects that can be deleted in one request
@@ -487,6 +493,14 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
         {
             httpHeaderPut(requestHeader, S3_HEADER_SRVSDENC_STR, S3_HEADER_SRVSDENC_KMS_STR);
             httpHeaderPut(requestHeader, S3_HEADER_SRVSDENC_KMSKEYID_STR, this->kmsKeyId);
+        }
+
+        // Set SSE-C headers when requested
+        if (params.sseC && this->sseCKey != NULL && this->sseCKeyMD5 != NULL)
+        {
+            httpHeaderPut(requestHeader, S3_HEADER_SSE_C_ALGO, S3_HEADER_SSE_C_AES256);
+            httpHeaderPut(requestHeader, S3_HEADER_SSE_C_KEY, this->sseCKey);
+            httpHeaderPut(requestHeader, S3_HEADER_SSE_C_KEY_MD5, this->sseCKeyMD5);
         }
 
         // Set tags when requested and available
