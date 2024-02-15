@@ -7723,6 +7723,86 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                       // opt/repo-s3-role
     ),                                                                                                           // opt/repo-s3-role
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                // opt/repo-s3-sse-customer-key
+    (                                                                                                // opt/repo-s3-sse-customer-key
+        PARSE_RULE_OPTION_NAME("repo-s3-sse-customer-key"),                                          // opt/repo-s3-sse-customer-key
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeString),                                                    // opt/repo-s3-sse-customer-key
+        PARSE_RULE_OPTION_RESET(true),                                                               // opt/repo-s3-sse-customer-key
+        PARSE_RULE_OPTION_REQUIRED(false),                                                           // opt/repo-s3-sse-customer-key
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),                                                 // opt/repo-s3-sse-customer-key
+        PARSE_RULE_OPTION_GROUP_MEMBER(true),                                                        // opt/repo-s3-sse-customer-key
+        PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),                                                   // opt/repo-s3-sse-customer-key
+                                                                                                     // opt/repo-s3-sse-customer-key
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                               // opt/repo-s3-sse-customer-key
+        (                                                                                            // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                              // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                             // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                  // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                   // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)                                                  // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                                    // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdManifest)                                                // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                              // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)                                                 // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)                                                  // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)                                                 // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)                                                  // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                                 // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                            // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                            // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                           // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                  // opt/repo-s3-sse-customer-key
+        ),                                                                                           // opt/repo-s3-sse-customer-key
+                                                                                                     // opt/repo-s3-sse-customer-key
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                              // opt/repo-s3-sse-customer-key
+        (                                                                                            // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                              // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                             // opt/repo-s3-sse-customer-key
+        ),                                                                                           // opt/repo-s3-sse-customer-key
+                                                                                                     // opt/repo-s3-sse-customer-key
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                              // opt/repo-s3-sse-customer-key
+        (                                                                                            // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                              // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                             // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                  // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                                 // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                  // opt/repo-s3-sse-customer-key
+        ),                                                                                           // opt/repo-s3-sse-customer-key
+                                                                                                     // opt/repo-s3-sse-customer-key
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                             // opt/repo-s3-sse-customer-key
+        (                                                                                            // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                              // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                             // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                   // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                                    // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdManifest)                                                // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                              // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)                                                 // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)                                                  // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)                                                 // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)                                                  // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                                 // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                            // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                            // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                           // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                  // opt/repo-s3-sse-customer-key
+        ),                                                                                           // opt/repo-s3-sse-customer-key
+                                                                                                     // opt/repo-s3-sse-customer-key
+        PARSE_RULE_OPTIONAL                                                                          // opt/repo-s3-sse-customer-key
+        (                                                                                            // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTIONAL_GROUP                                                                // opt/repo-s3-sse-customer-key
+            (                                                                                        // opt/repo-s3-sse-customer-key
+                PARSE_RULE_OPTIONAL_DEPEND                                                           // opt/repo-s3-sse-customer-key
+                (                                                                                    // opt/repo-s3-sse-customer-key
+                    PARSE_RULE_VAL_OPT(cfgOptRepoType),                                              // opt/repo-s3-sse-customer-key
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdS3),                                       // opt/repo-s3-sse-customer-key
+                ),                                                                                   // opt/repo-s3-sse-customer-key
+            ),                                                                                       // opt/repo-s3-sse-customer-key
+        ),                                                                                           // opt/repo-s3-sse-customer-key
+    ),                                                                                               // opt/repo-s3-sse-customer-key
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                           // opt/repo-s3-token
     (                                                                                                           // opt/repo-s3-token
         PARSE_RULE_OPTION_NAME("repo-s3-token"),                                                                // opt/repo-s3-token
@@ -10977,6 +11057,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoS3KmsKeyId,                                                                                       // opt-resolve-order
     cfgOptRepoS3Region,                                                                                         // opt-resolve-order
     cfgOptRepoS3Role,                                                                                           // opt-resolve-order
+    cfgOptRepoS3SseCustomerKey,                                                                                 // opt-resolve-order
     cfgOptRepoS3Token,                                                                                          // opt-resolve-order
     cfgOptRepoS3UriStyle,                                                                                       // opt-resolve-order
     cfgOptRepoSftpHost,                                                                                         // opt-resolve-order

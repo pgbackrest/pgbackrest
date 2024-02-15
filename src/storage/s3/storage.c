@@ -33,11 +33,11 @@ STRING_STATIC(S3_HEADER_TOKEN_STR,                                  "x-amz-secur
 STRING_STATIC(S3_HEADER_SRVSDENC_STR,                               "x-amz-server-side-encryption");
 STRING_STATIC(S3_HEADER_SRVSDENC_KMS_STR,                           "aws:kms");
 STRING_STATIC(S3_HEADER_SRVSDENC_KMSKEYID_STR,                      "x-amz-server-side-encryption-aws-kms-key-id");
+STRING_STATIC(S3_HEADER_SSECUSTKEY_ALGO_STR,                        "x-amz-server-side-encryption-customer-algorithm");
+STRING_STATIC(S3_HEADER_SSECUSTKEY_AES256_STR,                      "AES256");
+STRING_STATIC(S3_HEADER_SSECUSTKEY_KEY_STR,                         "x-amz-server-side-encryption-customer-key");
+STRING_STATIC(S3_HEADER_SSECUSTKEY_KEY_MD5_STR,                     "x-amz-server-side-encryption-customer-key-md5");
 STRING_STATIC(S3_HEADER_TAGGING,                                    "x-amz-tagging");
-STRING_STATIC(S3_HEADER_SSE_C_ALGO,                                 "x-amz-server-side-encryption-customer-algorithm");
-STRING_STATIC(S3_HEADER_SSE_C_AES256,                               "AES256");
-STRING_STATIC(S3_HEADER_SSE_C_KEY,                                  "x-amz-server-side-encryption-customer-key");
-STRING_STATIC(S3_HEADER_SSE_C_KEY_MD5,                              "x-amz-server-side-encryption-customer-key-MD5");
 
 /***********************************************************************************************************************************
 S3 query tokens
@@ -98,8 +98,8 @@ struct StorageS3
     String *secretAccessKey;                                        // Secret access key
     String *securityToken;                                          // Security token, if any
     const String *kmsKeyId;                                         // Server-side encryption key
-    const String *sseCKey;                                          // Base64 of SSE-C encryption key
-    const String *sseCKeyMD5;                                       // Base64 of MD5 of SSE-C key
+    const String *sseCustomerKey;                                   // Base64 of SSE-C encryption key
+    const String *sseCustomerKeyMd5;                                // Base64 of MD5 of SSE-C key
     size_t partSize;                                                // Part size for multi-part upload
     const String *tag;                                              // Tags to be applied to objects
     unsigned int deleteMax;                                         // Maximum objects that can be deleted in one request
@@ -461,6 +461,7 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
         FUNCTION_LOG_PARAM(BUFFER, param.content);
         FUNCTION_LOG_PARAM(BOOL, param.sseKms);
+        FUNCTION_LOG_PARAM(BOOL, param.sseC);
         FUNCTION_LOG_PARAM(BOOL, param.tag);
     FUNCTION_LOG_END();
 
@@ -496,11 +497,11 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
         }
 
         // Set SSE-C headers when requested
-        if (params.sseC && this->sseCKey != NULL && this->sseCKeyMD5 != NULL)
+        if (param.sseC && this->sseCustomerKey != NULL)
         {
-            httpHeaderPut(requestHeader, S3_HEADER_SSE_C_ALGO, S3_HEADER_SSE_C_AES256);
-            httpHeaderPut(requestHeader, S3_HEADER_SSE_C_KEY, this->sseCKey);
-            httpHeaderPut(requestHeader, S3_HEADER_SSE_C_KEY_MD5, this->sseCKeyMD5);
+            httpHeaderPut(requestHeader, S3_HEADER_SSECUSTKEY_ALGO_STR, S3_HEADER_SSECUSTKEY_AES256_STR);
+            httpHeaderPut(requestHeader, S3_HEADER_SSECUSTKEY_KEY_STR, this->sseCustomerKey);
+            httpHeaderPut(requestHeader, S3_HEADER_SSECUSTKEY_KEY_MD5_STR, this->sseCustomerKeyMd5);
         }
 
         // Set tags when requested and available
@@ -613,12 +614,13 @@ storageS3Request(StorageS3 *this, const String *verb, const String *path, Storag
         FUNCTION_LOG_PARAM(BOOL, param.allowMissing);
         FUNCTION_LOG_PARAM(BOOL, param.contentIo);
         FUNCTION_LOG_PARAM(BOOL, param.sseKms);
+        FUNCTION_LOG_PARAM(BOOL, param.sseC);
         FUNCTION_LOG_PARAM(BOOL, param.tag);
     FUNCTION_LOG_END();
 
     HttpRequest *const request = storageS3RequestAsyncP(
         this, verb, path, .header = param.header, .query = param.query, .content = param.content, .sseKms = param.sseKms,
-        .tag = param.tag);
+        .sseC = param.sseC, .tag = param.tag);
     HttpResponse *const result = storageS3ResponseP(
         request, .allowMissing = param.allowMissing, .contentIo = param.contentIo);
 
@@ -815,7 +817,7 @@ storageS3Info(THIS_VOID, const String *const file, const StorageInfoLevel level,
     ASSERT(file != NULL);
 
     // Attempt to get file info
-    HttpResponse *const httpResponse = storageS3RequestP(this, HTTP_VERB_HEAD_STR, file, .allowMissing = true);
+    HttpResponse *const httpResponse = storageS3RequestP(this, HTTP_VERB_HEAD_STR, file, .allowMissing = true, .sseC = true);
 
     // Does the file exist?
     StorageInfo result = {.level = level, .exists = httpResponseCodeOk(httpResponse)};
@@ -1119,9 +1121,9 @@ storageS3New(
     const String *const path, const bool write, StoragePathExpressionCallback pathExpressionFunction, const String *const bucket,
     const String *const endPoint, const StorageS3UriStyle uriStyle, const String *const region, const StorageS3KeyType keyType,
     const String *const accessKey, const String *const secretAccessKey, const String *const securityToken,
-    const String *const kmsKeyId, const String *const credRole, const String *const webIdToken, const size_t partSize,
-    const KeyValue *const tag, const String *host, const unsigned int port, const TimeMSec timeout, const bool verifyPeer,
-    const String *const caFile, const String *const caPath)
+    const String *const kmsKeyId, const String *sseCustomerKey, const String *const credRole, const String *const webIdToken,
+    const size_t partSize, const KeyValue *const tag, const String *host, const unsigned int port, const TimeMSec timeout,
+    const bool verifyPeer, const String *const caFile, const String *const caPath)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -1136,6 +1138,7 @@ storageS3New(
         FUNCTION_TEST_PARAM(STRING, secretAccessKey);
         FUNCTION_TEST_PARAM(STRING, securityToken);
         FUNCTION_TEST_PARAM(STRING, kmsKeyId);
+        FUNCTION_TEST_PARAM(STRING, sseCustomerKey);
         FUNCTION_TEST_PARAM(STRING, credRole);
         FUNCTION_TEST_PARAM(STRING, webIdToken);
         FUNCTION_LOG_PARAM(SIZE, partSize);
@@ -1163,6 +1166,7 @@ storageS3New(
             .region = strDup(region),
             .keyType = keyType,
             .kmsKeyId = strDup(kmsKeyId),
+            .sseCustomerKey = strDup(sseCustomerKey),
             .partSize = partSize,
             .deleteMax = STORAGE_S3_DELETE_MAX,
             .uriStyle = uriStyle,
@@ -1241,10 +1245,19 @@ storageS3New(
             }
         }
 
+        // Generate SSE customer key MD5 hash
+        if (this->sseCustomerKey != NULL)
+        {
+            this->sseCustomerKeyMd5 = strNewEncode(
+                encodingBase64, cryptoHashOne(hashTypeMd5, bufNewDecode(encodingBase64, this->sseCustomerKey)));
+        }
+
         // Create list of redacted headers
         this->headerRedactList = strLstNew();
         strLstAdd(this->headerRedactList, HTTP_HEADER_AUTHORIZATION_STR);
         strLstAdd(this->headerRedactList, S3_HEADER_DATE_STR);
+        strLstAdd(this->headerRedactList, S3_HEADER_SSECUSTKEY_KEY_STR);
+        strLstAdd(this->headerRedactList, S3_HEADER_SSECUSTKEY_KEY_MD5_STR);
         strLstAdd(this->headerRedactList, S3_HEADER_TOKEN_STR);
     }
     OBJ_NEW_END();

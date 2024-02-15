@@ -2333,6 +2333,10 @@ option:
     inherit: repo-s3-bucket
     required: false
 
+  repo-s3-sse-customer-key:
+    inherit: repo-s3-bucket
+    required: false
+
   repo-s3-region:
     inherit: repo-s3-bucket
     deprecate:
