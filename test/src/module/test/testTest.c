@@ -348,6 +348,7 @@ testRun(void)
                 String *const testCDup = strCat(strNew(), testC);
 
                 strReplace(testCDup, STRDEF("{[C_TEST_CONTAINER]}"), STRDEF("false"));
+                strReplace(testCDup, STRDEF("{[C_TEST_LOG_EXPECT]}"), STRDEF("true"));
                 strReplace(testCDup, STRDEF("{[C_TEST_DEBUG_TEST_TRACE]}"), STRDEF("#define DEBUG_TEST_TRACE"));
                 strReplace(testCDup, STRDEF("{[C_TEST_PATH_BUILD]}"), STRDEF(TEST_PATH "/test/unit-3/none/build"));
                 strReplace(testCDup, STRDEF("{[C_TEST_PROFILE]}"), STRDEF("false"));
@@ -464,6 +465,7 @@ testRun(void)
                 String *const testCDup = strCat(strNew(), testC);
 
                 strReplace(testCDup, STRDEF("{[C_TEST_CONTAINER]}"), STRDEF("false"));
+                strReplace(testCDup, STRDEF("{[C_TEST_LOG_EXPECT]}"), STRDEF("true"));
                 strReplace(testCDup, STRDEF("{[C_TEST_DEBUG_TEST_TRACE]}"), STRDEF("#define DEBUG_TEST_TRACE"));
                 strReplace(testCDup, STRDEF("{[C_TEST_PATH_BUILD]}"), STRDEF(TEST_PATH "/test/unit-3/none/build"));
                 strReplace(testCDup, STRDEF("{[C_TEST_PROFILE]}"), STRDEF("false"));
@@ -691,6 +693,7 @@ testRun(void)
                 String *const testCDup = strCat(strNew(), testC);
 
                 strReplace(testCDup, STRDEF("{[C_TEST_CONTAINER]}"), STRDEF("true"));
+                strReplace(testCDup, STRDEF("{[C_TEST_LOG_EXPECT]}"), STRDEF("true"));
                 strReplace(testCDup, STRDEF("{[C_TEST_DEBUG_TEST_TRACE]}"), STRDEF("// Debug test trace not enabled"));
                 strReplace(testCDup, STRDEF("{[C_TEST_PATH_BUILD]}"), STRDEF(TEST_PATH "/test/unit-3/uXX/build"));
                 strReplace(testCDup, STRDEF("{[C_TEST_PROFILE]}"), STRDEF("true"));
@@ -864,6 +867,7 @@ testRun(void)
                 String *const testCDup = strCat(strNew(), testC);
 
                 strReplace(testCDup, STRDEF("{[C_TEST_CONTAINER]}"), STRDEF("true"));
+                strReplace(testCDup, STRDEF("{[C_TEST_LOG_EXPECT]}"), STRDEF("false"));
                 strReplace(testCDup, STRDEF("{[C_TEST_DEBUG_TEST_TRACE]}"), STRDEF("// Debug test trace not enabled"));
                 strReplace(testCDup, STRDEF("{[C_TEST_PATH_BUILD]}"), STRDEF(TEST_PATH "/test/unit-3/uXX/build"));
                 strReplace(testCDup, STRDEF("{[C_TEST_PROFILE]}"), STRDEF("true"));
@@ -903,6 +907,7 @@ testRun(void)
         String *const testCDup = strCat(strNew(), testC);
 
         strReplace(testCDup, STRDEF("{[C_TEST_CONTAINER]}"), STRDEF("true"));
+        strReplace(testCDup, STRDEF("{[C_TEST_LOG_EXPECT]}"), STRDEF("false"));
         strReplace(testCDup, STRDEF("{[C_TEST_DEBUG_TEST_TRACE]}"), STRDEF("// Debug test trace not enabled"));
         strReplace(testCDup, STRDEF("{[C_TEST_PATH_BUILD]}"), STRDEF(TEST_PATH "/test/unit-3/uXX/build"));
         strReplace(testCDup, STRDEF("{[C_TEST_PROFILE]}"), STRDEF("false"));

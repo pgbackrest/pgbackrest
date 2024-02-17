@@ -104,6 +104,9 @@ STRING_EXTERN(TEST_GROUP_STR, TEST_GROUP);
 #include "common/harnessDebug.h"
 #include "common/harnessTest.intern.h"
 
+// Is log expect testing enabled?
+#define TEST_LOG_EXPECT                                             {[C_TEST_LOG_EXPECT]}
+
 #ifdef HRN_FEATURE_LOG
 #include "common/harnessLog.h"
 void harnessLogLevelDefaultSet(LogLevel logLevel);
@@ -196,6 +199,7 @@ main(int argListSize, const char *argList[])
         argList[0],                 // Test exe
         TEST_PROJECT_EXE,           // Project exe
         TEST_IN_CONTAINER,          // Is this test running in a container?
+        TEST_LOG_EXPECT,            // Is log expect testing enabled?
         {[C_TEST_IDX]},             // The 0-based index of this test
         {[C_TEST_TIMING]},          // Is timing enabled (may be disabled for reproducible documentation)
         TEST_PATH,                  // Path where tests write data

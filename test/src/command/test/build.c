@@ -641,6 +641,9 @@ testBldUnit(TestBuild *const this)
         // Path to source -- used to construct __FILENAME__ tests
         strReplace(testC, STRDEF("{[C_TEST_PGB_PATH]}"), strNewFmt("../%s", strZ(pathRepoRel)));
 
+        // Test expect logging
+        strReplace(testC, STRDEF("{[C_TEST_LOG_EXPECT]}"), module->type == testDefTypeUnit ? TRUE_STR : FALSE_STR);
+
         // Test log level
         strReplace(
             testC, STRDEF("{[C_LOG_LEVEL_TEST]}"),

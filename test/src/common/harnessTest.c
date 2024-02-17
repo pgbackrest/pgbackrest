@@ -33,6 +33,7 @@ static uint64_t timeMSecBegin;
 static const char *testExeData = NULL;
 static const char *testProjectExeData = NULL;
 static bool testContainerData = false;
+static bool testLogExpectData = false;
 static unsigned int testIdxData = 0;
 static bool testTiming = true;
 static const char *testPathData = NULL;
@@ -66,8 +67,8 @@ Initialize harness
 ***********************************************************************************************************************************/
 void
 hrnInit(
-    const char *testExe, const char *testProjectExe, bool testContainer, unsigned int testIdx, bool timing, const char *testPath,
-    const char *testDataPath, const char *testRepoPath)
+    const char *testExe, const char *testProjectExe, bool testContainer, bool testLogExpect, unsigned int testIdx, bool timing,
+    const char *testPath, const char *testDataPath, const char *testRepoPath)
 {
     FUNCTION_HARNESS_VOID();
 
@@ -75,6 +76,8 @@ hrnInit(
     testExeData = testExe;
     testProjectExeData = testProjectExe;
     testContainerData = testContainer;
+    testLogExpectData = testLogExpect;
+    (void)testLogExpectData;
     testIdxData = testIdx;
     testTiming = timing;
     testPathData = testPath;
@@ -129,7 +132,8 @@ testBegin(const char *name)
         if (!testFirst)
         {
             // Make sure there is nothing untested left in the log
-            harnessLogFinal();
+            if (testLogExpectData)
+                harnessLogFinal();
 
             // It is possible the test left the cwd in a weird place
             if (chdir(testPath()) != 0)
@@ -165,7 +169,8 @@ testBegin(const char *name)
             }
 
             // Clear any log replacements
-            hrnLogReplaceClear();
+            if (testLogExpectData)
+                hrnLogReplaceClear();
         }
 #endif
         // No longer the first test
@@ -182,7 +187,8 @@ testBegin(const char *name)
 
 #ifdef HRN_FEATURE_LOG
         // Initialize logging
-        harnessLogInit();
+        if (testLogExpectData)
+            harnessLogInit();
 #endif
 
         result = true;
@@ -203,7 +209,8 @@ hrnComplete(void)
 
 #ifdef HRN_FEATURE_LOG
     // Make sure there is nothing untested left in the log
-    harnessLogFinal();
+    if (testLogExpectData)
+        harnessLogFinal();
 #endif
 
     // Check that all tests ran
