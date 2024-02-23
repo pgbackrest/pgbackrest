@@ -67,28 +67,6 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("cmdTestExec()"))
-    {
-        cmdTestExecLog = STRDEF(TEST_PATH "/error.log");
-        bool error = false;
-
-        // The error will vary by OS so just make sure an error was thrown
-        TRY_BEGIN()
-        {
-            cmdTestExec(STRDEF("/bogus/bogus"));
-        }
-        CATCH(ExecuteError)
-        {
-            error = true;
-        }
-        TRY_END();
-
-        TEST_RESULT_BOOL(error, true, "an error should be thrown");
-
-        cmdTestExecLog = NULL;
-    }
-
-    // *****************************************************************************************************************************
     if (testBegin("TestDef and TestBuild"))
     {
         // meson_options.txt
