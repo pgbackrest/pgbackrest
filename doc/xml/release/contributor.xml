@@ -855,6 +855,11 @@
     <contributor-id type="github">vidierr</contributor-id>
 </contributor>
 
+<contributor id="rene.hojbjerg.larsen">
+    <contributor-name-display>Ren&amp;eacute; H&amp;oslash;jbjerg Larsen</contributor-name-display>
+    <contributor-id type="github">rhl-jfm</contributor-id>
+</contributor>
+
 <contributor id="robert.donovan">
     <contributor-name-display>Robert Donovan</contributor-name-display>
     <contributor-id type="github">rob-donovan</contributor-id>
@@ -908,6 +913,11 @@
 <contributor id="sebastien.lardiere">
     <contributor-name-display>Lardi&amp;egrave;re S&amp;eacute;bastien</contributor-name-display>
     <contributor-id type="github">slardiere</contributor-id>
+</contributor>
+
+<contributor id="sebastian.krause">
+    <contributor-name-display>Sebastian Krause</contributor-name-display>
+    <contributor-id type="github">sekrause</contributor-id>
 </contributor>
 
 <contributor id="seth.daniel">
