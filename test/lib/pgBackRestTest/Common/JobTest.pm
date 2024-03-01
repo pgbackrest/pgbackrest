@@ -187,7 +187,7 @@ sub run
             }
 
             # Create data directory
-            if ($self->{oTest}->{&TEST_C} && !$self->{oStorageTest}->pathExists($self->{strDataPath}))
+            if ($self->{oTest}->{&TEST_TYPE} eq TESTDEF_UNIT && !$self->{oStorageTest}->pathExists($self->{strDataPath}))
             {
                 $self->{oStorageTest}->pathCreate($self->{strDataPath}, {strMode => '0770'});
             }

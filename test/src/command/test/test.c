@@ -5,42 +5,12 @@ Test Command
 
 #include <stdlib.h>
 
+#include "build/common/exec.h"
 #include "command/test/build.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "config/config.h"
 #include "storage/posix/storage.h"
-
-/**********************************************************************************************************************************/
-static const String *cmdTestExecLog;
-
-static void
-cmdTestExec(const String *const command)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STRING, command);
-    FUNCTION_LOG_END();
-
-    ASSERT(cmdTestExecLog != NULL);
-    ASSERT(command != NULL);
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        LOG_DETAIL_FMT("exec: %s", strZ(command));
-
-        if (system(zNewFmt("%s > %s 2>&1", strZ(command), strZ(cmdTestExecLog))) != 0)
-        {
-            const Buffer *const buffer = storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), cmdTestExecLog));
-
-            THROW_FMT(
-                ExecuteError, "unable to execute: %s > %s 2>&1:\n%s", strZ(command), strZ(cmdTestExecLog),
-                zNewFmt("\n%s", strZ(strTrim(strNewBuf(buffer)))));
-        }
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN_VOID();
-}
 
 /**********************************************************************************************************************************/
 static void
@@ -55,17 +25,19 @@ cmdTestPathCreate(const Storage *const storage, const String *const path)
 
     ASSERT(storage != NULL);
 
+    const String *const rmCommand = strNewFmt("rm -rf '%s'/*", strZ(storagePathP(storage, path)));
+
     TRY_BEGIN()
     {
-        storagePathRemoveP(storage, path, .recurse = true);
+        execOneP(rmCommand);
     }
     CATCH_ANY()
     {
         // Reset permissions
-        cmdTestExec(strNewFmt("chmod -R 777 %s", strZ(storagePathP(storage, path))));
+        execOneP(strNewFmt("chmod -R 777 '%s'", strZ(storagePathP(storage, path))));
 
         // Try to remove again
-        storagePathRemoveP(storage, path, .recurse = true);
+        execOneP(rmCommand);
     }
     TRY_END();
 
@@ -100,9 +72,6 @@ cmdTest(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Log file name
-        cmdTestExecLog = strNewFmt("%s/exec-%u.log", strZ(pathTest), vmId);
-
         // Find test
         ASSERT(moduleName != NULL);
 
@@ -144,9 +113,9 @@ cmdTest(
                 {
                     LOG_DETAIL("meson setup");
 
-                    cmdTestExec(
+                    execOneP(
                         strNewFmt(
-                            "meson setup -Dwerror=true -Dfatal-errors=true %s %s %s", strZ(mesonSetup), strZ(pathUnitBuild),
+                            "meson setup -Dwerror=true -Dfatal-errors=true %s '%s' '%s'", strZ(mesonSetup), strZ(pathUnitBuild),
                             strZ(pathUnit)));
                 }
                 // Else reconfigure
@@ -154,7 +123,7 @@ cmdTest(
                 {
                     LOG_DETAIL("meson configure");
 
-                    cmdTestExec(strNewFmt("meson configure %s %s", strZ(mesonSetup), strZ(pathUnitBuild)));
+                    execOneP(strNewFmt("meson configure %s '%s'", strZ(mesonSetup), strZ(pathUnitBuild)));
                 }
 
                 // Remove old coverage data. Note that coverage can be in different paths depending on the meson version.
@@ -175,7 +144,7 @@ cmdTest(
                 storageRemoveP(storageUnitBuild, STRDEF("gmon.out"));
 
                 // Ninja build
-                cmdTestExec(strNewFmt("ninja -C %s", strZ(pathUnitBuild)));
+                execOneP(strNewFmt("ninja -C '%s'", strZ(pathUnitBuild)));
                 buildRetry = false;
             }
             CATCH_ANY()
