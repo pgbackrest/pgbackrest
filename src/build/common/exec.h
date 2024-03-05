@@ -17,6 +17,7 @@ typedef struct ExecOneParam
 {
     VAR_PARAM_HEADER;
     const String *shell;                                            // Shell command to use for exec (default is sh -c)
+    int resultExpect;                                               // Expected result, if not 0
 } ExecOneParam;
 
 #define execOneP(command, ...)                                                                                                     \

@@ -37,6 +37,9 @@ static bool testLogExpectData = false;
 static unsigned int testIdxData = 0;
 static bool testTiming = true;
 static const char *testPathData = NULL;
+static const char *testUserData = NULL;
+static const char *testVmData = NULL;
+static const char *testPgVersionData = NULL;
 static const char *testDataPathData = NULL;
 static const char *testRepoPathData = NULL;
 
@@ -67,8 +70,9 @@ Initialize harness
 ***********************************************************************************************************************************/
 void
 hrnInit(
-    const char *testExe, const char *testProjectExe, bool testContainer, bool testLogExpect, unsigned int testIdx, bool timing,
-    const char *testPath, const char *testDataPath, const char *testRepoPath)
+    const char *const testExe, const char *const testProjectExe, const bool testContainer, const bool testLogExpect,
+    const unsigned int testIdx, const bool timing, const char *const testPath, const char *const testUser, const char *const testVm,
+    const char *const testPgVersion,const char *const testDataPath, const char *const testRepoPath)
 {
     FUNCTION_HARNESS_VOID();
 
@@ -81,6 +85,9 @@ hrnInit(
     testIdxData = testIdx;
     testTiming = timing;
     testPathData = testPath;
+    testUserData = testUser;
+    testVmData = testVm;
+    testPgVersionData = testPgVersion;
     testDataPathData = testDataPath;
     testRepoPathData = testRepoPath;
 
@@ -725,6 +732,30 @@ testPath(void)
 {
     FUNCTION_HARNESS_VOID();
     FUNCTION_HARNESS_RETURN(STRINGZ, testPathData);
+}
+
+/**********************************************************************************************************************************/
+const char *
+testPgVersion(void)
+{
+    FUNCTION_HARNESS_VOID();
+    FUNCTION_HARNESS_RETURN(STRINGZ, testPgVersionData);
+}
+
+/**********************************************************************************************************************************/
+const char *
+testUser(void)
+{
+    FUNCTION_HARNESS_VOID();
+    FUNCTION_HARNESS_RETURN(STRINGZ, testUserData);
+}
+
+/**********************************************************************************************************************************/
+const char *
+testVm(void)
+{
+    FUNCTION_HARNESS_VOID();
+    FUNCTION_HARNESS_RETURN(STRINGZ, testVmData);
 }
 
 /**********************************************************************************************************************************/

@@ -67,6 +67,15 @@ bool testContainer(void);
 // parallel.
 unsigned int testIdx(void);
 
+// PostgreSQL version for integration testing
+const char *testPgVersion(void);
+
+// User running the test
+const char *testUser(void);
+
+// VM for integration testing
+const char *testVm(void);
+
 /***********************************************************************************************************************************
 Test that an expected error is actually thrown and error when it isn't
 ***********************************************************************************************************************************/
@@ -141,6 +150,14 @@ Output information about the test
     hrnTestLogPrefix(__LINE__);                                                                                                    \
     puts(comment);                                                                                                                 \
     fflush(stdout);
+
+#define TEST_RESULT_INFO_LINE_FMT(line, comment, ...)                                                                              \
+    hrnTestLogPrefix(line);                                                                                                        \
+    printf(comment "\n", __VA_ARGS__);                                                                                             \
+    fflush(stdout)
+
+#define TEST_RESULT_INFO_FMT(comment, ...)                                                                                         \
+    TEST_RESULT_INFO_LINE_FMT(__LINE__, comment, __VA_ARGS__)
 
 /***********************************************************************************************************************************
 Test that a void statement returns and does not throw an error

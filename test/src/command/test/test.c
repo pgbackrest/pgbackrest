@@ -49,15 +49,17 @@ cmdTestPathCreate(const Storage *const storage, const String *const path)
 /**********************************************************************************************************************************/
 void
 cmdTest(
-    const String *const pathRepo, const String *const pathTest, const String *const vm, const unsigned int vmId,
-    const String *moduleName, const unsigned int test, const uint64_t scale, const LogLevel logLevel, const bool logTime,
-    const String *const timeZone, const bool coverage, const bool profile, const bool optimize, const bool backTrace)
+    const String *const pathRepo, const String *const pathTest, const String *vm, const unsigned int vmId,
+    const String *const pgVersion, const String *moduleName, const unsigned int test, const uint64_t scale, const LogLevel logLevel,
+    const bool logTime, const String *const timeZone, const bool coverage, const bool profile, const bool optimize,
+    const bool backTrace)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, pathRepo);
         FUNCTION_LOG_PARAM(STRING, pathTest);
         FUNCTION_LOG_PARAM(STRING, vm);
         FUNCTION_LOG_PARAM(UINT, vmId);
+        FUNCTION_LOG_PARAM(STRING, pgVersion);
         FUNCTION_LOG_PARAM(STRING, moduleName);
         FUNCTION_LOG_PARAM(UINT, test);
         FUNCTION_LOG_PARAM(UINT64, scale);
@@ -80,6 +82,13 @@ cmdTest(
 
         CHECK_FMT(ParamInvalidError, module != NULL, "'%s' is not a valid test", strZ(moduleName));
 
+        // Vm used for integration and the pgbackrest binary
+        const String *const vmInt = vm;
+
+        // If integration then the vm should be none. Integration tests do not run in containers but instead spawn their own.
+        if (module->type == testDefTypeIntegration)
+            vm = strNewZ("none");
+
         // Build test
         bool buildRetry = false;
         const String *const pathUnit = strNewFmt("%s/unit-%u/%s", strZ(pathTest), vmId, strZ(vm));
@@ -92,8 +101,8 @@ cmdTest(
             {
                 // Build unit
                 TestBuild *const testBld = testBldNew(
-                    pathRepo, pathTest, vm, vmId, module, test, scale, logLevel, logTime, timeZone, coverage, profile, optimize,
-                    backTrace);
+                    pathRepo, pathTest, vm, vmInt, vmId, pgVersion, module, test, scale, logLevel, logTime, timeZone, coverage,
+                    profile, optimize, backTrace);
                 testBldUnit(testBld);
 
                 // Meson setup

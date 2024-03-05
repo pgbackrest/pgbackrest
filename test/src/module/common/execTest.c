@@ -135,7 +135,7 @@ testRun(void)
         TEST_RESULT_VOID(execOpen(exec), "open cat exec");
         kill(exec->processId, SIGKILL);
 
-        TEST_ERROR(execProcess(exec), ExecuteError, "cat terminated unexpectedly on signal 9");
+        TEST_ERROR(execProcess(exec, (ExecOneParam){0}), ExecuteError, "cat terminated unexpectedly on signal 9");
         TEST_RESULT_VOID(execFree(exec), "free exec");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -144,6 +144,13 @@ testRun(void)
         TEST_ERROR(
             execOneP(STRDEF("cat missing.txt")), UnknownError,
             "cat missing.txt terminated unexpectedly [1]: cat: missing.txt: No such file or directory");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("exec ignores error");
+
+        TEST_RESULT_STR_Z(
+            execOneP(STRDEF("cat missing.txt"), .resultExpect = 1), "cat: missing.txt: No such file or directory\n",
+            "ignore error");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

@@ -79,6 +79,12 @@ STRING_EXTERN(HRN_PATH_STR, HRN_PATH);
 #define TEST_USER_ID_Z                                              "{[C_TEST_USER_ID]}"
 #define TEST_USER_LEN                                               "{[C_TEST_USER_LEN]}"
 
+// VM for integration testing
+#define TEST_VM                                                     "{[C_TEST_VM]}"
+
+// PostgreSQL version for integration testing
+#define TEST_PG_VERSION                                             "{[C_TEST_PG_VERSION]}"
+
 #ifdef HRN_FEATURE_STRING
 STRING_EXTERN(TEST_USER_STR, TEST_USER);
 #endif
@@ -203,6 +209,9 @@ main(int argListSize, const char *argList[])
         {[C_TEST_IDX]},             // The 0-based index of this test
         {[C_TEST_TIMING]},          // Is timing enabled (may be disabled for reproducible documentation)
         TEST_PATH,                  // Path where tests write data
+        TEST_USER,                  // User running the test
+        TEST_VM,                    // VM for integration testing
+        TEST_PG_VERSION,            // PostgreSQL version for integration testing
         HRN_PATH,                   // Path where the harness stores temp files (expect, diff, etc.)
         HRN_PATH_REPO);             // Path with a copy of the repository
 

@@ -9,10 +9,11 @@ Execute Process Extensions
 
 /**********************************************************************************************************************************/
 static String *
-execProcess(Exec *const this)
+execProcess(Exec *const this, const ExecOneParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(EXEC, this);
+        FUNCTION_LOG_PARAM(INT, param.resultExpect);
     FUNCTION_LOG_END();
 
     String *const result = strNew();
@@ -35,7 +36,7 @@ execProcess(Exec *const this)
         // If the process exited normally but without a success status
         if (WIFEXITED(processStatus))
         {
-            if (WEXITSTATUS(processStatus) != 0)
+            if (WEXITSTATUS(processStatus) != param.resultExpect)
                 execCheckStatusError(this, processStatus, strTrim(result));
         }
         // Else if the process did not exit normally then it must have been a signal
@@ -53,7 +54,8 @@ execOne(const String *const command, const ExecOneParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, command);
-        (void)param;
+        FUNCTION_LOG_PARAM(STRING, param.shell);
+        FUNCTION_LOG_PARAM(INT, param.resultExpect);
     FUNCTION_LOG_END();
 
     String *result = NULL;
@@ -61,23 +63,23 @@ execOne(const String *const command, const ExecOneParam param)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         const StringList *const shellList = strLstNewSplitZ(param.shell != NULL ? param.shell : STRDEF("sh -c"), " ");
-        StringList *const param = strLstNew();
+        StringList *const paramList = strLstNew();
 
         ASSERT(strLstSize(shellList) != 0);
 
         for (unsigned int shellIdx = 1; shellIdx < strLstSize(shellList); shellIdx++)
-            strLstAdd(param, strLstGet(shellList, shellIdx));
+            strLstAdd(paramList, strLstGet(shellList, shellIdx));
 
-        strLstAddFmt(param, "%s 2>&1", strZ(command));
-        strLstAddZ(param, "2>&1");
+        strLstAddFmt(paramList, "%s 2>&1", strZ(command));
+        strLstAddZ(paramList, "2>&1");
 
-        Exec *const exec = execNew(strLstGet(shellList, 0), param, command, ioTimeoutMs());
+        Exec *const exec = execNew(strLstGet(shellList, 0), paramList, command, ioTimeoutMs());
 
         execOpen(exec);
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
-            result = execProcess(exec);
+            result = execProcess(exec, param);
         }
         MEM_CONTEXT_PRIOR_END();
     }
