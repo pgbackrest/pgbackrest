@@ -45,7 +45,6 @@ typedef struct HrnBackupPqScriptParam
     bool noPriorWal;                                                // Don't write prior test WAL segments
     bool noArchiveCheck;                                            // Do not check archive
     bool walSwitch;                                                 // WAL switch is required
-    bool tablespace;                                                // Is there a tablespace?
     CompressType walCompressType;                                   // Compress type for the archive files
     CipherType cipherType;                                          // Cipher type
     const char *cipherPass;                                         // Cipher pass

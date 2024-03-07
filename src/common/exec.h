@@ -29,9 +29,17 @@ Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct ExecPub
 {
+    String *command;                                                // Command to execute
     IoRead *ioReadExec;                                             // Wrapper for file descriptor read interface
     IoWrite *ioWriteExec;                                           // Wrapper for file descriptor write interface
 } ExecPub;
+
+// Exec command
+FN_INLINE_ALWAYS const String *
+execCommand(const Exec *const this)
+{
+    return THIS_PUB(Exec)->command;
+}
 
 // Read interface
 FN_INLINE_ALWAYS IoRead *

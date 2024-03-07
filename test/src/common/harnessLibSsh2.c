@@ -377,13 +377,20 @@ int
 libssh2_session_last_error(LIBSSH2_SESSION *session, char **errmsg, int *errmsg_len, int want_buf)
 {
     // Avoid compiler complaining of unused params
-    (void)errmsg_len;
     (void)want_buf;
 
     HrnLibSsh2 *hrnLibSsh2 = hrnLibSsh2ScriptRun(HRNLIBSSH2_SESSION_LAST_ERROR, NULL, (HrnLibSsh2 *)session);
 
     if (hrnLibSsh2->errMsg != NULL)
+    {
         *errmsg = hrnLibSsh2->errMsg;
+        *errmsg_len = (int)(strlen(hrnLibSsh2->errMsg) + 1);
+    }
+    else
+    {
+        *errmsg = NULL;
+        *errmsg_len = 0;
+    }
 
     return hrnLibSsh2->resultInt;
 }

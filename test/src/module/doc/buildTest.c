@@ -20,6 +20,11 @@ testRun(void)
     if (testBegin("cmdBuild()"))
     {
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("referenceManReplace()");
+
+        TEST_ERROR(referenceManReplace(strNewZ("TEST {[")), AssertError, "unreplaced variable(s) in: TEST {[");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("referenceCommandSection()");
 
         TEST_RESULT_STR_Z(referenceCommandSection(NULL), "general", "null section remap");
@@ -34,6 +39,14 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("parse and render");
+
+        HRN_STORAGE_PUT_Z(
+            storageTest, "doc/xml/index.xml",
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            "<!DOCTYPE doc SYSTEM \"doc.dtd\">\n"
+            "<doc title=\"{[project]}\" subtitle=\"Reliable {[postgres]} Backup &amp; Restore\" toc=\"n\">\n"
+            "<description>{[project]} is a reliable backup and restore solution for {[postgres]}...</description>\n"
+            "</doc>\n");
 
         HRN_STORAGE_PUT_Z(
             storageTest, "src/build/config/config.yaml",
@@ -94,6 +107,13 @@ testRun(void)
             "        default: true\n"
             "    deprecate:\n"
             "      frc: {}\n"
+            "\n"
+            "  internal-opt:\n"
+            "    type: boolean\n"
+            "    internal: true\n"
+            "    default: true\n"
+            "    command:\n"
+            "      backup: {}\n"
             "\n"
             "  stanza:\n"
             "    type: string\n"
@@ -172,6 +192,13 @@ testRun(void)
             "                   <option id=\"force\" name=\"Force Backup\">\n"
             "                       <summary>Force option command backup summary.</summary>\n"
             "                       <text><p>Force option command backup description.</p></text>\n"
+            "                       <example>n</example>"
+            "                       <example>y</example>"
+            "                   </option>\n"
+            "\n"
+            "                   <option id=\"internal-opt\" name=\"Internal Opt\">\n"
+            "                       <summary>Internal option command backup summary.</summary>\n"
+            "                       <text><p>internal option command backup description.</p></text>\n"
             "                       <example>n</example>"
             "                       <example>y</example>"
             "                   </option>\n"
@@ -326,6 +353,68 @@ testRun(void)
                 "</section>"
             // {uncrustify_on}
             "</doc>\n");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("pgbackrest.1.txt");
+
+        TEST_STORAGE_GET(
+            storageTest,
+            "doc/output/man/pgbackrest.1.txt",
+            "NAME\n"
+            "  pgBackRest - Reliable PostgreSQL Backup & Restore\n"
+            "\n"
+            "SYNOPSIS\n"
+            "  pgbackrest [options] [command]\n"
+            "\n"
+            "DESCRIPTION\n"
+            "  pgBackRest is a reliable backup and restore solution for PostgreSQL...\n"
+            "\n"
+            "COMMANDS\n"
+            "  backup  backup command summary.\n"
+            "  check   Check command summary.\n"
+            "\n"
+            "OPTIONS\n"
+            "  Backup Options:\n"
+            "    --force                Force option command backup summary.\n"
+            "    --repo-compress-level  Repo compress level option command backup summary.\n"
+            "\n"
+            "  General Options:\n"
+            "    --buffer-size          Buffer size option summary.\n"
+            "    --config               config option summary.\n"
+            "    --secure               Secure option summary.\n"
+            "\n"
+            "  Stanza Options:\n"
+            "    --stanza               Stanza option summary.\n"
+            "\n"
+            "FILES\n"
+            "  /etc/pgbackrest/pgbackrest.conf\n"
+            "  /var/lib/pgbackrest\n"
+            "  /var/log/pgbackrest\n"
+            "  /var/spool/pgbackrest\n"
+            "  /tmp/pgbackrest\n"
+            "\n"
+            "EXAMPLES\n"
+            "  * Create a backup of the PostgreSQL `main` cluster:\n"
+            "\n"
+            "    $ pgbackrest --stanza=main backup\n"
+            "\n"
+            "    The `main` cluster should be configured in `/etc/pgbackrest/pgbackrest.conf`\n"
+            "\n"
+            "  * Show all available backups:\n"
+            "\n"
+            "    $ pgbackrest info\n"
+            "\n"
+            "  * Show all available backups for a specific cluster:\n"
+            "\n"
+            "    $ pgbackrest --stanza=main info\n"
+            "\n"
+            "  * Show backup specific options:\n"
+            "\n"
+            "    $ pgbackrest help backup\n"
+            "\n"
+            "SEE ALSO\n"
+            "  /usr/share/doc/pgbackrest-doc/html/index.html\n"
+            "  http://www.pgbackrest.org\n");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

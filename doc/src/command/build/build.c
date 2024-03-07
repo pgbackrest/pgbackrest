@@ -3,6 +3,7 @@ Build Command
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include "command/build/man.h"
 #include "command/build/reference.h"
 #include "common/debug.h"
 #include "common/log.h"
@@ -22,6 +23,8 @@ cmdBuild(const String *const pathRepo)
         Storage *const storageRepo = storagePosixNewP(pathRepo, .write = true);
         const BldCfg bldCfg = bldCfgParse(storageRepo);
         const BldHlp bldHlp = bldHlpParse(storageRepo, bldCfg, true);
+        XmlNode *const xml = xmlDocumentRoot(
+            xmlDocumentNewBuf(storageGetP(storageNewReadP(storageRepo, STRDEF("doc/xml/index.xml")))));
 
         storagePutP(
             storageNewWriteP(storageRepo, STRDEF("doc/output/xml/command.xml")),
@@ -29,6 +32,9 @@ cmdBuild(const String *const pathRepo)
         storagePutP(
             storageNewWriteP(storageRepo, STRDEF("doc/output/xml/configuration.xml")),
             xmlDocumentBuf(referenceConfigurationRender(&bldCfg, &bldHlp)));
+        storagePutP(
+            storageNewWriteP(storageRepo, STRDEF("doc/output/man/" PROJECT_BIN ".1.txt")),
+            BUFSTR(referenceManRender(xml, &bldCfg, &bldHlp)));
     }
     MEM_CONTEXT_TEMP_END();
 

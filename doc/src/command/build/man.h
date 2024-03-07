@@ -1,18 +1,17 @@
 /***********************************************************************************************************************************
-Help Command
+Build Manual Page Reference
 ***********************************************************************************************************************************/
-#ifndef COMMAND_HELP_HELP_H
-#define COMMAND_HELP_HELP_H
+#ifndef DOC_COMMAND_BUILD_MAN_H
+#define DOC_COMMAND_BUILD_MAN_H
 
-#include "common/type/buffer.h"
+#include "build/config/parse.h"
+#include "build/help/parse.h"
+#include "common/type/xml.h"
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Render help and output to stdout
-FN_EXTERN void cmdHelp(const Buffer *const helpData);
-
-// Render help text
-FN_EXTERN String *helpRenderText(const String *text, bool internal, bool beta, size_t indent, bool indentFirst, size_t length);
+// Build manual page reference
+String *referenceManRender(const XmlNode *indexRoot, const BldCfg *bldCfg, const BldHlp *bldHlp);
 
 #endif

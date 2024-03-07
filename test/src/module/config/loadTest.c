@@ -887,6 +887,17 @@ testRun(void)
         TEST_RESULT_UINT(ioBufferSize(), 1048576, "buffer size set to option default");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("help command for help");
+
+        argList = strLstNew();
+        strLstAddZ(argList, PROJECT_BIN);
+        strLstAddZ(argList, "help");
+        strLstAddZ(argList, "help");
+
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config");
+        TEST_RESULT_UINT(ioBufferSize(), 1048576, "buffer size set to option default");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("command takes lock and opens log file and uses custom tcp settings");
 
         socketLocal = (struct SocketLocal){.init = false};
