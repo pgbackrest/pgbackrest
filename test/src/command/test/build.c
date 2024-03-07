@@ -29,15 +29,18 @@ Constants
 /**********************************************************************************************************************************/
 TestBuild *
 testBldNew(
-    const String *const pathRepo, const String *const pathTest, const String *const vm, const unsigned int vmId,
-    const TestDefModule *const module, const unsigned int test, const uint64_t scale, const LogLevel logLevel, const bool logTime,
-    const String *const timeZone, const bool coverage, const bool profile, const bool optimize, const bool backTrace)
+    const String *const pathRepo, const String *const pathTest, const String *const vm, const String *const vmInt,
+    const unsigned int vmId, const String *const pgVersion, const TestDefModule *const module, const unsigned int test,
+    const uint64_t scale, const LogLevel logLevel, const bool logTime, const String *const timeZone, const bool coverage,
+    const bool profile, const bool optimize, const bool backTrace)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, pathRepo);
         FUNCTION_LOG_PARAM(STRING, pathTest);
         FUNCTION_LOG_PARAM(STRING, vm);
+        FUNCTION_LOG_PARAM(STRING, vmInt);
         FUNCTION_LOG_PARAM(UINT, vmId);
+        FUNCTION_LOG_PARAM(STRING, pgVersion);
         FUNCTION_LOG_PARAM_P(VOID, module);
         FUNCTION_LOG_PARAM(UINT, test);
         FUNCTION_LOG_PARAM(UINT64, scale);
@@ -53,6 +56,7 @@ testBldNew(
     ASSERT(pathRepo != NULL);
     ASSERT(pathTest != NULL);
     ASSERT(vm != NULL);
+    ASSERT(vmInt != NULL);
     ASSERT(module != NULL);
     ASSERT(scale != 0);
 
@@ -65,7 +69,9 @@ testBldNew(
                 .pathRepo = strDup(pathRepo),
                 .pathTest = strDup(pathTest),
                 .vm = strDup(vm),
+                .vmInt = strDup(vmInt),
                 .vmId = vmId,
+                .pgVersion = strDup(pgVersion),
                 .module = module,
                 .test = test,
                 .scale = scale,
@@ -315,6 +321,11 @@ testBldUnit(TestBuild *const this)
         for (unsigned int shimIdx = 0; shimIdx < lstSize(module->shimList); shimIdx++)
         {
             const TestDefShim *const shim = lstGet(module->shimList, shimIdx);
+
+            // Skip this shim for integration tests
+            if (module->type == testDefTypeIntegration && !shim->integration)
+                continue;
+
             const String *const shimFile = strNewFmt("%s.c", strZ(cmdBldPathModule(shim->name)));
 
             String *const shimC = strCatBuf(
@@ -332,6 +343,11 @@ testBldUnit(TestBuild *const this)
         for (unsigned int harnessIdx = 0; harnessIdx < lstSize(module->harnessList); harnessIdx++)
         {
             const TestDefHarness *const harness = lstGet(module->harnessList, harnessIdx);
+
+            // Skip this harness for integration tests
+            if (module->type == testDefTypeIntegration && !harness->integration)
+                continue;
+
             const String *const harnessFile = strNewFmt("test/src/common/%s.c", strZ(bldEnum("harness", harness->name)));
             const String *harnessPath = strNewFmt("%s/%s", strZ(pathRepo), strZ(harnessFile));
 
@@ -631,12 +647,15 @@ testBldUnit(TestBuild *const this)
         strReplace(testC, STRDEF("{[C_HRN_PATH_REPO]}"), pathRepo);
 
         // Path to the project exe when it exists
-        const String *const pathProjectExe = storagePathP(
-            testBldStorageTest(this), strNewFmt("build/%s/src/" PROJECT_BIN, strZ(testBldVm(this))));
-        strReplace(testC, STRDEF("{[C_TEST_PROJECT_EXE]}"), pathProjectExe);
+        strReplace(
+            testC, STRDEF("{[C_TEST_PROJECT_EXE]}"),
+            storagePathP(testBldStorageTest(this), strNewFmt("build/%s/src/" PROJECT_BIN, strZ(testBldVm(this)))));
 
         // Path to source -- used to construct __FILENAME__ tests
         strReplace(testC, STRDEF("{[C_TEST_PGB_PATH]}"), strNewFmt("../%s", strZ(pathRepoRel)));
+
+        // Test expect logging
+        strReplace(testC, STRDEF("{[C_TEST_LOG_EXPECT]}"), module->type == testDefTypeUnit ? TRUE_STR : FALSE_STR);
 
         // Test log level
         strReplace(
@@ -664,6 +683,12 @@ testBldUnit(TestBuild *const this)
         strReplace(testC, STRDEF("{[C_TEST_USER]}"), userName());
         strReplace(testC, STRDEF("{[C_TEST_USER_LEN]}"), strNewFmt("%zu", strSize(userName())));
         strReplace(testC, STRDEF("{[C_TEST_USER_ID]}"), strNewFmt("%u", userId()));
+
+        // VM for integration testing
+        strReplace(testC, STRDEF("{[C_TEST_VM]}"), testBldVmInt(this));
+
+        // PostgreSQL version for integration testing
+        strReplace(testC, STRDEF("{[C_TEST_PG_VERSION]}"), testBldPgVersion(this));
 
         // Test id
         strReplace(testC, STRDEF("{[C_TEST_IDX]}"), strNewFmt("%u", testBldVmId(this)));

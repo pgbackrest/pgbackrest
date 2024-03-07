@@ -3165,6 +3165,13 @@ testRun(void)
 
         HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation, .timeModified = timeBase - 2);
 
+        // Zeroed file large enough to use block incr (that will be truncated to zero before restore)
+        relation = bufNew(16 * 1024);
+        memset(bufPtr(relation), 0, bufSize(relation));
+        bufUsedSet(relation, bufSize(relation));
+
+        HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/44", relation, .timeModified = timeBase - 2);
+
         // Add postgresql.auto.conf to contain recovery settings
         HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF, .timeModified = timeBase - 1);
 
@@ -3234,6 +3241,7 @@ testRun(void)
             "base/1/\n"
             "base/1/2\n"
             "base/1/3\n"
+            "base/1/44\n"
             "global/\n"
             "global/pg_control\n"
             "postgresql.auto.conf\n",
@@ -3244,6 +3252,9 @@ testRun(void)
 
         // Use detail log level to catch block incremental restore message
         harnessLogLevelSet(logLevelDetail);
+
+        // Truncate file to ensure delta is skipped
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_PATH_BASE "/1/44");
 
         // Shrink file to make sure block incremental delta will reuse it
         relation = bufNew(128 * 1024);
@@ -3271,6 +3282,7 @@ testRun(void)
             "base/1/\n"
             "base/1/2\n"
             "base/1/3\n"
+            "base/1/44\n"
             "global/\n"
             "global/pg_control\n"
             "postgresql.auto.conf\n",

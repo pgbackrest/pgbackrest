@@ -27,7 +27,6 @@ Object type
 struct Exec
 {
     ExecPub pub;                                                    // Publicly accessible variables
-    String *command;                                                // Command to execute
     StringList *param;                                              // List of parameters to pass to command
     const String *name;                                             // Name to display in log/error messages
     TimeMSec timeout;                                               // Timeout for any i/o operation (read, write, etc.)
@@ -129,7 +128,10 @@ execNew(const String *command, const StringList *param, const String *name, Time
     {
         *this = (Exec)
         {
-            .command = strDup(command),
+            .pub =
+            {
+                .command = strDup(command),
+            },
             .name = strDup(name),
             .timeout = timeout,
 
@@ -138,7 +140,7 @@ execNew(const String *command, const StringList *param, const String *name, Time
         };
 
         // The first parameter must be the command
-        strLstInsert(this->param, 0, this->command);
+        strLstInsert(this->param, 0, execCommand(this));
     }
     OBJ_NEW_END();
 
@@ -151,6 +153,31 @@ Check if the process is still running
 This should be called when anything unexpected happens while reading or writing, including errors and eof. If this function returns
 then the original error should be rethrown.
 ***********************************************************************************************************************************/
+// Helper to throw status error
+static void
+execCheckStatusError(Exec *const this, const int status, const String *const output)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_LOG_PARAM(EXEC, this);
+        FUNCTION_TEST_PARAM(INT, status);
+        FUNCTION_TEST_PARAM(STRING, output);
+    FUNCTION_TEST_END();
+
+    // Throw the error with as much information as is available
+    THROWP_FMT(
+        errorTypeFromCode(WEXITSTATUS(status)), "%s terminated unexpectedly [%d]%s%s", strZ(this->name),
+        WEXITSTATUS(status), strSize(output) > 0 ? ": " : "", strSize(output) > 0 ? strZ(output) : "");
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+// Helper to throw signal error
+static void
+execCheckSignalError(Exec *const this, const int status)
+{
+    THROW_FMT(ExecuteError, "%s terminated unexpectedly on signal %d", strZ(this->name), WTERMSIG(status));
+}
+
 static void
 execCheck(Exec *this)
 {
@@ -174,18 +201,13 @@ execCheck(Exec *this)
         // If the process exited normally
         if (WIFEXITED(processStatus))
         {
-            // Get data from stderr to help diagnose the problem
-            String *errorStr = strTrim(
-                strNewBuf(ioReadBuf(ioFdReadNewOpen(strNewFmt("%s error", strZ(this->name)), this->fdError, 0))));
-
-            // Throw the error with as much information as is available
-            THROWP_FMT(
-                errorTypeFromCode(WEXITSTATUS(processStatus)), "%s terminated unexpectedly [%d]%s%s", strZ(this->name),
-                WEXITSTATUS(processStatus), strSize(errorStr) > 0 ? ": " : "", strSize(errorStr) > 0 ? strZ(errorStr) : "");
+            execCheckStatusError(
+                this, processStatus,
+                strTrim(strNewBuf(ioReadBuf(ioFdReadNewOpen(strNewFmt("%s error", strZ(this->name)), this->fdError, 0)))));
         }
 
         // If the process did not exit normally then it must have been a signal
-        THROW_FMT(ExecuteError, "%s terminated unexpectedly on signal %d", strZ(this->name), WTERMSIG(processStatus));
+        execCheckSignalError(this, processStatus);
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -332,11 +354,11 @@ execOpen(Exec *this)
         PIPE_DUP2(pipeError, 1, STDERR_FILENO);
 
         // Execute the binary. This statement will not return if it is successful
-        execvp(strZ(this->command), (char **const)strLstPtr(this->param));
+        execvp(strZ(execCommand(this)), (char **const)strLstPtr(this->param));
 
         // If we got here then there was an error. We can't use a throw as we normally would because we have already shutdown
         // logging and we don't want to execute exit paths that might free parent resources which we still have references to.
-        fprintf(stderr, "unable to execute '%s': [%d] %s\n", strZ(this->command), errno, strerror(errno));
+        fprintf(stderr, "unable to execute '%s': [%d] %s\n", strZ(execCommand(this)), errno, strerror(errno));
         exit(errorTypeCode(&ExecuteError));
     }
 

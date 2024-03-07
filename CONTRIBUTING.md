@@ -358,7 +358,7 @@ pgbackrest/test/test.pl --vm-build --vm=u20
 
 pgbackrest-dev => Run a Specific Test Run
 ```
-pgbackrest/test/test.pl --vm=u20 --module=mock --test=archive --run=2
+pgbackrest/test/test.pl --vm=u20 --module=postgres --test=interface --run=2
 
 --- output ---
 

@@ -19,9 +19,9 @@ typedef struct TestBuild TestBuild;
 Constructors
 ***********************************************************************************************************************************/
 TestBuild *testBldNew(
-    const String *pathRepo, const String *pathTest, const String *const vm, unsigned int vmId, const TestDefModule *module,
-    unsigned int test, uint64_t scale, LogLevel logLevel, bool logTime, const String *timeZone, bool coverage, bool profile,
-    bool optimize, bool backTrace);
+    const String *pathRepo, const String *pathTest, const String *const vm, const String *const vmInt, unsigned int vmId,
+    const String *pgVersion, const TestDefModule *module, unsigned int test, uint64_t scale, LogLevel logLevel, bool logTime,
+    const String *timeZone, bool coverage, bool profile, bool optimize, bool backTrace);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -33,7 +33,9 @@ typedef struct TestBuildPub
     const Storage *storageRepo;                                     // Repository storage
     const Storage *storageTest;                                     // Test storage
     const String *vm;                                               // Vm to run the test on
+    const String *vmInt;                                            // Vm to run the test on for integration
     unsigned int vmId;                                              // Vm id (0-based) to run the test on
+    const String *pgVersion;                                        // Pg version to run the test on
     const TestDefModule *module;                                    // Module definition
     unsigned int test;                                              // Specific test to run (0 if all)
     LogLevel logLevel;                                              // Test log level
@@ -82,11 +84,25 @@ testBldVm(const TestBuild *const this)
     return THIS_PUB(TestBuild)->vm;
 }
 
+// Vm integration
+FN_INLINE_ALWAYS const String *
+testBldVmInt(const TestBuild *const this)
+{
+    return THIS_PUB(TestBuild)->vmInt;
+}
+
 // Vm id
 FN_INLINE_ALWAYS unsigned int
 testBldVmId(const TestBuild *const this)
 {
     return THIS_PUB(TestBuild)->vmId;
+}
+
+// Pg version
+FN_INLINE_ALWAYS const String *
+testBldPgVersion(const TestBuild *const this)
+{
+    return THIS_PUB(TestBuild)->pgVersion;
 }
 
 // Test Definition

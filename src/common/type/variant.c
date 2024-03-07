@@ -188,6 +188,7 @@ varEq(const Variant *this1, const Variant *this2)
                     break;
 
                 default:
+                    ASSERT(varType(this1) == varTypeKeyValue || varType(this1) == varTypeVariantList);
                     THROW_FMT(AssertError, "unable to test equality for %s", variantTypeName[varType(this1)]);
             }
         }
@@ -298,6 +299,7 @@ varBoolForce(const Variant *this)
             break;
 
         default:
+            ASSERT(varType(this) == varTypeKeyValue || varType(this) == varTypeVariantList);
             THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[varType(this)], variantTypeName[varTypeBool]);
     }
 
@@ -410,6 +412,7 @@ varIntForce(const Variant *this)
         }
 
         default:
+            ASSERT(varType(this) == varTypeKeyValue || varType(this) == varTypeVariantList);
             THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[varType(this)], variantTypeName[varTypeInt]);
     }
 
@@ -506,6 +509,7 @@ varInt64Force(const Variant *this)
         }
 
         default:
+            ASSERT(varType(this) == varTypeKeyValue || varType(this) == varTypeVariantList);
             THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[varType(this)], variantTypeName[varTypeInt64]);
     }
 
@@ -627,6 +631,7 @@ varUIntForce(const Variant *this)
             break;
 
         default:
+            ASSERT(varType(this) == varTypeKeyValue || varType(this) == varTypeVariantList);
             THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[varType(this)], variantTypeName[varTypeUInt]);
     }
 
@@ -735,6 +740,7 @@ varUInt64Force(const Variant *this)
             break;
 
         default:
+            ASSERT(varType(this) == varTypeKeyValue || varType(this) == varTypeVariantList);
             THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[varType(this)], variantTypeName[varTypeUInt64]);
     }
 
@@ -934,6 +940,7 @@ varStrForce(const Variant *this)
         }
 
         default:
+            ASSERT(varType(this) == varTypeKeyValue || varType(this) == varTypeVariantList);
             THROW_FMT(FormatError, "unable to force %s to %s", variantTypeName[varType(this)], variantTypeName[varTypeString]);
     }
 

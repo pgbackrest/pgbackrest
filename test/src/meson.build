@@ -19,6 +19,7 @@ subdir('command/help')
 # test target
 ####################################################################################################################################
 src_test = [
+    '../../src/build/common/exec.c',
     '../../src/build/common/render.c',
     '../../src/build/common/string.c',
     '../../src/build/common/yaml.c',
@@ -27,6 +28,7 @@ src_test = [
     '../../src/command/help/help.c',
 	'../../src/common/compress/bz2/common.c',
 	'../../src/common/compress/bz2/decompress.c',
+    '../../src/common/fork.c',
     '../../src/common/ini.c',
     '../../src/common/io/fd.c',
     '../../src/common/io/fdRead.c',

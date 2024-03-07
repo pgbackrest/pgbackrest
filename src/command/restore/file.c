@@ -88,8 +88,10 @@ restoreFile(
                         // Else use size and checksum
                         else
                         {
-                            // Only continue delta if the file size is as expected or larger
-                            if (info.size >= file->size || file->blockIncrMapSize != 0)
+                            // Only continue delta if the file size is as expected or larger (for normal files) or if block
+                            // incremental and the file to delta is not zero-length. Block incremental can potentially use almost
+                            // any portion of an existing file, but of course zero-length files do not have anything to reuse.
+                            if (info.size >= file->size || (file->blockIncrMapSize != 0 && info.size != 0))
                             {
                                 const char *const fileName = strZ(storagePathP(storagePg(), file->name));
 

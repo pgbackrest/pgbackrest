@@ -182,8 +182,8 @@ eval
     {
         # Build list of packages that need to be installed
         my $strPackage =
-            "gcc ccache python3-pip git rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config" .
-            " uncrustify libssh2-1-dev";
+            "gcc ccache python3-pip git rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config uncrustify" .
+            " libssh2-1-dev valgrind";
 
         # Add lcov when testing coverage
         if (vmCoverageC($strVm))
@@ -194,7 +194,7 @@ eval
         # Extra packages required when testing without containers
         if ($strVm eq VM_NONE)
         {
-            $strPackage .= " valgrind liblz4-dev liblz4-tool zstd libzstd-dev bzip2 libbz2-dev";
+            $strPackage .= " liblz4-dev liblz4-tool zstd libzstd-dev bzip2 libbz2-dev";
         }
         # Else packages needed for integration tests on containers
         else
