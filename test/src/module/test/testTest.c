@@ -847,7 +847,7 @@ testRun(void)
                 strReplace(testCDup, STRDEF("{[C_TEST_DEBUG_TEST_TRACE]}"), STRDEF("// Debug test trace not enabled"));
                 strReplace(testCDup, STRDEF("{[C_TEST_PATH_BUILD]}"), STRDEF(TEST_PATH "/test/unit-3/none/build"));
                 strReplace(testCDup, STRDEF("{[C_TEST_PROFILE]}"), STRDEF("true"));
-                strReplace(testCDup, STRDEF("{[C_TEST_PROJECT_EXE]}"), STRDEF(TEST_PATH "/test/bin/uXX/pgbackrest"));
+                strReplace(testCDup, STRDEF("{[C_TEST_PROJECT_EXE]}"), STRDEF(TEST_PATH "/test/build/uXX/src/pgbackrest"));
                 strReplace(testCDup, STRDEF("{[C_TEST_TZ]}"), STRDEF("setenv(\"TZ\", \"America/New_York\", true);"));
 
                 strReplace(testCDup, STRDEF("{[C_INCLUDE]}"), STRDEF(""));
