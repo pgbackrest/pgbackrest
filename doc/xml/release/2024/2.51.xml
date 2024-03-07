@@ -53,6 +53,19 @@
                 <p>Add detailed backtrace to <proper>autoconf</proper>/<proper>make</proper> build.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <github-pull-request id="2280"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Improve sort comparators.</p>
+            </release-item>
+        </release-development-list>
     </release-core-list>
 
     <release-doc-list>
