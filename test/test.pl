@@ -575,7 +575,7 @@ eval
 
     # Auto-generate code files (if --min-gen specified then do minimum required)
     #-------------------------------------------------------------------------------------------------------------------------------
-    my $strBuildPath = "${strTestPath}/build/${strVm}";
+    my $strBuildPath = "${strTestPath}/build/none";
     my $strBuildNinja = "${strBuildPath}/build.ninja";
 
     &log(INFO, (!-e $strBuildNinja ? 'clean ' : '') . 'autogenerate code');
@@ -596,9 +596,7 @@ eval
     }
 
     # Build code
-    executeTest(
-        ($strVm ne VM_NONE ? "docker exec -i -u ${\TEST_USER} test-build bash -l -c ' \\\n" : '') .
-        $strGenerateCommand . ($strVm ne VM_NONE ? "'" : ''));
+    executeTest($strGenerateCommand);
 
     if ($bGenOnly)
     {
@@ -690,7 +688,7 @@ eval
     #-------------------------------------------------------------------------------------------------------------------------------
     my $oyTestRun;
     my $bBinRequired = $bBuildOnly;
-    my $bIntegrationRequired = $bBuildOnly;
+    my $bUnitRequired = $bBuildOnly;
 
     # Only get the test list when they can run
     if (!$bBuildOnly)
@@ -700,43 +698,22 @@ eval
             $strVm, \@stryModule, \@stryModuleTest, \@iyModuleTestRun, $strPgVersion, $bCoverageOnly, $bCOnly, $bContainerOnly,
             $bNoPerformance);
 
-        # Determine if the C binary and test library need to be built
+        # Determine if the C binary needs to be built
         foreach my $hTest (@{$oyTestRun})
         {
-            # Bin build required for all Perl tests or if a C unit test calls Perl
+            # Unit build required for unit tests
+            if ($hTest->{&TEST_C})
+            {
+                $bUnitRequired = true;
+            }
+
+            # Bin build required for integration tests and when specified
             if (!$hTest->{&TEST_C} || $hTest->{&TEST_BIN_REQ})
             {
                 $bBinRequired = true;
             }
-
-            # Host bin required if an integration test
-            if (!$hTest->{&TEST_C})
-            {
-                $bIntegrationRequired = true;
-            }
         }
     }
-
-    my $strBuildRequired;
-
-    if ($bBinRequired || $bIntegrationRequired)
-    {
-        if ($bBinRequired)
-        {
-            $strBuildRequired = "bin";
-        }
-
-        if ($bIntegrationRequired)
-        {
-            $strBuildRequired .= ", integration";
-        }
-    }
-    else
-    {
-        $strBuildRequired = "none";
-    }
-
-    &log(INFO, "builds required: ${strBuildRequired}");
 
     # Build the binary and packages
     #-------------------------------------------------------------------------------------------------------------------------------
@@ -746,53 +723,42 @@ eval
 
         # Build the binary
         #---------------------------------------------------------------------------------------------------------------------------
-        if ($bBinRequired)
+        if ($bBinRequired || $bUnitRequired)
         {
             # Loop through VMs to do the C bin/integration builds
             my $bLogDetail = $strLogLevel eq 'detail';
             my @stryBuildVm = $strVm eq VM_ALL ? VM_LIST : ($strVm);
 
-            # Build binary for integration
-            if ($bIntegrationRequired)
-            {
-                push(@stryBuildVm, VM_NONE);
-            }
-
             foreach my $strBuildVM (@stryBuildVm)
             {
-                if ($strBuildVM eq VM_NONE)
+                my $strBuildPath = "${strTestPath}/build/${strBuildVM}";
+                my $strBuildNinja = "${strBuildPath}/build.ninja";
+
+                foreach my $strBuildVM (@stryBuildVm)
                 {
                     my $strBuildPath = "${strTestPath}/build/${strBuildVM}";
                     my $strBuildNinja = "${strBuildPath}/build.ninja";
 
-                    foreach my $strBuildVM (@stryBuildVm)
+                    &log(INFO, (!-e $strBuildNinja ? 'clean ' : '') . "build for ${strBuildVM} (${strBuildPath})");
+
+                    # Setup build if it does not exist
+                    my $strBuildCommand =
+                        "ninja -C ${strBuildPath}" . ($bBinRequired ? ' src/pgbackrest' : '') .
+                        ($bUnitRequired ? ' test/src/test-pgbackrest' : '');
+
+                    if (!-e $strBuildNinja)
                     {
-                        my $strBuildPath = "${strTestPath}/build/${strBuildVM}";
-                        my $strBuildNinja = "${strBuildPath}/build.ninja";
-
-                        &log(
-                            INFO, "    " . (!-e $strBuildNinja ? 'clean ' : '') .
-                            "build for ${strBuildVM} (${strBuildPath})");
-
-                        # Setup build if it does not exist
-                        my $strBuildCommand =
-                            "ninja -C ${strBuildPath} src/pgbackrest" .
-                            ($bIntegrationRequired && $strBuildVM eq VM_NONE ? ' test/src/test-pgbackrest' : '');
-
-                        if (!-e $strBuildNinja)
-                        {
-                            $strBuildCommand =
-                                "meson setup -Dwerror=true -Dfatal-errors=true -Dbuildtype=debug ${strBuildPath}" .
-                                    " ${strBackRestBase} && \\\n" .
-                                $strBuildCommand;
-                        }
-
-                        # Build code
-                        executeTest(
-                            ($strBuildVM ne VM_NONE ? 'docker exec -i -u ' . TEST_USER . " test-build bash -c '" : '') .
-                                $strBuildCommand . ($strBuildVM ne VM_NONE ? "'" : ''),
-                            {bShowOutputAsync => $bLogDetail});
+                        $strBuildCommand =
+                            "meson setup -Dwerror=true -Dfatal-errors=true -Dbuildtype=debug ${strBuildPath}" .
+                                " ${strBackRestBase} && \\\n" .
+                            $strBuildCommand;
                     }
+
+                    # Build code
+                    executeTest(
+                        ($strBuildVM ne VM_NONE ? 'docker exec -i -u ' . TEST_USER . " test-build bash -c '" : '') .
+                            $strBuildCommand . ($strBuildVM ne VM_NONE ? "'" : ''),
+                        {bShowOutputAsync => $bLogDetail});
                 }
             }
         }
