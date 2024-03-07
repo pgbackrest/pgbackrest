@@ -378,8 +378,8 @@ storageList(const Storage *this, const String *pathExp, StorageListParam param)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         StorageIterator *const storageItr = storageNewItrP(
-            this, pathExp, .errorOnMissing = param.errorOnMissing, .nullOnMissing = param.nullOnMissing,
-            .expression = param.expression);
+            this, pathExp, .level = storageInfoLevelExists, .errorOnMissing = param.errorOnMissing,
+            .nullOnMissing = param.nullOnMissing, .expression = param.expression);
 
         if (storageItr != NULL)
         {

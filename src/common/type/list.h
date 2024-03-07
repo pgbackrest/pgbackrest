@@ -52,6 +52,10 @@ FN_EXTERN int lstComparatorUInt(const void *item1, const void *item2);
 // General purpose list comparator for zero-terminated strings or structs with a zero-terminated string as the first member
 FN_EXTERN int lstComparatorZ(const void *item1, const void *item2);
 
+// Macro to compare two values in a branchless and transitive fashion
+#define LST_COMPARATOR_CMP(item1, item2)                                                                                           \
+    (((item1) > (item2)) - ((item1) < (item2)))
+
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
