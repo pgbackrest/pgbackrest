@@ -1727,7 +1727,8 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                     ASSERT(!file.delta || fileSizeEqual);
 
                     // Preserve values if the file will not be copied, is possibly equal to the prior file, or will be stored with
-                    // block incremental and the prior file is also stored with block incremental
+                    // block incremental and the prior file is also stored with block incremental. If the file will not be copied
+                    // then the file size must be equal to the prior file so there is no need to check that condition separately.
                     if (fileSizeEqual || fileBlockIncrPreserve)
                     {
                         file.sizePrior = filePrior.size;
