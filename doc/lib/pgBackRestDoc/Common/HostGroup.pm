@@ -1,7 +1,7 @@
 ####################################################################################################################################
-# HostGroupTest.pm - Encapsulate a group of docker containers for testing
+# HostGroupTest.pm - Encapsulate a group of docker containers
 ####################################################################################################################################
-package pgBackRestTest::Common::HostGroupTest;
+package pgBackRestDoc::Common::HostGroup;
 
 ####################################################################################################################################
 # Perl includes
@@ -177,7 +177,7 @@ sub hostGroupGet
 {
     if (!defined($oHostGroup))
     {
-        $oHostGroup = new pgBackRestTest::Common::HostGroupTest();
+        $oHostGroup = new pgBackRestDoc::Common::HostGroup();
     }
 
     return $oHostGroup;
