@@ -743,21 +743,16 @@ eval
     if (!$bDryRun)
     {
         my $oVm = vmGet();
-        my $lTimestampLast;
-        my $rhBinBuild = {};
 
         # Build the binary
         #---------------------------------------------------------------------------------------------------------------------------
         if ($bBinRequired)
         {
-            # Find the lastest modified time for dirs that affect the bin build
-            $lTimestampLast = buildLastModTime($oStorageBackRest, $strBackRestBase, ['src']);
-
-            # Loop through VMs to do the C bin builds
+            # Loop through VMs to do the C bin/integration builds
             my $bLogDetail = $strLogLevel eq 'detail';
             my @stryBuildVm = $strVm eq VM_ALL ? VM_LIST : ($strVm);
 
-            # Build binary for the host
+            # Build binary for integration
             if ($bIntegrationRequired)
             {
                 push(@stryBuildVm, VM_NONE);
@@ -777,24 +772,27 @@ eval
 
                         &log(
                             INFO, "    " . (!-e $strBuildNinja ? 'clean ' : '') .
-                            "bin build for ${strBuildVM} (${strBuildPath})");
+                            "build for ${strBuildVM} (${strBuildPath})");
 
                         # Setup build if it does not exist
-                        my $strBuildCommand = "ninja -C ${strBuildPath} src/pgbackrest";
+                        my $strBuildCommand =
+                            "ninja -C ${strBuildPath} src/pgbackrest" .
+                            ($bIntegrationRequired && $strBuildVM eq VM_NONE ? ' test/src/test-pgbackrest' : '');
 
-                    if (!-e $strBuildNinja)
-                    {
-                        $strBuildCommand =
-                            "meson setup -Dwerror=true -Dfatal-errors=true -Dbuildtype=debug ${strBuildPath}" .
-                                " ${strBackRestBase} && \\\n" .
-                            $strBuildCommand;
+                        if (!-e $strBuildNinja)
+                        {
+                            $strBuildCommand =
+                                "meson setup -Dwerror=true -Dfatal-errors=true -Dbuildtype=debug ${strBuildPath}" .
+                                    " ${strBackRestBase} && \\\n" .
+                                $strBuildCommand;
+                        }
+
+                        # Build code
+                        executeTest(
+                            ($strBuildVM ne VM_NONE ? 'docker exec -i -u ' . TEST_USER . " test-build bash -c '" : '') .
+                                $strBuildCommand . ($strBuildVM ne VM_NONE ? "'" : ''),
+                            {bShowOutputAsync => $bLogDetail});
                     }
-
-                    # Build code
-                    executeTest(
-                        ($strBuildVM ne VM_NONE ? 'docker exec -i -u ' . TEST_USER . " test-build bash -c '" : '') .
-                            $strBuildCommand . ($strBuildVM ne VM_NONE ? "'" : ''),
-                        {bShowOutputAsync => $bLogDetail});
                 }
             }
         }
