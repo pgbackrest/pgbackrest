@@ -14,6 +14,19 @@
 
                 <p>Skip zero-length files for block incremental delta restore.</p>
             </release-item>
+
+            <release-item>
+                <github-issue id="2275"/>
+                <github-pull-request id="2276"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="maksym.boguk"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Fix performance regression in storage list.</p>
+            </release-item>
         </release-bug-list>
 
         <release-improvement-list>
