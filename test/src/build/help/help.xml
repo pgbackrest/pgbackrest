@@ -120,6 +120,16 @@
                     <example>n</example>
                 </option>
 
+                <option id="pg-version">
+                    <summary><postgres/> version for integration test.</summary>
+
+                    <text>
+                        <p>Version of <postgres/> to use for the integration test.</p>
+                    </text>
+
+                    <example>16</example>
+                </option>
+
                 <option id="profile">
                     <summary>Generate profile report.</summary>
 

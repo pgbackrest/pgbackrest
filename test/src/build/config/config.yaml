@@ -70,6 +70,12 @@ option:
     command:
       test: {}
 
+  pg-version:
+    type: string
+    default: invalid
+    command:
+      test: {}
+
   profile:
     type: boolean
     default: false
