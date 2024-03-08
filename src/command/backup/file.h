@@ -31,6 +31,7 @@ typedef struct BackupFile
     bool pgFileDelta;                                               // Checksum pg file before copying
     bool pgFileIgnoreMissing;                                       // Ignore missing pg file
     uint64_t pgFileSize;                                            // Expected pg file size
+    uint64_t pgFileSizePrior;                                       // Prior pg file size (if manifestFileHasReference)
     bool pgFileCopyExactSize;                                       // Copy only pg expected size
     const Buffer *pgFileChecksum;                                   // Expected pg file checksum
     bool pgFileChecksumPage;                                        // Validate page checksums?
