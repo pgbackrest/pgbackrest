@@ -2009,6 +2009,7 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
                 pckWriteBoolP(param, file.delta);
                 pckWriteBoolP(param, !strEq(file.name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)));
                 pckWriteU64P(param, file.size);
+                pckWriteU64P(param, file.sizePrior);
                 pckWriteBoolP(param, !backupProcessFilePrimary(jobData->standbyExp, file.name));
                 pckWriteBinP(param, file.checksumSha1 != NULL ? BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE) : NULL);
                 pckWriteBoolP(param, file.checksumPage);
