@@ -1,5 +1,9 @@
 <release date="XXXX-XX-XX" version="2.51dev" title="UNDER DEVELOPMENT">
     <release-core-list>
+        <text>
+            <p><b>NOTE TO PACKAGERS</b>: The build system for <backrest/> is now <proper>meson</proper>. The <proper>autoconf</proper>/<proper>make</proper> build will not receive any new features and will be removed after a few releases.</p>
+        </text>
+
         <release-bug-list>
             <release-item>
                 <github-issue id="2271"/>
@@ -30,6 +34,17 @@
         </release-bug-list>
 
         <release-improvement-list>
+            <release-item>
+                <github-pull-request id="2264"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Make meson the primary build system.</p>
+            </release-item>
+
             <release-item>
                 <github-pull-request id="2257"/>
 
