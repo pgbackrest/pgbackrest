@@ -428,6 +428,42 @@ ioReadReady(IoRead *this, IoReadReadyParam param)
 }
 
 /**********************************************************************************************************************************/
+FN_EXTERN uint64_t
+ioReadFlush(IoRead *const this, const IoReadFlushParam param)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_READ, this);
+        FUNCTION_LOG_PARAM(BOOL, param.errorOnBytes);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->pub.opened && !this->pub.closed);
+
+    // Flush remaining data
+    uint64_t result = 0;
+
+    if (!ioReadEof(this))
+    {
+        Buffer *const buffer = bufNew(ioBufferSize());
+
+        do
+        {
+            result += ioRead(this, buffer);
+            bufUsedZero(buffer);
+        }
+        while (!ioReadEof(this));
+
+        bufFree(buffer);
+    }
+
+    // Error when bytes found and error requested
+    if (result != 0 && param.errorOnBytes)
+        THROW_FMT(FileReadError, "expected EOF but flushed %" PRIu64 " byte(s)", result);
+
+    FUNCTION_LOG_RETURN(UINT64, result);
+}
+
+/**********************************************************************************************************************************/
 FN_EXTERN void
 ioReadClose(IoRead *this)
 {

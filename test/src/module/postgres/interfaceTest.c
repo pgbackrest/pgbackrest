@@ -3,6 +3,7 @@ Test PostgreSQL Interface
 ***********************************************************************************************************************************/
 #include "storage/posix/storage.h"
 
+#include "common/harnessConfig.h"
 #include "common/harnessPostgres.h"
 
 /***********************************************************************************************************************************
@@ -14,6 +15,11 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
+    // Test configurations loading to initialize cfgOptFork value (PostgreSQL)
+    StringList *argList = strLstNew();
+    hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+    hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
+    hrnCfgLoadP(cfgCmdBackup, argList);
 
     // *****************************************************************************************************************************
     if (testBegin("pgVersionFromStr() and pgVersionToStr()"))
@@ -122,14 +128,16 @@ testRun(void)
             "wal segment size is 1048576 but must be 16777216 for PostgreSQL <= 10");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_95, .pageSize = 32 * 1024);
+        HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_95, .pageSize = 64 * 1024);
 
-        TEST_ERROR(pgControlFromFile(storageTest, NULL), FormatError, "page size is 32768 but must be 8192");
+        TEST_ERROR(
+            pgControlFromFile(storageTest, NULL), FormatError,
+            "page size is 65536 but only 1024, 2048, 4096, 8192, 16384, and 32768 are supported");
 
         // -------------------------------------------------------------------------------------------------------------------------
         HRN_PG_CONTROL_PUT(
             storageTest, PG_VERSION_94, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_94),
-            .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88);
+            .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88, .pageSize = pgPageSize8);
 
         TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info v90");
         TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "   check system id");
@@ -137,6 +145,72 @@ testRun(void)
         TEST_RESULT_UINT(info.catalogVersion, 201409291, "   check catalog version");
         TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
         TEST_RESULT_UINT(info.timeline, 88, "check timeline");
+        TEST_RESULT_UINT(info.pageSize, pgPageSize8, "check page size");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        HRN_PG_CONTROL_PUT(
+            storageTest, PG_VERSION_16, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_16),
+            .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88, .pageSize = pgPageSize1);
+
+        TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info v90");
+        TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "   check system id");
+        TEST_RESULT_UINT(info.version, PG_VERSION_16, "check version");
+        TEST_RESULT_UINT(info.catalogVersion, 202307071, "check catalog version");
+        TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
+        TEST_RESULT_UINT(info.timeline, 88, "check timeline");
+        TEST_RESULT_UINT(info.pageSize, pgPageSize1, "check page size");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        HRN_PG_CONTROL_PUT(
+            storageTest, PG_VERSION_16, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_16),
+            .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88, .pageSize = pgPageSize2);
+
+        TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info v90");
+        TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "   check system id");
+        TEST_RESULT_UINT(info.version, PG_VERSION_16, "check version");
+        TEST_RESULT_UINT(info.catalogVersion, 202307071, "check catalog version");
+        TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
+        TEST_RESULT_UINT(info.timeline, 88, "check timeline");
+        TEST_RESULT_UINT(info.pageSize, pgPageSize2, "check page size");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        HRN_PG_CONTROL_PUT(
+            storageTest, PG_VERSION_16, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_16),
+            .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88, .pageSize = pgPageSize4);
+
+        TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info v90");
+        TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "   check system id");
+        TEST_RESULT_UINT(info.version, PG_VERSION_16, "check version");
+        TEST_RESULT_UINT(info.catalogVersion, 202307071, "check catalog version");
+        TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
+        TEST_RESULT_UINT(info.timeline, 88, "check timeline");
+        TEST_RESULT_UINT(info.pageSize, pgPageSize4, "check page size");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        HRN_PG_CONTROL_PUT(
+            storageTest, PG_VERSION_16, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_16),
+            .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88, .pageSize = pgPageSize16);
+
+        TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info v90");
+        TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "   check system id");
+        TEST_RESULT_UINT(info.version, PG_VERSION_16, "check version");
+        TEST_RESULT_UINT(info.catalogVersion, 202307071, "check catalog version");
+        TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
+        TEST_RESULT_UINT(info.timeline, 88, "check timeline");
+        TEST_RESULT_UINT(info.pageSize, pgPageSize16, "check page size");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        HRN_PG_CONTROL_PUT(
+            storageTest, PG_VERSION_16, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_16),
+            .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88, .pageSize = pgPageSize32);
+
+        TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info v90");
+        TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "   check system id");
+        TEST_RESULT_UINT(info.version, PG_VERSION_16, "check version");
+        TEST_RESULT_UINT(info.catalogVersion, 202307071, "check catalog version");
+        TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
+        TEST_RESULT_UINT(info.timeline, 88, "check timeline");
+        TEST_RESULT_UINT(info.pageSize, pgPageSize32, "check page size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("force control version");
@@ -219,7 +293,7 @@ testRun(void)
         TEST_RESULT_STR_Z(pgLsnName(PG_VERSION_96), "location", "check location name");
         TEST_RESULT_STR_Z(pgLsnName(PG_VERSION_10), "lsn", "check lsn name");
 
-        TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_94, 201306121), "PG_9.4_201306121", "check 9.4 tablespace id");
+        TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_94, 201409291), "PG_9.4_201409291", "check 9.4 tablespace id");
         TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_16, 999999999), "PG_16_999999999", "check 16 tablespace id");
 
         TEST_RESULT_STR_Z(pgWalName(PG_VERSION_96), "xlog", "check xlog name");
@@ -235,11 +309,87 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("pgPageChecksum()"))
     {
-        unsigned char page[PG_PAGE_SIZE_DEFAULT];
-        memset(page, 0xFF, PG_PAGE_SIZE_DEFAULT);
+        TEST_TITLE("1KiB page checksum");
+        {
+            unsigned char page[pgPageSize1];
+            memset(page, 0xFF, sizeof(page));
 
-        TEST_RESULT_UINT(pgPageChecksum(page, 0), TEST_BIG_ENDIAN() ? 0xF55E : 0x0E1C, "check 0xFF filled page, block 0");
-        TEST_RESULT_UINT(pgPageChecksum(page, 999), TEST_BIG_ENDIAN() ? 0xF1B9 : 0x0EC3, "check 0xFF filled page, block 999");
+            TEST_RESULT_UINT(
+                pgPageChecksum(page, 0, sizeof(page)), TEST_BIG_ENDIAN() ? 0x980F : 0x016E, "check 0xFF filled page, block 0");
+            TEST_RESULT_UINT(
+                pgPageChecksum(page, 999, sizeof(page)), TEST_BIG_ENDIAN() ? 0x982A : 0x0391, "check 0xFF filled page, block 999");
+        }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("2KiB page checksum");
+        {
+            unsigned char page[pgPageSize2];
+            memset(page, 0xFF, sizeof(page));
+
+            TEST_RESULT_UINT(
+                pgPageChecksum(page, 0, sizeof(page)), TEST_BIG_ENDIAN() ? 0x4937 : 0xB57B, "check 0xFF filled page, block 0");
+            TEST_RESULT_UINT(
+                pgPageChecksum(page, 999, sizeof(page)), TEST_BIG_ENDIAN() ? 0x48D8 : 0xB7A2, "check 0xFF filled page, block 999");
+        }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("4KiB page checksum");
+        {
+            unsigned char page[pgPageSize4];
+            memset(page, 0xFF, sizeof(page));
+
+            TEST_RESULT_UINT(
+                pgPageChecksum(page, 0, sizeof(page)), TEST_BIG_ENDIAN() ? 0x81DA : 0x5B9B, "check 0xFF filled page, block 0");
+            TEST_RESULT_UINT(
+                pgPageChecksum(page, 999, sizeof(page)), TEST_BIG_ENDIAN() ? 0x7EB7 : 0x5BB8, "check 0xFF filled page, block 999");
+        }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("8KiB page checksum");
+        {
+            unsigned char page[pgPageSize8];
+            memset(page, 0xFF, sizeof(page));
+
+            TEST_RESULT_UINT(
+                pgPageChecksum(page, 0, sizeof(page)), TEST_BIG_ENDIAN() ? 0xF55E : 0x0E1C, "check 0xFF filled page, block 0");
+            TEST_RESULT_UINT(
+                pgPageChecksum(page, 999, sizeof(page)), TEST_BIG_ENDIAN() ? 0xF1B9 : 0x0EC3, "check 0xFF filled page, block 999");
+        }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("16KiB page checksum");
+        {
+            unsigned char page[pgPageSize16];
+            memset(page, 0xFF, sizeof(page));
+
+            TEST_RESULT_UINT(
+                pgPageChecksum(page, 0, sizeof(page)), TEST_BIG_ENDIAN() ? 0xA2AD : 0x158E, "check 0xFF filled page, block 0");
+            TEST_RESULT_UINT(
+                pgPageChecksum(page, 999, sizeof(page)), TEST_BIG_ENDIAN() ? 0xA548 : 0x18AD, "check 0xFF filled page, block 999");
+        }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("32KiB page checksum");
+        {
+            unsigned char page[pgPageSize32];
+            memset(page, 0xFF, sizeof(page));
+
+            TEST_RESULT_UINT(
+                pgPageChecksum(page, 0, sizeof(page)), TEST_BIG_ENDIAN() ? 0x7F66 : 0x5366, "check 0xFF filled page, block 0");
+            TEST_RESULT_UINT(
+                pgPageChecksum(page, 999, sizeof(page)), TEST_BIG_ENDIAN() ? 0x82C5 : 0x5745, "check 0xFF filled page, block 999");
+        }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("invalid page size error");
+        {
+            unsigned char page[64 * 1024];
+            memset(page, 0xFF, sizeof(page));
+
+            TEST_ERROR(
+                pgPageChecksum(page, 0, sizeof(page)), FormatError,
+                "page size is 65536 but only 1024, 2048, 4096, 8192, 16384, and 32768 are supported");
+        }
     }
 
     // *****************************************************************************************************************************

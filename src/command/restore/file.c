@@ -88,8 +88,10 @@ restoreFile(
                         // Else use size and checksum
                         else
                         {
-                            // Only continue delta if the file size is as expected or larger
-                            if (info.size >= file->size)
+                            // Only continue delta if the file size is as expected or larger (for normal files) or if block
+                            // incremental and the file to delta is not zero-length. Block incremental can potentially use almost
+                            // any portion of an existing file, but of course zero-length files do not have anything to reuse.
+                            if (info.size >= file->size || (file->blockIncrMapSize != 0 && info.size != 0))
                             {
                                 const char *const fileName = strZ(storagePathP(storagePg(), file->name));
 
@@ -115,6 +117,12 @@ restoreFile(
 
                                     // Update info
                                     info = storageInfoP(storagePg(), file->name, .followLink = true);
+
+                                    // For block incremental it is very important that the file be exactly the expected size, so
+                                    // make sure the truncate worked as expected
+                                    CHECK_FMT(
+                                        FileWriteError, info.size == file->size, "unable to truncate '%s' to %" PRIu64 " bytes",
+                                        strZ(file->name), file->size);
                                 }
 
                                 // Generate checksum for the file if size is not zero
@@ -123,7 +131,10 @@ restoreFile(
                                 if (file->size != 0)
                                 {
                                     read = storageReadIo(storageNewReadP(storagePg(), file->name));
-                                    ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
+
+                                    // Calculate checksum only when size matches
+                                    if (info.size == file->size)
+                                        ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
 
                                     // Generate block checksum list if block incremental
                                     if (file->blockIncrMapSize != 0)
@@ -136,11 +147,12 @@ restoreFile(
                                     ioReadDrain(read);
                                 }
 
-                                // If the checksum is the same (or file is zero size) then no need to copy the file
+                                // If size/checksum is the same (or file is zero size) then no need to copy the file
                                 if (file->size == 0 ||
-                                    bufEq(
-                                        file->checksum,
-                                        pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE))))
+                                    (info.size == file->size &&
+                                     bufEq(
+                                         file->checksum,
+                                         pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE)))))
                                 {
                                     // If the checksum/size are now the same but the time is not, then set the time back to the
                                     // backup time. This helps with unit testing, but also presents a pristine version of the
