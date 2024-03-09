@@ -647,12 +647,9 @@ testBldUnit(TestBuild *const this)
         strReplace(testC, STRDEF("{[C_HRN_PATH_REPO]}"), pathRepo);
 
         // Path to the project exe when it exists
-        const String *const pathProjectExe = storagePathP(
-            testBldStorageTest(this),
-            strNewFmt(
-                "%s/%s%s/" PROJECT_BIN, strEqZ(testBldVmInt(this), "none") ? "build" : "bin", strZ(testBldVmInt(this)),
-                strEqZ(testBldVmInt(this), "none") ? "/src" : ""));
-        strReplace(testC, STRDEF("{[C_TEST_PROJECT_EXE]}"), pathProjectExe);
+        strReplace(
+            testC, STRDEF("{[C_TEST_PROJECT_EXE]}"),
+            storagePathP(testBldStorageTest(this), strNewFmt("build/%s/src/" PROJECT_BIN, strZ(testBldVmInt(this)))));
 
         // Path to source -- used to construct __FILENAME__ tests
         strReplace(testC, STRDEF("{[C_TEST_PGB_PATH]}"), strNewFmt("../%s", strZ(pathRepoRel)));

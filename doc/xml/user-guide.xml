@@ -62,6 +62,7 @@
         <!-- Path where builds are performed -->
         <variable key="build-path">/build</variable>
         <variable key="build-br-path">{[build-path]}/pgbackrest-release-{[version]}</variable>
+        <variable key="build-meson-path">{[build-path]}/pgbackrest</variable>
 
         <!-- PostreSQL versions to run documentation for and min/max versions represented -->
         <variable key="pg-version" if="{[os-type-is-debian]}">{[os-debian-pg-version]}</variable>
@@ -581,7 +582,11 @@
         <execute-list host="{[br-install-host]}">
             <title>Copy <backrest/> binary from build host</title>
 
-            <execute user="root">
+            <execute if="{[os-type-is-debian]}" user="root">
+                <exe-cmd>scp {[host-build]}:{[build-meson-path]}/src/pgbackrest /usr/bin</exe-cmd>
+                <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
+            </execute>
+            <execute if="{[os-type-is-rhel]}" user="root">
                 <exe-cmd>scp {[host-build]}:{[build-br-path]}/src/pgbackrest /usr/bin</exe-cmd>
                 <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
             </execute>
@@ -985,6 +990,10 @@
 
         <p>When building from source it is best to use a build host rather than building on production. Many of the tools required for the build should generally not be installed in production. <backrest/> consists of a single executable so it is easy to copy to a new host once it is built.</p>
 
+        <p if="{[os-type-is-rhel]}">The preferred build method is <proper>meson</proper>/<proper>ninja</proper>, see <link url="user-guide.html#build">Build</link>. The <proper>autoconf</proper>/<proper>make</proper> method is shown here for legacy purposes.</p>
+
+        <p if="{[os-type-is-debian]}">The preferred build method is <proper>meson</proper>/<proper>ninja</proper> as shown below. The <proper>autoconf</proper>/<proper>make</proper> method is also provided for legacy purposes, see <link url="user-guide-rhel.html#build">Build</link>.</p>
+
         <execute-list host="{[host-build]}">
             <title>Download version <id>{[version]}</id> of <backrest/> to <path>{[build-path]}</path> path</title>
 
@@ -1006,10 +1015,10 @@
                 <exe-cmd>mkdir -p {[build-br-path]}</exe-cmd>
             </execute>
             <execute user="root" show="n">
-                <exe-cmd>cp -r {[pgbackrest-repo-path]}/src {[build-br-path]}</exe-cmd>
+                <exe-cmd>cp -r {[pgbackrest-repo-path]}/* {[build-br-path]}</exe-cmd>
             </execute>
             <execute user="root" show="n">
-                <exe-cmd>chown -R {[host-build-user]} {[build-br-path]}</exe-cmd>
+                <exe-cmd>chown -R {[host-build-user]} {[build-path]}</exe-cmd>
             </execute>
         </execute-list>
 
@@ -1022,7 +1031,7 @@
 
             <execute if="{[os-type-is-debian]}" user="root" pre="y">
                 <exe-cmd>
-                    apt-get install make gcc libpq-dev libssl-dev libxml2-dev pkg-config
+                    apt-get install meson gcc libpq-dev libssl-dev libxml2-dev pkg-config
                     liblz4-dev libzstd-dev libbz2-dev libz-dev libyaml-dev libssh2-1-dev
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
@@ -1037,7 +1046,18 @@
             </execute>
         </execute-list>
 
-        <execute-list host="{[host-build]}">
+        <execute-list if="{[os-type-is-debian]}" host="{[host-build]}">
+            <title>Configure and compile <backrest/></title>
+
+            <execute>
+                <exe-cmd>meson setup {[build-meson-path]} {[build-br-path]}</exe-cmd>
+            </execute>
+            <execute>
+                <exe-cmd>ninja -C {[build-meson-path]}</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <execute-list if="{[os-type-is-rhel]}" host="{[host-build]}">
             <title>Configure and compile <backrest/></title>
 
             <execute>
@@ -3746,9 +3766,11 @@
 
     To initialize the build, run the following. This only needs to be done once per doc build or branch change, though running it more that once only costs additional time:
         docker exec -it doc-build bash -c 'rm -rf /build/dev && mkdir -p /build/dev && cd /build/dev && /pgbackrest/src/configure -\-enable-test'
+        docker exec -it doc-build bash -c 'rm -rf /build/dev && meson setup -Dbuildtype=debug /build/dev /pgbackrest'
 
     One each host where a new build is required, run the following. This will build pgbackrest, copy it to the host, and display the build time for sanity:
         docker exec -it <container> bash -c 'ssh build make -C /build/dev -j 8 && scp build:/build/dev/pgbackrest /usr/bin && ls -lah /usr/bin/pgbackrest'
+        docker exec -it <container> bash -c 'ssh build ninja -C /build/dev && scp build:/build/dev/src/pgbackrest /usr/bin && ls -lah /usr/bin/pgbackrest'
     ============================================================================================================================ -->
     <section id="stress" if="'{[stress]}' eq 'y'">
         <title>Stress Testing</title>
