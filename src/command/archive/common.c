@@ -15,6 +15,7 @@ Archive Common
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
+#include "common/type/convert.h"
 #include "common/wait.h"
 #include "config/config.h"
 #include "postgres/interface.h"
@@ -293,14 +294,15 @@ archiveAsyncExec(ArchiveMode archiveMode, const StringList *commandExec)
 
 /**********************************************************************************************************************************/
 FN_EXTERN int
-archiveIdComparator(const void *item1, const void *item2)
+archiveIdComparator(const void *const archiveId1, const void *const archiveId2)
 {
-    StringList *archiveSort1 = strLstNewSplitZ(*(String **)item1, "-");
-    StringList *archiveSort2 = strLstNewSplitZ(*(String **)item2, "-");
-    int int1 = atoi(strZ(strLstGet(archiveSort1, 1)));
-    int int2 = atoi(strZ(strLstGet(archiveSort2, 1)));
+    ASSERT(strstr(strZ(*(String **)archiveId1), "-") != NULL);
+    ASSERT(strstr(strZ(*(String **)archiveId2), "-") != NULL);
 
-    return int1 - int2;
+    const int id1 = cvtZToInt(strstr(strZ(*(String **)archiveId1), "-") + 1);
+    const int id2 = cvtZToInt(strstr(strZ(*(String **)archiveId2), "-") + 1);
+
+    return LST_COMPARATOR_CMP(id1, id2);
 }
 
 /**********************************************************************************************************************************/

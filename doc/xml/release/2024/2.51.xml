@@ -1,6 +1,69 @@
 <release date="XXXX-XX-XX" version="2.51dev" title="UNDER DEVELOPMENT">
     <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <github-issue id="2271"/>
+                <github-pull-request id="2272"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="sebastian.krause"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="sebastian.krause"/>
+                    <release-item-reviewer id="rene.hojbjerg.larsen"/>
+                </release-item-contributor-list>
+
+                <p>Skip zero-length files for block incremental delta restore.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2275"/>
+                <github-pull-request id="2276"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="maksym.boguk"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Fix performance regression in storage list.</p>
+            </release-item>
+        </release-bug-list>
+
         <release-improvement-list>
+            <release-item>
+                <github-pull-request id="2257"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Detect files that have not changed during non-delta incremental backup.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2277"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Improve <cmd>archive-push</cmd> WAL segment queue handling.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2268"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Limit resume functionality to full backups.</p>
+            </release-item>
+
             <release-item>
                 <github-pull-request id="2263"/>
 
@@ -24,5 +87,34 @@
                 <p>Add detailed backtrace to <proper>autoconf</proper>/<proper>make</proper> build.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <github-pull-request id="2280"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Improve sort comparators.</p>
+            </release-item>
+        </release-development-list>
     </release-core-list>
+
+    <release-doc-list>
+        <release-improvement-list>
+            <release-item>
+                <github-pull-request id="2281"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="stephen.frost"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Update references to <file>recovery.conf</file>.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-doc-list>
 </release>

@@ -40,8 +40,9 @@ const char *testProjectExe(void);
 Functions
 ***********************************************************************************************************************************/
 void hrnInit(
-    const char *testExe, const char *testProjectExe, bool testContainer, unsigned int testIdx, bool timing, const char *testPath,
-    const char *testDataPath, const char *testRepoPath);
+    const char *testExe, const char *testProjectExe, bool testContainer, bool testLogExpect, unsigned int testIdx, bool timing,
+    const char *testPath, const char *testUser, const char *testVm, const char *testPgVersion, const char *testDataPath,
+    const char *testRepoPath);
 void hrnAdd(int run, bool selected);
 void hrnComplete(void);
 

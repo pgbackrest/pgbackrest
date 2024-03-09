@@ -31,7 +31,7 @@ arm64_task:
 # ----------------------------------------------------------------------------------------------------------------------------------
 freebsd_13_task:
   freebsd_instance:
-    image_family: freebsd-13-2
+    image_family: freebsd-13-3
     cpu: 4
     memory: 4G
 

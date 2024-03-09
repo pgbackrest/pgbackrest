@@ -291,12 +291,10 @@ eval
     # Render output
     for my $strOutput (@stryOutput)
     {
-        if (!($strOutput eq 'man' && $oManifest->isBackRest()))
-        {
-            $oManifest->renderGet($strOutput);
-        }
-
         &log(INFO, "render ${strOutput} output");
+
+        # Man output has already been generated in C so do not remove it
+        next if ($strOutput eq 'man');
 
         # Clean contents of out directory
         if (!$bOutPreserve)
@@ -316,6 +314,8 @@ eval
             }
         }
 
+        $oManifest->renderGet($strOutput);
+
         if ($strOutput eq 'markdown')
         {
             my $oMarkdown =
@@ -328,18 +328,6 @@ eval
                 );
 
             $oMarkdown->process();
-        }
-        elsif ($strOutput eq 'man' && $oManifest->isBackRest())
-        {
-            # Generate the command-line help
-            my $oRender = new pgBackRestDoc::Common::DocRender('text', $oManifest, !$bNoExe);
-            my $oDocConfig =
-                new pgBackRestDoc::Common::DocConfig(
-                    new pgBackRestDoc::Common::Doc("${strBasePath}/../src/build/help/help.xml"), $oRender);
-
-            $oStorageDoc->pathCreate(
-                "${strBasePath}/output/man", {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
-            $oStorageDoc->put("${strBasePath}/output/man/" . lc(PROJECT_NAME) . '.1.txt', $oDocConfig->manGet($oManifest));
         }
         elsif ($strOutput eq 'html')
         {
