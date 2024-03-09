@@ -5,6 +5,7 @@ Test HTTP
 
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
+#include "common/io/socket/address.h"
 #include "common/io/socket/client.h"
 #include "common/io/tls/client.h"
 
@@ -24,6 +25,13 @@ static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
+
+    // Ensure that the ipv4 loopback address will be selected
+    const String *const ipLoop4 = STRDEF("127.0.0.1");
+    AddressInfo *addrInfo = NULL;
+
+    TEST_ASSIGN(addrInfo, addrInfoNew(STRDEF("localhost"), 443), "localhost addr list");
+    TEST_RESULT_VOID(addrInfoPrefer(addrInfo, lstFindIdx(addrInfo->pub.list, &ipLoop4)), "prefer 127.0.0.1");
 
     // *****************************************************************************************************************************
     if (testBegin("httpUriEncode() and httpUriDecode()"))

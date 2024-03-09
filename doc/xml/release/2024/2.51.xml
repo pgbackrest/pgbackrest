@@ -1,5 +1,9 @@
 <release date="XXXX-XX-XX" version="2.51dev" title="UNDER DEVELOPMENT">
     <release-core-list>
+        <text>
+            <p><b>NOTE TO PACKAGERS</b>: The build system for <backrest/> is now <proper>meson</proper>. The <proper>autoconf</proper>/<proper>make</proper> build will not receive any new features and will be removed after a few releases.</p>
+        </text>
+
         <release-bug-list>
             <release-item>
                 <github-issue id="2271"/>
@@ -30,6 +34,35 @@
         </release-bug-list>
 
         <release-improvement-list>
+            <release-item>
+                <github-issue id="2154"/>
+                <github-pull-request id="2235"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="timothee.peignier"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Improved support for dual stack connections.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Make meson the primary build system.">
+                    <github-pull-request id="2264"/>
+                </commit>
+                <commit subject="Set function/variable visibility to hidden.">
+                    <github-pull-request id="2265"/>
+                </commit>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Make meson the primary build system.</p>
+            </release-item>
+
             <release-item>
                 <github-pull-request id="2257"/>
 
