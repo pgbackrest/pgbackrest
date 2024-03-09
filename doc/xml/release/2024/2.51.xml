@@ -53,6 +53,18 @@
             </release-item>
 
             <release-item>
+                <github-pull-request id="2268"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Limit resume functionality to full backups.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2263"/>
 
                 <release-item-contributor-list>
