@@ -35,7 +35,12 @@
 
         <release-improvement-list>
             <release-item>
-                <github-pull-request id="2264"/>
+                <commit subject="Make meson the primary build system.">
+                    <github-pull-request id="2264"/>
+                </commit>
+                <commit subject="Set function/variable visibility to hidden.">
+                    <github-pull-request id="2265"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
