@@ -383,10 +383,6 @@ eval
     ################################################################################################################################
     # Start VM and run
     ################################################################################################################################
-    # Clean any existing files in the src path that might interfere with the vpath build. This is kosher because the user should
-    # be expecting us to do builds in the src path during testing. Instead we clean the src path and do the builds elsewhere.
-    #-------------------------------------------------------------------------------------------------------------------------------
-    executeTest("make -C ${strBackRestBase}/src -f Makefile.in clean-all");
 
     # Clean up
     #-------------------------------------------------------------------------------------------------------------------------------
