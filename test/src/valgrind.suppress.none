@@ -9,7 +9,6 @@
 {
     libssh2_ubuntu_20_04
     Memcheck:Leak
-    match-leak-kinds: definite
     ...
     obj:/usr/lib/x86_64-linux-gnu/libssh2.so.1.0.1
     ...
