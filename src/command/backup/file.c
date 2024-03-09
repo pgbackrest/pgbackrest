@@ -301,8 +301,8 @@ backupFile(
                         Buffer *const buffer = bufNew(ioBufferSize());
                         bool readEof = false;
 
-                        // Read the first buffer to determine if the file was truncated. Detecting truncation matters only when
-                        // bundling is enabled as otherwise the file will be stored anyway.
+                        // Read the first buffer to determine if the file was truncated or was not changed. Detecting truncation
+                        // matters only when bundling is enabled as otherwise the file will be stored anyway.
                         ioRead(readIo, buffer);
 
                         if (ioReadEof(readIo))
@@ -327,6 +327,26 @@ backupFile(
                                         fileResult->copyChecksum,
                                         pckReadBinP(
                                             ioFilterGroupResultP(ioReadFilterGroup(readIo), CRYPTO_HASH_FILTER_TYPE, .idx = 0))));
+                            }
+                            // Else check if size is equal to prior size
+                            else if (file->manifestFileHasReference && fileResult->copySize == file->pgFileSizePrior)
+                            {
+                                const Buffer *const copyChecksum = pckReadBinP(
+                                    ioFilterGroupResultP(ioReadFilterGroup(readIo), CRYPTO_HASH_FILTER_TYPE));
+
+                                // If checksum is also equal then no need to copy the file
+                                if (bufEq(file->pgFileChecksum, copyChecksum))
+                                {
+                                    // If block incremental make sure no map was returned but a prior map was provided
+                                    ASSERT(
+                                        file->blockIncrSize == 0 ||
+                                        (pckReadU64P(
+                                             ioFilterGroupResultP(ioReadFilterGroup(readIo), BLOCK_INCR_FILTER_TYPE)) == 0 &&
+                                         file->blockIncrMapPriorFile != NULL));
+
+                                    fileResult->backupCopyResult = backupCopyResultNoOp;
+                                    fileResult->copyChecksum = file->pgFileChecksum;
+                                }
                             }
                         }
 
@@ -391,6 +411,9 @@ backupFile(
                                 {
                                     fileResult->blockIncrMapSize = pckReadU64P(
                                         ioFilterGroupResultP(ioReadFilterGroup(readIo), BLOCK_INCR_FILTER_TYPE));
+
+                                    // There must be a map because the file should have changed or shrunk
+                                    ASSERT(fileResult->blockIncrMapSize > 0);
                                 }
 
                                 // Get repo checksum

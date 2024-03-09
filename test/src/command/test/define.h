@@ -28,6 +28,7 @@ typedef struct TestDefCoverage
 typedef struct TestDefHarness
 {
     const String *name;                                             // Harness module name
+    bool integration;                                               // Include in integration tests?
     const StringList *includeList;                                  // List of modules to include directly in harness
 } TestDefHarness;
 
@@ -35,6 +36,7 @@ typedef struct TestDefHarness
 typedef struct TestDefShim
 {
     const String *name;                                             // Shim module name
+    bool integration;                                               // Include in integration tests?
     const StringList *functionList;                                 // List of functions to shim
 } TestDefShim;
 

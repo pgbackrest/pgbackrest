@@ -26,8 +26,8 @@ Get a list of all files in the backup and a redacted version of the manifest tha
 static String *
 testBackupValidateFile(
     const Storage *const storage, const String *const path, Manifest *const manifest, const ManifestData *const manifestData,
-    const String *const fileName, uint64_t fileSize, ManifestFilePack **const filePack, const time_t backupTimeStart,
-    const CipherType cipherType, const String *const cipherPass)
+    const String *const fileName, uint64_t fileSize, ManifestFilePack **const filePack, const CipherType cipherType,
+    const String *const cipherPass)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(STORAGE, storage);
@@ -37,7 +37,6 @@ testBackupValidateFile(
         FUNCTION_HARNESS_PARAM(STRING, fileName);
         FUNCTION_HARNESS_PARAM(UINT64, fileSize);
         FUNCTION_HARNESS_PARAM_P(VOID, filePack);
-        FUNCTION_HARNESS_PARAM(TIME, backupTimeStart);
         FUNCTION_HARNESS_PARAM(STRING_ID, cipherType);
         FUNCTION_HARNESS_PARAM(STRING, cipherPass);
     FUNCTION_HARNESS_END();
@@ -203,11 +202,11 @@ testBackupValidateFile(
 
     // Timestamp
     // -------------------------------------------------------------------------------------------------------------
-    if (file.timestamp != backupTimeStart)
+    if (file.timestamp != manifestData->backupTimestampStart)
     {
         strCatFmt(
-            result, ", ts=%s%" PRId64, file.timestamp > backupTimeStart ? "+" : "",
-            (int64_t)file.timestamp - (int64_t)backupTimeStart);
+            result, ", ts=%s%" PRId64, file.timestamp > manifestData->backupTimestampStart ? "+" : "",
+            (int64_t)file.timestamp - (int64_t)manifestData->backupTimestampStart);
     }
 
     // Page checksum
@@ -248,8 +247,7 @@ testBackupValidateFile(
 static String *
 testBackupValidateList(
     const Storage *const storage, const String *const path, Manifest *const manifest, const ManifestData *const manifestData,
-    StringList *const manifestFileList, const time_t backupTimeStart, const CipherType cipherType, const String *const cipherPass,
-    String *const result)
+    StringList *const manifestFileList, const CipherType cipherType, const String *const cipherPass, String *const result)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(STORAGE, storage);
@@ -257,7 +255,6 @@ testBackupValidateList(
         FUNCTION_HARNESS_PARAM(MANIFEST, manifest);
         FUNCTION_HARNESS_PARAM_P(VOID, manifestData);
         FUNCTION_HARNESS_PARAM(STRING_LIST, manifestFileList);
-        FUNCTION_HARNESS_PARAM(TIME, backupTimeStart);
         FUNCTION_HARNESS_PARAM(STRING_ID, cipherType);
         FUNCTION_HARNESS_PARAM(STRING, cipherPass);
         FUNCTION_HARNESS_PARAM(STRING, result);
@@ -351,8 +348,7 @@ testBackupValidateList(
                     strCat(
                         result,
                         testBackupValidateFile(
-                            storage, path, manifest, manifestData, info.name, info.size, filePack, backupTimeStart, cipherType,
-                            cipherPass));
+                            storage, path, manifest, manifestData, info.name, info.size, filePack, cipherType, cipherPass));
                 }
 
                 break;
@@ -403,16 +399,14 @@ typedef struct TestBackupValidateParam
 } TestBackupValidateParam;
 
 #define testBackupValidateP(storage, path, ...)                                                                                    \
-    testBackupValidate(storage, path, backupTimeStart, (TestBackupValidateParam){VAR_PARAM_INIT, __VA_ARGS__})
+    testBackupValidate(storage, path, (TestBackupValidateParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 static String *
-testBackupValidate(
-    const Storage *const storage, const String *const path, const time_t backupTimeStart, const TestBackupValidateParam param)
+testBackupValidate(const Storage *const storage, const String *const path, const TestBackupValidateParam param)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(STORAGE, storage);
         FUNCTION_HARNESS_PARAM(STRING, path);
-        FUNCTION_HARNESS_PARAM(TIME, backupTimeStart);
         FUNCTION_HARNESS_PARAM(UINT64, param.cipherType);
         FUNCTION_HARNESS_PARAM(STRINGZ, param.cipherPass);
     FUNCTION_HARNESS_END();
@@ -443,8 +437,7 @@ testBackupValidate(
         const CipherType cipherType = param.cipherType == 0 ? cipherTypeNone : param.cipherType;
         const String *const cipherPass = param.cipherPass == NULL ? NULL : manifestCipherSubPass(manifest);
 
-        testBackupValidateList(
-            storage, path, manifest, manifestData(manifest), manifestFileList, backupTimeStart, cipherType, cipherPass, result);
+        testBackupValidateList(storage, path, manifest, manifestData(manifest), manifestFileList, cipherType, cipherPass, result);
 
         // Check remaining files in the manifest -- these should all be references
         for (unsigned int manifestFileIdx = 0; manifestFileIdx < strLstSize(manifestFileList); manifestFileIdx++)
@@ -472,7 +465,7 @@ testBackupValidate(
                             .compressType = manifestData(manifest)->backupOptionCompressType,
                             .blockIncr = file.blockIncrMapSize != 0),
                         sizeof(STORAGE_REPO_BACKUP)),
-                    file.sizeRepo, filePack, backupTimeStart, cipherType, cipherPass));
+                    file.sizeRepo, filePack, cipherType, cipherPass));
         }
 
         // Make sure both backup.manifest files exist since we skipped them in the callback above
@@ -1246,6 +1239,29 @@ testRun(void)
             "  super block {max: 3, size: 3}\n"
             "    block {no: 0, offset: 6}\n",
             "check delta");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("diff/incr backup with identical data");
+
+        ioBufferSizeSet(3);
+
+        source = BUFSTRZ("ACCXYZ123@");
+        destination = bufNew(256);
+        write = ioBufferWriteNew(destination);
+
+        TEST_RESULT_VOID(
+            ioFilterGroupAdd(ioWriteFilterGroup(write), ioBufferNew()), "buffer to force internal buffer size");
+        TEST_RESULT_VOID(
+            ioFilterGroupAdd(
+                ioWriteFilterGroup(write), blockIncrNewPack(ioFilterParamList(blockIncrNew(3, 3, 8, 3, 0, 0, map, NULL, NULL)))),
+            "block incr");
+        TEST_RESULT_VOID(ioWriteOpen(write), "open");
+        TEST_RESULT_VOID(ioWrite(write, source), "write");
+        TEST_RESULT_VOID(ioWriteClose(write), "close");
+
+        TEST_ASSIGN(mapSize, pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE)), "map size");
+        TEST_RESULT_UINT(mapSize, 0, "map size is zero");
+        TEST_RESULT_UINT(bufUsed(destination), 0, "repo size is zero");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("full backup with larger super block");
@@ -3488,14 +3504,16 @@ testRun(void)
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-larger (1.4MB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (128KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: store truncated file " TEST_PATH "/pg1/truncate-to-zero (4B->0B, [PCT])\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/normal-same (bundle 1/0, 4B, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-to-block-incr (bundle 1/4, 16KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/16416, 8KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink-block (bundle 1/24608, 8KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink-below (bundle 1/24625, 8B, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/24633, 16.0KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-same (bundle 1/32859, 16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/normal-same (4B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-to-block-incr (bundle 1/0, 16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/16411, 8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink-block (bundle 1/24603, 8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink-below (bundle 1/24620, 8B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/24628, 16.0KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/block-incr-same (16KB, [PCT]) checksum [SHA1]\n"
                 "P00 DETAIL: reference pg_data/PG_VERSION to 20191103-165320F\n"
+                "P00 DETAIL: reference pg_data/block-incr-same to 20191103-165320F\n"
+                "P00 DETAIL: reference pg_data/normal-same to 20191103-165320F\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DC213000000001, lsn = 5dc2130/300000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
@@ -3506,17 +3524,17 @@ testRun(void)
             TEST_RESULT_STR_Z(
                 testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ".> {d=20191103-165320F_20191106-002640D}\n"
-                "bundle/1/pg_data/block-incr-same {s=16384, m=0:{0,1}}\n"
                 "bundle/1/pg_data/block-incr-shrink {s=16383, m=0:{0},1:{0}}\n"
                 "bundle/1/pg_data/block-incr-shrink-below {s=8}\n"
                 "bundle/1/pg_data/block-incr-shrink-block {s=8192, m=0:{0}}\n"
                 "bundle/1/pg_data/global/pg_control {s=8192}\n"
                 "bundle/1/pg_data/grow-to-block-incr {s=16385, m=1:{0,1,2}}\n"
-                "bundle/1/pg_data/normal-same {s=4}\n"
                 "pg_data/backup_label {s=17, ts=+2}\n"
                 "pg_data/block-incr-grow.pgbi {s=131072, m=0:{0},1:{0},0:{2},1:{1,2,3,4,5,6,7,8,9,10,11,12,13}}\n"
                 "pg_data/block-incr-larger.pgbi {s=1507328, m=1:{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15},1:{0,1,2,3,4,5,6}}\n"
                 "20191103-165320F/bundle/1/pg_data/PG_VERSION {s=2, ts=-200000}\n"
+                "20191103-165320F/bundle/1/pg_data/block-incr-same {s=16384, m=0:{0,1}}\n"
+                "20191103-165320F/bundle/1/pg_data/normal-same {s=4}\n"
                 "--------\n"
                 "[backup:target]\n"
                 "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n",
