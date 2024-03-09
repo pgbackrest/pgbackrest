@@ -383,10 +383,6 @@ eval
     ################################################################################################################################
     # Start VM and run
     ################################################################################################################################
-    # Clean any existing files in the src path that might interfere with the vpath build. This is kosher because the user should
-    # be expecting us to do builds in the src path during testing. Instead we clean the src path and do the builds elsewhere.
-    #-------------------------------------------------------------------------------------------------------------------------------
-    executeTest("make -C ${strBackRestBase}/src -f Makefile.in clean-all");
 
     # Clean up
     #-------------------------------------------------------------------------------------------------------------------------------
@@ -575,7 +571,7 @@ eval
 
     # Auto-generate code files (if --min-gen specified then do minimum required)
     #-------------------------------------------------------------------------------------------------------------------------------
-    my $strBuildPath = "${strTestPath}/build/${strVm}";
+    my $strBuildPath = "${strTestPath}/build/none";
     my $strBuildNinja = "${strBuildPath}/build.ninja";
 
     &log(INFO, (!-e $strBuildNinja ? 'clean ' : '') . 'autogenerate code');
@@ -596,9 +592,7 @@ eval
     }
 
     # Build code
-    executeTest(
-        ($strVm ne VM_NONE ? "docker exec -i -u ${\TEST_USER} test-build bash -l -c ' \\\n" : '') .
-        $strGenerateCommand . ($strVm ne VM_NONE ? "'" : ''));
+    executeTest($strGenerateCommand);
 
     if ($bGenOnly)
     {
@@ -690,7 +684,7 @@ eval
     #-------------------------------------------------------------------------------------------------------------------------------
     my $oyTestRun;
     my $bBinRequired = $bBuildOnly;
-    my $bIntegrationRequired = $bBuildOnly;
+    my $bUnitRequired = $bBuildOnly;
 
     # Only get the test list when they can run
     if (!$bBuildOnly)
@@ -700,82 +694,53 @@ eval
             $strVm, \@stryModule, \@stryModuleTest, \@iyModuleTestRun, $strPgVersion, $bCoverageOnly, $bCOnly, $bContainerOnly,
             $bNoPerformance);
 
-        # Determine if the C binary and test library need to be built
+        # Determine if the C binary needs to be built
         foreach my $hTest (@{$oyTestRun})
         {
-            # Bin build required for all Perl tests or if a C unit test calls Perl
+            # Unit build required for unit tests
+            if ($hTest->{&TEST_C})
+            {
+                $bUnitRequired = true;
+            }
+
+            # Bin build required for integration tests and when specified
             if (!$hTest->{&TEST_C} || $hTest->{&TEST_BIN_REQ})
             {
                 $bBinRequired = true;
             }
-
-            # Host bin required if an integration test
-            if (!$hTest->{&TEST_C})
-            {
-                $bIntegrationRequired = true;
-            }
         }
     }
-
-    my $strBuildRequired;
-
-    if ($bBinRequired || $bIntegrationRequired)
-    {
-        if ($bBinRequired)
-        {
-            $strBuildRequired = "bin";
-        }
-
-        if ($bIntegrationRequired)
-        {
-            $strBuildRequired .= ", integration";
-        }
-    }
-    else
-    {
-        $strBuildRequired = "none";
-    }
-
-    &log(INFO, "builds required: ${strBuildRequired}");
 
     # Build the binary and packages
     #-------------------------------------------------------------------------------------------------------------------------------
     if (!$bDryRun)
     {
         my $oVm = vmGet();
-        my $lTimestampLast;
-        my $rhBinBuild = {};
 
         # Build the binary
-        #-----------------------------------------------------------------------------------------------------------------------
-        if ($bBinRequired)
+        #---------------------------------------------------------------------------------------------------------------------------
+        if ($bBinRequired || $bUnitRequired)
         {
-            # Find the lastest modified time for dirs that affect the bin build
-            $lTimestampLast = buildLastModTime($oStorageBackRest, $strBackRestBase, ['src']);
-
-            # Loop through VMs to do the C bin builds
+            # Loop through VMs to do the C bin/integration builds
             my $bLogDetail = $strLogLevel eq 'detail';
             my @stryBuildVm = $strVm eq VM_ALL ? VM_LIST : ($strVm);
 
-            # Build binary for the host
-            if ($bIntegrationRequired)
-            {
-                push(@stryBuildVm, VM_NONE);
-            }
-
             foreach my $strBuildVM (@stryBuildVm)
             {
-                if ($strBuildVM eq VM_NONE)
+                my $strBuildPath = "${strTestPath}/build/${strBuildVM}";
+                my $strBuildNinja = "${strBuildPath}/build.ninja";
+
+                foreach my $strBuildVM (@stryBuildVm)
                 {
                     my $strBuildPath = "${strTestPath}/build/${strBuildVM}";
                     my $strBuildNinja = "${strBuildPath}/build.ninja";
 
-                    &log(
-                        INFO,
-                        "    " . (!-e $strBuildNinja ? 'clean ' : '') . "integration build for ${strBuildVM} (${strBuildPath})");
+                    &log(INFO, (!-e $strBuildNinja ? 'clean ' : '') . "build for ${strBuildVM} (${strBuildPath})");
 
                     # Setup build if it does not exist
-                    my $strBuildCommand = "ninja -C ${strBuildPath} test/src/test-pgbackrest src/pgbackrest";
+                    my $strBuildCommand =
+                        "ninja -C ${strBuildPath}" . ($bBinRequired ? ' src/pgbackrest' : '') .
+                        ($bUnitRequired ? ' test/src/test-pgbackrest' : '');
 
                     if (!-e $strBuildNinja)
                     {
@@ -786,62 +751,23 @@ eval
                     }
 
                     # Build code
-                    executeTest($strBuildCommand);
-                }
-                else
-                {
-                    my $strBinPath = "${strTestPath}/bin";
-                    my $strBuildPath = "${strBinPath}/${strBuildVM}";
-
-                    &log(INFO, "    bin build for ${strBuildVM} (${strBuildPath})");
-
-                    my $bRebuild = false;
-                    $rhBinBuild->{$strBuildVM} = false;
-
-                    # Build configure/compile options and see if they have changed from the previous build
-                    my $strCFlags = ($bDebugTestTrace ? ' -DDEBUG_TEST_TRACE' : '');
-                    my $strConfigOptions = (vmDebugIntegration($strBuildVM) ? ' --enable-test' : '');
-                    my $strBuildFlags = "CFLAGS_EXTRA=${strCFlags}\nCONFIGURE=${strConfigOptions}";
-                    my $strBuildFlagFile = "${strBinPath}/${strBuildVM}/build.flags";
-
-                    my $bBuildOptionsDiffer = buildPutDiffers($oStorageBackRest, $strBuildFlagFile, $strBuildFlags);
-
-                    if ($bBuildOptionsDiffer ||
-                        !-e "${strBuildPath}/Makefile" ||
-                        stat("${strBackRestBase}/src/Makefile.in")->mtime > stat("${strBuildPath}/Makefile")->mtime ||
-                        stat("${strBackRestBase}/src/configure")->mtime > stat("${strBuildPath}/Makefile")->mtime ||
-                        stat("${strBackRestBase}/src/build.auto.h.in")->mtime > stat("${strBuildPath}/Makefile")->mtime)
-                    {
-                        &log(INFO, '        bin dependencies have changed, rebuilding');
-
-                        # Remove old path if it exists and save the build flags
-                        executeTest("rm -rf ${strBuildPath}");
-                        buildPutDiffers($oStorageBackRest, $strBuildFlagFile, $strBuildFlags);
-
-                        executeTest(
-                            'docker exec -i -u ' . TEST_USER . ' test-build ' .
-                            "bash -c 'cd ${strBuildPath} && ${strBackRestBase}/src/configure -q${strConfigOptions}'",
-                            {bShowOutputAsync => $bLogDetail});
-                    }
-
                     executeTest(
-                        'docker exec -i -u ' . TEST_USER . ' test-build ' .
-                        "${strMakeCmd} -s -j ${iBuildMax}" . ($bLogDetail ? '' : ' --silent') .
-                            " --directory ${strBuildPath} CFLAGS_EXTRA='${strCFlags}'",
+                        ($strBuildVM ne VM_NONE ? 'docker exec -i -u ' . TEST_USER . " test-build bash -c '" : '') .
+                            $strBuildCommand . ($strBuildVM ne VM_NONE ? "'" : ''),
                         {bShowOutputAsync => $bLogDetail});
                 }
             }
         }
 
         # Shut down the build vm
-        #-----------------------------------------------------------------------------------------------------------------------
+        #---------------------------------------------------------------------------------------------------------------------------
         if ($strVm ne VM_NONE)
         {
             executeTest("docker rm -f test-build");
         }
 
         # Build the package
-        #-----------------------------------------------------------------------------------------------------------------------
+        #---------------------------------------------------------------------------------------------------------------------------
         if ($bBuildPackage && $strVm ne VM_NONE)
         {
             my $strPackagePath = "${strBackRestBase}/test/result/package";
