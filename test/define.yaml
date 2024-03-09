@@ -371,6 +371,7 @@ unit:
             common/io/socket/client:
               function:
                 - sckClientOpen
+                - sckClientOpenWait
 
         coverage:
           - common/io/client
@@ -403,6 +404,9 @@ unit:
           - common/io/http/response
           - common/io/http/session
           - common/io/http/url
+
+        include:
+          - common/io/socket/address
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: exec

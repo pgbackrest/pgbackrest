@@ -35,6 +35,19 @@
 
         <release-improvement-list>
             <release-item>
+                <github-issue id="2154"/>
+                <github-pull-request id="2235"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="timothee.peignier"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Improved support for dual stack connections.</p>
+            </release-item>
+
+            <release-item>
                 <commit subject="Make meson the primary build system.">
                     <github-pull-request id="2264"/>
                 </commit>
