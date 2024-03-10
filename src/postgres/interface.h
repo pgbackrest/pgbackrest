@@ -109,7 +109,7 @@ typedef struct PgControl
     PgPageSize pageSize;
     unsigned int walSegmentSize;
 
-    bool pageChecksum;
+    unsigned int pageChecksumVersion;                               // Page checksum version (0 if no checksum, 1 if checksum)
 } PgControl;
 
 /***********************************************************************************************************************************

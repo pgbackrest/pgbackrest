@@ -124,6 +124,14 @@ typedef struct
 	uint32		xrecoff;		/* low bits */
 } PageXLogRecPtr;
 
+// PG_DATA_CHECKSUM_VERSION define
+// ---------------------------------------------------------------------------------------------------------------------------------
+/*
+ * As of Release 9.3, the checksum version must also be considered when
+ * handling pages.
+ */
+#define PG_DATA_CHECKSUM_VERSION	1
+
 // PageHeaderData type
 // ---------------------------------------------------------------------------------------------------------------------------------
 /*

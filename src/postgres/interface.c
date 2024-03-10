@@ -276,6 +276,14 @@ pgControlFromBuffer(const Buffer *controlFile, const String *const pgVersionForc
     // Check the page size
     pgPageSizeCheck(result.pageSize);
 
+    // Check the checksum version
+    if (result.pageChecksumVersion != 0 && result.pageChecksumVersion != PG_DATA_CHECKSUM_VERSION)
+    {
+        THROW_FMT(
+            FormatError, "page checksum version is %u but only 0 and " STRINGIFY(PG_DATA_CHECKSUM_VERSION) " are valid",
+            result.pageChecksumVersion);
+    }
+
     FUNCTION_LOG_RETURN(PG_CONTROL, result);
 }
 
@@ -700,8 +708,8 @@ FN_EXTERN void
 pgControlToLog(const PgControl *const pgControl, StringStatic *const debugLog)
 {
     strStcFmt(
-        debugLog, "{version: %u, systemId: %" PRIu64 ", walSegmentSize: %u, pageChecksum: %s}", pgControl->version,
-        pgControl->systemId, pgControl->walSegmentSize, cvtBoolToConstZ(pgControl->pageChecksum));
+        debugLog, "{version: %u, systemId: %" PRIu64 ", walSegmentSize: %u, pageChecksumVersion: %u}", pgControl->version,
+        pgControl->systemId, pgControl->walSegmentSize, pgControl->pageChecksumVersion);
 }
 
 FN_EXTERN void

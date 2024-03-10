@@ -3138,7 +3138,7 @@ testRun(void)
         const String *repoPath = STRDEF(TEST_PATH "/repo");
 
         // Created pg_control and PG_VERSION
-        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_15, .pageChecksum = false);
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_15);
         HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_15_Z);
 
         // Create encrypted stanza
