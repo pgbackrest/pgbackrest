@@ -2503,6 +2503,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("incremental delta");
 
+        const char *pgControlSha1 = NULL;
+
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
@@ -2548,13 +2550,12 @@ testRun(void)
             HRN_MANIFEST_PATH_ADD(manifest, .name = TEST_PGDATA PG_PATH_GLOBAL);
 
             // global/pg_control
-            Buffer *fileBuffer = bufNew(8192);
-            memset(bufPtr(fileBuffer), 255, bufSize(fileBuffer));
-            bufUsedSet(fileBuffer, bufSize(fileBuffer));
+            Buffer *fileBuffer = hrnPgControlToBuffer(0, 0, (PgControl){.version = PG_VERSION_10});
+            pgControlSha1 = strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, fileBuffer)));
 
             HRN_MANIFEST_FILE_ADD(
                 manifest, .name = TEST_PGDATA PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, .size = 8192, .timestamp = 1482182860,
-                .checksumSha1 = "5e2b96c19c4f5c63a5afa2de504d29fe64a4c908");
+                .checksumSha1 = pgControlSha1);
             HRN_STORAGE_PUT(storageRepoWrite(), TEST_REPO_PATH PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, fileBuffer);
 
             // global/888
@@ -2834,7 +2835,7 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdRestore(), "successful restore");
 
-        TEST_RESULT_LOG(
+        TEST_RESULT_LOG_FMT(
             "P00   INFO: repo1: restore backup set 20161219-212741F_20161219-212918I\n"
             "P00   INFO: map link 'pg_hba.conf' to '../config/pg_hba.conf'\n"
             "P00   INFO: map link 'pg_wal' to '../wal'\n"
@@ -2865,7 +2866,7 @@ testRun(void)
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/16385 (16KB, [PCT]) checksum"
             " d74e5f7ebe52a3ed468ba08c5b6aefaccd1ca88f\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/global/pg_control.pgbackrest.tmp (8KB, [PCT])"
-            " checksum 5e2b96c19c4f5c63a5afa2de504d29fe64a4c908\n"
+            " checksum %s\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/2 (8KB, [PCT]) checksum 4d7b2a36c5387decf799352a3751883b7ceb96aa\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.conf (15B, [PCT]) checksum"
             " 98b8abb2e681e2a5a7d8ab082c0a79727887558d\n"
@@ -2911,7 +2912,8 @@ testRun(void)
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_10_201707211'\n"
             "P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
-            "P00   INFO: restore size = [SIZE], file total = 23");
+            "P00   INFO: restore size = [SIZE], file total = 23",
+            pgControlSha1);
 
         TEST_STORAGE_LIST(
             storagePg(), NULL,
@@ -3028,7 +3030,7 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdRestore(), "successful restore");
 
-        TEST_RESULT_LOG(
+        TEST_RESULT_LOG_FMT(
             "P00   INFO: repo2: restore backup set 20161219-212741F_20161219-212918I, recovery will start at [TIME]\n"
             "P00   INFO: map link 'pg_hba.conf' to '../config/pg_hba.conf'\n"
             "P00   INFO: map link 'pg_wal' to '../wal'\n"
@@ -3058,7 +3060,7 @@ testRun(void)
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/16385 - exists and matches backup (16KB, [PCT])"
             " checksum d74e5f7ebe52a3ed468ba08c5b6aefaccd1ca88f\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/global/pg_control.pgbackrest.tmp (8KB, [PCT])"
-            " checksum 5e2b96c19c4f5c63a5afa2de504d29fe64a4c908\n"
+            " checksum %s\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/2 (8KB, [PCT]) checksum 4d7b2a36c5387decf799352a3751883b7ceb96aa\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.conf - exists and matches backup (15B, [PCT])"
             " checksum 98b8abb2e681e2a5a7d8ab082c0a79727887558d\n"
@@ -3104,7 +3106,8 @@ testRun(void)
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_10_201707211'\n"
             "P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
-            "P00   INFO: restore size = [SIZE], file total = 23");
+            "P00   INFO: restore size = [SIZE], file total = 23",
+            pgControlSha1);
 
         // Check stanza archive spool path was removed
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_PATH_ARCHIVE);

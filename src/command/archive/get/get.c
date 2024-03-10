@@ -375,8 +375,16 @@ archiveGetCheck(const StringList *archiveRequestList)
         // List of warnings
         StringList *warnList = strLstNew();
 
-        // Get pg control info
+        // Get pg_control info. Error if the invalid checkpoint written by restore is detected and backup_label is not present.
         PgControl controlInfo = pgControlFromFile(storagePg(), cfgOptionStrNull(cfgOptPgVersionForce));
+
+        if (controlInfo.checkpoint == PG_CONTROL_CHECKPOINT_INVALID && !storageExistsP(storagePg(), STRDEF(PG_FILE_BACKUPLABEL)))
+        {
+            THROW(
+                FormatError,
+                "pg_control from backup is not valid without backup_label\n"
+                "HINT: was the backup_label file removed?");
+        }
 
         // Build list of repos/archiveIds where WAL may be found
         List *cacheRepoList = lstNewP(sizeof(ArchiveGetFindCacheRepo));
