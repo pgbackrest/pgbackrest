@@ -183,6 +183,7 @@ pgWalSegmentSizeCheck(unsigned int pgVersion, unsigned int walSegmentSize)
             PG_WAL_SEGMENT_SIZE_DEFAULT);
     }
 
+    // Check that the WAL segment size is valid
     if (!IsValidWalSegSize(walSegmentSize))
     {
         THROW_FMT(
