@@ -208,8 +208,8 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
             storagePgIdxWrite(0), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer(0, 0, pgControl),
             .timeModified = backupTimeStart);
 
-        // Update pg_control on primary with the backup time
-        HRN_PG_CONTROL_TIME(storagePgIdxWrite(0), backupTimeStart);
+        // Determine if tablespaces are present
+        const bool tablespace = !strLstEmpty(storageListP(storagePgIdx(0), STRDEF(PG_PATH_PGTBLSPC)));
 
         // Write WAL segments to the archive
         // -------------------------------------------------------------------------------------------------------------------------
@@ -309,7 +309,7 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
         HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_DATABASE_LIST_1(1, "test1"));
 
         // Get tablespace list
-        if (param.tablespace)
+        if (tablespace)
             HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_TABLESPACE_LIST_1(1, 32768, "tblspc32768"));
         else
             HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_TABLESPACE_LIST_0(1));
@@ -347,9 +347,9 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
                     if (pgVersion <= PG_VERSION_95)
                         HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_STOP_BACKUP_LE_95(1, lsnStopStr, walSegmentStop));
                     else if (pgVersion <= PG_VERSION_96)
-                        HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_STOP_BACKUP_96(1, lsnStopStr, walSegmentStop, false));
+                        HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_STOP_BACKUP_96(1, lsnStopStr, walSegmentStop, tablespace));
                     else
-                        HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_STOP_BACKUP_GE_10(1, lsnStopStr, walSegmentStop, true));
+                        HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_STOP_BACKUP_GE_10(1, lsnStopStr, walSegmentStop, tablespace));
 
                     // Get stop time
                     HRN_PQ_SCRIPT_ADD(

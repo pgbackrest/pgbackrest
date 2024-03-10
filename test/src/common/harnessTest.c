@@ -33,9 +33,13 @@ static uint64_t timeMSecBegin;
 static const char *testExeData = NULL;
 static const char *testProjectExeData = NULL;
 static bool testContainerData = false;
+static bool testLogExpectData = false;
 static unsigned int testIdxData = 0;
 static bool testTiming = true;
 static const char *testPathData = NULL;
+static const char *testUserData = NULL;
+static const char *testVmData = NULL;
+static const char *testPgVersionData = NULL;
 static const char *testDataPathData = NULL;
 static const char *testRepoPathData = NULL;
 
@@ -66,8 +70,9 @@ Initialize harness
 ***********************************************************************************************************************************/
 void
 hrnInit(
-    const char *testExe, const char *testProjectExe, bool testContainer, unsigned int testIdx, bool timing, const char *testPath,
-    const char *testDataPath, const char *testRepoPath)
+    const char *const testExe, const char *const testProjectExe, const bool testContainer, const bool testLogExpect,
+    const unsigned int testIdx, const bool timing, const char *const testPath, const char *const testUser, const char *const testVm,
+    const char *const testPgVersion,const char *const testDataPath, const char *const testRepoPath)
 {
     FUNCTION_HARNESS_VOID();
 
@@ -75,9 +80,14 @@ hrnInit(
     testExeData = testExe;
     testProjectExeData = testProjectExe;
     testContainerData = testContainer;
+    testLogExpectData = testLogExpect;
+    (void)testLogExpectData;
     testIdxData = testIdx;
     testTiming = timing;
     testPathData = testPath;
+    testUserData = testUser;
+    testVmData = testVm;
+    testPgVersionData = testPgVersion;
     testDataPathData = testDataPath;
     testRepoPathData = testRepoPath;
 
@@ -129,7 +139,8 @@ testBegin(const char *name)
         if (!testFirst)
         {
             // Make sure there is nothing untested left in the log
-            harnessLogFinal();
+            if (testLogExpectData)
+                harnessLogFinal();
 
             // It is possible the test left the cwd in a weird place
             if (chdir(testPath()) != 0)
@@ -165,7 +176,8 @@ testBegin(const char *name)
             }
 
             // Clear any log replacements
-            hrnLogReplaceClear();
+            if (testLogExpectData)
+                hrnLogReplaceClear();
         }
 #endif
         // No longer the first test
@@ -182,7 +194,8 @@ testBegin(const char *name)
 
 #ifdef HRN_FEATURE_LOG
         // Initialize logging
-        harnessLogInit();
+        if (testLogExpectData)
+            harnessLogInit();
 #endif
 
         result = true;
@@ -203,7 +216,8 @@ hrnComplete(void)
 
 #ifdef HRN_FEATURE_LOG
     // Make sure there is nothing untested left in the log
-    harnessLogFinal();
+    if (testLogExpectData)
+        harnessLogFinal();
 #endif
 
     // Check that all tests ran
@@ -718,6 +732,30 @@ testPath(void)
 {
     FUNCTION_HARNESS_VOID();
     FUNCTION_HARNESS_RETURN(STRINGZ, testPathData);
+}
+
+/**********************************************************************************************************************************/
+const char *
+testPgVersion(void)
+{
+    FUNCTION_HARNESS_VOID();
+    FUNCTION_HARNESS_RETURN(STRINGZ, testPgVersionData);
+}
+
+/**********************************************************************************************************************************/
+const char *
+testUser(void)
+{
+    FUNCTION_HARNESS_VOID();
+    FUNCTION_HARNESS_RETURN(STRINGZ, testUserData);
+}
+
+/**********************************************************************************************************************************/
+const char *
+testVm(void)
+{
+    FUNCTION_HARNESS_VOID();
+    FUNCTION_HARNESS_RETURN(STRINGZ, testVmData);
 }
 
 /**********************************************************************************************************************************/

@@ -117,7 +117,7 @@ bldHlpRenderXmlNode(const xmlNodePtr xml)
     return result;
 }
 
-static String *
+String *
 bldHlpRenderXml(const XmlNode *const xml)
 {
     return strTrim(bldHlpRenderXmlNode(*(const xmlNodePtr *)xml));

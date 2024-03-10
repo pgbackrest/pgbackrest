@@ -1529,8 +1529,7 @@ testRun(void)
 
         TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "help command");
         TEST_RESULT_BOOL(cfgCommandHelp(), true, "help is set");
-        TEST_RESULT_INT(cfgCommand(), cfgCmdHelp, "command is help");
-        TEST_RESULT_Z(cfgCommandName(), "help", "command name is help");
+        TEST_RESULT_INT(cfgCommand(), cfgCmdNone, "command is help");
 
         argList = strLstNew();
         strLstAddZ(argList, TEST_BACKREST_EXE);
@@ -1541,6 +1540,75 @@ testRun(void)
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "help for version command");
         TEST_RESULT_BOOL(cfgCommandHelp(), true, "help is set");
         TEST_RESULT_INT(cfgCommand(), cfgCmdVersion, "command is version");
+        TEST_RESULT_Z(cfgCommandName(), "version", "command name is version");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "help");
+        strLstAddZ(argList, "help");
+
+        TEST_RESULT_VOID(
+            cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "load config");
+        TEST_RESULT_BOOL(cfgCommandHelp(), true, "help is set");
+        TEST_RESULT_INT(cfgCommand(), cfgCmdHelp, "command is help");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("help option");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--help");
+
+        TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "load config");
+        TEST_RESULT_BOOL(cfgCommandHelp(), true, "help is set");
+        TEST_RESULT_INT(cfgCommand(), cfgCmdNone, "command is none");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("version option");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--version");
+
+        TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "load config");
+        TEST_RESULT_BOOL(cfgCommandHelp(), false, "help is not set");
+        TEST_RESULT_INT(cfgCommand(), cfgCmdVersion, "command is version");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("help and version options");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--help");
+        strLstAddZ(argList, "--version");
+
+        TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "load config");
+        TEST_RESULT_BOOL(cfgCommandHelp(), true, "help is not set");
+        TEST_RESULT_INT(cfgCommand(), cfgCmdNone, "command is none");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on command with --help option");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--help");
+        strLstAddZ(argList, "backup");
+
+        TEST_ERROR(
+            cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidError,
+            "invalid option '--help'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on command with --version option");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--version");
+        strLstAddZ(argList, "backup");
+
+        TEST_ERROR(
+            cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidError,
+            "invalid option '--version'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("help command - should not fail on missing options");

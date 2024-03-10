@@ -7,11 +7,13 @@ Test Restore Command
 #include "command/stanza/create.h"
 #include "common/compress/helper.h"
 #include "common/crypto/cipherBlock.h"
+#include "common/io/bufferRead.h"
 #include "postgres/version.h"
 #include "storage/helper.h"
 #include "storage/posix/storage.h"
 
 #include "common/harnessBackup.h"
+#include "common/harnessBlockIncr.h"
 #include "common/harnessConfig.h"
 #include "common/harnessInfo.h"
 #include "common/harnessManifest.h"
@@ -204,6 +206,60 @@ testRun(void)
             "block checksum list");
 
         ioWriteFree(write);
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("BlockDelta"))
+    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("super blocks are read until the end");
+
+        // Write block incremental with multiple super blocks
+        const Buffer *source = BUFSTRZ("123456789ABC");
+        Buffer *destination = bufNew(256);
+        IoWrite *write = ioBufferWriteNew(destination);
+
+        ioFilterGroupAdd(
+            ioWriteFilterGroup(write), blockIncrNew(6, 3, 5, 0, 0, 0, NULL, compressFilterP(compressTypeGz, 1, .raw = true), NULL));
+        ioWriteOpen(write);
+        ioWrite(write, source);
+        ioWriteClose(write);
+
+        // Extract block map
+        uint64_t mapSize = pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE));
+        const BlockMap *blockMap = blockMapNewRead(
+            ioBufferReadNewOpen(BUF(bufPtr(destination) + (bufUsed(destination) - (size_t)mapSize), (size_t)mapSize)), 3, 5);
+
+        // Perform block delta
+        BlockDelta *blockDelta = blockDeltaNew(blockMap, 3, 5, NULL, cipherTypeNone, NULL, compressTypeGz);
+        const BlockDeltaRead *blockDeltaRead = blockDeltaReadGet(blockDelta, 0);
+        IoRead *read = ioBufferReadNewOpen(destination);
+
+        // Set buffer size to one to make sure super blocks are properly flushed
+        size_t bufferSizeOld = ioBufferSize();
+        ioBufferSizeSet(1);
+
+        // Read all blocks from multiple super blocks
+        TEST_RESULT_STR_Z(strNewBuf(blockDeltaNext(blockDelta, blockDeltaRead, read)->block), "123", "read block");
+        TEST_RESULT_STR_Z(strNewBuf(blockDeltaNext(blockDelta, blockDeltaRead, read)->block), "456", "read block");
+        TEST_RESULT_STR_Z(strNewBuf(blockDeltaNext(blockDelta, blockDeltaRead, read)->block), "789", "read block");
+        TEST_RESULT_STR_Z(strNewBuf(blockDeltaNext(blockDelta, blockDeltaRead, read)->block), "ABC", "read block");
+        TEST_RESULT_PTR(blockDeltaNext(blockDelta, blockDeltaRead, read), NULL, "no more blocks");
+
+        // Reset buffer size
+        ioBufferSizeSet(bufferSizeOld);
+
+        // Now test the block map to show that we are reading in the right position after multiple super blocks
+        TEST_RESULT_STR_Z(
+            hrnBlockDeltaRender(blockMapNewRead(read, 3, 5), 3, 5),
+            "read {reference: 0, bundleId: 0, offset: 0, size: 28}\n"
+            "  super block {max: 6, size: 14}\n"
+            "    block {no: 0, offset: 0}\n"
+            "    block {no: 1, offset: 3}\n"
+            "  super block {max: 6, size: 14}\n"
+            "    block {no: 0, offset: 6}\n"
+            "    block {no: 1, offset: 9}\n",
+            "check delta");
     }
 
     // *****************************************************************************************************************************
@@ -3084,8 +3140,9 @@ testRun(void)
         const String *pgPath = STRDEF(TEST_PATH "/pg");
         const String *repoPath = STRDEF(TEST_PATH "/repo");
 
-        // Created pg_control
+        // Created pg_control and PG_VERSION
         HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_15, .pageChecksum = false);
+        HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_15_Z);
 
         // Create encrypted stanza
         StringList *argList = strLstNew();
@@ -3110,6 +3167,13 @@ testRun(void)
         bufUsedSet(relation, bufSize(relation));
 
         HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation, .timeModified = timeBase - 2);
+
+        // Zeroed file large enough to use block incr (that will be truncated to zero before restore)
+        relation = bufNew(16 * 1024);
+        memset(bufPtr(relation), 0, bufSize(relation));
+        bufUsedSet(relation, bufSize(relation));
+
+        HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/44", relation, .timeModified = timeBase - 2);
 
         // Add postgresql.auto.conf to contain recovery settings
         HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF, .timeModified = timeBase - 1);
@@ -3175,14 +3239,60 @@ testRun(void)
 
         TEST_STORAGE_LIST(
             storagePg(), NULL,
+            "PG_VERSION\n"
             "base/\n"
             "base/1/\n"
             "base/1/2\n"
             "base/1/3\n"
+            "base/1/44\n"
             "global/\n"
             "global/pg_control\n"
             "postgresql.auto.conf\n",
             .level = storageInfoLevelType);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("delta restore with block incr");
+
+        // Use detail log level to catch block incremental restore message
+        harnessLogLevelSet(logLevelDetail);
+
+        // Truncate file to ensure delta is skipped
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_PATH_BASE "/1/44");
+
+        // Shrink file to make sure block incremental delta will reuse it
+        relation = bufNew(128 * 1024);
+        memset(bufPtr(relation), 0, bufSize(relation));
+        bufUsedSet(relation, bufSize(relation));
+
+        HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation);
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH "/spool");
+        hrnCfgArgRawBool(argList, cfgOptDelta, true);
+        hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
+        hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        TEST_RESULT_VOID(cmdRestore(), "restore");
+
+        TEST_STORAGE_LIST(
+            storagePg(), NULL,
+            "PG_VERSION\n"
+            "base/\n"
+            "base/1/\n"
+            "base/1/2\n"
+            "base/1/3\n"
+            "base/1/44\n"
+            "global/\n"
+            "global/pg_control\n"
+            "postgresql.auto.conf\n",
+            .level = storageInfoLevelType);
+
+        // Check that file was restored to full size with a partial write
+        TEST_RESULT_LOG_EMPTY_OR_CONTAINS(", bi 128KB/256KB, ");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

@@ -137,7 +137,7 @@ testDefParseModuleList(Yaml *const yaml, List *const moduleList)
                         }
                         else if (strEqZ(subModuleDef.value, "harness"))
                         {
-                            TestDefHarness testDefHarness = {0};
+                            TestDefHarness testDefHarness = {.integration = true};
                             StringList *harnessIncludeList = strLstNew();
 
                             if (yamlEventPeek(yaml).type == yamlEventTypeScalar)
@@ -148,44 +148,59 @@ testDefParseModuleList(Yaml *const yaml, List *const moduleList)
                             {
                                 YAML_MAP_BEGIN(yaml)
                                 {
-                                    yamlScalarNextCheckZ(yaml, "name");
-                                    testDefHarness.name = yamlScalarNext(yaml).value;
+                                    const String *const type = yamlScalarNext(yaml).value;
 
-                                    yamlScalarNextCheckZ(yaml, "shim");
-
-                                    YAML_MAP_BEGIN(yaml)
+                                    if (strEqZ(type, "name"))
                                     {
-                                        const String *const shim = yamlScalarNext(yaml).value;
-                                        strLstAdd(harnessIncludeList, shim);
-
-                                        if (yamlEventPeek(yaml).type == yamlEventTypeScalar)
-                                        {
-                                            yamlScalarNext(yaml);
-                                        }
-                                        else
-                                        {
-                                            TestDefShim testDefShim = {.name = shim, .functionList = strLstNew()};
-
-                                            YAML_MAP_BEGIN(yaml)
-                                            {
-                                                yamlScalarNextCheckZ(yaml, "function");
-
-                                                StringList *const functionList = strLstNew();
-
-                                                YAML_SEQ_BEGIN(yaml)
-                                                {
-                                                    strLstAdd(functionList, yamlScalarNext(yaml).value);
-                                                }
-                                                YAML_SEQ_END();
-
-                                                testDefShim.functionList = functionList;
-                                            }
-                                            YAML_MAP_END();
-
-                                            lstAdd(globalShimList, &testDefShim);
-                                        }
+                                        testDefHarness.name = yamlScalarNext(yaml).value;
                                     }
-                                    YAML_MAP_END();
+                                    else if (strEqZ(type, "integration"))
+                                    {
+                                        testDefHarness.integration = yamlBoolParse(yamlScalarNext(yaml));
+                                    }
+                                    else
+                                    {
+                                        CHECK_FMT(AssertError, strEqZ(type, "shim"), "invalid key '%s'", strZ(type));
+
+                                        YAML_MAP_BEGIN(yaml)
+                                        {
+                                            const String *const shim = yamlScalarNext(yaml).value;
+                                            strLstAdd(harnessIncludeList, shim);
+
+                                            if (yamlEventPeek(yaml).type == yamlEventTypeScalar)
+                                            {
+                                                yamlScalarNext(yaml);
+                                            }
+                                            else
+                                            {
+                                                TestDefShim testDefShim =
+                                                {
+                                                    .name = shim,
+                                                    .integration = testDefHarness.integration,
+                                                    .functionList = strLstNew()
+                                                };
+
+                                                YAML_MAP_BEGIN(yaml)
+                                                {
+                                                    yamlScalarNextCheckZ(yaml, "function");
+
+                                                    StringList *const functionList = strLstNew();
+
+                                                    YAML_SEQ_BEGIN(yaml)
+                                                    {
+                                                        strLstAdd(functionList, yamlScalarNext(yaml).value);
+                                                    }
+                                                    YAML_SEQ_END();
+
+                                                    testDefShim.functionList = functionList;
+                                                }
+                                                YAML_MAP_END();
+
+                                                lstAdd(globalShimList, &testDefShim);
+                                            }
+                                        }
+                                        YAML_MAP_END();
+                                    }
                                 }
                                 YAML_MAP_END();
                             }
@@ -256,6 +271,7 @@ testDefParseModuleList(Yaml *const yaml, List *const moduleList)
                                 const TestDefHarness testDefHarness =
                                 {
                                     .name = strDup(globalHarness->name),
+                                    .integration = globalHarness->integration,
                                     .includeList = strLstDup(globalHarness->includeList),
                                 };
 
@@ -277,6 +293,7 @@ testDefParseModuleList(Yaml *const yaml, List *const moduleList)
                                 const TestDefShim testDefShim =
                                 {
                                     .name = strDup(globalShim->name),
+                                    .integration = globalShim->integration,
                                     .functionList = strLstDup(globalShim->functionList),
                                 };
 

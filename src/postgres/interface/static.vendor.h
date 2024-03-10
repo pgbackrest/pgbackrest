@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 PostgreSQL Types That Do Not Vary By Version
 
-Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
+Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
 Portions Copyright (c) 1994, Regents of the University of California
 
 For each supported release of PostgreSQL check the types in this file to see if they have changed. The easiest way to do this is to
@@ -22,16 +22,6 @@ all versions of PostgreSQL supported by pgBackRest.
 
 #include "common/assert.h"
 #include "postgres/interface.h"
-
-/***********************************************************************************************************************************
-Define Assert() as ASSERT()
-***********************************************************************************************************************************/
-#define Assert(condition)                                           ASSERT(condition)
-
-/***********************************************************************************************************************************
-Define BLCKSZ as PG_PAGE_SIZE_DEFAULT
-***********************************************************************************************************************************/
-#define BLCKSZ                                                      PG_PAGE_SIZE_DEFAULT
 
 /***********************************************************************************************************************************
 Types from src/include/c.h
