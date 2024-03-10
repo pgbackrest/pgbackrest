@@ -180,6 +180,14 @@ pgWalSegmentSizeCheck(unsigned int pgVersion, unsigned int walSegmentSize)
             PG_WAL_SEGMENT_SIZE_DEFAULT);
     }
 
+    // Check that the WAL segment size is valid
+    if (!IsValidWalSegSize(walSegmentSize))
+    {
+        THROW_FMT(
+            FormatError, "wal segment size is %u but must be a power of two between %d and %d inclusive", walSegmentSize,
+            WalSegMinSize, WalSegMaxSize);
+    }
+
     FUNCTION_TEST_RETURN_VOID();
 }
 

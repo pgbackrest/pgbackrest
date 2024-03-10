@@ -128,6 +128,31 @@ testRun(void)
             "wal segment size is 1048576 but must be 16777216 for PostgreSQL <= 10");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_11, .walSegmentSize = UINT_MAX); // UINT_MAX forces size to 0
+
+        TEST_ERROR(
+            pgControlFromFile(storageTest, NULL), FormatError,
+            "wal segment size is 0 but must be a power of two between 1048576 and 1073741824 inclusive");
+
+        HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_11, .walSegmentSize = 1);
+
+        TEST_ERROR(
+            pgControlFromFile(storageTest, NULL), FormatError,
+            "wal segment size is 1 but must be a power of two between 1048576 and 1073741824 inclusive");
+
+        HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_11, .walSegmentSize = 47);
+
+        TEST_ERROR(
+            pgControlFromFile(storageTest, NULL), FormatError,
+            "wal segment size is 47 but must be a power of two between 1048576 and 1073741824 inclusive");
+
+        HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_11, .walSegmentSize = (unsigned int)2 * 1024 * 1024 * 1024);
+
+        TEST_ERROR(
+            pgControlFromFile(storageTest, NULL), FormatError,
+            "wal segment size is 2147483648 but must be a power of two between 1048576 and 1073741824 inclusive");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_95, .pageSize = 64 * 1024);
 
         TEST_ERROR(
