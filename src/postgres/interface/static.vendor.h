@@ -124,6 +124,14 @@ typedef struct
 	uint32		xrecoff;		/* low bits */
 } PageXLogRecPtr;
 
+// PG_DATA_CHECKSUM_VERSION define
+// ---------------------------------------------------------------------------------------------------------------------------------
+/*
+ * As of Release 9.3, the checksum version must also be considered when
+ * handling pages.
+ */
+#define PG_DATA_CHECKSUM_VERSION	1
+
 // PageHeaderData type
 // ---------------------------------------------------------------------------------------------------------------------------------
 /*
@@ -235,5 +243,23 @@ Types from src/include/access/transam.h
  * it also ensures that no user-created object will be considered pinned.
  */
 #define FirstNormalObjectId		16384
+
+/***********************************************************************************************************************************
+Types from src/include/access/xlog_internal.h
+***********************************************************************************************************************************/
+
+// WalSegMinSize/WalSegMinSize macros
+// ---------------------------------------------------------------------------------------------------------------------------------
+/* wal_segment_size can range from 1MB to 1GB */
+#define WalSegMinSize 1024 * 1024
+#define WalSegMaxSize 1024 * 1024 * 1024
+
+// IsPowerOf2/IsValidWalSegSize macros
+// ---------------------------------------------------------------------------------------------------------------------------------
+/* check that the given size is a valid wal_segment_size */
+#define IsPowerOf2(x) (x > 0 && ((x) & ((x)-1)) == 0)
+#define IsValidWalSegSize(size) \
+	 (IsPowerOf2(size) && \
+	 ((size) >= WalSegMinSize && (size) <= WalSegMaxSize))
 
 #endif

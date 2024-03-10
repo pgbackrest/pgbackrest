@@ -128,11 +128,42 @@ testRun(void)
             "wal segment size is 1048576 but must be 16777216 for PostgreSQL <= 10");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_11, .walSegmentSize = UINT_MAX); // UINT_MAX forces size to 0
+
+        TEST_ERROR(
+            pgControlFromFile(storageTest, NULL), FormatError,
+            "wal segment size is 0 but must be a power of two between 1048576 and 1073741824 inclusive");
+
+        HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_11, .walSegmentSize = 1);
+
+        TEST_ERROR(
+            pgControlFromFile(storageTest, NULL), FormatError,
+            "wal segment size is 1 but must be a power of two between 1048576 and 1073741824 inclusive");
+
+        HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_11, .walSegmentSize = 47);
+
+        TEST_ERROR(
+            pgControlFromFile(storageTest, NULL), FormatError,
+            "wal segment size is 47 but must be a power of two between 1048576 and 1073741824 inclusive");
+
+        HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_11, .walSegmentSize = (unsigned int)2 * 1024 * 1024 * 1024);
+
+        TEST_ERROR(
+            pgControlFromFile(storageTest, NULL), FormatError,
+            "wal segment size is 2147483648 but must be a power of two between 1048576 and 1073741824 inclusive");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_95, .pageSize = 64 * 1024);
 
         TEST_ERROR(
             pgControlFromFile(storageTest, NULL), FormatError,
             "page size is 65536 but only 1024, 2048, 4096, 8192, 16384, and 32768 are supported");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_11, .pageChecksumVersion = 2);
+
+        TEST_ERROR(
+            pgControlFromFile(storageTest, NULL), FormatError, "page checksum version is 2 but only 0 and 1 are valid");
 
         // -------------------------------------------------------------------------------------------------------------------------
         HRN_PG_CONTROL_PUT(
@@ -146,11 +177,12 @@ testRun(void)
         TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
         TEST_RESULT_UINT(info.timeline, 88, "check timeline");
         TEST_RESULT_UINT(info.pageSize, pgPageSize8, "check page size");
+        TEST_RESULT_UINT(info.pageChecksumVersion, 0, "check page checksum");
 
         // -------------------------------------------------------------------------------------------------------------------------
         HRN_PG_CONTROL_PUT(
             storageTest, PG_VERSION_16, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_16),
-            .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88, .pageSize = pgPageSize1);
+            .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88, .pageSize = pgPageSize1, .pageChecksumVersion = 1);
 
         TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info v90");
         TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "   check system id");
@@ -159,6 +191,7 @@ testRun(void)
         TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
         TEST_RESULT_UINT(info.timeline, 88, "check timeline");
         TEST_RESULT_UINT(info.pageSize, pgPageSize1, "check page size");
+        TEST_RESULT_UINT(info.pageChecksumVersion, 1, "check page checksum");
 
         // -------------------------------------------------------------------------------------------------------------------------
         HRN_PG_CONTROL_PUT(
@@ -501,12 +534,12 @@ testRun(void)
             .version = PG_VERSION_11,
             .systemId = 0xEFEFEFEFEF,
             .walSegmentSize = 16 * 1024 * 1024,
-            .pageChecksum = true
+            .pageChecksumVersion = 1,
         };
 
         TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(&pgControl, pgControlToLog, logBuf, sizeof(logBuf)), "pgControlToLog");
         TEST_RESULT_Z(
-            logBuf, "{version: 110000, systemId: 1030522662895, walSegmentSize: 16777216, pageChecksum: true}", "check log");
+            logBuf, "{version: 110000, systemId: 1030522662895, walSegmentSize: 16777216, pageChecksumVersion: 1}", "check log");
     }
 
     // *****************************************************************************************************************************

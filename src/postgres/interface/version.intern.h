@@ -70,7 +70,7 @@ Read the version specific pg_control into a general data structure
             .timeline = ((ControlFileData *)controlFile)->checkPointCopy.ThisTimeLineID,                                           \
             .pageSize = ((ControlFileData *)controlFile)->blcksz,                                                                  \
             .walSegmentSize = ((ControlFileData *)controlFile)->xlog_seg_size,                                                     \
-            .pageChecksum = ((ControlFileData *)controlFile)->data_checksum_version != 0,                                          \
+            .pageChecksumVersion = ((ControlFileData *)controlFile)->data_checksum_version,                                        \
         };                                                                                                                         \
     }
 
