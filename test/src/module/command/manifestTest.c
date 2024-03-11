@@ -73,7 +73,7 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
             // Create pg_control and run stanza-create
-            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_95, .pageChecksum = false);
+            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_95);
             TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create");
         }
 

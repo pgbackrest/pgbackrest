@@ -1570,7 +1570,7 @@ testRun(void)
         TEST_TITLE("ok if cluster checksums are enabled and checksum-page is any value");
 
         // Create pg_control with page checksums
-        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_94, .pageChecksum = true);
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_94, .pageChecksumVersion = 1);
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -2700,7 +2700,7 @@ testRun(void)
 
         {
             // Update pg_control
-            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_11, .pageChecksum = true, .walSegmentSize = 1024 * 1024);
+            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_11, .pageChecksumVersion = 1, .walSegmentSize = 1024 * 1024);
 
             // Update version
             HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_11_Z, .timeModified = backupTimeStart);
@@ -3025,7 +3025,7 @@ testRun(void)
 
             // Create pg_control with unexpected catalog and control version
             HRN_PG_CONTROL_OVERRIDE_VERSION_PUT(
-                storagePgWrite(), PG_VERSION_11, 1501, .catalogVersion = 202211110, .pageChecksum = true,
+                storagePgWrite(), PG_VERSION_11, 1501, .catalogVersion = 202211110, .pageChecksumVersion = 1,
                 .walSegmentSize = 1024 * 1024);
 
             // Set to a smaller values than the defaults allow
@@ -3123,7 +3123,7 @@ testRun(void)
             HRN_STORAGE_REMOVE(storageTest, "pg1");
 
             // Update pg_control
-            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_11, .pageChecksum = false, .walSegmentSize = 2 * 1024 * 1024);
+            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_11, .walSegmentSize = 2 * 1024 * 1024);
 
             // Update version
             HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_11_Z, .timeModified = backupTimeStart);
@@ -3193,7 +3193,7 @@ testRun(void)
             HRN_STORAGE_PATH_REMOVE(storageTest, "pg1", .recurse = true);
 
             // Update pg_control
-            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_11, .pageChecksum = false, .walSegmentSize = 2 * 1024 * 1024);
+            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_11, .pageChecksumVersion = 0, .walSegmentSize = 2 * 1024 * 1024);
 
             // Update version
             HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_11_Z, .timeModified = backupTimeStart);
@@ -3246,7 +3246,7 @@ testRun(void)
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-no-resume (24KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (24KB, [PCT]) checksum [SHA1]");
 
-            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_11, .pageChecksum = false, .walSegmentSize = 2 * 1024 * 1024);
+            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_11, .pageChecksumVersion = 0, .walSegmentSize = 2 * 1024 * 1024);
 
             // Run backup
             hrnBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2, .walSwitch = true);
@@ -3839,7 +3839,8 @@ testRun(void)
 
             // Update pg_control
             HRN_PG_CONTROL_PUT(
-                storagePgWrite(), PG_VERSION_11, .pageChecksum = true, .walSegmentSize = 2 * 1024 * 1024, .pageSize = pgPageSize4);
+                storagePgWrite(), PG_VERSION_11, .pageChecksumVersion = 1, .walSegmentSize = 2 * 1024 * 1024,
+                .pageSize = pgPageSize4);
 
             // Update version
             HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_11_Z, .timeModified = backupTimeStart);
