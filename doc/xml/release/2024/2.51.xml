@@ -109,6 +109,17 @@
             </release-item>
 
             <release-item>
+                <github-pull-request id="2296"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Update resume functionality for block incremental.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2263"/>
 
                 <release-item-contributor-list>
