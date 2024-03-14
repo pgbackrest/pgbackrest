@@ -1150,7 +1150,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                              // opt/backup-full-incr
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                  // opt/backup-full-incr
                 (                                                                                            // opt/backup-full-incr
-                    PARSE_RULE_VAL_BOOL_TRUE,                                                                // opt/backup-full-incr
+                    PARSE_RULE_VAL_BOOL_FALSE,                                                               // opt/backup-full-incr
                 ),                                                                                           // opt/backup-full-incr
             ),                                                                                               // opt/backup-full-incr
                                                                                                              // opt/backup-full-incr
@@ -1158,7 +1158,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             (                                                                                                // opt/backup-full-incr
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                  // opt/backup-full-incr
                 (                                                                                            // opt/backup-full-incr
-                    PARSE_RULE_VAL_BOOL_TRUE,                                                                // opt/backup-full-incr
+                    PARSE_RULE_VAL_BOOL_FALSE,                                                               // opt/backup-full-incr
                 ),                                                                                           // opt/backup-full-incr
             ),                                                                                               // opt/backup-full-incr
         ),                                                                                                   // opt/backup-full-incr

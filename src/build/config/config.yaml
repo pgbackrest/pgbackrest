@@ -1204,7 +1204,7 @@ option:
   backup-full-incr:
     section: global
     type: boolean
-    default: true
+    default: false
     internal: true
     command:
       backup:

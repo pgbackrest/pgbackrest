@@ -2151,10 +2151,10 @@ testRun(void)
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
+            hrnCfgArgRawBool(argList, cfgOptBackupFullIncr, true);
             hrnCfgArgRawBool(argList, cfgOptStopAuto, true);
             hrnCfgArgRawBool(argList, cfgOptCompress, false);
             hrnCfgArgRawBool(argList, cfgOptArchiveCheck, false);
-            hrnCfgArgRawBool(argList, cfgOptBackupFullIncr, true);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Add files
@@ -2239,7 +2239,6 @@ testRun(void)
             hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
             hrnCfgArgRawBool(argList, cfgOptStopAuto, true);
             hrnCfgArgRawBool(argList, cfgOptArchiveCopy, true);
-            hrnCfgArgRawBool(argList, cfgOptBackupFullIncr, false);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Create a backup manifest that looks like a halted backup manifest
@@ -2398,7 +2397,6 @@ testRun(void)
             hrnCfgArgRawBool(argList, cfgOptDelta, true);
             hrnCfgArgRawBool(argList, cfgOptStopAuto, true);
             hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
-            hrnCfgArgRawBool(argList, cfgOptBackupFullIncr, false);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Create a backup manifest that looks like a halted backup manifest
@@ -2590,6 +2588,7 @@ testRun(void)
             hrnCfgArgKeyRaw(argList, cfgOptPgPath, 1, pg1Path);
             hrnCfgArgKeyRaw(argList, cfgOptPgPath, 2, pg2Path);
             hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 2, "5433");
+            hrnCfgArgRawBool(argList, cfgOptBackupFullIncr, true);
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             hrnCfgArgRawBool(argList, cfgOptCompress, false);
             hrnCfgArgRawBool(argList, cfgOptBackupStandby, true);
@@ -2742,7 +2741,6 @@ testRun(void)
             hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
             hrnCfgArgRawZ(argList, cfgOptManifestSaveThreshold, "1");
             hrnCfgArgRawBool(argList, cfgOptArchiveCopy, true);
-            hrnCfgArgRawBool(argList, cfgOptBackupFullIncr, false);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Move pg1-path and put a link in its place. This tests that backup works when pg1-path is a symlink yet should be
@@ -2890,7 +2888,6 @@ testRun(void)
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             hrnCfgArgRawStrId(argList, cfgOptType, backupTypeIncr);
             hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
-            hrnCfgArgRawBool(argList, cfgOptBackupFullIncr, false);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Preserve prior timestamp on pg_control
@@ -2934,7 +2931,6 @@ testRun(void)
             hrnCfgArgRawBool(argList, cfgOptDelta, true);
             hrnCfgArgRawBool(argList, cfgOptPageHeaderCheck, false);
             hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
-            hrnCfgArgRawBool(argList, cfgOptBackupFullIncr, false);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // File with bad page checksum and header errors that will be ignored
@@ -3223,6 +3219,7 @@ testRun(void)
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
+            hrnCfgArgRawBool(argList, cfgOptBackupFullIncr, true);
             hrnCfgArgRawZ(argList, cfgOptCompressType, "none");
             hrnCfgArgRawBool(argList, cfgOptResume, false);
             hrnCfgArgRawBool(argList, cfgOptRepoBundle, true);
@@ -3292,10 +3289,6 @@ testRun(void)
             bufUsedSet(file, bufSize(file));
 
             HRN_STORAGE_PUT(storagePgWrite(), "below-fi-limit", file, .timeModified = backupTimeStart - 119);
-
-            // Add full/incr option
-            hrnCfgArgRawBool(argList, cfgOptBackupFullIncr, true);
-            HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Run backup
             HRN_BACKUP_SCRIPT_SET(
@@ -3369,7 +3362,6 @@ testRun(void)
             hrnCfgArgRawBool(argList, cfgOptRepoBundle, true);
             hrnCfgArgRawZ(argList, cfgOptRepoBundleLimit, "23kB");
             hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
-            hrnCfgArgRawBool(argList, cfgOptBackupFullIncr, false);
             hrnCfgArgRawZ(argList, cfgOptRepoBlockSizeMap, STRINGIFY(BLOCK_MAX_FILE_SIZE) "b=" STRINGIFY(BLOCK_MAX_SIZE) "b");
             hrnCfgArgRawZ(argList, cfgOptRepoBlockSizeMap, STRINGIFY(BLOCK_MIN_FILE_SIZE) "=" STRINGIFY(BLOCK_MIN_SIZE));
             hrnCfgArgRawZ(argList, cfgOptRepoBlockSizeMap, STRINGIFY(BLOCK_MID_FILE_SIZE) "=" STRINGIFY(BLOCK_MID_SIZE));
@@ -3733,6 +3725,7 @@ testRun(void)
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
+            hrnCfgArgRawBool(argList, cfgOptBackupFullIncr, true);
             hrnCfgArgRawBool(argList, cfgOptDelta, true);
             hrnCfgArgRawBool(argList, cfgOptRepoBundle, true);
             hrnCfgArgRawZ(argList, cfgOptRepoBundleLimit, "8KiB");
