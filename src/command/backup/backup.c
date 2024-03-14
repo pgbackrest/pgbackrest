@@ -252,7 +252,7 @@ backupInit(const InfoBackup *const infoBackup)
         // If online then use the value in pg_control to set checksum-page
         if (cfgOptionBool(cfgOptOnline))
         {
-            cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, VARBOOL(pgControl.pageChecksum));
+            cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, VARBOOL(pgControl.pageChecksumVersion != 0));
         }
         // Else set to false. An offline cluster is likely to have false positives so better if the user enables manually.
         else
@@ -260,7 +260,7 @@ backupInit(const InfoBackup *const infoBackup)
     }
     // Else if checksums have been explicitly enabled but are not available then warn and reset. ??? We should be able to make this
     // determination when offline as well, but the integration tests don't write pg_control accurately enough to support it.
-    else if (cfgOptionBool(cfgOptOnline) && !pgControl.pageChecksum && cfgOptionBool(cfgOptChecksumPage))
+    else if (cfgOptionBool(cfgOptOnline) && pgControl.pageChecksumVersion == 0 && cfgOptionBool(cfgOptChecksumPage))
     {
         LOG_WARN(CFGOPT_CHECKSUM_PAGE " option set to true but checksums are not enabled on the cluster, resetting to false");
         cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, BOOL_FALSE_VAR);
@@ -2122,6 +2122,7 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
                 pckWriteBoolP(param, file.delta);
                 pckWriteBoolP(param, !strEq(file.name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)));
                 pckWriteU64P(param, file.size);
+                pckWriteU64P(param, file.sizePrior);
                 pckWriteBoolP(param, !backupProcessFilePrimary(jobData->standbyExp, file.name));
                 pckWriteBinP(param, file.checksumSha1 != NULL ? BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE) : NULL);
                 pckWriteBoolP(param, file.checksumPage);

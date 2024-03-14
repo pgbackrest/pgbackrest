@@ -54,7 +54,7 @@ Create a pg_control file
             },                                                                                                                     \
             .blcksz = pgControl.pageSize,                                                                                          \
             .xlog_seg_size = pgControl.walSegmentSize,                                                                             \
-            .data_checksum_version = pgControl.pageChecksum,                                                                       \
+            .data_checksum_version = pgControl.pageChecksumVersion,                                                                \
         };                                                                                                                         \
                                                                                                                                    \
         ((ControlFileData *)buffer)->crc =                                                                                         \

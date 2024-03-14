@@ -1618,14 +1618,16 @@
                     </config-key>
 
                     <config-key id="recovery-option" name="Recovery Option">
-                        <summary>Set an option in <file>recovery.conf</file>.</summary>
+                        <summary>Set an option in <file>postgresql.auto.conf</file> or <file>recovery.conf</file>.</summary>
 
                         <text>
-                            <p>See http://www.postgresql.org/docs/X.X/static/recovery-config.html for details on recovery.conf options (replace X.X with your <postgres/> version). This option can be used multiple times.</p>
+                            <p>See <link url="https://www.postgresql.org/docs/current/runtime-config.html">Server Configuration</link> for details on <file>postgresql.auto.conf</file> or <file>recovery.conf</file> options (be sure to select your <postgres/> version). This option can be used multiple times.</p>
+
+                            <p>For <postgres/> &gt;= 12, options will be written into <file>postgresql.auto.conf</file>. For all other versions, options will be written into <file>recovery.conf</file>.</p>
 
                             <admonition type="note">The <setting>restore_command</setting> option will be automatically generated but can be overridden with this option. Be careful about specifying your own <setting>restore_command</setting> as <backrest/> is designed to handle this for you. Target Recovery options (recovery_target_name, recovery_target_time, etc.) are generated automatically by <backrest/> and should not be set with this option.</admonition>
 
-                            <p>Since <backrest/> does not start <postgres/> after writing the <file>recovery.conf</file> file, it is always possible to edit/check <file>recovery.conf</file> before manually restarting.</p>
+                            <p>Since <backrest/> does not start <postgres/> after writing the <file>postgresql.auto.conf</file> or <file>recovery.conf</file> file, it is always possible to edit/check <file>postgresql.auto.conf</file> or <file>recovery.conf</file> before manually restarting.</p>
                         </text>
 
                         <example>primary_conninfo=db.mydomain.com</example>
@@ -2442,9 +2444,9 @@
                                 <list-item><id>name</id> - recover the restore point specified in <br-option>--target</br-option>.</list-item>
                                 <list-item><id>xid</id> - recover to the transaction id specified in <br-option>--target</br-option>.</list-item>
                                 <list-item><id>time</id> - recover to the time specified in <br-option>--target</br-option>.</list-item>
-                                <list-item><id>preserve</id> - preserve the existing <file>recovery.conf</file> file.</list-item>
-                                <list-item><id>standby</id> - add <setting>standby_mode=on</setting> to <file>recovery.conf</file> file so cluster will start in standby mode.</list-item>
-                                <list-item><id>none</id> - no <file>recovery.conf</file> file is written so <postgres/> will attempt to achieve consistency using WAL segments present in <path>pg_xlog</path>/<path>pg_wal</path>. Provide the required WAL segments or use the <setting>archive-copy</setting> setting to include them with the backup.</list-item>
+                                <list-item><id>preserve</id> - preserve the existing <file>postgresql.auto.conf</file> or <file>recovery.conf</file> file.</list-item>
+                                <list-item><id>standby</id> - add <setting>standby_mode=on</setting> to the <file>postgresql.auto.conf</file> or <file>recovery.conf</file> file so cluster will start in standby mode.</list-item>
+                                <list-item><id>none</id> - no <file>postgresql.auto.conf</file> or <file>recovery.conf</file> file is written so <postgres/> will attempt to achieve consistency using WAL segments present in <path>pg_xlog</path>/<path>pg_wal</path>. Provide the required WAL segments or use the <setting>archive-copy</setting> setting to include them with the backup.</list-item>
                             </list>
 
                             <admonition type="warning">Recovery <br-option>type=none</br-option> should be avoided because the timeline will not be incremented at the end of recovery. This can lead to, for example, <postgres/> attempting to archive duplicate WAL, which will be rejected, and may cause the disk to fill up and result in a <postgres/> panic. In addition, tools like <id>pg_rewind</id> may not work correctly or may cause corruption.</admonition>

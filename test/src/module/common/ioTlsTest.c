@@ -155,20 +155,22 @@ testRun(void)
     if (testBegin("AddressInfo"))
     {
 #ifdef TEST_CONTAINER_REQUIRED
-        HRN_SYSTEM("echo \"127.0.0.1 test-addr-loop.pgbackrest.org\" | sudo tee -a /etc/hosts > /dev/null");
-        HRN_SYSTEM("echo \"::1 test-addr-loop.pgbackrest.org\" | sudo tee -a /etc/hosts > /dev/null");
+        #define TEST_ADDR_LOOP_HOST                                 "test-addr-loop.pgbackrest.org"
+
+        HRN_SYSTEM("echo \"127.0.0.1 " TEST_ADDR_LOOP_HOST "\" | sudo tee -a /etc/hosts > /dev/null");
+        HRN_SYSTEM("echo \"::1 " TEST_ADDR_LOOP_HOST "\" | sudo tee -a /etc/hosts > /dev/null");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("lookup address info");
 
         AddressInfo *addrInfo = NULL;
-        TEST_ASSIGN(addrInfo, addrInfoNew(STRDEF("test-addr-loop.pgbackrest.org"), 443), "addr list");
-        TEST_RESULT_STR_Z(addrInfoHost(addrInfo), "test-addr-loop.pgbackrest.org", "check host");
+        TEST_ASSIGN(addrInfo, addrInfoNew(STRDEF(TEST_ADDR_LOOP_HOST), 443), "addr list");
+        TEST_RESULT_STR_Z(addrInfoHost(addrInfo), TEST_ADDR_LOOP_HOST, "check host");
         TEST_RESULT_UINT(addrInfoPort(addrInfo), 443, "check port");
         TEST_RESULT_UINT(addrInfoSize(addrInfo), 2, "check size");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("addrInfoToLog");
+        TEST_TITLE("addrInfoToLog()");
 
         char logBuf[STACK_TRACE_PARAM_MAX];
 
@@ -176,21 +178,94 @@ testRun(void)
         TEST_RESULT_Z(
             logBuf,
             zNewFmt(
-                "{host: {\"test-addr-loop.pgbackrest.org\"}, port: 443, list: [%s, %s]}",
-                strZ(addrInfoToStr(addrInfoGet(addrInfo, 0))), strZ(addrInfoToStr(addrInfoGet(addrInfo, 1)))),
+                "{host: {\"" TEST_ADDR_LOOP_HOST "\"}, port: 443, list: [%s, %s]}",
+                strZ(addrInfoGet(addrInfo, 0)->name), strZ(addrInfoGet(addrInfo, 1)->name)),
             "check log");
 
+        addrInfoSort(addrInfo);
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(addrInfo, addrInfoToLog, logBuf, sizeof(logBuf)), "addrInfoToLog");
+        TEST_RESULT_Z(logBuf, "{host: {\"" TEST_ADDR_LOOP_HOST "\"}, port: 443, list: [::1, 127.0.0.1]}", "check log");
+
         // Munge address so it is invalid
-        (*(struct addrinfo **)lstGet(addrInfo->pub.list, 0))->ai_addr = NULL;
+        ((AddressInfoItem *)lstGet(addrInfo->pub.list, 0))->info->ai_addr = NULL;
+        TEST_RESULT_STR_Z(addrInfoToStr(addrInfoGet(addrInfo, 0)->info), "invalid", "check invalid");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("addrInfoSort() break early");
+
+        struct addrinfo addr4 = {.ai_family = AF_INET};
+        struct addrinfo addr6 = {.ai_family = AF_INET6};
+
+        MEM_CONTEXT_OBJ_BEGIN(addrInfo)
+        {
+            addrInfo->pub.host = strNewZ("test");
+            lstClear(addrInfo->pub.list);
+
+            lstAdd(addrInfo->pub.list, &(AddressInfoItem){.name = strNewZ("127.0.0.1"), .info = &addr4});
+            lstAdd(addrInfo->pub.list, &(AddressInfoItem){.name = strNewZ("::1"), .info = &addr6});
+            lstAdd(addrInfo->pub.list, &(AddressInfoItem){.name = strNewZ("127.0.0.2"), .info = &addr4});
+            lstAdd(addrInfo->pub.list, &(AddressInfoItem){.name = strNewZ("::2"), .info = &addr6});
+            lstAdd(addrInfo->pub.list, &(AddressInfoItem){.name = strNewZ("::3"), .info = &addr6});
+            lstAdd(addrInfo->pub.list, &(AddressInfoItem){.name = strNewZ("::4"), .info = &addr6});
+            addrInfoSort(addrInfo);
+        }
+        MEM_CONTEXT_OBJ_END();
 
         TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(addrInfo, addrInfoToLog, logBuf, sizeof(logBuf)), "addrInfoToLog");
         TEST_RESULT_Z(
-            logBuf,
-            zNewFmt(
-                "{host: {\"test-addr-loop.pgbackrest.org\"}, port: 443, list: [invalid, %s]}",
-                strZ(addrInfoToStr(addrInfoGet(addrInfo, 1)))),
-            "check log");
-        TEST_RESULT_STR_Z(addrInfoToStr(addrInfoGet(addrInfo, 0)), "invalid", "check invalid");
+            logBuf, zNewFmt("{host: {\"test\"}, port: 443, list: [::1, 127.0.0.1, ::2, 127.0.0.2, ::3, ::4]}"), "check log");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("addrInfoSort()");
+
+        // Set a preference that won't be found
+        addrInfoPrefer(addrInfo, 5);
+
+        MEM_CONTEXT_OBJ_BEGIN(addrInfo)
+        {
+            lstClear(addrInfo->pub.list);
+
+            lstAdd(addrInfo->pub.list, &(AddressInfoItem){.name = strNewZ("127.0.0.1"), .info = &addr4});
+            lstAdd(addrInfo->pub.list, &(AddressInfoItem){.name = strNewZ("127.0.0.2"), .info = &addr4});
+            lstAdd(addrInfo->pub.list, &(AddressInfoItem){.name = strNewZ("::1"), .info = &addr6});
+            lstAdd(addrInfo->pub.list, &(AddressInfoItem){.name = strNewZ("::2"), .info = &addr6});
+            addrInfoSort(addrInfo);
+        }
+        MEM_CONTEXT_OBJ_END();
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(addrInfo, addrInfoToLog, logBuf, sizeof(logBuf)), "addrInfoToLog");
+        TEST_RESULT_Z(
+            logBuf, zNewFmt("{host: {\"test\"}, port: 443, list: [::1, 127.0.0.2, ::2, 127.0.0.1]}"), "check log");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("addrInfoSort() prefer v4");
+
+        addrInfoPrefer(addrInfo, 1);
+        addrInfoSort(addrInfo);
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(addrInfo, addrInfoToLog, logBuf, sizeof(logBuf)), "addrInfoToLog");
+        TEST_RESULT_Z(
+            logBuf, zNewFmt("{host: {\"test\"}, port: 443, list: [127.0.0.2, ::1, 127.0.0.1, ::2]}"), "check log");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("addrInfoSort() prefer v4 (already first)");
+
+        addrInfoSort(addrInfo);
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(addrInfo, addrInfoToLog, logBuf, sizeof(logBuf)), "addrInfoToLog");
+        TEST_RESULT_Z(
+            logBuf, zNewFmt("{host: {\"test\"}, port: 443, list: [127.0.0.2, ::1, 127.0.0.1, ::2]}"), "check log");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("addrInfoSort() prefer v6");
+
+        addrInfoPrefer(addrInfo, 3);
+        addrInfoSort(addrInfo);
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(addrInfo, addrInfoToLog, logBuf, sizeof(logBuf)), "addrInfoToLog");
+        TEST_RESULT_Z(
+            logBuf, zNewFmt("{host: {\"test\"}, port: 443, list: [::2, 127.0.0.1, ::1, 127.0.0.2]}"), "check log");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("free");
@@ -343,11 +418,6 @@ testRun(void)
             TEST_ERROR(
                 ioClientOpen(socketClient), HostConnectError, "unable to connect to '127.0.0.1:7777': [111] Connection refused");
             socketLocal.block = false;
-
-            // ---------------------------------------------------------------------------------------------------------------------
-            TEST_TITLE("uncovered conditions for sckConnect()");
-
-            TEST_RESULT_BOOL(sckConnectInProgress(EINTR), true, "connection in progress (EINTR)");
         }
         FINALLY()
         {
@@ -365,6 +435,11 @@ testRun(void)
     if (testBegin("SocketClient/SocketServer"))
     {
         IoClient *client = NULL;
+        AddressInfo *addrInfo = NULL;
+        const String *const ipLoop4 = STRDEF("127.0.0.1");
+
+        TEST_ASSIGN(addrInfo, addrInfoNew(STRDEF("localhost"), 443), "localhost addr list");
+        TEST_RESULT_VOID(addrInfoPrefer(addrInfo, lstFindIdx(addrInfo->pub.list, &ipLoop4)), "prefer 127.0.0.1");
 
         TEST_ASSIGN(client, sckClientNew(STRDEF("localhost"), HRN_SERVER_PORT_BOGUS, 100, 100), "new client");
         TEST_ERROR(
@@ -374,10 +449,71 @@ testRun(void)
 
         // This address should not be in use in a test environment -- if it is the test will fail
         TEST_ASSIGN(client, sckClientNew(STRDEF("172.31.255.255"), HRN_SERVER_PORT_BOGUS, 100, 100), "new client");
-        TEST_ERROR(
-            ioClientOpen(client), HostConnectError,
-            "timeout connecting to '172.31.255.255:34342'\n"
-            "[RETRY DETAIL OMITTED]");
+        TEST_ERROR(ioClientOpen(client), HostConnectError, "timeout connecting to '172.31.255.255:34342'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+#ifdef TEST_CONTAINER_REQUIRED
+        #define TEST_ADDR_CONN_HOST                                 "test-addr-conn.pgbackrest.org"
+
+        HRN_SYSTEM("echo \"127.0.0.1 " TEST_ADDR_CONN_HOST "\" | sudo tee -a /etc/hosts > /dev/null");
+        HRN_SYSTEM("echo \"::1 " TEST_ADDR_CONN_HOST "\" | sudo tee -a /etc/hosts > /dev/null");
+        HRN_SYSTEM("echo \"172.31.255.255 " TEST_ADDR_CONN_HOST "\" | sudo tee -a /etc/hosts > /dev/null");
+
+        // Explicitly set the order of the address list for the test below. The first IP must not respond, the second must error,
+        // and only the last will succeed.
+        const String *ipPrefer = STRDEF("172.31.255.255");
+        TEST_ASSIGN(addrInfo, addrInfoNew(STRDEF(TEST_ADDR_CONN_HOST), 443), "localhost addr list");
+        TEST_RESULT_VOID(addrInfoPrefer(addrInfo, lstFindIdx(addrInfo->pub.list, &ipPrefer)), "prefer 172.31.255.255");
+
+        TEST_ASSIGN(addrInfo, addrInfoNew(STRDEF(TEST_ADDR_CONN_HOST), 443), "localhost addr list");
+        TEST_RESULT_VOID(addrInfoSort(addrInfo), "sort addresses");
+        TEST_RESULT_STR(addrInfoToStr(addrInfoGet(addrInfo, 0)->info), ipPrefer, "first 172.31.255.255");
+        TEST_RESULT_STR_Z(addrInfoToStr(addrInfoGet(addrInfo, 1)->info), "::1", "second ::1");
+        TEST_RESULT_STR_Z(addrInfoToStr(addrInfoGet(addrInfo, 2)->info), "127.0.0.1", "third 127.0.0.1");
+
+        HRN_FORK_BEGIN()
+        {
+            const unsigned int testPort = hrnServerPortNext();
+
+            HRN_FORK_CHILD_BEGIN(.prefix = "test server", .timeout = 5000)
+            {
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolSocket, testPort), "socket server");
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_PARENT_BEGIN()
+            {
+                IoWrite *server = hrnServerScriptBegin(HRN_FORK_PARENT_WRITE(0));
+                IoClient *client;
+                IoSession *session;
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("connect to 127.0.0.1 when ::1 errors and 172.31.255.255 never responds");
+
+                TEST_ASSIGN(client, sckClientNew(STRDEF(TEST_ADDR_CONN_HOST), testPort, 1000, 1000), "new client");
+
+                hrnServerScriptAccept(server);
+                hrnServerScriptClose(server);
+
+                // Shim the server address to return false one time for write ready. This tests connections that take longer.
+                hrnSckClientOpenWaitShimInstall("127.0.0.1");
+
+                TEST_ASSIGN(session, ioClientOpen(client), "connection established");
+                TEST_RESULT_VOID(
+                    sckClientOpenWait(
+                        &(SckClientOpenData){.name = "test", .fd = ((SocketSession *)session->pub.driver)->fd, .errNo = EINTR}, 99),
+                    "check EINTR wait condition");
+                TEST_RESULT_VOID(ioSessionFree(session), "connection closed");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("end server process");
+
+                hrnServerScriptEnd(server);
+            }
+            HRN_FORK_PARENT_END();
+        }
+        HRN_FORK_END();
+#endif
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("sckServerAccept() returns NULL on interrupt");

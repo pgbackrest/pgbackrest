@@ -159,6 +159,7 @@ typedef struct ManifestFile
     uint64_t blockIncrMapSize;                                      // Block incremental map size
     uint64_t size;                                                  // Final size (after copy)
     uint64_t sizeOriginal;                                          // Original size (from manifest build)
+    uint64_t sizePrior;                                             // Prior size (valid if reference is set, backup only)
     uint64_t sizeRepo;                                              // Size in repo
     time_t timestamp;                                               // Original timestamp
 } ManifestFile;

@@ -32,13 +32,13 @@ jobs:
           - param: test --vm=d10 --param=no-performance --param=c-only
 
           # All integration tests for 32-bit
-          - param: test --vm=d10 --param=module=mock --param=module=real
+          - param: test --vm=d10 --param=module=mock --param=module=integration
 
           # Debian/Ubuntu documentation
           - param: doc --vm=u20
 
           # All integration tests
-          - param: test --vm=u22 --param=build-package --param=module=mock --param=module=real
+          - param: test --vm=u22 --param=build-package --param=module=mock --param=module=integration
 
           # All unit tests with coverage, backtrace and alternate timezone
           - param: test --vm=u22 --param=c-only --param=no-valgrind --param=tz=America/New_York
@@ -53,7 +53,7 @@ jobs:
           - param: doc --vm=rh8
 
           # All integration tests
-          - param: test --vm=rh7 --param=module=mock --param=module=real
+          - param: test --vm=rh7 --param=module=mock --param=module=integration
 
     steps:
       - name: Checkout Code
@@ -127,7 +127,7 @@ jobs:
 
       - name: Build
         run: |
-          meson setup --unity=on -Dforce-release=true -Dwerror=true build ${GITHUB_WORKSPACE?}/pgbackrest
+          meson setup --unity=on -Dwerror=true build ${GITHUB_WORKSPACE?}/pgbackrest
           ninja -vC build
 
       - name: Check

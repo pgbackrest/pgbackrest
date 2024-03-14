@@ -1105,7 +1105,8 @@ testRun(void)
                     "[target:file]\n"
                     "pg_data/BOGUS={\"size\":6,\"timestamp\":1482182860}\n"
                     "pg_data/FILE3={\"reference\":\"20190101-010101F\",\"size\":0,\"timestamp\":1482182860}\n"
-                    "pg_data/FILE4={\"size\":55,\"timestamp\":1482182861}\n"
+                    "pg_data/FILE4={\"checksum\":\"ccccccccccaaaaaaaaaabbbbbbbbbbdddddddddd\",\"reference\":\"20190101-010101F\""
+                    ",\"size\":55,\"timestamp\":1482182861}\n"
                     "pg_data/PG_VERSION={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\""
                     ",\"reference\":\"20190101-010101F\",\"size\":4,\"timestamp\":1482182860}\n"
                     TEST_MANIFEST_FILE_DEFAULT
@@ -1381,6 +1382,14 @@ testRun(void)
 
         TEST_RESULT_VOID(
             manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, STRDEF("000000030000000300000003")), "incremental manifest");
+
+        TEST_RESULT_UINT(
+            manifestFileFind(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/block-incr-add")).sizePrior, 0, "check prior size");
+        TEST_RESULT_UINT(
+            manifestFileFind(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/block-incr-sub")).sizePrior, 0, "check prior size");
+        TEST_RESULT_UINT(
+            manifestFileFind(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/block-incr-keep-size")).sizePrior, 16384,
+            "check prior size");
 
         contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");

@@ -25,6 +25,12 @@ FN_EXTERN AddressInfo *addrInfoNew(const String *const host, unsigned int port);
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
+typedef struct AddressInfoItem
+{
+    String *name;                                                   // Address as a string
+    struct addrinfo *info;                                          // Full address info
+} AddressInfoItem;
+
 typedef struct AddressInfoPub
 {
     const String *host;                                             // Host for address info lookup
@@ -33,10 +39,10 @@ typedef struct AddressInfoPub
 } AddressInfoPub;
 
 // Get address
-FN_INLINE_ALWAYS const struct addrinfo *
+FN_INLINE_ALWAYS const AddressInfoItem *
 addrInfoGet(const AddressInfo *const this, const unsigned int index)
 {
-    return *(const struct addrinfo **)lstGet(THIS_PUB(AddressInfo)->list, index);
+    return (const AddressInfoItem *)lstGet(THIS_PUB(AddressInfo)->list, index);
 }
 
 // Get lookup host
@@ -59,6 +65,15 @@ addrInfoSize(const AddressInfo *const this)
 {
     return lstSize(THIS_PUB(AddressInfo)->list);
 }
+
+/***********************************************************************************************************************************
+Functions
+***********************************************************************************************************************************/
+// Sort addresses alternating between IPv6 and IPv4
+FN_EXTERN void addrInfoSort(AddressInfo *this);
+
+// Set preferred address for host, which will be preferred in future lookups
+FN_EXTERN void addrInfoPrefer(AddressInfo *this, unsigned int index);
 
 /***********************************************************************************************************************************
 Destructor

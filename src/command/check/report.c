@@ -48,6 +48,7 @@ checkReportConfigVal(JsonWrite *const json, const String *const optionName, cons
             if (option.multi)
             {
                 ASSERT(strLstSize(valueList) >= 1);
+                ASSERT(!cfgParseOptionSecure(option.id));
 
                 // Split environment values
                 if (env)
@@ -68,7 +69,11 @@ checkReportConfigVal(JsonWrite *const json, const String *const optionName, cons
             else
             {
                 ASSERT(strLstSize(valueList) == 1);
-                jsonWriteStr(json, strLstGet(valueList, 0));
+
+                if (cfgParseOptionSecure(option.id))
+                    jsonWriteStr(json, strNewFmt("<%s>", strZ(optionName)));
+                else
+                    jsonWriteStr(json, strLstGet(valueList, 0));
             }
         }
 
