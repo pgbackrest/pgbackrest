@@ -2091,7 +2091,7 @@ testRun(void)
         HRN_STORAGE_PUT_Z(storagePgWrite(), "postgresql.conf", "CONFIGSTUFF2");
         HRN_BACKUP_SCRIPT_SET(
             {.op = hrnBackupScriptOpUpdate, .file = storagePathP(storagePg(), STRDEF("postgresql.conf")),
-                .content = BUFSTRDEF("CONFIG")});
+             .content = BUFSTRDEF("CONFIG")});
 
         unsigned int backupCount = strLstSize(storageListP(storageRepoIdx(1), strNewFmt(STORAGE_PATH_BACKUP "/test1")));
 
