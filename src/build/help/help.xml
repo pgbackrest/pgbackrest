@@ -1365,7 +1365,9 @@
                         <summary>Backup using full/incr hybrid.</summary>
 
                         <text>
-                            <p>!!!</p>
+                            <p>This backup method does a preliminary copy of all files that were last modified prior to a defined interval before calling <code>pg_backup_start()</code>. Then the backup is started as usual and the remainder of the files are copied. The advantage is that generally a smaller set of WAL will be required to make the backup consistent, provided there are some files that have not been recently modified.</p>
+
+                            <p>The length of the prior full backup is used to determine the interval used for the preliminary copy since any files modified within this interval will likely be modified again during the backup. If no prior full backup exists then the interval is set to one day.</p>
                         </text>
 
                         <example>y</example>

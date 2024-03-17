@@ -3257,7 +3257,7 @@ testRun(void)
                 "raised from local-1 shim protocol: unable to open missing file '" TEST_PATH "/pg1/global/pg_control' for read");
 
             TEST_RESULT_LOG(
-                "P00   INFO: full/incr backup preliminary copy\n"
+                "P00   INFO: full/incr backup preliminary copy of files last modified before 2019-11-03 16:51:20\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (24KB, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DBF06000000000, lsn = 5dbf060/0\n"
@@ -3290,6 +3290,12 @@ testRun(void)
 
             HRN_STORAGE_PUT(storagePgWrite(), "below-fi-limit", file, .timeModified = backupTimeStart - 119);
 
+            // Zero-length file that will not be copied due to bundling
+            HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "empty", .timeModified = backupTimeStart - 119);
+
+            // Remove percentage log replacement to check progress reporting for full/incr
+            hrnLogReplaceRemove(", [0-9]{1,3}.[0-9]{1,2}%\\)");
+
             // Run backup
             HRN_BACKUP_SCRIPT_SET(
                 {.op = hrnBackupScriptOpUpdate, .after = true, .file = storagePathP(storagePg(), STRDEF("block-incr-grow")),
@@ -3300,11 +3306,11 @@ testRun(void)
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
-                "P00   INFO: full/incr backup preliminary copy\n"
+                "P00   INFO: full/incr backup preliminary copy of files last modified before 2019-11-03 16:51:20\n"
                 "P00   INFO: backup '20191103-165320F' cannot be resumed: partially deleted by prior resume or invalid\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (24KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/rm-after-prelim-cp (8KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/rm-before-final-cp (8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (24KB, 29.99%) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/rm-after-prelim-cp (8KB, 39.99%) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/rm-before-final-cp (8KB, 49.99%) checksum [SHA1]\n"
                 "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DBF06000000000, lsn = 5dbf060/0\n"
                 "P00   INFO: check archive for segment 0000000105DBF06000000000\n"
@@ -3314,17 +3320,18 @@ testRun(void)
                 "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191103-165320F/pg_data/rm-after-prelim-cp' from backup"
                 " (missing in manifest)\n"
                 "P00   INFO: full/incr backup final copy\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-no-resume (24KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (24KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/below-fi-limit (8KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/0, 8KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/8192, 2B, [PCT]) checksum [SHA1]\n"
+                "P00 DETAIL: store zero-length file " TEST_PATH "/pg1/empty\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-no-resume (24KB, 61.53%) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (24KB, 84.61%) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/below-fi-limit (8KB, 92.30%) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/0, 8KB, 99.99%) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/8192, 2B, 100.00%) checksum [SHA1]\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DBF06000000001, lsn = 5dbf060/300000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000000105DBF06000000000:0000000105DBF06000000001\n"
                 "P00   INFO: new backup label = 20191103-165320F\n"
-                "P00   INFO: full backup size = [SIZE], file total = 7");
+                "P00   INFO: full backup size = [SIZE], file total = 8");
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
@@ -3343,6 +3350,10 @@ testRun(void)
 
             HRN_STORAGE_REMOVE(storagePgWrite(), "rm-before-final-cp");
             HRN_STORAGE_REMOVE(storagePgWrite(), "below-fi-limit");
+            HRN_STORAGE_REMOVE(storagePgWrite(), "empty");
+
+            // Replace progress reporting to reduce log churn
+            hrnLogReplaceAdd(", [0-9]{1,3}.[0-9]{1,2}%\\)", "[0-9].+%", "PCT", false);
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -3763,7 +3774,7 @@ testRun(void)
 
             TEST_RESULT_LOG(
                 "P00   WARN: backup '20191108-080000F' missing manifest removed from backup.info\n"
-                "P00   INFO: full/incr backup preliminary copy\n"
+                "P00   INFO: full/incr backup preliminary copy of files last modified before 2019-11-08 11:44:40\n"
                 "P00   WARN: resumable backup 20191108-080000F of same type exists -- invalid files will be removed then the backup"
                 " will resume\n"
                 "P00 DETAIL: remove path '" TEST_PATH "/repo/backup/test1/20191108-080000F/bundle' from resumed backup\n"

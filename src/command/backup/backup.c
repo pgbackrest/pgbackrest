@@ -720,7 +720,7 @@ backupManifestCopySize(Manifest *const manifest)
     {
         const ManifestFile file = manifestFile(manifest, fileIdx);
 
-        if (file.copy) // {uncovered - !!!}
+        if (file.copy)
             result += file.size;
     }
 
@@ -2294,7 +2294,7 @@ backupProcess(
             }
         }
 
-        // Generate processing queues !!! NEED TO FIX SIZE TOTAL FOR FULL/INCR
+        // Generate processing queues
         sizeTotal = backupProcessQueue(backupData, manifest, &jobData, preliminary) + copySizePrelim + copySizeFinal;
 
         // Create the parallel executor
@@ -2716,14 +2716,18 @@ cmdBackup(void)
                 copySizePrelim = backupManifestCopySize(manifestPrelim);
 
                 // If not delta, then reduce final copy size by the prelim copy size
-                if (!cfgOptionBool(cfgOptDelta)) // {uncovered - !!!}
+                if (!cfgOptionBool(cfgOptDelta))
                     copySizeFinal -= copySizePrelim;
 
                 // Perform preliminary copy if there are any files to copy
                 if (manifestFileTotal(manifestPrelim) > 0)
                 {
-                    // !!! ADD TIME OF COPY LIMIT HERE
-                    LOG_INFO("full/incr backup preliminary copy");
+                    // Report limit of files to be copied in the preliminary copy
+                    struct tm timePart;
+                    char timeBuffer[20];
+
+                    strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", localtime_r(&timestampCopyStart, &timePart));
+                    LOG_INFO_FMT("full/incr backup preliminary copy of files last modified before %s", timeBuffer);
 
                     // Wait for replay on the standby to catch up
                     const String *const checkpointLsn = pgLsnToStr(backupData->checkpoint);
@@ -2744,7 +2748,7 @@ cmdBackup(void)
                     // Set cipher passphrase (if any)
                     manifestCipherSubPassSet(manifestPrelim, cipherPassGen(cfgOptionStrId(cfgOptRepoCipherType)));
 
-                    // Resume a backup when possible !!! NEED TO ADD TIME CHECKS TO RESUME LIKE INCR HAS (TO ENABLE DELTA)
+                    // Resume a backup when possible
                     backupResume(manifestPrelim, cipherPassBackup);
 
                     // Save the manifest before processing starts
