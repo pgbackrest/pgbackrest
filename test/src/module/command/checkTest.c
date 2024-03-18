@@ -26,9 +26,193 @@ testRun(void)
     const Storage *const storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     // PQfinish() is strictly checked
-    harnessPqScriptStrictSet(true);
+    hrnPqScriptStrictSet(true);
 
     StringList *argList = strLstNew();
+
+    // *****************************************************************************************************************************
+    if (testBegin("checkReport()"))
+    {
+        // Common config
+        HRN_STORAGE_PUT_Z(
+            storageTest, "pgbackrest.conf",
+            "[global]\n"
+            "repo1-path=" TEST_PATH "/repo1\n"
+            "repo1-cipher-type=aes-256-cbc\n"
+            "repo1-cipher-pass=ULmO7pKuimOzPEqHH9HUqQln\n"
+            "repo1-block=y\n"
+            "no-repo1-block=bogus\n"
+            "bogus=y\n"
+            "\n"
+            "[global:backup]\n"
+            "start-fast=y\n"
+            "reset-start-fast=bogus\n"
+            "\n"
+            "[test2]\n"
+            "pg1-path=" TEST_PATH "/test2-pg1\n"
+            "recovery-option=key1=value1\n"
+            "recovery-option=key2=value2\n"
+            "\n"
+            "[test1]\n"
+            "pg1-path=" TEST_PATH "/test1-pg1\n");
+
+        StringList *const argListCommon = strLstNew();
+        hrnCfgArgRawZ(argListCommon, cfgOptConfig, TEST_PATH "/pgbackrest.conf");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("no env, no config");
+        {
+            TEST_RESULT_STR_Z(
+                checkReport(),
+                // {uncrustify_off - indentation}
+                "{"
+                    "\"cfg\":{"
+                        "\"env\":{},"
+                        "\"file\":null"
+                    "}"
+                "}",
+                // {uncrustify_on}
+                "render");
+        }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("report on stdout");
+        {
+            argList = strLstNew();
+            hrnCfgArgRawBool(argList, cfgOptReport, true);
+            HRN_CFG_LOAD(cfgCmdCheck, argList);
+
+            // Redirect stdout to a file
+            int stdoutSave = dup(STDOUT_FILENO);
+            const String *stdoutFile = STRDEF(TEST_PATH "/stdout.info");
+
+            THROW_ON_SYS_ERROR(freopen(strZ(stdoutFile), "w", stdout) == NULL, FileWriteError, "unable to reopen stdout");
+
+            // Not in a test wrapper to avoid writing to stdout
+            cmdCheck();
+
+            // Restore normal stdout
+            dup2(stdoutSave, STDOUT_FILENO);
+
+            // Check output of info command stored in file
+            TEST_STORAGE_GET(
+                storageTest, strZ(stdoutFile),
+                // {uncrustify_off - indentation}
+                "{"
+                    "\"cfg\":{"
+                        "\"env\":{},"
+                        "\"file\":null"
+                    "}"
+                "}",
+                // {uncrustify_on}
+                .remove = true);
+        }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("env and config");
+        {
+            hrnCfgEnvRawZ(cfgOptBufferSize, "64KiB");
+            setenv(PGBACKREST_ENV "BOGUS", "bogus", true);
+            setenv(PGBACKREST_ENV "NO_ONLINE", "bogus", true);
+            setenv(PGBACKREST_ENV "DB_INCLUDE", "db1:db2", true);
+            setenv(PGBACKREST_ENV "RESET_COMPRESS_TYPE", "bogus", true);
+
+            hrnCfgLoad(cfgCmdCheck, argListCommon, (HrnCfgLoadParam){.log = true});
+
+            TEST_RESULT_STR_Z(
+                checkReport(),
+                // {uncrustify_off - indentation}
+                "{"
+                    "\"cfg\":{"
+                        "\"env\":{"
+                            "\"PGBACKREST_BOGUS\":{"
+                                "\"warn\":\"invalid option\""
+                            "},"
+                            "\"PGBACKREST_BUFFER_SIZE\":{"
+                                "\"val\":\"64KiB\""
+                            "},"
+                            "\"PGBACKREST_DB_INCLUDE\":{"
+                                "\"val\":["
+                                    "\"db1\","
+                                    "\"db2\""
+                                "]"
+                            "},"
+                            "\"PGBACKREST_NO_ONLINE\":{"
+                                "\"val\":\"bogus\","
+                                "\"warn\":\"invalid negate option\""
+                            "},"
+                            "\"PGBACKREST_RESET_COMPRESS_TYPE\":{"
+                                "\"val\":\"bogus\","
+                                "\"warn\":\"invalid reset option\""
+                            "}"
+                        "},"
+                        "\"file\":{"
+                            "\"global\":{"
+                                "\"bogus\":{"
+                                    "\"warn\":\"invalid option\""
+                                "},"
+                                "\"no-repo1-block\":{"
+                                    "\"val\":\"bogus\","
+                                    "\"warn\":\"invalid negate option\""
+                                "},"
+                                "\"repo1-block\":{"
+                                    "\"val\":\"y\""
+                                "},"
+                                "\"repo1-cipher-pass\":{"
+                                    "\"val\":\"<repo1-cipher-pass>\""
+                                "},"
+                                "\"repo1-cipher-type\":{"
+                                "\"val\":\"aes-256-cbc\""
+                                "},"
+                                "\"repo1-path\":{"
+                                    "\"val\":\"" TEST_PATH "/repo1\""
+                                "}"
+                            "},"
+                            "\"global:backup\":{"
+                                "\"reset-start-fast\":"
+                                "{"
+                                    "\"val\":\"bogus\","
+                                    "\"warn\":\"invalid reset option\""
+                                "},"
+                                "\"start-fast\":{"
+                                    "\"val\":\"y\""
+                                "}"
+                            "},"
+                            "\"test1\":{"
+                                "\"pg1-path\":{"
+                                    "\"val\":\"" TEST_PATH "/test1-pg1\""
+                                "}"
+                            "},"
+                            "\"test2\":{"
+                                "\"pg1-path\":{"
+                                    "\"val\":\"" TEST_PATH "/test2-pg1\""
+                                "},"
+                                "\"recovery-option\":{"
+                                    "\"val\":["
+                                        "\"key1=value1\","
+                                        "\"key2=value2\""
+                                    "]"
+                                "}"
+                            "}"
+                        "}"
+                    "}"
+                "}",
+                // {uncrustify_on}
+                "render");
+
+            TEST_RESULT_LOG(
+                "P00   WARN: environment contains invalid option 'bogus'\n"
+                "P00   WARN: environment contains invalid negate option 'no-online'\n"
+                "P00   WARN: environment contains invalid reset option 'reset-compress-type'\n"
+                "P00   WARN: configuration file contains negate option 'no-repo1-block'\n"
+                "P00   WARN: configuration file contains invalid option 'bogus'");
+
+            unsetenv(PGBACKREST_ENV "BOGUS");
+            unsetenv(PGBACKREST_ENV "NO_ONLINE");
+            unsetenv(PGBACKREST_ENV "DB_INCLUDE");
+            unsetenv(PGBACKREST_ENV "RESET_COMPRESS_TYPE");
+        }
+    }
 
     // *****************************************************************************************************************************
     if (testBegin("cmdCheck()"))
@@ -45,14 +229,11 @@ testRun(void)
         TEST_TITLE("fail to connect to database");
 
         // Set up harness to expect a failure to connect to the database
-        harnessPqScriptSet((HarnessPq [])
-        {
-            {.function = HRNPQ_CONNECTDB, .param = "[\"dbname='postgres' port=5432\"]"},
-            {.function = HRNPQ_STATUS, .resultInt = CONNECTION_BAD},
-            {.function = HRNPQ_ERRORMESSAGE, .resultZ = "error"},
-            {.function = HRNPQ_FINISH},
-            {.function = NULL}
-        });
+        HRN_PQ_SCRIPT_SET(
+            {.function = HRN_PQ_CONNECTDB, .param = "[\"dbname='postgres' port=5432\"]"},
+            {.function = HRN_PQ_STATUS, .resultInt = CONNECTION_BAD},
+            {.function = HRN_PQ_ERRORMESSAGE, .resultZ = "error"},
+            {.function = HRN_PQ_FINISH});
 
         TEST_ERROR(cmdCheck(), ConfigError, "no database found\nHINT: check indexed pg-path/pg-host configurations");
         TEST_RESULT_LOG(
@@ -63,12 +244,9 @@ testRun(void)
 
         HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_96);
 
-        harnessPqScriptSet((HarnessPq [])
-        {
-            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_96, TEST_PATH "/pg", true, NULL, NULL),
-            HRNPQ_MACRO_CLOSE(1),
-            HRNPQ_MACRO_DONE()
-        });
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_96, TEST_PATH "/pg", true, NULL, NULL),
+            HRN_PQ_SCRIPT_CLOSE(1));
 
         TEST_ERROR(cmdCheck(), ConfigError, "primary database not found\nHINT: check indexed pg-path/pg-host configurations");
 
@@ -88,16 +266,12 @@ testRun(void)
         HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_96);
 
         // Two standbys found but no primary
-        harnessPqScriptSet((HarnessPq [])
-        {
-            HRNPQ_MACRO_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_93, "/pgdata", true, NULL, NULL),
-            HRNPQ_MACRO_OPEN_GE_93(8, "dbname='postgres' port=5433", PG_VERSION_93, "/pgdata", true, NULL, NULL),
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_94, "/pgdata", true, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN_GE_93(8, "dbname='postgres' port=5433", PG_VERSION_94, "/pgdata", true, NULL, NULL),
 
-            HRNPQ_MACRO_CLOSE(8),
-            HRNPQ_MACRO_CLOSE(1),
-
-            HRNPQ_MACRO_DONE()
-        });
+            HRN_PQ_SCRIPT_CLOSE(8),
+            HRN_PQ_SCRIPT_CLOSE(1));
 
         TEST_ERROR(cmdCheck(), ConfigError, "primary database not found\nHINT: check indexed pg-path/pg-host configurations");
 
@@ -112,12 +286,9 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, ".5");
         HRN_CFG_LOAD(cfgCmdCheck, argList);
 
-        harnessPqScriptSet((HarnessPq [])
-        {
-            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_96, "/pgdata", true, NULL, NULL),
-            HRNPQ_MACRO_CLOSE(1),
-            HRNPQ_MACRO_DONE()
-        });
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_96, "/pgdata", true, NULL, NULL),
+            HRN_PQ_SCRIPT_CLOSE(1));
 
         // Only confirming we get passed the check for repoIsLocal || more than one pg-path configured
         TEST_ERROR(
@@ -138,12 +309,9 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         // Primary database connection ok
-        harnessPqScriptSet((HarnessPq [])
-        {
-            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_96, TEST_PATH "/pg", false, NULL, NULL),
-            HRNPQ_MACRO_CLOSE(1),
-            HRNPQ_MACRO_DONE()
-        });
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_96, TEST_PATH "/pg", false, NULL, NULL),
+            HRN_PQ_SCRIPT_CLOSE(1));
 
         TEST_ERROR(
             cmdCheck(), FileMissingError,
@@ -175,16 +343,12 @@ testRun(void)
         HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_15);
 
         // Standby database path doesn't match pg_control
-        harnessPqScriptSet((HarnessPq [])
-        {
-            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH, true, NULL, NULL),
-            HRNPQ_MACRO_OPEN_GE_96(8, "dbname='postgres' port=5433", PG_VERSION_15, TEST_PATH "/pg8", false, NULL, NULL),
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH, true, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN_GE_96(8, "dbname='postgres' port=5433", PG_VERSION_15, TEST_PATH "/pg8", false, NULL, NULL),
 
-            HRNPQ_MACRO_CLOSE(8),
-            HRNPQ_MACRO_CLOSE(1),
-
-            HRNPQ_MACRO_DONE()
-        });
+            HRN_PQ_SCRIPT_CLOSE(8),
+            HRN_PQ_SCRIPT_CLOSE(1));
 
         TEST_ERROR(
             cmdCheck(), DbMismatchError,
@@ -222,16 +386,12 @@ testRun(void)
             ",\"db-version\":\"15\"}\n");
 
         // Single repo config - error when checking archive mode setting on database
-        harnessPqScriptSet((HarnessPq [])
-        {
-            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg", true, NULL, NULL),
-            HRNPQ_MACRO_OPEN_GE_96(8, "dbname='postgres' port=5433", PG_VERSION_15, TEST_PATH "/pg8", false, "off", NULL),
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg", true, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN_GE_96(8, "dbname='postgres' port=5433", PG_VERSION_15, TEST_PATH "/pg8", false, "off", NULL),
 
-            HRNPQ_MACRO_CLOSE(1),
-            HRNPQ_MACRO_CLOSE(8),
-
-            HRNPQ_MACRO_DONE()
-        });
+            HRN_PQ_SCRIPT_CLOSE(1),
+            HRN_PQ_SCRIPT_CLOSE(8));
 
         // Error on primary but standby check ok
         TEST_ERROR(cmdCheck(), ArchiveDisabledError, "archive_mode must be enabled");
@@ -247,16 +407,12 @@ testRun(void)
         hrnCfgArgKeyRawZ(argListRepo2, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         HRN_CFG_LOAD(cfgCmdCheck, argListRepo2);
 
-        harnessPqScriptSet((HarnessPq [])
-        {
-            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg", true, NULL, NULL),
-            HRNPQ_MACRO_OPEN_GE_96(8, "dbname='postgres' port=5433", PG_VERSION_15, TEST_PATH "/pg8", false, NULL, NULL),
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg", true, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN_GE_96(8, "dbname='postgres' port=5433", PG_VERSION_15, TEST_PATH "/pg8", false, NULL, NULL),
 
-            HRNPQ_MACRO_CLOSE(8),
-            HRNPQ_MACRO_CLOSE(1),
-
-            HRNPQ_MACRO_DONE()
-        });
+            HRN_PQ_SCRIPT_CLOSE(8),
+            HRN_PQ_SCRIPT_CLOSE(1));
 
         // Stanza has not yet been created on repo2 but is created (and checked) on repo1
         TEST_ERROR_FMT(
@@ -313,14 +469,11 @@ testRun(void)
             ",\"db-version\":\"15\"}\n");
 
         // Error when WAL segment not found
-        harnessPqScriptSet((HarnessPq [])
-        {
-            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg", false, NULL, NULL),
-            HRNPQ_MACRO_CREATE_RESTORE_POINT(1, "1/1"),
-            HRNPQ_MACRO_WAL_SWITCH(1, "wal", "000000010000000100000001"),
-            HRNPQ_MACRO_CLOSE(1),
-            HRNPQ_MACRO_DONE()
-        });
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg", false, NULL, NULL),
+            HRN_PQ_SCRIPT_CREATE_RESTORE_POINT(1, "1/1"),
+            HRN_PQ_SCRIPT_WAL_SWITCH(1, "wal", "000000010000000100000001"),
+            HRN_PQ_SCRIPT_CLOSE(1));
 
         TEST_ERROR(
             cmdCheck(), ArchiveTimeoutError,
@@ -364,14 +517,11 @@ testRun(void)
         bufUsedSet(buffer, bufSize(buffer));
 
         // WAL segment switch is performed once for all repos
-        harnessPqScriptSet((HarnessPq [])
-        {
-            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg", false, NULL, NULL),
-            HRNPQ_MACRO_CREATE_RESTORE_POINT(1, "1/1"),
-            HRNPQ_MACRO_WAL_SWITCH(1, "wal", "000000010000000100000001"),
-            HRNPQ_MACRO_CLOSE(1),
-            HRNPQ_MACRO_DONE()
-        });
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg", false, NULL, NULL),
+            HRN_PQ_SCRIPT_CREATE_RESTORE_POINT(1, "1/1"),
+            HRN_PQ_SCRIPT_WAL_SWITCH(1, "wal", "000000010000000100000001"),
+            HRN_PQ_SCRIPT_CLOSE(1));
 
         HRN_STORAGE_PUT(
             storageRepoIdxWrite(0), STORAGE_REPO_ARCHIVE "/15-1/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
@@ -433,15 +583,12 @@ testRun(void)
 
         DbGetResult db = {0};
 
-        harnessPqScriptSet((HarnessPq [])
-        {
-            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_11, TEST_PATH "/pg", false, NULL, NULL),
-            HRNPQ_MACRO_OPEN_GE_96(8, "dbname='postgres' port=5433", PG_VERSION_11, "/badpath", true, NULL, NULL),
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_11, TEST_PATH "/pg", false, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN_GE_96(8, "dbname='postgres' port=5433", PG_VERSION_11, "/badpath", true, NULL, NULL),
 
-            HRNPQ_MACRO_CLOSE(1),
-            HRNPQ_MACRO_CLOSE(8),
-            HRNPQ_MACRO_DONE()
-        });
+            HRN_PQ_SCRIPT_CLOSE(1),
+            HRN_PQ_SCRIPT_CLOSE(8));
 
         TEST_ASSIGN(db, dbGet(false, false, false), "get primary and standby");
 
@@ -500,12 +647,9 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         HRN_CFG_LOAD(cfgCmdCheck, argList);
 
-        harnessPqScriptSet((HarnessPq [])
-        {
-            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_11, TEST_PATH "/pg", false, "always", NULL),
-            HRNPQ_MACRO_CLOSE(1),
-            HRNPQ_MACRO_DONE()
-        });
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_11, TEST_PATH "/pg", false, "always", NULL),
+            HRN_PQ_SCRIPT_CLOSE(1));
 
         TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
         TEST_ERROR(

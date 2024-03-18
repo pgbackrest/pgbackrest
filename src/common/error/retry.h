@@ -2,7 +2,8 @@
 Error Retry Message
 
 Accumulate errors during retries to provide a single, coherent error message to the user that includes information about the
-original error and all the failed retries.
+original error and all the failed retries. Retries with the same error message are aggregated to keep the error message as short as
+possible.
 ***********************************************************************************************************************************/
 #ifndef COMMON_ERROR_RETRY_H
 #define COMMON_ERROR_RETRY_H
@@ -22,18 +23,11 @@ Constructor
 FN_EXTERN ErrorRetry *errRetryNew(void);
 
 /***********************************************************************************************************************************
-Functions
-***********************************************************************************************************************************/
-// Add retry error
-FN_EXTERN void errRetryAdd(ErrorRetry *this);
-
-/***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct ErrorRetryPub
 {
     const ErrorType *type;                                          // Error type
-    String *message;                                                // Error message
 } ErrorRetryPub;
 
 // Get error type
@@ -44,11 +38,23 @@ errRetryType(const ErrorRetry *const this)
 }
 
 // Get error message
-FN_INLINE_ALWAYS const String *
-errRetryMessage(const ErrorRetry *const this)
+FN_EXTERN String *errRetryMessage(const ErrorRetry *this);
+
+/***********************************************************************************************************************************
+Functions
+***********************************************************************************************************************************/
+// Add error
+typedef struct ErrRetryAddParam
 {
-    return THIS_PUB(ErrorRetry)->message;
-}
+    VAR_PARAM_HEADER;
+    const ErrorType *type;                                          // Error type (defaults to errorType())
+    const String *message;                                          // Error message (defaults to errorMessage())
+} ErrRetryAddParam;
+
+#define errRetryAddP(this, ...)                                                                                                    \
+    errRetryAdd(this, (ErrRetryAddParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN void errRetryAdd(ErrorRetry *const this, ErrRetryAddParam param);
 
 /***********************************************************************************************************************************
 Destructor

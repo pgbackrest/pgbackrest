@@ -1,0 +1,213 @@
+<release date="2023-09-25" version="2.48" title="Repository Storage Tags">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <github-issue id="2182"/>
+                <github-pull-request id="2184"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="burak.yurdakul"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                    <!-- Actually tester, but we don't have a tag for that yet -->
+                    <release-item-reviewer id="burak.yurdakul"/>
+                </release-item-contributor-list>
+
+                <p>Fix issue restoring block incremental without a block list.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <github-issue id="2150"/>
+                <github-pull-request id="2159"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                    <release-item-reviewer id="timothee.peignier"/>
+                </release-item-contributor-list>
+
+                <p>Add <br-option>--repo-storage-tag</br-option> option to create object tags.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2125"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="reid.thompson"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add known hosts checking for <proper>SFTP</proper> storage driver.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Adjust Wait object to be more accurate when nested."/>
+                <commit subject="Aggregate error retries in ErrorRetry output."/>
+                <commit subject="Refactor address list lookup to include all returned addresses.">
+                    <github-pull-request id="2174"/>
+                </commit>
+                <commit subject="Support for dual stack connections.">
+                    <github-issue id="2154"/>
+                    <github-pull-request id="2175"/>
+                </commit>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Support for dual stack connections.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2007"/>
+                <github-pull-request id="2141"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="stefan.fercot"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add backup size completed/total to <cmd>info</cmd> command <proper>JSON</proper> output.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <github-pull-request id="2057"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Multi-stanza check command.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2131"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Retry reads of <file>pg_control</file> until checksum is valid.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2169"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Optimize WAL segment check after successful backup.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2162"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="reid.thompson"/>
+                </release-item-contributor-list>
+
+                <p>Improve <proper>GCS</proper> multi-part performance.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="tom.swartz"/>
+                    <release-item-reviewer id="david.christensen"/>
+                    <release-item-reviewer id="reid.thompson"/>
+                </release-item-contributor-list>
+
+                <p>Allow <cmd>archive-get</cmd> command to run when stanza is stopped.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2136"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="reid.thompson"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Accept leading tilde in paths for SFTP public/private keys.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2072"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="daniel.farina"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Reload GCS credentials before renewing authentication token.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <github-pull-request id="2176"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Add report option to <cmd>check</cmd> command.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-bug-list>
+            <release-item>
+                <github-pull-request id="2165"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="hartmut.goebel"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix configuration reference example for the <br-option>tls-server-address</br-option> option.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix command reference example for the <br-option>filter</br-option> option.</p>
+            </release-item>
+        </release-bug-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-improvement-list>
+            <release-item>
+                <github-issue id="2163"/>
+                <github-pull-request id="2177"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="wu.ning"/>
+                    <release-item-contributor id="reid.thompson"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Allow <id>storage/sftp</id> unit test to run without <id>libssh2</id> installed.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-test-list>
+</release>

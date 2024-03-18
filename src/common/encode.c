@@ -86,15 +86,8 @@ encodeToStrSizeBase64(size_t sourceSize)
         FUNCTION_TEST_PARAM(SIZE, sourceSize);
     FUNCTION_TEST_END();
 
-    // Calculate how many groups of three are in the source
-    size_t encodeGroupTotal = sourceSize / 3;
-
-    // Increase by one if there is a partial group
-    if (sourceSize % 3 != 0)
-        encodeGroupTotal++;
-
-    // Four characters are needed to encode each group
-    FUNCTION_TEST_RETURN(SIZE, encodeGroupTotal * 4);
+    // Four characters are needed to encode each 3 byte group (plus up to two bytes of padding)
+    FUNCTION_TEST_RETURN(SIZE, (sourceSize + 2) / 3 * 4);
 }
 
 /**********************************************************************************************************************************/
@@ -291,28 +284,8 @@ encodeToStrSizeBase64Url(size_t sourceSize)
         FUNCTION_TEST_PARAM(SIZE, sourceSize);
     FUNCTION_TEST_END();
 
-    // Calculate how many groups of three are in the source. Each group of three is encoded with four bytes.
-    size_t encodeTotal = sourceSize / 3 * 4;
-
-    // Determine additional required bytes for the partial group, if any
-    switch (sourceSize % 3)
-    {
-        // One byte requires two characters to encode
-        case 1:
-            encodeTotal += 2;
-            break;
-
-        // Two bytes require three characters to encode
-        case 2:
-            encodeTotal += 3;
-            break;
-
-        // If mod is zero then sourceSize was evenly divisible and no additional bytes are required
-        case 0:
-            break;
-    }
-
-    FUNCTION_TEST_RETURN(SIZE, encodeTotal);
+    // Four characters are needed to encode each 3 byte group, three characters for 2 bytes, and two characters for 1 byte
+    FUNCTION_TEST_RETURN(SIZE, sourceSize / 3 * 4 + (sourceSize % 3 == 0 ? 0 : sourceSize % 3 + 1));
 }
 
 /***********************************************************************************************************************************

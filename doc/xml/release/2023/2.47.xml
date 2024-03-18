@@ -1,0 +1,148 @@
+<release date="2023-07-24" version="2.47" title="Performance Improvements and Bug Fixes">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <commit subject="Improve validation of referenced files in command/backup unit test."/>
+                <commit subject="Preserve block incremental info in manifest during delta backup.">
+                    <github-issue id="2112"/>
+                    <github-pull-request id="2123"/>
+                </commit>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="francisco.miguel.biete"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Preserve block incremental info in manifest during delta backup.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2112"/>
+                <github-pull-request id="2120"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="francisco.miguel.biete"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="reid.thompson"/>
+                </release-item-contributor-list>
+
+                <p>Fix block incremental file names in <cmd>verify</cmd> command.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2020"/>
+                <github-pull-request id="2124"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="krmozejko"/>
+                    <release-item-ideator id="don.seiler"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Fix spurious automatic delta backup on backup from standby.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2062"/>
+                <github-pull-request id="2070"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="t.anastacio"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Skip <file>recovery.signal</file> for <postgres/> &gt;= 12 when recovery <br-option>type=none</br-option>.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="1873"/>
+                <github-pull-request id="2104"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="andrey.sokolov"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix unique label generation for diff/incr backup.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2103"/>
+                <github-pull-request id="2109"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Fix time-based archive expiration when no backups are expired.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-improvement-list>
+            <release-item>
+                <commit subject="Make result code handling in storage/sftp more consistent."/>
+                <commit subject="Cleanup of init/handshake in storageSftpNew()."/>
+                <commit subject="Improve performance of SFTP storage driver.">
+                    <github-pull-request id="2089"/>
+                </commit>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="stephen.frost"/>
+                    <release-item-contributor id="reid.thompson"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve performance of <proper>SFTP</proper> storage driver.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Add timezone offset to info command date/time output.">
+                    <github-issue id="2093"/>
+                    <github-pull-request id="2095"/>
+                </commit>
+                <commit subject="Modify time_t casts based on complaints from Coverity."/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="philip.hurst"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                    <release-item-reviewer id="philip.hurst"/>
+                </release-item-contributor-list>
+
+                <p>Add timezone offset to <cmd>info</cmd> command date/time output.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Refactor allow list processing in config/parse module."/>
+                <commit subject="Centralize error handling for unsupported features.">
+                    <github-pull-request id="2075"/>
+                </commit>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Centralize error handling for unsupported features.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="dr-kd"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Clarify preference to install from packages in the user guide.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-doc-list>
+</release>

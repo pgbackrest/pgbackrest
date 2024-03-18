@@ -104,6 +104,7 @@ typedef enum
     manifestFilePackFlagBlockIncr,
     manifestFilePackFlagCopy,
     manifestFilePackFlagDelta,
+    manifestFilePackFlagSizePrior,
     manifestFilePackFlagResume,
     manifestFilePackFlagChecksumPage,
     manifestFilePackFlagChecksumPageError,
@@ -145,6 +146,9 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
 
     if (file->delta)
         flag |= 1 << manifestFilePackFlagDelta;
+
+    if (file->reference && file->sizePrior != 0)
+        flag |= 1 << manifestFilePackFlagSizePrior;
 
     if (file->resume)
         flag |= 1 << manifestFilePackFlagResume;
@@ -191,6 +195,10 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
     // Original size
     if (flag & (1 << manifestFilePackFlagSizeOriginal))
         cvtUInt64ToVarInt128(file->sizeOriginal, buffer, &bufferPos, sizeof(buffer));
+
+    // Prior size
+    if (flag & (1 << manifestFilePackFlagSizePrior))
+        cvtUInt64ToVarInt128(cvtInt64ToZigZag((int64_t)file->size - (int64_t)file->sizePrior), buffer, &bufferPos, sizeof(buffer));
 
     // Use the first timestamp that appears as the base for all other timestamps. Ideally we would like a timestamp as close to the
     // middle as possible but it doesn't seem worth doing the calculation.
@@ -321,6 +329,14 @@ manifestFileUnpack(const Manifest *const manifest, const ManifestFilePack *const
         result.sizeOriginal = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
     else
         result.sizeOriginal = result.size;
+
+    // Prior size
+    if (flag & (1 << manifestFilePackFlagSizePrior))
+    {
+        result.sizePrior =
+            (uint64_t)
+            ((int64_t)result.size - cvtInt64FromZigZag(cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX)));
+    }
 
     // Timestamp
     result.timestamp =
@@ -940,7 +956,7 @@ manifestBuildInfo(
             if (strEq(manifestParentName, MANIFEST_TARGET_PGDATA_STR))
             {
                 // Skip pg_dynshmem/* since these files cannot be reused on recovery
-                if (strEqZ(info->name, PG_PATH_PGDYNSHMEM) && pgVersion >= PG_VERSION_94)
+                if (strEqZ(info->name, PG_PATH_PGDYNSHMEM))
                     FUNCTION_TEST_RETURN_VOID();
 
                 // Skip pg_notify/* since these files cannot be reused on recovery
@@ -948,7 +964,7 @@ manifestBuildInfo(
                     FUNCTION_TEST_RETURN_VOID();
 
                 // Skip pg_replslot/* since these files are generally not useful after a restore
-                if (strEqZ(info->name, PG_PATH_PGREPLSLOT) && pgVersion >= PG_VERSION_94)
+                if (strEqZ(info->name, PG_PATH_PGREPLSLOT))
                     FUNCTION_TEST_RETURN_VOID();
 
                 // Skip pg_serial/* since these files are reset
@@ -1031,7 +1047,7 @@ manifestBuildInfo(
                     ((strEqZ(info->name, PG_FILE_RECOVERYCONF) || strEqZ(info->name, PG_FILE_RECOVERYDONE)) &&
                      pgVersion < PG_VERSION_12) ||
                     // Skip temp file for safely writing postgresql.auto.conf
-                    (strEqZ(info->name, PG_FILE_POSTGRESQLAUTOCONFTMP) && pgVersion >= PG_VERSION_94) ||
+                    (strEqZ(info->name, PG_FILE_POSTGRESQLAUTOCONFTMP)) ||
                     // Skip backup_label in versions where non-exclusive backup is supported
                     (strEqZ(info->name, PG_FILE_BACKUPLABEL) && pgVersion >= PG_VERSION_96) ||
                     // Skip old backup labels
@@ -1663,42 +1679,84 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
             }
         }
 
-        // Find files to reference in the prior manifest:
-        // 1) that don't need to be copied because delta is disabled and the size and timestamp match or size matches and is zero
-        // 2) where delta is enabled and size matches so checksum will be verified during backup and the file copied on mismatch
+        // Find files to (possibly) reference in the prior manifest
         bool delta = varBool(this->pub.data.backupOptionDelta);
 
         for (unsigned int fileIdx = 0; fileIdx < lstSize(this->pub.fileList); fileIdx++)
         {
             ManifestFile file = manifestFile(this, fileIdx);
 
-            // Check if prior file can be used
+            // Check if a prior file exists
             if (manifestFileExists(manifestPrior, file.name))
             {
                 const ManifestFile filePrior = manifestFileFind(manifestPrior, file.name);
 
-                if (file.copy &&
-                    ((filePrior.blockIncrMapSize > 0 && file.blockIncrSize > 0) ||
-                     (file.size == filePrior.size && (delta || file.size == 0 || file.timestamp == filePrior.timestamp))))
+                // If the file will be copied then preserve values from the prior file when needed. Some files may have been
+                // designated not to be copied at manifest build time, e.g. zero-length files when bundling.
+                if (file.copy)
                 {
-                    file.sizeRepo = filePrior.sizeRepo;
-                    file.checksumSha1 = filePrior.checksumSha1;
-                    file.checksumRepoSha1 = filePrior.checksumRepoSha1;
-                    file.reference = filePrior.reference != NULL ? filePrior.reference : manifestPrior->pub.data.backupLabel;
-                    file.checksumPage = filePrior.checksumPage;
-                    file.checksumPageError = filePrior.checksumPageError;
-                    file.checksumPageErrorList = filePrior.checksumPageErrorList;
-                    file.bundleId = filePrior.bundleId;
-                    file.bundleOffset = filePrior.bundleOffset;
-                    file.blockIncrSize = filePrior.blockIncrSize;
-                    file.blockIncrChecksumSize = filePrior.blockIncrChecksumSize;
-                    file.blockIncrMapSize = filePrior.blockIncrMapSize;
+                    // If file size is equal to prior size then the file can be referenced instead of copied if it has not changed
+                    // (this must be determined during the backup).
+                    const bool fileSizeEqual = file.size == filePrior.size;
 
-                    // Perform delta if the file size is not zero
-                    file.delta = delta && file.size != 0;
+                    // If prior file was stored with block incremental and file size is at least prior file block size then preserve
+                    // prior values. If file size is less than prior file block size then the entire file will need to be stored and
+                    // the map will be useless as long as the file stays at this size. It is not possible to change the block size
+                    // in a backup set and the map info will be required to compare against the prior block incremental.
+                    const bool fileBlockIncrPreserve = filePrior.blockIncrMapSize > 0 && file.size >= filePrior.blockIncrSize;
 
-                    // Copy if the file has changed or delta
-                    file.copy = (file.size != 0 && file.timestamp != filePrior.timestamp) || file.delta;
+                    // Perform delta if enabled and file size is equal to prior but not zero. Files of unequal length are always
+                    // different while zero-length files are always the same, so it wastes time to check them. It is possible for
+                    // a file to be truncated down to equal the prior file during backup, but the overhead of checking for such an
+                    // unlikely event does not seem worth the possible space saved.
+                    file.delta = delta && fileSizeEqual && file.size != 0;
+
+                    // Do not copy if size and prior size are both zero. Zero-length files are always equal so the file can simply
+                    // be referenced to the prior file. Note that this is only for the case where zero-length files are being
+                    // explicitly written to the repo. Bundled zero-length files disable copy at manifest build time and never
+                    // reference the prior file, even if it is also zero-length.
+                    if (file.size == 0 && filePrior.size == 0)
+                        file.copy = false;
+
+                    // If delta is disabled and size/timestamp are equal then the file is not copied
+                    if (!file.delta && fileSizeEqual && file.timestamp == filePrior.timestamp)
+                        file.copy = false;
+
+                    ASSERT(file.copy || !file.delta);
+                    ASSERT(file.copy || fileSizeEqual);
+                    ASSERT(!file.delta || fileSizeEqual);
+
+                    // Preserve values if the file will not be copied, is possibly equal to the prior file, or will be stored with
+                    // block incremental and the prior file is also stored with block incremental. If the file will not be copied
+                    // then the file size must be equal to the prior file so there is no need to check that condition separately.
+                    if (fileSizeEqual || fileBlockIncrPreserve)
+                    {
+                        file.sizePrior = filePrior.size;
+                        file.sizeRepo = filePrior.sizeRepo;
+                        file.checksumSha1 = filePrior.checksumSha1;
+                        file.checksumRepoSha1 = filePrior.checksumRepoSha1;
+                        file.reference = filePrior.reference != NULL ? filePrior.reference : manifestPrior->pub.data.backupLabel;
+                        file.checksumPage = filePrior.checksumPage;
+                        file.checksumPageError = filePrior.checksumPageError;
+                        file.checksumPageErrorList = filePrior.checksumPageErrorList;
+                        file.bundleId = filePrior.bundleId;
+                        file.bundleOffset = filePrior.bundleOffset;
+                        file.blockIncrSize = filePrior.blockIncrSize;
+                        file.blockIncrChecksumSize = filePrior.blockIncrChecksumSize;
+                        file.blockIncrMapSize = filePrior.blockIncrMapSize;
+
+                        ASSERT(file.checksumSha1 != NULL);
+                        ASSERT(
+                            (!file.checksumPage && !file.checksumPageError && file.checksumPageErrorList == NULL) ||
+                            (file.checksumPage && !file.checksumPageError && file.checksumPageErrorList == NULL) ||
+                            (file.checksumPage && file.checksumPageError));
+                        ASSERT(file.size == 0 || file.sizeRepo != 0);
+                        ASSERT(file.reference != NULL);
+                        ASSERT(file.bundleId != 0 || file.bundleOffset == 0);
+                        ASSERT(
+                            (file.blockIncrSize == 0 && file.blockIncrChecksumSize == 0 && file.blockIncrMapSize == 0) ||
+                            (file.blockIncrSize > 0 && file.blockIncrChecksumSize > 0 && file.blockIncrMapSize > 0));
+                    }
 
                     manifestFileUpdate(this, &file);
                 }

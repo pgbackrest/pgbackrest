@@ -86,7 +86,7 @@ main(const int argListSize, const char *const argList[])
         if (strEqZ(STRDEF("help"), argList[1]))
         {
             const BldCfg bldCfg = bldCfgParse(storageRepo);
-            bldHlpRender(storageBuild, bldCfg, bldHlpParse(storageRepo, bldCfg));
+            bldHlpRender(storageBuild, bldCfg, bldHlpParse(storageRepo, bldCfg, false));
         }
 
         // PostgreSQL

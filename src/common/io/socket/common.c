@@ -9,7 +9,7 @@ Socket Common Functions
 #include <sys/socket.h>
 
 #include "common/debug.h"
-#include "common/io/fd.h"
+#include "common/io/socket/address.h"
 #include "common/io/socket/common.h"
 #include "common/log.h"
 #include "common/wait.h"
@@ -53,41 +53,6 @@ sckInit(bool block, bool keepAlive, int tcpKeepAliveCount, int tcpKeepAliveIdle,
     socketLocal.tcpKeepAliveInterval = tcpKeepAliveInterval;
 
     FUNCTION_LOG_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-FN_EXTERN struct addrinfo *
-sckHostLookup(const String *const host, unsigned int port)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STRING, host);
-        FUNCTION_LOG_PARAM(UINT, port);
-    FUNCTION_LOG_END();
-
-    ASSERT(host != NULL);
-    ASSERT(port != 0);
-
-    // Set hints that narrow the type of address we are looking for -- we'll take ipv4 or ipv6
-    struct addrinfo hints = (struct addrinfo)
-    {
-        .ai_family = AF_UNSPEC,
-        .ai_flags = AI_PASSIVE,
-        .ai_socktype = SOCK_STREAM,
-        .ai_protocol = IPPROTO_TCP,
-    };
-
-    // Convert the port to a zero-terminated string for use with getaddrinfo()
-    char portZ[CVT_BASE10_BUFFER_SIZE];
-    cvtUIntToZ(port, portZ, sizeof(portZ));
-
-    // Do the lookup
-    struct addrinfo *result;
-    int error;
-
-    if ((error = getaddrinfo(strZ(host), portZ, &hints, &result)) != 0)
-        THROW_FMT(HostConnectError, "unable to get address for '%s': [%d] %s", strZ(host), error, gai_strerror(error));
-
-    FUNCTION_LOG_RETURN_P(VOID, result);
 }
 
 /**********************************************************************************************************************************/
@@ -170,53 +135,4 @@ sckOptionSet(int fd)
     }
 
     FUNCTION_TEST_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-static bool
-sckConnectInProgress(int errNo)
-{
-    return errNo == EINPROGRESS || errNo == EINTR;
-}
-
-FN_EXTERN void
-sckConnect(int fd, const String *host, unsigned int port, const struct addrinfo *hostAddress, TimeMSec timeout)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(INT, fd);
-        FUNCTION_LOG_PARAM(STRING, host);
-        FUNCTION_LOG_PARAM(UINT, port);
-        FUNCTION_LOG_PARAM_P(VOID, hostAddress);
-        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
-    FUNCTION_LOG_END();
-
-    ASSERT(host != NULL);
-    ASSERT(hostAddress != NULL);
-
-    // Attempt connection
-    if (connect(fd, hostAddress->ai_addr, hostAddress->ai_addrlen) == -1)
-    {
-        // Save the error
-        int errNo = errno;
-
-        // The connection has started but since we are in non-blocking mode it has not completed yet
-        if (sckConnectInProgress(errNo))
-        {
-            // Wait for write-ready
-            if (!fdReadyWrite(fd, timeout))
-                THROW_FMT(HostConnectError, "timeout connecting to '%s:%u'", strZ(host), port);
-
-            // Check for success or error. If the connection was successful this will set errNo to 0.
-            socklen_t errNoLen = sizeof(errNo);
-
-            THROW_ON_SYS_ERROR(
-                getsockopt(fd, SOL_SOCKET, SO_ERROR, &errNo, &errNoLen) == -1, HostConnectError, "unable to get socket error");
-        }
-
-        // Throw error if it is still set
-        if (errNo != 0)
-            THROW_SYS_ERROR_CODE_FMT(errNo, HostConnectError, "unable to connect to '%s:%u'", strZ(host), port);
-    }
-
-    FUNCTION_LOG_RETURN_VOID();
 }

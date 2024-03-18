@@ -1,0 +1,176 @@
+<release date="2017-11-21" version="1.26" title="Repository Encryption">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="craig.a.james"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue that could cause copying large manifests to fail during restore.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="javier.wilson"/>
+                </release-item-contributor-list>
+
+                <p>Fixed incorrect WAL offset for 32-bit architectures.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="clinton.adams"/>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue retrieving WAL for old database versions. After a <cmd>stanza-upgrade</cmd> it should still be possible to restore backups from the previous version and perform recovery with <cmd>archive-get</cmd>. However, archive-get only checked the most recent db version/id and failed. Also clean up some issues when the same db version/id appears multiple times in the history.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="jeff.mccormick"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue with invalid backup groups being set correctly on restore. If the backup cannot map a group to a name it stores the group in the manifest as <id>false</id> then uses either the owner of $PGDATA to set the group during restore or failing that the group of the current user. This logic was not working correctly because the selected group was overwriting the user on restore leaving the group undefined and the user incorrectly set to the group.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="uspen"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue passing parameters to remotes. When more than one db was specified the path, port, and socket path would for db1 were passed no matter which db was actually being addressed.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Repository encryption support.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <p>Disable gzip filter when <br-option>--compress-level-network=0</br-option>. The filter was used with compress level set to 0 which added overhead without any benefit.</p>
+            </release-item>
+
+            <release-item>
+                <p>Inflate performance improvement for gzip filter.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Refactor protocol param generation into a new function. This allows the code to be tested more precisely and doesn't require executing a remote process.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <id>list</id> type for options. The <id>hash</id> type was being used for lists with an additional flag (`value-hash`) to indicate that it was not really a hash.</p>
+            </release-item>
+
+            <release-item>
+                <p>Remove configurable option hints. <br-option>db-path</br-option> was the only option with a hint so the feature seemed wasteful. All missing stanza options now output the same hint without needing configuration.</p>
+            </release-item>
+
+            <release-item>
+                <p>Convert configuration definitions from auto-generated functions to auto-generated data structures.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <id>eof</id> to S3 file driver (required for encryption support).</p>
+            </release-item>
+
+            <release-item>
+                <p>Enable additional warnings for C builds.</p>
+            </release-item>
+
+            <release-item>
+                <p>Simplify try..catch..finally names. Also wrap in a do...while loop to make sure that no random else is attached to the main if block.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improve base64 implementation. Different encoded strings could be generated based on compiler optimizations. Even though decoding was still successful the encoded strings did not match the standard.</p>
+            </release-item>
+
+            <release-item>
+                <p>Disable <id>-Wclobber</id> compiler warning because it is mostly useless but keep the rest of of <id>-Wextra</id>.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-feature-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Add template to improve initial information gathered for issue submissions.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="keith.fiske"/>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Clarify usage of the <br-option>archive-timeout</br-option> option and describe how it is distinct from the <postgres/> <pg-option>archive_timeout</pg-option> setting.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Update <file>release.pl</file> to push data to site repository.</p>
+            </release-item>
+        </release-development-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-feature-list>
+            <release-item>
+                <p>Automated tests for 32-bit i386/i686 architecture.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Update Debian/Ubuntu containers to download latest version of <file>pip</file>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Full unit test coverage for gzip filter.</p>
+            </release-item>
+
+            <release-item>
+                <p>Only check expect logs on CentOS 7. Variations in distros cause false negatives in tests but don't add much value.</p>
+            </release-item>
+
+            <release-item>
+                <p>Fix flapping protocol timeout test. It only matters that the correct error code is returned, so disable logging to prevent message ordering from failing the expect test.</p>
+            </release-item>
+
+            <release-item>
+                <p>Designate a single distro (Ubuntu 16.04) for coverage testing. Running coverage testing on multiple distros takes time but doesn't add significant value. Also ensure that the distro designated to run coverage tests is one of the default test distros. For C tests, enable optimizations on the distros that don't do coverage testing.</p>
+            </release-item>
+
+            <release-item>
+                <p>Automate generation of WAL and <file>pg_control</file> test files. The existing static files would not work with 32-bit or big-endian systems so create functions to generate these files dynamically rather than creating a bunch of new static files.</p>
+            </release-item>
+
+            <release-item>
+                <p>Refactor C unit test macros so they compile with <id>-Wstrict-aliasing</id>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Refactor C page checksum unit test to compile with <id>-Wstrict-aliasing</id>.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+</release>

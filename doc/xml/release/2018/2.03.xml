@@ -1,0 +1,65 @@
+<release date="2018-05-22" version="2.03" title="Single Executable to Deploy">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="laetitia"/>
+                </release-item-contributor-list>
+
+                <p>Fix potential buffer overrun in error message handling.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="uspen"/>
+                </release-item-contributor-list>
+
+                <p>Fix archive write lock being taken for the synchronous <cmd>archive-get</cmd> command.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-improvement-list>
+            <release-item>
+                <p>Embed exported C functions and Perl modules directly into the <backrest/> executable.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="nick.floersch"/>
+                </release-item-contributor-list>
+
+                <p>Use <code>time_t</code> instead of <code>__time_t</code> for better portability.</p>
+            </release-item>
+
+            <release-item>
+                <p>Print total runtime in milliseconds at command end.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Add stack trace macros to all functions. Low-level functions only include stack trace in test builds while higher-level functions ship with stack trace built-in. Stack traces include all parameters passed to the function but production builds only create the parameter list when the log level is set high enough, i.e. <id>debug</id> or <id>trace</id> depending on the function.</p>
+            </release-item>
+
+            <release-item>
+                <p>Build <path>libc</path> using links rather than referencing the C files in <path>src</path> directly. The C library builds with different options which should not be reused for the C binary or vice versa.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <p>Test harness improvements. Allow more than one test to provide coverage for the same module. Add option to disable valgrind. Add option to disabled coverage. Add option to disable debug build. Add option to disable compiler optimization. Add <id>--dev-test</id> mode.</p>
+            </release-item>
+
+            <release-item>
+                <p>Update SSL error message test on CentOS 7.</p>
+            </release-item>
+
+            <release-item>
+                <p>Set <br-option>log-timestamp=n</br-option> for integration tests. This means less filtering of logs needs to be done and new timestamps can be added without adding new filters.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+</release>

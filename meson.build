@@ -4,7 +4,7 @@
 project(
     'pgbackrest',
     ['c'],
-    version: '2.48dev',
+    version: '2.51dev',
     license: 'MIT',
     meson_version: '>=0.45',
     default_options: [
@@ -213,4 +213,5 @@ configuration.set(
 # Include subdirs
 ####################################################################################################################################
 subdir('src')
+subdir('doc/src')
 subdir('test/src')

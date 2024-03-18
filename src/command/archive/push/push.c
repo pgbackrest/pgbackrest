@@ -60,37 +60,30 @@ archivePushDropWarning(const String *const walFile, const uint64_t queueMax)
 Determine if the WAL process list has become large enough to drop
 ***********************************************************************************************************************************/
 static bool
-archivePushDrop(const String *walPath, const StringList *const processList)
+archivePushDrop(const String *const walPath, const StringList *const processList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, walPath);
         FUNCTION_LOG_PARAM(STRING_LIST, processList);
     FUNCTION_LOG_END();
 
+    ASSERT(walPath != NULL);
+    ASSERT(processList != NULL);
+
     const uint64_t queueMax = cfgOptionUInt64(cfgOptArchivePushQueueMax);
     uint64_t queueSize = 0;
-    bool result = false;
 
-    MEM_CONTEXT_TEMP_RESET_BEGIN()
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        for (unsigned int processIdx = 0; processIdx < strLstSize(processList); processIdx++)
+        if (!strLstEmpty(processList))
         {
-            queueSize += storageInfoP(
-                storagePg(), strNewFmt("%s/%s", strZ(walPath), strZ(strLstGet(processList, processIdx)))).size;
-
-            if (queueSize > queueMax)
-            {
-                result = true;
-                break;
-            }
-
-            // Reset the memory context occasionally so we don't use too much memory or slow down processing
-            MEM_CONTEXT_TEMP_RESET(1000);
+            queueSize = storageInfoP(
+                storagePg(), strNewFmt("%s/%s", strZ(walPath), strZ(strLstGet(processList, 0)))).size * strLstSize(processList);
         }
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(BOOL, result);
+    FUNCTION_LOG_RETURN(BOOL, queueSize > queueMax);
 }
 
 /***********************************************************************************************************************************

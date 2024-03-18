@@ -39,7 +39,8 @@ testRun(void)
 
     // Create help data
     const BldCfg bldCfg = bldCfgParse(storagePosixNewP(HRN_PATH_REPO_STR));
-    const Buffer *const helpData = bldHlpRenderHelpAutoCCmp(bldCfg, bldHlpParse(storagePosixNewP(HRN_PATH_REPO_STR), bldCfg));
+    const Buffer *const helpData = bldHlpRenderHelpAutoCCmp(
+        bldCfg, bldHlpParse(storagePosixNewP(HRN_PATH_REPO_STR), bldCfg, false));
 
     // Program name a version are used multiple times
     const char *helpVersion = PROJECT_NAME " " PROJECT_VERSION;
@@ -211,7 +212,8 @@ testRun(void)
             "  --link-all                          restore all symlinks [default=n]\n"
             "  --link-map                          modify the destination of a symlink\n"
             "                                      [current=/link1=/dest1, /link2=/dest2]\n"
-            "  --recovery-option                   set an option in recovery.conf\n"
+            "  --recovery-option                   set an option in postgresql.auto.conf or\n"
+            "                                      recovery.conf\n"
             "  --set                               backup set to restore [default=latest]\n"
             "  --tablespace-map                    restore a tablespace into the specified\n"
             "                                      directory\n"
@@ -265,6 +267,10 @@ testRun(void)
             "  --log-subprocess                    enable logging in subprocesses [default=n]\n"
             "  --log-timestamp                     enable timestamp in logging [default=y]\n"
             "\n",
+            "Maintainer Options:\n"
+            "\n"
+            "  --pg-version-force                  force PostgreSQL version\n"
+            "\n"
             "Repository Options:\n"
             "\n"
             "  --repo                              set repository\n"
@@ -319,9 +325,11 @@ testRun(void)
             "  --repo-s3-uri-style                 S3 URI Style [default=host]\n"
             "  --repo-sftp-host                    SFTP repository host\n"
             "  --repo-sftp-host-fingerprint        SFTP repository host fingerprint\n"
+            "  --repo-sftp-host-key-check-type     SFTP host key check type [default=strict]\n"
             "  --repo-sftp-host-key-hash-type      SFTP repository host key hash type\n"
             "  --repo-sftp-host-port               SFTP repository host port [default=22]\n"
             "  --repo-sftp-host-user               SFTP repository host user\n"
+            "  --repo-sftp-known-host              SFTP known hosts file\n"
             "  --repo-sftp-private-key-file        SFTP private key file\n"
             "  --repo-sftp-private-key-passphrase  SFTP private key passphrase\n"
             "  --repo-sftp-public-key-file         SFTP public key file\n"
@@ -329,6 +337,7 @@ testRun(void)
             "  --repo-storage-ca-path              repository storage CA path\n"
             "  --repo-storage-host                 repository storage host\n"
             "  --repo-storage-port                 repository storage port [default=443]\n"
+            "  --repo-storage-tag                  repository storage tag(s)\n"
             "  --repo-storage-upload-chunk-size    repository storage upload chunk size\n"
             "  --repo-storage-verify-tls           repository storage certificate verify\n"
             "                                      [default=y]\n"

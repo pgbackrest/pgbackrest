@@ -154,7 +154,7 @@ httpRequestProcess(HttpRequest *this, bool waitForResponse, bool contentCache)
             CATCH_ANY()
             {
                 // Add the error retry info
-                errRetryAdd(errRetry);
+                errRetryAddP(errRetry);
 
                 // Sleep and then retry unless the total wait time has expired
                 if (waitMore(wait))

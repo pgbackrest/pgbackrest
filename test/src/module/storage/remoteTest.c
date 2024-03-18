@@ -265,6 +265,24 @@ testRun(void)
             "raised from remote-0 shim protocol: " STORAGE_ERROR_READ_MISSING, TEST_PATH "/pg256/test.txt");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("raw read file without compression");
+
+        HRN_STORAGE_PUT(storageTest, TEST_PATH "/repo128/test.txt", contentBuf);
+
+        // Disable protocol compression in the storage object
+        ((StorageRemote *)storageDriver(storageRepo))->compressLevel = 0;
+
+        Buffer *buffer = bufNew(bufUsed(contentBuf));
+        size_t size;
+        StorageRead *fileReadRaw;
+        TEST_ASSIGN(fileReadRaw, storageNewReadP(storageRepo, STRDEF("test.txt")), "new file");
+        TEST_RESULT_BOOL(ioReadOpen(storageReadIo(fileReadRaw)), true, "open read");
+        TEST_ASSIGN(size, storageReadRemote(fileReadRaw->driver, buffer, true), "read file and save returned size");
+        TEST_RESULT_UINT(size, bufUsed(buffer), "check returned size");
+        TEST_RESULT_UINT(size, bufUsed(contentBuf), "returned size should be the same as the file size");
+        TEST_RESULT_VOID(ioReadClose(storageReadIo(fileReadRaw)), "close");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read file without compression");
 
         HRN_STORAGE_PUT(storageTest, TEST_PATH "/repo128/test.txt", contentBuf);
@@ -295,7 +313,7 @@ testRun(void)
 
         size_t bufferOld = ioBufferSize();
         ioBufferSizeSet(11);
-        Buffer *buffer = bufNew(11);
+        buffer = bufNew(11);
 
         TEST_ASSIGN(fileRead, storageNewReadP(storageRepo, STRDEF("test.txt"), .limit = VARUINT64(11)), "get file");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(fileRead)), true, "open read");

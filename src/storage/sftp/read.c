@@ -70,7 +70,11 @@ storageReadSftpOpen(THIS_VOID)
                     THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->interface.name));
             }
             else
-                THROW_FMT(FileOpenError, STORAGE_ERROR_READ_OPEN, strZ(this->interface.name));
+            {
+                storageSftpEvalLibSsh2Error(
+                    rc, libssh2_sftp_last_error(this->sftpSession), &FileOpenError,
+                    strNewFmt(STORAGE_ERROR_READ_OPEN, strZ(this->interface.name)), NULL);
+            }
         }
     }
     // Else success
@@ -152,7 +156,11 @@ storageReadSftp(THIS_VOID, Buffer *const buffer, const bool block)
             else if (rc == LIBSSH2_ERROR_EAGAIN)
                 THROW_FMT(FileReadError, "timeout reading '%s'", strZ(this->interface.name));
             else
-                THROW_FMT(FileReadError, "unable to read '%s'", strZ(this->interface.name));
+            {
+                storageSftpEvalLibSsh2Error(
+                    (int)rc, libssh2_sftp_last_error(this->sftpSession), &FileReadError,
+                    strNewFmt("unable to read '%s'", strZ(this->interface.name)), NULL);
+            }
         }
 
         // Update amount of buffer used
@@ -201,7 +209,11 @@ storageReadSftpClose(THIS_VOID)
                     rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
                         strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
             else
-                THROW_FMT(FileCloseError, "timeout closing file '%s'", strZ(this->interface.name));
+            {
+                storageSftpEvalLibSsh2Error(
+                    rc, libssh2_sftp_last_error(this->sftpSession), &FileCloseError,
+                    strNewFmt("timeout closing file '%s'", strZ(this->interface.name)), NULL);
+            }
         }
     }
 

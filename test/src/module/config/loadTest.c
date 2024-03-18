@@ -118,6 +118,7 @@ testRun(void)
             "local repo1 and repo2 paths are both '/var/lib/pgbackrest' but must be different");
 
         // -------------------------------------------------------------------------------------------------------------------------
+#ifdef HAVE_LIBSSH2
         TEST_TITLE("local default repo paths for sftp repo type must be different");
 
         argList = strLstNew();
@@ -135,6 +136,7 @@ testRun(void)
         TEST_ERROR(
             hrnCfgLoadP(cfgCmdInfo, argList), OptionInvalidValueError,
             "local repo1 and repo2 paths are both '/var/lib/pgbackrest' but must be different");
+#endif // HAVE_LIBSSH2
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("local repo paths same but types different");
@@ -640,6 +642,104 @@ testRun(void)
 
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoAzureAccount, 1);
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoAzureKey, 1);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+#ifdef HAVE_LIBSSH2
+        TEST_TITLE("error on missing SFTP fingerprint");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 1, "sftp");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostUser, TEST_USER);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, "/privatekey");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyCheckType, "fingerprint");
+
+        TEST_ERROR(
+            hrnCfgLoadP(cfgCmdArchivePush, argList), OptionRequiredError,
+            "archive-push command requires option: repo1-sftp-host-fingerprint");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("success on SFTP fingerprint not needed");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 1, "sftp");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostUser, TEST_USER);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, "/privatekey");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyCheckType, "accept-new");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on incorrect SFTP fingerprint check type");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 1, "sftp");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostUser, TEST_USER);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, "/privatekey");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostFingerprint, "xxx");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyCheckType, "strict");
+
+        TEST_ERROR(
+            hrnCfgLoadP(cfgCmdArchivePush, argList), OptionInvalidError,
+            "option 'repo1-sftp-host-fingerprint' not valid without option 'repo1-sftp-host-key-check-type' = 'fingerprint'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("warn on default SFTP fingerprint check type");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 1, "sftp");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostUser, TEST_USER);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, "/privatekey");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostFingerprint, "xxx");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        TEST_RESULT_LOG(
+            "P00   WARN: option 'repo1-sftp-host-fingerprint' without option 'repo1-sftp-host-key-check-type' = 'fingerprint' is"
+            " deprecated\n"
+            "            HINT: set option 'repo1-sftp-host-key-check-type=fingerprint'");
+
+        TEST_RESULT_UINT(
+            cfgOptionIdxStrId(cfgOptRepoSftpHostKeyCheckType, 0), CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_FINGERPRINT,
+            "check type updated");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("success on correct SFTP fingerprint check type");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 1, "sftp");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostUser, TEST_USER);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, "/privatekey");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostFingerprint, "xxx");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyCheckType, "fingerprint");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        TEST_RESULT_UINT(
+            cfgOptionIdxStrId(cfgOptRepoSftpHostKeyCheckType, 0), CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_FINGERPRINT,
+            "check type");
+#endif // HAVE_LIBSSH2
     }
 
     // *****************************************************************************************************************************
@@ -784,6 +884,17 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "2");
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "help command for backup");
+        TEST_RESULT_UINT(ioBufferSize(), 1048576, "buffer size set to option default");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("help command for help");
+
+        argList = strLstNew();
+        strLstAddZ(argList, PROJECT_BIN);
+        strLstAddZ(argList, "help");
+        strLstAddZ(argList, "help");
+
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config");
         TEST_RESULT_UINT(ioBufferSize(), 1048576, "buffer size set to option default");
 
         // -------------------------------------------------------------------------------------------------------------------------

@@ -361,6 +361,15 @@ option:
     command-role:
       main: {}
 
+  report:
+    type: boolean
+    internal: true
+    default: false
+    command:
+      check: {}
+    command-role:
+      main: {}
+
   stanza:
     type: string
     command:
@@ -1598,7 +1607,6 @@ option:
   pg-version-force:
     section: stanza
     type: string
-    internal: true
     required: false
     command:
       archive-get: {}
@@ -2370,6 +2378,23 @@ option:
     type: string
     required: false
     command: repo-type
+    depend:
+      option: repo-sftp-host-key-check-type
+      list:
+        - fingerprint
+        - strict
+
+  repo-sftp-host-key-check-type:
+    section: global
+    group: repo
+    type: string-id
+    default: strict
+    allow-list:
+      - accept-new
+      - fingerprint
+      - none
+      - strict
+    command: repo-type
     depend: repo-sftp-host
 
   repo-sftp-host-key-hash-type:
@@ -2398,6 +2423,18 @@ option:
     type: string
     command: repo-type
     depend: repo-sftp-host
+
+  repo-sftp-known-host:
+    section: global
+    group: repo
+    type: list
+    required: false
+    command: repo-type
+    depend:
+      option: repo-sftp-host-key-check-type
+      list:
+        - accept-new
+        - strict
 
   repo-sftp-private-key-file:
     section: global
@@ -2488,6 +2525,19 @@ option:
     deprecate:
       repo?-azure-port: {}
       repo?-s3-port: {}
+
+  repo-storage-tag:
+    section: global
+    group: repo
+    type: hash
+    required: false
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - azure
+        - gcs
+        - s3
 
   repo-storage-upload-chunk-size:
     section: global

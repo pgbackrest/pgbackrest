@@ -75,6 +75,7 @@ typedef struct TestRequestParam
     const char *object;
     const char *query;
     const char *contentRange;
+    const char *contentType;
     const char *content;
     const char *range;
 } TestRequestParam;
@@ -109,6 +110,10 @@ testRequest(IoWrite *write, const char *verb, TestRequestParam param)
     // Add content-range
     if (param.contentRange != NULL)
         strCatFmt(request, "content-range:bytes %s\r\n", param.contentRange);
+
+    // Add content-type
+    if (param.contentType != NULL)
+        strCatFmt(request, "content-type:%s\r\n", param.contentType);
 
     // Add host
     strCatFmt(request, "host:%s\r\n", strZ(hrnServerHost()));
@@ -199,12 +204,6 @@ testRun(void)
 
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
-    // Get test host and ports
-    const String *const testHost = hrnServerHost();
-    const unsigned int testPort = hrnServerPort(0);
-    const unsigned int testPortAuth = hrnServerPort(1);
-    const unsigned int testPortMeta = hrnServerPort(2);
-
     // *****************************************************************************************************************************
     if (testBegin("storageRepoGet()"))
     {
@@ -245,7 +244,7 @@ testRun(void)
             (StorageGcs *)storageDriver(
                 storageGcsNew(
                     STRDEF("/repo"), false, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService, TEST_KEY_FILE_STR, TEST_CHUNK_SIZE,
-                    TEST_ENDPOINT_STR, TEST_TIMEOUT, true, NULL, NULL)),
+                    NULL, TEST_ENDPOINT_STR, TEST_TIMEOUT, true, NULL, NULL)),
             "read-only gcs storage - service key");
         TEST_RESULT_STR_Z(httpUrlHost(storage->authUrl), "test.com", "check host");
         TEST_RESULT_STR_Z(httpUrlPath(storage->authUrl), "/token", "check path");
@@ -270,7 +269,7 @@ testRun(void)
             (StorageGcs *)storageDriver(
                 storageGcsNew(
                     STRDEF("/repo"), true, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService, TEST_KEY_FILE_STR, TEST_CHUNK_SIZE,
-                    TEST_ENDPOINT_STR, TEST_TIMEOUT, true, NULL, NULL)),
+                    NULL, TEST_ENDPOINT_STR, TEST_TIMEOUT, true, NULL, NULL)),
             "read/write gcs storage - service key");
 
         TEST_RESULT_STR_Z(
@@ -287,27 +286,30 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("StorageGcs, StorageReadGcs, and StorageWriteGcs"))
     {
-        HRN_STORAGE_PUT(storageTest, TEST_KEY_FILE, BUFSTR(strNewFmt(TEST_KEY, strZ(testHost), testPortAuth)));
-
         HRN_FORK_BEGIN()
         {
+            const String *const testHost = hrnServerHost();
+            const unsigned int testPort = hrnServerPortNext();
+            const unsigned int testPortAuth = hrnServerPortNext();
+            const unsigned int testPortMeta = hrnServerPortNext();
+
+            HRN_STORAGE_PUT(storageTest, TEST_KEY_FILE, BUFSTR(strNewFmt(TEST_KEY, strZ(testHost), testPortAuth)));
+
             HRN_FORK_CHILD_BEGIN(.prefix = "gcs server", .timeout = 10000)
             {
-                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls, .port = testPort), "gcs server run");
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls, testPort), "gcs server");
             }
             HRN_FORK_CHILD_END();
 
             HRN_FORK_CHILD_BEGIN(.prefix = "auth server", .timeout = 10000)
             {
-                TEST_RESULT_VOID(
-                    hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls, .port = testPortAuth), "auth server run");
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls, testPortAuth), "auth server");
             }
             HRN_FORK_CHILD_END();
 
             HRN_FORK_CHILD_BEGIN(.prefix = "meta server", .timeout = 30000)
             {
-                TEST_RESULT_VOID(
-                    hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolSocket, .port = testPortMeta), "meta server run");
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolSocket, testPortMeta), "meta server");
             }
             HRN_FORK_CHILD_END();
 
@@ -434,6 +436,8 @@ testRun(void)
 
                 StringList *argListAuto = strLstDup(argList);
                 hrnCfgArgRawStrId(argListAuto, cfgOptRepoGcsKeyType, storageGcsKeyTypeAuto);
+                hrnCfgArgRawZ(argListAuto, cfgOptRepoStorageTag, "Key1=Value1");
+                hrnCfgArgRawZ(argListAuto, cfgOptRepoStorageTag, " Key 2= Value 2");
                 HRN_CFG_LOAD(cfgCmdArchivePush, argListAuto);
 
                 TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
@@ -445,6 +449,10 @@ testRun(void)
 
                 // Tests need the chunk size to be 16
                 ((StorageGcs *)storageDriver(storage))->chunkSize = 16;
+
+                // Store tags and set to NULL
+                const Buffer *tag = ((StorageGcs *)storageDriver(storage))->tag;
+                ((StorageGcs *)storageDriver(storage))->tag = NULL;
 
                 hrnServerScriptAccept(service);
 
@@ -582,9 +590,31 @@ testRun(void)
                 TEST_ERROR(storagePutP(write, NULL), FormatError, "expected size 55 for '/file.txt' but actual is 0");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("write file in chunks with nothing left over on close");
+                TEST_TITLE("write zero-length file (with tags)");
 
-                testRequestP(service, HTTP_VERB_POST, .upload = true, .query = "name=file.txt&uploadType=resumable");
+                testRequestP(
+                    service, HTTP_VERB_POST, .upload = true, .query = "name=file.txt&uploadType=resumable",
+                    .contentType = "application/json", .content = "{\"metadata\":{\" Key 2\":\" Value 2\",\"Key1\":\"Value1\"}}");
+                testResponseP(service, .header = "x-guploader-uploadid:ulid3");
+
+                testRequestP(
+                    service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
+                    .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=resumable&upload_id=ulid3", .contentRange = "*/0");
+                testResponseP(service, .content = "{\"md5Hash\":\"1B2M2Y8AsgTpgAmY7PhCfg==\",\"size\":\"0\"}");
+
+                ((StorageGcs *)storageDriver(storage))->tag = tag;
+
+                TEST_ASSIGN(write, storageNewWriteP(storage, STRDEF("file.txt")), "new write");
+                TEST_RESULT_VOID(storagePutP(write, NULL), "write");
+
+                ((StorageGcs *)storageDriver(storage))->tag = NULL;
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("write file in chunks with nothing left over on close (with tags)");
+
+                testRequestP(
+                    service, HTTP_VERB_POST, .upload = true, .query = "name=file.txt&uploadType=resumable",
+                    .contentType = "application/json", .content = "{\"metadata\":{\" Key 2\":\" Value 2\",\"Key1\":\"Value1\"}}");
                 testResponseP(service, .header = "x-guploader-uploadid:ulid1");
 
                 testRequestP(
@@ -595,12 +625,21 @@ testRun(void)
 
                 testRequestP(
                     service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
-                    .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=resumable&upload_id=ulid1", .contentRange = "16-31/32",
+                    .query = "name=file.txt&uploadType=resumable&upload_id=ulid1", .contentRange = "16-31/*",
                     .content = "7890123456789012");
+                testResponseP(service, .code = 308);
+
+                testRequestP(
+                    service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
+                    .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=resumable&upload_id=ulid1", .contentRange = "*/32");
                 testResponseP(service, .content = "{\"md5Hash\":\"dnF5x6K/8ZZRzpfSlMMM+w==\",\"size\":\"32\"}");
+
+                ((StorageGcs *)storageDriver(storage))->tag = tag;
 
                 TEST_ASSIGN(write, storageNewWriteP(storage, STRDEF("file.txt")), "new write");
                 TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890123456789012")), "write");
+
+                ((StorageGcs *)storageDriver(storage))->tag = NULL;
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write file in chunks with something left over on close");

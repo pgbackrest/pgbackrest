@@ -11,8 +11,12 @@ if get_option('unity') == 'on'
     # Add args to builds to prevent non-pgbackrest binaries failing due to unused functions
     arg_unity += '-Wno-unused-function'
 else
-    configuration.set('FN_EXTERN', 'extern', description: 'Extern function required by other compilation units')
-    configuration.set('VR_EXTERN_DECLARE', 'extern', description: 'Extern variable declaration required by other compilation units')
+    configuration.set(
+        'FN_EXTERN', 'extern __attribute__((visibility ("internal")))',
+        description: 'Extern function required by other compilation units')
+    configuration.set(
+        'VR_EXTERN_DECLARE', 'extern __attribute__((visibility ("internal")))',
+        description: 'Extern variable declaration required by other compilation units')
     configuration.set('VR_EXTERN_DEFINE', '', description: 'Extern variable definition required by other compilation units')
 endif
 
@@ -116,6 +120,7 @@ subdir('postgres')
 src_pgbackrest = [
 	'command/annotate/annotate.c',
 	'command/archive/common.c',
+	'command/archive/find.c',
 	'command/archive/get/file.c',
 	'command/archive/get/get.c',
 	'command/archive/get/protocol.c',
@@ -131,6 +136,7 @@ src_pgbackrest = [
 	'command/backup/file.c',
 	'command/check/check.c',
 	'command/check/common.c',
+	'command/check/report.c',
 	'command/exit.c',
 	'command/expire/expire.c',
 	'command/help/help.c',
@@ -199,6 +205,7 @@ src_pgbackrest = [
     'common/io/limitRead.c',
 	'common/io/server.c',
 	'common/io/session.c',
+	'common/io/socket/address.c',
 	'common/io/socket/client.c',
 	'common/io/socket/common.c',
 	'common/io/socket/server.c',
@@ -227,6 +234,7 @@ src_pgbackrest = [
 	'info/infoPg.c',
 	'postgres/client.c',
 	'postgres/interface.c',
+	'postgres/interface/crc32.c',
 	'postgres/interface/page.c',
 	'protocol/client.c',
 	'protocol/command.c',

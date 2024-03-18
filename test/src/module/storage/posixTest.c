@@ -487,6 +487,23 @@ testRun(void)
         storageTest->pub.interface.feature ^= 1 << storageFeatureInfoDetail;
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("path basic info - no recurse");
+
+        storageTest->pub.interface.feature ^= 1 << storageFeatureInfoDetail;
+
+        TEST_STORAGE_LIST(
+            storageTest, "pg",
+            "zzz/\n"
+            "pipe*\n"
+            "path/\n"
+            "link> {d=../file}\n"
+            "file {s=8, t=1656433838}\n"
+            "./\n",
+            .levelForce = true, .includeDot = true, .noRecurse = true, .sortOrder = sortOrderDesc);
+
+        storageTest->pub.interface.feature ^= 1 << storageFeatureInfoDetail;
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("empty path - filter");
 
         storagePathCreateP(storageTest, STRDEF("pg/empty"), .mode = 0700);

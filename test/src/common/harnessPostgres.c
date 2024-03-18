@@ -11,48 +11,44 @@ Harness for PostgreSQL Interface
 /***********************************************************************************************************************************
 Interface definition
 ***********************************************************************************************************************************/
-uint32_t hrnPgInterfaceCatalogVersion093(void);
-void hrnPgInterfaceControl093(unsigned int controlVersion, PgControl pgControl, unsigned char *buffer);
-void hrnPgInterfaceWal093(unsigned int magic, PgWal pgWal, unsigned char *buffer);
-
 uint32_t hrnPgInterfaceCatalogVersion094(void);
-void hrnPgInterfaceControl094(unsigned int controlVersion, PgControl pgControl, unsigned char *buffer);
+void hrnPgInterfaceControl094(unsigned int controlVersion, unsigned int crc, PgControl pgControl, unsigned char *buffer);
 void hrnPgInterfaceWal094(unsigned int magic, PgWal pgWal, unsigned char *buffer);
 
 uint32_t hrnPgInterfaceCatalogVersion095(void);
-void hrnPgInterfaceControl095(unsigned int controlVersion, PgControl pgControl, unsigned char *buffer);
+void hrnPgInterfaceControl095(unsigned int controlVersion, unsigned int crc, PgControl pgControl, unsigned char *buffer);
 void hrnPgInterfaceWal095(unsigned int magic, PgWal pgWal, unsigned char *buffer);
 
 uint32_t hrnPgInterfaceCatalogVersion096(void);
-void hrnPgInterfaceControl096(unsigned int controlVersion, PgControl pgControl, unsigned char *buffer);
+void hrnPgInterfaceControl096(unsigned int controlVersion, unsigned int crc, PgControl pgControl, unsigned char *buffer);
 void hrnPgInterfaceWal096(unsigned int magic, PgWal pgWal, unsigned char *buffer);
 
 uint32_t hrnPgInterfaceCatalogVersion100(void);
-void hrnPgInterfaceControl100(unsigned int controlVersion, PgControl pgControl, unsigned char *buffer);
+void hrnPgInterfaceControl100(unsigned int controlVersion, unsigned int crc, PgControl pgControl, unsigned char *buffer);
 void hrnPgInterfaceWal100(unsigned int magic, PgWal pgWal, unsigned char *buffer);
 
 uint32_t hrnPgInterfaceCatalogVersion110(void);
-void hrnPgInterfaceControl110(unsigned int controlVersion, PgControl pgControl, unsigned char *buffer);
+void hrnPgInterfaceControl110(unsigned int controlVersion, unsigned int crc, PgControl pgControl, unsigned char *buffer);
 void hrnPgInterfaceWal110(unsigned int magic, PgWal pgWal, unsigned char *buffer);
 
 uint32_t hrnPgInterfaceCatalogVersion120(void);
-void hrnPgInterfaceControl120(unsigned int controlVersion, PgControl pgControl, unsigned char *buffer);
+void hrnPgInterfaceControl120(unsigned int controlVersion, unsigned int crc, PgControl pgControl, unsigned char *buffer);
 void hrnPgInterfaceWal120(unsigned int magic, PgWal pgWal, unsigned char *buffer);
 
 uint32_t hrnPgInterfaceCatalogVersion130(void);
-void hrnPgInterfaceControl130(unsigned int controlVersion, PgControl pgControl, unsigned char *buffer);
+void hrnPgInterfaceControl130(unsigned int controlVersion, unsigned int crc, PgControl pgControl, unsigned char *buffer);
 void hrnPgInterfaceWal130(unsigned int magic, PgWal pgWal, unsigned char *buffer);
 
 uint32_t hrnPgInterfaceCatalogVersion140(void);
-void hrnPgInterfaceControl140(unsigned int controlVersion, PgControl pgControl, unsigned char *buffer);
+void hrnPgInterfaceControl140(unsigned int controlVersion, unsigned int crc, PgControl pgControl, unsigned char *buffer);
 void hrnPgInterfaceWal140(unsigned int magic, PgWal pgWal, unsigned char *buffer);
 
 uint32_t hrnPgInterfaceCatalogVersion150(void);
-void hrnPgInterfaceControl150(unsigned int controlVersion, PgControl pgControl, unsigned char *buffer);
+void hrnPgInterfaceControl150(unsigned int controlVersion, unsigned int crc, PgControl pgControl, unsigned char *buffer);
 void hrnPgInterfaceWal150(unsigned int magic, PgWal pgWal, unsigned char *buffer);
 
 uint32_t hrnPgInterfaceCatalogVersion160(void);
-void hrnPgInterfaceControl160(unsigned int controlVersion, PgControl pgControl, unsigned char *buffer);
+void hrnPgInterfaceControl160(unsigned int controlVersion, unsigned int crc, PgControl pgControl, unsigned char *buffer);
 void hrnPgInterfaceWal160(unsigned int magic, PgWal pgWal, unsigned char *buffer);
 
 typedef struct HrnPgInterface
@@ -64,7 +60,7 @@ typedef struct HrnPgInterface
     unsigned int (*catalogVersion)(void);
 
     // Create pg_control
-    void (*control)(unsigned int, PgControl, unsigned char *);
+    void (*control)(unsigned int, unsigned int, PgControl, unsigned char *);
 
     // Create WAL header
     void (*wal)(unsigned int, PgWal, unsigned char *);
@@ -142,13 +138,6 @@ static const HrnPgInterface hrnPgInterface[] =
         .control = hrnPgInterfaceControl094,
         .wal = hrnPgInterfaceWal094,
     },
-    {
-        .version = PG_VERSION_93,
-
-        .catalogVersion = hrnPgInterfaceCatalogVersion093,
-        .control = hrnPgInterfaceControl093,
-        .wal = hrnPgInterfaceWal093,
-    },
 };
 
 /***********************************************************************************************************************************
@@ -192,18 +181,21 @@ hrnPgCatalogVersion(unsigned int pgVersion)
 
 /**********************************************************************************************************************************/
 Buffer *
-hrnPgControlToBuffer(const unsigned int controlVersion, PgControl pgControl)
+hrnPgControlToBuffer(const unsigned int controlVersion, const unsigned int crc, PgControl pgControl)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(UINT, controlVersion);
+        FUNCTION_HARNESS_PARAM(UINT, crc);
         FUNCTION_HARNESS_PARAM(PG_CONTROL, pgControl);
     FUNCTION_HARNESS_END();
 
     ASSERT(pgControl.version != 0);
 
     // Set defaults if values are not passed
-    pgControl.pageSize = pgControl.pageSize == 0 ? PG_PAGE_SIZE_DEFAULT : pgControl.pageSize;
-    pgControl.walSegmentSize = pgControl.walSegmentSize == 0 ? PG_WAL_SEGMENT_SIZE_DEFAULT : pgControl.walSegmentSize;
+    pgControl.pageSize = pgControl.pageSize == 0 ? pgPageSize8 : pgControl.pageSize;
+    pgControl.walSegmentSize =
+        pgControl.walSegmentSize == UINT_MAX ?
+            0 : (pgControl.walSegmentSize == 0 ? PG_WAL_SEGMENT_SIZE_DEFAULT : pgControl.walSegmentSize);
     pgControl.catalogVersion =
         pgControl.catalogVersion == 0 ? hrnPgInterfaceVersion(pgControl.version)->catalogVersion() : pgControl.catalogVersion;
     pgControl.systemId = pgControl.systemId < 100 ? hrnPgSystemId(pgControl.version) + pgControl.systemId : pgControl.systemId;
@@ -216,7 +208,7 @@ hrnPgControlToBuffer(const unsigned int controlVersion, PgControl pgControl)
     bufUsedSet(result, bufSize(result));
 
     // Generate pg_control
-    hrnPgInterfaceVersion(pgControl.version)->control(controlVersion, pgControl, bufPtr(result));
+    hrnPgInterfaceVersion(pgControl.version)->control(controlVersion, crc, pgControl, bufPtr(result));
 
     FUNCTION_HARNESS_RETURN(BUFFER, result);
 }

@@ -2170,6 +2170,7 @@ restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zer
                 const ManifestFile file = manifestFileFind(manifest, pckReadStrP(jobResult));
                 const bool zeroed = restoreFileZeroed(file.name, zeroExp);
                 const RestoreResult result = (RestoreResult)pckReadU32P(jobResult);
+                const uint64_t blockIncrDeltaSize = pckReadU64P(jobResult);
 
                 String *log = strCatZ(strNew(), "restore");
 
@@ -2221,6 +2222,15 @@ restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zer
                         strCatFmt(log, "%s/", strZ(file.reference));
 
                     strCatFmt(log, "%" PRIu64 "/%" PRIu64 ", ", file.bundleId, file.bundleOffset);
+                }
+
+                // Add block incremental delta size, i.e. amount of the file that block incremental updated
+                if (file.blockIncrMapSize != 0 && result != restoreResultPreserve)
+                {
+                    strCatZ(log, "bi ");
+
+                    if (blockIncrDeltaSize != file.size)
+                        strCatFmt(log, "%s/", strZ(strSizeFormat(blockIncrDeltaSize)));
                 }
 
                 // Add size and percent complete
@@ -2602,6 +2612,22 @@ cmdRestore(void)
         // from being started.
         if (storageExistsP(storagePg(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "." STORAGE_FILE_TEMP_EXT)))
         {
+            // Invalidate the checkpoint in pg_control so the cluster cannot be started without backup_label
+            if (manifestData(jobData.manifest)->backupOptionOnline)
+            {
+                Buffer *const pgControlBuffer = storageGetP(
+                    storageNewReadP(storagePg(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "." STORAGE_FILE_TEMP_EXT)));
+                const ManifestFile pgControlFile = manifestFileFind(
+                    jobData.manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL));
+
+                pgControlCheckpointInvalidate(pgControlBuffer, cfgOptionStrNull(cfgOptPgVersionForce));
+                storagePutP(
+                    storageNewWriteP(
+                        storagePgWrite(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "." STORAGE_FILE_TEMP_EXT),
+                        .modeFile = pgControlFile.mode, .timeModified = pgControlFile.timestamp),
+                    pgControlBuffer);
+            }
+
             LOG_INFO(
                 "restore " PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL " (performed last to ensure aborted restores cannot be started)");
 

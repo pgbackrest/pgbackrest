@@ -1,7 +1,7 @@
 # Initialize configuration
 # ----------------------------------------------------------------------------------------------------------------------------------
 AC_PREREQ([2.71])
-AC_INIT([pgBackRest], [2.48dev])
+AC_INIT([pgBackRest], [2.51dev])
 AC_CONFIG_SRCDIR([version.h])
 AC_CONFIG_AUX_DIR(build)
 
@@ -40,6 +40,13 @@ AC_LINK_IFELSE(
 # Include the build directory
 # ----------------------------------------------------------------------------------------------------------------------------------
 AC_SUBST(CPPFLAGS, "${CPPFLAGS} -I.")
+
+# Check backtrace library
+# ----------------------------------------------------------------------------------------------------------------------------------
+AC_CHECK_LIB(
+    [backtrace], [backtrace_full],
+    [AC_CHECK_HEADER(backtrace.h, [AC_DEFINE(HAVE_LIBBACKTRACE) AC_SUBST(LIBS, "${LIBS} -lbacktrace")],
+        [AC_MSG_ERROR([header file <backtrace.h> is required])])])
 
 # Check required pq library
 # ----------------------------------------------------------------------------------------------------------------------------------

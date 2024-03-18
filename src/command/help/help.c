@@ -93,10 +93,8 @@ helpRenderSplitSize(const String *string, const char *delimiter, size_t size)
     FUNCTION_TEST_RETURN(STRING_LIST, this);
 }
 
-/***********************************************************************************************************************************
-Helper function for helpRender() to make output look good on a console
-***********************************************************************************************************************************/
-static String *
+/**********************************************************************************************************************************/
+FN_EXTERN String *
 helpRenderText(
     const String *const text, const bool internal, const bool beta, const size_t indent, const bool indentFirst,
     const size_t length)
@@ -289,7 +287,7 @@ helpRender(const Buffer *const helpData)
         const String *more = NULL;
 
         // Display general help
-        if (cfgCommand() == cfgCmdHelp || cfgCommand() == cfgCmdNone)
+        if (cfgCommand() == cfgCmdNone)
         {
             strCatZ(
                 result,
@@ -429,8 +427,8 @@ helpRender(const Buffer *const helpData)
                         const String *section = optionData[optionId].section;
 
                         if (section == NULL ||
-                            (!strEqZ(section, "general") && !strEqZ(section, "log") && !strEqZ(section, "repository") &&
-                             !strEqZ(section, "stanza")))
+                            (!strEqZ(section, "general") && !strEqZ(section, "log") && !strEqZ(section, "maintainer") &&
+                             !strEqZ(section, "repository") && !strEqZ(section, "stanza")))
                         {
                             section = strNewZ("command");
                         }

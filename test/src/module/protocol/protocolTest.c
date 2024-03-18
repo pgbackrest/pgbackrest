@@ -353,7 +353,7 @@ testRun(void)
         OBJ_NEW_BASE_BEGIN(Exec, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
         {
             protocolHelperClient.exec = OBJ_NEW_ALLOC();
-            *protocolHelperClient.exec = (Exec){.name = strNewZ("test"), .command = strNewZ("test"), .processId = INT_MAX};
+            *protocolHelperClient.exec = (Exec){.pub = {.command = strNewZ("test")}, .name = strNewZ("test"), .processId = INT_MAX};
             memContextCallbackSet(memContextCurrent(), execFreeResource, protocolHelperClient.exec);
         }
         OBJ_NEW_END();
@@ -845,6 +845,8 @@ testRun(void)
 
         HRN_FORK_BEGIN()
         {
+            const unsigned int testPort = hrnServerPortNext();
+
             HRN_FORK_CHILD_BEGIN()
             {
                 // -----------------------------------------------------------------------------------------------------------------
@@ -852,7 +854,7 @@ testRun(void)
 
                 // Connect to server without any verification
                 IoClient *tlsClient = tlsClientNewP(
-                    sckClientNew(hrnServerHost(), hrnServerPort(0), 5000, 5000), hrnServerHost(), 5000, 5000, false);
+                    sckClientNew(hrnServerHost(), testPort, 5000, 5000), hrnServerHost(), 5000, 5000, false);
                 IoSession *tlsSession = ioClientOpen(tlsClient);
 
                 // Send ping
@@ -872,7 +874,7 @@ testRun(void)
                 hrnCfgArgRawZ(argList, cfgOptRepoHostType, "tls");
                 hrnCfgArgRawZ(argList, cfgOptRepoHostCertFile, HRN_SERVER_CLIENT_CERT);
                 hrnCfgArgRawZ(argList, cfgOptRepoHostKeyFile, HRN_SERVER_CLIENT_KEY);
-                hrnCfgArgRawFmt(argList, cfgOptRepoHostPort, "%u", hrnServerPort(0));
+                hrnCfgArgRawFmt(argList, cfgOptRepoHostPort, "%u", testPort);
                 hrnCfgArgRawZ(argList, cfgOptStanza, "db");
                 HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
@@ -903,7 +905,7 @@ testRun(void)
                 hrnCfgArgRawZ(argList, cfgOptRepoHostType, "tls");
                 hrnCfgArgRawZ(argList, cfgOptRepoHostCertFile, HRN_SERVER_CLIENT_CERT);
                 hrnCfgArgRawZ(argList, cfgOptRepoHostKeyFile, HRN_SERVER_CLIENT_KEY);
-                hrnCfgArgRawFmt(argList, cfgOptRepoHostPort, "%u", hrnServerPort(0));
+                hrnCfgArgRawFmt(argList, cfgOptRepoHostPort, "%u", testPort);
                 HRN_CFG_LOAD(cfgCmdInfo, argList);
 
                 TEST_ERROR_FMT(
@@ -920,7 +922,7 @@ testRun(void)
                 hrnCfgArgRawZ(argList, cfgOptPgHostType, "tls");
                 hrnCfgArgRawZ(argList, cfgOptPgHostCertFile, HRN_SERVER_CLIENT_CERT);
                 hrnCfgArgRawZ(argList, cfgOptPgHostKeyFile, HRN_SERVER_CLIENT_KEY);
-                hrnCfgArgRawFmt(argList, cfgOptPgHostPort, "%u", hrnServerPort(0));
+                hrnCfgArgRawFmt(argList, cfgOptPgHostPort, "%u", testPort);
                 hrnCfgArgRawZ(argList, cfgOptStanza, "db");
                 hrnCfgArgRawZ(argList, cfgOptProcess, "1");
                 HRN_CFG_LOAD(cfgCmdBackup, argList, .role = cfgCmdRoleLocal);
@@ -936,7 +938,7 @@ testRun(void)
             {
                 IoServer *const tlsServer = tlsServerNew(
                     STRDEF("localhost"), STRDEF(HRN_SERVER_CA), STRDEF(HRN_SERVER_KEY), STRDEF(HRN_SERVER_CERT), 5000);
-                IoServer *const socketServer = sckServerNew(STRDEF("localhost"), hrnServerPort(0), 5000);
+                IoServer *const socketServer = sckServerNew(STRDEF("localhost"), testPort, 5000);
                 ProtocolServer *server = NULL;
 
                 // Server ping

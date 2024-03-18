@@ -1,0 +1,52 @@
+<release date="2015-11-22" version="0.88" title="Documentation and Minor Bug Fixes">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="dmitry.didovicher"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue where the <cmd>start</cmd>/<cmd>stop</cmd> commands required the <setting>{[dash]}-config</setting> option.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="stephen.frost"/>
+                    <release-item-ideator id="dmitry.didovicher"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue where log files were being overwritten instead of appended.</p>
+            </release-item>
+
+            <release-item>
+                <p>Fixed an issue where <setting>backup-user</setting> was not optional.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Symlinks are no longer created in backup directories in the repository. These symlinks could point virtually anywhere and potentially be dangerous. Symlinks are still recreated during a restore.</p>
+            </release-item>
+
+            <release-item>
+                <p>Added better messaging for backup expiration. Full and differential backup expirations are logged on a single line along with a list of all dependent backups expired.</p>
+            </release-item>
+
+            <release-item>
+                <p>Archive retention is automatically set to full backup retention if not explicitly configured.</p>
+            </release-item>
+        </release-feature-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-feature-list>
+            <release-item>
+                <p>Added documentation in the user guide for delta restores, expiration, dedicated backup hosts, starting and stopping <backrest/>, and replication.</p>
+            </release-item>
+        </release-feature-list>
+    </release-doc-list>
+</release>

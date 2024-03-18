@@ -61,11 +61,17 @@ STRING_DECLARE(PG_NAME_WAL_STR);
 STRING_DECLARE(PG_NAME_XLOG_STR);
 
 /***********************************************************************************************************************************
-Define default page size
-
-Page size can only be changed at compile time and is not known to be well-tested, so only the default page size is supported.
+Define allowed page sizes
 ***********************************************************************************************************************************/
-#define PG_PAGE_SIZE_DEFAULT                                        ((unsigned int)(8 * 1024))
+typedef enum
+{
+    pgPageSize1 = 1 * 1024,
+    pgPageSize2 = 2 * 1024,
+    pgPageSize4 = 4 * 1024,
+    pgPageSize8 = 8 * 1024,
+    pgPageSize16 = 16 * 1024,
+    pgPageSize32 = 32 * 1024,
+} PgPageSize;
 
 /***********************************************************************************************************************************
 Define default segment size and pages per segment
@@ -73,7 +79,6 @@ Define default segment size and pages per segment
 Segment size can only be changed at compile time and is not known to be well-tested, so only the default segment size is supported.
 ***********************************************************************************************************************************/
 #define PG_SEGMENT_SIZE_DEFAULT                                     ((unsigned int)(1 * 1024 * 1024 * 1024))
-#define PG_SEGMENT_PAGE_DEFAULT                                     (PG_SEGMENT_SIZE_DEFAULT / PG_PAGE_SIZE_DEFAULT)
 
 /***********************************************************************************************************************************
 WAL header size. It doesn't seem worth tracking the exact size of the WAL header across versions of PostgreSQL so just set it to
@@ -90,6 +95,11 @@ WAL segment size is supported for versions below 11.
 #define PG_WAL_SEGMENT_SIZE_DEFAULT                                 ((unsigned int)(16 * 1024 * 1024))
 
 /***********************************************************************************************************************************
+Checkpoint written into pg_control on restore. This will prevent PostgreSQL from starting if backup_label is not present.
+***********************************************************************************************************************************/
+#define PG_CONTROL_CHECKPOINT_INVALID                               0xDEAD
+
+/***********************************************************************************************************************************
 PostgreSQL Control File Info
 ***********************************************************************************************************************************/
 typedef struct PgControl
@@ -101,10 +111,10 @@ typedef struct PgControl
     uint64_t checkpoint;                                            // Last checkpoint LSN
     uint32_t timeline;                                              // Current timeline
 
-    unsigned int pageSize;
+    PgPageSize pageSize;
     unsigned int walSegmentSize;
 
-    bool pageChecksum;
+    unsigned int pageChecksumVersion;                               // Page checksum version (0 if no checksum, 1 if checksum)
 } PgControl;
 
 /***********************************************************************************************************************************
@@ -130,7 +140,11 @@ FN_EXTERN bool pgDbIsSystem(const String *name);
 FN_EXTERN bool pgDbIsSystemId(unsigned int id);
 
 // Get info from pg_control
+FN_EXTERN Buffer *pgControlBufferFromFile(const Storage *storage, const String *pgVersionForce);
 FN_EXTERN PgControl pgControlFromFile(const Storage *storage, const String *pgVersionForce);
+
+// Invalidate checkpoint record in pg_control
+FN_EXTERN void pgControlCheckpointInvalidate(Buffer *buffer, const String *pgVersionForce);
 
 // Get the control version for a PostgreSQL version
 FN_EXTERN uint32_t pgControlVersion(unsigned int pgVersion);
@@ -164,7 +178,13 @@ FN_EXTERN StringList *pgLsnRangeToWalSegmentList(
 FN_EXTERN const String *pgLsnName(unsigned int pgVersion);
 
 // Calculate the checksum for a page. Page cannot be const because the page header is temporarily modified during processing.
-FN_EXTERN uint16_t pgPageChecksum(unsigned char *page, uint32_t blockNo);
+FN_EXTERN uint16_t pgPageChecksum(unsigned char *page, uint32_t blockNo, PgPageSize pageSize);
+
+// Returns true if page size is valid, false otherwise
+FN_EXTERN bool pgPageSizeValid(PgPageSize pageSize);
+
+// Throws an error if page size is not valid
+FN_EXTERN void pgPageSizeCheck(PgPageSize pageSize);
 
 FN_EXTERN const String *pgWalName(unsigned int pgVersion);
 

@@ -33,6 +33,7 @@ STRING_STATIC(S3_HEADER_TOKEN_STR,                                  "x-amz-secur
 STRING_STATIC(S3_HEADER_SRVSDENC_STR,                               "x-amz-server-side-encryption");
 STRING_STATIC(S3_HEADER_SRVSDENC_KMS_STR,                           "aws:kms");
 STRING_STATIC(S3_HEADER_SRVSDENC_KMSKEYID_STR,                      "x-amz-server-side-encryption-aws-kms-key-id");
+STRING_STATIC(S3_HEADER_TAGGING,                                    "x-amz-tagging");
 
 /***********************************************************************************************************************************
 S3 query tokens
@@ -94,6 +95,7 @@ struct StorageS3
     String *securityToken;                                          // Security token, if any
     const String *kmsKeyId;                                         // Server-side encryption key
     size_t partSize;                                                // Part size for multi-part upload
+    const String *tag;                                              // Tags to be applied to objects
     unsigned int deleteMax;                                         // Maximum objects that can be deleted in one request
     StorageS3UriStyle uriStyle;                                     // Path or host style URIs
     const String *bucketEndpoint;                                   // Set to {bucket}.{endpoint}
@@ -453,6 +455,7 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
         FUNCTION_LOG_PARAM(BUFFER, param.content);
         FUNCTION_LOG_PARAM(BOOL, param.sseKms);
+        FUNCTION_LOG_PARAM(BOOL, param.tag);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -485,6 +488,10 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
             httpHeaderPut(requestHeader, S3_HEADER_SRVSDENC_STR, S3_HEADER_SRVSDENC_KMS_STR);
             httpHeaderPut(requestHeader, S3_HEADER_SRVSDENC_KMSKEYID_STR, this->kmsKeyId);
         }
+
+        // Set tags when requested and available
+        if (param.tag && this->tag != NULL)
+            httpHeaderPut(requestHeader, S3_HEADER_TAGGING, this->tag);
 
         // When using path-style URIs the bucket name needs to be prepended
         if (this->uriStyle == storageS3UriStylePath)
@@ -592,10 +599,12 @@ storageS3Request(StorageS3 *this, const String *verb, const String *path, Storag
         FUNCTION_LOG_PARAM(BOOL, param.allowMissing);
         FUNCTION_LOG_PARAM(BOOL, param.contentIo);
         FUNCTION_LOG_PARAM(BOOL, param.sseKms);
+        FUNCTION_LOG_PARAM(BOOL, param.tag);
     FUNCTION_LOG_END();
 
     HttpRequest *const request = storageS3RequestAsyncP(
-        this, verb, path, .header = param.header, .query = param.query, .content = param.content, .sseKms = param.sseKms);
+        this, verb, path, .header = param.header, .query = param.query, .content = param.content, .sseKms = param.sseKms,
+        .tag = param.tag);
     HttpResponse *const result = storageS3ResponseP(
         request, .allowMissing = param.allowMissing, .contentIo = param.contentIo);
 
@@ -1097,8 +1106,8 @@ storageS3New(
     const String *const endPoint, const StorageS3UriStyle uriStyle, const String *const region, const StorageS3KeyType keyType,
     const String *const accessKey, const String *const secretAccessKey, const String *const securityToken,
     const String *const kmsKeyId, const String *const credRole, const String *const webIdToken, const size_t partSize,
-    const String *host, const unsigned int port, const TimeMSec timeout, const bool verifyPeer, const String *const caFile,
-    const String *const caPath)
+    const KeyValue *const tag, const String *host, const unsigned int port, const TimeMSec timeout, const bool verifyPeer,
+    const String *const caFile, const String *const caPath)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -1116,6 +1125,7 @@ storageS3New(
         FUNCTION_TEST_PARAM(STRING, credRole);
         FUNCTION_TEST_PARAM(STRING, webIdToken);
         FUNCTION_LOG_PARAM(SIZE, partSize);
+        FUNCTION_LOG_PARAM(KEY_VALUE, tag);
         FUNCTION_LOG_PARAM(STRING, host);
         FUNCTION_LOG_PARAM(UINT, port);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
@@ -1148,6 +1158,14 @@ storageS3New(
             // Force the signing key to be generated on the first run
             .signingKeyDate = YYYYMMDD_STR,
         };
+
+        // Create tag query string
+        if (write && tag != NULL)
+        {
+            HttpQuery *const query = httpQueryNewP(.kv = tag);
+            this->tag = httpQueryRenderP(query);
+            httpQueryFree(query);
+        }
 
         // Create the HTTP client used to service requests
         if (host == NULL)

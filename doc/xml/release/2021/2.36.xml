@@ -1,0 +1,198 @@
+<release date="2021-11-01" version="2.36" title="Minor Bug Fixes and Improvements">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <github-issue id="1524"/>
+                <github-pull-request id="1525"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="younes.alhroub"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Allow <quote>global</quote> as a stanza prefix.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="1536"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="henrik.feldt"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Fix segfault on invalid <proper>GCS</proper> key file.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-improvement-list>
+            <release-item>
+                <commit subject="Refactor restoreManifestMap() tests in the command/restore unit."/>
+                <commit subject="Refactor restoreManifestMap() to be driven by link-map."/>
+                <commit subject="Allow link-map option to create new links.">
+                    <github-issue id="1409"/>
+                    <github-pull-request id="1520"/>
+                </commit>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="don.seiler"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="don.seiler"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                    <release-item-reviewer id="chris.bandy"/>
+                </release-item-contributor-list>
+
+                <p>Allow <br-option>link-map</br-option> option to create new links.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Increase max index allowed for pg/repo options to 256.">
+                    <github-pull-request id="1481"/>
+                </commit>
+                <commit subject="Use strncpy() to limit characters copied to optionName."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Increase max index allowed for <id>pg</id>/<id>repo</id> options to 256.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Add WebIdentity authentication for AWS S3.">
+                    <github-issue id="1203"/>
+                    <github-pull-request id="1527"/>
+                </commit>
+                <commit subject="Fix mismatched parameters in tlsClientNew() call."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="james.callahan"/>
+                    <release-item-reviewer id="reid.thompson"/>
+                    <!-- Actually tester, but we don't have a tag for that yet -->
+                    <release-item-reviewer id="benjamin.blattberg"/>
+                    <release-item-reviewer id="andrew.lecuyer"/>
+                </release-item-contributor-list>
+
+                <p>Add <id>WebIdentity</id> authentication for <proper>AWS S3</proper>.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="1484"/>
+                <github-pull-request id="1508"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="stefan.fercot"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Report backup file validation errors in <file>backup.info</file>.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="1507"/>
+                <github-pull-request id="1518"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="tom.swartz"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="tom.swartz"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Add recovery start time to online backup restore log.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Allow stack trace to be specified for errorInternalThrow()."/>
+                <commit subject="Add jobRetry parameter to HRN_CFG_LOAD()."/>
+                <commit subject="Report original error and retries on local job failure.">
+                    <github-pull-request id="1521"/>
+                </commit>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Report original error and retries on local job failure.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="1519"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Rename page checksum error to error list in info text output.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="1434"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="leigh.downs"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="cynthia.shang"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Add hints to standby replay timeout message.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <commit subject="Add TLS server.">
+                    <github-pull-request id="1504"/>
+                </commit>
+                <commit subject="Check return value of getsockopt()."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                    <!-- Actually tester, but we don't have a tag for that yet -->
+                    <release-item-reviewer id="andrew.lecuyer"/>
+                </release-item-contributor-list>
+
+                <p>Add <proper>TLS</proper> server.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="1543"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="reid.thompson"/>
+                </release-item-contributor-list>
+
+                <p>Store config values as a union instead of a variant.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-development-list>
+            <release-item>
+                <commit subject="Eliminate linefeed formatting from documentation."/>
+                <commit subject="Update contributing.xml with rendering changes from def7d513."/>
+                <commit subject="Add missing paragraph tag in user guide."/>
+                <commit subject="Add br tags for HTML documentation rendering missed in def7d513."/>
+                <commit subject="Add missing paragraph tags in coding standards."/>
+                <commit subject="Restore some linefeed rendering behavior from before def7d513."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="reid.thompson"/>
+                </release-item-contributor-list>
+
+                <p>Eliminate linefeed formatting from documentation.</p>
+            </release-item>
+        </release-development-list>
+    </release-doc-list>
+</release>

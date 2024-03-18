@@ -179,7 +179,7 @@ unit:
           shim:
             common/error/retry:
               function:
-                - errRetryAdd
+                - errRetryMessage
 
         coverage:
           - common/error/retry
@@ -362,7 +362,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: io-tls
-        total: 5
+        total: 6
         feature: SOCKET
         harness: server
         harness:
@@ -371,6 +371,7 @@ unit:
             common/io/socket/client:
               function:
                 - sckClientOpen
+                - sckClientOpenWait
 
         coverage:
           - common/io/client
@@ -380,6 +381,7 @@ unit:
           - common/io/tls/common
           - common/io/tls/server
           - common/io/tls/session
+          - common/io/socket/address
           - common/io/socket/client
           - common/io/socket/common
           - common/io/socket/server
@@ -403,12 +405,15 @@ unit:
           - common/io/http/session
           - common/io/http/url
 
+        include:
+          - common/io/socket/address
+
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: exec
-        total: 1
+        total: 2
 
         coverage:
-          - common/exec
+          - build/common/exec
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: ini
@@ -444,6 +449,7 @@ unit:
           - config/protocol
           - command/command
           - postgres/interface
+          - postgres/interface/crc32
           - postgres/interface/page
           - protocol/client
           - protocol/command
@@ -481,7 +487,7 @@ unit:
           - protocol/server
 
         include:
-          - common/exec
+          - build/common/exec
 
   # ********************************************************************************************************************************
   - name: config
@@ -597,16 +603,18 @@ unit:
           - storage/s3/read
           - storage/s3/storage
           - storage/s3/write
+          - storage/helper
 
         include:
-          - storage/helper
           - storage/storage
           - storage/write
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: sftp
-        total: 20
-        harness: libSsh2
+        total: 19
+        harness:
+          name: libSsh2
+          integration: false
         harness:
           name: fd
           shim:
@@ -633,7 +641,9 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: client
         total: 1
-        harness: pq
+        harness:
+          name: pq
+          integration: false
 
         coverage:
           - postgres/client
@@ -645,6 +655,7 @@ unit:
 
         coverage:
           - postgres/interface
+          - postgres/interface/crc32
           - postgres/interface/page
 
   # ********************************************************************************************************************************
@@ -697,7 +708,7 @@ unit:
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: test
-        total: 3
+        total: 2
 
         coverage:
           - test/command/test/build
@@ -792,6 +803,7 @@ unit:
 
         coverage:
           - command/archive/common
+          - command/archive/find
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: archive-get
@@ -830,11 +842,12 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: check
-        total: 3
+        total: 4
 
         coverage:
           - command/check/common
           - command/check/check
+          - command/check/report
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: command
@@ -873,8 +886,18 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: backup
-        total: 13
-        harness: backup
+        total: 12
+        harness:
+          name: backup
+          integration: false
+          shim:
+            command/backup/backup:
+              function:
+                - backupProcess
+        harness:
+          name: blockIncr
+          shim:
+            command/restore/blockDelta: ~
 
         coverage:
           - command/backup/backup
@@ -893,7 +916,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: restore
-        total: 14
+        total: 15
 
         coverage:
           - command/restore/blockChecksum
@@ -968,6 +991,19 @@ unit:
           - command/server/ping
           - command/server/server
 
+  # ********************************************************************************************************************************
+  - name: doc
+
+    test:
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: build
+        total: 1
+
+        coverage:
+          - doc/command/build/build
+          - doc/command/build/man
+          - doc/command/build/reference
+
 # **********************************************************************************************************************************
 # Integration tests
 #
@@ -977,37 +1013,14 @@ unit:
 integration:
 
   # ********************************************************************************************************************************
-  - name: mock
-
-    test:
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: stanza
-        total: 2
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: expire
-        total: 2
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: archive
-        total: 2
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: archive-stop
-        total: 2
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: all
-        total: 2
-
-  # ********************************************************************************************************************************
-  - name: real
+  - name: integration
     db: true
 
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: all
         total: 1
+        harness: host
 
 # **********************************************************************************************************************************
 # Performance tests
@@ -1021,11 +1034,6 @@ performance:
   - name: performance
 
     test:
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: archive-perl
-        total: 1
-        binReq: true
-
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type
         total: 6

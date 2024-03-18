@@ -31,16 +31,7 @@ Test sort comparator
 static int
 testComparator(const void *item1, const void *item2)
 {
-    int int1 = *(int *)item1;
-    int int2 = *(int *)item2;
-
-    if (int1 < int2)
-        return -1;
-
-    if (int1 > int2)
-        return 1;
-
-    return 0;
+    return LST_COMPARATOR_CMP(*(int *)item1, *(int *)item2);
 }
 
 /***********************************************************************************************************************************

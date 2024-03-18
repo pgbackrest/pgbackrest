@@ -31,6 +31,7 @@ typedef struct TestRequestParam
     const char *kms;
     const char *ttl;
     const char *token;
+    const char *tag;
 } TestRequestParam;
 
 #define testRequestP(write, s3, verb, path, ...)                                                                                   \
@@ -80,6 +81,9 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
 
         if (param.kms != NULL)
             strCatZ(request, ";x-amz-server-side-encryption;x-amz-server-side-encryption-aws-kms-key-id");
+
+        if (param.tag != NULL)
+            strCatZ(request, ";x-amz-tagging");
 
         strCatZ(request, ",Signature=????????????????????????????????????????????????????????????????\r\n");
     }
@@ -131,6 +135,10 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
         strCatZ(request, "x-amz-server-side-encryption:aws:kms\r\n");
         strCatFmt(request, "x-amz-server-side-encryption-aws-kms-key-id:%s\r\n", param.kms);
     }
+
+    // Add tags
+    if (param.tag != NULL)
+        strCatFmt(request, "x-amz-tagging:%s\r\n", param.tag);
 
     // Add metadata token
     if (param.token != NULL)
@@ -242,8 +250,6 @@ testRun(void)
     const String *region = STRDEF("us-east-1");
     const String *endPoint = STRDEF("s3.amazonaws.com");
     const String *host = hrnServerHost();
-    const unsigned int port = hrnServerPort(0);
-    const unsigned int authPort = hrnServerPort(1);
     const String *accessKey = STRDEF("AKIAIOSFODNN7EXAMPLE");
     const String *secretAccessKey = STRDEF("wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY");
     const String *securityToken = STRDEF(
@@ -396,16 +402,18 @@ testRun(void)
     {
         HRN_FORK_BEGIN()
         {
+            const unsigned int testPort = hrnServerPortNext();
+            const unsigned int testPortAuth = hrnServerPortNext();
+
             HRN_FORK_CHILD_BEGIN(.prefix = "s3 server", .timeout = 5000)
             {
-                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls, .port = port), "s3 server run");
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls, testPort), "s3 server");
             }
             HRN_FORK_CHILD_END();
 
             HRN_FORK_CHILD_BEGIN(.prefix = "auth server", .timeout = 10000)
             {
-                TEST_RESULT_VOID(
-                    hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolSocket, .port = authPort), "auth server run");
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolSocket, testPortAuth), "auth server");
             }
             HRN_FORK_CHILD_END();
 
@@ -421,7 +429,7 @@ testRun(void)
                 TEST_TITLE("config with keys, token, and host with custom port");
 
                 StringList *argList = strLstDup(commonArgList);
-                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), port);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), testPort);
                 hrnCfgEnvRaw(cfgOptRepoS3Token, securityToken);
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
@@ -480,10 +488,12 @@ testRun(void)
                 hrnServerScriptClose(service);
 
                 argList = strLstDup(commonArgList);
-                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), port);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), testPort);
                 hrnCfgArgRaw(argList, cfgOptRepoS3Role, credRole);
                 hrnCfgArgRawStrId(argList, cfgOptRepoS3KeyType, storageS3KeyTypeAuto);
                 hrnCfgArgRawZ(argList, cfgOptRepoS3KmsKeyId, "kmskey1");
+                hrnCfgArgRawZ(argList, cfgOptRepoStorageTag, "Key1=Value1");
+                hrnCfgArgRawZ(argList, cfgOptRepoStorageTag, " Key 2= Value 2");
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
                 s3 = storageRepoGet(0, true);
@@ -498,7 +508,7 @@ testRun(void)
 
                 // Testing requires the auth http client to be redirected
                 driver->credHost = hrnServerHost();
-                driver->credHttpClient = httpClientNew(sckClientNew(host, authPort, 5000, 5000), 5000);
+                driver->credHttpClient = httpClientNew(sckClientNew(host, testPortAuth, 5000, 5000), 5000);
 
                 // Now that we have checked the role when set explicitly, null it out to make sure it is retrieved automatically
                 driver->credRole = NULL;
@@ -703,7 +713,7 @@ testRun(void)
 
                 testRequestP(
                     service, s3, HTTP_VERB_PUT, "/file.txt", .content = "ABCD", .accessKey = "xx", .securityToken = "zz",
-                    .kms = "kmskey1");
+                    .kms = "kmskey1", .tag = "%20Key%202=%20Value%202&Key1=Value1");
                 testResponseP(service);
 
                 // Make a copy of the signing key to verify that it gets changed when the keys are updated
@@ -735,7 +745,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write zero-length file");
 
-                testRequestP(service, s3, HTTP_VERB_PUT, "/file.txt", .content = "", .kms = "kmskey1");
+                testRequestP(
+                    service, s3, HTTP_VERB_PUT, "/file.txt", .content = "", .kms = "kmskey1",
+                    .tag = "%20Key%202=%20Value%202&Key1=Value1");
                 testResponseP(service);
 
                 TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("file.txt")), "new write");
@@ -744,7 +756,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write file in chunks with nothing left over on close");
 
-                testRequestP(service, s3, HTTP_VERB_POST, "/file.txt?uploads=", .kms = "kmskey1");
+                testRequestP(
+                    service, s3, HTTP_VERB_POST, "/file.txt?uploads=", .kms = "kmskey1",
+                    .tag = "%20Key%202=%20Value%202&Key1=Value1");
                 testResponseP(
                     service,
                     .content =
@@ -780,6 +794,9 @@ testRun(void)
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error in success response of multipart upload");
+
+                // Stop writing tags
+                driver->tag = NULL;
 
                 testRequestP(service, s3, HTTP_VERB_POST, "/file.txt?uploads=", .kms = "kmskey1");
                 testResponseP(
@@ -909,7 +926,7 @@ testRun(void)
                 HRN_STORAGE_PUT_Z(storagePosixNewP(TEST_PATH_STR, .write = true), "web-id-token", TEST_SERVICE_TOKEN);
 
                 argList = strLstDup(commonArgList);
-                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), port);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), testPort);
                 hrnCfgArgRawStrId(argList, cfgOptRepoS3KeyType, storageS3KeyTypeWebId);
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
@@ -936,7 +953,7 @@ testRun(void)
 
                 // Testing requires the auth http client to be redirected
                 driver->credHost = hrnServerHost();
-                driver->credHttpClient = httpClientNew(sckClientNew(host, authPort, 5000, 5000), 5000);
+                driver->credHttpClient = httpClientNew(sckClientNew(host, testPortAuth, 5000, 5000), 5000);
 
                 hrnServerScriptAccept(service);
 
@@ -1226,7 +1243,7 @@ testRun(void)
                 argList = strLstDup(commonArgList);
                 hrnCfgArgRawStrId(argList, cfgOptRepoS3UriStyle, storageS3UriStylePath);
                 hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "https://%s", strZ(host));
-                hrnCfgArgRawFmt(argList, cfgOptRepoStoragePort, "%u", port);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStoragePort, "%u", testPort);
                 hrnCfgEnvRemoveRaw(cfgOptRepoS3Token);
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 

@@ -1,0 +1,13 @@
+<release date="2014-04-13" version="0.18" title="Return Soft Error When Archive Missing">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>The <cmd>archive-get</cmd> command now returns a 1 when the archive file is missing to differentiate from hard errors (ssh connection failure, file copy error, etc.) This lets <postgres/> know that the archive stream has terminated normally. However, this does not take into account possible holes in the archive stream.</p>
+            </release-item>
+        </release-bug-list>
+    </release-core-list>
+</release>

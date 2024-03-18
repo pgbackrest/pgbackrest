@@ -5,7 +5,6 @@
 # - 'version' contains a list of all supported versions
 # - For a specific version, 'release' marks it as not released (i.e. this should always be false when used)
 version:
-  - 9.3
   - 9.4
   - 9.5
   - 9.6
@@ -15,5 +14,4 @@ version:
   - 13
   - 14
   - 15
-  - 16:
-      release: false
+  - 16
