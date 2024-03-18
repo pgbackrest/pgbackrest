@@ -790,9 +790,10 @@ testRun(void)
                 TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client)), true, "open succeed");
 
                 TEST_RESULT_UINT(
-                    protocolClientCommandPut(client,
-                                             protocolCommandNewP(
-                                                 TEST_PROTOCOL_COMMAND_COMPLEX_CLOSE, .type = protocolCommandTypeCancel, .sessionId = sessionId)),
+                    protocolClientCommandPut(
+                        client,
+                        protocolCommandNewP(
+                            TEST_PROTOCOL_COMMAND_COMPLEX_CLOSE, .type = protocolCommandTypeCancel, .sessionId = sessionId)),
                     0, "cancel put");
                 TEST_RESULT_PTR(protocolClientDataGet(client), NULL, "cancel result");
 
