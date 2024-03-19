@@ -719,32 +719,6 @@ option:
     required: true
     default: ssh
 
-  pg-wal-segment-size:
-    section: global
-    type: size
-    default: 16MiB
-    allow-list:
-      - 1MiB
-      - 2MiB
-      - 4MiB
-      - 8MiB
-      - 16MiB
-      - 32MiB
-      - 64MiB
-      - 128MiB
-      - 256MiB
-      - 512MiB
-      - 1024MiB
-    command:
-      archive-get: {}
-      archive-push: {}
-      backup: {}
-      check: {}
-      restore: {}
-      stanza-create: {}
-      stanza-upgrade: {}
-      verify: {}
-
   # Option is deprecated and should not be referenced outside of cfgLoadUpdateOption()
   compress:
     section: global

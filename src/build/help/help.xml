@@ -195,16 +195,6 @@
                         <example>/usr/bin/ssh</example>
                     </config-key>
 
-                    <config-key id="pg-wal-segment-size" name="WAL segment size">
-                        <summary>expected size of the WAL segment.</summary>
-
-                        <text>
-                            <p>Change the expected size of the WAL segment. It can be useful for working with forks that use a non-standard WAL size.</p>
-                        </text>
-
-                        <example>64MiB</example>
-                    </config-key>
-
                     <config-key id="compress" name="Compress">
                         <summary>Use file compression.</summary>
 

@@ -248,8 +248,6 @@ testRun(void)
             "  --lock-path                         path where lock files are stored\n"
             "                                      [default=/tmp/pgbackrest]\n"
             "  --neutral-umask                     use a neutral umask [default=y]\n"
-            "  --pg-wal-segment-size               expected size of the WAL segment\n"
-            "                                      [default=16MiB]\n"
             "  --process-max                       max processes to use for\n"
             "                                      compress/transfer [default=1]\n"
             "  --protocol-timeout                  protocol timeout [default=1830]\n"

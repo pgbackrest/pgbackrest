@@ -99,7 +99,6 @@ Option constants
 #define CFGOPT_PAGE_HEADER_CHECK                                    "page-header-check"
 #define CFGOPT_PG                                                   "pg"
 #define CFGOPT_PG_VERSION_FORCE                                     "pg-version-force"
-#define CFGOPT_PG_WAL_SEGMENT_SIZE                                  "pg-wal-segment-size"
 #define CFGOPT_PROCESS                                              "process"
 #define CFGOPT_PROCESS_MAX                                          "process-max"
 #define CFGOPT_PROTOCOL_TIMEOUT                                     "protocol-timeout"
@@ -137,7 +136,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
 #define CFGOPT_VERBOSE                                              "verbose"
 
-#define CFG_OPTION_TOTAL                                            180
+#define CFG_OPTION_TOTAL                                            179
 
 /***********************************************************************************************************************************
 Option value constants
@@ -458,7 +457,6 @@ typedef enum
     cfgOptPgSocketPath,
     cfgOptPgUser,
     cfgOptPgVersionForce,
-    cfgOptPgWalSegmentSize,
     cfgOptProcess,
     cfgOptProcessMax,
     cfgOptProtocolTimeout,

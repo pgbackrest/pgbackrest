@@ -10,7 +10,6 @@ PostgreSQL Interface
 #include "common/memContext.h"
 #include "common/regExp.h"
 #include "common/time.h"
-#include "config/config.h"
 #include "postgres/interface.h"
 #include "postgres/interface/crc32.h"
 #include "postgres/interface/static.vendor.h"
@@ -177,23 +176,7 @@ pgWalSegmentSizeCheck(unsigned int pgVersion, unsigned int walSegmentSize)
         FUNCTION_TEST_PARAM(UINT, walSegmentSize);
     FUNCTION_TEST_END();
 
-    if (cfgOptionSource(cfgOptPgWalSegmentSize) != cfgSourceDefault)
-    {
-        if (pgVersion < PG_VERSION_10 && walSegmentSize > PG_9_MAX_WAL_SEGMENT_SIZE)
-        {
-            THROW_FMT(
-                FormatError, "WAL segment size is %u but must be less then or equal to %u for " PG_NAME " < " PG_VERSION_10_Z, walSegmentSize,
-                PG_9_MAX_WAL_SEGMENT_SIZE);
-        }
-
-        if (walSegmentSize != cfgOptionUInt(cfgOptPgWalSegmentSize))
-        {
-            THROW_FMT(
-                FormatError, "Expected WAL segment size is %u but actual is %u", cfgOptionUInt(cfgOptPgWalSegmentSize),
-                walSegmentSize);
-        }
-    }
-    else if (pgVersion < PG_VERSION_11 && walSegmentSize != PG_WAL_SEGMENT_SIZE_DEFAULT)
+    if (pgVersion < PG_VERSION_11 && walSegmentSize != PG_WAL_SEGMENT_SIZE_DEFAULT)
     {
         THROW_FMT(
             FormatError, "wal segment size is %u but must be %u for " PG_NAME " <= " PG_VERSION_10_Z, walSegmentSize,

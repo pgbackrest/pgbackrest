@@ -18,7 +18,6 @@ static const StringPub parseRuleValueStr[] =
     PARSE_RULE_STRPUB("1"),                                                                                               // val/str
     PARSE_RULE_STRPUB("128MiB"),                                                                                          // val/str
     PARSE_RULE_STRPUB("15"),                                                                                              // val/str
-    PARSE_RULE_STRPUB("16MiB"),                                                                                           // val/str
     PARSE_RULE_STRPUB("1800"),                                                                                            // val/str
     PARSE_RULE_STRPUB("1830"),                                                                                            // val/str
     PARSE_RULE_STRPUB("1GiB"),                                                                                            // val/str
@@ -71,7 +70,6 @@ typedef enum
     parseRuleValStrQT_1_QT,                                                                                          // val/str/enum
     parseRuleValStrQT_128MiB_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_15_QT,                                                                                         // val/str/enum
-    parseRuleValStrQT_16MiB_QT,                                                                                      // val/str/enum
     parseRuleValStrQT_1800_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_1830_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_1GiB_QT,                                                                                       // val/str/enum
@@ -286,12 +284,8 @@ static const int64_t parseRuleValueInt[] =
     9999999,                                                                                                              // val/int
     16777216,                                                                                                             // val/int
     20971520,                                                                                                             // val/int
-    33554432,                                                                                                             // val/int
-    67108864,                                                                                                             // val/int
     86400000,                                                                                                             // val/int
     134217728,                                                                                                            // val/int
-    268435456,                                                                                                            // val/int
-    536870912,                                                                                                            // val/int
     604800000,                                                                                                            // val/int
     1073741824,                                                                                                           // val/int
     1099511627776,                                                                                                        // val/int
@@ -340,12 +334,8 @@ typedef enum
     parseRuleValInt9999999,                                                                                          // val/int/enum
     parseRuleValInt16777216,                                                                                         // val/int/enum
     parseRuleValInt20971520,                                                                                         // val/int/enum
-    parseRuleValInt33554432,                                                                                         // val/int/enum
-    parseRuleValInt67108864,                                                                                         // val/int/enum
     parseRuleValInt86400000,                                                                                         // val/int/enum
     parseRuleValInt134217728,                                                                                        // val/int/enum
-    parseRuleValInt268435456,                                                                                        // val/int/enum
-    parseRuleValInt536870912,                                                                                        // val/int/enum
     parseRuleValInt604800000,                                                                                        // val/int/enum
     parseRuleValInt1073741824,                                                                                       // val/int/enum
     parseRuleValInt1099511627776,                                                                                    // val/int/enum
@@ -4253,81 +4243,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                          // opt/pg-version-force
         ),                                                                                                   // opt/pg-version-force
     ),                                                                                                       // opt/pg-version-force
-    // -----------------------------------------------------------------------------------------------------------------------------
-    PARSE_RULE_OPTION                                                                                     // opt/pg-wal-segment-size
-    (                                                                                                     // opt/pg-wal-segment-size
-        PARSE_RULE_OPTION_NAME("pg-wal-segment-size"),                                                    // opt/pg-wal-segment-size
-        PARSE_RULE_OPTION_TYPE(cfgOptTypeSize),                                                           // opt/pg-wal-segment-size
-        PARSE_RULE_OPTION_RESET(true),                                                                    // opt/pg-wal-segment-size
-        PARSE_RULE_OPTION_REQUIRED(true),                                                                 // opt/pg-wal-segment-size
-        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),                                                      // opt/pg-wal-segment-size
-                                                                                                          // opt/pg-wal-segment-size
-        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                    // opt/pg-wal-segment-size
-        (                                                                                                 // opt/pg-wal-segment-size
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                   // opt/pg-wal-segment-size
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                  // opt/pg-wal-segment-size
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                       // opt/pg-wal-segment-size
-            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                        // opt/pg-wal-segment-size
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                                      // opt/pg-wal-segment-size
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                 // opt/pg-wal-segment-size
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                // opt/pg-wal-segment-size
-            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                       // opt/pg-wal-segment-size
-        ),                                                                                                // opt/pg-wal-segment-size
-                                                                                                          // opt/pg-wal-segment-size
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                   // opt/pg-wal-segment-size
-        (                                                                                                 // opt/pg-wal-segment-size
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                   // opt/pg-wal-segment-size
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                  // opt/pg-wal-segment-size
-        ),                                                                                                // opt/pg-wal-segment-size
-                                                                                                          // opt/pg-wal-segment-size
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                   // opt/pg-wal-segment-size
-        (                                                                                                 // opt/pg-wal-segment-size
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                   // opt/pg-wal-segment-size
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                  // opt/pg-wal-segment-size
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                       // opt/pg-wal-segment-size
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                                      // opt/pg-wal-segment-size
-            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                       // opt/pg-wal-segment-size
-        ),                                                                                                // opt/pg-wal-segment-size
-                                                                                                          // opt/pg-wal-segment-size
-        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                  // opt/pg-wal-segment-size
-        (                                                                                                 // opt/pg-wal-segment-size
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                   // opt/pg-wal-segment-size
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                  // opt/pg-wal-segment-size
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                       // opt/pg-wal-segment-size
-            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                        // opt/pg-wal-segment-size
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                                      // opt/pg-wal-segment-size
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                 // opt/pg-wal-segment-size
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                // opt/pg-wal-segment-size
-            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                       // opt/pg-wal-segment-size
-        ),                                                                                                // opt/pg-wal-segment-size
-                                                                                                          // opt/pg-wal-segment-size
-        PARSE_RULE_OPTIONAL                                                                               // opt/pg-wal-segment-size
-        (                                                                                                 // opt/pg-wal-segment-size
-            PARSE_RULE_OPTIONAL_GROUP                                                                     // opt/pg-wal-segment-size
-            (                                                                                             // opt/pg-wal-segment-size
-                PARSE_RULE_OPTIONAL_ALLOW_LIST                                                            // opt/pg-wal-segment-size
-                (                                                                                         // opt/pg-wal-segment-size
-                    PARSE_RULE_VAL_INT(parseRuleValInt1048576),                                           // opt/pg-wal-segment-size
-                    PARSE_RULE_VAL_INT(parseRuleValInt2097152),                                           // opt/pg-wal-segment-size
-                    PARSE_RULE_VAL_INT(parseRuleValInt4194304),                                           // opt/pg-wal-segment-size
-                    PARSE_RULE_VAL_INT(parseRuleValInt8388608),                                           // opt/pg-wal-segment-size
-                    PARSE_RULE_VAL_INT(parseRuleValInt16777216),                                          // opt/pg-wal-segment-size
-                    PARSE_RULE_VAL_INT(parseRuleValInt33554432),                                          // opt/pg-wal-segment-size
-                    PARSE_RULE_VAL_INT(parseRuleValInt67108864),                                          // opt/pg-wal-segment-size
-                    PARSE_RULE_VAL_INT(parseRuleValInt134217728),                                         // opt/pg-wal-segment-size
-                    PARSE_RULE_VAL_INT(parseRuleValInt268435456),                                         // opt/pg-wal-segment-size
-                    PARSE_RULE_VAL_INT(parseRuleValInt536870912),                                         // opt/pg-wal-segment-size
-                    PARSE_RULE_VAL_INT(parseRuleValInt1073741824),                                        // opt/pg-wal-segment-size
-                ),                                                                                        // opt/pg-wal-segment-size
-                                                                                                          // opt/pg-wal-segment-size
-                PARSE_RULE_OPTIONAL_DEFAULT                                                               // opt/pg-wal-segment-size
-                (                                                                                         // opt/pg-wal-segment-size
-                    PARSE_RULE_VAL_INT(parseRuleValInt16777216),                                          // opt/pg-wal-segment-size
-                    PARSE_RULE_VAL_STR(parseRuleValStrQT_16MiB_QT),                                       // opt/pg-wal-segment-size
-                ),                                                                                        // opt/pg-wal-segment-size
-            ),                                                                                            // opt/pg-wal-segment-size
-        ),                                                                                                // opt/pg-wal-segment-size
-    ),                                                                                                    // opt/pg-wal-segment-size
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                                 // opt/process
     (                                                                                                                 // opt/process
@@ -10976,7 +10891,6 @@ static const uint8_t optionResolveOrder[] =
     cfgOptPgSocketPath,                                                                                         // opt-resolve-order
     cfgOptPgUser,                                                                                               // opt-resolve-order
     cfgOptPgVersionForce,                                                                                       // opt-resolve-order
-    cfgOptPgWalSegmentSize,                                                                                     // opt-resolve-order
     cfgOptProcess,                                                                                              // opt-resolve-order
     cfgOptProcessMax,                                                                                           // opt-resolve-order
     cfgOptProtocolTimeout,                                                                                      // opt-resolve-order
