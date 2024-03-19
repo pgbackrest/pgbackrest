@@ -31,6 +31,7 @@ typedef struct StorageReadRemote
     Buffer *block;                                                  // Block currently being read
     bool eof;                                                       // Has the file reached eof?
     bool eofFound;                                                  // Eof found but a block is remaining to be read
+    bool queued;                                                    // Is a block queued to be read?
     uint64_t sessionId;                                             // Session id for subsequent commands
 
 #ifdef DEBUG
@@ -63,11 +64,25 @@ storageReadRemoteFreeResource(THIS_VOID)
 
     if (!this->eofFound)
     {
-        ProtocolCommand *const command = protocolCommandNewP(
-            PROTOCOL_COMMAND_STORAGE_READ, .type = protocolCommandTypeClose, .sessionId = this->sessionId);
+        bool close = true;
 
-        protocolClientExecute(this->client, command);
-        protocolCommandFree(command);
+        if (this->queued)
+        {
+            PackRead *const response = protocolClientDataGet(this->client, this->sessionId);
+
+            close = !pckReadBoolP(response) || !pckReadBoolP(response); // {uncovered - !!!}
+
+            pckReadFree(response);
+        }
+
+        if (close)
+        {
+            ProtocolCommand *const command = protocolCommandNewP(
+                PROTOCOL_COMMAND_STORAGE_READ, .type = protocolCommandTypeClose, .sessionId = this->sessionId);
+
+            protocolClientExecute(this->client, command);
+            protocolCommandFree(command);
+        }
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -144,12 +159,20 @@ storageReadRemote(THIS_VOID, Buffer *buffer, bool block)
             {
                 MEM_CONTEXT_TEMP_BEGIN()
                 {
-                    protocolClientCommandPut(
-                        this->client, protocolCommandNewP(PROTOCOL_COMMAND_STORAGE_READ, .sessionId = this->sessionId));
+                    ProtocolCommand *const command = protocolCommandNewP(
+                        PROTOCOL_COMMAND_STORAGE_READ, .sessionId = this->sessionId);
+
+                    if (!this->queued)
+                        protocolClientCommandPut(this->client, command);
 
                     PackRead *const packRead = protocolClientDataGet(this->client, this->sessionId);
-
                     storageReadRemoteInternal(this, packRead);
+
+                    if (!this->eofFound)
+                    {
+                        protocolClientCommandPut(this->client, command);
+                        this->queued = true;
+                    }
                 }
                 MEM_CONTEXT_TEMP_END();
             }

@@ -314,6 +314,8 @@ protocolClientCommandPut(ProtocolClient *const this, ProtocolCommand *const comm
     // Expect idle state before command put
     protocolClientStateExpectIdle(this);
 
+    // !!! NEED TO DEAL WITH CLOSE/CANCEL HERE
+
     // Switch state to command put
     this->state = protocolClientStateCommandPut;
 
