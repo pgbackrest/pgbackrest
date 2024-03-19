@@ -346,7 +346,7 @@ protocolClientSessionNew(ProtocolClient *const client, const StringId command)
         FUNCTION_LOG_PARAM(STRING_ID, command);
     FUNCTION_LOG_END();
 
-    ASSERT(this != NULL);
+    ASSERT(client != NULL);
 
     OBJ_NEW_BEGIN(ProtocolClientSession, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
