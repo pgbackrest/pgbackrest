@@ -457,7 +457,7 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
             const ProtocolServerCommandGetResult command = protocolServerCommandGet(result);
             CHECK(FormatError, command.id == PROTOCOL_COMMAND_NOOP, "expected config command");
 
-            // Send a data end message and return a NULL server. Do not waste time looking at what the client wrote.
+            // Send a data end message and return a NULL server
             protocolServerDataPut(result, NULL);
 
             // Set result to NULL so there is no server for the caller to use. The TLS session will be freed when the temp mem

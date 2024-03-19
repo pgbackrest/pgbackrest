@@ -23,6 +23,7 @@ typedef struct StorageWriteRemote
     StorageWrite *write;                                            // Storage write interface
     ProtocolClient *client;                                         // Protocol client to make requests with
     uint64_t sessionId;                                             // Session id for subsequent commands
+    bool queued;                                                    // Is a write queued?
 
 #ifdef DEBUG
     uint64_t protocolWriteBytes;                                    // How many bytes were written to the protocol layer?
@@ -50,6 +51,9 @@ storageWriteRemoteFreeResource(THIS_VOID)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
+
+    if (this->queued)
+        protocolClientDataGet(this->client, this->sessionId);
 
     ProtocolCommand *const command = protocolCommandNewP(
         PROTOCOL_COMMAND_STORAGE_WRITE, .type = protocolCommandTypeCancel, .sessionId = this->sessionId);
@@ -137,12 +141,16 @@ storageWriteRemote(THIS_VOID, const Buffer *const buffer)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        if (this->queued)
+            protocolClientDataGet(this->client, this->sessionId);
+
         ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_STORAGE_WRITE, .sessionId = this->sessionId);
         PackWrite *const param = protocolCommandParamP(command, .extra = bufUsed(buffer));
 
         pckWriteBinP(param, buffer);
 
-        protocolClientExecute(this->client, command);
+        protocolClientCommandPut(this->client, command);
+        this->queued = true;
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -172,6 +180,9 @@ storageWriteRemoteClose(THIS_VOID)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
+            if (this->queued)
+                protocolClientDataGet(this->client, this->sessionId);
+
             ProtocolCommand *const command = protocolCommandNewP(
                 PROTOCOL_COMMAND_STORAGE_WRITE, .type = protocolCommandTypeClose, .sessionId = this->sessionId);
 

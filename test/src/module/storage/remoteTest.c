@@ -486,6 +486,17 @@ testRun(void)
         TEST_RESULT_BOOL(bufEq(storageGetP(storageNewReadP(storageRepo, STRDEF("test3.txt"))), contentBuf), true, "check file 3");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("write free and close before write");
+
+        TEST_ASSIGN(write, storageNewWriteP(storageRepoWrite, STRDEF("test2.txt")), "new write file");
+        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(write)), "open file");
+        TEST_RESULT_VOID(storageWriteFree(write), "free file");
+
+        TEST_ASSIGN(write, storageNewWriteP(storageRepoWrite, STRDEF("test2.txt")), "new write file");
+        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(write)), "open file");
+        TEST_RESULT_VOID(ioWriteClose(storageWriteIo(write)), "close file");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("write the file again with protocol compression");
 
         TEST_ASSIGN(

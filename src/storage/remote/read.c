@@ -304,6 +304,8 @@ storageReadRemoteClose(THIS_VOID)
 
     ASSERT(this != NULL);
 
+    // !!! NEED TO CLOSE HERE INSTEAD OF CALLING CANCEL?
+
     memContextCallbackClear(objMemContext(this));
     storageReadRemoteFreeResource(this);
 
