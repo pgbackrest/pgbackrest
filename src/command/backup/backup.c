@@ -1442,8 +1442,9 @@ backupJobResult(
                 const Buffer *const repoChecksum = pckReadBinP(jobResult);
                 PackRead *const checksumPageResult = pckReadPackReadP(jobResult);
 
-                // Increment backup copy progress
-                *sizeProgress += copySize;
+                // Increment backup copy progress. Use the original size since the size may have changed during the copy but for the
+                // purpose of reporting progress we need to increment by the original size used to generate the total size.
+                *sizeProgress += file.sizeOriginal;
 
                 // Create log file name
                 const String *const fileName = storagePathP(storagePg, manifestPathPg(file.name));

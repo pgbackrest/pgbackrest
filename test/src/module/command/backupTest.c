@@ -2087,17 +2087,24 @@ testRun(void)
 
         HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, "VER");
 
+        // Modify file postgresql.conf during the backup to demonstrate that percent complete will be updated correctly
+        HRN_STORAGE_PUT_Z(storagePgWrite(), "postgresql.conf", "CONFIGSTUFF2");
+        HRN_BACKUP_SCRIPT_SET(
+            {.op = hrnBackupScriptOpUpdate, .file = storagePathP(storagePg(), STRDEF("postgresql.conf")),
+             .content = BUFSTRDEF("CONFIG")});
+
         unsigned int backupCount = strLstSize(storageListP(storageRepoIdx(1), strNewFmt(STORAGE_PATH_BACKUP "/test1")));
 
         TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [FULL-2], version = " PROJECT_VERSION "\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (12B->6B, 80.00%) checksum"
+            " 2fb60054b43a25d7a958d3d19bdb1aa7809577a8\n"
             "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (3B, 100.00%) checksum c8663c2525f44b6d9c687fbceb4aafc63ed8b451\n"
             "P00 DETAIL: reference pg_data/global/pg_control to [FULL-2]\n"
-            "P00 DETAIL: reference pg_data/postgresql.conf to [FULL-2]\n"
             "P00   INFO: new backup label = [DIFF-4]\n"
-            "P00   INFO: diff backup size = 3B, file total = 3");
+            "P00   INFO: diff backup size = 9B, file total = 3");
         TEST_RESULT_UINT(
             strLstSize(storageListP(storageRepoIdx(1), strNewFmt(STORAGE_PATH_BACKUP "/test1"))), backupCount + 1,
             "new backup repo2");
