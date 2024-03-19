@@ -66,8 +66,7 @@ storageReadRemoteFreeResource(THIS_VOID)
         ProtocolCommand *const command = protocolCommandNewP(
             PROTOCOL_COMMAND_STORAGE_READ, .type = protocolCommandTypeClose, .sessionId = this->sessionId);
 
-        protocolClientCommandPut(this->client, command);
-        protocolClientDataGet(this->client);
+        protocolClientExecute(this->client, command);
         protocolCommandFree(command);
     }
 
@@ -148,7 +147,7 @@ storageReadRemote(THIS_VOID, Buffer *buffer, bool block)
                     protocolClientCommandPut(
                         this->client, protocolCommandNewP(PROTOCOL_COMMAND_STORAGE_READ, .sessionId = this->sessionId));
 
-                    PackRead *const packRead = protocolClientDataGet(this->client);
+                    PackRead *const packRead = protocolClientDataGet(this->client, this->sessionId);
 
                     storageReadRemoteInternal(this, packRead);
                 }
@@ -243,7 +242,7 @@ storageReadRemoteOpen(THIS_VOID)
         this->sessionId = protocolClientCommandPut(this->client, command);
 
         // If the file exists
-        PackRead *const packRead = protocolClientDataGet(this->client);
+        PackRead *const packRead = protocolClientDataGet(this->client, this->sessionId);
         result = pckReadBoolP(packRead);
 
         if (result)

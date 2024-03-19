@@ -682,11 +682,11 @@ testRun(void)
                 }
                 CATCH_FATAL()
                 {
+                    TEST_RESULT_Z(errorMessage(), "raised from test client: ERR_MESSAGE", "check message");
                     TEST_RESULT_PTR(errorType(), &AssertError, "check type");
                     TEST_RESULT_Z(errorFileName(), TEST_PGB_PATH "/src/protocol/client.c", "check file");
                     TEST_RESULT_Z(errorFunctionName(), "protocolClientError", "check function");
                     TEST_RESULT_BOOL(errorFileLine() > 0, true, "check file line > 0");
-                    TEST_RESULT_Z(errorMessage(), "raised from test client: ERR_MESSAGE", "check message");
                     TEST_RESULT_Z(errorStackTrace(), "ERR_STACK_TRACE", "check stack trace");
                 }
                 TRY_END();
@@ -719,37 +719,38 @@ testRun(void)
 
                 uint64_t sessionId;
                 TEST_ASSIGN(sessionId, protocolClientCommandPut(client, commandOpen), "open put");
-                TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client)), true, "open succeed");
+                TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client, sessionId)), true, "open succeed");
 
                 TEST_RESULT_UINT(
-                    protocolClientCommandPut(client, protocolCommandNewP(TEST_PROTOCOL_COMMAND_COMPLEX, .sessionId = 999)), 0,
+                    protocolClientCommandPut(client, protocolCommandNewP(TEST_PROTOCOL_COMMAND_COMPLEX, .sessionId = 999)), 999,
                     "process put");
                 TEST_ERROR(
-                    protocolClientDataGet(client), ProtocolError,
+                    protocolClientDataGet(client, 999), ProtocolError,
                     "raised from test client: unable to find session id 999 for command c-complex:prc");
 
                 ProtocolCommand *commandProcess = NULL;
                 TEST_ASSIGN(commandProcess, protocolCommandNewP(TEST_PROTOCOL_COMMAND_COMPLEX, .sessionId = sessionId), "process");
-                TEST_RESULT_UINT(protocolClientCommandPut(client, commandProcess), 0, "process put");
-                TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client)), false, "no more to process");
-                TEST_ERROR(protocolClientDataGet(client), ProtocolError, "client state is 'idle' but expected 'data-get'");
-
-                TEST_RESULT_UINT(protocolClientCommandPut(client, commandProcess), 0, "process put");
+                TEST_RESULT_UINT(protocolClientCommandPut(client, commandProcess), sessionId, "process put");
+                TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client, sessionId)), false, "no more to process");
                 TEST_ERROR(
-                    protocolClientDataGet(client), ProtocolError,
-                    "raised from test client: unable to find session id 2 for command c-complex:prc");
+                    protocolClientDataGet(client, sessionId), ProtocolError, "client state is 'idle' but expected 'data-get'");
+
+                TEST_RESULT_UINT(protocolClientCommandPut(client, commandProcess), sessionId, "process put");
+                TEST_ERROR_FMT(
+                    protocolClientDataGet(client, sessionId), ProtocolError,
+                    "raised from test client: unable to find session id %" PRIu64 " for command c-complex:prc", sessionId);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("process returns true");
 
                 TEST_ASSIGN(sessionId, protocolClientCommandPut(client, commandOpen), "open put");
-                TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client)), true, "open succeed");
+                TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client, sessionId)), true, "open succeed");
 
                 TEST_ASSIGN(commandProcess, protocolCommandNewP(TEST_PROTOCOL_COMMAND_COMPLEX, .sessionId = sessionId), "process");
-                TEST_RESULT_UINT(protocolClientCommandPut(client, commandProcess), 0, "process put");
-                TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client)), true, "more to process");
-                TEST_RESULT_UINT(protocolClientCommandPut(client, commandProcess), 0, "process put");
-                TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client)), true, "more to process");
+                TEST_RESULT_UINT(protocolClientCommandPut(client, commandProcess), sessionId, "process put");
+                TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client, sessionId)), true, "more to process");
+                TEST_RESULT_UINT(protocolClientCommandPut(client, commandProcess), sessionId, "process put");
+                TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client, sessionId)), true, "more to process");
 
                 ProtocolCommand *commandClose = NULL;
                 TEST_ASSIGN(
@@ -768,34 +769,34 @@ testRun(void)
                 TEST_RESULT_VOID(pckWriteStrP(protocolCommandParamP(commandOpen), STRDEF("data")), "param");
 
                 TEST_ASSIGN(sessionId, protocolClientCommandPut(client, commandOpen), "open put");
-                TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client)), true, "open succeed");
+                TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client, sessionId)), true, "open succeed");
 
                 TEST_ASSIGN(
                     commandProcess, protocolCommandNewP(TEST_PROTOCOL_COMMAND_COMPLEX_CLOSE, .sessionId = sessionId), "process");
-                TEST_RESULT_UINT(protocolClientCommandPut(client, commandProcess), 0, "process put");
-                TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client)), true, "more to process");
+                TEST_RESULT_UINT(protocolClientCommandPut(client, commandProcess), sessionId, "process put");
+                TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client, sessionId)), true, "more to process");
 
                 TEST_ASSIGN(
                     commandClose,
                     protocolCommandNewP(
                         TEST_PROTOCOL_COMMAND_COMPLEX_CLOSE, .type = protocolCommandTypeClose, .sessionId = sessionId),
                     "close command");
-                TEST_RESULT_UINT(protocolClientCommandPut(client, commandClose), 0, "close put");
-                TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client)), true, "close result");
+                TEST_RESULT_UINT(protocolClientCommandPut(client, commandClose), sessionId, "close put");
+                TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client, sessionId)), true, "close result");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("cancel handler");
 
                 TEST_ASSIGN(sessionId, protocolClientCommandPut(client, commandOpen), "open put");
-                TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client)), true, "open succeed");
+                TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client, sessionId)), true, "open succeed");
 
                 TEST_RESULT_UINT(
                     protocolClientCommandPut(
                         client,
                         protocolCommandNewP(
                             TEST_PROTOCOL_COMMAND_COMPLEX_CLOSE, .type = protocolCommandTypeCancel, .sessionId = sessionId)),
-                    0, "cancel put");
-                TEST_RESULT_PTR(protocolClientDataGet(client), NULL, "cancel result");
+                    sessionId, "cancel put");
+                TEST_RESULT_PTR(protocolClientDataGet(client, sessionId), NULL, "cancel result");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("free client");

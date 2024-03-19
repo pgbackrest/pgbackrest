@@ -25,7 +25,7 @@ struct ProtocolServer
     IoWrite *write;                                                 // Write interface
     const String *name;                                             // Name displayed in logging
     List *sessionList;                                              // List of active sessions
-    uint64_t sessionTotal;                                          // Total sessions (used to generate session ids);
+    uint64_t sessionId;                                             // Current session being processed
 };
 
 // Track server sessions
@@ -80,6 +80,38 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
 }
 
 /**********************************************************************************************************************************/
+static void
+protocolServerPut(ProtocolServer *const this, const ProtocolMessageType type, PackWrite *const data)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PROTOCOL_SERVER, this);
+        FUNCTION_TEST_PARAM(ENUM, type);
+        FUNCTION_TEST_PARAM(PACK_WRITE, data);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // End the pack
+        if (data != NULL)
+            pckWriteEndP(data);
+
+        // Write the result
+        PackWrite *const resultMessage = pckWriteNewIo(this->write);
+
+        pckWriteU32P(resultMessage, type, .defaultWrite = true);
+        pckWriteU64P(resultMessage, this->sessionId);
+        pckWritePackP(resultMessage, pckWriteResult(data));
+        pckWriteEndP(resultMessage);
+        ioWriteFlush(this->write);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
 FN_EXTERN void
 protocolServerError(ProtocolServer *this, int code, const String *message, const String *stack)
 {
@@ -100,6 +132,7 @@ protocolServerError(ProtocolServer *this, int code, const String *message, const
         // Write the error and flush to be sure it gets sent immediately
         PackWrite *error = pckWriteNewIo(this->write);
         pckWriteU32P(error, protocolMessageTypeError);
+        pckWriteU64P(error, this->sessionId);
         pckWriteI32P(error, code);
         pckWriteStrP(error, message);
         pckWriteStrP(error, stack);
@@ -135,8 +168,11 @@ protocolServerCommandGet(ProtocolServer *const this)
         {
             result.id = pckReadStrIdP(command);
             result.type = (ProtocolCommandType)pckReadStrIdP(command);
-            result.sessionId = pckReadU64P(command);
+            this->sessionId = pckReadU64P(command);
+            result.sessionRequired = pckReadBoolP(command);
             result.param = pckReadPackP(command);
+
+            ASSERT(this->sessionId != 0);
         }
         MEM_CONTEXT_PRIOR_END();
 
@@ -216,13 +252,9 @@ protocolServerProcess(
                                     // Open a protocol session
                                     case protocolCommandTypeOpen:
                                     {
-                                        ASSERT(command.sessionId == 0);
                                         ASSERT(handler->open != NULL);
 
-                                        ProtocolServerSession session = {.id = ++this->sessionTotal};
-
-                                        // Return session id to client
-                                        protocolServerDataPut(this, pckWriteU64P(protocolPackNew(), session.id));
+                                        ProtocolServerSession session = {.id = this->sessionId};
 
                                         // Call open handler
                                         MEM_CONTEXT_OBJ_BEGIN(this->sessionList)
@@ -245,7 +277,7 @@ protocolServerProcess(
                                         void *sessionData = NULL;
                                         unsigned int sessionListIdx = 0;
 
-                                        if (command.sessionId != 0)
+                                        if (command.sessionRequired)
                                         {
                                             ASSERT(handler->processSession != NULL);
                                             ASSERT(handler->process == NULL);
@@ -254,7 +286,7 @@ protocolServerProcess(
                                             {
                                                 ProtocolServerSession *const session = lstGet(this->sessionList, sessionListIdx);
 
-                                                if (session->id == command.sessionId)
+                                                if (session->id == this->sessionId)
                                                 {
                                                     sessionData = session->data;
                                                     break;
@@ -266,7 +298,7 @@ protocolServerProcess(
                                             {
                                                 THROW_FMT(
                                                     ProtocolError, "unable to find session id %" PRIu64 " for command %s:%s",
-                                                    command.sessionId, strZ(strIdToStr(command.id)),
+                                                    this->sessionId, strZ(strIdToStr(command.id)),
                                                     strZ(strIdToStr(command.type)));
                                             }
                                         }
@@ -282,7 +314,7 @@ protocolServerProcess(
                                                 {
                                                     ASSERT(handler->process == NULL);
                                                     CHECK_FMT(
-                                                        ProtocolError, command.sessionId != 0, "no session id for command %s:%s",
+                                                        ProtocolError, this->sessionId != 0, "no session id for command %s:%s",
                                                         strZ(strIdToStr(command.id)), strZ(strIdToStr(command.type)));
 
                                                     // Free session when process returns false. This optimization allows an explicit
@@ -297,7 +329,7 @@ protocolServerProcess(
                                                 else
                                                 {
                                                     ASSERT(handler->process != NULL);
-                                                    ASSERT(command.sessionId == 0);
+                                                    ASSERT(!command.sessionRequired);
 
                                                     handler->process(pckReadNew(command.param), this);
                                                 }
@@ -439,21 +471,9 @@ protocolServerDataPut(ProtocolServer *const this, PackWrite *const data)
         FUNCTION_LOG_PARAM(PACK_WRITE, data);
     FUNCTION_LOG_END();
 
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        // End the pack
-        if (data != NULL)
-            pckWriteEndP(data);
+    ASSERT(this != NULL);
 
-        // Write the result
-        PackWrite *const resultMessage = pckWriteNewIo(this->write);
-
-        pckWriteU32P(resultMessage, protocolMessageTypeData, .defaultWrite = true);
-        pckWritePackP(resultMessage, pckWriteResult(data));
-        pckWriteEndP(resultMessage);
-        ioWriteFlush(this->write);
-    }
-    MEM_CONTEXT_TEMP_END();
+    protocolServerPut(this, protocolMessageTypeData, data);
 
     FUNCTION_LOG_RETURN_VOID();
 }

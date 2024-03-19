@@ -51,7 +51,7 @@ typedef struct ProtocolServerCommandGetResult
 {
     StringId id;                                                    // Command identifier
     ProtocolCommandType type;                                       // Command type
-    uint64_t sessionId;                                             // Session id
+    bool sessionRequired;                                           // Session with more than one command
     Pack *param;                                                    // Parameter pack
 } ProtocolServerCommandGetResult;
 

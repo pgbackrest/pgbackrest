@@ -44,7 +44,15 @@ Getters/Setters
 typedef struct ProtocolCommandPub
 {
     ProtocolCommandType type;                                       // Command type
+    uint64_t sessionId;                                             // Session id
 } ProtocolCommandPub;
+
+// Command type
+FN_INLINE_ALWAYS uint64_t
+protocolCommandSessionId(const ProtocolCommand *const this)
+{
+    return THIS_PUB(ProtocolCommand)->sessionId;
+}
 
 // Command type
 FN_INLINE_ALWAYS ProtocolCommandType
@@ -76,7 +84,7 @@ typedef struct ProtocolCommandParamParam
 FN_EXTERN PackWrite *protocolCommandParam(ProtocolCommand *this, ProtocolCommandParamParam param);
 
 // Write protocol command
-FN_EXTERN void protocolCommandPut(ProtocolCommand *this, IoWrite *write);
+FN_EXTERN void protocolCommandPut(ProtocolCommand *this, uint64_t sessionId, IoWrite *write);
 
 /***********************************************************************************************************************************
 Destructor

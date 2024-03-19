@@ -38,6 +38,7 @@ struct ProtocolClient
     const String *name;                                             // Name displayed in logging
     const String *errorPrefix;                                      // Prefix used when throwing error
     TimeMSec keepAliveTime;                                         // Last time data was put to the server
+    uint64_t sessionTotal;                                          // Total sessions (used to generate session ids)
 };
 
 /***********************************************************************************************************************************
@@ -176,10 +177,11 @@ protocolClientError(ProtocolClient *const this, const ProtocolMessageType type, 
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(error != NULL);
 
     if (type == protocolMessageTypeError)
     {
+        ASSERT(error != NULL);
+
         MEM_CONTEXT_TEMP_BEGIN()
         {
             const ErrorType *const type = errorTypeFromCode(pckReadI32P(error));
@@ -202,13 +204,15 @@ protocolClientError(ProtocolClient *const this, const ProtocolMessageType type, 
 
 /**********************************************************************************************************************************/
 FN_EXTERN PackRead *
-protocolClientDataGet(ProtocolClient *const this)
+protocolClientDataGet(ProtocolClient *const this, const uint64_t sessionId)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
+        FUNCTION_LOG_PARAM(UINT64, sessionId);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
+    ASSERT(sessionId != 0);
 
     // Expect data-get state before data get
     protocolClientStateExpect(this, protocolClientStateDataGet);
@@ -217,8 +221,13 @@ protocolClientDataGet(ProtocolClient *const this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        PackRead *response = pckReadNewIo(this->pub.read);
-        ProtocolMessageType type = (ProtocolMessageType)pckReadU32P(response);
+        PackRead *const response = pckReadNewIo(this->pub.read);
+        const ProtocolMessageType type = (ProtocolMessageType)pckReadU32P(response);
+        const uint64_t responseSessionId = pckReadU64P(response);
+
+        CHECK_FMT(
+            AssertError, sessionId == responseSessionId, "expected %" PRIu64 " but got %" PRIu64 ", type %u",
+            sessionId, responseSessionId, type);
 
         protocolClientError(this, type, response);
 
@@ -252,8 +261,8 @@ protocolClientCommandPut(ProtocolClient *const this, ProtocolCommand *const comm
     ASSERT(this != NULL);
     ASSERT(command != NULL);
 
-    // Most command types do not return a session id
-    uint64_t result = 0;
+    // All commands require a session id for multiplexing
+    const uint64_t result = protocolCommandSessionId(command) == 0 ? ++this->sessionTotal : protocolCommandSessionId(command);
 
     // Expect idle state before command put
     protocolClientStateExpect(this, protocolClientStateIdle);
@@ -262,22 +271,10 @@ protocolClientCommandPut(ProtocolClient *const this, ProtocolCommand *const comm
     this->state = protocolClientStateCommandPut;
 
     // Put command
-    protocolCommandPut(command, this->write);
+    protocolCommandPut(command, result, this->write);
 
     // Switch state to data-get after successful command put
     this->state = protocolClientStateDataGet;
-
-    // If command type is open then get the session id
-    if (protocolCommandType(command) == protocolCommandTypeOpen)
-    {
-        PackRead *const read = protocolClientDataGet(this);
-        result = pckReadU64P(read);
-
-        pckReadFree(read);
-
-        // Switch state to data-get after getting the session id so the command can return its own data
-        this->state = protocolClientStateDataGet;
-    }
 
     // Reset the keep alive time
     this->keepAliveTime = timeMSec();
@@ -297,10 +294,7 @@ protocolClientExecute(ProtocolClient *const this, ProtocolCommand *const command
     ASSERT(this != NULL);
     ASSERT(command != NULL);
 
-    // Put command
-    protocolClientCommandPut(this, command);
-
-    FUNCTION_LOG_RETURN(PACK_READ, protocolClientDataGet(this));
+    FUNCTION_LOG_RETURN(PACK_READ, protocolClientDataGet(this, protocolClientCommandPut(this, command)));
 }
 
 /**********************************************************************************************************************************/

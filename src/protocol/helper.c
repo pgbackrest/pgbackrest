@@ -412,6 +412,11 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
         {
             TRY_BEGIN()
             {
+                // Get parameter list from the client. This needs to happen even if we cannot authorize the client so that the
+                // session id gets set for the error.
+                const ProtocolServerCommandGetResult command = protocolServerCommandGet(result);
+                CHECK(FormatError, command.id == PROTOCOL_COMMAND_CONFIG, "expected config command");
+
                 // Get list of authorized stanzas for this client
                 CHECK(AssertError, cfgOptionTest(cfgOptTlsServerAuth), "missing auth data");
 
@@ -422,10 +427,7 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
                 if (clientAuthList == NULL)
                     THROW(AccessError, "access denied");
 
-                // Get parameter list from the client and load it
-                const ProtocolServerCommandGetResult command = protocolServerCommandGet(result);
-                CHECK(FormatError, command.id == PROTOCOL_COMMAND_CONFIG, "expected config command");
-
+                // Load parameter list from the client
                 StringList *const paramList = pckReadStrLstP(pckReadNew(command.param));
                 strLstInsert(paramList, 0, cfgExe());
                 cfgLoad(strLstSize(paramList), strLstPtr(paramList));
@@ -451,6 +453,10 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
         // Else the client can only detect that the server is alive
         else
         {
+            // A noop command should have been received
+            const ProtocolServerCommandGetResult command = protocolServerCommandGet(result);
+            CHECK(FormatError, command.id == PROTOCOL_COMMAND_NOOP, "expected config command");
+
             // Send a data end message and return a NULL server. Do not waste time looking at what the client wrote.
             protocolServerDataPut(result, NULL);
 

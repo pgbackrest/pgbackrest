@@ -97,7 +97,7 @@ protocolClientNoExit(ProtocolClient *const this)
 FN_EXTERN void protocolClientNoOp(ProtocolClient *this);
 
 // Get data put by the server
-FN_EXTERN PackRead *protocolClientDataGet(ProtocolClient *this);
+FN_EXTERN PackRead *protocolClientDataGet(ProtocolClient *this, uint64_t sessionId);
 
 // Put command to the server, returns session id when command type is open
 FN_EXTERN uint64_t protocolClientCommandPut(ProtocolClient *this, ProtocolCommand *command);

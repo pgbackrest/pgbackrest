@@ -162,7 +162,7 @@ protocolParallelProcess(ProtocolParallel *this)
                             {
                                 ProtocolClient *const client = *(ProtocolClient **)lstGet(this->clientList, clientIdx);
 
-                                protocolParallelJobResultSet(job, protocolClientDataGet(client));
+                                protocolParallelJobResultSet(job, protocolClientDataGet(client, protocolParallelJobSessionId(job)));
                             }
                             CATCH_ANY()
                             {
@@ -203,11 +203,12 @@ protocolParallelProcess(ProtocolParallel *this)
                     lstAdd(this->jobList, &job);
 
                     // Put command
-                    protocolClientCommandPut(
+                    const uint64_t sessionId = protocolClientCommandPut(
                         *(ProtocolClient **)lstGet(this->clientList, clientIdx), protocolParallelJobCommand(job));
 
                     // Set client id and running state
                     protocolParallelJobProcessIdSet(job, clientIdx + 1);
+                    protocolParallelJobSessionIdSet(job, sessionId);
                     protocolParallelJobStateSet(job, protocolParallelJobStateRunning);
                     this->clientJobList[clientIdx] = job;
                 }
