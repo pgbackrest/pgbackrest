@@ -121,11 +121,11 @@ testRun(void)
         TEST_RESULT_UINT(info.timeline, 47, "check timeline");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_94, .walSegmentSize = 1024 * 1024);
+        HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_94, .walSegmentSize = 128 * 1024 * 1024);
 
         TEST_ERROR(
             pgControlFromFile(storageTest, NULL), FormatError,
-            "wal segment size is 1048576 but must be 16777216 for PostgreSQL <= 10");
+            "wal segment size is 134217728 but must be a power of two between 1048576 and 67108864 inclusive");
 
         // -------------------------------------------------------------------------------------------------------------------------
         HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_11, .walSegmentSize = UINT_MAX); // UINT_MAX forces size to 0
@@ -491,10 +491,11 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         memset(bufPtr(result), 0, bufSize(result));
-        HRN_PG_WAL_TO_BUFFER(result, PG_VERSION_96, .systemId = 0xEAEAEAEA, .size = PG_WAL_SEGMENT_SIZE_DEFAULT * 2);
+        HRN_PG_WAL_TO_BUFFER(result, PG_VERSION_96, .systemId = 0xEAEAEAEA, .size = PG_WAL_SEGMENT_SIZE_DEFAULT + 1);
 
         TEST_ERROR(
-            pgWalFromBuffer(result, NULL), FormatError, "wal segment size is 33554432 but must be 16777216 for PostgreSQL <= 10");
+            pgWalFromBuffer(result, NULL), FormatError,
+            "wal segment size is 16777217 but must be a power of two between 1048576 and 67108864 inclusive");
 
         // -------------------------------------------------------------------------------------------------------------------------
         memset(bufPtr(result), 0, bufSize(result));

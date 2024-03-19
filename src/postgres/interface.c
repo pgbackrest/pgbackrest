@@ -165,6 +165,23 @@ pgDbIsSystemId(const unsigned int id)
     FUNCTION_TEST_RETURN(BOOL, id < FirstNormalObjectId);
 }
 
+/**********************************************************************************************************************************/
+FN_EXTERN bool
+pgWalSegmentSizeValid(const unsigned int pgVersion, const size_t walSegmentSize)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, pgVersion);
+        FUNCTION_TEST_PARAM(SIZE, walSegmentSize);
+    FUNCTION_TEST_END();
+
+    if (pgVersion < PG_VERSION_10 && walSegmentSize > PG_9_MAX_WAL_SEGMENT_SIZE)
+    {
+        FUNCTION_TEST_RETURN(BOOL, false);
+    }
+
+    FUNCTION_TEST_RETURN(BOOL, IsValidWalSegSize(walSegmentSize));
+}
+
 /***********************************************************************************************************************************
 Check expected WAL segment size for older PostgreSQL versions
 ***********************************************************************************************************************************/
@@ -176,19 +193,12 @@ pgWalSegmentSizeCheck(unsigned int pgVersion, unsigned int walSegmentSize)
         FUNCTION_TEST_PARAM(UINT, walSegmentSize);
     FUNCTION_TEST_END();
 
-    if (pgVersion < PG_VERSION_11 && walSegmentSize != PG_WAL_SEGMENT_SIZE_DEFAULT)
-    {
-        THROW_FMT(
-            FormatError, "wal segment size is %u but must be %u for " PG_NAME " <= " PG_VERSION_10_Z, walSegmentSize,
-            PG_WAL_SEGMENT_SIZE_DEFAULT);
-    }
-
     // Check that the WAL segment size is valid
-    if (!IsValidWalSegSize(walSegmentSize))
+    if (!pgWalSegmentSizeValid(pgVersion, walSegmentSize))
     {
         THROW_FMT(
             FormatError, "wal segment size is %u but must be a power of two between %d and %d inclusive", walSegmentSize,
-            WalSegMinSize, WalSegMaxSize);
+            WalSegMinSize, pgVersion < PG_VERSION_10 ? PG_9_MAX_WAL_SEGMENT_SIZE : WalSegMaxSize);
     }
 
     FUNCTION_TEST_RETURN_VOID();
