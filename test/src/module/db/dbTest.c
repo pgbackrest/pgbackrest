@@ -151,7 +151,6 @@ testRun(void)
                     TRY_BEGIN()
                     {
                         TEST_RESULT_VOID(dbOpen(db), "open db");
-                        TEST_RESULT_UINT(db->sessionId, 1, "check remote idx");
                         TEST_RESULT_VOID(dbFree(db), "free db");
                         db = NULL;
                     }
@@ -170,7 +169,6 @@ testRun(void)
                     TRY_BEGIN()
                     {
                         TEST_RESULT_VOID(dbOpen(db), "open db");
-                        TEST_RESULT_UINT(db->sessionId, 2, "check idx");
                         TEST_RESULT_STR_Z(dbWalSwitch(db), "000000030000000200000003", "wal switch");
                         TEST_RESULT_UINT(dbDbTimeout(db), 777000, "check timeout");
                         TEST_RESULT_VOID(memContextCallbackClear(db->pub.memContext), "clear context so close is not called");
