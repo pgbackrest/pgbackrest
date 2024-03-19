@@ -39,7 +39,15 @@ struct ProtocolClient
     const String *errorPrefix;                                      // Prefix used when throwing error
     TimeMSec keepAliveTime;                                         // Last time data was put to the server
     uint64_t sessionTotal;                                          // Total sessions (used to generate session ids)
+    List *responseQueue;                                            // Queued responses
 };
+
+typedef struct ProtocolClientResponse
+{
+    uint64_t sessionId;
+    ProtocolMessageType type;
+    PackRead *packRead;
+} ProtocolClientResponse;
 
 /***********************************************************************************************************************************
 Close protocol connection
@@ -96,6 +104,7 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
             .name = strDup(name),
             .errorPrefix = strNewFmt("raised from %s", strZ(name)),
             .keepAliveTime = timeMSec(),
+            .responseQueue = lstNewP(sizeof(ProtocolClientResponse)),
         };
 
         // Read, parse, and check the protocol greeting
@@ -152,15 +161,18 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
 Check protocol state
 ***********************************************************************************************************************************/
 static void
-protocolClientStateExpect(const ProtocolClient *const this, const ProtocolClientState expect)
+protocolClientStateExpectIdle(const ProtocolClient *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PROTOCOL_CLIENT, this);
-        FUNCTION_TEST_PARAM(STRING_ID, expect);
     FUNCTION_TEST_END();
 
-    if (this->state != expect)
-        THROW_FMT(ProtocolError, "client state is '%s' but expected '%s'", strZ(strIdToStr(this->state)), strZ(strIdToStr(expect)));
+    if (this->state != protocolClientStateIdle)
+    {
+        THROW_FMT(
+            ProtocolError, "client state is '%s' but expected '%s'", strZ(strIdToStr(this->state)),
+            strZ(strIdToStr(protocolClientStateIdle)));
+    }
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -189,9 +201,6 @@ protocolClientError(ProtocolClient *const this, const ProtocolMessageType type, 
             const String *const stack = pckReadStrP(error);
             pckReadEndP(error);
 
-            // Switch state to idle after error (server will do the same)
-            this->state = protocolClientStateIdle;
-
             CHECK(FormatError, message != NULL && stack != NULL, "invalid error data");
 
             errorInternalThrow(type, __FILE__, __func__, __LINE__, strZ(message), strZ(stack));
@@ -215,36 +224,74 @@ protocolClientDataGet(ProtocolClient *const this, const uint64_t sessionId)
     ASSERT(sessionId != 0);
 
     // Expect data-get state before data get
-    protocolClientStateExpect(this, protocolClientStateDataGet);
+    protocolClientStateExpectIdle(this);
 
     PackRead *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        PackRead *const response = pckReadNewIo(this->pub.read);
-        const ProtocolMessageType type = (ProtocolMessageType)pckReadU32P(response);
-        const uint64_t responseSessionId = pckReadU64P(response);
+        // Check the queue for a response
+        ProtocolClientResponse response = {0};
 
-        CHECK_FMT(
-            AssertError, sessionId == responseSessionId, "expected %" PRIu64 " but got %" PRIu64 ", type %u",
-            sessionId, responseSessionId, type);
-
-        protocolClientError(this, type, response);
-
-        CHECK(FormatError, type == protocolMessageTypeData, "expected data message");
-
-        MEM_CONTEXT_PRIOR_BEGIN()
+        for (unsigned int responseIdx = 0; responseIdx < lstSize(this->responseQueue); responseIdx++)
         {
-            result = pckReadPackReadP(response);
-        }
-        MEM_CONTEXT_PRIOR_END();
+            if (((ProtocolClientResponse *)lstGet(this->responseQueue, responseIdx))->sessionId == sessionId)
+            {
+                response = *(ProtocolClientResponse *)lstGet(this->responseQueue, responseIdx);
+                objMove(response.packRead, memContextCurrent());
 
-        pckReadEndP(response);
+                lstRemoveIdx(this->responseQueue, responseIdx);
+                break;
+            }
+        }
+
+        // If not found in the queue then read from protocol
+        while (response.sessionId == 0)
+        {
+            // Switch state to data get
+            this->state = protocolClientStateDataGet;
+
+            PackRead *const responsePack = pckReadNewIo(this->pub.read);
+            response.sessionId = pckReadU64P(responsePack);
+            response.type = (ProtocolMessageType)pckReadU32P(responsePack);
+
+            if (response.type == protocolMessageTypeError)
+            {
+                PackWrite *const packWrite = protocolPackNew();
+
+                pckWriteI32P(packWrite, pckReadI32P(responsePack));
+                pckWriteStrP(packWrite, pckReadStrP(responsePack));
+                pckWriteStrP(packWrite, pckReadStrP(responsePack));
+                pckWriteEnd(packWrite);
+
+                response.packRead = pckReadNew(pckWriteResult(packWrite));
+            }
+            else
+            {
+                ASSERT(response.type == protocolMessageTypeData);
+                response.packRead = pckReadPackReadP(responsePack);
+            }
+
+            pckReadEndP(responsePack);
+
+            if (response.sessionId != sessionId)
+            {
+                objMove(response.packRead, objMemContext(this->responseQueue));
+                lstAdd(this->responseQueue, &response);
+
+                response.sessionId = 0;
+            }
+
+            // Switch state back to idle after successful data get
+            this->state = protocolClientStateIdle;
+        }
+
+        protocolClientError(this, response.type, response.packRead);
+        CHECK(FormatError, response.type == protocolMessageTypeData, "expected data message");
+
+        result = objMove(response.packRead, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
-
-    // Switch state to idle after successful data get
-    this->state = protocolClientStateIdle;
 
     FUNCTION_LOG_RETURN(PACK_READ, result);
 }
@@ -265,16 +312,16 @@ protocolClientCommandPut(ProtocolClient *const this, ProtocolCommand *const comm
     const uint64_t result = protocolCommandSessionId(command) == 0 ? ++this->sessionTotal : protocolCommandSessionId(command);
 
     // Expect idle state before command put
-    protocolClientStateExpect(this, protocolClientStateIdle);
+    protocolClientStateExpectIdle(this);
 
-    // Switch state to cmd-put
+    // Switch state to command put
     this->state = protocolClientStateCommandPut;
 
     // Put command
     protocolCommandPut(command, result, this->write);
 
-    // Switch state to data-get after successful command put
-    this->state = protocolClientStateDataGet;
+    // Switch state back to idle after successful command put
+    this->state = protocolClientStateIdle;
 
     // Reset the keep alive time
     this->keepAliveTime = timeMSec();

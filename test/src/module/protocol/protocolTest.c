@@ -68,12 +68,11 @@ testCommandRequestSimpleProtocol(PackRead *const param, ProtocolServer *const se
         FUNCTION_HARNESS_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_HARNESS_END();
 
-    ASSERT(param == NULL);
     ASSERT(server != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        protocolServerDataPut(server, pckWriteStrP(protocolPackNew(), STRDEF("output")));
+        protocolServerDataPut(server, pckWriteStrP(protocolPackNew(), strNewFmt("output%u", pckReadU32P(param))));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -699,9 +698,29 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("simple command");
 
-                TEST_RESULT_STR_Z(
-                    pckReadStrP(protocolClientExecute(client, protocolCommandNewP(TEST_PROTOCOL_COMMAND_SIMPLE))), "output",
-                    "execute");
+                ProtocolCommand *commandSimple = protocolCommandNewP(TEST_PROTOCOL_COMMAND_SIMPLE);
+                pckWriteU32P(protocolCommandParamP(commandSimple), 99);
+
+                TEST_RESULT_STR_Z(pckReadStrP(protocolClientExecute(client, commandSimple)), "output99", "execute");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("simple command with out of order results");
+
+                ProtocolCommand *commandSimple1 = protocolCommandNewP(TEST_PROTOCOL_COMMAND_SIMPLE);
+                pckWriteU32P(protocolCommandParamP(commandSimple1), 1);
+                uint64_t sessionId1 = protocolClientCommandPut(client, commandSimple1);
+
+                ProtocolCommand *commandSimple2 = protocolCommandNewP(TEST_PROTOCOL_COMMAND_SIMPLE);
+                pckWriteU32P(protocolCommandParamP(commandSimple2), 2);
+                uint64_t sessionId2 = protocolClientCommandPut(client, commandSimple2);
+
+                ProtocolCommand *commandSimple3 = protocolCommandNewP(TEST_PROTOCOL_COMMAND_SIMPLE);
+                pckWriteU32P(protocolCommandParamP(commandSimple3), 3);
+                uint64_t sessionId3 = protocolClientCommandPut(client, commandSimple3);
+
+                TEST_RESULT_STR_Z(pckReadStrP(protocolClientDataGet(client, sessionId2)), "output2", "output 2");
+                TEST_RESULT_STR_Z(pckReadStrP(protocolClientDataGet(client, sessionId3)), "output3", "output 3");
+                TEST_RESULT_STR_Z(pckReadStrP(protocolClientDataGet(client, sessionId1)), "output1", "output 1");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("open returns false");
@@ -732,13 +751,21 @@ testRun(void)
                 TEST_ASSIGN(commandProcess, protocolCommandNewP(TEST_PROTOCOL_COMMAND_COMPLEX, .sessionId = sessionId), "process");
                 TEST_RESULT_UINT(protocolClientCommandPut(client, commandProcess), sessionId, "process put");
                 TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client, sessionId)), false, "no more to process");
-                TEST_ERROR(
-                    protocolClientDataGet(client, sessionId), ProtocolError, "client state is 'idle' but expected 'data-get'");
 
                 TEST_RESULT_UINT(protocolClientCommandPut(client, commandProcess), sessionId, "process put");
                 TEST_ERROR_FMT(
                     protocolClientDataGet(client, sessionId), ProtocolError,
                     "raised from test client: unable to find session id %" PRIu64 " for command c-complex:prc", sessionId);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("error if state not idle");
+
+                client->state = protocolClientStateDataGet;
+
+                TEST_ERROR(
+                    protocolClientDataGet(client, sessionId), ProtocolError, "client state is 'data-get' but expected 'idle'");
+
+                client->state = protocolClientStateIdle;
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("process returns true");
