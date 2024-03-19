@@ -297,6 +297,173 @@ protocolClientDataGet(ProtocolClient *const this, const uint64_t sessionId)
 }
 
 /**********************************************************************************************************************************/
+FN_EXTERN void
+protocolClientCommandPutX(
+    ProtocolClient *const this, const StringId command, const ProtocolCommandType type, const uint64_t sessionId,
+    const bool sessionRequired, PackWrite *const param)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
+        FUNCTION_LOG_PARAM(STRING_ID, command);
+        FUNCTION_LOG_PARAM(STRING_ID, type);
+        FUNCTION_LOG_PARAM(UINT64, sessionId);
+        FUNCTION_LOG_PARAM(PACK_WRITE, param);
+    FUNCTION_LOG_END();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Write the command
+        PackWrite *const commandPack = pckWriteNewIo(this->write);
+        pckWriteU32P(commandPack, protocolMessageTypeCommand, .defaultWrite = true);
+        pckWriteStrIdP(commandPack, command);
+        pckWriteStrIdP(commandPack, type);
+        pckWriteU64P(commandPack, sessionId);
+        pckWriteBoolP(commandPack, sessionRequired);
+
+        // Write parameters
+        if (param != NULL)
+        {
+            pckWriteEndP(param);
+            pckWritePackP(commandPack, pckWriteResult(param));
+        }
+
+        pckWriteEndP(commandPack);
+
+        // Flush to send command immediately
+        ioWriteFlush(this->write);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN ProtocolClientSession *
+protocolClientSessionNew(ProtocolClient *const client, const StringId command)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, client);
+        FUNCTION_LOG_PARAM(STRING_ID, command);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    OBJ_NEW_BEGIN(ProtocolClientSession, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    {
+        *this = (ProtocolClientSession)
+        {
+            .client = client,
+            .command = command,
+            .sessionId = ++client->sessionTotal,
+        };
+    }
+    OBJ_NEW_END();
+
+    FUNCTION_LOG_RETURN(PROTOCOL_CLIENT_SESSION, this);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN PackRead *
+protocolClientSessionOpen(ProtocolClientSession *const this, const ProtocolClientSessionOpenParam param)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT_SESSION, this);
+        FUNCTION_LOG_PARAM(PACK_WRITE, param.param);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(!this->open);
+
+    protocolClientCommandPutX(this->client, this->command, protocolCommandTypeOpen, this->sessionId, true, param.param);
+    this->open = true;
+
+    // Set a callback to shutdown the protocol
+    // memContextCallbackSet(objMemContext(this), protocolClientFreeResource, this);
+
+    FUNCTION_LOG_RETURN(PACK_READ, protocolClientDataGet(this->client, this->sessionId));
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN PackRead *
+protocolClientSessionRequest(ProtocolClientSession *const this, const ProtocolClientSessionRequestParam param)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT_SESSION, this);
+        FUNCTION_LOG_PARAM(PACK_WRITE, param.param);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    protocolClientSessionRequestAsync(this, param);
+
+    FUNCTION_LOG_RETURN(PACK_READ, protocolClientSessionResponse(this));
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+protocolClientSessionRequestAsync(ProtocolClientSession *const this, const ProtocolClientSessionRequestParam param)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT_SESSION, this);
+        FUNCTION_LOG_PARAM(PACK_WRITE, param.param);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    protocolClientCommandPutX(this->client, this->command, protocolCommandTypeProcess, this->sessionId, this->open, param.param);
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN PackRead *
+protocolClientSessionResponse(ProtocolClientSession *const this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT_SESSION, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_LOG_RETURN(PACK_READ, protocolClientDataGet(this->client, this->sessionId));
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN PackRead *
+protocolClientSessionClose(ProtocolClientSession *const this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT_SESSION, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->open);
+
+    protocolClientCommandPutX(this->client, this->command, protocolCommandTypeClose, this->sessionId, this->open, NULL);
+    this->open = false;
+
+    FUNCTION_LOG_RETURN(PACK_READ, protocolClientDataGet(this->client, this->sessionId));
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+protocolClientSessionCancel(ProtocolClientSession *const this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT_SESSION, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->open);
+
+    protocolClientCommandPutX(this->client, this->command, protocolCommandTypeCancel, this->sessionId, this->open, NULL);
+    protocolClientDataGet(this->client, this->sessionId);
+    this->open = false;
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
 FN_EXTERN uint64_t
 protocolClientCommandPut(ProtocolClient *const this, ProtocolCommand *const command)
 {
@@ -371,5 +538,17 @@ protocolClientToLog(const ProtocolClient *const this, StringStatic *const debugL
 {
     strStcFmt(debugLog, "{name: %s, state: ", strZ(this->name));
     strStcResultSizeInc(debugLog, strIdToLog(this->state, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+    strStcCatChr(debugLog, '}');
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+protocolClientSessionToLog(const ProtocolClientSession *const this, StringStatic *const debugLog)
+{
+    strStcCat(debugLog, "{client: ");
+    protocolClientToLog(this->client, debugLog);
+    strStcCat(debugLog, ", command: ");
+    strStcResultSizeInc(debugLog, strIdToLog(this->command, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+    strStcFmt(debugLog, ", sessionId: %" PRIu64, this->sessionId);
     strStcCatChr(debugLog, '}');
 }

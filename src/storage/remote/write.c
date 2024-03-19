@@ -22,7 +22,7 @@ typedef struct StorageWriteRemote
     StorageRemote *storage;                                         // Storage that created this object
     StorageWrite *write;                                            // Storage write interface
     ProtocolClient *client;                                         // Protocol client to make requests with
-    uint64_t sessionId;                                             // Session id for subsequent commands
+    ProtocolClientSession *session;                                 // Protocol session for requests
     bool queued;                                                    // Is a write queued?
 
 #ifdef DEBUG
@@ -53,14 +53,9 @@ storageWriteRemoteFreeResource(THIS_VOID)
     ASSERT(this != NULL);
 
     if (this->queued)
-        protocolClientDataGet(this->client, this->sessionId);
+        protocolClientSessionResponse(this->session);
 
-    ProtocolCommand *const command = protocolCommandNewP(
-        PROTOCOL_COMMAND_STORAGE_WRITE, .type = protocolCommandTypeCancel, .sessionId = this->sessionId);
-    protocolClientCommandPut(this->client, command);
-    protocolCommandFree(command);
-
-    protocolClientDataGet(this->client, this->sessionId);
+    protocolClientSessionCancel(this->session);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -85,8 +80,7 @@ storageWriteRemoteOpen(THIS_VOID)
         if (this->interface.compressible)
             ioFilterGroupInsert(ioWriteFilterGroup(storageWriteIo(this->write)), 0, decompressFilterP(compressTypeGz));
 
-        ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_STORAGE_WRITE, .type = protocolCommandTypeOpen);
-        PackWrite *const param = protocolCommandParamP(command);
+        PackWrite *const param = protocolPackNew();
 
         pckWriteStrP(param, this->interface.name);
         pckWriteModeP(param, this->interface.modeFile);
@@ -100,9 +94,7 @@ storageWriteRemoteOpen(THIS_VOID)
         pckWriteBoolP(param, this->interface.atomic);
         pckWritePackP(param, ioFilterGroupParamAll(ioWriteFilterGroup(storageWriteIo(this->write))));
 
-        this->sessionId = protocolClientCommandPut(this->client, command);
-
-        protocolClientDataGet(this->client, this->sessionId);
+        protocolClientSessionOpenP(this->session, .param = param);
 
         // Clear filters since they will be run on the remote side
         ioFilterGroupClear(ioWriteFilterGroup(storageWriteIo(this->write)));
@@ -142,14 +134,13 @@ storageWriteRemote(THIS_VOID, const Buffer *const buffer)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         if (this->queued)
-            protocolClientDataGet(this->client, this->sessionId);
+            protocolClientSessionResponse(this->session);
 
-        ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_STORAGE_WRITE, .sessionId = this->sessionId);
-        PackWrite *const param = protocolCommandParamP(command, .extra = bufUsed(buffer));
+        PackWrite *const param = pckWriteNewP(.size = PROTOCOL_PACK_DEFAULT_SIZE + bufUsed(buffer));
 
         pckWriteBinP(param, buffer);
+        protocolClientSessionRequestAsyncP(this->session, param);
 
-        protocolClientCommandPut(this->client, command);
         this->queued = true;
     }
     MEM_CONTEXT_TEMP_END();
@@ -181,13 +172,10 @@ storageWriteRemoteClose(THIS_VOID)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             if (this->queued)
-                protocolClientDataGet(this->client, this->sessionId);
-
-            ProtocolCommand *const command = protocolCommandNewP(
-                PROTOCOL_COMMAND_STORAGE_WRITE, .type = protocolCommandTypeClose, .sessionId = this->sessionId);
+                protocolClientSessionResponse(this->session);
 
             ioFilterGroupResultAllSet(
-                ioWriteFilterGroup(storageWriteIo(this->write)), pckReadPackP(protocolClientExecute(this->client, command)));
+                ioWriteFilterGroup(storageWriteIo(this->write)), pckReadPackP(protocolClientSessionClose(this->session)));
         }
         MEM_CONTEXT_TEMP_END();
 
@@ -233,6 +221,7 @@ storageWriteRemoteNew(
         {
             .storage = storage,
             .client = client,
+            .session = protocolClientSessionNew(client, PROTOCOL_COMMAND_STORAGE_WRITE),
 
             .interface = (StorageWriteInterface)
             {

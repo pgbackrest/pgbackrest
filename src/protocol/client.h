@@ -24,6 +24,14 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct ProtocolClient ProtocolClient;
 
+typedef struct ProtocolClientSession
+{
+    ProtocolClient *client;                                         // Protocol client
+    StringId command;                                               // Command
+    uint64_t sessionId;                                             // Session id
+    bool open;                                                      // Was open called?
+} ProtocolClientSession;
+
 #include "common/io/read.h"
 #include "common/io/write.h"
 #include "common/type/object.h"
@@ -57,6 +65,7 @@ protocolPackNew(void)
 Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN ProtocolClient *protocolClientNew(const String *name, const String *service, IoRead *read, IoWrite *write);
+FN_EXTERN ProtocolClientSession *protocolClientSessionNew(ProtocolClient *client, StringId command);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -102,6 +111,45 @@ FN_EXTERN PackRead *protocolClientDataGet(ProtocolClient *this, uint64_t session
 // Put command to the server, returns session id when command type is open
 FN_EXTERN uint64_t protocolClientCommandPut(ProtocolClient *this, ProtocolCommand *command);
 
+// Session open
+typedef struct ProtocolClientSessionOpenParam
+{
+    VAR_PARAM_HEADER;
+    PackWrite *param;
+} ProtocolClientSessionOpenParam;
+
+#define protocolClientSessionOpenP(this, ...)                                                                                      \
+    protocolClientSessionOpen(this, (ProtocolClientSessionOpenParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN PackRead *protocolClientSessionOpen(ProtocolClientSession *const this, ProtocolClientSessionOpenParam param);
+
+// Session request
+typedef struct ProtocolClientSessionRequestParam
+{
+    VAR_PARAM_HEADER;
+    PackWrite *param;
+} ProtocolClientSessionRequestParam;
+
+#define protocolClientSessionRequestP(this, ...)                                                                                   \
+    protocolClientSessionRequest(this, (ProtocolClientSessionRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN PackRead *protocolClientSessionRequest(ProtocolClientSession *const this, ProtocolClientSessionRequestParam param);
+
+// Session request async
+#define protocolClientSessionRequestAsyncP(this, ...)                                                                              \
+    protocolClientSessionRequestAsync(this, (ProtocolClientSessionRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN void protocolClientSessionRequestAsync(ProtocolClientSession *const this, ProtocolClientSessionRequestParam param);
+
+// Session response after a call to protocolClientSessionRequestAsyncP()
+FN_EXTERN PackRead *protocolClientSessionResponse(ProtocolClientSession *const this);
+
+// Session close
+FN_EXTERN PackRead *protocolClientSessionClose(ProtocolClientSession *const this);
+
+// Session cancel
+FN_EXTERN void protocolClientSessionCancel(ProtocolClientSession *const this);
+
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
@@ -120,5 +168,12 @@ FN_EXTERN void protocolClientToLog(const ProtocolClient *this, StringStatic *deb
     ProtocolClient *
 #define FUNCTION_LOG_PROTOCOL_CLIENT_FORMAT(value, buffer, bufferSize)                                                             \
     FUNCTION_LOG_OBJECT_FORMAT(value, protocolClientToLog, buffer, bufferSize)
+
+FN_EXTERN void protocolClientSessionToLog(const ProtocolClientSession *this, StringStatic *debugLog);
+
+#define FUNCTION_LOG_PROTOCOL_CLIENT_SESSION_TYPE                                                                                  \
+    ProtocolClientSession *
+#define FUNCTION_LOG_PROTOCOL_CLIENT_SESSION_FORMAT(value, buffer, bufferSize)                                                     \
+    FUNCTION_LOG_OBJECT_FORMAT(value, protocolClientSessionToLog, buffer, bufferSize)
 
 #endif

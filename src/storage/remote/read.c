@@ -27,12 +27,12 @@ typedef struct StorageReadRemote
     StorageRead *read;                                              // Storage read interface
 
     ProtocolClient *client;                                         // Protocol client for requests
+    ProtocolClientSession *session;                                 // Protocol session for requests
     size_t remaining;                                               // Bytes remaining to be read in block
     Buffer *block;                                                  // Block currently being read
     bool eof;                                                       // Has the file reached eof?
     bool eofFound;                                                  // Eof found but a block is remaining to be read
     bool queued;                                                    // Is a block queued to be read?
-    uint64_t sessionId;                                             // Session id for subsequent commands
 
 #ifdef DEBUG
     uint64_t protocolReadBytes;                                     // How many bytes were read from the protocol layer?
@@ -68,7 +68,7 @@ storageReadRemoteFreeResource(THIS_VOID)
 
         if (this->queued)
         {
-            PackRead *const response = protocolClientDataGet(this->client, this->sessionId);
+            PackRead *const response = protocolClientSessionResponse(this->session);
 
             close = !pckReadBoolP(response) || !pckReadBoolP(response); // {uncovered - !!!}
 
@@ -76,13 +76,7 @@ storageReadRemoteFreeResource(THIS_VOID)
         }
 
         if (close)
-        {
-            ProtocolCommand *const command = protocolCommandNewP(
-                PROTOCOL_COMMAND_STORAGE_READ, .type = protocolCommandTypeClose, .sessionId = this->sessionId);
-
-            protocolClientExecute(this->client, command);
-            protocolCommandFree(command);
-        }
+            protocolClientSessionCancel(this->session);
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -159,18 +153,14 @@ storageReadRemote(THIS_VOID, Buffer *buffer, bool block)
             {
                 MEM_CONTEXT_TEMP_BEGIN()
                 {
-                    ProtocolCommand *const command = protocolCommandNewP(
-                        PROTOCOL_COMMAND_STORAGE_READ, .sessionId = this->sessionId);
-
                     if (!this->queued)
-                        protocolClientCommandPut(this->client, command);
+                        protocolClientSessionRequestAsyncP(this->session);
 
-                    PackRead *const packRead = protocolClientDataGet(this->client, this->sessionId);
-                    storageReadRemoteInternal(this, packRead);
+                    storageReadRemoteInternal(this, protocolClientSessionResponse(this->session));
 
                     if (!this->eofFound)
                     {
-                        protocolClientCommandPut(this->client, command);
+                        protocolClientSessionRequestAsyncP(this->session);
                         this->queued = true;
                     }
                 }
@@ -248,8 +238,7 @@ storageReadRemoteOpen(THIS_VOID)
                 compressFilterP(compressTypeGz, (int)this->interface.compressLevel, .raw = true));
         }
 
-        ProtocolCommand *command = protocolCommandNewP(PROTOCOL_COMMAND_STORAGE_READ, .type = protocolCommandTypeOpen);
-        PackWrite *const param = protocolCommandParamP(command);
+        PackWrite *const param = protocolPackNew();
 
         pckWriteStrP(param, this->interface.name);
         pckWriteBoolP(param, this->interface.ignoreMissing);
@@ -262,10 +251,8 @@ storageReadRemoteOpen(THIS_VOID)
 
         pckWritePackP(param, ioFilterGroupParamAll(ioReadFilterGroup(storageReadIo(this->read))));
 
-        this->sessionId = protocolClientCommandPut(this->client, command);
-
         // If the file exists
-        PackRead *const packRead = protocolClientDataGet(this->client, this->sessionId);
+        PackRead *const packRead = protocolClientSessionOpenP(this->session, .param = param);
         result = pckReadBoolP(packRead);
 
         if (result)
@@ -339,6 +326,7 @@ storageReadRemoteNew(
         {
             .storage = storage,
             .client = client,
+            .session = protocolClientSessionNew(client, PROTOCOL_COMMAND_STORAGE_READ),
 
             .interface = (StorageReadInterface)
             {

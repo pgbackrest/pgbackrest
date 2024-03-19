@@ -30,7 +30,7 @@ struct Db
     DbPub pub;                                                      // Publicly accessible variables
     PgClient *client;                                               // Local PostgreSQL client
     ProtocolClient *remoteClient;                                   // Protocol client for remote db queries
-    uint64_t sessionId;                                             // Session id provided by remote on open for subsequent calls
+    ProtocolClientSession *session;                                 // Protocol session for requests
     const Storage *storage;                                         // PostgreSQL storage
     const String *applicationName;                                  // Used to identify this connection in PostgreSQL
     time_t pingTimeLast;                                            // Last time cluster was pinged
@@ -50,11 +50,7 @@ dbFreeResource(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    ProtocolCommand *const command = protocolCommandNewP(
-        PROTOCOL_COMMAND_DB, .type = protocolCommandTypeClose, .sessionId = this->sessionId);
-
-    protocolClientExecute(this->remoteClient, command);
-    protocolCommandFree(command);
+    protocolClientSessionCancel(this->session);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -83,6 +79,7 @@ dbNew(PgClient *client, ProtocolClient *remoteClient, const Storage *const stora
                 .memContext = memContextCurrent(),
             },
             .remoteClient = remoteClient,
+            .session = remoteClient != NULL ? protocolClientSessionNew(remoteClient, PROTOCOL_COMMAND_DB) : NULL,
             .storage = storage,
             .applicationName = strDup(applicationName),
         };
@@ -117,13 +114,12 @@ dbQuery(Db *this, const PgClientQueryResult resultType, const String *const quer
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_DB, .sessionId = this->sessionId);
-            PackWrite *const param = protocolCommandParamP(command);
+            PackWrite *const param = protocolPackNew();
 
             pckWriteStrIdP(param, resultType);
             pckWriteStrP(param, query);
 
-            PackRead *const read = protocolClientExecute(this->remoteClient, command);
+            PackRead *const read = protocolClientSessionRequestP(this->session, .param = param);
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {
@@ -239,9 +235,7 @@ dbOpen(Db *this)
         // Open the connection
         if (this->remoteClient != NULL)
         {
-            this->sessionId = protocolClientCommandPut(
-                this->remoteClient, protocolCommandNewP(PROTOCOL_COMMAND_DB, .type = protocolCommandTypeOpen));
-            protocolClientDataGet(this->remoteClient, this->sessionId);
+            protocolClientSessionOpenP(this->session);
 
             // Set a callback to notify the remote when a connection is closed
             memContextCallbackSet(this->pub.memContext, dbFreeResource, this);
