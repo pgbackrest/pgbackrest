@@ -31,6 +31,19 @@
 
                 <p>Fix performance regression in storage list.</p>
             </release-item>
+
+            <release-item>
+                <github-issue id="2298"/>
+                <github-pull-request id="2304"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="samkingno"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Fix progress logging when file size changes during backup.</p>
+            </release-item>
         </release-bug-list>
 
         <release-improvement-list>
