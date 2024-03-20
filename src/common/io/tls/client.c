@@ -3,6 +3,13 @@ TLS Client
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+// {uncrustify_off - sorted headers}
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netinet/in_systm.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+// {uncrustify_on}
 #include <strings.h>
 
 #include "common/crypto/common.h"
@@ -126,6 +133,65 @@ tlsClientHostVerifyName(const String *host, const String *name)
 }
 
 /***********************************************************************************************************************************
+Check if an IP address from the server certificate matches the hostname
+
+As provided in the cert, the IP address would be a packed string in network byte
+order.  The length of the name field determines if we check as an IPv4 or IPv6
+address.  Adapted from libpq/fe-secure-common.c.
+***********************************************************************************************************************************/
+static bool
+tlsClientHostVerifyIPAddr(const String *host, const String *name)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING, host);
+        FUNCTION_LOG_PARAM(STRING, name);
+    FUNCTION_LOG_END();
+
+    ASSERT(host != NULL);
+    ASSERT(name != NULL);
+
+    size_t iplen = strSize(name);
+    bool result = false;
+
+    const char *ipdata = strZ(name);
+
+    if (!(host && strSize(host) > 0))
+        FUNCTION_LOG_RETURN(BOOL, false);
+
+    /*
+     * The data from the certificate is in network byte order. Convert our
+     * host string to network-ordered bytes as well, for comparison. (The host
+     * string isn't guaranteed to actually be an IP address, so if this
+     * conversion fails we need to consider it a mismatch rather than an
+     * error.)
+     */
+    else if (iplen == 4)
+    {
+        /* IPv4 */
+        struct in_addr addr;
+
+        if (inet_pton(AF_INET, strZ(host), &addr) == 1)
+        {
+            if (memcmp(ipdata, &addr.s_addr, iplen) == 0)
+                result = true;
+        }
+    }
+    else if (iplen == 16)
+    {
+        /* IPv6 */
+        struct in6_addr addr;
+
+        if (inet_pton(AF_INET6, strZ(host), &addr) == 1)
+        {
+            if (memcmp(ipdata, &addr.s6_addr, iplen) == 0)
+                result = true;
+        }
+    }
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+/***********************************************************************************************************************************
 Verify that the server certificate matches the hostname we connected to
 
 The certificate's Common Name and Subject Alternative Names are considered.
@@ -162,6 +228,8 @@ tlsClientHostVerify(const String *host, X509 *certificate)
 
                 if (name->type == GEN_DNS)                                                                          // {vm_covered}
                     result = tlsClientHostVerifyName(host, tlsAsn1ToStr(name->d.dNSName));                          // {vm_covered}
+                else if (name->type == GEN_IPADD)
+                    result = tlsClientHostVerifyIPAddr(host, tlsAsn1ToStr(name->d.dNSName));                          // {vm_covered}
 
                 if (result != false)                                                                                // {vm_covered}
                     break;                                                                                          // {vm_covered}
