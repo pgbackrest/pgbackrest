@@ -56,13 +56,13 @@ configOptionRemote(ProtocolClient *client, const VariantList *paramList)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_CONFIG_OPTION);
-        PackWrite *const param = protocolCommandParamP(command);
+        PackWrite *const param = protocolPackNew();
 
         for (unsigned int paramIdx = 0; paramIdx < varLstSize(paramList); paramIdx++)
             pckWriteStrP(param, varStr(varLstGet(paramList, paramIdx)));
 
-        const VariantList *const list = varVarLst(jsonToVar(pckReadStrP(protocolClientExecute(client, command))));
+        const VariantList *const list = varVarLst(
+            jsonToVar(pckReadStrP(protocolClientRequestP(client, PROTOCOL_COMMAND_CONFIG_OPTION, .param = param))));
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {

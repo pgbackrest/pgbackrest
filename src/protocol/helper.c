@@ -773,10 +773,10 @@ protocolRemoteExec(
                 TRY_BEGIN()
                 {
                     // Pass parameters to server
-                    ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_CONFIG);
-                    pckWriteStrLstP(protocolCommandParamP(command), protocolRemoteParam(protocolStorageType, hostIdx));
-                    protocolClientExecute(helper->client, command);
-                    protocolCommandFree(command);
+                    PackWrite *const param = protocolPackNew();
+
+                    pckWriteStrLstP(param, protocolRemoteParam(protocolStorageType, hostIdx));
+                    protocolClientRequestP(helper->client, PROTOCOL_COMMAND_CONFIG, .param = param);
                 }
                 CATCH_ANY()
                 {

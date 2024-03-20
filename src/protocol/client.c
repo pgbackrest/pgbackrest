@@ -446,6 +446,38 @@ protocolClientSessionClose(ProtocolClientSession *const this)
 }
 
 /**********************************************************************************************************************************/
+FN_EXTERN PackRead *
+protocolClientRequest(ProtocolClient *const this, const StringId command, const ProtocolClientSessionRequestParam param)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
+        FUNCTION_LOG_PARAM(STRING_ID, command);
+        FUNCTION_LOG_PARAM(PACK_WRITE, param.param);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    PackRead *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        ProtocolClientSession *const session = protocolClientSessionNew(this, command);
+
+        protocolClientCommandPutX(
+            session->client, session->command, protocolCommandTypeProcess, session->sessionId, session->open, param.param);
+
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = protocolClientDataGet(session->client, session->sessionId);
+        }
+        MEM_CONTEXT_PRIOR_END();
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(PACK_READ, result);
+}
+
+/**********************************************************************************************************************************/
 FN_EXTERN void
 protocolClientSessionCancel(ProtocolClientSession *const this)
 {
@@ -499,21 +531,6 @@ protocolClientCommandPut(ProtocolClient *const this, ProtocolCommand *const comm
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN PackRead *
-protocolClientExecute(ProtocolClient *const this, ProtocolCommand *const command)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
-        FUNCTION_LOG_PARAM(PROTOCOL_COMMAND, command);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(command != NULL);
-
-    FUNCTION_LOG_RETURN(PACK_READ, protocolClientDataGet(this, protocolClientCommandPut(this, command)));
-}
-
-/**********************************************************************************************************************************/
 FN_EXTERN void
 protocolClientNoOp(ProtocolClient *this)
 {
@@ -523,11 +540,7 @@ protocolClientNoOp(ProtocolClient *this)
 
     ASSERT(this != NULL);
 
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        protocolClientExecute(this, protocolCommandNewP(PROTOCOL_COMMAND_NOOP));
-    }
-    MEM_CONTEXT_TEMP_END();
+    protocolClientRequestP(this, PROTOCOL_COMMAND_NOOP);
 
     FUNCTION_LOG_RETURN_VOID();
 }

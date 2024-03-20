@@ -85,9 +85,6 @@ protocolClientIoReadFd(ProtocolClient *const this)
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Execute a command and get the result
-FN_EXTERN PackRead *protocolClientExecute(ProtocolClient *this, ProtocolCommand *command);
-
 // Move to a new parent mem context
 FN_INLINE_ALWAYS ProtocolClient *
 protocolClientMove(ProtocolClient *const this, MemContext *const parentNew)
@@ -149,6 +146,12 @@ FN_EXTERN PackRead *protocolClientSessionClose(ProtocolClientSession *const this
 
 // Session cancel
 FN_EXTERN void protocolClientSessionCancel(ProtocolClientSession *const this);
+
+// Client request
+#define protocolClientRequestP(this, command, ...)                                                                                          \
+    protocolClientRequest(this, command, (ProtocolClientSessionRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN PackRead *protocolClientRequest(ProtocolClient *this, StringId command, ProtocolClientSessionRequestParam param);
 
 /***********************************************************************************************************************************
 Destructor
