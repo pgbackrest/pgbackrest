@@ -2111,14 +2111,6 @@ src/protocol/client.h:
   class: core
   type: c/h
 
-src/protocol/command.c:
-  class: core
-  type: c
-
-src/protocol/command.h:
-  class: core
-  type: c/h
-
 src/protocol/helper.c:
   class: core
   type: c

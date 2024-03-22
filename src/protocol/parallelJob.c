@@ -5,7 +5,6 @@ Protocol Parallel Job
 
 #include "common/debug.h"
 #include "common/log.h"
-#include "protocol/command.h"
 #include "protocol/parallelJob.h"
 
 /***********************************************************************************************************************************
@@ -18,11 +17,12 @@ struct ProtocolParallelJob
 
 /**********************************************************************************************************************************/
 FN_EXTERN ProtocolParallelJob *
-protocolParallelJobNew(const Variant *key, ProtocolCommand *command)
+protocolParallelJobNew(const Variant *key, const StringId command, PackWrite *const param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(VARIANT, key);
-        FUNCTION_LOG_PARAM(PROTOCOL_COMMAND, command);
+        FUNCTION_LOG_PARAM(STRING_ID, command);
+        FUNCTION_LOG_PARAM(PACK_WRITE, param);
     FUNCTION_LOG_END();
 
     OBJ_NEW_BEGIN(ProtocolParallelJob, .childQty = MEM_CONTEXT_QTY_MAX)
@@ -33,10 +33,10 @@ protocolParallelJobNew(const Variant *key, ProtocolCommand *command)
             {
                 .state = protocolParallelJobStatePending,
                 .key = varDup(key),
+                .command = command,
+                .param = pckWriteMove(param, objMemContext(this)),
             },
         };
-
-        this->pub.command = protocolCommandMove(command, objMemContext(this));
     }
     OBJ_NEW_END();
 
@@ -80,23 +80,6 @@ protocolParallelJobProcessIdSet(ProtocolParallelJob *this, unsigned int processI
     ASSERT(processId > 0);
 
     this->pub.processId = processId;
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-FN_EXTERN void
-protocolParallelJobSessionIdSet(ProtocolParallelJob *const this, const uint64_t sessionId)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL_JOB, this);
-        FUNCTION_LOG_PARAM(UINT64, sessionId);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(sessionId != 0);
-
-    this->pub.sessionId = sessionId;
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -153,7 +136,8 @@ protocolParallelJobToLog(const ProtocolParallelJob *const this, StringStatic *co
     varToLog(protocolParallelJobKey(this), debugLog);
 
     strStcCat(debugLog, ", command: ");
-    protocolCommandToLog(protocolParallelJobCommand(this), debugLog);
+    strStcResultSizeInc(
+        debugLog, strIdToLog(protocolParallelJobCommand(this), strStcRemains(debugLog), strStcRemainsSize(debugLog)));
 
     strStcCat(debugLog, ", result: ");
     strStcResultSizeInc(

@@ -1952,7 +1952,6 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
         const int queueEnd = queueIdx;
 
         // Create backup job
-        ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_BACKUP_FILE);
         PackWrite *param = NULL;
         uint64_t fileTotal = 0;
         uint64_t fileSize = 0;
@@ -1981,7 +1980,7 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
                 // Add common parameters before first file
                 if (param == NULL)
                 {
-                    param = protocolCommandParamP(command);
+                    param = protocolPackNew();
 
                     if (bundle && file.size <= jobData->bundleLimit)
                     {
@@ -2069,7 +2068,8 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
                 // Assign job to result
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {
-                    result = protocolParallelJobNew(bundle ? VARUINT64(jobData->bundleId) : VARSTR(fileName), command);
+                    result = protocolParallelJobNew(
+                        bundle ? VARUINT64(jobData->bundleId) : VARSTR(fileName), PROTOCOL_COMMAND_BACKUP_FILE, param);
 
                     if (bundle)
                         jobData->bundleId++;

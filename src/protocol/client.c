@@ -69,7 +69,7 @@ protocolClientFreeResource(THIS_VOID)
     // Send an exit command but don't wait to see if it succeeds
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        protocolClientCommandPut(this, protocolCommandNewP(PROTOCOL_COMMAND_EXIT));
+        protocolClientSessionRequestAsyncP(protocolClientSessionNew(this, PROTOCOL_COMMAND_EXIT));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -212,7 +212,7 @@ protocolClientError(ProtocolClient *const this, const ProtocolMessageType type, 
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN PackRead *
+static PackRead *
 protocolClientDataGet(ProtocolClient *const this, const uint64_t sessionId)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -298,7 +298,7 @@ protocolClientDataGet(ProtocolClient *const this, const uint64_t sessionId)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-protocolClientCommandPutX(
+protocolClientCommandPut(
     ProtocolClient *const this, const StringId command, const ProtocolCommandType type, const uint64_t sessionId,
     const bool sessionRequired, PackWrite *const param)
 {
@@ -374,7 +374,7 @@ protocolClientSessionOpen(ProtocolClientSession *const this, const ProtocolClien
     ASSERT(this != NULL);
     ASSERT(!this->open);
 
-    protocolClientCommandPutX(this->client, this->command, protocolCommandTypeOpen, this->sessionId, true, param.param);
+    protocolClientCommandPut(this->client, this->command, protocolCommandTypeOpen, this->sessionId, true, param.param);
     this->open = true;
 
     // Set a callback to shutdown the protocol
@@ -410,7 +410,7 @@ protocolClientSessionRequestAsync(ProtocolClientSession *const this, const Proto
 
     ASSERT(this != NULL);
 
-    protocolClientCommandPutX(this->client, this->command, protocolCommandTypeProcess, this->sessionId, this->open, param.param);
+    protocolClientCommandPut(this->client, this->command, protocolCommandTypeProcess, this->sessionId, this->open, param.param);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -439,7 +439,7 @@ protocolClientSessionClose(ProtocolClientSession *const this)
     ASSERT(this != NULL);
     ASSERT(this->open);
 
-    protocolClientCommandPutX(this->client, this->command, protocolCommandTypeClose, this->sessionId, this->open, NULL);
+    protocolClientCommandPut(this->client, this->command, protocolCommandTypeClose, this->sessionId, this->open, NULL);
     this->open = false;
 
     FUNCTION_LOG_RETURN(PACK_READ, protocolClientDataGet(this->client, this->sessionId));
@@ -463,7 +463,7 @@ protocolClientRequest(ProtocolClient *const this, const StringId command, const 
     {
         ProtocolClientSession *const session = protocolClientSessionNew(this, command);
 
-        protocolClientCommandPutX(
+        protocolClientCommandPut(
             session->client, session->command, protocolCommandTypeProcess, session->sessionId, session->open, param.param);
 
         MEM_CONTEXT_PRIOR_BEGIN()
@@ -488,46 +488,11 @@ protocolClientSessionCancel(ProtocolClientSession *const this)
     ASSERT(this != NULL);
     ASSERT(this->open);
 
-    protocolClientCommandPutX(this->client, this->command, protocolCommandTypeCancel, this->sessionId, this->open, NULL);
+    protocolClientCommandPut(this->client, this->command, protocolCommandTypeCancel, this->sessionId, this->open, NULL);
     protocolClientDataGet(this->client, this->sessionId);
     this->open = false;
 
     FUNCTION_LOG_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-FN_EXTERN uint64_t
-protocolClientCommandPut(ProtocolClient *const this, ProtocolCommand *const command)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
-        FUNCTION_LOG_PARAM(PROTOCOL_COMMAND, command);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(command != NULL);
-
-    // All commands require a session id for multiplexing
-    const uint64_t result = protocolCommandSessionId(command) == 0 ? ++this->sessionTotal : protocolCommandSessionId(command);
-
-    // Expect idle state before command put
-    protocolClientStateExpectIdle(this);
-
-    // !!! NEED TO DEAL WITH CLOSE/CANCEL HERE
-
-    // Switch state to command put
-    this->state = protocolClientStateCommandPut;
-
-    // Put command
-    protocolCommandPut(command, result, this->write);
-
-    // Switch state back to idle after successful command put
-    this->state = protocolClientStateIdle;
-
-    // Reset the keep alive time
-    this->keepAliveTime = timeMSec();
-
-    FUNCTION_LOG_RETURN(UINT64, result);
 }
 
 /**********************************************************************************************************************************/

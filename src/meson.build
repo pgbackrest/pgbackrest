@@ -237,7 +237,6 @@ src_pgbackrest = [
 	'postgres/interface/crc32.c',
 	'postgres/interface/page.c',
 	'protocol/client.c',
-	'protocol/command.c',
 	'protocol/helper.c',
 	'protocol/parallel.c',
 	'protocol/parallelJob.c',

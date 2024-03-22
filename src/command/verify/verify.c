@@ -750,8 +750,7 @@ verifyArchive(VerifyJobData *const jobData)
                             encodingHex, strSubN(fileName, WAL_SEGMENT_NAME_SIZE + 1, HASH_TYPE_SHA1_SIZE_HEX));
 
                         // Set up the job
-                        ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_VERIFY_FILE);
-                        PackWrite *const param = protocolCommandParamP(command);
+                        PackWrite *const param = protocolPackNew();
 
                         pckWriteStrP(param, filePathName);
                         pckWriteBoolP(param, false);
@@ -765,7 +764,7 @@ verifyArchive(VerifyJobData *const jobData)
 
                         MEM_CONTEXT_PRIOR_BEGIN()
                         {
-                            result = protocolParallelJobNew(VARSTR(jobKey), command);
+                            result = protocolParallelJobNew(VARSTR(jobKey), PROTOCOL_COMMAND_VERIFY_FILE, param);
                         }
                         MEM_CONTEXT_PRIOR_END();
 
@@ -975,8 +974,7 @@ verifyBackup(VerifyJobData *const jobData)
                         if (fileBackupLabel != NULL)
                         {
                             // Set up the job
-                            ProtocolCommand *command = protocolCommandNewP(PROTOCOL_COMMAND_VERIFY_FILE);
-                            PackWrite *const param = protocolCommandParamP(command);
+                            PackWrite *const param = protocolPackNew();
                             const String *const filePathName = backupFileRepoPathP(
                                 fileBackupLabel, .manifestName = fileData.name, .bundleId = fileData.bundleId,
                                 .compressType = manifestData(jobData->manifest)->backupOptionCompressType,
@@ -1016,7 +1014,7 @@ verifyBackup(VerifyJobData *const jobData)
 
                             MEM_CONTEXT_PRIOR_BEGIN()
                             {
-                                result = protocolParallelJobNew(VARSTR(jobKey), command);
+                                result = protocolParallelJobNew(VARSTR(jobKey), PROTOCOL_COMMAND_VERIFY_FILE, param);
                             }
                             MEM_CONTEXT_PRIOR_END();
                         }

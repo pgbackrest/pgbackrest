@@ -467,8 +467,7 @@ archivePushAsyncCallback(void *data, unsigned int clientIdx)
             const String *walFile = strLstGet(jobData->walFileList, jobData->walFileIdx);
             jobData->walFileIdx++;
 
-            ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE);
-            PackWrite *const param = protocolCommandParamP(command);
+            PackWrite *const param = protocolPackNew();
 
             pckWriteStrP(param, strNewFmt("%s/%s", strZ(jobData->walPath), strZ(walFile)));
             pckWriteBoolP(param, cfgOptionBool(cfgOptArchiveHeaderCheck));
@@ -499,7 +498,7 @@ archivePushAsyncCallback(void *data, unsigned int clientIdx)
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {
-                result = protocolParallelJobNew(VARSTR(walFile), command);
+                result = protocolParallelJobNew(VARSTR(walFile), PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE, param);
             }
             MEM_CONTEXT_PRIOR_END();
         }

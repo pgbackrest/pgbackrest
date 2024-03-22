@@ -872,8 +872,7 @@ archiveGetAsyncCallback(void *const data, const unsigned int clientIdx)
             const ArchiveFileMap *archiveFileMap = lstGet(jobData->archiveFileMapList, jobData->archiveFileIdx);
             jobData->archiveFileIdx++;
 
-            ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_ARCHIVE_GET_FILE);
-            PackWrite *const param = protocolCommandParamP(command);
+            PackWrite *const param = protocolPackNew();
 
             pckWriteStrP(param, archiveFileMap->request);
 
@@ -891,7 +890,7 @@ archiveGetAsyncCallback(void *const data, const unsigned int clientIdx)
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {
-                result = protocolParallelJobNew(VARSTR(archiveFileMap->request), command);
+                result = protocolParallelJobNew(VARSTR(archiveFileMap->request), PROTOCOL_COMMAND_ARCHIVE_GET_FILE, param);
             }
             MEM_CONTEXT_PRIOR_END();
         }

@@ -708,21 +708,24 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("simple command with out of order results");
 
-                ProtocolCommand *commandSimple1 = protocolCommandNewP(TEST_PROTOCOL_COMMAND_SIMPLE);
-                pckWriteU32P(protocolCommandParamP(commandSimple1), 1);
-                uint64_t sessionId1 = protocolClientCommandPut(client, commandSimple1);
+                ProtocolClientSession *session1 = protocolClientSessionNew(client, TEST_PROTOCOL_COMMAND_SIMPLE);
+                PackWrite *param1 = protocolPackNew();
+                pckWriteU32P(param1, 1);
+                protocolClientSessionRequestAsyncP(session1, param1);
 
-                ProtocolCommand *commandSimple2 = protocolCommandNewP(TEST_PROTOCOL_COMMAND_SIMPLE);
-                pckWriteU32P(protocolCommandParamP(commandSimple2), 2);
-                uint64_t sessionId2 = protocolClientCommandPut(client, commandSimple2);
+                ProtocolClientSession *session2 = protocolClientSessionNew(client, TEST_PROTOCOL_COMMAND_SIMPLE);
+                PackWrite *param2 = protocolPackNew();
+                pckWriteU32P(param2, 2);
+                protocolClientSessionRequestAsyncP(session2, param2);
 
-                ProtocolCommand *commandSimple3 = protocolCommandNewP(TEST_PROTOCOL_COMMAND_SIMPLE);
-                pckWriteU32P(protocolCommandParamP(commandSimple3), 3);
-                uint64_t sessionId3 = protocolClientCommandPut(client, commandSimple3);
+                ProtocolClientSession *session3 = protocolClientSessionNew(client, TEST_PROTOCOL_COMMAND_SIMPLE);
+                PackWrite *param3 = protocolPackNew();
+                pckWriteU32P(param3, 3);
+                protocolClientSessionRequestAsyncP(session3, param3);
 
-                TEST_RESULT_STR_Z(pckReadStrP(protocolClientDataGet(client, sessionId2)), "output2", "output 2");
-                TEST_RESULT_STR_Z(pckReadStrP(protocolClientDataGet(client, sessionId3)), "output3", "output 3");
-                TEST_RESULT_STR_Z(pckReadStrP(protocolClientDataGet(client, sessionId1)), "output1", "output 1");
+                TEST_RESULT_STR_Z(pckReadStrP(protocolClientSessionResponse(session2)), "output2", "output 2");
+                TEST_RESULT_STR_Z(pckReadStrP(protocolClientSessionResponse(session3)), "output3", "output 3");
+                TEST_RESULT_STR_Z(pckReadStrP(protocolClientSessionResponse(session1)), "output1", "output 1");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("open returns false");
@@ -765,7 +768,7 @@ testRun(void)
                 client->state = protocolClientStateDataGet;
 
                 TEST_ERROR(
-                    protocolClientDataGet(client, session->sessionId), ProtocolError,
+                    protocolClientSessionRequestP(session), ProtocolError,
                     "client state is 'data-get' but expected 'idle'");
 
                 client->state = protocolClientStateIdle;
@@ -1031,7 +1034,7 @@ testRun(void)
         {
             TEST_ASSIGN(
                 job,
-                protocolParallelJobNew(VARSTRDEF("test"), protocolCommandNewP(strIdFromZ("c"))), "new job");
+                protocolParallelJobNew(VARSTRDEF("test"), strIdFromZ("c"), NULL), "new job");
             TEST_RESULT_PTR(protocolParallelJobMove(job, memContextPrior()), job, "move job");
             TEST_RESULT_PTR(protocolParallelJobMove(NULL, memContextPrior()), NULL, "move null job");
         }
@@ -1141,23 +1144,26 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("add jobs");
 
-                ProtocolCommand *command = protocolCommandNewP(strIdFromZ("c-one"));
-                pckWriteStrP(protocolCommandParamP(command), STRDEF("param1"));
-                pckWriteStrP(protocolCommandParamP(command), STRDEF("param2"));
+                StringId command = strIdFromZ("c-one");
+                PackWrite *param = protocolPackNew();
+                pckWriteStrP(param, STRDEF("param1"));
+                pckWriteStrP(param, STRDEF("param2"));
 
-                ProtocolParallelJob *job = protocolParallelJobNew(varNewStr(STRDEF("job1")), command);
+                ProtocolParallelJob *job = protocolParallelJobNew(varNewStr(STRDEF("job1")), command, param);
                 TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");
 
-                command = protocolCommandNewP(strIdFromZ("c2"));
-                pckWriteStrP(protocolCommandParamP(command), STRDEF("param1"));
+                command = strIdFromZ("c2");
+                param = protocolPackNew();
+                pckWriteStrP(param, STRDEF("param1"));
 
-                job = protocolParallelJobNew(varNewStr(STRDEF("job2")), command);
+                job = protocolParallelJobNew(varNewStr(STRDEF("job2")), command, param);
                 TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");
 
-                command = protocolCommandNewP(strIdFromZ("c-three"));
-                pckWriteStrP(protocolCommandParamP(command), STRDEF("param1"));
+                command = strIdFromZ("c-three");
+                param = protocolPackNew();
+                pckWriteStrP(param, STRDEF("param1"));
 
-                job = protocolParallelJobNew(varNewStr(STRDEF("job3")), command);
+                job = protocolParallelJobNew(varNewStr(STRDEF("job3")), command, param);
                 TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");
 
                 // -----------------------------------------------------------------------------------------------------------------

@@ -20,6 +20,17 @@ typedef enum
 } ProtocolMessageType;
 
 /***********************************************************************************************************************************
+Command types
+***********************************************************************************************************************************/
+typedef enum
+{
+    protocolCommandTypeOpen = STRID5("opn", 0x3a0f0),               // Open command for processing
+    protocolCommandTypeProcess = STRID5("prc", 0xe500),             // Process command
+    protocolCommandTypeClose = STRID5("cls", 0x4d830),              // Close command
+    protocolCommandTypeCancel = STRID5("cnc", 0xdc30),              // Cancel command
+} ProtocolCommandType;
+
+/***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 typedef struct ProtocolClient ProtocolClient;
@@ -35,7 +46,6 @@ typedef struct ProtocolClientSession
 #include "common/io/read.h"
 #include "common/io/write.h"
 #include "common/type/object.h"
-#include "protocol/command.h"
 
 /***********************************************************************************************************************************
 Constants
@@ -101,12 +111,6 @@ protocolClientNoExit(ProtocolClient *const this)
 
 // Send noop to test connection or keep it alive
 FN_EXTERN void protocolClientNoOp(ProtocolClient *this);
-
-// Get data put by the server
-FN_EXTERN PackRead *protocolClientDataGet(ProtocolClient *this, uint64_t sessionId);
-
-// Put command to the server, returns session id when command type is open
-FN_EXTERN uint64_t protocolClientCommandPut(ProtocolClient *this, ProtocolCommand *command);
 
 // Session open
 typedef struct ProtocolClientSessionOpenParam
