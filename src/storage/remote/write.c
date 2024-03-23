@@ -221,7 +221,7 @@ storageWriteRemoteNew(
         {
             .storage = storage,
             .client = client,
-            .session = protocolClientSessionNew(client, PROTOCOL_COMMAND_STORAGE_WRITE),
+            .session = protocolClientSessionNewP(client, PROTOCOL_COMMAND_STORAGE_WRITE, .async = true),
 
             .interface = (StorageWriteInterface)
             {

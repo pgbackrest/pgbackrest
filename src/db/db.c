@@ -79,7 +79,7 @@ dbNew(PgClient *client, ProtocolClient *remoteClient, const Storage *const stora
                 .memContext = memContextCurrent(),
             },
             .remoteClient = remoteClient,
-            .session = remoteClient != NULL ? protocolClientSessionNew(remoteClient, PROTOCOL_COMMAND_DB) : NULL,
+            .session = remoteClient != NULL ? protocolClientSessionNewP(remoteClient, PROTOCOL_COMMAND_DB) : NULL,
             .storage = storage,
             .applicationName = strDup(applicationName),
         };

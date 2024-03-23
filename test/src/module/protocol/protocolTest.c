@@ -708,17 +708,17 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("simple command with out of order results");
 
-                ProtocolClientSession *session1 = protocolClientSessionNew(client, TEST_PROTOCOL_COMMAND_SIMPLE);
+                ProtocolClientSession *session1 = protocolClientSessionNewP(client, TEST_PROTOCOL_COMMAND_SIMPLE, .async = true);
                 PackWrite *param1 = protocolPackNew();
                 pckWriteU32P(param1, 1);
                 protocolClientSessionRequestAsyncP(session1, param1);
 
-                ProtocolClientSession *session2 = protocolClientSessionNew(client, TEST_PROTOCOL_COMMAND_SIMPLE);
+                ProtocolClientSession *session2 = protocolClientSessionNewP(client, TEST_PROTOCOL_COMMAND_SIMPLE, .async = true);
                 PackWrite *param2 = protocolPackNew();
                 pckWriteU32P(param2, 2);
                 protocolClientSessionRequestAsyncP(session2, param2);
 
-                ProtocolClientSession *session3 = protocolClientSessionNew(client, TEST_PROTOCOL_COMMAND_SIMPLE);
+                ProtocolClientSession *session3 = protocolClientSessionNewP(client, TEST_PROTOCOL_COMMAND_SIMPLE, .async = true);
                 PackWrite *param3 = protocolPackNew();
                 pckWriteU32P(param3, 3);
                 protocolClientSessionRequestAsyncP(session3, param3);
@@ -726,6 +726,11 @@ testRun(void)
                 TEST_RESULT_STR_Z(pckReadStrP(protocolClientSessionResponse(session2)), "output2", "output 2");
                 TEST_RESULT_STR_Z(pckReadStrP(protocolClientSessionResponse(session3)), "output3", "output 3");
                 TEST_RESULT_STR_Z(pckReadStrP(protocolClientSessionResponse(session1)), "output1", "output 1");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("invalid session");
+
+                TEST_ERROR(protocolClientSessionFindIdx(client, 999), FormatError, "unable to find protocol client session 999");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("open returns false");
@@ -737,13 +742,13 @@ testRun(void)
                 TEST_RESULT_BOOL(
                     pckReadBoolP(
                         protocolClientSessionOpenP(
-                            protocolClientSessionNew(client, TEST_PROTOCOL_COMMAND_COMPLEX), .param = commandOpenParam)),
+                            protocolClientSessionNewP(client, TEST_PROTOCOL_COMMAND_COMPLEX), .param = commandOpenParam)),
                     false, "open request");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("process returns false (no close needed)");
 
-                ProtocolClientSession *session = protocolClientSessionNew(client, TEST_PROTOCOL_COMMAND_COMPLEX);
+                ProtocolClientSession *session = protocolClientSessionNewP(client, TEST_PROTOCOL_COMMAND_COMPLEX);
                 TEST_RESULT_BOOL(
                     pckReadBoolP(protocolClientSessionOpenP(session, .param = commandOpenParam)), true, "open succeed");
 
@@ -758,10 +763,6 @@ testRun(void)
 
                 TEST_RESULT_BOOL(pckReadBoolP(protocolClientSessionRequestP(session)), false, "no more to process");
 
-                TEST_ERROR_FMT(
-                    protocolClientSessionRequestP(session), ProtocolError,
-                    "raised from test client: unable to find session id %" PRIu64 " for command c-complex:prc", session->sessionId);
-
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error if state not idle");
 
@@ -773,10 +774,14 @@ testRun(void)
 
                 client->state = protocolClientStateIdle;
 
+                TEST_ERROR_FMT(
+                    protocolClientDataGet(session), ProtocolError,
+                    "raised from test client: unable to find session id %" PRIu64 " for command c-complex:prc", session->sessionId);
+
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("process returns true");
 
-                session = protocolClientSessionNew(client, TEST_PROTOCOL_COMMAND_COMPLEX);
+                session = protocolClientSessionNewP(client, TEST_PROTOCOL_COMMAND_COMPLEX);
 
                 TEST_RESULT_BOOL(
                     pckReadBoolP(protocolClientSessionOpenP(session, .param = commandOpenParam)), true, "open succeed");
@@ -789,7 +794,7 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("close handler");
 
-                session = protocolClientSessionNew(client, TEST_PROTOCOL_COMMAND_COMPLEX_CLOSE);
+                session = protocolClientSessionNewP(client, TEST_PROTOCOL_COMMAND_COMPLEX_CLOSE);
 
                 TEST_RESULT_BOOL(
                     pckReadBoolP(protocolClientSessionOpenP(session, .param = commandOpenParam)), true, "open succeed");
@@ -800,7 +805,7 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("cancel handler");
 
-                session = protocolClientSessionNew(client, TEST_PROTOCOL_COMMAND_COMPLEX);
+                session = protocolClientSessionNewP(client, TEST_PROTOCOL_COMMAND_COMPLEX);
 
                 TEST_RESULT_BOOL(
                     pckReadBoolP(protocolClientSessionOpenP(session, .param = commandOpenParam)), true, "open succeed");

@@ -34,14 +34,7 @@ typedef enum
 Object type
 ***********************************************************************************************************************************/
 typedef struct ProtocolClient ProtocolClient;
-
-typedef struct ProtocolClientSession
-{
-    ProtocolClient *client;                                         // Protocol client
-    StringId command;                                               // Command
-    uint64_t sessionId;                                             // Session id
-    bool open;                                                      // Was open called?
-} ProtocolClientSession;
+typedef struct ProtocolClientSession ProtocolClientSession;
 
 #include "common/io/read.h"
 #include "common/io/write.h"
@@ -75,7 +68,19 @@ protocolPackNew(void)
 Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN ProtocolClient *protocolClientNew(const String *name, const String *service, IoRead *read, IoWrite *write);
-FN_EXTERN ProtocolClientSession *protocolClientSessionNew(ProtocolClient *client, StringId command);
+
+// New session
+typedef struct ProtocolClientSessionNewParam
+{
+    VAR_PARAM_HEADER;
+    bool async;                                                     // Async requests allowed?
+} ProtocolClientSessionNewParam;
+
+#define protocolClientSessionNewP(client, command, ...)                                                                            \
+    protocolClientSessionNew(client, command, (ProtocolClientSessionNewParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN ProtocolClientSession *protocolClientSessionNew(
+    ProtocolClient *client, StringId command, ProtocolClientSessionNewParam param);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -85,11 +90,23 @@ typedef struct ProtocolClientPub
     IoRead *read;                                                   // Read interface
 } ProtocolClientPub;
 
+typedef struct ProtocolClientSessionPub
+{
+    bool queued;                                                    // Is a response currently queued?
+} ProtocolClientSessionPub;
+
 // Read file descriptor
 FN_INLINE_ALWAYS int
 protocolClientIoReadFd(ProtocolClient *const this)
 {
     return ioReadFd(THIS_PUB(ProtocolClient)->read);
+}
+
+// Is a response currently queued?
+FN_INLINE_ALWAYS bool
+protocolClientSessionQueued(const ProtocolClientSession *const this)
+{
+    return THIS_PUB(ProtocolClientSession)->queued;
 }
 
 /***********************************************************************************************************************************

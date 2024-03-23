@@ -39,15 +39,62 @@ struct ProtocolClient
     const String *errorPrefix;                                      // Prefix used when throwing error
     TimeMSec keepAliveTime;                                         // Last time data was put to the server
     uint64_t sessionTotal;                                          // Total sessions (used to generate session ids)
-    List *responseQueue;                                            // Queued responses
+    List *sessionList;                                              // Session list
 };
 
-typedef struct ProtocolClientResponse
+struct ProtocolClientSession
 {
-    uint64_t sessionId;
-    ProtocolMessageType type;
-    PackRead *packRead;
-} ProtocolClientResponse;
+    ProtocolClientSessionPub pub;                                   // Publicly accessible variables
+    ProtocolClient *client;                                         // Protocol client
+    StringId command;                                               // Command
+    uint64_t sessionId;                                             // Session id
+    bool open;                                                      // Was open called?
+    bool async;                                                     // Async requests allowed?
+
+    bool stored;                                                    // Is a message currently stored?
+    ProtocolMessageType type;                                       // Type of last message received
+    PackRead *packRead;                                             // Last message received (if any)
+
+};
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+protocolClientCommandPut(ProtocolClientSession *const this, const ProtocolCommandType type, PackWrite *const param)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT_SESSION, this);
+        FUNCTION_LOG_PARAM(STRING_ID, type);
+        FUNCTION_LOG_PARAM(PACK_WRITE, param);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Write the command
+        PackWrite *const commandPack = pckWriteNewIo(this->client->write);
+        pckWriteU32P(commandPack, protocolMessageTypeCommand, .defaultWrite = true);
+        pckWriteStrIdP(commandPack, this->command);
+        pckWriteStrIdP(commandPack, type);
+        pckWriteU64P(commandPack, this->sessionId);
+        pckWriteBoolP(commandPack, this->open);
+
+        // Write parameters
+        if (param != NULL)
+        {
+            pckWriteEndP(param);
+            pckWritePackP(commandPack, pckWriteResult(param));
+        }
+
+        pckWriteEndP(commandPack);
+
+        // Flush to send command immediately
+        ioWriteFlush(this->client->write);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
 
 /***********************************************************************************************************************************
 Close protocol connection
@@ -69,7 +116,7 @@ protocolClientFreeResource(THIS_VOID)
     // Send an exit command but don't wait to see if it succeeds
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        protocolClientSessionRequestAsyncP(protocolClientSessionNew(this, PROTOCOL_COMMAND_EXIT));
+        protocolClientCommandPut(protocolClientSessionNewP(this, PROTOCOL_COMMAND_EXIT), protocolCommandTypeProcess, NULL);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -104,7 +151,7 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
             .name = strDup(name),
             .errorPrefix = strNewFmt("raised from %s", strZ(name)),
             .keepAliveTime = timeMSec(),
-            .responseQueue = lstNewP(sizeof(ProtocolClientResponse)),
+            .sessionList = lstNewP(sizeof(ProtocolClientSession)),
         };
 
         // Read, parse, and check the protocol greeting
@@ -177,6 +224,30 @@ protocolClientStateExpectIdle(const ProtocolClient *const this)
     FUNCTION_TEST_RETURN_VOID();
 }
 
+/***********************************************************************************************************************************
+Find a client session
+***********************************************************************************************************************************/
+static unsigned int
+protocolClientSessionFindIdx(const ProtocolClient *const this, const uint64_t sessionId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PROTOCOL_CLIENT, this);
+        FUNCTION_TEST_PARAM(UINT64, sessionId);
+    FUNCTION_TEST_END();
+
+    unsigned int result = 0;
+
+    for (; result < lstSize(this->sessionList); result++)
+    {
+        if ((*(ProtocolClientSession **)lstGet(this->sessionList, result))->sessionId == sessionId)
+            break;
+    }
+
+    CHECK_FMT(FormatError, result < lstSize(this->sessionList), "unable to find protocol client session %" PRIu64, sessionId);
+
+    FUNCTION_TEST_RETURN(UINT, result);
+}
+
 /**********************************************************************************************************************************/
 // Helper to process errors
 static void
@@ -213,49 +284,46 @@ protocolClientError(ProtocolClient *const this, const ProtocolMessageType type, 
 
 /**********************************************************************************************************************************/
 static PackRead *
-protocolClientDataGet(ProtocolClient *const this, const uint64_t sessionId)
+protocolClientDataGet(ProtocolClientSession *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
-        FUNCTION_LOG_PARAM(UINT64, sessionId);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT_SESSION, this);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(sessionId != 0);
 
     // Expect data-get state before data get
-    protocolClientStateExpectIdle(this);
+    protocolClientStateExpectIdle(this->client);
 
     PackRead *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Check the queue for a response
-        ProtocolClientResponse response = {0};
+        // Check the session for a stored response
+        bool found = false;
+        ProtocolMessageType type = protocolMessageTypeData;
+        PackRead *packRead = NULL;
 
-        for (unsigned int responseIdx = 0; responseIdx < lstSize(this->responseQueue); responseIdx++)
+        if (this->stored)
         {
-            if (((ProtocolClientResponse *)lstGet(this->responseQueue, responseIdx))->sessionId == sessionId)
-            {
-                response = *(ProtocolClientResponse *)lstGet(this->responseQueue, responseIdx);
-                objMove(response.packRead, memContextCurrent());
+            found = true;
+            type = this->type;
+            packRead = pckReadMove(this->packRead, memContextCurrent());
 
-                lstRemoveIdx(this->responseQueue, responseIdx);
-                break;
-            }
+            this->stored = false;
         }
 
-        // If not found in the queue then read from protocol
-        while (response.sessionId == 0)
+        // If stored then read from protocol
+        while (!found)
         {
             // Switch state to data get
-            this->state = protocolClientStateDataGet;
+            this->client->state = protocolClientStateDataGet;
 
-            PackRead *const responsePack = pckReadNewIo(this->pub.read);
-            response.sessionId = pckReadU64P(responsePack);
-            response.type = (ProtocolMessageType)pckReadU32P(responsePack);
+            PackRead *const responsePack = pckReadNewIo(this->client->pub.read);
+            const uint64_t sessionId = pckReadU64P(responsePack);
+            type = (ProtocolMessageType)pckReadU32P(responsePack);
 
-            if (response.type == protocolMessageTypeError)
+            if (type == protocolMessageTypeError)
             {
                 PackWrite *const packWrite = protocolPackNew();
 
@@ -264,86 +332,55 @@ protocolClientDataGet(ProtocolClient *const this, const uint64_t sessionId)
                 pckWriteStrP(packWrite, pckReadStrP(responsePack));
                 pckWriteEnd(packWrite);
 
-                response.packRead = pckReadNew(pckWriteResult(packWrite));
+                packRead = pckReadNew(pckWriteResult(packWrite));
             }
             else
             {
-                ASSERT(response.type == protocolMessageTypeData);
-                response.packRead = pckReadPackReadP(responsePack);
+                ASSERT(type == protocolMessageTypeData);
+                packRead = pckReadPackReadP(responsePack);
             }
 
             pckReadEndP(responsePack);
 
-            if (response.sessionId != sessionId)
+            if (sessionId != this->sessionId)
             {
-                objMove(response.packRead, objMemContext(this->responseQueue));
-                lstAdd(this->responseQueue, &response);
+                ProtocolClientSession *const sessionOther = *(ProtocolClientSession **)lstGet(
+                    this->client->sessionList, protocolClientSessionFindIdx(this->client, sessionId));
 
-                response.sessionId = 0;
+                CHECK_FMT(
+                    FormatError, !sessionOther->stored, "protocol client session %" PRIu64 " already has a stored response",
+                    sessionOther->sessionId);
+
+                sessionOther->stored = true;
+                sessionOther->type = type;
+                sessionOther->packRead = objMove(packRead, objMemContext(sessionOther));
             }
+            else
+                found = true;
 
             // Switch state back to idle after successful data get
-            this->state = protocolClientStateIdle;
+            this->client->state = protocolClientStateIdle;
         }
 
-        protocolClientError(this, response.type, response.packRead);
-        CHECK(FormatError, response.type == protocolMessageTypeData, "expected data message");
+        protocolClientError(this->client, type, packRead);
+        CHECK(FormatError, type == protocolMessageTypeData, "expected data message");
 
-        result = objMove(response.packRead, memContextPrior());
+        result = objMove(packRead, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(PACK_READ, result);
 }
 
-/**********************************************************************************************************************************/
-FN_EXTERN void
-protocolClientCommandPut(
-    ProtocolClient *const this, const StringId command, const ProtocolCommandType type, const uint64_t sessionId,
-    const bool sessionRequired, PackWrite *const param)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
-        FUNCTION_LOG_PARAM(STRING_ID, command);
-        FUNCTION_LOG_PARAM(STRING_ID, type);
-        FUNCTION_LOG_PARAM(UINT64, sessionId);
-        FUNCTION_LOG_PARAM(PACK_WRITE, param);
-    FUNCTION_LOG_END();
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        // Write the command
-        PackWrite *const commandPack = pckWriteNewIo(this->write);
-        pckWriteU32P(commandPack, protocolMessageTypeCommand, .defaultWrite = true);
-        pckWriteStrIdP(commandPack, command);
-        pckWriteStrIdP(commandPack, type);
-        pckWriteU64P(commandPack, sessionId);
-        pckWriteBoolP(commandPack, sessionRequired);
-
-        // Write parameters
-        if (param != NULL)
-        {
-            pckWriteEndP(param);
-            pckWritePackP(commandPack, pckWriteResult(param));
-        }
-
-        pckWriteEndP(commandPack);
-
-        // Flush to send command immediately
-        ioWriteFlush(this->write);
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN_VOID();
-}
 
 /**********************************************************************************************************************************/
 FN_EXTERN ProtocolClientSession *
-protocolClientSessionNew(ProtocolClient *const client, const StringId command)
+protocolClientSessionNew(ProtocolClient *const client, const StringId command, const ProtocolClientSessionNewParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, client);
         FUNCTION_LOG_PARAM(STRING_ID, command);
+        FUNCTION_LOG_PARAM(BOOL, param.async);
     FUNCTION_LOG_END();
 
     ASSERT(client != NULL);
@@ -355,9 +392,14 @@ protocolClientSessionNew(ProtocolClient *const client, const StringId command)
             .client = client,
             .command = command,
             .sessionId = ++client->sessionTotal,
+            .async = param.async,
         };
     }
     OBJ_NEW_END();
+
+    // !!!
+    if (this->async)
+        lstAdd(this->client->sessionList, &this);
 
     FUNCTION_LOG_RETURN(PROTOCOL_CLIENT_SESSION, this);
 }
@@ -374,13 +416,13 @@ protocolClientSessionOpen(ProtocolClientSession *const this, const ProtocolClien
     ASSERT(this != NULL);
     ASSERT(!this->open);
 
-    protocolClientCommandPut(this->client, this->command, protocolCommandTypeOpen, this->sessionId, true, param.param);
+    protocolClientCommandPut(this, protocolCommandTypeOpen, param.param);
     this->open = true;
 
     // Set a callback to shutdown the protocol
     // memContextCallbackSet(objMemContext(this), protocolClientFreeResource, this);
 
-    FUNCTION_LOG_RETURN(PACK_READ, protocolClientDataGet(this->client, this->sessionId));
+    FUNCTION_LOG_RETURN(PACK_READ, protocolClientDataGet(this));
 }
 
 /**********************************************************************************************************************************/
@@ -410,7 +452,7 @@ protocolClientSessionRequestAsync(ProtocolClientSession *const this, const Proto
 
     ASSERT(this != NULL);
 
-    protocolClientCommandPut(this->client, this->command, protocolCommandTypeProcess, this->sessionId, this->open, param.param);
+    protocolClientCommandPut(this, protocolCommandTypeProcess, param.param);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -425,7 +467,7 @@ protocolClientSessionResponse(ProtocolClientSession *const this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_LOG_RETURN(PACK_READ, protocolClientDataGet(this->client, this->sessionId));
+    FUNCTION_LOG_RETURN(PACK_READ, protocolClientDataGet(this));
 }
 
 /**********************************************************************************************************************************/
@@ -439,10 +481,13 @@ protocolClientSessionClose(ProtocolClientSession *const this)
     ASSERT(this != NULL);
     ASSERT(this->open);
 
-    protocolClientCommandPut(this->client, this->command, protocolCommandTypeClose, this->sessionId, this->open, NULL);
+    protocolClientCommandPut(this, protocolCommandTypeClose, NULL);
     this->open = false;
 
-    FUNCTION_LOG_RETURN(PACK_READ, protocolClientDataGet(this->client, this->sessionId));
+    if (this->async) // {uncovered - !!!}
+        lstRemoveIdx(this->client->sessionList, protocolClientSessionFindIdx(this->client, this->sessionId)); // {uncovered - !!!}
+
+    FUNCTION_LOG_RETURN(PACK_READ, protocolClientDataGet(this));
 }
 
 /**********************************************************************************************************************************/
@@ -461,14 +506,13 @@ protocolClientRequest(ProtocolClient *const this, const StringId command, const 
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ProtocolClientSession *const session = protocolClientSessionNew(this, command);
+        ProtocolClientSession *const session = protocolClientSessionNewP(this, command);
 
-        protocolClientCommandPut(
-            session->client, session->command, protocolCommandTypeProcess, session->sessionId, session->open, param.param);
+        protocolClientCommandPut(session, protocolCommandTypeProcess, param.param);
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
-            result = protocolClientDataGet(session->client, session->sessionId);
+            result = protocolClientDataGet(session);
         }
         MEM_CONTEXT_PRIOR_END();
     }
@@ -488,9 +532,12 @@ protocolClientSessionCancel(ProtocolClientSession *const this)
     ASSERT(this != NULL);
     ASSERT(this->open);
 
-    protocolClientCommandPut(this->client, this->command, protocolCommandTypeCancel, this->sessionId, this->open, NULL);
-    protocolClientDataGet(this->client, this->sessionId);
+    protocolClientCommandPut(this, protocolCommandTypeCancel, NULL);
+    protocolClientDataGet(this);
     this->open = false;
+
+    if (this->async) // {uncovered - !!!}
+        lstRemoveIdx(this->client->sessionList, protocolClientSessionFindIdx(this->client, this->sessionId)); // {uncovered - !!!}
 
     FUNCTION_LOG_RETURN_VOID();
 }

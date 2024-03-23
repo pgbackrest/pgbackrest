@@ -207,8 +207,9 @@ protocolParallelProcess(ProtocolParallel *this)
                         lstAdd(this->jobList, &job);
 
                         // Put command
-                        ProtocolClientSession *const session = protocolClientSessionNew(
-                            *(ProtocolClient **)lstGet(this->clientList, clientIdx), protocolParallelJobCommand(job));
+                        ProtocolClientSession *const session = protocolClientSessionNewP(
+                            *(ProtocolClient **)lstGet(this->clientList, clientIdx), protocolParallelJobCommand(job),
+                            .async = true);
                         protocolClientSessionRequestAsyncP(session, .param = protocolParallelJobParam(job));
 
                         // Set client id and running state

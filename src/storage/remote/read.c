@@ -326,7 +326,7 @@ storageReadRemoteNew(
         {
             .storage = storage,
             .client = client,
-            .session = protocolClientSessionNew(client, PROTOCOL_COMMAND_STORAGE_READ),
+            .session = protocolClientSessionNewP(client, PROTOCOL_COMMAND_STORAGE_READ, .async = true),
 
             .interface = (StorageReadInterface)
             {
