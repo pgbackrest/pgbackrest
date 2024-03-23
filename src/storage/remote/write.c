@@ -55,8 +55,6 @@ storageWriteRemoteFreeResource(THIS_VOID)
     if (this->queued)
         protocolClientSessionResponse(this->session);
 
-    protocolClientSessionCancel(this->session);
-
     FUNCTION_LOG_RETURN_VOID();
 }
 

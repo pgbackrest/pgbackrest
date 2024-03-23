@@ -96,113 +96,6 @@ protocolClientCommandPut(ProtocolClientSession *const this, const ProtocolComman
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Close protocol connection
-***********************************************************************************************************************************/
-static void
-protocolClientFreeResource(THIS_VOID)
-{
-    THIS(ProtocolClient);
-
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    // Switch state to idle so the command is sent no matter the current state
-    this->state = protocolClientStateIdle;
-
-    // Send an exit command but don't wait to see if it succeeds
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        protocolClientCommandPut(protocolClientSessionNewP(this, PROTOCOL_COMMAND_EXIT), protocolCommandTypeProcess, NULL);
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-FN_EXTERN ProtocolClient *
-protocolClientNew(const String *name, const String *service, IoRead *read, IoWrite *write)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STRING, name);
-        FUNCTION_LOG_PARAM(STRING, service);
-        FUNCTION_LOG_PARAM(IO_READ, read);
-        FUNCTION_LOG_PARAM(IO_WRITE, write);
-    FUNCTION_LOG_END();
-
-    ASSERT(name != NULL);
-    ASSERT(read != NULL);
-    ASSERT(write != NULL);
-
-    OBJ_NEW_BEGIN(ProtocolClient, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
-    {
-        *this = (ProtocolClient)
-        {
-            .pub =
-            {
-                .read = read,
-            },
-            .state = protocolClientStateIdle,
-            .write = write,
-            .name = strDup(name),
-            .errorPrefix = strNewFmt("raised from %s", strZ(name)),
-            .keepAliveTime = timeMSec(),
-            .sessionList = lstNewP(sizeof(ProtocolClientSession)),
-        };
-
-        // Read, parse, and check the protocol greeting
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            JsonRead *const greeting = jsonReadNew(ioReadLine(this->pub.read));
-
-            jsonReadObjectBegin(greeting);
-
-            const struct
-            {
-                const StringId key;
-                const char *const value;
-            } expected[] =
-            {
-                {.key = PROTOCOL_GREETING_NAME, .value = PROJECT_NAME},
-                {.key = PROTOCOL_GREETING_SERVICE, .value = strZ(service)},
-                {.key = PROTOCOL_GREETING_VERSION, .value = PROJECT_VERSION},
-            };
-
-            for (unsigned int expectedIdx = 0; expectedIdx < LENGTH_OF(expected); expectedIdx++)
-            {
-                if (!jsonReadKeyExpectStrId(greeting, expected[expectedIdx].key))
-                    THROW_FMT(ProtocolError, "unable to find greeting key '%s'", strZ(strIdToStr(expected[expectedIdx].key)));
-
-                if (jsonReadTypeNext(greeting) != jsonTypeString)
-                    THROW_FMT(ProtocolError, "greeting key '%s' must be string type", strZ(strIdToStr(expected[expectedIdx].key)));
-
-                const String *const actualValue = jsonReadStr(greeting);
-
-                if (!strEqZ(actualValue, expected[expectedIdx].value))
-                {
-                    THROW_FMT(
-                        ProtocolError,
-                        "expected value '%s' for greeting key '%s' but got '%s'\n"
-                        "HINT: is the same version of " PROJECT_NAME " installed on the local and remote host?",
-                        expected[expectedIdx].value, strZ(strIdToStr(expected[expectedIdx].key)), strZ(actualValue));
-                }
-            }
-
-            jsonReadObjectEnd(greeting);
-        }
-        MEM_CONTEXT_TEMP_END();
-
-        // Set a callback to shutdown the protocol
-        memContextCallbackSet(objMemContext(this), protocolClientFreeResource, this);
-    }
-    OBJ_NEW_END();
-
-    FUNCTION_LOG_RETURN(PROTOCOL_CLIENT, this);
-}
 
 /***********************************************************************************************************************************
 Check protocol state
@@ -372,6 +265,149 @@ protocolClientDataGet(ProtocolClientSession *const this)
     FUNCTION_LOG_RETURN(PACK_READ, result);
 }
 
+/***********************************************************************************************************************************
+Close protocol connection
+***********************************************************************************************************************************/
+static void
+protocolClientFreeResource(THIS_VOID)
+{
+    THIS(ProtocolClient);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    // Switch state to idle so the command is sent no matter the current state
+    this->state = protocolClientStateIdle;
+
+    // Stop client sessions from sending cancel commands
+    for (unsigned int sessionIdx = 0; sessionIdx < lstSize(this->sessionList); sessionIdx++)
+        memContextCallbackClear(objMemContext(*(ProtocolClientSession **)lstGet(this->sessionList, sessionIdx)));
+
+    fprintf(stdout, "!!!SESSION TOTAL BEFORE %u\n", lstSize(this->sessionList));fflush(stdout);
+
+    // Send an exit command but don't wait to see if it succeeds
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        protocolClientCommandPut(protocolClientSessionNewP(this, PROTOCOL_COMMAND_EXIT), protocolCommandTypeProcess, NULL);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    fprintf(stdout, "!!!SESSION TOTAL AFTER %u\n", lstSize(this->sessionList));fflush(stdout);
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Close client session
+***********************************************************************************************************************************/
+static void
+protocolClientSessionFreeResource(THIS_VOID)
+{
+    THIS(ProtocolClientSession);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT_SESSION, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->async || this->open);
+
+    // If open then cancel
+    if (this->open)
+    {
+        protocolClientCommandPut(this, protocolCommandTypeCancel, NULL);
+        protocolClientDataGet(this);
+    }
+
+    // Remove from session list
+    lstRemoveIdx(this->client->sessionList, protocolClientSessionFindIdx(this->client, this->sessionId));
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN ProtocolClient *
+protocolClientNew(const String *name, const String *service, IoRead *read, IoWrite *write)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING, name);
+        FUNCTION_LOG_PARAM(STRING, service);
+        FUNCTION_LOG_PARAM(IO_READ, read);
+        FUNCTION_LOG_PARAM(IO_WRITE, write);
+    FUNCTION_LOG_END();
+
+    ASSERT(name != NULL);
+    ASSERT(read != NULL);
+    ASSERT(write != NULL);
+
+    OBJ_NEW_BEGIN(ProtocolClient, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    {
+        *this = (ProtocolClient)
+        {
+            .pub =
+            {
+                .read = read,
+            },
+            .state = protocolClientStateIdle,
+            .write = write,
+            .name = strDup(name),
+            .errorPrefix = strNewFmt("raised from %s", strZ(name)),
+            .keepAliveTime = timeMSec(),
+            .sessionList = lstNewP(sizeof(ProtocolClientSession)),
+        };
+
+        // Read, parse, and check the protocol greeting
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            JsonRead *const greeting = jsonReadNew(ioReadLine(this->pub.read));
+
+            jsonReadObjectBegin(greeting);
+
+            const struct
+            {
+                const StringId key;
+                const char *const value;
+            } expected[] =
+            {
+                {.key = PROTOCOL_GREETING_NAME, .value = PROJECT_NAME},
+                {.key = PROTOCOL_GREETING_SERVICE, .value = strZ(service)},
+                {.key = PROTOCOL_GREETING_VERSION, .value = PROJECT_VERSION},
+            };
+
+            for (unsigned int expectedIdx = 0; expectedIdx < LENGTH_OF(expected); expectedIdx++)
+            {
+                if (!jsonReadKeyExpectStrId(greeting, expected[expectedIdx].key))
+                    THROW_FMT(ProtocolError, "unable to find greeting key '%s'", strZ(strIdToStr(expected[expectedIdx].key)));
+
+                if (jsonReadTypeNext(greeting) != jsonTypeString)
+                    THROW_FMT(ProtocolError, "greeting key '%s' must be string type", strZ(strIdToStr(expected[expectedIdx].key)));
+
+                const String *const actualValue = jsonReadStr(greeting);
+
+                if (!strEqZ(actualValue, expected[expectedIdx].value))
+                {
+                    THROW_FMT(
+                        ProtocolError,
+                        "expected value '%s' for greeting key '%s' but got '%s'\n"
+                        "HINT: is the same version of " PROJECT_NAME " installed on the local and remote host?",
+                        expected[expectedIdx].value, strZ(strIdToStr(expected[expectedIdx].key)), strZ(actualValue));
+                }
+            }
+
+            jsonReadObjectEnd(greeting);
+        }
+        MEM_CONTEXT_TEMP_END();
+
+        // Set a callback to shutdown the protocol
+        memContextCallbackSet(objMemContext(this), protocolClientFreeResource, this);
+    }
+    OBJ_NEW_END();
+
+    FUNCTION_LOG_RETURN(PROTOCOL_CLIENT, this);
+}
 
 /**********************************************************************************************************************************/
 FN_EXTERN ProtocolClientSession *
@@ -397,9 +433,14 @@ protocolClientSessionNew(ProtocolClient *const client, const StringId command, c
     }
     OBJ_NEW_END();
 
-    // !!!
+    // If async then the session will need to be tracked in case another session gets a result for this session
     if (this->async)
+    {
         lstAdd(this->client->sessionList, &this);
+
+        // Set a callback to cleanup the session
+        memContextCallbackSet(objMemContext(this), protocolClientSessionFreeResource, this);
+    }
 
     FUNCTION_LOG_RETURN(PROTOCOL_CLIENT_SESSION, this);
 }
@@ -419,8 +460,12 @@ protocolClientSessionOpen(ProtocolClientSession *const this, const ProtocolClien
     protocolClientCommandPut(this, protocolCommandTypeOpen, param.param);
     this->open = true;
 
-    // Set a callback to shutdown the protocol
-    // memContextCallbackSet(objMemContext(this), protocolClientFreeResource, this);
+    // Set a callback to cleanup the session if it was not already done for async
+    if (!this->async)
+    {
+        lstAdd(this->client->sessionList, &this);
+        memContextCallbackSet(objMemContext(this), protocolClientSessionFreeResource, this);
+    }
 
     FUNCTION_LOG_RETURN(PACK_READ, protocolClientDataGet(this));
 }
@@ -484,8 +529,8 @@ protocolClientSessionClose(ProtocolClientSession *const this)
     protocolClientCommandPut(this, protocolCommandTypeClose, NULL);
     this->open = false;
 
-    if (this->async) // {uncovered - !!!}
-        lstRemoveIdx(this->client->sessionList, protocolClientSessionFindIdx(this->client, this->sessionId)); // {uncovered - !!!}
+    memContextCallbackClear(objMemContext(this));
+    protocolClientSessionFreeResource(this);
 
     FUNCTION_LOG_RETURN(PACK_READ, protocolClientDataGet(this));
 }
@@ -519,27 +564,6 @@ protocolClientRequest(ProtocolClient *const this, const StringId command, const 
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(PACK_READ, result);
-}
-
-/**********************************************************************************************************************************/
-FN_EXTERN void
-protocolClientSessionCancel(ProtocolClientSession *const this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT_SESSION, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(this->open);
-
-    protocolClientCommandPut(this, protocolCommandTypeCancel, NULL);
-    protocolClientDataGet(this);
-    this->open = false;
-
-    if (this->async) // {uncovered - !!!}
-        lstRemoveIdx(this->client->sessionList, protocolClientSessionFindIdx(this->client, this->sessionId)); // {uncovered - !!!}
-
-    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/

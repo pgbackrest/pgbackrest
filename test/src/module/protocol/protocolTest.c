@@ -343,6 +343,7 @@ testRun(void)
                 .name = strNewZ("test"),
                 .state = protocolClientStateIdle,
                 .write = write,
+                .sessionList = lstNewP(sizeof(ProtocolClientSession)),
             };
 
             memContextCallbackSet(memContextCurrent(), protocolClientFreeResource, protocolHelperClient.client);
@@ -794,7 +795,7 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("close handler");
 
-                session = protocolClientSessionNewP(client, TEST_PROTOCOL_COMMAND_COMPLEX_CLOSE);
+                session = protocolClientSessionNewP(client, TEST_PROTOCOL_COMMAND_COMPLEX_CLOSE, .async = true);
 
                 TEST_RESULT_BOOL(
                     pckReadBoolP(protocolClientSessionOpenP(session, .param = commandOpenParam)), true, "open succeed");
@@ -809,7 +810,7 @@ testRun(void)
 
                 TEST_RESULT_BOOL(
                     pckReadBoolP(protocolClientSessionOpenP(session, .param = commandOpenParam)), true, "open succeed");
-                TEST_RESULT_VOID(protocolClientSessionCancel(session), "cancel request");
+                TEST_RESULT_VOID(protocolClientSessionFree(session), "free request");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("free client");

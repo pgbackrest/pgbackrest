@@ -64,19 +64,8 @@ storageReadRemoteFreeResource(THIS_VOID)
 
     if (!this->eofFound)
     {
-        bool close = true;
-
         if (this->queued)
-        {
-            PackRead *const response = protocolClientSessionResponse(this->session);
-
-            close = !pckReadBoolP(response) || !pckReadBoolP(response); // {uncovered - !!!}
-
-            pckReadFree(response);
-        }
-
-        if (close)
-            protocolClientSessionCancel(this->session);
+            pckReadFree(protocolClientSessionResponse(this->session));
     }
 
     FUNCTION_LOG_RETURN_VOID();

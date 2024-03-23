@@ -303,7 +303,7 @@ protocolServerProcess(
                                             }
 
                                             // Error when session not found
-                                            if (sessionData == NULL)
+                                            if (sessionData == NULL && command.type != protocolCommandTypeCancel)
                                             {
                                                 THROW_FMT(
                                                     ProtocolError, "unable to find session id %" PRIu64 " for command %s:%s",
@@ -376,8 +376,11 @@ protocolServerProcess(
                                                 protocolServerDataPut(this, NULL);
 
                                                 // Free the session
-                                                objFree(sessionData);
-                                                lstRemoveIdx(this->sessionList, sessionListIdx);
+                                                if (sessionData != NULL)
+                                                {
+                                                    objFree(sessionData);
+                                                    lstRemoveIdx(this->sessionList, sessionListIdx);
+                                                }
 
                                                 break;
                                             }

@@ -165,9 +165,6 @@ FN_EXTERN PackRead *protocolClientSessionResponse(ProtocolClientSession *const t
 // Session close
 FN_EXTERN PackRead *protocolClientSessionClose(ProtocolClientSession *const this);
 
-// Session cancel
-FN_EXTERN void protocolClientSessionCancel(ProtocolClientSession *const this);
-
 // Client request
 #define protocolClientRequestP(this, command, ...)                                                                                          \
     protocolClientRequest(this, command, (ProtocolClientSessionRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
@@ -179,6 +176,12 @@ Destructor
 ***********************************************************************************************************************************/
 FN_INLINE_ALWAYS void
 protocolClientFree(ProtocolClient *const this)
+{
+    objFree(this);
+}
+
+FN_INLINE_ALWAYS void
+protocolClientSessionFree(ProtocolClientSession *const this)
 {
     objFree(this);
 }

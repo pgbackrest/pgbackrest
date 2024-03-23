@@ -743,10 +743,23 @@ testRun(void)
     // sure coverage data has been written by the remote. We also need to make sure that the mem context callback is cleared so that
     // protocolClientFreeResource() will not be called and send another exit. protocolFree() is still required to free the client
     // objects.
-    memContextCallbackClear(objMemContext(protocolRemoteGet(protocolStorageTypeRepo, 0)));
-    protocolClientRequestP(protocolRemoteGet(protocolStorageTypeRepo, 0), PROTOCOL_COMMAND_EXIT);
-    memContextCallbackClear(objMemContext(protocolRemoteGet(protocolStorageTypePg, 1)));
-    protocolClientRequestP(protocolRemoteGet(protocolStorageTypePg, 1), PROTOCOL_COMMAND_EXIT);
+    ProtocolClient *client = protocolRemoteGet(protocolStorageTypeRepo, 0);
+
+    memContextCallbackClear(objMemContext(client));
+
+    for (unsigned int sessionIdx = 0; sessionIdx < lstSize(client->sessionList); sessionIdx++)
+        memContextCallbackClear(objMemContext(*(ProtocolClientSession **)lstGet(client->sessionList, sessionIdx)));
+
+    protocolClientRequestP(client, PROTOCOL_COMMAND_EXIT);
+
+    client = protocolRemoteGet(protocolStorageTypePg, 1);
+
+    for (unsigned int sessionIdx = 0; sessionIdx < lstSize(client->sessionList); sessionIdx++)
+        memContextCallbackClear(objMemContext(*(ProtocolClientSession **)lstGet(client->sessionList, sessionIdx)));
+
+    memContextCallbackClear(objMemContext(client));
+    protocolClientRequestP(client, PROTOCOL_COMMAND_EXIT);
+
     protocolFree();
 
     FUNCTION_HARNESS_RETURN_VOID();

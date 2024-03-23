@@ -50,7 +50,7 @@ dbFreeResource(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    protocolClientSessionCancel(this->session);
+    protocolClientSessionFree(this->session);
 
     FUNCTION_LOG_RETURN_VOID();
 }
