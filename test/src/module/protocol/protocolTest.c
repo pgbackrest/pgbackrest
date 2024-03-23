@@ -803,6 +803,17 @@ testRun(void)
                 TEST_RESULT_BOOL(pckReadBoolP(protocolClientSessionRequestP(session)), true, "more to process");
                 TEST_RESULT_BOOL(pckReadBoolP(protocolClientSessionClose(session)), true, "close request");
 
+                session->open = true;
+                TEST_RESULT_VOID(protocolClientCommandPut(session, protocolCommandTypeClose, NULL), "close after close");
+                TEST_ERROR_FMT(
+                    protocolClientDataGet(session), ProtocolError,
+                    "raised from test client: unable to find session id %" PRIu64 " for command c-complex-c:cls",
+                    session->sessionId);
+
+                TEST_RESULT_VOID(protocolClientCommandPut(session, protocolCommandTypeCancel, NULL), "cancel after close");
+                TEST_RESULT_VOID(protocolClientDataGet(session), "cancel request succeeds");
+                session->open = false;
+
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("cancel handler");
 

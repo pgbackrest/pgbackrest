@@ -54,7 +54,6 @@ struct ProtocolClientSession
     bool stored;                                                    // Is a message currently stored?
     ProtocolMessageType type;                                       // Type of last message received
     PackRead *packRead;                                             // Last message received (if any)
-
 };
 
 /**********************************************************************************************************************************/
@@ -95,7 +94,6 @@ protocolClientCommandPut(ProtocolClientSession *const this, const ProtocolComman
 
     FUNCTION_LOG_RETURN_VOID();
 }
-
 
 /***********************************************************************************************************************************
 Check protocol state
@@ -286,16 +284,12 @@ protocolClientFreeResource(THIS_VOID)
     for (unsigned int sessionIdx = 0; sessionIdx < lstSize(this->sessionList); sessionIdx++)
         memContextCallbackClear(objMemContext(*(ProtocolClientSession **)lstGet(this->sessionList, sessionIdx)));
 
-    fprintf(stdout, "!!!SESSION TOTAL BEFORE %u\n", lstSize(this->sessionList));fflush(stdout);
-
     // Send an exit command but don't wait to see if it succeeds
     MEM_CONTEXT_TEMP_BEGIN()
     {
         protocolClientCommandPut(protocolClientSessionNewP(this, PROTOCOL_COMMAND_EXIT), protocolCommandTypeProcess, NULL);
     }
     MEM_CONTEXT_TEMP_END();
-
-    fprintf(stdout, "!!!SESSION TOTAL AFTER %u\n", lstSize(this->sessionList));fflush(stdout);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -313,7 +307,6 @@ protocolClientSessionFreeResource(THIS_VOID)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->async || this->open);
 
     // If open then cancel
     if (this->open)
