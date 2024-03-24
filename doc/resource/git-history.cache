@@ -1,5 +1,10 @@
 [
     {
+        "commit": "dc07fb1e5bd38026d4fefb67a0525a89ac98b520",
+        "date": "2024-03-25 09:53:22 +1300",
+        "subject": "v2.51: Meson Build System"
+    },
+    {
         "commit": "76956e71cfa3044867213bd65a6f22e96120c108",
         "date": "2024-03-20 09:05:39 +1300",
         "subject": "Fix progress logging when file size changes during backup.",
