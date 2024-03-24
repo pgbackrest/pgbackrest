@@ -1,5 +1,214 @@
 [
     {
+        "commit": "dc07fb1e5bd38026d4fefb67a0525a89ac98b520",
+        "date": "2024-03-25 09:53:22 +1300",
+        "subject": "v2.51: Meson Build System"
+    },
+    {
+        "commit": "76956e71cfa3044867213bd65a6f22e96120c108",
+        "date": "2024-03-20 09:05:39 +1300",
+        "subject": "Fix progress logging when file size changes during backup.",
+        "body": "If the file size changed during backup then the progress percentage in the log would not be accurate.\r\n\r\nFix this by using the original size to increment the progress since progress total was calculated from original file sizes."
+    },
+    {
+        "commit": "de55902fb3f92758c4784e6fc06a69466e656ec3",
+        "date": "2024-03-13 12:06:23 +1300",
+        "subject": "Redact secure options in check --report.",
+        "body": "For this to be practically useful secure options must be redacted. Otherwise, no user is likely to share the report.\n\nSince this feature is still internal, there is no real world impact."
+    },
+    {
+        "commit": "ff47450402fde5ebc64a08d31791551bee52200e",
+        "date": "2024-03-12 12:41:58 +1300",
+        "subject": "Update resume functionality for block incremental.",
+        "body": "Resume was not updated for block incremental so block incremental files were always removed during a resume. Resume worked but was very inefficient with block incremental enabled.\r\n\r\nUpdate resume to preserve block incremental files and add tests."
+    },
+    {
+        "commit": "e634fd85cedc1ae3aef7c4fa2556d7d73d05cb8a",
+        "date": "2024-03-10 17:08:42 +1300",
+        "subject": "Prevent invalid recovery when backup_label removed.",
+        "body": "If backup_label is removed from a restored backup then PostgreSQL will instead use checkpoint information from pg_control to attempt (what is thinks is) crash recovery. This will nearly always result in a corrupt cluster because the checkpoint will not be from the beginning of the backup, and even if it is, the end point will not be specified, which could lead to recovery stopping too early.\r\n\r\nTo prevent this, invalidate the checkpoint LSN in pg_control on restore. If backup_label is removed then recovery will still fail because PostgreSQL will not be able to find the invalid checkpoint. The LSN of the checkpoint is not logged but it will be visible in pg_controldata output as 0/DEAD. This value is invalid because PostgreSQL always skips the first WAL segment when initializing a cluster."
+    },
+    {
+        "commit": "960b43589d422a3757535b585e31da03a595ae97",
+        "date": "2024-03-10 16:17:50 +1300",
+        "subject": "Add validation for WAL segment size in pg_control.",
+        "body": "This serves as an additional sanity check to be sure the pg_control format is as expected. The field is useful for being near the end and containing a limited number of discrete values."
+    },
+    {
+        "commit": "63541b2273360c8c3f181fe0242bd20afb845715",
+        "date": "2024-03-10 15:50:10 +1300",
+        "subject": "Add validation for page checksum version in pg_control.",
+        "body": "This serves as an additional sanity check to be sure the pg_control format is as expected. The field is useful for being all the way at the end and being four bytes that can only have one of two values. Something more distinctive than 0 and 1 would be better, but this is what we have to work with.\n\nConvert PgControl.pageChecksum to unsigned int and rename to PgControl.pageChecksumVersion and make all downstream changes required for the new datatype."
+    },
+    {
+        "commit": "7448fde157c6d22f57b90c0cef11957b0aadf4b3",
+        "date": "2024-03-10 11:36:39 +1300",
+        "subject": "Improved support for dual stack connections.",
+        "body": "Connections are established using the \"happy eyeballs\" approach from RFC 8305, i.e. new addresses (if available) are tried if the prior address has already had a reasonable time to connect. This prevents waiting too long on a failed connection but does not try all the addresses at once. Prior connections that are still waiting are rechecked periodically if no subsequent connection is successful.\r\n\r\nThis improves substantially on 39bb8a0, which failed to take into account connection attempts that do not fail (but never connect) and use up all the available time."
+    },
+    {
+        "commit": "f287178b705cc90aa887d66c932e2a223029649b",
+        "date": "2024-03-10 11:09:13 +1300",
+        "subject": "Set function/variable visibility to hidden.",
+        "body": "This saves about 16KiB in the binary and reduces exported symbols by about 75%. All variables are still exported and any functions that are referenced by their pointers or extern'd but never used outside the module where they are defined.\r\n\r\nIn addition to modest space savings, this should also increase performance a bit since the compiler can simplify calls to these functions and load the binary should also be a little faster.\r\n\r\nThe GCC documentation does not make it clear that visibility can be used with variables, but it certainly makes a difference in the binary size, so something is happening. Other sources on the internet suggest that visibility can be used with variables. Clearly exports are not affected, but there may be some other optimization happening."
+    },
+    {
+        "commit": "e3d9df3ae9669ee5749b970d59f8afeb20fd3d9d",
+        "date": "2024-03-10 10:53:31 +1300",
+        "subject": "Make meson the primary build system.",
+        "body": "Meson has a lot of advantages over autoconf/make, primarily in ease-of-use and performance. Make meson the only build system used for testing and building the Debian documentation, but leave the RHEL documentation using autoconf/make for now so it gets some testing."
+    },
+    {
+        "commit": "c64cd8e01958c3316049d73f403241c136bcf392",
+        "date": "2024-03-10 10:43:24 +1300",
+        "subject": "Disable arm64 test in CirrusCI.",
+        "body": "There seems to be a shortage of arm64 hosts because queue times have been steadily increasing over the last few weeks. It can now take several hours to get an arm64 test queued, which makes it difficult to get development done.\n\nDisable for the time being and hope the resource issue gets resolved in the future."
+    },
+    {
+        "commit": "eda7706f53e925a701f85894ab3d8e861e5fcf06",
+        "date": "2024-03-10 09:40:13 +1300",
+        "subject": "Make valgrind libssh2 leak check less specific.",
+        "body": "The leak kind is usually definite but sometimes flaps to possible. For stability purposes accept any leak kind.\n\nNote that this is a leak in a specific version of libssh2 and not a bug in pgBackRest."
+    },
+    {
+        "commit": "dddcbcd8e9a1cae578b0cc5bb2d1aa768330f3c5",
+        "date": "2024-03-10 09:32:55 +1300",
+        "subject": "Limit resume functionality to full backups.",
+        "body": "Resume does not work correctly with delta diff/incr backups because the presence of a reference causes it to remove the file with the idea that it can just be referenced again. This is true for timestamp-based backups but for deltas all existing files need to be rechecked (which requires a reference).\r\n\r\nThis is fixable but not without significant effort and new tests and it calls into question the usefulness of non-full resumes. For diff/incr, if the file was changed since the prior backup there is a good chance it will be modified again before the resume occurs.\r\n\r\nIn order to keep this feature as useful as possible for the most valuable case, limit resumes to full backups."
+    },
+    {
+        "commit": "9d91d1b2f817b543fc8d970af56d1442c325ed7c",
+        "date": "2024-03-08 15:07:43 +1300",
+        "subject": "Detect files that have not changed during non-delta incremental backup.",
+        "body": "02eea55 added code to load a buffer of data from a file being backup up to detect files that have been truncated to zero after manifest generation. This mechanism can also be used to detect files that have not changed since the prior backup.\r\n\r\nIf the result of the file copy fits into a single buffer, then the size and checksum can be compared to the prior file before anything gets stored. If the file matches then it is referenced to the file in to prior backup.\r\n\r\nThe size that can be compared for normal copies is limited by the buffer size but for block incremental it works with any size file since there is no output from block incremental when the file is identical."
+    },
+    {
+        "commit": "cf17515e409440eecfb04bf7186790d8baa8ab12",
+        "date": "2024-03-08 12:34:11 +1300",
+        "subject": "Improve archive-push WAL segment queue handling.",
+        "body": "Infer the size of all WAL segments from the size of the first segment rather than getting info for all segments (up to queue size). If the segments are not the same size then there are larger issues than the WAL queue."
+    },
+    {
+        "commit": "4387250f2e159dc4f762ed4a7f4180eb81db3717",
+        "date": "2024-03-08 10:07:03 +1300",
+        "subject": "Improve sort comparators.",
+        "body": "Improve sort comparators to use branchless comparisons when possible and avoid using subtraction. Only one comparator was using subtraction and it appears there was no overflow risk since the values were pretty small.\r\n\r\nInspired by https://www.postgresql.org/message-id/CA%2B14426g2Wa9QuUpmakwPxXFWG_1FaY0AsApkvcTBy-YfS6uaw%40mail.gmail.com."
+    },
+    {
+        "commit": "e00bfe2d2c3f124b2883e3c2d169a2ce506a1e98",
+        "date": "2024-03-08 09:50:20 +1300",
+        "subject": "Fix performance regression in storage list.",
+        "body": "storageListP() returns a list of entries in a path and should not need to stat/head, etc. in order to get more detailed info. This was broken by 75623d4 which failed to set the level correctly.\r\n\r\nSet the correct level and update tests.\r\n\r\nThere's no easy way to directly test for a regression here but the SFTP tests will fail if more detailed info is requested since it would require script changes."
+    },
+    {
+        "commit": "794c5771305bfce6298ee529df682d3a873f6f7d",
+        "date": "2024-03-06 11:00:09 +1300",
+        "subject": "Migrate integration tests to C.",
+        "body": "The Perl integration tests were migrated as faithfully as possible, but there was some cruft and a few unit tests that it did not make sense to migrate.\n\nAlso remove all Perl code made obsolete by this migration.\n\nAll unit, performance, and integration tests are now written in C but significant parts of the test harness remain to be migrated."
+    },
+    {
+        "commit": "7f1bb3a051077d8af2bcadfb261c873b1bdcea9f",
+        "date": "2024-03-05 17:45:25 +1300",
+        "subject": "Remove obsolete valgrind suppression."
+    },
+    {
+        "commit": "cb58bdc9752e720687e594fa953e1b4a93b8defe",
+        "date": "2024-03-04 18:57:19 +1300",
+        "subject": "Move assert in cmdServerSigChild().",
+        "body": "It is possible for the server to receive notifications for children that were not spawned by it, e.g. when running as the root process of a container.\n\nOnly assert when the child process is found in our process list. Otherwise, the code may be something unexpected.\n\nSince this is an assert there should not be any real world consequences either way, but the issue has caused problems in testing."
+    },
+    {
+        "commit": "07051347fb8723ef1c6f951b17bcddb8fa0d8fcf",
+        "date": "2024-03-04 18:14:41 +1300",
+        "subject": "Update Cirrus CI BSD image to 13.3."
+    },
+    {
+        "commit": "f7a7ab16c9652179945717ebf9b68af3aa8a0b0e",
+        "date": "2024-03-02 12:29:10 +1300",
+        "subject": "Skip zero-length files for block incremental delta restore.",
+        "body": "a42614e introduced the capability to preserve smaller than expected files for block incremental restore delta, but failed to take into account that zero-length files are both useless and cause the block checksum filter to error.\r\n\r\nFix this by skipping zero-length files during block incremental restore delta."
+    },
+    {
+        "commit": "6c45b57fa8eef0f570abb1ac216ac43e0acf314a",
+        "date": "2024-02-24 11:22:48 +1300",
+        "subject": "Add execOne() to simplify exec for build, documentation, and testing.",
+        "body": "The core Exec object is efficient but geared toward the specific needs of core and not ease-of-use as required for build, documentation, and testing.\n\nexecOne() works similarly to system() except that it automatically redirects stderr to stdout and captures the output."
+    },
+    {
+        "commit": "6356a2b76c8f22dc0b3e1a0349b7f1f0cf1b65ae",
+        "date": "2024-02-17 19:16:39 +1300",
+        "subject": "Disable log expect testing for non-unit tests.",
+        "body": "This has never been a problem for performance tests since they do not call functions that log at info level or above, but the upcoming integration tests may do so. In any case it is better to disable this functionality outside of unit tests."
+    },
+    {
+        "commit": "d41b21c8f70aa6ce7a39aeaddbbacafda51c609d",
+        "date": "2024-02-17 10:52:37 +1300",
+        "subject": "Remove mock integration tests.",
+        "body": "These tests have not been maintained for several years, i.e. no tests for new features have been added. They are highly duplicative of the unit tests but do have the advantage of mixing in different storage drivers. They were allowed to remain because they were not doing any harm even if they were probably not doing any good.\n\nHowever, the real integration tests (that run directly against PostgreSQL) also test storage drivers and have been updated with new features over time. The real integration tests are now being migrated to C and as part of that effort the mock integration tests need to be removed or migrated, and they do not provide enough value to migrate.\n\nRemove all mock integration tests and a leftover Perl performance test."
+    },
+    {
+        "commit": "68351785f6816a23526900db595557cf6e3a0056",
+        "date": "2024-02-16 11:37:31 +1300",
+        "subject": "Update references to recovery.conf.",
+        "body": "Update references to recovery.conf to include postgresql.auto.conf used in newer versions.\r\n\r\nAlso update a broken recovery URL and point it to the current version (with a hint to select the proper version of PostgreSQL)."
+    },
+    {
+        "commit": "273d5050f8bd74869408d9570a35761ba5de75f1",
+        "date": "2024-02-07 11:01:55 -0300",
+        "subject": "Add asserts to default switch cases in common/type/variant module.",
+        "body": "This matches how switch is used in other parts of the code and prevents invalid values from being processed normally."
+    },
+    {
+        "commit": "ad8e92a9ac23a0123a080dafe6b83f0b71a22441",
+        "date": "2024-02-05 10:10:59 -0300",
+        "subject": "Remove unneeded backupTimeStart parameter from testBackupValidate().",
+        "body": "5ce8b9df added this parameter, but it is better to get the value from the manifest, which is already present."
+    },
+    {
+        "commit": "45f070aa9a221c6f862ff6ccb4ff011bfa6c3888",
+        "date": "2024-01-25 10:41:20 -0300",
+        "subject": "Add release instructions to update PostgreSQL ecosystem wiki."
+    },
+    {
+        "commit": "5ce8b9dfae984a9a40c44282a59936da5c3dfbd9",
+        "date": "2024-01-24 14:54:28 -0300",
+        "subject": "Simplify output in command/backup unit tests.",
+        "body": "The output combined a representation of the files/paths/links in the manifest along with output of what was validated on disk. This was redundant and made maintenance of the tests difficult, especially with all the quoting in the manifest output (which also made it hard to search for output).\n\nInstead use primarily the output created during validation and add fields from the manifest that were missing. Exclude paths from the output when there are files in the path since the path is then implied.\n\nOne major change here is that checksums are no longer output. This makes it easier to write tests that work on multiple architectures and all checksums are already verified during validation."
+    },
+    {
+        "commit": "1a0cc96c5a58cea2a21b8754909c6a2b824c3f9e",
+        "date": "2024-01-23 09:56:26 -0300",
+        "subject": "Migrate man page generation to C."
+    },
+    {
+        "commit": "676700d8ca6f2e0e0ab8123aa9606c8ec7aa81ae",
+        "date": "2024-01-22 14:17:09 -0300",
+        "subject": "Add detailed backtrace to autoconf/make build.",
+        "body": "c8264291 added libbacktrace to the meson build (not used in production yet), but held off on adding it to autoconf/make before more performance testing was done.\r\n\r\nPerformance tests show there is no noticeable cost to adding libbacktrace, so add it to get more detail error stack traces."
+    },
+    {
+        "commit": "0aaa0772f56d59178518377b33b3e3d02f0f5483",
+        "date": "2024-01-22 12:33:40 -0300",
+        "subject": "Fix help not displaying help for the help command.",
+        "body": "'pgbackrest help help' just displayed the help overview, rather than display help for the help command.\n\nFix this by making sure the command is set and routing correctly in the help command."
+    },
+    {
+        "commit": "68db3075d7ac4a48377967ad54e45b95b9ee6c61",
+        "date": "2024-01-22 12:00:13 -0300",
+        "subject": "Allow --version and --help for version and help.",
+        "body": "It is a bit confusing that --help and --version do not work like most command-line programs. For example, git allows either --help or help.\r\n\r\nMake these work by making them shortcuts (not actual options) to the applicable commands.\r\n\r\nThe user will still need to use help (not --help) to get help on specific commands/options, but at least they can get to the main help (which will tell them this) via --help."
+    },
+    {
+        "commit": "db5bcff3b443833dce6ba0f10ce4293d65f0f436",
+        "date": "2024-01-22 10:11:48 -0300",
+        "subject": "Update config.guess and config.sub to latest versions."
+    },
+    {
+        "commit": "c618fd3b09fab8cde44ad8e5fe0cb984c1bc76d4",
+        "date": "2024-01-22 10:09:38 -0300",
+        "subject": "Begin v2.51 development."
+    },
+    {
         "commit": "1add35624dbf4061bcb19521022b318418b0bba5",
         "date": "2024-01-22 09:54:59 -0300",
         "subject": "v2.50: Performance Improvements and Bug Fixes"
