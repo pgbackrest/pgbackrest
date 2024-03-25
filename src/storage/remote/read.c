@@ -32,7 +32,6 @@ typedef struct StorageReadRemote
     Buffer *block;                                                  // Block currently being read
     bool eof;                                                       // Has the file reached eof?
     bool eofFound;                                                  // Eof found but a block is remaining to be read
-    bool queued;                                                    // Is a block queued to be read?
 
 #ifdef DEBUG
     uint64_t protocolReadBytes;                                     // How many bytes were read from the protocol layer?
@@ -46,30 +45,6 @@ Macros for function logging
     StorageReadRemote *
 #define FUNCTION_LOG_STORAGE_READ_REMOTE_FORMAT(value, buffer, bufferSize)                                                         \
     objNameToLog(value, "StorageReadRemote", buffer, bufferSize)
-
-/***********************************************************************************************************************************
-Clear protocol if the entire file is not read or an error occurs before the read is complete. This is required to clear the
-protocol state so a subsequent command can succeed.
-***********************************************************************************************************************************/
-static void
-storageReadRemoteFreeResource(THIS_VOID)
-{
-    THIS(StorageReadRemote);
-
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_READ_REMOTE, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    if (!this->eofFound)
-    {
-        if (this->queued)
-            pckReadFree(protocolClientSessionResponse(this->session));
-    }
-
-    FUNCTION_LOG_RETURN_VOID();
-}
 
 /***********************************************************************************************************************************
 Read from a file
@@ -142,16 +117,13 @@ storageReadRemote(THIS_VOID, Buffer *buffer, bool block)
             {
                 MEM_CONTEXT_TEMP_BEGIN()
                 {
-                    if (!this->queued)
+                    if (!protocolClientSessionQueued(this->session))
                         protocolClientSessionRequestAsyncP(this->session);
 
                     storageReadRemoteInternal(this, protocolClientSessionResponse(this->session));
 
                     if (!this->eofFound)
-                    {
                         protocolClientSessionRequestAsyncP(this->session);
-                        this->queued = true;
-                    }
                 }
                 MEM_CONTEXT_TEMP_END();
             }
@@ -253,9 +225,6 @@ storageReadRemoteOpen(THIS_VOID)
             if (this->interface.compressible)
                 ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(this->read)), decompressFilterP(compressTypeGz, .raw = true));
 
-            // Set free callback to ensure the protocol is cleared on a short read
-            memContextCallbackSet(objMemContext(this), storageReadRemoteFreeResource, this);
-
             // Read the first block or eof
             storageReadRemoteInternal(this, packRead);
         }
@@ -280,10 +249,7 @@ storageReadRemoteClose(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    // !!! NEED TO CLOSE HERE INSTEAD OF CALLING CANCEL?
-
-    memContextCallbackClear(objMemContext(this));
-    storageReadRemoteFreeResource(this);
+    protocolClientSessionCancel(this->session);
 
     FUNCTION_LOG_RETURN_VOID();
 }

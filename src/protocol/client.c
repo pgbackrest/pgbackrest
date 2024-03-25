@@ -67,6 +67,7 @@ protocolClientCommandPut(ProtocolClientSession *const this, const ProtocolComman
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
+    ASSERT(!protocolClientSessionQueued(this));
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -89,6 +90,8 @@ protocolClientCommandPut(ProtocolClientSession *const this, const ProtocolComman
 
         // Flush to send command immediately
         ioWriteFlush(this->client->write);
+
+        this->pub.queued = true;
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -253,9 +256,14 @@ protocolClientDataGet(ProtocolClientSession *const this)
             this->client->state = protocolClientStateIdle;
         }
 
+        // The result is no longer queued -- either it will generate an error or be returned to the user
+        this->pub.queued = false;
+
+        // Check if this result is an error and if so throw it
         protocolClientError(this->client, type, packRead);
         CHECK(FormatError, type == protocolMessageTypeData, "expected data message");
 
+        // Return result the the caller
         result = objMove(packRead, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
@@ -307,6 +315,15 @@ protocolClientSessionFreeResource(THIS_VOID)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
+
+    // If a result is queued then read it before sending cancel
+    if (protocolClientSessionQueued(this))
+    {
+        if (this->stored)
+            pckReadFree(this->packRead);
+        else
+            pckReadFree(protocolClientDataGet(this));
+    }
 
     // If open then cancel
     if (this->open)
@@ -520,12 +537,29 @@ protocolClientSessionClose(ProtocolClientSession *const this)
     ASSERT(this->open);
 
     protocolClientCommandPut(this, protocolCommandTypeClose, NULL);
+    PackRead *const result = protocolClientDataGet(this);
     this->open = false;
 
     memContextCallbackClear(objMemContext(this));
     protocolClientSessionFreeResource(this);
 
-    FUNCTION_LOG_RETURN(PACK_READ, protocolClientDataGet(this));
+    FUNCTION_LOG_RETURN(PACK_READ, result);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+protocolClientSessionCancel(ProtocolClientSession *const this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT_SESSION, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    memContextCallbackClear(objMemContext(this));
+    protocolClientSessionFreeResource(this);
+
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -591,6 +625,8 @@ protocolClientSessionToLog(const ProtocolClientSession *const this, StringStatic
     protocolClientToLog(this->client, debugLog);
     strStcCat(debugLog, ", command: ");
     strStcResultSizeInc(debugLog, strIdToLog(this->command, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
-    strStcFmt(debugLog, ", sessionId: %" PRIu64, this->sessionId);
+    strStcFmt(
+        debugLog, ", sessionId: %" PRIu64 ", queued %s, stored: %s", this->sessionId,
+        cvtBoolToConstZ(protocolClientSessionQueued(this)), cvtBoolToConstZ(this->stored));
     strStcCatChr(debugLog, '}');
 }

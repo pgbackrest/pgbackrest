@@ -719,14 +719,31 @@ testRun(void)
                 pckWriteU32P(param2, 2);
                 protocolClientSessionRequestAsyncP(session2, param2);
 
-                ProtocolClientSession *session3 = protocolClientSessionNewP(client, TEST_PROTOCOL_COMMAND_SIMPLE, .async = true);
+                ProtocolClientSession *session3 = protocolClientSessionNewP(client, TEST_PROTOCOL_COMMAND_SIMPLE);
                 PackWrite *param3 = protocolPackNew();
                 pckWriteU32P(param3, 3);
                 protocolClientSessionRequestAsyncP(session3, param3);
 
-                TEST_RESULT_STR_Z(pckReadStrP(protocolClientSessionResponse(session2)), "output2", "output 2");
+                ProtocolClientSession *session4 = protocolClientSessionNewP(client, TEST_PROTOCOL_COMMAND_SIMPLE, .async = true);
+                PackWrite *param4 = protocolPackNew();
+                pckWriteU32P(param4, 4);
+                protocolClientSessionRequestAsyncP(session4, param4);
+
+                ProtocolClientSession *session5 = protocolClientSessionNewP(client, TEST_PROTOCOL_COMMAND_SIMPLE, .async = true);
+                PackWrite *param5 = protocolPackNew();
+                pckWriteU32P(param5, 5);
+                protocolClientSessionRequestAsyncP(session5, param5);
+
                 TEST_RESULT_STR_Z(pckReadStrP(protocolClientSessionResponse(session3)), "output3", "output 3");
+                TEST_RESULT_VOID(protocolClientSessionCancel(session2), "cancel 2");
                 TEST_RESULT_STR_Z(pckReadStrP(protocolClientSessionResponse(session1)), "output1", "output 1");
+                TEST_RESULT_VOID(protocolClientSessionCancel(session4), "cancel 4");
+                TEST_RESULT_STR_Z(pckReadStrP(protocolClientSessionResponse(session5)), "output5", "output 5");
+
+                TEST_RESULT_VOID(protocolClientSessionFree(session1), "free 1");
+                TEST_RESULT_VOID(protocolClientSessionFree(session5), "free 5");
+
+                TEST_RESULT_UINT(lstSize(client->sessionList), 0, "session list is empty");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("invalid session");
