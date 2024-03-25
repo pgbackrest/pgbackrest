@@ -274,6 +274,7 @@ executable(
     src_pgbackrest,
     help_auto_c_inc,
     interface_auto_c_inc,
+    install : true,
     dependencies : [
         lib_backtrace,
         lib_bz2,
