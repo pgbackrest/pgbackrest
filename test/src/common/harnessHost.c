@@ -88,6 +88,7 @@ static struct HrnHostLocal
     bool bundle;                                                    // Bundling enabled?
     bool blockIncr;                                                 // Block incremental enabled?
     bool archiveAsync;                                              // Async archiving enabled?
+    bool fullIncr;                                                  // Full/incr enabled?
     bool nonVersionSpecific;                                        // Run non version-specific tests?
 
     List *hostList;                                                 // List of hosts
@@ -626,7 +627,7 @@ hrnHostConfig(HrnHost *const this)
         strCatFmt(config, "log-path=%s\n", strZ(hrnHostLogPath(this)));
         strCatZ(config, "log-level-stderr=off\n");
         strCatZ(config, "log-level-console=warn\n");
-        strCatZ(config, "log-level-file=info\n");
+        strCatZ(config, "log-level-file=detail\n");
         strCatZ(config, "log-subprocess=n\n");
 
         // Compress options
@@ -684,6 +685,9 @@ hrnHostConfig(HrnHost *const this)
                 ASSERT(hrnHostLocal.bundle);
                 strCatZ(config, "repo1-block=y\n");
             }
+
+            if (hrnHostLocal.fullIncr)
+                strCatZ(config, "backup-full-incr=y\n");
 
             switch (hrnHostLocal.storage)
             {
@@ -994,6 +998,13 @@ hrnHostCompressType(void)
 }
 
 bool
+hrnHostFullIncr(void)
+{
+    FUNCTION_HARNESS_VOID();
+    FUNCTION_HARNESS_RETURN(BOOL, hrnHostLocal.fullIncr);
+}
+
+bool
 hrnHostNonVersionSpecific(void)
 {
     FUNCTION_HARNESS_VOID();
@@ -1176,6 +1187,7 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
         hrnHostLocal.tls = testDef->tls;
         hrnHostLocal.bundle = testDef->bnd;
         hrnHostLocal.blockIncr = testDef->bi;
+        hrnHostLocal.fullIncr = testDef->fi;
         hrnHostLocal.nonVersionSpecific = strcmp(testDef->pg, testMatrix[testMatrixSize - 1].pg) == 0;
     }
     MEM_CONTEXT_END();
@@ -1184,9 +1196,9 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
     ASSERT(hrnHostLocal.repoHost == HRN_HOST_PG2 || hrnHostLocal.repoHost == HRN_HOST_REPO);
 
     TEST_RESULT_INFO_LINE_FMT(
-        line, "pg = %s, repo = %s, .tls = %d, stg = %s, enc = %d, cmp = %s, rt = %u, bnd = %d, bi = %d, nv = %d", testDef->pg,
-        testDef->repo, testDef->tls, testDef->stg, testDef->enc, testDef->cmp, testDef->rt, testDef->bnd, testDef->bi,
-        hrnHostLocal.nonVersionSpecific);
+        line, "pg = %s, repo = %s, .tls = %d, stg = %s, enc = %d, cmp = %s, rt = %u, bnd = %d, bi = %d, fi %d, nv = %d",
+        testDef->pg, testDef->repo, testDef->tls, testDef->stg, testDef->enc, testDef->cmp, testDef->rt, testDef->bnd, testDef->bi,
+        testDef->fi, hrnHostLocal.nonVersionSpecific);
 
     // Create pg hosts
     hrnHostBuildRun(line, HRN_HOST_PG1);

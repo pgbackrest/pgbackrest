@@ -55,6 +55,7 @@ Option constants
 #define CFGOPT_ARCHIVE_MODE_CHECK                                   "archive-mode-check"
 #define CFGOPT_ARCHIVE_PUSH_QUEUE_MAX                               "archive-push-queue-max"
 #define CFGOPT_ARCHIVE_TIMEOUT                                      "archive-timeout"
+#define CFGOPT_BACKUP_FULL_INCR                                     "backup-full-incr"
 #define CFGOPT_BACKUP_STANDBY                                       "backup-standby"
 #define CFGOPT_BETA                                                 "beta"
 #define CFGOPT_BUFFER_SIZE                                          "buffer-size"
@@ -136,7 +137,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
 #define CFGOPT_VERBOSE                                              "verbose"
 
-#define CFG_OPTION_TOTAL                                            179
+#define CFG_OPTION_TOTAL                                            180
 
 /***********************************************************************************************************************************
 Option value constants
@@ -395,6 +396,7 @@ typedef enum
     cfgOptArchiveModeCheck,
     cfgOptArchivePushQueueMax,
     cfgOptArchiveTimeout,
+    cfgOptBackupFullIncr,
     cfgOptBackupStandby,
     cfgOptBeta,
     cfgOptBufferSize,
