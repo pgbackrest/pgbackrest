@@ -84,85 +84,73 @@ testCommandRequestSimpleProtocol(PackRead *const param, ProtocolServer *const se
 
 static bool testCommandRequestComplexOpenReturn = false;
 
-static void *
-testCommandRequestComplexOpenProtocol(PackRead *const param, ProtocolServer *const server)
+static ProtocolServerOpenResult
+testCommandRequestComplexOpenProtocol(PackRead *const param)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(PACK_READ, param);
-        FUNCTION_HARNESS_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_HARNESS_END();
 
     ASSERT(param != NULL);
-    ASSERT(server != NULL);
 
-    String *const result = testCommandRequestComplexOpenReturn ? strNewZ("DATA") : NULL;
+    ProtocolServerOpenResult result =
+    {
+        .sessionData = testCommandRequestComplexOpenReturn ? strNewZ("DATA") : NULL,
+        .data = protocolPackNew()
+    };
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         TEST_RESULT_UINT(pckReadU32P(param), 87, "param check");
         TEST_RESULT_STR_Z(pckReadStrP(param), "data", "param check");
 
-        TEST_RESULT_VOID(
-            protocolServerDataPut(server, pckWriteBoolP(protocolPackNew(), testCommandRequestComplexOpenReturn)), "result");
+        pckWriteBoolP(result.data, testCommandRequestComplexOpenReturn);
     }
     MEM_CONTEXT_TEMP_END();
 
     testCommandRequestComplexOpenReturn = true;
 
-    FUNCTION_HARNESS_RETURN(STRING, result);
+    FUNCTION_HARNESS_RETURN_STRUCT(result);
 }
 
 static bool testCommandRequestComplexReturn = false;
 
-static bool
-testCommandRequestComplexProtocol(PackRead *const param, ProtocolServer *const server, void *const data)
+static ProtocolServerProcessSessionResult
+testCommandRequestComplexProtocol(PackRead *const param, void *const data)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(PACK_READ, param);
-        FUNCTION_HARNESS_PARAM(PROTOCOL_SERVER, server);
         FUNCTION_HARNESS_PARAM(STRING, data);
     FUNCTION_HARNESS_END();
 
     ASSERT(param == NULL);
-    ASSERT(server != NULL);
     ASSERT(data != NULL);
     ASSERT(strEqZ(data, "DATA"));
 
-    const bool result = testCommandRequestComplexReturn;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        TEST_RESULT_VOID(
-            protocolServerDataPut(server, pckWriteBoolP(protocolPackNew(), testCommandRequestComplexReturn)), "result");
-    }
-    MEM_CONTEXT_TEMP_END();
+    ProtocolServerProcessSessionResult result = {.data = protocolPackNew(), .close =  !testCommandRequestComplexReturn};
+    pckWriteBoolP(result.data, testCommandRequestComplexReturn);
 
     testCommandRequestComplexReturn = true;
 
-    FUNCTION_HARNESS_RETURN(BOOL, result);
+    FUNCTION_HARNESS_RETURN_STRUCT(result);
 }
 
-static void
-testCommandRequestComplexCloseProtocol(PackRead *const param, ProtocolServer *const server, void *const data)
+static ProtocolServerCloseResult
+testCommandRequestComplexCloseProtocol(PackRead *const param, void *const data)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(PACK_READ, param);
-        FUNCTION_HARNESS_PARAM(PROTOCOL_SERVER, server);
         FUNCTION_HARNESS_PARAM(STRING, data);
     FUNCTION_HARNESS_END();
 
     ASSERT(param == NULL);
-    ASSERT(server != NULL);
     ASSERT(data != NULL);
     ASSERT(strEqZ(data, "DATA"));
 
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        TEST_RESULT_VOID(protocolServerDataPut(server, pckWriteBoolP(protocolPackNew(), true)), "result");
-    }
-    MEM_CONTEXT_TEMP_END();
+    ProtocolServerCloseResult result = {.data = protocolPackNew()};
+    pckWriteBoolP(result.data, true);
 
-    FUNCTION_HARNESS_RETURN_VOID();
+    FUNCTION_HARNESS_RETURN_STRUCT(result);
 }
 
 #define TEST_PROTOCOL_COMMAND_RETRY                                 STRID5("retry", 0x19950b20)

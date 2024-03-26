@@ -263,18 +263,19 @@ protocolServerProcess(
                                     {
                                         ASSERT(handler->open != NULL);
 
-                                        ProtocolServerSession session = {.id = this->sessionId};
-
                                         // Call open handler
-                                        MEM_CONTEXT_OBJ_BEGIN(this->sessionList)
-                                        {
-                                            session.data = handler->open(pckReadNew(command.param), this);
-                                        }
-                                        MEM_CONTEXT_OBJ_END();
+                                        ProtocolServerOpenResult openResult = handler->open(pckReadNew(command.param));
+                                        ProtocolServerSession session = {.id = this->sessionId, .data = openResult.data};
+
+                                        // Send data
+                                        protocolServerDataPut(this, openResult.data);
 
                                         // Create session if open returned session data
-                                        if (session.data != NULL)
+                                        if (openResult.sessionData != NULL)
+                                        {
+                                            session.data = objMove(openResult.sessionData, objMemContext(this->sessionList));
                                             lstAdd(this->sessionList, &session);
+                                        }
 
                                         break;
                                     }
@@ -326,9 +327,14 @@ protocolServerProcess(
                                                         ProtocolError, this->sessionId != 0, "no session id for command %s:%s",
                                                         strZ(strIdToStr(command.id)), strZ(strIdToStr(command.type)));
 
-                                                    // Free session when process returns false. This optimization allows an explicit
-                                                    // close to be skipped.
-                                                    if (!handler->processSession(pckReadNew(command.param), this, sessionData))
+                                                    ProtocolServerProcessSessionResult result = handler->processSession(
+                                                        pckReadNew(command.param), sessionData);
+
+                                                    protocolServerDataPut(this, result.data);
+
+                                                    // Free session when close is true. This optimization allows an explicit close
+                                                    // to be skipped.
+                                                    if (result.close)
                                                     {
                                                         objFree(sessionData);
                                                         lstRemoveIdx(this->sessionList, sessionListIdx);
@@ -350,13 +356,13 @@ protocolServerProcess(
                                             case protocolCommandTypeClose:
                                             {
                                                 // If there is a close handler then call it
+                                                PackWrite *data = NULL;
+
                                                 if (handler->close != NULL)
-                                                {
-                                                    handler->close(pckReadNew(command.param), this, sessionData);
-                                                }
-                                                // Else send default NULL data
-                                                else
-                                                    protocolServerDataPut(this, NULL);
+                                                    data = handler->close(pckReadNew(command.param), sessionData).data;
+
+                                                // Send data
+                                                protocolServerDataPut(this, data);
 
                                                 // Free the session
                                                 objFree(sessionData);

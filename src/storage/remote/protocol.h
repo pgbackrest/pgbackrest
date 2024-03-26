@@ -18,12 +18,12 @@ FN_EXTERN void storageRemoteListProtocol(PackRead *param, ProtocolServer *server
 FN_EXTERN void storageRemotePathCreateProtocol(PackRead *param, ProtocolServer *server);
 FN_EXTERN void storageRemotePathRemoveProtocol(PackRead *param, ProtocolServer *server);
 FN_EXTERN void storageRemotePathSyncProtocol(PackRead *param, ProtocolServer *server);
-FN_EXTERN void *storageRemoteReadOpenProtocol(PackRead *param, ProtocolServer *server);
-FN_EXTERN bool storageRemoteReadProtocol(PackRead *param, ProtocolServer *server, void *sessionData);
+FN_EXTERN ProtocolServerOpenResult storageRemoteReadOpenProtocol(PackRead *param);
+FN_EXTERN ProtocolServerProcessSessionResult storageRemoteReadProtocol(PackRead *param, void *sessionData);
 FN_EXTERN void storageRemoteRemoveProtocol(PackRead *param, ProtocolServer *server);
-FN_EXTERN void *storageRemoteWriteOpenProtocol(PackRead *param, ProtocolServer *server);
-FN_EXTERN bool storageRemoteWriteProtocol(PackRead *param, ProtocolServer *server, void *fileWrite);
-FN_EXTERN void storageRemoteWriteCloseProtocol(PackRead *param, ProtocolServer *server, void *fileWrite);
+FN_EXTERN ProtocolServerOpenResult storageRemoteWriteOpenProtocol(PackRead *param);
+FN_EXTERN ProtocolServerProcessSessionResult storageRemoteWriteProtocol(PackRead *param, void *fileWrite);
+FN_EXTERN ProtocolServerCloseResult storageRemoteWriteCloseProtocol(PackRead *param, void *fileWrite);
 
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()

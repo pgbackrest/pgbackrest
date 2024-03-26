@@ -22,10 +22,30 @@ Protocol command handler type and structure
 An array of this struct must be passed to protocolServerProcess() for the server to process commands. Each command handler should
 implement a single command, as defined by the command string.
 ***********************************************************************************************************************************/
-typedef void *(*ProtocolServerCommandOpenHandler)(PackRead *param, ProtocolServer *server);
+typedef struct ProtocolServerOpenResult
+{
+    PackWrite *data;                                                // Data returned to client
+    void *sessionData;                                              // Session data stored for processing
+} ProtocolServerOpenResult;
+
+typedef ProtocolServerOpenResult (*ProtocolServerCommandOpenHandler)(PackRead *param);
 typedef void (*ProtocolServerCommandProcessHandler)(PackRead *param, ProtocolServer *server);
-typedef bool (*ProtocolServerCommandProcessSessionHandler)(PackRead *param, ProtocolServer *server, void *sessionData);
-typedef void (*ProtocolServerCommandCloseHandler)(PackRead *param, ProtocolServer *server, void *sessionData);
+
+typedef struct ProtocolServerProcessSessionResult
+{
+    PackWrite *data;                                                // Data returned to client
+    bool close;                                                     // Close the session?
+} ProtocolServerProcessSessionResult;
+
+typedef ProtocolServerProcessSessionResult (*ProtocolServerCommandProcessSessionHandler)(PackRead *param, void *sessionData);
+
+
+typedef struct ProtocolServerCloseResult
+{
+    PackWrite *data;                                                // Data returned to client
+} ProtocolServerCloseResult;
+
+typedef ProtocolServerCloseResult (*ProtocolServerCommandCloseHandler)(PackRead *param, void *sessionData);
 
 typedef struct ProtocolServerHandler
 {
