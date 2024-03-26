@@ -273,7 +273,7 @@ executable(
     src_pgbackrest,
     help_auto_c_inc,
     interface_auto_c_inc,
-    dependencies : [
+    dependencies: [
         lib_backtrace,
         lib_bz2,
         lib_openssl,
@@ -283,5 +283,6 @@ executable(
         lib_xml,
         lib_z,
         lib_zstd,
-    ]
+    ],
+    install: true,
 )
