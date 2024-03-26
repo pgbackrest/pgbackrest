@@ -127,7 +127,7 @@ testCommandRequestComplexProtocol(PackRead *const param, void *const data)
     ASSERT(data != NULL);
     ASSERT(strEqZ(data, "DATA"));
 
-    ProtocolServerProcessSessionResult result = {.data = protocolPackNew(), .close =  !testCommandRequestComplexReturn};
+    ProtocolServerProcessSessionResult result = {.data = protocolPackNew(), .close = !testCommandRequestComplexReturn};
     pckWriteBoolP(result.data, testCommandRequestComplexReturn);
 
     testCommandRequestComplexReturn = true;

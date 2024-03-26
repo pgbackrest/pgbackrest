@@ -39,7 +39,6 @@ typedef struct ProtocolServerProcessSessionResult
 
 typedef ProtocolServerProcessSessionResult (*ProtocolServerCommandProcessSessionHandler)(PackRead *param, void *sessionData);
 
-
 typedef struct ProtocolServerCloseResult
 {
     PackWrite *data;                                                // Data returned to client
