@@ -284,5 +284,6 @@ executable(
         lib_xml,
         lib_z,
         lib_zstd,
-    ]
+    ],
+    install: true,
 )

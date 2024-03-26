@@ -125,6 +125,11 @@
     <contributor-id type="github">bradnicholson</contributor-id>
 </contributor>
 
+<contributor id="bradford.boyle">
+    <contributor-name-display>Bradford Boyle</contributor-name-display>
+    <contributor-id type="github">bradfordboyle</contributor-id>
+</contributor>
+
 <contributor id="brent.graveland">
     <contributor-name-display>Brent Graveland</contributor-name-display>
     <contributor-id type="github">graveland</contributor-id>

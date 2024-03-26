@@ -1,2 +1,16 @@
 <release date="XXXX-XX-XX" version="2.52dev" title="UNDER DEVELOPMENT">
+    <release-core-list>
+        <release-improvement-list>
+            <release-item>
+                <github-pull-request id="2312"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="bradford.boyle"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Tag <id>pgbackrest</id> build target in meson as installable.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-core-list>
 </release>
