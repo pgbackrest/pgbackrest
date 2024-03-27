@@ -88,11 +88,13 @@ something far larger needed but <= the minimum read size on just about any syste
 
 /***********************************************************************************************************************************
 Define default wal segment size
-
-Before PostgreSQL 11 WAL segment size could only be changed at compile time and is not known to be well-tested, so only the default
-WAL segment size is supported for versions below 11.
 ***********************************************************************************************************************************/
 #define PG_WAL_SEGMENT_SIZE_DEFAULT                                 ((unsigned int)(16 * 1024 * 1024))
+
+/***********************************************************************************************************************************
+Define max WAL segment size for PostgreSQL before 10
+***********************************************************************************************************************************/
+#define PG_9_MAX_WAL_SEGMENT_SIZE                                   ((int)(64 * 1024 * 1024))
 
 /***********************************************************************************************************************************
 Checkpoint written into pg_control on restore. This will prevent PostgreSQL from starting if backup_label is not present.
@@ -138,6 +140,9 @@ FN_EXTERN bool pgDbIsSystem(const String *name);
 
 // Does this database have a system id, i.e. less than the minimum assignable user id?
 FN_EXTERN bool pgDbIsSystemId(unsigned int id);
+
+// Does this WAL segment is void for given PostgreSQL version
+FN_EXTERN bool pgWalSegmentSizeValid(unsigned int pgVersion, size_t walSegmentSize);
 
 // Get info from pg_control
 FN_EXTERN Buffer *pgControlBufferFromFile(const Storage *storage, const String *pgVersionForce);
