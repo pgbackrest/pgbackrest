@@ -28,6 +28,14 @@ struct ProtocolServer
     uint64_t sessionId;                                             // Current session being processed
 };
 
+struct ProtocolServerResult
+{
+    void *sessionData;                                              // Session data
+    PackWrite *data;                                                // Result data
+    size_t extra;                                                   // Extra bytes for initializing data
+    bool close;                                                     // Close session?
+};
+
 // Track server sessions
 typedef struct ProtocolServerSession
 {
@@ -77,6 +85,78 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
     OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(PROTOCOL_SERVER, this);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN ProtocolServerResult *
+protocolServerResultNew(const ProtocolServerResultNewParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(SIZE, param.extra);
+    FUNCTION_TEST_END();
+
+    OBJ_NEW_BEGIN(ProtocolServerResult, .childQty = MEM_CONTEXT_QTY_MAX)
+    {
+        *this = (ProtocolServerResult)
+        {
+            .extra = param.extra,
+        };
+    }
+    OBJ_NEW_END();
+
+    FUNCTION_TEST_RETURN(PROTOCOL_SERVER_RESULT, this);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN PackWrite *
+protocolServerResultData(ProtocolServerResult *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PROTOCOL_SERVER_RESULT, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->data == NULL);
+
+    MEM_CONTEXT_OBJ_BEGIN(this)
+    {
+        this->data = pckWriteNewP(.size = PROTOCOL_PACK_DEFAULT_SIZE + this->extra);
+    }
+    MEM_CONTEXT_OBJ_END();
+
+    FUNCTION_TEST_RETURN(PACK_WRITE, this->data);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+protocolServerResultSessionDataSet(ProtocolServerResult *const this, void *const sessionData)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PROTOCOL_SERVER_RESULT, this);
+        FUNCTION_TEST_PARAM_P(VOID, sessionData);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(sessionData != NULL);
+
+    this->sessionData = objMove(sessionData, objMemContext(this));
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+protocolServerResultCloseSet(ProtocolServerResult *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PROTOCOL_SERVER_RESULT, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    this->close = true;
+
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -266,17 +346,20 @@ protocolServerProcess(
                                         ASSERT(handler->open != NULL);
 
                                         // Call open handler
-                                        ProtocolServerOpenResult openResult = handler->open(pckReadNew(command.param));
-                                        ProtocolServerSession session = {.id = this->sessionId, .data = openResult.data};
+                                        ProtocolServerResult *const openResult = handler->open(pckReadNew(command.param));
+                                        ASSERT(openResult != NULL);
+                                        ASSERT(!openResult->close);
+
+                                        ProtocolServerSession session = {.id = this->sessionId};
 
                                         // Send data
                                         protocolServerResponse(
-                                            this, protocolMessageTypeData, openResult.sessionData == NULL, openResult.data);
+                                            this, protocolMessageTypeData, openResult->sessionData == NULL, openResult->data);
 
                                         // Create session if open returned session data
-                                        if (openResult.sessionData != NULL)
+                                        if (openResult->sessionData != NULL)
                                         {
-                                            session.data = objMove(openResult.sessionData, objMemContext(this->sessionList));
+                                            session.data = objMove(openResult->sessionData, objMemContext(this->sessionList));
                                             lstAdd(this->sessionList, &session);
                                         }
 
@@ -323,6 +406,8 @@ protocolServerProcess(
                                             case protocolCommandTypeProcess:
                                             {
                                                 // Process session
+                                                ProtocolServerResult *processResult;
+
                                                 if (handler->processSession != NULL)
                                                 {
                                                     ASSERT(handler->process == NULL);
@@ -330,19 +415,7 @@ protocolServerProcess(
                                                         ProtocolError, this->sessionId != 0, "no session id for command %s:%s",
                                                         strZ(strIdToStr(command.id)), strZ(strIdToStr(command.type)));
 
-                                                    ProtocolServerProcessSessionResult result = handler->processSession(
-                                                        pckReadNew(command.param), sessionData);
-
-                                                    protocolServerResponse(
-                                                        this, protocolMessageTypeData, result.close, result.data);
-
-                                                    // Free session when close is true. This optimization allows an explicit close
-                                                    // to be skipped.
-                                                    if (result.close)
-                                                    {
-                                                        objFree(sessionData);
-                                                        lstRemoveIdx(this->sessionList, sessionListIdx);
-                                                    }
+                                                    processResult = handler->processSession(pckReadNew(command.param), sessionData);
                                                 }
                                                 // Standalone process
                                                 else
@@ -350,7 +423,27 @@ protocolServerProcess(
                                                     ASSERT(handler->process != NULL);
                                                     ASSERT(!command.sessionRequired);
 
-                                                    handler->process(pckReadNew(command.param), this);
+                                                    processResult = handler->process(pckReadNew(command.param));
+                                                }
+
+                                                if (processResult == NULL) // {uncovered - !!!}
+                                                    protocolServerResponse(this, protocolMessageTypeData, false, NULL); // {uncovered - !!!}
+                                                else
+                                                {
+                                                    ASSERT(processResult->sessionData == NULL);
+                                                    ASSERT(handler->processSession != NULL || !processResult->close);
+
+                                                    protocolServerResponse(
+                                                        this, protocolMessageTypeData, processResult->close,
+                                                        processResult->data);
+
+                                                    // Free session when close is true. This optimization allows an explicit
+                                                    // close to be skipped.
+                                                    if (processResult->close)
+                                                    {
+                                                        objFree(sessionData);
+                                                        lstRemoveIdx(this->sessionList, sessionListIdx);
+                                                    }
                                                 }
 
                                                 break;
@@ -363,7 +456,15 @@ protocolServerProcess(
                                                 PackWrite *data = NULL;
 
                                                 if (handler->close != NULL)
-                                                    data = handler->close(pckReadNew(command.param), sessionData).data;
+                                                {
+                                                    ProtocolServerResult *const closeResult = handler->close(
+                                                        pckReadNew(command.param), sessionData);
+                                                    ASSERT(closeResult != NULL);
+                                                    ASSERT(closeResult->sessionData == NULL);
+                                                    ASSERT(!closeResult->close);
+
+                                                    data = closeResult->data;
+                                                }
 
                                                 // Send data
                                                 protocolServerResponse(this, protocolMessageTypeData, true, data);
@@ -505,4 +606,13 @@ FN_EXTERN void
 protocolServerToLog(const ProtocolServer *const this, StringStatic *const debugLog)
 {
     strStcFmt(debugLog, "{name: %s}", strZ(this->name));
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+protocolServerResultToLog(const ProtocolServerResult *const this, StringStatic *const debugLog)
+{
+    strStcFmt(
+        debugLog, "{data: %s, sessionData: %s, close: %s}", cvtBoolToConstZ(this->data != NULL),
+        cvtBoolToConstZ(this->sessionData != NULL), cvtBoolToConstZ(this->close));
 }

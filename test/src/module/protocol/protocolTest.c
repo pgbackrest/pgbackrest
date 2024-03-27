@@ -21,62 +21,57 @@ Test protocol server command handlers
 ***********************************************************************************************************************************/
 #define TEST_PROTOCOL_COMMAND_ASSERT                                STRID5("assert", 0x2922ce610)
 
-__attribute__((__noreturn__)) static void
-testCommandAssertProtocol(PackRead *const param, ProtocolServer *const server)
+__attribute__((__noreturn__)) static ProtocolServerResult *
+testCommandAssertProtocol(PackRead *const param)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(PACK_READ, param);
-        FUNCTION_HARNESS_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_HARNESS_END();
 
     ASSERT(param == NULL);
-    ASSERT(server != NULL);
 
     hrnErrorThrowP();
 
-    // No FUNCTION_HARNESS_RETURN_VOID() because the function does not return
+    // No FUNCTION_HARNESS_RETURN() because the function does not return
 }
 
 #define TEST_PROTOCOL_COMMAND_ERROR                                 STRID5("error", 0x127ca450)
 
 static unsigned int testCommandErrorProtocolTotal = 0;
 
-__attribute__((__noreturn__)) static void
-testCommandErrorProtocol(PackRead *const param, ProtocolServer *const server)
+__attribute__((__noreturn__)) static ProtocolServerResult *
+testCommandErrorProtocol(PackRead *const param)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(PACK_READ, param);
-        FUNCTION_HARNESS_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_HARNESS_END();
 
     ASSERT(param == NULL);
-    ASSERT(server != NULL);
 
     testCommandErrorProtocolTotal++;
     hrnErrorThrowP(.errorType = &FormatError, .message = testCommandErrorProtocolTotal <= 2 ? NULL : "ERR_MESSAGE_RETRY");
 
-    // No FUNCTION_HARNESS_RETURN_VOID() because the function does not return
+    // No FUNCTION_HARNESS_RETURN() because the function does not return
 }
 
 #define TEST_PROTOCOL_COMMAND_SIMPLE                                STRID5("c-simple", 0x2b20d4cf630)
 
-static void
-testCommandRequestSimpleProtocol(PackRead *const param, ProtocolServer *const server)
+static ProtocolServerResult *
+testCommandRequestSimpleProtocol(PackRead *const param)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(PACK_READ, param);
-        FUNCTION_HARNESS_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_HARNESS_END();
 
-    ASSERT(server != NULL);
+    ProtocolServerResult *const result = protocolServerResultNewP();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        protocolServerDataPut(server, pckWriteStrP(protocolPackNew(), strNewFmt("output%u", pckReadU32P(param))));
+        pckWriteStrP(protocolServerResultData(result), strNewFmt("output%u", pckReadU32P(param)));
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_HARNESS_RETURN_VOID();
+    FUNCTION_HARNESS_RETURN(PROTOCOL_SERVER_RESULT, result);
 }
 
 #define TEST_PROTOCOL_COMMAND_COMPLEX                               STRID5("c-complex", 0x182b20d78f630)
@@ -84,7 +79,7 @@ testCommandRequestSimpleProtocol(PackRead *const param, ProtocolServer *const se
 
 static bool testCommandRequestComplexOpenReturn = false;
 
-static ProtocolServerOpenResult
+static ProtocolServerResult *
 testCommandRequestComplexOpenProtocol(PackRead *const param)
 {
     FUNCTION_HARNESS_BEGIN();
@@ -93,29 +88,28 @@ testCommandRequestComplexOpenProtocol(PackRead *const param)
 
     ASSERT(param != NULL);
 
-    ProtocolServerOpenResult result =
-    {
-        .sessionData = testCommandRequestComplexOpenReturn ? strNewZ("DATA") : NULL,
-        .data = protocolPackNew()
-    };
+    ProtocolServerResult *const result = protocolServerResultNewP();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         TEST_RESULT_UINT(pckReadU32P(param), 87, "param check");
         TEST_RESULT_STR_Z(pckReadStrP(param), "data", "param check");
 
-        pckWriteBoolP(result.data, testCommandRequestComplexOpenReturn);
+        pckWriteBoolP(protocolServerResultData(result), testCommandRequestComplexOpenReturn);
+
+        if (testCommandRequestComplexOpenReturn)
+            protocolServerResultSessionDataSet(result, strNewZ("DATA"));
     }
     MEM_CONTEXT_TEMP_END();
 
     testCommandRequestComplexOpenReturn = true;
 
-    FUNCTION_HARNESS_RETURN_STRUCT(result);
+    FUNCTION_HARNESS_RETURN(PROTOCOL_SERVER_RESULT, result);
 }
 
 static bool testCommandRequestComplexReturn = false;
 
-static ProtocolServerProcessSessionResult
+static ProtocolServerResult *
 testCommandRequestComplexProtocol(PackRead *const param, void *const data)
 {
     FUNCTION_HARNESS_BEGIN();
@@ -127,15 +121,18 @@ testCommandRequestComplexProtocol(PackRead *const param, void *const data)
     ASSERT(data != NULL);
     ASSERT(strEqZ(data, "DATA"));
 
-    ProtocolServerProcessSessionResult result = {.data = protocolPackNew(), .close = !testCommandRequestComplexReturn};
-    pckWriteBoolP(result.data, testCommandRequestComplexReturn);
+    ProtocolServerResult *const result = protocolServerResultNewP();
+    pckWriteBoolP(protocolServerResultData(result), testCommandRequestComplexReturn);
+
+    if (!testCommandRequestComplexReturn)
+        protocolServerResultCloseSet(result);
 
     testCommandRequestComplexReturn = true;
 
     FUNCTION_HARNESS_RETURN_STRUCT(result);
 }
 
-static ProtocolServerCloseResult
+static ProtocolServerResult *
 testCommandRequestComplexCloseProtocol(PackRead *const param, void *const data)
 {
     FUNCTION_HARNESS_BEGIN();
@@ -147,26 +144,26 @@ testCommandRequestComplexCloseProtocol(PackRead *const param, void *const data)
     ASSERT(data != NULL);
     ASSERT(strEqZ(data, "DATA"));
 
-    ProtocolServerCloseResult result = {.data = protocolPackNew()};
-    pckWriteBoolP(result.data, true);
+    ProtocolServerResult *const result = protocolServerResultNewP();
+    pckWriteBoolP(protocolServerResultData(result), true);
 
-    FUNCTION_HARNESS_RETURN_STRUCT(result);
+    FUNCTION_HARNESS_RETURN(PROTOCOL_SERVER_RESULT, result);
 }
 
 #define TEST_PROTOCOL_COMMAND_RETRY                                 STRID5("retry", 0x19950b20)
 
 static unsigned int testCommandRetryTotal = 1;
 
-static void
-testCommandRetryProtocol(PackRead *const param, ProtocolServer *const server)
+static ProtocolServerResult *
+testCommandRetryProtocol(PackRead *const param)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(PACK_READ, param);
-        FUNCTION_HARNESS_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_HARNESS_END();
 
     ASSERT(param == NULL);
-    ASSERT(server != NULL);
+
+    ProtocolServerResult *const result = protocolServerResultNewP();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -176,11 +173,11 @@ testCommandRetryProtocol(PackRead *const param, ProtocolServer *const server)
             THROW(FormatError, "error-until-0");
         }
 
-        protocolServerDataPut(server, pckWriteBoolP(protocolPackNew(), true));
+        pckWriteBoolP(protocolServerResultData(result), true);
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_HARNESS_RETURN_VOID();
+    FUNCTION_HARNESS_RETURN(PROTOCOL_SERVER_RESULT, result);
 }
 
 #define TEST_PROTOCOL_SERVER_HANDLER_LIST                                                                                          \
@@ -700,29 +697,28 @@ testRun(void)
                 ProtocolClientSession *session1 = protocolClientSessionNewP(client, TEST_PROTOCOL_COMMAND_SIMPLE, .async = true);
                 PackWrite *param1 = protocolPackNew();
                 pckWriteU32P(param1, 1);
-                protocolClientSessionRequestAsyncP(session1, param1);
+                protocolClientSessionRequestAsyncP(session1, .param = param1);
 
                 ProtocolClientSession *session2 = protocolClientSessionNewP(client, TEST_PROTOCOL_COMMAND_SIMPLE, .async = true);
                 PackWrite *param2 = protocolPackNew();
                 pckWriteU32P(param2, 2);
-                protocolClientSessionRequestAsyncP(session2, param2);
+                protocolClientSessionRequestAsyncP(session2, .param = param2);
 
                 ProtocolClientSession *session3 = protocolClientSessionNewP(client, TEST_PROTOCOL_COMMAND_SIMPLE);
                 PackWrite *param3 = protocolPackNew();
                 pckWriteU32P(param3, 3);
-                protocolClientSessionRequestAsyncP(session3, param3);
 
                 ProtocolClientSession *session4 = protocolClientSessionNewP(client, TEST_PROTOCOL_COMMAND_SIMPLE, .async = true);
                 PackWrite *param4 = protocolPackNew();
                 pckWriteU32P(param4, 4);
-                protocolClientSessionRequestAsyncP(session4, param4);
+                protocolClientSessionRequestAsyncP(session4, .param = param4);
 
                 ProtocolClientSession *session5 = protocolClientSessionNewP(client, TEST_PROTOCOL_COMMAND_SIMPLE, .async = true);
                 PackWrite *param5 = protocolPackNew();
                 pckWriteU32P(param5, 5);
-                protocolClientSessionRequestAsyncP(session5, param5);
+                protocolClientSessionRequestAsyncP(session5, .param = param5);
 
-                TEST_RESULT_STR_Z(pckReadStrP(protocolClientSessionResponse(session3)), "output3", "output 3");
+                TEST_RESULT_STR_Z(pckReadStrP(protocolClientSessionRequestP(session3, .param = param3)), "output3", "output 3");
                 TEST_RESULT_VOID(protocolClientSessionCancel(session2), "cancel 2");
                 TEST_RESULT_STR_Z(pckReadStrP(protocolClientSessionResponse(session1)), "output1", "output 1");
                 TEST_RESULT_VOID(protocolClientSessionCancel(session4), "cancel 4");

@@ -50,6 +50,7 @@ struct ProtocolClientSession
     uint64_t sessionId;                                             // Session id
     bool async;                                                     // Async requests allowed?
 
+    // Stored message (read by another session and stored for later retrieval)
     bool stored;                                                    // Is a message currently stored?
     bool close;                                                     // Should the session be closed?
     ProtocolMessageType type;                                       // Type of last message received
@@ -329,10 +330,10 @@ protocolClientSessionFreeResource(THIS_VOID)
     // If a result is queued then read it before sending cancel
     if (protocolClientSessionQueued(this))
     {
-        if (this->stored)
+        if (this->stored) // {uncovered - !!!}
             pckReadFree(this->packRead);
         else
-            pckReadFree(protocolClientDataGet(this));
+            pckReadFree(protocolClientDataGet(this)); // {uncovered - !!!}
     }
 
     // If open then cancel
@@ -502,9 +503,9 @@ protocolClientSessionRequest(ProtocolClientSession *const this, const ProtocolCl
 
     ASSERT(this != NULL);
 
-    protocolClientSessionRequestAsync(this, param);
+    protocolClientCommandPut(this, protocolCommandTypeProcess, param.param);
 
-    FUNCTION_LOG_RETURN(PACK_READ, protocolClientSessionResponse(this));
+    FUNCTION_LOG_RETURN(PACK_READ, protocolClientDataGet(this));
 }
 
 /**********************************************************************************************************************************/
@@ -517,6 +518,7 @@ protocolClientSessionRequestAsync(ProtocolClientSession *const this, const Proto
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
+    ASSERT(this->async);
 
     protocolClientCommandPut(this, protocolCommandTypeProcess, param.param);
 
@@ -532,6 +534,7 @@ protocolClientSessionResponse(ProtocolClientSession *const this)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
+    ASSERT(this->async);
 
     FUNCTION_LOG_RETURN(PACK_READ, protocolClientDataGet(this));
 }

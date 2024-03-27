@@ -13,16 +13,16 @@ Restore Protocol Handler
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
-FN_EXTERN void
-restoreFileProtocol(PackRead *const param, ProtocolServer *const server)
+FN_EXTERN ProtocolServerResult *
+restoreFileProtocol(PackRead *const param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PACK_READ, param);
-        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_LOG_END();
 
     ASSERT(param != NULL);
-    ASSERT(server != NULL);
+
+    ProtocolServerResult *const result = protocolServerResultNewP();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -72,25 +72,23 @@ restoreFileProtocol(PackRead *const param, ProtocolServer *const server)
         }
 
         // Restore files
-        const List *const result = restoreFile(
+        const List *const resultList = restoreFile(
             repoFile, repoIdx, repoFileCompressType, copyTimeBegin, delta, deltaForce, bundleRaw, cipherPass, referenceList,
             fileList);
 
         // Return result
-        PackWrite *const resultPack = protocolPackNew();
+        PackWrite *const data = protocolServerResultData(result);
 
-        for (unsigned int resultIdx = 0; resultIdx < lstSize(result); resultIdx++)
+        for (unsigned int resultIdx = 0; resultIdx < lstSize(resultList); resultIdx++)
         {
-            const RestoreFileResult *const fileResult = lstGet(result, resultIdx);
+            const RestoreFileResult *const fileResult = lstGet(resultList, resultIdx);
 
-            pckWriteStrP(resultPack, fileResult->manifestFile);
-            pckWriteU32P(resultPack, fileResult->result);
-            pckWriteU64P(resultPack, fileResult->blockIncrDeltaSize);
+            pckWriteStrP(data, fileResult->manifestFile);
+            pckWriteU32P(data, fileResult->result);
+            pckWriteU64P(data, fileResult->blockIncrDeltaSize);
         }
-
-        protocolServerDataPut(server, resultPack);
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(PROTOCOL_SERVER_RESULT, result);
 }

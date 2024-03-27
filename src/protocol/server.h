@@ -8,6 +8,7 @@ Protocol Server
 Object type
 ***********************************************************************************************************************************/
 typedef struct ProtocolServer ProtocolServer;
+typedef struct ProtocolServerResult ProtocolServerResult;
 
 #include "common/io/read.h"
 #include "common/io/write.h"
@@ -22,29 +23,10 @@ Protocol command handler type and structure
 An array of this struct must be passed to protocolServerProcess() for the server to process commands. Each command handler should
 implement a single command, as defined by the command string.
 ***********************************************************************************************************************************/
-typedef struct ProtocolServerOpenResult
-{
-    PackWrite *data;                                                // Data returned to client
-    void *sessionData;                                              // Session data stored for processing
-} ProtocolServerOpenResult;
-
-typedef ProtocolServerOpenResult (*ProtocolServerCommandOpenHandler)(PackRead *param);
-typedef void (*ProtocolServerCommandProcessHandler)(PackRead *param, ProtocolServer *server);
-
-typedef struct ProtocolServerProcessSessionResult
-{
-    PackWrite *data;                                                // Data returned to client
-    bool close;                                                     // Close the session?
-} ProtocolServerProcessSessionResult;
-
-typedef ProtocolServerProcessSessionResult (*ProtocolServerCommandProcessSessionHandler)(PackRead *param, void *sessionData);
-
-typedef struct ProtocolServerCloseResult
-{
-    PackWrite *data;                                                // Data returned to client
-} ProtocolServerCloseResult;
-
-typedef ProtocolServerCloseResult (*ProtocolServerCommandCloseHandler)(PackRead *param, void *sessionData);
+typedef ProtocolServerResult *(*ProtocolServerCommandOpenHandler)(PackRead *param);
+typedef ProtocolServerResult *(*ProtocolServerCommandProcessHandler)(PackRead *param);
+typedef ProtocolServerResult *(*ProtocolServerCommandProcessSessionHandler)(PackRead *param, void *sessionData);
+typedef ProtocolServerResult *(*ProtocolServerCommandCloseHandler)(PackRead *param, void *sessionData);
 
 typedef struct ProtocolServerHandler
 {
@@ -59,6 +41,17 @@ typedef struct ProtocolServerHandler
 Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN ProtocolServer *protocolServerNew(const String *name, const String *service, IoRead *read, IoWrite *write);
+
+typedef struct ProtocolServerResultNewParam
+{
+    VAR_PARAM_HEADER;
+    size_t extra;
+} ProtocolServerResultNewParam;
+
+#define protocolServerResultNewP(...)                                                                                              \
+    protocolServerResultNew((ProtocolServerResultNewParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN ProtocolServerResult *protocolServerResultNew(ProtocolServerResultNewParam param);
 
 /***********************************************************************************************************************************
 Functions
@@ -93,6 +86,15 @@ protocolServerMove(ProtocolServer *const this, MemContext *const parentNew)
     return objMove(this, parentNew);
 }
 
+// PackWrite to send data to client
+FN_EXTERN PackWrite *protocolServerResultData(ProtocolServerResult *this);
+
+// Set session data
+FN_EXTERN void protocolServerResultSessionDataSet(ProtocolServerResult *const this, void *const sessionData);
+
+// Close session
+FN_EXTERN void protocolServerResultCloseSet(ProtocolServerResult *const this);
+
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
@@ -111,5 +113,12 @@ FN_EXTERN void protocolServerToLog(const ProtocolServer *this, StringStatic *deb
     ProtocolServer *
 #define FUNCTION_LOG_PROTOCOL_SERVER_FORMAT(value, buffer, bufferSize)                                                             \
     FUNCTION_LOG_OBJECT_FORMAT(value, protocolServerToLog, buffer, bufferSize)
+
+FN_EXTERN void protocolServerResultToLog(const ProtocolServerResult *this, StringStatic *debugLog);
+
+#define FUNCTION_LOG_PROTOCOL_SERVER_RESULT_TYPE                                                                                   \
+    ProtocolServerResult *
+#define FUNCTION_LOG_PROTOCOL_SERVER_RESULT_FORMAT(value, buffer, bufferSize)                                                      \
+    FUNCTION_LOG_OBJECT_FORMAT(value, protocolServerResultToLog, buffer, bufferSize)
 
 #endif

@@ -13,16 +13,16 @@ Verify Protocol Handler
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
-FN_EXTERN void
-verifyFileProtocol(PackRead *const param, ProtocolServer *const server)
+FN_EXTERN ProtocolServerResult *
+verifyFileProtocol(PackRead *const param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PACK_READ, param);
-        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_LOG_END();
 
     ASSERT(param != NULL);
-    ASSERT(server != NULL);
+
+    ProtocolServerResult *const result = protocolServerResultNewP();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -43,12 +43,12 @@ verifyFileProtocol(PackRead *const param, ProtocolServer *const server)
         const uint64_t fileSize = pckReadU64P(param);
         const String *const cipherPass = pckReadStrP(param);
 
-        const VerifyResult result = verifyFile(filePathName, offset, limit, compressType, fileChecksum, fileSize, cipherPass);
-
         // Return result
-        protocolServerDataPut(server, pckWriteU32P(protocolPackNew(), result));
+        pckWriteU32P(
+            protocolServerResultData(result),
+            verifyFile(filePathName, offset, limit, compressType, fileChecksum, fileSize, cipherPass));
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(PROTOCOL_SERVER_RESULT, result);
 }

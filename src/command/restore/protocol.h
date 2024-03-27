@@ -11,7 +11,7 @@ Restore Protocol Handler
 Functions
 ***********************************************************************************************************************************/
 // Process protocol requests
-FN_EXTERN void restoreFileProtocol(PackRead *param, ProtocolServer *server);
+FN_EXTERN ProtocolServerResult *restoreFileProtocol(PackRead *param);
 
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()

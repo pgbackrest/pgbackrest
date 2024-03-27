@@ -14,16 +14,16 @@ Archive Get Protocol Handler
 #include "storage/write.intern.h"
 
 /**********************************************************************************************************************************/
-FN_EXTERN void
-archiveGetFileProtocol(PackRead *const param, ProtocolServer *const server)
+FN_EXTERN ProtocolServerResult *
+archiveGetFileProtocol(PackRead *const param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PACK_READ, param);
-        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_LOG_END();
 
     ASSERT(param != NULL);
-    ASSERT(server != NULL);
+
+    ProtocolServerResult *const result = protocolServerResultNewP();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -50,13 +50,11 @@ archiveGetFileProtocol(PackRead *const param, ProtocolServer *const server)
             strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s." STORAGE_FILE_TEMP_EXT, strZ(request)));
 
         // Return result
-        PackWrite *const resultPack = protocolPackNew();
-        pckWriteU32P(resultPack, fileResult.actualIdx);
-        pckWriteStrLstP(resultPack, fileResult.warnList);
-
-        protocolServerDataPut(server, resultPack);
+        PackWrite *const data = protocolServerResultData(result);
+        pckWriteU32P(data, fileResult.actualIdx);
+        pckWriteStrLstP(data, fileResult.warnList);
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(PROTOCOL_SERVER_RESULT, result);
 }

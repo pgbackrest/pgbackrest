@@ -13,16 +13,16 @@ Configuration Protocol Handler
 #include "config/protocol.h"
 
 /**********************************************************************************************************************************/
-FN_EXTERN void
-configOptionProtocol(PackRead *const param, ProtocolServer *const server)
+FN_EXTERN ProtocolServerResult *
+configOptionProtocol(PackRead *const param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PACK_READ, param);
-        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_LOG_END();
 
     ASSERT(param != NULL);
-    ASSERT(server != NULL);
+
+    ProtocolServerResult *const result = protocolServerResultNewP();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -36,11 +36,11 @@ configOptionProtocol(PackRead *const param, ProtocolServer *const server)
             varLstAdd(optionList, varDup(cfgOptionIdxVar(option.id, cfgOptionKeyToIdx(option.id, option.keyIdx + 1))));
         }
 
-        protocolServerDataPut(server, pckWriteStrP(protocolPackNew(), jsonFromVar(varNewVarLst(optionList))));
+        pckWriteStrP(protocolServerResultData(result), jsonFromVar(varNewVarLst(optionList)));
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(PROTOCOL_SERVER_RESULT, result);
 }
 
 /**********************************************************************************************************************************/
