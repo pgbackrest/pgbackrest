@@ -14,16 +14,18 @@ Object type
 ***********************************************************************************************************************************/
 struct ProtocolCommand
 {
+    ProtocolCommandPub pub;                                         // Publicly accessible variables
     StringId command;
     PackWrite *pack;
 };
 
 /**********************************************************************************************************************************/
 FN_EXTERN ProtocolCommand *
-protocolCommandNew(const StringId command)
+protocolCommandNew(const StringId command, const ProtocolCommandNewParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING_ID, command);
+        FUNCTION_TEST_PARAM(STRING_ID, param.type);
     FUNCTION_TEST_END();
 
     ASSERT(command != 0);
@@ -32,6 +34,11 @@ protocolCommandNew(const StringId command)
     {
         *this = (ProtocolCommand)
         {
+            .pub =
+            {
+                .type = param.type == 0 ? protocolCommandTypeProcess : param.type,
+                .sessionId = param.sessionId,
+            },
             .command = command,
         };
     }
@@ -42,21 +49,27 @@ protocolCommandNew(const StringId command)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-protocolCommandPut(ProtocolCommand *const this, IoWrite *const write)
+protocolCommandPut(ProtocolCommand *const this, const uint64_t sessionId, IoWrite *const write)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PROTOCOL_COMMAND, this);
+        FUNCTION_TEST_PARAM(UINT64, sessionId);
+        FUNCTION_TEST_PARAM(IO_WRITE, write);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
+    ASSERT(sessionId != 0);
     ASSERT(write != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Write the command
-        PackWrite *commandPack = pckWriteNewIo(write);
+        PackWrite *const commandPack = pckWriteNewIo(write);
         pckWriteU32P(commandPack, protocolMessageTypeCommand, .defaultWrite = true);
         pckWriteStrIdP(commandPack, this->command);
+        pckWriteStrIdP(commandPack, protocolCommandType(this));
+        pckWriteU64P(commandPack, sessionId);
+        pckWriteBoolP(commandPack, protocolCommandSessionId(this) != 0);
 
         // Write parameters
         if (this->pack != NULL)
@@ -77,10 +90,11 @@ protocolCommandPut(ProtocolCommand *const this, IoWrite *const write)
 
 /**********************************************************************************************************************************/
 FN_EXTERN PackWrite *
-protocolCommandParam(ProtocolCommand *this)
+protocolCommandParam(ProtocolCommand *const this, const ProtocolCommandParamParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PROTOCOL_COMMAND, this);
+        FUNCTION_TEST_PARAM(SIZE, param.extra);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -89,7 +103,7 @@ protocolCommandParam(ProtocolCommand *this)
     {
         MEM_CONTEXT_OBJ_BEGIN(this)
         {
-            this->pack = protocolPackNew();
+            this->pack = pckWriteNewP(.size = PROTOCOL_PACK_DEFAULT_SIZE + param.extra);
         }
         MEM_CONTEXT_OBJ_END();
     }

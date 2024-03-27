@@ -107,7 +107,6 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
         }
 
         protocolServerDataPut(server, resultPack);
-        protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 

@@ -23,6 +23,6 @@ Protocol commands for ProtocolServerHandler arrays passed to protocolServerProce
 #define PROTOCOL_COMMAND_CONFIG_OPTION                              STRID5("opt-g", 0x7dd20f0)
 
 #define PROTOCOL_SERVER_HANDLER_OPTION_LIST                                                                                        \
-    {.command = PROTOCOL_COMMAND_CONFIG_OPTION, .handler = configOptionProtocol},
+    {.command = PROTOCOL_COMMAND_CONFIG_OPTION, .process = configOptionProtocol},
 
 #endif

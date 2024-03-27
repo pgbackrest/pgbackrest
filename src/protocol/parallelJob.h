@@ -39,6 +39,7 @@ typedef struct ProtocolParallelJobPub
     const Variant *key;                                             // Unique key used to identify the job
     ProtocolCommand *command;                                       // Command to be executed
     unsigned int processId;                                         // Process that executed this job
+    uint64_t sessionId;                                             // Session if for the job
     ProtocolParallelJobState state;                                 // Current state of the job
     int code;                                                       // Non-zero result indicates an error
     String *message;                                                // Message if there was a error
@@ -82,6 +83,15 @@ protocolParallelJobProcessId(const ProtocolParallelJob *const this)
 }
 
 FN_EXTERN void protocolParallelJobProcessIdSet(ProtocolParallelJob *this, unsigned int processId);
+
+// Session Id
+FN_INLINE_ALWAYS uint64_t
+protocolParallelJobSessionId(const ProtocolParallelJob *const this)
+{
+    return THIS_PUB(ProtocolParallelJob)->sessionId;
+}
+
+FN_EXTERN void protocolParallelJobSessionIdSet(ProtocolParallelJob *this, uint64_t sessionId);
 
 // Job result
 FN_INLINE_ALWAYS PackRead *

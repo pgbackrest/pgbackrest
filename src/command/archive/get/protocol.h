@@ -19,6 +19,6 @@ Protocol commands for ProtocolServerHandler arrays passed to protocolServerProce
 #define PROTOCOL_COMMAND_ARCHIVE_GET_FILE                           STRID5("ag-f", 0x36ce10)
 
 #define PROTOCOL_SERVER_HANDLER_ARCHIVE_GET_LIST                                                                                   \
-    {.command = PROTOCOL_COMMAND_ARCHIVE_GET_FILE, .handler = archiveGetFileProtocol},
+    {.command = PROTOCOL_COMMAND_ARCHIVE_GET_FILE, .process = archiveGetFileProtocol},
 
 #endif

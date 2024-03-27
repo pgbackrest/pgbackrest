@@ -86,6 +86,23 @@ protocolParallelJobProcessIdSet(ProtocolParallelJob *this, unsigned int processI
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
+protocolParallelJobSessionIdSet(ProtocolParallelJob *const this, const uint64_t sessionId)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL_JOB, this);
+        FUNCTION_LOG_PARAM(UINT64, sessionId);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(sessionId != 0);
+
+    this->pub.sessionId = sessionId;
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
 protocolParallelJobResultSet(ProtocolParallelJob *const this, PackRead *const result)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

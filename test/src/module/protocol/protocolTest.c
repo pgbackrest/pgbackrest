@@ -74,7 +74,6 @@ testCommandRequestSimpleProtocol(PackRead *const param, ProtocolServer *const se
     MEM_CONTEXT_TEMP_BEGIN()
     {
         protocolServerDataPut(server, pckWriteStrP(protocolPackNew(), STRDEF("output")));
-        protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -82,9 +81,12 @@ testCommandRequestSimpleProtocol(PackRead *const param, ProtocolServer *const se
 }
 
 #define TEST_PROTOCOL_COMMAND_COMPLEX                               STRID5("c-complex", 0x182b20d78f630)
+#define TEST_PROTOCOL_COMMAND_COMPLEX_CLOSE                         STRID5("c-complex-c", 0xf782b20d78f630)
 
-static void
-testCommandRequestComplexProtocol(PackRead *const param, ProtocolServer *const server)
+static bool testCommandRequestComplexOpenReturn = false;
+
+static void *
+testCommandRequestComplexOpenProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(PACK_READ, param);
@@ -94,20 +96,70 @@ testCommandRequestComplexProtocol(PackRead *const param, ProtocolServer *const s
     ASSERT(param != NULL);
     ASSERT(server != NULL);
 
+    String *const result = testCommandRequestComplexOpenReturn ? strNewZ("DATA") : NULL;
+
     MEM_CONTEXT_TEMP_BEGIN()
     {
         TEST_RESULT_UINT(pckReadU32P(param), 87, "param check");
         TEST_RESULT_STR_Z(pckReadStrP(param), "data", "param check");
 
-        TEST_RESULT_VOID(protocolServerDataPut(server, NULL), "sync");
+        TEST_RESULT_VOID(
+            protocolServerDataPut(server, pckWriteBoolP(protocolPackNew(), testCommandRequestComplexOpenReturn)), "result");
+    }
+    MEM_CONTEXT_TEMP_END();
 
-        TEST_RESULT_BOOL(pckReadBoolP(protocolServerDataGet(server)), true, "data get");
-        TEST_RESULT_UINT(pckReadModeP(protocolServerDataGet(server)), 0644, "data get");
-        TEST_RESULT_PTR(protocolServerDataGet(server), NULL, "data end get");
+    testCommandRequestComplexOpenReturn = true;
 
-        TEST_RESULT_VOID(protocolServerDataPut(server, pckWriteBoolP(protocolPackNew(), true)), "data put");
-        TEST_RESULT_VOID(protocolServerDataPut(server, pckWriteI32P(protocolPackNew(), -1)), "data put");
-        TEST_RESULT_VOID(protocolServerDataEndPut(server), "data end put");
+    FUNCTION_HARNESS_RETURN(STRING, result);
+}
+
+static bool testCommandRequestComplexReturn = false;
+
+static bool
+testCommandRequestComplexProtocol(PackRead *const param, ProtocolServer *const server, void *const data)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(PACK_READ, param);
+        FUNCTION_HARNESS_PARAM(PROTOCOL_SERVER, server);
+        FUNCTION_HARNESS_PARAM(STRING, data);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(param == NULL);
+    ASSERT(server != NULL);
+    ASSERT(data != NULL);
+    ASSERT(strEqZ(data, "DATA"));
+
+    const bool result = testCommandRequestComplexReturn;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        TEST_RESULT_VOID(
+            protocolServerDataPut(server, pckWriteBoolP(protocolPackNew(), testCommandRequestComplexReturn)), "result");
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    testCommandRequestComplexReturn = true;
+
+    FUNCTION_HARNESS_RETURN(BOOL, result);
+}
+
+static void
+testCommandRequestComplexCloseProtocol(PackRead *const param, ProtocolServer *const server, void *const data)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(PACK_READ, param);
+        FUNCTION_HARNESS_PARAM(PROTOCOL_SERVER, server);
+        FUNCTION_HARNESS_PARAM(STRING, data);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(param == NULL);
+    ASSERT(server != NULL);
+    ASSERT(data != NULL);
+    ASSERT(strEqZ(data, "DATA"));
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        TEST_RESULT_VOID(protocolServerDataPut(server, pckWriteBoolP(protocolPackNew(), true)), "result");
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -138,7 +190,6 @@ testCommandRetryProtocol(PackRead *const param, ProtocolServer *const server)
         }
 
         protocolServerDataPut(server, pckWriteBoolP(protocolPackNew(), true));
-        protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -146,11 +197,14 @@ testCommandRetryProtocol(PackRead *const param, ProtocolServer *const server)
 }
 
 #define TEST_PROTOCOL_SERVER_HANDLER_LIST                                                                                          \
-    {.command = TEST_PROTOCOL_COMMAND_ASSERT, .handler = testCommandAssertProtocol},                                               \
-    {.command = TEST_PROTOCOL_COMMAND_ERROR, .handler = testCommandErrorProtocol},                                                 \
-    {.command = TEST_PROTOCOL_COMMAND_SIMPLE, .handler = testCommandRequestSimpleProtocol},                                        \
-    {.command = TEST_PROTOCOL_COMMAND_COMPLEX, .handler = testCommandRequestComplexProtocol},                                      \
-    {.command = TEST_PROTOCOL_COMMAND_RETRY, .handler = testCommandRetryProtocol},
+    {.command = TEST_PROTOCOL_COMMAND_ASSERT, .process = testCommandAssertProtocol},                                               \
+    {.command = TEST_PROTOCOL_COMMAND_ERROR, .process = testCommandErrorProtocol},                                                 \
+    {.command = TEST_PROTOCOL_COMMAND_SIMPLE, .process = testCommandRequestSimpleProtocol},                                        \
+    {.command = TEST_PROTOCOL_COMMAND_COMPLEX, .open = testCommandRequestComplexOpenProtocol,                                      \
+        .processSession = testCommandRequestComplexProtocol},                                                                      \
+    {.command = TEST_PROTOCOL_COMMAND_COMPLEX_CLOSE, .open = testCommandRequestComplexOpenProtocol,                                \
+        .processSession = testCommandRequestComplexProtocol, .close = testCommandRequestComplexCloseProtocol},                     \
+    {.command = TEST_PROTOCOL_COMMAND_RETRY, .process = testCommandRetryProtocol},
 
 /***********************************************************************************************************************************
 Test ParallelJobCallback
@@ -615,7 +669,7 @@ testRun(void)
                 TEST_TITLE("invalid command");
 
                 TEST_ERROR(
-                    protocolClientExecute(client, protocolCommandNew(strIdFromZ("BOGUS")), false), ProtocolError,
+                    protocolClientExecute(client, protocolCommandNewP(strIdFromZ("BOGUS"))), ProtocolError,
                     "raised from test client: invalid command 'BOGUS' (0x38eacd271)");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -623,16 +677,16 @@ testRun(void)
 
                 TRY_BEGIN()
                 {
-                    protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_ASSERT), false);
+                    protocolClientExecute(client, protocolCommandNewP(TEST_PROTOCOL_COMMAND_ASSERT));
                     THROW(TestError, "error was expected");
                 }
                 CATCH_FATAL()
                 {
+                    TEST_RESULT_Z(errorMessage(), "raised from test client: ERR_MESSAGE", "check message");
                     TEST_RESULT_PTR(errorType(), &AssertError, "check type");
                     TEST_RESULT_Z(errorFileName(), TEST_PGB_PATH "/src/protocol/client.c", "check file");
                     TEST_RESULT_Z(errorFunctionName(), "protocolClientError", "check function");
                     TEST_RESULT_BOOL(errorFileLine() > 0, true, "check file line > 0");
-                    TEST_RESULT_Z(errorMessage(), "raised from test client: ERR_MESSAGE", "check message");
                     TEST_RESULT_Z(errorStackTrace(), "ERR_STACK_TRACE", "check stack trace");
                 }
                 TRY_END();
@@ -646,35 +700,103 @@ testRun(void)
                 TEST_TITLE("simple command");
 
                 TEST_RESULT_STR_Z(
-                    pckReadStrP(protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_SIMPLE), true)), "output",
+                    pckReadStrP(protocolClientExecute(client, protocolCommandNewP(TEST_PROTOCOL_COMMAND_SIMPLE))), "output",
                     "execute");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("complex command");
+                TEST_TITLE("open returns false");
 
-                // Put the command to the server
-                ProtocolCommand *command = NULL;
-                TEST_ASSIGN(command, protocolCommandNew(TEST_PROTOCOL_COMMAND_COMPLEX), "command");
-                TEST_RESULT_VOID(pckWriteU32P(protocolCommandParam(command), 87), "param");
-                TEST_RESULT_VOID(pckWriteStrP(protocolCommandParam(command), STRDEF("data")), "param");
-                TEST_RESULT_VOID(protocolClientCommandPut(client, command, true), "command put");
+                ProtocolCommand *commandOpen = NULL;
+                TEST_ASSIGN(
+                    commandOpen, protocolCommandNewP(TEST_PROTOCOL_COMMAND_COMPLEX, .type = protocolCommandTypeOpen), "command");
+                TEST_RESULT_VOID(pckWriteU32P(protocolCommandParamP(commandOpen), 87), "param");
+                TEST_RESULT_VOID(pckWriteStrP(protocolCommandParamP(commandOpen), STRDEF("data")), "param");
 
+                TEST_RESULT_BOOL(pckReadBoolP(protocolClientExecute(client, commandOpen)), false, "open execute");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("process returns false (no close needed)");
+
+                uint64_t sessionId;
+                TEST_ASSIGN(sessionId, protocolClientCommandPut(client, commandOpen), "open put");
+                TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client, sessionId)), true, "open succeed");
+
+                TEST_RESULT_UINT(
+                    protocolClientCommandPut(client, protocolCommandNewP(TEST_PROTOCOL_COMMAND_COMPLEX, .sessionId = 999)), 999,
+                    "process put");
                 TEST_ERROR(
-                    protocolClientStateExpect(client, protocolClientStateIdle), ProtocolError,
-                    "client state is 'cmd-data-get' but expected 'idle'");
+                    protocolClientDataGet(client, 999), ProtocolError,
+                    "raised from test client: unable to find session id 999 for command c-complex:prc");
 
-                // Read null data to indicate that the server has started the command and is read to receive data
-                TEST_RESULT_PTR(protocolClientDataGet(client), NULL, "command started and ready for data");
+                ProtocolCommand *commandProcess = NULL;
+                TEST_ASSIGN(commandProcess, protocolCommandNewP(TEST_PROTOCOL_COMMAND_COMPLEX, .sessionId = sessionId), "process");
+                TEST_RESULT_UINT(protocolClientCommandPut(client, commandProcess), sessionId, "process put");
+                TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client, sessionId)), false, "no more to process");
+                TEST_ERROR(
+                    protocolClientDataGet(client, sessionId), ProtocolError, "client state is 'idle' but expected 'data-get'");
 
-                // Write data to the server
-                TEST_RESULT_VOID(protocolClientDataPut(client, pckWriteBoolP(protocolPackNew(), true)), "data put");
-                TEST_RESULT_VOID(protocolClientDataPut(client, pckWriteModeP(protocolPackNew(), 0644)), "data put");
-                TEST_RESULT_VOID(protocolClientDataPut(client, NULL), "data end put");
+                TEST_RESULT_UINT(protocolClientCommandPut(client, commandProcess), sessionId, "process put");
+                TEST_ERROR_FMT(
+                    protocolClientDataGet(client, sessionId), ProtocolError,
+                    "raised from test client: unable to find session id %" PRIu64 " for command c-complex:prc", sessionId);
 
-                // Get data from the server
-                TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client)), true, "data get");
-                TEST_RESULT_INT(pckReadI32P(protocolClientDataGet(client)), -1, "data get");
-                TEST_RESULT_VOID(protocolClientDataEndGet(client), "data end get");
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("process returns true");
+
+                TEST_ASSIGN(sessionId, protocolClientCommandPut(client, commandOpen), "open put");
+                TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client, sessionId)), true, "open succeed");
+
+                TEST_ASSIGN(commandProcess, protocolCommandNewP(TEST_PROTOCOL_COMMAND_COMPLEX, .sessionId = sessionId), "process");
+                TEST_RESULT_UINT(protocolClientCommandPut(client, commandProcess), sessionId, "process put");
+                TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client, sessionId)), true, "more to process");
+                TEST_RESULT_UINT(protocolClientCommandPut(client, commandProcess), sessionId, "process put");
+                TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client, sessionId)), true, "more to process");
+
+                ProtocolCommand *commandClose = NULL;
+                TEST_ASSIGN(
+                    commandClose,
+                    protocolCommandNewP(TEST_PROTOCOL_COMMAND_COMPLEX, .type = protocolCommandTypeClose, .sessionId = sessionId),
+                    "close command");
+                TEST_RESULT_PTR(protocolClientExecute(client, commandClose), NULL, "close execute");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("close handler");
+
+                TEST_ASSIGN(
+                    commandOpen, protocolCommandNewP(TEST_PROTOCOL_COMMAND_COMPLEX_CLOSE, .type = protocolCommandTypeOpen),
+                    "command");
+                TEST_RESULT_VOID(pckWriteU32P(protocolCommandParamP(commandOpen), 87), "param");
+                TEST_RESULT_VOID(pckWriteStrP(protocolCommandParamP(commandOpen), STRDEF("data")), "param");
+
+                TEST_ASSIGN(sessionId, protocolClientCommandPut(client, commandOpen), "open put");
+                TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client, sessionId)), true, "open succeed");
+
+                TEST_ASSIGN(
+                    commandProcess, protocolCommandNewP(TEST_PROTOCOL_COMMAND_COMPLEX_CLOSE, .sessionId = sessionId), "process");
+                TEST_RESULT_UINT(protocolClientCommandPut(client, commandProcess), sessionId, "process put");
+                TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client, sessionId)), true, "more to process");
+
+                TEST_ASSIGN(
+                    commandClose,
+                    protocolCommandNewP(
+                        TEST_PROTOCOL_COMMAND_COMPLEX_CLOSE, .type = protocolCommandTypeClose, .sessionId = sessionId),
+                    "close command");
+                TEST_RESULT_UINT(protocolClientCommandPut(client, commandClose), sessionId, "close put");
+                TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client, sessionId)), true, "close result");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("cancel handler");
+
+                TEST_ASSIGN(sessionId, protocolClientCommandPut(client, commandOpen), "open put");
+                TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client, sessionId)), true, "open succeed");
+
+                TEST_RESULT_UINT(
+                    protocolClientCommandPut(
+                        client,
+                        protocolCommandNewP(
+                            TEST_PROTOCOL_COMMAND_COMPLEX_CLOSE, .type = protocolCommandTypeCancel, .sessionId = sessionId)),
+                    sessionId, "cancel put");
+                TEST_RESULT_PTR(protocolClientDataGet(client, sessionId), NULL, "cancel result");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("free client");
@@ -693,14 +815,14 @@ testRun(void)
                 TEST_TITLE("command with retry");
 
                 TEST_RESULT_BOOL(
-                    pckReadBoolP(protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_RETRY), true)), true,
+                    pckReadBoolP(protocolClientExecute(client, protocolCommandNewP(TEST_PROTOCOL_COMMAND_RETRY))), true,
                     "execute");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("command throws assert with retry messages");
 
                 TEST_ERROR(
-                    protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_ERROR), false), FormatError,
+                    protocolClientExecute(client, protocolCommandNewP(TEST_PROTOCOL_COMMAND_ERROR)), FormatError,
                     "raised from test client: ERR_MESSAGE\n"
                     "[RETRY DETAIL OMITTED]");
 
@@ -906,7 +1028,7 @@ testRun(void)
         {
             TEST_ASSIGN(
                 job,
-                protocolParallelJobNew(VARSTRDEF("test"), protocolCommandNew(strIdFromZ("c"))), "new job");
+                protocolParallelJobNew(VARSTRDEF("test"), protocolCommandNewP(strIdFromZ("c"))), "new job");
             TEST_RESULT_PTR(protocolParallelJobMove(job, memContextPrior()), job, "move job");
             TEST_RESULT_PTR(protocolParallelJobMove(NULL, memContextPrior()), NULL, "move null job");
         }
@@ -944,7 +1066,6 @@ testRun(void)
                 HRN_FORK_CHILD_NOTIFY_GET();
 
                 TEST_RESULT_VOID(protocolServerDataPut(server, pckWriteU32P(protocolPackNew(), 1)), "data end put");
-                TEST_RESULT_VOID(protocolServerDataEndPut(server), "data end put");
 
                 // Wait for exit
                 TEST_RESULT_UINT(protocolServerCommandGet(server).id, PROTOCOL_COMMAND_EXIT, "noop command get");
@@ -967,7 +1088,6 @@ testRun(void)
                 HRN_FORK_CHILD_NOTIFY_GET();
 
                 TEST_RESULT_VOID(protocolServerDataPut(server, pckWriteU32P(protocolPackNew(), 2)), "data end put");
-                TEST_RESULT_VOID(protocolServerDataEndPut(server), "data end put");
 
                 // Command with error
                 TEST_RESULT_UINT(protocolServerCommandGet(server).id, strIdFromZ("c-three"), "c-three command get");
@@ -1018,21 +1138,21 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("add jobs");
 
-                ProtocolCommand *command = protocolCommandNew(strIdFromZ("c-one"));
-                pckWriteStrP(protocolCommandParam(command), STRDEF("param1"));
-                pckWriteStrP(protocolCommandParam(command), STRDEF("param2"));
+                ProtocolCommand *command = protocolCommandNewP(strIdFromZ("c-one"));
+                pckWriteStrP(protocolCommandParamP(command), STRDEF("param1"));
+                pckWriteStrP(protocolCommandParamP(command), STRDEF("param2"));
 
                 ProtocolParallelJob *job = protocolParallelJobNew(varNewStr(STRDEF("job1")), command);
                 TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");
 
-                command = protocolCommandNew(strIdFromZ("c2"));
-                pckWriteStrP(protocolCommandParam(command), STRDEF("param1"));
+                command = protocolCommandNewP(strIdFromZ("c2"));
+                pckWriteStrP(protocolCommandParamP(command), STRDEF("param1"));
 
                 job = protocolParallelJobNew(varNewStr(STRDEF("job2")), command);
                 TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");
 
-                command = protocolCommandNew(strIdFromZ("c-three"));
-                pckWriteStrP(protocolCommandParam(command), STRDEF("param1"));
+                command = protocolCommandNewP(strIdFromZ("c-three"));
+                pckWriteStrP(protocolCommandParamP(command), STRDEF("param1"));
 
                 job = protocolParallelJobNew(varNewStr(STRDEF("job3")), command);
                 TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");

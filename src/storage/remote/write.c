@@ -22,6 +22,7 @@ typedef struct StorageWriteRemote
     StorageRemote *storage;                                         // Storage that created this object
     StorageWrite *write;                                            // Storage write interface
     ProtocolClient *client;                                         // Protocol client to make requests with
+    uint64_t sessionId;                                             // Session id for subsequent commands
 
 #ifdef DEBUG
     uint64_t protocolWriteBytes;                                    // How many bytes were written to the protocol layer?
@@ -50,12 +51,12 @@ storageWriteRemoteFreeResource(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    PackWrite *const write = protocolPackNew();
-    protocolClientDataPut(this->client, pckWriteBoolP(write, false));
-    pckWriteFree(write);
+    ProtocolCommand *const command = protocolCommandNewP(
+        PROTOCOL_COMMAND_STORAGE_WRITE, .type = protocolCommandTypeCancel, .sessionId = this->sessionId);
+    protocolClientCommandPut(this->client, command);
+    protocolCommandFree(command);
 
-    protocolClientDataPut(this->client, NULL);
-    protocolClientDataEndGet(this->client);
+    protocolClientDataGet(this->client, this->sessionId);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -80,8 +81,8 @@ storageWriteRemoteOpen(THIS_VOID)
         if (this->interface.compressible)
             ioFilterGroupInsert(ioWriteFilterGroup(storageWriteIo(this->write)), 0, decompressFilterP(compressTypeGz));
 
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE);
-        PackWrite *const param = protocolCommandParam(command);
+        ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_STORAGE_WRITE, .type = protocolCommandTypeOpen);
+        PackWrite *const param = protocolCommandParamP(command);
 
         pckWriteStrP(param, this->interface.name);
         pckWriteModeP(param, this->interface.modeFile);
@@ -95,8 +96,9 @@ storageWriteRemoteOpen(THIS_VOID)
         pckWriteBoolP(param, this->interface.atomic);
         pckWritePackP(param, ioFilterGroupParamAll(ioWriteFilterGroup(storageWriteIo(this->write))));
 
-        protocolClientCommandPut(this->client, command, true);
-        protocolClientDataGet(this->client);
+        this->sessionId = protocolClientCommandPut(this->client, command);
+
+        protocolClientDataGet(this->client, this->sessionId);
 
         // Clear filters since they will be run on the remote side
         ioFilterGroupClear(ioWriteFilterGroup(storageWriteIo(this->write)));
@@ -109,7 +111,7 @@ storageWriteRemoteOpen(THIS_VOID)
                 compressFilterP(compressTypeGz, (int)this->interface.compressLevel));
         }
 
-        // Set free callback to ensure remote file is freed
+        // Set free callback to ensure remote file is cancelled
         memContextCallbackSet(objMemContext(this), storageWriteRemoteFreeResource, this);
     }
     MEM_CONTEXT_TEMP_END();
@@ -121,7 +123,7 @@ storageWriteRemoteOpen(THIS_VOID)
 Write to the file
 ***********************************************************************************************************************************/
 static void
-storageWriteRemote(THIS_VOID, const Buffer *buffer)
+storageWriteRemote(THIS_VOID, const Buffer *const buffer)
 {
     THIS(StorageWriteRemote);
 
@@ -135,8 +137,12 @@ storageWriteRemote(THIS_VOID, const Buffer *buffer)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        protocolClientDataPut(
-            this->client, pckWriteBinP(pckWriteNewP(.size = ioBufferSize() + PROTOCOL_PACK_DEFAULT_SIZE), buffer));
+        ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_STORAGE_WRITE, .sessionId = this->sessionId);
+        PackWrite *const param = protocolCommandParamP(command, .extra = bufUsed(buffer));
+
+        pckWriteBinP(param, buffer);
+
+        protocolClientExecute(this->client, command);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -166,10 +172,11 @@ storageWriteRemoteClose(THIS_VOID)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            protocolClientDataPut(this->client, NULL);
+            ProtocolCommand *const command = protocolCommandNewP(
+                PROTOCOL_COMMAND_STORAGE_WRITE, .type = protocolCommandTypeClose, .sessionId = this->sessionId);
+
             ioFilterGroupResultAllSet(
-                ioWriteFilterGroup(storageWriteIo(this->write)), pckReadPackP(protocolClientDataGet(this->client)));
-            protocolClientDataEndGet(this->client);
+                ioWriteFilterGroup(storageWriteIo(this->write)), pckReadPackP(protocolClientExecute(this->client, command)));
         }
         MEM_CONTEXT_TEMP_END();
 

@@ -15,6 +15,7 @@ typedef struct ProtocolServer ProtocolServer;
 #include "common/type/pack.h"
 #include "common/type/stringId.h"
 #include "protocol/client.h"
+#include "protocol/command.h"
 
 /***********************************************************************************************************************************
 Protocol command handler type and structure
@@ -22,12 +23,18 @@ Protocol command handler type and structure
 An array of this struct must be passed to protocolServerProcess() for the server to process commands. Each command handler should
 implement a single command, as defined by the command string.
 ***********************************************************************************************************************************/
-typedef void (*ProtocolServerCommandHandler)(PackRead *param, ProtocolServer *server);
+typedef void *(*ProtocolServerCommandOpenHandler)(PackRead *param, ProtocolServer *server);
+typedef void (*ProtocolServerCommandProcessHandler)(PackRead *param, ProtocolServer *server);
+typedef bool (*ProtocolServerCommandProcessSessionHandler)(PackRead *param, ProtocolServer *server, void *sessionData);
+typedef void (*ProtocolServerCommandCloseHandler)(PackRead *param, ProtocolServer *server, void *sessionData);
 
 typedef struct ProtocolServerHandler
 {
     StringId command;                                               // 5-bit StringId that identifies the protocol command
-    ProtocolServerCommandHandler handler;                           // Function that handles the protocol command
+    ProtocolServerCommandOpenHandler open;                          // Function that opens the protocol session
+    ProtocolServerCommandProcessHandler process;                    // Function that processes the protocol command
+    ProtocolServerCommandProcessSessionHandler processSession;      // Function that processes the protocol command for a session
+    ProtocolServerCommandCloseHandler close;                        // Function that closes the protocol session
 } ProtocolServerHandler;
 
 /***********************************************************************************************************************************
@@ -43,19 +50,15 @@ Functions
 typedef struct ProtocolServerCommandGetResult
 {
     StringId id;                                                    // Command identifier
+    ProtocolCommandType type;                                       // Command type
+    bool sessionRequired;                                           // Session with more than one command
     Pack *param;                                                    // Parameter pack
 } ProtocolServerCommandGetResult;
 
 FN_EXTERN ProtocolServerCommandGetResult protocolServerCommandGet(ProtocolServer *this);
 
-// Get data from the client
-FN_EXTERN PackRead *protocolServerDataGet(ProtocolServer *this);
-
 // Put data to the client
 FN_EXTERN void protocolServerDataPut(ProtocolServer *this, PackWrite *data);
-
-// Put data end to the client. This ends command processing and no more data should be sent.
-FN_EXTERN void protocolServerDataEndPut(ProtocolServer *this);
 
 // Return an error
 FN_EXTERN void protocolServerError(ProtocolServer *this, int code, const String *message, const String *stack);

@@ -55,7 +55,6 @@ archiveGetFileProtocol(PackRead *const param, ProtocolServer *const server)
         pckWriteStrLstP(resultPack, fileResult.warnList);
 
         protocolServerDataPut(server, resultPack);
-        protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 

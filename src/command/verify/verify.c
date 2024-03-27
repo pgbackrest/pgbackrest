@@ -750,8 +750,8 @@ verifyArchive(VerifyJobData *const jobData)
                             encodingHex, strSubN(fileName, WAL_SEGMENT_NAME_SIZE + 1, HASH_TYPE_SHA1_SIZE_HEX));
 
                         // Set up the job
-                        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE);
-                        PackWrite *const param = protocolCommandParam(command);
+                        ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_VERIFY_FILE);
+                        PackWrite *const param = protocolCommandParamP(command);
 
                         pckWriteStrP(param, filePathName);
                         pckWriteBoolP(param, false);
@@ -975,8 +975,8 @@ verifyBackup(VerifyJobData *const jobData)
                         if (fileBackupLabel != NULL)
                         {
                             // Set up the job
-                            ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE);
-                            PackWrite *const param = protocolCommandParam(command);
+                            ProtocolCommand *command = protocolCommandNewP(PROTOCOL_COMMAND_VERIFY_FILE);
+                            PackWrite *const param = protocolCommandParamP(command);
                             const String *const filePathName = backupFileRepoPathP(
                                 fileBackupLabel, .manifestName = fileData.name, .bundleId = fileData.bundleId,
                                 .compressType = manifestData(jobData->manifest)->backupOptionCompressType,

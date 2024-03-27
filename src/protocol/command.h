@@ -13,9 +13,53 @@ typedef struct ProtocolCommand ProtocolCommand;
 #include "common/type/pack.h"
 
 /***********************************************************************************************************************************
+Command types
+***********************************************************************************************************************************/
+typedef enum
+{
+    protocolCommandTypeOpen = STRID5("opn", 0x3a0f0),               // Open command for processing
+    protocolCommandTypeProcess = STRID5("prc", 0xe500),             // Process command
+    protocolCommandTypeClose = STRID5("cls", 0x4d830),              // Close command
+    protocolCommandTypeCancel = STRID5("cnc", 0xdc30),              // Cancel command
+} ProtocolCommandType;
+
+/***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN ProtocolCommand *protocolCommandNew(const StringId command);
+typedef struct ProtocolCommandNewParam
+{
+    VAR_PARAM_HEADER;
+    ProtocolCommandType type;                                       // Command type (defaults to protocolCommandTypeProcess)
+    uint64_t sessionId;                                             // Session id
+} ProtocolCommandNewParam;
+
+#define protocolCommandNewP(command, ...)                                                                                          \
+    protocolCommandNew(command, (ProtocolCommandNewParam){__VA_ARGS__})
+
+FN_EXTERN ProtocolCommand *protocolCommandNew(const StringId command, ProtocolCommandNewParam param);
+
+/***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+typedef struct ProtocolCommandPub
+{
+    ProtocolCommandType type;                                       // Command type
+    uint64_t sessionId;                                             // Session id
+} ProtocolCommandPub;
+
+// Command type
+FN_INLINE_ALWAYS uint64_t
+protocolCommandSessionId(const ProtocolCommand *const this)
+{
+    return THIS_PUB(ProtocolCommand)->sessionId;
+}
+
+// Command type
+FN_INLINE_ALWAYS ProtocolCommandType
+protocolCommandType(const ProtocolCommand *const this)
+{
+    return THIS_PUB(ProtocolCommand)->type;
+}
 
 /***********************************************************************************************************************************
 Functions
@@ -28,10 +72,19 @@ protocolCommandMove(ProtocolCommand *const this, MemContext *const parentNew)
 }
 
 // Read the command output
-FN_EXTERN PackWrite *protocolCommandParam(ProtocolCommand *this);
+typedef struct ProtocolCommandParamParam
+{
+    VAR_PARAM_HEADER;
+    size_t extra;                                                   // Extra bytes to allocate for pack
+} ProtocolCommandParamParam;
+
+#define protocolCommandParamP(this, ...)                                                                                           \
+    protocolCommandParam(this, (ProtocolCommandParamParam){__VA_ARGS__})
+
+FN_EXTERN PackWrite *protocolCommandParam(ProtocolCommand *this, ProtocolCommandParamParam param);
 
 // Write protocol command
-FN_EXTERN void protocolCommandPut(ProtocolCommand *this, IoWrite *write);
+FN_EXTERN void protocolCommandPut(ProtocolCommand *this, uint64_t sessionId, IoWrite *write);
 
 /***********************************************************************************************************************************
 Destructor

@@ -2311,7 +2311,7 @@ restoreJobCallback(void *data, unsigned int clientIdx)
         RestoreJobData *jobData = data;
 
         // Determine where to begin scanning the queue (we'll stop when we get back here)
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_RESTORE_FILE);
+        ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_RESTORE_FILE);
         PackWrite *param = NULL;
         int queueIdx = (int)(clientIdx % lstSize(jobData->queueList));
         int queueEnd = queueIdx;
@@ -2336,7 +2336,7 @@ restoreJobCallback(void *data, unsigned int clientIdx)
                 // Add common parameters before first file
                 if (param == NULL)
                 {
-                    param = protocolCommandParam(command);
+                    param = protocolCommandParamP(command);
 
                     if (file.bundleId != 0)
                     {

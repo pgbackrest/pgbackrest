@@ -467,8 +467,8 @@ archivePushAsyncCallback(void *data, unsigned int clientIdx)
             const String *walFile = strLstGet(jobData->walFileList, jobData->walFileIdx);
             jobData->walFileIdx++;
 
-            ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE);
-            PackWrite *const param = protocolCommandParam(command);
+            ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE);
+            PackWrite *const param = protocolCommandParamP(command);
 
             pckWriteStrP(param, strNewFmt("%s/%s", strZ(jobData->walPath), strZ(walFile)));
             pckWriteBoolP(param, cfgOptionBool(cfgOptArchiveHeaderCheck));
