@@ -48,10 +48,10 @@ struct ProtocolClientSession
     ProtocolClient *client;                                         // Protocol client
     StringId command;                                               // Command
     uint64_t sessionId;                                             // Session id
-    bool open;                                                      // Was open called?
     bool async;                                                     // Async requests allowed?
 
     bool stored;                                                    // Is a message currently stored?
+    bool close;                                                     // Should the session be closed?
     ProtocolMessageType type;                                       // Type of last message received
     PackRead *packRead;                                             // Last message received (if any)
 };
@@ -77,7 +77,7 @@ protocolClientCommandPut(ProtocolClientSession *const this, const ProtocolComman
         pckWriteStrIdP(commandPack, this->command);
         pckWriteStrIdP(commandPack, type);
         pckWriteU64P(commandPack, this->sessionId);
-        pckWriteBoolP(commandPack, this->open);
+        pckWriteBoolP(commandPack, this->pub.open);
 
         // Write parameters
         if (param != NULL)
@@ -196,12 +196,14 @@ protocolClientDataGet(ProtocolClientSession *const this)
         // Check the session for a stored response
         bool found = false;
         ProtocolMessageType type = protocolMessageTypeData;
+        bool close = false;
         PackRead *packRead = NULL;
 
         if (this->stored)
         {
             found = true;
             type = this->type;
+            close = this->close;
             packRead = pckReadMove(this->packRead, memContextCurrent());
 
             this->stored = false;
@@ -216,6 +218,7 @@ protocolClientDataGet(ProtocolClientSession *const this)
             PackRead *const responsePack = pckReadNewIo(this->client->pub.read);
             const uint64_t sessionId = pckReadU64P(responsePack);
             type = (ProtocolMessageType)pckReadU32P(responsePack);
+            close = pckReadBoolP(responsePack);
 
             if (type == protocolMessageTypeError)
             {
@@ -231,6 +234,8 @@ protocolClientDataGet(ProtocolClientSession *const this)
             else
             {
                 ASSERT(type == protocolMessageTypeData);
+                ASSERT(sessionId != 0);
+
                 packRead = pckReadPackReadP(responsePack);
             }
 
@@ -247,6 +252,7 @@ protocolClientDataGet(ProtocolClientSession *const this)
 
                 sessionOther->stored = true;
                 sessionOther->type = type;
+                sessionOther->close = close;
                 sessionOther->packRead = objMove(packRead, objMemContext(sessionOther));
             }
             else
@@ -258,6 +264,10 @@ protocolClientDataGet(ProtocolClientSession *const this)
 
         // The result is no longer queued -- either it will generate an error or be returned to the user
         this->pub.queued = false;
+
+        // Close the session if requested
+        if (close)
+            this->pub.open = false;
 
         // Check if this result is an error and if so throw it
         protocolClientError(this->client, type, packRead);
@@ -326,10 +336,11 @@ protocolClientSessionFreeResource(THIS_VOID)
     }
 
     // If open then cancel
-    if (this->open)
+    if (this->pub.open)
     {
         protocolClientCommandPut(this, protocolCommandTypeCancel, NULL);
         protocolClientDataGet(this);
+        ASSERT(!this->pub.open);
     }
 
     // Remove from session list
@@ -465,10 +476,10 @@ protocolClientSessionOpen(ProtocolClientSession *const this, const ProtocolClien
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(!this->open);
+    ASSERT(!this->pub.open);
 
     protocolClientCommandPut(this, protocolCommandTypeOpen, param.param);
-    this->open = true;
+    this->pub.open = true;
 
     // Set a callback to cleanup the session if it was not already done for async
     if (!this->async)
@@ -534,11 +545,11 @@ protocolClientSessionClose(ProtocolClientSession *const this)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->open);
+    ASSERT(this->pub.open);
 
     protocolClientCommandPut(this, protocolCommandTypeClose, NULL);
     PackRead *const result = protocolClientDataGet(this);
-    this->open = false;
+    ASSERT(!this->pub.open);
 
     memContextCallbackClear(objMemContext(this));
     protocolClientSessionFreeResource(this);

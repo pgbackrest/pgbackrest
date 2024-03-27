@@ -74,7 +74,7 @@ storageReadRemoteInternal(StorageReadRemote *const this, PackRead *const packRea
     }
 
     // If eof then get results
-    if (pckReadBoolP(packRead))
+    if (protocolClientSessionClosed(this->session))
     {
         ioFilterGroupResultAllSet(ioReadFilterGroup(storageReadIo(this->read)), pckReadPackP(packRead));
 

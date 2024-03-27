@@ -92,6 +92,7 @@ typedef struct ProtocolClientPub
 
 typedef struct ProtocolClientSessionPub
 {
+    bool open;                                                      // Is the session open?
     bool queued;                                                    // Is a response currently queued?
 } ProtocolClientSessionPub;
 
@@ -107,6 +108,13 @@ FN_INLINE_ALWAYS bool
 protocolClientSessionQueued(const ProtocolClientSession *const this)
 {
     return THIS_PUB(ProtocolClientSession)->queued;
+}
+
+// Is the session closed?
+FN_INLINE_ALWAYS bool
+protocolClientSessionClosed(const ProtocolClientSession *const this)
+{
+    return !THIS_PUB(ProtocolClientSession)->open;
 }
 
 /***********************************************************************************************************************************

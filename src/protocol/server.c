@@ -81,7 +81,7 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
 
 /**********************************************************************************************************************************/
 static void
-protocolServerPut(ProtocolServer *const this, const ProtocolMessageType type, PackWrite *const data)
+protocolServerResponse(ProtocolServer *const this, const ProtocolMessageType type, const bool close, PackWrite *const data)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PROTOCOL_SERVER, this);
@@ -102,6 +102,7 @@ protocolServerPut(ProtocolServer *const this, const ProtocolMessageType type, Pa
 
         pckWriteU64P(resultMessage, this->sessionId);
         pckWriteU32P(resultMessage, type, .defaultWrite = true);
+        pckWriteBoolP(resultMessage, close);
         pckWritePackP(resultMessage, pckWriteResult(data));
         pckWriteEndP(resultMessage);
         ioWriteFlush(this->write);
@@ -142,6 +143,7 @@ protocolServerError(ProtocolServer *this, int code, const String *message, const
         PackWrite *error = pckWriteNewIo(this->write);
         pckWriteU64P(error, this->sessionId);
         pckWriteU32P(error, protocolMessageTypeError);
+        pckWriteBoolP(error, false);
         pckWriteI32P(error, code);
         pckWriteStrP(error, message);
         pckWriteStrP(error, stack);
@@ -268,7 +270,8 @@ protocolServerProcess(
                                         ProtocolServerSession session = {.id = this->sessionId, .data = openResult.data};
 
                                         // Send data
-                                        protocolServerDataPut(this, openResult.data);
+                                        protocolServerResponse(
+                                            this, protocolMessageTypeData, openResult.sessionData == NULL, openResult.data);
 
                                         // Create session if open returned session data
                                         if (openResult.sessionData != NULL)
@@ -330,7 +333,8 @@ protocolServerProcess(
                                                     ProtocolServerProcessSessionResult result = handler->processSession(
                                                         pckReadNew(command.param), sessionData);
 
-                                                    protocolServerDataPut(this, result.data);
+                                                    protocolServerResponse(
+                                                        this, protocolMessageTypeData, result.close, result.data);
 
                                                     // Free session when close is true. This optimization allows an explicit close
                                                     // to be skipped.
@@ -362,7 +366,7 @@ protocolServerProcess(
                                                     data = handler->close(pckReadNew(command.param), sessionData).data;
 
                                                 // Send data
-                                                protocolServerDataPut(this, data);
+                                                protocolServerResponse(this, protocolMessageTypeData, true, data);
 
                                                 // Free the session
                                                 objFree(sessionData);
@@ -379,7 +383,7 @@ protocolServerProcess(
                                                     "unknown command type '%s'", strZ(strIdToStr(command.type)));
 
                                                 // Send NULL data
-                                                protocolServerDataPut(this, NULL);
+                                                protocolServerResponse(this, protocolMessageTypeData, true, NULL);
 
                                                 // Free the session
                                                 if (sessionData != NULL)
@@ -449,7 +453,7 @@ protocolServerProcess(
                             break;
 
                         case PROTOCOL_COMMAND_NOOP:
-                            protocolServerDataPut(this, NULL);
+                            protocolServerResponse(this, protocolMessageTypeData, false, NULL);
                             break;
 
                         default:
@@ -491,7 +495,7 @@ protocolServerDataPut(ProtocolServer *const this, PackWrite *const data)
 
     ASSERT(this != NULL);
 
-    protocolServerPut(this, protocolMessageTypeData, data);
+    protocolServerResponse(this, protocolMessageTypeData, false, data);
 
     FUNCTION_LOG_RETURN_VOID();
 }

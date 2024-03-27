@@ -773,12 +773,14 @@ testRun(void)
                 TEST_TITLE("error if state not idle");
 
                 client->state = protocolClientStateDataGet;
+                session->pub.open = true;
 
                 TEST_ERROR(
                     protocolClientSessionRequestP(session), ProtocolError,
                     "client state is 'data-get' but expected 'idle'");
 
                 client->state = protocolClientStateIdle;
+                session->pub.open = false;
 
                 TEST_ERROR_FMT(
                     protocolClientDataGet(session), ProtocolError,
@@ -808,7 +810,7 @@ testRun(void)
                 TEST_RESULT_BOOL(pckReadBoolP(protocolClientSessionRequestP(session)), true, "more to process");
                 TEST_RESULT_BOOL(pckReadBoolP(protocolClientSessionClose(session)), true, "close request");
 
-                session->open = true;
+                session->pub.open = true;
                 TEST_RESULT_VOID(protocolClientCommandPut(session, protocolCommandTypeClose, NULL), "close after close");
                 TEST_ERROR_FMT(
                     protocolClientDataGet(session), ProtocolError,
@@ -817,7 +819,7 @@ testRun(void)
 
                 TEST_RESULT_VOID(protocolClientCommandPut(session, protocolCommandTypeCancel, NULL), "cancel after close");
                 TEST_RESULT_VOID(protocolClientDataGet(session), "cancel request succeeds");
-                session->open = false;
+                session->pub.open = false;
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("cancel handler");

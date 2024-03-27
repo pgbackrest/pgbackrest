@@ -396,8 +396,6 @@ storageRemoteReadInternal(StorageRead *const fileRead, PackWrite *const packWrit
     // On eof
     bool result = true;
 
-    pckWriteBoolP(packWrite, ioReadEof(storageReadIo(fileRead)));
-
     if (ioReadEof(storageReadIo(fileRead)))
     {
         // Close file (needed to get filter results)
