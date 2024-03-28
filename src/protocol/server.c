@@ -166,24 +166,24 @@ protocolServerRequest(ProtocolServer *const this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        PackRead *const command = pckReadNewIo(this->read);
-        ProtocolMessageType type = (ProtocolMessageType)pckReadU32P(command);
+        PackRead *const request = pckReadNewIo(this->read);
+        ProtocolMessageType type = (ProtocolMessageType)pckReadU32P(request);
 
-        CHECK(FormatError, type == protocolMessageTypeCommand, "expected command message");
+        CHECK(FormatError, type == protocolMessageTypeCommand, "expected request message");
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
-            result.id = pckReadStrIdP(command);
-            result.type = (ProtocolCommandType)pckReadStrIdP(command);
-            this->sessionId = pckReadU64P(command);
-            result.sessionRequired = pckReadBoolP(command);
-            result.param = pckReadPackP(command);
+            result.id = pckReadStrIdP(request);
+            result.type = (ProtocolCommandType)pckReadStrIdP(request);
+            this->sessionId = pckReadU64P(request);
+            result.sessionRequired = pckReadBoolP(request);
+            result.param = pckReadPackP(request);
 
             ASSERT(this->sessionId != 0);
         }
         MEM_CONTEXT_PRIOR_END();
 
-        pckReadEndP(command);
+        pckReadEndP(request);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -207,7 +207,7 @@ protocolServerProcess(
     ASSERT(handlerList != NULL);
     ASSERT(handlerListSize > 0);
 
-    // Loop until exit command is received
+    // Loop until exit request is received
     bool exit = false;
 
     do
@@ -216,15 +216,15 @@ protocolServerProcess(
         {
             MEM_CONTEXT_TEMP_BEGIN()
             {
-                // Get command
-                ProtocolServerRequestResult command = protocolServerRequest(this);
+                // Get request
+                ProtocolServerRequestResult request = protocolServerRequest(this);
 
                 // Find the handler
                 const ProtocolServerHandler *handler = NULL;
 
                 for (unsigned int handlerIdx = 0; handlerIdx < handlerListSize; handlerIdx++)
                 {
-                    if (command.id == handlerList[handlerIdx].command)
+                    if (request.id == handlerList[handlerIdx].command)
                     {
                         handler = &handlerList[handlerIdx];
                         break;
@@ -234,14 +234,14 @@ protocolServerProcess(
                 // If handler was found then process
                 if (handler != NULL)
                 {
-                    // Send the command to the handler
+                    // Send the request to the handler
                     MEM_CONTEXT_TEMP_BEGIN()
                     {
                         // Variables to store first error message and retry messages
                         ErrorRetry *const errRetry = errRetryNew();
                         const String *errStackTrace = NULL;
 
-                        // Initialize retries in case of command failure
+                        // Initialize retries in case of request failure
                         bool retry = false;
                         unsigned int retryRemaining = retryInterval != NULL ? varLstSize(retryInterval) : 0;
                         TimeMSec retrySleepMs = 0;
@@ -253,8 +253,8 @@ protocolServerProcess(
 
                             TRY_BEGIN()
                             {
-                                // Process command type
-                                switch (command.type)
+                                // Process request type
+                                switch (request.type)
                                 {
                                     // Open a protocol session
                                     case protocolCommandTypeOpen:
@@ -262,7 +262,7 @@ protocolServerProcess(
                                         ASSERT(handler->open != NULL);
 
                                         // Call open handler
-                                        ProtocolServerResult *const openResult = handler->open(pckReadNew(command.param));
+                                        ProtocolServerResult *const openResult = handler->open(pckReadNew(request.param));
                                         ASSERT(openResult != NULL);
                                         ASSERT(!openResult->close);
 
@@ -289,7 +289,7 @@ protocolServerProcess(
                                         void *sessionData = NULL;
                                         unsigned int sessionListIdx = 0;
 
-                                        if (command.sessionRequired)
+                                        if (request.sessionRequired)
                                         {
                                             ASSERT(handler->processSession != NULL);
                                             ASSERT(handler->process == NULL);
@@ -306,19 +306,19 @@ protocolServerProcess(
                                             }
 
                                             // Error when session not found
-                                            if (sessionData == NULL && command.type != protocolCommandTypeCancel)
+                                            if (sessionData == NULL && request.type != protocolCommandTypeCancel)
                                             {
                                                 THROW_FMT(
-                                                    ProtocolError, "unable to find session id %" PRIu64 " for command %s:%s",
-                                                    this->sessionId, strZ(strIdToStr(command.id)),
-                                                    strZ(strIdToStr(command.type)));
+                                                    ProtocolError, "unable to find session id %" PRIu64 " for request %s:%s",
+                                                    this->sessionId, strZ(strIdToStr(request.id)),
+                                                    strZ(strIdToStr(request.type)));
                                             }
                                         }
 
-                                        // Process command type
-                                        switch (command.type)
+                                        // Process request type
+                                        switch (request.type)
                                         {
-                                            // Process command
+                                            // Process request
                                             case protocolCommandTypeProcess:
                                             {
                                                 // Process session
@@ -328,18 +328,18 @@ protocolServerProcess(
                                                 {
                                                     ASSERT(handler->process == NULL);
                                                     CHECK_FMT(
-                                                        ProtocolError, this->sessionId != 0, "no session id for command %s:%s",
-                                                        strZ(strIdToStr(command.id)), strZ(strIdToStr(command.type)));
+                                                        ProtocolError, this->sessionId != 0, "no session id for request %s:%s",
+                                                        strZ(strIdToStr(request.id)), strZ(strIdToStr(request.type)));
 
-                                                    processResult = handler->processSession(pckReadNew(command.param), sessionData);
+                                                    processResult = handler->processSession(pckReadNew(request.param), sessionData);
                                                 }
                                                 // Standalone process
                                                 else
                                                 {
                                                     ASSERT(handler->process != NULL);
-                                                    ASSERT(!command.sessionRequired);
+                                                    ASSERT(!request.sessionRequired);
 
-                                                    processResult = handler->process(pckReadNew(command.param));
+                                                    processResult = handler->process(pckReadNew(request.param));
                                                 }
 
                                                 if (processResult == NULL)
@@ -373,7 +373,7 @@ protocolServerProcess(
                                                 if (handler->close != NULL)
                                                 {
                                                     ProtocolServerResult *const closeResult = handler->close(
-                                                        pckReadNew(command.param), sessionData);
+                                                        pckReadNew(request.param), sessionData);
                                                     ASSERT(closeResult != NULL);
                                                     ASSERT(closeResult->sessionData == NULL);
                                                     ASSERT(!closeResult->close);
@@ -395,8 +395,8 @@ protocolServerProcess(
                                             default:
                                             {
                                                 CHECK_FMT(
-                                                    ProtocolError, command.type == protocolCommandTypeCancel,
-                                                    "unknown command type '%s'", strZ(strIdToStr(command.type)));
+                                                    ProtocolError, request.type == protocolCommandTypeCancel,
+                                                    "unknown request type '%s'", strZ(strIdToStr(request.type)));
 
                                                 // Send NULL data
                                                 protocolServerResponseP(this, .close = true);
@@ -442,7 +442,7 @@ protocolServerProcess(
                                     retryRemaining--;
                                     retry = true;
 
-                                    // Send keep-alive to remotes. A retry means the command is taking longer than usual so make
+                                    // Send keep-alive to remotes. A retry means the request is taking longer than usual so make
                                     // sure the remote does not timeout.
                                     protocolKeepAlive();
                                 }
@@ -459,10 +459,10 @@ protocolServerProcess(
                     }
                     MEM_CONTEXT_TEMP_END();
                 }
-                // Else check built-in commands
+                // Else check built-in requests
                 else
                 {
-                    switch (command.id)
+                    switch (request.id)
                     {
                         case PROTOCOL_COMMAND_EXIT:
                             exit = true;
@@ -474,7 +474,7 @@ protocolServerProcess(
 
                         default:
                             THROW_FMT(
-                                ProtocolError, "invalid command '%s' (0x%" PRIx64 ")", strZ(strIdToStr(command.id)), command.id);
+                                ProtocolError, "invalid request '%s' (0x%" PRIx64 ")", strZ(strIdToStr(request.id)), request.id);
                     }
                 }
 

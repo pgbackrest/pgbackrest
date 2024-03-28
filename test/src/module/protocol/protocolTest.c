@@ -567,7 +567,7 @@ testRun(void)
 
                 TEST_ERROR(
                     protocolServerProcess(server, NULL, commandHandler, LENGTH_OF(commandHandler)), ProtocolError,
-                    "invalid command 'BOGUS' (0x38eacd271)");
+                    "invalid request 'BOGUS' (0x38eacd271)");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("server restart and assert");
@@ -656,7 +656,7 @@ testRun(void)
 
                 TEST_ERROR(
                     protocolClientRequestP(client, strIdFromZ("BOGUS")), ProtocolError,
-                    "raised from test client: invalid command 'BOGUS' (0x38eacd271)");
+                    "raised from test client: invalid request 'BOGUS' (0x38eacd271)");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("command throws assert");
@@ -759,7 +759,7 @@ testRun(void)
 
                 TEST_ERROR(
                     protocolClientSessionRequestP(session), ProtocolError,
-                    "raised from test client: unable to find session id 9999 for command c-complex:prc");
+                    "raised from test client: unable to find session id 9999 for request c-complex:prc");
 
                 session->sessionId = sessionIdOld;
 
@@ -805,7 +805,7 @@ testRun(void)
                 TEST_RESULT_VOID(protocolClientRequestInternal(session, protocolCommandTypeClose, NULL), "close after close");
                 TEST_ERROR_FMT(
                     protocolClientResponseInternal(session), ProtocolError,
-                    "raised from test client: unable to find session id %" PRIu64 " for command c-complex-c:cls",
+                    "raised from test client: unable to find session id %" PRIu64 " for request c-complex-c:cls",
                     session->sessionId);
 
                 TEST_RESULT_VOID(protocolClientRequestInternal(session, protocolCommandTypeCancel, NULL), "cancel after close");
