@@ -231,26 +231,7 @@ protocolClientResponseInternal(ProtocolClientSession *const this)
             const uint64_t sessionId = pckReadU64P(response);
             type = (ProtocolMessageType)pckReadU32P(response);
             close = pckReadBoolP(response);
-
-            // if (type == protocolMessageTypeError)
-            // {
-            //     PackWrite *const packWrite = protocolPackNew();
-
-            //     pckWriteI32P(packWrite, pckReadI32P(response));
-            //     pckWriteStrP(packWrite, pckReadStrP(response));
-            //     pckWriteStrP(packWrite, pckReadStrP(response));
-            //     pckWriteEnd(packWrite);
-
-            //     packRead = pckReadNew(pckWriteResult(packWrite));
-            // }
-            // else
-            // {
-            //     ASSERT(type == protocolMessageTypeData);
-            //     ASSERT(sessionId != 0);
-
-                packRead = pckReadPackReadP(response);
-            // }
-
+            packRead = pckReadPackReadP(response);
             pckReadEndP(response);
 
             // If this response is for another session then store it with that session
