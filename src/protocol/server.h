@@ -38,40 +38,40 @@ typedef struct ProtocolServerHandler
 } ProtocolServerHandler;
 
 /***********************************************************************************************************************************
-Constructors
+Server Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN ProtocolServer *protocolServerNew(const String *name, const String *service, IoRead *read, IoWrite *write);
 
-typedef struct ProtocolServerResultNewParam
-{
-    VAR_PARAM_HEADER;
-    size_t extra;
-} ProtocolServerResultNewParam;
-
-#define protocolServerResultNewP(...)                                                                                              \
-    protocolServerResultNew((ProtocolServerResultNewParam){VAR_PARAM_INIT, __VA_ARGS__})
-
-FN_EXTERN ProtocolServerResult *protocolServerResultNew(ProtocolServerResultNewParam param);
-
 /***********************************************************************************************************************************
-Functions
+Server Functions
 ***********************************************************************************************************************************/
 // Get command from the client. Outside ProtocolServer, this is used when the first noop command needs to be processed before
 // running protocolServerProcess(), which allows an error to be returned to the client if initialization fails.
-typedef struct ProtocolServerCommandGetResult
+typedef struct ProtocolServerRequestResult
 {
     StringId id;                                                    // Command identifier
     ProtocolCommandType type;                                       // Command type
     bool sessionRequired;                                           // Session with more than one command
     Pack *param;                                                    // Parameter pack
-} ProtocolServerCommandGetResult;
+} ProtocolServerRequestResult;
 
-FN_EXTERN ProtocolServerCommandGetResult protocolServerCommandGet(ProtocolServer *this);
+FN_EXTERN ProtocolServerRequestResult protocolServerRequest(ProtocolServer *this);
 
-// Put data to the client
-FN_EXTERN void protocolServerDataPut(ProtocolServer *this, PackWrite *data);
+// Send response to client
+typedef struct ProtocolServerResponseParam
+{
+    VAR_PARAM_HEADER;
+    bool close;                                                     // Has the session been closed?
+    ProtocolMessageType type;                                       // Message type
+    PackWrite *data;                                                // Response data
+} ProtocolServerResponseParam;
 
-// Return an error
+#define protocolServerResponseP(this, ...)                                                                                         \
+    protocolServerResponse(this, (ProtocolServerResponseParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN void protocolServerResponse(ProtocolServer *const this, ProtocolServerResponseParam param);
+
+// Send an error to client
 FN_EXTERN void protocolServerError(ProtocolServer *this, int code, const String *message, const String *stack);
 
 // Process requests
@@ -86,6 +86,32 @@ protocolServerMove(ProtocolServer *const this, MemContext *const parentNew)
     return objMove(this, parentNew);
 }
 
+/***********************************************************************************************************************************
+Server Destructor
+***********************************************************************************************************************************/
+FN_INLINE_ALWAYS void
+protocolServerFree(ProtocolServer *const this)
+{
+    objFree(this);
+}
+
+/***********************************************************************************************************************************
+Result Constructors
+***********************************************************************************************************************************/
+typedef struct ProtocolServerResultNewParam
+{
+    VAR_PARAM_HEADER;
+    size_t extra;
+} ProtocolServerResultNewParam;
+
+#define protocolServerResultNewP(...)                                                                                              \
+    protocolServerResultNew((ProtocolServerResultNewParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN ProtocolServerResult *protocolServerResultNew(ProtocolServerResultNewParam param);
+
+/***********************************************************************************************************************************
+Result Getters/Setters
+***********************************************************************************************************************************/
 // PackWrite to send data to client
 FN_EXTERN PackWrite *protocolServerResultData(ProtocolServerResult *this);
 
@@ -94,15 +120,6 @@ FN_EXTERN void protocolServerResultSessionDataSet(ProtocolServerResult *const th
 
 // Close session
 FN_EXTERN void protocolServerResultCloseSet(ProtocolServerResult *const this);
-
-/***********************************************************************************************************************************
-Destructor
-***********************************************************************************************************************************/
-FN_INLINE_ALWAYS void
-protocolServerFree(ProtocolServer *const this)
-{
-    objFree(this);
-}
 
 /***********************************************************************************************************************************
 Macros for function logging

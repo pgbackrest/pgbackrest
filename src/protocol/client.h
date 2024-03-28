@@ -65,36 +65,17 @@ protocolPackNew(void)
 }
 
 /***********************************************************************************************************************************
-Constructors
+Client Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN ProtocolClient *protocolClientNew(const String *name, const String *service, IoRead *read, IoWrite *write);
 
-// New session
-typedef struct ProtocolClientSessionNewParam
-{
-    VAR_PARAM_HEADER;
-    bool async;                                                     // Async requests allowed?
-} ProtocolClientSessionNewParam;
-
-#define protocolClientSessionNewP(client, command, ...)                                                                            \
-    protocolClientSessionNew(client, command, (ProtocolClientSessionNewParam){VAR_PARAM_INIT, __VA_ARGS__})
-
-FN_EXTERN ProtocolClientSession *protocolClientSessionNew(
-    ProtocolClient *client, StringId command, ProtocolClientSessionNewParam param);
-
 /***********************************************************************************************************************************
-Getters/Setters
+Client Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct ProtocolClientPub
 {
     IoRead *read;                                                   // Read interface
 } ProtocolClientPub;
-
-typedef struct ProtocolClientSessionPub
-{
-    bool open;                                                      // Is the session open?
-    bool queued;                                                    // Is a response currently queued?
-} ProtocolClientSessionPub;
 
 // Read file descriptor
 FN_INLINE_ALWAYS int
@@ -103,22 +84,8 @@ protocolClientIoReadFd(ProtocolClient *const this)
     return ioReadFd(THIS_PUB(ProtocolClient)->read);
 }
 
-// Is a response currently queued?
-FN_INLINE_ALWAYS bool
-protocolClientSessionQueued(const ProtocolClientSession *const this)
-{
-    return THIS_PUB(ProtocolClientSession)->queued;
-}
-
-// Is the session closed?
-FN_INLINE_ALWAYS bool
-protocolClientSessionClosed(const ProtocolClientSession *const this)
-{
-    return !THIS_PUB(ProtocolClientSession)->open;
-}
-
 /***********************************************************************************************************************************
-Functions
+Client Functions
 ***********************************************************************************************************************************/
 // Move to a new parent mem context
 FN_INLINE_ALWAYS ProtocolClient *
@@ -137,6 +104,69 @@ protocolClientNoExit(ProtocolClient *const this)
 // Send noop to test connection or keep it alive
 FN_EXTERN void protocolClientNoOp(ProtocolClient *this);
 
+// Simple request that does not require a session or async
+typedef struct ProtocolClientRequestParam
+{
+    VAR_PARAM_HEADER;
+    PackWrite *param;
+} ProtocolClientRequestParam;
+
+#define protocolClientRequestP(this, command, ...)                                                                                          \
+    protocolClientRequest(this, command, (ProtocolClientRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN PackRead *protocolClientRequest(ProtocolClient *this, StringId command, ProtocolClientRequestParam param);
+
+/***********************************************************************************************************************************
+Client Destructor
+***********************************************************************************************************************************/
+FN_INLINE_ALWAYS void
+protocolClientFree(ProtocolClient *const this)
+{
+    objFree(this);
+}
+
+/***********************************************************************************************************************************
+Session Constructors
+***********************************************************************************************************************************/
+// New session
+typedef struct ProtocolClientSessionNewParam
+{
+    VAR_PARAM_HEADER;
+    bool async;                                                     // Async requests allowed?
+} ProtocolClientSessionNewParam;
+
+#define protocolClientSessionNewP(client, command, ...)                                                                            \
+    protocolClientSessionNew(client, command, (ProtocolClientSessionNewParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN ProtocolClientSession *protocolClientSessionNew(
+    ProtocolClient *client, StringId command, ProtocolClientSessionNewParam param);
+
+/***********************************************************************************************************************************
+Session Getters/Setters
+***********************************************************************************************************************************/
+typedef struct ProtocolClientSessionPub
+{
+    bool open;                                                      // Is the session open?
+    bool queued;                                                    // Is a response currently queued?
+} ProtocolClientSessionPub;
+
+// Is a response currently queued?
+FN_INLINE_ALWAYS bool
+protocolClientSessionQueued(const ProtocolClientSession *const this)
+{
+    return THIS_PUB(ProtocolClientSession)->queued;
+}
+
+// Is the session closed?
+FN_INLINE_ALWAYS bool
+protocolClientSessionClosed(const ProtocolClientSession *const this)
+{
+    return !THIS_PUB(ProtocolClientSession)->open;
+}
+
+/***********************************************************************************************************************************
+Session Functions
+***********************************************************************************************************************************/
 // Session open
 typedef struct ProtocolClientSessionOpenParam
 {
@@ -150,22 +180,16 @@ typedef struct ProtocolClientSessionOpenParam
 FN_EXTERN PackRead *protocolClientSessionOpen(ProtocolClientSession *const this, ProtocolClientSessionOpenParam param);
 
 // Session request
-typedef struct ProtocolClientSessionRequestParam
-{
-    VAR_PARAM_HEADER;
-    PackWrite *param;
-} ProtocolClientSessionRequestParam;
-
 #define protocolClientSessionRequestP(this, ...)                                                                                   \
-    protocolClientSessionRequest(this, (ProtocolClientSessionRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
+    protocolClientSessionRequest(this, (ProtocolClientRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-FN_EXTERN PackRead *protocolClientSessionRequest(ProtocolClientSession *const this, ProtocolClientSessionRequestParam param);
+FN_EXTERN PackRead *protocolClientSessionRequest(ProtocolClientSession *const this, ProtocolClientRequestParam param);
 
-// Session request async
+// Session async request
 #define protocolClientSessionRequestAsyncP(this, ...)                                                                              \
-    protocolClientSessionRequestAsync(this, (ProtocolClientSessionRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
+    protocolClientSessionRequestAsync(this, (ProtocolClientRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-FN_EXTERN void protocolClientSessionRequestAsync(ProtocolClientSession *const this, ProtocolClientSessionRequestParam param);
+FN_EXTERN void protocolClientSessionRequestAsync(ProtocolClientSession *const this, ProtocolClientRequestParam param);
 
 // Session response after a call to protocolClientSessionRequestAsyncP()
 FN_EXTERN PackRead *protocolClientSessionResponse(ProtocolClientSession *const this);
@@ -176,21 +200,9 @@ FN_EXTERN PackRead *protocolClientSessionClose(ProtocolClientSession *const this
 // Session cancel
 FN_EXTERN void protocolClientSessionCancel(ProtocolClientSession *const this);
 
-// Client request
-#define protocolClientRequestP(this, command, ...)                                                                                          \
-    protocolClientRequest(this, command, (ProtocolClientSessionRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
-
-FN_EXTERN PackRead *protocolClientRequest(ProtocolClient *this, StringId command, ProtocolClientSessionRequestParam param);
-
 /***********************************************************************************************************************************
-Destructor
+Session Destructor
 ***********************************************************************************************************************************/
-FN_INLINE_ALWAYS void
-protocolClientFree(ProtocolClient *const this)
-{
-    objFree(this);
-}
-
 FN_INLINE_ALWAYS void
 protocolClientSessionFree(ProtocolClientSession *const this)
 {

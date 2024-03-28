@@ -179,7 +179,7 @@ protocolParallelProcess(ProtocolParallel *this)
 
                             protocolParallelJobStateSet(job, protocolParallelJobStateDone);
                             this->clientJobList[clientIdx].job = NULL;
-                            objFree(this->clientJobList[clientIdx].session); // !!! NEED DEDICATED FREE HERE
+                            protocolClientSessionFree(this->clientJobList[clientIdx].session);
                         }
                         MEM_CONTEXT_TEMP_END();
                     }

@@ -63,11 +63,12 @@ testCommandRequestSimpleProtocol(PackRead *const param)
         FUNCTION_HARNESS_PARAM(PACK_READ, param);
     FUNCTION_HARNESS_END();
 
-    ProtocolServerResult *const result = protocolServerResultNewP();
+    ProtocolServerResult *const result = param != NULL ? protocolServerResultNewP() : NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        pckWriteStrP(protocolServerResultData(result), strNewFmt("output%u", pckReadU32P(param)));
+        if (param != NULL)
+            pckWriteStrP(protocolServerResultData(result), strNewFmt("output%u", pckReadU32P(param)));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -700,13 +701,13 @@ testRun(void)
                 protocolClientSessionRequestAsyncP(session1, .param = param1);
 
                 ProtocolClientSession *session2 = protocolClientSessionNewP(client, TEST_PROTOCOL_COMMAND_SIMPLE, .async = true);
-                PackWrite *param2 = protocolPackNew();
-                pckWriteU32P(param2, 2);
-                protocolClientSessionRequestAsyncP(session2, .param = param2);
+                protocolClientSessionRequestAsyncP(session2);
 
                 ProtocolClientSession *session3 = protocolClientSessionNewP(client, TEST_PROTOCOL_COMMAND_SIMPLE);
                 PackWrite *param3 = protocolPackNew();
                 pckWriteU32P(param3, 3);
+
+                TEST_RESULT_STR_Z(pckReadStrP(protocolClientSessionRequestP(session3, .param = param3)), "output3", "output 3");
 
                 ProtocolClientSession *session4 = protocolClientSessionNewP(client, TEST_PROTOCOL_COMMAND_SIMPLE, .async = true);
                 PackWrite *param4 = protocolPackNew();
@@ -718,7 +719,6 @@ testRun(void)
                 pckWriteU32P(param5, 5);
                 protocolClientSessionRequestAsyncP(session5, .param = param5);
 
-                TEST_RESULT_STR_Z(pckReadStrP(protocolClientSessionRequestP(session3, .param = param3)), "output3", "output 3");
                 TEST_RESULT_VOID(protocolClientSessionCancel(session2), "cancel 2");
                 TEST_RESULT_STR_Z(pckReadStrP(protocolClientSessionResponse(session1)), "output1", "output 1");
                 TEST_RESULT_VOID(protocolClientSessionCancel(session4), "cancel 4");
@@ -732,7 +732,7 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("invalid session");
 
-                TEST_ERROR(protocolClientSessionFindIdx(client, 999), FormatError, "unable to find protocol client session 999");
+                TEST_ERROR(protocolClientSessionFindIdx(client, 999), ProtocolError, "unable to find protocol client session 999");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("open returns false");
@@ -768,19 +768,14 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error if state not idle");
 
-                client->state = protocolClientStateDataGet;
+                client->state = protocolClientStateResponse;
                 session->pub.open = true;
 
                 TEST_ERROR(
                     protocolClientSessionRequestP(session), ProtocolError,
-                    "client state is 'data-get' but expected 'idle'");
+                    "client state is 'response' but expected 'idle'");
 
                 client->state = protocolClientStateIdle;
-                session->pub.open = false;
-
-                TEST_ERROR_FMT(
-                    protocolClientDataGet(session), ProtocolError,
-                    "raised from test client: unable to find session id %" PRIu64 " for command c-complex:prc", session->sessionId);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("process returns true");
@@ -807,14 +802,14 @@ testRun(void)
                 TEST_RESULT_BOOL(pckReadBoolP(protocolClientSessionClose(session)), true, "close request");
 
                 session->pub.open = true;
-                TEST_RESULT_VOID(protocolClientCommandPut(session, protocolCommandTypeClose, NULL), "close after close");
+                TEST_RESULT_VOID(protocolClientRequestInternal(session, protocolCommandTypeClose, NULL), "close after close");
                 TEST_ERROR_FMT(
-                    protocolClientDataGet(session), ProtocolError,
+                    protocolClientResponseInternal(session), ProtocolError,
                     "raised from test client: unable to find session id %" PRIu64 " for command c-complex-c:cls",
                     session->sessionId);
 
-                TEST_RESULT_VOID(protocolClientCommandPut(session, protocolCommandTypeCancel, NULL), "cancel after close");
-                TEST_RESULT_VOID(protocolClientDataGet(session), "cancel request succeeds");
+                TEST_RESULT_VOID(protocolClientRequestInternal(session, protocolCommandTypeCancel, NULL), "cancel after close");
+                TEST_RESULT_VOID(protocolClientResponseInternal(session), "cancel request succeeds");
                 session->pub.open = false;
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -991,7 +986,7 @@ testRun(void)
 
                 TEST_ASSIGN(server, protocolServer(tlsServer, socketSession), "server start");
                 TEST_RESULT_PTR_NE(server, NULL, "server is not null");
-                TEST_RESULT_UINT(protocolServerCommandGet(server).id, PROTOCOL_COMMAND_EXIT, "server exit");
+                TEST_RESULT_UINT(protocolServerRequest(server).id, PROTOCOL_COMMAND_EXIT, "server exit");
 
                 // Repo server access denied (archive-get) invalid stanza
                 // -----------------------------------------------------------------------------------------------------------------
@@ -1033,7 +1028,7 @@ testRun(void)
 
                 TEST_ASSIGN(server, protocolServer(tlsServer, socketSession), "server start");
                 TEST_RESULT_PTR_NE(server, NULL, "server is not null");
-                TEST_RESULT_UINT(protocolServerCommandGet(server).id, PROTOCOL_COMMAND_EXIT, "server exit");
+                TEST_RESULT_UINT(protocolServerRequest(server).id, PROTOCOL_COMMAND_EXIT, "server exit");
             }
             HRN_FORK_PARENT_END();
         }
@@ -1086,15 +1081,15 @@ testRun(void)
                     "local server 1");
 
                 // Command with output
-                TEST_RESULT_UINT(protocolServerCommandGet(server).id, strIdFromZ("c-one"), "c-one command get");
+                TEST_RESULT_UINT(protocolServerRequest(server).id, strIdFromZ("c-one"), "c-one command get");
 
                 // Wait for notify from parent
                 HRN_FORK_CHILD_NOTIFY_GET();
 
-                TEST_RESULT_VOID(protocolServerDataPut(server, pckWriteU32P(protocolPackNew(), 1)), "data end put");
+                TEST_RESULT_VOID(protocolServerResponseP(server, .data = pckWriteU32P(protocolPackNew(), 1)), "data end put");
 
                 // Wait for exit
-                TEST_RESULT_UINT(protocolServerCommandGet(server).id, PROTOCOL_COMMAND_EXIT, "noop command get");
+                TEST_RESULT_UINT(protocolServerRequest(server).id, PROTOCOL_COMMAND_EXIT, "noop command get");
             }
             HRN_FORK_CHILD_END();
 
@@ -1108,19 +1103,19 @@ testRun(void)
                     "local server 2");
 
                 // Command with output
-                TEST_RESULT_UINT(protocolServerCommandGet(server).id, strIdFromZ("c2"), "c2 command get");
+                TEST_RESULT_UINT(protocolServerRequest(server).id, strIdFromZ("c2"), "c2 command get");
 
                 // Wait for notify from parent
                 HRN_FORK_CHILD_NOTIFY_GET();
 
-                TEST_RESULT_VOID(protocolServerDataPut(server, pckWriteU32P(protocolPackNew(), 2)), "data end put");
+                TEST_RESULT_VOID(protocolServerResponseP(server, .data = pckWriteU32P(protocolPackNew(), 2)), "data end put");
 
                 // Command with error
-                TEST_RESULT_UINT(protocolServerCommandGet(server).id, strIdFromZ("c-three"), "c-three command get");
+                TEST_RESULT_UINT(protocolServerRequest(server).id, strIdFromZ("c-three"), "c-three command get");
                 TEST_RESULT_VOID(protocolServerError(server, 39, STRDEF("very serious error"), STRDEF("stack")), "error put");
 
                 // Wait for exit
-                TEST_RESULT_UINT(protocolServerCommandGet(server).id, PROTOCOL_COMMAND_EXIT, "wait for exit");
+                TEST_RESULT_UINT(protocolServerRequest(server).id, PROTOCOL_COMMAND_EXIT, "wait for exit");
             }
             HRN_FORK_CHILD_END();
 

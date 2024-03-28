@@ -414,7 +414,7 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
             {
                 // Get parameter list from the client. This needs to happen even if we cannot authorize the client so that the
                 // session id gets set for the error.
-                const ProtocolServerCommandGetResult command = protocolServerCommandGet(result);
+                const ProtocolServerRequestResult command = protocolServerRequest(result);
                 CHECK(FormatError, command.id == PROTOCOL_COMMAND_CONFIG, "expected config command");
 
                 // Get list of authorized stanzas for this client
@@ -444,7 +444,7 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
             TRY_END();
 
             // Ack the config command
-            protocolServerDataPut(result, NULL);
+            protocolServerResponseP(result);
 
             // Move result to prior context and move session into result so there is only one return value
             protocolServerMove(result, memContextPrior());
@@ -454,11 +454,11 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
         else
         {
             // A noop command should have been received
-            const ProtocolServerCommandGetResult command = protocolServerCommandGet(result);
+            const ProtocolServerRequestResult command = protocolServerRequest(result);
             CHECK(FormatError, command.id == PROTOCOL_COMMAND_NOOP, "expected config command");
 
             // Send a data end message and return a NULL server
-            protocolServerDataPut(result, NULL);
+            protocolServerResponseP(result);
 
             // Set result to NULL so there is no server for the caller to use. The TLS session will be freed when the temp mem
             // context ends.
