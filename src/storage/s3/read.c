@@ -55,7 +55,7 @@ storageReadS3Open(THIS_VOID)
         this->httpResponse = storageS3RequestP(
             this->storage, HTTP_VERB_GET_STR, this->interface.name,
             .header = httpHeaderPutRange(httpHeaderNew(NULL), this->interface.offset, this->interface.limit),
-            .allowMissing = true, .contentIo = true);
+            .allowMissing = true, .contentIo = true, .sseC = true);
     }
     MEM_CONTEXT_OBJ_END();
 

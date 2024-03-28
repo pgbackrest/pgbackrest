@@ -36,8 +36,8 @@ Constructors
 FN_EXTERN Storage *storageS3New(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
     const String *endPoint, StorageS3UriStyle uriStyle, const String *region, StorageS3KeyType keyType, const String *accessKey,
-    const String *secretAccessKey, const String *securityToken, const String *kmsKeyId, const String *credRole,
-    const String *webIdToken, size_t partSize, const KeyValue *tag, const String *host, unsigned int port, TimeMSec timeout,
-    bool verifyPeer, const String *caFile, const String *caPath);
+    const String *secretAccessKey, const String *securityToken, const String *kmsKeyId, const String *sseCustomerKey,
+    const String *credRole, const String *webIdToken, size_t partSize, const KeyValue *tag, const String *host, unsigned int port,
+    TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath);
 
 #endif
