@@ -232,24 +232,24 @@ protocolClientResponseInternal(ProtocolClientSession *const this)
             type = (ProtocolMessageType)pckReadU32P(response);
             close = pckReadBoolP(response);
 
-            if (type == protocolMessageTypeError)
-            {
-                PackWrite *const packWrite = protocolPackNew();
+            // if (type == protocolMessageTypeError)
+            // {
+            //     PackWrite *const packWrite = protocolPackNew();
 
-                pckWriteI32P(packWrite, pckReadI32P(response));
-                pckWriteStrP(packWrite, pckReadStrP(response));
-                pckWriteStrP(packWrite, pckReadStrP(response));
-                pckWriteEnd(packWrite);
+            //     pckWriteI32P(packWrite, pckReadI32P(response));
+            //     pckWriteStrP(packWrite, pckReadStrP(response));
+            //     pckWriteStrP(packWrite, pckReadStrP(response));
+            //     pckWriteEnd(packWrite);
 
-                packRead = pckReadNew(pckWriteResult(packWrite));
-            }
-            else
-            {
-                ASSERT(type == protocolMessageTypeData);
-                ASSERT(sessionId != 0);
+            //     packRead = pckReadNew(pckWriteResult(packWrite));
+            // }
+            // else
+            // {
+            //     ASSERT(type == protocolMessageTypeData);
+            //     ASSERT(sessionId != 0);
 
                 packRead = pckReadPackReadP(response);
-            }
+            // }
 
             pckReadEndP(response);
 

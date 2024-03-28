@@ -139,26 +139,13 @@ protocolServerError(ProtocolServer *this, int code, const String *message, const
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // !!! NOT SURE WHY THIS DOES NOT WORK?
-        // PackWrite *const packWrite = protocolPackNew();
+        PackWrite *const packWrite = protocolPackNew();
 
-        // pckWriteI32P(packWrite, code);
-        // pckWriteStrP(packWrite, message);
-        // pckWriteStrP(packWrite, stack);
+        pckWriteI32P(packWrite, code);
+        pckWriteStrP(packWrite, message);
+        pckWriteStrP(packWrite, stack);
 
-        // protocolServerPut(this, protocolMessageTypeError, packWrite);
-
-        // Write the error and flush to be sure it gets sent immediately
-        PackWrite *error = pckWriteNewIo(this->write);
-        pckWriteU64P(error, this->sessionId);
-        pckWriteU32P(error, protocolMessageTypeError);
-        pckWriteBoolP(error, false);
-        pckWriteI32P(error, code);
-        pckWriteStrP(error, message);
-        pckWriteStrP(error, stack);
-        pckWriteEndP(error);
-
-        ioWriteFlush(this->write);
+        protocolServerResponseP(this, .type = protocolMessageTypeError, .data = packWrite);
     }
     MEM_CONTEXT_TEMP_END();
 
