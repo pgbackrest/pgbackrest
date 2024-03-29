@@ -234,8 +234,11 @@ protocolClientResponseInternal(ProtocolClientSession *const this)
             packRead = pckReadPackReadP(response);
             pckReadEndP(response);
 
-            // If this response is for another session then store it with that session
-            if (sessionId != this->sessionId)
+            // If this response is for another session then store it with that session. Session id 0 indicates a fatal error on the
+            // server that should be reported by the first session that sees it.
+            ASSERT(sessionId != 0 || type == protocolMessageTypeError);
+
+            if (sessionId != 0 && sessionId != this->sessionId)
             {
                 ProtocolClientSession *const sessionOther = *(ProtocolClientSession **)lstGet(
                     this->client->sessionList, protocolClientSessionFindIdx(this->client, sessionId));

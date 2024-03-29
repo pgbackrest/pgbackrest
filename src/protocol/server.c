@@ -25,7 +25,7 @@ struct ProtocolServer
     IoWrite *write;                                                 // Write interface
     const String *name;                                             // Name displayed in logging
     List *sessionList;                                              // List of active sessions
-    uint64_t sessionId;                                             // Current session being processed !!! REMOVE
+    uint64_t sessionId;                                             // Current session being processed
 };
 
 struct ProtocolServerResult
@@ -487,6 +487,9 @@ protocolServerProcess(
         }
         CATCH_FATAL()
         {
+            // Zero session id so a fatal error will be handled by the first client that sees it
+            this->sessionId = 0;
+
             // Report error to the client
             protocolServerError(this, errorCode(), STR(errorMessage()), STR(errorStackTrace()));
 
