@@ -122,15 +122,15 @@ protocolClientRequestInternal(ProtocolClientSession *const this, const ProtocolC
         // Switch state to request
         this->client->state = protocolClientStateRequest;
 
-        // Write the request
+        // Write request
         PackWrite *const request = pckWriteNewIo(this->client->write);
-        pckWriteU32P(request, protocolMessageTypeCommand, .defaultWrite = true);
+        pckWriteU32P(request, protocolMessageTypeRequest, .defaultWrite = true);
         pckWriteStrIdP(request, this->command);
         pckWriteStrIdP(request, type);
         pckWriteU64P(request, this->sessionId);
         pckWriteBoolP(request, this->pub.open);
 
-        // Write parameters
+        // Write request parameters
         if (param != NULL)
         {
             pckWriteEndP(param);
@@ -206,7 +206,7 @@ protocolClientResponseInternal(ProtocolClientSession *const this)
     {
         // Check the session for a stored response
         bool found = false;
-        ProtocolMessageType type = protocolMessageTypeData;
+        ProtocolMessageType type = protocolMessageTypeResponse;
         bool close = false;
         PackRead *packRead = NULL;
 
@@ -268,7 +268,7 @@ protocolClientResponseInternal(ProtocolClientSession *const this)
 
         // Check if this result is an error and if so throw it
         protocolClientError(this->client, type, packRead);
-        CHECK(FormatError, type == protocolMessageTypeData, "expected data message");
+        CHECK(FormatError, type == protocolMessageTypeResponse, "expected response message");
 
         // Return result the the caller
         result = objMove(packRead, memContextPrior());

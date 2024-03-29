@@ -111,9 +111,9 @@ storageWriteRemote(THIS_VOID, const Buffer *const buffer)
             protocolClientSessionResponse(this->session);
 
         PackWrite *const param = pckWriteNewP(.size = PROTOCOL_PACK_DEFAULT_SIZE + bufUsed(buffer));
-
         pckWriteBinP(param, buffer);
-        protocolClientSessionRequestAsyncP(this->session, param);
+
+        protocolClientSessionRequestAsyncP(this->session, .param = param);
     }
     MEM_CONTEXT_TEMP_END();
 

@@ -9,13 +9,13 @@ Message types used by the protocol
 ***********************************************************************************************************************************/
 typedef enum
 {
-    // Data passed from client to server. This can be used as many times as needed.
-    protocolMessageTypeData = 0,
+    // Data passed from server to client
+    protocolMessageTypeResponse = 0,
 
-    // Command sent from the client to the server
-    protocolMessageTypeCommand = 1,
+    // Request sent from the client to the server
+    protocolMessageTypeRequest = 1,
 
-    // An error occurred on the server and the command ended abnormally. protocolMessageTypeData will not be sent to the client.
+    // An error occurred on the server and the request ended abnormally. protocolMessageTypeResponse will not be sent to the client.
     protocolMessageTypeError = 2,
 } ProtocolMessageType;
 
@@ -94,7 +94,7 @@ protocolClientMove(ProtocolClient *const this, MemContext *const parentNew)
     return objMove(this, parentNew);
 }
 
-// Do not send exit command to the server when the client is freed
+// Do not send exit request to the server when the client is freed
 FN_INLINE_ALWAYS void
 protocolClientNoExit(ProtocolClient *const this)
 {

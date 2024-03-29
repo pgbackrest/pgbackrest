@@ -385,7 +385,7 @@ strIdToLog(const StringId strId, char *const buffer, const size_t bufferSize)
 
     // Treat 0 as if it were null since this can never be a valid StringId
     if (strId == 0)
-        return (size_t)snprintf(buffer, bufferSize, "null");
+        return (size_t)snprintf(buffer, bufferSize, NULL_Z);
 
     return strIdToZ(strId, buffer);
 }
