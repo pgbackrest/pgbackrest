@@ -851,6 +851,9 @@ testRun(void)
                     "content-type:multipart/mixed; boundary=" HTTP_MULTIPART_BOUNDARY_DATA "\r\n"
                     "hdr1:1\r\n\r\n"
                     "\r\n--" HTTP_MULTIPART_BOUNDARY_DATA "\r\n"
+                    "content-type:application/http\r\n"
+                    "content-transfer-encoding:binary\r\n"
+                    "content-id:0\r\n\r\n"
                     "GET / HTTP/1.1\r\n\r\n"
                     "\r\n--" HTTP_MULTIPART_BOUNDARY_DATA "\r\n");
                 hrnServerScriptReplyZ(

@@ -383,6 +383,36 @@ storageGcsAuth(StorageGcs *this, HttpHeader *httpHeader)
 /***********************************************************************************************************************************
 Process Gcs request
 ***********************************************************************************************************************************/
+// Helper to generate request path
+static String *
+storageGcsRequestPath(StorageGcs *const this, const String *const object, const bool bucket, const bool upload)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_GCS, this);
+        FUNCTION_TEST_PARAM(STRING, object);
+        FUNCTION_TEST_PARAM(BOOL, bucket);
+        FUNCTION_TEST_PARAM(BOOL, upload);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    String *const result = strNew();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        strCatFmt(result, "%s/storage/v1/b", upload ? "/upload" : "");
+
+        if (bucket)
+            strCatFmt(result, "/%s/o", strZ(this->bucket));
+
+        if (object != NULL)
+            strCatFmt(result, "/%s", strZ(httpUriEncode(strSub(object, 1), false)));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(STRING, result);
+}
+
 FN_EXTERN HttpRequest *
 storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAsyncParam param)
 {
@@ -393,6 +423,7 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
         FUNCTION_LOG_PARAM(BOOL, param.upload);
         FUNCTION_LOG_PARAM(BOOL, param.noAuth);
         FUNCTION_LOG_PARAM(BOOL, param.tag);
+        FUNCTION_LOG_PARAM(STRING, param.path);
         FUNCTION_LOG_PARAM(STRING, param.object);
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
@@ -409,13 +440,8 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Generate path
-        String *path = strCatFmt(strNew(), "%s/storage/v1/b", param.upload ? "/upload" : "");
-
-        if (!param.noBucket)
-            strCatFmt(path, "/%s/o", strZ(this->bucket));
-
-        if (param.object != NULL)
-            strCatFmt(path, "/%s", strZ(httpUriEncode(strSub(param.object, 1), false)));
+        const String *const path = param.path != NULL ?
+            param.path : storageGcsRequestPath(this, param.object, !param.noBucket, param.upload);
 
         // Create header list
         HttpHeader *requestHeader =
@@ -434,23 +460,34 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
         // Set host
         httpHeaderPut(requestHeader, HTTP_HEADER_HOST_STR, this->endpoint);
 
-        // Set content length
+        // Set content
         const Buffer *content = param.content;
-        size_t contentSize = 0;
 
-        if (content != NULL)
+        if (param.contentList != NULL)
         {
-            ASSERT(param.contentList == NULL);
-            contentSize = bufUsed(content);
-        }
-        else if (param.contentList != NULL)
-        {
+            ASSERT(param.content == NULL);
+
+            HttpRequestMulti *const requestMulti = httpRequestMultiNew();
+
             for (unsigned int contentIdx = 0; contentIdx < lstSize(param.contentList); contentIdx++)
             {
+                const StorageGcsRequestPart *const requestPart = lstGet(param.contentList, contentIdx);
+                HttpHeader *const partHeader = httpHeaderNew(this->headerRedactList);
+
+                httpHeaderAdd(partHeader, HTTP_HEADER_CONTENT_LENGTH_STR, ZERO_STR);
+                httpRequestMultiAddP(
+                    requestMulti, strNewFmt("%u", contentIdx), requestPart->verb,
+                    storageGcsRequestPath(this, requestPart->object, true, false), .header = partHeader);
+                httpRequestMultiHeaderAdd(requestMulti, requestHeader);
+
+                content = httpRequestMultiContent(requestMulti);
             }
         }
 
-        httpHeaderPut(requestHeader, HTTP_HEADER_CONTENT_LENGTH_STR, contentSize == 0 ? ZERO_STR : strNewFmt("%zu", contentSize));
+        // Set content length
+        httpHeaderPut(
+            requestHeader, HTTP_HEADER_CONTENT_LENGTH_STR,
+            content == NULL || bufEmpty(content) ? ZERO_STR : strNewFmt("%zu", bufUsed(content)));
 
         // Make a copy of the query so it can be modified
         HttpQuery *query = httpQueryDupP(param.query, .redactList = this->queryRedactList);
@@ -515,6 +552,7 @@ storageGcsRequest(StorageGcs *const this, const String *const verb, const Storag
         FUNCTION_LOG_PARAM(BOOL, param.upload);
         FUNCTION_LOG_PARAM(BOOL, param.noAuth);
         FUNCTION_LOG_PARAM(BOOL, param.tag);
+        FUNCTION_LOG_PARAM(STRING, param.path);
         FUNCTION_LOG_PARAM(STRING, param.object);
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
@@ -526,7 +564,7 @@ storageGcsRequest(StorageGcs *const this, const String *const verb, const Storag
 
     HttpRequest *const request = storageGcsRequestAsyncP(
         this, verb, .noBucket = param.noBucket, .upload = param.upload, .noAuth = param.noAuth, .tag = param.tag,
-        .object = param.object, .header = param.header, .query = param.query, .content = param.content,
+        .path = param.path, .object = param.object, .header = param.header, .query = param.query, .content = param.content,
         .contentList = param.contentList);
     HttpResponse *const result = storageGcsResponseP(
         request, .allowMissing = param.allowMissing, .allowIncomplete = param.allowIncomplete, .contentIo = param.contentIo);
@@ -902,8 +940,11 @@ storageGcsPathRemoveCallback(void *const callbackData, const StorageInfo *const 
     {
         MEM_CONTEXT_BEGIN(data->memContext)
         {
+        List *const contentList = lstNewP(sizeof(StorageGcsRequestPart));
+        lstAdd(contentList, &(StorageGcsRequestPart){.verb = HTTP_VERB_DELETE_STR, .object = strNewFmt("%s/%s", strZ(data->path), strZ(info->name))});
+
             data->request = storageGcsRequestAsyncP(
-                data->this, HTTP_VERB_DELETE_STR, .object = strNewFmt("%s/%s", strZ(data->path), strZ(info->name)));
+                data->this, HTTP_VERB_POST_STR, .path = STRDEF("/batch/storage/v1"), .contentList = contentList);
         }
         MEM_CONTEXT_END();
     }

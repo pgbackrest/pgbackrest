@@ -68,6 +68,7 @@ STRING_DECLARE(HTTP_HEADER_RANGE_STR);
 #define HTTP_HEADER_RANGE_BYTES                                     "bytes"
 
 #define HTTP_HEADER_CONTENT_TYPE_MULTIPART                          "multipart/mixed; boundary="
+#define HTTP_MULTIPART_BOUNDARY_DATA                                "XyKQzd3+Y5abPhU_UcxJd8f-m5BElZP+jCdQM14_70xtP3j-IYtmxNL+7Gr3Fx"
 
 /***********************************************************************************************************************************
 Request Constructors

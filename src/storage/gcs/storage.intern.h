@@ -60,6 +60,7 @@ typedef struct StorageGcsRequestAsyncParam
     bool upload;                                                    // Is an object upload?
     bool noAuth;                                                    // Exclude authentication header?
     bool tag;                                                       // Add tags when available?
+    const String *path;                                             // URI path (this overrides object)
     const String *object;                                           // Object to include in URI
     const HttpHeader *header;                                       // Request headers
     const HttpQuery *query;                                         // Query parameters
@@ -93,6 +94,7 @@ typedef struct StorageGcsRequestParam
     bool upload;                                                    // Is an object upload?
     bool noAuth;                                                    // Exclude authentication header?
     bool tag;                                                       // Add tags when available?
+    const String *path;                                             // URI path (this overrides object)
     const String *object;                                           // Object to include in URI
     const HttpHeader *header;                                       // Request headers
     const HttpQuery *query;                                         // Query parameters

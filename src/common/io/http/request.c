@@ -393,6 +393,9 @@ httpRequestMultiAdd(
     {
         String *const request = strNew();
 
+        strCatZ(request, HTTP_HEADER_CONTENT_TYPE ":application/http\r\n");
+        strCatZ(request, "content-transfer-encoding:binary\r\n");
+        strCatFmt(request, "content-id:%s\r\n\r\n", strZ(contentId));
         strCat(request, httpRequestFmt(verb, path, param.query, param.header, false));
 
         MEM_CONTEXT_OBJ_BEGIN(this->contentList)

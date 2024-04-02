@@ -72,6 +72,8 @@ typedef struct TestRequestParam
     bool noBucket;
     bool upload;
     bool noAuth;
+    bool multiPart;
+    const char *path;
     const char *object;
     const char *query;
     const char *contentRange;
@@ -86,8 +88,9 @@ typedef struct TestRequestParam
 static void
 testRequest(IoWrite *write, const char *verb, TestRequestParam param)
 {
-    String *request = strCatFmt(
-        strNew(), "%s %s/storage/v1/b%s", verb, param.upload ? "/upload" : "", param.noBucket ? "" : "/bucket/o");
+    String *const request = param.path != NULL ?
+        strCatFmt(strNew(), "%s %s", verb, param.path) :
+        strCatFmt(strNew(), "%s %s/storage/v1/b%s", verb, param.upload ? "/upload" : "", param.noBucket ? "" : "/bucket/o");
 
     // Add object
     if (param.object != NULL)
@@ -114,6 +117,13 @@ testRequest(IoWrite *write, const char *verb, TestRequestParam param)
     // Add content-type
     if (param.contentType != NULL)
         strCatFmt(request, "content-type:%s\r\n", param.contentType);
+
+    // Add multipart content-type
+    if (param.multiPart)
+    {
+        ASSERT(param.contentType == NULL);
+        strCatZ(request, "content-type:multipart/mixed; boundary=" HTTP_MULTIPART_BOUNDARY_DATA "\r\n");
+    }
 
     // Add host
     strCatFmt(request, "host:%s\r\n", strZ(hrnServerHost()));
@@ -944,7 +954,18 @@ testRun(void)
                         "  ]"
                         "}");
 
-                testRequestP(service, HTTP_VERB_DELETE, .object = "path/to/test1.txt");
+                testRequestP(
+                    service, HTTP_VERB_POST, .path = "/batch/storage/v1", .multiPart = true,
+                    .content =
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_DATA "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-transfer-encoding:binary\r\n"
+                        "content-id:0\r\n"
+                        "\r\n"
+                        "DELETE /storage/v1/b/bucket/o/path%2Fto%2Ftest1.txt HTTP/1.1\r\n"
+                        "content-length:0\r\n"
+                        "\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_DATA "\r\n");
                 testResponseP(service);
 
                 testRequestP(service, HTTP_VERB_DELETE, .object = "path1/xxx.zzz");
