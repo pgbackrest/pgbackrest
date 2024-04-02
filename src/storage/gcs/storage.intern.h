@@ -41,6 +41,15 @@ VARIANT_DECLARE(GCS_JSON_NAME_VAR);
 VARIANT_DECLARE(GCS_JSON_SIZE_VAR);
 
 /***********************************************************************************************************************************
+Multi-Part request data
+***********************************************************************************************************************************/
+typedef struct StorageGcsRequestPart
+{
+    const String *object;                                           // Object to include in URI
+    const String *verb;                                             // Verb (GET, PUT, etc)
+} StorageGcsRequestPart;
+
+/***********************************************************************************************************************************
 Perform a GCS Request
 ***********************************************************************************************************************************/
 // Perform async request
@@ -55,6 +64,7 @@ typedef struct StorageGcsRequestAsyncParam
     const HttpHeader *header;                                       // Request headers
     const HttpQuery *query;                                         // Query parameters
     const Buffer *content;                                          // Request content
+    const List *contentList;                                        // Request content part list
 } StorageGcsRequestAsyncParam;
 
 #define storageGcsRequestAsyncP(this, verb, ...)                                                                                   \
@@ -87,6 +97,7 @@ typedef struct StorageGcsRequestParam
     const HttpHeader *header;                                       // Request headers
     const HttpQuery *query;                                         // Query parameters
     const Buffer *content;                                          // Request content
+    const List *contentList;                                        // Request content part list
     bool allowMissing;                                              // Allow missing files (caller can check response code)
     bool allowIncomplete;                                           // Allow incomplete resume (used for resumable upload)
     bool contentIo;                                                 // Is IoRead interface required to read content?

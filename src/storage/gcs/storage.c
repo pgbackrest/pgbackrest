@@ -397,6 +397,7 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
         FUNCTION_LOG_PARAM(BUFFER, param.content);
+        FUNCTION_LOG_PARAM(LIST, param.contentList);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -434,9 +435,22 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
         httpHeaderPut(requestHeader, HTTP_HEADER_HOST_STR, this->endpoint);
 
         // Set content length
-        httpHeaderPut(
-            requestHeader, HTTP_HEADER_CONTENT_LENGTH_STR,
-            param.content == NULL || bufEmpty(param.content) ? ZERO_STR : strNewFmt("%zu", bufUsed(param.content)));
+        const Buffer *content = param.content;
+        size_t contentSize = 0;
+
+        if (content != NULL)
+        {
+            ASSERT(param.contentList == NULL);
+            contentSize = bufUsed(content);
+        }
+        else if (param.contentList != NULL)
+        {
+            for (unsigned int contentIdx = 0; contentIdx < lstSize(param.contentList); contentIdx++)
+            {
+            }
+        }
+
+        httpHeaderPut(requestHeader, HTTP_HEADER_CONTENT_LENGTH_STR, contentSize == 0 ? ZERO_STR : strNewFmt("%zu", contentSize));
 
         // Make a copy of the query so it can be modified
         HttpQuery *query = httpQueryDupP(param.query, .redactList = this->queryRedactList);
@@ -449,7 +463,7 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result = httpRequestNewP(
-                this->httpClient, verb, path, .query = query, .header = requestHeader, .content = param.content);
+                this->httpClient, verb, path, .query = query, .header = requestHeader, .content = content);
         }
         MEM_CONTEXT_END();
     }
@@ -512,7 +526,8 @@ storageGcsRequest(StorageGcs *const this, const String *const verb, const Storag
 
     HttpRequest *const request = storageGcsRequestAsyncP(
         this, verb, .noBucket = param.noBucket, .upload = param.upload, .noAuth = param.noAuth, .tag = param.tag,
-        .object = param.object, .header = param.header, .query = param.query, .content = param.content);
+        .object = param.object, .header = param.header, .query = param.query, .content = param.content,
+        .contentList = param.contentList);
     HttpResponse *const result = storageGcsResponseP(
         request, .allowMissing = param.allowMissing, .allowIncomplete = param.allowIncomplete, .contentIo = param.contentIo);
 

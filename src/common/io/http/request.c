@@ -54,6 +54,64 @@ struct HttpRequest
     HttpSession *session;                                           // Session for async requests
 };
 
+struct HttpRequestMulti
+{
+    List *contentList;                                              // Multipart content
+    size_t contentSize;                                             // Size of all content (excluding boundaries)
+    Buffer *boundaryRaw;                                            // Multipart boundary (not yet formatted for output)
+};
+
+/***********************************************************************************************************************************
+Format the request (excluding content)
+***********************************************************************************************************************************/
+static String *
+httpRequestFmt(
+    const String *const verb, const String *const path, const HttpQuery *const query, const HttpHeader *const header,
+    const bool agent)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, verb);
+        FUNCTION_TEST_PARAM(STRING, path);
+        FUNCTION_TEST_PARAM(HTTP_QUERY, query);
+        FUNCTION_TEST_PARAM(HTTP_HEADER, header);
+        FUNCTION_TEST_PARAM(BOOL, agent);
+    FUNCTION_TEST_END();
+
+    ASSERT(verb != NULL);
+    ASSERT(path != NULL);
+    ASSERT(header != NULL);
+
+    String *const result = strNew();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Add verb, path, and query
+        strCatFmt(
+            result, "%s %s%s%s " HTTP_VERSION "\r\n", strZ(verb), strZ(path), query == NULL ? "" : "?",
+            query == NULL ? "" : strZ(httpQueryRenderP(query)));
+
+        // Add user agent
+        if (agent)
+            strCatZ(result, HTTP_HEADER_USER_AGENT ":" PROJECT_NAME "/" PROJECT_VERSION "\r\n");
+
+        // Add headers
+        StringList *const headerList = httpHeaderList(header);
+
+        for (unsigned int headerIdx = 0; headerIdx < strLstSize(headerList); headerIdx++)
+        {
+            const String *const headerKey = strLstGet(headerList, headerIdx);
+
+            strCatFmt(result, "%s:%s\r\n", strZ(headerKey), strZ(httpHeaderGet(header, headerKey)));
+        }
+
+        // Add blank line to end of headers
+        strCat(result, CRLF_STR);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(STRING, result);
+}
+
 /***********************************************************************************************************************************
 Process the request
 ***********************************************************************************************************************************/
@@ -99,28 +157,13 @@ httpRequestProcess(HttpRequest *this, bool waitForResponse, bool contentCache)
                     {
                         session = httpClientOpen(this->client);
 
-                        // Format the request and user agent
-                        String *requestStr =
-                            strCatFmt(
-                                strNew(),
-                                "%s %s%s%s " HTTP_VERSION "\r\n" HTTP_HEADER_USER_AGENT ":" PROJECT_NAME "/" PROJECT_VERSION "\r\n",
-                                strZ(httpRequestVerb(this)), strZ(httpRequestPath(this)), httpRequestQuery(this) == NULL ? "" : "?",
-                                httpRequestQuery(this) == NULL ? "" : strZ(httpQueryRenderP(httpRequestQuery(this))));
-
-                        // Add headers
-                        const StringList *headerList = httpHeaderList(httpRequestHeader(this));
-
-                        for (unsigned int headerIdx = 0; headerIdx < strLstSize(headerList); headerIdx++)
-                        {
-                            const String *headerKey = strLstGet(headerList, headerIdx);
-
-                            strCatFmt(
-                                requestStr, "%s:%s\r\n", strZ(headerKey), strZ(httpHeaderGet(httpRequestHeader(this), headerKey)));
-                        }
-
-                        // Add blank line to end of headers and write the request as a buffer so secrets do not show up in logs
-                        strCat(requestStr, CRLF_STR);
-                        ioWrite(httpSessionIoWrite(session), BUFSTR(requestStr));
+                        // Write the request as a buffer so secrets do not show up in logs
+                        ioWrite(
+                            httpSessionIoWrite(session),
+                            BUFSTR(
+                                httpRequestFmt(
+                                    httpRequestVerb(this), httpRequestPath(this), httpRequestQuery(this), httpRequestHeader(this),
+                                    true)));
 
                         // Write out content if any
                         if (this->content != NULL)
@@ -302,6 +345,135 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
     THROW(ProtocolError, strZ(error));
 }
 
+/**********************************************************************************************************************************/
+#define HTTP_MULTIPART_BOUNDARY_DATA                                "XyKQzd3+Y5abPhU_UcxJd8f-m5BElZP+jCdQM14_70xtP3j-IYtmxNL+7Gr3Fx"
+#define HTTP_MULTIPART_BOUNDARY_PRE                                 "\r\n--"
+#define HTTP_MULTIPART_BOUNDARY_POST                                "\r\n"
+
+FN_EXTERN HttpRequestMulti *
+httpRequestMultiNew(void)
+{
+    FUNCTION_TEST_VOID();
+
+    OBJ_NEW_BEGIN(HttpRequestMulti, .childQty = MEM_CONTEXT_QTY_MAX)
+    {
+        *this = (HttpRequestMulti)
+        {
+            .boundaryRaw = bufNewC(HTTP_MULTIPART_BOUNDARY_DATA, sizeof(HTTP_MULTIPART_BOUNDARY_DATA) - 1),
+            .contentList = lstNewP(sizeof(Buffer *)),
+        };
+    }
+    OBJ_NEW_END();
+
+    FUNCTION_TEST_RETURN(HTTP_REQUEST_MULTI, this);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+httpRequestMultiAdd(
+    HttpRequestMulti *const this, const String *const contentId, const String *const verb, const String *const path,
+    const HttpRequestNewParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(HTTP_REQUEST_MULTI, this);
+        FUNCTION_TEST_PARAM(STRING, contentId);
+        FUNCTION_TEST_PARAM(STRING, verb);
+        FUNCTION_TEST_PARAM(STRING, path);
+        FUNCTION_TEST_PARAM(HTTP_QUERY, param.query);
+        FUNCTION_TEST_PARAM(HTTP_HEADER, param.header);
+        FUNCTION_TEST_PARAM(BUFFER, param.content);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(contentId != NULL);
+    ASSERT(verb != NULL);
+    ASSERT(path != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        String *const request = strNew();
+
+        strCat(request, httpRequestFmt(verb, path, param.query, param.header, false));
+
+        MEM_CONTEXT_OBJ_BEGIN(this->contentList)
+        {
+            Buffer *const content = bufNew(strSize(request) + (param.content == NULL ? 0 : bufUsed(param.content))); // {uncovered}
+
+            bufCat(content, BUFSTR(request));
+            bufCat(content, param.content);
+            lstAdd(this->contentList, &content);
+
+            this->contentSize += bufUsed(content);
+        }
+        MEM_CONTEXT_OBJ_END();
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN Buffer *
+httpRequestMultiContent(HttpRequestMulti *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(HTTP_REQUEST_MULTI, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(!lstEmpty(this->contentList));
+
+    Buffer *const result = bufNew(
+        this->contentSize +
+        ((lstSize(this->contentList) + 1) *
+         (bufUsed(this->boundaryRaw) + sizeof(HTTP_MULTIPART_BOUNDARY_PRE) - sizeof(HTTP_MULTIPART_BOUNDARY_POST) - 2)));
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Generate boundary
+        Buffer *const boundary = bufNew(
+            bufUsed(this->boundaryRaw) + sizeof(HTTP_MULTIPART_BOUNDARY_PRE) - sizeof(HTTP_MULTIPART_BOUNDARY_POST) - 2);
+        bufCat(boundary, BUFSTRDEF(HTTP_MULTIPART_BOUNDARY_PRE));
+        bufCat(boundary, this->boundaryRaw);
+        bufCat(boundary, BUFSTRDEF(HTTP_MULTIPART_BOUNDARY_POST));
+
+        // Add first boundary
+        bufCat(result, boundary);
+
+        // Add content and boundaries
+        for (unsigned int contentIdx = 0; contentIdx < lstSize(this->contentList); contentIdx++)
+        {
+            bufCat(result, *(Buffer **)lstGet(this->contentList, contentIdx));
+            bufCat(result, boundary);
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(BUFFER, result);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN HttpHeader *
+httpRequestMultiHeaderAdd(HttpRequestMulti *const this, HttpHeader *const header)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(HTTP_REQUEST_MULTI, this);
+        FUNCTION_TEST_PARAM(HTTP_HEADER, header);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(header != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        httpHeaderAdd(
+            header, HTTP_HEADER_CONTENT_TYPE_STR,
+            strNewFmt(HTTP_HEADER_CONTENT_TYPE_MULTIPART "%s", strZ(strNewBuf(this->boundaryRaw))));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(HTTP_HEADER, header);
+}
 /**********************************************************************************************************************************/
 FN_EXTERN void
 httpRequestToLog(const HttpRequest *const this, StringStatic *const debugLog)

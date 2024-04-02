@@ -12,6 +12,7 @@ behavior.
 Object type
 ***********************************************************************************************************************************/
 typedef struct HttpRequest HttpRequest;
+typedef struct HttpRequestMulti HttpRequestMulti;
 
 #include "common/io/http/header.h"
 #include "common/io/http/query.h"
@@ -66,8 +67,10 @@ STRING_DECLARE(HTTP_HEADER_LAST_MODIFIED_STR);
 STRING_DECLARE(HTTP_HEADER_RANGE_STR);
 #define HTTP_HEADER_RANGE_BYTES                                     "bytes"
 
+#define HTTP_HEADER_CONTENT_TYPE_MULTIPART                          "multipart/mixed; boundary="
+
 /***********************************************************************************************************************************
-Constructors
+Request Constructors
 ***********************************************************************************************************************************/
 typedef struct HttpRequestNewParam
 {
@@ -83,7 +86,7 @@ typedef struct HttpRequestNewParam
 FN_EXTERN HttpRequest *httpRequestNew(HttpClient *client, const String *verb, const String *path, HttpRequestNewParam param);
 
 /***********************************************************************************************************************************
-Getters/Setters
+Request Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct HttpRequestPub
 {
@@ -122,7 +125,7 @@ httpRequestVerb(const HttpRequest *const this)
 }
 
 /***********************************************************************************************************************************
-Functions
+Request Functions
 ***********************************************************************************************************************************/
 // Wait for a response from the request
 FN_EXTERN HttpResponse *httpRequestResponse(HttpRequest *this, bool contentCache);
@@ -138,7 +141,7 @@ httpRequestMove(HttpRequest *const this, MemContext *const parentNew)
 }
 
 /***********************************************************************************************************************************
-Destructor
+Request Destructor
 ***********************************************************************************************************************************/
 FN_INLINE_ALWAYS void
 httpRequestFree(HttpRequest *const this)
@@ -147,13 +150,39 @@ httpRequestFree(HttpRequest *const this)
 }
 
 /***********************************************************************************************************************************
+Request Multi Constructors
+***********************************************************************************************************************************/
+FN_EXTERN HttpRequestMulti *httpRequestMultiNew(void);
+
+/***********************************************************************************************************************************
+Request Multi Functions
+***********************************************************************************************************************************/
+// Add a request to multipart content
+#define httpRequestMultiAddP(this, contentId, verb, path, ...)                                                                                \
+    httpRequestMultiAdd(this, contentId, verb, path, (HttpRequestNewParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN void httpRequestMultiAdd(
+    HttpRequestMulti *this, const String *contentId, const String *verb, const String *path, HttpRequestNewParam param);
+
+// Concatenate multipart content
+FN_EXTERN Buffer *httpRequestMultiContent(HttpRequestMulti *this);
+
+// Add multipart header
+FN_EXTERN HttpHeader *httpRequestMultiHeaderAdd(HttpRequestMulti *this, HttpHeader *header);
+
+/***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
 FN_EXTERN void httpRequestToLog(const HttpRequest *this, StringStatic *debugLog);
 
-#define FUNCTION_LOG_HTTP_REQUEST_TYPE                                                                                            \
+#define FUNCTION_LOG_HTTP_REQUEST_TYPE                                                                                             \
     HttpRequest *
-#define FUNCTION_LOG_HTTP_REQUEST_FORMAT(value, buffer, bufferSize)                                                               \
+#define FUNCTION_LOG_HTTP_REQUEST_FORMAT(value, buffer, bufferSize)                                                                \
     FUNCTION_LOG_OBJECT_FORMAT(value, httpRequestToLog, buffer, bufferSize)
+
+#define FUNCTION_LOG_HTTP_REQUEST_MULTI_TYPE                                                                                       \
+    HttpRequestMulti *
+#define FUNCTION_LOG_HTTP_REQUEST_MULTI_FORMAT(value, buffer, bufferSize)                                                          \
+    objNameToLog(value, "HttpRequestMulti", buffer, bufferSize)
 
 #endif

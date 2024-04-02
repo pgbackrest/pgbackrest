@@ -842,6 +842,50 @@ testRun(void)
                 TEST_RESULT_STR_Z(strNewBuf(buffer), "", "check response");
 
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("request with multipart request and response");
+
+                hrnServerScriptAccept(http);
+
+                hrnServerScriptExpectZ(http,
+                    "GET / HTTP/1.1\r\n" TEST_USER_AGENT
+                    "content-type:multipart/mixed; boundary=" HTTP_MULTIPART_BOUNDARY_DATA "\r\n"
+                    "hdr1:1\r\n\r\n"
+                    "\r\n--" HTTP_MULTIPART_BOUNDARY_DATA "\r\n"
+                    "GET / HTTP/1.1\r\n\r\n"
+                    "\r\n--" HTTP_MULTIPART_BOUNDARY_DATA "\r\n");
+                hrnServerScriptReplyZ(
+                    http,
+                    "HTTP/1.1 200 OK\r\nTransfer-Encoding:chunked\r\n\r\n"
+                    "20\r\n01234567890123456789012345678901\r\n"
+                    "10\r\n0123456789012345\r\n"
+                    "0\r\n\r\n");
+
+                HttpRequestMulti *requestMulti = httpRequestMultiNew();
+                httpRequestMultiAddP(requestMulti, STRDEF("0"), HTTP_VERB_GET_STR, STRDEF("/"), .header = httpHeaderNew(NULL));
+
+                HttpHeader *headerRequest = httpHeaderNew(NULL);
+                httpHeaderAdd(headerRequest, STRDEF("hdr1"), STRDEF("1"));
+                httpRequestMultiHeaderAdd(requestMulti, headerRequest);
+
+                TEST_ASSIGN(
+                    response,
+                    httpRequestResponse(
+                        httpRequestNewP(
+                            client, STRDEF("GET"), STRDEF("/"), .header = headerRequest,
+                            .content = httpRequestMultiContent(requestMulti)),
+                        false),
+                    "request");
+                TEST_RESULT_VOID(
+                    FUNCTION_LOG_OBJECT_FORMAT(httpResponseHeader(response), httpHeaderToLog, logBuf, sizeof(logBuf)),
+                    "httpHeaderToLog");
+                TEST_RESULT_Z(logBuf, "{transfer-encoding: 'chunked'}", "check response headers");
+
+                buffer = bufNew(35);
+
+                TEST_RESULT_VOID(ioRead(httpResponseIoRead(response), buffer), "read response");
+                TEST_RESULT_STR_Z(strNewBuf(buffer), "01234567890123456789012345678901012", "check response");
+
+                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("close connection and end server process");
 
                 hrnServerScriptClose(http);
