@@ -26,6 +26,11 @@ GCS Storage
 #include "storage/posix/storage.h"
 
 /***********************************************************************************************************************************
+Defaults
+***********************************************************************************************************************************/
+#define STORAGE_GCS_DELETE_MAX                                      100
+
+/***********************************************************************************************************************************
 HTTP headers
 ***********************************************************************************************************************************/
 STRING_EXTERN(GCS_HEADER_UPLOAD_ID_STR,                             GCS_HEADER_UPLOAD_ID);
@@ -87,6 +92,7 @@ struct StorageGcs
     const String *bucket;                                           // Bucket to store data in
     const String *endpoint;                                         // Endpoint
     size_t chunkSize;                                               // Block size for resumable upload
+    unsigned int deleteMax;                                         // Maximum objects that can be deleted in one request
     const Buffer *tag;                                              // Tags to be applied to objects
 
     StorageGcsKeyType keyType;                                      // Auth key type
@@ -478,10 +484,10 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
                 httpRequestMultiAddP(
                     requestMulti, strNewFmt("%u", contentIdx), requestPart->verb,
                     storageGcsRequestPath(this, requestPart->object, true, false), .header = partHeader);
-                httpRequestMultiHeaderAdd(requestMulti, requestHeader);
-
-                content = httpRequestMultiContent(requestMulti);
             }
+
+            httpRequestMultiHeaderAdd(requestMulti, requestHeader);
+            content = httpRequestMultiContent(requestMulti);
         }
 
         // Set content length
@@ -911,8 +917,60 @@ typedef struct StorageGcsPathRemoveData
     StorageGcs *this;                                               // Storage Object
     MemContext *memContext;                                         // Mem context to create requests in
     HttpRequest *request;                                           // Async remove request
+    List *contentList;                                              // Content list currently being build
     const String *path;                                             // Root path of remove
 } StorageGcsPathRemoveData;
+
+static HttpRequest *
+storageGcsPathRemoveInternal(StorageGcs *const this, HttpRequest *const request, List *const contentList)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_GCS, this);
+        FUNCTION_TEST_PARAM(HTTP_REQUEST, request);
+        FUNCTION_TEST_PARAM(LIST, contentList);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    // Get response for async request
+    if (request != NULL)
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            const Buffer *const response = httpResponseContent(storageGcsResponseP(request));
+            (void)response; // !!!
+
+            // THROW(AssertError, strZ(strNewBuf(response)));
+
+            // // Nothing is returned when there are no errors
+            // if (!bufEmpty(response))
+            // {
+            //     XmlNodeList *errorList = xmlNodeChildList(xmlDocumentRoot(xmlDocumentNewBuf(response)), S3_XML_TAG_ERROR_STR);
+
+            //     // Attempt to remove errored files one at a time rather than retrying the batch
+            //     for (unsigned int errorIdx = 0; errorIdx < xmlNodeLstSize(errorList); errorIdx++)
+            //     {
+            //         storageS3RequestP(
+            //             this, HTTP_VERB_DELETE_STR,
+            //             strNewFmt(
+            //                 "/%s",
+            //                 strZ(xmlNodeContent(xmlNodeChild(xmlNodeLstGet(errorList, errorIdx), S3_XML_TAG_KEY_STR, true)))));
+            //     }
+            // }
+        }
+        MEM_CONTEXT_TEMP_END();
+
+        httpRequestFree(request);
+    }
+
+    // Send new async request if there is more to remove
+    HttpRequest *result = NULL;
+
+    if (contentList != NULL)
+        result = storageGcsRequestAsyncP(this, HTTP_VERB_POST_STR, .path = STRDEF("/batch/storage/v1"), .contentList = contentList);
+
+    FUNCTION_TEST_RETURN(HTTP_REQUEST, result);
+}
 
 static void
 storageGcsPathRemoveCallback(void *const callbackData, const StorageInfo *const info)
@@ -925,28 +983,43 @@ storageGcsPathRemoveCallback(void *const callbackData, const StorageInfo *const 
     ASSERT(callbackData != NULL);
     ASSERT(info != NULL);
 
-    StorageGcsPathRemoveData *const data = callbackData;
-
-    // Get response from prior async request
-    if (data->request != NULL)
-    {
-        httpResponseFree(storageGcsResponseP(data->request, .allowMissing = true));
-        httpRequestFree(data->request);
-        data->request = NULL;
-    }
-
     // Only delete files since paths don't really exist
     if (info->type == storageTypeFile)
     {
-        MEM_CONTEXT_BEGIN(data->memContext)
-        {
-        List *const contentList = lstNewP(sizeof(StorageGcsRequestPart));
-        lstAdd(contentList, &(StorageGcsRequestPart){.verb = HTTP_VERB_DELETE_STR, .object = strNewFmt("%s/%s", strZ(data->path), strZ(info->name))});
+        StorageGcsPathRemoveData *const data = callbackData;
 
-            data->request = storageGcsRequestAsyncP(
-                data->this, HTTP_VERB_POST_STR, .path = STRDEF("/batch/storage/v1"), .contentList = contentList);
+        if (data->contentList == NULL)
+        {
+            MEM_CONTEXT_BEGIN(data->memContext)
+            {
+                data->contentList = lstNewP(sizeof(StorageGcsRequestPart));
+            }
+            MEM_CONTEXT_END();
         }
-        MEM_CONTEXT_END();
+
+        MEM_CONTEXT_OBJ_BEGIN(data->contentList)
+        {
+            const StorageGcsRequestPart content =
+            {
+                .verb = HTTP_VERB_DELETE_STR,
+                .object = strNewFmt("%s/%s", strZ(data->path), strZ(info->name)),
+            };
+
+            lstAdd(data->contentList, &content);
+        }
+        MEM_CONTEXT_OBJ_END();
+
+        if (lstSize(data->contentList) == data->this->deleteMax)
+        {
+            MEM_CONTEXT_BEGIN(data->memContext)
+            {
+                data->request = storageGcsPathRemoveInternal(data->this, data->request, data->contentList);
+            }
+            MEM_CONTEXT_END();
+
+            lstFree(data->contentList);
+            data->contentList = NULL;
+        }
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -978,9 +1051,12 @@ storageGcsPathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfa
 
         storageGcsListInternal(this, path, storageInfoLevelType, NULL, true, storageGcsPathRemoveCallback, &data);
 
+        // Call if there is more to be removed
+        if (data.contentList != NULL)
+            data.request = storageGcsPathRemoveInternal(this, data.request, data.contentList);
+
         // Check response on last async request
-        if (data.request != NULL)
-            storageGcsResponseP(data.request, .allowMissing = true);
+        storageGcsPathRemoveInternal(this, data.request, NULL);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -1056,6 +1132,7 @@ storageGcsNew(
             .bucket = strDup(bucket),
             .keyType = keyType,
             .chunkSize = chunkSize,
+            .deleteMax = STORAGE_GCS_DELETE_MAX,
         };
 
         // Create tag JSON buffer

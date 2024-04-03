@@ -965,16 +965,23 @@ testRun(void)
                         "DELETE /storage/v1/b/bucket/o/path%2Fto%2Ftest1.txt HTTP/1.1\r\n"
                         "content-length:0\r\n"
                         "\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_DATA "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-transfer-encoding:binary\r\n"
+                        "content-id:1\r\n"
+                        "\r\n"
+                        "DELETE /storage/v1/b/bucket/o/path1%2Fxxx.zzz HTTP/1.1\r\n"
+                        "content-length:0\r\n"
+                        "\r\n"
                         "\r\n--" HTTP_MULTIPART_BOUNDARY_DATA "\r\n");
-                testResponseP(service);
-
-                testRequestP(service, HTTP_VERB_DELETE, .object = "path1/xxx.zzz");
                 testResponseP(service);
 
                 TEST_RESULT_VOID(storagePathRemoveP(storage, STRDEF("/"), .recurse = true), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("remove files from path");
+
+                ((StorageGcs *)storageDriver(storage))->deleteMax = 1;
 
                 testRequestP(service, HTTP_VERB_GET, .query = "fields=nextPageToken%2Cprefixes%2Citems%28name%29&prefix=path%2F");
                 testResponseP(
@@ -994,13 +1001,37 @@ testRun(void)
                         "  ]"
                         "}");
 
-                testRequestP(service, HTTP_VERB_DELETE, .object = "path/test1.txt");
+                testRequestP(
+                    service, HTTP_VERB_POST, .path = "/batch/storage/v1", .multiPart = true,
+                    .content =
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_DATA "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-transfer-encoding:binary\r\n"
+                        "content-id:0\r\n"
+                        "\r\n"
+                        "DELETE /storage/v1/b/bucket/o/path%2Ftest1.txt HTTP/1.1\r\n"
+                        "content-length:0\r\n"
+                        "\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_DATA "\r\n");
                 testResponseP(service);
 
-                testRequestP(service, HTTP_VERB_DELETE, .object = "path/path1/xxx.zzz");
+                testRequestP(
+                    service, HTTP_VERB_POST, .path = "/batch/storage/v1", .multiPart = true,
+                    .content =
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_DATA "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-transfer-encoding:binary\r\n"
+                        "content-id:0\r\n"
+                        "\r\n"
+                        "DELETE /storage/v1/b/bucket/o/path%2Fpath1%2Fxxx.zzz HTTP/1.1\r\n"
+                        "content-length:0\r\n"
+                        "\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_DATA "\r\n");
                 testResponseP(service);
 
                 TEST_RESULT_VOID(storagePathRemoveP(storage, STRDEF("/path"), .recurse = true), "remove");
+
+                ((StorageGcs *)storageDriver(storage))->deleteMax = STORAGE_GCS_DELETE_MAX;
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("remove files in empty subpath (nothing to do)");
