@@ -937,10 +937,13 @@ storageGcsPathRemoveInternal(StorageGcs *const this, HttpRequest *const request,
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            const Buffer *const response = httpResponseContent(storageGcsResponseP(request));
-            (void)response; // !!!
+            HttpResponse *response = storageGcsResponseP(request);
+            const Buffer *const content = httpResponseContent(response);
+            (void)content; // !!!
 
-            // THROW(AssertError, strZ(strNewBuf(response)));
+            THROW_FMT(AssertError, "!!!HEADER: %s", strZ(httpHeaderGet(httpResponseHeader(response), HTTP_HEADER_CONTENT_TYPE_STR)));
+
+            // THROW(AssertError, strZ(strNewBuf(content)));
 
             // // Nothing is returned when there are no errors
             // if (!bufEmpty(response))

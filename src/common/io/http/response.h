@@ -11,6 +11,7 @@ cached content, etc. will still be available for the lifetime of the object.
 Object type
 ***********************************************************************************************************************************/
 typedef struct HttpResponse HttpResponse;
+typedef struct HttpResponseMulti HttpResponseMulti;
 
 #include "common/io/http/header.h"
 #include "common/io/http/session.h"
@@ -25,12 +26,12 @@ HTTP Response Constants
 #define HTTP_RESPONSE_CODE_NOT_FOUND                                404
 
 /***********************************************************************************************************************************
-Constructors
+Response Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN HttpResponse *httpResponseNew(HttpSession *session, const String *verb, bool contentCache);
 
 /***********************************************************************************************************************************
-Getters/Setters
+Response Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct HttpResponsePub
 {
@@ -70,7 +71,7 @@ httpResponseReason(const HttpResponse *const this)
 }
 
 /***********************************************************************************************************************************
-Functions
+Response Functions
 ***********************************************************************************************************************************/
 // Is this response code OK, i.e. 2XX?
 FN_INLINE_ALWAYS bool
@@ -90,13 +91,18 @@ httpResponseMove(HttpResponse *const this, MemContext *const parentNew)
 }
 
 /***********************************************************************************************************************************
-Destructor
+Response Destructor
 ***********************************************************************************************************************************/
 FN_INLINE_ALWAYS void
 httpResponseFree(HttpResponse *const this)
 {
     objFree(this);
 }
+
+/***********************************************************************************************************************************
+Response Multi Constructors
+***********************************************************************************************************************************/
+FN_EXTERN HttpResponseMulti *httpResponseMultiNew(const Buffer *content, const String *contentType);
 
 /***********************************************************************************************************************************
 Macros for function logging
@@ -107,5 +113,10 @@ FN_EXTERN void httpResponseToLog(const HttpResponse *this, StringStatic *debugLo
     HttpResponse *
 #define FUNCTION_LOG_HTTP_RESPONSE_FORMAT(value, buffer, bufferSize)                                                               \
     FUNCTION_LOG_OBJECT_FORMAT(value, httpResponseToLog, buffer, bufferSize)
+
+#define FUNCTION_LOG_HTTP_RESPONSE_MULTI_TYPE                                                                                      \
+    HttpResponseMulti *
+#define FUNCTION_LOG_HTTP_RESPONSE_MULTI_FORMAT(value, buffer, bufferSize)                                                         \
+    objNameToLog(value, "HttpResponseMulti", buffer, bufferSize)
 
 #endif

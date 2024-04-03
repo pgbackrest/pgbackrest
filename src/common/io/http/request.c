@@ -346,7 +346,6 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
 }
 
 /**********************************************************************************************************************************/
-#define HTTP_MULTIPART_BOUNDARY_DATA                                "XyKQzd3+Y5abPhU_UcxJd8f-m5BElZP+jCdQM14_70xtP3j-IYtmxNL+7Gr3Fx"
 #define HTTP_MULTIPART_BOUNDARY_PRE                                 "\r\n--"
 #define HTTP_MULTIPART_BOUNDARY_POST                                "\r\n"
 

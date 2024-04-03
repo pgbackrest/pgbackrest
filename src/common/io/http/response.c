@@ -43,6 +43,13 @@ struct HttpResponse
     Buffer *content;                                                // Caches content once requested
 };
 
+struct HttpResponseMulti
+{
+    const Buffer *content;                                          // Response content
+    Buffer *boundary;                                               // Multipart boundary
+    const void *boundaryLast;                                       // Last boundary location
+};
+
 /***********************************************************************************************************************************
 When response is done close/reuse the connection
 ***********************************************************************************************************************************/
@@ -205,6 +212,138 @@ httpResponseEof(THIS_VOID)
     FUNCTION_LOG_RETURN(BOOL, this->contentEof);
 }
 
+/***********************************************************************************************************************************
+Read response status
+***********************************************************************************************************************************/
+static void
+httpResponseStatusRead(HttpResponse *const this, IoRead *const read)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(HTTP_RESPONSE, this);
+        FUNCTION_TEST_PARAM(IO_READ, read);
+    FUNCTION_TEST_END();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Read status
+        String *status = ioReadLine(read);
+
+        // Check status ends with a CR and remove it to make error formatting easier and more accurate
+        if (!strEndsWith(status, CR_STR))
+            THROW_FMT(FormatError, "HTTP response status '%s' should be CR-terminated", strZ(status));
+
+        status = strSubN(status, 0, strSize(status) - 1);
+
+        // Check status is at least the minimum required length to avoid harder to interpret errors later on
+        if (strSize(status) < sizeof(HTTP_VERSION) + 4)
+            THROW_FMT(FormatError, "HTTP response '%s' has invalid length", strZ(strTrim(status)));
+
+        // If HTTP/1.0 then the connection will be closed on content eof since connections are not reused by default
+        if (strBeginsWith(status, HTTP_VERSION_10_STR))
+        {
+            this->closeOnContentEof = true;
+        }
+        // Else check that the version is the default (1.1)
+        else if (!strBeginsWith(status, HTTP_VERSION_STR))
+            THROW_FMT(FormatError, "HTTP version of response '%s' must be " HTTP_VERSION " or " HTTP_VERSION_10, strZ(status));
+
+        // Read status code
+        status = strSub(status, sizeof(HTTP_VERSION));
+
+        int spacePos = strChr(status, ' ');
+
+        if (spacePos != 3)
+            THROW_FMT(FormatError, "response status '%s' must have a space after the status code", strZ(status));
+
+        this->pub.code = cvtZSubNToUInt(strZ(status), 0, (size_t)spacePos);
+
+        // Read reason phrase. A missing reason phrase will be represented as an empty string.
+        MEM_CONTEXT_OBJ_BEGIN(this)
+        {
+            this->pub.reason = strSub(status, (size_t)spacePos + 1);
+        }
+        MEM_CONTEXT_OBJ_END();
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Read response headers
+***********************************************************************************************************************************/
+static void
+httpResponseHeaderRead(HttpResponse *const this, IoRead *const read)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(HTTP_RESPONSE, this);
+        FUNCTION_TEST_PARAM(IO_READ, read);
+    FUNCTION_TEST_END();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        do
+        {
+            // Read the next header
+            String *const header = strTrim(ioReadLine(read));
+
+            // If the header is empty then we have reached the end of the headers
+            if (strSize(header) == 0)
+                break;
+
+            // Split the header and store it
+            int colonPos = strChr(header, ':');
+
+            if (colonPos < 0)
+                THROW_FMT(FormatError, "header '%s' missing colon", strZ(strTrim(header)));
+
+            String *headerKey = strLower(strTrim(strSubN(header, 0, (size_t)colonPos)));
+            String *headerValue = strTrim(strSub(header, (size_t)colonPos + 1));
+
+            // Read transfer encoding (only chunked is supported)
+            if (strEq(headerKey, HTTP_HEADER_TRANSFER_ENCODING_STR))
+            {
+                // Error if transfer encoding is not chunked
+                if (!strEq(headerValue, HTTP_VALUE_TRANSFER_ENCODING_CHUNKED_STR))
+                {
+                    THROW_FMT(
+                        FormatError, "only '%s' is supported for '%s' header", HTTP_VALUE_TRANSFER_ENCODING_CHUNKED,
+                        HTTP_HEADER_TRANSFER_ENCODING);
+                }
+
+                this->contentChunked = true;
+            }
+
+            // Read content size
+            if (strEq(headerKey, HTTP_HEADER_CONTENT_LENGTH_STR))
+            {
+                this->contentSize = cvtZToUInt64(strZ(headerValue));
+                this->contentRemaining = this->contentSize;
+            }
+
+            // If the server notified of a closed connection then close the client connection after reading content. This
+            // prevents doing a retry on the next request when using the closed connection.
+            if (strEq(headerKey, HTTP_HEADER_CONNECTION_STR) && strEq(strLower(headerValue), HTTP_VALUE_CONNECTION_CLOSE_STR))
+                this->closeOnContentEof = true;
+
+            // Add after header checks in case the value was modified
+            httpHeaderAdd(this->pub.header, headerKey, headerValue);
+        }
+        while (1);
+
+        // Error if transfer encoding and content length are both set
+        if (this->contentChunked && this->contentSize > 0)
+        {
+            THROW_FMT(
+                FormatError, "'%s' and '%s' headers are both set", HTTP_HEADER_TRANSFER_ENCODING,
+                HTTP_HEADER_CONTENT_LENGTH);
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 /**********************************************************************************************************************************/
 FN_EXTERN HttpResponse *
 httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
@@ -232,101 +371,10 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Read status
-            String *status = ioReadLine(httpSessionIoReadP(this->session));
-
-            // Check status ends with a CR and remove it to make error formatting easier and more accurate
-            if (!strEndsWith(status, CR_STR))
-                THROW_FMT(FormatError, "HTTP response status '%s' should be CR-terminated", strZ(status));
-
-            status = strSubN(status, 0, strSize(status) - 1);
-
-            // Check status is at least the minimum required length to avoid harder to interpret errors later on
-            if (strSize(status) < sizeof(HTTP_VERSION) + 4)
-                THROW_FMT(FormatError, "HTTP response '%s' has invalid length", strZ(strTrim(status)));
-
-            // If HTTP/1.0 then the connection will be closed on content eof since connections are not reused by default
-            if (strBeginsWith(status, HTTP_VERSION_10_STR))
-            {
-                this->closeOnContentEof = true;
-            }
-            // Else check that the version is the default (1.1)
-            else if (!strBeginsWith(status, HTTP_VERSION_STR))
-                THROW_FMT(FormatError, "HTTP version of response '%s' must be " HTTP_VERSION " or " HTTP_VERSION_10, strZ(status));
-
-            // Read status code
-            status = strSub(status, sizeof(HTTP_VERSION));
-
-            int spacePos = strChr(status, ' ');
-
-            if (spacePos != 3)
-                THROW_FMT(FormatError, "response status '%s' must have a space after the status code", strZ(status));
-
-            this->pub.code = cvtZSubNToUInt(strZ(status), 0, (size_t)spacePos);
-
-            // Read reason phrase. A missing reason phrase will be represented as an empty string.
-            MEM_CONTEXT_OBJ_BEGIN(this)
-            {
-                this->pub.reason = strSub(status, (size_t)spacePos + 1);
-            }
-            MEM_CONTEXT_OBJ_END();
+            httpResponseStatusRead(this, httpSessionIoReadP(this->session));
 
             // Read headers
-            do
-            {
-                // Read the next header
-                String *const header = strTrim(ioReadLine(httpSessionIoReadP(this->session)));
-
-                // If the header is empty then we have reached the end of the headers
-                if (strSize(header) == 0)
-                    break;
-
-                // Split the header and store it
-                int colonPos = strChr(header, ':');
-
-                if (colonPos < 0)
-                    THROW_FMT(FormatError, "header '%s' missing colon", strZ(strTrim(header)));
-
-                String *headerKey = strLower(strTrim(strSubN(header, 0, (size_t)colonPos)));
-                String *headerValue = strTrim(strSub(header, (size_t)colonPos + 1));
-
-                // Read transfer encoding (only chunked is supported)
-                if (strEq(headerKey, HTTP_HEADER_TRANSFER_ENCODING_STR))
-                {
-                    // Error if transfer encoding is not chunked
-                    if (!strEq(headerValue, HTTP_VALUE_TRANSFER_ENCODING_CHUNKED_STR))
-                    {
-                        THROW_FMT(
-                            FormatError, "only '%s' is supported for '%s' header", HTTP_VALUE_TRANSFER_ENCODING_CHUNKED,
-                            HTTP_HEADER_TRANSFER_ENCODING);
-                    }
-
-                    this->contentChunked = true;
-                }
-
-                // Read content size
-                if (strEq(headerKey, HTTP_HEADER_CONTENT_LENGTH_STR))
-                {
-                    this->contentSize = cvtZToUInt64(strZ(headerValue));
-                    this->contentRemaining = this->contentSize;
-                }
-
-                // If the server notified of a closed connection then close the client connection after reading content. This
-                // prevents doing a retry on the next request when using the closed connection.
-                if (strEq(headerKey, HTTP_HEADER_CONNECTION_STR) && strEq(strLower(headerValue), HTTP_VALUE_CONNECTION_CLOSE_STR))
-                    this->closeOnContentEof = true;
-
-                // Add after header checks in case the value was modified
-                httpHeaderAdd(this->pub.header, headerKey, headerValue);
-            }
-            while (1);
-
-            // Error if transfer encoding and content length are both set
-            if (this->contentChunked && this->contentSize > 0)
-            {
-                THROW_FMT(
-                    FormatError, "'%s' and '%s' headers are both set", HTTP_HEADER_TRANSFER_ENCODING,
-                    HTTP_HEADER_CONTENT_LENGTH);
-            }
+            httpResponseHeaderRead(this, httpSessionIoReadP(this->session));
 
             // Was content returned in the response? HEAD will report content but not actually return any.
             this->contentExists =
@@ -395,6 +443,69 @@ httpResponseContent(HttpResponse *this)
 }
 
 /**********************************************************************************************************************************/
+FN_EXTERN HttpResponseMulti *
+httpResponseMultiNew(const Buffer *const content, const String *const contentType)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(BUFFER, content);
+        FUNCTION_LOG_PARAM(STRING, contentType);
+    FUNCTION_LOG_END();
+
+    ASSERT(content != NULL);
+
+    OBJ_NEW_BEGIN(HttpResponseMulti, .childQty = MEM_CONTEXT_QTY_MAX)
+    {
+        *this = (HttpResponseMulti)
+        {
+            .content = content,
+        };
+
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            // Extract boundary from content type header
+            if (contentType == NULL || !strBeginsWith(contentType, STRDEF(HTTP_HEADER_CONTENT_TYPE_MULTIPART))) // {uncovered - !!!}
+                THROW_FMT(FormatError, "expect multipart response"); // {uncovered - !!!}
+
+            const String *boundary = strSub(contentType, sizeof(HTTP_HEADER_CONTENT_TYPE_MULTIPART) - 1);
+
+            if (strZ(boundary)[0] == '"') // {uncovered - !!!}
+                boundary = strSubN(boundary, 1, strSize(boundary) - 2); // {uncovered - !!!}
+
+            boundary = strNewFmt("--%s", strZ(boundary));
+
+            MEM_CONTEXT_PRIOR_BEGIN()
+            {
+                this->boundary = bufNewC(strZ(boundary), strSize(boundary));
+            }
+            MEM_CONTEXT_PRIOR_END();
+
+            this->boundaryLast = bufFind(this->content, this->boundary);
+
+            if (this->boundaryLast == NULL) // {uncovered - !!!}
+                THROW_FMT(FormatError, "no boundary found"); // {uncovered - !!!}
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+    OBJ_NEW_END();
+
+    FUNCTION_LOG_RETURN(HTTP_RESPONSE_MULTI, this);
+}
+
+/**********************************************************************************************************************************/
+// FN_EXTERN HttpResponse *
+// httpResponseMultiNext(HttpResponseMulti *const this)
+// {
+//     FUNCTION_LOG_BEGIN(logLevelTrace);
+//         FUNCTION_LOG_PARAM(HTTP_RESPONSE_MULTI, this);
+//     FUNCTION_LOG_END();
+
+//     ASSERT(this != NULL);
+
+//     HttpResponse *result = NULL;
+
+//     FUNCTION_LOG_RETURN(HTTP_RESPONSE, result);
+
+/**********************************************************************************************************************************/
 FN_EXTERN void
 httpResponseToLog(const HttpResponse *const this, StringStatic *const debugLog)
 {
@@ -402,9 +513,9 @@ httpResponseToLog(const HttpResponse *const this, StringStatic *const debugLog)
         debugLog,
         "{code: %u, reason: %s, contentChunked: %s, contentSize: %" PRIu64 ", contentRemaining: %" PRIu64 ", closeOnContentEof: %s"
         ", contentExists: %s, contentEof: %s, contentCached: %s}",
-        httpResponseCode(this), strZ(httpResponseReason(this)), cvtBoolToConstZ(this->contentChunked), this->contentSize,
-        this->contentRemaining, cvtBoolToConstZ(this->closeOnContentEof), cvtBoolToConstZ(this->contentExists),
-        cvtBoolToConstZ(this->contentEof), cvtBoolToConstZ(this->content != NULL));
+        httpResponseCode(this), httpResponseReason(this) == NULL ? NULL_Z : strZ(httpResponseReason(this)),
+        cvtBoolToConstZ(this->contentChunked), this->contentSize, this->contentRemaining, cvtBoolToConstZ(this->closeOnContentEof),
+        cvtBoolToConstZ(this->contentExists), cvtBoolToConstZ(this->contentEof), cvtBoolToConstZ(this->content != NULL));
 
     strStcCat(debugLog, ", header: "),
     httpHeaderToLog(httpResponseHeader(this), debugLog);

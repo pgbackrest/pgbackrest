@@ -844,6 +844,8 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("request with multipart request and response");
 
+                ioBufferSizeSet(512);
+
                 hrnServerScriptAccept(http);
 
                 hrnServerScriptExpectZ(
@@ -859,10 +861,24 @@ testRun(void)
                     "\r\n--" HTTP_MULTIPART_BOUNDARY_DATA "\r\n");
                 hrnServerScriptReplyZ(
                     http,
-                    "HTTP/1.1 200 OK\r\nTransfer-Encoding:chunked\r\n\r\n"
+                    "HTTP/1.1 200 OK\r\nConnection:ClosE\r\ncontent-type:multipart/mixed; boundary=XXX\r\n\r\n"
+                    "PREAMBLE JUNK\r\n"
+                    "\r\n--XXX\r\n"
+                    "content-type:application/http\r\n"
+                    "content-id:0\r\n\r\n"
+                    "HTTP/1.1 200 OK\r\n\r\n"
+                    "\r\n--XXX\r\n"
+                    "content-type:application/http\r\n"
+                    "content-id:0\r\n"
+                    "\r\n"
+                    "HTTP/1.1 200 OK\r\n"
+                    "content-length="
+                    "\r\n"
                     "20\r\n01234567890123456789012345678901\r\n"
                     "10\r\n0123456789012345\r\n"
-                    "0\r\n\r\n");
+                    "\r\n--XX\r\n");
+
+                hrnServerScriptClose(http);
 
                 HttpRequestMulti *requestMulti = httpRequestMultiNew();
                 httpRequestMultiAddP(requestMulti, STRDEF("0"), HTTP_VERB_GET_STR, STRDEF("/"), .header = httpHeaderNew(NULL));
@@ -882,17 +898,26 @@ testRun(void)
                 TEST_RESULT_VOID(
                     FUNCTION_LOG_OBJECT_FORMAT(httpResponseHeader(response), httpHeaderToLog, logBuf, sizeof(logBuf)),
                     "httpHeaderToLog");
-                TEST_RESULT_Z(logBuf, "{transfer-encoding: 'chunked'}", "check response headers");
+                TEST_RESULT_Z(
+                    logBuf, "{connection: 'close', content-type: 'multipart/mixed; boundary=XXX'}", "check response headers");
 
-                buffer = bufNew(35);
+                HttpResponseMulti *responseMulti = NULL;
+                TEST_ASSIGN(
+                    responseMulti,
+                    httpResponseMultiNew(
+                        httpResponseContent(response), httpHeaderGet(httpResponseHeader(response), HTTP_HEADER_CONTENT_TYPE_STR)),
+                    "response multi");
 
-                TEST_RESULT_VOID(ioRead(httpResponseIoRead(response), buffer), "read response");
-                TEST_RESULT_STR_Z(strNewBuf(buffer), "01234567890123456789012345678901012", "check response");
+                (void)responseMulti; // !!!
+
+                // buffer = bufNew(35);
+
+                // TEST_RESULT_VOID(ioRead(httpResponseIoRead(response), buffer), "read response");
+                // TEST_RESULT_STR_Z(strNewBuf(buffer), "01234567890123456789012345678901012", "check response");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("close connection and end server process");
+                TEST_TITLE("end server process");
 
-                hrnServerScriptClose(http);
                 hrnServerScriptEnd(http);
             }
             HRN_FORK_PARENT_END();

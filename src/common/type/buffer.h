@@ -125,6 +125,9 @@ FN_EXTERN Buffer *bufCatSub(Buffer *this, const Buffer *cat, size_t catOffset, s
 // Are two buffers equal?
 FN_EXTERN bool bufEq(const Buffer *this, const Buffer *compare);
 
+// Find a buffer in another buffer
+FN_EXTERN const void *bufFind(const Buffer *this, const Buffer *find);
+
 // Move to a new parent mem context
 FN_INLINE_ALWAYS Buffer *
 bufMove(Buffer *const this, MemContext *const parentNew)
