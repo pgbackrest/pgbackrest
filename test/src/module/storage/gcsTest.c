@@ -88,9 +88,10 @@ typedef struct TestRequestParam
 static void
 testRequest(IoWrite *write, const char *verb, TestRequestParam param)
 {
-    String *const request = param.path != NULL ?
-        strCatFmt(strNew(), "%s %s", verb, param.path) :
-        strCatFmt(strNew(), "%s %s/storage/v1/b%s", verb, param.upload ? "/upload" : "", param.noBucket ? "" : "/bucket/o");
+    String *const request =
+        param.path != NULL ?
+            strCatFmt(strNew(), "%s %s", verb, param.path) :
+            strCatFmt(strNew(), "%s %s/storage/v1/b%s", verb, param.upload ? "/upload" : "", param.noBucket ? "" : "/bucket/o");
 
     // Add object
     if (param.object != NULL)

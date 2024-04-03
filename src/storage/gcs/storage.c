@@ -446,8 +446,8 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Generate path
-        const String *const path = param.path != NULL ?
-            param.path : storageGcsRequestPath(this, param.object, !param.noBucket, param.upload);
+        const String *const path =
+            param.path != NULL ? param.path : storageGcsRequestPath(this, param.object, !param.noBucket, param.upload);
 
         // Create header list
         HttpHeader *requestHeader =

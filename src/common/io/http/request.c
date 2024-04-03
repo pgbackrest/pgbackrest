@@ -477,6 +477,7 @@ httpRequestMultiHeaderAdd(HttpRequestMulti *const this, HttpHeader *const header
 
     FUNCTION_TEST_RETURN(HTTP_HEADER, header);
 }
+
 /**********************************************************************************************************************************/
 FN_EXTERN void
 httpRequestToLog(const HttpRequest *const this, StringStatic *const debugLog)

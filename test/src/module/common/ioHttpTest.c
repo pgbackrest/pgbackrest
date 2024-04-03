@@ -846,7 +846,8 @@ testRun(void)
 
                 hrnServerScriptAccept(http);
 
-                hrnServerScriptExpectZ(http,
+                hrnServerScriptExpectZ(
+                    http,
                     "GET / HTTP/1.1\r\n" TEST_USER_AGENT
                     "content-type:multipart/mixed; boundary=" HTTP_MULTIPART_BOUNDARY_DATA "\r\n"
                     "hdr1:1\r\n\r\n"
