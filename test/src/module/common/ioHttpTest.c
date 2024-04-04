@@ -883,7 +883,7 @@ testRun(void)
                     http,
                     "HTTP/1.1 200 OK\r\nConnection:ClosE\r\ncontent-type:multipart/mixed; boundary=XXX\r\n\r\n"
                     "PREAMBLE JUNK\r\n"
-                    "\r\n--XXX\r\n"
+                    "--XXX\r\n"
                     "content-type:application/http\r\n"
                     "content-id:0\r\n\r\n"
                     "HTTP/1.1 200 OK\r\n\r\n"
@@ -895,7 +895,8 @@ testRun(void)
                     "content-length:3\r\n"
                     "\r\n"
                     "123"
-                    "\r\n--XXX\r\n");
+                    "\r\n--XXX\n"
+                    "POSTAMBLE JUNK");
 
                 hrnServerScriptClose(http);
 
