@@ -896,7 +896,7 @@ testRun(void)
                     "\r\n"
                     "123"
                     "\r\n--XXX\n"
-                    "POSTAMBLE JUNK");
+                    "EPILOGUE JUNK");
 
                 hrnServerScriptClose(http);
 
