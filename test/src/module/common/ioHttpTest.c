@@ -319,7 +319,7 @@ testRun(void)
         TEST_ERROR(httpResponseMultiNew(BUFSTRDEF(""), STRDEF("bogus")), FormatError, "expected multipart content type");
         TEST_ERROR(
             strNewBuf(httpResponseMultiNew(BUFSTRDEF("--YYY"), STRDEF("multipart/mixed; boundary=\"XXX\""))->boundary),
-            FormatError, "multipart boundary '--XXX' not found");
+            FormatError, "multipart boundary 'XXX' not found");
     }
 
     // *****************************************************************************************************************************

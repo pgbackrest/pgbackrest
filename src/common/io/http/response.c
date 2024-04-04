@@ -480,16 +480,18 @@ httpResponseMultiNew(const Buffer *const content, const String *const contentTyp
             if (strZ(boundary)[0] == '"')
                 boundary = strSubN(boundary, 1, strSize(boundary) - 2);
 
-            boundary = strNewFmt("--%s", strZ(boundary));
+            const String *const boundaryNext = strNewFmt(HTTP_MULTIPART_BOUNDARY_PRE "%s", strZ(boundary));
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {
-                this->boundary = bufNewC(strZ(boundary), strSize(boundary));
+                this->boundary = bufNewC(strZ(boundaryNext), strSize(boundaryNext));
             }
             MEM_CONTEXT_PRIOR_END();
 
             // Find first boundary
-            this->boundaryLast = bufFindP(this->content, this->boundary);
+            const String *const boundaryFirst = strNewFmt("--%s" HTTP_MULTIPART_BOUNDARY_POST, strZ(boundary));
+            ASSERT(strSize(boundaryFirst) == strSize(boundaryNext));
+            this->boundaryLast = bufFindP(this->content, BUFSTR(boundaryFirst));
 
             if (this->boundaryLast == NULL)
                 THROW_FMT(FormatError, "multipart boundary '%s' not found", strZ(boundary));
@@ -523,11 +525,8 @@ httpResponseMultiNext(HttpResponseMulti *const this)
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            // Skip CRLF
-            this->boundaryLast += 2;
-
             // Create a buffer for the response
-            Buffer *const response = bufNewC(this->boundaryLast, (size_t)(boundaryNext - this->boundaryLast - 2));
+            Buffer *const response = bufNewC(this->boundaryLast, (size_t)(boundaryNext - this->boundaryLast));
             IoRead *const responseIo = ioBufferReadNewOpen(response);
 
             // Read multipart headers
@@ -558,7 +557,7 @@ httpResponseMultiNext(HttpResponseMulti *const this)
             ioWriteClose(write);
 
             // Set last boundary
-            this->boundaryLast = boundaryNext;
+            this->boundaryLast = boundaryNext + 2;
         }
         MEM_CONTEXT_TEMP_END();
     }

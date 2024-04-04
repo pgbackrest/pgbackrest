@@ -217,18 +217,22 @@ bufFind(const Buffer *const this, const Buffer *const find, const BufFindParam p
     ASSERT(param.begin == NULL || (param.begin >= bufPtrConst(this) && param.begin - bufPtrConst(this) <= (off_t)bufUsed(this)));
 
     const void *result = NULL;
-    const unsigned char *haystack = param.begin != NULL ? param.begin : bufPtrConst(this);
-    unsigned int findIdx = (unsigned int)(haystack - bufPtrConst(this));
 
-    for (; findIdx <= bufUsed(this) - bufUsed(find); findIdx++)
+    if (bufUsed(this) >= bufUsed(find))
     {
-        if (memcmp(haystack, bufPtrConst(find), bufSize(find)) == 0)
-        {
-            result = haystack;
-            break;
-        }
+        const unsigned char *haystack = param.begin != NULL ? param.begin : bufPtrConst(this);
+        unsigned int findIdx = (unsigned int)(haystack - bufPtrConst(this));
 
-        haystack++;
+        for (; findIdx <= bufUsed(this) - bufUsed(find); findIdx++)
+        {
+            if (memcmp(haystack, bufPtrConst(find), bufSize(find)) == 0)
+            {
+                result = haystack;
+                break;
+            }
+
+            haystack++;
+        }
     }
 
     FUNCTION_TEST_RETURN_CONST_P(UCHARDATA, result);

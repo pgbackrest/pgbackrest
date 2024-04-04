@@ -150,6 +150,7 @@ testRun(void)
         TEST_RESULT_PTR(bufFindP(haystack, BUFSTRDEF("here")), bufPtrConst(haystack) + 15, "found last");
         TEST_RESULT_PTR(bufFindP(haystack, BUFSTRDEF("thing")), bufPtrConst(haystack) + 8, "found middle");
         TEST_RESULT_PTR(bufFindP(haystack, BUFSTRDEF("find"), .begin = bufPtrConst(haystack) + 1), NULL, "skipped not found");
+        TEST_RESULT_PTR(bufFindP(haystack, BUFSTRDEF("findsomethinginhere2")), NULL, "needle longer than haystack");
     }
 
     // *****************************************************************************************************************************

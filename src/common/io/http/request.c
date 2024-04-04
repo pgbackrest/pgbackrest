@@ -345,9 +345,6 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
 }
 
 /**********************************************************************************************************************************/
-#define HTTP_MULTIPART_BOUNDARY_PRE                                 "\r\n--"
-#define HTTP_MULTIPART_BOUNDARY_POST                                "\r\n"
-
 FN_EXTERN HttpRequestMulti *
 httpRequestMultiNew(void)
 {
