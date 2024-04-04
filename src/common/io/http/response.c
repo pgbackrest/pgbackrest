@@ -347,6 +347,7 @@ httpResponseHeaderRead(HttpResponse *const this, IoRead *const read)
 }
 
 /**********************************************************************************************************************************/
+// Constructor helper
 static HttpResponse *
 httpResponseNewInternal(void)
 {
@@ -531,6 +532,11 @@ httpResponseMultiNext(HttpResponseMulti *const this)
             // Read multipart headers
             httpResponseHeaderRead(result, responseIo);
 
+            CHECK(
+                FormatError,
+                strEq(httpHeaderGet(httpResponseHeader(result), HTTP_HEADER_CONTENT_TYPE_STR), HTTP_HEADER_CONTENT_TYPE_HTTP_STR),
+                "expected '" HTTP_HEADER_CONTENT_TYPE ":" HTTP_HEADER_CONTENT_TYPE_HTTP "'");
+
             // Read status
             httpResponseStatusRead(result, responseIo);
 
@@ -542,7 +548,7 @@ httpResponseMultiNext(HttpResponseMulti *const this)
 
             MEM_CONTEXT_OBJ_BEGIN(result)
             {
-                result->content = bufNew(result->contentSize);
+                result->content = bufNew((size_t)result->contentSize);
             }
             MEM_CONTEXT_OBJ_END();
 
@@ -551,8 +557,6 @@ httpResponseMultiNext(HttpResponseMulti *const this)
             ioWriteClose(write);
 
             ASSERT(result->contentSize == bufUsed(result->content));
-
-            result->contentEof = true;
 
             // Set last boundary
             this->boundaryLast = boundaryNext;

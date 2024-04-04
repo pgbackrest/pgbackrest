@@ -25,6 +25,12 @@ HTTP Response Constants
 #define HTTP_RESPONSE_CODE_FORBIDDEN                                403
 #define HTTP_RESPONSE_CODE_NOT_FOUND                                404
 
+// 2xx indicates success
+#define HTTP_RESPONSE_CODE_CLASS_OK                                 2
+
+// 5xx errors that should always be retried
+#define HTTP_RESPONSE_CODE_CLASS_RETRY                              5
+
 /***********************************************************************************************************************************
 Response Constructors
 ***********************************************************************************************************************************/
@@ -77,7 +83,14 @@ Response Functions
 FN_INLINE_ALWAYS bool
 httpResponseCodeOk(const HttpResponse *const this)
 {
-    return httpResponseCode(this) / 100 == 2;
+    return httpResponseCode(this) / 100 == HTTP_RESPONSE_CODE_CLASS_OK;
+}
+
+// Should the request be retried?
+FN_INLINE_ALWAYS bool
+httpResponseCodeRetry(const HttpResponse *const this)
+{
+    return httpResponseCode(this) / 100 == HTTP_RESPONSE_CODE_CLASS_RETRY;
 }
 
 // Fetch all response content. Content will be cached so it can be retrieved again without additional cost.

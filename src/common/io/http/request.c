@@ -25,11 +25,13 @@ STRING_EXTERN(HTTP_VERB_POST_STR,                                   HTTP_VERB_PO
 STRING_EXTERN(HTTP_VERB_PUT_STR,                                    HTTP_VERB_PUT);
 
 STRING_EXTERN(HTTP_HEADER_AUTHORIZATION_STR,                        HTTP_HEADER_AUTHORIZATION);
+STRING_EXTERN(HTTP_HEADER_CONTENT_ID_STR,                           HTTP_HEADER_CONTENT_ID);
 STRING_EXTERN(HTTP_HEADER_CONTENT_LENGTH_STR,                       HTTP_HEADER_CONTENT_LENGTH);
 STRING_EXTERN(HTTP_HEADER_CONTENT_MD5_STR,                          HTTP_HEADER_CONTENT_MD5);
 STRING_EXTERN(HTTP_HEADER_CONTENT_RANGE_STR,                        HTTP_HEADER_CONTENT_RANGE);
 STRING_EXTERN(HTTP_HEADER_CONTENT_TYPE_STR,                         HTTP_HEADER_CONTENT_TYPE);
 STRING_EXTERN(HTTP_HEADER_CONTENT_TYPE_APP_FORM_URL_STR,            HTTP_HEADER_CONTENT_TYPE_APP_FORM_URL);
+STRING_EXTERN(HTTP_HEADER_CONTENT_TYPE_HTTP_STR,                    HTTP_HEADER_CONTENT_TYPE_HTTP);
 STRING_EXTERN(HTTP_HEADER_CONTENT_TYPE_JSON_STR,                    HTTP_HEADER_CONTENT_TYPE_JSON);
 STRING_EXTERN(HTTP_HEADER_CONTENT_TYPE_XML_STR,                     HTTP_HEADER_CONTENT_TYPE_XML);
 STRING_EXTERN(HTTP_HEADER_ETAG_STR,                                 HTTP_HEADER_ETAG);
@@ -38,9 +40,6 @@ STRING_EXTERN(HTTP_HEADER_HOST_STR,                                 HTTP_HEADER_
 STRING_EXTERN(HTTP_HEADER_LAST_MODIFIED_STR,                        HTTP_HEADER_LAST_MODIFIED);
 STRING_EXTERN(HTTP_HEADER_RANGE_STR,                                HTTP_HEADER_RANGE);
 #define HTTP_HEADER_USER_AGENT                                      "user-agent"
-
-// 5xx errors that should always be retried
-#define HTTP_RESPONSE_CODE_RETRY_CLASS                              5
 
 /***********************************************************************************************************************************
 Object type
@@ -185,7 +184,7 @@ httpRequestProcess(HttpRequest *this, bool waitForResponse, bool contentCache)
                         // Retry when response code is 5xx. These errors generally represent a server error for a request that looks
                         // valid. There are a few errors that might be permanently fatal but they are rare and it seems best not to
                         // try and pick and choose errors in this class to retry.
-                        if (httpResponseCode(result) / 100 == HTTP_RESPONSE_CODE_RETRY_CLASS)
+                        if (httpResponseCodeRetry(result))
                             THROW_FMT(ServiceError, "[%u] %s", httpResponseCode(result), strZ(httpResponseReason(result)));
 
                         // Move response to outer temp context
@@ -358,7 +357,7 @@ httpRequestMultiNew(void)
     {
         *this = (HttpRequestMulti)
         {
-            .boundaryRaw = bufNewC(HTTP_MULTIPART_BOUNDARY_DATA, sizeof(HTTP_MULTIPART_BOUNDARY_DATA) - 1),
+            .boundaryRaw = bufNewC(HTTP_MULTIPART_BOUNDARY, sizeof(HTTP_MULTIPART_BOUNDARY) - 1),
             .contentList = lstNewP(sizeof(Buffer *)),
         };
     }
@@ -392,14 +391,14 @@ httpRequestMultiAdd(
     {
         String *const request = strNew();
 
-        strCatZ(request, HTTP_HEADER_CONTENT_TYPE ":application/http\r\n");
-        strCatZ(request, "content-transfer-encoding:binary\r\n");
-        strCatFmt(request, "content-id:%s\r\n\r\n", strZ(contentId));
+        strCatZ(request, HTTP_HEADER_CONTENT_TYPE ":" HTTP_HEADER_CONTENT_TYPE_HTTP "\r\n");
+        strCatZ(request, HTTP_HEADER_CONTENT_TRANSFER_ENCODING ":" HTTP_HEADER_CONTENT_TRANSFER_ENCODING_BINARY "\r\n");
+        strCatFmt(request, HTTP_HEADER_CONTENT_ID ":%s\r\n\r\n", strZ(contentId));
         strCat(request, httpRequestFmt(verb, path, param.query, param.header, false));
 
         MEM_CONTEXT_OBJ_BEGIN(this->contentList)
         {
-            Buffer *const content = bufNew(strSize(request) + (param.content == NULL ? 0 : bufUsed(param.content))); // {uncovered}
+            Buffer *const content = bufNew(strSize(request) + (param.content == NULL ? 0 : bufUsed(param.content)));
 
             bufCat(content, BUFSTR(request));
             bufCat(content, param.content);

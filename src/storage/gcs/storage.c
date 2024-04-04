@@ -937,29 +937,21 @@ storageGcsPathRemoveInternal(StorageGcs *const this, HttpRequest *const request,
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            HttpResponse *response = storageGcsResponseP(request);
-            const Buffer *const content = httpResponseContent(response);
-            (void)content; // !!!
+            HttpResponse *const response = storageGcsResponseP(request);
+            HttpResponseMulti *const responseMulti = httpResponseMultiNew(
+                httpResponseContent(response), httpHeaderGet(httpResponseHeader(response), HTTP_HEADER_CONTENT_TYPE_STR));
+            HttpResponse *responsePart = httpResponseMultiNext(responseMulti);
+            CHECK(FormatError, responsePart != NULL, "at least one response part is required");
 
-            THROW_FMT(AssertError, "!!!HEADER: %s", strZ(httpHeaderGet(httpResponseHeader(response), HTTP_HEADER_CONTENT_TYPE_STR)));
+            do
+            {
+                if (!httpResponseCodeOk(responsePart) && httpResponseCode(responsePart) != HTTP_RESPONSE_CODE_NOT_FOUND)
+                    httpRequestError(request, responsePart);
 
-            // THROW(AssertError, strZ(strNewBuf(content)));
-
-            // // Nothing is returned when there are no errors
-            // if (!bufEmpty(response))
-            // {
-            //     XmlNodeList *errorList = xmlNodeChildList(xmlDocumentRoot(xmlDocumentNewBuf(response)), S3_XML_TAG_ERROR_STR);
-
-            //     // Attempt to remove errored files one at a time rather than retrying the batch
-            //     for (unsigned int errorIdx = 0; errorIdx < xmlNodeLstSize(errorList); errorIdx++)
-            //     {
-            //         storageS3RequestP(
-            //             this, HTTP_VERB_DELETE_STR,
-            //             strNewFmt(
-            //                 "/%s",
-            //                 strZ(xmlNodeContent(xmlNodeChild(xmlNodeLstGet(errorList, errorIdx), S3_XML_TAG_KEY_STR, true)))));
-            //     }
-            // }
+                httpResponseFree(responsePart);
+                responsePart = httpResponseMultiNext(responseMulti);
+            }
+            while (responsePart != NULL);
         }
         MEM_CONTEXT_TEMP_END();
 

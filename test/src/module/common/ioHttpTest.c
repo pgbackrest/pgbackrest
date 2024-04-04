@@ -851,14 +851,21 @@ testRun(void)
                 hrnServerScriptExpectZ(
                     http,
                     "GET / HTTP/1.1\r\n" TEST_USER_AGENT
-                    "content-type:multipart/mixed; boundary=" HTTP_MULTIPART_BOUNDARY_DATA "\r\n"
+                    "content-type:multipart/mixed; boundary=" HTTP_MULTIPART_BOUNDARY "\r\n"
                     "hdr1:1\r\n\r\n"
-                    "\r\n--" HTTP_MULTIPART_BOUNDARY_DATA "\r\n"
+                    "\r\n--" HTTP_MULTIPART_BOUNDARY "\r\n"
                     "content-type:application/http\r\n"
                     "content-transfer-encoding:binary\r\n"
                     "content-id:0\r\n\r\n"
                     "GET / HTTP/1.1\r\n\r\n"
-                    "\r\n--" HTTP_MULTIPART_BOUNDARY_DATA "\r\n");
+                    "\r\n--" HTTP_MULTIPART_BOUNDARY "\r\n"
+                    "content-type:application/http\r\n"
+                    "content-transfer-encoding:binary\r\n"
+                    "content-id:1\r\n\r\n"
+                    "POST /ack HTTP/1.1\r\n"
+                    "content-length:3\r\n\r\n"
+                    "XXX"
+                    "\r\n--" HTTP_MULTIPART_BOUNDARY "\r\n");
                 hrnServerScriptReplyZ(
                     http,
                     "HTTP/1.1 200 OK\r\nConnection:ClosE\r\ncontent-type:multipart/mixed; boundary=XXX\r\n\r\n"
@@ -869,7 +876,7 @@ testRun(void)
                     "HTTP/1.1 200 OK\r\n\r\n"
                     "\r\n--XXX\r\n"
                     "content-type:application/http\r\n"
-                    "content-id:0\r\n"
+                    "content-id:1\r\n"
                     "\r\n"
                     "HTTP/1.1 200 OK\r\n"
                     "content-length:3\r\n"
@@ -881,6 +888,10 @@ testRun(void)
 
                 HttpRequestMulti *requestMulti = httpRequestMultiNew();
                 httpRequestMultiAddP(requestMulti, STRDEF("0"), HTTP_VERB_GET_STR, STRDEF("/"), .header = httpHeaderNew(NULL));
+                httpRequestMultiAddP(
+                    requestMulti, STRDEF("1"), HTTP_VERB_POST_STR, STRDEF("/ack"),
+                    .header = httpHeaderAdd(httpHeaderNew(NULL), HTTP_HEADER_CONTENT_LENGTH_STR, STRDEF("3")),
+                    .content = BUFSTRDEF("XXX"));
 
                 HttpHeader *headerRequest = httpHeaderNew(NULL);
                 httpHeaderAdd(headerRequest, STRDEF("hdr1"), STRDEF("1"));

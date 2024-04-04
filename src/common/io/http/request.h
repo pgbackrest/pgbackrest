@@ -40,18 +40,25 @@ STRING_DECLARE(HTTP_VERB_PUT_STR);
 
 #define HTTP_HEADER_AUTHORIZATION                                   "authorization"
 STRING_DECLARE(HTTP_HEADER_AUTHORIZATION_STR);
+#define HTTP_HEADER_CONTENT_ID                                      "content-id"
+STRING_DECLARE(HTTP_HEADER_CONTENT_ID_STR);
 #define HTTP_HEADER_CONTENT_LENGTH                                  "content-length"
 STRING_DECLARE(HTTP_HEADER_CONTENT_LENGTH_STR);
 #define HTTP_HEADER_CONTENT_MD5                                     "content-md5"
 STRING_DECLARE(HTTP_HEADER_CONTENT_MD5_STR);
 #define HTTP_HEADER_CONTENT_RANGE                                   "content-range"
 STRING_DECLARE(HTTP_HEADER_CONTENT_RANGE_STR);
+#define HTTP_HEADER_CONTENT_TRANSFER_ENCODING                       "content-transfer-encoding"
+#define HTTP_HEADER_CONTENT_TRANSFER_ENCODING_BINARY                "binary"
 #define HTTP_HEADER_CONTENT_TYPE                                    "content-type"
 STRING_DECLARE(HTTP_HEADER_CONTENT_TYPE_STR);
 #define HTTP_HEADER_CONTENT_TYPE_APP_FORM_URL                       "application/x-www-form-urlencoded"
 STRING_DECLARE(HTTP_HEADER_CONTENT_TYPE_APP_FORM_URL_STR);
+#define HTTP_HEADER_CONTENT_TYPE_HTTP                               "application/http"
+STRING_DECLARE(HTTP_HEADER_CONTENT_TYPE_HTTP_STR);
 #define HTTP_HEADER_CONTENT_TYPE_JSON                               "application/json"
 STRING_DECLARE(HTTP_HEADER_CONTENT_TYPE_JSON_STR);
+#define HTTP_HEADER_CONTENT_TYPE_MULTIPART                          "multipart/mixed; boundary="
 #define HTTP_HEADER_CONTENT_TYPE_XML                                "application/xml"
 STRING_DECLARE(HTTP_HEADER_CONTENT_TYPE_XML_STR);
 #define HTTP_HEADER_CONTENT_RANGE_BYTES                             "bytes"
@@ -67,8 +74,7 @@ STRING_DECLARE(HTTP_HEADER_LAST_MODIFIED_STR);
 STRING_DECLARE(HTTP_HEADER_RANGE_STR);
 #define HTTP_HEADER_RANGE_BYTES                                     "bytes"
 
-#define HTTP_HEADER_CONTENT_TYPE_MULTIPART                          "multipart/mixed; boundary="
-#define HTTP_MULTIPART_BOUNDARY_DATA                                "XyKQzd3-Y5abPhU-UcxJd8f_m5BElZP_jCdQM14-70xtP3j-IYtmxNL"
+#define HTTP_MULTIPART_BOUNDARY                                     "XyKQzd3-Y5abPhU-UcxJd8f_m5BElZP_jCdQM14-70xtP3j-IYtmxNL"
 
 /***********************************************************************************************************************************
 Request Constructors
