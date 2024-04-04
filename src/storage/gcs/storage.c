@@ -466,7 +466,7 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
         // Set host
         httpHeaderPut(requestHeader, HTTP_HEADER_HOST_STR, this->endpoint);
 
-        // Set content
+        // Set content or construct multipart content
         const Buffer *content = param.content;
 
         if (param.contentList != NULL)
