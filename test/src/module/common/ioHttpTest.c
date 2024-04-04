@@ -872,11 +872,10 @@ testRun(void)
                     "content-id:0\r\n"
                     "\r\n"
                     "HTTP/1.1 200 OK\r\n"
-                    "content-length="
+                    "content-length:3\r\n"
                     "\r\n"
-                    "20\r\n01234567890123456789012345678901\r\n"
-                    "10\r\n0123456789012345\r\n"
-                    "\r\n--XX\r\n");
+                    "123"
+                    "\r\n--XXX\r\n");
 
                 hrnServerScriptClose(http);
 
@@ -908,12 +907,15 @@ testRun(void)
                         httpResponseContent(response), httpHeaderGet(httpResponseHeader(response), HTTP_HEADER_CONTENT_TYPE_STR)),
                     "response multi");
 
-                (void)responseMulti; // !!!
+                HttpResponse *responsePart = NULL;
+                TEST_ASSIGN(responsePart, httpResponseMultiNext(responseMulti), "response part");
+                TEST_RESULT_UINT(httpResponseCode(responsePart), 200, "response code");
+                TEST_RESULT_STR_Z(strNewBuf(httpResponseContent(responsePart)), "", "response content");
 
-                // buffer = bufNew(35);
+                TEST_ASSIGN(responsePart, httpResponseMultiNext(responseMulti), "response part");
+                TEST_RESULT_STR_Z(strNewBuf(httpResponseContent(responsePart)), "123", "response content");
 
-                // TEST_RESULT_VOID(ioRead(httpResponseIoRead(response), buffer), "read response");
-                // TEST_RESULT_STR_Z(strNewBuf(buffer), "01234567890123456789012345678901012", "check response");
+                TEST_RESULT_PTR(httpResponseMultiNext(responseMulti), NULL, "no more responses");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("end server process");

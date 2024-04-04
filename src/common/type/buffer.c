@@ -203,21 +203,24 @@ bufEq(const Buffer *this, const Buffer *compare)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN const void *
-bufFind(const Buffer *const this, const Buffer *const find)
+FN_EXTERN const unsigned char *
+bufFind(const Buffer *const this, const Buffer *const find, const BufFindParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, this);
         FUNCTION_TEST_PARAM(BUFFER, find);
+        FUNCTION_TEST_PARAM_P(VOID, param.begin);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
     ASSERT(find != NULL);
+    ASSERT(param.begin == NULL || (param.begin >= bufPtrConst(this) && param.begin - bufPtrConst(this) <= (off_t)bufUsed(this)));
 
     const void *result = NULL;
-    const unsigned char *haystack = bufPtrConst(this);
+    const unsigned char *haystack = param.begin != NULL ? param.begin : bufPtrConst(this);
+    unsigned int findIdx = (unsigned int)(haystack - bufPtrConst(this));
 
-    for (unsigned int findIdx = 0; findIdx <= bufUsed(this) - bufUsed(find); findIdx++)
+    for (; findIdx <= bufUsed(this) - bufUsed(find); findIdx++)
     {
         if (memcmp(haystack, bufPtrConst(find), bufSize(find)) == 0)
         {
@@ -228,7 +231,7 @@ bufFind(const Buffer *const this, const Buffer *const find)
         haystack++;
     }
 
-    FUNCTION_TEST_RETURN_CONST_P(VOID, result);
+    FUNCTION_TEST_RETURN_CONST_P(UCHARDATA, result);
 }
 
 /**********************************************************************************************************************************/

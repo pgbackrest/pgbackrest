@@ -126,7 +126,16 @@ FN_EXTERN Buffer *bufCatSub(Buffer *this, const Buffer *cat, size_t catOffset, s
 FN_EXTERN bool bufEq(const Buffer *this, const Buffer *compare);
 
 // Find a buffer in another buffer
-FN_EXTERN const void *bufFind(const Buffer *this, const Buffer *find);
+typedef struct BufFindParam
+{
+    VAR_PARAM_HEADER;
+    const unsigned char *begin;                                     // Begin find from this address
+} BufFindParam;
+
+#define bufFindP(this, find, ...)                                                                                                     \
+    bufFind(this, find, (BufFindParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN const unsigned char *bufFind(const Buffer *this, const Buffer *find, BufFindParam param);
 
 // Move to a new parent mem context
 FN_INLINE_ALWAYS Buffer *

@@ -105,6 +105,12 @@ Response Multi Constructors
 FN_EXTERN HttpResponseMulti *httpResponseMultiNew(const Buffer *content, const String *contentType);
 
 /***********************************************************************************************************************************
+Response Multi Functions
+***********************************************************************************************************************************/
+// Get next response
+FN_EXTERN HttpResponse *httpResponseMultiNext(HttpResponseMulti *this);
+
+/***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
 FN_EXTERN void httpResponseToLog(const HttpResponse *this, StringStatic *debugLog);

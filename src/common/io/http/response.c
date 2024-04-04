@@ -4,6 +4,8 @@ HTTP Response
 #include "build.auto.h"
 
 #include "common/debug.h"
+#include "common/io/bufferRead.h"
+#include "common/io/bufferWrite.h"
 #include "common/io/http/client.h"
 #include "common/io/http/common.h"
 #include "common/io/http/request.h"
@@ -47,7 +49,7 @@ struct HttpResponseMulti
 {
     const Buffer *content;                                          // Response content
     Buffer *boundary;                                               // Multipart boundary
-    const void *boundaryLast;                                       // Last boundary location
+    const unsigned char *boundaryLast;                              // Last boundary location
 };
 
 /***********************************************************************************************************************************
@@ -297,8 +299,8 @@ httpResponseHeaderRead(HttpResponse *const this, IoRead *const read)
             if (colonPos < 0)
                 THROW_FMT(FormatError, "header '%s' missing colon", strZ(strTrim(header)));
 
-            String *headerKey = strLower(strTrim(strSubN(header, 0, (size_t)colonPos)));
-            String *headerValue = strTrim(strSub(header, (size_t)colonPos + 1));
+            const String *const headerKey = strLower(strTrim(strSubN(header, 0, (size_t)colonPos)));
+            String *const headerValue = strTrim(strSub(header, (size_t)colonPos + 1));
 
             // Read transfer encoding (only chunked is supported)
             if (strEq(headerKey, HTTP_HEADER_TRANSFER_ENCODING_STR))
@@ -345,6 +347,26 @@ httpResponseHeaderRead(HttpResponse *const this, IoRead *const read)
 }
 
 /**********************************************************************************************************************************/
+static HttpResponse *
+httpResponseNewInternal(void)
+{
+    FUNCTION_TEST_VOID();
+
+    OBJ_NEW_BEGIN(HttpResponse, .childQty = MEM_CONTEXT_QTY_MAX)
+    {
+        *this = (HttpResponse)
+        {
+            .pub =
+            {
+                .header = httpHeaderNew(NULL),
+            },
+        };
+    }
+    OBJ_NEW_END();
+
+    FUNCTION_TEST_RETURN(HTTP_RESPONSE, this);
+}
+
 FN_EXTERN HttpResponse *
 httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
 {
@@ -357,57 +379,43 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
     ASSERT(session != NULL);
     ASSERT(verb != NULL);
 
-    OBJ_NEW_BEGIN(HttpResponse, .childQty = MEM_CONTEXT_QTY_MAX)
+    HttpResponse *const this = httpResponseNewInternal();
+    this->session = httpSessionMove(session, objMemContext(this));
+
+    // Read status
+    httpResponseStatusRead(this, httpSessionIoReadP(this->session));
+
+    // Read headers
+    httpResponseHeaderRead(this, httpSessionIoReadP(this->session));
+
+    // Was content returned in the response? HEAD will report content but not actually return any.
+    this->contentExists =
+        (this->contentChunked || this->contentSize > 0 || this->closeOnContentEof) && !strEq(verb, HTTP_VERB_HEAD_STR);
+    this->contentEof = !this->contentExists;
+
+    // Create an io object, even if there is no content. This makes the logic for readers easier -- they can just check eof
+    // rather than also checking if the io object exists.
+    MEM_CONTEXT_OBJ_BEGIN(this)
     {
-        *this = (HttpResponse)
-        {
-            .pub =
-            {
-                .header = httpHeaderNew(NULL),
-            },
-            .session = httpSessionMove(session, memContextCurrent()),
-        };
-
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            // Read status
-            httpResponseStatusRead(this, httpSessionIoReadP(this->session));
-
-            // Read headers
-            httpResponseHeaderRead(this, httpSessionIoReadP(this->session));
-
-            // Was content returned in the response? HEAD will report content but not actually return any.
-            this->contentExists =
-                (this->contentChunked || this->contentSize > 0 || this->closeOnContentEof) && !strEq(verb, HTTP_VERB_HEAD_STR);
-            this->contentEof = !this->contentExists;
-
-            // Create an io object, even if there is no content. This makes the logic for readers easier -- they can just check eof
-            // rather than also checking if the io object exists.
-            MEM_CONTEXT_OBJ_BEGIN(this)
-            {
-                this->pub.contentRead = ioReadNewP(this, .eof = httpResponseEof, .read = httpResponseRead);
-                ioReadOpen(httpResponseIoRead(this));
-            }
-            MEM_CONTEXT_OBJ_END();
-
-            // If there is no content then we are done with the client
-            if (!this->contentExists)
-            {
-                httpResponseDone(this);
-            }
-            // Else cache content when requested or on error
-            else if (contentCache || !httpResponseCodeOk(this))
-            {
-                MEM_CONTEXT_OBJ_BEGIN(this)
-                {
-                    httpResponseContent(this);
-                }
-                MEM_CONTEXT_OBJ_END();
-            }
-        }
-        MEM_CONTEXT_TEMP_END();
+        this->pub.contentRead = ioReadNewP(this, .eof = httpResponseEof, .read = httpResponseRead);
+        ioReadOpen(httpResponseIoRead(this));
     }
-    OBJ_NEW_END();
+    MEM_CONTEXT_OBJ_END();
+
+    // If there is no content then we are done with the client
+    if (!this->contentExists)
+    {
+        httpResponseDone(this);
+    }
+    // Else cache content when requested or on error
+    else if (contentCache || !httpResponseCodeOk(this))
+    {
+        MEM_CONTEXT_OBJ_BEGIN(this)
+        {
+            httpResponseContent(this);
+        }
+        MEM_CONTEXT_OBJ_END();
+    }
 
     FUNCTION_LOG_RETURN(HTTP_RESPONSE, this);
 }
@@ -479,7 +487,7 @@ httpResponseMultiNew(const Buffer *const content, const String *const contentTyp
             }
             MEM_CONTEXT_PRIOR_END();
 
-            this->boundaryLast = bufFind(this->content, this->boundary);
+            this->boundaryLast = bufFindP(this->content, this->boundary);
 
             if (this->boundaryLast == NULL) // {uncovered - !!!}
                 THROW_FMT(FormatError, "no boundary found"); // {uncovered - !!!}
@@ -492,18 +500,68 @@ httpResponseMultiNew(const Buffer *const content, const String *const contentTyp
 }
 
 /**********************************************************************************************************************************/
-// FN_EXTERN HttpResponse *
-// httpResponseMultiNext(HttpResponseMulti *const this)
-// {
-//     FUNCTION_LOG_BEGIN(logLevelTrace);
-//         FUNCTION_LOG_PARAM(HTTP_RESPONSE_MULTI, this);
-//     FUNCTION_LOG_END();
+FN_EXTERN HttpResponse *
+httpResponseMultiNext(HttpResponseMulti *const this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(HTTP_RESPONSE_MULTI, this);
+    FUNCTION_LOG_END();
 
-//     ASSERT(this != NULL);
+    ASSERT(this != NULL);
 
-//     HttpResponse *result = NULL;
+    HttpResponse *result = NULL;
 
-//     FUNCTION_LOG_RETURN(HTTP_RESPONSE, result);
+    // Find next boundary
+    this->boundaryLast += bufSize(this->boundary);
+    const unsigned char *const boundaryNext = bufFindP(this->content, this->boundary, .begin = this->boundaryLast);
+
+    if (boundaryNext != NULL)
+    {
+        result = httpResponseNewInternal();
+
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            // Skip CRLF
+            this->boundaryLast += 2;
+
+            // Create a buffer for the response
+            Buffer *const response = bufNewC(this->boundaryLast, (size_t)(boundaryNext - this->boundaryLast - 2));
+            IoRead *const responseIo = ioBufferReadNewOpen(response);
+
+            // Read multipart headers
+            httpResponseHeaderRead(result, responseIo);
+
+            // Read status
+            httpResponseStatusRead(result, responseIo);
+
+            // Read headers
+            httpResponseHeaderRead(result, responseIo);
+
+            // Read content
+            CHECK(FormatError, !result->contentChunked, "chunked encoding not supported in multipart");
+
+            MEM_CONTEXT_OBJ_BEGIN(result)
+            {
+                result->content = bufNew(result->contentSize);
+            }
+            MEM_CONTEXT_OBJ_END();
+
+            IoWrite *const write = ioBufferWriteNewOpen(result->content);
+            ioCopyP(responseIo, write);
+            ioWriteClose(write);
+
+            ASSERT(result->contentSize == bufUsed(result->content));
+
+            result->contentEof = true;
+
+            // Set last boundary
+            this->boundaryLast = boundaryNext;
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+
+    FUNCTION_LOG_RETURN(HTTP_RESPONSE, result);
+}
 
 /**********************************************************************************************************************************/
 FN_EXTERN void

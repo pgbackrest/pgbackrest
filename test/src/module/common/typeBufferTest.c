@@ -145,10 +145,11 @@ testRun(void)
 
         const Buffer *haystack = BUFSTRDEF("findsomethinginhere");
 
-        TEST_RESULT_PTR(bufFind(haystack, BUFSTRDEF("xxx")), NULL, "not found");
-        TEST_RESULT_PTR(bufFind(haystack, BUFSTRDEF("find")), bufPtrConst(haystack), "found first");
-        TEST_RESULT_PTR(bufFind(haystack, BUFSTRDEF("here")), bufPtrConst(haystack) + 15, "found last");
-        TEST_RESULT_PTR(bufFind(haystack, BUFSTRDEF("thing")), bufPtrConst(haystack) + 8, "found middle");
+        TEST_RESULT_PTR(bufFindP(haystack, BUFSTRDEF("xxx")), NULL, "not found");
+        TEST_RESULT_PTR(bufFindP(haystack, BUFSTRDEF("find")), bufPtrConst(haystack), "found first");
+        TEST_RESULT_PTR(bufFindP(haystack, BUFSTRDEF("here")), bufPtrConst(haystack) + 15, "found last");
+        TEST_RESULT_PTR(bufFindP(haystack, BUFSTRDEF("thing")), bufPtrConst(haystack) + 8, "found middle");
+        TEST_RESULT_PTR(bufFindP(haystack, BUFSTRDEF("find"), .begin = bufPtrConst(haystack) + 1), NULL, "skipped not found");
     }
 
     // *****************************************************************************************************************************
