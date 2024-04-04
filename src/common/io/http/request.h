@@ -74,7 +74,7 @@ STRING_DECLARE(HTTP_HEADER_LAST_MODIFIED_STR);
 STRING_DECLARE(HTTP_HEADER_RANGE_STR);
 #define HTTP_HEADER_RANGE_BYTES                                     "bytes"
 
-#define HTTP_MULTIPART_BOUNDARY                                     "XyKQzd3-Y5abPhU+UcxJd8f.70xtP3j-IYtmxNL"
+#define HTTP_MULTIPART_BOUNDARY                                     "XyKQzd3-Y5abPhU+UcxJd8f.70xtP3j_IYtmxNL"
 
 /***********************************************************************************************************************************
 Request Constructors
