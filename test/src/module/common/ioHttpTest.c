@@ -310,6 +310,19 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("HttpResponseMulti"))
+    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("errors");
+
+        TEST_ERROR(httpResponseMultiNew(BUFSTRDEF(""), NULL), FormatError, "expected multipart content type");
+        TEST_ERROR(httpResponseMultiNew(BUFSTRDEF(""), STRDEF("bogus")), FormatError, "expected multipart content type");
+        TEST_ERROR(
+            strNewBuf(httpResponseMultiNew(BUFSTRDEF("--YYY"), STRDEF("multipart/mixed; boundary=\"XXX\""))->boundary),
+            FormatError, "multipart boundary '--XXX' not found");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("HttpClient"))
     {
         char logBuf[STACK_TRACE_PARAM_MAX];

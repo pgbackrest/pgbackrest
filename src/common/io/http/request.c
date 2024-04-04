@@ -424,16 +424,14 @@ httpRequestMultiContent(HttpRequestMulti *const this)
     ASSERT(this != NULL);
     ASSERT(!lstEmpty(this->contentList));
 
-    Buffer *const result = bufNew(
-        this->contentSize +
-        ((lstSize(this->contentList) + 1) *
-         (bufUsed(this->boundaryRaw) + sizeof(HTTP_MULTIPART_BOUNDARY_PRE) - sizeof(HTTP_MULTIPART_BOUNDARY_POST) - 2)));
+    const size_t boundarySize =
+        bufUsed(this->boundaryRaw) + sizeof(HTTP_MULTIPART_BOUNDARY_PRE) - sizeof(HTTP_MULTIPART_BOUNDARY_POST) - 2;
+    Buffer *const result = bufNew(this->contentSize + ((lstSize(this->contentList) + 1) * boundarySize));
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Generate boundary
-        Buffer *const boundary = bufNew(
-            bufUsed(this->boundaryRaw) + sizeof(HTTP_MULTIPART_BOUNDARY_PRE) - sizeof(HTTP_MULTIPART_BOUNDARY_POST) - 2);
+        Buffer *const boundary = bufNew(boundarySize);
         bufCat(boundary, BUFSTRDEF(HTTP_MULTIPART_BOUNDARY_PRE));
         bufCat(boundary, this->boundaryRaw);
         bufCat(boundary, BUFSTRDEF(HTTP_MULTIPART_BOUNDARY_POST));

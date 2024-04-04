@@ -1074,7 +1074,7 @@ testRun(void)
                     "POST /batch/storage/v1\n"
                     "*** Request Headers ***:\n"
                     "authorization: <redacted>\n"
-                    "content-length: 286\n"
+                    "content-length: 262\n"
                     "content-type: multipart/mixed; boundary=" HTTP_MULTIPART_BOUNDARY "\n"
                     "host: %s\n"
                     "*** Response Headers ***:\n"

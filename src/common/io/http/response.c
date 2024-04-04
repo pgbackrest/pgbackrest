@@ -472,13 +472,13 @@ httpResponseMultiNew(const Buffer *const content, const String *const contentTyp
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Extract boundary from content type header
-            if (contentType == NULL || !strBeginsWith(contentType, STRDEF(HTTP_HEADER_CONTENT_TYPE_MULTIPART))) // {uncovered - !!!}
-                THROW_FMT(FormatError, "expect multipart response"); // {uncovered - !!!}
+            if (contentType == NULL || !strBeginsWith(contentType, STRDEF(HTTP_HEADER_CONTENT_TYPE_MULTIPART)))
+                THROW(FormatError, "expected multipart content type");
 
             const String *boundary = strSub(contentType, sizeof(HTTP_HEADER_CONTENT_TYPE_MULTIPART) - 1);
 
-            if (strZ(boundary)[0] == '"') // {uncovered - !!!}
-                boundary = strSubN(boundary, 1, strSize(boundary) - 2); // {uncovered - !!!}
+            if (strZ(boundary)[0] == '"')
+                boundary = strSubN(boundary, 1, strSize(boundary) - 2);
 
             boundary = strNewFmt("--%s", strZ(boundary));
 
@@ -488,10 +488,11 @@ httpResponseMultiNew(const Buffer *const content, const String *const contentTyp
             }
             MEM_CONTEXT_PRIOR_END();
 
+            // Find first boundary
             this->boundaryLast = bufFindP(this->content, this->boundary);
 
-            if (this->boundaryLast == NULL) // {uncovered - !!!}
-                THROW_FMT(FormatError, "no boundary found"); // {uncovered - !!!}
+            if (this->boundaryLast == NULL)
+                THROW_FMT(FormatError, "multipart boundary '%s' not found", strZ(boundary));
         }
         MEM_CONTEXT_TEMP_END();
     }
@@ -555,8 +556,6 @@ httpResponseMultiNext(HttpResponseMulti *const this)
             IoWrite *const write = ioBufferWriteNewOpen(result->content);
             ioCopyP(responseIo, write);
             ioWriteClose(write);
-
-            // ASSERT(result->contentSize == bufUsed(result->content)); !!!
 
             // Set last boundary
             this->boundaryLast = boundaryNext;
