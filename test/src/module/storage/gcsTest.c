@@ -983,17 +983,17 @@ testRun(void)
                 testResponseP(
                     service, .multiPart = true,
                     .content =
-                    "\r\n--" HTTP_MULTIPART_BOUNDARY "\r\n"
-                    "content-type:application/http\r\n"
-                    "content-id:response-0\r\n"
-                    "\r\n"
-                    "HTTP/1.1 404 Missing\r\n\r\n"
-                    "\r\n--" HTTP_MULTIPART_BOUNDARY "\r\n"
-                    "content-type:application/http\r\n"
-                    "content-id:response-1\r\n"
-                    "\r\n"
-                    "HTTP/1.1 200 OK\r\n\r\n"
-                    "\r\n--" HTTP_MULTIPART_BOUNDARY "\r\n");
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-id:response-0\r\n"
+                        "\r\n"
+                        "HTTP/1.1 404 Missing\r\n\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-id:response-1\r\n"
+                        "\r\n"
+                        "HTTP/1.1 200 OK\r\n\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY "\r\n");
 
                 TEST_RESULT_VOID(storagePathRemoveP(storage, STRDEF("/"), .recurse = true), "remove");
 
@@ -1035,12 +1035,12 @@ testRun(void)
                 testResponseP(
                     service, .multiPart = true,
                     .content =
-                    "\r\n--" HTTP_MULTIPART_BOUNDARY "\r\n"
-                    "content-type:application/http\r\n"
-                    "content-id:response-0\r\n"
-                    "\r\n"
-                    "HTTP/1.1 404 OK\r\n\r\n"
-                    "\r\n--" HTTP_MULTIPART_BOUNDARY "\r\n");
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-id:response-0\r\n"
+                        "\r\n"
+                        "HTTP/1.1 404 OK\r\n\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY "\r\n");
 
                 testRequestP(
                     service, HTTP_VERB_POST, .path = "/batch/storage/v1", .multiPart = true,
@@ -1057,17 +1057,17 @@ testRun(void)
                 testResponseP(
                     service, .multiPart = true,
                     .content =
-                    "\r\n--" HTTP_MULTIPART_BOUNDARY "\r\n"
-                    "content-type:application/http\r\n"
-                    "content-id:response-0\r\n"
-                    "\r\n"
-                    "HTTP/1.1 300 Error\r\n"
-                    "content-length:5\r\n"
-                    "content-type:text\r\n\r\n"
-                    "ERROR"
-                    "\r\n--" HTTP_MULTIPART_BOUNDARY "\r\n");
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-id:response-0\r\n"
+                        "\r\n"
+                        "HTTP/1.1 300 Error\r\n"
+                        "content-length:5\r\n"
+                        "content-type:text\r\n\r\n"
+                        "ERROR"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY "\r\n");
 
-                TEST_ERROR(
+                TEST_ERROR_FMT(
                     storagePathRemoveP(storage, STRDEF("/path"), .recurse = true), ProtocolError,
                     "HTTP request failed with 300 (Error):\n"
                     "*** Path/Query ***:\n"
@@ -1076,13 +1076,14 @@ testRun(void)
                     "authorization: <redacted>\n"
                     "content-length: 286\n"
                     "content-type: multipart/mixed; boundary=" HTTP_MULTIPART_BOUNDARY "\n"
-                    "host: 127.0.0.1\n"
+                    "host: %s\n"
                     "*** Response Headers ***:\n"
                     "content-id: response-0\n"
                     "content-length: 5\n"
                     "content-type: application/http, text\n"
                     "*** Response Content ***:\n"
-                    "ERROR");
+                    "ERROR",
+                    strZ(hrnServerHost()));
 
                 ((StorageGcs *)storageDriver(storage))->deleteMax = STORAGE_GCS_DELETE_MAX;
 

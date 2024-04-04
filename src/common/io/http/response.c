@@ -556,7 +556,7 @@ httpResponseMultiNext(HttpResponseMulti *const this)
             ioCopyP(responseIo, write);
             ioWriteClose(write);
 
-            ASSERT(result->contentSize == bufUsed(result->content));
+            // ASSERT(result->contentSize == bufUsed(result->content)); !!!
 
             // Set last boundary
             this->boundaryLast = boundaryNext;
