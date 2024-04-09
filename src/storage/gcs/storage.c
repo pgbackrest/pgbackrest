@@ -19,6 +19,7 @@ GCS Storage
 #include "common/io/tls/client.h"
 #include "common/log.h"
 #include "common/regExp.h"
+#include "common/stat.h"
 #include "common/type/json.h"
 #include "common/type/object.h"
 #include "storage/gcs/read.h"
@@ -77,6 +78,14 @@ VARIANT_STRDEF_STATIC(GCS_JSON_UPDATED_VAR,                         GCS_JSON_UPD
 
 STRING_STATIC(GCS_FIELD_LIST_MIN_STR,                               GCS_FIELD_LIST ")");
 STRING_STATIC(GCS_FIELD_LIST_MAX_STR,                               GCS_FIELD_LIST "," GCS_JSON_SIZE "," GCS_JSON_UPDATED ")");
+
+/***********************************************************************************************************************************
+Statistics constants
+***********************************************************************************************************************************/
+STRING_STATIC(GCS_STAT_REMOVE_STR,                                  "gcs.rm");
+STRING_STATIC(GCS_STAT_REMOVE_BATCH_STR,                            "gcs.rm.batch");
+STRING_STATIC(GCS_STAT_REMOVE_BATCH_PART_STR,                       "gcs.rm.batch.part");
+STRING_STATIC(GCS_STAT_REMOVE_BATCH_RETRY_STR,                      "gcs.rm.batch.retry");
 
 /***********************************************************************************************************************************
 Object type
@@ -965,8 +974,11 @@ storageGcsPathRemoveInternal(StorageGcsPathRemoveData *const data)
                     const StorageGcsRequestPart *const content = lstGet(data->requestContentList, contentIdx);
 
                     // Retry remove
+                    statInc(GCS_STAT_REMOVE_BATCH_RETRY_STR);
                     storageGcsRequestP(data->this, content->verb, .object = content->object, .allowMissing = true);
                 }
+                else
+                    statInc(GCS_STAT_REMOVE_BATCH_PART_STR);
 
                 httpResponseFree(responsePart);
                 responsePart = httpResponseMultiNext(responseMulti);
@@ -986,6 +998,8 @@ storageGcsPathRemoveInternal(StorageGcsPathRemoveData *const data)
     // Send new async request if there is more to remove
     if (data->contentList != NULL)
     {
+        statInc(GCS_STAT_REMOVE_BATCH_STR);
+
         MEM_CONTEXT_BEGIN(data->memContext)
         {
             data->request = storageGcsRequestAsyncP(
@@ -1103,6 +1117,7 @@ storageGcsRemove(THIS_VOID, const String *const file, const StorageInterfaceRemo
     ASSERT(file != NULL);
     ASSERT(!param.errorOnMissing);
 
+    statInc(GCS_STAT_REMOVE_STR);
     httpResponseFree(storageGcsRequestP(this, HTTP_VERB_DELETE_STR, .object = file, .allowMissing = true));
 
     FUNCTION_LOG_RETURN_VOID();
