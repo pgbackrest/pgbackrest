@@ -1,7 +1,8 @@
 /***********************************************************************************************************************************
 Test Block Cipher
 ***********************************************************************************************************************************/
-#include "common/io/filter/filter.intern.h"
+#include "common/io/bufferRead.h"
+#include "common/io/filter/filter.h"
 #include "common/io/io.h"
 #include "common/type/json.h"
 
@@ -16,7 +17,7 @@ Data for testing
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
@@ -27,9 +28,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("Common"))
     {
-        TEST_RESULT_BOOL(cryptoIsInit(), false, "crypto is not initialized");
         TEST_RESULT_VOID(cryptoInit(), "initialize crypto");
-        TEST_RESULT_BOOL(cryptoIsInit(), true, "crypto is initialized");
         TEST_RESULT_VOID(cryptoInit(), "initialize crypto again");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -40,19 +39,16 @@ testRun(void)
         EVP_MD_CTX *context = EVP_MD_CTX_create();
         TEST_ERROR(
             cryptoError(EVP_DigestInit_ex(context, NULL, NULL) != 1, "unable to initialize hash context"), CryptoError,
-            "unable to initialize hash context: [101187723] no digest set");
+            "unable to initialize hash context: "
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+            "[50331787]"
+#else
+            "[101187723]"
+#endif
+            " no digest set");
         EVP_MD_CTX_destroy(context);
 
         TEST_ERROR(cryptoError(true, "no error"), CryptoError, "no error: [0] no details available");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(cipherType(strNew(BOGUS_STR)), AssertError, "invalid cipher name 'BOGUS'");
-        TEST_RESULT_UINT(cipherType(strNew("none")), cipherTypeNone, "none type");
-        TEST_RESULT_UINT(cipherType(strNew("aes-256-cbc")), cipherTypeAes256Cbc, "aes-256-cbc type");
-
-        TEST_ERROR(cipherTypeName((CipherType)2), AssertError, "invalid cipher type 2");
-        TEST_RESULT_STR_Z(cipherTypeName(cipherTypeNone), "none", "none name");
-        TEST_RESULT_STR_Z(cipherTypeName(cipherTypeAes256Cbc), "aes-256-cbc", "aes-256-cbc name");
 
         // Test if the buffer was overrun
         // -------------------------------------------------------------------------------------------------------------------------
@@ -79,21 +75,18 @@ testRun(void)
         // Cipher and digest errors
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(
-            cipherBlockNew(
-                cipherModeEncrypt, cipherTypeNone, BUFSTRZ(TEST_PASS), NULL), AssertError,
-                "unable to load cipher 'none'");
+            cipherBlockNewP(cipherModeEncrypt, cipherTypeNone, BUFSTRZ(TEST_PASS)), AssertError, "unable to load cipher 'none'");
         TEST_ERROR(
-            cipherBlockNew(
-                cipherModeEncrypt, cipherTypeAes256Cbc, testPass, strNew(BOGUS_STR)), AssertError, "unable to load digest 'BOGUS'");
+            cipherBlockNewP(cipherModeEncrypt, cipherTypeAes256Cbc, testPass, .digest = STRDEF(BOGUS_STR)), AssertError,
+            "unable to load digest 'BOGUS'");
 
         // Initialization of object
         // -------------------------------------------------------------------------------------------------------------------------
         CipherBlock *cipherBlock = (CipherBlock *)ioFilterDriver(
-            cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRZ(TEST_PASS), NULL));
-        TEST_RESULT_Z(memContextName(cipherBlock->memContext), "CipherBlock", "mem context name is valid");
+            cipherBlockNewP(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRZ(TEST_PASS)));
         TEST_RESULT_INT(cipherBlock->mode, cipherModeEncrypt, "mode is valid");
-        TEST_RESULT_UINT(cipherBlock->passSize, strlen(TEST_PASS), "passphrase size is valid");
-        TEST_RESULT_BOOL(memcmp(cipherBlock->pass, TEST_PASS, strlen(TEST_PASS)) == 0, true, "passphrase is valid");
+        TEST_RESULT_UINT(bufSize(cipherBlock->pass), strlen(TEST_PASS), "passphrase size is valid");
+        TEST_RESULT_BOOL(memcmp(bufPtrConst(cipherBlock->pass), TEST_PASS, strlen(TEST_PASS)) == 0, true, "passphrase is valid");
         TEST_RESULT_BOOL(cipherBlock->saltDone, false, "salt done is false");
         TEST_RESULT_BOOL(cipherBlock->processDone, false, "process done is false");
         TEST_RESULT_UINT(cipherBlock->headerSize, 0, "header size is 0");
@@ -105,8 +98,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         Buffer *encryptBuffer = bufNew(TEST_BUFFER_SIZE);
 
-        IoFilter *blockEncryptFilter = cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, testPass, NULL);
-        blockEncryptFilter = cipherBlockNewVar(ioFilterParamList(blockEncryptFilter));
+        IoFilter *blockEncryptFilter = cipherBlockNewP(cipherModeEncrypt, cipherTypeAes256Cbc, testPass);
+        blockEncryptFilter = cipherBlockNewPack(ioFilterParamList(blockEncryptFilter));
         CipherBlock *blockEncrypt = (CipherBlock *)ioFilterDriver(blockEncryptFilter);
 
         TEST_RESULT_UINT(
@@ -116,11 +109,11 @@ testRun(void)
         bufLimitSet(encryptBuffer, CIPHER_BLOCK_MAGIC_SIZE);
         ioFilterProcessInOut(blockEncryptFilter, testPlainText, encryptBuffer);
         TEST_RESULT_UINT(bufUsed(encryptBuffer), CIPHER_BLOCK_MAGIC_SIZE, "cipher size is magic size");
-        TEST_RESULT_BOOL(ioFilterInputSame(blockEncryptFilter), true,  "filter needs same input");
+        TEST_RESULT_BOOL(ioFilterInputSame(blockEncryptFilter), true, "filter needs same input");
 
         bufLimitSet(encryptBuffer, CIPHER_BLOCK_MAGIC_SIZE + PKCS5_SALT_LEN);
         ioFilterProcessInOut(blockEncryptFilter, testPlainText, encryptBuffer);
-        TEST_RESULT_BOOL(ioFilterInputSame(blockEncryptFilter), false,  "filter does not need same input");
+        TEST_RESULT_BOOL(ioFilterInputSame(blockEncryptFilter), false, "filter does not need same input");
 
         TEST_RESULT_BOOL(blockEncrypt->saltDone, true, "salt done is true");
         TEST_RESULT_BOOL(blockEncrypt->processDone, true, "process done is true");
@@ -142,13 +135,13 @@ testRun(void)
         TEST_RESULT_UINT(
             bufUsed(encryptBuffer), CIPHER_BLOCK_HEADER_SIZE + (size_t)EVP_CIPHER_block_size(blockEncrypt->cipher),
             "cipher size increases by one block");
-        TEST_RESULT_BOOL(ioFilterDone(blockEncryptFilter), false,  "filter is not done");
+        TEST_RESULT_BOOL(ioFilterDone(blockEncryptFilter), false, "filter is not done");
 
         ioFilterProcessInOut(blockEncryptFilter, NULL, encryptBuffer);
         TEST_RESULT_UINT(
             bufUsed(encryptBuffer), CIPHER_BLOCK_HEADER_SIZE + (size_t)(EVP_CIPHER_block_size(blockEncrypt->cipher) * 2),
             "cipher size increases by one block on flush");
-        TEST_RESULT_BOOL(ioFilterDone(blockEncryptFilter), true,  "filter is done");
+        TEST_RESULT_BOOL(ioFilterDone(blockEncryptFilter), true, "filter is done");
 
         ioFilterFree(blockEncryptFilter);
 
@@ -156,8 +149,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         Buffer *decryptBuffer = bufNew(TEST_BUFFER_SIZE);
 
-        IoFilter *blockDecryptFilter = cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, testPass, HASH_TYPE_SHA1_STR);
-        blockDecryptFilter = cipherBlockNewVar(ioFilterParamList(blockDecryptFilter));
+        IoFilter *blockDecryptFilter = cipherBlockNewP(cipherModeDecrypt, cipherTypeAes256Cbc, testPass, .digest = STRDEF("sha1"));
+        blockDecryptFilter = cipherBlockNewPack(ioFilterParamList(blockDecryptFilter));
         CipherBlock *blockDecrypt = (CipherBlock *)ioFilterDriver(blockDecryptFilter);
 
         TEST_RESULT_UINT(
@@ -176,7 +169,7 @@ testRun(void)
 
         // Decrypt in small chunks to test buffering
         // -------------------------------------------------------------------------------------------------------------------------
-        blockDecryptFilter = cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, testPass, NULL);
+        blockDecryptFilter = cipherBlockNewP(cipherModeDecrypt, cipherTypeAes256Cbc, testPass);
         blockDecrypt = (CipherBlock *)ioFilterDriver(blockDecryptFilter);
 
         bufUsedZero(decryptBuffer);
@@ -214,19 +207,29 @@ testRun(void)
 
         ioFilterFree(blockDecryptFilter);
 
-        // Encrypt zero byte file and decrypt it
         // -------------------------------------------------------------------------------------------------------------------------
-        blockEncryptFilter = cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, testPass, NULL);
+        TEST_TITLE("encrypt zero byte file with no magic");
+
+        blockEncryptFilter = cipherBlockNewP(cipherModeEncrypt, cipherTypeAes256Cbc, testPass, .raw = true);
         blockEncrypt = (CipherBlock *)ioFilterDriver(blockEncryptFilter);
 
         bufUsedZero(encryptBuffer);
 
         ioFilterProcessInOut(blockEncryptFilter, NULL, encryptBuffer);
-        TEST_RESULT_UINT(bufUsed(encryptBuffer), 32, "check remaining size");
+        TEST_RESULT_UINT(bufUsed(encryptBuffer), 24, "check remaining size");
 
         ioFilterFree(blockEncryptFilter);
 
-        blockDecryptFilter = cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, testPass, NULL);
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on decrypt expecting magic");
+
+        blockDecryptFilter = cipherBlockNewP(cipherModeDecrypt, cipherTypeAes256Cbc, testPass);
+        TEST_ERROR(ioFilterProcessInOut(blockDecryptFilter, encryptBuffer, decryptBuffer), CryptoError, "cipher header invalid");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("decrypt zero byte file with no magic");
+
+        blockDecryptFilter = cipherBlockNewP(cipherModeDecrypt, cipherTypeAes256Cbc, testPass, .raw = true);
         blockDecrypt = (CipherBlock *)ioFilterDriver(blockDecryptFilter);
 
         bufUsedZero(decryptBuffer);
@@ -240,7 +243,7 @@ testRun(void)
 
         // Invalid cipher header
         // -------------------------------------------------------------------------------------------------------------------------
-        blockDecryptFilter = cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, testPass, NULL);
+        blockDecryptFilter = cipherBlockNewP(cipherModeDecrypt, cipherTypeAes256Cbc, testPass);
         blockDecrypt = (CipherBlock *)ioFilterDriver(blockDecryptFilter);
 
         TEST_ERROR(
@@ -251,7 +254,7 @@ testRun(void)
 
         // Invalid encrypted data cannot be flushed
         // -------------------------------------------------------------------------------------------------------------------------
-        blockDecryptFilter = cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, testPass, NULL);
+        blockDecryptFilter = cipherBlockNewP(cipherModeDecrypt, cipherTypeAes256Cbc, testPass);
         blockDecrypt = (CipherBlock *)ioFilterDriver(blockDecryptFilter);
 
         bufUsedZero(decryptBuffer);
@@ -265,7 +268,7 @@ testRun(void)
 
         // File with no header should not flush
         // -------------------------------------------------------------------------------------------------------------------------
-        blockDecryptFilter = cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, testPass, NULL);
+        blockDecryptFilter = cipherBlockNewP(cipherModeDecrypt, cipherTypeAes256Cbc, testPass);
         blockDecrypt = (CipherBlock *)ioFilterDriver(blockDecryptFilter);
 
         bufUsedZero(decryptBuffer);
@@ -276,7 +279,7 @@ testRun(void)
 
         // File with header only should error
         // -------------------------------------------------------------------------------------------------------------------------
-        blockDecryptFilter = cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, testPass, NULL);
+        blockDecryptFilter = cipherBlockNewP(cipherModeDecrypt, cipherTypeAes256Cbc, testPass);
         blockDecrypt = (CipherBlock *)ioFilterDriver(blockDecryptFilter);
 
         bufUsedZero(decryptBuffer);
@@ -304,41 +307,50 @@ testRun(void)
     {
         IoFilter *hash = NULL;
 
-        TEST_ERROR(cryptoHashNew(strNew(BOGUS_STR)), AssertError, "unable to load hash 'BOGUS'");
+        TEST_ERROR(cryptoHashNew(STRID5("bogus", 0x13a9de20)), AssertError, "unable to load hash 'bogus'");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(hash, cryptoHashNew(strNew(HASH_TYPE_SHA1)), "create sha1 hash");
+        TEST_ASSIGN(hash, cryptoHashNew(hashTypeSha1), "create sha1 hash");
         TEST_RESULT_VOID(ioFilterFree(hash), "    free hash");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(hash, cryptoHashNewVar(varVarLst(jsonToVar(strNewFmt("[\"%s\"]", HASH_TYPE_SHA1)))), "create sha1 hash");
-        TEST_RESULT_STR_Z(bufHex(cryptoHash((CryptoHash *)ioFilterDriver(hash))), HASH_TYPE_SHA1_ZERO, "    check empty hash");
+        PackWrite *packWrite = pckWriteNewP();
+        pckWriteStrIdP(packWrite, hashTypeSha1);
+        pckWriteEndP(packWrite);
+
+        TEST_ASSIGN(hash, cryptoHashNewPack(pckWriteResult(packWrite)), "create sha1 hash");
         TEST_RESULT_STR_Z(
-            bufHex(cryptoHash((CryptoHash *)ioFilterDriver(hash))), HASH_TYPE_SHA1_ZERO, "    check empty hash again");
+            strNewEncode(encodingHex, cryptoHash((CryptoHash *)ioFilterDriver(hash))), HASH_TYPE_SHA1_ZERO, "    check empty hash");
+        TEST_RESULT_STR_Z(
+            strNewEncode(encodingHex, cryptoHash((CryptoHash *)ioFilterDriver(hash))), HASH_TYPE_SHA1_ZERO,
+            "    check empty hash again");
         TEST_RESULT_VOID(ioFilterFree(hash), "    free hash");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(hash, cryptoHashNew(strNew(HASH_TYPE_SHA1)), "create sha1 hash");
+        TEST_ASSIGN(hash, cryptoHashNew(hashTypeSha1), "create sha1 hash");
         TEST_RESULT_VOID(ioFilterProcessIn(hash, BUFSTRZ("1")), "    add 1");
-        TEST_RESULT_VOID(ioFilterProcessIn(hash, BUFSTR(strNew("2"))), "    add 2");
+        TEST_RESULT_VOID(ioFilterProcessIn(hash, BUFSTR(STRDEF("2"))), "    add 2");
         TEST_RESULT_VOID(ioFilterProcessIn(hash, BUFSTRDEF("3")), "    add 3");
         TEST_RESULT_VOID(ioFilterProcessIn(hash, BUFSTRDEF("4")), "    add 4");
         TEST_RESULT_VOID(ioFilterProcessIn(hash, BUFSTRDEF("5")), "    add 5");
 
-        TEST_RESULT_STR_Z(varStr(ioFilterResult(hash)), "8cb2237d0679ca88db6464eac60da96345513964", "    check small hash");
+        TEST_RESULT_STR_Z(
+            strNewEncode(encodingHex, pckReadBinP(pckReadNew(ioFilterResult(hash)))), "8cb2237d0679ca88db6464eac60da96345513964",
+            "    check small hash");
         TEST_RESULT_VOID(ioFilterFree(hash), "    free hash");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("md5 hash - zero bytes");
 
-        TEST_ASSIGN(hash, cryptoHashNew(strNew(HASH_TYPE_MD5)), "create md5 hash");
-        TEST_RESULT_STR_Z(varStr(ioFilterResult(hash)), HASH_TYPE_MD5_ZERO, "check empty hash");
+        TEST_ASSIGN(hash, cryptoHashNew(hashTypeMd5), "create md5 hash");
+        TEST_RESULT_STR_Z(
+            strNewEncode(encodingHex, pckReadBinP(pckReadNew(ioFilterResult(hash)))), HASH_TYPE_MD5_ZERO, "check empty hash");
 
         // Exercise most of the conditions in the local MD5 code
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("md5 hash - mixed bytes");
 
-        TEST_ASSIGN(hash, cryptoHashNew(strNew(HASH_TYPE_MD5)), "create md5 hash");
+        TEST_ASSIGN(hash, cryptoHashNew(hashTypeMd5), "create md5 hash");
         TEST_RESULT_VOID(ioFilterProcessIn(hash, BUFSTRZ("1")), "add 1");
         TEST_RESULT_VOID(ioFilterProcessIn(hash, BUFSTRZ("123456789012345678901234567890123")), "add 32 bytes");
         TEST_RESULT_VOID(
@@ -347,11 +359,13 @@ testRun(void)
                 BUFSTRZ(
                     "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890"
                     "12345678901234567890123456789012345678901234567890")),
-                "add 160 bytes");
+            "add 160 bytes");
         TEST_RESULT_VOID(
             ioFilterProcessIn(hash, BUFSTRZ("12345678901234567890123456789001234567890012345678901234")), "add 58 bytes");
 
-        TEST_RESULT_STR_Z(varStr(ioFilterResult(hash)), "3318600bc9c1d379e91e4bae90721243", "check hash");
+        TEST_RESULT_STR_Z(
+            strNewEncode(encodingHex, pckReadBinP(pckReadNew(ioFilterResult(hash)))), "3318600bc9c1d379e91e4bae90721243",
+            "check hash");
 
         // Full coverage of local MD5 requires processing > 511MB of data but that makes the test run too long. Instead we'll cheat
         // a bit and initialize the context at 511MB to start. This does not produce a valid MD5 hash but does provide coverage of
@@ -359,33 +373,98 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("md5 hash - > 0x1fffffff bytes");
 
-        TEST_ASSIGN(hash, cryptoHashNew(strNew(HASH_TYPE_MD5)), "create md5 hash");
-        ((CryptoHash *)ioFilterDriver(hash))->md5Context->lo = 0x1fffffff;
+        TEST_ASSIGN(hash, cryptoHashNew(hashTypeMd5), "create md5 hash");
+        ((CryptoHash *)ioFilterDriver(hash))->md5Context.lo = 0x1fffffff;
 
         TEST_RESULT_VOID(ioFilterProcessIn(hash, BUFSTRZ("1")), "add 1");
-        TEST_RESULT_STR_Z(varStr(ioFilterResult(hash)), "5c99876f9cafa7f485eac9c7a8a2764c", "check hash");
+        TEST_RESULT_STR_Z(
+            strNewEncode(encodingHex, pckReadBinP(pckReadNew(ioFilterResult(hash)))), "5c99876f9cafa7f485eac9c7a8a2764c",
+            "check hash");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(hash, cryptoHashNew(strNew(HASH_TYPE_SHA256)), "create sha256 hash");
-        TEST_RESULT_STR_Z(varStr(ioFilterResult(hash)), HASH_TYPE_SHA256_ZERO, "    check empty hash");
+        TEST_ASSIGN(hash, cryptoHashNew(hashTypeSha256), "create sha256 hash");
+        TEST_RESULT_STR_Z(
+            strNewEncode(encodingHex, pckReadBinP(pckReadNew(ioFilterResult(hash)))), HASH_TYPE_SHA256_ZERO, "    check empty hash");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR_Z(
-            bufHex(cryptoHashOne(strNew(HASH_TYPE_SHA1), BUFSTRDEF("12345"))), "8cb2237d0679ca88db6464eac60da96345513964",
+            strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, BUFSTRDEF("12345"))), "8cb2237d0679ca88db6464eac60da96345513964",
             "    check small hash");
         TEST_RESULT_STR_Z(
-            bufHex(cryptoHashOne(strNew(HASH_TYPE_SHA1), BUFSTRDEF(""))), HASH_TYPE_SHA1_ZERO, "    check empty hash");
+            strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, BUFSTRDEF(""))), HASH_TYPE_SHA1_ZERO, "    check empty hash");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR_Z(
-            bufHex(
+            strNewEncode(
+                encodingHex,
                 cryptoHmacOne(
-                    strNew(HASH_TYPE_SHA256),
+                    hashTypeSha256,
                     BUFSTRDEF("AWS4wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"),
                     BUFSTRDEF("20170412"))),
             "8b05c497afe9e1f42c8ada4cb88392e118649db1e5c98f0f0fb0a158bdd2dd76",
             "    check hmac");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    // *****************************************************************************************************************************
+    if (testBegin("XxHash"))
+    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("xxHashOne");
+
+        TEST_RESULT_STR_Z(
+            strNewEncode(encodingHex, xxHashOne(16, BUFSTRDEF(""))), "99aa06d3014798d86001c324468d497f", "check empty hash 16");
+        TEST_RESULT_STR_Z(
+            strNewEncode(encodingHex, xxHashOne(16, BUFSTRDEF("12345\n"))), "1a3e11127b8856b804f0f99dc9fa4b56",
+            "check small hash 16");
+
+        TEST_RESULT_STR_Z(strNewEncode(encodingHex, xxHashOne(5, BUFSTRDEF(""))), "99aa06d301", "check empty hash 5");
+        TEST_RESULT_STR_Z(strNewEncode(encodingHex, xxHashOne(5, BUFSTRDEF("12345\n"))), "1a3e11127b", "check small hash 5");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("XxHash");
+
+        ioBufferSizeSet(2);
+
+        const Buffer *message = BUFSTRDEF("");
+        IoRead *read = ioBufferReadNew(message);
+        ioFilterGroupAdd(ioReadFilterGroup(read), xxHashNew(16));
+
+        ioReadDrain(read);
+
+        TEST_RESULT_STR_Z(
+            strNewEncode(encodingHex, pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(read), XX_HASH_FILTER_TYPE))),
+            "99aa06d3014798d86001c324468d497f", "check empty hash 16");
+
+        message = BUFSTRDEF("12345\n");
+        read = ioBufferReadNew(message);
+        ioFilterGroupAdd(ioReadFilterGroup(read), xxHashNew(16));
+
+        ioReadDrain(read);
+
+        TEST_RESULT_STR_Z(
+            strNewEncode(encodingHex, pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(read), XX_HASH_FILTER_TYPE))),
+            "1a3e11127b8856b804f0f99dc9fa4b56", "check small hash 16");
+
+        message = BUFSTRDEF("");
+        read = ioBufferReadNew(message);
+        ioFilterGroupAdd(ioReadFilterGroup(read), xxHashNew(5));
+
+        ioReadDrain(read);
+
+        TEST_RESULT_STR_Z(
+            strNewEncode(encodingHex, pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(read), XX_HASH_FILTER_TYPE))),
+            "99aa06d301", "check empty hash 5");
+
+        message = BUFSTRDEF("12345\n");
+        read = ioBufferReadNew(message);
+        ioFilterGroupAdd(ioReadFilterGroup(read), xxHashNew(5));
+
+        ioReadDrain(read);
+
+        TEST_RESULT_STR_Z(
+            strNewEncode(encodingHex, pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(read), XX_HASH_FILTER_TYPE))),
+            "1a3e11127b", "check small hash 5");
+    }
+
+    FUNCTION_HARNESS_RETURN_VOID();
 }

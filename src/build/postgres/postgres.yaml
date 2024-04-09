@@ -1,0 +1,17 @@
+# Supported PostgreSQL Versions
+#
+# Version interfaces are auto-generated to src/postgres/interface.auto.c.inc.
+#
+# - 'version' contains a list of all supported versions
+# - For a specific version, 'release' marks it as not released (i.e. this should always be false when used)
+version:
+  - 9.4
+  - 9.5
+  - 9.6
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+  - 15
+  - 16

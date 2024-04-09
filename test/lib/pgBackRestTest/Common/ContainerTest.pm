@@ -31,9 +31,11 @@ use pgBackRestTest::Common::VmTest;
 use constant TEST_USER                                              => getpwuid($UID) . '';
     push @EXPORT, qw(TEST_USER);
 use constant TEST_USER_ID                                           => $UID;
+    push @EXPORT, qw(TEST_USER_ID);
 use constant TEST_GROUP                                             => getgrgid((getpwnam(TEST_USER))[3]) . '';
     push @EXPORT, qw(TEST_GROUP);
 use constant TEST_GROUP_ID                                          => getgrnam(TEST_GROUP) . '';
+    push @EXPORT, qw(TEST_GROUP_ID);
 
 ####################################################################################################################################
 # Cert file constants
@@ -108,7 +110,8 @@ sub containerWrite
 
         foreach my $strBuild (reverse(keys(%{$hContainerCache})))
         {
-            if (defined($hContainerCache->{$strBuild}{$strOS}) && $hContainerCache->{$strBuild}{$strOS} eq $strScriptSha1)
+            if (defined($hContainerCache->{$strBuild}{hostArch()}{$strOS}) &&
+                $hContainerCache->{$strBuild}{hostArch()}{$strOS} eq $strScriptSha1)
             {
                 &log(INFO, "Using cached ${strTag}-${strBuild} image (${strScriptSha1}) ...");
 
@@ -128,9 +131,10 @@ sub containerWrite
 
     # Write the image
     $oStorageDocker->put("${strTempPath}/${strImage}", trim($strScript) . "\n");
-    executeTest('docker build' . (defined($bForce) && $bForce ? ' --no-cache' : '') .
-                " -f ${strTempPath}/${strImage} -t ${strTag} ${strTempPath}",
-                {bSuppressStdErr => true});
+    executeTest(
+        'docker build' . (defined($bForce) && $bForce ? ' --no-cache' : '') . " -f ${strTempPath}/${strImage} -t ${strTag} " .
+            $oStorageDocker->pathGet('test'),
+        {bSuppressStdErr => true, bShowOutputAsync => (logLevel())[1] eq DETAIL});
 }
 
 ####################################################################################################################################
@@ -142,7 +146,7 @@ sub groupCreate
     my $strName = shift;
     my $iId = shift;
 
-    return "groupadd -g${iId} ${strName}";
+    return "groupadd -f -g${iId} ${strName}";
 }
 
 sub userCreate
@@ -174,7 +178,7 @@ sub sshSetup
     my $strOS = shift;
     my $strUser = shift;
     my $strGroup = shift;
-    my $bControlMaster = shift;
+    my $bControlMtr = shift;
 
     my $strUserPath = $strUser eq 'root' ? "/${strUser}" : "/home/${strUser}";
 
@@ -202,15 +206,16 @@ sub sshSetup
         "    echo 'Host *' > ${strUserPath}/.ssh/config && \\\n" .
         "    echo '    StrictHostKeyChecking no' >> ${strUserPath}/.ssh/config && \\\n";
 
-    if ($bControlMaster)
+    if ($bControlMtr)
     {
         $strScript .=
-            "    echo '    ControlMaster auto' >> ${strUserPath}/.ssh/config && \\\n" .
+            "    echo '    ControlMas'.'ter auto' >> ${strUserPath}/.ssh/config && \\\n" .
             "    echo '    ControlPath /tmp/\%r\@\%h:\%p' >> ${strUserPath}/.ssh/config && \\\n" .
             "    echo '    ControlPersist 30' >> ${strUserPath}/.ssh/config && \\\n";
     }
 
     $strScript .=
+        "    cp ${strUserPath}/.ssh/authorized_keys ${strUserPath}/.ssh/id_rsa.pub && \\\n" .
         "    chown -R ${strUser}:${strGroup} ${strUserPath}/.ssh && \\\n" .
         "    chmod 700 ${strUserPath}/.ssh && \\\n" .
         "    chmod 600 ${strUserPath}/.ssh/*";
@@ -219,44 +224,70 @@ sub sshSetup
 }
 
 ####################################################################################################################################
-# Cert Setup
+# Copy text file into container. Note that this will not work if the file contains single quotes.
 ####################################################################################################################################
-sub certSetup
+sub fileCopy
+{
+    my $oStorage = shift;
+    my $strSourceFile = shift;
+    my $strDestFile = shift;
+
+    my $strScript;
+
+    foreach my $strLine (split("\n", ${$oStorage->get($strSourceFile)}))
+    {
+        $strScript .= "    echo '${strLine}' " . (defined($strScript) ? '>>' : '>') . " ${strDestFile} && \\\n";
+    }
+
+    return $strScript;
+}
+
+####################################################################################################################################
+# CA Setup
+####################################################################################################################################
+sub caSetup
 {
     my $strOS = shift;
+    my $oStorage = shift;
+    my $strCaFile = shift;
 
-    my $strScript =
-        sectionHeader() .
-        "# Generate fake certs\n" .
-        "    mkdir -p -m 755 /etc/fake-cert && \\\n" .
-        "    cd /etc/fake-cert && \\\n" .
-        "    openssl genrsa -out ca.key 2048 && \\\n" .
-        "    openssl req -new -x509 -extensions v3_ca -key ca.key -out ca.crt -days 99999 \\\n" .
-        "        -subj \"/C=US/ST=Country/L=City/O=Organization/CN=pgbackrest.org\" && \\\n" .
-        "    openssl genrsa -out server.key 2048 && \\\n" .
-        "    openssl req -new -key server.key -out server.csr \\\n" .
-        "        -subj \"/C=US/ST=Country/L=City/O=Organization/CN=*.pgbackrest.org\" && \\\n" .
-        "    openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 99999 \\\n" .
-        "        -sha256 && \\\n" .
-        "    chmod 644 /etc/fake-cert/* && \\\n";
+    my $strOsBase = vmGet()->{$strOS}{&VM_OS_BASE};
 
-    my $rhVm = vmGet();
+    # Determine CA location
+    my $strCertFile = undef;
 
-    if ($rhVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
+    if ($strOsBase eq VM_OS_BASE_RHEL)
     {
-        $strScript .=
-            "    cp /etc/fake-cert/pgbackrest-test-ca.crt /etc/pki/ca-trust/source/anchors && \\\n" .
-            "    update-ca-trust extract";
+        $strCertFile = '/etc/pki/ca-trust/source/anchors';
     }
-    elsif ($rhVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
+    elsif ($strOsBase eq VM_OS_BASE_DEBIAN)
     {
-        $strScript .=
-            "    cp /etc/fake-cert/pgbackrest-test-ca.crt /usr/local/share/ca-certificates && \\\n" .
-            "    update-ca-certificates";
+        $strCertFile = '/usr/local/share/ca-certificates';
     }
     else
     {
-        confess &log(ERROR, "unable to install certificate for $rhVm->{$strOS}{&VM_OS_BASE}");
+        confess &log(ERROR, "unable to install CA for ${strOsBase}");
+    }
+
+    $strCertFile .= '/pgbackrest-test-ca.crt';
+
+    # Write CA
+    my $strScript =
+        sectionHeader() .
+        "# Install CA\n" .
+        fileCopy($oStorage, $strCaFile, $strCertFile) .
+        "    chmod 644 ${strCertFile} && \\\n";
+
+    # Install CA
+    if ($strOsBase eq VM_OS_BASE_RHEL)
+    {
+        $strScript .=
+            "    update-ca-trust extract";
+    }
+    elsif ($strOsBase eq VM_OS_BASE_DEBIAN)
+    {
+        $strScript .=
+            "    update-ca-certificates";
     }
 
     return $strScript;
@@ -275,7 +306,7 @@ sub entryPointSetup
 
     my $oVm = vmGet();
 
-    if ($oVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL || $strOS eq VM_U12)
+    if ($oVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
     {
         $strScript .= '/usr/sbin/sshd -D';
     }
@@ -344,10 +375,10 @@ sub containerBuild
 
         if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
         {
-            if ($strOS eq VM_CO7)
+            if ($strOS eq VM_RH7)
             {
                 $strScript .=
-                    "    yum -y install epel-release && \\\n";
+                    "    yum -y install centos-release-scl-rh epel-release && \\\n";
             }
 
             $strScript .=
@@ -355,26 +386,30 @@ sub containerBuild
                 "    yum -y install openssh-server openssh-clients wget sudo valgrind git \\\n" .
                 "        perl perl-Digest-SHA perl-DBD-Pg perl-YAML-LibYAML openssl \\\n" .
                 "        gcc make perl-ExtUtils-MakeMaker perl-Test-Simple openssl-devel perl-ExtUtils-Embed rpm-build \\\n" .
-                "        zlib-devel libxml2-devel lz4-devel lz4 bzip2-devel bzip2 perl-JSON-PP";
+                "        libyaml-devel zlib-devel libxml2-devel lz4-devel lz4 bzip2-devel bzip2 perl-JSON-PP ccache meson \\\n" .
+                "        libssh2-devel";
         }
         else
         {
             $strScript .=
                 "    export DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive && \\\n" .
                 "    apt-get update && \\\n" .
-                "    apt-get -y install openssh-server wget sudo gcc make valgrind git \\\n" .
+                "    apt-get install -y --no-install-recommends openssh-server wget sudo gcc make valgrind git \\\n" .
                 "        libdbd-pg-perl libhtml-parser-perl libssl-dev libperl-dev \\\n" .
                 "        libyaml-libyaml-perl tzdata devscripts lintian libxml-checker-perl txt2man debhelper \\\n" .
                 "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev libxml2-dev pkg-config \\\n" .
-                "        libbz2-dev bzip2";
+                "        libbz2-dev bzip2 libyaml-dev libjson-pp-perl liblz4-dev liblz4-tool gnupg lsb-release ccache meson \\\n" .
+                "        libssh2-1-dev";
 
-            if ($strOS eq VM_U12)
+            # This package is required to build valgrind on 32-bit
+            if ($oVm->{$strOS}{&VM_ARCH} eq VM_ARCH_I386)
             {
-                $strScript .= ' libperl5.14';
+                $strScript .= " g++-multilib";
             }
-            else
+
+            if ($strOS eq VM_U22)
             {
-                $strScript .= ' libjson-pp-perl liblz4-dev liblz4-tool';
+                $strScript .= " valgrind";
             }
         }
 
@@ -412,28 +447,21 @@ sub containerBuild
             $strScript .= sectionHeader() .
                 "# Suppress dpkg interactive output\n" .
                 "    rm /etc/apt/apt.conf.d/70debconf";
-
-            if ($strOS eq VM_U12)
-            {
-                $strScript .= sectionHeader() .
-                    "# Create run directory required by SSH (not created automatically on Ubuntu 12.04)\n" .
-                    "    mkdir -p /var/run/sshd";
-            }
         }
 
         #---------------------------------------------------------------------------------------------------------------------------
-        my $strCertPath = 'test/certificate';
-        my $strCertName = 'pgbackrest-test';
-
-        $strCopy = '# Copy Test Certificates';
-
-        foreach my $strFile ('-ca.crt', '.crt', '.key')
+        if ($strOS ne VM_U22)
         {
-            $oStorageDocker->copy("${strCertPath}/${strCertName}${strFile}", "${strTempPath}/${strCertName}${strFile}");
-            $strCopy .= "\nCOPY ${strCertName}${strFile} " . CERT_FAKE_PATH . "/${strCertName}${strFile}";
-        }
+            my $strValgrind = 'valgrind-3.17.0';
 
-        $strScript .= certSetup($strOS);
+            $strScript .= sectionHeader() .
+                "# Build valgrind\n" .
+                "    wget -q -O - https://sourceware.org/pub/valgrind/${strValgrind}.tar.bz2 | tar jx -C /root && \\\n" .
+                "    cd /root/${strValgrind} && \\\n" .
+                "    ./configure --silent && \\\n" .
+                "    make -s -j8 install && \\\n" .
+                "    rm -rf /root/${strValgrind}";
+        }
 
         #---------------------------------------------------------------------------------------------------------------------------
         if (defined($oVm->{$strOS}{&VMDEF_LCOV_VERSION}))
@@ -452,7 +480,7 @@ sub containerBuild
         #---------------------------------------------------------------------------------------------------------------------------
         if (!$bDeprecated)
         {
-            $strScript .=  sectionHeader() .
+            $strScript .= sectionHeader() .
                 "# Install PostgreSQL packages\n";
 
             if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
@@ -460,19 +488,18 @@ sub containerBuild
                 $strScript .=
                     "    rpm --import http://yum.postgresql.org/RPM-GPG-KEY-PGDG && \\\n";
 
-                if ($strOS eq VM_CO7)
+                if ($strOS eq VM_RH7)
                 {
                     $strScript .=
                         "    rpm -ivh \\\n" .
-                        "        http://yum.postgresql.org/9.2/redhat/rhel-7-x86_64/pgdg-centos92-9.2-3.noarch.rpm \\\n" .
-                        "        https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/" .
+                        "        https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-" . hostArch() . "/" .
                             "pgdg-redhat-repo-latest.noarch.rpm && \\\n";
                 }
-                elsif ($strOS eq VM_F32)
+                elsif ($strOS eq VM_F38)
                 {
                     $strScript .=
                         "    rpm -ivh \\\n" .
-                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-32-x86_64/" .
+                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-38-" . hostArch() . "/" .
                             "pgdg-fedora-repo-latest.noarch.rpm && \\\n";
                 }
 
@@ -481,12 +508,11 @@ sub containerBuild
             else
             {
                 $strScript .=
-                    "    echo 'deb http://apt.postgresql.org/pub/repos/apt/ " .
-                    $$oVm{$strOS}{&VM_OS_REPO} . '-pgdg main' .
-                        "' >> /etc/apt/sources.list.d/pgdg.list && \\\n" .
+                    "    echo \"deb http://apt.postgresql.org/pub/repos/apt/ \$(lsb_release -s -c)-pgdg main" .
+                        "\" >> /etc/apt/sources.list.d/pgdg.list && \\\n" .
                     "    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \\\n" .
                     "    apt-get update && \\\n" .
-                    "    apt-get install -y postgresql-common libpq-dev && \\\n" .
+                    "    apt-get install -y --no-install-recommends postgresql-common libpq-dev && \\\n" .
                     "    sed -i 's/^\\#create\\_main\\_cluster.*\$/create\\_main\\_cluster \\= false/' " .
                         "/etc/postgresql-common/createcluster.conf";
             }
@@ -502,8 +528,8 @@ sub containerBuild
                 }
                 else
                 {
-                    $strScript .= "    apt-get install -y";
-                }
+                    $strScript .= "    apt-get install -y --no-install-recommends";
+                 }
 
                 # Construct list of databases to install
                 foreach my $strDbVersion (@{$oOS->{&VM_DB}})
@@ -513,7 +539,13 @@ sub containerBuild
                         my $strDbVersionNoDot = $strDbVersion;
                         $strDbVersionNoDot =~ s/\.//;
 
-                        $strScript .=  " postgresql${strDbVersionNoDot}-server";
+                        $strScript .= " postgresql${strDbVersionNoDot}-server";
+
+                        # Add development package for the latest version of postgres
+                        if ($strDbVersion eq @{$oOS->{&VM_DB}}[-1])
+                        {
+                            $strScript .= " postgresql${strDbVersionNoDot}-devel";
+                        }
                     }
                     else
                     {
@@ -523,14 +555,24 @@ sub containerBuild
             }
         }
 
+        # Add path to lastest version of postgres
+        if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
+        {
+            $strScript .=
+                "\n\nENV PATH=/usr/pgsql-" . @{$oOS->{&VM_DB}}[-1] . "/bin:\$PATH\n" .
+                "ENV PKG_CONFIG_PATH=/usr/pgsql-" . @{$oOS->{&VM_DB}}[-1] . "/lib/pkgconfig:\$PKG_CONFIG_PATH\n";
+        }
 
         #---------------------------------------------------------------------------------------------------------------------------
         if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
         {
-        $strScript .=  sectionHeader() .
+        $strScript .= sectionHeader() .
             "# Cleanup\n";
 
-            $strScript .= "    apt-get clean";
+            $strScript .=
+                "    apt-get autoremove -y && \\\n" .
+                "    apt-get clean && \\\n" .
+                "    rm -rf /var/lib/apt/lists/*";
         }
 
         containerWrite(
@@ -546,7 +588,18 @@ sub containerBuild
             $strCopy = undef;
             $strScript = '';
 
-            #---------------------------------------------------------------------------------------------------------------------------
+            #-----------------------------------------------------------------------------------------------------------------------
+            if ($oVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL && hostArch() eq VM_ARCH_AARCH64)
+            {
+                $strScript .= sectionHeader() .
+                    "# Remove unneeded language setup\n" .
+                    "    rm /etc/profile.d/lang.sh";
+            }
+
+            #-----------------------------------------------------------------------------------------------------------------------
+            $strScript .= caSetup($strOS, $oStorageDocker, "test/certificate/pgbackrest-test-ca.crt");
+
+            #-----------------------------------------------------------------------------------------------------------------------
             $strScript .= sectionHeader() .
                 "# Create banner to make sure pgBackRest ignores it\n" .
                 "    echo '***********************************************' >  /etc/issue.net && \\\n" .
@@ -555,6 +608,20 @@ sub containerBuild
                 "    echo 'More banner after a blank line.'                 >> /etc/issue.net && \\\n" .
                 "    echo '***********************************************' >> /etc/issue.net && \\\n" .
                 "    echo 'Banner /etc/issue.net'                           >> /etc/ssh/sshd_config";
+
+            if ($strOS eq VM_U22)
+            {
+                $strScript .= sectionHeader() .
+                    "    echo '# Add PubkeyAcceptedAlgorithms (required for SFTP)'              >> /etc/ssh/sshd_config && \\\n" .
+                    "    echo 'HostKeyAlgorithms=+ssh-rsa,ssh-rsa-cert-v01\@openssh.com'        >> /etc/ssh/sshd_config && \\\n" .
+                    "    echo 'PubkeyAcceptedAlgorithms=+ssh-rsa,ssh-rsa-cert-v01\@openssh.com' >> /etc/ssh/sshd_config";
+            }
+
+            # Rename existing group that would conflict with our group name. This is pretty hacky but should be OK since we are the
+            # only thing running in the container.
+            $strScript .= sectionHeader() .
+                "# Rename conflicting group\n" .
+                '    sed -i s/.*\:x\:' . TEST_GROUP_ID . '\:$/' . TEST_GROUP . '\:x\:' . TEST_GROUP_ID . "\:/ /etc/group";
 
             $strScript .= sectionHeader() .
                 "# Create test user\n" .
@@ -571,7 +638,8 @@ sub containerBuild
                 $strScript .=
                     # Don't allow sudo to disable core dump (suppresses errors, see https://github.com/sudo-project/sudo/issues/42)
                     "    echo \"Set disable_coredump false\" >> /etc/sudo.conf && \\\n" .
-                    "    echo '%" . TEST_GROUP . "        ALL=(ALL)       NOPASSWD: ALL' > /etc/sudoers.d/" . TEST_GROUP . " && \\\n" .
+                    "    echo '%" . TEST_GROUP . "        ALL=(ALL)       NOPASSWD: ALL' > /etc/sudoers.d/" . TEST_GROUP .
+                        " && \\\n" .
                     "    sed -i 's/^Defaults    requiretty\$/\\# Defaults    requiretty/' /etc/sudoers";
             }
             else
@@ -581,9 +649,9 @@ sub containerBuild
             }
 
             $strScript .=
-                sshSetup($strOS, TEST_USER, TEST_GROUP, $$oVm{$strOS}{&VM_CONTROL_MASTER});
+                sshSetup($strOS, TEST_USER, TEST_GROUP, $$oVm{$strOS}{&VM_CONTROL_MTR});
 
-            $strScript .=  sectionHeader() .
+            $strScript .= sectionHeader() .
                 "# Make " . TEST_USER . " home dir readable\n" .
                 '    chmod g+r,g+x /home/' . TEST_USER;
 

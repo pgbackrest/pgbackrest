@@ -10,28 +10,41 @@ This object is intended to be used for multiple TLS sessions so ioClientOpen() c
 #define COMMON_IO_TLS_CLIENT_H
 
 #include "common/io/client.h"
+#include "common/time.h"
 
 /***********************************************************************************************************************************
 Io client type
 ***********************************************************************************************************************************/
-#define IO_CLIENT_TLS_TYPE                                          "tls"
-    STRING_DECLARE(IO_CLIENT_TLS_TYPE_STR);
+#define IO_CLIENT_TLS_TYPE                                          STRID5("tls", 0x4d940)
 
 /***********************************************************************************************************************************
 Statistics constants
 ***********************************************************************************************************************************/
 #define TLS_STAT_CLIENT                                             "tls.client"        // Clients created
-    STRING_DECLARE(TLS_STAT_CLIENT_STR);
+STRING_DECLARE(TLS_STAT_CLIENT_STR);
 #define TLS_STAT_RETRY                                              "tls.retry"         // Connection retries
-    STRING_DECLARE(TLS_STAT_RETRY_STR);
+STRING_DECLARE(TLS_STAT_RETRY_STR);
 #define TLS_STAT_SESSION                                            "tls.session"       // Sessions created
-    STRING_DECLARE(TLS_STAT_SESSION_STR);
+STRING_DECLARE(TLS_STAT_SESSION_STR);
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-IoClient *tlsClientNew(
-    IoClient *ioClient, const String *host, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath);
+typedef struct TlsClientNewParam
+{
+    VAR_PARAM_HEADER;
+    const String *caFile;
+    const String *caPath;
+    const String *certFile;
+    const String *keyFile;
+} TlsClientNewParam;
+
+#define tlsClientNewP(ioClient, host, timeoutConnect, timeoutSession, verifyPeer, ...)                                             \
+    tlsClientNew(ioClient, host, timeoutConnect, timeoutSession, verifyPeer, (TlsClientNewParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN IoClient *tlsClientNew(
+    IoClient *ioClient, const String *host, TimeMSec timeoutConnect, TimeMSec timeoutSession, bool verifyPeer,
+    TlsClientNewParam param);
 
 /***********************************************************************************************************************************
 Functions

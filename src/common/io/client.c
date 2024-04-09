@@ -4,81 +4,57 @@ Io Client Interface
 #include "build.auto.h"
 
 #include "common/debug.h"
-#include "common/io/client.intern.h"
+#include "common/io/client.h"
 #include "common/log.h"
-#include "common/memContext.h"
-#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 struct IoClient
 {
-    MemContext *memContext;                                         // Mem context
-    void *driver;                                                   // Driver object
-    const IoClientInterface *interface;                             // Driver interface
+    IoClientPub pub;                                                // Publicly accessible variables
 };
 
-OBJECT_DEFINE_MOVE(IO_CLIENT);
-OBJECT_DEFINE_FREE(IO_CLIENT);
-
 /**********************************************************************************************************************************/
-IoClient *
-ioClientNew(void *driver, const IoClientInterface *interface)
+FN_EXTERN IoClient *
+ioClientNew(void *const driver, const IoClientInterface *const interface)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace)
+    FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM_P(VOID, driver);
         FUNCTION_LOG_PARAM(IO_CLIENT_INTERFACE, interface);
     FUNCTION_LOG_END();
 
     ASSERT(driver != NULL);
     ASSERT(interface != NULL);
-    ASSERT(interface->type != NULL);
+    ASSERT(interface->type != 0);
     ASSERT(interface->name != NULL);
     ASSERT(interface->open != NULL);
     ASSERT(interface->toLog != NULL);
 
-    IoClient *this = memNew(sizeof(IoClient));
-
-    *this = (IoClient)
+    OBJ_NEW_BEGIN(IoClient, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        .memContext = memContextCurrent(),
-        .driver = driver,
-        .interface = interface,
-    };
+        *this = (IoClient)
+        {
+            .pub =
+            {
+                .driver = objMoveToInterface(driver, this, memContextPrior()),
+                .interface = interface,
+            },
+        };
+    }
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_CLIENT, this);
 }
 
 /**********************************************************************************************************************************/
-IoSession *
-ioClientOpen(IoClient *this)
+FN_EXTERN void
+ioClientToLog(const IoClient *const this, StringStatic *const debugLog)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(IO_CLIENT, this);
-    FUNCTION_LOG_END();
+    strStcCat(debugLog, "{type: ");
+    strStcResultSizeInc(debugLog, strIdToLog(this->pub.interface->type, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
 
-    ASSERT(this != NULL);
-
-    FUNCTION_LOG_RETURN(IO_SESSION, this->interface->open(this->driver));
-}
-
-/**********************************************************************************************************************************/
-const String *
-ioClientName(IoClient *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(IO_CLIENT, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_LOG_RETURN_CONST(STRING, this->interface->name(this->driver));
-}
-
-/**********************************************************************************************************************************/
-String *
-ioClientToLog(const IoClient *this)
-{
-    return strNewFmt("{type: %s, driver: %s}", strZ(*this->interface->type), strZ(this->interface->toLog(this->driver)));
+    strStcCat(debugLog, ", driver: ");
+    this->pub.interface->toLog(this->pub.driver, debugLog);
+    strStcCatChr(debugLog, '}');
 }

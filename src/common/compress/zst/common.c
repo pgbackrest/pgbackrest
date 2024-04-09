@@ -16,7 +16,7 @@ ZST Common
 #include "common/debug.h"
 
 /**********************************************************************************************************************************/
-size_t
+FN_EXTERN size_t
 zstError(size_t error)
 {
     FUNCTION_TEST_BEGIN();
@@ -26,7 +26,7 @@ zstError(size_t error)
     if (ZSTD_isError(error))
         THROW_FMT(FormatError, "zst error: [%zd] %s", (ssize_t)error, ZSTD_getErrorName(error));
 
-    FUNCTION_TEST_RETURN(error);
+    FUNCTION_TEST_RETURN(SIZE, error);
 }
 
 #endif // HAVE_LIBZST

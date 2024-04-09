@@ -1,0 +1,29 @@
+<release date="2015-04-19" version="0.60" title="Better Version Support and WAL Improvements">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <p>Pushing duplicate WAL now generates an error. This worked before only if checksums were disabled.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <p>Database System IDs are used to make sure that all WAL in an archive matches up. This should help prevent misconfigurations that send WAL from multiple clusters to the same archive.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Improved threading model by starting threads early and terminating them late.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-test-list>
+        <release-feature-list>
+            <release-item>
+                <p>Regression tests working back to <postgres/> 8.3.</p>
+            </release-item>
+        </release-feature-list>
+    </release-test-list>
+</release>

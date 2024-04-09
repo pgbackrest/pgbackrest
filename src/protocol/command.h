@@ -7,54 +7,49 @@ Protocol Command
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define PROTOCOL_COMMAND_TYPE                                       ProtocolCommand
-#define PROTOCOL_COMMAND_PREFIX                                     protocolCommand
-
 typedef struct ProtocolCommand ProtocolCommand;
 
-#include "common/type/variant.h"
-
-/***********************************************************************************************************************************
-Constants
-***********************************************************************************************************************************/
-#define PROTOCOL_KEY_COMMAND                                        "cmd"
-    STRING_DECLARE(PROTOCOL_KEY_COMMAND_STR);
-#define PROTOCOL_KEY_PARAMETER                                      "param"
-    STRING_DECLARE(PROTOCOL_KEY_PARAMETER_STR);
+#include "common/type/object.h"
+#include "common/type/pack.h"
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-ProtocolCommand *protocolCommandNew(const String *command);
+FN_EXTERN ProtocolCommand *protocolCommandNew(const StringId command);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Move to a new parent mem context
-ProtocolCommand *protocolCommandMove(ProtocolCommand *this, MemContext *parentNew);
+FN_INLINE_ALWAYS ProtocolCommand *
+protocolCommandMove(ProtocolCommand *const this, MemContext *const parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 // Read the command output
-ProtocolCommand *protocolCommandParamAdd(ProtocolCommand *this, const Variant *param);
+FN_EXTERN PackWrite *protocolCommandParam(ProtocolCommand *this);
 
-/***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-// Command JSON
-String *protocolCommandJson(const ProtocolCommand *this);
+// Write protocol command
+FN_EXTERN void protocolCommandPut(ProtocolCommand *this, IoWrite *write);
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void protocolCommandFree(ProtocolCommand *this);
+FN_INLINE_ALWAYS void
+protocolCommandFree(ProtocolCommand *const this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-String *protocolCommandToLog(const ProtocolCommand *this);
+FN_EXTERN void protocolCommandToLog(const ProtocolCommand *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_PROTOCOL_COMMAND_TYPE                                                                                         \
     ProtocolCommand *
 #define FUNCTION_LOG_PROTOCOL_COMMAND_FORMAT(value, buffer, bufferSize)                                                            \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, protocolCommandToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, protocolCommandToLog, buffer, bufferSize)
 
 #endif

@@ -8,11 +8,10 @@ Fork Handler
 #include <unistd.h>
 
 #include "common/debug.h"
-#include "common/error.h"
 #include "common/log.h"
 
 /**********************************************************************************************************************************/
-int
+FN_EXTERN int
 forkSafe(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
@@ -25,7 +24,7 @@ forkSafe(void)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 forkDetach(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
@@ -36,7 +35,7 @@ forkDetach(void)
     // The process should never receive a SIGHUP but ignore it just in case
     signal(SIGHUP, SIG_IGN);
 
-    // There should be no way the child process can exit first (after the next fork) but just in case ignore SIGCHLD.  This means
+    // There should be no way the child process can exit first (after the next fork) but just in case ignore SIGCHLD. This means
     // that the child process will automatically be reaped by the kernel should it finish first rather than becoming defunct.
     signal(SIGCHLD, SIG_IGN);
 

@@ -1,312 +1,310 @@
 /***********************************************************************************************************************************
-Test Convert JSON to/from KeyValue
+Test JSON read/write
 ***********************************************************************************************************************************/
 
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
     // *****************************************************************************************************************************
-    if (testBegin("jsonToBool() and jsonToBoolInternal()"))
+    if (testBegin("JsonRead"))
     {
-        TEST_ERROR(jsonToBool(strNew("z")), JsonFormatError, "expected boolean at 'z'");
-        TEST_ERROR(jsonToBool(strNew("falsex")), JsonFormatError, "unexpected characters after boolean at 'x'");
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on no data");
 
-        TEST_RESULT_BOOL(jsonToBool(strNew("true")), true, "bool is true");
-        TEST_RESULT_BOOL(jsonToBool(strNew("false")), false, "bool is false");
-    }
-
-    // *****************************************************************************************************************************
-    if (testBegin("jsonToInt(), jsonToInt64(), jsonToUInt(), jsonToUInt64() and jsonToIntInternal()"))
-    {
-        TEST_ERROR(jsonToUInt(strNew("-")), JsonFormatError, "found '-' with no integer at '-'");
-        TEST_ERROR(jsonToUInt(strNew(" 555555555 A")), JsonFormatError, "unexpected characters after number at 'A'");
-
-        TEST_RESULT_INT(jsonToInt(strNew("-555555555 ")), -555555555, "integer");
-        TEST_RESULT_INT(jsonToInt64(strNew("-555555555555 ")), -555555555555, "integer");
-        TEST_RESULT_UINT(jsonToUInt(strNew("\t555555555\n\r")), 555555555, "unsigned integer");
-        TEST_RESULT_UINT(jsonToUInt64(strNew(" 555555555555 ")), 555555555555, "unsigned integer");
-    }
-
-    // *****************************************************************************************************************************
-    if (testBegin("jsonToStr() and jsonToStrInternal()"))
-    {
-        TEST_ERROR(jsonToStr(strNew("\"\\j\"")), JsonFormatError, "invalid escape character 'j'");
-        TEST_ERROR(jsonToStr(strNew("\"runonstring")), JsonFormatError, "expected '\"' but found null delimiter");
-        TEST_ERROR(jsonToStr(strNew("\"normal\"L")), JsonFormatError, "unexpected characters after string at 'L'");
-        TEST_ERROR(jsonToStr(strNew("nullz")), JsonFormatError, "unexpected characters after string at 'z'");
-
-        TEST_RESULT_STR(jsonToStr(strNew("null")), NULL, "null string");
-        TEST_RESULT_STR_Z(jsonToStr(strNew(" \"test\"")), "test", "simple string");
-        TEST_RESULT_STR_Z(jsonToStr(strNew("\"te\\\"st\" ")), "te\"st", "string with quote");
-        TEST_RESULT_STR_Z(jsonToStr(strNew("\"\\\"\\\\\\/\\b\\n\\r\\t\\f\"")), "\"\\/\b\n\r\t\f", "string with escapes");
-    }
-
-    // *****************************************************************************************************************************
-    if (testBegin("jsonToKv() and jsonToKvInternal()"))
-    {
-        TEST_ERROR(jsonToKv(strNew("[")), JsonFormatError, "expected '{' at '['");
-        TEST_ERROR(jsonToKv(strNew("{\"key1\"= 747}")), JsonFormatError, "expected ':' at '= 747}'");
-        TEST_ERROR(jsonToKv(strNew("{\"key1\" : 747'")), JsonFormatError, "expected '}' at '''");
-        TEST_ERROR(jsonToKv(strNew("{key1")), JsonFormatError, "expected '\"' at 'key1'");
-        TEST_ERROR(jsonToKv(strNew("{}BOGUS")), JsonFormatError, "unexpected characters after object at 'BOGUS'");
-
-        KeyValue *kv = NULL;
-        TEST_ASSIGN(kv, jsonToKv(strNew("{\"key1\": 747, \"key2\":\"value2\",\"key3\"\t:\t[\t] }")), "object");
-        TEST_RESULT_UINT(varLstSize(kvKeyList(kv)), 3, "check key total");
-        TEST_RESULT_UINT(varUInt64(kvGet(kv, varNewStr(strNew("key1")))), 747, "check object uint");
-        TEST_RESULT_STR_Z(varStr(kvGet(kv, varNewStr(strNew("key2")))), "value2", "check object str");
-        TEST_RESULT_UINT(varLstSize(varVarLst(kvGet(kv, varNewStr(strNew("key3"))))), 0, "check empty array");
-
-        TEST_ASSIGN(kv, jsonToKv(strNew("\t{\n} ")), "empty object");
-        TEST_RESULT_UINT(varLstSize(kvKeyList(kv)), 0, "check key total");
-    }
-
-    // *****************************************************************************************************************************
-    if (testBegin("jsonToVar()"))
-    {
-        TEST_ERROR(jsonToVar(strNew("")), JsonFormatError, "expected data");
-        TEST_ERROR(jsonToVar(strNew(" \t\r\n ")), JsonFormatError, "expected data");
-        TEST_ERROR(jsonToVar(strNew("z")), JsonFormatError, "invalid type at 'z'");
-        TEST_ERROR(jsonToVar(strNew("3 =")), JsonFormatError, "unexpected characters after JSON at '='");
+        TEST_ERROR(jsonReadStr(jsonReadNew(STRDEF(""))), JsonFormatError, "expected data");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_STR_Z(varStr(jsonToVar(strNew(" \"test\""))), "test", "simple string");
-        TEST_RESULT_STR_Z(varStr(jsonToVar(strNew("\"te\\\"st\" "))), "te\"st", "string with quote");
-        TEST_RESULT_STR_Z(varStr(jsonToVar(strNew("\"\\\"\\\\\\/\\b\\n\\r\\t\\f\""))), "\"\\/\b\n\r\t\f", "string with escapes");
+        TEST_TITLE("error on invalid type");
+
+        TEST_ERROR(jsonReadStr(jsonReadNew(STRDEF("x"))), JsonFormatError, "invalid type at: x");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(jsonToVar(strNew("ton")), JsonFormatError, "expected boolean at 'ton'");
-        TEST_RESULT_BOOL(varBool(jsonToVar(strNew(" true"))), true, "boolean true");
-        TEST_RESULT_BOOL(varBool(jsonToVar(strNew("false "))), false, "boolean false");
+        TEST_TITLE("error on missing comma");
+
+        JsonRead *read = NULL;
+
+        TEST_ASSIGN(read, jsonReadNew(STRDEF("\r[\ttrue true]")), "new read");
+
+        TEST_RESULT_VOID(jsonReadArrayBegin(read), "array begin");
+        TEST_RESULT_BOOL(jsonReadBool(read), true, "bool true");
+        jsonReadConsumeWhiteSpace(read);
+        TEST_ERROR(jsonReadBool(read), JsonFormatError, "missing comma at: true]");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(jsonToVar(strNew("not")), JsonFormatError, "expected null at 'not'");
-        TEST_RESULT_PTR(jsonToVar(strNew("null")), NULL, "null value");
+        TEST_TITLE("error on mismatched container end");
+
+        TEST_ASSIGN(read, jsonReadNew(STRDEF("\r{ ] ")), "new read");
+
+        TEST_RESULT_VOID(jsonReadObjectBegin(read), "object begin");
+        jsonReadConsumeWhiteSpace(read);
+        TEST_ERROR(jsonReadObjectEnd(read), JsonFormatError, "expected } but found ] at: ] ");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(jsonToVar(strNew("[1, \"test\", false")), JsonFormatError, "expected ']' at ''");
+        TEST_TITLE("error on no digits in number");
 
-        VariantList *valueList = NULL;
-        TEST_ASSIGN(valueList, varVarLst(jsonToVar(strNew("[1, \"test\", false]"))), "array");
-        TEST_RESULT_UINT(varLstSize(valueList), 3, "check array size");
-        TEST_RESULT_UINT(varUInt64(varLstGet(valueList, 0)), 1, "check array int");
-        TEST_RESULT_STR_Z(varStr(varLstGet(valueList, 1)), "test", "check array str");
-        TEST_RESULT_BOOL(varBool(varLstGet(valueList, 2)), false, "check array bool");
-
-        TEST_ASSIGN(valueList, varVarLst(jsonToVar(strNew("[ ]"))), "empty array");
-        TEST_RESULT_UINT(varLstSize(valueList), 0, "check array size");
+        TEST_ERROR(jsonReadNumber(jsonReadNew(STRDEF("a"))), JsonFormatError, "no digits found at: a");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        KeyValue *kv = NULL;
-        TEST_ASSIGN(kv, varKv(jsonToVar(strNew("\t{\n} "))), "empty object");
-        TEST_RESULT_UINT(varLstSize(kvKeyList(kv)), 0, "check key total");
+        TEST_TITLE("error on number larger than available buffer");
+
+        TEST_ERROR(
+            jsonReadNumber(jsonReadNew(STRDEF("9999999999999999999999999999999999999999999999999999999999999999"))),
+            JsonFormatError, "invalid number at: 9999999999999999999999999999999999999999999999999999999999999999");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on invalid ascii encoding");
+
+        TEST_ERROR(jsonReadStr(jsonReadNew(STRDEF("\"\\u1111"))), JsonFormatError, "unable to decode at: \\u1111");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on invalid escape");
+
+        TEST_ERROR(jsonReadStr(jsonReadNew(STRDEF("\"\\xy"))), JsonFormatError, "invalid escape character at: \\xy");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on unterminated string");
+
+        TEST_ERROR(jsonReadStr(jsonReadNew(STRDEF("\""))), JsonFormatError, "expected '\"' but found null delimiter");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on invalid bool");
+
+        TEST_ERROR(jsonReadBool(jsonReadNew(STRDEF("fase"))), JsonFormatError, "expected boolean at: fase");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on invalid integers");
+
+        TEST_ERROR(
+            jsonReadInt(jsonReadNew(strNewFmt("%" PRId64, (int64_t)INT_MIN - 1))), JsonFormatError,
+            "-2147483649 is out of range for int");
+        TEST_ERROR(
+            jsonReadInt(jsonReadNew(strNewFmt("%" PRId64, (int64_t)INT_MAX + 1))), JsonFormatError,
+            "2147483648 is out of range for int");
+        TEST_ERROR(
+            jsonReadInt64(jsonReadNew(strNewFmt("%" PRIu64, (uint64_t)INT64_MAX + 1))), JsonFormatError,
+            "9223372036854775808 is out of range for int64");
+        TEST_ERROR(jsonReadUInt(jsonReadNew(STRDEF("-1"))), JsonFormatError, "-1 is out of range for uint");
+        TEST_ERROR(
+            jsonReadUInt(jsonReadNew(strNewFmt("%" PRIu64, (uint64_t)UINT_MAX + 1))), JsonFormatError,
+            "4294967296 is out of range for uint");
+        TEST_ERROR(jsonReadUInt64(jsonReadNew(STRDEF("-1"))), JsonFormatError, "-1 is out of range for uint64");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on invalid null");
+
+        TEST_ERROR(jsonReadNull(jsonReadNew(STRDEF("nil"))), JsonFormatError, "expected null at: nil");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on escape characters in key");
+
+        TEST_ASSIGN(read, jsonReadNew(STRDEF("{\"\\\"")), "new read");
+
+        TEST_RESULT_VOID(jsonReadObjectBegin(read), "object begin");
+        jsonReadConsumeWhiteSpace(read);
+        TEST_ERROR(jsonReadKey(read), JsonFormatError, "escape character not allowed in key at: \\\"");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on unterminated key");
+
+        TEST_ASSIGN(read, jsonReadNew(STRDEF("{\"")), "new read");
+
+        TEST_RESULT_VOID(jsonReadObjectBegin(read), "object begin");
+        jsonReadConsumeWhiteSpace(read);
+        TEST_ERROR(jsonReadKey(read), JsonFormatError, "expected '\"' but found null delimiter");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on missing : after key");
+
+        TEST_ASSIGN(read, jsonReadNew(STRDEF("\r{ \"key1\"xxx")), "new read");
+
+        TEST_RESULT_VOID(jsonReadObjectBegin(read), "object begin");
+        TEST_ERROR(jsonReadKey(read), JsonFormatError, "expected : after key 'key1' at: xxx");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("scalar");
+
+        TEST_ASSIGN(read, jsonReadNew(STRDEF("\rtrue\t")), "new read");
+
+        TEST_RESULT_BOOL(jsonReadBool(read), true, "bool true");
+        TEST_ERROR(jsonReadBool(read), FormatError, "JSON read is complete");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("complex");
+
+        #define TEST_VARIANT                                        "[-1,true,\"zxv\",{\"key1\":null,\"key2\":777}]"
+
+        const String *json = STRDEF(
+            "\t\r\n "                                               // Leading whitespace
+            "[\n"
+            "    {"
+            "        \"key1\"\t: \"\\u0076\\na\\tlu e\\f\\b\\/\\\\\\\"\\r1\","
+            "        \"key2\"\t: 777,"
+            "        \"key3\"\t: 777,"
+            "        \"key4\"\t: 9223372036854775807"
+            "    },"
+            "    \"abc\\/\","
+            "    \"def\","
+            "    null,"
+            "    [\"a\", \"b\"],"
+            "    123,"
+            "    18446744073709551615,"
+            "    -1,"
+            "    -9223372036854775807,"
+            "    [true, {\"key1\":null,\"key1\":\"value1\"}],"
+            "    true,"
+            "    " TEST_VARIANT ","
+            "    false\n"
+            "]"
+            " ");                                                  // Extra whitespace at the end
+
+        TEST_ASSIGN(read, jsonReadNew(strNewFmt("%s]", strZ(json))), "new read");
+
+        TEST_RESULT_VOID(jsonReadArrayBegin(read), "array begin");
+        jsonReadConsumeWhiteSpace(read);
+        TEST_ERROR_FMT(jsonReadArrayEnd(read), JsonFormatError, "expected ] but found { at: %s", read->json);
+
+        TEST_RESULT_VOID(jsonReadObjectBegin(read), "object begin");
+        TEST_RESULT_BOOL(jsonReadKeyExpect(read, STRDEF("key0")), false, "expect key0");
+        TEST_RESULT_STR_Z(jsonReadKey(read), "key1", "key1");
+        jsonReadConsumeWhiteSpace(read);
+        TEST_ERROR_FMT(jsonReadKey(read), AssertError, "key has already been read at: %s", read->json);
+        TEST_RESULT_STR_Z(jsonReadStr(read), "v\na\tlu e\f\b/\\\"\r1", "str");
+        TEST_ERROR_FMT(jsonReadStr(read), AssertError, "key has not been read at: %s", read->json);
+        TEST_ERROR(jsonReadKeyRequire(read, STRDEF("key1")), JsonFormatError, "required key 'key1' not found");
+        TEST_RESULT_VOID(jsonReadKeyRequire(read, STRDEF("key2")), "key2");
+        jsonReadConsumeWhiteSpace(read);
+        TEST_ERROR_FMT(jsonReadStr(read), JsonFormatError, "expected 'str' but found 'nmbr' at: %s", read->json);
+        TEST_RESULT_INT(jsonReadInt(read), 777, "int");
+        TEST_RESULT_BOOL(jsonReadKeyExpectZ(read, "key4"), true, "expect key4");
+        TEST_RESULT_INT(jsonReadInt64(read), INT64_MAX, "int");
+        TEST_RESULT_BOOL(jsonReadKeyExpectStrId(read, STRID5("key5", 0xee4ab0)), false, "do not expect key5");
+        TEST_ERROR(jsonReadKeyRequireStrId(read, STRID5("key5", 0xee4ab0)), JsonFormatError, "required key 'key5' not found");
+        TEST_ERROR(jsonReadKeyRequireZ(read, "key5"), JsonFormatError, "required key 'key5' not found");
+        TEST_RESULT_VOID(jsonReadObjectEnd(read), "object end");
+
+        TEST_RESULT_STR_Z(jsonReadStr(read), "abc/", "str");
+        TEST_RESULT_STR_Z(strIdToStr(jsonReadStrId(read)), "def", "strid");
+        TEST_RESULT_STR_Z(jsonReadStr(read), NULL, "str null");
+        TEST_RESULT_STRLST_Z(jsonReadStrLst(read), "a\nb\n", "str list");
+        TEST_RESULT_UINT(jsonReadUInt(read), 123, "uint");
+        TEST_RESULT_UINT(jsonReadUInt64(read), 18446744073709551615U, "uint64");
+        TEST_RESULT_INT(jsonReadInt(read), -1, "int");
+        TEST_RESULT_INT(jsonReadInt64(read), -9223372036854775807L, "int64");
+        TEST_RESULT_VOID(jsonReadSkip(read), "skip");
+        TEST_RESULT_BOOL(jsonReadBool(read), true, "bool true");
+        TEST_RESULT_STR_Z(jsonFromVar(jsonReadVar(read)), TEST_VARIANT, "var");
+        TEST_RESULT_BOOL(jsonReadBool(read), false, "bool false");
+
+        TEST_RESULT_VOID(jsonReadArrayEnd(read), "array end");
+        TEST_ERROR(jsonReadArrayEnd(read), FormatError, "JSON read is complete");
+
+        TEST_RESULT_VOID(jsonReadFree(read), "free");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("variant");
+
+        TEST_RESULT_STR_Z(varStr(jsonToVar(STRDEF("\"test\""))), "test", "var");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("validate");
+
+        TEST_RESULT_VOID(jsonValidate(json), "valid");
+        TEST_ERROR(jsonValidate(STRDEF("\"\\u000")), JsonFormatError, "unable to decode at: \\u000");
+        TEST_ERROR(jsonValidate(STRDEF("\"")), JsonFormatError, "expected '\"' but found null delimiter");
+        TEST_ERROR(jsonValidate(STRDEF("{\"key\"x")), JsonFormatError, "expected : after key at: x");
+        TEST_ERROR(jsonValidate(strNewFmt("%s]", strZ(json))), JsonFormatError, "characters after JSON at: ]");
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("jsonToVarLst() and jsonToArrayInternal()"))
+    if (testBegin("JsonWrite"))
     {
-        TEST_ERROR(jsonToVarLst(strNew("{")), JsonFormatError, "expected '[' at '{'");
-        TEST_ERROR(jsonToVarLst(strNew("[")), JsonFormatError, "expected data");
-        TEST_ERROR(jsonToVarLst(strNew(" [] ZZZ")), JsonFormatError, "unexpected characters after array at 'ZZZ'");
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("complex");
 
-        TEST_RESULT_STR_Z(strLstJoin(strLstNewVarLst(jsonToVarLst(strNew("[\"e1\", \"e2\"]"))), "|"), "e1|e2", "json list");
-    }
+        JsonWrite *write = NULL;
 
-    // *****************************************************************************************************************************
-    if (testBegin("jsonFromBool()"))
-    {
-        TEST_RESULT_STR_Z(jsonFromBool(true), "true", "json bool true");
-        TEST_RESULT_STR_Z(jsonFromBool(false), "false", "json bool true");
-    }
+        TEST_ASSIGN(write, jsonWriteNewP(), "new write");
 
-    // *****************************************************************************************************************************
-    if (testBegin("jsonFromInt(), jsonFromInt64(), jsonFromUInt() and jsonFromUInt64()"))
-    {
-        TEST_RESULT_STR_Z(jsonFromInt(-2147483648), "-2147483648", "json int");
-        TEST_RESULT_STR_Z(jsonFromInt64(-9223372036854775807L), "-9223372036854775807", "json int64");
-        TEST_RESULT_STR_Z(jsonFromUInt(4294967295), "4294967295", "json uint");
-        TEST_RESULT_STR_Z(jsonFromUInt64(18446744073709551615UL), "18446744073709551615", "json uint64");
-    }
+        TEST_RESULT_VOID(jsonWriteArrayBegin(write), "array begin");
+        TEST_RESULT_VOID(jsonWriteBool(write, true), "bool true");
+        TEST_RESULT_VOID(jsonWriteInt(write, 55), "int 55");
+        TEST_RESULT_VOID(jsonWriteInt64(write, INT64_MIN), "int64 min");
+        TEST_RESULT_VOID(jsonWriteStr(write, STRDEF("two\nlines")), "str with two lines");
 
-    // *****************************************************************************************************************************
-    if (testBegin("jsonFromStr() and jsonFromStrInternal()"))
-    {
-        TEST_RESULT_STR_Z(jsonFromStr(NULL), "null", "null string");
-        TEST_RESULT_STR_Z(jsonFromStr(strNew("simple string")), "\"simple string\"", "simple string");
-        TEST_RESULT_STR_Z(jsonFromStr(strNew("\"\\/\b\n\r\t\f")), "\"\\\"\\\\/\\b\\n\\r\\t\\f\"", "string escapes");
-    }
+        TEST_RESULT_VOID(jsonWriteObjectBegin(write), "object begin");
+        TEST_ERROR(jsonWriteBool(write, false), JsonFormatError, "key has not been written");
+        TEST_ERROR(
+            jsonWriteKeyZ(write, "1234567890123456789012345678901234567890123456789012345678901234567"), AssertError,
+            "key '1234567890123456789012345678901234567890123456789012345678901234567' must not be longer than 66 bytes");
+        TEST_RESULT_VOID(jsonWriteKey(write, STRDEF("flag")), "key 'flag'");
+        TEST_ERROR(jsonWriteKey(write, STRDEF("flag")), JsonFormatError, "key has already been written");
+        TEST_RESULT_VOID(jsonWriteBool(write, false), "bool false");
+        TEST_ERROR(jsonWriteKey(write, STRDEF("flag")), JsonFormatError, "key 'flag' is not after prior key 'flag'");
+        TEST_RESULT_VOID(jsonWriteKeyStrId(write, STRID5("key5", 0xee4ab0)), "key 'key5'");
+        TEST_RESULT_VOID(jsonWriteStrFmt(write, "%d", 898), "str fmt");
+        TEST_RESULT_VOID(jsonWriteKeyZ(write, "val"), "key 'val'");
+        TEST_RESULT_VOID(jsonWriteUInt64(write, UINT64_MAX), "uint64 max");
+        TEST_RESULT_VOID(jsonWriteObjectEnd(write), "object end");
 
-    // *****************************************************************************************************************************
-    if (testBegin("jsonFromKv(), jsonFromKvInternal()"))
-    {
-        KeyValue *keyValue = kvNew();
-        String *json = NULL;
+        StringList *list = strLstNew();
+        strLstAddZ(list, "a");
+        strLstAddZ(list, "\n\"a\\\r\t\bbc");
 
-        TEST_ASSIGN(json, jsonFromKv(keyValue), "kvToJson - empty");
-        TEST_RESULT_STR_Z(json, "{}", "  empty curly brackets");
+        TEST_RESULT_VOID(jsonWriteStrLst(write, list), "write str list");
 
-        kvPut(keyValue, varNewStrZ("backup"), varNewVarLst(varLstNew()));
-        TEST_ASSIGN(json, jsonFromKv(keyValue), "kvToJson - kv with empty array");
-        TEST_RESULT_STR_Z(json, "{\"backup\":[]}", "  kv with empty array brackets");
+        TEST_RESULT_VOID(jsonWriteUInt(write, 66), "write int 66");
+        TEST_RESULT_VOID(jsonWriteJson(write, NULL), "null json");
+        TEST_RESULT_VOID(jsonWriteJson(write, STRDEF("{}")), "json");
+        TEST_RESULT_VOID(jsonWriteZ(write, NULL), "null z");
+        TEST_RESULT_VOID(jsonWriteZ(write, "a string\f"), "z");
+        TEST_RESULT_VOID(jsonWriteStrId(write, strIdFromZ("hilly")), "strid");
+        TEST_RESULT_VOID(jsonWriteVar(write, varNewKv(NULL)), "null kv");
+        TEST_RESULT_VOID(jsonWriteStr(write, NULL), "null str");
+        TEST_RESULT_VOID(jsonWriteArrayEnd(write), "array end");
 
-        kvPutKv(keyValue, varNewStr(strNew("archive")));
-        kvPutKv(keyValue, varNewStr(strNew("empty")));
-        kvPut(keyValue, varNewStrZ("bool1"), varNewBool(true));
-        kvPut(keyValue, varNewStrZ("bool2"), varNewBool(false));
-        kvPut(keyValue, varNewStrZ("null-str"), varNewStr(NULL));
-        kvPut(keyValue, varNewStrZ("checknull"), (Variant *)NULL);
+        TEST_ERROR(jsonWriteUInt(write, 66), JsonFormatError, "JSON write is complete");
 
-        VariantList *dbList = varLstNew();
-        Variant *dbInfo = varNewKv(kvNew());
-        kvPut(varKv(dbInfo), varNewStr(strNew("id")), varNewInt(1));
-        kvPut(varKv(dbInfo), varNewStr(strNew("version")),  varNewStr(strNew("9.4")));
-        varLstAdd(dbList, dbInfo);
-        varLstAdd(dbList, NULL);
-        kvPut(keyValue, varNewStrZ("db"), varNewVarLst(dbList));
-        kvPut(keyValue, varNewStrZ("null-list"), varNewVarLst(NULL));
-
-        TEST_ASSIGN(json, jsonFromKv(keyValue), "kvToJson - kv with empty array, kv, varList with values");
         TEST_RESULT_STR_Z(
-            json,
-            "{"
-                "\"archive\":{},"
-                "\"backup\":[],"
-                "\"bool1\":true,"
-                "\"bool2\":false,"
-                "\"checknull\":null,"
-                "\"db\":["
-                    "{"
-                        "\"id\":1,"
-                        "\"version\":\"9.4\""
-                    "},"
-                    "null"
-                "],"
-                "\"empty\":{},"
-                "\"null-list\":null,"
-                "\"null-str\":null"
-            "}",
-            "  kv with empty array, kv, varList with values");
+            jsonWriteResult(write),
+            // {uncrustify_off - indentation}
+            "["
+                "true,"
+                "55,"
+                "-9223372036854775808,"
+                "\"two\\nlines\","
+                "{"
+                    "\"flag\":false,"
+                    "\"key5\":\"898\","
+                    "\"val\":18446744073709551615"
+                "},"
+                "[\"a\",\"\\n\\\"a\\\\\\r\\t\\bbc\"],"
+                "66,"
+                "null,"
+                "{},"
+                "null,"
+                "\"a string\\f\","
+                "\"hilly\","
+                "null,"
+                "null"
+            "]",
+            // {uncrustify_on}
+            "json result");
 
-        TEST_ASSIGN(
-            keyValue,
-            varKv(
-                jsonToVar(
-                    strNew(
-                    "{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
-                    "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
-                    "\"checksum-page-error\":[1,[4,6]],\"backup-timestamp-start\":1482182951}"))),
-            "multiple values with array");
-        TEST_ASSIGN(json, jsonFromKv(keyValue), "  kvToJson - sorted");
-        TEST_RESULT_STR_Z(
-            json,
-            "{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
-            "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\"],"
-            "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1,[4,6]]}",
-            "  check string no pretty print");
+        TEST_RESULT_VOID(jsonWriteFree(write), "free");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("variant");
+
+        TEST_RESULT_STR_Z(jsonFromVar(varNewStr(NULL)), "null", "null str");
+        TEST_RESULT_STR_Z(jsonFromVar(varNewVarLst(NULL)), "null", "null var lst");
+        TEST_RESULT_STR_Z(jsonFromVar(varNewUInt(47)), "47", "uint");
+        TEST_RESULT_STR_Z(jsonFromVar(varNewInt(-99)), "-99", "int");
     }
 
-    // *****************************************************************************************************************************
-    if (testBegin("jsonFromVar()"))
-    {
-        TEST_ERROR(jsonFromVar(varNewInt(1)), JsonFormatError, "variant type is invalid");
-
-        String *json = NULL;
-        Variant *keyValue = NULL;
-
-        TEST_ASSIGN(keyValue, varNewKv(kvNew()), "build new kv");
-        kvPut(varKv(keyValue), varNewStrZ("backup-info-size-delta"), varNewInt(1982702));
-        kvPut(varKv(keyValue), varNewStrZ("backup-prior"), varNewStrZ("20161219-212741F_20161219-212803I"));
-
-        Variant *listVar = NULL;
-        TEST_ASSIGN(listVar, varNewVarLst(varLstNew()), "  new string array to kv");
-        varLstAdd(varVarLst(listVar), varNewStrZ("20161219-212741F"));
-        varLstAdd(varVarLst(listVar), varNewStrZ("20161219-212741F_20161219-212803I"));
-        varLstAdd(varVarLst(listVar), varNewStrZ(NULL));
-        kvPut(varKv(keyValue), varNewStrZ("backup-reference"), listVar);
-        kvPut(varKv(keyValue), varNewStrZ("backup-timestamp-start"), varNewInt(1482182951));
-
-        Variant *listVar2 = NULL;
-        TEST_ASSIGN(listVar2, varNewVarLst(varLstNew()), "  new int array to kv");
-        varLstAdd(varVarLst(listVar2), varNewInt(1));
-        kvPut(varKv(keyValue), varNewStrZ("checksum-page-error"), listVar2);
-
-        // Embed a keyValue section to test recursion
-        Variant *sectionKey = varNewStr(strNew("section"));
-        KeyValue *sectionKv = kvPutKv(varKv(keyValue), sectionKey);
-        kvAdd(sectionKv, varNewStr(strNew("key1")), varNewStr(strNew("value1")));
-        kvAdd(sectionKv, varNewStr(strNew("key2")), (Variant *)NULL);
-        kvAdd(sectionKv, varNewStr(strNew("key3")), varNewStr(strNew("value2")));
-        kvAdd(sectionKv, varNewStr(strNew("escape")), varNewStr(strNew("\"\\/\b\n\r\t\f")));
-
-        TEST_ASSIGN(json, jsonFromVar(keyValue), "KeyValue");
-        TEST_RESULT_STR_Z(
-            json,
-            "{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
-            "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\",null],"
-            "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1],"
-            "\"section\":{\"escape\":\"\\\"\\\\/\\b\\n\\r\\t\\f\",\"key1\":\"value1\",\"key2\":null,\"key3\":\"value2\"}}",
-            "  sorted json string result, no pretty print");
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        Variant *varListOuter = NULL;
-
-        TEST_ASSIGN(json, jsonFromVar(varNewVarLst(varLstNew())), "VariantList");
-        TEST_RESULT_STR_Z(json, "[]", "  empty list no pretty print");
-
-        TEST_ASSIGN(varListOuter, varNewVarLst(varLstNew()), "new variant list with keyValues");
-        varLstAdd(varVarLst(varListOuter), varNewStrZ("ASTRING"));
-        varLstAdd(varVarLst(varListOuter), varNewInt64(9223372036854775807LL));
-        varLstAdd(varVarLst(varListOuter), varNewInt(2147483647));
-        varLstAdd(varVarLst(varListOuter), varNewBool(true));
-        varLstAdd(varVarLst(varListOuter), varNewVarLst(varLstNew()));
-        varLstAdd(varVarLst(varListOuter), NULL);
-        varLstAdd(varVarLst(varListOuter), keyValue);
-
-        TEST_ASSIGN(json, jsonFromVar(varListOuter), "VariantList");
-        TEST_RESULT_STR_Z(
-            json,
-            "[\"ASTRING\",9223372036854775807,2147483647,true,[],null,{\"backup-info-size-delta\":1982702,"
-            "\"backup-prior\":\"20161219-212741F_20161219-212803I\","
-            "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\",null],"
-            "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1],"
-            "\"section\":{\"escape\":\"\\\"\\\\/\\b\\n\\r\\t\\f\",\"key1\":\"value1\",\"key2\":null,\"key3\":\"value2\"}}]",
-            "  sorted json string result no pretty print");
-
-        Variant *keyValue2 = varDup(keyValue);
-        varLstAdd(varVarLst(varListOuter), keyValue2);
-
-        TEST_ASSIGN(json, jsonFromVar(varListOuter), "VariantList - multiple elements");
-        TEST_RESULT_STR_Z(
-            json,
-            "[\"ASTRING\",9223372036854775807,2147483647,true,[],null,{\"backup-info-size-delta\":1982702,"
-            "\"backup-prior\":\"20161219-212741F_20161219-212803I\","
-            "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\",null],"
-            "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1],"
-            "\"section\":{\"escape\":\"\\\"\\\\/\\b\\n\\r\\t\\f\",\"key1\":\"value1\",\"key2\":null,\"key3\":\"value2\"}},"
-            "{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
-            "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\",null],"
-            "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1],"
-            "\"section\":{\"escape\":\"\\\"\\\\/\\b\\n\\r\\t\\f\",\"key1\":\"value1\",\"key2\":null,\"key3\":\"value2\"}}]",
-            "  sorted json string result no pretty print");
-
-        VariantList *varList = varLstNew();
-        varLstAdd(varList, varNewUInt(32));
-        varLstAdd(varList, varNewUInt64(10000000000));
-
-        TEST_RESULT_STR_Z(jsonFromVar(varNewVarLst(varList)), "[32,10000000000]", "list various types");
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_STR_Z(jsonFromVar(NULL), "null", "null variant");
-        TEST_RESULT_STR_Z(jsonFromVar(varNewBool(true)), "true", "bool variant");
-        TEST_RESULT_STR_Z(jsonFromVar(varNewUInt(66)), "66", "uint variant");
-        TEST_RESULT_STR_Z(jsonFromVar(varNewUInt64(10000000001)), "10000000001", "uint64 variant");
-        TEST_RESULT_STR_Z(jsonFromVar(varNewStrZ("test \" string")), "\"test \\\" string\"", "string variant");
-    }
-
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

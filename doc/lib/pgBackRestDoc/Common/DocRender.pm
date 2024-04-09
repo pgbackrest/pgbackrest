@@ -31,13 +31,13 @@ my $oRenderTag =
 {
     'markdown' =>
     {
+        'br' => ['\n', ''],
         'quote' => ['"', '"'],
         'b' => ['**', '**'],
         'i' => ['_', '_'],
         # 'bi' => ['_**', '**_'],
-        'ul' => ["\n", ""],
-        'ol' => ["\n", "\n"],
-        'li' => ['- ', "\n"],
+        'list-item' => ["\n", ""],
+        'list-item' => ['- ', "\n"],
         'id' => ['`', '`'],
         'file' => ['`', '`'],
         'path' => ['`', '`'],
@@ -56,13 +56,14 @@ my $oRenderTag =
 
     'text' =>
     {
+        'br' => ['\n', ''],
         'quote' => ['"', '"'],
+        'p' => ['', "\n\n"],
         'b' => ['', ''],
         'i' => ['', ''],
         # 'bi' => ['', ''],
-        'ul' => ["\n", "\n"],
-        'ol' => ["\n", "\n"],
-        'li' => ['* ', "\n"],
+        'list' => ["", "\n"],
+        'list-item' => ['* ', "\n"],
         'id' => ['', ''],
         'host' => ['', ''],
         'file' => ['', ''],
@@ -78,18 +79,19 @@ my $oRenderTag =
         'backrest' => [undef, ''],
         'proper' => ['', ''],
         'postgres' => ['PostgreSQL', ''],
-        'admonition' => ["\n", "\n\n"],
+        'admonition' => ['', "\n\n"],
     },
 
     'latex' =>
     {
+        'br' => ['\\\vspace{1em}', ''],
         'quote' => ['``', '"'],
+        'p' => ["\n\\begin{sloppypar}", "\\end{sloppypar}\n"],
         'b' => ['\textbf{', '}'],
         'i' => ['\textit{', '}'],
         # 'bi' => ['', ''],
-        'ul' => ["\\begin{itemize}\n", "\\end{itemize}\n"],
-        # 'ol' => ["\n", "\n"],
-        'li' => ['\item ', "\n"],
+        'list' => ["\\begin{itemize}\n", "\\end{itemize}\n"],
+        'list-item' => ['\item ', "\n"],
         'id' => ['\textnormal{\texttt{', '}}'],
         'host' => ['\textnormal{\textbf{', '}}'],
         'file' => ['\textnormal{\texttt{', '}}'],
@@ -110,18 +112,20 @@ my $oRenderTag =
         'backrest' => [undef, ''],
         'proper' => ['\textnormal{\texttt{', '}}'],
         'postgres' => ['PostgreSQL', ''],
-        'admonition' => ["\n\\begin{leftbar}\n\\textit{\\textbf{", "}\n\\end{leftbar}\n"],
+        'admonition' =>
+            ["\n\\vspace{.5em}\\begin{leftbar}\n\\begin{sloppypar}\\textit{\\textbf{", "}\\end{sloppypar}\n\\end{leftbar}\n"],
     },
 
     'html' =>
     {
+        'br' => ['<br/>', ''],
         'quote' => ['<q>', '</q>'],
         'b' => ['<b>', '</b>'],
         'i' => ['<i>', '</i>'],
+        'p' => ['', ''],
         # 'bi' => ['<i><b>', '</b></i>'],
-        'ul' => ['<ul>', '</ul>'],
-        'ol' => ['<ol>', '</ol>'],
-        'li' => ['<li>', '</li>'],
+        'list' => ['<ul class="list-unordered">', '</ul>'],
+        'list-item' => ['<li class="list-unordered">', '</li>'],
         'id' => ['<span class="id">', '</span>'],
         'host' => ['<span class="host">', '</span>'],
         'file' => ['<span class="file">', '</span>'],
@@ -193,29 +197,14 @@ sub new
         my $oRenderOut =
             $self->{oManifest}->renderOutGet($self->{strType} eq 'latex' ? 'pdf' : $self->{strType}, $self->{strRenderOutKey});
 
-        # If these are the backrest docs then load the reference
+        # If these are the backrest docs then load the help
         if ($self->{oManifest}->isBackRest())
         {
             $self->{oReference} =
-                new pgBackRestDoc::Common::DocConfig(${$self->{oManifest}->sourceGet('reference')}{doc}, $self);
+                new pgBackRestDoc::Common::DocConfig(${$self->{oManifest}->sourceGet('help')}{doc}, $self);
         }
 
-        if (defined($$oRenderOut{source}) && $$oRenderOut{source} eq 'reference' && $self->{oManifest}->isBackRest())
-        {
-            if ($self->{strRenderOutKey} eq 'configuration')
-            {
-                $self->{oDoc} = $self->{oReference}->helpConfigDocGet();
-            }
-            elsif ($self->{strRenderOutKey} eq 'command')
-            {
-                $self->{oDoc} = $self->{oReference}->helpCommandDocGet();
-            }
-            else
-            {
-                confess &log(ERROR, "cannot render $self->{strRenderOutKey} from source $$oRenderOut{source}");
-            }
-        }
-        elsif (defined($$oRenderOut{source}) && $$oRenderOut{source} eq 'release' && $self->{oManifest}->isBackRest())
+        if (defined($$oRenderOut{source}) && $$oRenderOut{source} eq 'release' && $self->{oManifest}->isBackRest())
         {
             require pgBackRestDoc::Custom::DocCustomRelease;
             pgBackRestDoc::Custom::DocCustomRelease->import();
@@ -471,7 +460,7 @@ sub build
             $oNode->paramSet('depend-default', $strDependPrev);
         }
 
-        # Set log to true if this section has an execute list.  This helps reduce the info logging by only showing sections that are
+        # Set log to true if this section has an execute list. This helps reduce the info logging by only showing sections that are
         # likely to take a log time.
         $oNode->paramSet('log', $self->{bExe} && $oNode->nodeList('execute-list', false) > 0 ? true : false);
 
@@ -843,14 +832,14 @@ sub processTag
 
         $strBuffer .= $strStart;
 
-        # Admonitions in the reference materials are tags of the text element rather than field elements of the document so special
+        # Admonitions in the help materials are tags of the text element rather than field elements of the document so special
         # handling is required
         if ($strTag eq 'admonition')
         {
             $strBuffer .= $self->processAdmonitionStart($oTag);
         }
 
-        if ($strTag eq 'p' || $strTag eq 'title' || $strTag eq 'li' || $strTag eq 'code-block' || $strTag eq 'summary'
+        if ($strTag eq 'p' || $strTag eq 'title' || $strTag eq 'list-item' || $strTag eq 'code-block' || $strTag eq 'summary'
             || $strTag eq 'admonition')
         {
             $strBuffer .= $self->processText($oTag);
@@ -986,6 +975,7 @@ sub processText
 
     my $strType = $self->{strType};
     my $strBuffer = '';
+    my $strLastTag = 'body';
 
     foreach my $oNode ($oText->nodeList(undef, false))
     {
@@ -996,11 +986,30 @@ sub processText
                 confess &log(ERROR, "unable to process quotes in string (use <quote> instead):\n${oNode}");
             }
 
-            $strBuffer .= $oNode;
+            # Skip text nodes with linefeeds since they happen between tags
+            if (index($oNode, "\n") == -1)
+            {
+                $strBuffer .= $oNode;
+            }
         }
         else
         {
+            # Add br tags to separate paragraphs and linefeeds to make the output more diffable. This is needed because of the hacky
+            # way config text is being rendered in the final document, i.e. by passing rendered HTML into divs rather than XML to be
+            # rendered at that time.
+            if ($strLastTag eq 'p' && $strType eq 'html')
+            {
+                $strBuffer .= "<br/>\n";
+
+                if ($oNode->nameGet() eq 'p')
+                {
+                    $strBuffer .= "<br/>\n";
+                }
+            }
+
             $strBuffer .= $self->processTag($oNode);
+
+            $strLastTag = $oNode->nameGet();
         }
     }
     #
@@ -1053,6 +1062,11 @@ sub processText
             # Escape all ampersands after making any other conversions above
             $strBuffer =~ s/(?<!\\)\&/\\&/g;
         }
+    }
+
+    if ($strType eq 'html')
+    {
+        $strBuffer =~ s/ma[s]ter/ma&#115;ter/g;
     }
 
     if ($strType eq 'text')

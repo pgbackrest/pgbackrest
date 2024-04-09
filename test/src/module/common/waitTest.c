@@ -5,7 +5,7 @@ Test Wait Handler
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
@@ -23,19 +23,39 @@ testRun(void)
         TimeMSec begin = timeMSec();
 
         TEST_ASSIGN(wait, waitNew(0), "new wait");
-        TEST_RESULT_UINT(waitRemaining(wait), 0, "    check remaining time");
         TEST_RESULT_UINT(wait->waitTime, 0, "    check wait time");
         TEST_RESULT_UINT(wait->sleepTime, 0, "    check sleep time");
         TEST_RESULT_UINT(wait->sleepPrevTime, 0, "    check sleep prev time");
         TEST_RESULT_BOOL(waitMore(wait), false, "    no wait more");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("100ms with retries after time expired");
+
+        TEST_ASSIGN(wait, waitNew(100), "new wait");
+        sleepMSec(100);
+
+        TEST_RESULT_BOOL(waitMore(wait), true, "    time expired, first retry");
+        TEST_RESULT_BOOL(waitMore(wait), true, "    time expired, second retry");
+        TEST_RESULT_BOOL(waitMore(wait), false, "    time expired, retries expired");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("200ms wait");
+
+        begin = timeMSec();
+
         TEST_ASSIGN(wait, waitNew(200), "new wait = 0.2 sec");
-        TEST_RESULT_UINT(waitRemaining(wait), 200, "    check remaining time");
         TEST_RESULT_UINT(wait->waitTime, 200, "    check wait time");
         TEST_RESULT_UINT(wait->sleepTime, 20, "    check sleep time");
         TEST_RESULT_UINT(wait->sleepPrevTime, 0, "    check sleep prev time");
         TEST_RESULT_BOOL(wait->beginTime > (TimeMSec)1483228800000, true, "    check begin time");
+
+        TEST_RESULT_BOOL(waitMore(wait), true, "    first retry");
+        TEST_RESULT_UINT(wait->retry, 1, "    check retry");
+
+        TEST_RESULT_BOOL(waitMore(wait), true, "    second retry");
+        TEST_RESULT_UINT(wait->retry, 0, "    check retry");
+
+        TEST_RESULT_BOOL(waitMore(wait), true, "    still going because of time");
 
         while (waitMore(wait));
         TimeMSec end = timeMSec();
@@ -47,6 +67,8 @@ testRun(void)
         TEST_RESULT_VOID(waitFree(wait), "    free wait");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("1100ms wait");
+
         begin = timeMSec();
 
         TEST_ASSIGN(wait, waitNew(1100), "new wait = 1.1 sec");
@@ -65,5 +87,5 @@ testRun(void)
         TEST_RESULT_VOID(waitFree(wait), "    free wait");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

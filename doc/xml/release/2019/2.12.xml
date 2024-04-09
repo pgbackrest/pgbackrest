@@ -1,0 +1,199 @@
+<release date="2019-04-11" version="2.12" title="C Implementation of Archive Push">
+    <release-core-list>
+        <text>
+            <p><b>IMPORTANT NOTE</b>: The new <proper>TLS</proper>/<proper>SSL</proper> implementation forbids dots in <proper>S3</proper> bucket names per RFC-2818. This security fix is required for compliant hostname verification.</p>
+        </text>
+
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="marc.cousin"/>
+                </release-item-contributor-list>
+
+                <p>Fix issues when a path option is / terminated.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="brad.nicholson"/>
+                </release-item-contributor-list>
+
+                <p>Fix issues when <br-option>log-level-file=off</br-option> is set for the <cmd>archive-get</cmd> command.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="kyle.nevins"/>
+                </release-item-contributor-list>
+
+                <p>Fix C code to recognize <id>host:port</id> option format like Perl does.</p>
+            </release-item>
+
+            <release-item>
+                <p>Fix issues with <code>remote</code>/<code>local</code> command logging options.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-improvement-list>
+            <release-item>
+                <p>The <cmd>archive-push</cmd> command is implemented entirely in C.</p>
+            </release-item>
+
+            <release-item>
+                <!-- <commit type="depend" subject="Allow three-digits process IDs in logging."/> -->
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="rakshitha.br"/>
+                </release-item-contributor-list>
+
+                <p>Increase <br-option>process-max</br-option> limit to <id>999</id>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improve error message when an <proper>S3</proper> bucket name contains dots.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Add separate <cmd>archive-push-async</cmd> command.</p>
+            </release-item>
+
+            <release-item>
+                <p><code>CryptoHash</code> improvements and fixes. Fix incorrect buffer size used in <code>cryptoHashOne()</code>. Add missing <code>const</code> to <code>cryptoHashOne()</code> and <code>cryptoHashOneStr()</code>. Add hash size constants. Extern hash type constant.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <id>CIFS</id> storage driver.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add file write to the remote and S3 storage drivers.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>storageRepoWrite()</code> and <code>storagePg()</code>/<code>storagePgWrite()</code> to storage helper.</p>
+            </release-item>
+
+            <release-item>
+                <p>Use a single file to handle global errors in async archiving.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add document creation to XML objects.</p>
+            </release-item>
+
+            <release-item>
+                <p>Remove redundant documentation from <postgres/> interface files and clarify ambiguous function names.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add WAL info to <postgres/> interface.</p>
+            </release-item>
+
+            <release-item>
+                <p>Refactor <postgres/> interface to remove most code duplication.</p>
+            </release-item>
+
+            <release-item>
+                <p>Logging improvements. Allow three-digit process IDs in logging. Allow process id in C logging.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add process id to <code>ProtocolParallelJob</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add process id to C <cmd>archive-get</cmd> and <cmd>archive-push</cmd> logging.</p>
+            </release-item>
+
+            <release-item>
+                <p>Close log file before <code>exec()</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Allow warnings to be written by <code>archiveAsyncStatusOkWrite()</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Move WAL path prefix logic into <code>walPath()</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Make notion of current <postgres/> info ID in C align with Perl.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add locking capability to the remote command.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>forkSafe()</code> to handle fork errors.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>httpHeaderDup()</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p><code>httpClientRequest()</code> accepts a body parameter.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>protocolKeepAlive()</code> to send <id>noops</id> to all remotes.</p>
+            </release-item>
+
+            <release-item>
+                <p>Make <code>strLstDup()</code> null-tolerant.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>strLstMergeAnti()</code> for merge anti-joins.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>cvtSSizeToZ()</code> and debug macros.</p>
+            </release-item>
+
+            <release-item>
+                <p>Remove unused <code>infoArchiveCheckPg()</code> function.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add constants for <file>.ok</file>/<file>.error</file> status extensions.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="magnus.hagander"/>
+                </release-item-contributor-list>
+
+                <p>Clarify that S3-compatible object stores are supported.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <p>Build test harness with the same warnings as code being tested.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>TEST_64BIT()</code> macro to detect 64-bit platforms.</p>
+            </release-item>
+
+            <release-item>
+                <p>Skip coverage for macros with numbers in their name.</p>
+            </release-item>
+
+            <release-item>
+                <p>Use <cmd>restore</cmd> command for remote performances tests.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+</release>

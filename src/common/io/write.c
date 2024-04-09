@@ -7,20 +7,17 @@ IO Write Interface
 
 #include "common/debug.h"
 #include "common/io/io.h"
-#include "common/io/write.intern.h"
+#include "common/io/write.h"
 #include "common/log.h"
-#include "common/memContext.h"
-#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 struct IoWrite
 {
-    MemContext *memContext;                                         // Mem context
+    IoWritePub pub;                                                 // Publicly accessible variables
     void *driver;                                                   // Driver object
     IoWriteInterface interface;                                     // Driver interface
-    IoFilterGroup *filterGroup;                                     // IO filters
     Buffer *output;                                                 // Output buffer
 
 #ifdef DEBUG
@@ -30,11 +27,9 @@ struct IoWrite
 #endif
 };
 
-OBJECT_DEFINE_FREE(IO_WRITE);
-
 /**********************************************************************************************************************************/
-IoWrite *
-ioWriteNew(void *driver, IoWriteInterface interface)
+FN_EXTERN IoWrite *
+ioWriteNew(void *const driver, const IoWriteInterface interface)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM_P(VOID, driver);
@@ -44,28 +39,26 @@ ioWriteNew(void *driver, IoWriteInterface interface)
     ASSERT(driver != NULL);
     ASSERT(interface.write != NULL);
 
-    IoWrite *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("IoWrite")
+    OBJ_NEW_BEGIN(IoWrite, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = memNew(sizeof(IoWrite));
-
         *this = (IoWrite)
         {
-            .memContext = memContextCurrent(),
-            .driver = driver,
+            .pub =
+            {
+                .filterGroup = ioFilterGroupNew(),
+            },
+            .driver = objMoveToInterface(driver, this, memContextPrior()),
             .interface = interface,
-            .filterGroup = ioFilterGroupNew(),
             .output = bufNew(ioBufferSize()),
         };
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_WRITE, this);
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 ioWriteOpen(IoWrite *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -80,11 +73,11 @@ ioWriteOpen(IoWrite *this)
 
     // Track whether filters were added to prevent flush() from being called later since flush() won't work with most filters
 #ifdef DEBUG
-    this->filterGroupSet = ioFilterGroupSize(this->filterGroup) > 0;
+    this->filterGroupSet = ioFilterGroupSize(this->pub.filterGroup) > 0;
 #endif
 
     // Open the filter group
-    ioFilterGroupOpen(this->filterGroup);
+    ioFilterGroupOpen(this->pub.filterGroup);
 
 #ifdef DEBUG
     this->opened = true;
@@ -94,7 +87,7 @@ ioWriteOpen(IoWrite *this)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 ioWrite(IoWrite *this, const Buffer *buffer)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -106,11 +99,11 @@ ioWrite(IoWrite *this, const Buffer *buffer)
     ASSERT(this->opened && !this->closed);
 
     // Only write if there is data to write
-    if (buffer != NULL && bufUsed(buffer) > 0)
+    if (buffer != NULL && !bufEmpty(buffer))
     {
         do
         {
-            ioFilterGroupProcess(this->filterGroup, buffer, this->output);
+            ioFilterGroupProcess(this->pub.filterGroup, buffer, this->output);
 
             // Write data if the buffer is full
             if (bufRemains(this->output) == 0)
@@ -119,14 +112,14 @@ ioWrite(IoWrite *this, const Buffer *buffer)
                 bufUsedZero(this->output);
             }
         }
-        while (ioFilterGroupInputSame(this->filterGroup));
+        while (ioFilterGroupInputSame(this->pub.filterGroup));
     }
 
     FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 ioWriteLine(IoWrite *this, const Buffer *buffer)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -144,7 +137,7 @@ ioWriteLine(IoWrite *this, const Buffer *buffer)
 }
 
 /**********************************************************************************************************************************/
-bool
+FN_EXTERN bool
 ioWriteReady(IoWrite *this, IoWriteReadyParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -163,7 +156,7 @@ ioWriteReady(IoWrite *this, IoWriteReadyParam param)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 ioWriteStr(IoWrite *this, const String *string)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -180,7 +173,7 @@ ioWriteStr(IoWrite *this, const String *string)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 ioWriteStrLine(IoWrite *this, const String *string)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -198,7 +191,27 @@ ioWriteStrLine(IoWrite *this, const String *string)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
+ioWriteVarIntU64(IoWrite *const this, const uint64_t value)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_WRITE, this);
+        FUNCTION_LOG_PARAM(UINT64, value);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    unsigned char buffer[CVT_VARINT128_BUFFER_SIZE];
+    size_t bufferPos = 0;
+
+    cvtUInt64ToVarInt128(value, buffer, &bufferPos, sizeof(buffer));
+    ioWrite(this, BUF(buffer, bufferPos));
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
 ioWriteFlush(IoWrite *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -209,7 +222,7 @@ ioWriteFlush(IoWrite *this)
     ASSERT(this->opened && !this->closed);
     ASSERT(!this->filterGroupSet);
 
-    if (bufUsed(this->output) > 0)
+    if (!bufEmpty(this->output))
     {
         this->interface.write(this->driver, this->output);
         bufUsedZero(this->output);
@@ -219,7 +232,7 @@ ioWriteFlush(IoWrite *this)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 ioWriteClose(IoWrite *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -232,19 +245,19 @@ ioWriteClose(IoWrite *this)
     // Flush remaining data
     do
     {
-        ioFilterGroupProcess(this->filterGroup, NULL, this->output);
+        ioFilterGroupProcess(this->pub.filterGroup, NULL, this->output);
 
         // Write data if the buffer is full or if this is the last buffer to be written
-        if (bufRemains(this->output) == 0 || (ioFilterGroupDone(this->filterGroup) && bufUsed(this->output) > 0))
+        if (bufRemains(this->output) == 0 || (ioFilterGroupDone(this->pub.filterGroup) && !bufEmpty(this->output)))
         {
             this->interface.write(this->driver, this->output);
             bufUsedZero(this->output);
         }
     }
-    while (!ioFilterGroupDone(this->filterGroup));
+    while (!ioFilterGroupDone(this->pub.filterGroup));
 
     // Close the filter group and gather results
-    ioFilterGroupClose(this->filterGroup);
+    ioFilterGroupClose(this->pub.filterGroup);
 
     // Close the driver if there is a close function
     if (this->interface.close != NULL)
@@ -258,20 +271,7 @@ ioWriteClose(IoWrite *this)
 }
 
 /**********************************************************************************************************************************/
-IoFilterGroup *
-ioWriteFilterGroup(const IoWrite *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_WRITE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->filterGroup);
-}
-
-/**********************************************************************************************************************************/
-int
+FN_EXTERN int
 ioWriteFd(const IoWrite *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

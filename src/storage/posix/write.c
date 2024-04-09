@@ -9,24 +9,18 @@ Posix Storage File write
 #include <utime.h>
 
 #include "common/debug.h"
-#include "common/io/write.intern.h"
+#include "common/io/write.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
 #include "common/user.h"
-#include "storage/posix/storage.intern.h"
 #include "storage/posix/write.h"
 #include "storage/write.intern.h"
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define STORAGE_WRITE_POSIX_TYPE                                    StorageWritePosix
-#define STORAGE_WRITE_POSIX_PREFIX                                  storageWritePosix
-
 typedef struct StorageWritePosix
 {
-    MemContext *memContext;                                         // Object mem context
     StorageWriteInterface interface;                                // Interface
     StoragePosix *storage;                                          // Storage that created this object
 
@@ -41,28 +35,49 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_WRITE_POSIX_TYPE                                                                                      \
     StorageWritePosix *
 #define FUNCTION_LOG_STORAGE_WRITE_POSIX_FORMAT(value, buffer, bufferSize)                                                         \
-    objToLog(value, "StorageWritePosix", buffer, bufferSize)
+    objNameToLog(value, "StorageWritePosix", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 File open constants
 
 Since open is called more than once use constants to make sure these parameters are always the same
 ***********************************************************************************************************************************/
-#define FILE_OPEN_FLAGS                                             (O_CREAT | O_TRUNC | O_WRONLY)
 #define FILE_OPEN_PURPOSE                                           "write"
 
 /***********************************************************************************************************************************
 Close file descriptor
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(STORAGE_WRITE_POSIX, LOG, logLevelTrace)
+static void
+storageWritePosixFreeResource(THIS_VOID)
 {
+    THIS(StorageWritePosix);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_WRITE_POSIX, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     THROW_ON_SYS_ERROR_FMT(close(this->fd) == -1, FileCloseError, STORAGE_ERROR_WRITE_CLOSE, strZ(this->nameTmp));
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Open the file
 ***********************************************************************************************************************************/
+static const char *
+storageWritePosixOpenOwner(const String *const owner, const char *const defaultOwner)
+{
+    return owner == NULL ? defaultOwner : strZ(owner);
+}
+
+static const char *
+storageWritePosixOpenOwnerId(const String *const owner, const unsigned int ownerId)
+{
+    return owner == NULL ? "" : zNewFmt("[%u]", ownerId);
+}
+
 static void
 storageWritePosixOpen(THIS_VOID)
 {
@@ -76,16 +91,18 @@ storageWritePosixOpen(THIS_VOID)
     ASSERT(this->fd == -1);
 
     // Open the file
-    this->fd = open(strZ(this->nameTmp), FILE_OPEN_FLAGS, this->interface.modeFile);
+    const int flags = O_CREAT | O_WRONLY | (this->interface.truncate ? O_TRUNC : 0);
+
+    this->fd = open(strZ(this->nameTmp), flags, this->interface.modeFile);
 
     // Attempt to create the path if it is missing
     if (this->fd == -1 && errno == ENOENT && this->interface.createPath)                                            // {vm_covered}
     {
-         // Create the path
+        // Create the path
         storageInterfacePathCreateP(this->storage, this->path, false, false, this->interface.modePath);
 
         // Open file again
-        this->fd = open(strZ(this->nameTmp), FILE_OPEN_FLAGS, this->interface.modeFile);
+        this->fd = open(strZ(this->nameTmp), flags, this->interface.modeFile);
     }
 
     // Handle errors
@@ -98,24 +115,40 @@ storageWritePosixOpen(THIS_VOID)
     }
 
     // Set free callback to ensure the file descriptor is freed
-    memContextCallbackSet(this->memContext, storageWritePosixFreeResource, this);
+    memContextCallbackSet(objMemContext(this), storageWritePosixFreeResource, this);
 
     // Update user/group owner
     if (this->interface.user != NULL || this->interface.group != NULL)
     {
-        uid_t updateUserId = userIdFromName(this->interface.user);
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            const StorageInfo info = storageInterfaceInfoP(
+                this->storage, this->nameTmp, storageInfoLevelDetail, .followLink = true);
+            ASSERT(info.exists);
+            uid_t updateUserId = userIdFromName(this->interface.user);
+            gid_t updateGroupId = groupIdFromName(this->interface.group);
 
-        if (updateUserId == userId())
-            updateUserId = (uid_t)-1;
+            if (updateUserId == (uid_t)-1)
+                updateUserId = info.userId;
 
-        gid_t updateGroupId = groupIdFromName(this->interface.group);
+            if (updateGroupId == (gid_t)-1)
+                updateGroupId = info.groupId;
 
-        if (updateGroupId == groupId())
-            updateGroupId = (gid_t)-1;
-
-        THROW_ON_SYS_ERROR_FMT(
-            chown(strZ(this->nameTmp), updateUserId, updateGroupId) == -1, FileOwnerError, "unable to set ownership for '%s'",
-            strZ(this->nameTmp));
+            // Continue if one of the owners would be changed
+            if (updateUserId != info.userId || updateGroupId != info.groupId)
+            {
+                THROW_ON_SYS_ERROR_FMT(
+                    chown(strZ(this->nameTmp), updateUserId, updateGroupId) == -1, FileOwnerError,
+                    "unable to set ownership for '%s' to %s%s:%s%s from %s[%u]:%s[%u]", strZ(this->nameTmp),
+                    storageWritePosixOpenOwner(this->interface.user, "[none]"),
+                    storageWritePosixOpenOwnerId(this->interface.user, updateUserId),
+                    storageWritePosixOpenOwner(this->interface.group, "[none]"),
+                    storageWritePosixOpenOwnerId(this->interface.group, updateGroupId),
+                    storageWritePosixOpenOwner(info.user, "[unknown]"), info.userId,
+                    storageWritePosixOpenOwner(info.group, "[unknown]"), info.groupId);
+            }
+        }
+        MEM_CONTEXT_TEMP_END();
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -167,7 +200,7 @@ storageWritePosixClose(THIS_VOID)
             THROW_ON_SYS_ERROR_FMT(fsync(this->fd) == -1, FileSyncError, STORAGE_ERROR_WRITE_SYNC, strZ(this->nameTmp));
 
         // Close the file
-        memContextCallbackClear(this->memContext);
+        memContextCallbackClear(objMemContext(this));
         THROW_ON_SYS_ERROR_FMT(close(this->fd) == -1, FileCloseError, STORAGE_ERROR_WRITE_CLOSE, strZ(this->nameTmp));
         this->fd = -1;
 
@@ -210,14 +243,15 @@ storageWritePosixFd(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->fd);
+    FUNCTION_TEST_RETURN(INT, this->fd);
 }
 
 /**********************************************************************************************************************************/
-StorageWrite *
+FN_EXTERN StorageWrite *
 storageWritePosixNew(
-    StoragePosix *storage, const String *name, mode_t modeFile, mode_t modePath, const String *user, const String *group,
-    time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic)
+    StoragePosix *const storage, const String *const name, const mode_t modeFile, const mode_t modePath, const String *const user,
+    const String *const group, const time_t timeModified, const bool createPath, const bool syncFile, const bool syncPath,
+    const bool atomic, const bool truncate)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_POSIX, storage);
@@ -231,6 +265,7 @@ storageWritePosixNew(
         FUNCTION_LOG_PARAM(BOOL, syncFile);
         FUNCTION_LOG_PARAM(BOOL, syncPath);
         FUNCTION_LOG_PARAM(BOOL, atomic);
+        FUNCTION_LOG_PARAM(BOOL, truncate);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
@@ -238,22 +273,17 @@ storageWritePosixNew(
     ASSERT(modeFile != 0);
     ASSERT(modePath != 0);
 
-    StorageWrite *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("StorageWritePosix")
+    OBJ_NEW_BEGIN(StorageWritePosix, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        StorageWritePosix *driver = memNew(sizeof(StorageWritePosix));
-
-        *driver = (StorageWritePosix)
+        *this = (StorageWritePosix)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .storage = storage,
             .path = strPath(name),
             .fd = -1,
 
             .interface = (StorageWriteInterface)
             {
-                .type = STORAGE_POSIX_TYPE_STR,
+                .type = STORAGE_POSIX_TYPE,
                 .name = strDup(name),
                 .atomic = atomic,
                 .createPath = createPath,
@@ -262,6 +292,7 @@ storageWritePosixNew(
                 .modePath = modePath,
                 .syncFile = syncFile,
                 .syncPath = syncPath,
+                .truncate = truncate,
                 .user = strDup(user),
                 .timeModified = timeModified,
 
@@ -276,11 +307,9 @@ storageWritePosixNew(
         };
 
         // Create temp file name
-        driver->nameTmp = atomic ? strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strZ(name)) : driver->interface.name;
-
-        this = storageWriteNew(driver, &driver->interface);
+        this->nameTmp = atomic ? strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strZ(name)) : this->interface.name;
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_WRITE, this);
+    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteNew(this, &this->interface));
 }

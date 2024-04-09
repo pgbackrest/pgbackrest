@@ -7,23 +7,17 @@ Posix Storage Read
 #include <unistd.h>
 
 #include "common/debug.h"
-#include "common/io/read.intern.h"
+#include "common/io/read.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
 #include "storage/posix/read.h"
-#include "storage/posix/storage.intern.h"
 #include "storage/read.intern.h"
 
 /***********************************************************************************************************************************
 Object types
 ***********************************************************************************************************************************/
-#define STORAGE_READ_POSIX_TYPE                                     StorageReadPosix
-#define STORAGE_READ_POSIX_PREFIX                                   storageReadPosix
-
 typedef struct StorageReadPosix
 {
-    MemContext *memContext;                                         // Object mem context
     StorageReadInterface interface;                                 // Interface
     StoragePosix *storage;                                          // Storage that created this object
 
@@ -39,17 +33,27 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_READ_POSIX_TYPE                                                                                       \
     StorageReadPosix *
 #define FUNCTION_LOG_STORAGE_READ_POSIX_FORMAT(value, buffer, bufferSize)                                                          \
-    objToLog(value, "StorageReadPosix", buffer, bufferSize)
+    objNameToLog(value, "StorageReadPosix", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Close file descriptor
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(STORAGE_READ_POSIX, LOG, logLevelTrace)
+static void
+storageReadPosixFreeResource(THIS_VOID)
 {
+    THIS(StorageReadPosix);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_READ_POSIX, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     if (this->fd != -1)
         THROW_ON_SYS_ERROR_FMT(close(this->fd) == -1, FileCloseError, STORAGE_ERROR_READ_CLOSE, strZ(this->interface.name));
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Open the file
@@ -66,8 +70,6 @@ storageReadPosixOpen(THIS_VOID)
     ASSERT(this != NULL);
     ASSERT(this->fd == -1);
 
-    bool result = false;
-
     // Open the file
     this->fd = open(strZ(this->interface.name), O_RDONLY, 0);
 
@@ -82,14 +84,22 @@ storageReadPosixOpen(THIS_VOID)
         else
             THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_READ_OPEN, strZ(this->interface.name));                // {vm_covered}
     }
-    // On success set free callback to ensure the file descriptor is freed
-    if (this->fd != -1)
+    // Else success
+    else
     {
-        memContextCallbackSet(this->memContext, storageReadPosixFreeResource, this);
-        result = true;
+        // Set free callback to ensure the file descriptor is freed
+        memContextCallbackSet(objMemContext(this), storageReadPosixFreeResource, this);
+
+        // Seek to offset
+        if (this->interface.offset != 0)
+        {
+            THROW_ON_SYS_ERROR_FMT(
+                lseek(this->fd, (off_t)this->interface.offset, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK,
+                this->interface.offset, strZ(this->interface.name));
+        }
     }
 
-    FUNCTION_LOG_RETURN(BOOL, result);
+    FUNCTION_LOG_RETURN(BOOL, this->fd != -1);
 }
 
 /***********************************************************************************************************************************
@@ -131,8 +141,8 @@ storageReadPosix(THIS_VOID, Buffer *buffer, bool block)
         bufUsedInc(buffer, (size_t)actualBytes);
         this->current += (uint64_t)actualBytes;
 
-        // If less data than expected was read or the limit has been reached then EOF.  The file may not actually be EOF but we are
-        // not concerned with files that are growing.  Just read up to the point where the file is being extended.
+        // If less data than expected was read or the limit has been reached then EOF. The file may not actually be EOF but we are
+        // not concerned with files that are growing. Just read up to the point where the file is being extended.
         if ((size_t)actualBytes != expectedBytes || this->current == this->limit)
             this->eof = true;
     }
@@ -154,7 +164,7 @@ storageReadPosixClose(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    memContextCallbackClear(this->memContext);
+    memContextCallbackClear(objMemContext(this));
     storageReadPosixFreeResource(this);
     this->fd = -1;
 
@@ -175,7 +185,7 @@ storageReadPosixEof(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->eof);
+    FUNCTION_TEST_RETURN(BOOL, this->eof);
 }
 
 /***********************************************************************************************************************************
@@ -192,43 +202,42 @@ storageReadPosixFd(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->fd);
+    FUNCTION_TEST_RETURN(INT, this->fd);
 }
 
 /**********************************************************************************************************************************/
-StorageRead *
-storageReadPosixNew(StoragePosix *storage, const String *name, bool ignoreMissing, const Variant *limit)
+FN_EXTERN StorageRead *
+storageReadPosixNew(
+    StoragePosix *const storage, const String *const name, const bool ignoreMissing, const uint64_t offset,
+    const Variant *const limit)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
+        FUNCTION_LOG_PARAM(UINT64, offset);
         FUNCTION_LOG_PARAM(VARIANT, limit);
     FUNCTION_LOG_END();
 
     ASSERT(name != NULL);
 
-    StorageRead *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("StorageReadPosix")
+    OBJ_NEW_BEGIN(StorageReadPosix, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        StorageReadPosix *driver = memNew(sizeof(StorageReadPosix));
-
-        *driver = (StorageReadPosix)
+        *this = (StorageReadPosix)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .storage = storage,
             .fd = -1,
 
-            // Rather than enable/disable limit checking just use a big number when there is no limit.  We can feel pretty confident
+            // Rather than enable/disable limit checking just use a big number when there is no limit. We can feel pretty confident
             // that no files will be > UINT64_MAX in size. This is a copy of the interface limit but it simplifies the code during
             // read so it seems worthwhile.
             .limit = limit == NULL ? UINT64_MAX : varUInt64(limit),
 
             .interface = (StorageReadInterface)
             {
-                .type = STORAGE_POSIX_TYPE_STR,
+                .type = STORAGE_POSIX_TYPE,
                 .name = strDup(name),
                 .ignoreMissing = ignoreMissing,
+                .offset = offset,
                 .limit = varDup(limit),
 
                 .ioInterface = (IoReadInterface)
@@ -241,10 +250,8 @@ storageReadPosixNew(StoragePosix *storage, const String *name, bool ignoreMissin
                 },
             },
         };
-
-        this = storageReadNew(driver, &driver->interface);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_READ, this);
+    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadNew(this, &this->interface));
 }

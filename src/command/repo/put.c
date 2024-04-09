@@ -5,6 +5,7 @@ Repository Put Command
 
 #include <unistd.h>
 
+#include "command/repo/common.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
 #include "common/io/fdRead.h"
@@ -17,10 +18,10 @@ Repository Put Command
 /***********************************************************************************************************************************
 Write source IO to destination file
 ***********************************************************************************************************************************/
-void
+static void
 storagePutProcess(IoRead *source)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug)
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_READ, source);
     FUNCTION_LOG_END();
 
@@ -34,12 +35,15 @@ storagePutProcess(IoRead *source)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Is path valid for repo?
+        file = repoPathIsValid(file);
+
         StorageWrite *destination = storageNewWriteP(storageRepoWrite(), file);
 
         // Add encryption if needed
         if (!cfgOptionBool(cfgOptRaw))
         {
-            CipherType repoCipherType = cipherType(cfgOptionStr(cfgOptRepoCipherType));
+            CipherType repoCipherType = cfgOptionStrId(cfgOptRepoCipherType);
 
             if (repoCipherType != cipherTypeNone)
             {
@@ -61,15 +65,7 @@ storagePutProcess(IoRead *source)
         ioWriteOpen(storageWriteIo(destination));
 
         // Copy data from source to destination
-        Buffer *buffer = bufNew(ioBufferSize());
-
-        do
-        {
-            ioRead(source, buffer);
-            ioWrite(storageWriteIo(destination), buffer);
-            bufUsedZero(buffer);
-        }
-        while (!ioReadEof(source));
+        ioCopyP(source, storageWriteIo(destination));
 
         // Close the source and destination
         ioReadClose(source);
@@ -81,7 +77,7 @@ storagePutProcess(IoRead *source)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 cmdStoragePut(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);

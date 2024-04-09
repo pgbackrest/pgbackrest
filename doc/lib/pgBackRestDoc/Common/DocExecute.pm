@@ -15,70 +15,22 @@ use Exporter qw(import);
 use File::Basename qw(dirname);
 use Storable qw(dclone);
 
-use pgBackRestBuild::Config::Data;
-
 use pgBackRestTest::Common::ExecuteTest;
-use pgBackRestTest::Common::HostTest;
-use pgBackRestTest::Common::HostGroupTest;
 
 use pgBackRestDoc::Common::DocManifest;
 use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Host;
+use pgBackRestDoc::Common::HostGroup;
 use pgBackRestDoc::Common::Ini;
 use pgBackRestDoc::Common::Log;
 use pgBackRestDoc::Common::String;
+use pgBackRestDoc::Custom::DocConfigData;
 use pgBackRestDoc::ProjectInfo;
 
 ####################################################################################################################################
 # User that's building the docs
 ####################################################################################################################################
 use constant DOC_USER                                              => getpwuid($UID) eq 'root' ? 'ubuntu' : getpwuid($UID) . '';
-
-####################################################################################################################################
-# Generate indexed defines
-####################################################################################################################################
-my $rhConfigDefineIndex = cfgDefine();
-
-foreach my $strKey (sort(keys(%{$rhConfigDefineIndex})))
-{
-    # Build options for all possible db configurations
-    if (defined($rhConfigDefineIndex->{$strKey}{&CFGDEF_PREFIX}) &&
-        $rhConfigDefineIndex->{$strKey}{&CFGDEF_PREFIX} eq CFGDEF_PREFIX_PG)
-    {
-        my $strPrefix = $rhConfigDefineIndex->{$strKey}{&CFGDEF_PREFIX};
-
-        for (my $iIndex = 1; $iIndex <= CFGDEF_INDEX_PG; $iIndex++)
-        {
-            my $strKeyNew = "${strPrefix}${iIndex}" . substr($strKey, length($strPrefix));
-
-            $rhConfigDefineIndex->{$strKeyNew} = dclone($rhConfigDefineIndex->{$strKey});
-
-            $rhConfigDefineIndex->{$strKeyNew}{&CFGDEF_INDEX_TOTAL} = CFGDEF_INDEX_PG;
-            $rhConfigDefineIndex->{$strKeyNew}{&CFGDEF_INDEX} = $iIndex - 1;
-
-            # Options indexed > 1 are never required
-            if ($iIndex != 1)
-            {
-                $rhConfigDefineIndex->{$strKeyNew}{&CFGDEF_REQUIRED} = false;
-            }
-
-            if (defined($rhConfigDefineIndex->{$strKeyNew}{&CFGDEF_DEPEND}) &&
-                defined($rhConfigDefineIndex->{$strKeyNew}{&CFGDEF_DEPEND}{&CFGDEF_DEPEND_OPTION}))
-            {
-                $rhConfigDefineIndex->{$strKeyNew}{&CFGDEF_DEPEND}{&CFGDEF_DEPEND_OPTION} =
-                    "${strPrefix}${iIndex}" .
-                    substr(
-                        $rhConfigDefineIndex->{$strKeyNew}{&CFGDEF_DEPEND}{&CFGDEF_DEPEND_OPTION},
-                        length($strPrefix));
-            }
-        }
-
-        delete($rhConfigDefineIndex->{$strKey});
-    }
-    else
-    {
-        $rhConfigDefineIndex->{$strKey}{&CFGDEF_INDEX} = 0;
-    }
-}
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -330,7 +282,7 @@ sub execute
                             $iFilterFirst = $iFilterFirst < 0 ? 0 : $iFilterFirst;
 
                             # Don't repeat lines that have already been output
-                            $iFilterFirst  = $iFilterFirst <= $iLastOutput ? $iLastOutput + 1 : $iFilterFirst;
+                            $iFilterFirst = $iFilterFirst <= $iLastOutput ? $iLastOutput + 1 : $iFilterFirst;
 
                             # Determine the last line to output
                             my $iFilterLast = $iIndex + $iFilterContext;
@@ -573,17 +525,9 @@ sub backrestConfig
                 }
                 else
                 {
-                    # Make sure the specified option exists
-                    # ??? This is too simplistic to handle new indexed options.  The check below works for now but it would be good
-                    # ??? to bring back more sophisticated checking in the future.
-                    # if (!defined($rhConfigDefineIndex->{$strKey}))
-                    # {
-                    #     confess &log(ERROR, "option ${strKey} does not exist");
-                    # }
-
                     # If this option is a hash and the value is already set then append to the array
-                    if (defined($rhConfigDefineIndex->{$strKey}) &&
-                        $rhConfigDefineIndex->{$strKey}{&CFGDEF_TYPE} eq CFGDEF_TYPE_HASH &&
+                    if (defined(cfgDefine()->{$strKey}) &&
+                        cfgDefine()->{$strKey}{&CFGDEF_TYPE} eq CFGDEF_TYPE_HASH &&
                         defined(${$self->{config}}{$strHostName}{$$hCacheKey{file}}{$strSection}{$strKey}))
                     {
                         my @oValue = ();
@@ -627,10 +571,6 @@ sub backrestConfig
             my $oConfigClean = dclone($self->{config}{$strHostName}{$$hCacheKey{file}});
             delete($$oConfigClean{&CFGDEF_SECTION_GLOBAL}{&CFGOPT_LOG_LEVEL_STDERR});
             delete($$oConfigClean{&CFGDEF_SECTION_GLOBAL}{&CFGOPT_LOG_TIMESTAMP});
-
-            # Don't show repo1-azure-host option. Since Azure behaves differently with Azurite (which we use for local testing) and
-            # the actual service we can't just fake /etc/hosts like we do for S3.
-            delete($$oConfigClean{&CFGDEF_SECTION_GLOBAL}{'repo1-azure-host'});
 
             if (keys(%{$$oConfigClean{&CFGDEF_SECTION_GLOBAL}}) == 0)
             {
@@ -1083,7 +1023,9 @@ sub sectionChildProcess
                     $self->{oManifest}{oStorage}->put(
                         $strDockerfile,
                         "FROM ${strFrom}\n\n" . trim($self->{oManifest}->variableReplace($strCommandList)) . "\n");
-                    executeTest("docker build -f ${strDockerfile} -t ${strPreImage} " . $self->{oManifest}{oStorage}->pathGet());
+                    executeTest(
+                        "docker build -f ${strDockerfile} -t ${strPreImage} " . $self->{oManifest}{oStorage}->pathGet(),
+                        {bSuppressStdErr => true});
 
                     # Use the pre-built image
                     $strImage = $strPreImage;
@@ -1108,8 +1050,8 @@ sub sectionChildProcess
                     $strOption =~ s/\{\[host\-repo\-path\]\}/${strHostRepoPath}/g;
                 }
 
-                my $oHost = new pgBackRestTest::Common::HostTest(
-                    $$hCacheKey{name}, "doc-$$hCacheKey{name}", $strImage, $strHostUser, $$hCacheKey{os},
+                my $oHost = new pgBackRestDoc::Common::Host(
+                    $$hCacheKey{name}, "doc-$$hCacheKey{name}", $strImage, $strHostUser,
                     defined($strMount) ? [$strMount] : undef, $strOption, $$hCacheKey{param}, $$hCacheKey{'update-hosts'});
 
                 $self->{host}{$$hCacheKey{name}} = $oHost;

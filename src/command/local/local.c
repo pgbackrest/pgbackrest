@@ -9,40 +9,33 @@ Local Command
 #include "command/restore/protocol.h"
 #include "command/verify/protocol.h"
 #include "common/debug.h"
-#include "common/io/fdRead.h"
-#include "common/io/fdWrite.h"
 #include "common/log.h"
-#include "config/config.h"
+#include "config/config.intern.h"
 #include "config/protocol.h"
 #include "protocol/helper.h"
 #include "protocol/server.h"
 
+/***********************************************************************************************************************************
+Command handlers
+***********************************************************************************************************************************/
+static const ProtocolServerHandler commandLocalHandlerList[] =
+{
+    PROTOCOL_SERVER_HANDLER_ARCHIVE_GET_LIST
+    PROTOCOL_SERVER_HANDLER_ARCHIVE_PUSH_LIST
+    PROTOCOL_SERVER_HANDLER_BACKUP_LIST
+    PROTOCOL_SERVER_HANDLER_RESTORE_LIST
+    PROTOCOL_SERVER_HANDLER_VERIFY_LIST
+};
+
 /**********************************************************************************************************************************/
-void
-cmdLocal(int fdRead, int fdWrite)
+FN_EXTERN void
+cmdLocal(ProtocolServer *server)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Configure two retries for local commands
-        VariantList *retryInterval = varLstNew();
-        varLstAdd(retryInterval, varNewUInt64(0));
-        varLstAdd(retryInterval, varNewUInt64(15000));
-
-        String *name = strNewFmt(PROTOCOL_SERVICE_LOCAL "-%u", cfgOptionUInt(cfgOptProcess));
-        IoRead *read = ioFdReadNew(name, fdRead, (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * 1000));
-        ioReadOpen(read);
-        IoWrite *write = ioFdWriteNew(name, fdWrite, (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * 1000));
-        ioWriteOpen(write);
-
-        ProtocolServer *server = protocolServerNew(name, PROTOCOL_SERVICE_LOCAL_STR, read, write);
-        protocolServerHandlerAdd(server, archiveGetProtocol);
-        protocolServerHandlerAdd(server, archivePushProtocol);
-        protocolServerHandlerAdd(server, backupProtocol);
-        protocolServerHandlerAdd(server, restoreProtocol);
-        protocolServerHandlerAdd(server, verifyProtocol);
-        protocolServerProcess(server, retryInterval);
+        protocolServerProcess(server, cfgCommandJobRetry(), commandLocalHandlerList, LENGTH_OF(commandLocalHandlerList));
     }
     MEM_CONTEXT_TEMP_END();
 

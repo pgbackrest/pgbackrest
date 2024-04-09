@@ -3,12 +3,14 @@ File Descriptor Functions
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#ifdef __sun__                                                      // Illumos needs sys/siginfo for sigset_t inside poll.h
+#include <sys/siginfo.h>
+#endif
 #include <poll.h>
 
 #include "common/debug.h"
 #include "common/io/fd.h"
 #include "common/log.h"
-#include "common/wait.h"
 
 /***********************************************************************************************************************************
 Use poll() to determine when data is ready to read/write on a socket. Retry after EINTR with whatever time is left on the timer.
@@ -55,10 +57,10 @@ fdReadyRetry(int pollResult, int errNo, bool first, TimeMSec *timeout, TimeMSec 
         }
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(BOOL, result);
 }
 
-bool
+FN_EXTERN bool
 fdReady(int fd, bool read, bool write, TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

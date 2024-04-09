@@ -12,46 +12,86 @@ Restore Protocol Handler
 #include "config/config.h"
 #include "storage/helper.h"
 
-/***********************************************************************************************************************************
-Constants
-***********************************************************************************************************************************/
-STRING_EXTERN(PROTOCOL_COMMAND_RESTORE_FILE_STR,                    PROTOCOL_COMMAND_RESTORE_FILE);
-
 /**********************************************************************************************************************************/
-bool
-restoreProtocol(const String *command, const VariantList *paramList, ProtocolServer *server)
+FN_EXTERN void
+restoreFileProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STRING, command);
-        FUNCTION_LOG_PARAM(VARIANT_LIST, paramList);
+        FUNCTION_LOG_PARAM(PACK_READ, param);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_LOG_END();
 
-    ASSERT(command != NULL);
-
-    // Attempt to satisfy the request -- we may get requests that are meant for other handlers
-    bool found = true;
+    ASSERT(param != NULL);
+    ASSERT(server != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        if (strEq(command, PROTOCOL_COMMAND_RESTORE_FILE_STR))
+        // Restore file
+        const String *const repoFile = pckReadStrP(param);
+        const unsigned int repoIdx = pckReadU32P(param);
+        const CompressType repoFileCompressType = (CompressType)pckReadU32P(param);
+        const time_t copyTimeBegin = pckReadTimeP(param);
+        const bool delta = pckReadBoolP(param);
+        const bool deltaForce = pckReadBoolP(param);
+        const bool bundleRaw = pckReadBoolP(param);
+        const String *const cipherPass = pckReadStrP(param);
+        const StringList *const referenceList = pckReadStrLstP(param);
+
+        // Build the file list
+        List *fileList = lstNewP(sizeof(RestoreFile));
+
+        while (!pckReadNullP(param))
         {
-            protocolServerResponse(
-                server,
-                VARBOOL(
-                    restoreFile(
-                        varStr(varLstGet(paramList, 0)), varStr(varLstGet(paramList, 1)),
-                        (CompressType)varUIntForce(varLstGet(paramList, 2)), varStr(varLstGet(paramList, 3)),
-                        varStr(varLstGet(paramList, 4)), varBoolForce(varLstGet(paramList, 5)), varUInt64(varLstGet(paramList, 6)),
-                        (time_t)varInt64Force(varLstGet(paramList, 7)), cvtZToUIntBase(strZ(varStr(varLstGet(paramList, 8))), 8),
-                        varStr(varLstGet(paramList, 9)), varStr(varLstGet(paramList, 10)),
-                        (time_t)varInt64Force(varLstGet(paramList, 11)), varBoolForce(varLstGet(paramList, 12)),
-                        varBoolForce(varLstGet(paramList, 13)), varStr(varLstGet(paramList, 14)))));
+            RestoreFile file = {.name = pckReadStrP(param)};
+            file.checksum = pckReadBinP(param);
+            file.size = pckReadU64P(param);
+            file.timeModified = pckReadTimeP(param);
+            file.mode = pckReadModeP(param);
+            file.zero = pckReadBoolP(param);
+            file.user = pckReadStrP(param);
+            file.group = pckReadStrP(param);
+
+            if (pckReadBoolP(param))
+            {
+                file.offset = pckReadU64P(param);
+                file.limit = varNewUInt64(pckReadU64P(param));
+            }
+
+            // Block incremental
+            file.blockIncrMapSize = pckReadU64P(param);
+
+            if (file.blockIncrMapSize != 0)
+            {
+                file.blockIncrSize = (size_t)pckReadU64P(param);
+                file.blockIncrChecksumSize = (size_t)pckReadU64P(param);
+            }
+
+            file.manifestFile = pckReadStrP(param);
+
+            lstAdd(fileList, &file);
         }
-        else
-            found = false;
+
+        // Restore files
+        const List *const result = restoreFile(
+            repoFile, repoIdx, repoFileCompressType, copyTimeBegin, delta, deltaForce, bundleRaw, cipherPass, referenceList,
+            fileList);
+
+        // Return result
+        PackWrite *const resultPack = protocolPackNew();
+
+        for (unsigned int resultIdx = 0; resultIdx < lstSize(result); resultIdx++)
+        {
+            const RestoreFileResult *const fileResult = lstGet(result, resultIdx);
+
+            pckWriteStrP(resultPack, fileResult->manifestFile);
+            pckWriteU32P(resultPack, fileResult->result);
+            pckWriteU64P(resultPack, fileResult->blockIncrDeltaSize);
+        }
+
+        protocolServerDataPut(server, resultPack);
+        protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(BOOL, found);
+    FUNCTION_LOG_RETURN_VOID();
 }

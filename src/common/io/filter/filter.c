@@ -4,42 +4,33 @@ IO Filter Interface
 #include "build.auto.h"
 
 #include "common/debug.h"
-#include "common/io/filter/filter.intern.h"
+#include "common/io/filter/filter.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 struct IoFilter
 {
-    MemContext *memContext;                                         // Mem context of filter
-    const String *type;                                             // Filter type
-    void *driver;                                                   // Filter driver
-    const VariantList *paramList;                                   // Filter parameters
-    IoFilterInterface interface;                                    // Filter interface
-
+    IoFilterPub pub;                                                // Publicly accessible variables
     bool flushing;                                                  // Has the filter started flushing?
 };
-
-OBJECT_DEFINE_MOVE(IO_FILTER);
-OBJECT_DEFINE_FREE(IO_FILTER);
 
 /***********************************************************************************************************************************
 Allocations will be in the memory context of the caller.
 ***********************************************************************************************************************************/
-IoFilter *
-ioFilterNew(const String *type, void *driver, VariantList *paramList, IoFilterInterface interface)
+FN_EXTERN IoFilter *
+ioFilterNew(const StringId type, void *const driver, Pack *const paramList, const IoFilterInterface interface)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STRING, type);
+        FUNCTION_LOG_PARAM(STRING_ID, type);
         FUNCTION_LOG_PARAM_P(VOID, driver);
-        FUNCTION_LOG_PARAM(VARIANT_LIST, paramList);
+        FUNCTION_LOG_PARAM(PACK, paramList);
         FUNCTION_LOG_PARAM(IO_FILTER_INTERFACE, interface);
     FUNCTION_LOG_END();
 
-    ASSERT(type != NULL);
+    ASSERT(type != 0);
     ASSERT(driver != NULL);
     // One of processIn or processInOut must be set
     ASSERT(interface.in != NULL || interface.inOut != NULL);
@@ -48,22 +39,26 @@ ioFilterNew(const String *type, void *driver, VariantList *paramList, IoFilterIn
     // If the filter does not produce output then it should produce a result
     ASSERT(interface.in == NULL || (interface.result != NULL && interface.done == NULL && interface.inputSame == NULL));
 
-    IoFilter *this = memNew(sizeof(IoFilter));
-
-    *this = (IoFilter)
+    OBJ_NEW_BEGIN(IoFilter, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        .memContext = memContextCurrent(),
-        .type = type,
-        .driver = driver,
-        .paramList = paramList,
-        .interface = interface,
-    };
+        *this = (IoFilter)
+        {
+            .pub =
+            {
+                .type = type,
+                .driver = objMoveToInterface(driver, this, memContextPrior()),
+                .paramList = pckMove(paramList, objMemContext(this)),
+                .interface = interface,
+            },
+        };
+    }
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_FILTER, this);
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 ioFilterProcessIn(IoFilter *this, const Buffer *input)
 {
     FUNCTION_TEST_BEGIN();
@@ -72,20 +67,20 @@ ioFilterProcessIn(IoFilter *this, const Buffer *input)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->interface.in != NULL);
-    CHECK(input == NULL || bufUsed(input) > 0);
-    CHECK(!this->flushing || input == NULL);
+    ASSERT(this->pub.interface.in != NULL);
+    CHECK(AssertError, input == NULL || !bufEmpty(input), "expected data or flush");
+    CHECK(AssertError, !this->flushing || input == NULL, "no data allowed after flush");
 
     if (input == NULL)
         this->flushing = true;
     else
-        this->interface.in(this->driver, input);
+        this->pub.interface.in(this->pub.driver, input);
 
     FUNCTION_TEST_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 ioFilterProcessInOut(IoFilter *this, const Buffer *input, Buffer *output)
 {
     FUNCTION_TEST_BEGIN();
@@ -96,25 +91,27 @@ ioFilterProcessInOut(IoFilter *this, const Buffer *input, Buffer *output)
 
     ASSERT(this != NULL);
     ASSERT(output != NULL);
-    ASSERT(this->interface.inOut != NULL);
-    CHECK(input == NULL || bufUsed(input) > 0);
-    CHECK(!this->flushing || input == NULL);
+    ASSERT(this->pub.interface.inOut != NULL);
+    CHECK(AssertError, input == NULL || !bufEmpty(input), "expected data or flush");
+    CHECK(AssertError, !this->flushing || input == NULL, "no data allowed after flush");
 
     if (input == NULL && !this->flushing)
         this->flushing = true;
 
     if (!ioFilterDone(this))
-        this->interface.inOut(this->driver, input, output);
+        this->pub.interface.inOut(this->pub.driver, input, output);
 
-    CHECK(!ioFilterInputSame(this) || bufUsed(output) > 0);
+    // If input same is requested then there must be some output otherwise there is no point in requesting the same input
+    CHECK(AssertError, !ioFilterInputSame(this) || !bufEmpty(output), "expected input to be consumed or some output");
+
     FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
-If done is not defined by the filter then check inputSame.  If inputSame is true then the filter is not done.  Even if the filter
-is done the interface will not report done until the interface is flushing.
+If done is not defined by the filter then check inputSame. If inputSame is true then the filter is not done. Even if the filter is
+done the interface will not report done until the interface is flushing.
 ***********************************************************************************************************************************/
-bool
+FN_EXTERN bool
 ioFilterDone(const IoFilter *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -126,26 +123,13 @@ ioFilterDone(const IoFilter *this)
     bool result = false;
 
     if (this->flushing)
-        result = this->interface.done != NULL ? this->interface.done(this->driver) : !ioFilterInputSame(this);
+        result = this->pub.interface.done != NULL ? this->pub.interface.done(this->pub.driver) : !ioFilterInputSame(this);
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(BOOL, result);
 }
 
 /**********************************************************************************************************************************/
-void *
-ioFilterDriver(IoFilter *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_FILTER, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->driver);
-}
-
-/**********************************************************************************************************************************/
-bool
+FN_EXTERN bool
 ioFilterInputSame(const IoFilter *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -154,50 +138,11 @@ ioFilterInputSame(const IoFilter *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->interface.inputSame != NULL ? this->interface.inputSame(this->driver) : false);
+    FUNCTION_TEST_RETURN(BOOL, this->pub.interface.inputSame != NULL ? this->pub.interface.inputSame(this->pub.driver) : false);
 }
 
 /**********************************************************************************************************************************/
-const IoFilterInterface *
-ioFilterInterface(const IoFilter *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_FILTER, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(&this->interface);
-}
-
-/**********************************************************************************************************************************/
-bool
-ioFilterOutput(const IoFilter *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_FILTER, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->interface.inOut != NULL);
-}
-
-/**********************************************************************************************************************************/
-const VariantList *
-ioFilterParamList(const IoFilter *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_FILTER, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->paramList);
-}
-
-/**********************************************************************************************************************************/
-Variant *
+FN_EXTERN Pack *
 ioFilterResult(const IoFilter *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -206,25 +151,14 @@ ioFilterResult(const IoFilter *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->interface.result ? this->interface.result(this->driver) : NULL);
+    FUNCTION_TEST_RETURN(PACK, this->pub.interface.result ? this->pub.interface.result(this->pub.driver) : NULL);
 }
 
 /**********************************************************************************************************************************/
-const String *
-ioFilterType(const IoFilter *this)
+FN_EXTERN void
+ioFilterToLog(const IoFilter *const this, StringStatic *const debugLog)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_FILTER, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->type);
-}
-
-/**********************************************************************************************************************************/
-String *
-ioFilterToLog(const IoFilter *this)
-{
-    return strNewFmt("{type: %s}", strZ(this->type));
+    strStcCat(debugLog, "{type: ");
+    strStcResultSizeInc(debugLog, strIdToLog(ioFilterType(this), strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+    strStcCatChr(debugLog, '}');
 }

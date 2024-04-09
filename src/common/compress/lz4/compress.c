@@ -7,39 +7,30 @@ Developed against version r131 using the documentation in https://github.com/lz4
 
 #ifdef HAVE_LIBLZ4
 
-#include <stdio.h>
 #include <lz4frame.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "common/compress/lz4/common.h"
 #include "common/compress/lz4/compress.h"
 #include "common/debug.h"
-#include "common/io/filter/filter.intern.h"
+#include "common/io/filter/filter.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
+#include "common/type/pack.h"
 
 /***********************************************************************************************************************************
-Older versions of lz4 do not define the max header size.  This seems to be the max for any version.
+Older versions of lz4 do not define the max header size. This seems to be the max for any version.
 ***********************************************************************************************************************************/
 #ifndef LZ4F_HEADER_SIZE_MAX
-    #define LZ4F_HEADER_SIZE_MAX                                    19
+#define LZ4F_HEADER_SIZE_MAX                                        19
 #endif
-
-/***********************************************************************************************************************************
-Filter type constant
-***********************************************************************************************************************************/
-STRING_EXTERN(LZ4_COMPRESS_FILTER_TYPE_STR,                         LZ4_COMPRESS_FILTER_TYPE);
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define LZ4_COMPRESS_TYPE                                           Lz4Compress
-#define LZ4_COMPRESS_PREFIX                                         lz4Compress
-
 typedef struct Lz4Compress
 {
-    MemContext *memContext;                                         // Context to store data
     LZ4F_compressionContext_t context;                              // LZ4 compression context
     LZ4F_preferences_t prefs;                                       // Preferences -- just compress level set
     IoFilter *filter;                                               // Filter interface
@@ -53,34 +44,44 @@ typedef struct Lz4Compress
 /***********************************************************************************************************************************
 Render as string for logging
 ***********************************************************************************************************************************/
-static String *
-lz4CompressToLog(const Lz4Compress *this)
+static void
+lz4CompressToLog(const Lz4Compress *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{level: %d, first: %s, inputSame: %s, flushing: %s}", this->prefs.compressionLevel,
+    strStcFmt(
+        debugLog, "{level: %d, first: %s, inputSame: %s, flushing: %s}", this->prefs.compressionLevel,
         cvtBoolToConstZ(this->first), cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->flushing));
 }
 
 #define FUNCTION_LOG_LZ4_COMPRESS_TYPE                                                                                             \
     Lz4Compress *
 #define FUNCTION_LOG_LZ4_COMPRESS_FORMAT(value, buffer, bufferSize)                                                                \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, lz4CompressToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, lz4CompressToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Free compression context
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(LZ4_COMPRESS, LOG, logLevelTrace)
+static void
+lz4CompressFreeResource(THIS_VOID)
 {
+    THIS(Lz4Compress);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(LZ4_COMPRESS, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     LZ4F_freeCompressionContext(this->context);
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Compress data
 ***********************************************************************************************************************************/
-// Helper to return a buffer where output will be written.  If there is enough space in the provided output buffer then use it,
-// otherwise allocate an internal buffer to hold the compressed data.  Once we start using the internal buffer we'll need to
-// continue using it until it is completely flushed.
+// Helper to return a buffer where output will be written. If there is enough space in the provided output buffer then use it,
+// otherwise allocate an internal buffer to hold the compressed data. Once we start using the internal buffer we'll need to continue
+// using it until it is completely flushed.
 static Buffer *
 lz4CompressBuffer(Lz4Compress *this, size_t required, Buffer *output)
 {
@@ -93,7 +94,7 @@ lz4CompressBuffer(Lz4Compress *this, size_t required, Buffer *output)
     Buffer *result = output;
 
     // Is an internal buffer required to hold the compressed data?
-    if (bufUsed(this->buffer) > 0 || required >= bufRemains(output))
+    if (!bufEmpty(this->buffer) || required >= bufRemains(output))
     {
         // Reallocate buffer if it is not large enough
         if (required >= bufRemains(this->buffer))
@@ -102,7 +103,7 @@ lz4CompressBuffer(Lz4Compress *this, size_t required, Buffer *output)
         result = this->buffer;
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(BUFFER, result);
 }
 
 // Helper to flush output data to compressed buffer
@@ -220,7 +221,7 @@ lz4CompressDone(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->flushing && !this->inputSame);
+    FUNCTION_TEST_RETURN(BOOL, this->flushing && !this->inputSame);
 }
 
 /***********************************************************************************************************************************
@@ -237,51 +238,61 @@ lz4CompressInputSame(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->inputSame);
+    FUNCTION_TEST_RETURN(BOOL, this->inputSame);
 }
 
 /**********************************************************************************************************************************/
-IoFilter *
-lz4CompressNew(int level)
+FN_EXTERN IoFilter *
+lz4CompressNew(const int level, const bool raw)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(INT, level);
+        FUNCTION_LOG_PARAM(BOOL, raw);
     FUNCTION_LOG_END();
 
-    ASSERT(level >= 0);
+    ASSERT(level >= LZ4_COMPRESS_LEVEL_MIN && level <= LZ4_COMPRESS_LEVEL_MAX);
 
-    IoFilter *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("Lz4Compress")
+    OBJ_NEW_BEGIN(Lz4Compress, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        Lz4Compress *driver = memNew(sizeof(Lz4Compress));
-
-        *driver = (Lz4Compress)
+        *this = (Lz4Compress)
         {
-            .memContext = MEM_CONTEXT_NEW(),
-            .prefs = {.compressionLevel = level, .frameInfo = {.contentChecksumFlag = LZ4F_contentChecksumEnabled}},
+            .prefs =
+            {
+                .compressionLevel = level,
+                .frameInfo = {.contentChecksumFlag = raw ? LZ4F_noContentChecksum : LZ4F_contentChecksumEnabled},
+            },
             .first = true,
             .buffer = bufNew(0),
         };
 
         // Create lz4 context
-        lz4Error(LZ4F_createCompressionContext(&driver->context, LZ4F_VERSION));
+        lz4Error(LZ4F_createCompressionContext(&this->context, LZ4F_VERSION));
 
         // Set callback to ensure lz4 context is freed
-        memContextCallbackSet(driver->memContext, lz4CompressFreeResource, driver);
-
-        // Create param list
-        VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewInt(level));
-
-        // Create filter interface
-        this = ioFilterNewP(
-            LZ4_COMPRESS_FILTER_TYPE_STR, driver, paramList, .done = lz4CompressDone, .inOut = lz4CompressProcess,
-            .inputSame = lz4CompressInputSame);
+        memContextCallbackSet(objMemContext(this), lz4CompressFreeResource, this);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_FILTER, this);
+    // Create param list
+    Pack *paramList;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackWrite *const packWrite = pckWriteNewP();
+
+        pckWriteI32P(packWrite, level);
+        pckWriteBoolP(packWrite, raw);
+        pckWriteEndP(packWrite);
+
+        paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(
+        IO_FILTER,
+        ioFilterNewP(
+            LZ4_COMPRESS_FILTER_TYPE, this, paramList, .done = lz4CompressDone, .inOut = lz4CompressProcess,
+            .inputSame = lz4CompressInputSame));
 }
 
 #endif // HAVE_LIBLZ4

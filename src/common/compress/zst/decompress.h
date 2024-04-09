@@ -13,13 +13,12 @@ Decompress IO from the zst format.
 /***********************************************************************************************************************************
 Filter type constant
 ***********************************************************************************************************************************/
-#define ZST_DECOMPRESS_FILTER_TYPE                                  "zstDecompress"
-    STRING_DECLARE(ZST_DECOMPRESS_FILTER_TYPE_STR);
+#define ZST_DECOMPRESS_FILTER_TYPE                                  STRID5("zst-dcmp", 0x83464dd27a0)
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-IoFilter *zstDecompressNew(void);
+FN_EXTERN IoFilter *zstDecompressNew(bool raw);
 
 #endif
 

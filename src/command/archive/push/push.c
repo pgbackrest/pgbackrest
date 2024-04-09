@@ -18,11 +18,18 @@ Archive Push Command
 #include "common/wait.h"
 #include "config/config.h"
 #include "config/exec.h"
+#include "config/load.h"
 #include "info/infoArchive.h"
 #include "postgres/interface.h"
+#include "postgres/version.h"
 #include "protocol/helper.h"
 #include "protocol/parallel.h"
 #include "storage/helper.h"
+
+/***********************************************************************************************************************************
+Constants for log messages that are used multiple times to keep them consistent
+***********************************************************************************************************************************/
+#define UNABLE_TO_FIND_VALID_REPO_MSG                               "unable to find a valid repository"
 
 /***********************************************************************************************************************************
 Ready file extension constants
@@ -34,45 +41,49 @@ Ready file extension constants
 Format the warning when a file is dropped
 ***********************************************************************************************************************************/
 static String *
-archivePushDropWarning(const String *walFile, uint64_t queueMax)
+archivePushDropWarning(const String *const walFile, const uint64_t queueMax)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, walFile);
         FUNCTION_TEST_PARAM(UINT64, queueMax);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(
-        strNewFmt("dropped WAL file '%s' because archive queue exceeded %s", strZ(walFile), strZ(strSizeFormat(queueMax))));
+    String *const size = strSizeFormat(queueMax);
+    String *const result = strNewFmt("dropped WAL file '%s' because archive queue exceeded %s", strZ(walFile), strZ(size));
+
+    strFree(size);
+
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************
 Determine if the WAL process list has become large enough to drop
 ***********************************************************************************************************************************/
 static bool
-archivePushDrop(const String *walPath, const StringList *const processList)
+archivePushDrop(const String *const walPath, const StringList *const processList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, walPath);
         FUNCTION_LOG_PARAM(STRING_LIST, processList);
     FUNCTION_LOG_END();
 
+    ASSERT(walPath != NULL);
+    ASSERT(processList != NULL);
+
     const uint64_t queueMax = cfgOptionUInt64(cfgOptArchivePushQueueMax);
     uint64_t queueSize = 0;
-    bool result = false;
 
-    for (unsigned int processIdx = 0; processIdx < strLstSize(processList); processIdx++)
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        queueSize += storageInfoP(
-            storagePg(), strNewFmt("%s/%s", strZ(walPath), strZ(strLstGet(processList, processIdx)))).size;
-
-        if (queueSize > queueMax)
+        if (!strLstEmpty(processList))
         {
-            result = true;
-            break;
+            queueSize = storageInfoP(
+                storagePg(), strNewFmt("%s/%s", strZ(walPath), strZ(strLstGet(processList, 0)))).size * strLstSize(processList);
         }
     }
+    MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(BOOL, result);
+    FUNCTION_LOG_RETURN(BOOL, queueSize > queueMax);
 }
 
 /***********************************************************************************************************************************
@@ -102,9 +113,8 @@ archivePushReadyList(const String *walPath)
 
         for (unsigned int readyIdx = 0; readyIdx < strLstSize(readyListRaw); readyIdx++)
         {
-            strLstAdd(
-                result,
-                strSubN(strLstGet(readyListRaw, readyIdx), 0, strSize(strLstGet(readyListRaw, readyIdx)) - STATUS_EXT_READY_SIZE));
+            const String *const ready = strLstGet(readyListRaw, readyIdx);
+            strLstAddSub(result, ready, strSize(ready) - STATUS_EXT_READY_SIZE);
         }
 
         strLstMove(result, memContextPrior());
@@ -117,9 +127,9 @@ archivePushReadyList(const String *walPath)
 /***********************************************************************************************************************************
 Determine which WAL files need to be pushed to the archive when in async mode
 
-This is the heart of the "look ahead" functionality in async archiving.  Any files in the out directory that do not end in ok are
+This is the heart of the "look ahead" functionality in async archiving. Any files in the out directory that do not end in ok are
 removed and any ok files that do not have a corresponding ready file in archive_status (meaning it has been acknowledged by
-PostgreSQL) are removed.  Then all ready files that do not have a corresponding ok file (meaning it has already been processed) are
+PostgreSQL) are removed. Then all ready files that do not have a corresponding ok file (meaning it has already been processed) are
 returned for processing.
 ***********************************************************************************************************************************/
 static StringList *
@@ -150,7 +160,7 @@ archivePushProcessList(const String *walPath)
             const String *statusFile = strLstGet(statusList, statusIdx);
 
             if (strEndsWithZ(statusFile, STATUS_EXT_OK))
-                strLstAdd(okList, strSubN(statusFile, 0, strSize(statusFile) - STATUS_EXT_OK_SIZE));
+                strLstAddSub(okList, statusFile, strSize(statusFile) - STATUS_EXT_OK_SIZE);
             else
             {
                 storageRemoveP(
@@ -183,75 +193,117 @@ archivePushProcessList(const String *walPath)
 /***********************************************************************************************************************************
 Check that pg_control and archive.info match and get the archive id and archive cipher passphrase (if present)
 
-As much information as possible is collected here so that async archiving has as little work as possible to do for each file.  Sync
+As much information as possible is collected here so that async archiving has as little work as possible to do for each file. Sync
 archiving does not benefit but it makes sense to use the same function.
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_ARCHIVE_PUSH_CHECK_RESULT_TYPE                                                                                \
-    ArchivePushCheckResult
-#define FUNCTION_LOG_ARCHIVE_PUSH_CHECK_RESULT_FORMAT(value, buffer, bufferSize)                                                   \
-    objToLog(&value, "ArchivePushCheckResult", buffer, bufferSize)
-
 typedef struct ArchivePushCheckResult
 {
     unsigned int pgVersion;                                         // PostgreSQL version
     uint64_t pgSystemId;                                            // PostgreSQL system id
-    String *archiveId;                                              // Archive id for current pg version
-    String *archiveCipherPass;                                      // Archive cipher passphrase
+    List *repoList;                                                 // Data for each repo
+    StringList *errorList;                                          // Errors while checking repos
 } ArchivePushCheckResult;
 
 static ArchivePushCheckResult
-archivePushCheck(bool pgPathSet, CipherType cipherType, const String *cipherPass)
+archivePushCheck(bool pgPathSet)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BOOL, pgPathSet);
-        FUNCTION_LOG_PARAM(ENUM, cipherType);
-        FUNCTION_TEST_PARAM(STRING, cipherPass);
     FUNCTION_LOG_END();
 
-    ArchivePushCheckResult result = {0};
+    FUNCTION_AUDIT_STRUCT();
+
+    ArchivePushCheckResult result = {.repoList = lstNewP(sizeof(ArchivePushFileRepoData)), .errorList = strLstNew()};
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Attempt to load the archive info file
-        InfoArchive *info = infoArchiveLoadFile(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cipherType, cipherPass);
-
-        // Get archive id for the most recent version -- archive-push will only operate against the most recent version
-        String *archiveId = infoPgArchiveId(infoArchivePg(info), infoPgDataCurrentId(infoArchivePg(info)));
-        InfoPgData archiveInfo = infoPgData(infoArchivePg(info), infoPgDataCurrentId(infoArchivePg(info)));
-
-        // Ensure that stanza version and system identifier match pg_control when available
+        // If we have access to pg_control then load it to get the pg version and system id. If we can't load pg_control then we'll
+        // still compare the pg info stored in the repo to the WAL segment and also all the repos against each other.
         if (pgPathSet)
         {
             // Get info from pg_control
-            PgControl controlInfo = pgControlFromFile(storagePg());
-
-            if (controlInfo.version != archiveInfo.version || controlInfo.systemId != archiveInfo.systemId)
-            {
-                THROW_FMT(
-                    ArchiveMismatchError,
-                    "PostgreSQL version %s, system-id %" PRIu64 " do not match stanza version %s, system-id %" PRIu64
-                    "\nHINT: are you archiving to the correct stanza?",
-                    strZ(pgVersionToStr(controlInfo.version)), controlInfo.systemId, strZ(pgVersionToStr(archiveInfo.version)),
-                    archiveInfo.systemId);
-            }
+            PgControl pgControl = pgControlFromFile(storagePg(), cfgOptionStrNull(cfgOptPgVersionForce));
+            result.pgVersion = pgControl.version;
+            result.pgSystemId = pgControl.systemId;
         }
 
-        MEM_CONTEXT_PRIOR_BEGIN()
+        for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
         {
-            result.pgVersion = archiveInfo.version;
-            result.pgSystemId = archiveInfo.systemId;
-            result.archiveId = strDup(archiveId);
-            result.archiveCipherPass = strDup(infoArchiveCipherPass(info));
+            TRY_BEGIN()
+            {
+                // Get the repo storage in case it is remote and encryption settings need to be pulled down
+                storageRepoIdx(repoIdx);
+
+                // Get cipher type
+                CipherType repoCipherType = cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx);
+
+                // Attempt to load the archive info file
+                InfoArchive *info = infoArchiveLoadFile(
+                    storageRepoIdx(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, repoCipherType,
+                    cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
+
+                // Get archive id for the most recent version -- archive-push will only operate against the most recent version
+                String *archiveId = infoPgArchiveId(infoArchivePg(info), infoPgDataCurrentId(infoArchivePg(info)));
+                InfoPgData archiveInfo = infoPgData(infoArchivePg(info), infoPgDataCurrentId(infoArchivePg(info)));
+
+                // Ensure that stanza version and system identifier match pg_control when available or the other repos when
+                // pg_control is not available
+                if (pgPathSet || repoIdx > 0)
+                {
+                    if (result.pgVersion != archiveInfo.version || result.pgSystemId != archiveInfo.systemId)
+                    {
+                        THROW_FMT(
+                            ArchiveMismatchError,
+                            "%s version %s, system-id %" PRIu64 " do not match %s stanza version %s, system-id %" PRIu64
+                            "\nHINT: are you archiving to the correct stanza?",
+                            pgPathSet ? PG_NAME : zNewFmt("%s stanza", cfgOptionGroupName(cfgOptGrpRepo, 0)),
+                            strZ(pgVersionToStr(result.pgVersion)), result.pgSystemId,
+                            cfgOptionGroupName(cfgOptGrpRepo, repoIdx), strZ(pgVersionToStr(archiveInfo.version)),
+                            archiveInfo.systemId);
+                    }
+                }
+
+                MEM_CONTEXT_PRIOR_BEGIN()
+                {
+                    result.pgVersion = archiveInfo.version;
+                    result.pgSystemId = archiveInfo.systemId;
+
+                    const ArchivePushFileRepoData archivePushFileRepoData =
+                    {
+                        .repoIdx = repoIdx,
+                        .archiveId = strDup(archiveId),
+                        .cipherType = repoCipherType,
+                        .cipherPass = strDup(infoArchiveCipherPass(info)),
+                    };
+
+                    lstAdd(result.repoList, &archivePushFileRepoData);
+                }
+                MEM_CONTEXT_PRIOR_END();
+            }
+            CATCH_ANY()
+            {
+                strLstAddFmt(
+                    result.errorList, "%s: [%s] %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx), errorTypeName(errorType()),
+                    errorMessage());
+            }
+            TRY_END();
         }
-        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(ARCHIVE_PUSH_CHECK_RESULT, result);
+    // If no valid repos were found then error
+    if (lstEmpty(result.repoList))
+    {
+        ASSERT(strLstSize(result.errorList) > 0);
+
+        THROW_FMT(RepoInvalidError, UNABLE_TO_FIND_VALID_REPO_MSG ":\n%s", strZ(strLstJoin(result.errorList, "\n")));
+    }
+
+    FUNCTION_LOG_RETURN_STRUCT(result);
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 cmdArchivePush(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
@@ -273,7 +325,7 @@ cmdArchivePush(void)
         lockStopTest();
 
         // Get the segment name
-        String *walFile = walPath(strLstGet(commandParam, 0), cfgOptionStrNull(cfgOptPgPath), STR(cfgCommandName(cfgCommand())));
+        String *walFile = walPath(strLstGet(commandParam, 0), cfgOptionStrNull(cfgOptPgPath), STR(cfgCommandName()));
         String *archiveFile = strBase(walFile);
 
         if (cfgOptionBool(cfgOptArchiveAsync))
@@ -291,27 +343,24 @@ cmdArchivePush(void)
             }
 
             // Loop and wait for the WAL segment to be pushed
-            Wait *wait = waitNew((TimeMSec)(cfgOptionDbl(cfgOptArchiveTimeout) * MSEC_PER_SEC));
+            Wait *wait = waitNew(cfgOptionUInt64(cfgOptArchiveTimeout));
 
             do
             {
-                // Check if the WAL segment has been pushed.  Errors will not be thrown on the first try to allow the async process
+                // Check if the WAL segment has been pushed. Errors will not be thrown on the first try to allow the async process
                 // a chance to fix them.
-                pushed = archiveAsyncStatus(archiveModePush, archiveFile, throwOnError);
+                pushed = archiveAsyncStatus(archiveModePush, archiveFile, throwOnError, true);
 
-                // If the WAL segment has not already been pushed then start the async process to push it.  There's no point in
-                // forking the async process off more than once so track that as well.  Use an archive lock to prevent more than
-                // one async process being launched.
-                if (!pushed && !forked &&
-                    lockAcquire(
-                        cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), cfgLockType(), 0,
-                        false))
+                // If the WAL segment has not already been pushed then start the async process to push it. There's no point in
+                // forking the async process off more than once so track that as well. Use an archive lock to prevent more than one
+                // async process being launched.
+                if (!pushed && !forked && lockAcquireP(.returnOnNoLock = true))
                 {
                     // The async process should not output on the console at all
                     KeyValue *optionReplace = kvNew();
 
-                    kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_CONSOLE_STR), VARSTRDEF("off"));
-                    kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), VARSTRDEF("off"));
+                    kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_CONSOLE), VARSTRDEF("off"));
+                    kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_STDERR), VARSTRDEF("off"));
 
                     // Generate command options
                     StringList *commandExec = cfgExecParam(cfgCmdArchivePush, cfgCmdRoleAsync, optionReplace, true, false);
@@ -327,7 +376,7 @@ cmdArchivePush(void)
                     // Execute the async process
                     archiveAsyncExec(archiveModePush, commandExec);
 
-                    // Mark the async process as forked so it doesn't get forked again.  A single run of the async process should be
+                    // Mark the async process as forked so it doesn't get forked again. A single run of the async process should be
                     // enough to do the job, running it again won't help anything.
                     forked = true;
                 }
@@ -341,8 +390,10 @@ cmdArchivePush(void)
             if (!pushed)
             {
                 THROW_FMT(
-                    ArchiveTimeoutError, "unable to push WAL file '%s' to the archive asynchronously after %lg second(s)",
-                    strZ(archiveFile), cfgOptionDbl(cfgOptArchiveTimeout));
+                    ArchiveTimeoutError,
+                    "unable to push WAL file '%s' to the archive asynchronously after %s second(s)\n"
+                    "HINT: check '%s' for errors.",
+                    strZ(archiveFile), strZ(cfgOptionDisplay(cfgOptArchiveTimeout)), strZ(cfgLoadLogFileName(cfgCmdRoleAsync)));
             }
 
             // Log success
@@ -359,23 +410,18 @@ cmdArchivePush(void)
             // Else push the file
             else
             {
-                // Get the repo storage in case it is remote and encryption settings need to be pulled down
-                storageRepo();
-
-                // Get archive info
-                ArchivePushCheckResult archiveInfo = archivePushCheck(
-                    cfgOptionTest(cfgOptPgPath), cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-                    cfgOptionStrNull(cfgOptRepoCipherPass));
+                // Check archive info for each repo
+                ArchivePushCheckResult archiveInfo = archivePushCheck(cfgOptionTest(cfgOptPgPath));
 
                 // Push the file to the archive
-                String *warning = archivePushFile(
-                    walFile, archiveInfo.archiveId, archiveInfo.pgVersion, archiveInfo.pgSystemId, archiveFile,
-                    cipherType(cfgOptionStr(cfgOptRepoCipherType)), archiveInfo.archiveCipherPass,
-                    compressTypeEnum(cfgOptionStr(cfgOptCompressType)), cfgOptionInt(cfgOptCompressLevel));
+                ArchivePushFileResult fileResult = archivePushFile(
+                    walFile, cfgOptionBool(cfgOptArchiveHeaderCheck), cfgOptionBool(cfgOptArchiveModeCheck), archiveInfo.pgVersion,
+                    archiveInfo.pgSystemId, archiveFile, compressTypeEnum(cfgOptionStrId(cfgOptCompressType)),
+                    cfgOptionInt(cfgOptCompressLevel), archiveInfo.repoList, archiveInfo.errorList);
 
                 // If a warning was returned then log it
-                if (warning != NULL)
-                    LOG_WARN(strZ(warning));
+                for (unsigned int warnIdx = 0; warnIdx < strLstSize(fileResult.warnList); warnIdx++)
+                    LOG_WARN(strZ(strLstGet(fileResult.warnList, warnIdx)));
 
                 // Log success
                 LOG_INFO_FMT("pushed WAL file '%s' to the archive", strZ(archiveFile));
@@ -393,48 +439,77 @@ typedef struct ArchivePushAsyncData
     const String *walPath;                                          // Path to pg_wal/pg_xlog
     const StringList *walFileList;                                  // List of wal files to process
     unsigned int walFileIdx;                                        // Current index in the list to be processed
-    CipherType cipherType;                                          // Cipher type
     CompressType compressType;                                      // Type of compression for WAL segments
     int compressLevel;                                              // Compression level for wal files
     ArchivePushCheckResult archiveInfo;                             // Archive info
 } ArchivePushAsyncData;
 
-static ProtocolParallelJob *archivePushAsyncCallback(void *data, unsigned int clientIdx)
+static ProtocolParallelJob *
+archivePushAsyncCallback(void *data, unsigned int clientIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
         FUNCTION_TEST_PARAM(UINT, clientIdx);
     FUNCTION_TEST_END();
 
-    // No special logic based on the client, we'll just get the next job
-    (void)clientIdx;
+    ProtocolParallelJob *result = NULL;
 
-    // Get a new job if there are any left
-    ArchivePushAsyncData *jobData = data;
-
-    if (jobData->walFileIdx < strLstSize(jobData->walFileList))
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        const String *walFile = strLstGet(jobData->walFileList, jobData->walFileIdx);
-        jobData->walFileIdx++;
+        // No special logic based on the client, we'll just get the next job
+        (void)clientIdx;
 
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_PUSH_STR);
-        protocolCommandParamAdd(command, VARSTR(strNewFmt("%s/%s", strZ(jobData->walPath), strZ(walFile))));
-        protocolCommandParamAdd(command, VARSTR(jobData->archiveInfo.archiveId));
-        protocolCommandParamAdd(command, VARUINT(jobData->archiveInfo.pgVersion));
-        protocolCommandParamAdd(command, VARUINT64(jobData->archiveInfo.pgSystemId));
-        protocolCommandParamAdd(command, VARSTR(walFile));
-        protocolCommandParamAdd(command, VARUINT(jobData->cipherType));
-        protocolCommandParamAdd(command, VARSTR(jobData->archiveInfo.archiveCipherPass));
-        protocolCommandParamAdd(command, VARUINT(jobData->compressType));
-        protocolCommandParamAdd(command, VARINT(jobData->compressLevel));
+        // Get a new job if there are any left
+        ArchivePushAsyncData *jobData = data;
 
-        FUNCTION_TEST_RETURN(protocolParallelJobNew(VARSTR(walFile), command));
+        if (jobData->walFileIdx < strLstSize(jobData->walFileList))
+        {
+            const String *walFile = strLstGet(jobData->walFileList, jobData->walFileIdx);
+            jobData->walFileIdx++;
+
+            ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE);
+            PackWrite *const param = protocolCommandParam(command);
+
+            pckWriteStrP(param, strNewFmt("%s/%s", strZ(jobData->walPath), strZ(walFile)));
+            pckWriteBoolP(param, cfgOptionBool(cfgOptArchiveHeaderCheck));
+            pckWriteBoolP(param, cfgOptionBool(cfgOptArchiveModeCheck));
+            pckWriteU32P(param, jobData->archiveInfo.pgVersion);
+            pckWriteU64P(param, jobData->archiveInfo.pgSystemId);
+            pckWriteStrP(param, walFile);
+            pckWriteU32P(param, jobData->compressType);
+            pckWriteI32P(param, jobData->compressLevel);
+            pckWriteStrLstP(param, jobData->archiveInfo.errorList);
+
+            // Add data for each repo to push to
+            pckWriteArrayBeginP(param);
+
+            for (unsigned int repoListIdx = 0; repoListIdx < lstSize(jobData->archiveInfo.repoList); repoListIdx++)
+            {
+                ArchivePushFileRepoData *data = lstGet(jobData->archiveInfo.repoList, repoListIdx);
+
+                pckWriteObjBeginP(param);
+                pckWriteU32P(param, data->repoIdx);
+                pckWriteStrP(param, data->archiveId);
+                pckWriteU64P(param, data->cipherType);
+                pckWriteStrP(param, data->cipherPass);
+                pckWriteObjEndP(param);
+            }
+
+            pckWriteArrayEndP(param);
+
+            MEM_CONTEXT_PRIOR_BEGIN()
+            {
+                result = protocolParallelJobNew(VARSTR(walFile), command);
+            }
+            MEM_CONTEXT_PRIOR_END();
+        }
     }
+    MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(NULL);
+    FUNCTION_TEST_RETURN(PROTOCOL_PARALLEL_JOB, result);
 }
 
-void
+FN_EXTERN void
 cmdArchivePushAsync(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
@@ -455,7 +530,7 @@ cmdArchivePushAsync(void)
         ArchivePushAsyncData jobData =
         {
             .walPath = strLstGet(commandParam, 0),
-            .compressType = compressTypeEnum(cfgOptionStr(cfgOptCompressType)),
+            .compressType = compressTypeEnum(cfgOptionStrId(cfgOptCompressType)),
             .compressLevel = cfgOptionInt(cfgOptCompressLevel),
         };
 
@@ -468,13 +543,13 @@ cmdArchivePushAsync(void)
             jobData.walFileList = archivePushProcessList(jobData.walPath);
 
             // The archive-push:async command should not have been called unless there are WAL files to process
-            if (strLstSize(jobData.walFileList) == 0)
+            if (strLstEmpty(jobData.walFileList))
                 THROW(AssertError, "no WAL files to process");
 
             LOG_INFO_FMT(
                 "push %u WAL file(s) to archive: %s%s", strLstSize(jobData.walFileList), strZ(strLstGet(jobData.walFileList, 0)),
                 strLstSize(jobData.walFileList) == 1 ?
-                    "" : strZ(strNewFmt("...%s", strZ(strLstGet(jobData.walFileList, strLstSize(jobData.walFileList) - 1)))));
+                    "" : zNewFmt("...%s", strZ(strLstGet(jobData.walFileList, strLstSize(jobData.walFileList) - 1))));
 
             // Drop files if queue max has been exceeded
             if (cfgOptionTest(cfgOptArchivePushQueueMax) && archivePushDrop(jobData.walPath, jobData.walFileList))
@@ -491,72 +566,74 @@ cmdArchivePushAsync(void)
             // Else continue processing
             else
             {
-                // Get the repo storage in case it is remote and encryption settings need to be pulled down
-                storageRepo();
-
-                // Get cipher type
-                jobData.cipherType = cipherType(cfgOptionStr(cfgOptRepoCipherType));
-
-                // Get archive info
-                jobData.archiveInfo = archivePushCheck(
-                    true, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStrNull(cfgOptRepoCipherPass));
+                // Check archive info for each repo
+                jobData.archiveInfo = archivePushCheck(true);
 
                 // Create the parallel executor
                 ProtocolParallel *parallelExec = protocolParallelNew(
-                    (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2, archivePushAsyncCallback, &jobData);
+                    cfgOptionUInt64(cfgOptProtocolTimeout) / 2, archivePushAsyncCallback, &jobData);
 
                 for (unsigned int processIdx = 1; processIdx <= cfgOptionUInt(cfgOptProcessMax); processIdx++)
                     protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, 0, processIdx));
 
                 // Process jobs
-                do
+                MEM_CONTEXT_TEMP_RESET_BEGIN()
                 {
-                    unsigned int completed = protocolParallelProcess(parallelExec);
-
-                    for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
+                    do
                     {
-                        protocolKeepAlive();
+                        unsigned int completed = protocolParallelProcess(parallelExec);
 
-                        // Get the job and job key
-                        ProtocolParallelJob *job = protocolParallelResult(parallelExec);
-                        unsigned int processId = protocolParallelJobProcessId(job);
-                        const String *walFile = varStr(protocolParallelJobKey(job));
-
-                        // The job was successful
-                        if (protocolParallelJobErrorCode(job) == 0)
+                        for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
                         {
-                            // If there was a warning then output it to the log
-                            const String *warning = varStr(protocolParallelJobResult(job));
+                            protocolKeepAlive();
 
-                            if (warning != NULL)
-                                LOG_WARN_PID(processId, strZ(warning));
+                            // Get the job and job key
+                            ProtocolParallelJob *job = protocolParallelResult(parallelExec);
+                            unsigned int processId = protocolParallelJobProcessId(job);
+                            const String *walFile = varStr(protocolParallelJobKey(job));
 
-                            // Log success
-                            LOG_DETAIL_PID_FMT(processId, "pushed WAL file '%s' to the archive", strZ(walFile));
+                            // The job was successful
+                            if (protocolParallelJobErrorCode(job) == 0)
+                            {
+                                // Output file warnings
+                                StringList *fileWarnList = pckReadStrLstP(protocolParallelJobResult(job));
 
-                            // Write the status file
-                            archiveAsyncStatusOkWrite(archiveModePush, walFile, warning);
+                                for (unsigned int warnIdx = 0; warnIdx < strLstSize(fileWarnList); warnIdx++)
+                                    LOG_WARN_PID(processId, strZ(strLstGet(fileWarnList, warnIdx)));
+
+                                // Log success
+                                LOG_DETAIL_PID_FMT(processId, "pushed WAL file '%s' to the archive", strZ(walFile));
+
+                                // Write the status file
+                                archiveAsyncStatusOkWrite(
+                                    archiveModePush, walFile, strLstEmpty(fileWarnList) ? NULL : strLstJoin(fileWarnList, "\n"));
+                            }
+                            // Else the job errored
+                            else
+                            {
+                                LOG_WARN_PID_FMT(
+                                    processId,
+                                    "could not push WAL file '%s' to the archive (will be retried): [%d] %s", strZ(walFile),
+                                    protocolParallelJobErrorCode(job), strZ(protocolParallelJobErrorMessage(job)));
+
+                                archiveAsyncStatusErrorWrite(
+                                    archiveModePush, walFile, protocolParallelJobErrorCode(job),
+                                    protocolParallelJobErrorMessage(job));
+                            }
+
+                            protocolParallelJobFree(job);
                         }
-                        // Else the job errored
-                        else
-                        {
-                            LOG_WARN_PID_FMT(
-                                processId,
-                                "could not push WAL file '%s' to the archive (will be retried): [%d] %s", strZ(walFile),
-                                protocolParallelJobErrorCode(job), strZ(protocolParallelJobErrorMessage(job)));
 
-                            archiveAsyncStatusErrorWrite(
-                                archiveModePush, walFile, protocolParallelJobErrorCode(job), protocolParallelJobErrorMessage(job));
-                        }
-
-                        protocolParallelJobFree(job);
+                        // Reset the memory context occasionally so we don't use too much memory or slow down processing
+                        MEM_CONTEXT_TEMP_RESET(1000);
                     }
+                    while (!protocolParallelDone(parallelExec));
                 }
-                while (!protocolParallelDone(parallelExec));
+                MEM_CONTEXT_TEMP_END();
             }
         }
         // On any global error write a single error file to cover all unprocessed files
-        CATCH_ANY()
+        CATCH_FATAL()
         {
             archiveAsyncStatusErrorWrite(archiveModePush, NULL, errorCode(), STR(errorMessage()));
             RETHROW();

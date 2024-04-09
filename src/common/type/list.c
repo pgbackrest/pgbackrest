@@ -4,22 +4,19 @@ List Handler
 #include "build.auto.h"
 
 #include <stdarg.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "common/debug.h"
 #include "common/type/list.h"
-#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 struct List
 {
-    MemContext *memContext;
+    ListPub pub;                                                    // Publicly accessible variables
     size_t itemSize;
-    unsigned int listSize;
     unsigned int listSizeMax;
     SortOrder sortOrder;
     unsigned char *listAlloc;                                       // Pointer to memory allocated for the list
@@ -27,11 +24,8 @@ struct List
     ListComparator *comparator;
 };
 
-OBJECT_DEFINE_MOVE(LIST);
-OBJECT_DEFINE_FREE(LIST);
-
 /**********************************************************************************************************************************/
-List *
+FN_EXTERN List *
 lstNew(size_t itemSize, ListParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -39,43 +33,22 @@ lstNew(size_t itemSize, ListParam param)
         FUNCTION_TEST_PARAM(FUNCTIONP, param.comparator);
     FUNCTION_TEST_END();
 
-    List *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("List")
+    OBJ_NEW_BEGIN(List, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        // Create object
-        this = memNew(sizeof(List));
-
         *this = (List)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .itemSize = itemSize,
             .sortOrder = param.sortOrder,
             .comparator = param.comparator,
         };
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(LIST, this);
 }
 
 /**********************************************************************************************************************************/
-void *
-lstAdd(List *this, const void *item)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(LIST, this);
-        FUNCTION_TEST_PARAM_P(VOID, item);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    ASSERT(item != NULL);
-
-    FUNCTION_TEST_RETURN(lstInsert(this, lstSize(this), item));
-}
-
-/**********************************************************************************************************************************/
-List *
+FN_EXTERN List *
 lstClear(List *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -86,21 +59,21 @@ lstClear(List *this)
 
     if (this->list != NULL)
     {
-        MEM_CONTEXT_BEGIN(this->memContext)
+        MEM_CONTEXT_BEGIN(lstMemContext(this))
         {
             memFree(this->list);
         }
         MEM_CONTEXT_END();
 
-        this->listSize = 0;
+        this->pub.listSize = 0;
         this->listSizeMax = 0;
     }
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(LIST, this);
 }
 
 /**********************************************************************************************************************************/
-int
+FN_EXTERN int
 lstComparatorStr(const void *item1, const void *item2)
 {
     FUNCTION_TEST_BEGIN();
@@ -111,7 +84,40 @@ lstComparatorStr(const void *item1, const void *item2)
     ASSERT(item1 != NULL);
     ASSERT(item2 != NULL);
 
-    FUNCTION_TEST_RETURN(strCmp(*(String **)item1, *(String **)item2));
+    FUNCTION_TEST_RETURN(INT, strCmp(*(String **)item1, *(String **)item2));
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN int
+lstComparatorUInt(const void *const uintPtr1, const void *const uintPtr2)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, uintPtr1);
+        FUNCTION_TEST_PARAM_P(VOID, uintPtr2);
+    FUNCTION_TEST_END();
+
+    ASSERT(uintPtr1 != NULL);
+    ASSERT(uintPtr2 != NULL);
+
+    const unsigned int uint1 = *(unsigned int *)uintPtr1;
+    const unsigned int uint2 = *(unsigned int *)uintPtr2;
+
+    FUNCTION_TEST_RETURN(INT, LST_COMPARATOR_CMP(uint1, uint2));
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN int
+lstComparatorZ(const void *item1, const void *item2)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, item1);
+        FUNCTION_TEST_PARAM_P(VOID, item2);
+    FUNCTION_TEST_END();
+
+    ASSERT(item1 != NULL);
+    ASSERT(item2 != NULL);
+
+    FUNCTION_TEST_RETURN(INT, strcmp(*(char **)item1, *(char **)item2));
 }
 
 /***********************************************************************************************************************************
@@ -126,7 +132,7 @@ lstComparatorDesc(const void *item1, const void *item2)
 }
 
 /**********************************************************************************************************************************/
-void *
+FN_EXTERN void *
 lstGet(const List *this, unsigned int listIdx)
 {
     FUNCTION_TEST_BEGIN();
@@ -137,14 +143,14 @@ lstGet(const List *this, unsigned int listIdx)
     ASSERT(this != NULL);
 
     // Ensure list index is in range
-    if (listIdx >= this->listSize)
-        THROW_FMT(AssertError, "cannot get index %u from list with %u value(s)", listIdx, this->listSize);
+    if (listIdx >= lstSize(this))
+        THROW_FMT(AssertError, "cannot get index %u from list with %u value(s)", listIdx, lstSize(this));
 
     // Return pointer to list item
-    FUNCTION_TEST_RETURN(this->list + (listIdx * this->itemSize));
+    FUNCTION_TEST_RETURN_P(VOID, this->list + (listIdx * this->itemSize));
 }
 
-void *
+FN_EXTERN void *
 lstGetLast(const List *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -154,30 +160,15 @@ lstGetLast(const List *this)
     ASSERT(this != NULL);
 
     // Ensure there are items in the list
-    if (this->listSize == 0)
+    if (lstSize(this) == 0)
         THROW(AssertError, "cannot get last from list with no values");
 
     // Return pointer to list item
-    FUNCTION_TEST_RETURN(lstGet(this, this->listSize - 1));
+    FUNCTION_TEST_RETURN_P(VOID, lstGet(this, lstSize(this) - 1));
 }
 
 /**********************************************************************************************************************************/
-bool
-lstExists(const List *this, const void *item)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(LIST, this);
-        FUNCTION_TEST_PARAM_P(VOID, item);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    ASSERT(item != NULL);
-
-    FUNCTION_TEST_RETURN(lstFind(this, item) != NULL);
-}
-
-/**********************************************************************************************************************************/
-void *
+FN_EXTERN void *
 lstFind(const List *this, const void *item)
 {
     FUNCTION_TEST_BEGIN();
@@ -189,27 +180,30 @@ lstFind(const List *this, const void *item)
     ASSERT(this->comparator != NULL);
     ASSERT(item != NULL);
 
-    if (this->sortOrder == sortOrderAsc)
-        FUNCTION_TEST_RETURN(bsearch(item, this->list, this->listSize, this->itemSize, this->comparator));
-    else if (this->sortOrder == sortOrderDesc)
+    if (this->list != NULL)
     {
-        // Assign the list for the descending comparator to use
-        comparatorDescList = this;
+        if (this->sortOrder == sortOrderAsc)
+            FUNCTION_TEST_RETURN_P(VOID, bsearch(item, this->list, lstSize(this), this->itemSize, this->comparator));
+        else if (this->sortOrder == sortOrderDesc)
+        {
+            // Assign the list for the descending comparator to use
+            comparatorDescList = this;
 
-        FUNCTION_TEST_RETURN(bsearch(item, this->list, this->listSize, this->itemSize, lstComparatorDesc));
+            FUNCTION_TEST_RETURN_P(VOID, bsearch(item, this->list, lstSize(this), this->itemSize, lstComparatorDesc));
+        }
+
+        // Fall back on an iterative search
+        for (unsigned int listIdx = 0; listIdx < lstSize(this); listIdx++)
+        {
+            if (this->comparator(item, lstGet(this, listIdx)) == 0)
+                FUNCTION_TEST_RETURN_P(VOID, lstGet(this, listIdx));
+        }
     }
 
-    // Fall back on an iterative search
-    for (unsigned int listIdx = 0; listIdx < lstSize(this); listIdx++)
-    {
-        if (this->comparator(item, lstGet(this, listIdx)) == 0)
-            FUNCTION_TEST_RETURN(lstGet(this, listIdx));
-    }
-
-    FUNCTION_TEST_RETURN(NULL);
+    FUNCTION_TEST_RETURN_P(VOID, NULL);
 }
 
-unsigned int
+FN_EXTERN unsigned int
 lstFindIdx(const List *this, const void *item)
 {
     FUNCTION_TEST_BEGIN();
@@ -222,10 +216,10 @@ lstFindIdx(const List *this, const void *item)
 
     void *result = lstFind(this, item);
 
-    FUNCTION_TEST_RETURN(result == NULL ? LIST_NOT_FOUND : lstIdx(this, result));
+    FUNCTION_TEST_RETURN(UINT, result == NULL ? LIST_NOT_FOUND : lstIdx(this, result));
 }
 
-void *
+FN_EXTERN void *
 lstFindDefault(const List *this, const void *item, void *itemDefault)
 {
     FUNCTION_TEST_BEGIN();
@@ -237,13 +231,13 @@ lstFindDefault(const List *this, const void *item, void *itemDefault)
     ASSERT(this != NULL);
     ASSERT(item != NULL);
 
-    void *result= lstFind(this, item);
+    void *result = lstFind(this, item);
 
-    FUNCTION_TEST_RETURN(result == NULL ? itemDefault : result);
+    FUNCTION_TEST_RETURN_P(VOID, result == NULL ? itemDefault : result);
 }
 
 /**********************************************************************************************************************************/
-unsigned int
+FN_EXTERN unsigned int
 lstIdx(const List *this, const void *item)
 {
     FUNCTION_TEST_BEGIN();
@@ -255,18 +249,18 @@ lstIdx(const List *this, const void *item)
     ASSERT(item != NULL);
 
     // Item pointers should always be aligned with the beginning of an item in the list
-    ASSERT((size_t)((unsigned char * const)item - this->list) % this->itemSize == 0);
+    ASSERT((size_t)((unsigned char *const)item - this->list) % this->itemSize == 0);
 
-    size_t result = (size_t)((unsigned char * const)item - this->list) / this->itemSize;
+    size_t result = (size_t)((unsigned char *const)item - this->list) / this->itemSize;
 
     // Item pointers should always be in range
-    ASSERT(result < this->listSize);
+    ASSERT(result < lstSize(this));
 
-    FUNCTION_TEST_RETURN((unsigned int)result);
+    FUNCTION_TEST_RETURN(UINT, (unsigned int)result);
 }
 
 /**********************************************************************************************************************************/
-void *
+FN_EXTERN void *
 lstInsert(List *this, unsigned int listIdx, const void *item)
 {
     FUNCTION_TEST_BEGIN();
@@ -279,9 +273,9 @@ lstInsert(List *this, unsigned int listIdx, const void *item)
     ASSERT(item != NULL);
 
     // If list size = max then allocate more space
-    if (this->listSize == this->listSizeMax)
+    if (lstSize(this) == this->listSizeMax)
     {
-        MEM_CONTEXT_BEGIN(this->memContext)
+        MEM_CONTEXT_BEGIN(lstMemContext(this))
         {
             // If nothing has been allocated yet
             if (this->listSizeMax == 0)
@@ -303,9 +297,9 @@ lstInsert(List *this, unsigned int listIdx, const void *item)
     // Else if there is space before the beginning of the list then move the list down
     else if (
         (this->list != this->listAlloc) &&
-        (this->listSize + ((uintptr_t)(this->list - this->listAlloc) / this->itemSize) == this->listSizeMax))
+        (lstSize(this) + ((uintptr_t)(this->list - this->listAlloc) / this->itemSize) == this->listSizeMax))
     {
-        memmove(this->listAlloc, this->list, this->listSize * this->itemSize);
+        memmove(this->listAlloc, this->list, lstSize(this) * this->itemSize);
         this->list = this->listAlloc;
     }
 
@@ -319,13 +313,13 @@ lstInsert(List *this, unsigned int listIdx, const void *item)
     // Copy item into the list
     this->sortOrder = sortOrderNone;
     memcpy(itemPtr, item, this->itemSize);
-    this->listSize++;
+    this->pub.listSize++;
 
-    FUNCTION_TEST_RETURN(itemPtr);
+    FUNCTION_TEST_RETURN_P(VOID, itemPtr);
 }
 
 /**********************************************************************************************************************************/
-List *
+FN_EXTERN List *
 lstRemoveIdx(List *this, unsigned int listIdx)
 {
     FUNCTION_TEST_BEGIN();
@@ -337,7 +331,7 @@ lstRemoveIdx(List *this, unsigned int listIdx)
     ASSERT(listIdx <= lstSize(this));
 
     // Decrement the list size
-    this->listSize--;
+    this->pub.listSize--;
 
     // If this is the first item then move the list pointer up to avoid moving all the items
     if (listIdx == 0)
@@ -352,10 +346,10 @@ lstRemoveIdx(List *this, unsigned int listIdx)
             (lstSize(this) - listIdx) * this->itemSize);
     }
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(LIST, this);
 }
 
-bool
+FN_EXTERN bool
 lstRemove(List *this, const void *item)
 {
     FUNCTION_TEST_BEGIN();
@@ -371,13 +365,13 @@ lstRemove(List *this, const void *item)
     if (listIdx != LIST_NOT_FOUND)
     {
         lstRemoveIdx(this, listIdx);
-        FUNCTION_TEST_RETURN(true);
+        FUNCTION_TEST_RETURN(BOOL, true);
     }
 
-    FUNCTION_TEST_RETURN(false);
+    FUNCTION_TEST_RETURN(BOOL, false);
 }
 
-List *
+FN_EXTERN List *
 lstRemoveLast(List *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -386,40 +380,14 @@ lstRemoveLast(List *this)
 
     ASSERT(this != NULL);
 
-    if (this->listSize == 0)
+    if (lstSize(this) == 0)
         THROW(AssertError, "cannot remove last from list with no values");
 
-    FUNCTION_TEST_RETURN(lstRemoveIdx(this, this->listSize - 1));
+    FUNCTION_TEST_RETURN(LIST, lstRemoveIdx(this, lstSize(this) - 1));
 }
 
 /**********************************************************************************************************************************/
-MemContext *
-lstMemContext(const List *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(LIST, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->memContext);
-}
-
-/**********************************************************************************************************************************/
-unsigned int
-lstSize(const List *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(LIST, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->listSize);
-}
-
-/**********************************************************************************************************************************/
-List *
+FN_EXTERN List *
 lstSort(List *this, SortOrder sortOrder)
 {
     FUNCTION_TEST_BEGIN();
@@ -430,34 +398,35 @@ lstSort(List *this, SortOrder sortOrder)
     ASSERT(this != NULL);
     ASSERT(this->comparator != NULL);
 
-    switch (sortOrder)
+    if (this->list != NULL)
     {
-        case sortOrderAsc:
+        switch (sortOrder)
         {
-            qsort(this->list, this->listSize, this->itemSize, this->comparator);
-            break;
+            case sortOrderAsc:
+                qsort(this->list, lstSize(this), this->itemSize, this->comparator);
+                break;
+
+            case sortOrderDesc:
+            {
+                // Assign the list that will be sorted for the comparator function to use
+                comparatorDescList = this;
+
+                qsort(this->list, lstSize(this), this->itemSize, lstComparatorDesc);
+                break;
+            }
+
+            case sortOrderNone:
+                break;
         }
-
-        case sortOrderDesc:
-        {
-            // Assign the list that will be sorted for the comparator function to use
-            comparatorDescList = this;
-
-            qsort(this->list, this->listSize, this->itemSize, lstComparatorDesc);
-            break;
-        }
-
-        case sortOrderNone:
-            break;
     }
 
     this->sortOrder = sortOrder;
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(LIST, this);
 }
 
 /**********************************************************************************************************************************/
-List *
+FN_EXTERN List *
 lstComparatorSet(List *this, ListComparator *comparator)
 {
     FUNCTION_TEST_BEGIN();
@@ -470,12 +439,12 @@ lstComparatorSet(List *this, ListComparator *comparator)
     this->comparator = comparator;
     this->sortOrder = sortOrderNone;
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(LIST, this);
 }
 
 /**********************************************************************************************************************************/
-String *
-lstToLog(const List *this)
+FN_EXTERN void
+lstToLog(const List *const this, StringStatic *const debugLog)
 {
-    return strNewFmt("{size: %u}", this->listSize);
+    strStcFmt(debugLog, "{size: %u}", lstSize(this));
 }

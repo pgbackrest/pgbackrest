@@ -9,16 +9,9 @@ Crypto Common
 #include <openssl/rand.h>
 #include <openssl/ssl.h>
 
-#include "common/debug.h"
-#include "common/error.h"
-#include "common/log.h"
 #include "common/crypto/common.h"
-
-/***********************************************************************************************************************************
-Cipher types
-***********************************************************************************************************************************/
-STRING_EXTERN(CIPHER_TYPE_NONE_STR,                                 CIPHER_TYPE_NONE);
-STRING_EXTERN(CIPHER_TYPE_AES_256_CBC_STR,                          CIPHER_TYPE_AES_256_CBC);
+#include "common/debug.h"
+#include "common/log.h"
 
 /***********************************************************************************************************************************
 Flag to indicate if OpenSSL has already been initialized
@@ -26,7 +19,7 @@ Flag to indicate if OpenSSL has already been initialized
 static bool cryptoInitDone = false;
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 cryptoError(bool error, const char *description)
 {
     FUNCTION_TEST_BEGIN();
@@ -40,7 +33,7 @@ cryptoError(bool error, const char *description)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-void
+FN_EXTERN void
 cryptoErrorCode(unsigned long code, const char *description)
 {
     FUNCTION_TEST_BEGIN();
@@ -51,48 +44,11 @@ cryptoErrorCode(unsigned long code, const char *description)
     const char *errorMessage = ERR_reason_error_string(code);
     THROW_FMT(CryptoError, "%s: [%lu] %s", description, code, errorMessage == NULL ? "no details available" : errorMessage);
 
-    FUNCTION_TEST_RETURN_VOID();
+    FUNCTION_TEST_NO_RETURN();
 }
 
 /**********************************************************************************************************************************/
-CipherType
-cipherType(const String *name)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, name);
-    FUNCTION_TEST_END();
-
-    ASSERT(name != NULL);
-
-    CipherType result = cipherTypeNone;
-
-    if (strEq(name, CIPHER_TYPE_AES_256_CBC_STR))
-        result = cipherTypeAes256Cbc;
-    else if (!strEq(name, CIPHER_TYPE_NONE_STR))
-        THROW_FMT(AssertError, "invalid cipher name '%s'", strZ(name));
-
-    FUNCTION_TEST_RETURN(result);
-}
-
-const String *
-cipherTypeName(CipherType type)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, type);
-    FUNCTION_TEST_END();
-
-    const String *result = CIPHER_TYPE_NONE_STR;
-
-    if (type == cipherTypeAes256Cbc)
-        result = CIPHER_TYPE_AES_256_CBC_STR;
-    else if (type != cipherTypeNone)
-        THROW_FMT(AssertError, "invalid cipher type %u", type);
-
-    FUNCTION_TEST_RETURN(result);
-}
-
-/**********************************************************************************************************************************/
-void
+FN_EXTERN void
 cryptoInit(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
@@ -120,15 +76,7 @@ cryptoInit(void)
 }
 
 /**********************************************************************************************************************************/
-bool
-cryptoIsInit(void)
-{
-    FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(cryptoInitDone);
-}
-
-/**********************************************************************************************************************************/
-void
+FN_EXTERN void
 cryptoRandomBytes(unsigned char *buffer, size_t size)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

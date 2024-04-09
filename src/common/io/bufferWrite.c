@@ -5,9 +5,8 @@ Buffer IO Write
 
 #include "common/debug.h"
 #include "common/io/bufferWrite.h"
-#include "common/io/write.intern.h"
+#include "common/io/write.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
 
 /***********************************************************************************************************************************
@@ -15,7 +14,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct IoBufferWrite
 {
-    MemContext *memContext;                                         // Object memory context
     Buffer *write;                                                  // Buffer to write into
 } IoBufferWrite;
 
@@ -25,7 +23,7 @@ Macros for function logging
 #define FUNCTION_LOG_IO_BUFFER_WRITE_TYPE                                                                                          \
     IoBufferWrite *
 #define FUNCTION_LOG_IO_BUFFER_WRITE_FORMAT(value, buffer, bufferSize)                                                             \
-    objToLog(value, "IoBufferWrite", buffer, bufferSize)
+    objNameToLog(value, "IoBufferWrite", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Write to the buffer
@@ -49,8 +47,8 @@ ioBufferWrite(THIS_VOID, const Buffer *buffer)
 }
 
 /**********************************************************************************************************************************/
-IoWrite *
-ioBufferWriteNew(Buffer *buffer)
+FN_EXTERN IoWrite *
+ioBufferWriteNew(Buffer *const buffer)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(BUFFER, buffer);
@@ -58,21 +56,14 @@ ioBufferWriteNew(Buffer *buffer)
 
     ASSERT(buffer != NULL);
 
-    IoWrite *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("IoBufferWrite")
+    OBJ_NEW_BEGIN(IoBufferWrite, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        IoBufferWrite *driver = memNew(sizeof(IoBufferWrite));
-
-        *driver = (IoBufferWrite)
+        *this = (IoBufferWrite)
         {
-            .memContext = memContextCurrent(),
             .write = buffer,
         };
-
-        this = ioWriteNewP(driver, .write = ioBufferWrite);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_WRITE, this);
+    FUNCTION_LOG_RETURN(IO_WRITE, ioWriteNewP(this, .write = ioBufferWrite));
 }

@@ -3,31 +3,106 @@ Help Command
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <ctype.h>
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "common/compress/bz2/decompress.h"
 #include "common/debug.h"
+#include "common/io/bufferRead.h"
 #include "common/io/fdWrite.h"
+#include "common/io/io.h"
 #include "common/memContext.h"
-#include "config/config.h"
-#include "config/define.h"
+#include "common/type/pack.h"
+#include "config/config.intern.h"
 #include "config/parse.h"
 #include "version.h"
 
 /***********************************************************************************************************************************
-Define the console width - use a fixed with of 80 since this should be safe on virtually all consoles
+Define the console width - use a fixed width of 80 since this should be safe on virtually all consoles
 ***********************************************************************************************************************************/
 #define CONSOLE_WIDTH                                               80
 
 /***********************************************************************************************************************************
-Helper function for helpRender() to make output look good on a console
+Helper function to split a string into a string list based on a delimiter and max size per item. In other words each item in the
+list will be no longer than size even if multiple delimiters are skipped. This is useful for breaking up text on spaces, for
+example.
 ***********************************************************************************************************************************/
-static String *
-helpRenderText(const String *text, size_t indent, bool indentFirst, size_t length)
+static StringList *
+helpRenderSplitSize(const String *string, const char *delimiter, size_t size)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, string);
+        FUNCTION_TEST_PARAM(STRINGZ, delimiter);
+        FUNCTION_TEST_PARAM(SIZE, size);
+    FUNCTION_TEST_END();
+
+    ASSERT(string != NULL);
+    ASSERT(delimiter != NULL);
+    ASSERT(size > 0);
+
+    // Create the list
+    StringList *this = strLstNew();
+
+    // Base points to the beginning of the string that is being searched
+    const char *stringBase = strZ(string);
+
+    // Match points to the next delimiter match that has been found
+    const char *stringMatchLast = NULL;
+    const char *stringMatch = NULL;
+
+    MEM_CONTEXT_BEGIN(lstMemContext((List *)this))
+    {
+        do
+        {
+            // Find a delimiter match
+            stringMatch = strstr(stringMatchLast == NULL ? stringBase : stringMatchLast, delimiter);
+
+            // If a match was found then add the string
+            if (stringMatch != NULL)
+            {
+                if ((size_t)(stringMatch - stringBase) >= size)
+                {
+                    if (stringMatchLast != NULL)
+                        stringMatch = stringMatchLast - strlen(delimiter);
+
+                    strLstAddZSub(this, stringBase, (size_t)(stringMatch - stringBase));
+                    stringBase = stringMatch + strlen(delimiter);
+                    stringMatchLast = NULL;
+                }
+                else
+                    stringMatchLast = stringMatch + strlen(delimiter);
+            }
+            // Else make whatever is left the last string
+            else
+            {
+                if (stringMatchLast != NULL && strlen(stringBase) - strlen(delimiter) >= size)
+                {
+                    strLstAddZSub(this, stringBase, (size_t)((stringMatchLast - strlen(delimiter)) - stringBase));
+                    stringBase = stringMatchLast;
+                }
+
+                strLstAddZ(this, stringBase);
+            }
+        }
+        while (stringMatch != NULL);
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN(STRING_LIST, this);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN String *
+helpRenderText(
+    const String *const text, const bool internal, const bool beta, const size_t indent, const bool indentFirst,
+    const size_t length)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, text);
+        FUNCTION_LOG_PARAM(BOOL, internal);
+        FUNCTION_LOG_PARAM(BOOL, beta);
         FUNCTION_LOG_PARAM(SIZE, indent);
         FUNCTION_LOG_PARAM(BOOL, indentFirst);
         FUNCTION_LOG_PARAM(SIZE, length);
@@ -36,37 +111,47 @@ helpRenderText(const String *text, size_t indent, bool indentFirst, size_t lengt
     ASSERT(text != NULL);
     ASSERT(length > 0);
 
-    String *result = strNew("");
+    String *const result = strNew();
 
-    // Split the text into paragraphs
-    StringList *lineList = strLstNewSplitZ(text, "\n");
-
-    // Iterate through each paragraph and split the lines according to the line length
-    for (unsigned int lineIdx = 0; lineIdx < strLstSize(lineList); lineIdx++)
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Add LF if there is already content
-        if (strSize(result) != 0)
-            strCat(result, LF_STR);
+        // Split the text into paragraphs
+        const StringList *const lineList = strLstNewSplitZ(
+            strNewFmt(
+                "%s%s", strZ(text),
+                beta ?
+                    "\n\nFOR BETA TESTING ONLY. DO NOT USE IN PRODUCTION." :
+                    (internal ? "\n\nFOR INTERNAL USE ONLY. DO NOT USE IN PRODUCTION." : "")),
+            "\n");
 
-        // Split the paragraph into lines that don't exceed the line length
-        StringList *partList = strLstNewSplitSizeZ(strLstGet(lineList, lineIdx), " ", length - indent);
-
-        for (unsigned int partIdx = 0; partIdx < strLstSize(partList); partIdx++)
+        // Iterate through each paragraph and split the lines according to the line length
+        for (unsigned int lineIdx = 0; lineIdx < strLstSize(lineList); lineIdx++)
         {
-            // Indent when required
-            if (partIdx != 0 || indentFirst)
+            // Add LF if there is already content
+            if (strSize(result) != 0)
+                strCat(result, LF_STR);
+
+            // Split the paragraph into lines that don't exceed the line length
+            StringList *const partList = helpRenderSplitSize(strLstGet(lineList, lineIdx), " ", length - indent);
+
+            for (unsigned int partIdx = 0; partIdx < strLstSize(partList); partIdx++)
             {
-                if (partIdx != 0)
-                    strCat(result, LF_STR);
+                // Indent when required
+                if (partIdx != 0 || indentFirst)
+                {
+                    if (partIdx != 0)
+                        strCat(result, LF_STR);
 
-                if (strSize(strLstGet(partList, partIdx)))
-                    strCatFmt(result, "%*s", (int)indent, "");
+                    if (strSize(strLstGet(partList, partIdx)))
+                        strCatFmt(result, "%*s", (int)indent, "");
+                }
+
+                // Add the line
+                strCat(result, strLstGet(partList, partIdx));
             }
-
-            // Add the line
-            strCat(result, strLstGet(partList, partIdx));
         }
     }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(STRING, result);
 }
@@ -74,83 +159,135 @@ helpRenderText(const String *text, size_t indent, bool indentFirst, size_t lengt
 /***********************************************************************************************************************************
 Helper function for helpRender() to output values as strings
 ***********************************************************************************************************************************/
-static const String *
-helpRenderValue(const Variant *value)
+static String *
+helpRenderValue(const ConfigOption optionId, const unsigned int optionIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(VARIANT, value);
+        FUNCTION_LOG_PARAM(ENUM, optionId);
+        FUNCTION_LOG_PARAM(UINT, optionIdx);
     FUNCTION_LOG_END();
 
-    const String *result = NULL;
+    String *result = NULL;
 
-    if (value != NULL)
+    if (cfgOptionIdxSource(optionId, 0) != cfgSourceDefault)
     {
-    if (varType(value) == varTypeBool)
-    {
-        if (varBool(value))
-            result = Y_STR;
-        else
-            result = N_STR;
-    }
-    else if (varType(value) == varTypeKeyValue)
-    {
-        String *resultTemp = strNew("");
+        result = strNew();
 
-        const KeyValue *optionKv = varKv(value);
-        const VariantList *keyList = kvKeyList(optionKv);
-
-        for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
+        MEM_CONTEXT_TEMP_BEGIN()
         {
-            if (keyIdx != 0)
-                strCatZ(resultTemp, ", ");
+            const Variant *const value = cfgOptionIdxVar(optionId, optionIdx);
+            ASSERT(value != NULL);
 
-            strCatFmt(
-                resultTemp, "%s=%s", strZ(varStr(varLstGet(keyList, keyIdx))),
-                strZ(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx)))));
+            switch (varType(value))
+            {
+                case varTypeKeyValue:
+                {
+                    const KeyValue *const optionKv = varKv(value);
+                    const VariantList *const keyList = kvKeyList(optionKv);
+
+                    for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
+                    {
+                        if (keyIdx != 0)
+                            strCatZ(result, ", ");
+
+                        strCatFmt(
+                            result, "%s=%s", strZ(varStr(varLstGet(keyList, keyIdx))),
+                            strZ(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx)))));
+                    }
+
+                    break;
+                }
+
+                case varTypeVariantList:
+                {
+                    const VariantList *const list = varVarLst(value);
+
+                    for (unsigned int listIdx = 0; listIdx < varLstSize(list); listIdx++)
+                    {
+                        if (listIdx != 0)
+                            strCatZ(result, ", ");
+
+                        strCatFmt(result, "%s", strZ(varStr(varLstGet(list, listIdx))));
+                    }
+
+                    break;
+                }
+
+                default:
+                    strCat(result, cfgOptionIdxDisplay(optionId, optionIdx));
+                    break;
+            }
         }
-
-        result = resultTemp;
-    }
-    else if (varType(value) == varTypeVariantList)
-    {
-        String *resultTemp = strNew("");
-
-        const VariantList *list = varVarLst(value);
-
-        for (unsigned int listIdx = 0; listIdx < varLstSize(list); listIdx++)
-        {
-            if (listIdx != 0)
-                strCatZ(resultTemp, ", ");
-
-            strCatFmt(resultTemp, "%s", strZ(varStr(varLstGet(list, listIdx))));
-        }
-
-        result = resultTemp;
-    }
-    else
-        result = varStrForce(value);
+        MEM_CONTEXT_TEMP_END();
     }
 
-    FUNCTION_LOG_RETURN_CONST(STRING, result);
+    FUNCTION_LOG_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************
 Render help to a string
 ***********************************************************************************************************************************/
-static String *
-helpRender(void)
+// Stored unpacked command data
+typedef struct HelpCommandData
 {
-    FUNCTION_LOG_VOID(logLevelDebug);
+    bool internal;                                                  // Is the command internal?
+    String *summary;                                                // Short summary of the command
+    String *description;                                            // Full description of the command
+} HelpCommandData;
 
-    String *result = strNew(PROJECT_NAME " " PROJECT_VERSION);
+// Stored unpacked option data
+typedef struct HelpOptionData
+{
+    bool internal;                                                  // Is the option internal?
+    String *section;                                                // eg. general, command
+    String *summary;                                                // Short summary of the option
+    String *description;                                            // Full description of the option
+    StringList *deprecatedNames;                                    // Deprecated names for the option
+} HelpOptionData;
+
+static String *
+helpRender(const Buffer *const helpData)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(BUFFER, helpData);
+    FUNCTION_LOG_END();
+
+    String *result = strCatZ(strNew(), PROJECT_NAME " " PROJECT_VERSION);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Set a small buffer size to minimize memory usage
+        ioBufferSizeSet(8192);
+
+        // Read pack from compressed buffer
+        IoRead *const helpRead = ioBufferReadNew(helpData);
+        ioFilterGroupAdd(ioReadFilterGroup(helpRead), bz2DecompressNew(false));
+        ioReadOpen(helpRead);
+
+        PackRead *pckHelp = pckReadNewIo(helpRead);
+
+        // Unpack command data
+        HelpCommandData *commandData = memNew(sizeof(HelpCommandData) * CFG_COMMAND_TOTAL);
+
+        pckReadArrayBeginP(pckHelp);
+
+        for (ConfigCommand commandId = 0; commandId < CFG_COMMAND_TOTAL; commandId++)
+        {
+            commandData[commandId] = (HelpCommandData)
+            {
+                .internal = pckReadBoolP(pckHelp),
+                .summary = pckReadStrP(pckHelp),
+                .description = pckReadStrP(pckHelp),
+            };
+        }
+
+        pckReadArrayEndP(pckHelp);
+
         // Message for more help when it is available
         const String *more = NULL;
 
         // Display general help
-        if (cfgCommand() == cfgCmdHelp || cfgCommand() == cfgCmdNone)
+        if (cfgCommand() == cfgCmdNone)
         {
             strCatZ(
                 result,
@@ -166,40 +303,107 @@ helpRender(void)
 
             for (ConfigCommand commandId = 0; commandId < CFG_COMMAND_TOTAL; commandId++)
             {
-                if (commandId == cfgCmdNone || cfgCommandInternal(commandId))
+                if (commandData[commandId].internal)
                     continue;
 
-                if (strlen(cfgCommandName(commandId)) > commandSizeMax)
-                    commandSizeMax = strlen(cfgCommandName(commandId));
+                if (strlen(cfgParseCommandName(commandId)) > commandSizeMax)
+                    commandSizeMax = strlen(cfgParseCommandName(commandId));
             }
 
             // Output help for each command
             for (ConfigCommand commandId = 0; commandId < CFG_COMMAND_TOTAL; commandId++)
             {
-                if (commandId == cfgCmdNone || cfgCommandInternal(commandId))
+                if (commandData[commandId].internal)
                     continue;
 
                 strCatFmt(
-                    result, "    %s%*s%s\n", cfgCommandName(commandId),
-                    (int)(commandSizeMax - strlen(cfgCommandName(commandId)) + 2), "",
-                    strZ(helpRenderText(STR(cfgDefCommandHelpSummary(commandId)), commandSizeMax + 6, false, CONSOLE_WIDTH)));
+                    result, "    %s%*s%s\n", cfgParseCommandName(commandId),
+                    (int)(commandSizeMax - strlen(cfgParseCommandName(commandId)) + 2), "",
+                    strZ(helpRenderText(commandData[commandId].summary, false, false, commandSizeMax + 6, false, CONSOLE_WIDTH)));
             }
 
             // Construct message for more help
-            more = strNew("[command]");
+            more = strNewZ("[command]");
         }
         else
         {
             ConfigCommand commandId = cfgCommand();
-            const char *commandName = cfgCommandName(commandId);
+            const char *commandName = cfgParseCommandName(commandId);
+
+            // Unpack option data
+            HelpOptionData *optionData = memNew(sizeof(HelpOptionData) * CFG_OPTION_TOTAL);
+
+            pckReadArrayBeginP(pckHelp);
+
+            for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
+            {
+                optionData[optionId] = (HelpOptionData)
+                {
+                    .internal = pckReadBoolP(pckHelp),
+                    .section = pckReadStrP(pckHelp, .defaultValue = STRDEF("general")),
+                    .summary = pckReadStrP(pckHelp),
+                    .description = pckReadStrP(pckHelp),
+                };
+
+                // Unpack deprecated names
+                if (!pckReadNullP(pckHelp))
+                {
+                    optionData[optionId].deprecatedNames = strLstNew();
+
+                    pckReadArrayBeginP(pckHelp);
+
+                    while (pckReadNext(pckHelp))
+                        strLstAdd(optionData[optionId].deprecatedNames, pckReadStrP(pckHelp));
+
+                    pckReadArrayEndP(pckHelp);
+                }
+
+                // Unpack command overrides
+                if (!pckReadNullP(pckHelp))
+                {
+                    pckReadArrayBeginP(pckHelp);
+
+                    while (pckReadNext(pckHelp))
+                    {
+                        // Get command override id
+                        ConfigCommand commandIdArray = pckReadId(pckHelp) - 1;
+
+                        // Unpack override data
+                        pckReadObjBeginP(pckHelp, .id = commandIdArray + 1);
+
+                        bool internal = pckReadBoolP(pckHelp, .defaultValue = optionData[optionId].internal);
+                        String *summary = pckReadStrP(pckHelp, .defaultValue = optionData[optionId].summary);
+                        String *description = pckReadStrP(pckHelp, .defaultValue = optionData[optionId].description);
+
+                        pckReadObjEndP(pckHelp);
+
+                        // Only use overrides for the current command
+                        if (commandId == commandIdArray)
+                        {
+                            optionData[optionId].internal = internal;
+                            optionData[optionId].section = NULL;
+                            optionData[optionId].summary = summary;
+                            optionData[optionId].description = description;
+                        }
+                    }
+
+                    pckReadArrayEndP(pckHelp);
+                }
+            }
+
+            pckReadArrayEndP(pckHelp);
 
             // Output command part of title
             strCatFmt(result, " - '%s' command", commandName);
 
             // If no additional params then this is command help
-            if (strLstSize(cfgCommandParam()) == 0)
+            if (strLstEmpty(cfgCommandParam()))
             {
-                // Output command summary and description
+                // Output command summary and description. Add a warning for internal commands.
+                CHECK(
+                    AssertError, commandData[commandId].summary != NULL && commandData[commandId].description != NULL,
+                    "command help missing");
+
                 strCatFmt(
                     result,
                     " help\n"
@@ -207,8 +411,10 @@ helpRender(void)
                     "%s\n"
                     "\n"
                     "%s\n",
-                    strZ(helpRenderText(STR(cfgDefCommandHelpSummary(commandId)), 0, true, CONSOLE_WIDTH)),
-                    strZ(helpRenderText(STR(cfgDefCommandHelpDescription(commandId)), 0, true, CONSOLE_WIDTH)));
+                    strZ(helpRenderText(commandData[commandId].summary, false, false, 0, true, CONSOLE_WIDTH)),
+                    strZ(
+                        helpRenderText(
+                            commandData[commandId].description, commandData[commandId].internal, false, 0, true, CONSOLE_WIDTH)));
 
                 // Construct key/value of sections and options
                 KeyValue *optionKv = kvNew();
@@ -216,24 +422,21 @@ helpRender(void)
 
                 for (unsigned int optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
                 {
-                    if (cfgDefOptionValid(commandId, optionId) && !cfgDefOptionInternal(commandId, optionId))
+                    if (cfgParseOptionValid(commandId, cfgCmdRoleMain, optionId) && !optionData[optionId].internal)
                     {
-                        const String *section = NULL;
-
-                        if (cfgDefOptionHelpSection(optionId) != NULL)
-                            section = strNew(cfgDefOptionHelpSection(optionId));
+                        const String *section = optionData[optionId].section;
 
                         if (section == NULL ||
-                            (!strEqZ(section, "general") && !strEqZ(section, "log") && !strEqZ(section, "repository") &&
-                             !strEqZ(section, "stanza")))
+                            (!strEqZ(section, "general") && !strEqZ(section, "log") && !strEqZ(section, "maintainer") &&
+                             !strEqZ(section, "repository") && !strEqZ(section, "stanza")))
                         {
-                            section = strNew("command");
+                            section = strNewZ("command");
                         }
 
-                        kvAdd(optionKv, VARSTR(section), VARINT((int)optionId));
+                        kvAdd(optionKv, VARSTR(section), VARUINT(optionId));
 
-                        if (strlen(cfgDefOptionName(optionId)) > optionSizeMax)
-                            optionSizeMax = strlen(cfgDefOptionName(optionId));
+                        if (strlen(cfgParseOptionName(optionId)) > optionSizeMax)
+                            optionSizeMax = strlen(cfgParseOptionName(optionId));
                     }
                 }
 
@@ -251,26 +454,26 @@ helpRender(void)
 
                     for (unsigned int optionIdx = 0; optionIdx < varLstSize(optionList); optionIdx++)
                     {
-                        ConfigOption optionId = varInt(varLstGet(optionList, optionIdx));
+                        ConfigOption optionId = varUInt(varLstGet(optionList, optionIdx));
 
-                        // Get option summary
-                        String *summary = strFirstLower(strNewN(
-                            cfgDefOptionHelpSummary(commandId, optionId),
-                            strlen(cfgDefOptionHelpSummary(commandId, optionId)) - 1));
+                        // Get option summary and lower-case first letter if it does not appear to be part of an acronym
+                        String *summary = strCatN(
+                            strNew(), optionData[optionId].summary, strSize(optionData[optionId].summary) - 1);
+                        ASSERT(strSize(summary) > 1);
 
-                        // Ouput current and default values if they exist
-                        const String *defaultValue = helpRenderValue(cfgOptionDefault(optionId));
-                        const String *value = NULL;
+                        if (!isupper(strZ(summary)[1]) && isalpha(strZ(summary)[1]))
+                            strFirstLower(summary);
 
-                        if (cfgOptionSource(optionId) != cfgSourceDefault)
-                            value = helpRenderValue(cfgOption(optionId));
+                        // Output current and default values if they exist
+                        const String *defaultValue = cfgOptionDefault(optionId);
+                        const String *value = helpRenderValue(optionId, 0);
 
                         if (value != NULL || defaultValue != NULL)
                         {
                             strCatZ(summary, " [");
 
                             if (value != NULL)
-                                strCatFmt(summary, "current=%s", cfgDefOptionSecure(optionId) ? "<redacted>" : strZ(value));
+                                strCatFmt(summary, "current=%s", cfgParseOptionSecure(optionId) ? "<redacted>" : strZ(value));
 
                             if (defaultValue != NULL)
                             {
@@ -286,8 +489,8 @@ helpRender(void)
                         // Output option help
                         strCatFmt(
                             result, "  --%s%*s%s\n",
-                            cfgDefOptionName(optionId), (int)(optionSizeMax - strlen(cfgDefOptionName(optionId)) + 2), "",
-                            strZ(helpRenderText(summary, optionSizeMax + 6, false, CONSOLE_WIDTH)));
+                            cfgParseOptionName(optionId), (int)(optionSizeMax - strlen(cfgParseOptionName(optionId)) + 2), "",
+                            strZ(helpRenderText(summary, false, false, optionSizeMax + 6, false, CONSOLE_WIDTH)));
                     }
                 }
 
@@ -304,19 +507,17 @@ helpRender(void)
 
                 // Ensure the option is valid
                 const String *optionName = strLstGet(cfgCommandParam(), 0);
-                CfgParseOptionResult option = cfgParseOption(optionName);
+                CfgParseOptionResult option = cfgParseOptionP(optionName, .ignoreMissingIndex = true);
 
-                if (!option.found)
-                {
-                    int optionId = cfgDefOptionId(strZ(optionName));
+                // Error when option is not found or is invalid for the current command
+                if (!option.found || !cfgParseOptionValid(cfgCommand(), cfgCmdRoleMain, option.id))
+                    THROW_FMT(OptionInvalidError, "option '%s' is not valid for command '%s'", strZ(optionName), commandName);
 
-                    if (optionId == -1)
-                        THROW_FMT(OptionInvalidError, "option '%s' is not valid for command '%s'", strZ(optionName), commandName);
-                    else
-                        option.id = (unsigned int)optionId;
-                }
+                // Output option summary and description. Add a warning for internal and beta options.
+                CHECK(
+                    AssertError, optionData[option.id].summary != NULL && optionData[option.id].description != NULL,
+                    "option help missing");
 
-                // Output option summary and description
                 strCatFmt(
                     result,
                     " - '%s' option help\n"
@@ -324,31 +525,35 @@ helpRender(void)
                     "%s\n"
                     "\n"
                     "%s\n",
-                    cfgDefOptionName(option.id),
-                    strZ(helpRenderText(STR(cfgDefOptionHelpSummary(commandId, option.id)), 0, true, CONSOLE_WIDTH)),
-                    strZ(helpRenderText(STR(cfgDefOptionHelpDescription(commandId, option.id)), 0, true, CONSOLE_WIDTH)));
+                    cfgParseOptionName(option.id),
+                    strZ(helpRenderText(optionData[option.id].summary, false, false, 0, true, CONSOLE_WIDTH)),
+                    strZ(
+                        helpRenderText(
+                            optionData[option.id].description, optionData[option.id].internal, option.beta, 0, true,
+                            CONSOLE_WIDTH)));
 
-                // Ouput current and default values if they exist
-                const String *defaultValue = helpRenderValue(cfgOptionDefault(option.id));
-                const String *value = NULL;
-
-                if (cfgOptionSource(option.id) != cfgSourceDefault)
-                    value = helpRenderValue(cfgOption(option.id));
+                // Output current and default values if they exist
+                const String *defaultValue = cfgOptionDefault(option.id);
+                const String *value = helpRenderValue(option.id, 0);
 
                 if (value != NULL || defaultValue != NULL)
                 {
                     strCat(result, LF_STR);
 
                     if (value != NULL)
-                        strCatFmt(result, "current: %s\n", cfgDefOptionSecure(option.id) ? "<redacted>" : strZ(value));
+                        strCatFmt(result, "current: %s\n", cfgParseOptionSecure(option.id) ? "<redacted>" : strZ(value));
 
                     if (defaultValue != NULL)
                         strCatFmt(result, "default: %s\n", strZ(defaultValue));
                 }
 
                 // Output alternate name (call it deprecated so the user will know not to use it)
-                if (cfgDefOptionHelpNameAlt(option.id))
-                    strCatFmt(result, "\ndeprecated name: %s\n", cfgDefOptionHelpNameAltValue(option.id, 0));
+                if (optionData[option.id].deprecatedNames != NULL)
+                {
+                    strCatFmt(
+                        result, "\ndeprecated name%s: %s\n", strLstSize(optionData[option.id].deprecatedNames) > 1 ? "s" : "",
+                        strZ(strLstJoin(optionData[option.id].deprecatedNames, ", ")));
+                }
             }
         }
 
@@ -362,14 +567,16 @@ helpRender(void)
 }
 
 /**********************************************************************************************************************************/
-void
-cmdHelp(void)
+FN_EXTERN void
+cmdHelp(const Buffer *const helpData)
 {
-    FUNCTION_LOG_VOID(logLevelDebug);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(BUFFER, helpData);
+    FUNCTION_LOG_END();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ioFdWriteOneStr(STDOUT_FILENO, helpRender());
+        ioFdWriteOneStr(STDOUT_FILENO, helpRender(helpData));
     }
     MEM_CONTEXT_TEMP_END();
 

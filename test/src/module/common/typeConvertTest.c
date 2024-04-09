@@ -1,12 +1,12 @@
 /***********************************************************************************************************************************
-Test Convert Base Data Types
+Test Convert C Types
 ***********************************************************************************************************************************/
 #include "common/stackTrace.h"
 
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
@@ -28,8 +28,6 @@ testRun(void)
     if (testBegin("cvtCharToZ()"))
     {
         char buffer[STACK_TRACE_PARAM_MAX];
-
-        TEST_ERROR(cvtCharToZ('A', buffer, 1), AssertError, "buffer overflow");
 
         TEST_RESULT_UINT(cvtCharToZ('C', buffer, STACK_TRACE_PARAM_MAX), 1, "convert char to string");
         TEST_RESULT_Z(buffer, "C", "    check buffer");
@@ -73,8 +71,10 @@ testRun(void)
             cvtZToInt("-9223372036854775807"), FormatError, "unable to convert base 10 string '-9223372036854775807' to int");
 
         TEST_RESULT_INT(cvtZToIntBase("-FF", 16), -255, "convert string to int");
+        TEST_RESULT_INT(cvtZSubNToIntBase("XFFX", 1, 2, 16), 255, "convert string to int");
         TEST_RESULT_INT(cvtZToInt("0"), 0, "convert string to int");
         TEST_RESULT_INT(cvtZToInt("1234567890"), 1234567890, "convert string to int");
+        TEST_RESULT_INT(cvtZSubNToInt("X1234567890X", 1, 10), 1234567890, "convert string to int");
         TEST_RESULT_INT(cvtZToInt("-1234567890"), -1234567890, "convert string to int");
     }
 
@@ -114,7 +114,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("cvtSizeToZ() and cvtSSizeToZ()"))
+    if (testBegin("cvtSizeToZ()"))
     {
         char buffer[STACK_TRACE_PARAM_MAX];
 
@@ -122,12 +122,6 @@ testRun(void)
 
         TEST_RESULT_UINT(cvtSizeToZ(4294967295, buffer, STACK_TRACE_PARAM_MAX), 10, "convert size to string");
         TEST_RESULT_Z(buffer, "4294967295", "    check buffer");
-
-        // ------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(cvtSSizeToZ(-9999, buffer, 4), AssertError, "buffer overflow");
-
-        TEST_RESULT_UINT(cvtSSizeToZ(-9999, buffer, STACK_TRACE_PARAM_MAX), 5, "convert ssize to string");
-        TEST_RESULT_Z(buffer, "-9999", "    check buffer");
     }
 
     // *****************************************************************************************************************************
@@ -155,7 +149,9 @@ testRun(void)
         TEST_ERROR(cvtZToUInt("5000000000"), FormatError, "unable to convert base 10 string '5000000000' to unsigned int");
 
         TEST_RESULT_UINT(cvtZToUIntBase("FF", 16), 255, "convert string to unsigned int");
+        TEST_RESULT_UINT(cvtZSubNToUIntBase("XFFX", 1, 2, 16), 255, "convert string to unsigned int");
         TEST_RESULT_UINT(cvtZToUInt("3333333333"), 3333333333U, "convert string to unsigned int");
+        TEST_RESULT_UINT(cvtZSubNToUInt("X3333333333X", 1, 10), 3333333333U, "convert string to unsigned int");
     }
 
     // *****************************************************************************************************************************
@@ -178,9 +174,11 @@ testRun(void)
             cvtZToInt64("9223372036854775808"), FormatError, "unable to convert base 10 string '9223372036854775808' to int64");
 
         TEST_RESULT_INT(cvtZToInt64Base("-FF", 16), -255, "convert string to int64");
+        TEST_RESULT_INT(cvtZSubNToInt64Base("X-FFX", 1, 3, 16), -255, "convert string to int64");
         TEST_RESULT_INT(cvtZToInt64("0"), 0, "convert string to int64");
         TEST_RESULT_INT(cvtZToInt64("9223372036854775807"), 9223372036854775807, "convert string to int64");
         TEST_RESULT_INT(cvtZToInt64("-9223372036854775807"), -9223372036854775807, "convert string to int64");
+        TEST_RESULT_INT(cvtZSubNToInt64("X-9223372036854775807X", 1, 20), -9223372036854775807, "convert string to int64");
     }
 
     // *****************************************************************************************************************************
@@ -199,8 +197,44 @@ testRun(void)
         TEST_ERROR(cvtZToUInt64("-1"), FormatError, "unable to convert base 10 string '-1' to uint64");
 
         TEST_RESULT_UINT(cvtZToUInt64Base("FF", 16), 255, "convert string to uint64");
+        TEST_RESULT_UINT(cvtZSubNToUInt64Base("XFFX", 1, 2, 16), 255, "convert string to uint64");
         TEST_RESULT_UINT(cvtZToUInt64("18446744073709551615"), 18446744073709551615U, "convert string to uint64");
+        TEST_RESULT_UINT(cvtZSubNToUInt64("X18446744073709551615X", 1, 20), 18446744073709551615U, "convert string to uint64");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    // *****************************************************************************************************************************
+    if (testBegin("cvtUInt64ToVarInt128() and cvtUInt64FromVarInt128()"))
+    {
+        uint8_t buffer[CVT_VARINT128_BUFFER_SIZE];
+        size_t bufferPos;
+
+        bufferPos = 0;
+        TEST_ERROR(cvtUInt64ToVarInt128(9999, buffer, &bufferPos, 1), AssertError, "buffer overflow");
+
+        bufferPos = 0;
+        TEST_RESULT_VOID(cvtUInt64ToVarInt128(0xFFFFFFFFFFFFFFFF, buffer, &bufferPos, sizeof(buffer)), "to varint-128");
+        TEST_RESULT_UINT(bufferPos, 10, "check buffer position");
+
+        bufferPos = 0;
+        TEST_ERROR(cvtUInt64FromVarInt128(buffer, &bufferPos, 1), FormatError, "buffer position is beyond buffer size");
+
+        bufferPos = 0;
+        TEST_RESULT_UINT(cvtUInt64FromVarInt128(buffer, &bufferPos, sizeof(buffer)), 0xFFFFFFFFFFFFFFFF, "to uint64");
+        TEST_RESULT_UINT(bufferPos, 10, "check buffer position");
+
+        bufferPos = 0;
+        TEST_RESULT_VOID(cvtUInt64ToVarInt128(0, buffer, &bufferPos, sizeof(buffer)), "to varint-128");
+        TEST_RESULT_UINT(bufferPos, 1, "check buffer position");
+
+        bufferPos = 0;
+        TEST_RESULT_UINT(cvtUInt64FromVarInt128(buffer, &bufferPos, sizeof(buffer)), 0, "to uint64");
+        TEST_RESULT_UINT(bufferPos, 1, "check buffer position");
+
+        uint8_t buffer2[CVT_VARINT128_BUFFER_SIZE + 1];
+        memset(buffer2, 0xFF, sizeof(buffer2));
+        bufferPos = 0;
+        TEST_ERROR(cvtUInt64FromVarInt128(buffer2, &bufferPos, sizeof(buffer)), FormatError, "unterminated varint-128 integer");
+    }
+
+    FUNCTION_HARNESS_RETURN_VOID();
 }

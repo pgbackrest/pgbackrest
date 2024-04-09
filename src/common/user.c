@@ -14,7 +14,7 @@ System User/Group Management
 /***********************************************************************************************************************************
 User group info
 ***********************************************************************************************************************************/
-struct
+static struct
 {
     MemContext *memContext;                                         // Mem context to store data in this struct
 
@@ -24,6 +24,9 @@ struct
 
     gid_t groupId;                                                  // Real group id of the calling process from getgid()
     const String *groupName;                                        // Group name if it exists
+#ifdef HAVE_LIBSSH2
+    const String *userHome;                                         // User home directory
+#endif // HAVE_LIBSSH2
 } userLocalData;
 
 /**********************************************************************************************************************************/
@@ -34,12 +37,15 @@ userInitInternal(void)
 
     MEM_CONTEXT_BEGIN(memContextTop())
     {
-        MEM_CONTEXT_NEW_BEGIN("UserLocalData")
+        MEM_CONTEXT_NEW_BEGIN(UserLocalData, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             userLocalData.memContext = MEM_CONTEXT_NEW();
 
             userLocalData.userId = getuid();
             userLocalData.userName = userNameFromId(userLocalData.userId);
+#ifdef HAVE_LIBSSH2
+            userLocalData.userHome = userHomeFromId(userLocalData.userId);
+#endif // HAVE_LIBSSH2
             userLocalData.userRoot = userLocalData.userId == 0;
 
             userLocalData.groupId = getgid();
@@ -52,7 +58,7 @@ userInitInternal(void)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-void
+FN_EXTERN void
 userInit(void)
 {
     FUNCTION_TEST_VOID();
@@ -64,15 +70,15 @@ userInit(void)
 }
 
 /**********************************************************************************************************************************/
-gid_t
+FN_EXTERN gid_t
 groupId(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(userLocalData.groupId);
+    FUNCTION_TEST_RETURN_TYPE(gid_t, userLocalData.groupId);
 }
 
 /**********************************************************************************************************************************/
-gid_t
+FN_EXTERN gid_t
 groupIdFromName(const String *groupName)
 {
     FUNCTION_TEST_BEGIN();
@@ -84,22 +90,22 @@ groupIdFromName(const String *groupName)
         struct group *groupData = getgrnam(strZ(groupName));
 
         if (groupData != NULL)
-            FUNCTION_TEST_RETURN(groupData->gr_gid);
+            FUNCTION_TEST_RETURN_TYPE(gid_t, groupData->gr_gid);
     }
 
-    FUNCTION_TEST_RETURN((gid_t)-1);
+    FUNCTION_TEST_RETURN_TYPE(gid_t, (gid_t)-1);
 }
 
 /**********************************************************************************************************************************/
-const String *
+FN_EXTERN const String *
 groupName(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(userLocalData.groupName);
+    FUNCTION_TEST_RETURN_CONST(STRING, userLocalData.groupName);
 }
 
 /**********************************************************************************************************************************/
-String *
+FN_EXTERN String *
 groupNameFromId(gid_t groupId)
 {
     FUNCTION_TEST_BEGIN();
@@ -109,21 +115,50 @@ groupNameFromId(gid_t groupId)
     struct group *groupData = getgrgid(groupId);
 
     if (groupData != NULL)
-        FUNCTION_TEST_RETURN(strNew(groupData->gr_name));
+        FUNCTION_TEST_RETURN(STRING, strNewZ(groupData->gr_name));
 
-    FUNCTION_TEST_RETURN(NULL);
+    FUNCTION_TEST_RETURN(STRING, NULL);
 }
 
 /**********************************************************************************************************************************/
-uid_t
+// Currently userHome() and userHomeFromId() are only used if we are building with libssh2
+#ifdef HAVE_LIBSSH2
+
+FN_EXTERN const String *
+userHome(void)
+{
+    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_RETURN_CONST(STRING, userLocalData.userHome);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN String *
+userHomeFromId(uid_t userId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, userId);
+    FUNCTION_TEST_END();
+
+    struct passwd *userData = getpwuid(userId);
+
+    if (userData != NULL)
+        FUNCTION_TEST_RETURN(STRING, strNewZ(userData->pw_dir));
+
+    FUNCTION_TEST_RETURN(STRING, NULL);
+}
+
+#endif // HAVE_LIBSSH2
+
+/**********************************************************************************************************************************/
+FN_EXTERN uid_t
 userId(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(userLocalData.userId);
+    FUNCTION_TEST_RETURN_TYPE(uid_t, userLocalData.userId);
 }
 
 /**********************************************************************************************************************************/
-uid_t
+FN_EXTERN uid_t
 userIdFromName(const String *userName)
 {
     FUNCTION_TEST_BEGIN();
@@ -135,22 +170,22 @@ userIdFromName(const String *userName)
         struct passwd *userData = getpwnam(strZ(userName));
 
         if (userData != NULL)
-            FUNCTION_TEST_RETURN(userData->pw_uid);
+            FUNCTION_TEST_RETURN_TYPE(uid_t, userData->pw_uid);
     }
 
-    FUNCTION_TEST_RETURN((uid_t)-1);
+    FUNCTION_TEST_RETURN_TYPE(uid_t, (uid_t)-1);
 }
 
 /**********************************************************************************************************************************/
-const String *
+FN_EXTERN const String *
 userName(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(userLocalData.userName);
+    FUNCTION_TEST_RETURN_CONST(STRING, userLocalData.userName);
 }
 
 /**********************************************************************************************************************************/
-String *
+FN_EXTERN String *
 userNameFromId(uid_t userId)
 {
     FUNCTION_TEST_BEGIN();
@@ -160,15 +195,15 @@ userNameFromId(uid_t userId)
     struct passwd *userData = getpwuid(userId);
 
     if (userData != NULL)
-        FUNCTION_TEST_RETURN(strNew(userData->pw_name));
+        FUNCTION_TEST_RETURN(STRING, strNewZ(userData->pw_name));
 
-    FUNCTION_TEST_RETURN(NULL);
+    FUNCTION_TEST_RETURN(STRING, NULL);
 }
 
 /**********************************************************************************************************************************/
-bool
+FN_EXTERN bool
 userRoot(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(userLocalData.userRoot);
+    FUNCTION_TEST_RETURN(BOOL, userLocalData.userRoot);
 }

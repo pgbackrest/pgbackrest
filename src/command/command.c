@@ -13,7 +13,7 @@ Common Command Routines
 #include "common/time.h"
 #include "common/type/json.h"
 #include "config/config.intern.h"
-#include "config/define.h"
+#include "config/parse.h"
 #include "version.h"
 
 /***********************************************************************************************************************************
@@ -23,7 +23,7 @@ static TimeMSec timeBegin;
 static String *cmdOptionStr;
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 cmdInit(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
@@ -34,7 +34,7 @@ cmdInit(void)
 }
 
 /**********************************************************************************************************************************/
-const String *
+FN_EXTERN const String *
 cmdOption(void)
 {
     FUNCTION_TEST_VOID();
@@ -43,23 +43,23 @@ cmdOption(void)
     {
         MEM_CONTEXT_BEGIN(memContextTop())
         {
-            cmdOptionStr = strNew("");
+            cmdOptionStr = strNew();
 
             MEM_CONTEXT_TEMP_BEGIN()
             {
                 // Add command parameters if they exist
                 const StringList *commandParamList = cfgCommandParam();
 
-                if (strLstSize(commandParamList) != 0)
+                if (!strLstEmpty(commandParamList))
                 {
-                    strCatFmt(cmdOptionStr, " [");
+                    strCatZ(cmdOptionStr, " [");
 
                     for (unsigned int commandParamIdx = 0; commandParamIdx < strLstSize(commandParamList); commandParamIdx++)
                     {
                         const String *commandParam = strLstGet(commandParamList, commandParamIdx);
 
                         if (commandParamIdx != 0)
-                            strCatFmt(cmdOptionStr, ", ");
+                            strCatZ(cmdOptionStr, ", ");
 
                         if (strchr(strZ(commandParam), ' ') != NULL)
                             commandParam = strNewFmt("\"%s\"", strZ(commandParam));
@@ -67,16 +67,16 @@ cmdOption(void)
                         strCat(cmdOptionStr, commandParam);
                     }
 
-                    strCatFmt(cmdOptionStr, "]");
+                    strCatZ(cmdOptionStr, "]");
                 }
 
                 // Loop though options and add the ones that are interesting
                 for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
                 {
-                    // Skip the option if not valid for this command.  Generally only one command runs at a time, but sometimes
+                    // Skip the option if not valid for this command. Generally only one command runs at a time, but sometimes
                     // commands are chained together (e.g. backup and expire) and the second command may not use all the options of
-                    // the first command.  Displaying them is harmless but might cause confusion.
-                    if (!cfgOptionValid(optionId) || !cfgDefOptionValid(cfgCommand(), optionId))
+                    // the first command. Displaying them is harmless but might cause confusion.
+                    if (!cfgOptionValid(optionId) || !cfgParseOptionValid(cfgCommand(), cfgCommandRole(), optionId))
                         continue;
 
                     // Loop through option indexes
@@ -94,10 +94,10 @@ cmdOption(void)
                         else if (cfgOptionIdxSource(optionId, optionIdx) != cfgSourceDefault)
                         {
                             // Don't show redacted options
-                            if (cfgDefOptionSecure(optionId))
+                            if (cfgParseOptionSecure(optionId))
                                 strCatFmt(cmdOptionStr, " --%s=<redacted>", cfgOptionIdxName(optionId, optionIdx));
                             // Output boolean option
-                            else if (cfgDefOptionType(optionId) == cfgDefOptTypeBoolean)
+                            else if (cfgParseOptionType(optionId) == cfgOptTypeBoolean)
                                 strCatFmt(cmdOptionStr, " --%s", cfgOptionIdxName(optionId, optionIdx));
                             // Output other options
                             else
@@ -105,7 +105,7 @@ cmdOption(void)
                                 StringList *valueList = NULL;
 
                                 // Generate the values of hash options
-                                if (cfgDefOptionType(optionId) == cfgDefOptTypeHash)
+                                if (cfgParseOptionType(optionId) == cfgOptTypeHash)
                                 {
                                     valueList = strLstNew();
 
@@ -114,15 +114,13 @@ cmdOption(void)
 
                                     for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
                                     {
-                                        strLstAdd(
-                                            valueList,
-                                            strNewFmt(
-                                                "%s=%s", strZ(varStr(varLstGet(keyList, keyIdx))),
-                                                strZ(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx))))));
+                                        strLstAddFmt(
+                                            valueList, "%s=%s", strZ(varStr(varLstGet(keyList, keyIdx))),
+                                            strZ(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx)))));
                                     }
                                 }
                                 // Generate values for list options
-                                else if (cfgDefOptionType(optionId) == cfgDefOptTypeList)
+                                else if (cfgParseOptionType(optionId) == cfgOptTypeList)
                                 {
                                     valueList = strLstNewVarLst(cfgOptionIdxLst(optionId, optionIdx));
                                 }
@@ -130,7 +128,7 @@ cmdOption(void)
                                 else
                                 {
                                     valueList = strLstNew();
-                                    strLstAdd(valueList, varStrForce(cfgOptionIdx(optionId, optionIdx)));
+                                    strLstAdd(valueList, cfgOptionIdxDisplay(optionId, optionIdx));
                                 }
 
                                 // Output options and values
@@ -155,11 +153,11 @@ cmdOption(void)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(cmdOptionStr);
+    FUNCTION_TEST_RETURN(STRING, cmdOptionStr);
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 cmdBegin(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
@@ -172,7 +170,7 @@ cmdBegin(void)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Basic info on command start
-            String *info = strNewFmt("%s command begin", strZ(cfgCommandRoleName()));
+            String *info = strCatFmt(strNew(), "%s command begin", strZ(cfgCommandRoleName()));
 
             // Free the old option string if it exists. This is needed when more than one command is run in a row so an option
             // string gets created for the new command.
@@ -191,7 +189,7 @@ cmdBegin(void)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 cmdEnd(int code, const String *errorMessage)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -201,19 +199,19 @@ cmdEnd(int code, const String *errorMessage)
 
     ASSERT(cfgCommand() != cfgCmdNone);
 
-    // Skip this log message if it won't be output.  It's not too expensive but since we skipped cmdBegin(), may as well.
+    // Skip this log message if it won't be output. It's not too expensive but since we skipped cmdBegin(), may as well.
     if (logAny(cfgLogLevelDefault()))
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Output statistics if there are any
-            const KeyValue *statKv = statToKv();
+            const String *const statJson = statToJson();
 
-            if (varLstSize(kvKeyList(statKv)) > 0)
-                LOG_DETAIL_FMT("statistics: %s", strZ(jsonFromKv(statKv)));
+            if (statJson != NULL)
+                LOG_DETAIL_FMT("statistics: %s", strZ(statJson));
 
             // Basic info on command end
-            String *info = strNewFmt("%s command end: ", strZ(cfgCommandRoleName()));
+            String *info = strCatFmt(strNew(), "%s command end: ", strZ(cfgCommandRoleName()));
 
             if (errorMessage == NULL)
             {

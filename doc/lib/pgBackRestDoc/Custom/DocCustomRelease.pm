@@ -12,8 +12,6 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname);
 
-use pgBackRestBuild::Config::Data;
-
 use pgBackRestDoc::Common::DocRender;
 use pgBackRestDoc::Common::Log;
 use pgBackRestDoc::Common::String;
@@ -269,7 +267,7 @@ sub contributorTextGet
 }
 
 ####################################################################################################################################
-# Find a commit by subject prefix.  Error if the prefix appears more than once.
+# Find a commit by subject prefix. Error if the prefix appears more than once.
 ####################################################################################################################################
 sub commitFindSubject
 {
@@ -390,7 +388,7 @@ sub docGet
 
             # Get the end commit of the last release
             my $strReleaseLastVersion = $oyRelease[$iReleaseIdx + 1]->paramGet('version');
-            my $rhReleaseLastCommitEnd =  $self->commitFindSubject(\@hyGitLog, "v${strReleaseLastVersion}\\: .+");
+            my $rhReleaseLastCommitEnd = $self->commitFindSubject(\@hyGitLog, "v${strReleaseLastVersion}\\: .+");
 
             if (!defined($rhReleaseLastCommitEnd))
             {
@@ -552,9 +550,9 @@ sub docGet
                         }
 
                         # Add release note if present
-                        if (!$bReleaseNote && $oRelease->nodeGet($strSectionType)->nodeTest('p'))
+                        if (!$bReleaseNote && defined($oRelease->nodeGet($strSectionType)->textGet(false)))
                         {
-                            $oReleaseSection->nodeAdd('p')->textSet($oRelease->nodeGet($strSectionType)->nodeGet('p')->textGet());
+                            $oReleaseSection->nodeAdd('p')->textSet($oRelease->nodeGet($strSectionType)->textGet());
                             $bReleaseNote = true;
                         }
 

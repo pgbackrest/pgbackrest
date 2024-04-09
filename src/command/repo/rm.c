@@ -3,6 +3,7 @@ Repository Remove Command
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include "command/repo/common.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -10,7 +11,7 @@ Repository Remove Command
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 cmdStorageRemove(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
@@ -25,6 +26,10 @@ cmdStorageRemove(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Is path valid for repo?
+        if (path != NULL)
+            path = repoPathIsValid(path);
+
         // Check if this is a file
         StorageInfo info = storageInfoP(storageRepo(), path, .ignoreMissing = true);
 
@@ -37,7 +42,7 @@ cmdStorageRemove(void)
         {
             bool recurse = cfgOptionBool(cfgOptRecurse);
 
-            if (!recurse && strLstSize(storageListP(storageRepo(), path)) > 0)
+            if (!recurse && !strLstEmpty(storageListP(storageRepo(), path)))
                 THROW(OptionInvalidError, CFGOPT_RECURSE " option must be used to delete non-empty path");
 
             storagePathRemoveP(storageRepoWrite(), path, .recurse = recurse);

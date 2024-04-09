@@ -1,5 +1,7 @@
 /***********************************************************************************************************************************
 Gz Decompress
+
+Based on the documentation at https://github.com/madler/zlib/blob/master/zlib.h
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
@@ -9,25 +11,16 @@ Gz Decompress
 #include "common/compress/gz/common.h"
 #include "common/compress/gz/decompress.h"
 #include "common/debug.h"
-#include "common/io/filter/filter.intern.h"
+#include "common/io/filter/filter.h"
 #include "common/log.h"
-#include "common/memContext.h"
+#include "common/macro.h"
 #include "common/type/object.h"
-
-/***********************************************************************************************************************************
-Filter type constant
-***********************************************************************************************************************************/
-STRING_EXTERN(GZ_DECOMPRESS_FILTER_TYPE_STR,                        GZ_DECOMPRESS_FILTER_TYPE);
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define GZ_DECOMPRESS_TYPE                                          GzDecompress
-#define GZ_DECOMPRESS_PREFIX                                        gzDecompress
-
 typedef struct GzDecompress
 {
-    MemContext *memContext;                                         // Context to store data
     z_stream stream;                                                // Decompression stream state
 
     int result;                                                     // Result of last operation
@@ -38,27 +31,37 @@ typedef struct GzDecompress
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-static String *
-gzDecompressToLog(const GzDecompress *this)
+static void
+gzDecompressToLog(const GzDecompress *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{inputSame: %s, done: %s, availIn: %u}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done),
+    strStcFmt(
+        debugLog, "{inputSame: %s, done: %s, availIn: %u}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done),
         this->stream.avail_in);
 }
 
 #define FUNCTION_LOG_GZ_DECOMPRESS_TYPE                                                                                            \
     GzDecompress *
 #define FUNCTION_LOG_GZ_DECOMPRESS_FORMAT(value, buffer, bufferSize)                                                               \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, gzDecompressToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, gzDecompressToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Free inflate stream
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(GZ_DECOMPRESS, LOG, logLevelTrace)
+static void
+gzDecompressFreeResource(THIS_VOID)
 {
+    THIS(GzDecompress);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(GZ_DECOMPRESS, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     inflateEnd(&this->stream);
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Decompress data
@@ -87,7 +90,7 @@ gzDecompressProcess(THIS_VOID, const Buffer *compressed, Buffer *uncompressed)
         this->stream.avail_in = (unsigned int)bufUsed(compressed);
 
         // Not all versions of zlib (and none by default) will accept const input buffers
-        this->stream.next_in = UNCONSTIFY(unsigned char *, bufPtrConst(compressed));
+        this->stream.next_in = bufPtrConst(compressed);
     }
 
     this->stream.avail_out = (unsigned int)bufRemains(uncompressed);
@@ -121,7 +124,7 @@ gzDecompressDone(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->done);
+    FUNCTION_TEST_RETURN(BOOL, this->done);
 }
 
 /***********************************************************************************************************************************
@@ -138,40 +141,49 @@ gzDecompressInputSame(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->inputSame);
+    FUNCTION_TEST_RETURN(BOOL, this->inputSame);
 }
 
 /**********************************************************************************************************************************/
-IoFilter *
-gzDecompressNew(void)
+FN_EXTERN IoFilter *
+gzDecompressNew(const bool raw)
 {
-    FUNCTION_LOG_VOID(logLevelTrace);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(BOOL, raw);
+    FUNCTION_LOG_END();
 
-    IoFilter *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("GzDecompress")
+    OBJ_NEW_BEGIN(GzDecompress, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        // Allocate state and set context
-        GzDecompress *driver = memNew(sizeof(GzDecompress));
-
-        *driver = (GzDecompress)
+        *this = (GzDecompress)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .stream = {.zalloc = NULL},
         };
 
         // Create gz stream
-        gzError(driver->result = inflateInit2(&driver->stream, WANT_GZ | WINDOW_BITS));
+        gzError(this->result = inflateInit2(&this->stream, (raw ? 0 : WANT_GZ) | WINDOW_BITS));
 
         // Set free callback to ensure gz context is freed
-        memContextCallbackSet(driver->memContext, gzDecompressFreeResource, driver);
-
-        // Create filter interface
-        this = ioFilterNewP(
-            GZ_DECOMPRESS_FILTER_TYPE_STR, driver, NULL, .done = gzDecompressDone, .inOut = gzDecompressProcess,
-            .inputSame = gzDecompressInputSame);
+        memContextCallbackSet(objMemContext(this), gzDecompressFreeResource, this);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_FILTER, this);
+    // Create param list
+    Pack *paramList;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackWrite *const packWrite = pckWriteNewP();
+
+        pckWriteBoolP(packWrite, raw);
+        pckWriteEndP(packWrite);
+
+        paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(
+        IO_FILTER,
+        ioFilterNewP(
+            GZ_DECOMPRESS_FILTER_TYPE, this, paramList, .done = gzDecompressDone, .inOut = gzDecompressProcess,
+            .inputSame = gzDecompressInputSame));
 }

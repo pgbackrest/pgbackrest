@@ -1,0 +1,109 @@
+# Error Definitions
+#
+# Definitions for all C errors, auto-generated to src/common/error/error.auto.c.inc/.h.
+
+# Errors in the code that it should not be possible for the user to encounter -- i.e., a likely bug
+assert:
+  code: 25
+  fatal: true
+
+checksum: 26
+config: 27
+file-invalid: 28
+format: 29
+command-required: 30
+option-invalid: 31
+option-invalid-value: 32
+option-required: 37
+pg-running: 38
+protocol: 39
+path-not-empty: 40
+file-open: 41
+file-read: 42
+param-required: 43
+archive-mismatch: 44
+archive-duplicate: 45
+version-not-supported: 46
+path-create: 47
+command-invalid: 48
+host-connect: 49
+lock-acquire: 50
+backup-mismatch: 51
+file-sync: 52
+path-open: 53
+path-sync: 54
+file-missing: 55
+db-connect: 56
+db-query: 57
+db-mismatch: 58
+file-remove: 60
+path-remove: 61
+stop: 62
+term: 63
+file-write: 64
+feature-not-supported: 67
+archive-command-invalid: 68
+link-expected: 69
+link-destination: 70
+host-invalid: 72
+path-missing: 73
+file-move: 74
+backup-set-invalid: 75
+tablespace-map: 76
+link-map: 78
+file-close: 79
+db-missing: 80
+db-invalid: 81
+archive-timeout: 82
+file-mode: 83
+archive-disabled: 87
+file-owner: 88
+user-missing: 89
+file-exists: 93
+
+# Memory allocation failed
+memory:
+  code: 94
+  fatal: true
+
+crypto: 95
+param-invalid: 96
+
+# Unable to close a path
+path-close: 97
+
+# Unable to get info for a file
+file-info: 98
+
+# Invalid JSON format. Eventually this should be a child of format error and share the same code
+json-format: 99
+
+# An error from the kernel that there's nothing we can do about. It should always be fatal.
+kernel: 100
+
+# An error from a service that is not our fault, e.g. 5xx errors from an http server. These may be retried.
+service: 101
+
+# An error while attempting to execute a binary
+execute: 102
+
+# No valid repository could be found
+repo-invalid: 103
+
+# The command encountered one or more errors
+command: 104
+
+# Unable to authenticate or authorize
+access: 105
+
+# Unexpected clock skew or timezone change
+clock: 106
+
+# This error should not be thrown directly -- it serves as a parent for the C errors
+runtime: 122
+
+# Used when an error is not caught. This should not happen.
+unhandled: 124
+
+# Used when a specific error is not provided, generally by a executed process. This should be rare.
+unknown: 125

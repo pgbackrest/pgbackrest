@@ -5,272 +5,443 @@ Backup File
 
 #include <string.h>
 
+#include "command/backup/blockIncr.h"
 #include "command/backup/file.h"
 #include "command/backup/pageChecksum.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
+#include "common/io/bufferRead.h"
 #include "common/io/filter/group.h"
 #include "common/io/filter/size.h"
 #include "common/io/io.h"
 #include "common/log.h"
 #include "common/regExp.h"
 #include "common/type/convert.h"
-#include "postgres/interface.h"
+#include "common/type/json.h"
+#include "info/manifest.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
 Helper functions
 ***********************************************************************************************************************************/
 static unsigned int
-segmentNumber(const String *pgFile)
+segmentNumber(const String *const pgFile)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, pgFile);
     FUNCTION_TEST_END();
 
-    // Determine which segment number this is by checking for a numeric extension.  No extension means segment 0.
-    FUNCTION_TEST_RETURN(regExpMatchOne(STRDEF("\\.[0-9]+$"), pgFile) ? cvtZToUInt(strrchr(strZ(pgFile), '.') + 1) : 0);
+    // Determine which segment number this is by checking for a numeric extension. No extension means segment 0.
+    FUNCTION_TEST_RETURN(UINT, regExpMatchOne(STRDEF("\\.[0-9]+$"), pgFile) ? cvtZToUInt(strrchr(strZ(pgFile), '.') + 1) : 0);
 }
 
 /**********************************************************************************************************************************/
-BackupFileResult
+FN_EXTERN List *
 backupFile(
-    const String *pgFile, bool pgFileIgnoreMissing, uint64_t pgFileSize, bool pgFileCopyExactSize, const String *pgFileChecksum,
-    bool pgFileChecksumPage, uint64_t pgFileChecksumPageLsnLimit, const String *repoFile, bool repoFileHasReference,
-    CompressType repoFileCompressType, int repoFileCompressLevel, const String *backupLabel, bool delta, CipherType cipherType,
-    const String *cipherPass)
+    const String *const repoFile, const uint64_t bundleId, const bool bundleRaw, const unsigned int blockIncrReference,
+    const CompressType repoFileCompressType, const int repoFileCompressLevel, const CipherType cipherType,
+    const String *const cipherPass, const String *const pgVersionForce, const PgPageSize pageSize, const List *const fileList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STRING, pgFile);                         // Database file to copy to the repo
-        FUNCTION_LOG_PARAM(BOOL, pgFileIgnoreMissing);              // Is it OK if the database file is missing?
-        FUNCTION_LOG_PARAM(UINT64, pgFileSize);                     // Size of the database file
-        FUNCTION_LOG_PARAM(BOOL, pgFileCopyExactSize);              // Copy only pgFileSize bytes even if the file has grown
-        FUNCTION_LOG_PARAM(STRING, pgFileChecksum);                 // Checksum to verify the database file
-        FUNCTION_LOG_PARAM(BOOL, pgFileChecksumPage);               // Should page checksums be validated
-        FUNCTION_LOG_PARAM(UINT64, pgFileChecksumPageLsnLimit);     // Upper LSN limit to which page checksums must be valid
-        FUNCTION_LOG_PARAM(STRING, repoFile);                       // Destination in the repo to copy the pg file
-        FUNCTION_LOG_PARAM(BOOL, repoFileHasReference);             // Does the repo file exist in a prior backup in the set?
+        FUNCTION_LOG_PARAM(STRING, repoFile);                       // Repo file
+        FUNCTION_LOG_PARAM(UINT64, bundleId);                       // Bundle id (0 if none)
+        FUNCTION_LOG_PARAM(BOOL, bundleRaw);                        // Raw compress/encrypt format in bundles?
+        FUNCTION_LOG_PARAM(UINT, blockIncrReference);               // Block incremental reference to use in map
         FUNCTION_LOG_PARAM(ENUM, repoFileCompressType);             // Compress type for repo file
-        FUNCTION_LOG_PARAM(INT,  repoFileCompressLevel);            // Compression level for repo file
-        FUNCTION_LOG_PARAM(STRING, backupLabel);                    // Label of current backup
-        FUNCTION_LOG_PARAM(BOOL, delta);                            // Is the delta option on?
-        FUNCTION_LOG_PARAM(ENUM, cipherType);                       // Encryption type
+        FUNCTION_LOG_PARAM(INT, repoFileCompressLevel);             // Compression level for repo file
+        FUNCTION_LOG_PARAM(STRING_ID, cipherType);                  // Encryption type
         FUNCTION_TEST_PARAM(STRING, cipherPass);                    // Password to access the repo file if encrypted
+        FUNCTION_LOG_PARAM(ENUM, pageSize);                         // Page size
+        FUNCTION_LOG_PARAM(STRING, pgVersionForce);                 // Force pg version
+        FUNCTION_LOG_PARAM(LIST, fileList);                         // List of files to backup
     FUNCTION_LOG_END();
 
-    ASSERT(pgFile != NULL);
     ASSERT(repoFile != NULL);
-    ASSERT(backupLabel != NULL);
     ASSERT((cipherType == cipherTypeNone && cipherPass == NULL) || (cipherType != cipherTypeNone && cipherPass != NULL));
+    ASSERT(fileList != NULL && !lstEmpty(fileList));
+    ASSERT(pgPageSizeValid(pageSize));
 
     // Backup file results
-    BackupFileResult result = {.backupCopyResult = backupCopyResultCopy};
+    List *const result = lstNewP(sizeof(BackupFileResult));
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Generate complete repo path and add compression extension if needed
-        const String *repoPathFile = strNewFmt(
-            STORAGE_REPO_BACKUP "/%s/%s%s", strZ(backupLabel), strZ(repoFile), strZ(compressExtStr(repoFileCompressType)));
-
-        // If checksum is defined then the file needs to be checked. If delta option then check the DB and possibly the repo, else
-        // just check the repo.
-        if (pgFileChecksum != NULL)
+        // Check files to determine which ones need to be copied
+        for (unsigned int fileIdx = 0; fileIdx < lstSize(fileList); fileIdx++)
         {
-            // Does the file in pg match the checksum and size passed?
-            bool pgFileMatch = false;
-
-            // If delta, then check the DB checksum and possibly the repo. If the checksum does not match in either case then
-            // recopy.
-            if (delta)
+            // Use a per-file mem context to reduce memory usage
+            MEM_CONTEXT_TEMP_BEGIN()
             {
-                // Generate checksum/size for the pg file. Only read as many bytes as passed in pgFileSize.  If the file has grown
-                // since the manifest was built we don't need to consider the extra bytes since they will be replayed from WAL
-                // during recovery.
-                IoRead *read = storageReadIo(
-                    storageNewReadP(
-                        storagePg(), pgFile, .ignoreMissing = pgFileIgnoreMissing,
-                        .limit = pgFileCopyExactSize ? VARUINT64(pgFileSize) : NULL));
-                ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
-                ioFilterGroupAdd(ioReadFilterGroup(read), ioSizeNew());
+                const BackupFile *const file = lstGet(fileList, fileIdx);
+                ASSERT(file->pgFile != NULL);
+                ASSERT(file->manifestFile != NULL);
+                ASSERT((!file->pgFileDelta && !file->manifestFileResume) || file->pgFileChecksum != NULL);
 
-                // If the pg file exists check the checksum/size
-                if (ioReadDrain(read))
+                BackupFileResult *const fileResult = lstAdd(
+                    result, &(BackupFileResult){.manifestFile = file->manifestFile, .backupCopyResult = backupCopyResultCopy});
+
+                // Does the file in pg match the checksum and size passed?
+                bool pgFileMatch = false;
+
+                // If delta then check the pg checksum
+                if (file->pgFileDelta)
                 {
-                    const String *pgTestChecksum = varStr(
-                        ioFilterGroupResult(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE_STR));
-                    uint64_t pgTestSize = varUInt64Force(ioFilterGroupResult(ioReadFilterGroup(read), SIZE_FILTER_TYPE_STR));
+                    // Generate checksum/size for the pg file. Only read as many bytes as passed in pgFileSize. If the file has
+                    // grown since the manifest was built we don't need to consider the extra bytes since they will be replayed from
+                    // WAL during recovery.
+                    IoRead *const read = storageReadIo(
+                        storageNewReadP(
+                            storagePg(), file->pgFile, .ignoreMissing = file->pgFileIgnoreMissing,
+                            .limit = file->pgFileCopyExactSize ? VARUINT64(file->pgFileSize) : NULL));
+                    ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
+                    ioFilterGroupAdd(ioReadFilterGroup(read), ioSizeNew());
 
-                    // Does the pg file match?
-                    if (pgFileSize == pgTestSize && strEq(pgFileChecksum, pgTestChecksum))
+                    // If the pg file exists check the checksum/size
+                    if (ioReadDrain(read))
                     {
-                        pgFileMatch = true;
+                        const Buffer *const pgTestChecksum = pckReadBinP(
+                            ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE));
+                        const uint64_t pgTestSize = pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(read), SIZE_FILTER_TYPE));
 
-                        // If it matches and is a reference to a previous backup then no need to copy the file
-                        if (repoFileHasReference)
+                        // Does the pg file match?
+                        if (file->pgFileSize == pgTestSize && bufEq(file->pgFileChecksum, pgTestChecksum))
                         {
-                            MEM_CONTEXT_PRIOR_BEGIN()
+                            pgFileMatch = true;
+
+                            // If it matches and is a reference to a previous backup then no need to copy the file
+                            if (file->manifestFileHasReference)
                             {
-                                result.backupCopyResult = backupCopyResultNoOp;
-                                result.copySize = pgTestSize;
-                                result.copyChecksum = strDup(pgTestChecksum);
+                                MEM_CONTEXT_BEGIN(lstMemContext(result))
+                                {
+                                    fileResult->backupCopyResult = backupCopyResultNoOp;
+                                    fileResult->copySize = file->pgFileSize;
+                                    fileResult->copyChecksum = file->pgFileChecksum;
+                                }
+                                MEM_CONTEXT_END();
                             }
-                            MEM_CONTEXT_PRIOR_END();
                         }
                     }
+                    // Else the source file is missing from the database so skip this file
+                    else
+                        fileResult->backupCopyResult = backupCopyResultSkip;
                 }
-                // Else the source file is missing from the database so skip this file
-                else
-                    result.backupCopyResult = backupCopyResultSkip;
-            }
 
-            // If this is not a delta backup or it is and the file exists and the checksum from the DB matches, then also test the
-            // checksum of the file in the repo (unless it is in a prior backup) and if the checksum doesn't match, then there may
-            // be corruption in the repo, so recopy
-            if (!delta || !repoFileHasReference)
-            {
-                // If this is a delta backup and the file is missing from the DB, then remove it from the repo (backupManifestUpdate
-                // will remove it from the manifest)
-                if (result.backupCopyResult == backupCopyResultSkip)
+                // On resume check the manifest file
+                if (file->manifestFileResume)
                 {
-                    storageRemoveP(storageRepoWrite(), repoPathFile);
-                }
-                else if (!delta || pgFileMatch)
-                {
-                    // Check the repo file in a try block because on error (e.g. missing or corrupt file that can't be decrypted or
-                    // decompressed) we should recopy rather than ending the backup.
-                    TRY_BEGIN()
+                    // Resumed files should never have a reference to a prior backup
+                    ASSERT(!file->manifestFileHasReference);
+
+                    // If the file is missing from pg, then remove it from the repo (backupJobResult() will remove it from the
+                    // manifest)
+                    if (fileResult->backupCopyResult == backupCopyResultSkip)
+                    {
+                        storageRemoveP(storageRepoWrite(), repoFile);
+                    }
+                    // Else if the pg file matches or is unknown because delta was not performed then check the repo file
+                    else if (!file->pgFileDelta || pgFileMatch)
                     {
                         // Generate checksum/size for the repo file
-                        IoRead *read = storageReadIo(storageNewReadP(storageRepo(), repoPathFile));
-
-                        if (cipherType != cipherTypeNone)
-                        {
-                            ioFilterGroupAdd(
-                                ioReadFilterGroup(read), cipherBlockNew(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), NULL));
-                        }
-
-                        // Decompress the file if compressed
-                        if (repoFileCompressType != compressTypeNone)
-                            ioFilterGroupAdd(ioReadFilterGroup(read), decompressFilter(repoFileCompressType));
-
-                        ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
+                        IoRead *const read = storageReadIo(storageNewReadP(storageRepo(), repoFile));
+                        ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
                         ioFilterGroupAdd(ioReadFilterGroup(read), ioSizeNew());
-
                         ioReadDrain(read);
 
                         // Test checksum/size
-                        const String *pgTestChecksum = varStr(
-                            ioFilterGroupResult(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE_STR));
-                        uint64_t pgTestSize = varUInt64Force(ioFilterGroupResult(ioReadFilterGroup(read), SIZE_FILTER_TYPE_STR));
+                        const Buffer *const pgTestChecksum = pckReadBinP(
+                            ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE));
+                        const uint64_t pgTestSize = pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(read), SIZE_FILTER_TYPE));
 
-                        // No need to recopy if checksum/size match
-                        if (pgFileSize == pgTestSize && strEq(pgFileChecksum, pgTestChecksum))
+                        // No need to recopy if checksum/size match. When the repo checksum is missing still compare to repo size
+                        // since the repo checksum should only be missing when the repo file was not compressed/encrypted, i.e. the
+                        // repo size should match the original size. There is no need to worry about old manifests here since resume
+                        // does not work across versions.
+                        if (file->repoFileSize == pgTestSize &&
+                            bufEq(file->repoFileChecksum != NULL ? file->repoFileChecksum : file->pgFileChecksum, pgTestChecksum))
                         {
-                            MEM_CONTEXT_PRIOR_BEGIN()
+                            MEM_CONTEXT_BEGIN(lstMemContext(result))
                             {
-                                result.backupCopyResult = backupCopyResultChecksum;
-                                result.copySize = pgTestSize;
-                                result.copyChecksum = strDup(pgTestChecksum);
+                                fileResult->backupCopyResult = backupCopyResultChecksum;
+                                fileResult->copySize = file->pgFileSize;
+                                fileResult->copyChecksum = file->pgFileChecksum;
                             }
-                            MEM_CONTEXT_PRIOR_END();
+                            MEM_CONTEXT_END();
                         }
-                        // Else recopy when repo file is not as expected
+                        // Else copy when repo file is invalid
                         else
-                            result.backupCopyResult = backupCopyResultReCopy;
+                            fileResult->repoInvalid = true;
                     }
-                    // Recopy on any kind of error
-                    CATCH_ANY()
-                    {
-                        result.backupCopyResult = backupCopyResultReCopy;
-                    }
-                    TRY_END();
                 }
             }
+            MEM_CONTEXT_TEMP_END();
         }
 
-        // Copy the file
-        if (result.backupCopyResult == backupCopyResultCopy || result.backupCopyResult == backupCopyResultReCopy)
+        // Are the files compressible during the copy?
+        const bool compressible = repoFileCompressType == compressTypeNone && cipherType == cipherTypeNone;
+
+        // Copy files that need to be copied
+        StorageWrite *write = NULL;
+        uint64_t bundleOffset = 0;
+
+        for (unsigned int fileIdx = 0; fileIdx < lstSize(fileList); fileIdx++)
         {
-            // Is the file compressible during the copy?
-            bool compressible = repoFileCompressType == compressTypeNone && cipherType == cipherTypeNone;
-
-            // Setup pg file for read. Only read as many bytes as passed in pgFileSize.  If the file is growing it does no good to
-            // copy data past the end of the size recorded in the manifest since those blocks will need to be replayed from WAL
-            // during recovery.
-            StorageRead *read = storageNewReadP(
-                storagePg(), pgFile, .ignoreMissing = pgFileIgnoreMissing, .compressible = compressible,
-                .limit = pgFileCopyExactSize ? VARUINT64(pgFileSize) : NULL);
-            ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(HASH_TYPE_SHA1_STR));
-            ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), ioSizeNew());
-
-            // Add page checksum filter
-            if (pgFileChecksumPage)
+            // Use a per-file mem context to reduce memory usage
+            MEM_CONTEXT_TEMP_BEGIN()
             {
-                ioFilterGroupAdd(
-                    ioReadFilterGroup(storageReadIo(read)), pageChecksumNew(segmentNumber(pgFile), PG_SEGMENT_PAGE_DEFAULT,
-                    pgFileChecksumPageLsnLimit));
-            }
+                const BackupFile *const file = lstGet(fileList, fileIdx);
+                BackupFileResult *const fileResult = lstGet(result, fileIdx);
 
-            // Add compression
-            if (repoFileCompressType != compressTypeNone)
-            {
-                ioFilterGroupAdd(
-                    ioReadFilterGroup(storageReadIo(read)), compressFilter(repoFileCompressType, repoFileCompressLevel));
-            }
-
-            // If there is a cipher then add the encrypt filter
-            if (cipherType != cipherTypeNone)
-            {
-                ioFilterGroupAdd(
-                    ioReadFilterGroup(
-                        storageReadIo(read)), cipherBlockNew(cipherModeEncrypt, cipherType, BUFSTR(cipherPass), NULL));
-            }
-
-            // Setup the repo file for write
-            StorageWrite *write = storageNewWriteP(storageRepoWrite(), repoPathFile, .compressible = compressible);
-            ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(write)), ioSizeNew());
-
-            // Open the source and destination and copy the file
-            if (storageCopy(read, write))
-            {
-                MEM_CONTEXT_PRIOR_BEGIN()
+                if (fileResult->backupCopyResult == backupCopyResultCopy)
                 {
-                    // Get sizes and checksum
-                    result.copySize = varUInt64Force(
-                        ioFilterGroupResult(ioReadFilterGroup(storageReadIo(read)), SIZE_FILTER_TYPE_STR));
-                    result.copyChecksum = strDup(
-                        varStr(ioFilterGroupResult(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE_STR)));
-                    result.repoSize =
-                        varUInt64Force(ioFilterGroupResult(ioWriteFilterGroup(storageWriteIo(write)), SIZE_FILTER_TYPE_STR));
+                    // Setup pg file for read. Only read as many bytes as passed in pgFileSize. If the file is growing it does no
+                    // good to copy data past the end of the size recorded in the manifest since those blocks will need to be
+                    // replayed from WAL during recovery. pg_control requires special handling since it needs to be retried on crc
+                    // validation failure.
+                    bool repoChecksum = false;
+                    IoRead *readIo;
 
-                    // Get results of page checksum validation
-                    if (pgFileChecksumPage)
+                    if (strEqZ(file->pgFile, PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL))
+                        readIo = ioBufferReadNew(pgControlBufferFromFile(storagePg(), pgVersionForce));
+                    else
                     {
-                        result.pageChecksumResult = kvDup(
-                            varKv(ioFilterGroupResult(ioReadFilterGroup(storageReadIo(read)), PAGE_CHECKSUM_FILTER_TYPE_STR)));
+                        readIo = storageReadIo(
+                            storageNewReadP(
+                                storagePg(), file->pgFile, .ignoreMissing = file->pgFileIgnoreMissing, .compressible = compressible,
+                                .limit = file->pgFileCopyExactSize ? VARUINT64(file->pgFileSize) : NULL));
                     }
+
+                    ioFilterGroupAdd(ioReadFilterGroup(readIo), cryptoHashNew(hashTypeSha1));
+                    ioFilterGroupAdd(ioReadFilterGroup(readIo), ioSizeNew());
+
+                    // Add page checksum filter
+                    if (file->pgFileChecksumPage)
+                    {
+                        ioFilterGroupAdd(
+                            ioReadFilterGroup(readIo),
+                            pageChecksumNew(
+                                segmentNumber(file->pgFile), PG_SEGMENT_SIZE_DEFAULT / pageSize, pageSize,
+                                file->pgFilePageHeaderCheck, storagePathP(storagePg(), file->pgFile)));
+                    }
+
+                    // Compress filter
+                    IoFilter *const compress =
+                        repoFileCompressType != compressTypeNone ?
+                            compressFilterP(
+                                repoFileCompressType, repoFileCompressLevel, .raw = bundleRaw || file->blockIncrSize != 0) :
+                            NULL;
+
+                    // Encrypt filter
+                    IoFilter *const encrypt =
+                        cipherType != cipherTypeNone ?
+                            cipherBlockNewP(
+                                cipherModeEncrypt, cipherType, BUFSTR(cipherPass), .raw = bundleRaw || file->blockIncrSize != 0) :
+                            NULL;
+
+                    // If block incremental then add the filter and pass compress/encrypt filters to it since each block is
+                    // compressed/encrypted separately
+                    if (file->blockIncrSize != 0)
+                    {
+                        // Read prior block map
+                        const Buffer *blockMap = NULL;
+
+                        if (file->blockIncrMapPriorFile != NULL)
+                        {
+                            StorageRead *const blockMapRead = storageNewReadP(
+                                storageRepo(), file->blockIncrMapPriorFile, .offset = file->blockIncrMapPriorOffset,
+                                .limit = VARUINT64(file->blockIncrMapPriorSize));
+
+                            if (cipherType != cipherTypeNone)
+                            {
+                                ioFilterGroupAdd(
+                                    ioReadFilterGroup(storageReadIo(blockMapRead)),
+                                    cipherBlockNewP(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), .raw = true));
+                            }
+
+                            blockMap = storageGetP(blockMapRead);
+                        }
+
+                        // Add block incremental filter
+                        ioFilterGroupAdd(
+                            ioReadFilterGroup(readIo),
+                            blockIncrNew(
+                                file->blockIncrSuperSize, file->blockIncrSize, file->blockIncrChecksumSize, blockIncrReference,
+                                bundleId, bundleOffset, blockMap, compress, encrypt));
+
+                        repoChecksum = true;
+                    }
+                    // Else apply compress/encrypt filters to the entire file
+                    else
+                    {
+                        // Add compress filter
+                        if (compress != NULL)
+                        {
+                            ioFilterGroupAdd(ioReadFilterGroup(readIo), compress);
+                            repoChecksum = true;
+                        }
+
+                        // Add encrypt filter
+                        if (encrypt != NULL)
+                        {
+                            ioFilterGroupAdd(ioReadFilterGroup(readIo), encrypt);
+                            repoChecksum = true;
+                        }
+                    }
+
+                    // Capture checksum of file stored in the repo if filters that modify the output have been applied
+                    if (repoChecksum)
+                        ioFilterGroupAdd(ioReadFilterGroup(readIo), cryptoHashNew(hashTypeSha1));
+
+                    // Add size filter last to calculate repo size
+                    ioFilterGroupAdd(ioReadFilterGroup(readIo), ioSizeNew());
+
+                    // Open the source
+                    if (ioReadOpen(readIo))
+                    {
+                        Buffer *const buffer = bufNew(ioBufferSize());
+                        bool readEof = false;
+
+                        // Read the first buffer to determine if the file was truncated or was not changed. Detecting truncation
+                        // matters only when bundling is enabled as otherwise the file will be stored anyway.
+                        ioRead(readIo, buffer);
+
+                        if (ioReadEof(readIo))
+                        {
+                            // Close the source and set eof
+                            ioReadClose(readIo);
+                            readEof = true;
+
+                            // Get file size
+                            fileResult->copySize = pckReadU64P(
+                                ioFilterGroupResultP(ioReadFilterGroup(readIo), SIZE_FILTER_TYPE, .idx = 0));
+
+                            // If file is zero-length then it was truncated during the backup. When bundling we can simply mark it
+                            // as truncated since no file needs to be stored.
+                            if (bundleId != 0 && fileResult->copySize == 0)
+                            {
+                                fileResult->backupCopyResult = backupCopyResultTruncate;
+                                fileResult->copyChecksum = HASH_TYPE_SHA1_ZERO_BUF;
+
+                                ASSERT(
+                                    bufEq(
+                                        fileResult->copyChecksum,
+                                        pckReadBinP(
+                                            ioFilterGroupResultP(ioReadFilterGroup(readIo), CRYPTO_HASH_FILTER_TYPE, .idx = 0))));
+                            }
+                            // Else check if size is equal to prior size
+                            else if (file->manifestFileHasReference && fileResult->copySize == file->pgFileSizePrior)
+                            {
+                                const Buffer *const copyChecksum = pckReadBinP(
+                                    ioFilterGroupResultP(ioReadFilterGroup(readIo), CRYPTO_HASH_FILTER_TYPE));
+
+                                // If checksum is also equal then no need to copy the file
+                                if (bufEq(file->pgFileChecksum, copyChecksum))
+                                {
+                                    // If block incremental make sure no map was returned but a prior map was provided
+                                    ASSERT(
+                                        file->blockIncrSize == 0 ||
+                                        (pckReadU64P(
+                                             ioFilterGroupResultP(ioReadFilterGroup(readIo), BLOCK_INCR_FILTER_TYPE)) == 0 &&
+                                         file->blockIncrMapPriorFile != NULL));
+
+                                    fileResult->backupCopyResult = backupCopyResultNoOp;
+                                    fileResult->copyChecksum = file->pgFileChecksum;
+                                }
+                            }
+                        }
+
+                        // Copy the file
+                        if (fileResult->backupCopyResult == backupCopyResultCopy)
+                        {
+                            // Setup the repo file for write. There is no need to write the file atomically (e.g. via a temp file on
+                            // Posix) because checksums are tested on resume after a failed backup. The path does not need to be
+                            // synced for each file because all paths are synced at the end of the backup. It needs to be created in
+                            // the prior context because it will live longer than a single loop when more than one file is being
+                            // written.
+                            if (write == NULL)
+                            {
+                                MEM_CONTEXT_PRIOR_BEGIN()
+                                {
+                                    write = storageNewWriteP(
+                                        storageRepoWrite(), repoFile, .compressible = compressible, .noAtomic = true,
+                                        .noSyncPath = true);
+                                    ioWriteOpen(storageWriteIo(write));
+                                }
+                                MEM_CONTEXT_PRIOR_END();
+                            }
+
+                            // Write the first buffer
+                            ioWrite(storageWriteIo(write), buffer);
+                            bufFree(buffer);
+
+                            // Copy remainder of the file if not eof
+                            if (!readEof)
+                            {
+                                ioCopyP(readIo, storageWriteIo(write));
+
+                                // Close the source
+                                ioReadClose(readIo);
+                            }
+
+                            // Get copy results
+                            MEM_CONTEXT_BEGIN(lstMemContext(result))
+                            {
+                                // Get size and checksum
+                                fileResult->copySize = pckReadU64P(
+                                    ioFilterGroupResultP(ioReadFilterGroup(readIo), SIZE_FILTER_TYPE, .idx = 0));
+                                fileResult->copyChecksum = pckReadBinP(
+                                    ioFilterGroupResultP(ioReadFilterGroup(readIo), CRYPTO_HASH_FILTER_TYPE, .idx = 0));
+
+                                // Get bundle offset
+                                fileResult->bundleOffset = bundleOffset;
+
+                                // Get repo size
+                                fileResult->repoSize = pckReadU64P(
+                                    ioFilterGroupResultP(ioReadFilterGroup(readIo), SIZE_FILTER_TYPE, .idx = 1));
+
+                                // Get results of page checksum validation
+                                if (file->pgFileChecksumPage)
+                                {
+                                    fileResult->pageChecksumResult = pckDup(
+                                        ioFilterGroupResultPackP(ioReadFilterGroup(readIo), PAGE_CHECKSUM_FILTER_TYPE));
+                                }
+
+                                // Get results of block incremental
+                                if (file->blockIncrSize != 0)
+                                {
+                                    fileResult->blockIncrMapSize = pckReadU64P(
+                                        ioFilterGroupResultP(ioReadFilterGroup(readIo), BLOCK_INCR_FILTER_TYPE));
+
+                                    // There must be a map because the file should have changed or shrunk
+                                    ASSERT(fileResult->blockIncrMapSize > 0);
+                                }
+
+                                // Get repo checksum
+                                if (repoChecksum)
+                                {
+                                    fileResult->repoChecksum = pckReadBinP(
+                                        ioFilterGroupResultP(ioReadFilterGroup(readIo), CRYPTO_HASH_FILTER_TYPE, .idx = 1));
+                                }
+                            }
+                            MEM_CONTEXT_END();
+
+                            bundleOffset += fileResult->repoSize;
+                        }
+                    }
+                    // Else if source file is missing and the read setup indicated ignore a missing file, the database removed it so
+                    // skip it
+                    else
+                        fileResult->backupCopyResult = backupCopyResultSkip;
                 }
-                MEM_CONTEXT_PRIOR_END();
             }
-            // Else if source file is missing and the read setup indicated ignore a missing file, the database removed it so skip it
-            else
-                result.backupCopyResult = backupCopyResultSkip;
+            MEM_CONTEXT_TEMP_END();
         }
 
-        // If the file was copied get the repo size only if the storage can store the files with a different size than what was
-        // written. This has to be checked after the file is at rest because filesystem compression may affect the actual repo size
-        // and this cannot be calculated in stream.
-        //
-        // If the file was checksummed then get the size in all cases since we don't already have it.
-        if (((result.backupCopyResult == backupCopyResultCopy || result.backupCopyResult == backupCopyResultReCopy) &&
-                storageFeature(storageRepo(), storageFeatureCompress)) ||
-            result.backupCopyResult == backupCopyResultChecksum)
-        {
-            result.repoSize = storageInfoP(storageRepo(), repoPathFile).size;
-        }
+        // Close the repository file if it was opened
+        if (write != NULL)
+            ioWriteClose(storageWriteIo(write));
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(BACKUP_FILE_RESULT, result);
+    FUNCTION_LOG_RETURN(LIST, result);
 }

@@ -1,7 +1,7 @@
 # Initialize configuration
 # ----------------------------------------------------------------------------------------------------------------------------------
-AC_PREREQ([2.69])
-AC_INIT([pgBackRest], [2.31])
+AC_PREREQ([2.71])
+AC_INIT([pgBackRest], [2.52dev])
 AC_CONFIG_SRCDIR([version.h])
 AC_CONFIG_AUX_DIR(build)
 
@@ -9,12 +9,9 @@ AC_CONFIG_AUX_DIR(build)
 # ----------------------------------------------------------------------------------------------------------------------------------
 : ${CFLAGS=""}
 
-# Check compiler supports C99 standard
+# Build C standard based on the host type. C99 is required and other flags are added depending on the host.
 # ----------------------------------------------------------------------------------------------------------------------------------
-AC_PROG_CC_C99
-
-# Build C standard based on the host type.  C99 is required and other flags are added depending on the host.
-# ----------------------------------------------------------------------------------------------------------------------------------
+AC_PROG_CC
 AC_CANONICAL_HOST
 AC_SUBST(CFLAGS, "${CFLAGS} -std=c99")
 
@@ -40,36 +37,16 @@ AC_LINK_IFELSE(
     [AC_LANG_PROGRAM([], [[int x; static int y[__builtin_types_compatible_p(__typeof__(x), int)];]])],
     [AC_DEFINE(HAVE_BUILTIN_TYPES_COMPATIBLE_P)])
 
-# Set warnings and optimizations based on build type (i.e. production or test)
-# ----------------------------------------------------------------------------------------------------------------------------------
-AC_SUBST(CFLAGS, "${CFLAGS} -Wall -Wextra -Wno-missing-field-initializers")
-
-# -Wno-clobbered is not supported on all compilers
-AX_CHECK_COMPILE_FLAG([-Wno-clobbered], [AC_SUBST(CFLAGS, "${CFLAGS} -Wno-clobbered")], [], [-Werror])
-
-AC_ARG_ENABLE(
-    test, [AS_HELP_STRING([--enable-test], [enable internal test code and assertions for debugging])])
-
-if test "$enable_test" != yes
-then
-    AC_DEFINE(NDEBUG)
-
-    # Enable optimizations if not testing and they have not been disabled
-    AC_ARG_ENABLE(optimize, [AS_HELP_STRING([--disable-optimize], [disable compiler optimizations])])
-
-    if test "$enable_optimize" != no
-    then
-        AC_SUBST(CFLAGS, "${CFLAGS} -O2")
-        AC_SUBST(CFLAGS_PAGE_CHECKSUM, "-funroll-loops -ftree-vectorize")
-    fi
-else
-    AC_SUBST(CFLAGS, "${CFLAGS} -Wwrite-strings -Wconversion -Wformat=2 -Wformat-nonliteral -Wstrict-prototypes -Wpointer-arith")
-    AC_SUBST(CFLAGS, "${CFLAGS} -Wvla")
-fi
-
 # Include the build directory
 # ----------------------------------------------------------------------------------------------------------------------------------
 AC_SUBST(CPPFLAGS, "${CPPFLAGS} -I.")
+
+# Check backtrace library
+# ----------------------------------------------------------------------------------------------------------------------------------
+AC_CHECK_LIB(
+    [backtrace], [backtrace_full],
+    [AC_CHECK_HEADER(backtrace.h, [AC_DEFINE(HAVE_LIBBACKTRACE) AC_SUBST(LIBS, "${LIBS} -lbacktrace")],
+        [AC_MSG_ERROR([header file <backtrace.h> is required])])])
 
 # Check required pq library
 # ----------------------------------------------------------------------------------------------------------------------------------
@@ -113,6 +90,12 @@ fi
 AC_CHECK_LIB([xml2], [xmlSaveToBuffer], [], [AC_MSG_ERROR([library 'xml2' is required])])
 AC_CHECK_HEADER(libxml/parser.h, [], [AC_MSG_ERROR([header file <libxml/parser.h> is required])])
 
+# Check required yaml library (only required for build)
+# ----------------------------------------------------------------------------------------------------------------------------------
+AC_CHECK_LIB(
+    [yaml], [yaml_parser_initialize], [AC_SUBST(LIBS_BUILD, "${LIBS_BUILD} -lyaml")], [AC_MSG_ERROR([library 'yaml' is required])])
+AC_CHECK_HEADER(zlib.h, [], [AC_MSG_ERROR([header file <yaml.h> is required])])
+
 # Check required gz library
 # ----------------------------------------------------------------------------------------------------------------------------------
 AC_CHECK_LIB([z], [deflate], [], [AC_MSG_ERROR([library 'z' is required])])
@@ -130,6 +113,17 @@ AC_CHECK_LIB(
     [AC_CHECK_HEADER(lz4frame.h, [AC_DEFINE(HAVE_LIBLZ4) AC_SUBST(LIBS, "${LIBS} -llz4")],
         [AC_MSG_ERROR([header file <lz4frame.h> is required])])])
 
+# Check optional libSSH2 library
+# ----------------------------------------------------------------------------------------------------------------------------------
+AC_CHECK_LIB(
+    [ssh2], [libssh2_init],
+    [AC_CHECK_HEADER(libssh2.h, [AC_DEFINE(HAVE_LIBSSH2) AC_SUBST(LIBS, "${LIBS} -lssh2")],
+        [AC_MSG_ERROR([header file <libssh2.h> is required])])])
+AC_CHECK_LIB(
+    [ssh2], [libssh2_sftp_init],
+    [AC_CHECK_HEADER(libssh2_sftp.h, [],
+        [AC_MSG_ERROR([header file <libssh2_sftp.h> is required])])])
+
 # Check optional zst library. Ignore any versions below 1.0.
 # ----------------------------------------------------------------------------------------------------------------------------------
 AC_CHECK_LIB(
@@ -143,6 +137,52 @@ AC_CHECK_LIB(
                     #endif])],
             [AC_DEFINE(HAVE_LIBZST) AC_SUBST(LIBS, "${LIBS} -lzstd")])],
         [AC_MSG_ERROR([header file <zstd.h> is required])])])
+
+# Set configuration path
+# ----------------------------------------------------------------------------------------------------------------------------------
+AC_ARG_WITH(
+    [configdir], [AS_HELP_STRING([--with-configdir=DIR], [default configuration path])],
+    [AC_DEFINE_UNQUOTED([CFGOPTDEF_CONFIG_PATH], ["${withval}"])],
+    [AC_DEFINE_UNQUOTED([CFGOPTDEF_CONFIG_PATH], ["/etc/" PROJECT_BIN])])
+
+# Set warnings and optimizations based on build type (i.e. production or test)
+# ----------------------------------------------------------------------------------------------------------------------------------
+AC_SUBST(CFLAGS, "${CFLAGS} -Wall -Wextra -Wno-missing-field-initializers -Wno-implicit-fallthrough")
+
+# -Wno-clobbered is not supported on all compilers
+AX_CHECK_COMPILE_FLAG([-Wno-clobbered], [AC_SUBST(CFLAGS, "${CFLAGS} -Wno-clobbered")], [], [-Werror])
+
+AC_ARG_ENABLE(
+    test, [AS_HELP_STRING([--enable-test], [enable internal test code and assertions for debugging])])
+
+if test "$enable_test" != yes
+then
+    AC_DEFINE(NDEBUG)
+
+    # Enable optimizations if not testing and they have not been disabled
+    AC_ARG_ENABLE(optimize, [AS_HELP_STRING([--disable-optimize], [disable compiler optimizations])])
+
+    if test "$enable_optimize" != no
+    then
+        AC_SUBST(CFLAGS, "${CFLAGS} -O2")
+        AC_SUBST(CFLAGS_PAGE_CHECKSUM, "-funroll-loops -ftree-vectorize")
+    fi
+else
+    # Check for optional warnings (note that these must be checked before the additional warnings below are added)
+    AX_CHECK_COMPILE_FLAG([-Wformat-signedness], [AC_SUBST(CFLAGS, "${CFLAGS} -Wformat-signedness")], [], [-Werror])
+    AX_CHECK_COMPILE_FLAG([-Wduplicated-branches], [AC_SUBST(CFLAGS, "${CFLAGS} -Wduplicated-branches")], [], [-Werror])
+    AX_CHECK_COMPILE_FLAG([-Wduplicated-cond], [AC_SUBST(CFLAGS, "${CFLAGS} -Wduplicated-cond")], [], [-Werror])
+
+    # Add additional warnings
+    AC_SUBST(CFLAGS, "${CFLAGS} -Wwrite-strings -Wconversion -Wformat=2 -Wformat-nonliteral -Wstrict-prototypes -Wpointer-arith")
+    AC_SUBST(CFLAGS, "${CFLAGS} -Wvla")
+
+    # Add error on warnings and stop on first error
+    AC_SUBST(CFLAGS, "${CFLAGS} -Werror -Wfatal-errors")
+
+    # Add debug info
+    AC_SUBST(CFLAGS, "${CFLAGS} -g")
+fi
 
 # Write output
 # ----------------------------------------------------------------------------------------------------------------------------------

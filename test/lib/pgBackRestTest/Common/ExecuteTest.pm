@@ -211,17 +211,6 @@ sub endRetry
         $self->{strErrorLog} .= "${strLine}\n";
     }
 
-    # Pass the log to the LogTest object
-    if (defined($self->{oLogTest}))
-    {
-        if (defined($self->{strErrorLog}) && $self->{strErrorLog} ne '')
-        {
-            $self->{strOutLog} .= "STDERR:\n" . $self->{strErrorLog};
-        }
-
-        $self->{oLogTest}->logAdd($self->{strCommand}, $self->{strComment}, $self->{bLogOutput} ? $self->{strOutLog} : undef);
-    }
-
     # If an error was expected then return success if that error occurred
     if ($self->{iExpectedExitStatus} != 0 && $iExitStatus == $self->{iExpectedExitStatus})
     {
@@ -233,7 +222,9 @@ sub endRetry
         if ($self->{bSuppressError})
         {
             &log(DEBUG, "suppressed error was ${iExitStatus}");
-            $self->{strErrorLog} = '';
+
+            # Make a copy of the suppressed error log in case it is needed
+            $self->{strSuppressedErrorLog} = $self->{strErrorLog};
         }
         else
         {

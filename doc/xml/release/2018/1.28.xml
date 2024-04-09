@@ -1,0 +1,95 @@
+<release date="2018-02-01" version="1.28" title="Stanza Delete">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="chiranjeevi.ravilla"/>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Fixed inability to restore a single database contained in a tablespace using --db-include.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="adam.k.sumner"/>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Ensure latest <id>db-id</id> is selected on when matching <file>archive.info</file> to <file>backup.info</file>. This provides correct matching in the event there are <id>system-id</id> and <id>db-version</id> duplicates (e.g. after reverting a <id>pg_upgrade</id>).</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="jason.odonnell"/>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fixed overly chatty error message when reporting an invalid command.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="magnus.hagander"/>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Add <cmd>stanza-delete</cmd> command to cleanup unused stanzas.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Improve <cmd>stanza-create</cmd> command so that it does not error when the stanza already exists.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Minor changes to <code>Manifest</code> module, mostly for test reproducibility.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Fix non-compliant formatting for function declarations.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="jason.odonnell"/>
+                </release-item-contributor-list>
+
+                <p>Update <cmd>stanza-create --force</cmd> documentation to urge caution when using.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Add unit tests for the <code>Manifest</code> module.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+</release>

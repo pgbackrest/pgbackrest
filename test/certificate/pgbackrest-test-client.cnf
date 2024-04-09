@@ -1,0 +1,26 @@
+[req]
+default_bits=4096
+prompt=no
+default_md=sha256
+req_extensions=v3_req
+distinguished_name=dn
+
+[ca]
+default_ca=ca_pgbackrest
+
+[ca_pgbackrest]
+database = index.txt
+unique_subject = no
+default_md = sha256
+
+[dn]
+C=US
+ST=All
+L=All
+O=pgBackRest
+OU=Unit Testing Domain
+CN=pgbackrest-client
+
+[v3_req]
+basicConstraints=CA:FALSE
+keyUsage=nonRepudiation,digitalSignature,keyEncipherment

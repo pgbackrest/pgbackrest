@@ -9,7 +9,7 @@ Common Handler for Control Commands
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
-String *
+FN_EXTERN String *
 lockStopFileName(const String *stanza)
 {
     FUNCTION_TEST_BEGIN();
@@ -18,11 +18,11 @@ lockStopFileName(const String *stanza)
 
     String *result = strNewFmt("%s/%s" STOP_FILE_EXT, strZ(cfgOptionStr(cfgOptLockPath)), stanza != NULL ? strZ(stanza) : "all");
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 lockStopTest(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
@@ -33,7 +33,7 @@ lockStopTest(void)
         if (cfgOptionTest(cfgOptStanza))
         {
             if (storageExistsP(storageLocal(), lockStopFileName(cfgOptionStr(cfgOptStanza))))
-                THROW_FMT(StopError, "stop file exists for stanza %s", strZ(cfgOptionStr(cfgOptStanza)));
+                THROW_FMT(StopError, "stop file exists for stanza %s", strZ(cfgOptionDisplay(cfgOptStanza)));
         }
 
         // Check all stanzas

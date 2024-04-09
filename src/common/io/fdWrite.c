@@ -8,9 +8,8 @@ File Descriptor Io Write
 #include "common/debug.h"
 #include "common/io/fd.h"
 #include "common/io/fdWrite.h"
-#include "common/io/write.intern.h"
+#include "common/io/write.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
 
 /***********************************************************************************************************************************
@@ -18,7 +17,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct IoFdWrite
 {
-    MemContext *memContext;                                         // Object memory context
     const String *name;                                             // File descriptor name for error messages
     int fd;                                                         // File descriptor to write to
     TimeMSec timeout;                                               // Timeout for write operation
@@ -30,7 +28,7 @@ Macros for function logging
 #define FUNCTION_LOG_IO_FD_WRITE_TYPE                                                                                              \
     IoFdWrite *
 #define FUNCTION_LOG_IO_FD_WRITE_FORMAT(value, buffer, bufferSize)                                                                 \
-    objToLog(value, "IoFdWrite", buffer, bufferSize)
+    objNameToLog(value, "IoFdWrite", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 // Can bytes be written immediately?
@@ -99,41 +97,35 @@ ioFdWriteFd(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->fd);
+    FUNCTION_TEST_RETURN(INT, this->fd);
 }
 
 /**********************************************************************************************************************************/
-IoWrite *
-ioFdWriteNew(const String *name, int fd, TimeMSec timeout)
+FN_EXTERN IoWrite *
+ioFdWriteNew(const String *const name, const int fd, const TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(INT, fd);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
     FUNCTION_LOG_END();
 
-    IoWrite *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("IoFdWrite")
+    OBJ_NEW_BEGIN(IoFdWrite, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        IoFdWrite *driver = memNew(sizeof(IoFdWrite));
-
-        *driver = (IoFdWrite)
+        *this = (IoFdWrite)
         {
-            .memContext = memContextCurrent(),
             .name = strDup(name),
             .fd = fd,
             .timeout = timeout,
         };
-
-        this = ioWriteNewP(driver, .fd = ioFdWriteFd, .ready = ioFdWriteReady, .write = ioFdWrite);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_WRITE, this);
+    FUNCTION_LOG_RETURN(IO_WRITE, ioWriteNewP(this, .fd = ioFdWriteFd, .ready = ioFdWriteReady, .write = ioFdWrite));
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 ioFdWriteOneStr(int fd, const String *string)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

@@ -8,24 +8,19 @@ Storage Interface
 
 #include "common/debug.h"
 #include "common/io/io.h"
-#include "common/type/list.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/type/object.h"
 #include "common/regExp.h"
+#include "common/type/list.h"
 #include "common/wait.h"
-#include "storage/storage.intern.h"
+#include "storage/storage.h"
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 struct Storage
 {
-    MemContext *memContext;
-    void *driver;
-    StorageInterface interface;
-    const String *type;
-
+    StoragePub pub;                                                 // Publicly accessible variables
     const String *path;
     mode_t modeFile;
     mode_t modePath;
@@ -33,16 +28,14 @@ struct Storage
     StoragePathExpressionCallback *pathExpressionFunction;
 };
 
-OBJECT_DEFINE_FREE(STORAGE);
-
 /**********************************************************************************************************************************/
-Storage *
+FN_EXTERN Storage *
 storageNew(
-    const String *type, const String *path, mode_t modeFile, mode_t modePath, bool write,
-    StoragePathExpressionCallback pathExpressionFunction, void *driver, StorageInterface interface)
+    const StringId type, const String *const path, const mode_t modeFile, const mode_t modePath, const bool write,
+    StoragePathExpressionCallback pathExpressionFunction, void *const driver, const StorageInterface interface)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STRING, type);
+        FUNCTION_LOG_PARAM(STRING_ID, type);
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(MODE, modeFile);
         FUNCTION_LOG_PARAM(MODE, modePath);
@@ -52,45 +45,64 @@ storageNew(
         FUNCTION_LOG_PARAM(STORAGE_INTERFACE, interface);
     FUNCTION_LOG_END();
 
-    ASSERT(type != NULL);
+    FUNCTION_AUDIT_HELPER();
+
+    ASSERT(type != 0);
     ASSERT(strSize(path) >= 1 && strZ(path)[0] == '/');
     ASSERT(driver != NULL);
     ASSERT(interface.info != NULL);
-    ASSERT(interface.infoList != NULL);
+    ASSERT(interface.list != NULL);
     ASSERT(interface.newRead != NULL);
     ASSERT(interface.newWrite != NULL);
     ASSERT(interface.pathRemove != NULL);
     ASSERT(interface.remove != NULL);
 
-    Storage *this = (Storage *)memNew(sizeof(Storage));
-
-    *this = (Storage)
+    OBJ_NEW_BEGIN(Storage, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        .memContext = memContextCurrent(),
-        .driver = driver,
-        .interface = interface,
-        .type = type,
-        .path = strDup(path),
-        .modeFile = modeFile,
-        .modePath = modePath,
-        .write = write,
-        .pathExpressionFunction = pathExpressionFunction,
-    };
+        *this = (Storage)
+        {
+            .pub =
+            {
+                .type = type,
+                .driver = objMoveToInterface(driver, this, memContextPrior()),
+                .interface = interface,
+            },
+            .path = strDup(path),
+            .modeFile = modeFile,
+            .modePath = modePath,
+            .write = write,
+            .pathExpressionFunction = pathExpressionFunction,
+        };
 
-    // If path sync feature is enabled then path feature must be enabled
-    CHECK(!storageFeature(this, storageFeaturePathSync) || storageFeature(this, storageFeaturePath));
+        // If path sync feature is enabled then path feature must be enabled
+        CHECK(
+            AssertError, !storageFeature(this, storageFeaturePathSync) || storageFeature(this, storageFeaturePath),
+            "path feature required");
 
-    // If hardlink feature is enabled then path feature must be enabled
-    CHECK(!storageFeature(this, storageFeatureHardLink) || storageFeature(this, storageFeaturePath));
+        // If hardlink feature is enabled then path feature must be enabled
+        CHECK(
+            AssertError, !storageFeature(this, storageFeatureHardLink) || storageFeature(this, storageFeaturePath),
+            "path feature required");
 
-    // If symlink feature is enabled then path feature must be enabled
-    CHECK(!storageFeature(this, storageFeatureSymLink) || storageFeature(this, storageFeaturePath));
+        // If symlink feature is enabled then path feature must be enabled
+        CHECK(
+            AssertError, !storageFeature(this, storageFeatureSymLink) || storageFeature(this, storageFeaturePath),
+            "path feature required");
+
+        // If link features are enabled then linkCreate must be implemented
+        CHECK(
+            AssertError,
+            (!storageFeature(this, storageFeatureSymLink) && !storageFeature(this, storageFeatureHardLink)) ||
+            interface.linkCreate != NULL,
+            "linkCreate required");
+    }
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(STORAGE, this);
 }
 
 /**********************************************************************************************************************************/
-bool
+FN_EXTERN bool
 storageCopy(StorageRead *source, StorageWrite *destination)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -112,15 +124,7 @@ storageCopy(StorageRead *source, StorageWrite *destination)
             ioWriteOpen(storageWriteIo(destination));
 
             // Copy data from source to destination
-            Buffer *read = bufNew(ioBufferSize());
-
-            do
-            {
-                ioRead(storageReadIo(source), read);
-                ioWrite(storageWriteIo(destination), read);
-                bufUsedZero(read);
-            }
-            while (!ioReadEof(storageReadIo(source)));
+            ioCopyP(storageReadIo(source), storageWriteIo(destination));
 
             // Close the source and destination files
             ioReadClose(storageReadIo(source));
@@ -136,7 +140,7 @@ storageCopy(StorageRead *source, StorageWrite *destination)
 }
 
 /**********************************************************************************************************************************/
-bool
+FN_EXTERN bool
 storageExists(const Storage *this, const String *pathExp, StorageExistsParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -172,7 +176,7 @@ storageExists(const Storage *this, const String *pathExp, StorageExistsParam par
 }
 
 /**********************************************************************************************************************************/
-Buffer *
+FN_EXTERN Buffer *
 storageGet(StorageRead *file, StorageGetParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -229,7 +233,7 @@ storageGet(StorageRead *file, StorageGetParam param)
 }
 
 /**********************************************************************************************************************************/
-StorageInfo
+FN_EXTERN StorageInfo
 storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -241,8 +245,10 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
         FUNCTION_LOG_PARAM(BOOL, param.noPathEnforce);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_STRUCT();
+
     ASSERT(this != NULL);
-    ASSERT(this->interface.info != NULL);
+    ASSERT(this->pub.interface.info != NULL);
 
     StorageInfo result = {0};
 
@@ -255,8 +261,15 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
         if (param.level == storageInfoLevelDefault)
             param.level = storageFeature(this, storageFeatureInfoDetail) ? storageInfoLevelDetail : storageInfoLevelBasic;
 
-        result = storageInterfaceInfoP(
-            this->driver, file, param.level, .followLink = param.followLink);
+        // If file is / then this is definitely a path so skip the call for drivers that do not support paths and do not provide
+        // additional info to return. Also, some object stores (e.g. S3) behave strangely when getting info for /.
+        if (strEq(file, FSLASH_STR) && !storageFeature(this, storageFeaturePath))
+        {
+            result = (StorageInfo){.level = param.level};
+        }
+        // Else call the driver
+        else
+            result = storageInterfaceInfoP(storageDriver(this), file, param.level, .followLink = param.followLink);
 
         // Error if the file missing and not ignoring
         if (!result.exists && !param.ignoreMissing)
@@ -277,185 +290,26 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
 }
 
 /**********************************************************************************************************************************/
-typedef struct StorageInfoListSortData
-{
-    MemContext *memContext;                                         // Mem context to use for allocating data in this struct
-    StringList *ownerList;                                          // List of users and groups to reduce memory usage
-    List *infoList;                                                 // List of info
-} StorageInfoListSortData;
-
-static void
-storageInfoListSortCallback(void *data, const StorageInfo *info)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_LOG_PARAM_P(VOID, data);
-        FUNCTION_LOG_PARAM(STORAGE_INFO, info);
-    FUNCTION_TEST_END();
-
-    StorageInfoListSortData *infoData = data;
-
-    MEM_CONTEXT_BEGIN(infoData->memContext)
-    {
-        // Copy info and dup strings
-        StorageInfo infoCopy = *info;
-        infoCopy.name = strDup(info->name);
-        infoCopy.linkDestination = strDup(info->linkDestination);
-        infoCopy.user = strLstAddIfMissing(infoData->ownerList, info->user);
-        infoCopy.group = strLstAddIfMissing(infoData->ownerList, info->group);
-
-        lstAdd(infoData->infoList, &infoCopy);
-    }
-    MEM_CONTEXT_END();
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
-static bool
-storageInfoListSort(
-    const Storage *this, const String *path, StorageInfoLevel level, const String *expression, SortOrder sortOrder,
-    StorageInfoListCallback callback, void *callbackData)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE, this);
-        FUNCTION_LOG_PARAM(STRING, path);
-        FUNCTION_LOG_PARAM(ENUM, level);
-        FUNCTION_LOG_PARAM(STRING, expression);
-        FUNCTION_LOG_PARAM(ENUM, sortOrder);
-        FUNCTION_LOG_PARAM(FUNCTIONP, callback);
-        FUNCTION_LOG_PARAM_P(VOID, callbackData);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(callback != NULL);
-
-    bool result = false;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        // If no sorting then use the callback directly
-        if (sortOrder == sortOrderNone)
-        {
-            result = storageInterfaceInfoListP(this->driver, path, level, callback, callbackData, .expression = expression);
-        }
-        // Else sort the info before sending it to the callback
-        else
-        {
-            StorageInfoListSortData data =
-            {
-                .memContext = MEM_CONTEXT_TEMP(),
-                .ownerList = strLstNew(),
-                .infoList = lstNewP(sizeof(StorageInfo), .comparator = lstComparatorStr),
-            };
-
-            result = storageInterfaceInfoListP(
-                this->driver, path, level, storageInfoListSortCallback, &data, .expression = expression);
-            lstSort(data.infoList, sortOrder);
-
-            MEM_CONTEXT_TEMP_RESET_BEGIN()
-            {
-                for (unsigned int infoIdx = 0; infoIdx < lstSize(data.infoList); infoIdx++)
-                {
-                    // Pass info to the caller
-                    callback(callbackData, lstGet(data.infoList, infoIdx));
-
-                    // Reset the memory context occasionally
-                    MEM_CONTEXT_TEMP_RESET(1000);
-                }
-            }
-            MEM_CONTEXT_TEMP_END();
-        }
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN(BOOL, result);
-}
-
-typedef struct StorageInfoListData
-{
-    const Storage *storage;                                         // Storage object;
-    StorageInfoListCallback callbackFunction;                       // Original callback function
-    void *callbackData;                                             // Original callback data
-    const String *expression;                                       // Filter for names
-    RegExp *regExp;                                                 // Compiled filter for names
-    bool recurse;                                                   // Should we recurse?
-    SortOrder sortOrder;                                            // Sort order
-    const String *path;                                             // Top-level path for info
-    const String *subPath;                                          // Path below the top-level path (starts as NULL)
-} StorageInfoListData;
-
-static void
-storageInfoListCallback(void *data, const StorageInfo *info)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_LOG_PARAM_P(VOID, data);
-        FUNCTION_LOG_PARAM(STORAGE_INFO, info);
-    FUNCTION_TEST_END();
-
-    StorageInfoListData *listData = data;
-
-    // Is this the . path?
-    bool dotPath = info->type == storageTypePath && strEq(info->name, DOT_STR);
-
-    // Skip . paths when getting info for subpaths (since info was already reported in the parent path)
-    if (dotPath && listData->subPath != NULL)
-    {
-        FUNCTION_TEST_RETURN_VOID();
-        return;
-    }
-
-    // Update the name in info with the subpath
-    StorageInfo infoUpdate = *info;
-
-    if (listData->subPath != NULL)
-        infoUpdate.name = strNewFmt("%s/%s", strZ(listData->subPath), strZ(infoUpdate.name));
-
-    // Is this file a match?
-    bool match = listData->expression == NULL || regExpMatch(listData->regExp, infoUpdate.name);
-
-    // Callback before checking path contents when not descending
-    if (match && listData->sortOrder != sortOrderDesc)
-        listData->callbackFunction(listData->callbackData, &infoUpdate);
-
-    // Recurse into paths
-    if (infoUpdate.type == storageTypePath && listData->recurse && !dotPath)
-    {
-        StorageInfoListData data = *listData;
-        data.subPath = infoUpdate.name;
-
-        storageInfoListSort(
-            data.storage, strNewFmt("%s/%s", strZ(data.path), strZ(data.subPath)), infoUpdate.level, data.expression,
-            data.sortOrder, storageInfoListCallback, &data);
-    }
-
-    // Callback after checking path contents when descending
-    if (match && listData->sortOrder == sortOrderDesc)
-        listData->callbackFunction(listData->callbackData, &infoUpdate);
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
-bool
-storageInfoList(
-    const Storage *this, const String *pathExp, StorageInfoListCallback callback, void *callbackData, StorageInfoListParam param)
+FN_EXTERN StorageIterator *
+storageNewItr(const Storage *const this, const String *const pathExp, StorageNewItrParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, this);
         FUNCTION_LOG_PARAM(STRING, pathExp);
-        FUNCTION_LOG_PARAM(FUNCTIONP, callback);
-        FUNCTION_LOG_PARAM_P(VOID, callbackData);
         FUNCTION_LOG_PARAM(ENUM, param.level);
         FUNCTION_LOG_PARAM(BOOL, param.errorOnMissing);
+        FUNCTION_LOG_PARAM(BOOL, param.recurse);
+        FUNCTION_LOG_PARAM(BOOL, param.nullOnMissing);
         FUNCTION_LOG_PARAM(ENUM, param.sortOrder);
         FUNCTION_LOG_PARAM(STRING, param.expression);
         FUNCTION_LOG_PARAM(BOOL, param.recurse);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(callback != NULL);
-    ASSERT(this->interface.infoList != NULL);
+    ASSERT(this->pub.interface.list != NULL);
     ASSERT(!param.errorOnMissing || storageFeature(this, storageFeaturePath));
 
-    bool result = false;
+    StorageIterator *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -463,62 +317,49 @@ storageInfoList(
         if (param.level == storageInfoLevelDefault)
             param.level = storageFeature(this, storageFeatureInfoDetail) ? storageInfoLevelDetail : storageInfoLevelBasic;
 
-        // Build the path
-        String *path = storagePathP(this, pathExp);
-
-        // If there is an expression or recursion then the info will need to be filtered through a local callback
-        if (param.expression != NULL || param.recurse)
-        {
-            StorageInfoListData data =
-            {
-                .storage = this,
-                .callbackFunction = callback,
-                .callbackData = callbackData,
-                .expression = param.expression,
-                .sortOrder = param.sortOrder,
-                .recurse = param.recurse,
-                .path = path,
-            };
-
-            if (data.expression != NULL)
-                data.regExp = regExpNew(param.expression);
-
-            result = storageInfoListSort(
-                this, path, param.level, param.expression, param.sortOrder, storageInfoListCallback, &data);
-        }
-        else
-            result = storageInfoListSort(this, path, param.level, NULL, param.sortOrder, callback, callbackData);
-
-        if (!result && param.errorOnMissing)
-            THROW_FMT(PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING, strZ(path));
+        result = storageItrMove(
+            storageItrNew(
+                storageDriver(this), storagePathP(this, pathExp), param.level, param.errorOnMissing, param.nullOnMissing,
+                param.recurse, param.sortOrder, param.expression),
+            memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(BOOL, result);
+    FUNCTION_LOG_RETURN(STORAGE_ITERATOR, result);
 }
 
 /**********************************************************************************************************************************/
-static void
-storageListCallback(void *data, const StorageInfo *info)
+FN_EXTERN void
+storageLinkCreate(
+    const Storage *const this, const String *const target, const String *const linkPath, const StorageLinkCreateParam param)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_LOG_PARAM_P(VOID, data);
-        FUNCTION_LOG_PARAM(STORAGE_INFO, info);
-    FUNCTION_TEST_END();
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, this);
+        FUNCTION_LOG_PARAM(STRING, target);
+        FUNCTION_LOG_PARAM(STRING, linkPath);
+        FUNCTION_LOG_PARAM(ENUM, param.linkType);
+    FUNCTION_LOG_END();
 
-    // Skip . path
-    if (strEq(info->name, DOT_STR))
+    ASSERT(this != NULL);
+    ASSERT(this->write);
+    ASSERT(target != NULL);
+    ASSERT(linkPath != NULL);
+    ASSERT(this->pub.interface.linkCreate != NULL);
+    ASSERT(
+        (param.linkType == storageLinkSym && storageFeature(this, storageFeatureSymLink)) ||
+        (param.linkType == storageLinkHard && storageFeature(this, storageFeatureHardLink)));
+
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        FUNCTION_TEST_RETURN_VOID();
-        return;
+        storageInterfaceLinkCreateP(storageDriver(this), target, linkPath, .linkType = param.linkType);
     }
+    MEM_CONTEXT_TEMP_END();
 
-    strLstAdd((StringList *)data, info->name);
-
-    FUNCTION_TEST_RETURN_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
-StringList *
+/**********************************************************************************************************************************/
+FN_EXTERN StringList *
 storageList(const Storage *this, const String *pathExp, StorageListParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -531,26 +372,24 @@ storageList(const Storage *this, const String *pathExp, StorageListParam param)
 
     ASSERT(this != NULL);
     ASSERT(!param.errorOnMissing || !param.nullOnMissing);
-    ASSERT(!param.errorOnMissing || storageFeature(this, storageFeaturePath));
 
     StringList *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = strLstNew();
+        StorageIterator *const storageItr = storageNewItrP(
+            this, pathExp, .level = storageInfoLevelExists, .errorOnMissing = param.errorOnMissing,
+            .nullOnMissing = param.nullOnMissing, .expression = param.expression);
 
-        // Build an empty list if the directory does not exist by default.  This makes the logic in calling functions simpler when
-        // the caller doesn't care if the path is missing.
-        if (!storageInfoListP(
-                this, pathExp, storageListCallback, result, .level = storageInfoLevelExists, .errorOnMissing = param.errorOnMissing,
-                .expression = param.expression))
+        if (storageItr != NULL)
         {
-            if (param.nullOnMissing)
-                result = NULL;
-        }
+            result = strLstNew();
 
-        // Move list up to the old context
-        result = strLstMove(result, memContextPrior());
+            while (storageItrMore(storageItr))
+                strLstAdd(result, storageItrNext(storageItr).name);
+
+            strLstMove(result, memContextPrior());
+        }
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -558,7 +397,7 @@ storageList(const Storage *this, const String *pathExp, StorageListParam param)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 storageMove(const Storage *this, StorageRead *source, StorageWrite *destination)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -567,29 +406,29 @@ storageMove(const Storage *this, StorageRead *source, StorageWrite *destination)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->interface.move != NULL);
+    ASSERT(this->pub.interface.move != NULL);
     ASSERT(source != NULL);
     ASSERT(destination != NULL);
     ASSERT(!storageReadIgnoreMissing(source));
-    ASSERT(strEq(this->type, storageReadType(source)));
-    ASSERT(strEq(storageReadType(source), storageWriteType(destination)));
+    ASSERT(storageType(this) == storageReadType(source));
+    ASSERT(storageReadType(source) == storageWriteType(destination));
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // If the file can't be moved it will need to be copied
-        if (!storageInterfaceMoveP(this->driver, source, destination))
+        if (!storageInterfaceMoveP(storageDriver(this), source, destination))
         {
             // Perform the copy
             storageCopyP(source, destination);
 
             // Remove the source file
-            storageInterfaceRemoveP(this->driver, storageReadName(source));
+            storageInterfaceRemoveP(storageDriver(this), storageReadName(source));
 
-            // Sync source path if the destination path was synced.  We know the source and destination paths are different because
-            // the move did not succeed.  This will need updating when drivers other than Posix/CIFS are implemented because there's
+            // Sync source path if the destination path was synced. We know the source and destination paths are different because
+            // the move did not succeed. This will need updating when drivers other than Posix/CIFS are implemented because there's
             // no way to get coverage on it now.
             if (storageWriteSyncPath(destination))
-                storageInterfacePathSyncP(this->driver, strPath(storageReadName(source)));
+                storageInterfacePathSyncP(storageDriver(this), strPath(storageReadName(source)));
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -598,7 +437,7 @@ storageMove(const Storage *this, StorageRead *source, StorageWrite *destination)
 }
 
 /**********************************************************************************************************************************/
-StorageRead *
+FN_EXTERN StorageRead *
 storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -606,11 +445,11 @@ storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam p
         FUNCTION_LOG_PARAM(STRING, fileExp);
         FUNCTION_LOG_PARAM(BOOL, param.ignoreMissing);
         FUNCTION_LOG_PARAM(BOOL, param.compressible);
+        FUNCTION_LOG_PARAM(UINT64, param.offset);
         FUNCTION_LOG_PARAM(VARIANT, param.limit);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(storageFeature(this, storageFeatureLimitRead) || param.limit == NULL);
     ASSERT(param.limit == NULL || varType(param.limit) == varTypeUInt64);
 
     StorageRead *result = NULL;
@@ -619,8 +458,8 @@ storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam p
     {
         result = storageReadMove(
             storageInterfaceNewReadP(
-                this->driver, storagePathP(this, fileExp), param.ignoreMissing, .compressible = param.compressible,
-                .limit = param.limit),
+                storageDriver(this), storagePathP(this, fileExp), param.ignoreMissing, .compressible = param.compressible,
+                .offset = param.offset, .limit = param.limit),
             memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
@@ -629,7 +468,7 @@ storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam p
 }
 
 /**********************************************************************************************************************************/
-StorageWrite *
+FN_EXTERN StorageWrite *
 storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -644,11 +483,14 @@ storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam
         FUNCTION_LOG_PARAM(BOOL, param.noSyncFile);
         FUNCTION_LOG_PARAM(BOOL, param.noSyncPath);
         FUNCTION_LOG_PARAM(BOOL, param.noAtomic);
+        FUNCTION_LOG_PARAM(BOOL, param.noTruncate);
         FUNCTION_LOG_PARAM(BOOL, param.compressible);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(this->write);
+    // noTruncate does not work with atomic writes because a new file is always created for atomic writes
+    ASSERT(!param.noTruncate || param.noAtomic);
 
     StorageWrite *result = NULL;
 
@@ -656,10 +498,11 @@ storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam
     {
         result = storageWriteMove(
             storageInterfaceNewWriteP(
-                this->driver, storagePathP(this, fileExp), .modeFile = param.modeFile != 0 ? param.modeFile : this->modeFile,
+                storageDriver(this), storagePathP(this, fileExp), .modeFile = param.modeFile != 0 ? param.modeFile : this->modeFile,
                 .modePath = param.modePath != 0 ? param.modePath : this->modePath, .user = param.user, .group = param.group,
                 .timeModified = param.timeModified, .createPath = !param.noCreatePath, .syncFile = !param.noSyncFile,
-                .syncPath = !param.noSyncPath, .atomic = !param.noAtomic, .compressible = param.compressible),
+                .syncPath = !param.noSyncPath, .atomic = !param.noAtomic, .truncate = !param.noTruncate,
+                .compressible = param.compressible),
             memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
@@ -668,7 +511,7 @@ storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam
 }
 
 /**********************************************************************************************************************************/
-String *
+FN_EXTERN String *
 storagePath(const Storage *this, const String *pathExp, StoragePathParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -694,8 +537,9 @@ storagePath(const Storage *this, const String *pathExp, StoragePathParam param)
             // Make sure the base storage path is contained within the path expression
             if (!strEqZ(this->path, "/"))
             {
-                if (!param.noEnforce && (!strBeginsWith(pathExp, this->path) ||
-                    !(strSize(pathExp) == strSize(this->path) || *(strZ(pathExp) + strSize(this->path)) == '/')))
+                if (!param.noEnforce &&
+                    (!strBeginsWith(pathExp, this->path) ||
+                     !(strSize(pathExp) == strSize(this->path) || *(strZ(pathExp) + strSize(this->path)) == '/')))
                 {
                     THROW_FMT(AssertError, "absolute path '%s' is not in base path '%s'", strZ(pathExp), strZ(this->path));
                 }
@@ -723,7 +567,7 @@ storagePath(const Storage *this, const String *pathExp, StoragePathParam param)
                     THROW_FMT(AssertError, "end > not found in path expression '%s'", strZ(pathExp));
 
                 // Create a string from the expression
-                String *expression = strNewN(strZ(pathExp), (size_t)(end - strZ(pathExp) + 1));
+                String *expression = strNewZN(strZ(pathExp), (size_t)(end - strZ(pathExp) + 1));
 
                 // Create a string from the path if there is anything left after the expression
                 String *path = NULL;
@@ -738,7 +582,7 @@ storagePath(const Storage *this, const String *pathExp, StoragePathParam param)
                     if (end[2] == 0)
                         THROW_FMT(AssertError, "path '%s' should not end in '/'", strZ(pathExp));
 
-                    path = strNew(end + 2);
+                    path = strNewZ(end + 2);
                 }
 
                 // Evaluate the path
@@ -765,11 +609,11 @@ storagePath(const Storage *this, const String *pathExp, StoragePathParam param)
         }
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -781,7 +625,7 @@ storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateP
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->interface.pathCreate != NULL && storageFeature(this, storageFeaturePath));
+    ASSERT(this->pub.interface.pathCreate != NULL && storageFeature(this, storageFeaturePath));
     ASSERT(this->write);
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -791,7 +635,7 @@ storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateP
 
         // Call driver function
         storageInterfacePathCreateP(
-            this->driver, path, param.errorOnExists, param.noParentCreate, param.mode != 0 ? param.mode : this->modePath);
+            storageDriver(this), path, param.errorOnExists, param.noParentCreate, param.mode != 0 ? param.mode : this->modePath);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -799,7 +643,7 @@ storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateP
 }
 
 /**********************************************************************************************************************************/
-bool
+FN_EXTERN bool
 storagePathExists(const Storage *this, const String *pathExp)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -818,7 +662,7 @@ storagePathExists(const Storage *this, const String *pathExp)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 storagePathRemove(const Storage *this, const String *pathExp, StoragePathRemoveParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -839,7 +683,7 @@ storagePathRemove(const Storage *this, const String *pathExp, StoragePathRemoveP
         String *path = storagePathP(this, pathExp);
 
         // Call driver function
-        if (!storageInterfacePathRemoveP(this->driver, path, param.recurse) && param.errorOnMissing)
+        if (!storageInterfacePathRemoveP(storageDriver(this), path, param.recurse) && param.errorOnMissing)
         {
             THROW_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE_MISSING, strZ(path));
         }
@@ -850,7 +694,8 @@ storagePathRemove(const Storage *this, const String *pathExp, StoragePathRemoveP
 }
 
 /**********************************************************************************************************************************/
-void storagePathSync(const Storage *this, const String *pathExp)
+FN_EXTERN void
+storagePathSync(const Storage *this, const String *pathExp)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, this);
@@ -861,11 +706,11 @@ void storagePathSync(const Storage *this, const String *pathExp)
     ASSERT(this->write);
 
     // Not all storage requires path sync so just do nothing if the function is not implemented
-    if (this->interface.pathSync != NULL)
+    if (this->pub.interface.pathSync != NULL)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            storageInterfacePathSyncP(this->driver, storagePathP(this, pathExp));
+            storageInterfacePathSyncP(storageDriver(this), storagePathP(this, pathExp));
         }
         MEM_CONTEXT_TEMP_END();
     }
@@ -874,7 +719,7 @@ void storagePathSync(const Storage *this, const String *pathExp)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 storagePut(StorageWrite *file, const Buffer *buffer)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -892,7 +737,7 @@ storagePut(StorageWrite *file, const Buffer *buffer)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -910,7 +755,7 @@ storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam par
         String *file = storagePathP(this, fileExp);
 
         // Call driver function
-        storageInterfaceRemoveP(this->driver, file, .errorOnMissing = param.errorOnMissing);
+        storageInterfaceRemoveP(storageDriver(this), file, .errorOnMissing = param.errorOnMissing);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -918,62 +763,10 @@ storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam par
 }
 
 /**********************************************************************************************************************************/
-void *
-storageDriver(const Storage *this)
+FN_EXTERN void
+storageToLog(const Storage *const this, StringStatic *const debugLog)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->driver);
-}
-
-/**********************************************************************************************************************************/
-bool
-storageFeature(const Storage *this, StorageFeature feature)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE, this);
-        FUNCTION_TEST_PARAM(ENUM, feature);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->interface.feature >> feature & 1);
-}
-
-/**********************************************************************************************************************************/
-StorageInterface
-storageInterface(const Storage *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->interface);
-}
-
-/**********************************************************************************************************************************/
-const String *
-storageType(const Storage *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->type);
-}
-
-/**********************************************************************************************************************************/
-String *
-storageToLog(const Storage *this)
-{
-    return strNewFmt(
-        "{type: %s, path: %s, write: %s}", strZ(this->type), strZ(strToLog(this->path)), cvtBoolToConstZ(this->write));
+    strStcCat(debugLog, "{type: "),
+    strStcResultSizeInc(debugLog, strIdToLog(storageType(this), strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+    strStcFmt(debugLog, ", path: %s, write: %s}", strZ(this->path), cvtBoolToConstZ(this->write));
 }

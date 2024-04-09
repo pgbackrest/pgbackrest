@@ -7,12 +7,12 @@ Exec Configuration
 
 #include "common/debug.h"
 #include "common/log.h"
-#include "config/define.h"
 #include "config/config.intern.h"
 #include "config/exec.h"
+#include "config/parse.h"
 
 /**********************************************************************************************************************************/
-StringList *
+FN_EXTERN StringList *
 cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const KeyValue *optionReplace, bool local, bool quote)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -35,7 +35,8 @@ cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const Key
             // Skip the option if it is not valid for the original/specified command or if is secure. Also skip repo1-cipher-type
             // because there's no point of passing it if the other process doesn't have access to repo1-cipher-pass. There is
             // probably a better way to do this last part...
-            if (!cfgDefOptionValid(commandId, optionId) || cfgDefOptionSecure(optionId) || optionId == cfgOptRepoCipherType)
+            if (!cfgParseOptionValid(commandId, commandRoleId, optionId) || cfgParseOptionSecure(optionId) ||
+                optionId == cfgOptRepoCipherType)
             {
                 continue;
             }
@@ -70,21 +71,19 @@ cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const Key
                     if (cfgOptionIdxNegate(optionId, optionIdx))
                         value = BOOL_FALSE_VAR;
                     else if (cfgOptionIdxSource(optionId, optionIdx) != cfgSourceDefault)
-                        value = cfgOptionIdx(optionId, optionIdx);
+                        value = cfgOptionIdxVar(optionId, optionIdx);
                 }
 
                 // If the option was reset
                 if (value == NULL && cfgOptionValid(optionId) && cfgOptionIdxReset(optionId, optionIdx))
                 {
-                    strLstAdd(result, strNewFmt("--reset-%s", cfgOptionIdxName(optionId, optionIdx)));
+                    strLstAddFmt(result, "--reset-%s", cfgOptionIdxName(optionId, optionIdx));
                 }
                 // Else format the value if found, even if the option is not valid for the command
                 else if (value != NULL && (!local || exists || cfgOptionIdxSource(optionId, optionIdx) == cfgSourceParam))
                 {
                     if (varType(value) == varTypeBool)
-                    {
-                        strLstAdd(result, strNewFmt("--%s%s", varBool(value) ? "" : "no-", cfgOptionIdxName(optionId, optionIdx)));
-                    }
+                        strLstAddFmt(result, "--%s%s", varBool(value) ? "" : "no-", cfgOptionIdxName(optionId, optionIdx));
                     else
                     {
                         StringList *valueList = NULL;
@@ -98,11 +97,9 @@ cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const Key
 
                             for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
                             {
-                                strLstAdd(
-                                    valueList,
-                                    strNewFmt(
-                                        "%s=%s", strZ(varStr(varLstGet(keyList, keyIdx))),
-                                        strZ(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx))))));
+                                strLstAddFmt(
+                                    valueList, "%s=%s", strZ(varStr(varLstGet(keyList, keyIdx))),
+                                    strZ(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx)))));
                             }
                         }
                         else if (varType(value) == varTypeVariantList)
@@ -113,7 +110,11 @@ cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const Key
                         else
                         {
                             valueList = strLstNew();
-                            strLstAdd(valueList, varStrForce(value));
+
+                            strLstAdd(
+                                valueList,
+                                exists ? cfgOptionDisplayVar(value, cfgParseOptionType(optionId)) :
+                                    cfgOptionIdxDisplay(optionId, optionIdx));
                         }
 
                         // Output options and values
@@ -124,7 +125,7 @@ cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const Key
                             if (quote && strchr(strZ(value), ' ') != NULL)
                                 value = strNewFmt("\"%s\"", strZ(value));
 
-                            strLstAdd(result, strNewFmt("--%s=%s", cfgOptionIdxName(optionId, optionIdx), strZ(value)));
+                            strLstAddFmt(result, "--%s=%s", cfgOptionIdxName(optionId, optionIdx), strZ(value));
                         }
                     }
                 }
@@ -132,7 +133,7 @@ cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const Key
         }
 
         // Add the command
-        strLstAdd(result, cfgCommandRoleNameParam(commandId, commandRoleId, COLON_STR));
+        strLstAdd(result, cfgParseCommandRoleName(commandId, commandRoleId));
 
         // Move list to the prior context
         strLstMove(result, memContextPrior());

@@ -4,20 +4,21 @@ Archive Push Protocol Handler
 #ifndef COMMAND_ARCHIVE_PUSH_PROTOCOL_H
 #define COMMAND_ARCHIVE_PUSH_PROTOCOL_H
 
-#include "common/type/string.h"
-#include "common/type/variantList.h"
+#include "common/type/pack.h"
 #include "protocol/server.h"
-
-/***********************************************************************************************************************************
-Constants
-***********************************************************************************************************************************/
-#define PROTOCOL_COMMAND_ARCHIVE_PUSH                               "archivePush"
-    STRING_DECLARE(PROTOCOL_COMMAND_ARCHIVE_PUSH_STR);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Process protocol requests
-bool archivePushProtocol(const String *command, const VariantList *paramList, ProtocolServer *server);
+FN_EXTERN void archivePushFileProtocol(PackRead *param, ProtocolServer *server);
+
+/***********************************************************************************************************************************
+Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()
+***********************************************************************************************************************************/
+#define PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE                          STRID5("ap-f", 0x36e010)
+
+#define PROTOCOL_SERVER_HANDLER_ARCHIVE_PUSH_LIST                                                                                  \
+    {.command = PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE, .handler = archivePushFileProtocol},
 
 #endif

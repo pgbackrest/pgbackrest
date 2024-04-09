@@ -7,37 +7,23 @@ IO Read Interface
 
 #include "common/debug.h"
 #include "common/io/io.h"
-#include "common/io/read.intern.h"
+#include "common/io/read.h"
 #include "common/log.h"
-#include "common/memContext.h"
-#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 struct IoRead
 {
-    MemContext *memContext;                                         // Mem context
-    void *driver;                                                   // Driver object
-    IoReadInterface interface;                                      // Driver interface
-    IoFilterGroup *filterGroup;                                     // IO filters
+    IoReadPub pub;                                                  // Publicly accessible variables
     Buffer *input;                                                  // Input buffer
     Buffer *output;                                                 // Internal output buffer (extra output from buffered reads)
     size_t outputPos;                                               // Current position in the internal output buffer
-
-    bool eofAll;                                                    // Is the read done (read and filters complete)?
-
-#ifdef DEBUG
-    bool opened;                                                    // Has the io been opened?
-    bool closed;                                                    // Has the io been closed?
-#endif
 };
 
-OBJECT_DEFINE_FREE(IO_READ);
-
 /**********************************************************************************************************************************/
-IoRead *
-ioReadNew(void *driver, IoReadInterface interface)
+FN_EXTERN IoRead *
+ioReadNew(void *const driver, const IoReadInterface interface)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM_P(VOID, driver);
@@ -47,28 +33,26 @@ ioReadNew(void *driver, IoReadInterface interface)
     ASSERT(driver != NULL);
     ASSERT(interface.read != NULL);
 
-    IoRead *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("IoRead")
+    OBJ_NEW_BEGIN(IoRead, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = memNew(sizeof(IoRead));
-
         *this = (IoRead)
         {
-            .memContext = memContextCurrent(),
-            .driver = driver,
-            .interface = interface,
-            .filterGroup = ioFilterGroupNew(),
+            .pub =
+            {
+                .driver = objMoveToInterface(driver, this, memContextPrior()),
+                .interface = interface,
+                .filterGroup = ioFilterGroupNew(),
+            },
             .input = bufNew(ioBufferSize()),
         };
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_READ, this);
 }
 
 /**********************************************************************************************************************************/
-bool
+FN_EXTERN bool
 ioReadOpen(IoRead *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -76,18 +60,18 @@ ioReadOpen(IoRead *this)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(!this->opened && !this->closed);
-    ASSERT(ioFilterGroupSize(this->filterGroup) == 0 || !ioReadBlock(this));
+    ASSERT(!this->pub.opened && !this->pub.closed);
+    ASSERT(ioFilterGroupSize(this->pub.filterGroup) == 0 || !ioReadBlock(this));
 
     // Open if the driver has an open function
-    bool result = this->interface.open != NULL ? this->interface.open(this->driver) : true;
+    bool result = this->pub.interface.open != NULL ? this->pub.interface.open(this->pub.driver) : true;
 
     // Only open the filter group if the read was opened
     if (result)
-        ioFilterGroupOpen(this->filterGroup);
+        ioFilterGroupOpen(this->pub.filterGroup);
 
 #ifdef DEBUG
-    this->opened = result;
+    this->pub.opened = result;
 #endif
 
     FUNCTION_LOG_RETURN(BOOL, result);
@@ -106,9 +90,9 @@ ioReadEofDriver(const IoRead *this)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->opened && !this->closed);
+    ASSERT(this->pub.opened && !this->pub.closed);
 
-    FUNCTION_LOG_RETURN(BOOL, this->interface.eof != NULL ? this->interface.eof(this->driver) : false);
+    FUNCTION_LOG_RETURN(BOOL, this->pub.interface.eof != NULL ? this->pub.interface.eof(this->pub.driver) : false);
 }
 
 /**********************************************************************************************************************************/
@@ -123,17 +107,17 @@ ioReadInternal(IoRead *this, Buffer *buffer, bool block)
 
     ASSERT(this != NULL);
     ASSERT(buffer != NULL);
-    ASSERT(this->opened && !this->closed);
+    ASSERT(this->pub.opened && !this->pub.closed);
 
     // Loop until EOF or the output buffer is full
     size_t bufferUsedBegin = bufUsed(buffer);
 
-    while (!this->eofAll && bufRemains(buffer) > 0)
+    while (!ioReadEof(this) && bufRemains(buffer) > 0)
     {
         // Process input buffer again to get more output
-        if (ioFilterGroupInputSame(this->filterGroup))
+        if (ioFilterGroupInputSame(this->pub.filterGroup))
         {
-            ioFilterGroupProcess(this->filterGroup, this->input, buffer);
+            ioFilterGroupProcess(this->pub.filterGroup, this->input, buffer);
         }
         // Else new input can be accepted
         else
@@ -149,7 +133,7 @@ ioReadInternal(IoRead *this, Buffer *buffer, bool block)
                     if (ioReadBlock(this) && bufRemains(this->input) > bufRemains(buffer))
                         bufLimitSet(this->input, bufRemains(buffer));
 
-                    this->interface.read(this->driver, this->input, block);
+                    this->pub.interface.read(this->pub.driver, this->input, block);
                     bufLimitClear(this->input);
                 }
                 // Set input to NULL and flush (no need to actually free the buffer here as it will be freed with the mem context)
@@ -158,8 +142,8 @@ ioReadInternal(IoRead *this, Buffer *buffer, bool block)
             }
 
             // Process the input buffer (or flush if NULL)
-            if (this->input == NULL || bufUsed(this->input) > 0)
-                ioFilterGroupProcess(this->filterGroup, this->input, buffer);
+            if (this->input == NULL || !bufEmpty(this->input))
+                ioFilterGroupProcess(this->pub.filterGroup, this->input, buffer);
 
             // Stop if not blocking -- we don't need to fill the buffer as long as we got some data
             if (!block && bufUsed(buffer) > bufferUsedBegin)
@@ -167,7 +151,7 @@ ioReadInternal(IoRead *this, Buffer *buffer, bool block)
         }
 
         // Eof when no more input and the filter group is done
-        this->eofAll = ioReadEofDriver(this) && ioFilterGroupDone(this->filterGroup);
+        this->pub.eofAll = ioReadEofDriver(this) && ioFilterGroupDone(this->pub.filterGroup);
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -176,7 +160,7 @@ ioReadInternal(IoRead *this, Buffer *buffer, bool block)
 /***********************************************************************************************************************************
 Read data and use buffered line read output when present
 ***********************************************************************************************************************************/
-size_t
+FN_EXTERN size_t
 ioRead(IoRead *this, Buffer *buffer)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -187,7 +171,7 @@ ioRead(IoRead *this, Buffer *buffer)
 
     ASSERT(this != NULL);
     ASSERT(buffer != NULL);
-    ASSERT(this->opened && !this->closed);
+    ASSERT(this->pub.opened && !this->pub.closed);
 
     // Store size of remaining portion of buffer to calculate total read at the end
     size_t outputRemains = bufRemains(buffer);
@@ -212,10 +196,76 @@ ioRead(IoRead *this, Buffer *buffer)
     FUNCTION_LOG_RETURN(SIZE, outputRemains - bufRemains(buffer));
 }
 
+/**********************************************************************************************************************************/
+FN_EXTERN size_t
+ioReadSmall(IoRead *this, Buffer *buffer)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_READ, this);
+        FUNCTION_TEST_PARAM(BUFFER, buffer);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(buffer != NULL);
+    ASSERT(this->pub.opened && !this->pub.closed);
+
+    // Allocate the internal output buffer if it has not already been allocated
+    if (this->output == NULL)
+    {
+        MEM_CONTEXT_OBJ_BEGIN(this)
+        {
+            this->output = bufNew(ioBufferSize());
+        }
+        MEM_CONTEXT_OBJ_END();
+    }
+
+    // Store size of remaining portion of buffer to calculate total read at the end
+    size_t outputRemains = bufRemains(buffer);
+
+    do
+    {
+        // Internal output buffer remains taking into account the position
+        size_t outputInternalRemains = bufUsed(this->output) - this->outputPos;
+
+        // Use any data in the internal output buffer
+        if (outputInternalRemains > 0)
+        {
+            // Determine how much data should be copied
+            size_t size = outputInternalRemains > bufRemains(buffer) ? bufRemains(buffer) : outputInternalRemains;
+
+            // Copy data to the output buffer
+            bufCatSub(buffer, this->output, this->outputPos, size);
+            this->outputPos += size;
+        }
+
+        // If more data is required
+        if (!bufFull(buffer))
+        {
+            // If the data required is the same size as the internal output buffer then just read into the external buffer
+            if (bufRemains(buffer) >= bufSize(this->output))
+            {
+                ioReadInternal(this, buffer, true);
+            }
+            // Else read as much data as is available. If it is not enough we will try again later.
+            else
+            {
+                // Clear the internal output buffer since all data was copied already
+                bufUsedZero(this->output);
+                this->outputPos = 0;
+
+                ioReadInternal(this, this->output, false);
+            }
+        }
+    }
+    while (!bufFull(buffer) && !ioReadEof(this));
+
+    FUNCTION_TEST_RETURN(SIZE, outputRemains - bufRemains(buffer));
+}
+
 /***********************************************************************************************************************************
 The entire string to search for must fit within a single buffer.
 ***********************************************************************************************************************************/
-String *
+FN_EXTERN String *
 ioReadLineParam(IoRead *this, bool allowEof)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -224,17 +274,17 @@ ioReadLineParam(IoRead *this, bool allowEof)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->opened && !this->closed);
+    ASSERT(this->pub.opened && !this->pub.closed);
 
-    // Allocate the output buffer if it has not already been allocated.  This buffer is not allocated at object creation because it
+    // Allocate the output buffer if it has not already been allocated. This buffer is not allocated at object creation because it
     // is not always used.
     if (this->output == NULL)
     {
-        MEM_CONTEXT_BEGIN(this->memContext)
+        MEM_CONTEXT_OBJ_BEGIN(this)
         {
             this->output = bufNew(ioBufferSize());
         }
-        MEM_CONTEXT_END();
+        MEM_CONTEXT_OBJ_END();
     }
 
     // Search for a linefeed
@@ -260,7 +310,7 @@ ioReadLineParam(IoRead *this, bool allowEof)
                 size_t size = (size_t)(linefeed - outputPtr);
 
                 // Create the string
-                result = strNewN(outputPtr, size);
+                result = strNewZN(outputPtr, size);
                 this->outputPos += size + 1;
             }
         }
@@ -287,7 +337,7 @@ ioReadLineParam(IoRead *this, bool allowEof)
             if (ioReadEof(this))
             {
                 if (allowEof)
-                    result = strNewN((char *)bufPtr(this->output), bufUsed(this->output));
+                    result = strNewZN((char *)bufPtr(this->output), bufUsed(this->output));
                 else
                     THROW(FileReadError, "unexpected eof while reading line");
             }
@@ -301,18 +351,65 @@ ioReadLineParam(IoRead *this, bool allowEof)
 }
 
 /**********************************************************************************************************************************/
-String *
-ioReadLine(IoRead *this)
+FN_EXTERN uint64_t
+ioReadVarIntU64(IoRead *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_READ, this);
     FUNCTION_LOG_END();
 
-    FUNCTION_LOG_RETURN(STRING, ioReadLineParam(this, false));
+    // Allocate the internal output buffer if it has not already been allocated
+    if (this->output == NULL)
+    {
+        MEM_CONTEXT_OBJ_BEGIN(this)
+        {
+            this->output = bufNew(ioBufferSize());
+        }
+        MEM_CONTEXT_OBJ_END();
+    }
+
+    uint64_t result = 0;
+    uint8_t byte;
+
+    // Convert bytes from varint-128 encoding to a uint64
+    for (unsigned int bufferIdx = 0; bufferIdx < CVT_VARINT128_BUFFER_SIZE; bufferIdx++)
+    {
+        // Get more bytes if needed
+        if (bufUsed(this->output) - this->outputPos == 0)
+        {
+            // Clear the internal output buffer since all data was copied already
+            bufUsedZero(this->output);
+            this->outputPos = 0;
+
+            // Read into the internal output buffer
+            ioReadInternal(this, this->output, false);
+
+            // Error on eof
+            if (bufUsed(this->output) == 0)
+                THROW(FileReadError, "unexpected eof");
+        }
+
+        // Get the next encoded byte
+        byte = bufPtr(this->output)[this->outputPos++];
+
+        // Shift the lower order 7 encoded bits into the uint64 in reverse order
+        result |= (uint64_t)(byte & 0x7f) << (7 * bufferIdx);
+
+        // Done if the high order bit is not set to indicate more data
+        if (byte < 0x80)
+            break;
+    }
+
+    // By this point all bytes should have been read so error if this is not the case. This could be due to a coding error or
+    // corrupton in the data stream.
+    if (byte >= 0x80)
+        THROW(FormatError, "unterminated base-128 integer");
+
+    FUNCTION_LOG_RETURN(UINT64, result);
 }
 
 /**********************************************************************************************************************************/
-bool
+FN_EXTERN bool
 ioReadReady(IoRead *this, IoReadReadyParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -324,14 +421,50 @@ ioReadReady(IoRead *this, IoReadReadyParam param)
 
     bool result = true;
 
-    if (this->interface.ready != NULL)
-        result = this->interface.ready(this->driver, param.error);
+    if (this->pub.interface.ready != NULL)
+        result = this->pub.interface.ready(this->pub.driver, param.error);
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN uint64_t
+ioReadFlush(IoRead *const this, const IoReadFlushParam param)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_READ, this);
+        FUNCTION_LOG_PARAM(BOOL, param.errorOnBytes);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->pub.opened && !this->pub.closed);
+
+    // Flush remaining data
+    uint64_t result = 0;
+
+    if (!ioReadEof(this))
+    {
+        Buffer *const buffer = bufNew(ioBufferSize());
+
+        do
+        {
+            result += ioRead(this, buffer);
+            bufUsedZero(buffer);
+        }
+        while (!ioReadEof(this));
+
+        bufFree(buffer);
+    }
+
+    // Error when bytes found and error requested
+    if (result != 0 && param.errorOnBytes)
+        THROW_FMT(FileReadError, "expected EOF but flushed %" PRIu64 " byte(s)", result);
+
+    FUNCTION_LOG_RETURN(UINT64, result);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
 ioReadClose(IoRead *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -339,77 +472,24 @@ ioReadClose(IoRead *this)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->opened && !this->closed);
+    ASSERT(this->pub.opened && !this->pub.closed);
 
     // Close the filter group and gather results
-    ioFilterGroupClose(this->filterGroup);
+    ioFilterGroupClose(this->pub.filterGroup);
 
     // Close the driver if there is a close function
-    if (this->interface.close != NULL)
-        this->interface.close(this->driver);
+    if (this->pub.interface.close != NULL)
+        this->pub.interface.close(this->pub.driver);
 
 #ifdef DEBUG
-    this->closed = true;
+    this->pub.closed = true;
 #endif
 
     FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
-bool
-ioReadBlock(const IoRead *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_READ, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->interface.block);
-}
-
-/**********************************************************************************************************************************/
-void *
-ioReadDriver(IoRead *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_READ, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->driver);
-}
-
-/**********************************************************************************************************************************/
-bool
-ioReadEof(const IoRead *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(IO_READ, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(this->opened && !this->closed);
-
-    FUNCTION_LOG_RETURN(BOOL, this->eofAll);
-}
-
-/**********************************************************************************************************************************/
-IoFilterGroup *
-ioReadFilterGroup(const IoRead *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_READ, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->filterGroup);
-}
-
-/**********************************************************************************************************************************/
-int
+FN_EXTERN int
 ioReadFd(const IoRead *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -418,18 +498,5 @@ ioReadFd(const IoRead *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_LOG_RETURN(INT, this->interface.fd == NULL ? -1 : this->interface.fd(this->driver));
-}
-
-/**********************************************************************************************************************************/
-const IoReadInterface *
-ioReadInterface(const IoRead *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_READ, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(&this->interface);
+    FUNCTION_LOG_RETURN(INT, this->pub.interface.fd == NULL ? -1 : this->pub.interface.fd(this->pub.driver));
 }

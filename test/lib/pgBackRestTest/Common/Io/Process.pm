@@ -119,7 +119,7 @@ sub error
 
                     logErrorResult(
                         $iErrorCode, $self->id() . ' terminated unexpectedly' .
-                            ($self->{iExitStatus} != 255 ?  sprintf(' [%03d]', $self->{iExitStatus}) : ''),
+                            ($self->{iExitStatus} != 255 ? sprintf(' [%03d]', $self->{iExitStatus}) : ''),
                         $strError);
                 }
             }

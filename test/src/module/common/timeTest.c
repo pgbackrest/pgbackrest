@@ -6,7 +6,7 @@ Test Time Management
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
@@ -22,10 +22,23 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("sleepMSec()"))
     {
+        TEST_TITLE("sleep 0ms");
+
         // Sleep and measure time slept
         TimeMSec begin = timeMSec();
-        sleepMSec(1400);
+        sleepMSec(0);
         TimeMSec end = timeMSec();
+
+        // Check bounds for time slept (within a range of .02 seconds)
+        TEST_RESULT_BOOL(end - begin < (TimeMSec)20, true, "upper range check");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("sleep 1400ms");
+
+        // Sleep and measure time slept
+        begin = timeMSec();
+        sleepMSec(1400);
+        end = timeMSec();
 
         // Check bounds for time slept (within a range of .1 seconds)
         TEST_RESULT_BOOL(end - begin >= (TimeMSec)1400, true, "lower range check");
@@ -63,10 +76,10 @@ testRun(void)
 
         TEST_ERROR(timePartsValid(-1,  0,  0), FormatError, "invalid time -1:00:00");
         TEST_ERROR(timePartsValid(24,  0,  0), FormatError, "invalid time 24:00:00");
-        TEST_ERROR(timePartsValid( 0, -1,  0), FormatError, "invalid time 00:-1:00");
-        TEST_ERROR(timePartsValid( 0, 60,  0), FormatError, "invalid time 00:60:00");
-        TEST_ERROR(timePartsValid( 0,  0, -1), FormatError, "invalid time 00:00:-1");
-        TEST_ERROR(timePartsValid( 0,  0, 60), FormatError, "invalid time 00:00:60");
+        TEST_ERROR(timePartsValid(0, -1,  0), FormatError, "invalid time 00:-1:00");
+        TEST_ERROR(timePartsValid(0, 60,  0), FormatError, "invalid time 00:60:00");
+        TEST_ERROR(timePartsValid(0,  0, -1), FormatError, "invalid time 00:00:-1");
+        TEST_ERROR(timePartsValid(0,  0, 60), FormatError, "invalid time 00:00:60");
         TEST_RESULT_VOID(timePartsValid(23, 59, 59), "valid time");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -98,5 +111,5 @@ testRun(void)
         TEST_RESULT_INT(epochFromParts(2020, 1, 8, 9, 18, 15, tzOffsetSeconds(-7, 0)), 1578500295, "epoch with timezone");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

@@ -6,7 +6,7 @@ Test Variant Data Type
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
@@ -15,8 +15,8 @@ testRun(void)
     if (testBegin("bool"))
     {
         // Ensure type sizes are as expected
-        TEST_RESULT_UINT(sizeof(VariantBoolConst), 8, "check VariantBoolConst size");
-        TEST_RESULT_UINT(sizeof(VariantBool), TEST_64BIT() ? 16 : 12, "check VariantBool size");
+        TEST_RESULT_UINT(sizeof(VariantBoolPub), 8, "check VariantBoolPub size");
+        TEST_RESULT_UINT(sizeof(VariantBool), 8, "check VariantBool size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         Variant *boolean = varNewBool(false);
@@ -24,14 +24,14 @@ testRun(void)
         varFree(boolean);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(varBool(varNewStrZ("string")), AssertError, "assertion 'this->type == varTypeBool' failed");
+        TEST_ERROR(varBool(varNewStrZ("string")), AssertError, "assertion 'varType(this) == varTypeBool' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_BOOL(varBool(BOOL_TRUE_VAR), true, "true bool variant");
         TEST_RESULT_BOOL(varBool(BOOL_FALSE_VAR), false, "false bool variant");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_BOOL(varBoolForce(VARBOOL(false)), false, "force bool to bool");
+        TEST_RESULT_BOOL(varBoolForce(BOOL_FALSE_VAR), false, "force bool to bool");
         TEST_RESULT_BOOL(varBoolForce(VARINT(1)), true, "force int to bool");
         TEST_RESULT_BOOL(varBoolForce(VARUINT(0)), false, "force uint to bool");
         TEST_RESULT_BOOL(varBoolForce(VARINT64(false)), false, "force int64 to bool");
@@ -53,48 +53,11 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("double"))
-    {
-        // Ensure type sizes are as expected
-        TEST_RESULT_UINT(sizeof(VariantDoubleConst), TEST_64BIT() ? 16 : 12, "check VariantDoubleConst size");
-        TEST_RESULT_UINT(sizeof(VariantDouble), TEST_64BIT() ? 24 : 16, "check VariantDouble size");
-
-        Variant *var = varNewDbl(44.44);
-        TEST_RESULT_DOUBLE(varDbl(var), 44.44, "double variant");
-        varFree(var);
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(varDbl(varNewStrZ("string")), AssertError, "assertion 'this->type == varTypeDouble' failed");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_DOUBLE(varDblForce(VARDBL(4.567)), 4.567, "force double to double");
-        TEST_RESULT_DOUBLE(varDblForce(varNewBool(false)), 0, "force bool to double");
-        TEST_RESULT_DOUBLE(varDblForce(VARINT(123)), 123, "force int to double");
-        TEST_RESULT_DOUBLE(varDblForce(VARINT64(999999999999)), 999999999999, "force int64 to double");
-        TEST_RESULT_DOUBLE(varDblForce(VARUINT64(9223372036854775807U)), 9223372036854775807.0, "force uint64 to double");
-        TEST_RESULT_DOUBLE(varDblForce(VARUINT(992)), 992, "force uint to double");
-        TEST_RESULT_DOUBLE(varDblForce(VARSTRDEF("879.01")), 879.01, "force String to double");
-        TEST_RESULT_DOUBLE(varDblForce(VARSTRDEF("0")), 0, "force String to double");
-        TEST_RESULT_DOUBLE(
-            varDblForce(VARUINT64(UINT64_MAX)), 18446744073709551616.0, "force max uint64 to double (it will be rounded)");
-
-        TEST_ERROR(varDblForce(VARSTRDEF("AAA")), FormatError, "unable to convert string 'AAA' to double");
-        TEST_ERROR(varDblForce(varNewVarLst(varLstNew())), AssertError, "unable to force VariantList to double");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_DOUBLE(varDbl(varDup(VARDBL(3.1415))), 3.1415, "dup double");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_BOOL(varEq(VARDBL(1.234), VARDBL(1.234)), true, "double, double eq");
-        TEST_RESULT_BOOL(varEq(VARDBL(4.321), VARDBL(1.234)), false, "double, double not eq");
-    }
-
-    // *****************************************************************************************************************************
     if (testBegin("int"))
     {
         // Ensure type sizes are as expected
-        TEST_RESULT_UINT(sizeof(VariantIntConst), 8, "check VariantIntConst size");
-        TEST_RESULT_UINT(sizeof(VariantInt), TEST_64BIT() ? 16 : 12, "check VariantInt size");
+        TEST_RESULT_UINT(sizeof(VariantIntPub), 8, "check VariantIntPub size");
+        TEST_RESULT_UINT(sizeof(VariantInt), 8, "check VariantInt size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         Variant *integer = varNewInt(44);
@@ -114,7 +77,7 @@ testRun(void)
         TEST_ERROR(varIntForce(VARUINT64(2147483648)), FormatError, "unable to convert uint64 2147483648 to int");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(varInt(varNewStrZ("string")), AssertError, "assertion 'this->type == varTypeInt' failed");
+        TEST_ERROR(varInt(varNewStrZ("string")), AssertError, "assertion 'varType(this) == varTypeInt' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_INT(varInt(varDup(VARINT(88976))), 88976, "dup int");
@@ -132,8 +95,8 @@ testRun(void)
     if (testBegin("int64"))
     {
         // Ensure type sizes are as expected
-        TEST_RESULT_UINT(sizeof(VariantInt64Const), TEST_64BIT() ? 16 : 12, "check VariantInt64Const size");
-        TEST_RESULT_UINT(sizeof(VariantInt64), TEST_64BIT() ? 24 : 16, "check VariantInt64 size");
+        TEST_RESULT_UINT(sizeof(VariantInt64Pub), TEST_64BIT() ? 16 : 12, "check VariantInt64Pub size");
+        TEST_RESULT_UINT(sizeof(VariantInt64), TEST_64BIT() ? 16 : 12, "check VariantInt64 size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         Variant *integer = varNewInt64(44);
@@ -152,11 +115,11 @@ testRun(void)
             varInt64Force(varNewStrZ("9223372036854775808")), FormatError,
             "unable to convert base 10 string '9223372036854775808' to int64");
         TEST_ERROR(varInt64Force(varNewVarLst(varLstNew())), AssertError, "unable to force VariantList to int64");
-        TEST_ERROR(varInt64Force(VARUINT64(9223372036854775808U)), FormatError,
-            "unable to convert uint64 9223372036854775808 to int64");
+        TEST_ERROR(
+            varInt64Force(VARUINT64(9223372036854775808U)), FormatError, "unable to convert uint64 9223372036854775808 to int64");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(varInt64(varNewStrZ("string")), AssertError, "assertion 'this->type == varTypeInt64' failed");
+        TEST_ERROR(varInt64(varNewStrZ("string")), AssertError, "assertion 'varType(this) == varTypeInt64' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_INT(varInt64(varDup(VARINT64(88976))), 88976, "dup int64");
@@ -173,8 +136,8 @@ testRun(void)
     if (testBegin("unsigned int"))
     {
         // Ensure type sizes are as expected
-        TEST_RESULT_UINT(sizeof(VariantUIntConst), 8, "check VariantUIntConst size");
-        TEST_RESULT_UINT(sizeof(VariantUInt), TEST_64BIT() ? 16 : 12, "check VariantUInt size");
+        TEST_RESULT_UINT(sizeof(VariantUIntPub), 8, "check VariantUIntPub size");
+        TEST_RESULT_UINT(sizeof(VariantUInt), 8, "check VariantUInt size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         Variant *unsignedint = varNewUInt(787);
@@ -200,7 +163,7 @@ testRun(void)
         TEST_ERROR(varUIntForce(VARINT(-1)), FormatError, "unable to convert int -1 to unsigned int");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(varUInt(varNewStrZ("string")), AssertError, "assertion 'this->type == varTypeUInt' failed");
+        TEST_ERROR(varUInt(varNewStrZ("string")), AssertError, "assertion 'varType(this) == varTypeUInt' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_UINT(varUInt(varDup(VARUINT(88976))), 88976, "dup uint");
@@ -214,8 +177,8 @@ testRun(void)
     if (testBegin("uint64"))
     {
         // Ensure type sizes are as expected
-        TEST_RESULT_UINT(sizeof(VariantUInt64Const), TEST_64BIT() ? 16 : 12, "check VariantUInt64Const size");
-        TEST_RESULT_UINT(sizeof(VariantUInt64), TEST_64BIT() ? 24 : 16, "check VariantUInt64 size");
+        TEST_RESULT_UINT(sizeof(VariantUInt64Pub), TEST_64BIT() ? 16 : 12, "check VariantUInt64Pub size");
+        TEST_RESULT_UINT(sizeof(VariantUInt64), TEST_64BIT() ? 16 : 12, "check VariantUInt64 size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         Variant *uint64 = varNewUInt64(44);
@@ -240,7 +203,7 @@ testRun(void)
         TEST_ERROR(varUInt64Force(VARINT(-1)), FormatError, "unable to convert int -1 to uint64");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(varUInt64(varNewStrZ("string")), AssertError, "assertion 'this->type == varTypeUInt64' failed");
+        TEST_ERROR(varUInt64(varNewStrZ("string")), AssertError, "assertion 'varType(this) == varTypeUInt64' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_UINT(varUInt64(varDup(VARUINT64(88976))), 88976, "dup uint64");
@@ -257,10 +220,10 @@ testRun(void)
     if (testBegin("keyValue"))
     {
         // Ensure type sizes are as expected
-        TEST_RESULT_UINT(sizeof(VariantKeyValue), TEST_64BIT() ? 24 : 12, "check VariantKeyValue size");
+        TEST_RESULT_UINT(sizeof(VariantKeyValue), TEST_64BIT() ? 16 : 8, "check VariantKeyValue size");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(varKv(VARINT(66)), AssertError, "assertion 'this->type == varTypeKeyValue' failed");
+        TEST_ERROR(varKv(VARINT(66)), AssertError, "assertion 'varType(this) == varTypeKeyValue' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         Variant *keyValue = NULL;
@@ -290,21 +253,21 @@ testRun(void)
     if (testBegin("String"))
     {
         // Ensure type sizes are as expected
-        TEST_RESULT_UINT(sizeof(VariantStringConst), TEST_64BIT() ? 16 : 8, "check VariantStringConst size");
-        TEST_RESULT_UINT(sizeof(VariantString), TEST_64BIT() ? 24 : 12, "check VariantString size");
+        TEST_RESULT_UINT(sizeof(VariantStringPub), TEST_64BIT() ? 16 : 8, "check VariantStringPub size");
+        TEST_RESULT_UINT(sizeof(VariantString), TEST_64BIT() ? 16 : 8, "check VariantString size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR(varStr(varNewStr(NULL)), NULL, "new null str");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        Variant *string = varNewStr(strNew("test-str"));
+        Variant *string = varNewStr(STRDEF("test-str"));
         TEST_RESULT_STR_Z(varStr(string), "test-str", "string pointer");
         varFree(string);
 
         TEST_RESULT_STR(varStr(NULL), NULL, "get null string variant");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(varStr(varNewBool(true)), AssertError, "assertion 'this->type == varTypeString' failed");
+        TEST_ERROR(varStr(varNewBool(true)), AssertError, "assertion 'varType(this) == varTypeString' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_INT(varIntForce(VARSTR(STRDEF("777"))), 777, "int from string");
@@ -323,8 +286,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR_Z(varStrForce(VARSTRDEF("teststring")), "teststring", "force string to string");
         TEST_RESULT_STR_Z(varStrForce(VARINT(999)), "999", "force int to string");
+        TEST_RESULT_STR_Z(varStrForce(VARUINT(888)), "888", "force uint to string");
         TEST_RESULT_STR_Z(varStrForce(VARINT64(9223372036854775807L)), "9223372036854775807", "force int64 to string");
-        TEST_RESULT_STR_Z(varStrForce(VARDBL((double)999999999.123456)), "999999999.123456", "force double to string");
         TEST_RESULT_STR_Z(varStrForce(varNewBool(true)), "true", "force bool to string");
         TEST_RESULT_STR_Z(varStrForce(varNewBool(false)), "false", "force bool to string");
         TEST_RESULT_STR_Z(varStrForce(VARUINT64(18446744073709551615U)), "18446744073709551615", "force uint64 to string");
@@ -348,16 +311,25 @@ testRun(void)
         TEST_RESULT_PTR(varDup(NULL), NULL, "dup NULL");
         TEST_RESULT_BOOL(varEq(VARSTRDEF("expect-equal"), VARSTRDEF("expect-equal")), true, "string, string eq");
         TEST_RESULT_BOOL(varEq(VARSTRDEF("Y"), VARSTRDEF("X")), false, "string, string not eq");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("string large enough to need separate allocation");
+
+        char *compare = memNew(MEM_CONTEXT_ALLOC_EXTRA_MAX + 1);
+        memset(compare, 'A', MEM_CONTEXT_ALLOC_EXTRA_MAX);
+        compare[MEM_CONTEXT_ALLOC_EXTRA_MAX] = '\0';
+
+        TEST_RESULT_STR_Z(varStr(varNewStrZ(compare)), compare, "compare");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("VariantList"))
     {
         // Ensure type sizes are as expected
-        TEST_RESULT_UINT(sizeof(VariantVariantList), TEST_64BIT() ? 24 : 12, "check VariantVariantList size");
+        TEST_RESULT_UINT(sizeof(VariantVariantList), TEST_64BIT() ? 16 : 8, "check VariantVariantList size");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(varVarLst(VARINT(66)), AssertError, "assertion 'this->type == varTypeVariantList' failed");
+        TEST_ERROR(varVarLst(VARINT(66)), AssertError, "assertion 'varType(this) == varTypeVariantList' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         Variant *listVar = NULL;
@@ -366,12 +338,14 @@ testRun(void)
         TEST_ASSIGN(listVar, varNewVarLst(varLstNew()), "new empty");
 
         TEST_RESULT_INT(varLstSize(varVarLst(listVar)), 0, "    empty size");
+        TEST_RESULT_BOOL(varLstEmpty(varVarLst(listVar)), true, "    empty");
         TEST_RESULT_PTR(varVarLst(NULL), NULL, "get null var list");
 
         TEST_RESULT_PTR(varLstAdd(varVarLst(listVar), varNewBool(true)), varVarLst(listVar), "    add bool");
         TEST_RESULT_PTR(varLstAdd(varVarLst(listVar), varNewInt(55)), varVarLst(listVar), "    add int");
 
         TEST_RESULT_INT(varLstSize(varVarLst(listVar)), 2, "    size with items");
+        TEST_RESULT_BOOL(varLstEmpty(varVarLst(listVar)), false, "    not empty");
 
         TEST_RESULT_BOOL(varBool(varLstGet(varVarLst(listVar), 0)), true, "    get bool");
         TEST_RESULT_INT(varInt(varLstGet(varVarLst(listVar), 1)), 55, "    get int");
@@ -396,11 +370,19 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("varToLog"))
     {
-        TEST_RESULT_STR_Z(varToLog(varNewStrZ("testme")), "{\"testme\"}", "format String");
-        TEST_RESULT_STR_Z(varToLog(varNewBool(false)), "{false}", "format bool");
-        TEST_RESULT_STR_Z(varToLog(varNewKv(kvNew())), "{KeyValue}", "format KeyValue");
-        TEST_RESULT_STR_Z(varToLog(varNewVarLst(varLstNew())), "{VariantList}", "format VariantList");
-        TEST_RESULT_STR_Z(varToLog(NULL), "null", "format null");
+        char logBuf[STACK_TRACE_PARAM_MAX];
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(varNewStrZ("testme"), varToLog, logBuf, sizeof(logBuf)), "varToLog");
+        TEST_RESULT_Z(logBuf, "{\"testme\"}", "check log");
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(varNewBool(false), varToLog, logBuf, sizeof(logBuf)), "varToLog");
+        TEST_RESULT_Z(logBuf, "{false}", "check log");
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(varNewKv(kvNew()), varToLog, logBuf, sizeof(logBuf)), "varToLog");
+        TEST_RESULT_Z(logBuf, "{KeyValue}", "check log");
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(varNewVarLst(varLstNew()), varToLog, logBuf, sizeof(logBuf)), "varToLog");
+        TEST_RESULT_Z(logBuf, "{VariantList}", "check log");
     }
 
     // *****************************************************************************************************************************
@@ -417,7 +399,7 @@ testRun(void)
         MEM_CONTEXT_TEMP_END();
 
         TEST_RESULT_PTR(varLstAdd(list, varNewInt(27)), list, "add int");
-        TEST_RESULT_PTR(varLstAdd(list, varNewStr(strNew("test-str"))), list, "add string");
+        TEST_RESULT_PTR(varLstAdd(list, varNewStr(STRDEF("test-str"))), list, "add string");
 
         TEST_RESULT_INT(varLstSize(list), 2, "list size");
 
@@ -436,7 +418,7 @@ testRun(void)
         varLstAdd(list, varNewStrZ("string1"));
         varLstAdd(list, varNewStrZ("string2"));
 
-        TEST_RESULT_STR_Z(strLstJoin(strLstNewVarLst(varLstDup(list)), ", "), "string1, string2", "duplicate variant list");
+        TEST_RESULT_STRLST_Z(strLstNewVarLst(varLstDup(list)), "string1\nstring2\n", "duplicate variant list");
 
         TEST_RESULT_PTR(varLstDup(NULL), NULL, "duplicate null list");
     }
@@ -446,14 +428,13 @@ testRun(void)
     {
         StringList *listStr = strLstNew();
 
-        strLstAdd(listStr, strNew("string1"));
-        strLstAdd(listStr, strNew("string2"));
+        strLstAddZ(listStr, "string1");
+        strLstAddZ(listStr, "string2");
 
-        TEST_RESULT_STR_Z(
-            strLstJoin(strLstNewVarLst(varLstNewStrLst(listStr)), ", "), "string1, string2", "variant list from string list");
+        TEST_RESULT_STRLST_Z(strLstNewVarLst(varLstNewStrLst(listStr)), "string1\nstring2\n", "variant list from string list");
 
         TEST_RESULT_PTR(varLstNewStrLst(NULL), NULL, "variant list from null string list");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

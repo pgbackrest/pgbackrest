@@ -8,9 +8,11 @@ Database Helper
 #include "db/helper.h"
 #include "postgres/interface.h"
 #include "protocol/helper.h"
+#include "storage/helper.h"
 #include "version.h"
 
 /**********************************************************************************************************************************/
+// Helper to get a connection to the specified pg cluster
 static Db *
 dbGetIdx(unsigned int pgIdx)
 {
@@ -24,7 +26,7 @@ dbGetIdx(unsigned int pgIdx)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const String *applicationName = strNewFmt(PROJECT_NAME " [%s]", cfgCommandName(cfgCommand()));
+        const String *applicationName = strNewFmt(PROJECT_NAME " [%s]", cfgCommandName());
 
         if (pgIsLocal(pgIdx))
         {
@@ -32,11 +34,11 @@ dbGetIdx(unsigned int pgIdx)
                 pgClientNew(
                     cfgOptionIdxStrNull(cfgOptPgSocketPath, pgIdx), cfgOptionIdxUInt(cfgOptPgPort, pgIdx),
                     cfgOptionIdxStr(cfgOptPgDatabase, pgIdx), cfgOptionIdxStrNull(cfgOptPgUser, pgIdx),
-                    (TimeMSec)(cfgOptionDbl(cfgOptDbTimeout) * MSEC_PER_SEC)),
-                NULL, applicationName);
+                    cfgOptionUInt64(cfgOptDbTimeout)),
+                NULL, storagePgIdx(pgIdx), applicationName);
         }
         else
-            result = dbNew(NULL, protocolRemoteGet(protocolStorageTypePg, pgIdx), applicationName);
+            result = dbNew(NULL, protocolRemoteGet(protocolStorageTypePg, pgIdx), storagePgIdx(pgIdx), applicationName);
 
         dbMove(result, memContextPrior());
     }
@@ -45,10 +47,7 @@ dbGetIdx(unsigned int pgIdx)
     FUNCTION_LOG_RETURN(DB, result);
 }
 
-/***********************************************************************************************************************************
-Get primary cluster or primary and standby cluster
-***********************************************************************************************************************************/
-DbGetResult
+FN_EXTERN DbGetResult
 dbGet(bool primaryOnly, bool primaryRequired, bool standbyRequired)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -56,6 +55,8 @@ dbGet(bool primaryOnly, bool primaryRequired, bool standbyRequired)
         FUNCTION_LOG_PARAM(BOOL, primaryRequired);
         FUNCTION_LOG_PARAM(BOOL, standbyRequired);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_STRUCT();
 
     ASSERT(!(primaryOnly && standbyRequired));
 
@@ -90,7 +91,7 @@ dbGet(bool primaryOnly, bool primaryRequired, bool standbyRequired)
             CATCH_ANY()
             {
                 LOG_WARN_FMT(
-                    "unable to check pg-%u: [%s] %s", cfgOptionGroupIdxToKey(cfgOptGrpPg, pgIdx), errorTypeName(errorType()),
+                    "unable to check %s: [%s] %s", cfgOptionGroupName(cfgOptGrpPg, pgIdx), errorTypeName(errorType()),
                     errorMessage());
                 db = NULL;
             }
@@ -127,7 +128,12 @@ dbGet(bool primaryOnly, bool primaryRequired, bool standbyRequired)
 
         // Error if no primary was found
         if (result.primary == NULL && primaryRequired)
-            THROW(DbConnectError, "unable to find primary cluster - cannot proceed");
+        {
+            THROW(
+                DbConnectError,
+                "unable to find primary cluster - cannot proceed\n"
+                "HINT: are all available clusters in recovery?");
+        }
 
         // Error if no standby was found
         if (result.standby == NULL && standbyRequired)
@@ -138,5 +144,5 @@ dbGet(bool primaryOnly, bool primaryRequired, bool standbyRequired)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(DB_GET_RESULT, result);
+    FUNCTION_LOG_RETURN_STRUCT(result);
 }

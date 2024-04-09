@@ -1,0 +1,132 @@
+<release date="2023-11-27" version="2.49" title="Remove PostgreSQL 9.3 Support">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <commit subject="Remove unused header."/>
+                <commit subject="Fix regression in retries.">
+                    <github-issue id="2200"/>
+                    <github-issue id="2214"/>
+                    <github-pull-request id="2221"/>
+                </commit>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="norman.adkins"/>
+                    <release-item-ideator id="tanel.suurhans"/>
+                    <release-item-ideator id="jordan.english"/>
+                    <release-item-ideator id="timothee.peignier"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Fix regression in retries.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2219"/>
+                <github-pull-request id="2226"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="luc.languagetools"/>
+                    <release-item-contributor id="reid.thompson"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Fix recursive path remove in <proper>SFTP</proper> storage driver.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-improvement-list>
+            <release-item>
+                <github-pull-request id="2220"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Remove support for <proper>PostgreSQL</proper> <id>9.3</id>.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <github-pull-request id="2224"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="georgy.shelkovy"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix <code>storageReadRemote()</code> to return actual read bytes.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-feature-list>
+            <release-item>
+                <github-pull-request id="2202"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Document maintainer options.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update point-in-time recovery documentation for <postgres/> &gt;= 13.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-development-list>
+            <release-item>
+                <commit subject="Add new XML functions required for building documentation."/>
+                <commit subject="Remove unused references to DocConfig and DocConfigData Perl modules."/>
+                <commit subject="Allow documentation source file to be specified in manifest."/>
+                <commit subject="Parse defaults and text sections in help.xml."/>
+                <commit subject="Use CSS to number sections in documentation."/>
+                <commit subject="Build command and configuration reference in C."/>
+                <commit subject="Simplify section titles in configuration reference."/>
+                <commit subject="Simplify description rendering in command and configuration reference."/>
+
+                <p>Build command and configuration reference in C.</p>
+            </release-item>
+        </release-development-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-improvement-list>
+            <release-item>
+                <github-issue id="2193"/>
+                <github-pull-request id="2194"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="wu.ning"/>
+                    <release-item-contributor id="reid.thompson"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Allow <id>config/load</id> unit test to run without <id>libssh2</id> installed.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <github-issue id="2228"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="georgy.shelkovy"/>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Remove unused fields from <code>backupJobResult()</code> test in command/backup unit.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+</release>

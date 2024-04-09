@@ -1,18 +1,18 @@
 /***********************************************************************************************************************************
 PostgreSQL Types That Do Not Vary By Version
 
-Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
+Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
 Portions Copyright (c) 1994, Regents of the University of California
 
-For each supported release of PostgreSQL check the types in this file to see if they have changed.  The easiest way to do this is to
-copy and paste in place and check git to see if there are any diffs.  Tabs should be copied as is to make this process easy even
+For each supported release of PostgreSQL check the types in this file to see if they have changed. The easiest way to do this is to
+copy and paste in place and check git to see if there are any diffs. Tabs should be copied as is to make this process easy even
 though the pgBackRest project does not use tabs elsewhere.
 
-Comments should be copied with the types they apply to, even if the comment has not changed.  This does get repetitive, but has no
+Comments should be copied with the types they apply to, even if the comment has not changed. This does get repetitive, but has no
 runtime cost and makes the rules a bit easier to follow.
 
-If a comment is changed then the newer comment should be copied.  If the *type* has changed then it must be moved to version.auto.c
-which could have a large impact on dependencies.  Hopefully that won't happen often.
+If a comment is changed then the newer comment should be copied. If the *type* has changed then it must be moved to version.auto.c
+which could have a large impact on dependencies. Hopefully that won't happen often.
 
 Note when adding new types it is safer to add them to version.auto.c unless they are needed for code that must be compatible across
 all versions of PostgreSQL supported by pgBackRest.
@@ -22,16 +22,6 @@ all versions of PostgreSQL supported by pgBackRest.
 
 #include "common/assert.h"
 #include "postgres/interface.h"
-
-/***********************************************************************************************************************************
-Define Assert() as ASSERT()
-***********************************************************************************************************************************/
-#define Assert(condition)                                           ASSERT(condition)
-
-/***********************************************************************************************************************************
-Define BLCKSZ as PG_PAGE_SIZE_DEFAULT
-***********************************************************************************************************************************/
-#define BLCKSZ                                                      PG_PAGE_SIZE_DEFAULT
 
 /***********************************************************************************************************************************
 Types from src/include/c.h
@@ -134,10 +124,13 @@ typedef struct
 	uint32		xrecoff;		/* low bits */
 } PageXLogRecPtr;
 
-// PageXLogRecPtrGet macro
+// PG_DATA_CHECKSUM_VERSION define
 // ---------------------------------------------------------------------------------------------------------------------------------
-#define PageXLogRecPtrGet(val) \
-	((uint64) (val).xlogid << 32 | (val).xrecoff)
+/*
+ * As of Release 9.3, the checksum version must also be considered when
+ * handling pages.
+ */
+#define PG_DATA_CHECKSUM_VERSION	1
 
 // PageHeaderData type
 // ---------------------------------------------------------------------------------------------------------------------------------
@@ -186,7 +179,6 @@ typedef struct
  * On the high end, we can only support pages up to 32KB because lp_off/lp_len
  * are 15 bits.
  */
-
 typedef struct PageHeaderData
 {
 	/* XXX LSN is member of *any* block, not only page-organized ones */
@@ -206,12 +198,68 @@ typedef struct PageHeaderData
 // ---------------------------------------------------------------------------------------------------------------------------------
 typedef PageHeaderData *PageHeader;
 
-// PageIsNew macro
+/***********************************************************************************************************************************
+Types from src/include/access/transam.h
+***********************************************************************************************************************************/
+
+// FirstNormalObjectId define
 // ---------------------------------------------------------------------------------------------------------------------------------
 /*
- * PageIsNew
- *		returns true iff page has not been initialized (by PageInit)
+ *		Object ID (OID) zero is InvalidOid.
+ *
+ *		OIDs 1-9999 are reserved for manual assignment (see .dat files in
+ *		src/include/catalog/).  Of these, 8000-9999 are reserved for
+ *		development purposes (such as in-progress patches and forks);
+ *		they should not appear in released versions.
+ *
+ *		OIDs 10000-11999 are reserved for assignment by genbki.pl, for use
+ *		when the .dat files in src/include/catalog/ do not specify an OID
+ *		for a catalog entry that requires one.  Note that genbki.pl assigns
+ *		these OIDs independently in each catalog, so they're not guaranteed
+ *		to be globally unique.  Furthermore, the bootstrap backend and
+ *		initdb's post-bootstrap processing can also assign OIDs in this range.
+ *		The normal OID-generation logic takes care of any OID conflicts that
+ *		might arise from that.
+ *
+ *		OIDs 12000-16383 are reserved for unpinned objects created by initdb's
+ *		post-bootstrap processing.  initdb forces the OID generator up to
+ *		12000 as soon as it's made the pinned objects it's responsible for.
+ *
+ *		OIDs beginning at 16384 are assigned from the OID generator
+ *		during normal multiuser operation.  (We force the generator up to
+ *		16384 as soon as we are in normal operation.)
+ *
+ * The choices of 8000, 10000 and 12000 are completely arbitrary, and can be
+ * moved if we run low on OIDs in any category.  Changing the macros below,
+ * and updating relevant documentation (see bki.sgml and RELEASE_CHANGES),
+ * should be sufficient to do this.  Moving the 16384 boundary between
+ * initdb-assigned OIDs and user-defined objects would be substantially
+ * more painful, however, since some user-defined OIDs will appear in
+ * on-disk data; such a change would probably break pg_upgrade.
+ *
+ * NOTE: if the OID generator wraps around, we skip over OIDs 0-16383
+ * and resume with 16384.  This minimizes the odds of OID conflict, by not
+ * reassigning OIDs that might have been assigned during initdb.  Critically,
+ * it also ensures that no user-created object will be considered pinned.
  */
-#define PageIsNew(page) (((PageHeader) (page))->pd_upper == 0)
+#define FirstNormalObjectId		16384
+
+/***********************************************************************************************************************************
+Types from src/include/access/xlog_internal.h
+***********************************************************************************************************************************/
+
+// WalSegMinSize/WalSegMinSize macros
+// ---------------------------------------------------------------------------------------------------------------------------------
+/* wal_segment_size can range from 1MB to 1GB */
+#define WalSegMinSize 1024 * 1024
+#define WalSegMaxSize 1024 * 1024 * 1024
+
+// IsPowerOf2/IsValidWalSegSize macros
+// ---------------------------------------------------------------------------------------------------------------------------------
+/* check that the given size is a valid wal_segment_size */
+#define IsPowerOf2(x) (x > 0 && ((x) & ((x)-1)) == 0)
+#define IsValidWalSegSize(size) \
+	 (IsPowerOf2(size) && \
+	 ((size) >= WalSegMinSize && (size) <= WalSegMaxSize))
 
 #endif

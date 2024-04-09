@@ -1,30 +1,26 @@
 /***********************************************************************************************************************************
 Log Test Harness
 ***********************************************************************************************************************************/
+#include "build.auto.h"
+
 #include <fcntl.h>
-#include <unistd.h>
 #include <regex.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
+#include "build/common/regExp.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/regExp.h"
 #include "common/type/stringList.h"
 
 #include "common/harnessDebug.h"
 #include "common/harnessTest.h"
 
-#ifndef NO_LOG
-
 /***********************************************************************************************************************************
-Expose log internal data for unit testing/debugging
+Include shimmed C modules
 ***********************************************************************************************************************************/
-extern LogLevel logLevelFile;
-extern int logFdFile;
-extern bool logFileBanner;
-extern unsigned int logProcessId;
-extern void logAnySet(void);
+{[SHIM_MODULE]}
 
 /***********************************************************************************************************************************
 Log settings for testing
@@ -62,7 +58,7 @@ harnessLogOpen(const char *logFile, int flags, int mode)
     if (result == -1)
         THROW_SYS_ERROR_FMT(FileOpenError, "unable to open log file '%s'", logFile);
 
-    FUNCTION_HARNESS_RESULT(INT, result);
+    FUNCTION_HARNESS_RETURN(INT, result);
 }
 
 /***********************************************************************************************************************************
@@ -76,11 +72,11 @@ harnessLogInit(void)
     logInit(logLevelTestDefault, logLevelOff, logLevelInfo, false, logProcessId, 99, false);
     logFileBanner = true;
 
-    snprintf(logFile, sizeof(logFile), "%s/expect.log", testDataPath());
+    snprintf(logFile, sizeof(logFile), "%s/expect.log", hrnPath());
     logFdFile = harnessLogOpen(logFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
     logAnySet();
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -90,6 +86,56 @@ harnessLogDryRunSet(bool dryRun)
     logDryRunTest = dryRun;
 
     logInit(logLevelTestDefault, logLevelOff, logLevelTest, false, logProcessId, 99, logDryRunTest);
+}
+
+/**********************************************************************************************************************************/
+unsigned int
+hrnLogLevelFile(void)
+{
+    return logLevelFile;
+}
+
+void
+hrnLogLevelFileSet(unsigned int logLevel)
+{
+    logLevelFile = logLevel;
+}
+
+unsigned int
+hrnLogLevelStdOut(void)
+{
+    return logLevelStdOut;
+}
+
+void
+hrnLogLevelStdOutSet(unsigned int logLevel)
+{
+    logLevelStdOut = logLevel;
+}
+
+unsigned int
+hrnLogLevelStdErr(void)
+{
+    return logLevelStdErr;
+}
+
+void
+hrnLogLevelStdErrSet(unsigned int logLevel)
+{
+    logLevelStdErr = logLevel;
+}
+
+/**********************************************************************************************************************************/
+bool
+hrnLogTimestamp(void)
+{
+    return logTimestamp;
+}
+
+void
+hrnLogTimestampSet(bool log)
+{
+    logTimestamp = log;
 }
 
 /***********************************************************************************************************************************
@@ -130,7 +176,8 @@ harnessLogLevelDefaultSet(LogLevel logLevel)
 }
 
 /**********************************************************************************************************************************/
-void hrnLogProcessIdSet(unsigned int processId)
+void
+hrnLogProcessIdSet(unsigned int processId)
 {
     logProcessId = processId;
 }
@@ -172,7 +219,7 @@ harnessLogLoad(const char *logFile)
     if (totalBytes > 0)
         harnessLogBuffer[totalBytes - 1] = 0;
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -210,7 +257,7 @@ hrnLogReplaceAdd(const char *expression, const char *expressionSub, const char *
     {
         MEM_CONTEXT_BEGIN(memContextTop())
         {
-            MEM_CONTEXT_NEW_BEGIN("HarnessLog")
+            MEM_CONTEXT_NEW_BEGIN(HarnessLog, .childQty = MEM_CONTEXT_QTY_MAX)
             {
                 harnessLog.memContext = MEM_CONTEXT_NEW();
             }
@@ -232,11 +279,11 @@ hrnLogReplaceAdd(const char *expression, const char *expressionSub, const char *
     {
         HarnessLogReplace logReplace =
         {
-            .expression = strNew(expression),
-            .regExp = regExpNew(STRDEF(expression)),
-            .expressionSub = expressionSub == NULL ? NULL : strNew(expressionSub),
-            .regExpSub = expressionSub == NULL ? NULL : regExpNew(STRDEF(expressionSub)),
-            .replacement = strNew(replacement),
+            .expression = strNewZ(expression),
+            .regExp = regExpNew(STR(expression)),
+            .expressionSub = expressionSub == NULL ? NULL : strNewZ(expressionSub),
+            .regExpSub = expressionSub == NULL ? NULL : regExpNew(STR(expressionSub)),
+            .replacement = strNewZ(replacement),
             .matchList = strLstNew(),
             .version = version,
         };
@@ -245,7 +292,7 @@ hrnLogReplaceAdd(const char *expression, const char *expressionSub, const char *
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -257,7 +304,7 @@ hrnLogReplaceClear(void)
     if (harnessLog.replaceList != NULL)
         lstClear(harnessLog.replaceList);
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -282,10 +329,11 @@ hrnLogReplace(void)
                 while (regExpMatch(logReplace->regExp, STRDEF(harnessLogBuffer)))
                 {
                     // Get the match
-                    String *match = regExpMatchStr(logReplace->regExp);
+                    String *match = regExpMatchStr(logReplace->regExp, STRDEF(harnessLogBuffer));
 
                     // Find beginning of match
-                    char *begin = harnessLogBuffer + (regExpMatchPtr(logReplace->regExp) - harnessLogBuffer);
+                    char *begin =
+                        harnessLogBuffer + (regExpMatchPtr(logReplace->regExp, STRDEF(harnessLogBuffer)) - harnessLogBuffer);
 
                     // If there is a sub expression then evaluate it
                     if (logReplace->regExpSub != NULL)
@@ -299,18 +347,18 @@ hrnLogReplace(void)
                         }
 
                         // Find beginning of match
-                        begin += regExpMatchPtr(logReplace->regExpSub) - strZ(match);
+                        begin += regExpMatchPtr(logReplace->regExpSub, match) - strZ(match);
 
                         // Get the match
-                        match = regExpMatchStr(logReplace->regExpSub);
+                        match = regExpMatchStr(logReplace->regExpSub, match);
                     }
 
-                    // Build replacement string.  If versioned then append the version number.
-                    String *replace = strNewFmt("[%s", strZ(logReplace->replacement));
+                    // Build replacement string. If versioned then append the version number.
+                    String *replace = strCatFmt(strNew(), "[%s", strZ(logReplace->replacement));
 
                     if (logReplace->version)
                     {
-                        unsigned int index = lstFindIdx((List *)logReplace->matchList, &match);
+                        unsigned int index = strLstFindIdxP(logReplace->matchList, match);
 
                         if (index == LIST_NOT_FOUND)
                         {
@@ -328,7 +376,7 @@ hrnLogReplace(void)
                     int diff = (int)strSize(replace) - (int)strSize(match);
 
                     // Make sure we won't overflow the buffer
-                    CHECK((size_t)((int)strlen(harnessLogBuffer) + diff) < sizeof(harnessLogBuffer) - 1);
+                    ASSERT((size_t)((int)strlen(harnessLogBuffer) + diff) < sizeof(harnessLogBuffer) - 1);
 
                     // Move data from end of string enough to make room for the replacement and copy replacement
                     memmove(end + diff, end, strlen(end) + 1);
@@ -339,85 +387,59 @@ hrnLogReplace(void)
         MEM_CONTEXT_TEMP_END();
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Compare log to a static string
-
-After the comparison the log is cleared so the next result can be compared.
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
 harnessLogResult(const char *expected)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(STRINGZ, expected);
-
-        FUNCTION_HARNESS_ASSERT(expected != NULL);
     FUNCTION_HARNESS_END();
+
+    ASSERT(expected != NULL);
 
     harnessLogLoad(logFile);
     hrnLogReplace();
 
-    expected = hrnReplaceKey(expected);
-
     if (strcmp(harnessLogBuffer, expected) != 0)
     {
         THROW_FMT(
-            AssertError, "\n\nactual log:\n\n%s\n\nbut diff is (- remove from expected, + add to expected):\n\n%s",
+            AssertError, "\nACTUAL LOG:\n\n%s\n\nBUT DIFF FROM EXPECTED IS (- remove from expected, + add to expected):\n\n%s",
             harnessLogBuffer, hrnDiff(expected, harnessLogBuffer));
     }
 
     close(logFdFile);
     logFdFile = harnessLogOpen(logFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Compare log to a regexp
-
-After the comparison the log is cleared so the next result can be compared.
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
-harnessLogResultRegExp(const char *expression)
+harnessLogResultEmptyOrContains(const char *const contains)
 {
     FUNCTION_HARNESS_BEGIN();
-        FUNCTION_HARNESS_PARAM(STRINGZ, expression);
-
-        FUNCTION_HARNESS_ASSERT(expression != NULL);
+        FUNCTION_HARNESS_PARAM(STRINGZ, contains);
     FUNCTION_HARNESS_END();
 
-    regex_t regExp;
+    ASSERT(contains != NULL);
 
-    TRY_BEGIN()
+    harnessLogLoad(logFile);
+    hrnLogReplace();
+
+    if (strlen(harnessLogBuffer) != 0 && strstr(harnessLogBuffer, contains) == NULL)
     {
-        harnessLogLoad(logFile);
-
-        // Compile the regexp and process errors
-        int result = 0;
-
-        if ((result = regcomp(&regExp, expression, REG_NOSUB | REG_EXTENDED)) != 0)
-        {
-            char buffer[4096];
-            regerror(result, NULL, buffer, sizeof(buffer));
-            THROW(FormatError, buffer);
-        }
-
-        // Do the match
-        if (regexec(&regExp, harnessLogBuffer, 0, NULL, 0) != 0)
-            THROW_FMT(AssertError, "\n\nexpected log regexp:\n\n%s\n\nbut actual log was:\n\n%s\n\n", expression, harnessLogBuffer);
-
-        close(logFdFile);
-        logFdFile = harnessLogOpen(logFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
+        THROW_FMT(
+            AssertError, "\nLOG MUST CONTAIN:\n\n%s\n\nBUT WAS ACTUALLY:\n\n%s",
+            contains, harnessLogBuffer);
     }
-    FINALLY()
-    {
-        regfree(&regExp);
-    }
-    TRY_END();
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    close(logFdFile);
+    logFdFile = harnessLogOpen(logFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
+
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -431,10 +453,11 @@ harnessLogFinal(void)
     harnessLogLoad(logFile);
     hrnLogReplace();
 
+    // Close expect log file
+    close(logFdFile);
+
     if (strcmp(harnessLogBuffer, "") != 0)
         THROW_FMT(AssertError, "\n\nexpected log to be empty but actual log was:\n\n%s\n\n", harnessLogBuffer);
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
-
-#endif

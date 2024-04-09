@@ -11,6 +11,15 @@ Read from a Buffer object using the IoRead interface.
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-IoRead *ioBufferReadNew(const Buffer *buffer);
+FN_EXTERN IoRead *ioBufferReadNew(const Buffer *buffer);
+
+// Construct and open buffer read
+FN_INLINE_ALWAYS IoRead *
+ioBufferReadNewOpen(const Buffer *const buffer)
+{
+    IoRead *const result = ioBufferReadNew(buffer);
+    ioReadOpen(result);
+    return result;
+}
 
 #endif

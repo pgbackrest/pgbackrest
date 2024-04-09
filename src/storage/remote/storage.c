@@ -6,17 +6,11 @@ Remote Storage
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/type/json.h"
 #include "common/type/object.h"
+#include "common/type/pack.h"
 #include "storage/remote/protocol.h"
 #include "storage/remote/read.h"
-#include "storage/remote/storage.intern.h"
 #include "storage/remote/write.h"
-
-/***********************************************************************************************************************************
-Storage type
-***********************************************************************************************************************************/
-STRING_EXTERN(STORAGE_REMOTE_TYPE_STR,                              STORAGE_REMOTE_TYPE);
 
 /***********************************************************************************************************************************
 Object type
@@ -24,37 +18,99 @@ Object type
 struct StorageRemote
 {
     STORAGE_COMMON_MEMBER;
-    MemContext *memContext;
     ProtocolClient *client;                                         // Protocol client
     unsigned int compressLevel;                                     // Protocol compression level
 };
 
 /**********************************************************************************************************************************/
-// Helper to parse storage info from the protocol output
+typedef struct StorageRemoteInfoData
+{
+    MemContext *memContext;                                         // Mem context used to store values from last call
+    time_t timeModifiedLast;                                        // timeModified from last call
+    mode_t modeLast;                                                // mode from last call
+    uid_t userIdLast;                                               // userId from last call
+    gid_t groupIdLast;                                              // groupId from last call
+    String *user;                                                   // user from last call
+    String *group;                                                  // group from last call
+} StorageRemoteInfoData;
+
+// Helper to get storage info from the protocol output
 static void
-storageRemoteInfoParse(ProtocolClient *client, StorageInfo *info)
+storageRemoteInfoGet(StorageRemoteInfoData *const data, PackRead *const read, StorageInfo *const info)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PROTOCOL_CLIENT, client);
+        FUNCTION_TEST_PARAM_P(VOID, data);
+        FUNCTION_TEST_PARAM(PACK_READ, read);
         FUNCTION_TEST_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
 
-    info->type = jsonToUInt(protocolClientReadLine(client));
-    info->timeModified = (time_t)jsonToUInt64(protocolClientReadLine(client));
+    FUNCTION_AUDIT_HELPER();
 
+    ASSERT(data != NULL);
+    ASSERT(read != NULL);
+    ASSERT(info != NULL);
+
+    // Read type and time modified
+    info->type = pckReadU32P(read);
+    info->timeModified = pckReadTimeP(read) + data->timeModifiedLast;
+
+    // Read size for files
     if (info->type == storageTypeFile)
-        info->size = jsonToUInt64(protocolClientReadLine(client));
+        info->size = pckReadU64P(read);
 
+    // Read fields needed for detail level
     if (info->level >= storageInfoLevelDetail)
     {
-        info->userId = jsonToUInt(protocolClientReadLine(client));
-        info->user = jsonToStr(protocolClientReadLine(client));
-        info->groupId = jsonToUInt(protocolClientReadLine(client));
-        info->group = jsonToStr(protocolClientReadLine(client));
-        info->mode = jsonToUInt(protocolClientReadLine(client));
+        // Read mode
+        info->mode = pckReadModeP(read, .defaultValue = data->modeLast);
 
+        // Read user id/name
+        info->userId = pckReadU32P(read, .defaultValue = data->userIdLast);
+
+        if (pckReadBoolP(read))                                                                                     // {vm_covered}
+            info->user = NULL;                                                                                      // {vm_covered}
+        else
+            info->user = pckReadStrP(read, .defaultValue = data->user);
+
+        // Read group id/name
+        info->groupId = pckReadU32P(read, .defaultValue = data->groupIdLast);
+
+        if (pckReadBoolP(read))                                                                                     // {vm_covered}
+            info->group = NULL;                                                                                     // {vm_covered}
+        else
+            info->group = pckReadStrP(read, .defaultValue = data->group);
+
+        // Read link destination
         if (info->type == storageTypeLink)
-            info->linkDestination = jsonToStr(protocolClientReadLine(client));
+            info->linkDestination = pckReadStrP(read);
+    }
+
+    // Store defaults to use for the next call
+    data->timeModifiedLast = info->timeModified;
+    data->modeLast = info->mode;
+    data->userIdLast = info->userId;
+    data->groupIdLast = info->groupId;
+
+    if (info->user != NULL && !strEq(info->user, data->user))                                                       // {vm_covered}
+    {
+        strFree(data->user);
+
+        MEM_CONTEXT_BEGIN(data->memContext)
+        {
+            data->user = strDup(info->user);
+        }
+        MEM_CONTEXT_END();
+    }
+
+    if (info->group != NULL && !strEq(info->group, data->group))                                                    // {vm_covered}
+    {
+        strFree(data->group);
+
+        MEM_CONTEXT_BEGIN(data->memContext)
+        {
+            data->group = strDup(info->group);
+        }
+        MEM_CONTEXT_END();
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -72,37 +128,42 @@ storageRemoteInfo(THIS_VOID, const String *file, StorageInfoLevel level, Storage
         FUNCTION_LOG_PARAM(BOOL, param.followLink);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_STRUCT();
+
     ASSERT(this != NULL);
 
     StorageInfo result = {.level = level};
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_INFO_STR);
-        protocolCommandParamAdd(command, VARSTR(file));
-        protocolCommandParamAdd(command, VARUINT(level));
-        protocolCommandParamAdd(command, VARBOOL(param.followLink));
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_INFO);
+        PackWrite *const commandParam = protocolCommandParam(command);
 
-        result.exists = varBool(protocolClientExecute(this->client, command, true));
+        pckWriteStrP(commandParam, file);
+        pckWriteU32P(commandParam, level);
+        pckWriteBoolP(commandParam, param.followLink);
+
+        // Put command
+        protocolClientCommandPut(this->client, command, false);
+
+        // Read info from protocol
+        PackRead *read = protocolClientDataGet(this->client);
+
+        result.exists = pckReadBoolP(read);
 
         if (result.exists)
         {
-            // Read info from protocol
-            storageRemoteInfoParse(this->client, &result);
+            StorageRemoteInfoData parseData = {.memContext = memContextCurrent()};
 
-            // Acknowledge command completed
-            protocolClientReadOutput(this->client, false);
-
-            // Duplicate strings into the prior context
+            // Read info from protocol into prior context
             MEM_CONTEXT_PRIOR_BEGIN()
             {
-                result.name = strDup(result.name);
-                result.linkDestination = strDup(result.linkDestination);
-                result.user = strDup(result.user);
-                result.group = strDup(result.group);
+                storageRemoteInfoGet(&parseData, read, &result);
             }
             MEM_CONTEXT_PRIOR_END();
         }
+
+        protocolClientDataEndGet(this->client);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -110,10 +171,42 @@ storageRemoteInfo(THIS_VOID, const String *file, StorageInfoLevel level, Storage
 }
 
 /**********************************************************************************************************************************/
-static bool
-storageRemoteInfoList(
-    THIS_VOID, const String *path, StorageInfoLevel level, StorageInfoListCallback callback, void *callbackData,
-    StorageInterfaceInfoListParam param)
+static void
+storageRemoteLinkCreate(
+    THIS_VOID, const String *const target, const String *const linkPath, const StorageInterfaceLinkCreateParam param)
+{
+    THIS(StorageRemote);
+
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
+        FUNCTION_LOG_PARAM(STRING, target);
+        FUNCTION_LOG_PARAM(STRING, linkPath);
+        FUNCTION_LOG_PARAM(ENUM, param.linkType);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(target != NULL);
+    ASSERT(linkPath != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_LINK_CREATE);
+        PackWrite *const commandParam = protocolCommandParam(command);
+
+        pckWriteStrP(commandParam, target);
+        pckWriteStrP(commandParam, linkPath);
+        pckWriteU32P(commandParam, param.linkType);
+
+        protocolClientExecute(this->client, command, false);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+static StorageList *
+storageRemoteList(THIS_VOID, const String *const path, const StorageInfoLevel level, const StorageInterfaceListParam param)
 {
     THIS(StorageRemote);
 
@@ -121,54 +214,59 @@ storageRemoteInfoList(
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(ENUM, level);
-        FUNCTION_LOG_PARAM(FUNCTIONP, callback);
-        FUNCTION_LOG_PARAM_P(VOID, callbackData);
         (void)param;                                                // No parameters are used
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(path != NULL);
-    ASSERT(callback != NULL);
 
-    bool result = false;
+    StorageList *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR);
-        protocolCommandParamAdd(command, VARSTR(path));
-        protocolCommandParamAdd(command, VARUINT(level));
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_LIST);
+        PackWrite *const commandParam = protocolCommandParam(command);
 
-        // Send command
-        protocolClientWriteCommand(this->client, command);
+        pckWriteStrP(commandParam, path);
+        pckWriteU32P(commandParam, level);
 
-        // Read list.  The list ends when there is a blank line -- this is safe even for file systems that allow blank filenames
-        // since the filename is json-encoded so will always include quotes.
+        // Put command
+        protocolClientCommandPut(this->client, command, false);
+
+        // Read list
+        StorageRemoteInfoData parseData = {.memContext = memContextCurrent()};
+        result = storageLstNew(level);
+
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
-            const String *name = protocolClientReadLine(this->client);
+            PackRead *read = protocolClientDataGet(this->client);
+            pckReadNext(read);
 
-            while (strSize(name) != 0)
+            while (pckReadType(read) == pckTypeStr)
             {
-                StorageInfo info = {.exists = true, .level = level, .name = jsonToStr(name)};
+                StorageInfo info = {.exists = true, .level = level, .name = pckReadStrP(read)};
 
-                storageRemoteInfoParse(this->client, &info);
-                callback(callbackData, &info);
+                storageRemoteInfoGet(&parseData, read, &info);
+                storageLstAdd(result, &info);
 
                 // Reset the memory context occasionally so we don't use too much memory or slow down processing
                 MEM_CONTEXT_TEMP_RESET(1000);
 
-                // Read the next item
-                name = protocolClientReadLine(this->client);
+                read = protocolClientDataGet(this->client);
+                pckReadNext(read);
             }
+
+            if (!pckReadBoolP(read))
+                result = NULL;
         }
         MEM_CONTEXT_TEMP_END();
 
-        // Acknowledge command completed
-        result = varBool(protocolClientReadOutput(this->client, true));
+        protocolClientDataEndGet(this->client);
+        storageLstMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(BOOL, result);
+    FUNCTION_LOG_RETURN(STORAGE_LIST, result);
 }
 
 /**********************************************************************************************************************************/
@@ -182,6 +280,7 @@ storageRemoteNewRead(THIS_VOID, const String *file, bool ignoreMissing, StorageI
         FUNCTION_LOG_PARAM(STRING, file);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(BOOL, param.compressible);
+        FUNCTION_LOG_PARAM(UINT64, param.offset);
         FUNCTION_LOG_PARAM(VARIANT, param.limit);
     FUNCTION_LOG_END();
 
@@ -192,7 +291,7 @@ storageRemoteNewRead(THIS_VOID, const String *file, bool ignoreMissing, StorageI
         STORAGE_READ,
         storageReadRemoteNew(
             this, this->client, file, ignoreMissing, this->compressLevel > 0 ? param.compressible : false, this->compressLevel,
-            param.limit));
+            param.offset, param.limit));
 }
 
 /**********************************************************************************************************************************/
@@ -219,6 +318,7 @@ storageRemoteNewWrite(
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
+    ASSERT(param.truncate);
 
     FUNCTION_LOG_RETURN(
         STORAGE_WRITE,
@@ -249,11 +349,13 @@ storageRemotePathCreate(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_PATH_CREATE_STR);
-        protocolCommandParamAdd(command, VARSTR(path));
-        protocolCommandParamAdd(command, VARBOOL(errorOnExists));
-        protocolCommandParamAdd(command, VARBOOL(noParentCreate));
-        protocolCommandParamAdd(command, VARUINT(mode));
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_PATH_CREATE);
+        PackWrite *const commandParam = protocolCommandParam(command);
+
+        pckWriteStrP(commandParam, path);
+        pckWriteBoolP(commandParam, errorOnExists);
+        pckWriteBoolP(commandParam, noParentCreate);
+        pckWriteModeP(commandParam, mode);
 
         protocolClientExecute(this->client, command, false);
     }
@@ -282,11 +384,13 @@ storageRemotePathRemove(THIS_VOID, const String *path, bool recurse, StorageInte
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_PATH_REMOVE_STR);
-        protocolCommandParamAdd(command, VARSTR(path));
-        protocolCommandParamAdd(command, VARBOOL(recurse));
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_PATH_REMOVE);
+        PackWrite *const commandParam = protocolCommandParam(command);
 
-        result = varBool(protocolClientExecute(this->client, command, true));
+        pckWriteStrP(commandParam, path);
+        pckWriteBoolP(commandParam, recurse);
+
+        result = pckReadBoolP(protocolClientExecute(this->client, command, true));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -310,8 +414,8 @@ storageRemotePathSync(THIS_VOID, const String *path, StorageInterfacePathSyncPar
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR);
-        protocolCommandParamAdd(command, VARSTR(path));
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_PATH_SYNC);
+        pckWriteStrP(protocolCommandParam(command), path);
 
         protocolClientExecute(this->client, command, false);
     }
@@ -337,9 +441,11 @@ storageRemoteRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam p
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_REMOVE_STR);
-        protocolCommandParamAdd(command, VARSTR(file));
-        protocolCommandParamAdd(command, VARBOOL(param.errorOnMissing));
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_REMOVE);
+        PackWrite *const commandParam = protocolCommandParam(command);
+
+        pckWriteStrP(commandParam, file);
+        pckWriteBoolP(commandParam, param.errorOnMissing);
 
         protocolClientExecute(this->client, command, false);
     }
@@ -352,19 +458,20 @@ storageRemoteRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam p
 static const StorageInterface storageInterfaceRemote =
 {
     .info = storageRemoteInfo,
-    .infoList = storageRemoteInfoList,
+    .list = storageRemoteList,
     .newRead = storageRemoteNewRead,
     .newWrite = storageRemoteNewWrite,
     .pathCreate = storageRemotePathCreate,
     .pathRemove = storageRemotePathRemove,
     .pathSync = storageRemotePathSync,
     .remove = storageRemoteRemove,
+    .linkCreate = storageRemoteLinkCreate,
 };
 
-Storage *
+FN_EXTERN Storage *
 storageRemoteNew(
-    mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction, ProtocolClient *client,
-    unsigned int compressLevel)
+    const mode_t modeFile, const mode_t modePath, const bool write, StoragePathExpressionCallback pathExpressionFunction,
+    ProtocolClient *const client, const unsigned int compressLevel)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MODE, modeFile);
@@ -379,48 +486,36 @@ storageRemoteNew(
     ASSERT(modePath != 0);
     ASSERT(client != NULL);
 
-    Storage *this = NULL;
+    const String *path;
 
-    MEM_CONTEXT_NEW_BEGIN("StorageRemote")
+    OBJ_NEW_BEGIN(StorageRemote, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageRemote *driver = memNew(sizeof(StorageRemote));
-
-        *driver = (StorageRemote)
+        *this = (StorageRemote)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .client = client,
             .compressLevel = compressLevel,
             .interface = storageInterfaceRemote,
         };
 
-        const String *path = NULL;
-
         // Get storage features from the remote
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            // Send command
-            protocolClientWriteCommand(driver->client, protocolCommandNew(PROTOCOL_COMMAND_STORAGE_FEATURE_STR));
+            // Execute command and get result
+            PackRead *result = protocolClientExecute(this->client, protocolCommandNew(PROTOCOL_COMMAND_STORAGE_FEATURE), true);
 
-            // Read values
-            path = jsonToStr(protocolClientReadLine(driver->client));
-            driver->interface.feature = jsonToUInt64(protocolClientReadLine(driver->client));
-
-            // Acknowledge command completed
-            protocolClientReadOutput(driver->client, false);
-
-            // Dup path into parent context
+            // Get path in parent context
             MEM_CONTEXT_PRIOR_BEGIN()
             {
-                path = strDup(path);
+                path = pckReadStrP(result);
             }
             MEM_CONTEXT_PRIOR_END();
+
+            this->interface.feature = pckReadU64P(result);
         }
         MEM_CONTEXT_TEMP_END();
-
-        this = storageNew(
-            STORAGE_REMOTE_TYPE_STR, path, modeFile, modePath, write, pathExpressionFunction, driver, driver->interface);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE, this);
+    FUNCTION_LOG_RETURN(
+        STORAGE, storageNew(STORAGE_REMOTE_TYPE, path, modeFile, modePath, write, pathExpressionFunction, this, this->interface));
 }

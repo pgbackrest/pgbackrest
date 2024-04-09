@@ -1,8 +1,8 @@
 # **********************************************************************************************************************************
 # Container Cache
 #
-# Contains hashes for containers that are available on Docker hub.  If present, the container can be pulled instead of being built
-# locally which saves a lot of time.  Note: these are hashes of the Dockerfile not the actual binary image.
+# Contains hashes for containers that are available on Docker hub. If present, the container can be pulled instead of being built
+# locally which saves a lot of time. Note: these are hashes of the Dockerfile not the actual binary image.
 #
 # To build a new image:
 # - if Dockerfile has changed, just build as usual
@@ -12,12 +12,16 @@
 # - docker login -u pgbackrest
 # - VM=XXX;DATE=YYYYMMDDX;BASE=pgbackrest/test:${VM?}-base;docker tag ${BASE?} ${BASE?}-${DATE?} && docker push ${BASE?}-${DATE?}
 # **********************************************************************************************************************************
-20200924A:
-  co7: ee58b885ad2463d60031511de0a297aa93c02068
-  u18: d95d53e642fc1cea4a2b8e935ea7d9739f7d1c46
+20231109A:
+  x86_64:
+    d10: 927b594d0f0319c19d692947f9218a4474cf8cd6
+    u20: 51041e6806d2d05ccefbd8a2ab23f2c9e42a7997
+    u22: 287933d006d8780a521dac6409f4910ebafe6ded
 
-20200507A:
-  f32: 61792779061d2a675509c65bfa64b61b8d4cea17
+20230622A:
+  x86_64:
+    f38: 3dc5e099699d3f4f3bc65d06f20c0ae1c9124eaf
 
-20200505A:
-  u12: 8a88ab44aace049d7da5ca1094375ff8b9aeb7ab
+20230513A:
+  x86_64:
+    rh7: 18dd0cbe19aa66dd9d72d312da5cb8c4bddea8b9

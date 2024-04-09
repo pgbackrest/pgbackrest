@@ -5,9 +5,8 @@ Buffer IO Read
 
 #include "common/debug.h"
 #include "common/io/bufferRead.h"
-#include "common/io/read.intern.h"
+#include "common/io/read.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
 
 /***********************************************************************************************************************************
@@ -15,7 +14,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct IoBufferRead
 {
-    MemContext *memContext;                                         // Object memory context
     const Buffer *read;                                             // Buffer to read data from
 
     size_t readPos;                                                 // Current position in the read buffer
@@ -28,7 +26,7 @@ Macros for function logging
 #define FUNCTION_LOG_IO_BUFFER_READ_TYPE                                                                                           \
     IoBufferRead *
 #define FUNCTION_LOG_IO_BUFFER_READ_FORMAT(value, buffer, bufferSize)                                                              \
-    objToLog(value, "IoBufferRead", buffer, bufferSize)
+    objNameToLog(value, "IoBufferRead", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Read data from the buffer
@@ -85,8 +83,8 @@ ioBufferReadEof(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-IoRead *
-ioBufferReadNew(const Buffer *buffer)
+FN_EXTERN IoRead *
+ioBufferReadNew(const Buffer *const buffer)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(BUFFER, buffer);
@@ -94,21 +92,14 @@ ioBufferReadNew(const Buffer *buffer)
 
     ASSERT(buffer != NULL);
 
-    IoRead *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("IoBufferRead")
+    OBJ_NEW_BEGIN(IoBufferRead, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        IoBufferRead *driver = memNew(sizeof(IoBufferRead));
-
-        *driver = (IoBufferRead)
+        *this = (IoBufferRead)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .read = buffer,
         };
-
-        this = ioReadNewP(driver, .eof = ioBufferReadEof, .read = ioBufferRead);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_READ, this);
+    FUNCTION_LOG_RETURN(IO_READ, ioReadNewP(this, .eof = ioBufferReadEof, .read = ioBufferRead));
 }

@@ -26,21 +26,15 @@ use constant TEST_DB                                                => 'db';
     push @EXPORT, qw(TEST_DB);
 use constant TEST_C                                                 => 'c';
     push @EXPORT, qw(TEST_C);
-use constant TEST_CDEF                                              => 'cdef';
-    push @EXPORT, qw(TEST_CDEF);
-use constant TEST_CTESTDEF                                          => 'ctestdef';
-    push @EXPORT, qw(TEST_CTESTDEF);
 use constant TEST_CONTAINER                                         => 'container';
     push @EXPORT, qw(TEST_CONTAINER);
-use constant TEST_DEBUG_UNIT_SUPPRESS                               => TESTDEF_DEBUG_UNIT_SUPPRESS;
-    push @EXPORT, qw(TEST_DEBUG_UNIT_SUPPRESS);
 use constant TEST_MODULE                                            => 'module';
     push @EXPORT, qw(TEST_MODULE);
 use constant TEST_NAME                                              => 'test';
     push @EXPORT, qw(TEST_NAME);
 use constant TEST_BIN_REQ                                           => 'bin-req';
     push @EXPORT, qw(TEST_BIN_REQ);
-use constant TEST_PGSQL_BIN                                         => 'pgsql-bin';
+use constant TEST_PGSQL_BIN                                         => 'psql-bin';
     push @EXPORT, qw(TEST_PGSQL_BIN);
 use constant TEST_INTEGRATION                                       => 'integration';
     push @EXPORT, qw(TEST_INTEGRATION);
@@ -119,7 +113,7 @@ sub testListGet
                         # Skip this test if it is performance and no performance is specified
                         next if ($bNoPerformance && $hTest->{&TESTDEF_TYPE} eq TESTDEF_PERFORMANCE);
 
-                        # Skip this test if it is not C and vm=none.  Perl tests require Docker which is not supported.
+                        # Skip this test if it is not C and vm=none. Perl tests require Docker which is not supported.
                         next if ($strVm eq VM_NONE && !$hTest->{&TESTDEF_C});
 
                         # Skip this test if a container is required and vm=none.
@@ -134,7 +128,7 @@ sub testListGet
                                 ($strDbVersion ne 'all' &&
                                     $strDbVersion eq ${$$oyVm{$strTestOS}{&VM_DB_TEST}}[$iDbVersionIdx]))
                             {
-                                # Individual tests will be each be run in a separate container.  This is the default.
+                                # Individual tests will be each be run in a separate container. This is the default.
                                 my $bTestIndividual =
                                     !defined($hTest->{&TESTDEF_INDIVIDUAL}) || $hTest->{&TESTDEF_INDIVIDUAL} ? true : false;
 
@@ -170,9 +164,6 @@ sub testListGet
                                         &TEST_TYPE => $hTest->{&TESTDEF_TYPE},
                                         &TEST_VM => $strTestOS,
                                         &TEST_C => coalesce($hTest->{&TESTDEF_C}, $hModule->{&TESTDEF_C}, false),
-                                        &TEST_CDEF => $hTest->{&TESTDEF_DEFINE},
-                                        &TEST_CTESTDEF => $hTest->{&TESTDEF_DEFINE_TEST},
-                                        &TEST_DEBUG_UNIT_SUPPRESS => $hTest->{&TEST_DEBUG_UNIT_SUPPRESS},
                                         &TEST_CONTAINER => defined($hTest->{&TESTDEF_CONTAINER}) ?
                                             $hTest->{&TESTDEF_CONTAINER} : $hModule->{&TESTDEF_CONTAINER},
                                         &TEST_PGSQL_BIN => $strPgSqlBin,

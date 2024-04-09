@@ -8,43 +8,54 @@ Debug Routines
 #include "common/debug.h"
 
 /**********************************************************************************************************************************/
-size_t
-objToLog(const void *object, const char *objectName, char *buffer, size_t bufferSize)
+FN_EXTERN size_t
+objToLog(const void *const object, ObjToLogFormat formatFunc, char *const buffer, const size_t bufferSize)
 {
-    size_t result = 0;
+    StringStatic debugLog = strStcInit(buffer, bufferSize);
 
     if (object == NULL)
-        result = (size_t)snprintf(buffer, bufferSize, NULL_Z);
+        strStcCat(&debugLog, NULL_Z);
     else
-        result = (size_t)snprintf(buffer, bufferSize, "{%s}", objectName);
+        formatFunc(object, &debugLog);
 
-    return result;
+    return strStcResultSize(&debugLog);
 }
 
 /**********************************************************************************************************************************/
-size_t
+FN_EXTERN size_t
+objNameToLog(const void *object, const char *objectName, char *buffer, size_t bufferSize)
+{
+    StringStatic debugLog = strStcInit(buffer, bufferSize);
+
+    if (object == NULL)
+        strStcCat(&debugLog, NULL_Z);
+    else
+        strStcFmt(&debugLog, "{%s}", objectName);
+
+    return strStcResultSize(&debugLog);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN size_t
 ptrToLog(const void *pointer, const char *pointerName, char *buffer, size_t bufferSize)
 {
-    size_t result = 0;
+    StringStatic debugLog = strStcInit(buffer, bufferSize);
 
     if (pointer == NULL)
-        result = (size_t)snprintf(buffer, bufferSize, NULL_Z);
+        strStcCat(&debugLog, NULL_Z);
     else
-        result = (size_t)snprintf(buffer, bufferSize, "(%s)", pointerName);
+        strStcFmt(&debugLog, "(%s)", pointerName);
 
-    return result;
+    return strStcResultSize(&debugLog);
 }
 
 /**********************************************************************************************************************************/
-size_t
-strzToLog(const char *string, char *buffer, size_t bufferSize)
-{
-    return (size_t)snprintf(buffer, bufferSize, string == NULL ? "%s" : "\"%s\"", string == NULL ? NULL_Z : string);
-}
-
-/**********************************************************************************************************************************/
-size_t
+FN_EXTERN size_t
 typeToLog(const char *typeName, char *buffer, size_t bufferSize)
 {
-    return (size_t)snprintf(buffer, bufferSize, "%s", typeName);
+    StringStatic debugLog = strStcInit(buffer, bufferSize);
+
+    strStcFmt(&debugLog, "%s", typeName);
+
+    return strStcResultSize(&debugLog);
 }

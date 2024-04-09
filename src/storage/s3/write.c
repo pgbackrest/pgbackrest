@@ -4,9 +4,7 @@ S3 Storage File Write
 #include "build.auto.h"
 
 #include "common/debug.h"
-#include "common/io/write.intern.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
 #include "common/type/xml.h"
 #include "storage/s3/write.h"
@@ -33,7 +31,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct StorageWriteS3
 {
-    MemContext *memContext;                                         // Object mem context
     StorageWriteInterface interface;                                // Interface
     StorageS3 *storage;                                             // Storage that created this object
 
@@ -50,7 +47,7 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_WRITE_S3_TYPE                                                                                         \
     StorageWriteS3 *
 #define FUNCTION_LOG_STORAGE_WRITE_S3_FORMAT(value, buffer, bufferSize)                                                            \
-    objToLog(value, "StorageWriteS3", buffer, bufferSize)
+    objNameToLog(value, "StorageWriteS3", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Open the file
@@ -68,11 +65,11 @@ storageWriteS3Open(THIS_VOID)
     ASSERT(this->partBuffer == NULL);
 
     // Allocate the part buffer
-    MEM_CONTEXT_BEGIN(this->memContext)
+    MEM_CONTEXT_OBJ_BEGIN(this)
     {
         this->partBuffer = bufNew(this->partSize);
     }
-    MEM_CONTEXT_END();
+    MEM_CONTEXT_OBJ_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -81,7 +78,7 @@ storageWriteS3Open(THIS_VOID)
 Flush bytes to upload part
 ***********************************************************************************************************************************/
 static void
-storageWriteS3Part(StorageWriteS3 *this)
+storageWriteS3Part(StorageWriteS3 *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_WRITE_S3, this);
@@ -92,10 +89,12 @@ storageWriteS3Part(StorageWriteS3 *this)
     // If there is an outstanding async request then wait for the response and store the part id
     if (this->request != NULL)
     {
-        strLstAdd(
-            this->uploadPartList, httpHeaderGet(httpResponseHeader(storageS3ResponseP(this->request)), HTTP_HEADER_ETAG_STR));
+        HttpResponse *const response = storageS3ResponseP(this->request);
+
+        strLstAdd(this->uploadPartList, httpHeaderGet(httpResponseHeader(response), HTTP_HEADER_ETAG_STR));
         ASSERT(strLstGet(this->uploadPartList, strLstSize(this->uploadPartList) - 1) != NULL);
 
+        httpResponseFree(response);
         httpRequestFree(this->request);
         this->request = NULL;
     }
@@ -128,15 +127,16 @@ storageWriteS3PartAsync(StorageWriteS3 *this)
                     httpResponseContent(
                         storageS3RequestP(
                             this->storage, HTTP_VERB_POST_STR, this->interface.name,
-                            .query = httpQueryAdd(httpQueryNewP(), S3_QUERY_UPLOADS_STR, EMPTY_STR)))));
+                            .query = httpQueryAdd(httpQueryNewP(), S3_QUERY_UPLOADS_STR, EMPTY_STR), .sseKms = true,
+                            .tag = true))));
 
             // Store the upload id
-            MEM_CONTEXT_BEGIN(this->memContext)
+            MEM_CONTEXT_OBJ_BEGIN(this)
             {
                 this->uploadId = xmlNodeContent(xmlNodeChild(xmlRoot, S3_XML_TAG_UPLOAD_ID_STR, true));
                 this->uploadPartList = strLstNew();
             }
-            MEM_CONTEXT_END();
+            MEM_CONTEXT_OBJ_END();
         }
 
         // Upload the part async
@@ -144,12 +144,12 @@ storageWriteS3PartAsync(StorageWriteS3 *this)
         httpQueryAdd(query, S3_QUERY_UPLOAD_ID_STR, this->uploadId);
         httpQueryAdd(query, S3_QUERY_PART_NUMBER_STR, strNewFmt("%u", strLstSize(this->uploadPartList) + 1));
 
-        MEM_CONTEXT_BEGIN(this->memContext)
+        MEM_CONTEXT_OBJ_BEGIN(this)
         {
             this->request = storageS3RequestAsyncP(
                 this->storage, HTTP_VERB_PUT_STR, this->interface.name, .query = query, .content = this->partBuffer);
         }
-        MEM_CONTEXT_END();
+        MEM_CONTEXT_OBJ_END();
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -179,8 +179,10 @@ storageWriteS3(THIS_VOID, const Buffer *buffer)
     do
     {
         // Copy as many bytes as possible into the part buffer
-        size_t bytesNext = bufRemains(this->partBuffer) > bufUsed(buffer) - bytesTotal ?
-            bufUsed(buffer) - bytesTotal : bufRemains(this->partBuffer);
+        const size_t bytesNext =
+            bufRemains(this->partBuffer) > bufUsed(buffer) - bytesTotal ?
+                bufUsed(buffer) - bytesTotal : bufRemains(this->partBuffer);
+
         bufCatSub(this->partBuffer, buffer, bytesTotal, bytesNext);
         bytesTotal += bytesNext;
 
@@ -219,7 +221,7 @@ storageWriteS3Close(THIS_VOID)
             if (this->uploadId != NULL)
             {
                 // If there is anything left in the part buffer then write it
-                if (bufUsed(this->partBuffer) > 0)
+                if (!bufEmpty(this->partBuffer))
                     storageWriteS3PartAsync(this);
 
                 // Complete prior async request, if any
@@ -236,14 +238,26 @@ storageWriteS3Close(THIS_VOID)
                 }
 
                 // Finalize the multi-part upload
-                storageS3RequestP(
+                HttpRequest *request = storageS3RequestAsyncP(
                     this->storage, HTTP_VERB_POST_STR, this->interface.name,
                     .query = httpQueryAdd(httpQueryNewP(), S3_QUERY_UPLOAD_ID_STR, this->uploadId),
                     .content = xmlDocumentBuf(partList));
+                HttpResponse *response = storageS3ResponseP(request);
+
+                // Error when no etag in the result. This indicates that the request did not succeed despite the success code.
+                if (xmlNodeChild(
+                        xmlDocumentRoot(xmlDocumentNewBuf(httpResponseContent(response))), S3_XML_TAG_ETAG_STR, false) == NULL)
+                {
+                    httpRequestError(request, response);
+                }
             }
             // Else upload all the data in a single put
             else
-                storageS3RequestP(this->storage, HTTP_VERB_PUT_STR, this->interface.name, .content = this->partBuffer);
+            {
+                storageS3RequestP(
+                    this->storage, HTTP_VERB_PUT_STR, this->interface.name, .content = this->partBuffer, .sseKms = true,
+                    .tag = true);
+            }
 
             bufFree(this->partBuffer);
             this->partBuffer = NULL;
@@ -255,8 +269,8 @@ storageWriteS3Close(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-StorageWrite *
-storageWriteS3New(StorageS3 *storage, const String *name, size_t partSize)
+FN_EXTERN StorageWrite *
+storageWriteS3New(StorageS3 *const storage, const String *const name, const size_t partSize)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_S3, storage);
@@ -266,26 +280,22 @@ storageWriteS3New(StorageS3 *storage, const String *name, size_t partSize)
     ASSERT(storage != NULL);
     ASSERT(name != NULL);
 
-    StorageWrite *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("StorageWriteS3")
+    OBJ_NEW_BEGIN(StorageWriteS3, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageWriteS3 *driver = memNew(sizeof(StorageWriteS3));
-
-        *driver = (StorageWriteS3)
+        *this = (StorageWriteS3)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .storage = storage,
             .partSize = partSize,
 
             .interface = (StorageWriteInterface)
             {
-                .type = STORAGE_S3_TYPE_STR,
+                .type = STORAGE_S3_TYPE,
                 .name = strDup(name),
                 .atomic = true,
                 .createPath = true,
                 .syncFile = true,
                 .syncPath = true,
+                .truncate = true,
 
                 .ioInterface = (IoWriteInterface)
                 {
@@ -295,10 +305,8 @@ storageWriteS3New(StorageS3 *storage, const String *name, size_t partSize)
                 },
             },
         };
-
-        this = storageWriteNew(driver, &driver->interface);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_WRITE, this);
+    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteNew(this, &this->interface));
 }

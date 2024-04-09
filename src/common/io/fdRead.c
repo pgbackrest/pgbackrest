@@ -8,9 +8,8 @@ File Descriptor Io Read
 #include "common/debug.h"
 #include "common/io/fd.h"
 #include "common/io/fdRead.h"
-#include "common/io/read.intern.h"
+#include "common/io/read.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
 
 /***********************************************************************************************************************************
@@ -18,7 +17,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct IoFdRead
 {
-    MemContext *memContext;                                         // Object memory context
     const String *name;                                             // File descriptor name for error messages
     int fd;                                                         // File descriptor to read data from
     TimeMSec timeout;                                               // Timeout for read operation
@@ -31,7 +29,7 @@ Macros for function logging
 #define FUNCTION_LOG_IO_FD_READ_TYPE                                                                                               \
     IoFdRead *
 #define FUNCTION_LOG_IO_FD_READ_FORMAT(value, buffer, bufferSize)                                                                  \
-    objToLog(value, "IoFdRead", buffer, bufferSize)
+    objNameToLog(value, "IoFdRead", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Are there bytes ready to read immediately?
@@ -141,12 +139,12 @@ ioFdReadFd(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->fd);
+    FUNCTION_TEST_RETURN(INT, this->fd);
 }
 
 /**********************************************************************************************************************************/
-IoRead *
-ioFdReadNew(const String *name, int fd, TimeMSec timeout)
+FN_EXTERN IoRead *
+ioFdReadNew(const String *const name, const int fd, const TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, name);
@@ -156,23 +154,17 @@ ioFdReadNew(const String *name, int fd, TimeMSec timeout)
 
     ASSERT(fd != -1);
 
-    IoRead *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("IoFdRead")
+    OBJ_NEW_BEGIN(IoFdRead, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        IoFdRead *driver = memNew(sizeof(IoFdRead));
-
-        *driver = (IoFdRead)
+        *this = (IoFdRead)
         {
-            .memContext = memContextCurrent(),
             .name = strDup(name),
             .fd = fd,
             .timeout = timeout,
         };
-
-        this = ioReadNewP(driver, .block = true, .eof = ioFdReadEof, .fd = ioFdReadFd, .read = ioFdRead, .ready = ioFdReadReady);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_READ, this);
+    FUNCTION_LOG_RETURN(
+        IO_READ, ioReadNewP(this, .block = true, .eof = ioFdReadEof, .fd = ioFdReadFd, .read = ioFdRead, .ready = ioFdReadReady));
 }

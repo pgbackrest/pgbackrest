@@ -5,6 +5,7 @@ Repository Get Command
 
 #include <unistd.h>
 
+#include "command/repo/common.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
 #include "common/io/fdWrite.h"
@@ -20,10 +21,10 @@ Repository Get Command
 /***********************************************************************************************************************************
 Write source file to destination IO
 ***********************************************************************************************************************************/
-int
+static int
 storageGetProcess(IoWrite *destination)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug)
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_READ, destination);
     FUNCTION_LOG_END();
 
@@ -40,20 +41,8 @@ storageGetProcess(IoWrite *destination)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // If the source path is absolute then get the relative part of the file
-        if (strBeginsWith(file, FSLASH_STR))
-        {
-            // Check that the file path begins with the repo path
-            if (!strBeginsWith(file, cfgOptionStr(cfgOptRepoPath)))
-            {
-                THROW_FMT(
-                    OptionInvalidValueError, "absolute path '%s' is not in base path '%s'", strZ(file),
-                    strZ(cfgOptionStr(cfgOptRepoPath)));
-            }
-
-            // Get the relative part of the file
-            file = strSub(file, strEq(cfgOptionStr(cfgOptRepoPath), FSLASH_STR) ? 1 : strSize(cfgOptionStr(cfgOptRepoPath)) + 1);
-        }
+        // Is path valid for repo?
+        file = repoPathIsValid(file);
 
         // Create new file read
         IoRead *source = storageReadIo(storageNewReadP(storageRepo(), file, .ignoreMissing = cfgOptionBool(cfgOptIgnoreMissing)));
@@ -61,7 +50,7 @@ storageGetProcess(IoWrite *destination)
         // Add decryption if needed
         if (!cfgOptionBool(cfgOptRaw))
         {
-            CipherType repoCipherType = cipherType(cfgOptionStr(cfgOptRepoCipherType));
+            CipherType repoCipherType = cfgOptionStrId(cfgOptRepoCipherType);
 
             if (repoCipherType != cipherTypeNone)
             {
@@ -95,7 +84,7 @@ storageGetProcess(IoWrite *destination)
                         {
                             THROW_FMT(
                                 OptionInvalidValueError, "stanza name '%s' given in option doesn't match the given path",
-                                strZ(cfgOptionStr(cfgOptStanza)));
+                                strZ(cfgOptionDisplay(cfgOptStanza)));
                         }
 
                         // Archive path
@@ -132,8 +121,11 @@ storageGetProcess(IoWrite *destination)
                                     !strEndsWithZ(file, BACKUP_MANIFEST_FILE INFO_COPY_EXT))
                                 {
                                     const Manifest *manifest = manifestLoadFile(
-                                        storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s/%s", strZ(stanza),
-                                        strZ(strLstGet(filePathSplitLst, 2)), BACKUP_MANIFEST_FILE), repoCipherType, cipherPass);
+                                        storageRepo(),
+                                        strNewFmt(
+                                            STORAGE_PATH_BACKUP "/%s/%s/%s", strZ(stanza), strZ(strLstGet(filePathSplitLst, 2)),
+                                            BACKUP_MANIFEST_FILE),
+                                        repoCipherType, cipherPass);
                                     cipherPass = manifestCipherSubPass(manifest);
                                 }
                             }
@@ -157,15 +149,7 @@ storageGetProcess(IoWrite *destination)
             ioWriteOpen(destination);
 
             // Copy data from source to destination
-            Buffer *buffer = bufNew(ioBufferSize());
-
-            do
-            {
-                ioRead(source, buffer);
-                ioWrite(destination, buffer);
-                bufUsedZero(buffer);
-            }
-            while (!ioReadEof(source));
+            ioCopyP(source, destination);
 
             // Close the source and destination
             ioReadClose(source);
@@ -181,7 +165,7 @@ storageGetProcess(IoWrite *destination)
 }
 
 /**********************************************************************************************************************************/
-int
+FN_EXTERN int
 cmdStorageGet(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
@@ -193,12 +177,11 @@ cmdStorageGet(void)
     {
         TRY_BEGIN()
         {
-            result = storageGetProcess(
-                ioFdWriteNew(STRDEF("stdout"), STDOUT_FILENO, (TimeMSec)(cfgOptionDbl(cfgOptIoTimeout) * 1000)));
+            result = storageGetProcess(ioFdWriteNew(STRDEF("stdout"), STDOUT_FILENO, cfgOptionUInt64(cfgOptIoTimeout)));
         }
-        // Ignore write errors because it's possible (even likely) that this output is being piped to something like head which
-        // will exit when it gets what it needs and leave us writing to a broken pipe.  It would be better to just ignore the broken
-        // pipe error but currently we don't store system error codes.
+        // Ignore write errors because it's possible (even likely) that this output is being piped to something like head which will
+        // exit when it gets what it needs and leave us writing to a broken pipe. It would be better to just ignore the broken pipe
+        // error but currently we don't store system error codes.
         CATCH(FileWriteError)
         {
         }

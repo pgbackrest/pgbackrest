@@ -7,8 +7,6 @@ Regular Expression Handler
 #include <sys/types.h>
 
 #include "common/debug.h"
-#include "common/memContext.h"
-#include "common/type/object.h"
 #include "common/regExp.h"
 
 /***********************************************************************************************************************************
@@ -16,22 +14,27 @@ Contains information about the regular expression handler
 ***********************************************************************************************************************************/
 struct RegExp
 {
-    MemContext *memContext;
     regex_t regExp;
-    const char *matchPtr;
-    size_t matchSize;
 };
-
-OBJECT_DEFINE_FREE(REGEXP);
 
 /***********************************************************************************************************************************
 Free regular expression
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(REGEXP, TEST, )
+static void
+regExpFreeResource(THIS_VOID)
 {
+    THIS(RegExp);
+
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(REGEXP, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
     regfree(&this->regExp);
+
+    FUNCTION_TEST_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(TEST);
 
 /***********************************************************************************************************************************
 Handle errors
@@ -58,7 +61,7 @@ regExpErrorCheck(int error)
 }
 
 /**********************************************************************************************************************************/
-RegExp *
+FN_EXTERN RegExp *
 regExpNew(const String *expression)
 {
     FUNCTION_TEST_BEGIN();
@@ -67,37 +70,27 @@ regExpNew(const String *expression)
 
     ASSERT(expression != NULL);
 
-    RegExp *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("RegExp")
+    OBJ_NEW_BEGIN(RegExp, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = memNew(sizeof(RegExp));
-
-        *this = (RegExp)
-        {
-            .memContext = MEM_CONTEXT_NEW(),
-        };
+        *this = (RegExp){{0}};                                      // Extra braces are required for older gcc versions
 
         // Compile the regexp and process errors
         int result = 0;
 
         if ((result = regcomp(&this->regExp, strZ(expression), REG_EXTENDED)) != 0)
-        {
-            memFree(this);
             regExpError(result);
-        }
 
         // Set free callback to ensure cipher context is freed
-        memContextCallbackSet(this->memContext, regExpFreeResource, this);
+        memContextCallbackSet(objMemContext(this), regExpFreeResource, this);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(REGEXP, this);
 }
 
 /**********************************************************************************************************************************/
-bool
-regExpMatch(RegExp *this, const String *string)
+FN_EXTERN bool
+regExpMatch(RegExp *const this, const String *const string)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(REGEXP, this);
@@ -109,68 +102,16 @@ regExpMatch(RegExp *this, const String *string)
 
     // Test for a match
     regmatch_t matchPtr;
-    int result = regexec(&this->regExp, strZ(string), 1, &matchPtr, 0);
+    const int result = regexec(&this->regExp, strZ(string), 1, &matchPtr, 0);
 
     // Check for an error
     regExpErrorCheck(result);
 
-    // Store match results
-    if (result == 0)
-    {
-        this->matchPtr = strZ(string) + matchPtr.rm_so;
-        this->matchSize = (size_t)(matchPtr.rm_eo - matchPtr.rm_so);
-    }
-    // Else reset match results
-    else
-    {
-        this->matchPtr = NULL;
-        this->matchSize = 0;
-    }
-
-    FUNCTION_TEST_RETURN(result == 0);
-}
-
-/***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-const char *
-regExpMatchPtr(RegExp *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(REGEXP, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->matchPtr);
-}
-
-size_t
-regExpMatchSize(RegExp *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(REGEXP, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->matchSize);
-}
-
-String *
-regExpMatchStr(RegExp *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(REGEXP, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->matchPtr == NULL ? NULL : strNewN(regExpMatchPtr(this), regExpMatchSize(this)));
+    FUNCTION_TEST_RETURN(BOOL, result == 0);
 }
 
 /**********************************************************************************************************************************/
-bool
+FN_EXTERN bool
 regExpMatchOne(const String *expression, const String *string)
 {
     FUNCTION_TEST_BEGIN();
@@ -181,24 +122,19 @@ regExpMatchOne(const String *expression, const String *string)
     ASSERT(expression != NULL);
     ASSERT(string != NULL);
 
-    bool result = false;
-    RegExp *regExp = regExpNew(expression);
+    bool result;
 
-    TRY_BEGIN()
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = regExpMatch(regExp, string);
+        result = regExpMatch(regExpNew(expression), string);
     }
-    FINALLY()
-    {
-        regExpFree(regExp);
-    }
-    TRY_END();
+    MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(BOOL, result);
 }
 
 /**********************************************************************************************************************************/
-String *
+FN_EXTERN String *
 regExpPrefix(const String *expression)
 {
     FUNCTION_TEST_BEGIN();
@@ -247,5 +183,5 @@ regExpPrefix(const String *expression)
         }
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }

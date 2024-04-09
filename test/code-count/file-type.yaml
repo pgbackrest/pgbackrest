@@ -1,40 +1,4 @@
 # File types for source files in the project
-build/error.yaml:
-  class: build
-  type: yaml
-
-build/lib/pgBackRestBuild/Build.pm:
-  class: build
-  type: perl
-
-build/lib/pgBackRestBuild/Build/Common.pm:
-  class: build
-  type: perl
-
-build/lib/pgBackRestBuild/Config/Build.pm:
-  class: build
-  type: perl
-
-build/lib/pgBackRestBuild/Config/BuildDefine.pm:
-  class: build
-  type: perl
-
-build/lib/pgBackRestBuild/Config/BuildParse.pm:
-  class: build
-  type: perl
-
-build/lib/pgBackRestBuild/Config/Data.pm:
-  class: build
-  type: perl
-
-build/lib/pgBackRestBuild/Error/Build.pm:
-  class: build
-  type: perl
-
-build/lib/pgBackRestBuild/Error/Data.pm:
-  class: build
-  type: perl
-
 doc/doc.pl:
   class: doc/core
   type: perl
@@ -63,6 +27,14 @@ doc/lib/pgBackRestDoc/Common/Exception.pm:
   class: doc/core
   type: perl
 
+doc/lib/pgBackRestDoc/Common/Host.pm:
+  class: doc/core
+  type: perl
+
+doc/lib/pgBackRestDoc/Common/HostGroup.pm:
+  class: doc/core
+  type: perl
+
 doc/lib/pgBackRestDoc/Common/Ini.pm:
   class: doc/core
   type: perl
@@ -72,6 +44,10 @@ doc/lib/pgBackRestDoc/Common/Log.pm:
   type: perl
 
 doc/lib/pgBackRestDoc/Common/String.pm:
+  class: doc/core
+  type: perl
+
+doc/lib/pgBackRestDoc/Custom/DocConfigData.pm:
   class: doc/core
   type: perl
 
@@ -131,6 +107,62 @@ doc/resource/latex/preamble.tex:
   class: doc/core
   type: latex
 
+doc/src/build/config/config.yaml:
+  class: doc/core
+  type: yaml
+
+doc/src/build/help/help.xml:
+  class: doc/core
+  type: xml
+
+doc/src/command/build/build.c:
+  class: doc/core
+  type: c
+
+doc/src/command/build/build.h:
+  class: doc/core
+  type: c/h
+
+doc/src/command/build/man.c:
+  class: doc/core
+  type: c
+
+doc/src/command/build/man.h:
+  class: doc/core
+  type: c/h
+
+doc/src/command/build/reference.c:
+  class: doc/core
+  type: c
+
+doc/src/command/build/reference.h:
+  class: doc/core
+  type: c/h
+
+doc/src/command/help/meson.build:
+  class: doc/core
+  type: meson
+
+doc/src/config/load.c:
+  class: doc/core
+  type: c
+
+doc/src/config/load.h:
+  class: doc/core
+  type: c/h
+
+doc/src/config/meson.build:
+  class: doc/core
+  type: meson
+
+doc/src/main.c:
+  class: doc/core
+  type: c
+
+doc/src/meson.build:
+  class: doc/core
+  type: meson
+
 doc/xml/auto/metric-coverage-report.auto.xml:
   class: doc/source
   type: xml
@@ -167,11 +199,443 @@ doc/xml/metric.xml:
   class: doc/source
   type: xml
 
-doc/xml/reference.xml:
+doc/xml/release.xml:
   class: doc/source
   type: xml
 
-doc/xml/release.xml:
+doc/xml/release/2014/0.10.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2014/0.11.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2014/0.15.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2014/0.16.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2014/0.17.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2014/0.18.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2014/0.19.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2014/0.30.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2015/0.50.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2015/0.60.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2015/0.61.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2015/0.65.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2015/0.70.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2015/0.75.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2015/0.77.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2015/0.78.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2015/0.80.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2015/0.82.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2015/0.85.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2015/0.87.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2015/0.88.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2015/0.89.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2016/0.90.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2016/0.91.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2016/0.92.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2016/1.00.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2016/1.01.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2016/1.02.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2016/1.03.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2016/1.04.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2016/1.05.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2016/1.06.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2016/1.07.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2016/1.08.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2016/1.09.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2016/1.10.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2016/1.11.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2016/1.12.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2017/1.13.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2017/1.14.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2017/1.15.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2017/1.16.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2017/1.17.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2017/1.18.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2017/1.19.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2017/1.20.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2017/1.21.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2017/1.22.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2017/1.23.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2017/1.24.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2017/1.25.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2017/1.26.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2017/1.27.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2018/1.28.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2018/1.29.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2018/2.00.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2018/2.01.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2018/2.02.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2018/2.03.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2018/2.04.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2018/2.05.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2018/2.06.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2018/2.07.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2019/2.08.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2019/2.09.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2019/2.10.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2019/2.11.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2019/2.12.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2019/2.13.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2019/2.14.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2019/2.15.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2019/2.16.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2019/2.17.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2019/2.18.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2019/2.19.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2019/2.20.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2020/2.21.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2020/2.22.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2020/2.23.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2020/2.24.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2020/2.25.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2020/2.26.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2020/2.27.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2020/2.28.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2020/2.29.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2020/2.30.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2020/2.31.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2021/2.32.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2021/2.33.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2021/2.34.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2021/2.35.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2021/2.36.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2022/2.37.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2022/2.38.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2022/2.39.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2022/2.40.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2022/2.41.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2022/2.42.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2022/2.43.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2023/2.44.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2023/2.45.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2023/2.46.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2023/2.47.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2023/2.48.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2023/2.49.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2024/2.50.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2024/2.51.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2024/2.52.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/contributor.xml:
   class: doc/source
   type: xml
 
@@ -182,6 +646,14 @@ doc/xml/user-guide-index.xml:
 doc/xml/user-guide.xml:
   class: doc/source
   type: xml
+
+meson.build:
+  class: build
+  type: meson
+
+meson_options.txt:
+  class: build
+  type: meson
 
 src/Makefile.in:
   class: build
@@ -195,6 +667,54 @@ src/build/aclocal.m4:
   class: build
   type: make
 
+src/build/common/exec.c:
+  class: build
+  type: c
+
+src/build/common/exec.h:
+  class: build
+  type: c/h
+
+src/build/common/regExp.c:
+  class: build
+  type: c
+
+src/build/common/regExp.h:
+  class: build
+  type: c/h
+
+src/build/common/render.c:
+  class: build
+  type: c
+
+src/build/common/render.h:
+  class: build
+  type: c/h
+
+src/build/common/string.c:
+  class: build
+  type: c
+
+src/build/common/string.h:
+  class: build
+  type: c/h
+
+src/build/common/xml.c:
+  class: build
+  type: c
+
+src/build/common/xml.h:
+  class: build
+  type: c/h
+
+src/build/common/yaml.c:
+  class: build
+  type: c
+
+src/build/common/yaml.h:
+  class: build
+  type: c/h
+
 src/build/config.guess:
   class: build
   type: make
@@ -203,19 +723,119 @@ src/build/config.sub:
   class: build
   type: make
 
+src/build/config/config.yaml:
+  class: build
+  type: yaml
+
+src/build/config/parse.c:
+  class: build
+  type: c
+
+src/build/config/parse.h:
+  class: build
+  type: c/h
+
+src/build/config/render.c:
+  class: build
+  type: c
+
+src/build/config/render.h:
+  class: build
+  type: c/h
+
 src/build/configure.ac:
   class: build
   type: make
 
+src/build/error/error.yaml:
+  class: build
+  type: yaml
+
+src/build/error/parse.c:
+  class: build
+  type: c
+
+src/build/error/parse.h:
+  class: build
+  type: c/h
+
+src/build/error/render.c:
+  class: build
+  type: c
+
+src/build/error/render.h:
+  class: build
+  type: c/h
+
+src/build/help/help.xml:
+  class: build
+  type: make
+
+src/build/help/parse.c:
+  class: build
+  type: c
+
+src/build/help/parse.h:
+  class: build
+  type: c/h
+
+src/build/help/render.c:
+  class: build
+  type: c
+
+src/build/help/render.h:
+  class: build
+  type: c/h
+
 src/build/install-sh:
   class: build
   type: make
+
+src/build/main.c:
+  class: build
+  type: c
+
+src/build/postgres/parse.c:
+  class: build
+  type: c
+
+src/build/postgres/parse.h:
+  class: build
+  type: c/h
+
+src/build/postgres/postgres.yaml:
+  class: build
+  type: yaml
+
+src/build/postgres/render.c:
+  class: build
+  type: c
+
+src/build/postgres/render.h:
+  class: build
+  type: c/h
+
+src/command/annotate/annotate.c:
+  class: core
+  type: c
+
+src/command/annotate/annotate.h:
+  class: core
+  type: c/h
 
 src/command/archive/common.c:
   class: core
   type: c
 
 src/command/archive/common.h:
+  class: core
+  type: c/h
+
+src/command/archive/find.c:
+  class: core
+  type: c
+
+src/command/archive/find.h:
   class: core
   type: c/h
 
@@ -275,6 +895,22 @@ src/command/backup/backup.h:
   class: core
   type: c/h
 
+src/command/backup/blockIncr.c:
+  class: core
+  type: c
+
+src/command/backup/blockIncr.h:
+  class: core
+  type: c/h
+
+src/command/backup/blockMap.c:
+  class: core
+  type: c
+
+src/command/backup/blockMap.h:
+  class: core
+  type: c/h
+
 src/command/backup/common.c:
   class: core
   type: c
@@ -323,6 +959,14 @@ src/command/check/common.h:
   class: core
   type: c/h
 
+src/command/check/report.c:
+  class: core
+  type: c
+
+src/command/check/report.h:
+  class: core
+  type: c/h
+
 src/command/command.c:
   class: core
   type: c
@@ -355,6 +999,14 @@ src/command/control/stop.h:
   class: core
   type: c/h
 
+src/command/exit.c:
+  class: core
+  type: c
+
+src/command/exit.h:
+  class: core
+  type: c/h
+
 src/command/expire/expire.c:
   class: core
   type: c
@@ -363,6 +1015,10 @@ src/command/expire/expire.h:
   class: core
   type: c/h
 
+src/command/help/help.auto.c.inc:
+  class: core/auto
+  type: c
+
 src/command/help/help.c:
   class: core
   type: c
@@ -370,6 +1026,10 @@ src/command/help/help.c:
 src/command/help/help.h:
   class: core
   type: c/h
+
+src/command/help/meson.build:
+  class: build
+  type: meson
 
 src/command/info/info.c:
   class: core
@@ -387,11 +1047,27 @@ src/command/local/local.h:
   class: core
   type: c/h
 
+src/command/manifest/manifest.c:
+  class: core
+  type: c
+
+src/command/manifest/manifest.h:
+  class: core
+  type: c/h
+
 src/command/remote/remote.c:
   class: core
   type: c
 
 src/command/remote/remote.h:
+  class: core
+  type: c/h
+
+src/command/repo/common.c:
+  class: core
+  type: c
+
+src/command/repo/common.h:
   class: core
   type: c/h
 
@@ -435,6 +1111,22 @@ src/command/repo/rm.h:
   class: core
   type: c/h
 
+src/command/restore/blockChecksum.c:
+  class: core
+  type: c
+
+src/command/restore/blockChecksum.h:
+  class: core
+  type: c/h
+
+src/command/restore/blockDelta.c:
+  class: core
+  type: c
+
+src/command/restore/blockDelta.h:
+  class: core
+  type: c/h
+
 src/command/restore/file.c:
   class: core
   type: c
@@ -456,6 +1148,22 @@ src/command/restore/restore.c:
   type: c
 
 src/command/restore/restore.h:
+  class: core
+  type: c/h
+
+src/command/server/ping.c:
+  class: core
+  type: c
+
+src/command/server/ping.h:
+  class: core
+  type: c/h
+
+src/command/server/server.c:
+  class: core
+  type: c
+
+src/command/server/server.h:
   class: core
   type: c/h
 
@@ -651,7 +1359,19 @@ src/common/crypto/hash.h:
   class: core
   type: c/h
 
-src/common/crypto/md5.vendor.c:
+src/common/crypto/md5.vendor.c.inc:
+  class: core/vendor
+  type: c
+
+src/common/crypto/xxhash.c:
+  class: core
+  type: c
+
+src/common/crypto/xxhash.h:
+  class: core
+  type: c/h
+
+src/common/crypto/xxhash.vendor.c.inc:
   class: core/vendor
   type: c
 
@@ -671,27 +1391,27 @@ src/common/encode.h:
   class: core
   type: c/h
 
-src/common/encode/base64.c:
-  class: core
-  type: c
-
-src/common/encode/base64.h:
-  class: core
-  type: c/h
-
-src/common/error.auto.c:
+src/common/error/error.auto.c.inc:
   class: core/auto
   type: c
 
-src/common/error.auto.h:
+src/common/error/error.auto.h:
   class: core/auto
   type: c/h
 
-src/common/error.c:
+src/common/error/error.c:
   class: core
   type: c
 
-src/common/error.h:
+src/common/error/error.h:
+  class: core
+  type: c/h
+
+src/common/error/retry.c:
+  class: core
+  type: c
+
+src/common/error/retry.h:
   class: core
   type: c/h
 
@@ -700,14 +1420,6 @@ src/common/exec.c:
   type: c
 
 src/common/exec.h:
-  class: core
-  type: c/h
-
-src/common/exit.c:
-  class: core
-  type: c
-
-src/common/exit.h:
   class: core
   type: c/h
 
@@ -879,11 +1591,27 @@ src/common/io/http/session.h:
   class: core
   type: c/h
 
+src/common/io/http/url.c:
+  class: core
+  type: c
+
+src/common/io/http/url.h:
+  class: core
+  type: c/h
+
 src/common/io/io.c:
   class: core
   type: c
 
 src/common/io/io.h:
+  class: core
+  type: c/h
+
+src/common/io/limitRead.c:
+  class: core
+  type: c
+
+src/common/io/limitRead.h:
   class: core
   type: c/h
 
@@ -899,6 +1627,18 @@ src/common/io/read.intern.h:
   class: core
   type: c/h
 
+src/common/io/server.c:
+  class: core
+  type: c
+
+src/common/io/server.h:
+  class: core
+  type: c/h
+
+src/common/io/server.intern.h:
+  class: core
+  type: c/h
+
 src/common/io/session.c:
   class: core
   type: c
@@ -908,6 +1648,14 @@ src/common/io/session.h:
   type: c/h
 
 src/common/io/session.intern.h:
+  class: core
+  type: c/h
+
+src/common/io/socket/address.c:
+  class: core
+  type: c
+
+src/common/io/socket/address.h:
   class: core
   type: c/h
 
@@ -927,6 +1675,14 @@ src/common/io/socket/common.h:
   class: core
   type: c/h
 
+src/common/io/socket/server.c:
+  class: core
+  type: c
+
+src/common/io/socket/server.h:
+  class: core
+  type: c/h
+
 src/common/io/socket/session.c:
   class: core
   type: c
@@ -940,6 +1696,22 @@ src/common/io/tls/client.c:
   type: c
 
 src/common/io/tls/client.h:
+  class: core
+  type: c/h
+
+src/common/io/tls/common.c:
+  class: core
+  type: c
+
+src/common/io/tls/common.h:
+  class: core
+  type: c/h
+
+src/common/io/tls/server.c:
+  class: core
+  type: c
+
+src/common/io/tls/server.h:
   class: core
   type: c/h
 
@@ -1027,6 +1799,14 @@ src/common/time.h:
   class: core
   type: c/h
 
+src/common/type/blob.c:
+  class: core
+  type: c
+
+src/common/type/blob.h:
+  class: core
+  type: c/h
+
 src/common/type/buffer.c:
   class: core
   type: c
@@ -1067,15 +1847,19 @@ src/common/type/list.h:
   class: core
   type: c/h
 
-src/common/type/mcv.c:
+src/common/type/object.c:
   class: core
   type: c
 
-src/common/type/mcv.h:
+src/common/type/object.h:
   class: core
   type: c/h
 
-src/common/type/object.h:
+src/common/type/pack.c:
+  class: core
+  type: c
+
+src/common/type/pack.h:
   class: core
   type: c/h
 
@@ -1091,6 +1875,14 @@ src/common/type/string.h:
   class: core
   type: c/h
 
+src/common/type/stringId.c:
+  class: core
+  type: c
+
+src/common/type/stringId.h:
+  class: core
+  type: c/h
+
 src/common/type/stringList.c:
   class: core
   type: c
@@ -1099,7 +1891,19 @@ src/common/type/stringList.h:
   class: core
   type: c/h
 
-src/common/type/stringz.h:
+src/common/type/stringStatic.c:
+  class: core
+  type: c
+
+src/common/type/stringStatic.h:
+  class: core
+  type: c/h
+
+src/common/type/stringZ.c:
+  class: core
+  type: c
+
+src/common/type/stringZ.h:
   class: core
   type: c/h
 
@@ -1143,9 +1947,13 @@ src/common/wait.h:
   class: core
   type: c/h
 
-src/config/config.auto.c:
-  class: core/auto
+src/config/common.c:
+  class: core
   type: c
+
+src/config/common.h:
+  class: core
+  type: c/h
 
 src/config/config.auto.h:
   class: core/auto
@@ -1160,22 +1968,6 @@ src/config/config.h:
   type: c/h
 
 src/config/config.intern.h:
-  class: core
-  type: c/h
-
-src/config/define.auto.c:
-  class: core/auto
-  type: c
-
-src/config/define.auto.h:
-  class: core/auto
-  type: c/h
-
-src/config/define.c:
-  class: core
-  type: c
-
-src/config/define.h:
   class: core
   type: c/h
 
@@ -1195,7 +1987,7 @@ src/config/load.h:
   class: core
   type: c/h
 
-src/config/parse.auto.c:
+src/config/parse.auto.c.inc:
   class: core/auto
   type: c
 
@@ -1287,6 +2079,10 @@ src/main.c:
   class: core
   type: c
 
+src/meson.build:
+  class: build
+  type: meson
+
 src/postgres/client.c:
   class: core
   type: c
@@ -1294,6 +2090,10 @@ src/postgres/client.c:
 src/postgres/client.h:
   class: core
   type: c/h
+
+src/postgres/interface.auto.c.inc:
+  class: core/auto
+  type: c
 
 src/postgres/interface.c:
   class: core
@@ -1303,72 +2103,20 @@ src/postgres/interface.h:
   class: core
   type: c/h
 
+src/postgres/interface/crc32.c:
+  class: core
+  type: c
+
+src/postgres/interface/crc32.h:
+  class: core
+  type: c/h
+
 src/postgres/interface/page.c:
   class: core
   type: c
 
-src/postgres/interface/pageChecksum.vendor.c:
-  class: core/vendor
-  type: c
-
 src/postgres/interface/static.vendor.h:
   class: core/vendor
-  type: c/h
-
-src/postgres/interface/v083.c:
-  class: core
-  type: c
-
-src/postgres/interface/v084.c:
-  class: core
-  type: c
-
-src/postgres/interface/v090.c:
-  class: core
-  type: c
-
-src/postgres/interface/v091.c:
-  class: core
-  type: c
-
-src/postgres/interface/v092.c:
-  class: core
-  type: c
-
-src/postgres/interface/v093.c:
-  class: core
-  type: c
-
-src/postgres/interface/v094.c:
-  class: core
-  type: c
-
-src/postgres/interface/v095.c:
-  class: core
-  type: c
-
-src/postgres/interface/v096.c:
-  class: core
-  type: c
-
-src/postgres/interface/v100.c:
-  class: core
-  type: c
-
-src/postgres/interface/v110.c:
-  class: core
-  type: c
-
-src/postgres/interface/v120.c:
-  class: core
-  type: c
-
-src/postgres/interface/v130.c:
-  class: core
-  type: c
-
-src/postgres/interface/version.h:
-  class: core
   type: c/h
 
 src/postgres/interface/version.intern.h:
@@ -1377,6 +2125,14 @@ src/postgres/interface/version.intern.h:
 
 src/postgres/interface/version.vendor.h:
   class: core/vendor
+  type: c/h
+
+src/postgres/meson.build:
+  class: build
+  type: meson
+
+src/postgres/version.auto.h:
+  class: core/auto
   type: c/h
 
 src/postgres/version.h:
@@ -1431,6 +2187,14 @@ src/protocol/server.h:
   class: core
   type: c/h
 
+src/storage/azure/helper.c:
+  class: core
+  type: c
+
+src/storage/azure/helper.h:
+  class: core
+  type: c/h
+
 src/storage/azure/read.c:
   class: core
   type: c
@@ -1459,11 +2223,55 @@ src/storage/azure/write.h:
   class: core
   type: c/h
 
+src/storage/cifs/helper.c:
+  class: core
+  type: c
+
+src/storage/cifs/helper.h:
+  class: core
+  type: c/h
+
 src/storage/cifs/storage.c:
   class: core
   type: c
 
 src/storage/cifs/storage.h:
+  class: core
+  type: c/h
+
+src/storage/gcs/helper.c:
+  class: core
+  type: c
+
+src/storage/gcs/helper.h:
+  class: core
+  type: c/h
+
+src/storage/gcs/read.c:
+  class: core
+  type: c
+
+src/storage/gcs/read.h:
+  class: core
+  type: c/h
+
+src/storage/gcs/storage.c:
+  class: core
+  type: c
+
+src/storage/gcs/storage.h:
+  class: core
+  type: c/h
+
+src/storage/gcs/storage.intern.h:
+  class: core
+  type: c/h
+
+src/storage/gcs/write.c:
+  class: core
+  type: c
+
+src/storage/gcs/write.h:
   class: core
   type: c/h
 
@@ -1476,6 +2284,22 @@ src/storage/helper.h:
   type: c/h
 
 src/storage/info.h:
+  class: core
+  type: c/h
+
+src/storage/iterator.c:
+  class: core
+  type: c
+
+src/storage/iterator.h:
+  class: core
+  type: c/h
+
+src/storage/list.c:
+  class: core
+  type: c
+
+src/storage/list.h:
   class: core
   type: c/h
 
@@ -1555,6 +2379,14 @@ src/storage/remote/write.h:
   class: core
   type: c/h
 
+src/storage/s3/helper.c:
+  class: core
+  type: c
+
+src/storage/s3/helper.h:
+  class: core
+  type: c/h
+
 src/storage/s3/read.c:
   class: core
   type: c
@@ -1580,6 +2412,42 @@ src/storage/s3/write.c:
   type: c
 
 src/storage/s3/write.h:
+  class: core
+  type: c/h
+
+src/storage/sftp/helper.c:
+  class: core
+  type: c
+
+src/storage/sftp/helper.h:
+  class: core
+  type: c/h
+
+src/storage/sftp/read.c:
+  class: core
+  type: c
+
+src/storage/sftp/read.h:
+  class: core
+  type: c/h
+
+src/storage/sftp/storage.c:
+  class: core
+  type: c
+
+src/storage/sftp/storage.h:
+  class: core
+  type: c/h
+
+src/storage/sftp/storage.intern.h:
+  class: core
+  type: c/h
+
+src/storage/sftp/write.c:
+  class: core
+  type: c
+
+src/storage/sftp/write.h:
   class: core
   type: c/h
 
@@ -1610,6 +2478,10 @@ src/storage/write.intern.h:
 src/version.h:
   class: core
   type: c/h
+
+test/ci.pl:
+  class: test/harness
+  type: perl
 
 test/container.yaml:
   class: test/harness
@@ -1647,18 +2519,6 @@ test/lib/pgBackRestTest/Common/ExecuteTest.pm:
   class: test/harness
   type: perl
 
-test/lib/pgBackRestTest/Common/FileTest.pm:
-  class: test/harness
-  type: perl
-
-test/lib/pgBackRestTest/Common/HostGroupTest.pm:
-  class: test/harness
-  type: perl
-
-test/lib/pgBackRestTest/Common/HostTest.pm:
-  class: test/harness
-  type: perl
-
 test/lib/pgBackRestTest/Common/Io/Base.pm:
   class: test/harness
   type: perl
@@ -1687,14 +2547,6 @@ test/lib/pgBackRestTest/Common/ListTest.pm:
   class: test/harness
   type: perl
 
-test/lib/pgBackRestTest/Common/LogTest.pm:
-  class: test/harness
-  type: perl
-
-test/lib/pgBackRestTest/Common/RunTest.pm:
-  class: test/harness
-  type: perl
-
 test/lib/pgBackRestTest/Common/Storage.pm:
   class: test/harness
   type: perl
@@ -1715,10 +2567,6 @@ test/lib/pgBackRestTest/Common/StoragePosixWrite.pm:
   class: test/harness
   type: perl
 
-test/lib/pgBackRestTest/Common/StorageRepo.pm:
-  class: test/harness
-  type: perl
-
 test/lib/pgBackRestTest/Common/VmTest.pm:
   class: test/harness
   type: perl
@@ -1727,85 +2575,57 @@ test/lib/pgBackRestTest/Common/Wait.pm:
   class: test/harness
   type: perl
 
-test/lib/pgBackRestTest/Env/ArchiveInfo.pm:
+test/src/build/config/config.yaml:
   class: test/harness
-  type: perl
+  type: yaml
 
-test/lib/pgBackRestTest/Env/BackupInfo.pm:
+test/src/build/help/help.xml:
   class: test/harness
-  type: perl
+  type: xml
 
-test/lib/pgBackRestTest/Env/ExpireEnvTest.pm:
+test/src/command/help/meson.build:
+  class: build
+  type: meson
+
+test/src/command/test/build.c:
   class: test/harness
-  type: perl
+  type: c
 
-test/lib/pgBackRestTest/Env/Host/HostAzureTest.pm:
+test/src/command/test/build.h:
   class: test/harness
-  type: perl
+  type: c/h
 
-test/lib/pgBackRestTest/Env/Host/HostBackupTest.pm:
+test/src/command/test/define.c:
   class: test/harness
-  type: perl
+  type: c
 
-test/lib/pgBackRestTest/Env/Host/HostBaseTest.pm:
+test/src/command/test/define.h:
   class: test/harness
-  type: perl
+  type: c/h
 
-test/lib/pgBackRestTest/Env/Host/HostDbCommonTest.pm:
+test/src/command/test/test.c:
   class: test/harness
-  type: perl
+  type: c
 
-test/lib/pgBackRestTest/Env/Host/HostDbSyntheticTest.pm:
+test/src/command/test/test.h:
   class: test/harness
-  type: perl
+  type: c/h
 
-test/lib/pgBackRestTest/Env/Host/HostDbTest.pm:
+test/src/common/harnessBackup.c:
   class: test/harness
-  type: perl
+  type: c
 
-test/lib/pgBackRestTest/Env/Host/HostS3Test.pm:
+test/src/common/harnessBackup.h:
   class: test/harness
-  type: perl
+  type: c/h
 
-test/lib/pgBackRestTest/Env/HostEnvTest.pm:
+test/src/common/harnessBlockIncr.c:
   class: test/harness
-  type: perl
+  type: c
 
-test/lib/pgBackRestTest/Env/InfoCommon.pm:
+test/src/common/harnessBlockIncr.h:
   class: test/harness
-  type: perl
-
-test/lib/pgBackRestTest/Env/Manifest.pm:
-  class: test/harness
-  type: perl
-
-test/lib/pgBackRestTest/Module/Mock/MockAllTest.pm:
-  class: test/module
-  type: perl
-
-test/lib/pgBackRestTest/Module/Mock/MockArchiveStopTest.pm:
-  class: test/module
-  type: perl
-
-test/lib/pgBackRestTest/Module/Mock/MockArchiveTest.pm:
-  class: test/module
-  type: perl
-
-test/lib/pgBackRestTest/Module/Mock/MockExpireTest.pm:
-  class: test/module
-  type: perl
-
-test/lib/pgBackRestTest/Module/Mock/MockStanzaTest.pm:
-  class: test/module
-  type: perl
-
-test/lib/pgBackRestTest/Module/Performance/PerformanceArchivePerlTest.pm:
-  class: test/module
-  type: perl
-
-test/lib/pgBackRestTest/Module/Real/RealAllTest.pm:
-  class: test/module
-  type: perl
+  type: c/h
 
 test/src/common/harnessConfig.c:
   class: test/harness
@@ -1819,7 +2639,39 @@ test/src/common/harnessDebug.h:
   class: test/harness
   type: c/h
 
+test/src/common/harnessError.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessError.h:
+  class: test/harness
+  type: c/h
+
+test/src/common/harnessErrorRetry.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessErrorRetry.h:
+  class: test/harness
+  type: c/h
+
+test/src/common/harnessFd.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessFd.h:
+  class: test/harness
+  type: c/h
+
 test/src/common/harnessFork.h:
+  class: test/harness
+  type: c/h
+
+test/src/common/harnessHost.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessHost.h:
   class: test/harness
   type: c/h
 
@@ -1831,11 +2683,95 @@ test/src/common/harnessInfo.h:
   class: test/harness
   type: c/h
 
+test/src/common/harnessLibSsh2.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessLibSsh2.h:
+  class: test/harness
+  type: c/h
+
+test/src/common/harnessLock.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessLock.h:
+  class: test/harness
+  type: c/h
+
 test/src/common/harnessLog.c:
   class: test/harness
   type: c
 
 test/src/common/harnessLog.h:
+  class: test/harness
+  type: c/h
+
+test/src/common/harnessManifest.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessManifest.h:
+  class: test/harness
+  type: c/h
+
+test/src/common/harnessPack.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessPack.h:
+  class: test/harness
+  type: c/h
+
+test/src/common/harnessPostgres.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessPostgres.h:
+  class: test/harness
+  type: c/h
+
+test/src/common/harnessPostgres/harness094.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessPostgres/harness095.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessPostgres/harness096.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessPostgres/harness100.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessPostgres/harness110.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessPostgres/harness120.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessPostgres/harness130.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessPostgres/harness140.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessPostgres/harness150.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessPostgres/harness160.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessPostgres/harnessVersion.intern.h:
   class: test/harness
   type: c/h
 
@@ -1847,11 +2783,35 @@ test/src/common/harnessPq.h:
   class: test/harness
   type: c/h
 
+test/src/common/harnessProtocol.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessProtocol.h:
+  class: test/harness
+  type: c/h
+
 test/src/common/harnessServer.c:
   class: test/harness
   type: c
 
 test/src/common/harnessServer.h:
+  class: test/harness
+  type: c/h
+
+test/src/common/harnessSocket.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessSocket.h:
+  class: test/harness
+  type: c/h
+
+test/src/common/harnessStackTrace.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessStackTrace.h:
   class: test/harness
   type: c/h
 
@@ -1875,6 +2835,58 @@ test/src/common/harnessTest.intern.h:
   class: test/harness
   type: c/h
 
+test/src/common/harnessTime.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessTime.h:
+  class: test/harness
+  type: c/h
+
+test/src/config/load.c:
+  class: test/harness
+  type: c
+
+test/src/config/load.h:
+  class: test/harness
+  type: c/h
+
+test/src/config/meson.build:
+  class: build
+  type: meson
+
+test/src/main.c:
+  class: test/harness
+  type: c
+
+test/src/meson.build:
+  class: build
+  type: meson
+
+test/src/module/build/commonTest.c:
+  class: test/module
+  type: c
+
+test/src/module/build/configTest.c:
+  class: test/module
+  type: c
+
+test/src/module/build/errorTest.c:
+  class: test/module
+  type: c
+
+test/src/module/build/helpTest.c:
+  class: test/module
+  type: c
+
+test/src/module/build/postgresTest.c:
+  class: test/module
+  type: c
+
+test/src/module/command/annotateTest.c:
+  class: test/module
+  type: c
+
 test/src/module/command/archiveCommonTest.c:
   class: test/module
   type: c
@@ -1884,10 +2896,6 @@ test/src/module/command/archiveGetTest.c:
   type: c
 
 test/src/module/command/archivePushTest.c:
-  class: test/module
-  type: c
-
-test/src/module/command/backupCommonTest.c:
   class: test/module
   type: c
 
@@ -1907,6 +2915,10 @@ test/src/module/command/controlTest.c:
   class: test/module
   type: c
 
+test/src/module/command/exitTest.c:
+  class: test/module
+  type: c
+
 test/src/module/command/expireTest.c:
   class: test/module
   type: c
@@ -1923,6 +2935,10 @@ test/src/module/command/localTest.c:
   class: test/module
   type: c
 
+test/src/module/command/manifestTest.c:
+  class: test/module
+  type: c
+
 test/src/module/command/remoteTest.c:
   class: test/module
   type: c
@@ -1932,6 +2948,10 @@ test/src/module/command/repoTest.c:
   type: c
 
 test/src/module/command/restoreTest.c:
+  class: test/module
+  type: c
+
+test/src/module/command/serverTest.c:
   class: test/module
   type: c
 
@@ -1971,15 +2991,15 @@ test/src/module/common/encodeTest.c:
   class: test/module
   type: c
 
+test/src/module/common/errorRetryTest.c:
+  class: test/module
+  type: c
+
 test/src/module/common/errorTest.c:
   class: test/module
   type: c
 
 test/src/module/common/execTest.c:
-  class: test/module
-  type: c
-
-test/src/module/common/exitTest.c:
   class: test/module
   type: c
 
@@ -2031,6 +3051,10 @@ test/src/module/common/timeTest.c:
   class: test/module
   type: c
 
+test/src/module/common/typeBlobTest.c:
+  class: test/module
+  type: c
+
 test/src/module/common/typeBufferTest.c:
   class: test/module
   type: c
@@ -2051,11 +3075,11 @@ test/src/module/common/typeListTest.c:
   class: test/module
   type: c
 
-test/src/module/common/typeMcvTest.c:
+test/src/module/common/typeObjectTest.c:
   class: test/module
   type: c
 
-test/src/module/common/typeObjectTest.c:
+test/src/module/common/typePackTest.c:
   class: test/module
   type: c
 
@@ -2083,10 +3107,6 @@ test/src/module/common/waitTest.c:
   class: test/module
   type: c
 
-test/src/module/config/defineTest.c:
-  class: test/module
-  type: c
-
 test/src/module/config/execTest.c:
   class: test/module
   type: c
@@ -2107,6 +3127,10 @@ test/src/module/db/dbTest.c:
   class: test/module
   type: c
 
+test/src/module/doc/buildTest.c:
+  class: test/module
+  type: c
+
 test/src/module/info/infoArchiveTest.c:
   class: test/module
   type: c
@@ -2124,6 +3148,10 @@ test/src/module/info/infoTest.c:
   type: c
 
 test/src/module/info/manifestTest.c:
+  class: test/module
+  type: c
+
+test/src/module/integration/allTest.c:
   class: test/module
   type: c
 
@@ -2151,7 +3179,7 @@ test/src/module/storage/azureTest.c:
   class: test/module
   type: c
 
-test/src/module/storage/cifsTest.c:
+test/src/module/storage/gcsTest.c:
   class: test/module
   type: c
 
@@ -2167,14 +3195,18 @@ test/src/module/storage/s3Test.c:
   class: test/module
   type: c
 
+test/src/module/storage/sftpTest.c:
+  class: test/module
+  type: c
+
+test/src/module/test/testTest.c:
+  class: test/module
+  type: c
+
 test/src/test.c:
   class: test/harness
   type: c
 
 test/test.pl:
-  class: test/harness
-  type: perl
-
-test/travis.pl:
   class: test/harness
   type: perl

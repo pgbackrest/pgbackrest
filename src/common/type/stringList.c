@@ -13,64 +13,25 @@ String List Handler
 #include "common/type/stringList.h"
 
 /***********************************************************************************************************************************
-Wrapper for lstNew*()
-***********************************************************************************************************************************/
-StringList *
-strLstNew(void)
-{
-    FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN((StringList *)lstNewP(sizeof(String *), .comparator = lstComparatorStr));
-}
-
-/***********************************************************************************************************************************
 Internal add -- the string must have been created in the list's mem context before being passed
 ***********************************************************************************************************************************/
-static String *
-strLstAddInternal(StringList *this, String *string)
+FN_INLINE_ALWAYS String *
+strLstAddInternal(StringList *const this, String *const string)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING_LIST, this);
-        FUNCTION_TEST_PARAM(STRING, string);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(*(String **)lstAdd((List *)this, &string));
+    return *(String **)lstAdd((List *)this, &string);
 }
 
 /***********************************************************************************************************************************
 Internal insert -- the string must have been created in the list's mem context before being passed
 ***********************************************************************************************************************************/
-static String *
-strLstInsertInternal(StringList *this, unsigned int listIdx, String *string)
+FN_INLINE_ALWAYS String *
+strLstInsertInternal(StringList *const this, const unsigned int listIdx, String *const string)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING_LIST, this);
-        FUNCTION_TEST_PARAM(UINT, listIdx);
-        FUNCTION_TEST_PARAM(STRING, string);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(*(String **)lstInsert((List *)this, listIdx, &string));
+    return *(String **)lstInsert((List *)this, listIdx, &string);
 }
 
 /**********************************************************************************************************************************/
-StringList *
-strLstNewSplit(const String *string, const String *delimiter)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, string);
-        FUNCTION_TEST_PARAM(STRING, delimiter);
-    FUNCTION_TEST_END();
-
-    ASSERT(string != NULL);
-    ASSERT(delimiter != NULL);
-
-    FUNCTION_TEST_RETURN(strLstNewSplitZ(string, strZ(delimiter)));
-}
-
-StringList *
+FN_EXTERN StringList *
 strLstNewSplitZ(const String *string, const char *delimiter)
 {
     FUNCTION_TEST_BEGIN();
@@ -100,101 +61,22 @@ strLstNewSplitZ(const String *string, const char *delimiter)
             // If a match was found then add the string
             if (stringMatch != NULL)
             {
-                strLstAddInternal(this, strNewN(stringBase, (size_t)(stringMatch - stringBase)));
+                strLstAddInternal(this, strNewZN(stringBase, (size_t)(stringMatch - stringBase)));
                 stringBase = stringMatch + strlen(delimiter);
             }
             // Else make whatever is left the last string
             else
-                strLstAddInternal(this, strNew(stringBase));
+                strLstAddInternal(this, strNewZ(stringBase));
         }
         while (stringMatch != NULL);
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(STRING_LIST, this);
 }
 
 /**********************************************************************************************************************************/
-StringList *
-strLstNewSplitSize(const String *string, const String *delimiter, size_t size)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, string);
-        FUNCTION_TEST_PARAM(STRING, delimiter);
-        FUNCTION_TEST_PARAM(SIZE, size);
-    FUNCTION_TEST_END();
-
-    ASSERT(string != NULL);
-    ASSERT(delimiter != NULL);
-
-    FUNCTION_TEST_RETURN(strLstNewSplitSizeZ(string, strZ(delimiter), size));
-}
-
-StringList *
-strLstNewSplitSizeZ(const String *string, const char *delimiter, size_t size)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, string);
-        FUNCTION_TEST_PARAM(STRINGZ, delimiter);
-        FUNCTION_TEST_PARAM(SIZE, size);
-    FUNCTION_TEST_END();
-
-    ASSERT(string != NULL);
-    ASSERT(delimiter != NULL);
-
-    // Create the list
-    StringList *this = strLstNew();
-
-    // Base points to the beginning of the string that is being searched
-    const char *stringBase = strZ(string);
-
-    // Match points to the next delimiter match that has been found
-    const char *stringMatchLast = NULL;
-    const char *stringMatch = NULL;
-
-    MEM_CONTEXT_BEGIN(lstMemContext((List *)this))
-    {
-        do
-        {
-            // Find a delimiter match
-            stringMatch = strstr(stringMatchLast == NULL ? stringBase : stringMatchLast, delimiter);
-
-            // If a match was found then add the string
-            if (stringMatch != NULL)
-            {
-                if ((size_t)(stringMatch - stringBase) >= size)
-                {
-                    if (stringMatchLast != NULL)
-                        stringMatch = stringMatchLast - strlen(delimiter);
-
-                    strLstAddInternal(this, strNewN(stringBase, (size_t)(stringMatch - stringBase)));
-                    stringBase = stringMatch + strlen(delimiter);
-                    stringMatchLast = NULL;
-                }
-                else
-                    stringMatchLast = stringMatch + strlen(delimiter);
-            }
-            // Else make whatever is left the last string
-            else
-            {
-                if (stringMatchLast != NULL && strlen(stringBase) - strlen(delimiter) >= size)
-                {
-                    strLstAddInternal(this, strNewN(stringBase, (size_t)((stringMatchLast - strlen(delimiter)) - stringBase)));
-                    stringBase = stringMatchLast;
-                }
-
-                strLstAddInternal(this, strNew(stringBase));
-            }
-        }
-        while (stringMatch != NULL);
-    }
-    MEM_CONTEXT_END();
-
-    FUNCTION_TEST_RETURN(this);
-}
-
-/**********************************************************************************************************************************/
-StringList *
+FN_EXTERN StringList *
 strLstNewVarLst(const VariantList *sourceList)
 {
     FUNCTION_TEST_BEGIN();
@@ -204,7 +86,7 @@ strLstNewVarLst(const VariantList *sourceList)
     // Create the list
     StringList *this = NULL;
 
-    if  (sourceList != NULL)
+    if (sourceList != NULL)
     {
         this = strLstNew();
 
@@ -217,11 +99,11 @@ strLstNewVarLst(const VariantList *sourceList)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(STRING_LIST, this);
 }
 
 /**********************************************************************************************************************************/
-StringList *
+FN_EXTERN StringList *
 strLstDup(const StringList *sourceList)
 {
     FUNCTION_TEST_BEGIN();
@@ -244,40 +126,11 @@ strLstDup(const StringList *sourceList)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(STRING_LIST, this);
 }
 
 /**********************************************************************************************************************************/
-bool
-strLstExists(const StringList *this, const String *string)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING_LIST, this);
-        FUNCTION_TEST_PARAM(STRING, string);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(lstExists((List *)this, &string));
-}
-
-bool
-strLstExistsZ(const StringList *this, const char *cstring)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING_LIST, this);
-        FUNCTION_TEST_PARAM(STRINGZ, cstring);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    const String *string = cstring == NULL ? NULL : STR(cstring);
-
-    FUNCTION_TEST_RETURN(lstExists((List *)this, &string));
-}
-
-/**********************************************************************************************************************************/
-String *
+FN_EXTERN String *
 strLstAdd(StringList *this, const String *string)
 {
     FUNCTION_TEST_BEGIN();
@@ -295,10 +148,70 @@ strLstAdd(StringList *this, const String *string)
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
-String *
+FN_EXTERN String *
+strLstAddSubN(StringList *const this, const String *const string, const size_t offset, const size_t size)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING_LIST, this);
+        FUNCTION_TEST_PARAM(STRING, string);
+        FUNCTION_TEST_PARAM(SIZE, offset);
+        FUNCTION_TEST_PARAM(SIZE, size);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(string != NULL);
+
+    String *result = NULL;
+
+    MEM_CONTEXT_BEGIN(lstMemContext((List *)this))
+    {
+        result = strLstAddInternal(this, strSubN(string, offset, size));
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN(STRING, result);
+}
+
+FN_EXTERN String *
+strLstAddFmt(StringList *const this, const char *const format, ...)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING_LIST, this);
+        FUNCTION_TEST_PARAM(STRINGZ, format);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(format != NULL);
+
+    // Determine how long the allocated string needs to be
+    va_list argumentList;
+    va_start(argumentList, format);
+    const size_t size = (size_t)vsnprintf(NULL, 0, format, argumentList);
+    va_end(argumentList);
+
+    // Format string
+    va_start(argumentList, format);
+    char *const buffer = memNew(size + 1);
+    vsnprintf(buffer, size + 1, format, argumentList);
+    va_end(argumentList);
+
+    String *result = NULL;
+
+    MEM_CONTEXT_BEGIN(lstMemContext((List *)this))
+    {
+        result = strLstAddInternal(this, strNewZN(buffer, size));
+    }
+    MEM_CONTEXT_END();
+
+    memFree(buffer);
+
+    FUNCTION_TEST_RETURN(STRING, result);
+}
+
+FN_EXTERN String *
 strLstAddIfMissing(StringList *this, const String *string)
 {
     FUNCTION_TEST_BEGIN();
@@ -311,12 +224,12 @@ strLstAddIfMissing(StringList *this, const String *string)
     String **result = lstFind((List *)this, &string);
 
     if (result == NULL)
-        FUNCTION_TEST_RETURN(strLstAdd(this, string));
+        FUNCTION_TEST_RETURN(STRING, strLstAdd(this, string));
 
-    FUNCTION_TEST_RETURN(*result);
+    FUNCTION_TEST_RETURN(STRING, *result);
 }
 
-String *
+FN_EXTERN String *
 strLstAddZ(StringList *this, const char *string)
 {
     FUNCTION_TEST_BEGIN();
@@ -330,29 +243,60 @@ strLstAddZ(StringList *this, const char *string)
 
     MEM_CONTEXT_BEGIN(lstMemContext((List *)this))
     {
-        result = strLstAddInternal(this, strNew(string));
+        result = strLstAddInternal(this, strNewZ(string));
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
-/**********************************************************************************************************************************/
-String *
-strLstGet(const StringList *this, unsigned int listIdx)
+FN_EXTERN String *
+strLstAddZSubN(StringList *const this, const char *const string, const size_t offset, const size_t size)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING_LIST, this);
-        FUNCTION_TEST_PARAM(UINT, listIdx);
+        FUNCTION_TEST_PARAM(STRINGZ, string);
+        FUNCTION_TEST_PARAM(SIZE, offset);
+        FUNCTION_TEST_PARAM(SIZE, size);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
+    ASSERT(string != NULL);
 
-    FUNCTION_TEST_RETURN(*(String **)lstGet((List *)this, listIdx));
+    String *result = NULL;
+
+    MEM_CONTEXT_BEGIN(lstMemContext((List *)this))
+    {
+        result = strLstAddInternal(this, strSubN(STR(string), offset, size));
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/
-String *
+FN_EXTERN unsigned int
+strLstFindIdx(const StringList *const this, const String *const string, const StrLstFindIdxParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING_LIST, this);
+        FUNCTION_TEST_PARAM(STRING, string);
+        FUNCTION_TEST_PARAM(BOOL, param.required);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(string != NULL);
+
+    const unsigned int result = lstFindIdx((List *)this, &string);
+
+    if (result == LIST_NOT_FOUND && param.required)
+        THROW_FMT(AssertError, "unable to find '%s' in string list", strZ(string));
+
+    FUNCTION_TEST_RETURN(UINT, result);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN String *
 strLstInsert(StringList *this, unsigned int listIdx, const String *string)
 {
     FUNCTION_TEST_BEGIN();
@@ -371,48 +315,11 @@ strLstInsert(StringList *this, unsigned int listIdx, const String *string)
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_TEST_RETURN(result);
-}
-
-String *
-strLstInsertZ(StringList *this, unsigned int listIdx, const char *string)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING_LIST, this);
-        FUNCTION_TEST_PARAM(UINT, listIdx);
-        FUNCTION_TEST_PARAM(STRINGZ, string);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    String *result = NULL;
-
-    MEM_CONTEXT_BEGIN(lstMemContext((List *)this))
-    {
-        result = strLstInsertInternal(this, listIdx, strNew(string));
-    }
-    MEM_CONTEXT_END();
-
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/
-String *
-strLstJoin(const StringList *this, const char *separator)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING_LIST, this);
-        FUNCTION_TEST_PARAM(STRINGZ, separator);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    ASSERT(separator != NULL);
-
-    FUNCTION_TEST_RETURN(strLstJoinQuote(this, separator, ""));
-}
-
-/**********************************************************************************************************************************/
-String *
+FN_EXTERN String *
 strLstJoinQuote(const StringList *this, const char *separator, const char *quote)
 {
     FUNCTION_TEST_BEGIN();
@@ -425,7 +332,7 @@ strLstJoinQuote(const StringList *this, const char *separator, const char *quote
     ASSERT(separator != NULL);
     ASSERT(quote != NULL);
 
-    String *join = strNew("");
+    String *join = strNew();
 
     for (unsigned int listIdx = 0; listIdx < strLstSize(this); listIdx++)
     {
@@ -438,11 +345,11 @@ strLstJoinQuote(const StringList *this, const char *separator, const char *quote
             strCatFmt(join, "%s%s%s", quote, strZ(strLstGet(this, listIdx)), quote);
     }
 
-    FUNCTION_TEST_RETURN(join);
+    FUNCTION_TEST_RETURN(STRING, join);
 }
 
 /**********************************************************************************************************************************/
-StringList *
+FN_EXTERN StringList *
 strLstMergeAnti(const StringList *this, const StringList *anti)
 {
     FUNCTION_TEST_BEGIN();
@@ -499,27 +406,11 @@ strLstMergeAnti(const StringList *this, const StringList *anti)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING_LIST, result);
 }
 
 /**********************************************************************************************************************************/
-StringList *
-strLstMove(StringList *this, MemContext *parentNew)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING_LIST, this);
-        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-    FUNCTION_TEST_END();
-
-    ASSERT(parentNew != NULL);
-
-    lstMove((List *)this, parentNew);
-
-    FUNCTION_TEST_RETURN(this);
-}
-
-/**********************************************************************************************************************************/
-const char **
+FN_EXTERN const char **
 strLstPtr(const StringList *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -540,96 +431,27 @@ strLstPtr(const StringList *this)
 
     list[strLstSize(this)] = NULL;
 
-    FUNCTION_TEST_RETURN(list);
+    FUNCTION_TEST_RETURN_CONST_P(STRINGZ, list);
 }
 
 /**********************************************************************************************************************************/
-bool
-strLstRemove(StringList *this, const String *item)
+FN_EXTERN void
+strLstToLog(const StringList *const this, StringStatic *const debugLog)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING_LIST, this);
-        FUNCTION_TEST_PARAM(STRING, item);
-    FUNCTION_TEST_END();
+    strStcCat(debugLog, "{[");
 
-    ASSERT(this != NULL);
-    ASSERT(item != NULL);
+    for (unsigned int strLstIdx = 0; strLstIdx < strLstSize(this); strLstIdx++)
+    {
+        const String *const value = strLstGet(this, strLstIdx);
 
-    FUNCTION_TEST_RETURN(lstRemove((List *)this, &item));
-}
+        if (strLstIdx != 0)
+            strStcCat(debugLog, ", ");
 
-StringList *
-strLstRemoveIdx(StringList *this, unsigned int listIdx)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING_LIST, this);
-        FUNCTION_TEST_PARAM(UINT, listIdx);
-    FUNCTION_TEST_END();
+        if (value == NULL)
+            strStcCat(debugLog, NULL_Z);
+        else
+            strStcFmt(debugLog, "\"%s\"", strZ(value));
+    }
 
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN((StringList *)lstRemoveIdx((List *)this, listIdx));
-}
-
-/**********************************************************************************************************************************/
-unsigned int
-strLstSize(const StringList *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING_LIST, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(lstSize((List *)this));
-}
-
-/**********************************************************************************************************************************/
-StringList *
-strLstSort(StringList *this, SortOrder sortOrder)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING_LIST, this);
-        FUNCTION_TEST_PARAM(ENUM, sortOrder);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    lstSort((List *)this, sortOrder);
-
-    FUNCTION_TEST_RETURN(this);
-}
-
-/**********************************************************************************************************************************/
-StringList *
-strLstComparatorSet(StringList *this, ListComparator *comparator)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING_LIST, this);
-        FUNCTION_TEST_PARAM(FUNCTIONP, comparator);
-    FUNCTION_TEST_END();
-
-    lstComparatorSet((List *)this, comparator);
-
-    FUNCTION_TEST_RETURN(this);
-}
-
-/**********************************************************************************************************************************/
-String *
-strLstToLog(const StringList *this)
-{
-    return strNewFmt("{[%s]}", strZ(strLstJoinQuote(this, ", ", "\"")));
-}
-
-/**********************************************************************************************************************************/
-void
-strLstFree(StringList *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING_LIST, this);
-    FUNCTION_TEST_END();
-
-    lstFree((List *)this);
-
-    FUNCTION_TEST_RETURN_VOID();
+    strStcCat(debugLog, "]}");
 }

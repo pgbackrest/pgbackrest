@@ -8,6 +8,7 @@ Restore Command
 #include <time.h>
 #include <unistd.h>
 
+#include "command/restore/file.h"
 #include "command/restore/protocol.h"
 #include "command/restore/restore.h"
 #include "common/crypto/cipherBlock.h"
@@ -31,7 +32,7 @@ Restore Command
 Recovery constants
 ***********************************************************************************************************************************/
 #define RESTORE_COMMAND                                             "restore_command"
-    STRING_STATIC(RESTORE_COMMAND_STR,                              RESTORE_COMMAND);
+STRING_STATIC(RESTORE_COMMAND_STR,                                  RESTORE_COMMAND);
 
 #define RECOVERY_TARGET                                             "recovery_target"
 #define RECOVERY_TARGET_LSN                                         "recovery_target_lsn"
@@ -40,34 +41,16 @@ Recovery constants
 #define RECOVERY_TARGET_XID                                         "recovery_target_xid"
 
 #define RECOVERY_TARGET_ACTION                                      "recovery_target_action"
-#define RECOVERY_TARGET_ACTION_PAUSE                                "pause"
-    STRING_STATIC(RECOVERY_TARGET_ACTION_PAUSE_STR,                 RECOVERY_TARGET_ACTION_PAUSE);
-#define RECOVERY_TARGET_ACTION_SHUTDOWN                             "shutdown"
-    STRING_STATIC(RECOVERY_TARGET_ACTION_SHUTDOWN_STR,              RECOVERY_TARGET_ACTION_SHUTDOWN);
-
 #define RECOVERY_TARGET_INCLUSIVE                                   "recovery_target_inclusive"
+
 #define RECOVERY_TARGET_TIMELINE                                    "recovery_target_timeline"
+#define RECOVERY_TARGET_TIMELINE_CURRENT                            "current"
+
 #define PAUSE_AT_RECOVERY_TARGET                                    "pause_at_recovery_target"
 #define STANDBY_MODE                                                "standby_mode"
-    STRING_STATIC(STANDBY_MODE_STR,                                 STANDBY_MODE);
-
-#define RECOVERY_TYPE_DEFAULT                                       "default"
-    STRING_STATIC(RECOVERY_TYPE_DEFAULT_STR,                        RECOVERY_TYPE_DEFAULT);
-#define RECOVERY_TYPE_IMMEDIATE                                     "immediate"
-    STRING_STATIC(RECOVERY_TYPE_IMMEDIATE_STR,                      RECOVERY_TYPE_IMMEDIATE);
-#define RECOVERY_TYPE_NONE                                          "none"
-    STRING_STATIC(RECOVERY_TYPE_NONE_STR,                           RECOVERY_TYPE_NONE);
-#define RECOVERY_TYPE_PRESERVE                                      "preserve"
-    STRING_STATIC(RECOVERY_TYPE_PRESERVE_STR,                       RECOVERY_TYPE_PRESERVE);
-#define RECOVERY_TYPE_STANDBY                                       "standby"
-    STRING_STATIC(RECOVERY_TYPE_STANDBY_STR,                        RECOVERY_TYPE_STANDBY);
-#define RECOVERY_TYPE_TIME                                          "time"
-    STRING_STATIC(RECOVERY_TYPE_TIME_STR,                           RECOVERY_TYPE_TIME);
+STRING_STATIC(STANDBY_MODE_STR,                                     STANDBY_MODE);
 
 #define ARCHIVE_MODE                                                "archive_mode"
-#define ARCHIVE_MODE_OFF                                            "off"
-    STRING_STATIC(ARCHIVE_MODE_OFF_STR,                             ARCHIVE_MODE_OFF);
-STRING_STATIC(ARCHIVE_MODE_PRESERVE_STR,                            "preserve");
 
 /***********************************************************************************************************************************
 Validate restore path
@@ -79,20 +62,15 @@ restorePathValidate(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // The PGDATA directory must exist
-        // ??? We should remove this requirement in a separate commit.  What's the harm in creating the dir assuming we have perms?
-        if (!storagePathExistsP(storagePg(), NULL))
-            THROW_FMT(PathMissingError, "$PGDATA directory '%s' does not exist", strZ(cfgOptionStr(cfgOptPgPath)));
-
         // PostgreSQL must not be running
-        if (storageExistsP(storagePg(), PG_FILE_POSTMASTERPID_STR))
+        if (storageExistsP(storagePg(), PG_FILE_POSTMTRPID_STR))
         {
             THROW_FMT(
                 PgRunningError,
                 "unable to restore while PostgreSQL is running\n"
-                    "HINT: presence of '" PG_FILE_POSTMASTERPID "' in '%s' indicates PostgreSQL is running.\n"
-                    "HINT: remove '" PG_FILE_POSTMASTERPID "' only if PostgreSQL is not running.",
-                strZ(cfgOptionStr(cfgOptPgPath)));
+                "HINT: presence of '" PG_FILE_POSTMTRPID "' in '%s' indicates PostgreSQL is running.\n"
+                "HINT: remove '" PG_FILE_POSTMTRPID "' only if PostgreSQL is not running.",
+                strZ(cfgOptionDisplay(cfgOptPgPath)));
         }
 
         // If the restore will be destructive attempt to verify that PGDATA looks like a valid PostgreSQL directory
@@ -101,13 +79,13 @@ restorePathValidate(void)
         {
             LOG_WARN_FMT(
                 "--delta or --force specified but unable to find '" PG_FILE_PGVERSION "' or '" BACKUP_MANIFEST_FILE "' in '%s' to"
-                    " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
-                    " exist in the destination directories the restore will be aborted.",
-               strZ(cfgOptionStr(cfgOptPgPath)));
+                " confirm that this is a valid $PGDATA directory. --delta and --force have been disabled and if any files exist"
+                " in the destination directories the restore will be aborted.",
+                strZ(cfgOptionDisplay(cfgOptPgPath)));
 
             // Disable delta and force so restore will fail if the directories are not empty
-            cfgOptionSet(cfgOptDelta, cfgSourceDefault, VARBOOL(false));
-            cfgOptionSet(cfgOptForce, cfgSourceDefault, VARBOOL(false));
+            cfgOptionSet(cfgOptDelta, cfgSourceDefault, BOOL_FALSE_VAR);
+            cfgOptionSet(cfgOptForce, cfgSourceDefault, BOOL_FALSE_VAR);
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -144,12 +122,12 @@ getEpoch(const String *targetTime)
             // Strip off the date and time and put the remainder into another string
             String *datetime = strSubN(targetTime, 0, 19);
 
-            int dtYear = cvtZToInt(strZ(strSubN(datetime, 0, 4)));
-            int dtMonth = cvtZToInt(strZ(strSubN(datetime, 5, 2)));
-            int dtDay = cvtZToInt(strZ(strSubN(datetime, 8, 2)));
-            int dtHour = cvtZToInt(strZ(strSubN(datetime, 11, 2)));
-            int dtMinute = cvtZToInt(strZ(strSubN(datetime, 14, 2)));
-            int dtSecond = cvtZToInt(strZ(strSubN(datetime, 17, 2)));
+            int dtYear = cvtZSubNToInt(strZ(datetime), 0, 4);
+            int dtMonth = cvtZSubNToInt(strZ(datetime), 5, 2);
+            int dtDay = cvtZSubNToInt(strZ(datetime), 8, 2);
+            int dtHour = cvtZSubNToInt(strZ(datetime), 11, 2);
+            int dtMinute = cvtZSubNToInt(strZ(datetime), 14, 2);
+            int dtSecond = cvtZSubNToInt(strZ(datetime), 17, 2);
 
             // Confirm date and time parts are valid
             datePartsValid(dtYear, dtMonth, dtDay);
@@ -169,13 +147,13 @@ getEpoch(const String *targetTime)
                 String *timezoneOffset = strSub(timeTargetZone, (size_t)idxSign);
 
                 // Include the sign with the hour
-                int tzHour = cvtZToInt(strZ(strSubN(timezoneOffset, 0, 3)));
+                int tzHour = cvtZSubNToInt(strZ(timezoneOffset), 0, 3);
                 int tzMinute = 0;
 
                 // If minutes are included in timezone offset then extract the minutes based on whether a colon separates them from
                 // the hour
                 if (strSize(timezoneOffset) > 3)
-                    tzMinute = cvtZToInt(strZ(strSubN(timezoneOffset, 3 + (strChr(timezoneOffset, ':') == -1 ? 0 : 1), 2)));
+                    tzMinute = cvtZSubNToInt(strZ(timezoneOffset), 3 + (strChr(timezoneOffset, ':') == -1 ? 0 : 1), 2);
 
                 result = epochFromParts(dtYear, dtMonth, dtDay, dtHour, dtMinute, dtSecond, tzOffsetSeconds(tzHour, tzMinute));
             }
@@ -185,16 +163,26 @@ getEpoch(const String *targetTime)
                 // Set tm_isdst to -1 to force mktime to consider if DST. For example, if system time is America/New_York then
                 // 2019-09-14 20:02:49 was a time in DST so the Epoch value should be 1568505769 (and not 1568509369 which would be
                 // 2019-09-14 21:02:49 - an hour too late)
-                result = mktime(
-                    &(struct tm){.tm_sec = dtSecond, .tm_min = dtMinute, .tm_hour = dtHour, .tm_mday = dtDay, .tm_mon = dtMonth - 1,
-                    .tm_year = dtYear - 1900, .tm_isdst = -1});
+                struct tm time =
+                {
+                    .tm_sec = dtSecond,
+                    .tm_min = dtMinute,
+                    .tm_hour = dtHour,
+                    .tm_mday = dtDay,
+                    .tm_mon = dtMonth - 1,
+                    .tm_year = dtYear - 1900,
+                    .tm_isdst = -1,
+                };
+
+                result = mktime(&time);
             }
         }
         else
         {
-            LOG_WARN_FMT(
-                "automatic backup set selection cannot be performed with provided time '%s', latest backup set will be used"
-                "\nHINT: time format must be YYYY-MM-DD HH:MM:SS with optional msec and optional timezone (+/- HH or HHMM or HH:MM)"
+            THROW_FMT(
+                FormatError,
+                "automatic backup set selection cannot be performed with provided time '%s'\n"
+                "HINT: time format must be YYYY-MM-DD HH:MM:SS with optional msec and optional timezone (+/- HH or HHMM or HH:MM)"
                 " - if timezone is omitted, local time is assumed (for UTC use +00)",
                 strZ(targetTime));
         }
@@ -207,92 +195,217 @@ getEpoch(const String *targetTime)
 /***********************************************************************************************************************************
 Get the backup set to restore
 ***********************************************************************************************************************************/
-static String *
-restoreBackupSet(InfoBackup *infoBackup)
+typedef struct RestoreBackupData
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
-    FUNCTION_LOG_END();
+    unsigned int repoIdx;                                           // Internal repo index
+    CipherType repoCipherType;                                      // Repo encryption type (0 = none)
+    const String *backupCipherPass;                                 // Passphrase of backup files if repo is encrypted (else NULL)
+    const String *backupSet;                                        // Backup set to restore
+} RestoreBackupData;
 
-    ASSERT(infoBackup != NULL);
+#define FUNCTION_LOG_RESTORE_BACKUP_DATA_TYPE                                                                                      \
+    RestoreBackupData
+#define FUNCTION_LOG_RESTORE_BACKUP_DATA_FORMAT(value, buffer, bufferSize)                                                         \
+    objNameToLog(&value, "RestoreBackupData", buffer, bufferSize)
 
-    String *result = NULL;
+// Helper function for restoreBackupSet
+static RestoreBackupData
+restoreBackupData(const String *backupLabel, unsigned int repoIdx, const String *backupCipherPass)
+{
+    ASSERT(backupLabel != NULL);
+
+    RestoreBackupData restoreBackup = {0};
+
+    MEM_CONTEXT_PRIOR_BEGIN()
+    {
+        restoreBackup.backupSet = strDup(backupLabel);
+        restoreBackup.repoIdx = repoIdx;
+        restoreBackup.repoCipherType = cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx);
+        restoreBackup.backupCipherPass = strDup(backupCipherPass);
+    }
+    MEM_CONTEXT_PRIOR_END();
+
+    return restoreBackup;
+}
+
+static RestoreBackupData
+restoreBackupSet(void)
+{
+    FUNCTION_LOG_VOID(logLevelDebug);
+
+    FUNCTION_AUDIT_STRUCT();
+
+    RestoreBackupData result = {0};
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // If backup set to restore is default (i.e. latest) then get the actual set
-        const String *backupSet = NULL;
+        // Initialize the repo index
+        unsigned int repoIdxMin = 0;
+        unsigned int repoIdxMax = cfgOptionGroupIdxTotal(cfgOptGrpRepo) - 1;
+
+        // If the repo was specified then set index to the array location and max to loop only once
+        if (cfgOptionTest(cfgOptRepo))
+        {
+            repoIdxMin = cfgOptionGroupIdxDefault(cfgOptGrpRepo);
+            repoIdxMax = repoIdxMin;
+        }
+
+        // If the set option was not provided by the user but a target was set, then we will need to search for a backup set that
+        // satisfies the target condition, else we will use the backup provided
+        const String *backupSetRequested = NULL;
+        const StringId targetType = cfgOptionStrId(cfgOptType);
+
+        union
+        {
+            time_t time;
+            uint64_t lsn;
+        } target = {0};
 
         if (cfgOptionSource(cfgOptSet) == cfgSourceDefault)
         {
-            if (infoBackupDataTotal(infoBackup) == 0)
-                THROW(BackupSetInvalidError, "no backup sets to restore");
+            if (targetType == CFGOPTVAL_TYPE_TIME)
+                target.time = getEpoch(cfgOptionStr(cfgOptTarget));
+            else if (targetType == CFGOPTVAL_TYPE_LSN)
+                target.lsn = pgLsnFromStr(cfgOptionStr(cfgOptTarget));
+        }
+        else
+            backupSetRequested = cfgOptionStr(cfgOptSet);
 
-            time_t timeTargetEpoch = 0;
+        // Search through the repo list for a backup set to use for recovery
+        for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
+        {
+            // Get the repo storage in case it is remote and encryption settings need to be pulled down
+            storageRepoIdx(repoIdx);
 
-            // If the recovery type is time, attempt to determine the backup set
-            if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_TIME_STR))
+            InfoBackup *infoBackup = NULL;
+
+            // Attempt to load backup.info
+            TRY_BEGIN()
             {
-                timeTargetEpoch = getEpoch(cfgOptionStr(cfgOptTarget));
+                infoBackup = infoBackupLoadFile(
+                    storageRepoIdx(repoIdx), INFO_BACKUP_PATH_FILE_STR, cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
+                    cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
+            }
+            CATCH_ANY()
+            {
+                LOG_WARN_FMT("%s: [%s] %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx), errorTypeName(errorType()), errorMessage());
+            }
+            TRY_END();
 
-                // Try to find the newest backup set with a stop time before the target recovery time
-                if (timeTargetEpoch != 0)
+            // If unable to load the backup info file, then move on to next repo
+            if (infoBackup == NULL)
+                continue;
+
+            if (infoBackupDataTotal(infoBackup) == 0)
+            {
+                LOG_WARN_FMT(
+                    "%s: [%s] no backup sets to restore", cfgOptionGroupName(cfgOptGrpRepo, repoIdx),
+                    errorTypeName(&BackupSetInvalidError));
+                continue;
+            }
+
+            // If a backup set was not specified, then see if a target was requested
+            if (backupSetRequested == NULL)
+            {
+                // Get the latest backup
+                InfoBackupData latestBackup = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1);
+
+                // If a target was requested, attempt to determine the backup set
+                if (targetType == CFGOPTVAL_TYPE_TIME || targetType == CFGOPTVAL_TYPE_LSN)
                 {
+                    bool found = false;
+
                     // Search current backups from newest to oldest
                     for (unsigned int keyIdx = infoBackupDataTotal(infoBackup) - 1; (int)keyIdx >= 0; keyIdx--)
                     {
                         // Get the backup data
                         InfoBackupData backupData = infoBackupData(infoBackup, keyIdx);
 
-                        // If the end of the backup is before the target time, then select this backup
-                        if (backupData.backupTimestampStop < timeTargetEpoch)
+                        // If target is lsn and no backupLsnStop exists, exit this repo and log that backup may be manually selected
+                        if (targetType == CFGOPTVAL_TYPE_LSN && !backupData.backupLsnStop)
                         {
-                            backupSet = backupData.backupLabel;
+                            LOG_WARN_FMT(
+                                "%s reached backup from prior version missing required LSN info before finding a match -- backup"
+                                " auto-select has been disabled for this repo\n"
+                                "HINT: you may specify a backup to restore using the --set option.",
+                                cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
+
+                            break;
+                        }
+
+                        // If the end of the backup is valid for the target, then select this backup
+                        if ((targetType == CFGOPTVAL_TYPE_TIME && backupData.backupTimestampStop < target.time) ||
+                            (targetType == CFGOPTVAL_TYPE_LSN && pgLsnFromStr(backupData.backupLsnStop) <= target.lsn))
+                        {
+                            found = true;
+
+                            result = restoreBackupData(backupData.backupLabel, repoIdx, infoPgCipherPass(infoBackupPg(infoBackup)));
                             break;
                         }
                     }
 
-                    if (backupSet == NULL)
-                    {
-                        LOG_WARN_FMT(
-                            "unable to find backup set with stop time less than '%s', latest backup set will be used",
-                            strZ(cfgOptionStr(cfgOptTarget)));
-                    }
+                    // If a backup was found on this repo matching the criteria for time then exit
+                    if (found)
+                        break;
                 }
-            }
-
-            // If a backup set was not found or the recovery type was not time, then use the latest backup
-            if (backupSet == NULL)
-                backupSet = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel;
-        }
-        // Otherwise check to make sure the specified backup set is valid
-        else
-        {
-            bool found = false;
-            backupSet = cfgOptionStr(cfgOptSet);
-
-            for (unsigned int backupIdx = 0; backupIdx < infoBackupDataTotal(infoBackup); backupIdx++)
-            {
-                if (strEq(infoBackupData(infoBackup, backupIdx).backupLabel, backupSet))
+                // Else use backup set found
+                else
                 {
-                    found = true;
+                    // Is this backup part of the latest pg history?
+                    InfoPgData backupInfoPg = infoPgData(infoBackupPg(infoBackup), infoPgDataCurrentId(infoBackupPg(infoBackup)));
+
+                    if (latestBackup.backupPgId < backupInfoPg.id)
+                    {
+                        THROW_FMT(
+                            BackupSetInvalidError,
+                            "the latest backup set found '%s' is from a prior version of " PG_NAME "\n"
+                            "HINT: was a backup created after the stanza-upgrade?\n"
+                            "HINT: specify --" CFGOPT_SET " or --" CFGOPT_TYPE "=time/lsn to restore from a prior version of"
+                            " " PG_NAME ".",
+                            strZ(latestBackup.backupLabel));
+                    }
+
+                    result = restoreBackupData(latestBackup.backupLabel, repoIdx, infoPgCipherPass(infoBackupPg(infoBackup)));
                     break;
                 }
             }
+            // Otherwise check to see if the specified backup set is on this repo
+            else
+            {
+                for (unsigned int backupIdx = 0; backupIdx < infoBackupDataTotal(infoBackup); backupIdx++)
+                {
+                    if (strEq(infoBackupData(infoBackup, backupIdx).backupLabel, backupSetRequested))
+                    {
+                        result = restoreBackupData(backupSetRequested, repoIdx, infoPgCipherPass(infoBackupPg(infoBackup)));
+                        break;
+                    }
+                }
 
-            if (!found)
-                THROW_FMT(BackupSetInvalidError, "backup set %s is not valid", strZ(backupSet));
+                // If the backup set is found, then exit, else continue to next repo
+                if (result.backupSet != NULL)
+                    break;
+            }
         }
 
-        MEM_CONTEXT_PRIOR_BEGIN()
+        // Still no backup set to use after checking all the repos required to be checked?
+        if (result.backupSet == NULL)
         {
-            result = strDup(backupSet);
+            if (backupSetRequested != NULL)
+                THROW_FMT(BackupSetInvalidError, "backup set %s is not valid", strZ(backupSetRequested));
+            else if (targetType == CFGOPTVAL_TYPE_TIME || targetType == CFGOPTVAL_TYPE_LSN)
+            {
+                THROW_FMT(
+                    BackupSetInvalidError, "unable to find backup set with %s '%s'",
+                    targetType == CFGOPTVAL_TYPE_LSN ? "lsn less than or equal to" : "stop time less than",
+                    strZ(cfgOptionDisplay(cfgOptTarget)));
+            }
+            else
+                THROW(BackupSetInvalidError, "no backup set found to restore");
         }
-        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(STRING, result);
+    FUNCTION_LOG_RETURN_STRUCT(result);
 }
 
 /***********************************************************************************************************************************
@@ -312,7 +425,7 @@ restoreManifestValidate(Manifest *manifest, const String *backupSet)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // If there are no files in the manifest then something has gone horribly wrong
-        CHECK(manifestFileTotal(manifest) > 0);
+        CHECK(FormatError, manifestFileTotal(manifest) > 0, "manifest missing files");
 
         // Sanity check to ensure the manifest has not been moved to a new directory
         const ManifestData *data = manifestData(manifest);
@@ -358,7 +471,7 @@ restoreManifestMap(Manifest *manifest)
 
         // Remap tablespaces
         // -------------------------------------------------------------------------------------------------------------------------
-        KeyValue *tablespaceMap = varKv(cfgOption(cfgOptTablespaceMap));
+        const KeyValue *const tablespaceMap = cfgOptionKvNull(cfgOptTablespaceMap);
         const String *tablespaceMapAllPath = cfgOptionStrNull(cfgOptTablespaceMapAll);
 
         if (tablespaceMap != NULL || tablespaceMapAllPath != NULL)
@@ -437,88 +550,146 @@ restoreManifestMap(Manifest *manifest)
                         THROW_FMT(TablespaceMapError, "unable to remap invalid tablespace '%s'", strZ(tablespace));
                 }
             }
-
-            // Issue a warning message when remapping tablespaces in PostgreSQL < 9.2
-            if (manifestData(manifest)->pgVersion <= PG_VERSION_92)
-                LOG_WARN("update pg_tablespace.spclocation with new tablespace locations for PostgreSQL <= " PG_VERSION_92_STR);
         }
 
         // Remap links
         // -------------------------------------------------------------------------------------------------------------------------
-        KeyValue *linkMap = varKv(cfgOption(cfgOptLinkMap));
-        bool linkAll = cfgOptionBool(cfgOptLinkAll);
+        const KeyValue *const linkMap = cfgOptionKvNull(cfgOptLinkMap);
 
-        StringList *linkRemapped = strLstNew();
-
-        for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
+        if (linkMap != NULL)
         {
-            const ManifestTarget *target = manifestTarget(manifest, targetIdx);
+            const StringList *const linkMapList = strLstSort(strLstNewVarLst(kvKeyList(linkMap)), sortOrderAsc);
 
-            // Is this a link?
-            if (target->type == manifestTargetTypeLink && target->tablespaceId == 0)
+            for (unsigned int linkMapIdx = 0; linkMapIdx < strLstSize(linkMapList); linkMapIdx++)
             {
-                const String *link = strSub(target->name, strSize(MANIFEST_TARGET_PGDATA_STR) + 1);
-                const String *linkPath = linkMap == NULL ? NULL : varStr(kvGet(linkMap, VARSTR(link)));
+                const String *const link = strLstGet(linkMapList, linkMapIdx);
+                const String *const linkPath = varStr(kvGet(linkMap, VARSTR(link)));
+                const String *const manifestName = strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strZ(link));
 
-                // Remap link if a mapping was found
-                if (linkPath != NULL)
+                // Attempt to find the link target
+                ManifestTarget target = {0};
+
+                if (manifestTargetFindDefault(manifest, manifestName, NULL) != NULL)
+                    target = *manifestTargetFind(manifest, manifestName);
+
+                // If the target was not found then check if the link is a valid file or path
+                bool create = false;
+
+                if (target.name == NULL)
                 {
-                    LOG_INFO_FMT("map link '%s' to '%s'", strZ(link), strZ(linkPath));
-                    manifestLinkUpdate(manifest, target->name, linkPath);
+                    // Is the specified link a file or a path? Error if they both match.
+                    const bool pathExists = manifestPathFindDefault(manifest, manifestName, NULL) != NULL;
+                    const bool fileExists = manifestFileExists(manifest, manifestName);
 
-                    // If the link is a file separate the file name from the path to update the target
-                    const String *linkFile = NULL;
+                    CHECK(FormatError, !pathExists || !fileExists, "link may not be both file and path");
 
-                    if (target->file != NULL)
+                    target = (ManifestTarget){.name = manifestName, .path = linkPath, .type = manifestTargetTypeLink};
+
+                    // If a file
+                    if (fileExists)
                     {
-                        // The link destination must have at least one path component in addition to the file part. So '..' would
-                        // not be a valid destination but '../file' or '/file' is.
-                        if (strSize(strPath(linkPath)) == 0)
-                        {
-                            THROW_FMT(
-                                LinkMapError, "'%s' is not long enough to be the destination for file link '%s'", strZ(linkPath),
-                                strZ(link));
-                        }
-
-                        linkFile = strBase(linkPath);
-                        linkPath = strPath(linkPath);
+                        // File needs to be set so the file/path is updated later but set it to something invalid just in case it
+                        // it does not get updated due to a regression
+                        target.file = DOT_STR;
+                    }
+                    // Else error if not a path
+                    else if (!pathExists)
+                    {
+                        THROW_FMT(
+                            LinkMapError,
+                            "unable to map link '%s'\n"
+                            "HINT: Does the link reference a valid backup path or file?",
+                            strZ(link));
                     }
 
-                    manifestTargetUpdate(manifest, target->name, linkPath, linkFile);
-
-                    // Add to remapped list for later validation that all links were valid
-                    strLstAdd(linkRemapped, link);
-                }
-                // If all links are not being restored then remove the target and link
-                else if (!linkAll)
-                {
-                    if (target->file != NULL)
-                        LOG_WARN_FMT("file link '%s' will be restored as a file at the same location", strZ(link));
-                    else
+                    // Add the link. Copy user/group from the base data directory.
+                    const ManifestPath *const pathBase = manifestPathFind(manifest, MANIFEST_TARGET_PGDATA_STR);
+                    const ManifestLink manifestLink =
                     {
-                        LOG_WARN_FMT(
-                            "contents of directory link '%s' will be restored in a directory at the same location", strZ(link));
+                        .name = manifestName,
+                        .destination = linkPath,
+                        .group = pathBase->group,
+                        .user = pathBase->user,
+                    };
+
+                    manifestLinkAdd(manifest, &manifestLink);
+                    create = true;
+                }
+                // Else update target to new path
+                else
+                    target.path = linkPath;
+
+                // The target must be a link since pg_data/ was prepended and pgdata is the only allowed path
+                CHECK(FormatError, target.type == manifestTargetTypeLink, "target must be a link");
+
+                // Error if the target is a tablespace
+                if (target.tablespaceId != 0)
+                {
+                    THROW_FMT(
+                        LinkMapError,
+                        "unable to remap tablespace '%s'\n"
+                        "HINT: use '" CFGOPT_TABLESPACE_MAP "' option to remap tablespaces.",
+                        strZ(link));
+                }
+
+                LOG_INFO_FMT("%slink '%s' to '%s'", create ? "" : "map ", strZ(link), strZ(target.path));
+
+                // If the link was not created update to the new destination
+                if (!create)
+                    manifestLinkUpdate(manifest, target.name, target.path);
+
+                // If the link is a file separate the file name from the path
+                if (target.file != NULL)
+                {
+                    // The link destination must have at least one path component in addition to the file part. So '..' would
+                    // not be a valid destination but '../file' or '/file' is.
+                    if (strSize(strPath(target.path)) == 0)
+                    {
+                        THROW_FMT(
+                            LinkMapError, "'%s' is not long enough to be the destination for file link '%s'", strZ(target.path),
+                            strZ(link));
                     }
 
-                    manifestLinkRemove(manifest, target->name);
-                    manifestTargetRemove(manifest, target->name);
-                    targetIdx--;
+                    target.file = strBase(target.path);
+                    target.path = strPath(target.path);
                 }
+
+                // Create a new target or update the existing target file/path
+                if (create)
+                    manifestTargetAdd(manifest, &target);
+                else
+                    manifestTargetUpdate(manifest, target.name, target.path, target.file);
             }
         }
 
-        // Error on invalid links
-        if (linkMap != NULL)
+        // If all links are not being restored then check for links that were not remapped and remove them
+        if (!cfgOptionBool(cfgOptLinkAll))
         {
-            const VariantList *linkMapList = kvKeyList(linkMap);
-            strLstSort(linkRemapped, sortOrderAsc);
-
-            for (unsigned int linkMapIdx = 0; linkMapIdx < varLstSize(linkMapList); linkMapIdx++)
+            for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
             {
-                const String *link = varStr(varLstGet(linkMapList, linkMapIdx));
+                const ManifestTarget *const target = manifestTarget(manifest, targetIdx);
 
-                if (!strLstExists(linkRemapped, link))
-                    THROW_FMT(LinkMapError, "unable to remap invalid link '%s'", strZ(link));
+                // Is this a non-tablespace link?
+                if (target->type == manifestTargetTypeLink && target->tablespaceId == 0)
+                {
+                    const String *const link = strSub(target->name, strSize(MANIFEST_TARGET_PGDATA_STR) + 1);
+
+                    // If the link was not remapped then remove it
+                    if (linkMap == NULL || kvGet(linkMap, VARSTR(link)) == NULL)
+                    {
+                        if (target->file != NULL)
+                            LOG_WARN_FMT("file link '%s' will be restored as a file at the same location", strZ(link));
+                        else
+                        {
+                            LOG_WARN_FMT(
+                                "contents of directory link '%s' will be restored in a directory at the same location", strZ(link));
+                        }
+
+                        manifestLinkRemove(manifest, target->name);
+                        manifestTargetRemove(manifest, target->name);
+                        targetIdx--;
+                    }
+                }
             }
         }
     }
@@ -530,40 +701,33 @@ restoreManifestMap(Manifest *manifest)
 /***********************************************************************************************************************************
 Check ownership of items in the manifest
 ***********************************************************************************************************************************/
+// Helper to determine what the user/group of a path/file/link should be
+static const String *
+restoreManifestOwnerReplace(const String *const owner, const String *const ownerDefaultRoot)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, owner);
+        FUNCTION_TEST_PARAM(STRING, ownerDefaultRoot);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN_CONST(STRING, userRoot() ? (owner == NULL ? ownerDefaultRoot : owner) : NULL);
+}
+
 // Helper to get list of owners from a file/link/path list
-#define RESTORE_MANIFEST_OWNER_GET(type)                                                                                           \
+#define RESTORE_MANIFEST_OWNER_GET(type, deref)                                                                                    \
     for (unsigned int itemIdx = 0; itemIdx < manifest##type##Total(manifest); itemIdx++)                                           \
     {                                                                                                                              \
-        Manifest##type *item = (Manifest##type *)manifest##type(manifest, itemIdx);                                                \
+        Manifest##type item = deref manifest##type(manifest, itemIdx);                                                             \
                                                                                                                                    \
-        if (item->user == NULL)                                                                                                    \
+        if (item.user == NULL)                                                                                                     \
             userNull = true;                                                                                                       \
         else                                                                                                                       \
-            strLstAddIfMissing(userList, item->user);                                                                              \
+            strLstAddIfMissing(userList, item.user);                                                                               \
                                                                                                                                    \
-        if (item->group == NULL)                                                                                                   \
+        if (item.group == NULL)                                                                                                    \
             groupNull = true;                                                                                                      \
         else                                                                                                                       \
-            strLstAddIfMissing(groupList, item->group);                                                                            \
-                                                                                                                                   \
-        if (!userRoot())                                                                                                           \
-        {                                                                                                                          \
-            item->user = NULL;                                                                                                     \
-            item->group = NULL;                                                                                                    \
-        }                                                                                                                          \
-    }
-
-// Helper to update an owner in a file/link/path list
-#define RESTORE_MANIFEST_OWNER_NULL_UPDATE(type, user, group)                                                                      \
-    for (unsigned int itemIdx = 0; itemIdx < manifest##type##Total(manifest); itemIdx++)                                           \
-    {                                                                                                                              \
-        Manifest##type *item = (Manifest##type *)manifest##type(manifest, itemIdx);                                                \
-                                                                                                                                   \
-        if (item->user == NULL)                                                                                                    \
-            item->user = user;                                                                                                     \
-                                                                                                                                   \
-        if (item->group == NULL)                                                                                                   \
-            item->group = group;                                                                                                   \
+            strLstAddIfMissing(groupList, item.group);                                                                             \
     }
 
 // Helper to warn when an owner is missing and must be remapped
@@ -577,18 +741,22 @@ Check ownership of items in the manifest
         {                                                                                                                          \
             const String *owner = strLstGet(type##List, ownerIdx);                                                                 \
                                                                                                                                    \
-            if (type##Name() == NULL ||  !strEq(type##Name(), owner))                                                              \
+            if (type##Name() == NULL || !strEq(type##Name(), owner))                                                               \
                 LOG_WARN_FMT("unknown " #type " '%s' in backup manifest mapped to current " #type, strZ(owner));                   \
         }                                                                                                                          \
     }                                                                                                                              \
     while (0)
 
 static void
-restoreManifestOwner(Manifest *manifest)
+restoreManifestOwner(const Manifest *const manifest, const String **const rootReplaceUser, const String **const rootReplaceGroup)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
+        FUNCTION_LOG_PARAM_P(VOID, rootReplaceUser);
+        FUNCTION_LOG_PARAM_P(VOID, rootReplaceGroup);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     ASSERT(manifest != NULL);
 
@@ -601,9 +769,9 @@ restoreManifestOwner(Manifest *manifest)
         bool groupNull = false;
         StringList *groupList = strLstNew();
 
-        RESTORE_MANIFEST_OWNER_GET(File);
-        RESTORE_MANIFEST_OWNER_GET(Link);
-        RESTORE_MANIFEST_OWNER_GET(Path);
+        RESTORE_MANIFEST_OWNER_GET(File, );
+        RESTORE_MANIFEST_OWNER_GET(Link, *(ManifestLink *));
+        RESTORE_MANIFEST_OWNER_GET(Path, *(ManifestPath *));
 
         // Update users and groups in the manifest (this can only be done as root)
         // -------------------------------------------------------------------------------------------------------------------------
@@ -629,19 +797,15 @@ restoreManifestOwner(Manifest *manifest)
 
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {
-                    const String *user = strDup(pathInfo.user);
-                    const String *group = strDup(pathInfo.group);
-
-                    RESTORE_MANIFEST_OWNER_NULL_UPDATE(File, user, group)
-                    RESTORE_MANIFEST_OWNER_NULL_UPDATE(Link, user, group)
-                    RESTORE_MANIFEST_OWNER_NULL_UPDATE(Path, user, group)
+                    *rootReplaceUser = strDup(pathInfo.user);
+                    *rootReplaceGroup = strDup(pathInfo.group);
                 }
                 MEM_CONTEXT_PRIOR_END();
             }
         }
-        // Else set owners to NULL.  This means we won't make any attempt to update ownership and will just leave it as written by
-        // the current user/group.  If there are existing files that are not owned by the current user/group then we will attempt
-        // to update them, which will generally cause an error, though some systems allow updates to the group ownership.
+        // Else set owners to NULL. This means we won't make any attempt to update ownership and will just leave it as written by
+        // the current user/group. If there are existing files that are not owned by the current user/group then we will attempt to
+        // update them, which will generally cause an error, though some systems allow updates to the group ownership.
         // -------------------------------------------------------------------------------------------------------------------------
         else
         {
@@ -668,13 +832,16 @@ typedef struct RestoreCleanCallbackData
     bool exists;                                                    // Does the target path exist?
     bool delta;                                                     // Is this a delta restore?
     StringList *fileIgnore;                                         // Files to ignore during clean
+    const String *rootReplaceUser;                                  // User to replace invalid users when root
+    const String *rootReplaceGroup;                                 // Group to replace invalid group when root
 } RestoreCleanCallbackData;
 
 // Helper to update ownership on a file/link/path
 static void
 restoreCleanOwnership(
-    const String *pgPath, const String *manifestUserName, const String *manifestGroupName, uid_t actualUserId, gid_t actualGroupId,
-    bool new)
+    const String *const pgPath, const String *manifestUserName, const String *const rootReplaceUser,
+    const String *manifestGroupName, const String *const rootReplaceGroup, const uid_t actualUserId, const gid_t actualGroupId,
+    const bool new)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, pgPath);
@@ -690,6 +857,8 @@ restoreCleanOwnership(
     // Get the expected user id
     uid_t expectedUserId = userId();
 
+    manifestUserName = restoreManifestOwnerReplace(manifestUserName, rootReplaceUser);
+
     if (manifestUserName != NULL)
     {
         uid_t manifestUserId = userIdFromName(manifestUserName);
@@ -700,6 +869,8 @@ restoreCleanOwnership(
 
     // Get the expected group id
     gid_t expectedGroupId = groupId();
+
+    manifestGroupName = restoreManifestOwnerReplace(manifestGroupName, rootReplaceGroup);
 
     if (manifestGroupName != NULL)
     {
@@ -743,145 +914,155 @@ restoreCleanMode(const String *pgPath, mode_t manifestMode, const StorageInfo *i
         LOG_DETAIL_FMT("update mode for '%s' to %04o", strZ(pgPath), manifestMode);
 
         THROW_ON_SYS_ERROR_FMT(
-            chmod(strZ(pgPath), manifestMode) == -1, FileOwnerError, "unable to set mode for '%s'", strZ(pgPath));
+            chmod(strZ(pgPath), manifestMode) == -1, FileModeError, "unable to set mode for '%s'", strZ(pgPath));
     }
 
     FUNCTION_TEST_RETURN_VOID();
 }
 
-// storageInfoList() callback that cleans the paths
+// Recurse paths
 static void
-restoreCleanInfoListCallback(void *data, const StorageInfo *info)
+restoreCleanBuildRecurse(StorageIterator *const storageItr, const RestoreCleanCallbackData *const cleanData)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, data);
-        FUNCTION_TEST_PARAM(STORAGE_INFO, info);
+        FUNCTION_TEST_PARAM(STORAGE_ITERATOR, storageItr);
+        FUNCTION_TEST_PARAM_P(VOID, cleanData);
     FUNCTION_TEST_END();
 
-    ASSERT(data != NULL);
-    ASSERT(info != NULL);
+    ASSERT(storageItr != NULL);
+    ASSERT(cleanData != NULL);
 
-    RestoreCleanCallbackData *cleanData = (RestoreCleanCallbackData *)data;
-
-    // Don't include backup.manifest or recovery.conf (when preserved) in the comparison or empty directory check
-    if (cleanData->basePath && info->type == storageTypeFile && strLstExists(cleanData->fileIgnore, info->name))
+    MEM_CONTEXT_TEMP_RESET_BEGIN()
     {
-        FUNCTION_TEST_RETURN_VOID();
-        return;
-    }
-
-    // Skip all . paths because they have already been cleaned on the previous level of recursion
-    if (strEq(info->name, DOT_STR))
-    {
-        FUNCTION_TEST_RETURN_VOID();
-        return;
-    }
-
-    // If this is not a delta then error because the directory is expected to be empty.  Ignore the . path.
-    if (!cleanData->delta)
-    {
-        THROW_FMT(
-            PathNotEmptyError,
-            "unable to restore to path '%s' because it contains files\n"
-            "HINT: try using --delta if this is what you intended.",
-            strZ(cleanData->targetPath));
-    }
-
-    // Construct the name used to find this file/link/path in the manifest
-    const String *manifestName = strNewFmt("%s/%s", strZ(cleanData->targetName), strZ(info->name));
-
-    // Construct the path of this file/link/path in the PostgreSQL data directory
-    const String *pgPath = strNewFmt("%s/%s", strZ(cleanData->targetPath), strZ(info->name));
-
-    switch (info->type)
-    {
-        case storageTypeFile:
+        while (storageItrMore(storageItr))
         {
-            const ManifestFile *manifestFile = manifestFileFindDefault(cleanData->manifest, manifestName, NULL);
+            const StorageInfo info = storageItrNext(storageItr);
 
-            if (manifestFile != NULL)
+            // Don't include backup.manifest or recovery.conf (when preserved) in the comparison or empty directory check
+            if (cleanData->basePath && info.type == storageTypeFile && strLstExists(cleanData->fileIgnore, info.name))
+                continue;
+
+            // If this is not a delta then error because the directory is expected to be empty. Ignore the . path.
+            if (!cleanData->delta)
             {
-                restoreCleanOwnership(pgPath, manifestFile->user, manifestFile->group, info->userId, info->groupId, false);
-                restoreCleanMode(pgPath, manifestFile->mode, info);
-            }
-            else
-            {
-                LOG_DETAIL_FMT("remove invalid file '%s'", strZ(pgPath));
-                storageRemoveP(storageLocalWrite(), pgPath, .errorOnMissing = true);
+                THROW_FMT(
+                    PathNotEmptyError,
+                    "unable to restore to path '%s' because it contains files\n"
+                    "HINT: try using --delta if this is what you intended.",
+                    strZ(cleanData->targetPath));
             }
 
-            break;
-        }
+            // Construct the name used to find this file/link/path in the manifest
+            const String *manifestName = strNewFmt("%s/%s", strZ(cleanData->targetName), strZ(info.name));
 
-        case storageTypeLink:
-        {
-            const ManifestLink *manifestLink = manifestLinkFindDefault(cleanData->manifest, manifestName, NULL);
+            // Construct the path of this file/link/path in the PostgreSQL data directory
+            const String *pgPath = strNewFmt("%s/%s", strZ(cleanData->targetPath), strZ(info.name));
 
-            if (manifestLink != NULL)
+            switch (info.type)
             {
-                if (!strEq(manifestLink->destination, info->linkDestination))
+                case storageTypeFile:
                 {
-                    LOG_DETAIL_FMT("remove link '%s' because destination changed", strZ(pgPath));
-                    storageRemoveP(storageLocalWrite(), pgPath, .errorOnMissing = true);
+                    if (manifestFileExists(cleanData->manifest, manifestName) &&
+                        manifestLinkFindDefault(cleanData->manifest, manifestName, NULL) == NULL)
+                    {
+                        const ManifestFile manifestFile = manifestFileFind(cleanData->manifest, manifestName);
+
+                        restoreCleanOwnership(
+                            pgPath, manifestFile.user, cleanData->rootReplaceUser, manifestFile.group, cleanData->rootReplaceGroup,
+                            info.userId, info.groupId, false);
+                        restoreCleanMode(pgPath, manifestFile.mode, &info);
+                    }
+                    else
+                    {
+                        LOG_DETAIL_FMT("remove invalid file '%s'", strZ(pgPath));
+                        storageRemoveP(storageLocalWrite(), pgPath, .errorOnMissing = true);
+                    }
+
+                    break;
                 }
-                else
-                    restoreCleanOwnership(pgPath, manifestLink->user, manifestLink->group, info->userId, info->groupId, false);
+
+                case storageTypeLink:
+                {
+                    const ManifestLink *manifestLink = manifestLinkFindDefault(cleanData->manifest, manifestName, NULL);
+
+                    if (manifestLink != NULL)
+                    {
+                        if (!strEq(manifestLink->destination, info.linkDestination))
+                        {
+                            LOG_DETAIL_FMT("remove link '%s' because destination changed", strZ(pgPath));
+                            storageRemoveP(storageLocalWrite(), pgPath, .errorOnMissing = true);
+                        }
+                        else
+                        {
+                            restoreCleanOwnership(
+                                pgPath, manifestLink->user, cleanData->rootReplaceUser, manifestLink->group,
+                                cleanData->rootReplaceGroup, info.userId, info.groupId, false);
+                        }
+                    }
+                    else
+                    {
+                        LOG_DETAIL_FMT("remove invalid link '%s'", strZ(pgPath));
+                        storageRemoveP(storageLocalWrite(), pgPath, .errorOnMissing = true);
+                    }
+
+                    break;
+                }
+
+                case storageTypePath:
+                {
+                    const ManifestPath *manifestPath = manifestPathFindDefault(cleanData->manifest, manifestName, NULL);
+
+                    if (manifestPath != NULL && manifestLinkFindDefault(cleanData->manifest, manifestName, NULL) == NULL)
+                    {
+                        // Check ownership/permissions
+                        restoreCleanOwnership(
+                            pgPath, manifestPath->user, cleanData->rootReplaceUser, manifestPath->group,
+                            cleanData->rootReplaceGroup, info.userId, info.groupId, false);
+                        restoreCleanMode(pgPath, manifestPath->mode, &info);
+
+                        // Recurse into the path
+                        RestoreCleanCallbackData cleanDataSub = *cleanData;
+                        cleanDataSub.targetName = strNewFmt("%s/%s", strZ(cleanData->targetName), strZ(info.name));
+                        cleanDataSub.targetPath = strNewFmt("%s/%s", strZ(cleanData->targetPath), strZ(info.name));
+                        cleanDataSub.basePath = false;
+
+                        restoreCleanBuildRecurse(
+                            storageNewItrP(
+                                storageLocalWrite(), cleanDataSub.targetPath, .errorOnMissing = true, .sortOrder = sortOrderAsc),
+                            &cleanDataSub);
+                    }
+                    else
+                    {
+                        LOG_DETAIL_FMT("remove invalid path '%s'", strZ(pgPath));
+                        storagePathRemoveP(storageLocalWrite(), pgPath, .errorOnMissing = true, .recurse = true);
+                    }
+
+                    break;
+                }
+
+                // Special file types cannot exist in the manifest so just delete them
+                case storageTypeSpecial:
+                    LOG_DETAIL_FMT("remove special file '%s'", strZ(pgPath));
+                    storageRemoveP(storageLocalWrite(), pgPath, .errorOnMissing = true);
+                    break;
             }
-            else
-            {
-                LOG_DETAIL_FMT("remove invalid link '%s'", strZ(pgPath));
-                storageRemoveP(storageLocalWrite(), pgPath, .errorOnMissing = true);
-            }
 
-            break;
-        }
-
-        case storageTypePath:
-        {
-            const ManifestPath *manifestPath = manifestPathFindDefault(cleanData->manifest, manifestName, NULL);
-
-            if (manifestPath != NULL)
-            {
-                // Check ownership/permissions
-                restoreCleanOwnership(pgPath, manifestPath->user, manifestPath->group, info->userId, info->groupId, false);
-                restoreCleanMode(pgPath, manifestPath->mode, info);
-
-                // Recurse into the path
-                RestoreCleanCallbackData cleanDataSub = *cleanData;
-                cleanDataSub.targetName = strNewFmt("%s/%s", strZ(cleanData->targetName), strZ(info->name));
-                cleanDataSub.targetPath = strNewFmt("%s/%s", strZ(cleanData->targetPath), strZ(info->name));
-                cleanDataSub.basePath = false;
-
-                storageInfoListP(
-                    storageLocalWrite(), cleanDataSub.targetPath, restoreCleanInfoListCallback, &cleanDataSub,
-                    .errorOnMissing = true, .sortOrder = sortOrderAsc);
-            }
-            else
-            {
-                LOG_DETAIL_FMT("remove invalid path '%s'", strZ(pgPath));
-                storagePathRemoveP(storageLocalWrite(), pgPath, .errorOnMissing = true, .recurse = true);
-            }
-
-            break;
-        }
-
-        // Special file types cannot exist in the manifest so just delete them
-        case storageTypeSpecial:
-        {
-            LOG_DETAIL_FMT("remove special file '%s'", strZ(pgPath));
-            storageRemoveP(storageLocalWrite(), pgPath, .errorOnMissing = true);
-            break;
+            // Reset the memory context occasionally so we don't use too much memory or slow down processing
+            MEM_CONTEXT_TEMP_RESET(1000);
         }
     }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_TEST_RETURN_VOID();
 }
 
 static void
-restoreCleanBuild(Manifest *manifest)
+restoreCleanBuild(const Manifest *const manifest, const String *const rootReplaceUser, const String *const rootReplaceGroup)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
+        FUNCTION_LOG_PARAM(STRING, rootReplaceUser);
+        FUNCTION_LOG_PARAM(STRING, rootReplaceGroup);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
@@ -908,6 +1089,8 @@ restoreCleanBuild(Manifest *manifest)
                 .target = manifestTarget(manifest, targetIdx),
                 .delta = delta,
                 .fileIgnore = strLstNew(),
+                .rootReplaceUser = rootReplaceUser,
+                .rootReplaceGroup = rootReplaceGroup,
             };
 
             cleanData->targetName = cleanData->target->name;
@@ -918,7 +1101,7 @@ restoreCleanBuild(Manifest *manifest)
             strLstAdd(cleanData->fileIgnore, BACKUP_MANIFEST_FILE_STR);
 
             // Also ignore recovery files when recovery type = preserve
-            if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_PRESERVE_STR))
+            if (cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_PRESERVE)
             {
                 // If recovery GUCs then three files must be preserved
                 if (manifestData(manifest)->pgVersion >= PG_VERSION_RECOVERY_GUC)
@@ -938,19 +1121,15 @@ restoreCleanBuild(Manifest *manifest)
                 const String *tablespaceId = pgTablespaceId(
                     manifestData(manifest)->pgVersion, manifestData(manifest)->pgCatalogVersion);
 
-                // Only PostgreSQL >= 9.0 has tablespace indentifiers
-                if (tablespaceId != NULL)
-                {
-                    cleanData->targetName = strNewFmt("%s/%s", strZ(cleanData->targetName), strZ(tablespaceId));
-                    cleanData->targetPath = strNewFmt("%s/%s", strZ(cleanData->targetPath), strZ(tablespaceId));
-                }
+                cleanData->targetName = strNewFmt("%s/%s", strZ(cleanData->targetName), strZ(tablespaceId));
+                cleanData->targetPath = strNewFmt("%s/%s", strZ(cleanData->targetPath), strZ(tablespaceId));
             }
 
             strLstSort(cleanData->fileIgnore, sortOrderAsc);
 
-            // Check that the path exists.  If not, there's no need to do any cleaning and we'll attempt to create it later.
-            // Don't log check for the same path twice.  There can be multiple links to files in the same path, but logging it more
-            // than once makes the logs noisy and looks like a bug.
+            // Check that the path exists. If not, there's no need to do any cleaning and we'll attempt to create it later. Don't
+            // log check for the same path twice. There can be multiple links to files in the same path, but logging it more than
+            // once makes the logs noisy and looks like a bug.
             if (!strLstExists(pathChecked, cleanData->targetPath))
                 LOG_DETAIL_FMT("check '%s' exists", strZ(cleanData->targetPath));
 
@@ -977,9 +1156,8 @@ restoreCleanBuild(Manifest *manifest)
                 {
                     if (cleanData->target->file == NULL)
                     {
-                        storageInfoListP(
-                            storageLocal(), cleanData->targetPath, restoreCleanInfoListCallback, cleanData,
-                            .errorOnMissing = true);
+                        restoreCleanBuildRecurse(
+                            storageNewItrP(storageLocal(), cleanData->targetPath, .errorOnMissing = true), cleanData);
                     }
                     else
                     {
@@ -1006,7 +1184,7 @@ restoreCleanBuild(Manifest *manifest)
 
         // Skip the tablespace_map file when present so PostgreSQL does not rewrite links in pg_tblspc. The tablespace links will be
         // created after paths are cleaned.
-        if (manifestFileFindDefault(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_TABLESPACEMAP), NULL) != NULL &&
+        if (manifestFileExists(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_TABLESPACEMAP)) &&
             manifestData(manifest)->pgVersion >= PG_VERSION_TABLESPACE_MAP)
         {
             LOG_DETAIL_FMT("skip '" PG_FILE_TABLESPACEMAP "' -- tablespace links will be created based on mappings");
@@ -1014,9 +1192,8 @@ restoreCleanBuild(Manifest *manifest)
         }
 
         // Skip postgresql.auto.conf if preserve is set and the PostgreSQL version supports recovery GUCs
-        if (manifestData(manifest)->pgVersion >= PG_VERSION_RECOVERY_GUC &&
-            strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_PRESERVE_STR) &&
-            manifestFileFindDefault(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_POSTGRESQLAUTOCONF), NULL) != NULL)
+        if (manifestData(manifest)->pgVersion >= PG_VERSION_RECOVERY_GUC && cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_PRESERVE &&
+            manifestFileExists(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_POSTGRESQLAUTOCONF)))
         {
             LOG_DETAIL_FMT("skip '" PG_FILE_POSTGRESQLAUTOCONF "' -- recovery type is preserve");
             manifestFileRemove(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_POSTGRESQLAUTOCONF));
@@ -1024,8 +1201,8 @@ restoreCleanBuild(Manifest *manifest)
 
         // Step 2: Clean target directories
         // -------------------------------------------------------------------------------------------------------------------------
-        // Delete the pg_control file (if it exists) so the cluster cannot be started if restore does not complete.  Sync the path
-        // so the file does not return, zombie-like, in the case of a host crash.
+        // Delete the pg_control file (if it exists) so the cluster cannot be started if restore does not complete. Sync the path so
+        // the file does not return, zombie-like, in the case of a host crash.
         if (storageExistsP(storagePg(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)))
         {
             LOG_DETAIL_FMT(
@@ -1041,10 +1218,10 @@ restoreCleanBuild(Manifest *manifest)
             // Only clean if the target exists
             if (cleanData->exists)
             {
-                // Don't clean file links.  It doesn't matter whether the file exists or not since we know it is in the manifest.
+                // Don't clean file links. It doesn't matter whether the file exists or not since we know it is in the manifest.
                 if (cleanData->target->file == NULL)
                 {
-                    // Only log when doing a delta restore because otherwise the targets should be empty.  We'll still run the clean
+                    // Only log when doing a delta restore because otherwise the targets should be empty. We'll still run the clean
                     // to fix permissions/ownership on the target paths.
                     if (delta)
                         LOG_INFO_FMT("remove invalid files/links/paths from '%s'", strZ(cleanData->targetPath));
@@ -1054,13 +1231,15 @@ restoreCleanBuild(Manifest *manifest)
                     StorageInfo info = storageInfoP(storageLocal(), cleanData->targetPath, .followLink = true);
 
                     restoreCleanOwnership(
-                        cleanData->targetPath, manifestPath->user, manifestPath->group, info.userId, info.groupId, false);
+                        cleanData->targetPath, manifestPath->user, rootReplaceUser, manifestPath->group, rootReplaceGroup,
+                        info.userId, info.groupId, false);
                     restoreCleanMode(cleanData->targetPath, manifestPath->mode, &info);
 
                     // Clean the target
-                    storageInfoListP(
-                        storageLocalWrite(), cleanData->targetPath, restoreCleanInfoListCallback, cleanData, .errorOnMissing = true,
-                        .sortOrder = sortOrderAsc);
+                    restoreCleanBuildRecurse(
+                        storageNewItrP(
+                            storageLocalWrite(), cleanData->targetPath, .errorOnMissing = true, .sortOrder = sortOrderAsc),
+                        cleanData);
                 }
             }
             // If the target does not exist we'll attempt to create it
@@ -1078,7 +1257,8 @@ restoreCleanBuild(Manifest *manifest)
                     path = manifestPathFind(manifest, cleanData->target->name);
 
                 storagePathCreateP(storageLocalWrite(), cleanData->targetPath, .mode = path->mode);
-                restoreCleanOwnership(cleanData->targetPath, path->user, path->group, userId(), groupId(), true);
+                restoreCleanOwnership(
+                    cleanData->targetPath, path->user, rootReplaceUser, path->group, rootReplaceGroup, userId(), groupId(), true);
             }
         }
 
@@ -1088,12 +1268,12 @@ restoreCleanBuild(Manifest *manifest)
         {
             const ManifestPath *path = manifestPath(manifest, pathIdx);
 
-            // Skip the pg_tblspc path because it only maps to the manifest.  We should remove this in a future release but not much
+            // Skip the pg_tblspc path because it only maps to the manifest. We should remove this in a future release but not much
             // can be done about it for now.
             if (strEq(path->name, MANIFEST_TARGET_PGTBLSPC_STR))
                 continue;
 
-            // If this path has been mapped as a link then create a link.  The path has already been created as part of target
+            // If this path has been mapped as a link then create a link. The path has already been created as part of target
             // creation (or it might have already existed).
             const ManifestLink *link = manifestLinkFindDefault(
                 manifest,
@@ -1106,15 +1286,14 @@ restoreCleanBuild(Manifest *manifest)
                 const String *pgPath = storagePathP(storagePg(), manifestPathPg(link->name));
                 StorageInfo linkInfo = storageInfoP(storagePg(), pgPath, .ignoreMissing = true);
 
-                // Create the link if it is missing.  If it exists it should already have the correct ownership and destination.
+                // Create the link if it is missing. If it exists it should already have the correct ownership and destination.
                 if (!linkInfo.exists)
                 {
                     LOG_DETAIL_FMT("create symlink '%s' to '%s'", strZ(pgPath), strZ(link->destination));
 
-                    THROW_ON_SYS_ERROR_FMT(
-                        symlink(strZ(link->destination), strZ(pgPath)) == -1, FileOpenError,
-                        "unable to create symlink '%s' to '%s'", strZ(pgPath), strZ(link->destination));
-                    restoreCleanOwnership(pgPath, link->user, link->group, userId(), groupId(), true);
+                    storageLinkCreateP(storagePgWrite(), link->destination, pgPath);
+                    restoreCleanOwnership(
+                        pgPath, link->user, rootReplaceUser, link->group, rootReplaceGroup, userId(), groupId(), true);
                 }
             }
             // Create the path normally
@@ -1123,18 +1302,20 @@ restoreCleanBuild(Manifest *manifest)
                 const String *pgPath = storagePathP(storagePg(), manifestPathPg(path->name));
                 StorageInfo pathInfo = storageInfoP(storagePg(), pgPath, .ignoreMissing = true);
 
-                // Create the path if it is missing  If it exists it should already have the correct ownership and mode.
+                // Create the path if it is missing. If it exists it should already have the correct ownership and mode.
                 if (!pathInfo.exists)
                 {
                     LOG_DETAIL_FMT("create path '%s'", strZ(pgPath));
 
                     storagePathCreateP(storagePgWrite(), pgPath, .mode = path->mode, .noParentCreate = true, .errorOnExists = true);
-                    restoreCleanOwnership(storagePathP(storagePg(), pgPath), path->user, path->group, userId(), groupId(), true);
+                    restoreCleanOwnership(
+                        storagePathP(storagePg(), pgPath), path->user, rootReplaceUser, path->group, rootReplaceGroup, userId(),
+                        groupId(), true);
                 }
             }
         }
 
-        // Step 4: Create file links.  These don't get created during path creation because they do not have a matching path entry.
+        // Step 4: Create file links. These don't get created during path creation because they do not have a matching path entry.
         // -------------------------------------------------------------------------------------------------------------------------
         for (unsigned int linkIdx = 0; linkIdx < manifestLinkTotal(manifest); linkIdx++)
         {
@@ -1143,15 +1324,14 @@ restoreCleanBuild(Manifest *manifest)
             const String *pgPath = storagePathP(storagePg(), manifestPathPg(link->name));
             StorageInfo linkInfo = storageInfoP(storagePg(), pgPath, .ignoreMissing = true);
 
-            // Create the link if it is missing.  If it exists it should already have the correct ownership and destination.
+            // Create the link if it is missing. If it exists it should already have the correct ownership and destination.
             if (!linkInfo.exists)
             {
                 LOG_DETAIL_FMT("create symlink '%s' to '%s'", strZ(pgPath), strZ(link->destination));
 
-                THROW_ON_SYS_ERROR_FMT(
-                    symlink(strZ(link->destination), strZ(pgPath)) == -1, FileOpenError,
-                    "unable to create symlink '%s' to '%s'", strZ(pgPath), strZ(link->destination));
-                restoreCleanOwnership(pgPath, link->user, link->group, userId(), groupId(), true);
+                storageLinkCreateP(storagePgWrite(), link->destination, pgPath);
+                restoreCleanOwnership(
+                    pgPath, link->user, rootReplaceUser, link->group, rootReplaceGroup, userId(), groupId(), true);
             }
         }
     }
@@ -1174,8 +1354,8 @@ restoreSelectiveExpression(Manifest *manifest)
 
     String *result = NULL;
 
-    // Continue if db-include is specified
-    if (cfgOptionTest(cfgOptDbInclude))
+    // Continue if databases to include or exclude have been specified
+    if (cfgOptionTest(cfgOptDbExclude) || cfgOptionTest(cfgOptDbInclude))
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
@@ -1183,37 +1363,78 @@ restoreSelectiveExpression(Manifest *manifest)
             RegExp *baseRegExp = regExpNew(STRDEF("^" MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/[0-9]+/" PG_FILE_PGVERSION));
 
             // Generate tablespace expression
-            RegExp *tablespaceRegExp = NULL;
             const String *tablespaceId = pgTablespaceId(
                 manifestData(manifest)->pgVersion, manifestData(manifest)->pgCatalogVersion);
+            RegExp *tablespaceRegExp = regExpNew(
+                strNewFmt("^" MANIFEST_TARGET_PGTBLSPC "/[0-9]+/%s/[0-9]+/" PG_FILE_PGVERSION, strZ(tablespaceId)));
 
-            if (tablespaceId == NULL)
-                tablespaceRegExp = regExpNew(STRDEF("^" MANIFEST_TARGET_PGTBLSPC "/[0-9]+/[0-9]+/" PG_FILE_PGVERSION));
-            else
-            {
-                tablespaceRegExp = regExpNew(
-                    strNewFmt("^" MANIFEST_TARGET_PGTBLSPC "/[0-9]+/%s/[0-9]+/" PG_FILE_PGVERSION, strZ(tablespaceId)));
-            }
-
-            // Generate a list of databases in base or in a tablespace
+            // Generate a list of databases in base or in a tablespace and get all standard system databases, even in cases where
+            // users have recreated them
+            StringList *systemDbIdList = strLstNew();
             StringList *dbList = strLstNew();
+
+            for (unsigned int systemDbIdx = 0; systemDbIdx < manifestDbTotal(manifest); systemDbIdx++)
+            {
+                const ManifestDb *systemDb = manifestDb(manifest, systemDbIdx);
+
+                if (pgDbIsSystem(systemDb->name) || pgDbIsSystemId(systemDb->id))
+                {
+                    // Build the system id list and add to the dbList for logging and checking
+                    const String *systemDbId = varStrForce(VARUINT(systemDb->id));
+                    strLstAdd(systemDbIdList, systemDbId);
+                    strLstAdd(dbList, systemDbId);
+                }
+            }
 
             for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
             {
-                const ManifestFile *file = manifestFile(manifest, fileIdx);
+                const String *const fileName = manifestFileNameGet(manifest, fileIdx);
 
-                if (regExpMatch(baseRegExp, file->name) || regExpMatch(tablespaceRegExp, file->name))
-                    strLstAddIfMissing(dbList, strBase(strPath(file->name)));
+                if (regExpMatch(baseRegExp, fileName) || regExpMatch(tablespaceRegExp, fileName))
+                {
+                    String *dbId = strBase(strPath(fileName));
+
+                    // In the highly unlikely event that a system database was somehow added after the backup began, it will only be
+                    // found in the file list and not the manifest db section, so add it to the system database list
+                    if (pgDbIsSystemId(cvtZToUInt(strZ(dbId))))
+                        strLstAddIfMissing(systemDbIdList, dbId);
+
+                    strLstAddIfMissing(dbList, dbId);
+                }
             }
 
             strLstSort(dbList, sortOrderAsc);
 
             // If no databases were found then this backup is not a valid cluster
-            if (strLstSize(dbList) == 0)
+            if (strLstEmpty(dbList))
                 THROW(FormatError, "no databases found for selective restore\nHINT: is this a valid cluster?");
 
             // Log databases found
             LOG_DETAIL_FMT("databases found for selective restore (%s)", strZ(strLstJoin(dbList, ", ")));
+
+            // Generate list with ids of databases to exclude
+            StringList *excludeDbIdList = strLstNew();
+            const StringList *excludeList = strLstNewVarLst(cfgOptionLst(cfgOptDbExclude));
+
+            for (unsigned int excludeIdx = 0; excludeIdx < strLstSize(excludeList); excludeIdx++)
+            {
+                const String *excludeDb = strLstGet(excludeList, excludeIdx);
+
+                // If the db to exclude is not in the list as an id then search by name
+                if (!strLstExists(dbList, excludeDb))
+                {
+                    const ManifestDb *db = manifestDbFindDefault(manifest, excludeDb, NULL);
+
+                    if (db == NULL || !strLstExists(dbList, varStrForce(VARUINT(db->id))))
+                        THROW_FMT(DbMissingError, "database to exclude '%s' does not exist", strZ(excludeDb));
+
+                    // Set the exclude db to the id if the name mapping was successful
+                    excludeDb = varStrForce(VARUINT(db->id));
+                }
+
+                // Add to exclude list
+                strLstAdd(excludeDbIdList, excludeDb);
+            }
 
             // Remove included databases from the list
             const StringList *includeList = strLstNewVarLst(cfgOptionLst(cfgOptDbInclude));
@@ -1235,27 +1456,47 @@ restoreSelectiveExpression(Manifest *manifest)
                 }
 
                 // Error if the db is a system db
-                if (cvtZToUInt64(strZ(includeDb)) < PG_USER_OBJECT_MIN_ID)
+                if (strLstExists(systemDbIdList, includeDb))
                     THROW(DbInvalidError, "system databases (template0, postgres, etc.) are included by default");
+
+                // Error if the db id is in the exclude list
+                if (strLstExists(excludeDbIdList, includeDb))
+                    THROW_FMT(DbInvalidError, "database to include '%s' is in the exclude list", strZ(includeDb));
 
                 // Remove from list of DBs to zero
                 strLstRemove(dbList, includeDb);
             }
 
+            // Only exclude specified db in case no db to include has been provided
+            if (strLstEmpty(includeList))
+            {
+                dbList = strLstDup(excludeDbIdList);
+            }
+            // Else, remove the system databases from list of DBs to zero unless they are excluded explicitly
+            else
+            {
+                strLstSort(systemDbIdList, sortOrderAsc);
+                strLstSort(excludeDbIdList, sortOrderAsc);
+                systemDbIdList = strLstMergeAnti(systemDbIdList, excludeDbIdList);
+                dbList = strLstMergeAnti(dbList, systemDbIdList);
+            }
+
             // Build regular expression to identify files that will be zeroed
-            strLstSort(dbList, sortOrderAsc);
             String *expression = NULL;
 
-            for (unsigned int dbIdx = 0; dbIdx < strLstSize(dbList); dbIdx++)
+            if (!strLstEmpty(dbList))
             {
-                const String *db = strLstGet(dbList, dbIdx);
+                LOG_DETAIL_FMT("databases excluded (zeroed) from selective restore (%s)", strZ(strLstJoin(dbList, ", ")));
 
-                // Only user created databases can be zeroed, never system databases
-                if (cvtZToUInt64(strZ(db)) >= PG_USER_OBJECT_MIN_ID)
+                // Generate the expression from the list of databases to be zeroed. Only user created databases can be zeroed, never
+                // system databases.
+                for (unsigned int dbIdx = 0; dbIdx < strLstSize(dbList); dbIdx++)
                 {
+                    const String *db = strLstGet(dbList, dbIdx);
+
                     // Create expression string or append |
                     if (expression == NULL)
-                        expression = strNew("");
+                        expression = strNew();
                     else
                         strCatZ(expression, "|");
 
@@ -1268,12 +1509,7 @@ restoreSelectiveExpression(Manifest *manifest)
                         const ManifestTarget *target = manifestTarget(manifest, targetIdx);
 
                         if (target->tablespaceId != 0)
-                        {
-                            if (tablespaceId == NULL)
-                                strCatFmt(expression, "|(^%s/%s/)", strZ(target->name), strZ(db));
-                            else
-                                strCatFmt(expression, "|(^%s/%s/%s/)", strZ(target->name), strZ(tablespaceId), strZ(db));
-                        }
+                            strCatFmt(expression, "|(^%s/%s/%s/)", strZ(target->name), strZ(tablespaceId), strZ(db));
                     }
                 }
             }
@@ -1329,7 +1565,7 @@ restoreRecoveryOption(unsigned int pgVersion)
                 String *key = strLstGet(recoveryOptionKey, keyIdx);
                 const String *value = varStr(kvGet(recoveryOption, VARSTR(key)));
 
-                // Replace - in key with _.  Since we use - users naturally will as well.
+                // Replace - in key with _. Since we use - users naturally will as well.
                 strReplaceChr(key, '-', '_');
 
                 kvPut(result, VARSTR(key), VARSTR(value));
@@ -1339,67 +1575,68 @@ restoreRecoveryOption(unsigned int pgVersion)
         }
 
         // If archive-mode is not preserve
-        const String *archiveMode = cfgOptionStr(cfgOptArchiveMode);
-
-        if (!strEq(archiveMode, ARCHIVE_MODE_PRESERVE_STR))
+        if (cfgOptionStrId(cfgOptArchiveMode) != CFGOPTVAL_ARCHIVE_MODE_PRESERVE)
         {
             if (pgVersion < PG_VERSION_12)
             {
                 THROW_FMT(
                     OptionInvalidError,
-                    "option '" CFGOPT_ARCHIVE_MODE "' is not supported on " PG_NAME " < " PG_VERSION_12_STR "\n"
-                        "HINT: 'archive_mode' should be manually set to 'off' in postgresql.conf.");
+                    "option '" CFGOPT_ARCHIVE_MODE "' is not supported on " PG_NAME " < " PG_VERSION_12_Z "\n"
+                    "HINT: 'archive_mode' should be manually set to 'off' in postgresql.conf.");
             }
 
             // The only other valid option is off
-            ASSERT(strEq(archiveMode, ARCHIVE_MODE_OFF_STR));
+            ASSERT(cfgOptionStrId(cfgOptArchiveMode) == CFGOPTVAL_ARCHIVE_MODE_OFF);
 
             // If archive-mode=off then set archive_mode=off
-            kvPut(result, VARSTRDEF(ARCHIVE_MODE), VARSTR(ARCHIVE_MODE_OFF_STR));
+            kvPut(result, VARSTRDEF(ARCHIVE_MODE), VARSTRDEF(CFGOPTVAL_ARCHIVE_MODE_OFF_Z));
         }
 
         // Write restore_command
         if (!strLstExists(recoveryOptionKey, RESTORE_COMMAND_STR))
         {
-            // Null out options that it does not make sense to pass from the restore command to archive-get.  All of these have
-            // reasonable defaults so there is no danger of an error -- they just might not be optimal.  In any case, it seems
-            // better than, for example, passing --process-max=32 to archive-get because it was specified for restore.
+            // Null out options that it does not make sense to pass from the restore command to archive-get. All of these have
+            // reasonable defaults so there is no danger of an error -- they just might not be optimal. In any case, it seems better
+            // than, for example, passing --process-max=32 to archive-get because it was specified for restore.
             KeyValue *optionReplace = kvNew();
 
-            kvPut(optionReplace, VARSTR(CFGOPT_EXEC_ID_STR), NULL);
-            kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_CONSOLE_STR), NULL);
-            kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_FILE_STR), NULL);
-            kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), NULL);
-            kvPut(optionReplace, VARSTR(CFGOPT_LOG_SUBPROCESS_STR), NULL);
-            kvPut(optionReplace, VARSTR(CFGOPT_LOG_TIMESTAMP_STR), NULL);
-            kvPut(optionReplace, VARSTR(CFGOPT_PROCESS_MAX_STR), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_EXEC_ID), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_JOB_RETRY), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_JOB_RETRY_INTERVAL), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_CONSOLE), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_FILE), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_STDERR), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_SUBPROCESS), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_TIMESTAMP), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_PROCESS_MAX), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_CMD), NULL);
 
             kvPut(
                 result, VARSTRZ(RESTORE_COMMAND),
                 VARSTR(
                     strNewFmt(
-                        "%s %s %%f \"%%p\"", strZ(cfgExe()),
-                        strZ(strLstJoin(cfgExecParam(cfgCmdArchiveGet, cfgCmdRoleDefault, optionReplace, true, true), " ")))));
+                        "%s %s %%f \"%%p\"", strZ(cfgOptionStr(cfgOptCmd)),
+                        strZ(strLstJoin(cfgExecParam(cfgCmdArchiveGet, cfgCmdRoleMain, optionReplace, true, true), " ")))));
         }
 
         // If recovery type is immediate
-        if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_IMMEDIATE_STR))
+        if (cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_IMMEDIATE)
         {
-            kvPut(result, VARSTRZ(RECOVERY_TARGET), VARSTRZ(RECOVERY_TYPE_IMMEDIATE));
+            kvPut(result, VARSTRZ(RECOVERY_TARGET), VARSTRZ(CFGOPTVAL_TYPE_IMMEDIATE_Z));
         }
         // Else recovery type is standby
-        else if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_STANDBY_STR))
+        else if (cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_STANDBY)
         {
             // Write standby_mode for PostgreSQL versions that support it
             if (pgVersion < PG_VERSION_RECOVERY_GUC)
                 kvPut(result, VARSTR(STANDBY_MODE_STR), VARSTRDEF("on"));
         }
         // Else recovery type is not default so write target options
-        else if (!strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_DEFAULT_STR))
+        else if (cfgOptionStrId(cfgOptType) != CFGOPTVAL_TYPE_DEFAULT)
         {
             // Write the recovery target
             kvPut(
-                result, VARSTR(strNewFmt(RECOVERY_TARGET "_%s", strZ(cfgOptionStr(cfgOptType)))),
+                result, VARSTR(strNewFmt(RECOVERY_TARGET "_%s", strZ(strIdToStr(cfgOptionStrId(cfgOptType))))),
                 VARSTR(cfgOptionStr(cfgOptTarget)));
 
             // Write recovery_target_inclusive
@@ -1410,42 +1647,48 @@ restoreRecoveryOption(unsigned int pgVersion)
         // Write pause_at_recovery_target/recovery_target_action
         if (cfgOptionTest(cfgOptTargetAction))
         {
-            const String *targetAction = cfgOptionStr(cfgOptTargetAction);
+            StringId targetAction = cfgOptionStrId(cfgOptTargetAction);
 
-            if (!strEq(targetAction, RECOVERY_TARGET_ACTION_PAUSE_STR))
+            if (targetAction != CFGOPTVAL_TARGET_ACTION_PAUSE)
             {
                 // Write recovery_target on supported PostgreSQL versions
                 if (pgVersion >= PG_VERSION_RECOVERY_TARGET_ACTION)
                 {
-                    kvPut(result, VARSTRZ(RECOVERY_TARGET_ACTION), VARSTR(targetAction));
+                    kvPut(result, VARSTRZ(RECOVERY_TARGET_ACTION), VARSTR(strIdToStr(targetAction)));
                 }
-                // Write pause_at_recovery_target on supported PostgreSQL versions
-                else if (pgVersion >= PG_VERSION_RECOVERY_TARGET_PAUSE)
+                // Else write pause_at_recovery_target on supported PostgreSQL versions
+                else
                 {
                     // Shutdown action is not supported with pause_at_recovery_target setting
-                    if (strEq(targetAction, RECOVERY_TARGET_ACTION_SHUTDOWN_STR))
+                    if (targetAction == CFGOPTVAL_TARGET_ACTION_SHUTDOWN)
                     {
                         THROW_FMT(
                             OptionInvalidError,
-                            CFGOPT_TARGET_ACTION "=" RECOVERY_TARGET_ACTION_SHUTDOWN " is only available in PostgreSQL >= %s",
+                            CFGOPT_TARGET_ACTION "=" CFGOPTVAL_TARGET_ACTION_SHUTDOWN_Z " is only available in PostgreSQL >= %s",
                             strZ(pgVersionToStr(PG_VERSION_RECOVERY_TARGET_ACTION)));
                     }
 
                     kvPut(result, VARSTRZ(PAUSE_AT_RECOVERY_TARGET), VARSTR(FALSE_STR));
                 }
-                // Else error on unsupported version
-                else
-                {
-                    THROW_FMT(
-                        OptionInvalidError, CFGOPT_TARGET_ACTION " option is only available in PostgreSQL >= %s",
-                        strZ(pgVersionToStr(PG_VERSION_RECOVERY_TARGET_PAUSE)));
-                }
             }
         }
 
-        // Write recovery_target_timeline
+        // Write recovery_target_timeline if set
         if (cfgOptionTest(cfgOptTargetTimeline))
+        {
             kvPut(result, VARSTRZ(RECOVERY_TARGET_TIMELINE), VARSTR(cfgOptionStr(cfgOptTargetTimeline)));
+        }
+        // Else explicitly set target timeline to "current" when type=immediate and PostgreSQL >= 12. We do this because
+        // type=immediate means there won't be any actual attempt to change timelines, but if we leave the target timeline as the
+        // default of "latest" then PostgreSQL might fail to restore because it can't reach the "latest" timeline in the repository
+        // from this backup.
+        //
+        // This is really a PostgreSQL bug and will hopefully be addressed there, but we'll handle it here for older versions, at
+        // least until they aren't really seen in the wild any longer.
+        //
+        // PostgreSQL < 12 defaults to "current" (but does not accept "current" as a parameter) so no need set it explicitly.
+        else if (cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_IMMEDIATE && pgVersion >= PG_VERSION_12)
+            kvPut(result, VARSTRZ(RECOVERY_TARGET_TIMELINE), VARSTRDEF(RECOVERY_TARGET_TIMELINE_CURRENT));
 
         // Move to prior context
         kvMove(result, memContextPrior());
@@ -1457,35 +1700,29 @@ restoreRecoveryOption(unsigned int pgVersion)
 
 // Helper to convert recovery options to text format
 static String *
-restoreRecoveryConf(unsigned int pgVersion, const String *restoreLabel)
+restoreRecoveryConf(const unsigned int pgVersion, const String *const restoreLabel)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(STRING, restoreLabel);
     FUNCTION_LOG_END();
 
-    String *result = NULL;
+    String *const result = strNew();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = strNewFmt("# Recovery settings generated by " PROJECT_NAME " restore on %s\n", strZ(restoreLabel));
+        strCatFmt(result, "# Recovery settings generated by " PROJECT_NAME " restore on %s\n", strZ(restoreLabel));
 
         // Output all recovery options
-        KeyValue *optionKv = restoreRecoveryOption(pgVersion);
-        const VariantList *optionKeyList = kvKeyList(optionKv);
+        const KeyValue *const optionKv = restoreRecoveryOption(pgVersion);
+        const VariantList *const optionKeyList = kvKeyList(optionKv);
 
         for (unsigned int optionKeyIdx = 0; optionKeyIdx < varLstSize(optionKeyList); optionKeyIdx++)
         {
-            const Variant *optionKey = varLstGet(optionKeyList, optionKeyIdx);
+            const Variant *const optionKey = varLstGet(optionKeyList, optionKeyIdx);
+
             strCatFmt(result, "%s = '%s'\n", strZ(varStr(optionKey)), strZ(varStr(kvGet(optionKv, optionKey))));
         }
-
-        // Move to prior context
-        MEM_CONTEXT_PRIOR_BEGIN()
-        {
-            result = strDup(result);
-        }
-        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -1494,29 +1731,32 @@ restoreRecoveryConf(unsigned int pgVersion, const String *restoreLabel)
 
 // Helper to write recovery options into recovery.conf
 static void
-restoreRecoveryWriteConf(const Manifest *manifest, unsigned int pgVersion, const String *restoreLabel)
+restoreRecoveryWriteConf(
+    const Manifest *const manifest, const StorageInfo *const fileInfo, const unsigned int pgVersion,
+    const String *const restoreLabel)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
+        FUNCTION_LOG_PARAM(STORAGE_INFO, fileInfo);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(STRING, restoreLabel);
     FUNCTION_LOG_END();
 
     // Only write recovery.conf if recovery type != none
-    if (!strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_NONE_STR))
+    if (cfgOptionStrId(cfgOptType) != CFGOPTVAL_TYPE_NONE)
     {
-        LOG_INFO_FMT("write %s", strZ(storagePathP(storagePg(), PG_FILE_RECOVERYCONF_STR)));
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            LOG_INFO_FMT("write %s", strZ(storagePathP(storagePg(), PG_FILE_RECOVERYCONF_STR)));
 
-        // Use the data directory to set permissions and ownership for recovery file
-        const ManifestPath *dataPath = manifestPathFind(manifest, MANIFEST_TARGET_PGDATA_STR);
-        mode_t recoveryFileMode = dataPath->mode & (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-
-        // Write recovery.conf
-        storagePutP(
-            storageNewWriteP(
-                storagePgWrite(), PG_FILE_RECOVERYCONF_STR, .noCreatePath = true, .modeFile = recoveryFileMode, .noAtomic = true,
-                .noSyncPath = true, .user = dataPath->user, .group = dataPath->group),
-            BUFSTR(restoreRecoveryConf(pgVersion, restoreLabel)));
+            // Write recovery.conf
+            storagePutP(
+                storageNewWriteP(
+                    storagePgWrite(), PG_FILE_RECOVERYCONF_STR, .noCreatePath = true, .modeFile = fileInfo->mode, .noAtomic = true,
+                    .noSyncPath = true, .user = fileInfo->user, .group = fileInfo->group),
+                BUFSTR(restoreRecoveryConf(pgVersion, restoreLabel)));
+        }
+        MEM_CONTEXT_TEMP_END();
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -1524,16 +1764,20 @@ restoreRecoveryWriteConf(const Manifest *manifest, unsigned int pgVersion, const
 
 // Helper to write recovery options into postgresql.auto.conf
 static void
-restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
+restoreRecoveryWriteAutoConf(
+    const Manifest *const manifest, const StorageInfo *const fileInfo, const unsigned int pgVersion,
+    const String *const restoreLabel)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(MANIFEST, manifest);
+        FUNCTION_LOG_PARAM(STORAGE_INFO, fileInfo);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(STRING, restoreLabel);
     FUNCTION_LOG_END();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *content = strNew("");
+        String *content = strNew();
 
         // Load postgresql.auto.conf so we can preserve the existing contents
         Buffer *autoConf = storageGetP(storageNewReadP(storagePg(), PG_FILE_POSTGRESQLAUTOCONF_STR, .ignoreMissing = true));
@@ -1545,8 +1789,8 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
         }
         // Else the file does exist so comment out old recovery options that could interfere with the current recovery. Don't
         // comment out *all* recovery options because some should only be commented out if there is a new option to replace it, e.g.
-        // primary_conninfo. If the option shouldn't be commented out all the time then it won't ever be commnented out -- this
-        // may not be ideal but it is what was decided. PostgreSQL will use the last value set so this is safe as long as the option
+        // primary_conninfo. If the option shouldn't be commented out all the time then it won't ever be commented out -- this may
+        // not be ideal but it is what was decided. PostgreSQL will use the last value set so this is safe as long as the option
         // does not have dependencies on other options.
         else
         {
@@ -1554,9 +1798,9 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
             RegExp *recoveryExp =
                 regExpNew(
                     STRDEF(
-                        "^\\s*(" RECOVERY_TARGET "|" RECOVERY_TARGET_ACTION "|" RECOVERY_TARGET_INCLUSIVE "|" RECOVERY_TARGET_LSN
-                            "|" RECOVERY_TARGET_NAME "|" RECOVERY_TARGET_TIME "|" RECOVERY_TARGET_TIMELINE "|" RECOVERY_TARGET_XID
-                            ")\\s*="));
+                        "^[\t ]*(" RECOVERY_TARGET "|" RECOVERY_TARGET_ACTION "|" RECOVERY_TARGET_INCLUSIVE "|"
+                        RECOVERY_TARGET_LSN "|" RECOVERY_TARGET_NAME "|" RECOVERY_TARGET_TIME "|" RECOVERY_TARGET_TIMELINE "|"
+                        RECOVERY_TARGET_XID ")[\t ]*="));
 
             // Check each line for recovery settings
             const StringList *contentList = strLstNewSplit(strNewBuf(autoConf), LF_STR);
@@ -1575,7 +1819,7 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
             }
 
             // If settings will be appended then format the file so a blank line will be between old and new settings
-            if (!strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_NONE_STR))
+            if (cfgOptionStrId(cfgOptType) != CFGOPTVAL_TYPE_NONE)
             {
                 strTrim(content);
                 strCatZ(content, "\n\n");
@@ -1583,9 +1827,9 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
         }
 
         // If recovery was requested then write the recovery options
-        if (!strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_NONE_STR))
+        if (cfgOptionStrId(cfgOptType) != CFGOPTVAL_TYPE_NONE)
         {
-            // If the user specified standby_mode as a recovery option then error.  It's tempting to just set type=standby in this
+            // If the user specified standby_mode as a recovery option then error. It's tempting to just set type=standby in this
             // case but since config parsing has already happened the target options could be in an invalid state.
             if (cfgOptionTest(cfgOptRecoveryOption))
             {
@@ -1597,7 +1841,7 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
                     // Get the key and value
                     String *key = strLstGet(recoveryOptionKey, keyIdx);
 
-                    // Replace - in key with _.  Since we use - users naturally will as well.
+                    // Replace - in key with _. Since we use - users naturally will as well.
                     strReplaceChr(key, '-', '_');
 
                     if (strEq(key, STANDBY_MODE_STR))
@@ -1605,46 +1849,43 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
                         THROW_FMT(
                             OptionInvalidError,
                             "'" STANDBY_MODE "' setting is not valid for " PG_NAME " >= %s\n"
-                            "HINT: use --" CFGOPT_TYPE "=" RECOVERY_TYPE_STANDBY " instead of --" CFGOPT_RECOVERY_OPTION "="
-                                STANDBY_MODE "=on.",
+                            "HINT: use --" CFGOPT_TYPE "=" CFGOPTVAL_TYPE_STANDBY_Z " instead of --" CFGOPT_RECOVERY_OPTION "="
+                            STANDBY_MODE "=on.",
                             strZ(pgVersionToStr(PG_VERSION_RECOVERY_GUC)));
                     }
                 }
             }
 
-            strCatFmt(content, "%s", strZ(restoreRecoveryConf(pgVersion, restoreLabel)));
+            strCat(content, restoreRecoveryConf(pgVersion, restoreLabel));
         }
 
         LOG_INFO_FMT(
             "write %s%s", autoConf == NULL ? "" : "updated ", strZ(storagePathP(storagePg(), PG_FILE_POSTGRESQLAUTOCONF_STR)));
 
-        // Use the data directory to set permissions and ownership for recovery file
-        const StorageInfo dataPath = storageInfoP(storagePg(), NULL);
-        mode_t recoveryFileMode = dataPath.mode & (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-
         // Write postgresql.auto.conf
         storagePutP(
             storageNewWriteP(
-                storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF_STR, .noCreatePath = true, .modeFile = recoveryFileMode,
-                .noAtomic = true, .noSyncPath = true, .user = dataPath.user, .group = dataPath.group),
+                storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF_STR, .noCreatePath = true, .modeFile = fileInfo->mode,
+                .noAtomic = true, .noSyncPath = true, .user = fileInfo->user, .group = fileInfo->group),
             BUFSTR(content));
 
         // The standby.signal file is required for standby mode
-        if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_STANDBY_STR))
+        if (cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_STANDBY)
         {
             storagePutP(
                 storageNewWriteP(
-                    storagePgWrite(), PG_FILE_STANDBYSIGNAL_STR, .noCreatePath = true, .modeFile = recoveryFileMode,
-                    .noAtomic = true, .noSyncPath = true, .user = dataPath.user, .group = dataPath.group),
+                    storagePgWrite(), PG_FILE_STANDBYSIGNAL_STR, .noCreatePath = true, .modeFile = fileInfo->mode,
+                    .noAtomic = true, .noSyncPath = true, .user = fileInfo->user, .group = fileInfo->group),
                 NULL);
         }
-        // Else the recovery.signal file is required for targeted recovery
-        else
+        // Else the recovery.signal file is required for targeted recovery. Skip writing this file if the backup was offline and
+        // recovery type is none since PostgreSQL will error in this case when wal_level=minimal.
+        else if (cfgOptionStrId(cfgOptType) != CFGOPTVAL_TYPE_NONE)
         {
             storagePutP(
                 storageNewWriteP(
-                    storagePgWrite(), PG_FILE_RECOVERYSIGNAL_STR, .noCreatePath = true, .modeFile = recoveryFileMode,
-                    .noAtomic = true, .noSyncPath = true, .user = dataPath.user, .group = dataPath.group),
+                    storagePgWrite(), PG_FILE_RECOVERYSIGNAL_STR, .noCreatePath = true, .modeFile = fileInfo->mode,
+                    .noAtomic = true, .noSyncPath = true, .user = fileInfo->user, .group = fileInfo->group),
                 NULL);
         }
     }
@@ -1654,10 +1895,11 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
 }
 
 static void
-restoreRecoveryWrite(const Manifest *manifest)
+restoreRecoveryWrite(const Manifest *const manifest, const StorageInfo *const fileInfo)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
+        FUNCTION_LOG_PARAM(STORAGE_INFO, fileInfo);
     FUNCTION_LOG_END();
 
     // Get PostgreSQL version to write recovery for
@@ -1666,16 +1908,16 @@ restoreRecoveryWrite(const Manifest *manifest)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // If recovery type is preserve then leave recovery file as it is
-        if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_PRESERVE_STR))
+        if (cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_PRESERVE)
         {
             // Determine which file recovery setttings will be written to
-            const String *recoveryFile = pgVersion >= PG_VERSION_RECOVERY_GUC ?
-                PG_FILE_POSTGRESQLAUTOCONF_STR : PG_FILE_RECOVERYCONF_STR;
+            const String *const recoveryFile =
+                pgVersion >= PG_VERSION_RECOVERY_GUC ? PG_FILE_POSTGRESQLAUTOCONF_STR : PG_FILE_RECOVERYCONF_STR;
 
             if (!storageExistsP(storagePg(), recoveryFile))
             {
                 LOG_WARN_FMT(
-                    "recovery type is " RECOVERY_TYPE_PRESERVE " but recovery file does not exist at '%s'",
+                    "recovery type is " CFGOPTVAL_TYPE_PRESERVE_Z " but recovery file does not exist at '%s'",
                     strZ(storagePathP(storagePg(), recoveryFile)));
             }
         }
@@ -1683,16 +1925,18 @@ restoreRecoveryWrite(const Manifest *manifest)
         else
         {
             // Generate a label used to identify this restore in the recovery file
+            struct tm timePart;
             char restoreTimestamp[20];
             time_t timestamp = time(NULL);
-            strftime(restoreTimestamp, sizeof(restoreTimestamp), "%Y-%m-%d %H:%M:%S", localtime(&timestamp));
+
+            strftime(restoreTimestamp, sizeof(restoreTimestamp), "%Y-%m-%d %H:%M:%S", localtime_r(&timestamp, &timePart));
             const String *restoreLabel = STR(restoreTimestamp);
 
             // Write recovery file based on PostgreSQL version
             if (pgVersion >= PG_VERSION_RECOVERY_GUC)
-                restoreRecoveryWriteAutoConf(pgVersion, restoreLabel);
+                restoreRecoveryWriteAutoConf(manifest, fileInfo, pgVersion, restoreLabel);
             else
-                restoreRecoveryWriteConf(manifest, pgVersion, restoreLabel);
+                restoreRecoveryWriteConf(manifest, fileInfo, pgVersion, restoreLabel);
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -1704,6 +1948,8 @@ restoreRecoveryWrite(const Manifest *manifest)
 Generate a list of queues that determine the order of file processing
 ***********************************************************************************************************************************/
 // Comparator to order ManifestFile objects by size then name
+static const Manifest *restoreProcessQueueComparatorManifest = NULL;
+
 static int
 restoreProcessQueueComparator(const void *item1, const void *item2)
 {
@@ -1715,14 +1961,62 @@ restoreProcessQueueComparator(const void *item1, const void *item2)
     ASSERT(item1 != NULL);
     ASSERT(item2 != NULL);
 
-    // If the size differs then that's enough to determine order
-    if ((*(ManifestFile **)item1)->size < (*(ManifestFile **)item2)->size)
-        FUNCTION_TEST_RETURN(-1);
-    else if ((*(ManifestFile **)item1)->size > (*(ManifestFile **)item2)->size)
-        FUNCTION_TEST_RETURN(1);
+    // Unpack files
+    ManifestFile file1 = manifestFileUnpack(restoreProcessQueueComparatorManifest, *(const ManifestFilePack **)item1);
+    ManifestFile file2 = manifestFileUnpack(restoreProcessQueueComparatorManifest, *(const ManifestFilePack **)item2);
 
-    // If size is the same then use name to generate a deterministic ordering (names must be unique)
-    FUNCTION_TEST_RETURN(strCmp((*(ManifestFile **)item1)->name, (*(ManifestFile **)item2)->name));
+    // Zero length files should be ordered at the end
+    if (file1.size == 0)
+    {
+        if (file2.size != 0)
+            FUNCTION_TEST_RETURN(INT, -1);
+    }
+    else if (file2.size == 0)
+        FUNCTION_TEST_RETURN(INT, 1);
+
+    // If the bundle id differs that is enough to determine order
+    if (file1.bundleId < file2.bundleId)
+        FUNCTION_TEST_RETURN(INT, 1);
+    else if (file1.bundleId > file2.bundleId)
+        FUNCTION_TEST_RETURN(INT, -1);
+
+    // If the bundle ids are 0
+    if (file1.bundleId == 0)
+    {
+        // If the size differs then that's enough to determine order
+        if (file1.size < file2.size)
+            FUNCTION_TEST_RETURN(INT, -1);
+        else if (file1.size > file2.size)
+            FUNCTION_TEST_RETURN(INT, 1);
+
+        // If size is the same then use name to generate a deterministic ordering (names must be unique)
+        ASSERT(!strEq(file1.name, file2.name));
+        FUNCTION_TEST_RETURN(INT, strCmp(file1.name, file2.name));
+    }
+
+    // If the reference differs that is enough to determine order
+    if (file1.reference == NULL)
+    {
+        if (file2.reference != NULL)
+            FUNCTION_TEST_RETURN(INT, -1);
+    }
+    else if (file2.reference == NULL)
+        FUNCTION_TEST_RETURN(INT, 1);
+    else
+    {
+        const int backupLabelCmp = strCmp(file1.reference, file2.reference) * -1;
+
+        if (backupLabelCmp != 0)
+            FUNCTION_TEST_RETURN(INT, backupLabelCmp);
+    }
+
+    // Finally order by bundle offset
+    ASSERT(file1.bundleOffset != file2.bundleOffset);
+
+    if (file1.bundleOffset < file2.bundleOffset)
+        FUNCTION_TEST_RETURN(INT, 1);
+
+    FUNCTION_TEST_RETURN(INT, -1);
 }
 
 static uint64_t
@@ -1733,25 +2027,27 @@ restoreProcessQueue(Manifest *manifest, List **queueList)
         FUNCTION_LOG_PARAM_P(LIST, queueList);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     ASSERT(manifest != NULL);
 
     uint64_t result = 0;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Create list of process queue
-        *queueList = lstNewP(sizeof(List *));
+        // Create list of process queues (use void * instead of List * to avoid Coverity false positive)
+        *queueList = lstNewP(sizeof(void *));
 
         // Generate the list of processing queues (there is always at least one)
         StringList *targetList = strLstNew();
-        strLstAdd(targetList, STRDEF(MANIFEST_TARGET_PGDATA "/"));
+        strLstAddZ(targetList, MANIFEST_TARGET_PGDATA "/");
 
         for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
         {
             const ManifestTarget *target = manifestTarget(manifest, targetIdx);
 
             if (target->tablespaceId != 0)
-                strLstAdd(targetList, strNewFmt("%s/", strZ(target->name)));
+                strLstAddFmt(targetList, "%s/", strZ(target->name));
         }
 
         // Generate the processing queues
@@ -1768,7 +2064,8 @@ restoreProcessQueue(Manifest *manifest, List **queueList)
         // Now put all files into the processing queues
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
         {
-            const ManifestFile *file = manifestFile(manifest, fileIdx);
+            const ManifestFilePack *const filePack = manifestFilePackGet(manifest, fileIdx);
+            const ManifestFile file = manifestFileUnpack(manifest, filePack);
 
             // Find the target that contains this file
             unsigned int targetIdx = 0;
@@ -1776,9 +2073,9 @@ restoreProcessQueue(Manifest *manifest, List **queueList)
             do
             {
                 // A target should always be found
-                CHECK(targetIdx < strLstSize(targetList));
+                CHECK(FormatError, targetIdx < strLstSize(targetList), "backup target not found");
 
-                if (strBeginsWith(file->name, strLstGet(targetList, targetIdx)))
+                if (strBeginsWith(file.name, strLstGet(targetList, targetIdx)))
                     break;
 
                 targetIdx++;
@@ -1786,13 +2083,15 @@ restoreProcessQueue(Manifest *manifest, List **queueList)
             while (1);
 
             // Add file to queue
-            lstAdd(*(List **)lstGet(*queueList, targetIdx), &file);
+            lstAdd(*(List **)lstGet(*queueList, targetIdx), &filePack);
 
             // Add size to total
-            result += file->size;
+            result += file.size;
         }
 
         // Sort the queues
+        restoreProcessQueueComparatorManifest = manifest;
+
         for (unsigned int targetIdx = 0; targetIdx < strLstSize(targetList); targetIdx++)
             lstSort(*(List **)lstGet(*queueList, targetIdx), sortOrderDesc);
 
@@ -1819,12 +2118,14 @@ restoreFileZeroed(const String *manifestName, RegExp *zeroExp)
     ASSERT(manifestName != NULL);
 
     FUNCTION_TEST_RETURN(
+        BOOL,
         zeroExp == NULL ? false : regExpMatch(zeroExp, manifestName) && !strEndsWith(manifestName, STRDEF("/" PG_FILE_PGVERSION)));
 }
 
-// Helper function to construct the absolute pg path for any file
+// Helper function to construct the absolute pg path for any file. Add a temp extension to pg_control so a partially restored
+// cluster cannot be started.
 static String *
-restoreFilePgPath(const Manifest *manifest, const String *manifestName)
+restoreFilePgPath(const Manifest *const manifest, const String *const manifestName)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, manifest);
@@ -1834,12 +2135,14 @@ restoreFilePgPath(const Manifest *manifest, const String *manifestName)
     ASSERT(manifest != NULL);
     ASSERT(manifestName != NULL);
 
-    String *result = strNewFmt("%s/%s", strZ(manifestTargetBase(manifest)->path), strZ(manifestPathPg(manifestName)));
+    String *const pathPg = manifestPathPg(manifestName);
+    String *const result = strNewFmt(
+        "%s/%s%s", strZ(manifestTargetBase(manifest)->path), strZ(pathPg),
+        strEqZ(manifestName, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) ? "." STORAGE_FILE_TEMP_EXT : "");
 
-    if (strEq(manifestName, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)))
-        result = strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strZ(result));
+    strFree(pathPg);
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 static uint64_t
@@ -1860,56 +2163,86 @@ restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zer
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            const ManifestFile *file = manifestFileFind(manifest, varStr(protocolParallelJobKey(job)));
-            bool zeroed = restoreFileZeroed(file->name, zeroExp);
-            bool copy = varBool(protocolParallelJobResult(job));
+            PackRead *const jobResult = protocolParallelJobResult(job);
 
-            String *log = strNew("restore");
-
-            // Note if file was zeroed (i.e. selective restore)
-            if (zeroed)
-                strCatZ(log, " zeroed");
-
-            // Add filename
-            strCatFmt(log, " file %s", strZ(restoreFilePgPath(manifest, file->name)));
-
-            // If not copied and not zeroed add details to explain why it was not copied
-            if (!copy && !zeroed)
+            while (!pckReadNullP(jobResult))
             {
-                strCatZ(log, " - ");
+                const ManifestFile file = manifestFileFind(manifest, pckReadStrP(jobResult));
+                const bool zeroed = restoreFileZeroed(file.name, zeroExp);
+                const RestoreResult result = (RestoreResult)pckReadU32P(jobResult);
+                const uint64_t blockIncrDeltaSize = pckReadU64P(jobResult);
 
-                // On force we match on size and modification time
-                if (cfgOptionBool(cfgOptForce))
-                {
-                    strCatFmt(
-                        log, "exists and matches size %" PRIu64 " and modification time %" PRIu64, file->size,
-                        (uint64_t)file->timestamp);
-                }
-                // Else a checksum delta or file is zero-length
-                else
-                {
-                    strCatZ(log, "exists and ");
+                String *log = strCatZ(strNew(), "restore");
 
-                    // No need to copy zero-length files
-                    if (file->size == 0)
+                // Note if file was zeroed (i.e. selective restore)
+                if (zeroed)
+                    strCatZ(log, " zeroed");
+
+                // Add filename
+                strCatFmt(log, " file %s", strZ(restoreFilePgPath(manifest, file.name)));
+
+                // If preserved add details to explain why it was not copied or zeroed
+                if (result == restoreResultPreserve)
+                {
+                    strCatZ(log, " - ");
+
+                    // On force we match on size and modification time
+                    if (cfgOptionBool(cfgOptForce))
                     {
-                        strCatZ(log, "is zero size");
+                        strCatFmt(
+                            log, "exists and matches size %" PRIu64 " and modification time %" PRIu64, file.size,
+                            (uint64_t)file.timestamp);
                     }
-                    // The file matched the manifest checksum so did not need to be copied
+                    // Else a checksum delta or file is zero-length
                     else
-                        strCatZ(log, "matches backup");
+                    {
+                        strCatZ(log, "exists and ");
+
+                        // No need to copy zero-length files
+                        if (file.size == 0)
+                        {
+                            strCatZ(log, "is zero size");
+                        }
+                        // The file matched the manifest checksum so did not need to be copied
+                        else
+                            strCatZ(log, "matches backup");
+                    }
                 }
+
+                // Add bundle info
+                strCatZ(log, " (");
+
+                if (file.bundleId != 0)
+                {
+                    ASSERT(varUInt64(protocolParallelJobKey(job)) == file.bundleId);
+
+                    strCatZ(log, "bundle ");
+
+                    if (file.reference != NULL)
+                        strCatFmt(log, "%s/", strZ(file.reference));
+
+                    strCatFmt(log, "%" PRIu64 "/%" PRIu64 ", ", file.bundleId, file.bundleOffset);
+                }
+
+                // Add block incremental delta size, i.e. amount of the file that block incremental updated
+                if (file.blockIncrMapSize != 0 && result != restoreResultPreserve)
+                {
+                    strCatZ(log, "bi ");
+
+                    if (blockIncrDeltaSize != file.size)
+                        strCatFmt(log, "%s/", strZ(strSizeFormat(blockIncrDeltaSize)));
+                }
+
+                // Add size and percent complete
+                sizeRestored += file.size;
+                strCatFmt(log, "%s, %.2lf%%)", strZ(strSizeFormat(file.size)), (double)sizeRestored * 100.00 / (double)sizeTotal);
+
+                // If not zero-length add the checksum
+                if (file.size != 0 && !zeroed)
+                    strCatFmt(log, " checksum %s", strZ(strNewEncode(encodingHex, BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE))));
+
+                LOG_DETAIL_PID(protocolParallelJobProcessId(job), strZ(log));
             }
-
-            // Add size and percent complete
-            sizeRestored += file->size;
-            strCatFmt(log, " (%s, %" PRIu64 "%%)", strZ(strSizeFormat(file->size)), sizeRestored * 100 / sizeTotal);
-
-            // If not zero-length add the checksum
-            if (file->size != 0 && !zeroed)
-                strCatFmt(log, " checksum %s", file->checksumSha1);
-
-            LOG_PID(copy ? logLevelInfo : logLevelDetail, protocolParallelJobProcessId(job), 0, strZ(log));
         }
         MEM_CONTEXT_TEMP_END();
 
@@ -1928,13 +2261,16 @@ Return new restore jobs as requested
 ***********************************************************************************************************************************/
 typedef struct RestoreJobData
 {
+    unsigned int repoIdx;                                           // Internal repo idx
     Manifest *manifest;                                             // Backup manifest
     List *queueList;                                                // List of processing queues
     RegExp *zeroExp;                                                // Identify files that should be sparse zeroed
     const String *cipherSubPass;                                    // Passphrase used to decrypt files in the backup
+    const String *rootReplaceUser;                                  // User to replace invalid users when root
+    const String *rootReplaceGroup;                                 // Group to replace invalid group when root
 } RestoreJobData;
 
-// Helper to caculate the next queue to scan based on the client index
+// Helper to calculate the next queue to scan based on the client index
 static int
 restoreJobQueueNext(unsigned int clientIdx, int queueIdx, unsigned int queueTotal)
 {
@@ -1949,15 +2285,16 @@ restoreJobQueueNext(unsigned int clientIdx, int queueIdx, unsigned int queueTota
 
     // Deal with wrapping on either end
     if (queueIdx < 0)
-        FUNCTION_TEST_RETURN((int)queueTotal - 1);
+        FUNCTION_TEST_RETURN(INT, (int)queueTotal - 1);
     else if (queueIdx == (int)queueTotal)
-        FUNCTION_TEST_RETURN(0);
+        FUNCTION_TEST_RETURN(INT, 0);
 
-    FUNCTION_TEST_RETURN(queueIdx);
+    FUNCTION_TEST_RETURN(INT, queueIdx);
 }
 
 // Callback to fetch restore jobs for the parallel executor
-static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientIdx)
+static ProtocolParallelJob *
+restoreJobCallback(void *data, unsigned int clientIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
@@ -1974,45 +2311,115 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
         RestoreJobData *jobData = data;
 
         // Determine where to begin scanning the queue (we'll stop when we get back here)
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_RESTORE_FILE);
+        PackWrite *param = NULL;
         int queueIdx = (int)(clientIdx % lstSize(jobData->queueList));
         int queueEnd = queueIdx;
 
+        // Create restore job
         do
         {
             List *queue = *(List **)lstGet(jobData->queueList, (unsigned int)queueIdx);
+            bool fileAdded = false;
+            const String *fileName = NULL;
+            uint64_t bundleId = 0;
+            const String *reference = NULL;
 
-            if (lstSize(queue) > 0)
+            while (!lstEmpty(queue))
             {
-                const ManifestFile *file = *(ManifestFile **)lstGet(queue, 0);
+                const ManifestFile file = manifestFileUnpack(jobData->manifest, *(ManifestFilePack **)lstGet(queue, 0));
 
-                // Create restore job
-                ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_RESTORE_FILE_STR);
+                // Break if bundled files have already been added and 1) the bundleId has changed or 2) the reference has changed
+                if (fileAdded && (bundleId != file.bundleId || !strEq(reference, file.reference)))
+                    break;
 
-                protocolCommandParamAdd(command, VARSTR(file->name));
-                protocolCommandParamAdd(
-                    command, file->reference != NULL ?
-                        VARSTR(file->reference) : VARSTR(manifestData(jobData->manifest)->backupLabel));
-                protocolCommandParamAdd(command, VARUINT(manifestData(jobData->manifest)->backupOptionCompressType));
-                protocolCommandParamAdd(command, VARSTR(restoreFilePgPath(jobData->manifest, file->name)));
-                protocolCommandParamAdd(command, VARSTRZ(file->checksumSha1));
-                protocolCommandParamAdd(command, VARBOOL(restoreFileZeroed(file->name, jobData->zeroExp)));
-                protocolCommandParamAdd(command, VARUINT64(file->size));
-                protocolCommandParamAdd(command, VARUINT64((uint64_t)file->timestamp));
-                protocolCommandParamAdd(command, VARSTR(strNewFmt("%04o", file->mode)));
-                protocolCommandParamAdd(command, VARSTR(file->user));
-                protocolCommandParamAdd(command, VARSTR(file->group));
-                protocolCommandParamAdd(command, VARUINT64((uint64_t)manifestData(jobData->manifest)->backupTimestampCopyStart));
-                protocolCommandParamAdd(command, VARBOOL(cfgOptionBool(cfgOptDelta)));
-                protocolCommandParamAdd(command, VARBOOL(cfgOptionBool(cfgOptDelta) && cfgOptionBool(cfgOptForce)));
-                protocolCommandParamAdd(command, VARSTR(jobData->cipherSubPass));
+                // Add common parameters before first file
+                if (param == NULL)
+                {
+                    param = protocolCommandParam(command);
+
+                    if (file.bundleId != 0)
+                    {
+                        bundleId = file.bundleId;
+                        reference = file.reference;
+                    }
+                    else
+                        fileName = file.name;
+
+                    pckWriteStrP(
+                        param,
+                        backupFileRepoPathP(
+                            file.reference != NULL ? file.reference : manifestData(jobData->manifest)->backupLabel,
+                            .manifestName = file.name, .bundleId = file.bundleId,
+                            .compressType = manifestData(jobData->manifest)->backupOptionCompressType,
+                            .blockIncr = file.blockIncrMapSize != 0));
+                    pckWriteU32P(param, jobData->repoIdx);
+                    pckWriteU32P(param, manifestData(jobData->manifest)->backupOptionCompressType);
+                    pckWriteTimeP(param, manifestData(jobData->manifest)->backupTimestampCopyStart);
+                    pckWriteBoolP(param, cfgOptionBool(cfgOptDelta));
+                    pckWriteBoolP(param, cfgOptionBool(cfgOptDelta) && cfgOptionBool(cfgOptForce));
+                    pckWriteBoolP(param, file.bundleId != 0 && manifestData(jobData->manifest)->bundleRaw);
+                    pckWriteStrP(param, jobData->cipherSubPass);
+                    pckWriteStrLstP(param, manifestReferenceList(jobData->manifest));
+
+                    fileAdded = true;
+                }
+
+                pckWriteStrP(param, restoreFilePgPath(jobData->manifest, file.name));
+                pckWriteBinP(param, BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE));
+                pckWriteU64P(param, file.size);
+                pckWriteTimeP(param, file.timestamp);
+                pckWriteModeP(param, file.mode);
+                pckWriteBoolP(param, restoreFileZeroed(file.name, jobData->zeroExp));
+                pckWriteStrP(param, restoreManifestOwnerReplace(file.user, jobData->rootReplaceUser));
+                pckWriteStrP(param, restoreManifestOwnerReplace(file.group, jobData->rootReplaceGroup));
+
+                // If block incremental then modify offset and size to where the map is stored since we need to read that first.
+                if (file.blockIncrMapSize != 0)
+                {
+                    pckWriteBoolP(param, true);
+                    pckWriteU64P(param, file.bundleOffset + file.sizeRepo - file.blockIncrMapSize);
+                    pckWriteU64P(param, file.blockIncrMapSize);
+                }
+                // Else write bundle offset/size
+                else if (file.bundleId != 0)
+                {
+                    pckWriteBoolP(param, true);
+                    pckWriteU64P(param, file.bundleOffset);
+                    pckWriteU64P(param, file.sizeRepo);
+                }
+                // Else restore as a whole file
+                else
+                    pckWriteBoolP(param, false);
+
+                // Block incremental
+                pckWriteU64P(param, file.blockIncrMapSize);
+
+                if (file.blockIncrMapSize != 0)
+                {
+                    pckWriteU64P(param, file.blockIncrSize);
+                    pckWriteU64P(param, file.blockIncrChecksumSize);
+                }
+
+                pckWriteStrP(param, file.name);
 
                 // Remove job from the queue
                 lstRemoveIdx(queue, 0);
 
-                // Assign job to result
-                result = protocolParallelJobMove(protocolParallelJobNew(VARSTR(file->name), command), memContextPrior());
+                // Break if the file is not bundled
+                if (bundleId == 0)
+                    break;
+            }
 
-                // Break out of the loop early since we found a job
+            if (fileAdded)
+            {
+                // Assign job to result
+                MEM_CONTEXT_PRIOR_BEGIN()
+                {
+                    result = protocolParallelJobNew(bundleId != 0 ? VARUINT64(bundleId) : VARSTR(fileName), command);
+                }
+                MEM_CONTEXT_PRIOR_END();
+
                 break;
             }
 
@@ -2022,11 +2429,11 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(PROTOCOL_PARALLEL_JOB, result);
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 cmdRestore(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
@@ -2042,35 +2449,57 @@ cmdRestore(void)
         // Validate restore path
         restorePathValidate();
 
-        // Get the repo storage in case it is remote and encryption settings need to be pulled down
-        storageRepo();
-
-        // Load backup.info
-        InfoBackup *infoBackup = infoBackupLoadFile(
-            storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-            cfgOptionStrNull(cfgOptRepoCipherPass));
+        // Remove stanza archive spool path so existing files do not interfere with the new cluster. For instance, old archive-push
+        // acknowledgements could cause a new cluster to skip archiving. This should not happen if a new timeline is selected but
+        // better to be safe. Missing stanza spool paths are ignored.
+        storagePathRemoveP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_STR, .recurse = true);
 
         // Get the backup set
-        const String *backupSet = restoreBackupSet(infoBackup);
+        RestoreBackupData backupData = restoreBackupSet();
 
         // Load manifest
-        RestoreJobData jobData = {0};
+        RestoreJobData jobData = {.repoIdx = backupData.repoIdx};
 
         jobData.manifest = manifestLoadFile(
-            storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupSet)),
-            cipherType(cfgOptionStr(cfgOptRepoCipherType)), infoPgCipherPass(infoBackupPg(infoBackup)));
+            storageRepoIdx(backupData.repoIdx),
+            strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupData.backupSet)), backupData.repoCipherType,
+            backupData.backupCipherPass);
 
-        // Validate manifest.  Don't use strict mode because we'd rather ignore problems that won't affect a restore.
+        // Remotes (if any) are no longer needed since the rest of the repository reads will be done by the local processes
+        protocolFree();
+
+        // If the backup was made offline and no restore type was specified then set to none. This prevents recovery.signal from
+        // being generated by default for PostgreSQL >= 12. Offline backups created with wal_level=minimal will error in this case
+        // so this should be a good default. However, if the user explicitly sets type and it does not equal none then they will get
+        // an error if wal_level=minimal.
+        if (!manifestData(jobData.manifest)->backupOptionOnline && cfgOptionSource(cfgOptType) == cfgSourceDefault)
+            cfgOptionSet(cfgOptType, cfgSourceParam, VARUINT64(CFGOPTVAL_TYPE_NONE));
+
+        // Validate manifest. Don't use strict mode because we'd rather ignore problems that won't affect a restore.
         manifestValidate(jobData.manifest, false);
 
         // Get the cipher subpass used to decrypt files in the backup
         jobData.cipherSubPass = manifestCipherSubPass(jobData.manifest);
 
         // Validate the manifest
-        restoreManifestValidate(jobData.manifest, backupSet);
+        restoreManifestValidate(jobData.manifest, backupData.backupSet);
 
-        // Log the backup set to restore
-        LOG_INFO_FMT("restore backup set %s", strZ(backupSet));
+        // Log the backup set to restore. If the backup was online then append the time recovery will start from.
+        String *const message = strCatFmt(
+            strNew(), "%s: restore backup set %s", cfgOptionGroupName(cfgOptGrpRepo, backupData.repoIdx),
+            strZ(backupData.backupSet));
+
+        if (manifestData(jobData.manifest)->backupOptionOnline)
+        {
+            struct tm timePart;
+            char timeBuffer[20];
+            time_t backupTimestampStart = manifestData(jobData.manifest)->backupTimestampStart;
+
+            strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", localtime_r(&backupTimestampStart, &timePart));
+            strCatFmt(message, ", recovery will start at %s", timeBuffer);
+        }
+
+        LOG_INFO(strZ(message));
 
         // Map manifest
         restoreManifestMap(jobData.manifest);
@@ -2079,14 +2508,14 @@ cmdRestore(void)
         manifestLinkCheck(jobData.manifest);
 
         // Update ownership
-        restoreManifestOwner(jobData.manifest);
+        restoreManifestOwner(jobData.manifest, &jobData.rootReplaceUser, &jobData.rootReplaceGroup);
 
         // Generate the selective restore expression
         String *expression = restoreSelectiveExpression(jobData.manifest);
         jobData.zeroExp = expression == NULL ? NULL : regExpNew(expression);
 
         // Clean the data directory and build path/link structure
-        restoreCleanBuild(jobData.manifest);
+        restoreCleanBuild(jobData.manifest, jobData.rootReplaceUser, jobData.rootReplaceGroup);
 
         // Generate processing queues
         uint64_t sizeTotal = restoreProcessQueue(jobData.manifest, &jobData.queueList);
@@ -2096,7 +2525,7 @@ cmdRestore(void)
 
         // Create the parallel executor
         ProtocolParallel *parallelExec = protocolParallelNew(
-            (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2, restoreJobCallback, &jobData);
+            cfgOptionUInt64(cfgOptProtocolTimeout) / 2, restoreJobCallback, &jobData);
 
         for (unsigned int processIdx = 1; processIdx <= cfgOptionUInt(cfgOptProcessMax); processIdx++)
             protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, 0, processIdx));
@@ -2104,20 +2533,32 @@ cmdRestore(void)
         // Process jobs
         uint64_t sizeRestored = 0;
 
-        do
+        MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
-            unsigned int completed = protocolParallelProcess(parallelExec);
-
-            for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
+            do
             {
-                sizeRestored = restoreJobResult(
-                    jobData.manifest, protocolParallelResult(parallelExec), jobData.zeroExp, sizeTotal, sizeRestored);
-            }
-        }
-        while (!protocolParallelDone(parallelExec));
+                unsigned int completed = protocolParallelProcess(parallelExec);
 
-        // Write recovery settings
-        restoreRecoveryWrite(jobData.manifest);
+                for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
+                {
+                    sizeRestored = restoreJobResult(
+                        jobData.manifest, protocolParallelResult(parallelExec), jobData.zeroExp, sizeTotal, sizeRestored);
+                }
+
+                // Reset the memory context occasionally so we don't use too much memory or slow down processing
+                MEM_CONTEXT_TEMP_RESET(1000);
+            }
+            while (!protocolParallelDone(parallelExec));
+        }
+        MEM_CONTEXT_TEMP_END();
+
+        // Write recovery settings. Use the data directory to set permissions and ownership for recovery files.
+        StorageInfo fileInfo = storageInfoP(storagePg(), NULL);
+        fileInfo.user = restoreManifestOwnerReplace(fileInfo.user, jobData.rootReplaceUser);
+        fileInfo.group = restoreManifestOwnerReplace(fileInfo.group, jobData.rootReplaceGroup);
+        fileInfo.mode = fileInfo.mode & (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+
+        restoreRecoveryWrite(jobData.manifest, &fileInfo);
 
         // Remove backup.manifest
         storageRemoveP(storagePgWrite(), BACKUP_MANIFEST_FILE_STR);
@@ -2133,7 +2574,7 @@ cmdRestore(void)
             {
                 const String *pgPath = manifestTargetPath(jobData.manifest, target);
 
-                // Don't sync the same path twice.  There can be multiple links to files in the same path, but syncing it more than
+                // Don't sync the same path twice. There can be multiple links to files in the same path, but syncing it more than
                 // once makes the logs noisy and looks like a bug even though it doesn't hurt anything or realistically affect
                 // performance.
                 if (strLstExists(pathSynced, pgPath))
@@ -2152,7 +2593,7 @@ cmdRestore(void)
         {
             const String *manifestName = manifestPath(jobData.manifest, pathIdx)->name;
 
-            // Skip the pg_tblspc path because it only maps to the manifest.  We should remove this in a future release but not much
+            // Skip the pg_tblspc path because it only maps to the manifest. We should remove this in a future release but not much
             // can be done about it for now.
             if (strEqZ(manifestName, MANIFEST_TARGET_PGTBLSPC))
                 continue;
@@ -2167,9 +2608,26 @@ cmdRestore(void)
             storagePathSyncP(storagePgWrite(), pgPath);
         }
 
-        // Rename pg_control
+        // Rename pg_control to remove the temp extension. This is done last to prevent a partially restored (or unsynced) cluster
+        // from being started.
         if (storageExistsP(storagePg(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "." STORAGE_FILE_TEMP_EXT)))
         {
+            // Invalidate the checkpoint in pg_control so the cluster cannot be started without backup_label
+            if (manifestData(jobData.manifest)->backupOptionOnline)
+            {
+                Buffer *const pgControlBuffer = storageGetP(
+                    storageNewReadP(storagePg(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "." STORAGE_FILE_TEMP_EXT)));
+                const ManifestFile pgControlFile = manifestFileFind(
+                    jobData.manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL));
+
+                pgControlCheckpointInvalidate(pgControlBuffer, cfgOptionStrNull(cfgOptPgVersionForce));
+                storagePutP(
+                    storageNewWriteP(
+                        storagePgWrite(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "." STORAGE_FILE_TEMP_EXT),
+                        .modeFile = pgControlFile.mode, .timeModified = pgControlFile.timestamp),
+                    pgControlBuffer);
+            }
+
             LOG_INFO(
                 "restore " PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL " (performed last to ensure aborted restores cannot be started)");
 
@@ -2181,9 +2639,14 @@ cmdRestore(void)
         else
             LOG_WARN("backup does not contain '" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "' -- cluster will not start");
 
-        // Sync global path
+        // Sync global path to persist pg_control rename. If this fails or if the system crashes before it can complete, then
+        // pg_control should retain the temp extension, which will prevent the cluster from being started.
         LOG_DETAIL_FMT("sync path '%s'", strZ(storagePathP(storagePg(), PG_PATH_GLOBAL_STR)));
         storagePathSyncP(storagePgWrite(), PG_PATH_GLOBAL_STR);
+
+        // Restore info
+        LOG_INFO_FMT(
+            "restore size = %s, file total = %u", strZ(strSizeFormat(sizeRestored)), manifestFileTotal(jobData.manifest));
     }
     MEM_CONTEXT_TEMP_END();
 

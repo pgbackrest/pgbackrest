@@ -7,9 +7,6 @@ Postgres Client
 
 #include "common/debug.h"
 #include "common/log.h"
-#include "common/memContext.h"
-#include "common/type/list.h"
-#include "common/type/object.h"
 #include "common/wait.h"
 #include "postgres/client.h"
 
@@ -18,60 +15,59 @@ Object type
 ***********************************************************************************************************************************/
 struct PgClient
 {
-    MemContext *memContext;
-    const String *host;
-    unsigned int port;
-    const String *database;
-    const String *user;
-    TimeMSec queryTimeout;
-
-    PGconn *connection;
+    PgClientPub pub;                                                // Publicly accessible variables
+    PGconn *connection;                                             // Pg connection
 };
-
-OBJECT_DEFINE_MOVE(PG_CLIENT);
-OBJECT_DEFINE_FREE(PG_CLIENT);
 
 /***********************************************************************************************************************************
 Close protocol connection
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(PG_CLIENT, LOG, logLevelTrace)
+static void
+pgClientFreeResource(THIS_VOID)
 {
+    THIS(PgClient);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PG_CLIENT, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     PQfinish(this->connection);
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /**********************************************************************************************************************************/
-PgClient *
-pgClientNew(const String *host, const unsigned int port, const String *database, const String *user, const TimeMSec queryTimeout)
+FN_EXTERN PgClient *
+pgClientNew(const String *host, const unsigned int port, const String *database, const String *user, const TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, host);
         FUNCTION_LOG_PARAM(UINT, port);
         FUNCTION_LOG_PARAM(STRING, database);
         FUNCTION_LOG_PARAM(STRING, user);
-        FUNCTION_LOG_PARAM(TIME_MSEC, queryTimeout);
+        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
     FUNCTION_LOG_END();
 
     ASSERT(port >= 1 && port <= 65535);
     ASSERT(database != NULL);
 
-    PgClient *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("PgClient")
+    OBJ_NEW_BEGIN(PgClient, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = memNew(sizeof(PgClient));
-
         *this = (PgClient)
         {
-            .memContext = MEM_CONTEXT_NEW(),
-            .host = strDup(host),
-            .port = port,
-            .database = strDup(database),
-            .user = strDup(user),
-            .queryTimeout = queryTimeout,
+            .pub =
+            {
+                .host = strDup(host),
+                .port = port,
+                .database = strDup(database),
+                .user = strDup(user),
+                .timeout = timeout,
+            },
         };
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(PG_CLIENT, this);
 }
@@ -98,7 +94,7 @@ pgClientEscape(const String *string)
 
     ASSERT(string != NULL);
 
-    String *result = strNew("'");
+    String *result = strCatZ(strNew(), "'");
 
     // Iterate all characters in the string
     for (unsigned stringIdx = 0; stringIdx < strSize(string); stringIdx++)
@@ -114,11 +110,11 @@ pgClientEscape(const String *string)
 
     strCatChr(result, '\'');
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/
-PgClient *
+FN_EXTERN PgClient *
 pgClientOpen(PgClient *this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -126,33 +122,34 @@ pgClientOpen(PgClient *this)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    CHECK(this->connection == NULL);
+    CHECK(AssertError, this->connection == NULL, "invalid connection");
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Base connection string
-        String *connInfo = strNewFmt("dbname=%s port=%u", strZ(pgClientEscape(this->database)), this->port);
+        String *connInfo = strCatFmt(
+            strNew(), "dbname=%s port=%u", strZ(pgClientEscape(pgClientDatabase(this))), pgClientPort(this));
 
         // Add user if specified
-        if (this->user != NULL)
-            strCatFmt(connInfo, " user=%s", strZ(pgClientEscape(this->user)));
+        if (pgClientUser(this) != NULL)
+            strCatFmt(connInfo, " user=%s", strZ(pgClientEscape(pgClientUser(this))));
 
         // Add host if specified
-        if (this->host != NULL)
-            strCatFmt(connInfo, " host=%s", strZ(pgClientEscape(this->host)));
+        if (pgClientHost(this) != NULL)
+            strCatFmt(connInfo, " host=%s", strZ(pgClientEscape(pgClientHost(this))));
 
         // Make the connection
         this->connection = PQconnectdb(strZ(connInfo));
 
         // Set a callback to shutdown the connection
-        memContextCallbackSet(this->memContext, pgClientFreeResource, this);
+        memContextCallbackSet(objMemContext(this), pgClientFreeResource, this);
 
         // Handle errors
         if (PQstatus(this->connection) != CONNECTION_OK)
         {
             THROW_FMT(
                 DbConnectError, "unable to connect to '%s': %s", strZ(connInfo),
-                strZ(strTrim(strNew(PQerrorMessage(this->connection)))));
+                strZ(strTrim(strNewZ(PQerrorMessage(this->connection)))));
         }
 
         // Set notice and warning processor
@@ -164,19 +161,21 @@ pgClientOpen(PgClient *this)
 }
 
 /**********************************************************************************************************************************/
-VariantList *
-pgClientQuery(PgClient *this, const String *query)
+FN_EXTERN Pack *
+pgClientQuery(PgClient *const this, const String *const query, const PgClientQueryResult resultType)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PG_CLIENT, this);
         FUNCTION_LOG_PARAM(STRING, query);
+        FUNCTION_LOG_PARAM(STRING_ID, resultType);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    CHECK(this->connection != NULL);
+    CHECK(AssertError, this->connection != NULL, "invalid connection");
     ASSERT(query != NULL);
+    ASSERT(resultType != 0);
 
-    VariantList *result = NULL;
+    Pack *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -185,11 +184,11 @@ pgClientQuery(PgClient *this, const String *query)
         {
             THROW_FMT(
                 DbQueryError, "unable to send query '%s': %s", strZ(query),
-                strZ(strTrim(strNew(PQerrorMessage(this->connection)))));
+                strZ(strTrim(strNewZ(PQerrorMessage(this->connection)))));
         }
 
         // Wait for a result
-        Wait *wait = waitNew(this->queryTimeout);
+        Wait *wait = waitNew(pgClientTimeout(this));
         bool busy = false;
 
         do
@@ -213,7 +212,7 @@ pgClientQuery(PgClient *this, const String *query)
                 char error[256];
 
                 if (!PQcancel(cancel, error, sizeof(error)))
-                    THROW_FMT(DbQueryError, "unable to cancel query '%s': %s", strZ(query), strZ(strTrim(strNew(error))));
+                    THROW_FMT(DbQueryError, "unable to cancel query '%s': %s", strZ(query), strZ(strTrim(strNewZ(error))));
             }
             FINALLY()
             {
@@ -229,95 +228,114 @@ pgClientQuery(PgClient *this, const String *query)
         {
             // Throw timeout error if cancelled
             if (busy)
-                THROW_FMT(DbQueryError, "query '%s' timed out after %" PRIu64 "ms", strZ(query), this->queryTimeout);
+                THROW_FMT(DbQueryError, "query '%s' timed out after %" PRIu64 "ms", strZ(query), pgClientTimeout(this));
 
             // If this was a command that returned no results then we are done
-            int resultStatus = PQresultStatus(pgResult);
+            ExecStatusType resultStatus = PQresultStatus(pgResult);
 
-            if (resultStatus != PGRES_COMMAND_OK)
+            if (resultStatus == PGRES_COMMAND_OK)
             {
+                if (resultType != pgClientQueryResultNone && resultType != pgClientQueryResultAny)
+                    THROW_FMT(DbQueryError, "result expected from '%s'", strZ(query));
+            }
+            else
+            {
+                if (resultType == pgClientQueryResultNone)
+                    THROW_FMT(DbQueryError, "no result expected from '%s'", strZ(query));
+
                 // Expect some rows to be returned
                 if (resultStatus != PGRES_TUPLES_OK)
                 {
                     THROW_FMT(
                         DbQueryError, "unable to execute query '%s': %s", strZ(query),
-                        strZ(strTrim(strNew(PQresultErrorMessage(pgResult)))));
+                        strZ(strTrim(strNewZ(PQresultErrorMessage(pgResult)))));
                 }
 
                 // Fetch row and column values
-                result = varLstNew();
+                PackWrite *const pack = pckWriteNewP();
 
-                MEM_CONTEXT_BEGIN(lstMemContext((List *)result))
+                int rowTotal = PQntuples(pgResult);
+                int columnTotal = PQnfields(pgResult);
+
+                if (resultType != pgClientQueryResultAny)
                 {
-                    int rowTotal = PQntuples(pgResult);
-                    int columnTotal = PQnfields(pgResult);
+                    if (rowTotal != 1)
+                        THROW_FMT(DbQueryError, "expected one row from '%s'", strZ(query));
 
-                    // Get column types
-                    Oid *columnType = memNew(sizeof(int) * (size_t)columnTotal);
+                    if (resultType == pgClientQueryResultColumn && columnTotal != 1)
+                        THROW_FMT(DbQueryError, "expected one column from '%s'", strZ(query));
+                }
+
+                // Get column types
+                Oid *columnType = memNew(sizeof(int) * (size_t)columnTotal);
+
+                for (int columnIdx = 0; columnIdx < columnTotal; columnIdx++)
+                    columnType[columnIdx] = PQftype(pgResult, columnIdx);
+
+                // Get values
+                for (int rowIdx = 0; rowIdx < rowTotal; rowIdx++)
+                {
+                    if (resultType == pgClientQueryResultAny)
+                        pckWriteArrayBeginP(pack);
 
                     for (int columnIdx = 0; columnIdx < columnTotal; columnIdx++)
-                        columnType[columnIdx] = PQftype(pgResult, columnIdx);
-
-                    // Get values
-                    for (int rowIdx = 0; rowIdx < rowTotal; rowIdx++)
                     {
-                        VariantList *resultRow = varLstNew();
+                        char *value = PQgetvalue(pgResult, rowIdx, columnIdx);
 
-                        for (int columnIdx = 0; columnIdx < columnTotal; columnIdx++)
+                        // If value is zero-length then check if it is null
+                        if (value[0] == '\0' && PQgetisnull(pgResult, rowIdx, columnIdx))
                         {
-                            char *value = PQgetvalue(pgResult, rowIdx, columnIdx);
-
-                            // If value is zero-length then check if it is null
-                            if (value[0] == '\0' && PQgetisnull(pgResult, rowIdx, columnIdx))
+                            pckWriteNullP(pack);
+                        }
+                        // Else convert the value to a variant
+                        else
+                        {
+                            // Convert column type. Not all PostgreSQL types are supported but these should suffice.
+                            switch (columnType[columnIdx])
                             {
-                                varLstAdd(resultRow, NULL);
-                            }
-                            // Else convert the value to a variant
-                            else
-                            {
-                                // Convert column type.  Not all PostgreSQL types are supported but these should suffice.
-                                switch (columnType[columnIdx])
-                                {
-                                    // Boolean type
-                                    case 16:                            // bool
-                                    {
-                                        varLstAdd(resultRow, varNewBool(varBoolForce(varNewStrZ(value))));
-                                        break;
-                                    }
+                                // Boolean type
+                                case 16:                            // bool
+                                    pckWriteBoolP(pack, varBoolForce(varNewStrZ(value)), .defaultWrite = true);
+                                    break;
 
-                                    // Text/char types
-                                    case 18:                            // char
-                                    case 19:                            // name
-                                    case 25:                            // text
-                                    {
-                                        varLstAdd(resultRow, varNewStrZ(value));
-                                        break;
-                                    }
+                                // Text/char types
+                                case 18:                            // char
+                                case 19:                            // name
+                                case 25:                            // text
+                                    pckWriteStrP(pack, STR(value), .defaultWrite = true);
+                                    break;
 
-                                    // Integer types
-                                    case 20:                            // int8
-                                    case 21:                            // int2
-                                    case 23:                            // int4
-                                    case 26:                            // oid
-                                    {
-                                        varLstAdd(resultRow, varNewInt64(cvtZToInt64(value)));
-                                        break;
-                                    }
+                                // 64-bit integer type
+                                case 20:                            // int8
+                                    pckWriteI64P(pack, cvtZToInt64(value), .defaultWrite = true);
+                                    break;
 
-                                    default:
-                                    {
-                                        THROW_FMT(
-                                            FormatError, "unable to parse type %u in column %d for query '%s'",
-                                            columnType[columnIdx], columnIdx, strZ(query));
-                                    }
-                                }
+                                // 32-bit integer type
+                                case 23:                            // int4
+                                    pckWriteI32P(pack, cvtZToInt(value), .defaultWrite = true);
+                                    break;
+
+                                // 32-bit unsigned integer type
+                                case 26:                            // oid
+                                    pckWriteU32P(pack, cvtZToUInt(value), .defaultWrite = true);
+                                    break;
+
+                                default:
+                                    THROW_FMT(
+                                        FormatError, "unable to parse type %u in column %d for query '%s'",
+                                        columnType[columnIdx], columnIdx, strZ(query));
                             }
                         }
-
-                        varLstAdd(result, varNewVarLst(resultRow));
                     }
+
+                    if (resultType == pgClientQueryResultAny)
+                        pckWriteArrayEndP(pack);
                 }
-                MEM_CONTEXT_END();
+
+                // End pack and return result
+                pckWriteEndP(pack);
+
+                result = pckMove(pckWriteResult(pack), memContextPrior());
             }
         }
         FINALLY()
@@ -325,20 +343,17 @@ pgClientQuery(PgClient *this, const String *query)
             // Free the result
             PQclear(pgResult);
 
-            // Need to get a NULL result to complete the request
-            CHECK(PQgetResult(this->connection) == NULL);
+            CHECK(ServiceError, PQgetResult(this->connection) == NULL, "NULL result required to complete request");
         }
         TRY_END();
-
-        varLstMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(VARIANT_LIST, result);
+    FUNCTION_LOG_RETURN(PACK, result);
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 pgClientClose(PgClient *this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -349,7 +364,7 @@ pgClientClose(PgClient *this)
 
     if (this->connection != NULL)
     {
-        memContextCallbackClear(this->memContext);
+        memContextCallbackClear(objMemContext(this));
         PQfinish(this->connection);
         this->connection = NULL;
     }
@@ -358,10 +373,22 @@ pgClientClose(PgClient *this)
 }
 
 /**********************************************************************************************************************************/
-String *
-pgClientToLog(const PgClient *this)
+FN_EXTERN void
+pgClientToLog(const PgClient *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{host: %s, port: %u, database: %s, user: %s, queryTimeout %" PRIu64 "}", strZ(strToLog(this->host)), this->port,
-        strZ(strToLog(this->database)), strZ(strToLog(this->user)), this->queryTimeout);
+    strStcCat(debugLog, "{host: ");
+    strStcResultSizeInc(
+        debugLog,
+        FUNCTION_LOG_OBJECT_FORMAT(pgClientHost(this), strToLog, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+
+    strStcCat(debugLog, ", database: ");
+    strToLog(pgClientDatabase(this), debugLog);
+
+    strStcCat(debugLog, ", user: ");
+    strStcResultSizeInc(
+        debugLog,
+        FUNCTION_LOG_OBJECT_FORMAT(pgClientUser(this), strToLog, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+
+    strStcFmt(
+        debugLog, ", port: %u, queryTimeout %" PRIu64 "}", pgClientPort(this), pgClientTimeout(this));
 }

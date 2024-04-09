@@ -15,6 +15,7 @@ use Exporter qw(import);
 
 use pgBackRestDoc::Common::Exception;
 use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
 
 use pgBackRestTest::Common::DbVersion;
 
@@ -29,26 +30,20 @@ use constant VM_DB_TEST                                             => 'db-test'
     push @EXPORT, qw(VM_DB_TEST);
 use constant VMDEF_DEBUG_INTEGRATION                                => 'debug-integration';
     push @EXPORT, qw(VMDEF_DEBUG_INTEGRATION);
-use constant VM_CONTROL_MASTER                                      => 'control-master';
-    push @EXPORT, qw(VM_CONTROL_MASTER);
+use constant VM_CONTROL_MTR                                         => 'control-mtr';
+    push @EXPORT, qw(VM_CONTROL_MTR);
 # Will coverage testing be run for C?
 use constant VMDEF_COVERAGE_C                                       => 'coverage-c';
 use constant VM_DEPRECATED                                          => 'deprecated';
     push @EXPORT, qw(VM_DEPRECATED);
 use constant VM_IMAGE                                               => 'image';
     push @EXPORT, qw(VM_IMAGE);
-use constant VM_OS                                                  => 'os';
-    push @EXPORT, qw(VM_OS);
 use constant VM_OS_BASE                                             => 'os-base';
     push @EXPORT, qw(VM_OS_BASE);
-use constant VM_OS_REPO                                             => 'os-repo';
-    push @EXPORT, qw(VM_OS_REPO);
-use constant VMDEF_PGSQL_BIN                                        => 'pgsql-bin';
+use constant VMDEF_PGSQL_BIN                                        => 'psql-bin';
     push @EXPORT, qw(VMDEF_PGSQL_BIN);
 use constant VMDEF_LCOV_VERSION                                     => 'lcov-version';
     push @EXPORT, qw(VMDEF_LCOV_VERSION);
-use constant VMDEF_WITH_BACKTRACE                                   => 'with-backtrace';
-    push @EXPORT, qw(VMDEF_WITH_BACKTRACE);
 use constant VMDEF_WITH_LZ4                                         => 'with-lz4';
     push @EXPORT, qw(VMDEF_WITH_LZ4);
 use constant VMDEF_WITH_ZST                                         => 'with-zst';
@@ -63,18 +58,10 @@ use constant VM_OS_BASE_RHEL                                        => 'rhel';
     push @EXPORT, qw(VM_OS_BASE_RHEL);
 
 ####################################################################################################################################
-# Valid OS list
-####################################################################################################################################
-use constant VM_OS_CENTOS                                           => 'centos';
-    push @EXPORT, qw(VM_OS_CENTOS);
-use constant VM_OS_DEBIAN                                           => 'debian';
-    push @EXPORT, qw(VM_OS_DEBIAN);
-use constant VM_OS_UBUNTU                                           => 'ubuntu';
-    push @EXPORT, qw(VM_OS_DEBIAN);
-
-####################################################################################################################################
 # Valid architecture list
 ####################################################################################################################################
+use constant VM_ARCH_AARCH64                                        => 'aarch64';
+    push @EXPORT, qw(VM_ARCH_AARCH64);
 use constant VM_ARCH_I386                                           => 'i386';
     push @EXPORT, qw(VM_ARCH_I386);
 use constant VM_ARCH_AMD64                                          => 'amd64';
@@ -89,39 +76,25 @@ use constant VM_ALL                                                 => 'all';
 use constant VM_NONE                                                => 'none';
     push @EXPORT, qw(VM_NONE);
 
-use constant VM_CO7                                                 => 'co7';
-    push @EXPORT, qw(VM_CO7);
-use constant VM_CO8                                                 => 'co8';
-    push @EXPORT, qw(VM_CO8);
-use constant VM_F32                                                 => 'f32';
-    push @EXPORT, qw(VM_F32);
-use constant VM_U12                                                 => 'u12';
-    push @EXPORT, qw(VM_U12);
-use constant VM_U14                                                 => 'u14';
-    push @EXPORT, qw(VM_U14);
-use constant VM_U16                                                 => 'u16';
-    push @EXPORT, qw(VM_U16);
-use constant VM_U18                                                 => 'u18';
-    push @EXPORT, qw(VM_U18);
-use constant VM_D8                                                  => 'd8';
-    push @EXPORT, qw(VM_D8);
-use constant VM_D9                                                  => 'd9';
-    push @EXPORT, qw(VM_D9);
-
-# Defines the vm that will be used for expect testing
-use constant VM_EXPECT                                              => VM_CO7;
-    push @EXPORT, qw(VM_EXPECT);
-
-# Defines the host VM (the VM that the containers run in)
-use constant VM_HOST_DEFAULT                                        => VM_U18;
-    push @EXPORT, qw(VM_HOST_DEFAULT);
+use constant VM_D10                                                 => 'd10';
+    push @EXPORT, qw(VM_D10);
+use constant VM_RH7                                                 => 'rh7';
+    push @EXPORT, qw(VM_RH7);
+use constant VM_RH8                                                 => 'rh8';
+    push @EXPORT, qw(VM_RH8);
+use constant VM_F38                                                 => 'f38';
+    push @EXPORT, qw(VM_F38);
+use constant VM_U20                                                 => 'u20';
+    push @EXPORT, qw(VM_U20);
+use constant VM_U22                                                 => 'u22';
+    push @EXPORT, qw(VM_U22);
 
 # VM aliases for run matrices (numbered oldest to newest)
-use constant VM2                                                    => VM_U12;
+use constant VM2                                                    => VM_D10;
     push @EXPORT, qw(VM2);
-use constant VM3                                                    => VM_CO7;
+use constant VM3                                                    => VM_RH7;
     push @EXPORT, qw(VM3);
-use constant VM4                                                    => VM_U18;
+use constant VM4                                                    => VM_U22;
     push @EXPORT, qw(VM4);
 
 # List of default test VMs
@@ -134,7 +107,6 @@ my $oyVm =
     &VM_NONE =>
     {
         &VM_OS_BASE => VM_OS_BASE_DEBIAN,
-        &VM_OS => VM_OS_UBUNTU,
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_COVERAGE_C => true,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
@@ -152,11 +124,34 @@ my $oyVm =
         ],
     },
 
-    # CentOS 7
-    &VM_CO7 =>
+    # Debian 10
+    &VM_D10 =>
+    {
+        &VM_OS_BASE => VM_OS_BASE_DEBIAN,
+        &VM_IMAGE => 'i386/debian:10',
+        &VM_ARCH => VM_ARCH_I386,
+        &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
+
+        &VMDEF_WITH_ZST => true,
+
+        &VM_DB =>
+        [
+            PG_VERSION_94,
+            PG_VERSION_95,
+            PG_VERSION_96,
+        ],
+
+        &VM_DB_TEST =>
+        [
+            PG_VERSION_94,
+            PG_VERSION_96,
+        ],
+    },
+
+    # RHEL 7
+    &VM_RH7 =>
     {
         &VM_OS_BASE => VM_OS_BASE_RHEL,
-        &VM_OS => VM_OS_CENTOS,
         &VM_IMAGE => 'centos:7',
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
@@ -166,28 +161,27 @@ my $oyVm =
 
         &VM_DB =>
         [
-            PG_VERSION_92,
-            PG_VERSION_94,
-            PG_VERSION_95,
-            PG_VERSION_96,
-            PG_VERSION_10,
             PG_VERSION_11,
             PG_VERSION_12,
             PG_VERSION_13,
+            PG_VERSION_14,
+            PG_VERSION_15,
         ],
 
         &VM_DB_TEST =>
         [
-            PG_VERSION_96,
+            PG_VERSION_11,
+            PG_VERSION_12,
+            PG_VERSION_13,
+            PG_VERSION_14,
         ],
     },
 
-    # Fedora 32
-    &VM_F32 =>
+    # Fedora 38
+    &VM_F38 =>
     {
         &VM_OS_BASE => VM_OS_BASE_RHEL,
-        &VM_OS => VM_OS_CENTOS,
-        &VM_IMAGE => 'fedora:32',
+        &VM_IMAGE => 'fedora:36',
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
         &VMDEF_COVERAGE_C => true,
@@ -197,196 +191,31 @@ my $oyVm =
 
         &VM_DB =>
         [
-            PG_VERSION_95,
-            PG_VERSION_96,
-            PG_VERSION_10,
-            PG_VERSION_11,
-            PG_VERSION_12,
-        ],
-
-        &VM_DB_TEST =>
-        [
-            PG_VERSION_12,
-        ],
-    },
-
-    # Debian 8
-    &VM_D8 =>
-    {
-        &VM_OS_BASE => VM_OS_BASE_DEBIAN,
-        &VM_OS => VM_OS_DEBIAN,
-        &VM_OS_REPO => 'jessie',
-        &VM_IMAGE => 'debian:8',
-        &VM_ARCH => VM_ARCH_AMD64,
-        &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
-
-        &VM_DB =>
-        [
-            PG_VERSION_84,
-            PG_VERSION_90,
-            PG_VERSION_91,
-            PG_VERSION_92,
-            PG_VERSION_93,
-            PG_VERSION_94,
-            PG_VERSION_95,
-            PG_VERSION_96,
-            PG_VERSION_10,
-            PG_VERSION_11,
-        ],
-
-        &VM_DB_TEST =>
-        [
-            PG_VERSION_95,
-        ],
-    },
-
-    # Debian 9
-    &VM_D9 =>
-    {
-        &VM_OS_BASE => VM_OS_BASE_DEBIAN,
-        &VM_OS => VM_OS_DEBIAN,
-        &VM_OS_REPO => 'stretch',
-        &VM_IMAGE => 'debian:9',
-        &VM_ARCH => VM_ARCH_AMD64,
-        &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
-
-        &VM_DB_TEST =>
-        [
-            PG_VERSION_92,
-            PG_VERSION_93,
-            PG_VERSION_94,
-            PG_VERSION_95,
-            PG_VERSION_96,
-            PG_VERSION_10,
-            PG_VERSION_11,
-            PG_VERSION_12,
-        ],
-
-        &VM_DB_TEST =>
-        [
-            PG_VERSION_96,
-        ],
-    },
-
-    # Ubuntu 12.04
-    &VM_U12 =>
-    {
-        &VM_OS_BASE => VM_OS_BASE_DEBIAN,
-        &VM_OS => VM_OS_UBUNTU,
-        &VM_OS_REPO => 'precise',
-        &VM_IMAGE => 'i386/ubuntu:12.04',
-        &VM_ARCH => VM_ARCH_I386,
-        &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
-        &VMDEF_WITH_LZ4 => false,
-
-        &VM_DB =>
-        [
-            PG_VERSION_83,
-            PG_VERSION_84,
-            PG_VERSION_90,
-            PG_VERSION_91,
-            PG_VERSION_92,
-            PG_VERSION_93,
-        ],
-
-        &VM_DB_TEST =>
-        [
-            PG_VERSION_83,
-            PG_VERSION_84,
-            PG_VERSION_90,
-            PG_VERSION_91,
-            PG_VERSION_92,
-            PG_VERSION_93,
-        ],
-    },
-
-    # Ubuntu 14.04
-    &VM_U14 =>
-    {
-        &VM_OS_BASE => VM_OS_BASE_DEBIAN,
-        &VM_OS => VM_OS_UBUNTU,
-        &VM_OS_REPO => 'trusty',
-        &VM_IMAGE => 'ubuntu:14.04',
-        &VM_ARCH => VM_ARCH_AMD64,
-        &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
-
-        &VM_DB =>
-        [
-            PG_VERSION_84,
-            PG_VERSION_90,
-            PG_VERSION_91,
-            PG_VERSION_92,
-            PG_VERSION_93,
-            PG_VERSION_94,
-            PG_VERSION_95,
-            PG_VERSION_96,
-            PG_VERSION_10,
-            PG_VERSION_11,
             PG_VERSION_12,
             PG_VERSION_13,
-        ],
-
-        &VM_DB =>
-        [
-            PG_VERSION_94,
-        ],
-    },
-
-    # Ubuntu 16.04
-    &VM_U16 =>
-    {
-        &VM_OS_BASE => VM_OS_BASE_DEBIAN,
-        &VM_OS => VM_OS_UBUNTU,
-        &VM_OS_REPO => 'xenial',
-        &VM_IMAGE => 'ubuntu:16.04',
-        &VM_ARCH => VM_ARCH_AMD64,
-        &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
-
-        &VMDEF_WITH_BACKTRACE => true,
-
-        &VM_DB =>
-        [
-            PG_VERSION_91,
-            PG_VERSION_92,
-            PG_VERSION_93,
-            PG_VERSION_94,
-            PG_VERSION_95,
-            PG_VERSION_96,
-            PG_VERSION_10,
-            PG_VERSION_11,
-            PG_VERSION_12,
-            PG_VERSION_13,
+            PG_VERSION_14,
+            PG_VERSION_15,
         ],
 
         &VM_DB_TEST =>
         [
-            PG_VERSION_94,
-            PG_VERSION_95,
+            PG_VERSION_15,
         ],
     },
 
-    # Ubuntu 18.04
-    &VM_U18 =>
+    # Ubuntu 20.04
+    &VM_U20 =>
     {
         &VM_OS_BASE => VM_OS_BASE_DEBIAN,
-        &VM_OS => VM_OS_UBUNTU,
-        &VM_OS_REPO => 'bionic',
-        &VM_IMAGE => 'ubuntu:18.04',
+        &VM_IMAGE => 'ubuntu:20.04',
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_COVERAGE_C => true,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
-        &VMDEF_WITH_BACKTRACE => true,
         &VMDEF_WITH_ZST => true,
 
         &VM_DB =>
         [
-            PG_VERSION_83,
-            PG_VERSION_84,
-            PG_VERSION_90,
-            PG_VERSION_91,
-            PG_VERSION_92,
-            PG_VERSION_93,
             PG_VERSION_94,
             PG_VERSION_95,
             PG_VERSION_96,
@@ -394,16 +223,49 @@ my $oyVm =
             PG_VERSION_11,
             PG_VERSION_12,
             PG_VERSION_13,
+            PG_VERSION_14,
+            PG_VERSION_15,
         ],
 
         &VM_DB_TEST =>
         [
+            PG_VERSION_95,
+            PG_VERSION_96,
+            PG_VERSION_15,
+        ],
+    },
+
+    # Ubuntu 22.04
+    &VM_U22 =>
+    {
+        &VM_OS_BASE => VM_OS_BASE_DEBIAN,
+        &VM_IMAGE => 'ubuntu:22.04',
+        &VM_ARCH => VM_ARCH_AMD64,
+        &VMDEF_COVERAGE_C => true,
+        &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
+
+        &VMDEF_WITH_ZST => true,
+
+        &VM_DB =>
+        [
             PG_VERSION_94,
             PG_VERSION_95,
+            PG_VERSION_96,
             PG_VERSION_10,
             PG_VERSION_11,
             PG_VERSION_12,
             PG_VERSION_13,
+            PG_VERSION_14,
+            PG_VERSION_15,
+            PG_VERSION_16,
+        ],
+
+        &VM_DB_TEST =>
+        [
+            PG_VERSION_95,
+            PG_VERSION_10,
+            PG_VERSION_15,
+            PG_VERSION_16,
         ],
     },
 };
@@ -477,7 +339,7 @@ sub vmValid
 push @EXPORT, qw(vmValid);
 
 ####################################################################################################################################
-# Which vm to use for the test matrix.  If one of the standard four, then use that, else use VM4.
+# Which vm to use for the test matrix. If one of the standard four, then use that, else use VM4.
 ####################################################################################################################################
 sub vmTest
 {
@@ -535,22 +397,33 @@ sub vmArchBits
 {
     my $strVm = shift;
 
-    return ($oyVm->{$strVm}{&VM_ARCH} eq VM_ARCH_AMD64 ? 64 : 32);
+    return ($oyVm->{$strVm}{&VM_ARCH} eq VM_ARCH_I386 ? 32 : 64);
 }
 
 push @EXPORT, qw(vmArchBits);
 
 ####################################################################################################################################
-# Does the VM support libbacktrace?
+# Get host architecture
 ####################################################################################################################################
-sub vmWithBackTrace
-{
-    my $strVm = shift;
+my $strHostArch = undef;
 
-    return ($oyVm->{$strVm}{&VMDEF_WITH_BACKTRACE} ? true : false);
+sub hostArch
+{
+    if (!defined($strHostArch))
+    {
+        $strHostArch = trim(`uname -m`);
+
+        # Mac M1 reports arm64 but we generally need aarch64 (which Linux reports)
+        if ($strHostArch eq 'arm64')
+        {
+            $strHostArch = 'aarch64';
+        }
+    }
+
+    return $strHostArch;
 }
 
-push @EXPORT, qw(vmWithBackTrace);
+push @EXPORT, qw(hostArch);
 
 ####################################################################################################################################
 # Does the VM support liblz4?

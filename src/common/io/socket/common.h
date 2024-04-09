@@ -13,12 +13,9 @@ Socket Common Functions
 Functions
 ***********************************************************************************************************************************/
 // Initialize settings for socket connections (some are used only for TCP)
-void sckInit(bool block, bool keepAlive, int tcpKeepAliveCount, int tcpKeepAliveIdle, int tcpKeepAliveInterval);
+FN_EXTERN void sckInit(bool block, bool keepAlive, int tcpKeepAliveCount, int tcpKeepAliveIdle, int tcpKeepAliveInterval);
 
 // Set options on a socket
-void sckOptionSet(int fd);
-
-// Connect socket to an IP address
-void sckConnect(int fd, const String *host, unsigned int port, const struct addrinfo *hostAddress, TimeMSec timeout);
+FN_EXTERN void sckOptionSet(int fd);
 
 #endif

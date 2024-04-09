@@ -12,6 +12,7 @@ Stop Command
 
 #include "command/control/common.h"
 #include "common/debug.h"
+#include "common/lock.h"
 #include "common/type/convert.h"
 #include "config/config.h"
 #include "storage/helper.h"
@@ -19,7 +20,7 @@ Stop Command
 #include "storage/storage.intern.h"
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 cmdStop(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
@@ -34,14 +35,11 @@ cmdStop(void)
             // Create the lock path (ignore if already created)
             storagePathCreateP(storageLocalWrite(), strPath(stopFile), .mode = 0770);
 
-            // Create the stop file with Read/Write and Create only - do not use Truncate
-            int fd = -1;
-            THROW_ON_SYS_ERROR_FMT(
-                ((fd = open(strZ(stopFile), O_WRONLY | O_CREAT, STORAGE_MODE_FILE_DEFAULT)) == -1), FileOpenError,
-                "unable to open stop file '%s'", strZ(stopFile));
-
-            // Close the file
-            close(fd);
+            // Create the stop file with without truncating an existing file
+            IoWrite *const stopWrite = storageWriteIo(
+                storageNewWriteP(storageLocalWrite(), stopFile, .noAtomic = true, .noTruncate = true, .modePath = 0770));
+            ioWriteOpen(stopWrite);
+            ioWriteClose(stopWrite);
 
             // If --force was specified then send term signals to running processes
             if (cfgOptionBool(cfgOptForce))
@@ -53,47 +51,33 @@ cmdStop(void)
                 // Find each lock file and send term signals to the processes
                 for (unsigned int lockPathFileIdx = 0; lockPathFileIdx < strLstSize(lockPathFileList); lockPathFileIdx++)
                 {
-                    String *lockFile = strNewFmt("%s/%s", strZ(lockPath), strZ(strLstGet(lockPathFileList, lockPathFileIdx)));
+                    const String *lockFile = strLstGet(lockPathFileList, lockPathFileIdx);
 
-                    // Skip any file that is not a lock file
-                    if (!strEndsWithZ(lockFile, LOCK_FILE_EXT))
-                        continue;
-
-                    // If we cannot open the lock file for any reason then warn and continue to next file
-                    if ((fd = open(strZ(lockFile), O_RDONLY, 0)) == -1)
+                    // Skip any file that is not a lock file. Skip lock files for other stanzas if a stanza is provided.
+                    if (!strEndsWithZ(lockFile, LOCK_FILE_EXT) ||
+                        (cfgOptionTest(cfgOptStanza) &&
+                         !strEq(lockFile, lockFileName(cfgOptionStr(cfgOptStanza), lockTypeArchive)) &&
+                         !strEq(lockFile, lockFileName(cfgOptionStr(cfgOptStanza), lockTypeBackup))))
                     {
-                        LOG_WARN_FMT( "unable to open lock file %s", strZ(lockFile));
                         continue;
                     }
 
-                    // Attempt a lock on the file - if a lock can be acquired that means the original process died without removing
-                    // the lock file so remove it now
-                    if (flock(fd, LOCK_EX | LOCK_NB) == 0)
+                    // Read the lock file
+                    lockFile = strNewFmt("%s/%s", strZ(lockPath), strZ(lockFile));
+                    LockReadResult lockRead = lockReadFileP(lockFile, .remove = true);
+
+                    // If we cannot read the lock file for any reason then warn and continue to next file
+                    if (lockRead.status != lockReadStatusValid)
                     {
-                        unlink(strZ(lockFile));
-                        close(fd);
+                        LOG_WARN_FMT("unable to read lock file %s", strZ(lockFile));
                         continue;
                     }
 
-                    // The file is locked so that means there is a running process - read the process id and send it a term signal
-                    char contents[LOCK_BUFFER_SIZE];
-                    ssize_t actualBytes = read(fd, contents, sizeof(contents));
-                    String *processId = actualBytes > 0 ?
-                        strTrim(strLstGet(strLstNewSplitZ(strNewN(contents, (size_t)actualBytes), LF_Z), 0)) : NULL;
-
-                    // If the process id is defined then assume this is a valid lock file
-                    if (processId != NULL && strSize(processId) > 0)
-                    {
-                        if (kill(cvtZToInt(strZ(processId)), SIGTERM) != 0)
-                            LOG_WARN_FMT("unable to send term signal to process %s", strZ(processId));
-                        else
-                            LOG_INFO_FMT("sent term signal to process %s", strZ(processId));
-                    }
+                    // The lock file is valid so that means there is a running process -- send a term signal to the process
+                    if (kill(lockRead.data.processId, SIGTERM) != 0)
+                        LOG_WARN_FMT("unable to send term signal to process %d", lockRead.data.processId);
                     else
-                    {
-                        unlink(strZ(lockFile));
-                        close(fd);
-                    }
+                        LOG_INFO_FMT("sent term signal to process %d", lockRead.data.processId);
                 }
             }
         }
@@ -101,7 +85,7 @@ cmdStop(void)
         {
             LOG_WARN_FMT(
                 "stop file already exists for %s",
-                cfgOptionTest(cfgOptStanza) ? strZ(strNewFmt("stanza %s", strZ(cfgOptionStr(cfgOptStanza)))) : "all stanzas");
+                cfgOptionTest(cfgOptStanza) ? zNewFmt("stanza %s", strZ(cfgOptionDisplay(cfgOptStanza))) : "all stanzas");
         }
     }
     MEM_CONTEXT_TEMP_END();

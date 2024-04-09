@@ -1,0 +1,194 @@
+<release date="2018-03-19" version="2.01" title="Minor Bug Fixes and Improvements">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="brad.nicholson"/>
+                </release-item-contributor-list>
+
+                <p>Fix <br-option>--target-action</br-option> and <br-option>--recovery-option</br-option> options being reported as invalid when restoring with <br-option>--type=immediate</br-option>.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="brad.nicholson"/>
+                </release-item-contributor-list>
+
+                <p>Immediately error when a secure option (e.g. <br-option>repo1-s3-key</br-option>) is passed on the command line.</p>
+
+                <p>Since <backrest/> would not pass secure options on to sub-processes an obscure error was thrown. The new error is much clearer and provides hints about how to fix the problem. Update command documentation to omit secure options that cannot be specified on the command-line.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="ibrahim.edib.kokdemir"/>
+                </release-item-contributor-list>
+
+                <p>Fix issue passing <br-option>--no-config</br-option> to embedded Perl.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="clinton.adams"/>
+                </release-item-contributor-list>
+
+                <p>Fix issue where specifying <br-option>log-level-stderr</br-option> &gt; <id>warn</id> would cause a <cmd>local</cmd>/<cmd>remote</cmd> process to error on exit due to output found on stderr when none was expected.</p>
+
+                <p>The max value for a <cmd>local</cmd>/<cmd>remote</cmd> process is now <id>error</id> since there is no reason for these processes to emit warnings.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="thomas.flatley"/>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Fix manifest test in the <cmd>check</cmd> command when tablespaces are present.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Error when multiple arguments are set in the config file for an option that does not accept multiple arguments.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="adrian.vondendriesch"/>
+                </release-item-contributor-list>
+
+                <p>Remove extraneous sudo commands from <file>src/Makefile</file>.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Improve Perl configuration. Set config before <code>Main::main()</code> call to avoid secrets being exposed in a stack trace. Move logic for setting defaults to C.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improve logging. Move command begin to C except when it must be called after another command in Perl (e.g. <cmd>expire</cmd> after <cmd>backup</cmd>). Command begin logs correctly for complex data types like hash and list. Specify which commands will log to file immediately and set the default log level for log messages that are common to all commands. File logging is initiated from C.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Port most of <code>Config::Config::configLoad()</code> from Perl to C.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Fix incorrect enum types in <file>config.c</file> that throw warnings under clang.</p>
+            </release-item>
+
+            <release-item>
+                <p>Enable <id>-Wswitch-enum</id>, <id>-Wconversion</id>, <id>-Wformat=2</id>, <id>-Wformat-nonliteral</id>, and <id>-Wformat-signedness</id> and silence new warnings.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improve code documentation in <code>config</code> module.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improve debugging. Add <code>ASSERT_DEBUG()</code> macro for debugging and replace all current <code>assert()</code> calls except in tests that can't use the debug code. Replace remaining NDEBUG blocks with the more granular DEBUG_UNIT. Remove some debug <code>memset()</code> calls in <code>MemContext</code> since valgrind is more useful for these checks.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Add <code>cfgOptionTest()</code> and update <code>cfgOption()</code> calls that are better implemented as <code>cfgOptionTest()</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Build with <id>-DNDEBUG</id> by default but disable for testing.</p>
+            </release-item>
+
+            <release-item>
+                <p>Check <code>int</code> size in <code>common/type.h</code>. This ensures that integers are at least 32-bits without having to run the test suite.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improve conversion of C exceptions to <code>Exception</code> objects. Colons in the message would prevent all of the message from being loaded into the <code>Exception</code> object.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Show index in examples for indexed options, i.e. <id>repo-*</id>, <id>pg-*</id>.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Simplify table of contents on command page by only listing commands.</p>
+            </release-item>
+
+            <release-item>
+                <p>Remove references to the C library being optional.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-feature-list>
+            <release-item>
+                <p>Add CentOS/RHEL package builds.</p>
+            </release-item>
+
+            <release-item>
+                <p>Use clang for static code analysis.</p>
+
+                <p>Nothing found initially except for some functions that should have been marked <code>__noreturn__</code>.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Build performance improvements. Improve bin and libc build performance. Improve code generation performance.</p>
+            </release-item>
+
+            <release-item>
+                <p>Config test code writes secure options to a file instead of passing on the command-line.</p>
+            </release-item>
+
+            <release-item>
+                <p>Disable console display of coverage for C files since <code>Devel::Cover</code> does not handle it well.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add new test for <code>Common::Io::Process</code> to show that output on stderr will raise an exception on <code>close()</code> even if the exit code is 0.</p>
+            </release-item>
+
+            <release-item>
+                <p>Update <file>pip</file> before installing <file>awscli</file>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Remove <setting>--smart</setting> from <setting>--expect</setting> tests. This ensures that new binaries are built before running the tests.</p>
+            </release-item>
+
+            <release-item>
+                <p>Remove Debian package patch now that it has been merged upstream.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+</release>

@@ -10,25 +10,15 @@ ZST Decompress
 #include "common/compress/zst/common.h"
 #include "common/compress/zst/decompress.h"
 #include "common/debug.h"
-#include "common/io/filter/filter.intern.h"
+#include "common/io/filter/filter.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
-
-/***********************************************************************************************************************************
-Filter type constant
-***********************************************************************************************************************************/
-STRING_EXTERN(ZST_DECOMPRESS_FILTER_TYPE_STR,                       ZST_DECOMPRESS_FILTER_TYPE);
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define ZST_DECOMPRESS_TYPE                                         ZstDecompress
-#define ZST_DECOMPRESS_PREFIX                                       zstDecompress
-
 typedef struct ZstDecompress
 {
-    MemContext *memContext;                                         // Context to store data
     ZSTD_DStream *context;                                          // Decompression context
     IoFilter *filter;                                               // Filter interface
 
@@ -41,27 +31,37 @@ typedef struct ZstDecompress
 /***********************************************************************************************************************************
 Render as string for logging
 ***********************************************************************************************************************************/
-static String *
-zstDecompressToLog(const ZstDecompress *this)
+static void
+zstDecompressToLog(const ZstDecompress *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{inputSame: %s, inputOffset: %zu, frameDone %s, done: %s}", cvtBoolToConstZ(this->inputSame), this->inputOffset,
+    strStcFmt(
+        debugLog, "{inputSame: %s, inputOffset: %zu, frameDone %s, done: %s}", cvtBoolToConstZ(this->inputSame), this->inputOffset,
         cvtBoolToConstZ(this->frameDone), cvtBoolToConstZ(this->done));
 }
 
 #define FUNCTION_LOG_ZST_DECOMPRESS_TYPE                                                                                           \
     ZstDecompress *
 #define FUNCTION_LOG_ZST_DECOMPRESS_FORMAT(value, buffer, bufferSize)                                                              \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, zstDecompressToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, zstDecompressToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Free decompression context
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(ZST_DECOMPRESS, LOG, logLevelTrace)
+static void
+zstDecompressFreeResource(THIS_VOID)
 {
+    THIS(ZstDecompress);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(ZST_DECOMPRESS, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     ZSTD_freeDStream(this->context);
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Decompress data
@@ -134,7 +134,7 @@ zstDecompressDone(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->done);
+    FUNCTION_TEST_RETURN(BOOL, this->done);
 }
 
 /***********************************************************************************************************************************
@@ -151,41 +151,37 @@ zstDecompressInputSame(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->inputSame);
+    FUNCTION_TEST_RETURN(BOOL, this->inputSame);
 }
 
 /**********************************************************************************************************************************/
-IoFilter *
-zstDecompressNew(void)
+FN_EXTERN IoFilter *
+zstDecompressNew(const bool raw)
 {
-    FUNCTION_LOG_VOID(logLevelTrace);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        (void)raw;                                                  // Raw unsupported
+    FUNCTION_LOG_END();
 
-    IoFilter *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("ZstDecompress")
+    OBJ_NEW_BEGIN(ZstDecompress, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        ZstDecompress *driver = memNew(sizeof(ZstDecompress));
-
-        *driver = (ZstDecompress)
+        *this = (ZstDecompress)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .context = ZSTD_createDStream(),
         };
 
         // Set callback to ensure zst context is freed
-        memContextCallbackSet(driver->memContext, zstDecompressFreeResource, driver);
+        memContextCallbackSet(objMemContext(this), zstDecompressFreeResource, this);
 
         // Initialize context
-        zstError(ZSTD_initDStream(driver->context));
-
-        // Create filter interface
-        this = ioFilterNewP(
-            ZST_DECOMPRESS_FILTER_TYPE_STR, driver, NULL, .done = zstDecompressDone, .inOut = zstDecompressProcess,
-            .inputSame = zstDecompressInputSame);
+        zstError(ZSTD_initDStream(this->context));
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_FILTER, this);
+    FUNCTION_LOG_RETURN(
+        IO_FILTER,
+        ioFilterNewP(
+            ZST_DECOMPRESS_FILTER_TYPE, this, NULL, .done = zstDecompressDone, .inOut = zstDecompressProcess,
+            .inputSame = zstDecompressInputSame));
 }
 
 #endif // HAVE_LIBZST

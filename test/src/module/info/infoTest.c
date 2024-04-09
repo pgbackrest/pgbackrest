@@ -60,17 +60,17 @@ Test save callbacks
 static void
 testInfoSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData)
 {
-    if (infoSaveSection(infoSaveData, STRDEF("c"), sectionNext))
-        infoSaveValue(infoSaveData, STRDEF("c"), strNew("key"), (String *)data);
+    if (infoSaveSection(infoSaveData, "c", sectionNext))
+        infoSaveValue(infoSaveData, "c", "key", (String *)data);
 
-    if (infoSaveSection(infoSaveData, STRDEF("d"), sectionNext))
-        infoSaveValue(infoSaveData, STRDEF("d"), strNew("key"), (String *)data);
+    if (infoSaveSection(infoSaveData, "d", sectionNext))
+        infoSaveValue(infoSaveData, "d", "key", (String *)data);
 }
 
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     // *****************************************************************************************************************************
@@ -78,7 +78,7 @@ testRun(void)
     {
         Info *info = NULL;
 
-        TEST_ASSIGN(info, infoNew(strNew("123xyz")), "infoNew(cipher)");
+        TEST_ASSIGN(info, infoNew(STRDEF("123xyz")), "infoNew(cipher)");
         TEST_RESULT_STR_Z(infoCipherPass(info), "123xyz", "    cipherPass is set");
 
         TEST_ASSIGN(info, infoNew(NULL), "infoNew(NULL)");
@@ -89,12 +89,12 @@ testRun(void)
     if (testBegin("infoNewLoad() and infoSave()"))
     {
         // Format error
-        // --------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         const Buffer *contentLoad = BUFSTRDEF(
             "[backrest]\n"
             "backrest-format=4\n");
 
-        String *callbackContent = strNew("");
+        String *callbackContent = strNew();
 
         TEST_ERROR(
             infoNewLoad(ioBufferReadNew(contentLoad), harnessInfoLoadNewCallback, callbackContent), FormatError,
@@ -102,7 +102,7 @@ testRun(void)
         TEST_RESULT_STR_Z(callbackContent, "", "    check callback content");
 
         // Checksum not found
-        // --------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         contentLoad = BUFSTRDEF(
             "[backrest]\n"
             "backrest-format=5\n");
@@ -113,7 +113,7 @@ testRun(void)
         TEST_RESULT_STR_Z(callbackContent, "", "    check callback content");
 
         // Checksum invalid
-        // --------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         contentLoad = BUFSTRDEF(
             "[backrest]\n"
             "backrest-checksum=\"BOGUS\"\n"
@@ -127,7 +127,7 @@ testRun(void)
         TEST_RESULT_STR_Z(callbackContent, "", "    check callback content");
 
         // Crypto expected
-        // --------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         contentLoad = BUFSTRDEF(
             "[backrest]\n"
             "backrest-checksum=\"BOGUS\"\n"
@@ -135,7 +135,7 @@ testRun(void)
             "backrest-version=\"2.17\"\n");
 
         IoRead *read = ioBufferReadNew(contentLoad);
-        ioFilterGroupAdd(ioReadFilterGroup(read), cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTRDEF("X"), NULL));
+        ioFilterGroupAdd(ioReadFilterGroup(read), cipherBlockNewP(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTRDEF("X")));
 
         TEST_ERROR(
             infoNewLoad(read, harnessInfoLoadNewCallback, callbackContent), CryptoError,
@@ -144,13 +144,13 @@ testRun(void)
         TEST_RESULT_STR_Z(callbackContent, "", "    check callback content");
 
         // Base file with other content in cipher (this is to test that future additions don't break the code)
-        // --------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         contentLoad = harnessInfoChecksumZ(
             "[cipher]\n"
             "cipher-other=1\n");
 
         Info *info = NULL;
-        callbackContent = strNew("");
+        callbackContent = strNew();
 
         TEST_ASSIGN(
             info, infoNewLoad(ioBufferReadNew(contentLoad), harnessInfoLoadNewCallback, callbackContent), "info with other cipher");
@@ -158,7 +158,7 @@ testRun(void)
         TEST_RESULT_STR(infoCipherPass(info), NULL, "    check cipher pass not set");
 
         // Base file with content
-        // --------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         contentLoad = harnessInfoChecksumZ(
             "[c]\n"
             "key=1\n"
@@ -166,7 +166,7 @@ testRun(void)
             "[d]\n"
             "key=1\n");
 
-        callbackContent = strNew("");
+        callbackContent = strNew();
 
         TEST_ASSIGN(
             info, infoNewLoad(ioBufferReadNew(contentLoad), harnessInfoLoadNewCallback, callbackContent), "info with content");
@@ -175,11 +175,11 @@ testRun(void)
 
         Buffer *contentSave = bufNew(0);
 
-        TEST_RESULT_VOID(infoSave(info, ioBufferWriteNew(contentSave), testInfoSaveCallback, strNew("1")), "info save");
+        TEST_RESULT_VOID(infoSave(info, ioBufferWriteNew(contentSave), testInfoSaveCallback, strNewZ("1")), "info save");
         TEST_RESULT_STR(strNewBuf(contentSave), strNewBuf(contentLoad), "   check save");
 
         // File with content and cipher
-        // --------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         contentLoad = harnessInfoChecksumZ(
             "[c]\n"
             "key=1\n"
@@ -190,7 +190,7 @@ testRun(void)
             "[d]\n"
             "key=1\n");
 
-        callbackContent = strNew("");
+        callbackContent = strNew();
 
         TEST_ASSIGN(
             info,
@@ -201,7 +201,7 @@ testRun(void)
 
         contentSave = bufNew(0);
 
-        TEST_RESULT_VOID(infoSave(info, ioBufferWriteNew(contentSave), testInfoSaveCallback, strNew("1")), "info save");
+        TEST_RESULT_VOID(infoSave(info, ioBufferWriteNew(contentSave), testInfoSaveCallback, strNewZ("1")), "info save");
         TEST_RESULT_STR(strNewBuf(contentSave), strNewBuf(contentLoad), "   check save");
     }
 
@@ -209,39 +209,39 @@ testRun(void)
     if (testBegin("infoLoad()"))
     {
         // One error
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TestInfoLoad testInfoLoad = {.test = 1};
 
         TEST_ERROR(
             infoLoad(STRDEF("unable to load info file"), testInfoLoadCallback, &testInfoLoad), ChecksumError,
             "unable to load info file:\n"
-                "ChecksumError: checksum error");
+            "ChecksumError: checksum error");
 
         // Two errors (same error)
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         testInfoLoad = (TestInfoLoad){.test = 2};
 
         TEST_ERROR(
             infoLoad(STRDEF("unable to load info file(s)"), testInfoLoadCallback, &testInfoLoad), FormatError,
             "unable to load info file(s):\n"
-                "FormatError: format error\n"
-                "FormatError: format error");
+            "FormatError: format error\n"
+            "FormatError: format error");
 
         // Four errors (mixed)
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         testInfoLoad = (TestInfoLoad){.test = 3};
 
         TEST_ERROR(
             infoLoad(STRDEF("unable to load info file(s)"), testInfoLoadCallback, &testInfoLoad), FileOpenError,
             "unable to load info file(s):\n"
-                "FileMissingError: file missing error\n"
-                "ChecksumError: checksum error\n"
-                "HINT: have you checked the thing?\n"
-                "FormatError: format error\n"
-                "FileMissingError: file missing error");
+            "FileMissingError: file missing error\n"
+            "ChecksumError: checksum error\n"
+            "HINT: have you checked the thing?\n"
+            "FormatError: format error\n"
+            "FileMissingError: file missing error");
 
         // Success
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         testInfoLoad = (TestInfoLoad){0};
 
         infoLoad(STRDEF("SHOULD BE NO ERROR"), testInfoLoadCallback, &testInfoLoad);

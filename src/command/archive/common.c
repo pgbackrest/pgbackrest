@@ -15,10 +15,11 @@ Archive Common
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
+#include "common/type/convert.h"
 #include "common/wait.h"
 #include "config/config.h"
+#include "postgres/interface.h"
 #include "postgres/version.h"
-#include "storage/helper.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
@@ -34,10 +35,10 @@ STRING_EXTERN(WAL_TIMELINE_HISTORY_REGEXP_STR,                      WAL_TIMELINE
 Global error file constant
 ***********************************************************************************************************************************/
 #define STATUS_FILE_GLOBAL                                          "global"
-    STRING_STATIC(STATUS_FILE_GLOBAL_STR,                           STATUS_FILE_GLOBAL);
+STRING_STATIC(STATUS_FILE_GLOBAL_STR,                               STATUS_FILE_GLOBAL);
 
 #define STATUS_FILE_GLOBAL_ERROR                                    STATUS_FILE_GLOBAL STATUS_EXT_ERROR
-    STRING_STATIC(STATUS_FILE_GLOBAL_ERROR_STR,                         STATUS_FILE_GLOBAL_ERROR);
+STRING_STATIC(STATUS_FILE_GLOBAL_ERROR_STR,                         STATUS_FILE_GLOBAL_ERROR);
 
 /***********************************************************************************************************************************
 Get the correct spool queue based on the archive mode
@@ -46,37 +47,43 @@ static const String *
 archiveAsyncSpoolQueue(ArchiveMode archiveMode)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, archiveMode);
+        FUNCTION_TEST_PARAM(STRING_ID, archiveMode);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN((archiveMode == archiveModeGet ? STORAGE_SPOOL_ARCHIVE_IN_STR : STORAGE_SPOOL_ARCHIVE_OUT_STR));
+    FUNCTION_TEST_RETURN_CONST(
+        STRING, archiveMode == archiveModeGet ? STORAGE_SPOOL_ARCHIVE_IN_STR : STORAGE_SPOOL_ARCHIVE_OUT_STR);
 }
 
 /**********************************************************************************************************************************/
-void
-archiveAsyncErrorClear(ArchiveMode archiveMode, const String *archiveFile)
+FN_EXTERN void
+archiveAsyncErrorClear(const ArchiveMode archiveMode, const String *const archiveFile)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(ENUM, archiveMode);
+        FUNCTION_LOG_PARAM(STRING_ID, archiveMode);
         FUNCTION_LOG_PARAM(STRING, archiveFile);
     FUNCTION_LOG_END();
 
     ASSERT(archiveFile != NULL);
 
-    storageRemoveP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s" STATUS_EXT_ERROR, strZ(archiveFile)));
+    String *const errorFile = strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s" STATUS_EXT_ERROR, strZ(archiveFile));
+
+    storageRemoveP(storageSpoolWrite(), errorFile);
     storageRemoveP(storageSpoolWrite(), STRDEF(STORAGE_SPOOL_ARCHIVE_OUT "/" STATUS_FILE_GLOBAL_ERROR));
+
+    strFree(errorFile);
 
     FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
-bool
-archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throwOnError)
+FN_EXTERN bool
+archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throwOnError, bool warnOnOk)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(ENUM, archiveMode);
+        FUNCTION_LOG_PARAM(STRING_ID, archiveMode);
         FUNCTION_LOG_PARAM(STRING, walSegment);
         FUNCTION_LOG_PARAM(BOOL, throwOnError);
+        FUNCTION_LOG_PARAM(BOOL, warnOnOk);
     FUNCTION_LOG_END();
 
     ASSERT(walSegment != NULL);
@@ -112,7 +119,7 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throw
         if (okFileExists || errorFileExists)
         {
             // Get the status file content
-            const String *statusFile = okFileExists ? okFile: errorFile;
+            const String *statusFile = okFileExists ? okFile : errorFile;
 
             String *content = strNewBuf(
                 storageGetP(storageNewReadP(storageSpool(), strNewFmt("%s/%s", strZ(spoolQueue), strZ(statusFile)))));
@@ -135,15 +142,15 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throw
                     THROW_FMT(FormatError, "%s message must be > 0", strZ(statusFile));
 
                 // Get contents
-                code = varIntForce(VARSTR(strNewN(strZ(content), (size_t)(linefeedPtr - strZ(content)))));
-                message = strTrim(strNew(linefeedPtr + 1));
+                code = varIntForce(VARSTR(strNewZN(strZ(content), (size_t)(linefeedPtr - strZ(content)))));
+                message = strTrim(strNewZ(linefeedPtr + 1));
             }
 
             // Process OK files
             if (okFileExists)
             {
                 // If there is content in the status file it is a warning
-                if (strSize(content) != 0)
+                if (strSize(content) != 0 && warnOnOk)
                 {
                     // If error code is not success, then this was a renamed error file
                     if (code != 0)
@@ -175,11 +182,11 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throw
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 archiveAsyncStatusErrorWrite(ArchiveMode archiveMode, const String *walSegment, int code, const String *message)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(ENUM, archiveMode);
+        FUNCTION_LOG_PARAM(STRING_ID, archiveMode);
         FUNCTION_LOG_PARAM(STRING, walSegment);
         FUNCTION_LOG_PARAM(INT, code);
         FUNCTION_LOG_PARAM(STRING, message);
@@ -204,11 +211,11 @@ archiveAsyncStatusErrorWrite(ArchiveMode archiveMode, const String *walSegment, 
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 archiveAsyncStatusOkWrite(ArchiveMode archiveMode, const String *walSegment, const String *warning)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(ENUM, archiveMode);
+        FUNCTION_LOG_PARAM(STRING_ID, archiveMode);
         FUNCTION_LOG_PARAM(STRING, walSegment);
         FUNCTION_LOG_PARAM(STRING, warning);
     FUNCTION_LOG_END();
@@ -229,11 +236,11 @@ archiveAsyncStatusOkWrite(ArchiveMode archiveMode, const String *walSegment, con
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 archiveAsyncExec(ArchiveMode archiveMode, const StringList *commandExec)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(ENUM, archiveMode);
+        FUNCTION_LOG_PARAM(STRING_ID, archiveMode);
         FUNCTION_LOG_PARAM(STRING_LIST, commandExec);
     FUNCTION_LOG_END();
 
@@ -256,9 +263,9 @@ archiveAsyncExec(ArchiveMode archiveMode, const StringList *commandExec)
         for (int fd = 3; fd < 1024; fd++)
             close(fd);
 
-        // Execute the binary.  This statement will not return if it is successful.
+        // Execute the binary. This statement will not return if it is successful.
         THROW_ON_SYS_ERROR_FMT(
-            execvp(strZ(strLstGet(commandExec, 0)), (char ** const)strLstPtr(commandExec)) == -1, ExecuteError,
+            execvp(strZ(strLstGet(commandExec, 0)), (char **const)strLstPtr(commandExec)) == -1, ExecuteError,
             "unable to execute asynchronous '%s'", archiveMode == archiveModeGet ? CFGCMD_ARCHIVE_GET : CFGCMD_ARCHIVE_PUSH);
     }
 
@@ -272,33 +279,34 @@ archiveAsyncExec(ArchiveMode archiveMode, const StringList *commandExec)
 
     THROW_ON_SYS_ERROR(waitpid(pid, &processStatus, 0) == -1, ExecuteError, "unable to wait for forked process");
 
-    // The first fork should exit with success.  If not, something went wrong during the second fork.
-    CHECK(WIFEXITED(processStatus) && WEXITSTATUS(processStatus) == 0);
+    // The first fork should exit with success. If not, something went wrong during the second fork.
+    CHECK(ExecuteError, WIFEXITED(processStatus) && WEXITSTATUS(processStatus) == 0, "error on first fork");
 
 #ifdef DEBUG_EXEC_TIME
-    // If the process does not exit immediately then something probably went wrong with the double fork.  It's possible that this
-    // test will fail on very slow systems so it may need to be tuned.  The idea is to make sure that the waitpid() above is not
+    // If the process does not exit immediately then something probably went wrong with the double fork. It's possible that this
+    // test will fail on very slow systems so it may need to be tuned. The idea is to make sure that the waitpid() above is not
     // waiting on the async process.
-    ASSERT(timeMSec() - timeBegin < 10);
+    CHECK(AssertError, timeMSec() - timeBegin < 10, "the process does not exit immediately");
 #endif
 
     FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
-int
-archiveIdComparator(const void *item1, const void *item2)
+FN_EXTERN int
+archiveIdComparator(const void *const archiveId1, const void *const archiveId2)
 {
-    StringList *archiveSort1 = strLstNewSplitZ(*(String **)item1, "-");
-    StringList *archiveSort2 = strLstNewSplitZ(*(String **)item2, "-");
-    int int1 = atoi(strZ(strLstGet(archiveSort1, 1)));
-    int int2 = atoi(strZ(strLstGet(archiveSort2, 1)));
+    ASSERT(strstr(strZ(*(String **)archiveId1), "-") != NULL);
+    ASSERT(strstr(strZ(*(String **)archiveId2), "-") != NULL);
 
-    return (int1 - int2);
+    const int id1 = cvtZToInt(strstr(strZ(*(String **)archiveId1), "-") + 1);
+    const int id2 = cvtZToInt(strstr(strZ(*(String **)archiveId2), "-") + 1);
+
+    return LST_COMPARATOR_CMP(id1, id2);
 }
 
 /**********************************************************************************************************************************/
-bool
+FN_EXTERN bool
 walIsPartial(const String *walSegment)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -312,7 +320,7 @@ walIsPartial(const String *walSegment)
 }
 
 /**********************************************************************************************************************************/
-String *
+FN_EXTERN String *
 walPath(const String *walFile, const String *pgPath, const String *command)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -334,8 +342,8 @@ walPath(const String *walFile, const String *pgPath, const String *command)
             THROW_FMT(
                 OptionRequiredError,
                 "option '%s' must be specified when relative wal paths are used\n"
-                    "HINT: is %%f passed to %s instead of %%p?\n"
-                    "HINT: PostgreSQL may pass relative paths even with %%p depending on the environment.",
+                "HINT: is %%f passed to %s instead of %%p?\n"
+                "HINT: PostgreSQL may pass relative paths even with %%p depending on the environment.",
                 cfgOptionName(cfgOptPgPath), strZ(command));
         }
 
@@ -360,7 +368,7 @@ walPath(const String *walFile, const String *pgPath, const String *command)
                 THROW_FMT(
                     OptionInvalidValueError,
                     PG_NAME " working directory '%s' is not the same as option %s '%s'\n"
-                        "HINT: is the " PG_NAME " data_directory configured the same as the %s option?",
+                    "HINT: is the " PG_NAME " data_directory configured the same as the %s option?",
                     currentWorkDir, cfgOptionName(cfgOptPgPath), strZ(pgPath), cfgOptionName(cfgOptPgPath));
             }
         }
@@ -374,7 +382,7 @@ walPath(const String *walFile, const String *pgPath, const String *command)
 }
 
 /**********************************************************************************************************************************/
-bool
+FN_EXTERN bool
 walIsSegment(const String *walSegment)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -399,78 +407,7 @@ walIsSegment(const String *walSegment)
 }
 
 /**********************************************************************************************************************************/
-String *
-walSegmentFind(const Storage *storage, const String *archiveId, const String *walSegment, TimeMSec timeout)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE, storage);
-        FUNCTION_LOG_PARAM(STRING, archiveId);
-        FUNCTION_LOG_PARAM(STRING, walSegment);
-        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
-    FUNCTION_LOG_END();
-
-    ASSERT(storage != NULL);
-    ASSERT(archiveId != NULL);
-    ASSERT(walSegment != NULL);
-    ASSERT(walIsSegment(walSegment));
-
-    String *result = NULL;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        Wait *wait = waitNew(timeout);
-
-        do
-        {
-            // Get a list of all WAL segments that match
-            StringList *list = storageListP(
-                storage, strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(strSubN(walSegment, 0, 16))),
-                .expression = strNewFmt(
-                    "^%s%s-[0-f]{40}" COMPRESS_TYPE_REGEXP "{0,1}$", strZ(strSubN(walSegment, 0, 24)),
-                        walIsPartial(walSegment) ? WAL_SEGMENT_PARTIAL_EXT : ""),
-                .nullOnMissing = true);
-
-            // If there are results
-            if (list != NULL && strLstSize(list) > 0)
-            {
-                // Error if there is more than one match
-                if (strLstSize(list) > 1)
-                {
-                    THROW_FMT(
-                        ArchiveDuplicateError,
-                        "duplicates found in archive for WAL segment %s: %s\n"
-                            "HINT: are multiple primaries archiving to this stanza?",
-                        strZ(walSegment), strZ(strLstJoin(strLstSort(list, sortOrderAsc), ", ")));
-                }
-
-                // Copy file name of WAL segment found into the prior context
-                MEM_CONTEXT_PRIOR_BEGIN()
-                {
-                    result = strDup(strLstGet(list, 0));
-                }
-                MEM_CONTEXT_PRIOR_END();
-            }
-        }
-        while (result == NULL && waitMore(wait));
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    if (result == NULL && timeout != 0)
-    {
-        THROW_FMT(
-            ArchiveTimeoutError,
-            "WAL segment %s was not archived before the %" PRIu64 "ms timeout\n"
-                "HINT: check the archive_command to ensure that all options are correct (especially --stanza).\n"
-                "HINT: check the PostgreSQL server log for errors.\n"
-                "HINT: run the 'start' command if the stanza was previously stopped.",
-            strZ(walSegment), timeout);
-    }
-
-    FUNCTION_LOG_RETURN(STRING, result);
-}
-
-/**********************************************************************************************************************************/
-String *
+FN_EXTERN String *
 walSegmentNext(const String *walSegment, size_t walSegmentSize, unsigned int pgVersion)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -482,7 +419,7 @@ walSegmentNext(const String *walSegment, size_t walSegmentSize, unsigned int pgV
     ASSERT(walSegment != NULL);
     ASSERT(strSize(walSegment) == 24);
     ASSERT(UINT32_MAX % walSegmentSize == walSegmentSize - 1);
-    ASSERT(pgVersion >= PG_VERSION_11 || walSegmentSize == 16 * 1024 * 1024);
+    ASSERT(pgVersion >= PG_VERSION_11 || walSegmentSize == PG_WAL_SEGMENT_SIZE_DEFAULT);
 
     // Extract WAL parts
     uint32_t timeline = 0;
@@ -491,7 +428,7 @@ walSegmentNext(const String *walSegment, size_t walSegmentSize, unsigned int pgV
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        timeline = (uint32_t)strtol(strZ(strSubN(walSegment, 0, 8)), NULL, 16);
+        timeline = pgTimelineFromWalSegment(walSegment);
         major = (uint32_t)strtol(strZ(strSubN(walSegment, 8, 8)), NULL, 16);
         minor = (uint32_t)strtol(strZ(strSubN(walSegment, 16, 8)), NULL, 16);
 
@@ -503,13 +440,6 @@ walSegmentNext(const String *walSegment, size_t walSegmentSize, unsigned int pgV
             major++;
             minor = 0;
         }
-
-        // Special hack for PostgreSQL < 9.3 which skipped minor FF
-        if (minor == 0xFF && pgVersion < PG_VERSION_93)
-        {
-            major++;
-            minor = 0;
-        }
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -517,7 +447,7 @@ walSegmentNext(const String *walSegment, size_t walSegmentSize, unsigned int pgV
 }
 
 /**********************************************************************************************************************************/
-StringList *
+FN_EXTERN StringList *
 walSegmentRange(const String *walSegmentBegin, size_t walSegmentSize, unsigned int pgVersion, unsigned int range)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);

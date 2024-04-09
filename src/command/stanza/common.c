@@ -5,7 +5,6 @@ Stanza Commands Handler
 
 #include "command/check/common.h"
 #include "common/debug.h"
-#include "common/encode.h"
 #include "common/log.h"
 #include "config/config.h"
 #include "db/helper.h"
@@ -15,7 +14,7 @@ Stanza Commands Handler
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
-String *
+FN_EXTERN String *
 cipherPassGen(CipherType cipherType)
 {
     FUNCTION_TEST_BEGIN();
@@ -28,16 +27,15 @@ cipherPassGen(CipherType cipherType)
     {
         unsigned char buffer[48]; // 48 is the amount of entropy needed to get a 64 base key
         cryptoRandomBytes(buffer, sizeof(buffer));
-        char cipherPassSubChar[64];
-        encodeToStr(encodeBase64, buffer, sizeof(buffer), cipherPassSubChar);
-        result = strNew(cipherPassSubChar);
+
+        result = strNewEncode(encodingBase64, BUF(buffer, sizeof(buffer)));
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/
-PgControl
+FN_EXTERN PgControl
 pgValidate(void)
 {
     FUNCTION_TEST_VOID();
@@ -48,20 +46,20 @@ pgValidate(void)
     {
         if (cfgOptionBool(cfgOptOnline))
         {
-            // Check the connections of the master (and standby, if any) and return the master database object.
+            // Check the primary connections (and standby, if any) and return the primary database object.
             DbGetResult dbObject = dbGet(false, true, false);
 
-            // Get the pgControl information from the pg*-path deemed to be the master
-            result = pgControlFromFile(storagePgIdx(dbObject.primaryIdx));
+            // Get the pgControl information from the pg*-path deemed to be the primary
+            result = dbPgControl(dbObject.primary);
 
             // Check the user configured path and version against the database
-            checkDbConfig(result.version, dbObject.primaryIdx, dbObject.primary, false);
+            checkDbConfig(dbPgControl(dbObject.primary).version, dbObject.primaryIdx, dbObject.primary, false);
         }
-        // If the database is not online, assume that pg1 is the master
+        // If the database is not online, assume that pg1 is the primary
         else
-            result = pgControlFromFile(storagePg());
+            result = pgControlFromFile(storagePg(), cfgOptionStrNull(cfgOptPgVersionForce));
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN_TYPE(PgControl, result);
 }

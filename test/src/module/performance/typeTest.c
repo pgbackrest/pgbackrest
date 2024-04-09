@@ -1,22 +1,26 @@
 /***********************************************************************************************************************************
 Test Type Performance
 
-Test the performance of various types and data structures.  Generally speaking, the starting values should be high enough to "blow
+Test the performance of various types and data structures. Generally speaking, the starting values should be high enough to "blow
 up" in terms of execution time if there are performance problems without taking very long if everything is running smoothly.
 
-These starting values can then be scaled up for profiling and stress testing as needed.  In general we hope to scale to 1000 without
-running out of memory on the test systems or taking an undue amount of time.  It should be noted that in this context scaling to
+These starting values can then be scaled up for profiling and stress testing as needed. In general we hope to scale to 1000 without
+running out of memory on the test systems or taking an undue amount of time. It should be noted that in this context scaling to
 1000 is nowhere near turning it up to 11.
 ***********************************************************************************************************************************/
+#include <unistd.h>
+
 #include "common/ini.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
+#include "common/io/socket/client.h"
 #include "common/stat.h"
 #include "common/time.h"
 #include "common/type/list.h"
 #include "common/type/object.h"
 #include "info/manifest.h"
 #include "postgres/version.h"
+#include "storage/posix/storage.h"
 
 #include "common/harnessInfo.h"
 #include "common/harnessStorage.h"
@@ -27,29 +31,7 @@ Test sort comparator
 static int
 testComparator(const void *item1, const void *item2)
 {
-    int int1 = *(int *)item1;
-    int int2 = *(int *)item2;
-
-    if (int1 < int2)
-        return -1;
-
-    if (int1 > int2)
-        return 1;
-
-    return 0;
-}
-
-/***********************************************************************************************************************************
-Test callback to count ini load results
-***********************************************************************************************************************************/
-static void
-testIniLoadCountCallback(void *data, const String *section, const String *key, const String *value, const Variant *valueVar)
-{
-    (*(unsigned int *)data)++;
-    (void)section;
-    (void)key;
-    (void)value;
-    (void)valueVar;
+    return LST_COMPARATOR_CMP(*(int *)item1, *(int *)item2);
 }
 
 /***********************************************************************************************************************************
@@ -61,10 +43,14 @@ typedef struct
     uint64_t fileTotal;
 } StorageTestManifestNewBuild;
 
+STRING_STATIC(TEST_MANIFEST_PATH_USER_STR,                          "test");
+
 static StorageInfo
 storageTestManifestNewBuildInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageInterfaceInfoParam param)
 {
-    (void)thisVoid; (void)level; (void)param;
+    (void)thisVoid;
+    (void)level;
+    (void)param;
 
     StorageInfo result =
     {
@@ -74,8 +60,8 @@ storageTestManifestNewBuildInfo(THIS_VOID, const String *file, StorageInfoLevel 
         .mode = 0600,
         .userId = 100,
         .groupId = 100,
-        .user = STRDEF("test"),
-        .group = STRDEF("test"),
+        .user = TEST_MANIFEST_PATH_USER_STR,
+        .group = TEST_MANIFEST_PATH_USER_STR,
     };
 
     if (strEq(file, STRDEF("/pg")))
@@ -88,17 +74,20 @@ storageTestManifestNewBuildInfo(THIS_VOID, const String *file, StorageInfoLevel 
     return result;
 }
 
-static bool
-storageTestManifestNewBuildInfoList(
-    THIS_VOID, const String *path, StorageInfoLevel level, StorageInfoListCallback callback, void *callbackData,
-    StorageInterfaceInfoListParam param)
+static StorageList *
+storageTestManifestNewBuildList(THIS_VOID, const String *path, StorageInfoLevel level, StorageInterfaceListParam param)
 {
     THIS(StorageTestManifestNewBuild);
-    (void)path; (void)level; (void)param;
+
+    (void)path;
+    (void)level;
+    (void)param;
+
+    StorageList *const result = storageLstNew(storageInfoLevelDetail);
 
     MEM_CONTEXT_TEMP_RESET_BEGIN()
     {
-        StorageInfo result =
+        StorageInfo info =
         {
             .level = storageInfoLevelDetail,
             .exists = true,
@@ -112,25 +101,25 @@ storageTestManifestNewBuildInfoList(
 
         if (strEq(path, STRDEF("/pg")))
         {
-            result.name = STRDEF("base");
-            callback(callbackData, &result);
+            info.name = STRDEF("base");
+            storageLstAdd(result, &info);
         }
         else if (strEq(path, STRDEF("/pg/base")))
         {
-            result.name = STRDEF("1000000000");
-            callback(callbackData, &result);
+            info.name = STRDEF("1000000000");
+            storageLstAdd(result, &info);
         }
         else if (strEq(path, STRDEF("/pg/base/1000000000")))
         {
-            result.type = storageTypeFile;
-            result.size = 8192;
-            result.mode = 0600;
-            result.timeModified = 1595627966;
+            info.type = storageTypeFile;
+            info.size = 8192;
+            info.mode = 0600;
+            info.timeModified = 1595627966;
 
             for (unsigned int fileIdx = 0; fileIdx < this->fileTotal; fileIdx++)
             {
-                result.name = strNewFmt("%u", 1000000000 + fileIdx);
-                callback(callbackData, &result);
+                info.name = strNewFmt("%u", 1000000000 + fileIdx);
+                storageLstAdd(result, &info);
                 MEM_CONTEXT_TEMP_RESET(10000);
             }
         }
@@ -139,13 +128,13 @@ storageTestManifestNewBuildInfoList(
     }
     MEM_CONTEXT_TEMP_END();
 
-    return true;
+    return result;
 }
 
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
@@ -153,8 +142,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("lstFind()"))
     {
-        CHECK(testScale() <= 10000);
-        int testMax = 100000 * (int)testScale();
+        ASSERT(TEST_SCALE <= 10000);
+        int testMax = 100000 * (int)TEST_SCALE;
 
         // Generate a large list of values (use int instead of string so there fewer allocations)
         List *list = lstNewP(sizeof(int), .comparator = testComparator);
@@ -162,7 +151,7 @@ testRun(void)
         for (int listIdx = 0; listIdx < testMax; listIdx++)
             lstAdd(list, &listIdx);
 
-        CHECK(lstSize(list) == (unsigned int)testMax);
+        ASSERT(lstSize(list) == (unsigned int)testMax);
 
         TEST_LOG_FMT("generated %d item list", testMax);
 
@@ -172,7 +161,7 @@ testRun(void)
         TimeMSec timeBegin = timeMSec();
 
         for (int listIdx = 0; listIdx < testMax; listIdx++)
-            CHECK(*(int *)lstFind(list, &listIdx) == listIdx);
+            ASSERT(*(int *)lstFind(list, &listIdx) == listIdx);
 
         TEST_LOG_FMT("asc search completed in %ums", (unsigned int)(timeMSec() - timeBegin));
 
@@ -182,7 +171,7 @@ testRun(void)
         timeBegin = timeMSec();
 
         for (int listIdx = 0; listIdx < testMax; listIdx++)
-            CHECK(*(int *)lstFind(list, &listIdx) == listIdx);
+            ASSERT(*(int *)lstFind(list, &listIdx) == listIdx);
 
         TEST_LOG_FMT("desc search completed in %ums", (unsigned int)(timeMSec() - timeBegin));
     }
@@ -190,8 +179,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("lstRemoveIdx()"))
     {
-        CHECK(testScale() <= 10000);
-        int testMax = 1000000 * (int)testScale();
+        ASSERT(TEST_SCALE <= 10000);
+        int testMax = 1000000 * (int)TEST_SCALE;
 
         // Generate a large list of values (use int instead of string so there fewer allocations)
         List *list = lstNewP(sizeof(int));
@@ -199,7 +188,7 @@ testRun(void)
         for (int listIdx = 0; listIdx < testMax; listIdx++)
             lstAdd(list, &listIdx);
 
-        CHECK(lstSize(list) == (unsigned int)testMax);
+        ASSERT(lstSize(list) == (unsigned int)testMax);
 
         TEST_LOG_FMT("generated %d item list", testMax);
 
@@ -211,16 +200,16 @@ testRun(void)
 
         TEST_LOG_FMT("remove completed in %ums", (unsigned int)(timeMSec() - timeBegin));
 
-        CHECK(lstSize(list) == 0);
+        ASSERT(lstEmpty(list));
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("iniLoad()"))
+    if (testBegin("iniValueNext()"))
     {
-        CHECK(testScale() <= 10000);
+        ASSERT(TEST_SCALE <= 10000);
 
-        String *iniStr = strNew("[section1]\n");
-        unsigned int iniMax = 100000 * (unsigned int)testScale();
+        String *iniStr = strCatZ(strNew(), "[section1]\n");
+        unsigned int iniMax = 100000 * (unsigned int)TEST_SCALE;
 
         for (unsigned int keyIdx = 0; keyIdx < iniMax; keyIdx++)
             strCatFmt(iniStr, "key%u=\"value%u\"\n", keyIdx, keyIdx);
@@ -228,11 +217,19 @@ testRun(void)
         TEST_LOG_FMT("ini size = %s, keys = %u", strZ(strSizeFormat(strSize(iniStr))), iniMax);
 
         TimeMSec timeBegin = timeMSec();
-        unsigned int iniTotal = 0;
+        Ini *ini = iniNewP(ioBufferReadNew(BUFSTR(iniStr)), .strict = true);
 
-        TEST_RESULT_VOID(iniLoad(ioBufferReadNew(BUFSTR(iniStr)), testIniLoadCountCallback, &iniTotal), "parse ini");
+        unsigned int iniTotal = 0;
+        const IniValue *value = iniValueNext(ini);
+
+        while (value != NULL)
+        {
+            iniTotal++;
+            value = iniValueNext(ini);
+        }
+
+        TEST_RESULT_INT(iniTotal, iniMax, "check ini value total");
         TEST_LOG_FMT("parse completed in %ums", (unsigned int)(timeMSec() - timeBegin));
-        TEST_RESULT_INT(iniTotal, iniMax, "    check ini total");
     }
 
     // Build/load/save a larger manifest to test performance and memory usage. The default sizing is for a "typical" large cluster
@@ -240,24 +237,33 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("manifestNewBuild()/manifestNewLoad()/manifestSave()"))
     {
-        CHECK(testScale() <= 1000000);
+        ASSERT(TEST_SCALE <= 1000000);
 
         // Create a storage driver to test manifest build with an arbitrary number of files
-        StorageTestManifestNewBuild driver =
+        StorageTestManifestNewBuild *driver = NULL;
+
+        OBJ_NEW_BASE_BEGIN(StorageTestManifestNewBuild, .childQty = MEM_CONTEXT_QTY_MAX)
         {
-            .interface = storageInterfaceTestDummy,
-            .fileTotal = 100000 * (unsigned int)testScale(),
-        };
+            driver = OBJ_NEW_ALLOC();
 
-        driver.interface.info = storageTestManifestNewBuildInfo;
-        driver.interface.infoList = storageTestManifestNewBuildInfoList;
+            *driver = (StorageTestManifestNewBuild)
+            {
+                .interface = storageInterfaceTestDummy,
+                .fileTotal = 100000 * (unsigned int)TEST_SCALE,
+            };
+        }
+        OBJ_NEW_END();
 
-        Storage *storagePg = storageNew(STRDEF("TEST"), STRDEF("/pg"), 0, 0, false, NULL, &driver, driver.interface);
+        driver->interface.info = storageTestManifestNewBuildInfo;
+        driver->interface.list = storageTestManifestNewBuildList;
+
+        const Storage *const storagePg = storageNew(
+            strIdFromZ("test"), STRDEF("/pg"), 0, 0, false, NULL, driver, driver->interface);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("build manifest");
 
-        MemContext *testContext = memContextNew("test");
+        MemContext *testContext = memContextNewP("test", .childQty = MEM_CONTEXT_QTY_MAX);
         memContextKeep();
         Manifest *manifest = NULL;
         TimeMSec timeBegin = timeMSec();
@@ -265,15 +271,15 @@ testRun(void)
         MEM_CONTEXT_BEGIN(testContext)
         {
             TEST_ASSIGN(
-                manifest, manifestNewBuild(storagePg, PG_VERSION_91, 999999999, false, false, NULL, NULL),
-                "build with %" PRIu64 " files", driver.fileTotal);
+                manifest, manifestNewBuild(storagePg, PG_VERSION_15, 999999999, 0, false, false, false, false, NULL, NULL, NULL),
+                "build files");
         }
         MEM_CONTEXT_END();
 
         TEST_LOG_FMT("completed in %ums", (unsigned int)(timeMSec() - timeBegin));
-        TEST_LOG_FMT("memory used %zu", memContextSize(testContext));
+        // TEST_LOG_FMT("memory used %zu", memContextSize(testContext));
 
-        TEST_RESULT_UINT(manifestFileTotal(manifest), driver.fileTotal, "   check file total");
+        TEST_RESULT_UINT(manifestFileTotal(manifest), driver->fileTotal, "   check file total");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("save manifest");
@@ -290,7 +296,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("load manifest");
 
-        testContext = memContextNew("test");
+        testContext = memContextNewP("test", .childQty = MEM_CONTEXT_QTY_MAX);
         memContextKeep();
         timeBegin = timeMSec();
 
@@ -301,9 +307,9 @@ testRun(void)
         MEM_CONTEXT_END();
 
         TEST_LOG_FMT("completed in %ums", (unsigned int)(timeMSec() - timeBegin));
-        TEST_LOG_FMT("memory used %zu", memContextSize(testContext));
+        // TEST_LOG_FMT("memory used %zu", memContextSize(testContext));
 
-        TEST_RESULT_UINT(manifestFileTotal(manifest), driver.fileTotal, "   check file total");
+        TEST_RESULT_UINT(manifestFileTotal(manifest), driver->fileTotal, "   check file total");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("find all files");
@@ -312,8 +318,8 @@ testRun(void)
 
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
         {
-            const ManifestFile *file = manifestFile(manifest, fileIdx);
-            CHECK(file == manifestFileFind(manifest, file->name));
+            const ManifestFile file = manifestFile(manifest, fileIdx);
+            ASSERT(strEq(file.name, manifestFileFind(manifest, file.name).name));
         }
 
         TEST_LOG_FMT("completed in %ums", (unsigned int)(timeMSec() - timeBegin));
@@ -323,7 +329,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("statistics collector"))
     {
-        CHECK(testScale() <= 1000000);
+        ASSERT(TEST_SCALE <= 1000000);
 
         // Setup a list of stats to use for testing
         #define TEST_STAT_TOTAL 100
@@ -332,7 +338,7 @@ testRun(void)
         for (unsigned int statIdx = 0; statIdx < TEST_STAT_TOTAL; statIdx++)
             statList[statIdx] = strNewFmt("STAT%u", statIdx);
 
-        uint64_t runTotal = (uint64_t)testScale() * (uint64_t)100000;
+        uint64_t runTotal = (uint64_t)TEST_SCALE * (uint64_t)100000;
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE_FMT("update %d stats %" PRIu64 " times", TEST_STAT_TOTAL, runTotal);
@@ -346,19 +352,26 @@ testRun(void)
         }
 
         TEST_LOG_FMT("completed in %ums", (unsigned int)(timeMSec() - timeBegin));
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("check stats have correct values");
-
-        KeyValue *statKv = statToKv();
-
-        for (unsigned int statIdx = 0; statIdx < TEST_STAT_TOTAL; statIdx++)
-        {
-            TEST_RESULT_UINT(
-                varUInt64(kvGet(varKv(kvGet(statKv, VARSTR(statList[statIdx]))), STAT_VALUE_TOTAL_VAR)), runTotal, "check stat %u",
-                statIdx);
-        }
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    // *****************************************************************************************************************************
+    if (testBegin("SocketClient"))
+    {
+        // This test must be done here because the problem with variables being clobbered after a long jump is only present in
+        // optimized builds, so the unit test will not notice if the volatile keyword goes missing in sckClientOpen(). Since the
+        // performance tests are built with optimization is it more likely to be caught here.
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("create socket with error to check for leaks");
+
+        const Storage *const storageFd = storagePosixNewP(strNewFmt("/proc/%d/fd", getpid()));
+        unsigned int fdBefore = strLstSize(storageListP(storageFd, NULL));
+
+        TEST_ERROR(
+            ioClientOpen(sckClientNew(STRDEF("172.31.255.255"), 7777, 0, 0)), HostConnectError,
+            "timeout connecting to '172.31.255.255:7777'");
+
+        TEST_RESULT_UINT(strLstSize(storageListP(storageFd, NULL)), fdBefore, "socket was freed");
+    }
+
+    FUNCTION_HARNESS_RETURN_VOID();
 }

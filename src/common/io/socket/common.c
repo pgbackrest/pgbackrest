@@ -9,7 +9,7 @@ Socket Common Functions
 #include <sys/socket.h>
 
 #include "common/debug.h"
-#include "common/io/fd.h"
+#include "common/io/socket/address.h"
 #include "common/io/socket/common.h"
 #include "common/log.h"
 #include "common/wait.h"
@@ -23,14 +23,14 @@ static struct SocketLocal
 
     bool block;                                                     // Use blocking mode socket
 
-    bool keepAlive;                                                 // Are socket keep alives enabled?
+    bool keepAlive;                                                 // Is socket keep-alive enabled?
     int tcpKeepAliveCount;                                          // TCP keep alive count (0 disables)
     int tcpKeepAliveIdle;                                           // TCP keep alive idle (0 disables)
     int tcpKeepAliveInterval;                                       // TCP keep alive interval (0 disables)
 } socketLocal;
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 sckInit(bool block, bool keepAlive, int tcpKeepAliveCount, int tcpKeepAliveIdle, int tcpKeepAliveInterval)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -56,7 +56,7 @@ sckInit(bool block, bool keepAlive, int tcpKeepAliveCount, int tcpKeepAliveIdle,
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 sckOptionSet(int fd)
 {
     FUNCTION_TEST_BEGIN();
@@ -71,7 +71,7 @@ sckOptionSet(int fd)
     int socketValue = 1;
 
     THROW_ON_SYS_ERROR(
-        setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &socketValue, sizeof(int)) == -1, ProtocolError, "unable set TCP_NODELAY");
+        setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &socketValue, sizeof(int)) == -1, ProtocolError, "unable to set TCP_NODELAY");
 #endif
 
     // Put the socket in non-blocking mode
@@ -86,7 +86,7 @@ sckOptionSet(int fd)
     // Automatically close the socket (in the child process) on a successful execve() call. Connections are never shared between
     // processes so there is no reason to leave them open.
 #ifdef F_SETFD
-	THROW_ON_SYS_ERROR(fcntl(fd, F_SETFD, FD_CLOEXEC) == -1, ProtocolError, "unable set FD_CLOEXEC");
+    THROW_ON_SYS_ERROR(fcntl(fd, F_SETFD, FD_CLOEXEC) == -1, ProtocolError, "unable to set FD_CLOEXEC");
 #endif
 
     // Enable TCP keepalives
@@ -95,7 +95,7 @@ sckOptionSet(int fd)
         int socketValue = 1;
 
         THROW_ON_SYS_ERROR(
-            setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &socketValue, sizeof(int)) == -1, ProtocolError, "unable set SO_KEEPALIVE");
+            setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &socketValue, sizeof(int)) == -1, ProtocolError, "unable to set SO_KEEPALIVE");
 
         // Set TCP_KEEPCNT when available
 #ifdef TCP_KEEPIDLE
@@ -104,7 +104,8 @@ sckOptionSet(int fd)
             socketValue = socketLocal.tcpKeepAliveCount;
 
             THROW_ON_SYS_ERROR(
-                setsockopt(fd, IPPROTO_TCP, TCP_KEEPCNT, &socketValue, sizeof(int)) == -1, ProtocolError, "unable set TCP_KEEPCNT");
+                setsockopt(fd, IPPROTO_TCP, TCP_KEEPCNT, &socketValue, sizeof(int)) == -1, ProtocolError,
+                "unable to set TCP_KEEPCNT");
         }
 #endif
 
@@ -116,11 +117,11 @@ sckOptionSet(int fd)
 
             THROW_ON_SYS_ERROR(
                 setsockopt(fd, IPPROTO_TCP, TCP_KEEPIDLE, &socketValue, sizeof(int)) == -1, ProtocolError,
-                "unable set SO_KEEPIDLE");
+                "unable to set SO_KEEPIDLE");
         }
 #endif
 
-    // Set TCP_KEEPINTVL when available
+        // Set TCP_KEEPINTVL when available
 #ifdef TCP_KEEPIDLE
         if (socketLocal.tcpKeepAliveInterval > 0)
         {
@@ -128,59 +129,10 @@ sckOptionSet(int fd)
 
             THROW_ON_SYS_ERROR(
                 setsockopt(fd, IPPROTO_TCP, TCP_KEEPINTVL, &socketValue, sizeof(int)) == -1, ProtocolError,
-                "unable set SO_KEEPINTVL");
+                "unable to set SO_KEEPINTVL");
         }
 #endif
     }
 
     FUNCTION_TEST_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-static bool
-sckConnectInProgress(int errNo)
-{
-    return errNo == EINPROGRESS || errNo == EINTR;
-}
-
-void
-sckConnect(int fd, const String *host, unsigned int port, const struct addrinfo *hostAddress, TimeMSec timeout)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(INT, fd);
-        FUNCTION_LOG_PARAM(STRING, host);
-        FUNCTION_LOG_PARAM(UINT, port);
-        FUNCTION_LOG_PARAM_P(VOID, hostAddress);
-        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
-    FUNCTION_LOG_END();
-
-    ASSERT(host != NULL);
-    ASSERT(hostAddress != NULL);
-
-    // Attempt connection
-    if (connect(fd, hostAddress->ai_addr, hostAddress->ai_addrlen) == -1)
-    {
-        // Save the error
-        int errNo = errno;
-
-        // The connection has started but since we are in non-blocking mode it has not completed yet
-        if (sckConnectInProgress(errNo))
-        {
-            // Wait for write-ready
-            if (!fdReadyWrite(fd, timeout))
-                THROW_FMT(HostConnectError, "timeout connecting to '%s:%u'", strZ(host), port);
-
-            // Check for success or error. If the connection was successful this will set errNo to 0.
-            socklen_t errNoLen = sizeof(errNo);
-
-            THROW_ON_SYS_ERROR(
-                getsockopt(fd, SOL_SOCKET, SO_ERROR, &errNo, &errNoLen) == -1, HostConnectError, "unable to get socket error");
-        }
-
-        // Throw error if it is still set
-        if (errNo != 0)
-            THROW_SYS_ERROR_CODE_FMT(errNo, HostConnectError, "unable to connect to '%s:%u'", strZ(host), port);
-    }
-
-    FUNCTION_LOG_RETURN_VOID();
 }

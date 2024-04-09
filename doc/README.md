@@ -8,19 +8,20 @@ This will build all documentation with defaults:
 ```bash
 ./doc.pl
 ```
-The user guide can be built for different platforms: `centos7`, `centos8` and `debian`. This will build the HTML user guide for CentOS/RHEL 7:
+The user guide can be built for `rhel` and `debian`. This will build the HTML user guide for RHEL:
 ```bash
-./doc.pl --out=html --include=user-guide --var=os-type=centos7
+./doc.pl --out=html --include=user-guide --var=os-type=rhel
 ```
 Documentation generation will build a cache of all executed statements and use the cache to build the documentation quickly if no executed statements have changed. This makes proofing text-only edits very fast, but sometimes it is useful to do a full build without using the cache:
 ```bash
-./doc.pl --out=html --include=user-guide --var=os-type=centos8 --no-cache
+./doc.pl --out=html --include=user-guide --var=os-type=rhel --no-cache
 ```
-Each `os-type` has a default container image that will be used as a base for creating hosts. For `centos7`/`centos8` these defaults are generally fine, but for `debian` it can be useful to change the image.
+Each `os-type` has a default container image that will be used as a base for creating hosts but it may be useful to change the image.
 ```bash
 ./doc.pl --out=html --include=user-guide --var=os-type=debian --var=os-image=debian:9
+./doc.pl --out=html --include=user-guide --var=os-type=rhel --var=os-image=centos:7
 ```
-The following is a sample CentOS/RHEL 7 configuration that can be used for building the documentation.
+The following is a sample RHEL 7 configuration that can be used for building the documentation.
 ```bash
 # Install docker
 sudo yum install -y yum-utils device-mapper-persistent-data lvm2
@@ -34,7 +35,7 @@ sudo yum install -y git wget
 # Install latex (for building PDF)
 sudo yum install -y texlive texlive-titlesec texlive-sectsty texlive-framed texlive-epstopdf ghostscript
 
-# Install Perl modules that do not have CentOS packages via CPAN
+# Install Perl modules via CPAN that do not have packages
 sudo yum install -y yum cpanminus
 sudo yum groupinstall -y "Development Tools" "Development Libraries"
 sudo cpanm install --force XML::Checker::Parser
@@ -55,13 +56,13 @@ Ubuntu 16.04:
 ```bash
 ./doc.pl --out=html --include=user-guide --no-cache --var=os-type=debian --var=os-image=ubuntu:16.04 --var=package=test/package/pgbackrest_2.08-0_amd64.deb
 ```
-CentOS/RHEL 7:
+RHEL 7:
 ```bash
-./doc.pl --out=html --include=user-guide --no-cache --var=os-type=centos7 --var=package=test/package/pgbackrest-2.08-1.el7.x86_64.rpm
+./doc.pl --out=html --include=user-guide --no-cache --var=os-type=rhel --var=os-image=centos:7 --var=package=test/package/pgbackrest-2.08-1.el7.x86_64.rpm
 ```
-CentOS/RHEL 8:
+RHEL 8:
 ```bash
-./doc.pl --out=html --include=user-guide --no-cache --var=os-type=centos8 --var=package=test/package/pgbackrest-2.08-1.el8.x86_64.rpm
+./doc.pl --out=html --include=user-guide --no-cache --var=os-type=rhel --var=os-image=centos:8 --var=package=test/package/pgbackrest-2.08-1.el8.x86_64.rpm
 ```
 Packages can be built with `test.pl` using the following configuration on top of the configuration given for building the documentation.
 ```bash

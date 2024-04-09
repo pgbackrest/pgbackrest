@@ -1,0 +1,32 @@
+<release date="2015-10-28" version="0.87" title="Website and User Guide">
+    <release-core-list>
+        <release-feature-list>
+            <release-item>
+                <p>The <file>backup_label.old</file> and <file>recovery.done</file> files are now excluded from backups.</p>
+            </release-item>
+        </release-feature-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-feature-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-contributor id="stephen.frost"/>
+                    <release-item-reviewer id="michael.renner"/>
+                    <release-item-reviewer id="cynthia.shang"/>
+                    <release-item-reviewer id="eric.radman"/>
+                    <release-item-reviewer id="dmitry.didovicher"/>
+                </release-item-contributor-list>
+
+                <p>Added a new user guide that covers <backrest/> basics and some advanced topics including PITR. Much more to come, but it's a start.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-development-list>
+            <release-item>
+                <p>The website, markdown, and command-line help are now all generated from the same XML source.</p>
+            </release-item>
+        </release-development-list>
+    </release-doc-list>
+</release>

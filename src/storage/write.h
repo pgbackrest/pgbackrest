@@ -7,65 +7,122 @@ Storage Write Interface
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define STORAGE_WRITE_TYPE                                          StorageWrite
-#define STORAGE_WRITE_PREFIX                                        storageWrite
-
 typedef struct StorageWrite StorageWrite;
 
 #include "common/io/write.h"
 #include "common/type/buffer.h"
+#include "common/type/object.h"
 #include "common/type/string.h"
+#include "common/type/stringId.h"
+#include "storage/write.intern.h"
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Move to a new parent mem context
-StorageWrite *storageWriteMove(StorageWrite *this, MemContext *parentNew);
+FN_INLINE_ALWAYS StorageWrite *
+storageWriteMove(StorageWrite *const this, MemContext *const parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
+typedef struct StorageWritePub
+{
+    const StorageWriteInterface *interface;                         // File data (name, driver type, etc.)
+    IoWrite *io;                                                    // Write interface
+} StorageWritePub;
+
 // Will the file be written atomically? Atomic writes means the file will be complete or be missing. Filesystems have different ways
 // to accomplish this.
-bool storageWriteAtomic(const StorageWrite *this);
+FN_INLINE_ALWAYS bool
+storageWriteAtomic(const StorageWrite *const this)
+{
+    return THIS_PUB(StorageWrite)->interface->atomic;
+}
 
 // Will the path be created if required?
-bool storageWriteCreatePath(const StorageWrite *this);
+FN_INLINE_ALWAYS bool
+storageWriteCreatePath(const StorageWrite *const this)
+{
+    return THIS_PUB(StorageWrite)->interface->createPath;
+}
 
 // Write interface
-IoWrite *storageWriteIo(const StorageWrite *this);
+FN_INLINE_ALWAYS IoWrite *
+storageWriteIo(const StorageWrite *const this)
+{
+    return THIS_PUB(StorageWrite)->io;
+}
 
 // File mode
-mode_t storageWriteModeFile(const StorageWrite *this);
+FN_INLINE_ALWAYS mode_t
+storageWriteModeFile(const StorageWrite *const this)
+{
+    return THIS_PUB(StorageWrite)->interface->modeFile;
+}
 
 // Path mode (if the destination path needs to be create)
-mode_t storageWriteModePath(const StorageWrite *this);
+FN_INLINE_ALWAYS mode_t
+storageWriteModePath(const StorageWrite *const this)
+{
+    return THIS_PUB(StorageWrite)->interface->modePath;
+}
 
 // File name
-const String *storageWriteName(const StorageWrite *this);
+FN_INLINE_ALWAYS const String *
+storageWriteName(const StorageWrite *const this)
+{
+    return THIS_PUB(StorageWrite)->interface->name;
+}
 
 // Will the file be synced before it is closed?
-bool storageWriteSyncFile(const StorageWrite *this);
+FN_INLINE_ALWAYS bool
+storageWriteSyncFile(const StorageWrite *const this)
+{
+    return THIS_PUB(StorageWrite)->interface->syncFile;
+}
 
 // Will the path be synced after the file is closed?
-bool storageWriteSyncPath(const StorageWrite *this);
+FN_INLINE_ALWAYS bool
+storageWriteSyncPath(const StorageWrite *const this)
+{
+    return THIS_PUB(StorageWrite)->interface->syncPath;
+}
+
+// Will the file be truncated if it exists?
+FN_INLINE_ALWAYS bool
+storageWriteTruncate(const StorageWrite *const this)
+{
+    return THIS_PUB(StorageWrite)->interface->truncate;
+}
 
 // File type
-const String *storageWriteType(const StorageWrite *this);
+FN_INLINE_ALWAYS StringId
+storageWriteType(const StorageWrite *const this)
+{
+    return THIS_PUB(StorageWrite)->interface->type;
+}
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void storageWriteFree(StorageWrite *this);
+FN_INLINE_ALWAYS void
+storageWriteFree(StorageWrite *const this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-String *storageWriteToLog(const StorageWrite *this);
+FN_EXTERN void storageWriteToLog(const StorageWrite *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_STORAGE_WRITE_TYPE                                                                                            \
     StorageWrite *
 #define FUNCTION_LOG_STORAGE_WRITE_FORMAT(value, buffer, bufferSize)                                                               \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, storageWriteToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, storageWriteToLog, buffer, bufferSize)
 
 #endif

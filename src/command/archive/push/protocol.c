@@ -12,43 +12,61 @@ Archive Push Protocol Handler
 #include "config/config.h"
 #include "storage/helper.h"
 
-/***********************************************************************************************************************************
-Constants
-***********************************************************************************************************************************/
-STRING_EXTERN(PROTOCOL_COMMAND_ARCHIVE_PUSH_STR,                     PROTOCOL_COMMAND_ARCHIVE_PUSH);
-
 /**********************************************************************************************************************************/
-bool
-archivePushProtocol(const String *command, const VariantList *paramList, ProtocolServer *server)
+FN_EXTERN void
+archivePushFileProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STRING, command);
-        FUNCTION_LOG_PARAM(VARIANT_LIST, paramList);
+        FUNCTION_LOG_PARAM(PACK_READ, param);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_LOG_END();
 
-    ASSERT(command != NULL);
-
-    // Attempt to satisfy the request -- we may get requests that are meant for other handlers
-    bool found = true;
+    ASSERT(param != NULL);
+    ASSERT(server != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        if (strEq(command, PROTOCOL_COMMAND_ARCHIVE_PUSH_STR))
+        // Read parameters
+        const String *const walSource = pckReadStrP(param);
+        const bool headerCheck = pckReadBoolP(param);
+        const bool modeCheck = pckReadBoolP(param);
+        const unsigned int pgVersion = pckReadU32P(param);
+        const uint64_t pgSystemId = pckReadU64P(param);
+        const String *const archiveFile = pckReadStrP(param);
+        const CompressType compressType = pckReadU32P(param);
+        const int compressLevel = pckReadI32P(param);
+        const StringList *const priorErrorList = pckReadStrLstP(param);
+
+        // Read repo data
+        List *repoList = lstNewP(sizeof(ArchivePushFileRepoData));
+
+        pckReadArrayBeginP(param);
+
+        while (!pckReadNullP(param))
         {
-            protocolServerResponse(
-                server,
-                VARSTR(
-                    archivePushFile(
-                        varStr(varLstGet(paramList, 0)), varStr(varLstGet(paramList, 1)),
-                        varUIntForce(varLstGet(paramList, 2)), varUInt64(varLstGet(paramList, 3)), varStr(varLstGet(paramList, 4)),
-                        (CipherType)varUIntForce(varLstGet(paramList, 5)), varStr(varLstGet(paramList, 6)),
-                        (CompressType)varUIntForce(varLstGet(paramList, 7)), varIntForce(varLstGet(paramList, 8)))));
+            pckReadObjBeginP(param);
+
+            ArchivePushFileRepoData repo = {.repoIdx = pckReadU32P(param)};
+            repo.archiveId = pckReadStrP(param);
+            repo.cipherType = pckReadU64P(param);
+            repo.cipherPass = pckReadStrP(param);
+            pckReadObjEndP(param);
+
+            lstAdd(repoList, &repo);
         }
-        else
-            found = false;
+
+        pckReadArrayEndP(param);
+
+        // Push file
+        const ArchivePushFileResult fileResult = archivePushFile(
+            walSource, headerCheck, modeCheck, pgVersion, pgSystemId, archiveFile, compressType, compressLevel, repoList,
+            priorErrorList);
+
+        // Return result
+        protocolServerDataPut(server, pckWriteStrLstP(protocolPackNew(), fileResult.warnList));
+        protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(BOOL, found);
+    FUNCTION_LOG_RETURN_VOID();
 }

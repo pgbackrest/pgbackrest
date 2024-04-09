@@ -5,13 +5,13 @@ Compression Helper
 
 #include <string.h>
 
-#include "common/compress/helper.h"
 #include "common/compress/bz2/common.h"
 #include "common/compress/bz2/compress.h"
 #include "common/compress/bz2/decompress.h"
 #include "common/compress/gz/common.h"
 #include "common/compress/gz/compress.h"
 #include "common/compress/gz/decompress.h"
+#include "common/compress/helper.h"
 #include "common/compress/lz4/common.h"
 #include "common/compress/lz4/compress.h"
 #include "common/compress/lz4/decompress.h"
@@ -35,38 +35,49 @@ Configuration for supported and future compression types
 ***********************************************************************************************************************************/
 static const struct CompressHelperLocal
 {
+    StringId typeId;                                                // Compress type id
     const String *const type;                                       // Compress type -- must be extension without period prefixed
     const String *const ext;                                        // File extension with period prefixed
-    const char *compressType;                                       // Type of the compression filter
-    IoFilter *(*compressNew)(int);                                  // Function to create new compression filter
-    const char *decompressType;                                     // Type of the decompression filter
-    IoFilter *(*decompressNew)(void);                               // Function to create new decompression filter
-    int levelDefault;                                               // Default compression level
+    StringId compressType;                                          // Type of the compression filter
+    IoFilter *(*compressNew)(int, bool);                            // Function to create new compression filter
+    StringId decompressType;                                        // Type of the decompression filter
+    IoFilter *(*decompressNew)(bool);                               // Function to create new decompression filter
+    int levelDefault : 8;                                           // Default compression level
+    int levelMin : 8;                                               // Minimum compression level
+    int levelMax : 8;                                               // Maximum compression level
 } compressHelperLocal[] =
 {
     {
+        .typeId = STRID5("none", 0x2b9ee0),
         .type = STRDEF(COMPRESS_TYPE_NONE),
         .ext = STRDEF(""),
     },
     {
+        .typeId = STRID5("bz2", 0x73420),
         .type = STRDEF(BZ2_EXT),
         .ext = STRDEF("." BZ2_EXT),
         .compressType = BZ2_COMPRESS_FILTER_TYPE,
         .compressNew = bz2CompressNew,
         .decompressType = BZ2_DECOMPRESS_FILTER_TYPE,
         .decompressNew = bz2DecompressNew,
-        .levelDefault = 9,
+        .levelDefault = BZ2_COMPRESS_LEVEL_DEFAULT,
+        .levelMin = BZ2_COMPRESS_LEVEL_MIN,
+        .levelMax = BZ2_COMPRESS_LEVEL_MAX,
     },
     {
+        .typeId = STRID5("gz", 0x3470),
         .type = STRDEF(GZ_EXT),
         .ext = STRDEF("." GZ_EXT),
         .compressType = GZ_COMPRESS_FILTER_TYPE,
         .compressNew = gzCompressNew,
         .decompressType = GZ_DECOMPRESS_FILTER_TYPE,
         .decompressNew = gzDecompressNew,
-        .levelDefault = 6,
+        .levelDefault = GZ_COMPRESS_LEVEL_DEFAULT,
+        .levelMin = GZ_COMPRESS_LEVEL_MIN,
+        .levelMax = GZ_COMPRESS_LEVEL_MAX,
     },
     {
+        .typeId = STRID6("lz4", 0x2068c1),
         .type = STRDEF(LZ4_EXT),
         .ext = STRDEF("." LZ4_EXT),
 #ifdef HAVE_LIBLZ4
@@ -74,10 +85,13 @@ static const struct CompressHelperLocal
         .compressNew = lz4CompressNew,
         .decompressType = LZ4_DECOMPRESS_FILTER_TYPE,
         .decompressNew = lz4DecompressNew,
-        .levelDefault = 1,
+        .levelDefault = LZ4_COMPRESS_LEVEL_DEFAULT,
+        .levelMin = LZ4_COMPRESS_LEVEL_MIN,
+        .levelMax = LZ4_COMPRESS_LEVEL_MAX,
 #endif
     },
     {
+        .typeId = STRID5("zst", 0x527a0),
         .type = STRDEF(ZST_EXT),
         .ext = STRDEF("." ZST_EXT),
 #ifdef HAVE_LIBZST
@@ -85,77 +99,73 @@ static const struct CompressHelperLocal
         .compressNew = zstCompressNew,
         .decompressType = ZST_DECOMPRESS_FILTER_TYPE,
         .decompressNew = zstDecompressNew,
-        .levelDefault = 3,
+        .levelDefault = ZST_COMPRESS_LEVEL_DEFAULT,
+        .levelMin = ZST_COMPRESS_LEVEL_MIN,
+        .levelMax = ZST_COMPRESS_LEVEL_MAX,
 #endif
     },
     {
+        .typeId = STRID5("xz", 0x3580),
         .type = STRDEF(XZ_EXT),
         .ext = STRDEF("." XZ_EXT),
     },
-    {
-        .type = STRDEF(BZ2_EXT),
-        .ext = STRDEF("." BZ2_EXT),
-    },
 };
 
-#define COMPRESS_LIST_SIZE                                                                                                         \
-    (sizeof(compressHelperLocal) / sizeof(struct CompressHelperLocal))
-
 /**********************************************************************************************************************************/
-CompressType
-compressTypeEnum(const String *type)
+FN_EXTERN CompressType
+compressTypeEnum(const StringId type)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, type);
+        FUNCTION_TEST_PARAM(STRING_ID, type);
     FUNCTION_TEST_END();
 
-    ASSERT(type != NULL);
+    ASSERT(type != 0);
 
     CompressType result = compressTypeNone;
 
-    for (; result < COMPRESS_LIST_SIZE; result++)
+    for (; result < LENGTH_OF(compressHelperLocal); result++)
     {
-        if (strEq(type, compressHelperLocal[result].type))
+        if (type == compressHelperLocal[result].typeId)
             break;
     }
 
-    if (result == COMPRESS_LIST_SIZE)
-        THROW_FMT(AssertError, "invalid compression type '%s'", strZ(type));
+    if (result == LENGTH_OF(compressHelperLocal))
+        THROW_FMT(AssertError, "invalid compression type '%s'", strZ(strIdToStr(type)));
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(ENUM, result);
 }
 
 /**********************************************************************************************************************************/
-void
+static void
 compressTypePresent(CompressType type)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, type);
     FUNCTION_TEST_END();
 
-    ASSERT(type < COMPRESS_LIST_SIZE);
+    ASSERT(type < LENGTH_OF(compressHelperLocal));
 
     if (type != compressTypeNone && compressHelperLocal[type].compressNew == NULL)
-        THROW_FMT(OptionInvalidValueError, PROJECT_NAME " not compiled with %s support", strZ(compressHelperLocal[type].type));
+        THROW_FMT(OptionInvalidValueError, PROJECT_NAME " not built with %s support", strZ(compressHelperLocal[type].type));
 
     FUNCTION_TEST_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
-const String *
+FN_EXTERN const String *
 compressTypeStr(CompressType type)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, type);
     FUNCTION_TEST_END();
 
-    ASSERT(type < COMPRESS_LIST_SIZE);
+    ASSERT(type < LENGTH_OF(compressHelperLocal));
 
-    FUNCTION_TEST_RETURN(compressHelperLocal[type].type);
+    FUNCTION_TEST_RETURN_CONST(STRING, compressHelperLocal[type].type);
 }
 
 /**********************************************************************************************************************************/
-CompressType
+FN_EXTERN CompressType
 compressTypeFromName(const String *name)
 {
     FUNCTION_TEST_BEGIN();
@@ -164,110 +174,150 @@ compressTypeFromName(const String *name)
 
     CompressType result = compressTypeNone + 1;
 
-    for (; result < COMPRESS_LIST_SIZE; result++)
+    for (; result < LENGTH_OF(compressHelperLocal); result++)
     {
         if (strEndsWith(name, compressHelperLocal[result].ext))
             break;
     }
 
-    if (result == COMPRESS_LIST_SIZE)
+    if (result == LENGTH_OF(compressHelperLocal))
         result = compressTypeNone;
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(ENUM, result);
 }
 
 /**********************************************************************************************************************************/
-int
+FN_EXTERN int
 compressLevelDefault(CompressType type)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, type);
     FUNCTION_TEST_END();
 
-    ASSERT(type < COMPRESS_LIST_SIZE);
+    ASSERT(type < LENGTH_OF(compressHelperLocal));
     compressTypePresent(type);
 
-    FUNCTION_TEST_RETURN(compressHelperLocal[type].levelDefault);
+    FUNCTION_TEST_RETURN(INT, compressHelperLocal[type].levelDefault);
 }
 
 /**********************************************************************************************************************************/
-IoFilter *
-compressFilter(CompressType type, int level)
+FN_EXTERN int
+compressLevelMin(CompressType type)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, type);
+    FUNCTION_TEST_END();
+
+    ASSERT(type < LENGTH_OF(compressHelperLocal));
+    compressTypePresent(type);
+
+    FUNCTION_TEST_RETURN(INT, compressHelperLocal[type].levelMin);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN int
+compressLevelMax(CompressType type)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, type);
+    FUNCTION_TEST_END();
+
+    ASSERT(type < LENGTH_OF(compressHelperLocal));
+    compressTypePresent(type);
+
+    FUNCTION_TEST_RETURN(INT, compressHelperLocal[type].levelMax);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN IoFilter *
+compressFilter(const CompressType type, const int level, const CompressFilterParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, type);
         FUNCTION_TEST_PARAM(INT, level);
+        FUNCTION_TEST_PARAM(BOOL, param.raw);
     FUNCTION_TEST_END();
 
-    ASSERT(type < COMPRESS_LIST_SIZE);
+    ASSERT(type < LENGTH_OF(compressHelperLocal));
     ASSERT(type != compressTypeNone);
     compressTypePresent(type);
 
-    FUNCTION_TEST_RETURN(compressHelperLocal[type].compressNew(level));
+    FUNCTION_TEST_RETURN(IO_FILTER, compressHelperLocal[type].compressNew(level, param.raw));
 }
 
 /**********************************************************************************************************************************/
-IoFilter *
-compressFilterVar(const String *filterType, const VariantList *filterParamList)
+FN_EXTERN IoFilter *
+compressFilterPack(const StringId filterType, const Pack *const filterParam)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STRING, filterType);
-        FUNCTION_LOG_PARAM(VARIANT_LIST, filterParamList);
+        FUNCTION_LOG_PARAM(STRING_ID, filterType);
+        FUNCTION_LOG_PARAM(VARIANT_LIST, filterParam);
     FUNCTION_LOG_END();
 
-    ASSERT(filterType != NULL);
+    ASSERT(filterType != 0);
 
     IoFilter *result = NULL;
 
-    for (CompressType compressIdx = compressTypeNone + 1; compressIdx < COMPRESS_LIST_SIZE; compressIdx++)
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        const struct CompressHelperLocal *compress = &compressHelperLocal[compressIdx];
+        for (CompressType compressIdx = compressTypeNone + 1; compressIdx < LENGTH_OF(compressHelperLocal); compressIdx++)
+        {
+            const struct CompressHelperLocal *compress = &compressHelperLocal[compressIdx];
 
-        if (compress->compressType != NULL && strEqZ(filterType, compress->compressType))
-        {
-            result = compress->compressNew(varIntForce(varLstGet(filterParamList, 0)));
-            break;
-        }
-        else if (compress->decompressType != NULL && strEqZ(filterType, compress->decompressType))
-        {
-            result = compress->decompressNew();
-            break;
+            if (filterType == compress->compressType)
+            {
+                ASSERT(filterParam != NULL);
+
+                PackRead *const paramRead = pckReadNew(filterParam);
+                const int level = pckReadI32P(paramRead);
+                const bool raw = pckReadBoolP(paramRead);
+
+                result = ioFilterMove(compress->compressNew(level, raw), memContextPrior());
+                break;
+            }
+            else if (filterType == compress->decompressType)
+            {
+                result = ioFilterMove(compress->decompressNew(pckReadBoolP(pckReadNew(filterParam))), memContextPrior());
+                break;
+            }
         }
     }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(IO_FILTER, result);
 }
 
 /**********************************************************************************************************************************/
-IoFilter *
-decompressFilter(CompressType type)
+FN_EXTERN IoFilter *
+decompressFilter(const CompressType type, const DecompressFilterParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, type);
+        FUNCTION_TEST_PARAM(BOOL, param.raw);
     FUNCTION_TEST_END();
 
-    ASSERT(type < COMPRESS_LIST_SIZE);
+    ASSERT(type < LENGTH_OF(compressHelperLocal));
     ASSERT(type != compressTypeNone);
     compressTypePresent(type);
 
-    FUNCTION_TEST_RETURN(compressHelperLocal[type].decompressNew());
+    FUNCTION_TEST_RETURN(IO_FILTER, compressHelperLocal[type].decompressNew(param.raw));
 }
 
 /**********************************************************************************************************************************/
-const String *
+FN_EXTERN const String *
 compressExtStr(CompressType type)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, type);
     FUNCTION_TEST_END();
 
-    ASSERT(type < COMPRESS_LIST_SIZE);
+    ASSERT(type < LENGTH_OF(compressHelperLocal));
 
-    FUNCTION_TEST_RETURN(compressHelperLocal[type].ext);
+    FUNCTION_TEST_RETURN_CONST(STRING, compressHelperLocal[type].ext);
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 compressExtCat(String *file, CompressType type)
 {
     FUNCTION_TEST_BEGIN();
@@ -283,7 +333,7 @@ compressExtCat(String *file, CompressType type)
 }
 
 /**********************************************************************************************************************************/
-String *
+FN_EXTERN String *
 compressExtStrip(const String *file, CompressType type)
 {
     FUNCTION_TEST_BEGIN();
@@ -296,5 +346,5 @@ compressExtStrip(const String *file, CompressType type)
     if (!strEndsWith(file, compressExtStr(type)))
         THROW_FMT(FormatError, "'%s' must have '%s' extension", strZ(file), strZ(compressExtStr(type)));
 
-    FUNCTION_TEST_RETURN(strSubN(file, 0, strSize(file) - strSize(compressExtStr(type))));
+    FUNCTION_TEST_RETURN(STRING, strSubN(file, 0, strSize(file) - strSize(compressExtStr(type))));
 }

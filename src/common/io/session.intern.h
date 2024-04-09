@@ -5,15 +5,15 @@ Io Session Interface Internal
 #define COMMON_IO_SESSION_INTERN_H
 
 #include "common/io/session.h"
+#include "common/io/write.h"
 
 /***********************************************************************************************************************************
 Interface
 ***********************************************************************************************************************************/
 typedef struct IoSessionInterface
 {
-    // Type used to identify the session. This is stored as a pointer to a String pointer so it can be used with an existing String
-    // constant (e.g. created with STRING_EXTERN()) without needing to be copied.
-    const String *const *type;
+    // Type used to identify the session
+    StringId type;
 
     // Close the session
     void (*close)(void *driver);
@@ -22,7 +22,7 @@ typedef struct IoSessionInterface
     int (*fd)(void *driver);
 
     // IoRead interface for the session
-    IoRead *(*ioRead)(void *driver);
+    IoRead *(*ioRead)(void *driver, bool ignoreUnexpectedEof);
 
     // IoWrite interface for the session
     IoWrite *(*ioWrite)(void *driver);
@@ -31,13 +31,22 @@ typedef struct IoSessionInterface
     IoSessionRole (*role)(const void *driver);
 
     // Driver log function
-    String *(*toLog)(const void *driver);
+    void (*toLog)(const void *driver, StringStatic *debugLog);
 } IoSessionInterface;
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-IoSession *ioSessionNew(void *driver, const IoSessionInterface *interface);
+FN_EXTERN IoSession *ioSessionNew(void *driver, const IoSessionInterface *interface);
+
+/***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+// Has the session been authenticated?
+FN_EXTERN void ioSessionAuthenticatedSet(IoSession *this, bool authenticated);
+
+// Set the peer name
+FN_EXTERN void ioSessionPeerNameSet(IoSession *this, const String *peerName);
 
 /***********************************************************************************************************************************
 Macros for function logging
@@ -45,6 +54,6 @@ Macros for function logging
 #define FUNCTION_LOG_IO_SESSION_INTERFACE_TYPE                                                                                     \
     IoSessionInterface *
 #define FUNCTION_LOG_IO_SESSION_INTERFACE_FORMAT(value, buffer, bufferSize)                                                        \
-    objToLog(&value, "IoSessionInterface", buffer, bufferSize)
+    objNameToLog(&value, "IoSessionInterface", buffer, bufferSize)
 
 #endif

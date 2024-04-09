@@ -186,7 +186,11 @@ sub process
     return logDebugReturn
     (
         $strOperation,
-        {name => 'strHtml', value => $oHtmlBuilder->htmlGet(), trace => true}
+        {name => 'strHtml',
+            value => $oHtmlBuilder->htmlGet(
+                {bAnalytics => defined($self->{oManifest}->variableGet('analytics')) &&
+                    $self->{oManifest}->variableGet('analytics') eq 'y'}),
+            trace => true}
     );
 }
 
@@ -246,14 +250,14 @@ sub sectionProcess
 
     if ($self->{bTocNumber})
     {
-        $oSectionHeaderElement->addNew(HTML_DIV, "section${iDepth}-number", {strContent => $strSectionNo});
+        $oSectionHeaderElement->addNew(HTML_DIV, "section${iDepth}-number");
     }
 
     $oSectionHeaderElement->addNew(HTML_DIV, "section${iDepth}-title", {strContent => $strSectionTitle});
 
     if ($self->{bTocNumber})
     {
-        $oSectionTocElement->addNew(HTML_DIV, "section${iDepth}-toc-number", {strContent => $strSectionNo});
+        $oSectionTocElement->addNew(HTML_DIV, "section${iDepth}-toc-number");
     }
 
     my $oTocSectionTitleElement = $oSectionTocElement->addNew(HTML_DIV, "section${iDepth}-toc-title");
@@ -624,6 +628,9 @@ sub backrestConfigProcess
         #     addNew(HTML_DIV, "config-body-title",
         #            {strContent => "${strFile}:"});
 
+        # Convert linefeeds to br tags
+        $strConfig =~ s/\n/<br\/>\n/g;
+
         $oConfigBodyElement->
             addNew(HTML_DIV, "config-body-output",
                    {strContent => $strConfig});
@@ -680,6 +687,9 @@ sub postgresConfigProcess
         # $oConfigBodyElement->
         #     addNew(HTML_DIV, "config-body-title",
         #            {strContent => "append to ${strFile}:"});
+
+        # Convert linefeeds to br tags
+        $strConfig =~ s/\n/<br\/>\n/g;
 
         $oConfigBodyElement->
             addNew(HTML_DIV, "config-body-output",

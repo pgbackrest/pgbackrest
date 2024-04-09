@@ -19,9 +19,9 @@ Variant Data Type
 /***********************************************************************************************************************************
 Constant variants that are generally useful
 ***********************************************************************************************************************************/
-// Used to declare Bool Variant constants that will be externed using VARIANT_DECLARE().  Must be used in a .c file.
+// Used to define Bool Variant constants that will be externed using VARIANT_DECLARE().
 #define VARIANT_BOOL_EXTERN(name, dataParam)                                                                                       \
-    const Variant *const name = ((const Variant *)&(const VariantBoolConst){.type = varTypeBool, .data = dataParam})
+    VR_EXTERN_DEFINE const Variant *const name = ((const Variant *)&(const VariantBoolPub){.type = varTypeBool, .data = dataParam})
 
 VARIANT_BOOL_EXTERN(BOOL_FALSE_VAR,                                 false);
 VARIANT_BOOL_EXTERN(BOOL_TRUE_VAR,                                  true);
@@ -31,70 +31,49 @@ Information about the variant
 ***********************************************************************************************************************************/
 struct Variant
 {
-    VARIANT_COMMON
+    VariantPub pub;                                                 // Publicly accessible variables
 };
 
 typedef struct VariantBool
 {
-    VARIANT_COMMON
-    VARIANT_BOOL_COMMON
-    MemContext *memContext;
+    VariantBoolPub pub;                                             // Publicly accessible variables
 } VariantBool;
-
-typedef struct VariantDouble
-{
-    VARIANT_COMMON
-    VARIANT_DOUBLE_COMMON
-    MemContext *memContext;
-} VariantDouble;
 
 typedef struct VariantInt
 {
-    VARIANT_COMMON
-    VARIANT_INT_COMMON
-    MemContext *memContext;
+    VariantIntPub pub;                                              // Publicly accessible variables
 } VariantInt;
 
 typedef struct VariantInt64
 {
-    VARIANT_COMMON
-    VARIANT_INT64_COMMON
-    MemContext *memContext;
+    VariantInt64Pub pub;                                            // Publicly accessible variables
 } VariantInt64;
 
 typedef struct VariantKeyValue
 {
     VARIANT_COMMON
-    KeyValue *data;                                                 /* KeyValue data */
-    MemContext *memContext;
+    KeyValue *data;                                                 // KeyValue data
 } VariantKeyValue;
 
 typedef struct VariantString
 {
-    VARIANT_COMMON
-    VARIANT_STRING_COMMON
-    MemContext *memContext;
+    VariantStringPub pub;                                           // Publicly accessible variables
 } VariantString;
 
 typedef struct VariantUInt
 {
-    VARIANT_COMMON
-    VARIANT_UINT_COMMON
-    MemContext *memContext;
+    VariantUIntPub pub;                                             // Publicly accessible variables
 } VariantUInt;
 
 typedef struct VariantUInt64
 {
-    VARIANT_COMMON
-    VARIANT_UINT64_COMMON
-    MemContext *memContext;
+    VariantUInt64Pub pub;                                           // Publicly accessible variables
 } VariantUInt64;
 
 typedef struct VariantVariantList
 {
     VARIANT_COMMON
-    VariantList *data;                                              /* VariantList data */
-    MemContext *memContext;
+    VariantList *data;                                              // VariantList data
 } VariantVariantList;
 
 /***********************************************************************************************************************************
@@ -103,7 +82,6 @@ Variant type names
 static const char *const variantTypeName[] =
 {
     "bool",                                                         // varTypeBool
-    "double",                                                       // varTypeDouble,
     "int",                                                          // varTypeInt
     "int64",                                                        // varTypeInt64
     "KeyValue",                                                     // varTypeKeyValue
@@ -114,7 +92,7 @@ static const char *const variantTypeName[] =
 };
 
 /**********************************************************************************************************************************/
-Variant *
+FN_EXTERN Variant *
 varDup(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -125,78 +103,49 @@ varDup(const Variant *this)
 
     if (this != NULL)
     {
-        switch (this->type)
+        switch (varType(this))
         {
             case varTypeBool:
-            {
                 result = varNewBool(varBool(this));
                 break;
-            }
-
-            case varTypeDouble:
-            {
-                result = varNewDbl(varDbl(this));
-                break;
-            }
 
             case varTypeInt:
-            {
                 result = varNewInt(varInt(this));
                 break;
-            }
 
             case varTypeInt64:
-            {
                 result = varNewInt64(varInt64(this));
                 break;
-            }
 
             case varTypeKeyValue:
             {
-                VariantKeyValue *keyValue = memNew(sizeof(VariantKeyValue));
-
-                *keyValue = (VariantKeyValue)
-                {
-                    .memContext = memContextCurrent(),
-                    .type = varTypeKeyValue,
-                    .data = kvDup(varKv(this)),
-                };
-
-                result = (Variant *)keyValue;
+                result = varNewKv(kvDup(varKv(this)));
                 break;
             }
 
             case varTypeString:
-            {
                 result = varNewStr(varStr(this));
                 break;
-            }
 
             case varTypeUInt:
-            {
                 result = varNewUInt(varUInt(this));
                 break;
-            }
 
             case varTypeUInt64:
-            {
                 result = varNewUInt64(varUInt64(this));
                 break;
-            }
 
             case varTypeVariantList:
-            {
                 result = varNewVarLst(varVarLst(this));
                 break;
-            }
         }
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(VARIANT, result);
 }
 
 /**********************************************************************************************************************************/
-bool
+FN_EXTERN bool
 varEq(const Variant *this1, const Variant *this2)
 {
     FUNCTION_TEST_BEGIN();
@@ -215,49 +164,32 @@ varEq(const Variant *this1, const Variant *this2)
             switch (varType(this1))
             {
                 case varTypeBool:
-                {
                     result = varBool(this1) == varBool(this2);
                     break;
-                }
-
-                case varTypeDouble:
-                {
-                    result = varDbl(this1) == varDbl(this2);
-                    break;
-                }
 
                 case varTypeInt:
-                {
                     result = varInt(this1) == varInt(this2);
                     break;
-                }
 
                 case varTypeInt64:
-                {
                     result = varInt64(this1) == varInt64(this2);
                     break;
-                }
 
                 case varTypeString:
-                {
                     result = strEq(varStr(this1), varStr(this2));
                     break;
-                }
 
                 case varTypeUInt:
-                {
                     result = varUInt(this1) == varUInt(this2);
                     break;
-                }
 
                 case varTypeUInt64:
-                {
                     result = varUInt64(this1) == varUInt64(this2);
                     break;
-                }
 
                 default:
-                    THROW_FMT(AssertError, "unable to test equality for %s", variantTypeName[this1->type]);
+                    ASSERT(varType(this1) == varTypeKeyValue || varType(this1) == varTypeVariantList);
+                    THROW_FMT(AssertError, "unable to test equality for %s", variantTypeName[varType(this1)]);
             }
         }
     }
@@ -265,45 +197,35 @@ varEq(const Variant *this1, const Variant *this2)
     else
         result = this1 == NULL && this2 == NULL;
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(BOOL, result);
 }
 
 /**********************************************************************************************************************************/
-VariantType
-varType(const Variant *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(VARIANT, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->type);
-}
-
-/**********************************************************************************************************************************/
-Variant *
+FN_EXTERN Variant *
 varNewBool(bool data)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BOOL, data);
     FUNCTION_TEST_END();
 
-    // Allocate memory for the variant and set the type and data
-    VariantBool *this = memNew(sizeof(VariantBool));
-
-    *this = (VariantBool)
+    OBJ_NEW_BEGIN(VariantBool)
     {
-        .memContext = memContextCurrent(),
-        .type = varTypeBool,
-        .data = data,
-    };
+        *this = (VariantBool)
+        {
+            .pub =
+            {
+                .type = varTypeBool,
+                .data = data,
+            },
+        };
+    }
+    OBJ_NEW_END();
 
-    FUNCTION_TEST_RETURN((Variant *)this);
+    FUNCTION_TEST_RETURN(VARIANT, (Variant *)OBJ_NAME(this, Variant::VariantBool));
 }
 
 /**********************************************************************************************************************************/
-bool
+FN_EXTERN bool
 varBool(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -311,12 +233,12 @@ varBool(const Variant *this)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->type == varTypeBool);
+    ASSERT(varType(this) == varTypeBool);
 
-    FUNCTION_TEST_RETURN(((VariantBool *)this)->data);
+    FUNCTION_TEST_RETURN(BOOL, ((VariantBool *)this)->pub.data);
 }
 
-bool
+FN_EXTERN bool
 varBoolForce(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -327,7 +249,7 @@ varBoolForce(const Variant *this)
 
     bool result = false;
 
-    switch (this->type)
+    switch (varType(this))
     {
         case varTypeBool:
             result = varBool(this);
@@ -343,7 +265,7 @@ varBoolForce(const Variant *this)
 
         case varTypeString:
         {
-            // List of false/true boolean string values.  Note that false/true values must be equal.
+            // List of false/true boolean string values. Note that false/true values must be equal.
             static const char *const boolString[] =
             {
                 "n", "f", "0",  "no", FALSE_Z, "off",
@@ -354,16 +276,16 @@ varBoolForce(const Variant *this)
             const char *string = strZ(varStr(this));
             unsigned int boolIdx;
 
-            for (boolIdx = 0; boolIdx < sizeof(boolString) / sizeof(char *); boolIdx++)
+            for (boolIdx = 0; boolIdx < LENGTH_OF(boolString); boolIdx++)
                 if (strcasecmp(string, boolString[boolIdx]) == 0)
                     break;
 
             // If string was not found then not a boolean
-            if (boolIdx == sizeof(boolString) / sizeof(char *))
+            if (boolIdx == LENGTH_OF(boolString))
                 THROW_FMT(FormatError, "unable to convert str '%s' to bool", string);
 
             // False if in first half of list, true if in second half
-            result = boolIdx / (sizeof(boolString) / sizeof(char *) / 2);
+            result = boolIdx / (LENGTH_OF(boolString) / 2);
 
             break;
         }
@@ -377,132 +299,39 @@ varBoolForce(const Variant *this)
             break;
 
         default:
-            THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeBool]);
+            ASSERT(varType(this) == varTypeKeyValue || varType(this) == varTypeVariantList);
+            THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[varType(this)], variantTypeName[varTypeBool]);
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(BOOL, result);
 }
 
 /**********************************************************************************************************************************/
-Variant *
-varNewDbl(double data)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(DOUBLE, data);
-    FUNCTION_TEST_END();
-
-    // Allocate memory for the variant and set the type and data
-    VariantDouble *this = memNew(sizeof(VariantDouble));
-
-    *this = (VariantDouble)
-    {
-        .memContext = memContextCurrent(),
-        .type = varTypeDouble,
-        .data = data,
-    };
-
-    FUNCTION_TEST_RETURN((Variant *)this);
-}
-
-/**********************************************************************************************************************************/
-double
-varDbl(const Variant *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(VARIANT, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    ASSERT(this->type == varTypeDouble);
-
-    FUNCTION_TEST_RETURN(((VariantDouble *)this)->data);
-}
-
-double
-varDblForce(const Variant *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(VARIANT, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    double result = 0;
-
-    switch (this->type)
-    {
-        case varTypeBool:
-        {
-            result = varBool(this);
-            break;
-        }
-
-        case varTypeDouble:
-        {
-            result = varDbl(this);
-            break;
-        }
-
-        case varTypeInt:
-        {
-            result = varInt(this);
-            break;
-        }
-
-        case varTypeInt64:
-        {
-            result = (double)varInt64(this);
-            break;
-        }
-
-        case varTypeString:
-        {
-            result = cvtZToDouble(strZ(varStr(this)));
-            break;
-        }
-
-        case varTypeUInt:
-        {
-            result = (double)varUInt(this);
-            break;
-        }
-
-        case varTypeUInt64:
-        {
-            result = (double)varUInt64(this);
-            break;
-        }
-
-        default:
-            THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeDouble]);
-    }
-
-    FUNCTION_TEST_RETURN(result);
-}
-
-/**********************************************************************************************************************************/
-Variant *
+FN_EXTERN Variant *
 varNewInt(int data)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, data);
     FUNCTION_TEST_END();
 
-    // Allocate memory for the variant and set the type and data
-    VariantInt *this = memNew(sizeof(VariantInt));
-
-    *this = (VariantInt)
+    OBJ_NEW_BEGIN(VariantInt)
     {
-        .memContext = memContextCurrent(),
-        .type = varTypeInt,
-        .data = data,
-    };
+        *this = (VariantInt)
+        {
+            .pub =
+            {
+                .type = varTypeInt,
+                .data = data,
+            },
+        };
+    }
+    OBJ_NEW_END();
 
-    FUNCTION_TEST_RETURN((Variant *)this);
+    FUNCTION_TEST_RETURN(VARIANT, (Variant *)OBJ_NAME(this, Variant::VariantInt));
 }
 
 /**********************************************************************************************************************************/
-int
+FN_EXTERN int
 varInt(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -510,12 +339,12 @@ varInt(const Variant *this)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->type == varTypeInt);
+    ASSERT(varType(this) == varTypeInt);
 
-    FUNCTION_TEST_RETURN(((VariantInt *)this)->data);
+    FUNCTION_TEST_RETURN(INT, ((VariantInt *)this)->pub.data);
 }
 
-int
+FN_EXTERN int
 varIntForce(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -526,19 +355,15 @@ varIntForce(const Variant *this)
 
     int result = 0;
 
-    switch (this->type)
+    switch (varType(this))
     {
         case varTypeBool:
-        {
             result = varBool(this);
             break;
-        }
 
         case varTypeInt:
-        {
             result = varInt(this);
             break;
-        }
 
         case varTypeInt64:
         {
@@ -547,7 +372,7 @@ varIntForce(const Variant *this)
             // Make sure the value fits into a normal 32-bit int range since 32-bit platforms are supported
             if (resultTest > INT32_MAX || resultTest < INT32_MIN)
                 THROW_FMT(
-                    FormatError, "unable to convert %s %" PRId64 " to %s", variantTypeName[this->type], resultTest,
+                    FormatError, "unable to convert %s %" PRId64 " to %s", variantTypeName[varType(this)], resultTest,
                     variantTypeName[varTypeInt]);
 
             result = (int)resultTest;
@@ -555,10 +380,8 @@ varIntForce(const Variant *this)
         }
 
         case varTypeString:
-        {
             result = cvtZToInt(strZ(varStr(this)));
             break;
-        }
 
         case varTypeUInt:
         {
@@ -567,7 +390,7 @@ varIntForce(const Variant *this)
             // Make sure the value fits into a normal 32-bit int range
             if (resultTest > INT32_MAX)
                 THROW_FMT(
-                    FormatError, "unable to convert %s %u to %s", variantTypeName[this->type], resultTest,
+                    FormatError, "unable to convert %s %u to %s", variantTypeName[varType(this)], resultTest,
                     variantTypeName[varTypeInt]);
 
             result = (int)resultTest;
@@ -581,7 +404,7 @@ varIntForce(const Variant *this)
             // Make sure the value fits into a normal 32-bit int range
             if (resultTest > INT32_MAX)
                 THROW_FMT(
-                    FormatError, "unable to convert %s %" PRIu64 " to %s", variantTypeName[this->type], resultTest,
+                    FormatError, "unable to convert %s %" PRIu64 " to %s", variantTypeName[varType(this)], resultTest,
                     variantTypeName[varTypeInt]);
 
             result = (int)resultTest;
@@ -589,35 +412,39 @@ varIntForce(const Variant *this)
         }
 
         default:
-            THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeInt]);
+            ASSERT(varType(this) == varTypeKeyValue || varType(this) == varTypeVariantList);
+            THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[varType(this)], variantTypeName[varTypeInt]);
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(INT, result);
 }
 
 /**********************************************************************************************************************************/
-Variant *
+FN_EXTERN Variant *
 varNewInt64(int64_t data)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT64, data);
     FUNCTION_TEST_END();
 
-    // Allocate memory for the variant and set the type and data
-    VariantInt64 *this = memNew(sizeof(VariantInt64));
-
-    *this = (VariantInt64)
+    OBJ_NEW_BEGIN(VariantInt64)
     {
-        .memContext = memContextCurrent(),
-        .type = varTypeInt64,
-        .data = data,
-    };
+        *this = (VariantInt64)
+        {
+            .pub =
+            {
+                .type = varTypeInt64,
+                .data = data,
+            },
+        };
+    }
+    OBJ_NEW_END();
 
-    FUNCTION_TEST_RETURN((Variant *)this);
+    FUNCTION_TEST_RETURN(VARIANT, (Variant *)OBJ_NAME(this, Variant::VariantInt64));
 }
 
 /**********************************************************************************************************************************/
-int64_t
+FN_EXTERN int64_t
 varInt64(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -625,12 +452,12 @@ varInt64(const Variant *this)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->type == varTypeInt64);
+    ASSERT(varType(this) == varTypeInt64);
 
-    FUNCTION_TEST_RETURN(((VariantInt64 *)this)->data);
+    FUNCTION_TEST_RETURN(INT64, ((VariantInt64 *)this)->pub.data);
 }
 
-int64_t
+FN_EXTERN int64_t
 varInt64Force(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -641,38 +468,28 @@ varInt64Force(const Variant *this)
 
     int64_t result = 0;
 
-    switch (this->type)
+    switch (varType(this))
     {
         case varTypeBool:
-        {
             result = varBool(this);
             break;
-        }
 
         case varTypeInt:
-        {
             result = (int64_t)varInt(this);
             break;
-        }
 
         case varTypeInt64:
-        {
             result = varInt64(this);
             break;
-        }
 
         case varTypeString:
-        {
             result = cvtZToInt64(strZ(varStr(this)));
             break;
-        }
 
         case varTypeUInt:
-        {
             result = varUInt(this);
 
             break;
-        }
 
         case varTypeUInt64:
         {
@@ -684,7 +501,7 @@ varInt64Force(const Variant *this)
             else
             {
                 THROW_FMT(
-                    FormatError, "unable to convert %s %" PRIu64 " to %s", variantTypeName[this->type], resultTest,
+                    FormatError, "unable to convert %s %" PRIu64 " to %s", variantTypeName[varType(this)], resultTest,
                     variantTypeName[varTypeInt64]);
             }
 
@@ -692,35 +509,39 @@ varInt64Force(const Variant *this)
         }
 
         default:
-            THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeInt64]);
+            ASSERT(varType(this) == varTypeKeyValue || varType(this) == varTypeVariantList);
+            THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[varType(this)], variantTypeName[varTypeInt64]);
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(INT64, result);
 }
 
 /**********************************************************************************************************************************/
-Variant *
+FN_EXTERN Variant *
 varNewUInt(unsigned int data)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, data);
     FUNCTION_TEST_END();
 
-    // Allocate memory for the variant and set the type and data
-    VariantUInt *this = memNew(sizeof(VariantUInt));
-
-    *this = (VariantUInt)
+    OBJ_NEW_BEGIN(VariantUInt)
     {
-        .memContext = memContextCurrent(),
-        .type = varTypeUInt,
-        .data = data,
-    };
+        *this = (VariantUInt)
+        {
+            .pub =
+            {
+                .type = varTypeUInt,
+                .data = data,
+            },
+        };
+    }
+    OBJ_NEW_END();
 
-    FUNCTION_TEST_RETURN((Variant *)this);
+    FUNCTION_TEST_RETURN(VARIANT, (Variant *)OBJ_NAME(this, Variant::VariantUInt));
 }
 
 /**********************************************************************************************************************************/
-unsigned int
+FN_EXTERN unsigned int
 varUInt(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -728,12 +549,12 @@ varUInt(const Variant *this)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->type == varTypeUInt);
+    ASSERT(varType(this) == varTypeUInt);
 
-    FUNCTION_TEST_RETURN(((VariantUInt *)this)->data);
+    FUNCTION_TEST_RETURN(UINT, ((VariantUInt *)this)->pub.data);
 }
 
-unsigned int
+FN_EXTERN unsigned int
 varUIntForce(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -744,13 +565,11 @@ varUIntForce(const Variant *this)
 
     unsigned int result = 0;
 
-    switch (this->type)
+    switch (varType(this))
     {
         case varTypeBool:
-        {
             result = varBool(this);
             break;
-        }
 
         case varTypeInt:
         {
@@ -762,7 +581,7 @@ varUIntForce(const Variant *this)
             else
             {
                 THROW_FMT(
-                    FormatError, "unable to convert %s %d to %s", variantTypeName[this->type], resultTest,
+                    FormatError, "unable to convert %s %d to %s", variantTypeName[varType(this)], resultTest,
                     variantTypeName[varTypeUInt]);
             }
 
@@ -779,7 +598,7 @@ varUIntForce(const Variant *this)
             else
             {
                 THROW_FMT(
-                    FormatError, "unable to convert %s %" PRId64 " to %s", variantTypeName[this->type], resultTest,
+                    FormatError, "unable to convert %s %" PRId64 " to %s", variantTypeName[varType(this)], resultTest,
                     variantTypeName[varTypeUInt]);
             }
 
@@ -787,10 +606,8 @@ varUIntForce(const Variant *this)
         }
 
         case varTypeUInt:
-        {
             result = varUInt(this);
             break;
-        }
 
         case varTypeUInt64:
         {
@@ -802,7 +619,7 @@ varUIntForce(const Variant *this)
             else
             {
                 THROW_FMT(
-                    FormatError, "unable to convert %s %" PRIu64 " to %s", variantTypeName[this->type], resultTest,
+                    FormatError, "unable to convert %s %" PRIu64 " to %s", variantTypeName[varType(this)], resultTest,
                     variantTypeName[varTypeUInt]);
             }
 
@@ -810,41 +627,43 @@ varUIntForce(const Variant *this)
         }
 
         case varTypeString:
-        {
             result = cvtZToUInt(strZ(varStr(this)));
             break;
-        }
 
         default:
-            THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeUInt]);
+            ASSERT(varType(this) == varTypeKeyValue || varType(this) == varTypeVariantList);
+            THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[varType(this)], variantTypeName[varTypeUInt]);
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(UINT, result);
 }
 
 /**********************************************************************************************************************************/
-Variant *
+FN_EXTERN Variant *
 varNewUInt64(uint64_t data)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT64, data);
     FUNCTION_TEST_END();
 
-    // Allocate memory for the variant and set the type and data
-    VariantUInt64 *this = memNew(sizeof(VariantUInt64));
-
-    *this = (VariantUInt64)
+    OBJ_NEW_BEGIN(VariantUInt64)
     {
-        .memContext = memContextCurrent(),
-        .type = varTypeUInt64,
-        .data = data,
-    };
+        *this = (VariantUInt64)
+        {
+            .pub =
+            {
+                .type = varTypeUInt64,
+                .data = data,
+            },
+        };
+    }
+    OBJ_NEW_END();
 
-    FUNCTION_TEST_RETURN((Variant *)this);
+    FUNCTION_TEST_RETURN(VARIANT, (Variant *)OBJ_NAME(this, Variant::VariantUInt64));
 }
 
 /**********************************************************************************************************************************/
-uint64_t
+FN_EXTERN uint64_t
 varUInt64(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -852,12 +671,12 @@ varUInt64(const Variant *this)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->type == varTypeUInt64);
+    ASSERT(varType(this) == varTypeUInt64);
 
-    FUNCTION_TEST_RETURN(((VariantUInt64 *)this)->data);
+    FUNCTION_TEST_RETURN(UINT64, ((VariantUInt64 *)this)->pub.data);
 }
 
-uint64_t
+FN_EXTERN uint64_t
 varUInt64Force(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -868,13 +687,11 @@ varUInt64Force(const Variant *this)
 
     uint64_t result = 0;
 
-    switch (this->type)
+    switch (varType(this))
     {
         case varTypeBool:
-        {
             result = varBool(this);
             break;
-        }
 
         case varTypeInt:
         {
@@ -886,7 +703,7 @@ varUInt64Force(const Variant *this)
             else
             {
                 THROW_FMT(
-                    FormatError, "unable to convert %s %d to %s", variantTypeName[this->type], resultTest,
+                    FormatError, "unable to convert %s %d to %s", variantTypeName[varType(this)], resultTest,
                     variantTypeName[varTypeUInt64]);
             }
 
@@ -903,7 +720,7 @@ varUInt64Force(const Variant *this)
             else
             {
                 THROW_FMT(
-                    FormatError, "unable to convert %s %" PRId64 " to %s", variantTypeName[this->type], resultTest,
+                    FormatError, "unable to convert %s %" PRId64 " to %s", variantTypeName[varType(this)], resultTest,
                     variantTypeName[varTypeUInt64]);
             }
 
@@ -911,55 +728,50 @@ varUInt64Force(const Variant *this)
         }
 
         case varTypeString:
-        {
             result = cvtZToUInt64(strZ(varStr(this)));
             break;
-        }
 
         case varTypeUInt:
-        {
             result = varUInt(this);
             break;
-        }
 
         case varTypeUInt64:
-        {
             result = varUInt64(this);
             break;
-        }
 
         default:
-            THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeUInt64]);
+            ASSERT(varType(this) == varTypeKeyValue || varType(this) == varTypeVariantList);
+            THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[varType(this)], variantTypeName[varTypeUInt64]);
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(UINT64, result);
 }
 
 /**********************************************************************************************************************************/
-Variant *
+FN_EXTERN Variant *
 varNewKv(KeyValue *data)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(KEY_VALUE, data);
     FUNCTION_TEST_END();
 
-    // Allocate memory for the variant and set the type and data
-    VariantKeyValue *this = memNew(sizeof(VariantKeyValue));
-
-    *this = (VariantKeyValue)
+    OBJ_NEW_BEGIN(VariantKeyValue, .childQty = 1)
     {
-        .memContext = memContextCurrent(),
-        .type = varTypeKeyValue,
-    };
+        *this = (VariantKeyValue)
+        {
+            .type = varTypeKeyValue,
+        };
 
-    if (data != NULL)
-        this->data = kvMove(data, memContextCurrent());
+        if (data != NULL)
+            this->data = kvMove(data, memContextCurrent());
+    }
+    OBJ_NEW_END();
 
-    FUNCTION_TEST_RETURN((Variant *)this);
+    FUNCTION_TEST_RETURN(VARIANT, (Variant *)OBJ_NAME(this, Variant::VariantKeyValue));
 }
 
 /**********************************************************************************************************************************/
-KeyValue *
+FN_EXTERN KeyValue *
 varKv(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -970,46 +782,89 @@ varKv(const Variant *this)
 
     if (this != NULL)
     {
-        ASSERT(this->type == varTypeKeyValue);
+        ASSERT(varType(this) == varTypeKeyValue);
         result = ((VariantKeyValue *)this)->data;
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(KEY_VALUE, result);
 }
 
 /**********************************************************************************************************************************/
-Variant *
+FN_EXTERN Variant *
 varNewStr(const String *data)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, data);
     FUNCTION_TEST_END();
 
-    // Allocate memory for the variant and set the type and data
-    VariantString *this = memNew(sizeof(VariantString));
+    // If the variant is larger than the extra allowed with a mem context then allocate the buffer separately
+    size_t allocExtra = sizeof(VariantString) + (data != NULL ? sizeof(StringPub) + strSize(data) + 1 : 0);
 
-    *this = (VariantString)
+    if (allocExtra > MEM_CONTEXT_ALLOC_EXTRA_MAX)
     {
-        .memContext = memContextCurrent(),
-        .type = varTypeString,
-        .data = strDup(data),
-    };
+        ASSERT(data != NULL);
 
-    FUNCTION_TEST_RETURN((Variant *)this);
+        OBJ_NEW_BEGIN(VariantString, .childQty = 1)
+        {
+            *this = (VariantString)
+            {
+                .pub =
+                {
+                    .type = varTypeString,
+                    .data = strDup(data),
+                },
+            };
+        }
+        OBJ_NEW_END();
+
+        FUNCTION_TEST_RETURN(VARIANT, (Variant *)OBJ_NAME(this, Variant::VariantString));
+    }
+
+    OBJ_NEW_EXTRA_BEGIN(VariantString, (uint16_t)(allocExtra))
+    {
+        *this = (VariantString)
+        {
+            .pub =
+            {
+                .type = varTypeString,
+            },
+        };
+
+        if (data != NULL)
+        {
+            // Point the String after the VariantString struct
+            StringPub *const pubData = (StringPub *)(this + 1);
+            this->pub.data = (String *)pubData;
+
+            // Assign the string size and buffer (after StringPub struct)
+            *pubData = (StringPub)
+            {
+                .size = (unsigned int)strSize(data),
+                .buffer = (char *)(pubData + 1),
+            };
+
+            // Assign the string
+            memcpy(pubData->buffer, strZ(data), strSize(data));
+            pubData->buffer[strSize(data)] = '\0';
+        }
+    }
+    OBJ_NEW_END();
+
+    FUNCTION_TEST_RETURN(VARIANT, (Variant *)OBJ_NAME(this, Variant::VariantString));
 }
 
-Variant *
+FN_EXTERN Variant *
 varNewStrZ(const char *data)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRINGZ, data);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(varNewStr(data == NULL ? NULL : strNew(data)));
+    FUNCTION_TEST_RETURN(VARIANT, varNewStr(data == NULL ? NULL : STR(data)));
 }
 
 /**********************************************************************************************************************************/
-const String *
+FN_EXTERN const String *
 varStr(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -1020,14 +875,14 @@ varStr(const Variant *this)
 
     if (this != NULL)
     {
-        ASSERT(this->type == varTypeString);
-        result = ((VariantString *)this)->data;
+        ASSERT(varType(this) == varTypeString);
+        result = ((VariantString *)this)->pub.data;
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
-String *
+FN_EXTERN String *
 varStrForce(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -1041,26 +896,15 @@ varStrForce(const Variant *this)
     switch (varType(this))
     {
         case varTypeBool:
-        {
-            result = strNew(cvtBoolToConstZ(varBool(this)));
+            result = strNewZ(cvtBoolToConstZ(varBool(this)));
             break;
-        }
-
-        case varTypeDouble:
-        {
-            char working[CVT_BASE10_BUFFER_SIZE];
-
-            cvtDoubleToZ(varDbl(this), working, sizeof(working));
-            result = strNew(working);
-            break;
-        }
 
         case varTypeInt:
         {
             char working[CVT_BASE10_BUFFER_SIZE];
 
             cvtIntToZ(varInt(this), working, sizeof(working));
-            result = strNew(working);
+            result = strNewZ(working);
             break;
         }
 
@@ -1069,22 +913,20 @@ varStrForce(const Variant *this)
             char working[CVT_BASE10_BUFFER_SIZE];
 
             cvtInt64ToZ(varInt64(this), working, sizeof(working));
-            result = strNew(working);
+            result = strNewZ(working);
             break;
         }
 
         case varTypeString:
-        {
             result = strDup(varStr(this));
             break;
-        }
 
         case varTypeUInt:
         {
             char working[CVT_BASE10_BUFFER_SIZE];
 
             cvtUIntToZ(varUInt(this), working, sizeof(working));
-            result = strNew(working);
+            result = strNewZ(working);
             break;
         }
 
@@ -1093,42 +935,43 @@ varStrForce(const Variant *this)
             char working[CVT_BASE10_BUFFER_SIZE];
 
             cvtUInt64ToZ(varUInt64(this), working, sizeof(working));
-            result = strNew(working);
+            result = strNewZ(working);
             break;
         }
 
         default:
-            THROW_FMT(FormatError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeString]);
+            ASSERT(varType(this) == varTypeKeyValue || varType(this) == varTypeVariantList);
+            THROW_FMT(FormatError, "unable to force %s to %s", variantTypeName[varType(this)], variantTypeName[varTypeString]);
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/
-Variant *
+FN_EXTERN Variant *
 varNewVarLst(const VariantList *data)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT_LIST, data);
     FUNCTION_TEST_END();
 
-    // Allocate memory for the variant and set the type and data
-    VariantVariantList *this = memNew(sizeof(VariantVariantList));
-
-    *this = (VariantVariantList)
+    OBJ_NEW_BEGIN(VariantVariantList, .childQty = 1)
     {
-        .memContext = memContextCurrent(),
-        .type = varTypeVariantList,
-    };
+        *this = (VariantVariantList)
+        {
+            .type = varTypeVariantList,
+        };
 
-    if (data != NULL)
-        this->data = varLstDup(data);
+        if (data != NULL)
+            this->data = varLstDup(data);
+    }
+    OBJ_NEW_END();
 
-    FUNCTION_TEST_RETURN((Variant *)this);
+    FUNCTION_TEST_RETURN(VARIANT, (Variant *)OBJ_NAME(this, Variant::VariantVariantList));
 }
 
 /**********************************************************************************************************************************/
-VariantList *
+FN_EXTERN VariantList *
 varVarLst(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -1139,137 +982,51 @@ varVarLst(const Variant *this)
 
     if (this != NULL)
     {
-        ASSERT(this->type == varTypeVariantList);
+        ASSERT(varType(this) == varTypeVariantList);
         result = ((VariantVariantList *)this)->data;
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(VARIANT_LIST, result);
 }
 
 /**********************************************************************************************************************************/
-String *
-varToLog(const Variant *this)
+FN_EXTERN void
+varToLog(const Variant *const this, StringStatic *const debugLog)
 {
-    String *result = NULL;
-
-    if (this == NULL)
-        result = strDup(NULL_STR);
-    else
+    switch (varType(this))
     {
-        switch (varType(this))
-        {
-            case varTypeString:
-            {
-                result = strToLog(varStr(this));
-                break;
-            }
+        case varTypeString:
+            strStcResultSizeInc(
+                debugLog,
+                FUNCTION_LOG_OBJECT_FORMAT(varStr(this), strToLog, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+            break;
 
-            case varTypeKeyValue:
-            {
-                result = strNew("{KeyValue}");
-                break;
-            }
+        case varTypeKeyValue:
+            strStcCat(debugLog, "{KeyValue}");
+            break;
 
-            case varTypeVariantList:
-            {
-                result = strNew("{VariantList}");
-                break;
-            }
+        case varTypeVariantList:
+            strStcCat(debugLog, "{VariantList}");
+            break;
 
-            case varTypeBool:
-            case varTypeDouble:
-            case varTypeInt:
-            case varTypeInt64:
-            case varTypeUInt:
-            case varTypeUInt64:
-            {
-                result = strNewFmt("{%s}", strZ(varStrForce(this)));
-                break;
-            }
-        }
+        case varTypeBool:
+            strStcFmt(debugLog, "{%s}", cvtBoolToConstZ(varBool(this)));
+            break;
+
+        case varTypeInt:
+            strStcFmt(debugLog, "{%d}", varInt(this));
+            break;
+
+        case varTypeInt64:
+            strStcFmt(debugLog, "{%" PRId64 "}", varInt64(this));
+            break;
+
+        case varTypeUInt:
+            strStcFmt(debugLog, "{%u}", varUInt(this));
+            break;
+
+        case varTypeUInt64:
+            strStcFmt(debugLog, "{%" PRIu64 "}", varUInt64(this));
+            break;
     }
-
-    return result;
-}
-
-/**********************************************************************************************************************************/
-void
-varFree(Variant *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(VARIANT, this);
-    FUNCTION_TEST_END();
-
-    if (this != NULL)
-    {
-        MemContext *memContext = NULL;
-
-        switch (this->type)
-        {
-            case varTypeBool:
-            {
-                memContext = ((VariantBool *)this)->memContext;
-                break;
-            }
-
-            case varTypeDouble:
-            {
-                memContext = ((VariantDouble *)this)->memContext;
-                break;
-            }
-
-            case varTypeInt:
-            {
-                memContext = ((VariantInt *)this)->memContext;
-                break;
-            }
-
-            case varTypeInt64:
-            {
-                memContext = ((VariantInt64 *)this)->memContext;
-                break;
-            }
-
-            case varTypeKeyValue:
-            {
-                memContext = ((VariantKeyValue *)this)->memContext;
-                kvFree(((VariantKeyValue *)this)->data);
-                break;
-            }
-
-            case varTypeString:
-            {
-                memContext = ((VariantString *)this)->memContext;
-                strFree(((VariantString *)this)->data);
-                break;
-            }
-
-            case varTypeUInt:
-            {
-                memContext = ((VariantUInt *)this)->memContext;
-                break;
-            }
-
-            case varTypeUInt64:
-            {
-                memContext = ((VariantUInt64 *)this)->memContext;
-                break;
-            }
-
-            case varTypeVariantList:
-            {
-                memContext = ((VariantVariantList *)this)->memContext;
-                varLstFree(((VariantVariantList *)this)->data);
-                break;
-            }
-        }
-
-        MEM_CONTEXT_BEGIN(memContext)
-        {
-            memFree(this);
-        }
-        MEM_CONTEXT_END();
-    }
-
-    FUNCTION_TEST_RETURN_VOID();
 }

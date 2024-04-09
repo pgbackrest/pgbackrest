@@ -7,69 +7,81 @@ Ini Handler
 /***********************************************************************************************************************************
 Ini object
 ***********************************************************************************************************************************/
-#define INI_TYPE                                                    Ini
-#define INI_PREFIX                                                  ini
-
 typedef struct Ini Ini;
 
 #include "common/io/read.h"
 #include "common/io/write.h"
+#include "common/type/object.h"
 #include "common/type/variant.h"
+
+/***********************************************************************************************************************************
+Ini section/key/value
+***********************************************************************************************************************************/
+typedef struct IniValue
+{
+    String *section;
+    String *key;
+    String *value;
+} IniValue;
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-Ini *iniNew(void);
+typedef struct IniNewParam
+{
+    VAR_PARAM_HEADER;
+    bool strict;                                                    // Expect all values to be JSON and do not trim
+    bool store;                                                     // Store in KeyValue so functions can be used to query
+} IniNewParam;
+
+#define iniNewP(read, ...)                                                                                                         \
+    iniNew(read, (IniNewParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN Ini *iniNew(IoRead *read, IniNewParam param);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Move to a new parent mem context
-Ini *iniMove(Ini *this, MemContext *parentNew);
+FN_INLINE_ALWAYS Ini *
+iniMove(Ini *const this, MemContext *const parentNew)
+{
+    return objMove(this, parentNew);
+}
 
-// Parse ini from a string. Comments are ignored and additional whitespace around sections, keys, and values is trimmed. Should be
-// used *only* to read user-generated config files, for code-generated info files see iniLoad().
-void iniParse(Ini *this, const String *content);
+// Check that the ini is valid
+FN_EXTERN void iniValid(Ini *this);
 
-// Set an ini value
-void iniSet(Ini *this, const String *section, const String *key, const String *value);
+// Get the next value in the ini file. Note that members of IniValue are reused between calls so the members of a previous call may
+// change after the next call. Any members that need to be preserved should be copied before the next call.
+FN_EXTERN const IniValue *iniValueNext(Ini *this);
 
 /***********************************************************************************************************************************
-Getters/Setters
+Getters
 ***********************************************************************************************************************************/
 // Get an ini value -- error if it does not exist
-const String *iniGet(const Ini *this, const String *section, const String *key);
-
-// Get an ini value -- if it does not exist then return specified default
-const String *iniGetDefault(const Ini *this, const String *section, const String *key, const String *defaultValue);
+FN_EXTERN const String *iniGet(const Ini *this, const String *section, const String *key);
 
 // Ini key list
-StringList *iniGetList(const Ini *this, const String *section, const String *key);
+FN_EXTERN StringList *iniGetList(const Ini *this, const String *section, const String *key);
 
 // The key's value is a list
-bool iniSectionKeyIsList(const Ini *this, const String *section, const String *key);
-
-// List of keys for a section
-StringList *iniSectionKeyList(const Ini *this, const String *section);
+FN_EXTERN bool iniSectionKeyIsList(const Ini *this, const String *section, const String *key);
 
 // List of sections
-StringList *iniSectionList(const Ini *this);
+FN_EXTERN StringList *iniSectionList(const Ini *const this);
+
+// List of keys for a section
+FN_EXTERN StringList *iniSectionKeyList(const Ini *this, const String *section);
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void iniFree(Ini *this);
-
-/***********************************************************************************************************************************
-Helper Functions
-***********************************************************************************************************************************/
-// Load an ini file and return data to a callback. Intended to read info files that were generated by code so do not have comments
-// or extraneous spaces, and where all values are valid JSON. This allows syntax characters such as [, =, #, and whitespace to be
-// used in keys.
-void iniLoad(
-    IoRead *read,
-    void (*callbackFunction)(void *data, const String *section, const String *key, const String *value, const Variant *valueVar),
-    void *callbackData);
+FN_INLINE_ALWAYS void
+iniFree(Ini *const this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging
@@ -77,6 +89,10 @@ Macros for function logging
 #define FUNCTION_LOG_INI_TYPE                                                                                                      \
     Ini *
 #define FUNCTION_LOG_INI_FORMAT(value, buffer, bufferSize)                                                                         \
-    objToLog(value, "Ini", buffer, bufferSize)
+    objNameToLog(value, "Ini", buffer, bufferSize)
+#define FUNCTION_LOG_INI_VALUE_TYPE                                                                                                \
+    IniValue *
+#define FUNCTION_LOG_INI_VALUE_FORMAT(value, buffer, bufferSize)                                                                   \
+    objNameToLog(value, "IniValue", buffer, bufferSize)
 
 #endif

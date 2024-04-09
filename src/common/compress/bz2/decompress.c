@@ -3,31 +3,22 @@ BZ2 Decompress
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include <stdio.h>
 #include <bzlib.h>
+#include <stdio.h>
 
 #include "common/compress/bz2/common.h"
 #include "common/compress/bz2/decompress.h"
 #include "common/debug.h"
-#include "common/io/filter/filter.intern.h"
+#include "common/io/filter/filter.h"
 #include "common/log.h"
-#include "common/memContext.h"
+#include "common/macro.h"
 #include "common/type/object.h"
-
-/***********************************************************************************************************************************
-Filter type constant
-***********************************************************************************************************************************/
-STRING_EXTERN(BZ2_DECOMPRESS_FILTER_TYPE_STR,                        BZ2_DECOMPRESS_FILTER_TYPE);
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define BZ2_DECOMPRESS_TYPE                                          Bz2Decompress
-#define BZ2_DECOMPRESS_PREFIX                                        bz2Decompress
-
 typedef struct Bz2Decompress
 {
-    MemContext *memContext;                                         // Context to store data
     bz_stream stream;                                               // Decompression stream state
 
     int result;                                                     // Result of last operation
@@ -38,27 +29,37 @@ typedef struct Bz2Decompress
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-static String *
-bz2DecompressToLog(const Bz2Decompress *this)
+static void
+bz2DecompressToLog(const Bz2Decompress *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{inputSame: %s, done: %s, avail_in: %u}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done),
+    strStcFmt(
+        debugLog, "{inputSame: %s, done: %s, avail_in: %u}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done),
         this->stream.avail_in);
 }
 
 #define FUNCTION_LOG_BZ2_DECOMPRESS_TYPE                                                                                            \
     Bz2Decompress *
 #define FUNCTION_LOG_BZ2_DECOMPRESS_FORMAT(value, buffer, bufferSize)                                                               \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, bz2DecompressToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, bz2DecompressToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Free inflate stream
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(BZ2_DECOMPRESS, LOG, logLevelTrace)
+static void
+bz2DecompressFreeResource(THIS_VOID)
 {
+    THIS(Bz2Decompress);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(BZ2_DECOMPRESS, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     BZ2_bzDecompressEnd(&this->stream);
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Decompress data
@@ -121,7 +122,7 @@ bz2DecompressDone(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->done);
+    FUNCTION_TEST_RETURN(BOOL, this->done);
 }
 
 /***********************************************************************************************************************************
@@ -138,40 +139,35 @@ bz2DecompressInputSame(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->inputSame);
+    FUNCTION_TEST_RETURN(BOOL, this->inputSame);
 }
 
 /**********************************************************************************************************************************/
-IoFilter *
-bz2DecompressNew(void)
+FN_EXTERN IoFilter *
+bz2DecompressNew(const bool raw)
 {
-    FUNCTION_LOG_VOID(logLevelTrace);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        (void)raw;                                                  // Raw unsupported
+    FUNCTION_LOG_END();
 
-    IoFilter *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("Bz2Decompress")
+    OBJ_NEW_BEGIN(Bz2Decompress, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        // Allocate state and set context
-        Bz2Decompress *driver = memNew(sizeof(Bz2Decompress));
-
-        *driver = (Bz2Decompress)
+        *this = (Bz2Decompress)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .stream = {.bzalloc = NULL},
         };
 
         // Create bz2 stream
-        bz2Error(driver->result = BZ2_bzDecompressInit(&driver->stream, 0, 0));
+        bz2Error(this->result = BZ2_bzDecompressInit(&this->stream, 0, 0));
 
         // Set free callback to ensure bz2 context is freed
-        memContextCallbackSet(driver->memContext, bz2DecompressFreeResource, driver);
-
-        // Create filter interface
-        this = ioFilterNewP(
-            BZ2_DECOMPRESS_FILTER_TYPE_STR, driver, NULL, .done = bz2DecompressDone, .inOut = bz2DecompressProcess,
-            .inputSame = bz2DecompressInputSame);
+        memContextCallbackSet(objMemContext(this), bz2DecompressFreeResource, this);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_FILTER, this);
+    FUNCTION_LOG_RETURN(
+        IO_FILTER,
+        ioFilterNewP(
+            BZ2_DECOMPRESS_FILTER_TYPE, this, NULL, .done = bz2DecompressDone, .inOut = bz2DecompressProcess,
+            .inputSame = bz2DecompressInputSame));
 }

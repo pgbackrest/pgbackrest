@@ -10,9 +10,6 @@ session.
 #ifndef COMMON_IO_TLS_SESSION_H
 #define COMMON_IO_TLS_SESSION_H
 
-/***********************************************************************************************************************************
-Object type
-***********************************************************************************************************************************/
 #include <openssl/ssl.h>
 
 #include "common/io/session.h"
@@ -22,6 +19,6 @@ Object type
 Constructors
 ***********************************************************************************************************************************/
 // Only called by TLS client/server code
-IoSession *tlsSessionNew(SSL *session, IoSession *ioSession, TimeMSec timeout);
+FN_EXTERN IoSession *tlsSessionNew(SSL *session, IoSession *ioSession, TimeMSec timeout);
 
 #endif

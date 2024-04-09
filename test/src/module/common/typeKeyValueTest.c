@@ -5,7 +5,7 @@ Test Key Value Data Type
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
@@ -16,7 +16,6 @@ testRun(void)
         KeyValue *store = NULL;
 
         TEST_ASSIGN(store, kvNew(), "new store");
-        TEST_RESULT_PTR_NE(store->memContext, NULL, "mem context set");
         TEST_RESULT_PTR_NE(store->list, NULL, "list set");
         TEST_RESULT_INT(lstSize(store->list), 0, "list empty");
 
@@ -24,7 +23,7 @@ testRun(void)
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    if (testBegin("kvPut(), kvAdd(), kvKeyExists(), kvKeyList(), kvGet(), kvGetDefault(), kvGetList(), and kvDup()"))
+    if (testBegin("kvPut(), kvAdd(), kvKeyExists(), kvKeyList(), kvGet(), kvGetDefault(), kvGetList(), kvDup(), and kvRemove()"))
     {
         KeyValue *store = NULL;
 
@@ -38,17 +37,17 @@ testRun(void)
 
         // Set various data types
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_PTR(kvPut(store, varNewStr(strNew("str-key")), varNewStr(strNew("str-value"))), store, "put string/string");
+        TEST_RESULT_PTR(kvPut(store, VARSTRDEF("str-key"), VARSTRDEF("str-value")), store, "put string/string");
         TEST_RESULT_PTR(kvPut(store, varNewInt(42), varNewInt(57)), store, "put int/int");
-        TEST_RESULT_PTR(kvPut(store, varNewStr(strNew("str-key-int")), varNewInt(99)), store, "put string/int");
+        TEST_RESULT_PTR(kvPut(store, VARSTRDEF("str-key-int"), varNewInt(99)), store, "put string/int");
         TEST_RESULT_PTR(kvPut(store, varNewInt(78), NULL), store, "put int/null");
 
         // Get the types and make sure they have the correct value
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_STR_Z(varStr(kvGet(store, varNewStr(strNew("str-key")))), "str-value", "get string/string");
+        TEST_RESULT_STR_Z(varStr(kvGet(store, VARSTRDEF("str-key"))), "str-value", "get string/string");
         TEST_RESULT_INT(varInt(kvGet(store, varNewInt(42))), 57, "get int/int");
         TEST_RESULT_INT(varInt(varLstGet(kvGetList(store, varNewInt(42)), 0)), 57, "get int/int");
-        TEST_RESULT_INT(varInt(kvGet(store, varNewStr(strNew("str-key-int")))), 99, "get string/int");
+        TEST_RESULT_INT(varInt(kvGet(store, VARSTRDEF("str-key-int"))), 99, "get string/int");
         TEST_RESULT_PTR(kvGet(store, varNewInt(78)), NULL, "get int/null");
         TEST_RESULT_PTR(kvGetDefault(store, varNewInt(78), varNewInt(999)), NULL, "get int/null (default ignored)");
         TEST_RESULT_PTR(kvGet(store, varNewInt(777)), NULL, "get missing key");
@@ -56,8 +55,8 @@ testRun(void)
 
         // Check key exists
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_BOOL(kvKeyExists(store, varNewStr(strNew("str-key"))), true, "key exists");
-        TEST_RESULT_BOOL(kvKeyExists(store, varNewStr(strNew(BOGUS_STR))), false, "key does not exist");
+        TEST_RESULT_BOOL(kvKeyExists(store, VARSTRDEF("str-key")), true, "key exists");
+        TEST_RESULT_BOOL(kvKeyExists(store, VARSTRDEF(BOGUS_STR)), false, "key does not exist");
 
         // Check that a null value can be changed to non-null
         // -------------------------------------------------------------------------------------------------------------------------
@@ -89,11 +88,11 @@ testRun(void)
 
         // Create a new kv and add it to this kv
         // -------------------------------------------------------------------------------------------------------------------------
-        KeyValue *storeSub = kvPutKv(store, varNewStr(strNew("kv-key")));
+        KeyValue *storeSub = kvPutKv(store, VARSTRDEF("kv-key"));
 
-        kvPut(storeSub, varNewStr(strNew("str-sub-key")), varNewStr(strNew("str-sub-value")));
+        kvPut(storeSub, VARSTRDEF("str-sub-key"), VARSTRDEF("str-sub-value"));
         TEST_RESULT_STR_Z(
-            varStr(kvGet(varKv(kvGet(store, varNewStr(strNew("kv-key")))), varNewStr(strNew("str-sub-key")))),
+            varStr(kvGet(varKv(kvGet(store, VARSTRDEF("kv-key"))), VARSTRDEF("str-sub-key"))),
             "str-sub-value", "get string/kv");
 
         // Duplicate the kv
@@ -103,12 +102,22 @@ testRun(void)
         TEST_RESULT_INT(varBool(kvGet(store, varNewInt(78))), false, "get int/bool");
         TEST_RESULT_INT(varInt(varLstGet(varVarLst(kvGet(store, varNewInt(99))), 2)), 3, "get int/int");
         TEST_RESULT_STR_Z(
-            varStr(kvGet(varKv(kvGet(storeDup, varNewStr(strNew("kv-key")))), varNewStr(strNew("str-sub-key")))),
+            varStr(kvGet(varKv(kvGet(storeDup, VARSTRDEF("kv-key"))), VARSTRDEF("str-sub-key"))),
             "str-sub-value", "get string/kv");
+
+        // Remove a kv
+        // -------------------------------------------------------------------------------------------------------------------------
+        const Variant *key = VARSTRDEF("str-key-to-remove");
+
+        kvPut(store, key, VARSTRDEF("str-value"));
+        TEST_RESULT_STR_Z(varStr(kvGet(store, key)), "str-value", "get string/kv");
+        TEST_RESULT_PTR(kvRemove(store, key), store, "remove string/kv");
+        TEST_RESULT_BOOL(kvKeyExists(store, key), false, "key does not exist");
+        TEST_RESULT_PTR(kvRemove(store, key), store, "don't fail to remove key that doesn't exist");
 
         TEST_RESULT_VOID(kvFree(storeDup), "free dup store");
         TEST_RESULT_VOID(kvFree(store), "free store");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

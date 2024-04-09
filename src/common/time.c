@@ -15,7 +15,7 @@ Constants describing number of sub-units in an interval
 #define MSEC_PER_USEC                                               ((TimeMSec)1000)
 
 /**********************************************************************************************************************************/
-TimeMSec
+FN_EXTERN TimeMSec
 timeMSec(void)
 {
     FUNCTION_TEST_VOID();
@@ -23,27 +23,33 @@ timeMSec(void)
     struct timeval currentTime;
     gettimeofday(&currentTime, NULL);
 
-    FUNCTION_TEST_RETURN(((TimeMSec)currentTime.tv_sec * MSEC_PER_SEC) + (TimeMSec)currentTime.tv_usec / MSEC_PER_USEC);
+    FUNCTION_TEST_RETURN(TIME_MSEC, ((TimeMSec)currentTime.tv_sec * MSEC_PER_SEC) + (TimeMSec)currentTime.tv_usec / MSEC_PER_USEC);
 }
 
 /**********************************************************************************************************************************/
-void
-sleepMSec(TimeMSec sleepMSec)
+FN_EXTERN void
+sleepMSec(const TimeMSec sleepMSec)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT64, sleepMSec);
     FUNCTION_TEST_END();
 
-    struct timeval delay;
-    delay.tv_sec = (time_t)(sleepMSec / MSEC_PER_SEC);
-    delay.tv_usec = (time_t)(sleepMSec % MSEC_PER_SEC * 1000);
-    select(0, NULL, NULL, NULL, &delay);
+    if (sleepMSec > 0)
+    {
+        const struct timespec delay =
+        {
+            .tv_sec = (time_t)(sleepMSec / MSEC_PER_SEC),
+            .tv_nsec = (long)(sleepMSec % MSEC_PER_SEC * 1000000),
+        };
+
+        nanosleep(&delay, NULL);
+    }
 
     FUNCTION_TEST_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 datePartsValid(int year, int month, int day)
 {
     FUNCTION_TEST_BEGIN();
@@ -65,7 +71,7 @@ datePartsValid(int year, int month, int day)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 timePartsValid(int hour, int minute, int second)
 {
     FUNCTION_TEST_BEGIN();
@@ -81,7 +87,7 @@ timePartsValid(int hour, int minute, int second)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 tzPartsValid(int tzHour, int tzMinute)
 {
     FUNCTION_TEST_BEGIN();
@@ -93,7 +99,7 @@ tzPartsValid(int tzHour, int tzMinute)
     // ??? This is only a sanity check for basic validity of timezone offset of 15 minute intervals until the timezone
     // database is implemented.
     if (!(((tzHour > -12 && tzHour < 14) && (tzMinute % 15 == 0)) || (tzHour == -12 && tzMinute == 0) ||
-        (tzHour == 14 && tzMinute == 0)))
+          (tzHour == 14 && tzMinute == 0)))
     {
         THROW_FMT(FormatError, "invalid timezone %02d%02d", tzHour, tzMinute);
     }
@@ -102,7 +108,7 @@ tzPartsValid(int tzHour, int tzMinute)
 }
 
 /**********************************************************************************************************************************/
-int
+FN_EXTERN int
 tzOffsetSeconds(int tzHour, int tzMinute)
 {
     FUNCTION_TEST_BEGIN();
@@ -122,22 +128,22 @@ tzOffsetSeconds(int tzHour, int tzMinute)
         tzHour = sign * tzHour;
     }
 
-    FUNCTION_TEST_RETURN(sign * (tzHour * 3600 + tzMinute * 60));
+    FUNCTION_TEST_RETURN(INT, sign * (tzHour * 3600 + tzMinute * 60));
 }
 
 /**********************************************************************************************************************************/
-bool
+FN_EXTERN bool
 yearIsLeap(int year)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, year);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0));
+    FUNCTION_TEST_RETURN(BOOL, (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0));
 }
 
 /**********************************************************************************************************************************/
-int
+FN_EXTERN int
 dayOfYear(int year, int month, int day)
 {
     FUNCTION_TEST_BEGIN();
@@ -154,11 +160,11 @@ dayOfYear(int year, int month, int day)
         {0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335},
     };
 
-    FUNCTION_TEST_RETURN(cumulativeDaysPerMonth[yearIsLeap(year) ? 1 : 0][month - 1] + day);
+    FUNCTION_TEST_RETURN(INT, cumulativeDaysPerMonth[yearIsLeap(year) ? 1 : 0][month - 1] + day);
 }
 
 /**********************************************************************************************************************************/
-time_t
+FN_EXTERN time_t
 epochFromParts(int year, int month, int day, int hour, int minute, int second, int tzOffsetSecond)
 {
     FUNCTION_TEST_BEGIN();
@@ -175,6 +181,7 @@ epochFromParts(int year, int month, int day, int hour, int minute, int second, i
 
     // Return epoch using calculation from https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap04.html#tag_04_16
     FUNCTION_TEST_RETURN(
+        TIME,
         -1 * tzOffsetSecond + second + minute * 60 + hour * 3600 +
         (dayOfYear(year, month, day) - 1) * 86400 + (year - 1900 - 70) * 31536000 +
         ((year - 1900 - 69) / 4) * 86400 - ((year - 1900 - 1) / 100) * 86400 + ((year - 1900 + 299) / 400) * 86400);

@@ -5,7 +5,7 @@ Test System User/Group Management
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
@@ -16,21 +16,27 @@ testRun(void)
         TEST_RESULT_VOID(userInit(), "initialize info");
         TEST_RESULT_VOID(userInit(), "initialize info again");
 
-        TEST_RESULT_UINT(userId(), getuid(), "check user id");
+        TEST_RESULT_UINT(userId(), TEST_USER_ID, "check user id");
         TEST_RESULT_UINT(userIdFromName(userName()), userId(), "get user id");
         TEST_RESULT_UINT(userIdFromName(NULL), (uid_t)-1, "get null user id");
         TEST_RESULT_UINT(userIdFromName(STRDEF("bogus")), (uid_t)-1, "get bogus user id");
-        TEST_RESULT_STR_Z(userName(), testUser(), "check user name");
+        TEST_RESULT_STR(userName(), TEST_USER_STR, "check user name");
         TEST_RESULT_STR_Z(userNameFromId(77777), NULL, "invalid user name by id");
         TEST_RESULT_BOOL(userRoot(), false, "check user is root");
 
-        TEST_RESULT_UINT(groupId(), getgid(), "check group id");
+        TEST_RESULT_UINT(groupId(), TEST_GROUP_ID, "check group id");
         TEST_RESULT_UINT(groupIdFromName(groupName()), groupId(), "get group id");
         TEST_RESULT_UINT(groupIdFromName(NULL), (gid_t)-1, "get null group id");
         TEST_RESULT_UINT(groupIdFromName(STRDEF("bogus")), (uid_t)-1, "get bogus group id");
-        TEST_RESULT_STR_Z(groupName(), testGroup(), "check name name");
+        TEST_RESULT_STR(groupName(), TEST_GROUP_STR, "check name name");
         TEST_RESULT_STR_Z(groupNameFromId(77777), NULL, "invalid group name by id");
+
+#ifdef HAVE_LIBSSH2
+        TEST_RESULT_STR(userHome(), STRDEF("/home/" TEST_USER), "check user name");
+        TEST_RESULT_STR_Z(userHomeFromId(userId()), "/home/" TEST_USER, "user home by id");
+        TEST_RESULT_STR_Z(userHomeFromId(77777), NULL, "invalid user home by id");
+#endif //  HAVE_LIBSSH2
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

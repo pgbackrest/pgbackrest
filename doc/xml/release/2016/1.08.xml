@@ -1,0 +1,51 @@
+<release date="2016-09-14" version="1.08" title="Bug Fixes and Log Improvements">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="todd.vernick"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue where local processes were not disconnecting when complete and could later timeout.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="todd.vernick"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue where the protocol layer could timeout while waiting for WAL segments to arrive in the archive.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-improvement-list>
+            <release-item>
+                <p>Cache file log output until the file is created to create a more complete log.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-development-list>
+            <release-item>
+                <p>Show Process ID in output instead of filtering it out with the timestamp.</p>
+            </release-item>
+        </release-development-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="john.harvey"/>
+                </release-item-contributor-list>
+
+                <p>Suppress <quote>dpkg-reconfigure: unable to re-open stdin: No file or directory</quote> warning in Vagrant VM build.</p>
+            </release-item>
+
+            <release-item>
+                <p>Show Process ID in expect logs instead of filtering it out with the timestamp.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+</release>

@@ -9,39 +9,31 @@ HTTP Response
 #include "common/io/http/request.h"
 #include "common/io/http/response.h"
 #include "common/io/io.h"
-#include "common/io/read.intern.h"
+#include "common/io/read.h"
 #include "common/log.h"
 #include "common/stat.h"
-#include "common/type/object.h"
 #include "common/wait.h"
 
 /***********************************************************************************************************************************
 HTTP constants
 ***********************************************************************************************************************************/
 #define HTTP_HEADER_CONNECTION                                      "connection"
-    STRING_STATIC(HTTP_HEADER_CONNECTION_STR,                       HTTP_HEADER_CONNECTION);
+STRING_STATIC(HTTP_HEADER_CONNECTION_STR,                           HTTP_HEADER_CONNECTION);
 #define HTTP_HEADER_TRANSFER_ENCODING                               "transfer-encoding"
-    STRING_STATIC(HTTP_HEADER_TRANSFER_ENCODING_STR,                HTTP_HEADER_TRANSFER_ENCODING);
+STRING_STATIC(HTTP_HEADER_TRANSFER_ENCODING_STR,                    HTTP_HEADER_TRANSFER_ENCODING);
 
 #define HTTP_VALUE_CONNECTION_CLOSE                                 "close"
-    STRING_STATIC(HTTP_VALUE_CONNECTION_CLOSE_STR,                  HTTP_VALUE_CONNECTION_CLOSE);
+STRING_STATIC(HTTP_VALUE_CONNECTION_CLOSE_STR,                      HTTP_VALUE_CONNECTION_CLOSE);
 #define HTTP_VALUE_TRANSFER_ENCODING_CHUNKED                        "chunked"
-    STRING_STATIC(HTTP_VALUE_TRANSFER_ENCODING_CHUNKED_STR,         HTTP_VALUE_TRANSFER_ENCODING_CHUNKED);
+STRING_STATIC(HTTP_VALUE_TRANSFER_ENCODING_CHUNKED_STR,             HTTP_VALUE_TRANSFER_ENCODING_CHUNKED);
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 struct HttpResponse
 {
-    MemContext *memContext;                                         // Mem context
-
+    HttpResponsePub pub;                                            // Publicly accessible variables
     HttpSession *session;                                           // HTTP session
-    IoRead *contentRead;                                            // Read interface for response content
-
-    unsigned int code;                                              // Response code (e.g. 200, 404)
-    String *reason;                                                 // Response reason e.g. (OK, Not Found)
-    HttpHeader *header;                                             // Response headers
-
     bool contentChunked;                                            // Is the response content chunked?
     uint64_t contentSize;                                           // Content size (ignored for chunked)
     uint64_t contentRemaining;                                      // Content remaining (per chunk if chunked)
@@ -50,14 +42,6 @@ struct HttpResponse
     bool contentEof;                                                // Has all content been read?
     Buffer *content;                                                // Caches content once requested
 };
-
-OBJECT_DEFINE_MOVE(HTTP_RESPONSE);
-OBJECT_DEFINE_FREE(HTTP_RESPONSE);
-
-OBJECT_DEFINE_GET(IoRead, , HTTP_RESPONSE, IoRead *, contentRead);
-OBJECT_DEFINE_GET(Code, const, HTTP_RESPONSE, unsigned int, code);
-OBJECT_DEFINE_GET(Header, const, HTTP_RESPONSE, const HttpHeader *, header);
-OBJECT_DEFINE_GET(Reason, const, HTTP_RESPONSE, const String *, reason);
 
 /***********************************************************************************************************************************
 When response is done close/reuse the connection
@@ -92,6 +76,21 @@ httpResponseDone(HttpResponse *this)
 /***********************************************************************************************************************************
 Read content
 ***********************************************************************************************************************************/
+// Helper to determine if it is OK to accept unexpected EOF, e.g. the server closed the socket with properly closing the TLS
+// connection. The idea is that since these types of responses can be validated we should be able to detect a short read.
+static bool
+httpResponseReadIgnoreUnexpectedEof(const HttpResponse *const this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(HTTP_RESPONSE, this);
+    FUNCTION_LOG_END();
+
+    const String *const contentType = httpHeaderGet(this->pub.header, HTTP_HEADER_CONTENT_TYPE_STR);
+
+    FUNCTION_LOG_RETURN(
+        BOOL, strEq(contentType, HTTP_HEADER_CONTENT_TYPE_XML_STR) || strEq(contentType, HTTP_HEADER_CONTENT_TYPE_JSON_STR));
+}
+
 static size_t
 httpResponseRead(THIS_VOID, Buffer *buffer, bool block)
 {
@@ -115,17 +114,20 @@ httpResponseRead(THIS_VOID, Buffer *buffer, bool block)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            IoRead *rawRead = httpSessionIoRead(this->session);
-
             // If close was requested and no content specified then the server may send content up until the eof
             if (this->closeOnContentEof && !this->contentChunked && this->contentSize == 0)
             {
+                IoRead *const rawRead = httpSessionIoReadP(
+                    this->session, .ignoreUnexpectedEof = httpResponseReadIgnoreUnexpectedEof(this));
+
                 ioRead(rawRead, buffer);
                 this->contentEof = ioReadEof(rawRead);
             }
             // Else read using specified encoding or size
             else
             {
+                IoRead *const rawRead = httpSessionIoReadP(this->session);
+
                 do
                 {
                     // If chunked content and no content remaining
@@ -143,7 +145,7 @@ httpResponseRead(THIS_VOID, Buffer *buffer, bool block)
                     if (this->contentRemaining > 0)
                     {
                         // If the buffer is larger than the content that needs to be read then limit the buffer size so the read
-                        // won't block or read too far.  Casting to size_t is safe on 32-bit because we know the max buffer size is
+                        // won't block or read too far. Casting to size_t is safe on 32-bit because we know the max buffer size is
                         // defined as less than 2^32 so content remaining can't be more than that.
                         if (bufRemains(buffer) > this->contentRemaining)
                             bufLimitSet(buffer, bufSize(buffer) - (bufRemains(buffer) - (size_t)this->contentRemaining));
@@ -162,8 +164,8 @@ httpResponseRead(THIS_VOID, Buffer *buffer, bool block)
                     // If no content remaining
                     if (this->contentRemaining == 0)
                     {
-                        // If chunked then consume the blank line that follows every chunk.  There might be more chunk data so loop back
-                        // around to check.
+                        // If chunked then consume the blank line that follows every chunk. There might be more chunk data so loop
+                        // back around to check.
                         if (this->contentChunked)
                         {
                             ioReadLine(rawRead);
@@ -204,10 +206,10 @@ httpResponseEof(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-HttpResponse *
+FN_EXTERN HttpResponse *
 httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug)
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(HTTP_SESSION, session);
         FUNCTION_LOG_PARAM(STRING, verb);
         FUNCTION_LOG_PARAM(BOOL, contentCache);
@@ -216,23 +218,21 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
     ASSERT(session != NULL);
     ASSERT(verb != NULL);
 
-    HttpResponse *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("HttpResponse")
+    OBJ_NEW_BEGIN(HttpResponse, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = memNew(sizeof(HttpResponse));
-
         *this = (HttpResponse)
         {
-            .memContext = MEM_CONTEXT_NEW(),
+            .pub =
+            {
+                .header = httpHeaderNew(NULL),
+            },
             .session = httpSessionMove(session, memContextCurrent()),
-            .header = httpHeaderNew(NULL),
         };
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Read status
-            String *status = ioReadLine(httpSessionIoRead(this->session));
+            String *status = ioReadLine(httpSessionIoReadP(this->session));
 
             // Check status ends with a CR and remove it to make error formatting easier and more accurate
             if (!strEndsWith(status, CR_STR))
@@ -261,20 +261,20 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
             if (spacePos != 3)
                 THROW_FMT(FormatError, "response status '%s' must have a space after the status code", strZ(status));
 
-            this->code = cvtZToUInt(strZ(strSubN(status, 0, (size_t)spacePos)));
+            this->pub.code = cvtZSubNToUInt(strZ(status), 0, (size_t)spacePos);
 
             // Read reason phrase. A missing reason phrase will be represented as an empty string.
-            MEM_CONTEXT_BEGIN(this->memContext)
+            MEM_CONTEXT_OBJ_BEGIN(this)
             {
-                this->reason = strSub(status, (size_t)spacePos + 1);
+                this->pub.reason = strSub(status, (size_t)spacePos + 1);
             }
-            MEM_CONTEXT_END();
+            MEM_CONTEXT_OBJ_END();
 
             // Read headers
             do
             {
                 // Read the next header
-                String *header = strTrim(ioReadLine(httpSessionIoRead(this->session)));
+                String *const header = strTrim(ioReadLine(httpSessionIoReadP(this->session)));
 
                 // If the header is empty then we have reached the end of the headers
                 if (strSize(header) == 0)
@@ -288,8 +288,6 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
 
                 String *headerKey = strLower(strTrim(strSubN(header, 0, (size_t)colonPos)));
                 String *headerValue = strTrim(strSub(header, (size_t)colonPos + 1));
-
-                httpHeaderAdd(this->header, headerKey, headerValue);
 
                 // Read transfer encoding (only chunked is supported)
                 if (strEq(headerKey, HTTP_HEADER_TRANSFER_ENCODING_STR))
@@ -312,10 +310,13 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
                     this->contentRemaining = this->contentSize;
                 }
 
-                // If the server notified of a closed connection then close the client connection after reading content.  This
+                // If the server notified of a closed connection then close the client connection after reading content. This
                 // prevents doing a retry on the next request when using the closed connection.
-                if (strEq(headerKey, HTTP_HEADER_CONNECTION_STR) && strEq(headerValue, HTTP_VALUE_CONNECTION_CLOSE_STR))
+                if (strEq(headerKey, HTTP_HEADER_CONNECTION_STR) && strEq(strLower(headerValue), HTTP_VALUE_CONNECTION_CLOSE_STR))
                     this->closeOnContentEof = true;
+
+                // Add after header checks in case the value was modified
+                httpHeaderAdd(this->pub.header, headerKey, headerValue);
             }
             while (1);
 
@@ -323,23 +324,23 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
             if (this->contentChunked && this->contentSize > 0)
             {
                 THROW_FMT(
-                    FormatError,  "'%s' and '%s' headers are both set", HTTP_HEADER_TRANSFER_ENCODING,
+                    FormatError, "'%s' and '%s' headers are both set", HTTP_HEADER_TRANSFER_ENCODING,
                     HTTP_HEADER_CONTENT_LENGTH);
             }
 
-            // Was content returned in the response?  HEAD will report content but not actually return any.
+            // Was content returned in the response? HEAD will report content but not actually return any.
             this->contentExists =
                 (this->contentChunked || this->contentSize > 0 || this->closeOnContentEof) && !strEq(verb, HTTP_VERB_HEAD_STR);
             this->contentEof = !this->contentExists;
 
-            // Create an io object, even if there is no content.  This makes the logic for readers easier -- they can just check eof
+            // Create an io object, even if there is no content. This makes the logic for readers easier -- they can just check eof
             // rather than also checking if the io object exists.
-            MEM_CONTEXT_BEGIN(this->memContext)
+            MEM_CONTEXT_OBJ_BEGIN(this)
             {
-                this->contentRead = ioReadNewP(this, .eof = httpResponseEof, .read = httpResponseRead);
-                ioReadOpen(this->contentRead);
+                this->pub.contentRead = ioReadNewP(this, .eof = httpResponseEof, .read = httpResponseRead);
+                ioReadOpen(httpResponseIoRead(this));
             }
-            MEM_CONTEXT_END();
+            MEM_CONTEXT_OBJ_END();
 
             // If there is no content then we are done with the client
             if (!this->contentExists)
@@ -349,22 +350,22 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
             // Else cache content when requested or on error
             else if (contentCache || !httpResponseCodeOk(this))
             {
-                MEM_CONTEXT_BEGIN(this->memContext)
+                MEM_CONTEXT_OBJ_BEGIN(this)
                 {
                     httpResponseContent(this);
                 }
-                MEM_CONTEXT_END();
+                MEM_CONTEXT_OBJ_END();
             }
         }
         MEM_CONTEXT_TEMP_END();
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(HTTP_RESPONSE, this);
 }
 
 /**********************************************************************************************************************************/
-const Buffer *
+FN_EXTERN const Buffer *
 httpResponseContent(HttpResponse *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -390,30 +391,22 @@ httpResponseContent(HttpResponse *this)
         }
     }
 
-    FUNCTION_TEST_RETURN(this->content);
+    FUNCTION_TEST_RETURN(BUFFER, this->content);
 }
 
 /**********************************************************************************************************************************/
-bool
-httpResponseCodeOk(const HttpResponse *this)
+FN_EXTERN void
+httpResponseToLog(const HttpResponse *const this, StringStatic *const debugLog)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(HTTP_RESPONSE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->code / 100 == 2);
-}
-
-/**********************************************************************************************************************************/
-String *
-httpResponseToLog(const HttpResponse *this)
-{
-    return strNewFmt(
-        "{code: %u, reason: %s, header: %s, contentChunked: %s, contentSize: %" PRIu64 ", contentRemaining: %" PRIu64
-            ", closeOnContentEof: %s, contentExists: %s, contentEof: %s, contentCached: %s}",
-        this->code, strZ(this->reason), strZ(httpHeaderToLog(this->header)), cvtBoolToConstZ(this->contentChunked),
-        this->contentSize, this->contentRemaining, cvtBoolToConstZ(this->closeOnContentEof), cvtBoolToConstZ(this->contentExists),
+    strStcFmt(
+        debugLog,
+        "{code: %u, reason: %s, contentChunked: %s, contentSize: %" PRIu64 ", contentRemaining: %" PRIu64 ", closeOnContentEof: %s"
+        ", contentExists: %s, contentEof: %s, contentCached: %s}",
+        httpResponseCode(this), strZ(httpResponseReason(this)), cvtBoolToConstZ(this->contentChunked), this->contentSize,
+        this->contentRemaining, cvtBoolToConstZ(this->closeOnContentEof), cvtBoolToConstZ(this->contentExists),
         cvtBoolToConstZ(this->contentEof), cvtBoolToConstZ(this->content != NULL));
+
+    strStcCat(debugLog, ", header: "),
+    httpHeaderToLog(httpResponseHeader(this), debugLog);
+    strStcCatChr(debugLog, '}');
 }

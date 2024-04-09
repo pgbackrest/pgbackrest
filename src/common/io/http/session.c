@@ -7,27 +7,21 @@ HTTP Session
 #include "common/io/http/session.h"
 #include "common/io/io.h"
 #include "common/log.h"
-#include "common/memContext.h"
-#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 struct HttpSession
 {
-    MemContext *memContext;                                         // Mem context
     HttpClient *httpClient;                                         // HTTP client
     IoSession *ioSession;                                           // IO session
 };
 
-OBJECT_DEFINE_MOVE(HTTP_SESSION);
-OBJECT_DEFINE_FREE(HTTP_SESSION);
-
 /**********************************************************************************************************************************/
-HttpSession *
+FN_EXTERN HttpSession *
 httpSessionNew(HttpClient *httpClient, IoSession *ioSession)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug)
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(HTTP_CLIENT, httpClient);
         FUNCTION_LOG_PARAM(IO_SESSION, ioSession);
     FUNCTION_LOG_END();
@@ -35,29 +29,24 @@ httpSessionNew(HttpClient *httpClient, IoSession *ioSession)
     ASSERT(httpClient != NULL);
     ASSERT(ioSession != NULL);
 
-    HttpSession *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("HttpSession")
+    OBJ_NEW_BEGIN(HttpSession, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = memNew(sizeof(HttpSession));
-
         *this = (HttpSession)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .httpClient = httpClient,
             .ioSession = ioSessionMove(ioSession, memContextCurrent()),
         };
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(HTTP_SESSION, this);
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 httpSessionDone(HttpSession *this)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug)
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(HTTP_SESSION, this);
     FUNCTION_LOG_END();
 
@@ -69,20 +58,21 @@ httpSessionDone(HttpSession *this)
 }
 
 /**********************************************************************************************************************************/
-IoRead *
-httpSessionIoRead(HttpSession *this)
+FN_EXTERN IoRead *
+httpSessionIoRead(HttpSession *const this, const HttpSessionIoReadParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(HTTP_SESSION, this);
+        FUNCTION_TEST_PARAM(BOOL, param.ignoreUnexpectedEof);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(ioSessionIoRead(this->ioSession));
+    FUNCTION_TEST_RETURN(IO_READ, ioSessionIoReadP(this->ioSession, .ignoreUnexpectedEof = param.ignoreUnexpectedEof));
 }
 
 /**********************************************************************************************************************************/
-IoWrite *
+FN_EXTERN IoWrite *
 httpSessionIoWrite(HttpSession *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -91,5 +81,5 @@ httpSessionIoWrite(HttpSession *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(ioSessionIoWrite(this->ioSession));
+    FUNCTION_TEST_RETURN(IO_WRITE, ioSessionIoWrite(this->ioSession));
 }

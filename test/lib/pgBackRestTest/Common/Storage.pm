@@ -644,7 +644,7 @@ sub pathGet
     my
     (
         $strOperation,
-        $strPathExp,                                               # File that that needs to be translated to a path
+        $strPathExp,                                               # File that needs to be translated to a path
         $bTemp,                                                    # Return the temp file name
     ) =
         logDebugParam

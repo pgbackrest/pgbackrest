@@ -3,10 +3,49 @@ Test Stack Trace Handler
 ***********************************************************************************************************************************/
 #include <assert.h>
 
+#include "common/harnessStackTrace.h"
+
+#ifdef HAVE_LIBBACKTRACE
+
+FN_NO_RETURN void
+testStackTraceError3(void)
+{
+    stackTracePush("module/common/stackTraceTest.c", "testStackTraceError3", logLevelTrace);
+    THROW(FormatError, "test error");
+}
+
+FN_NO_RETURN void
+testStackTraceError2(void)
+{
+    testStackTraceError3();
+}
+
+FN_NO_RETURN void
+testStackTraceError1(void)
+{
+    stackTracePush("src/file1.c", "testStackTraceError1", logLevelDebug);
+    testStackTraceError2();
+}
+
+FN_NO_RETURN void
+testStackTraceError5(void)
+{
+    THROW_FMT(FormatError, "test error fmt");
+}
+
+FN_NO_RETURN void
+testStackTraceError4(void)
+{
+    stackTracePush("file4.c", "testStackTraceError4", logLevelTrace);
+    testStackTraceError5();
+}
+
+#endif
+
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
@@ -25,26 +64,136 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("stackTraceInit() and stackTraceError()"))
+    if (testBegin("libBackTrace"))
     {
-#ifdef WITH_BACKTRACE
-        stackTraceInit(BOGUS_STR);
+#ifdef HAVE_LIBBACKTRACE
+        // *************************************************************************************************************************
+        TEST_TITLE("empty error function");
 
-        // This time does nothing
-        stackTraceInit(BOGUS_STR);
+        TEST_RESULT_VOID(stackTraceBackErrorCallback(NULL, NULL, 0), "call error");
 
-        // This will call the error routine since we passed a bogus exe
-        assert(stackTracePush("file1.c", "function1", logLevelDebug) == logLevelDebug);
-        stackTracePop("file1.c", "function1", false);
+        // *************************************************************************************************************************
+        TEST_TITLE("missing backtrace data");
 
-        stackTraceLocal.backTraceState = NULL;
+        StackTraceBackData data =
+        {
+            .firstCall = true,
+        };
+
+        TEST_RESULT_INT(stackTraceBackCallback(&data, 0, NULL, 0, NULL), true, "all null, first call");
+
+        data.firstCall = false;
+
+        TEST_RESULT_INT(stackTraceBackCallback(&data, 0, "fileName", 0, NULL), false, "two null");
+        TEST_RESULT_INT(stackTraceBackCallback(&data, 0, "fileName", 2, NULL), false, "one null");
+
+        // Note that it is possible for libbacktrace to be present but not have any debug symbols to work with so handle that by
+        // looking for an alternative error. However this will not work when coverage is required.
+        // *************************************************************************************************************************
+        TEST_TITLE("backtrace data");
+
+        TRY_BEGIN()
+        {
+            testStackTraceError1();
+        }
+        CATCH_ANY()
+        {
+            TRY_BEGIN()
+            {
+                char buffer[4096];
+                snprintf(buffer, sizeof(buffer), "%s", errorStackTrace());
+
+                if (strstr(buffer, ":testRun:") != NULL)
+                    memcpy(strstr(buffer, ":testRun:") + 9, "XX", 2);
+
+                if (strstr(buffer, ":main:") != NULL)
+                    memcpy(strstr(buffer, ":main:") + 6, "XXX", 3);
+
+                TEST_RESULT_Z(
+                    buffer,
+                    "module/common/stackTraceTest.c:testStackTraceError3:14:(trace log level required for parameters)\n"
+                    "module/common/stackTraceTest.c:testStackTraceError2:20:(no parameters available)\n"
+                    "file1.c:testStackTraceError1:27:(debug log level required for parameters)\n"
+                    "module/common/stackTraceTest.c:testRun:XX:(no parameters available)\n"
+                    "../test.c:main:XXX:(no parameters available)",
+                    "check stack trace");
+            }
+            CATCH(TestError)
+            {
+                hrnTestResultEnd();
+
+                TRY_BEGIN()
+                {
+                    testStackTraceError1();
+                }
+                CATCH_ANY()
+                {
+                    TEST_RESULT_Z(
+                        errorStackTrace(),
+                        "module/common/stackTraceTest.c:testStackTraceError3:14:(trace log level required for parameters)\n"
+                        "file1.c:testStackTraceError1:(debug log level required for parameters)",
+                        "check stack trace");
+                }
+                TRY_END();
+            }
+            TRY_END();
+        }
+        TRY_END();
+
+        TRY_BEGIN()
+        {
+            testStackTraceError4();
+        }
+        CATCH_ANY()
+        {
+            TRY_BEGIN()
+            {
+                char buffer[4096];
+                snprintf(buffer, sizeof(buffer), "%s", errorStackTrace());
+
+                if (strstr(buffer, ":testRun:") != NULL)
+                    memcpy(strstr(buffer, ":testRun:") + 9, "XXX", 3);
+
+                if (strstr(buffer, ":main:") != NULL)
+                    memcpy(strstr(buffer, ":main:") + 6, "XXX", 3);
+
+                TEST_RESULT_Z(
+                    buffer,
+                    "module/common/stackTraceTest.c:testStackTraceError5:33:(no parameters available)\n"
+                    "file4.c:testStackTraceError4:40:(trace log level required for parameters)\n"
+                    "module/common/stackTraceTest.c:testRun:XXX:(no parameters available)\n"
+                    "../test.c:main:XXX:(no parameters available)",
+                    "check stack trace");
+            }
+            CATCH(TestError)
+            {
+                hrnTestResultEnd();
+
+                TRY_BEGIN()
+                {
+                    testStackTraceError4();
+                }
+                CATCH_ANY()
+                {
+                    TEST_RESULT_Z(
+                        errorStackTrace(),
+                        "module/common/stackTraceTest.c:testStackTraceError5:33:(test build required for parameters)\n"
+                        "    ... function(s) omitted ...\n"
+                        "file4.c:testStackTraceError4:(trace log level required for parameters)",
+                        "check stack trace");
+                }
+                TRY_END();
+            }
+            TRY_END();
+        }
+        TRY_END();
 #endif
     }
 
     // *****************************************************************************************************************************
     if (testBegin("stackTraceTestStart(), stackTraceTestStop(), and stackTraceTest()"))
     {
-#ifndef NDEBUG
+#ifdef DEBUG
         assert(stackTraceTest());
 
         stackTraceTestStop();
@@ -65,9 +214,11 @@ testRun(void)
     {
         char buffer[4096];
 
-#ifdef WITH_BACKTRACE
-        stackTraceInit(testExe());
+#ifdef HAVE_LIBBACKTRACE
+        // Disable backtrace to make sure default code is called
+        hrnStackTraceBackShimInstall();
 #endif
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check size of StackTraceData");
 
@@ -98,9 +249,9 @@ testRun(void)
 
             TEST_RESULT_Z(
                 buffer,
-                "file1:function2:99:(test build required for parameters)\n"
+                "file1.c:function2:99:(test build required for parameters)\n"
                 "    ... function(s) omitted ...\n"
-                "file1:function1:(void)",
+                "file1.c:function1:(void)",
                 "    check stack trace");
 
             assert(stackTracePush("file1.c", "function2", logLevelTrace) == logLevelTrace);
@@ -135,7 +286,7 @@ testRun(void)
                 // Munge the previous previous param in the stack so that the next one will just barely fit
                 stackTraceLocal.stack[stackTraceLocal.stackSize - 1].paramSize = bufferOverflow - 1;
 
-                assert(stackTracePush("file4.c", "function4", logLevelDebug) == logLevelTrace);
+                assert(stackTracePush("src/file4.c", "function4", logLevelDebug) == logLevelTrace);
                 stackTraceLocal.stack[stackTraceLocal.stackSize - 2].fileLine = 7777;
                 stackTraceParamLog();
                 assert(stackTraceLocal.stackSize == 5);
@@ -150,18 +301,31 @@ testRun(void)
                 stackTraceParamAdd((size_t)snprintf(stackTraceParamBuffer("param1"), STACK_TRACE_PARAM_MAX, "value1"));
                 assert(strcmp(stackTraceParam(), "buffer full - parameters not available") == 0);
 
-                stackTraceToZ(buffer, sizeof(buffer), "file4.c", "function4", 99);
+                stackTraceToZ(buffer, sizeof(buffer), "../pgbackrest/src/file4.c", "function4", 99);
 
                 TEST_RESULT_Z(
                     buffer,
-                    "file4:function4:99:(buffer full - parameters not available)\n"
-                    "file3:function3:7777:(param1: value1, param2: value2)\n"
-                    "file2:function2:7777:(param1: value1)\n"
-                    "file1:function2:7777:(debug log level required for parameters)\n"
-                    "file1:function1:7777:(void)",
+                    "file4.c:function4:99:(buffer full - parameters not available)\n"
+                    "file3.c:function3:7777:(param1: value1, param2: value2)\n"
+                    "file2.c:function2:7777:(param1: value1)\n"
+                    "file1.c:function2:7777:(debug log level required for parameters)\n"
+                    "file1.c:function1:7777:(void)",
                     "stack trace");
 
-                stackTracePop("file4.c", "function4", false);
+                stackTraceToZ(buffer, sizeof(buffer), "file5.c", "function4", 99);
+
+                TEST_RESULT_Z(
+                    buffer,
+                    "file5.c:function4:99:(test build required for parameters)\n"
+                    "    ... function(s) omitted ...\n"
+                    "file4.c:function4:(buffer full - parameters not available)\n"
+                    "file3.c:function3:7777:(param1: value1, param2: value2)\n"
+                    "file2.c:function2:7777:(param1: value1)\n"
+                    "file1.c:function2:7777:(debug log level required for parameters)\n"
+                    "file1.c:function1:7777:(void)",
+                    "stack trace");
+
+                stackTracePop("src/file4.c", "function4", false);
                 assert(stackTraceLocal.stackSize == 4);
 
                 // Check that stackTracePop() works with test tracing
@@ -191,7 +355,11 @@ testRun(void)
         TRY_END();
 
         assert(stackTraceLocal.stackSize == 0);
+
+#ifdef HAVE_LIBBACKTRACE
+        hrnStackTraceBackShimUninstall();
+#endif
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

@@ -24,49 +24,44 @@ Object type
 ***********************************************************************************************************************************/
 struct HttpClient
 {
-    MemContext *memContext;                                         // Mem context
-    TimeMSec timeout;                                               // Request timeout
+    HttpClientPub pub;                                              // Publicly accessible variables
     IoClient *ioClient;                                             // Io client (e.g. TLS or socket client)
 
     List *sessionReuseList;                                         // List of HTTP sessions that can be reused
 };
 
-OBJECT_DEFINE_GET(Timeout, const, HTTP_CLIENT, TimeMSec, timeout);
-
 /**********************************************************************************************************************************/
-HttpClient *
+FN_EXTERN HttpClient *
 httpClientNew(IoClient *ioClient, TimeMSec timeout)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug)
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_CLIENT, ioClient);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
     FUNCTION_LOG_END();
 
     ASSERT(ioClient != NULL);
 
-    HttpClient *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("HttpClient")
+    OBJ_NEW_BEGIN(HttpClient, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = memNew(sizeof(HttpClient));
-
         *this = (HttpClient)
         {
-            .memContext = MEM_CONTEXT_NEW(),
-            .timeout = timeout,
+            .pub =
+            {
+                .timeout = timeout,
+            },
             .ioClient = ioClient,
             .sessionReuseList = lstNewP(sizeof(HttpSession *)),
         };
 
         statInc(HTTP_STAT_CLIENT_STR);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(HTTP_CLIENT, this);
 }
 
 /**********************************************************************************************************************************/
-HttpSession *
+FN_EXTERN HttpSession *
 httpClientOpen(HttpClient *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -77,8 +72,8 @@ httpClientOpen(HttpClient *this)
 
     HttpSession *result = NULL;
 
-    // Check if there is a resuable session
-    if (lstSize(this->sessionReuseList) > 0)
+    // Check if there is a reusable session
+    if (!lstEmpty(this->sessionReuseList))
     {
         // Remove session from reusable list
         result = *(HttpSession **)lstGet(this->sessionReuseList, 0);
@@ -98,7 +93,7 @@ httpClientOpen(HttpClient *this)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 httpClientReuse(HttpClient *this, HttpSession *session)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -116,10 +111,10 @@ httpClientReuse(HttpClient *this, HttpSession *session)
 }
 
 /**********************************************************************************************************************************/
-String *
-httpClientToLog(const HttpClient *this)
+FN_EXTERN void
+httpClientToLog(const HttpClient *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{ioClient: %s, reusable: %u, timeout: %" PRIu64"}", strZ(ioClientToLog(this->ioClient)), lstSize(this->sessionReuseList),
-        this->timeout);
+    strStcCat(debugLog, "{ioClient: ");
+    ioClientToLog(this->ioClient, debugLog);
+    strStcFmt(debugLog, ", reusable: %u, timeout: %" PRIu64 "}", lstSize(this->sessionReuseList), httpClientTimeout(this));
 }

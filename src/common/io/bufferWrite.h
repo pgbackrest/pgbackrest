@@ -11,6 +11,15 @@ Write to a Buffer object using the IoWrite interface.
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-IoWrite *ioBufferWriteNew(Buffer *buffer);
+FN_EXTERN IoWrite *ioBufferWriteNew(Buffer *buffer);
+
+// Construct and open buffer write
+FN_INLINE_ALWAYS IoWrite *
+ioBufferWriteNewOpen(Buffer *const buffer)
+{
+    IoWrite *const result = ioBufferWriteNew(buffer);
+    ioWriteOpen(result);
+    return result;
+}
 
 #endif

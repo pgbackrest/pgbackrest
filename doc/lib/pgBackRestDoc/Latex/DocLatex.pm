@@ -19,7 +19,6 @@ use Storable qw(dclone);
 
 use pgBackRestTest::Common::ExecuteTest;
 
-use pgBackRestDoc::Common::DocConfig;
 use pgBackRestDoc::Common::DocManifest;
 use pgBackRestDoc::Common::Exception;
 use pgBackRestDoc::Common::Log;
@@ -165,7 +164,7 @@ sub process
         $strLatexOutputName = abs_path($self->{strLatexPath} . "/" . $oRender->{file});
     }
 
-    # Copy pdf file if is is not already in the correct place
+    # Copy pdf file if it is not already in the correct place
     if ($strLatexOutputName ne "$self->{strLatexPath}/" . $strLatexFileBase . '.pdf')
     {
         copy("$self->{strLatexPath}/" . $strLatexFileBase . '.pdf', $strLatexOutputName)

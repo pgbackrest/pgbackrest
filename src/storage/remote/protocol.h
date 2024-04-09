@@ -4,41 +4,63 @@ Remote Storage Protocol Handler
 #ifndef STORAGE_REMOTE_PROTOCOL_H
 #define STORAGE_REMOTE_PROTOCOL_H
 
-#include "common/type/string.h"
-#include "common/type/variantList.h"
+#include "common/type/pack.h"
 #include "protocol/server.h"
-
-/***********************************************************************************************************************************
-Constants
-***********************************************************************************************************************************/
-#define PROTOCOL_BLOCK_HEADER                                       "BRBLOCK"
-
-#define PROTOCOL_COMMAND_STORAGE_FEATURE                            "storageFeature"
-    STRING_DECLARE(PROTOCOL_COMMAND_STORAGE_FEATURE_STR);
-#define PROTOCOL_COMMAND_STORAGE_INFO                               "storageInfo"
-    STRING_DECLARE(PROTOCOL_COMMAND_STORAGE_INFO_STR);
-#define PROTOCOL_COMMAND_STORAGE_INFO_LIST                          "storageInfoList"
-    STRING_DECLARE(PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR);
-#define PROTOCOL_COMMAND_STORAGE_OPEN_READ                          "storageOpenRead"
-    STRING_DECLARE(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR);
-#define PROTOCOL_COMMAND_STORAGE_OPEN_WRITE                         "storageOpenWrite"
-    STRING_DECLARE(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR);
-#define PROTOCOL_COMMAND_STORAGE_PATH_CREATE                        "storagePathCreate"
-    STRING_DECLARE(PROTOCOL_COMMAND_STORAGE_PATH_CREATE_STR);
-#define PROTOCOL_COMMAND_STORAGE_REMOVE                             "storageRemove"
-    STRING_DECLARE(PROTOCOL_COMMAND_STORAGE_REMOVE_STR);
-#define PROTOCOL_COMMAND_STORAGE_PATH_REMOVE                        "storagePathRemove"
-    STRING_DECLARE(PROTOCOL_COMMAND_STORAGE_PATH_REMOVE_STR);
-#define PROTOCOL_COMMAND_STORAGE_PATH_SYNC                          "storagePathSync"
-    STRING_DECLARE(PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Get size of the next transfer block
-ssize_t storageRemoteProtocolBlockSize(const String *message);
-
 // Process storage protocol requests
-bool storageRemoteProtocol(const String *command, const VariantList *paramList, ProtocolServer *server);
+FN_EXTERN void storageRemoteFeatureProtocol(PackRead *param, ProtocolServer *server);
+FN_EXTERN void storageRemoteInfoProtocol(PackRead *param, ProtocolServer *server);
+FN_EXTERN void storageRemoteLinkCreateProtocol(PackRead *param, ProtocolServer *server);
+FN_EXTERN void storageRemoteListProtocol(PackRead *param, ProtocolServer *server);
+FN_EXTERN void storageRemoteOpenReadProtocol(PackRead *param, ProtocolServer *server);
+FN_EXTERN void storageRemoteOpenWriteProtocol(PackRead *param, ProtocolServer *server);
+FN_EXTERN void storageRemotePathCreateProtocol(PackRead *param, ProtocolServer *server);
+FN_EXTERN void storageRemotePathRemoveProtocol(PackRead *param, ProtocolServer *server);
+FN_EXTERN void storageRemotePathSyncProtocol(PackRead *param, ProtocolServer *server);
+FN_EXTERN void storageRemoteRemoveProtocol(PackRead *param, ProtocolServer *server);
+
+/***********************************************************************************************************************************
+Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()
+***********************************************************************************************************************************/
+#define PROTOCOL_COMMAND_STORAGE_FEATURE                            STRID5("s-f", 0x1b730)
+#define PROTOCOL_COMMAND_STORAGE_INFO                               STRID5("s-i", 0x27730)
+#define PROTOCOL_COMMAND_STORAGE_LINK_CREATE                        STRID5("s-lc", 0x1b3730)
+#define PROTOCOL_COMMAND_STORAGE_LIST                               STRID5("s-l", 0x33730)
+#define PROTOCOL_COMMAND_STORAGE_OPEN_READ                          STRID5("s-or", 0x93f730)
+#define PROTOCOL_COMMAND_STORAGE_OPEN_WRITE                         STRID5("s-ow", 0xbbf730)
+#define PROTOCOL_COMMAND_STORAGE_PATH_CREATE                        STRID5("s-pc", 0x1c3730)
+#define PROTOCOL_COMMAND_STORAGE_REMOVE                             STRID5("s-r", 0x4b730)
+#define PROTOCOL_COMMAND_STORAGE_PATH_REMOVE                        STRID5("s-pr", 0x943730)
+#define PROTOCOL_COMMAND_STORAGE_PATH_SYNC                          STRID5("s-ps", 0x9c3730)
+
+#define PROTOCOL_SERVER_HANDLER_STORAGE_REMOTE_LIST                                                                                \
+    {.command = PROTOCOL_COMMAND_STORAGE_FEATURE, .handler = storageRemoteFeatureProtocol},                                        \
+    {.command = PROTOCOL_COMMAND_STORAGE_INFO, .handler = storageRemoteInfoProtocol},                                              \
+    {.command = PROTOCOL_COMMAND_STORAGE_LINK_CREATE, .handler = storageRemoteLinkCreateProtocol},                                 \
+    {.command = PROTOCOL_COMMAND_STORAGE_LIST, .handler = storageRemoteListProtocol},                                              \
+    {.command = PROTOCOL_COMMAND_STORAGE_OPEN_READ, .handler = storageRemoteOpenReadProtocol},                                     \
+    {.command = PROTOCOL_COMMAND_STORAGE_OPEN_WRITE, .handler = storageRemoteOpenWriteProtocol},                                   \
+    {.command = PROTOCOL_COMMAND_STORAGE_PATH_CREATE, .handler = storageRemotePathCreateProtocol},                                 \
+    {.command = PROTOCOL_COMMAND_STORAGE_PATH_REMOVE, .handler = storageRemotePathRemoveProtocol},                                 \
+    {.command = PROTOCOL_COMMAND_STORAGE_PATH_SYNC, .handler = storageRemotePathSyncProtocol},                                     \
+    {.command = PROTOCOL_COMMAND_STORAGE_REMOVE, .handler = storageRemoteRemoveProtocol},
+
+/***********************************************************************************************************************************
+Filters that may be passed to a remote
+***********************************************************************************************************************************/
+typedef IoFilter *(*StorageRemoteFilterHandlerParam)(const Pack *paramList);
+typedef IoFilter *(*StorageRemoteFilterHandlerNoParam)(void);
+
+typedef struct StorageRemoteFilterHandler
+{
+    StringId type;                                                  // Filter type
+    StorageRemoteFilterHandlerParam handlerParam;                   // Handler for filter with parameters
+    StorageRemoteFilterHandlerNoParam handlerNoParam;               // Handler with no parameters
+} StorageRemoteFilterHandler;
+
+FN_EXTERN void storageRemoteFilterHandlerSet(const StorageRemoteFilterHandler *filterHandler, unsigned int filterHandlerSize);
 
 #endif

@@ -24,7 +24,7 @@ testLogOpen(const char *logFile, int flags, int mode)
 
     THROW_ON_SYS_ERROR_FMT(result == -1, FileOpenError, "unable to open log file '%s'", logFile);
 
-    FUNCTION_HARNESS_RESULT(INT, result);
+    FUNCTION_HARNESS_RETURN(INT, result);
 }
 
 /***********************************************************************************************************************************
@@ -64,13 +64,13 @@ testLogLoad(const char *logFile, char *buffer, size_t bufferSize)
     // Remove final linefeed
     buffer[totalBytes - 1] = 0;
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
 Compare log to a static string
 ***********************************************************************************************************************************/
-void
+static void
 testLogResult(const char *logFile, const char *expected)
 {
     FUNCTION_HARNESS_BEGIN();
@@ -84,17 +84,15 @@ testLogResult(const char *logFile, const char *expected)
     char actual[32768];
     testLogLoad(logFile, actual, sizeof(actual));
 
-    if (strcmp(actual, expected) != 0)                                                          // {uncoverable_branch}
-        THROW_FMT(                                                                              // {+uncovered}
-            AssertError, "\n\nexpected log:\n\n%s\n\nbut actual log was:\n\n%s\n\n", expected, actual);
+    TEST_RESULT_Z(actual, expected, "check log");
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
@@ -102,10 +100,10 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("logLevelEnum() and logLevelStr()"))
     {
-        TEST_ERROR(logLevelEnum(BOGUS_STR), AssertError, "log level 'BOGUS' not found");
-        TEST_RESULT_INT(logLevelEnum("OFF"), logLevelOff, "log level 'OFF' found");
-        TEST_RESULT_INT(logLevelEnum("info"), logLevelInfo, "log level 'info' found");
-        TEST_RESULT_INT(logLevelEnum("TRACE"), logLevelTrace, "log level 'TRACE' found");
+        TEST_ERROR(logLevelEnum(strIdFromZ(BOGUS_STR)), AssertError, "invalid log level");
+        TEST_RESULT_INT(logLevelEnum(strIdFromZ("off")), logLevelOff, "log level 'OFF' found");
+        TEST_RESULT_INT(logLevelEnum(strIdFromZ("info")), logLevelInfo, "log level 'info' found");
+        TEST_RESULT_INT(logLevelEnum(strIdFromZ("trace")), logLevelTrace, "log level 'TRACE' found");
 
         TEST_ERROR(logLevelStr(999), AssertError, "assertion 'logLevel <= LOG_LEVEL_MAX' failed");
         TEST_RESULT_Z(logLevelStr(logLevelOff), "OFF", "log level 'OFF' found");
@@ -178,19 +176,17 @@ testRun(void)
         TEST_RESULT_VOID(
             logInternal(logLevelWarn, LOG_LEVEL_MIN, LOG_LEVEL_MAX, 0, "file", "function", 0, "TEST"), "log timestamp");
 
-        String *logTime = strNewN(logBuffer, 23);
+        String *logTime = strNewZN(logBuffer, 23);
         TEST_RESULT_BOOL(
             regExpMatchOne(
-                strNew("^20[0-9]{2}\\-[0-1][0-9]\\-[0-3][0-9] [0-2][0-9]\\:[0-5][0-9]\\:[0-5][0-9]\\.[0-9]{3}$"), logTime),
-            true, "check timestamp format: %s", strZ(logTime));
+                STRDEF("^20[0-9]{2}\\-[0-1][0-9]\\-[0-3][0-9] [0-2][0-9]\\:[0-5][0-9]\\:[0-5][0-9]\\.[0-9]{3}$"), logTime),
+            true, "check timestamp format");
 
         // Redirect output to files
-        char stdoutFile[1024];
-        snprintf(stdoutFile, sizeof(stdoutFile), "%s/stdout.log", testPath());
+        const char *const stdoutFile = TEST_PATH "/stdout.log";
         logFdStdOut = testLogOpen(stdoutFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
 
-        char stderrFile[1024];
-        snprintf(stderrFile, sizeof(stderrFile), "%s/stderr.log", testPath());
+        const char *const stderrFile = TEST_PATH "/stderr.log";
         logFdStdErr = testLogOpen(stderrFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
 
         TEST_RESULT_VOID(
@@ -220,8 +216,7 @@ testRun(void)
         TEST_RESULT_VOID(logInit(logLevelDebug, logLevelDebug, logLevelDebug, false, 0, 999, false), "init logging to debug");
 
         // Log to file
-        char fileFile[1024];
-        snprintf(fileFile, sizeof(stdoutFile), "%s/file.log", testPath());
+        const char *const fileFile = TEST_PATH "/file.log";
         logFileSet(fileFile);
 
         logBuffer[0] = 0;
@@ -257,6 +252,34 @@ testRun(void)
         TEST_RESULT_BOOL(logFileSet("/" BOGUS_STR), false, "attempt to open bogus file");
         TEST_RESULT_INT(logFdFile, -1, "log file is closed");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error goes to stderr when stderr is not in range but stdout is");
+
+        TEST_RESULT_VOID(logInit(logLevelDebug, logLevelWarn, logLevelOff, false, 0, 99, false), "init");
+        TEST_RESULT_VOID(
+            logInternal(logLevelError, logLevelDebug, LOG_LEVEL_MAX, 99, "test.c", "test_func", 1, "error to stderr"), "log error");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error goes to stderr when stdout is not in range but stderr is");
+
+        TEST_RESULT_VOID(logInit(logLevelWarn, logLevelDebug, logLevelOff, false, 0, 99, false), "init");
+        TEST_RESULT_VOID(
+            logInternal(logLevelError, logLevelDebug, LOG_LEVEL_MAX, 99, "test.c", "test_func", 1, "error to stderr 2"),
+            "log error");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error goes nowhere when stdout and stderr are out of rance");
+
+        TEST_RESULT_VOID(logInit(logLevelWarn, logLevelDebug, logLevelOff, false, 0, 99, false), "init");
+        TEST_RESULT_VOID(
+            logInternal(logLevelError, logLevelTrace, LOG_LEVEL_MAX, 99, "test.c", "test_func", 1, "error to stderr 2"),
+            "log error");
+
+        // Get the error message from above to use for the expect log test
+        int testFdFile = open("/" BOGUS_STR, O_CREAT | O_APPEND, 0640);
+        const char *testErrorFile = strerror(errno);
+        TEST_RESULT_INT(testFdFile, -1, "got error message");
+
         // Close logging again
         TEST_RESULT_VOID(logInit(logLevelDebug, logLevelDebug, logLevelDebug, false, 0, 99, false), "reduce log size");
         TEST_RESULT_BOOL(logFileSet(fileFile), true, "open valid file");
@@ -277,14 +300,21 @@ testRun(void)
             "            message2");
 
         // Check stderr
-        testLogResult(
-            stderrFile,
+        char buffer[4096];
+
+        sprintf(
+            buffer,
             "DEBUG:     test::test_func: message\n"
             "           message2\n"
             "INFO: [DRY-RUN] info message\n"
             "INFO: [DRY-RUN] info message 2\n"
-            "WARN: [DRY-RUN] unable to open log file '/BOGUS': Permission denied\n"
-            "      NOTE: process will continue without log file.");
+            "WARN: [DRY-RUN] unable to open log file '/BOGUS': %s\n"
+            "      NOTE: process will continue without log file.\n"
+            "ERROR: [001]: error to stderr\n"
+            "ERROR: [001]: error to stderr 2",
+            testErrorFile);
+
+        testLogResult(stderrFile, buffer);
 
         // Check file
         testLogResult(
@@ -298,5 +328,5 @@ testRun(void)
             "P99   INFO: [DRY-RUN] info message 2");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

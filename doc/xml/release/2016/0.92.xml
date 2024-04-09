@@ -1,0 +1,13 @@
+<release date="2016-04-06" version="0.92" title="Command-line Repository Path Fix">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="jan.wieck"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue where the master process was passing <setting>{[dash]}-repo-remote-path</setting> instead of <setting>{[dash]}-repo-path</setting> to the remote and causing the lock files to be created in the default repository directory (<path>/var/lib/backup</path>), generally ending in failure. This was only an issue when <setting>{[dash]}-repo-remote-path</setting> was defined on the command line rather than in <file>pg_backrest.conf</file>.</p>
+            </release-item>
+        </release-bug-list>
+    </release-core-list>
+</release>

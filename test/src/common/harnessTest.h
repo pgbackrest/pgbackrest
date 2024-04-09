@@ -6,15 +6,32 @@ C Test Harness
 
 #include <inttypes.h>
 
-#include "common/harnessTest.intern.h"
-
+#include "common/assert.h"
 #include "common/debug.h"
-#include "common/error.h"
+
+#include "common/harnessTest.intern.h"
 
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
 #define BOGUS_STR                                                   "BOGUS"
+
+/***********************************************************************************************************************************
+Make sure ASSERT() always exists for tests to use, even when DEBUG is disabled for performance
+***********************************************************************************************************************************/
+#ifdef HRN_FEATURE_ASSERT
+
+#undef ASSERT
+
+#define ASSERT(condition)                                                                                                          \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        if (!(condition))                                                                                                          \
+            THROW_FMT(AssertError, "assertion '%s' failed", #condition);                                                           \
+    }                                                                                                                              \
+    while (0)
+
+#endif
 
 /***********************************************************************************************************************************
 Functions
@@ -27,19 +44,6 @@ void hrnFileRead(const char *fileName, unsigned char *buffer, size_t bufferSize)
 
 // Write a buffer to a file
 void hrnFileWrite(const char *fileName, const unsigned char *buffer, size_t bufferSize);
-
-// Replace common test values in a string and return a buffer with the replacements.
-//
-// Note that the returned buffer will be overwritten with each call.  Values that can be replaced are:
-//
-// {[path]} - the current test path
-// {[path-data]} - the current test data path
-// {[user-id]} - the current test user id
-// {[user]} - the current test user
-// {[group-id]} - the current test group id
-// {[group]} - the current test group
-// {[project-exe]} - the project exe
-const char *hrnReplaceKey(const char *string);
 
 // Diff two strings using command-line diff tool
 const char *hrnDiff(const char *actual, const char *expected);
@@ -56,37 +60,38 @@ uint64_t testTimeMSecBegin(void);
 // The path and name of the test executable
 const char *testExe(void);
 
-// Path where test data is written
-const char *testPath(void);
-
-// Path to a copy of the repository
-const char *testRepoPath(void);
-
-// Test OS user
-const char *testUser(void);
-
-// Test OS group
-const char *testGroup(void);
-
 // Is this test running in a container?
 bool testContainer(void);
 
-// Location of the data path were the harness can write data that won't be visible to the test
-const char *testDataPath(void);
-
-// Get the 0-based index of the test.  Useful for modifying resources like port numbers to avoid conflicts when running tests in
+// Get the 0-based index of the test. Useful for modifying resources like port numbers to avoid conflicts when running tests in
 // parallel.
 unsigned int testIdx(void);
 
-// Location of the project exe
-const char *testProjectExe(void);
+// PostgreSQL version for integration testing
+const char *testPgVersion(void);
 
-// For scaling performance tests
-uint64_t testScale(void);
+// User running the test
+const char *testUser(void);
+
+// VM for integration testing
+const char *testVm(void);
 
 /***********************************************************************************************************************************
 Test that an expected error is actually thrown and error when it isn't
 ***********************************************************************************************************************************/
+// Wrap the error in a temp mem context (when available) to free memory and execute callbacks after CATCH_FATAL()
+#ifdef HRN_FEATURE_MEMCONTEXT
+
+#include "common/memContext.h"
+
+#define TEST_ERROR_MEM_CONTEXT_BEGIN()                              MEM_CONTEXT_TEMP_BEGIN()
+#define TEST_ERROR_MEM_CONTEXT_END()                                MEM_CONTEXT_TEMP_END()
+
+#else
+#define TEST_ERROR_MEM_CONTEXT_BEGIN()
+#define TEST_ERROR_MEM_CONTEXT_END()
+#endif
+
 #define TEST_ERROR(statement, errorTypeExpected, errorMessageExpected)                                                             \
 {                                                                                                                                  \
     bool TEST_ERROR_catch = false;                                                                                                 \
@@ -94,24 +99,28 @@ Test that an expected error is actually thrown and error when it isn't
     /* Set the line number for the current function in the stack trace */                                                          \
     FUNCTION_HARNESS_STACK_TRACE_LINE_SET(__LINE__);                                                                               \
                                                                                                                                    \
-    hrnTestLogPrefix(__LINE__, true);                                                                                              \
+    hrnTestLogPrefix(__LINE__);                                                                                                    \
     printf("expect %s: %s\n", errorTypeName(&errorTypeExpected), errorMessageExpected);                                            \
     fflush(stdout);                                                                                                                \
                                                                                                                                    \
-    TRY_BEGIN()                                                                                                                    \
+    TEST_ERROR_MEM_CONTEXT_BEGIN()                                                                                                 \
     {                                                                                                                              \
-        statement;                                                                                                                 \
-    }                                                                                                                              \
-    CATCH_ANY()                                                                                                                    \
-    {                                                                                                                              \
-        TEST_ERROR_catch = true;                                                                                                   \
+        TRY_BEGIN()                                                                                                                \
+        {                                                                                                                          \
+            statement;                                                                                                             \
+        }                                                                                                                          \
+        CATCH_FATAL()                                                                                                              \
+        {                                                                                                                          \
+            TEST_ERROR_catch = true;                                                                                               \
                                                                                                                                    \
-        if (strcmp(errorMessage(), errorMessageExpected) != 0 || errorType() != &errorTypeExpected)                                \
-            THROW_FMT(                                                                                                             \
-                TestError, "EXPECTED %s: %s\n\n BUT GOT %s: %s\n\nTHROWN AT:\n%s", errorTypeName(&errorTypeExpected),              \
-                errorMessageExpected, errorName(), errorMessage(), errorStackTrace());                                             \
+            if (strcmp(errorMessage(), errorMessageExpected) != 0 || errorType() != &errorTypeExpected)                            \
+                THROW_FMT(                                                                                                         \
+                    TestError, "EXPECTED %s: %s\n\n BUT GOT %s: %s\n\nTHROWN AT:\n%s", errorTypeName(&errorTypeExpected),          \
+                    errorMessageExpected, errorName(), errorMessage(), errorStackTrace());                                         \
+        }                                                                                                                          \
+        TRY_END();                                                                                                                 \
     }                                                                                                                              \
-    TRY_END();                                                                                                                     \
+    TEST_ERROR_MEM_CONTEXT_END();                                                                                                  \
                                                                                                                                    \
     if (!TEST_ERROR_catch)                                                                                                         \
         THROW_FMT(                                                                                                                 \
@@ -137,19 +146,26 @@ Test error with a formatted expected message
 /***********************************************************************************************************************************
 Output information about the test
 ***********************************************************************************************************************************/
-#define TEST_RESULT_INFO(...)                                                                                                      \
-    hrnTestLogPrefix(__LINE__, true);                                                                                              \
-    printf(__VA_ARGS__);                                                                                                           \
-    printf("\n");                                                                                                                  \
+#define TEST_RESULT_INFO(comment)                                                                                                  \
+    hrnTestLogPrefix(__LINE__);                                                                                                    \
+    puts(comment);                                                                                                                 \
     fflush(stdout);
+
+#define TEST_RESULT_INFO_LINE_FMT(line, comment, ...)                                                                              \
+    hrnTestLogPrefix(line);                                                                                                        \
+    printf(comment "\n", __VA_ARGS__);                                                                                             \
+    fflush(stdout)
+
+#define TEST_RESULT_INFO_FMT(comment, ...)                                                                                         \
+    TEST_RESULT_INFO_LINE_FMT(__LINE__, comment, __VA_ARGS__)
 
 /***********************************************************************************************************************************
 Test that a void statement returns and does not throw an error
 ***********************************************************************************************************************************/
-#define TEST_RESULT_VOID(statement, ...)                                                                                           \
+#define TEST_RESULT_VOID(statement, comment)                                                                                       \
 {                                                                                                                                  \
-    TEST_RESULT_INFO(__VA_ARGS__);                                                                                                 \
-    hrnTestResultBegin(#statement, __LINE__, false);                                                                               \
+    TEST_RESULT_INFO(comment);                                                                                                     \
+    hrnTestResultBegin(#statement, false);                                                                                         \
     statement;                                                                                                                     \
     hrnTestResultEnd();                                                                                                            \
 }
@@ -157,10 +173,10 @@ Test that a void statement returns and does not throw an error
 /***********************************************************************************************************************************
 Test that a statement does not error and assign it to the specified variable if not
 ***********************************************************************************************************************************/
-#define TEST_ASSIGN(lValue, statement, ...)                                                                                        \
+#define TEST_ASSIGN(lValue, statement, comment)                                                                                    \
 {                                                                                                                                  \
-    TEST_RESULT_INFO(__VA_ARGS__);                                                                                                 \
-    hrnTestResultBegin(#statement, __LINE__, true);                                                                                \
+    TEST_RESULT_INFO(comment);                                                                                                     \
+    hrnTestResultBegin(#statement, true);                                                                                          \
     lValue = statement;                                                                                                            \
     hrnTestResultEnd();                                                                                                            \
 }
@@ -168,126 +184,135 @@ Test that a statement does not error and assign it to the specified variable if 
 /***********************************************************************************************************************************
 Macros to compare results of common data types
 ***********************************************************************************************************************************/
-#define TEST_RESULT_BOOL_PARAM(statement, expected, ...)                                                                           \
+#define TEST_RESULT_BOOL_PARAM(statement, expected, comment)                                                                       \
     do                                                                                                                             \
     {                                                                                                                              \
-        TEST_RESULT_INFO(__VA_ARGS__);                                                                                             \
-        hrnTestResultBegin(#statement, __LINE__, true);                                                                            \
+        TEST_RESULT_INFO(comment);                                                                                                 \
+        hrnTestResultBegin(#statement, true);                                                                                      \
         hrnTestResultBool(statement, expected);                                                                                    \
     }                                                                                                                              \
     while (0)
 
-#define TEST_RESULT_BOOL(statement, expected, ...)                                                                                 \
-    TEST_RESULT_BOOL_PARAM(statement, expected, __VA_ARGS__);
+#define TEST_RESULT_BOOL(statement, expected, comment)                                                                             \
+    TEST_RESULT_BOOL_PARAM(statement, expected, comment)
 
-#define TEST_RESULT_DOUBLE_PARAM(statement, expected, ...)                                                                         \
+#define TEST_RESULT_DOUBLE_PARAM(statement, expected, comment)                                                                     \
     do                                                                                                                             \
     {                                                                                                                              \
-        TEST_RESULT_INFO(__VA_ARGS__);                                                                                             \
-        hrnTestResultBegin(#statement, __LINE__, true);                                                                            \
+        TEST_RESULT_INFO(comment);                                                                                                 \
+        hrnTestResultBegin(#statement, true);                                                                                      \
         hrnTestResultDouble(statement, expected);                                                                                  \
     }                                                                                                                              \
     while (0)
 
-#define TEST_RESULT_DOUBLE(statement, expected, ...)                                                                               \
-    TEST_RESULT_DOUBLE_PARAM(statement, expected, __VA_ARGS__);
+#define TEST_RESULT_DOUBLE(statement, expected, comment)                                                                           \
+    TEST_RESULT_DOUBLE_PARAM(statement, expected, comment)
 
-#define TEST_RESULT_INT_PARAM(statement, expected, operation, ...)                                                                 \
+#define TEST_RESULT_INT_PARAM(statement, expected, operation, comment)                                                             \
     do                                                                                                                             \
     {                                                                                                                              \
-        TEST_RESULT_INFO(__VA_ARGS__);                                                                                             \
-        hrnTestResultBegin(#statement, __LINE__, true);                                                                            \
+        TEST_RESULT_INFO(comment);                                                                                                 \
+        hrnTestResultBegin(#statement, true);                                                                                      \
         hrnTestResultInt64(statement, expected, operation);                                                                        \
     }                                                                                                                              \
     while (0)
 
-#define TEST_RESULT_INT(statement, expected, ...)                                                                                  \
-    TEST_RESULT_INT_PARAM(statement, expected, harnessTestResultOperationEq, __VA_ARGS__);
-#define TEST_RESULT_INT_NE(statement, expected, ...)                                                                               \
-    TEST_RESULT_INT_PARAM(statement, expected, harnessTestResultOperationNe, __VA_ARGS__);
+#define TEST_RESULT_INT(statement, expected, comment)                                                                              \
+    TEST_RESULT_INT_PARAM(statement, expected, harnessTestResultOperationEq, comment)
+#define TEST_RESULT_INT_NE(statement, expected, comment)                                                                           \
+    TEST_RESULT_INT_PARAM(statement, expected, harnessTestResultOperationNe, comment)
 
-#define TEST_RESULT_PTR_PARAM(statement, expected, operation, ...)                                                                 \
+#define TEST_RESULT_PTR_PARAM(statement, expected, operation, comment)                                                             \
     do                                                                                                                             \
     {                                                                                                                              \
-        TEST_RESULT_INFO(__VA_ARGS__);                                                                                             \
-        hrnTestResultBegin(#statement, __LINE__, true);                                                                            \
+        TEST_RESULT_INFO(comment);                                                                                                 \
+        hrnTestResultBegin(#statement, true);                                                                                      \
         hrnTestResultPtr(statement, expected, operation);                                                                          \
     }                                                                                                                              \
     while (0)
 
 // Compare raw pointers. When checking for NULL use the type-specific macro when available, e.g. TEST_RESULT_STR(). This is more
 // type-safe and makes it clearer what is being tested.
-#define TEST_RESULT_PTR(statement, expected, ...)                                                                                  \
-    TEST_RESULT_PTR_PARAM(statement, expected, harnessTestResultOperationEq, __VA_ARGS__);
-#define TEST_RESULT_PTR_NE(statement, expected, ...)                                                                               \
-    TEST_RESULT_PTR_PARAM(statement, expected, harnessTestResultOperationNe, __VA_ARGS__);
+#define TEST_RESULT_PTR(statement, expected, comment)                                                                              \
+    TEST_RESULT_PTR_PARAM(statement, expected, harnessTestResultOperationEq, comment)
+#define TEST_RESULT_PTR_NE(statement, expected, comment)                                                                           \
+    TEST_RESULT_PTR_PARAM(statement, expected, harnessTestResultOperationNe, comment)
 
-#define TEST_RESULT_Z_PARAM(statement, expected, operation, ...)                                                                   \
+#define TEST_RESULT_Z_PARAM(statement, expected, operation, comment)                                                               \
     do                                                                                                                             \
     {                                                                                                                              \
-        TEST_RESULT_INFO(__VA_ARGS__);                                                                                             \
-        hrnTestResultBegin(#statement, __LINE__, true);                                                                            \
+        TEST_RESULT_INFO(comment);                                                                                                 \
+        hrnTestResultBegin(#statement, true);                                                                                      \
         hrnTestResultZ(statement, expected, operation);                                                                            \
     }                                                                                                                              \
     while (0)
 
-#define TEST_RESULT_Z(statement, expected, ...)                                                                                    \
-    TEST_RESULT_Z_PARAM(statement, expected, harnessTestResultOperationEq, __VA_ARGS__);
-#define TEST_RESULT_Z_NE(statement, expected, ...)                                                                                 \
-    TEST_RESULT_Z_PARAM(statement, expected, harnessTestResultOperationNe, __VA_ARGS__);
+#define TEST_RESULT_Z(statement, expected, comment)                                                                                \
+    TEST_RESULT_Z_PARAM(statement, expected, harnessTestResultOperationEq, comment)
+#define TEST_RESULT_Z_NE(statement, expected, comment)                                                                             \
+    TEST_RESULT_Z_PARAM(statement, expected, harnessTestResultOperationNe, comment)
 
-#define TEST_RESULT_STR(statement, resultExpected, ...)                                                                            \
-    TEST_RESULT_Z(strZNull(statement), strZNull(resultExpected), __VA_ARGS__);
-#define TEST_RESULT_STR_Z(statement, resultExpected, ...)                                                                          \
-    TEST_RESULT_Z(strZNull(statement), resultExpected, __VA_ARGS__);
-#define TEST_RESULT_STR_KEYRPL(statement, resultExpected, ...)                                                                     \
-    TEST_RESULT_Z(strZNull(statement), hrnReplaceKey(strZ(resultExpected)), __VA_ARGS__);
-#define TEST_RESULT_STR_Z_KEYRPL(statement, resultExpected, ...)                                                                   \
-    TEST_RESULT_Z(strZNull(statement), hrnReplaceKey(resultExpected), __VA_ARGS__);
-#define TEST_RESULT_Z_STR(statement, resultExpected, ...)                                                                          \
-    TEST_RESULT_Z(statement, strZNull(resultExpected), __VA_ARGS__);
+#define TEST_RESULT_STR(statement, resultExpected, comment)                                                                        \
+    TEST_RESULT_Z(strZNull(statement), strZNull(resultExpected), comment)
+#define TEST_RESULT_STR_Z(statement, resultExpected, comment)                                                                      \
+    TEST_RESULT_Z(strZNull(statement), resultExpected, comment)
+#define TEST_RESULT_Z_STR(statement, resultExpected, comment)                                                                      \
+    TEST_RESULT_Z(statement, strZNull(resultExpected), comment)
 
-#define TEST_RESULT_UINT_PARAM(statement, expected, operation, ...)                                                                \
+// Compare a string list to a \n delimited string
+#define TEST_RESULT_STRLST_Z(statement, resultExpected, comment)                                                                   \
     do                                                                                                                             \
     {                                                                                                                              \
-        TEST_RESULT_INFO(__VA_ARGS__);                                                                                             \
-        hrnTestResultBegin(#statement, __LINE__, true);                                                                            \
+        TEST_RESULT_INFO(comment);                                                                                                 \
+        hrnTestResultBegin(#statement, true);                                                                                      \
+        hrnTestResultStringList(statement, resultExpected, harnessTestResultOperationEq);                                          \
+    }                                                                                                                              \
+    while (0)
+
+#define TEST_RESULT_STRLST_STR(statement, resultExpected, comment)                                                                 \
+    TEST_RESULT_STRLST_Z(statement, strZNull(resultExpected), comment)
+
+#define TEST_RESULT_UINT_PARAM(statement, expected, operation, comment)                                                            \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        TEST_RESULT_INFO(comment);                                                                                                 \
+        hrnTestResultBegin(#statement, true);                                                                                      \
         hrnTestResultUInt64(statement, expected, operation);                                                                       \
     }                                                                                                                              \
     while (0)
 
-#define TEST_RESULT_UINT(statement, expected, ...)                                                                                 \
-    TEST_RESULT_UINT_PARAM(statement, expected, harnessTestResultOperationEq, __VA_ARGS__);
+#define TEST_RESULT_UINT(statement, expected, comment)                                                                             \
+    TEST_RESULT_UINT_PARAM(statement, expected, harnessTestResultOperationEq, comment)
 
-#define TEST_RESULT_UINT_INT_PARAM(statement, expected, operation, ...)                                                            \
+#define TEST_RESULT_UINT_INT_PARAM(statement, expected, operation, comment)                                                        \
     do                                                                                                                             \
     {                                                                                                                              \
-        TEST_RESULT_INFO(__VA_ARGS__);                                                                                             \
-        hrnTestResultBegin(#statement, __LINE__, true);                                                                            \
+        TEST_RESULT_INFO(comment);                                                                                                 \
+        hrnTestResultBegin(#statement, true);                                                                                      \
         hrnTestResultUInt64Int64(statement, expected, operation);                                                                  \
     }                                                                                                                              \
     while (0)
 
-#define TEST_RESULT_UINT_INT(statement, expected, ...)                                                                             \
-    TEST_RESULT_UINT_INT_PARAM(statement, expected, harnessTestResultOperationEq, __VA_ARGS__);
+#define TEST_RESULT_UINT_INT(statement, expected, comment)                                                                         \
+    TEST_RESULT_UINT_INT_PARAM(statement, expected, harnessTestResultOperationEq, comment)
 
 /***********************************************************************************************************************************
-Test system calls
+System call harness
 ***********************************************************************************************************************************/
-#define TEST_SYSTEM(command)                                                                                                       \
+#define HRN_SYSTEM(command)                                                                                                        \
     do                                                                                                                             \
     {                                                                                                                              \
-        int TEST_SYSTEM_FMT_result = system(hrnReplaceKey(command));                                                               \
+        int TEST_SYSTEM_FMT_result = system(command);                                                                              \
                                                                                                                                    \
         if (TEST_SYSTEM_FMT_result != 0)                                                                                           \
         {                                                                                                                          \
             THROW_FMT(                                                                                                             \
-                AssertError, "SYSTEM COMMAND: %s\n\nFAILED WITH CODE %d\n\nTHROWN AT:\n%s", hrnReplaceKey(command),                \
-                TEST_SYSTEM_FMT_result, errorStackTrace());                                                                        \
+                AssertError, "SYSTEM COMMAND: %s\n\nFAILED WITH CODE %d\n\nTHROWN AT:\n%s", command, TEST_SYSTEM_FMT_result,       \
+                errorStackTrace());                                                                                                \
         }                                                                                                                          \
     } while (0)
 
-#define TEST_SYSTEM_FMT(...)                                                                                                       \
+#define HRN_SYSTEM_FMT(...)                                                                                                        \
     do                                                                                                                             \
     {                                                                                                                              \
         char TEST_SYSTEM_FMT_buffer[8192];                                                                                         \
@@ -295,7 +320,7 @@ Test system calls
         if (snprintf(TEST_SYSTEM_FMT_buffer, sizeof(TEST_SYSTEM_FMT_buffer), __VA_ARGS__) >= (int)sizeof(TEST_SYSTEM_FMT_buffer))  \
             THROW_FMT(AssertError, "command needs more than the %zu characters available", sizeof(TEST_SYSTEM_FMT_buffer));        \
                                                                                                                                    \
-        TEST_SYSTEM(TEST_SYSTEM_FMT_buffer);                                                                                       \
+        HRN_SYSTEM(TEST_SYSTEM_FMT_buffer);                                                                                        \
     } while (0)
 
 /***********************************************************************************************************************************
@@ -311,6 +336,20 @@ Test log result
         CATCH_ANY()                                                                                                                \
         {                                                                                                                          \
             THROW_FMT(AssertError, "LOG RESULT FAILED WITH:\n%s", errorMessage());                                                 \
+        }                                                                                                                          \
+        TRY_END();                                                                                                                 \
+    } while (0)
+
+#define TEST_RESULT_LOG_EMPTY_OR_CONTAINS(expected)                                                                                \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        TRY_BEGIN()                                                                                                                \
+        {                                                                                                                          \
+            harnessLogResultEmptyOrContains(expected);                                                                             \
+        }                                                                                                                          \
+        CATCH_ANY()                                                                                                                \
+        {                                                                                                                          \
+            THROW_FMT(AssertError, "LOG RESULT CONTAINS FAILED WITH:\n%s", errorMessage());                                        \
         }                                                                                                                          \
         TRY_END();                                                                                                                 \
     } while (0)
@@ -336,7 +375,7 @@ Logging macros
 #define TEST_LOG(message)                                                                                                          \
     do                                                                                                                             \
     {                                                                                                                              \
-        hrnTestLogPrefix(__LINE__, true);                                                                                          \
+        hrnTestLogPrefix(__LINE__);                                                                                                \
         printf("%s\n", message);                                                                                                   \
         fflush(stdout);                                                                                                            \
     } while (0)
@@ -344,7 +383,7 @@ Logging macros
 #define TEST_LOG_FMT(format, ...)                                                                                                  \
     do                                                                                                                             \
     {                                                                                                                              \
-        hrnTestLogPrefix(__LINE__, true);                                                                                          \
+        hrnTestLogPrefix(__LINE__);                                                                                                \
         printf(format "\n", __VA_ARGS__);                                                                                          \
         fflush(stdout);                                                                                                            \
     } while (0)
@@ -355,21 +394,21 @@ Test title macro
 #define TEST_TITLE(message)                                                                                                        \
     do                                                                                                                             \
     {                                                                                                                              \
-        hrnTestLogPrefix(__LINE__, false);                                                                                         \
-        printf("%s\n", message);                                                                                                   \
+        hrnTestLogTitle(__LINE__);                                                                                                 \
+        printf(" %s\n", message);                                                                                                  \
         fflush(stdout);                                                                                                            \
     } while (0)
 
 #define TEST_TITLE_FMT(format, ...)                                                                                                \
     do                                                                                                                             \
     {                                                                                                                              \
-        hrnTestLogPrefix(__LINE__, false);                                                                                         \
-        printf(format "\n", __VA_ARGS__);                                                                                          \
+        hrnTestLogTitle(__LINE__);                                                                                                 \
+        printf(" " format "\n", __VA_ARGS__);                                                                                      \
         fflush(stdout);                                                                                                            \
     } while (0)
 
 /***********************************************************************************************************************************
-Is this a 64-bit system?  If not then it is 32-bit since 16-bit systems are not supported.
+Is this a 64-bit system? If not then it is 32-bit since 16-bit systems are not supported.
 ***********************************************************************************************************************************/
 #define TEST_64BIT()                                                                                                               \
     (sizeof(size_t) == 8)

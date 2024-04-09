@@ -11,15 +11,14 @@ Execute Process
 #include <unistd.h>
 
 #include "common/debug.h"
-#include "common/log.h"
 #include "common/exec.h"
 #include "common/fork.h"
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
 #include "common/io/io.h"
-#include "common/io/read.intern.h"
-#include "common/io/write.intern.h"
-#include "common/type/object.h"
+#include "common/io/read.h"
+#include "common/io/write.h"
+#include "common/log.h"
 #include "common/wait.h"
 
 /***********************************************************************************************************************************
@@ -27,8 +26,7 @@ Object type
 ***********************************************************************************************************************************/
 struct Exec
 {
-    MemContext *memContext;                                         // Mem context
-    String *command;                                                // Command to execute
+    ExecPub pub;                                                    // Publicly accessible variables
     StringList *param;                                              // List of parameters to pass to command
     const String *name;                                             // Name to display in log/error messages
     TimeMSec timeout;                                               // Timeout for any i/o operation (read, write, etc.)
@@ -41,18 +39,13 @@ struct Exec
 
     IoRead *ioReadFd;                                               // File descriptor read interface
     IoWrite *ioWriteFd;                                             // File descriptor write interface
-
-    IoRead *ioReadExec;                                             // Wrapper for file descriptor read interface
-    IoWrite *ioWriteExec;                                           // Wrapper for file descriptor write interface
 };
-
-OBJECT_DEFINE_FREE(EXEC);
 
 /***********************************************************************************************************************************
 Macro to close file descriptors after dup2() in the child process
 
 If the parent process is daemomized and has closed stdout, stdin, and stderr or some combination of them, then the newly created
-descriptors might overlap stdout, stdin, or stderr.  In that case we don't want to accidentally close the descriptor that we have
+descriptors might overlap stdout, stdin, or stderr. In that case we don't want to accidentally close the descriptor that we have
 just copied.
 
 Note that this is pretty specific to the way that file descriptors are handled in this module and may not be generally applicable in
@@ -74,8 +67,17 @@ other code.
 /***********************************************************************************************************************************
 Free exec file descriptors and ensure process is shut down
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(EXEC, LOG, logLevelTrace)
+static void
+execFreeResource(THIS_VOID)
 {
+    THIS(Exec);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(EXEC, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     // Close file descriptors
     close(this->fdRead);
     close(this->fdWrite);
@@ -103,14 +105,15 @@ OBJECT_DEFINE_FREE_RESOURCE_BEGIN(EXEC, LOG, logLevelTrace)
         }
         MEM_CONTEXT_TEMP_END();
     }
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /**********************************************************************************************************************************/
-Exec *
+FN_EXTERN Exec *
 execNew(const String *command, const StringList *param, const String *name, TimeMSec timeout)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug)
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, command);
         FUNCTION_LOG_PARAM(STRING_LIST, param);
         FUNCTION_LOG_PARAM(STRING, name);
@@ -121,16 +124,14 @@ execNew(const String *command, const StringList *param, const String *name, Time
     ASSERT(name != NULL);
     ASSERT(timeout > 0);
 
-    Exec *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("Exec")
+    OBJ_NEW_BEGIN(Exec, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = memNew(sizeof(Exec));
-
         *this = (Exec)
         {
-            .memContext = MEM_CONTEXT_NEW(),
-            .command = strDup(command),
+            .pub =
+            {
+                .command = strDup(command),
+            },
             .name = strDup(name),
             .timeout = timeout,
 
@@ -139,9 +140,9 @@ execNew(const String *command, const StringList *param, const String *name, Time
         };
 
         // The first parameter must be the command
-        strLstInsert(this->param, 0, this->command);
+        strLstInsert(this->param, 0, execCommand(this));
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(EXEC, this);
 }
@@ -149,9 +150,34 @@ execNew(const String *command, const StringList *param, const String *name, Time
 /***********************************************************************************************************************************
 Check if the process is still running
 
-This should be called when anything unexpected happens while reading or writing, including errors and eof.  If this function returns
+This should be called when anything unexpected happens while reading or writing, including errors and eof. If this function returns
 then the original error should be rethrown.
 ***********************************************************************************************************************************/
+// Helper to throw status error
+static void
+execCheckStatusError(Exec *const this, const int status, const String *const output)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_LOG_PARAM(EXEC, this);
+        FUNCTION_TEST_PARAM(INT, status);
+        FUNCTION_TEST_PARAM(STRING, output);
+    FUNCTION_TEST_END();
+
+    // Throw the error with as much information as is available
+    THROWP_FMT(
+        errorTypeFromCode(WEXITSTATUS(status)), "%s terminated unexpectedly [%d]%s%s", strZ(this->name),
+        WEXITSTATUS(status), strSize(output) > 0 ? ": " : "", strSize(output) > 0 ? strZ(output) : "");
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+// Helper to throw signal error
+static void
+execCheckSignalError(Exec *const this, const int status)
+{
+    THROW_FMT(ExecuteError, "%s terminated unexpectedly on signal %d", strZ(this->name), WTERMSIG(status));
+}
+
 static void
 execCheck(Exec *this)
 {
@@ -175,19 +201,13 @@ execCheck(Exec *this)
         // If the process exited normally
         if (WIFEXITED(processStatus))
         {
-            // Get data from stderr to help diagnose the problem
-            IoRead *ioReadError = ioFdReadNew(strNewFmt("%s error", strZ(this->name)), this->fdError, 0);
-            ioReadOpen(ioReadError);
-            String *errorStr = strTrim(strNewBuf(ioReadBuf(ioReadError)));
-
-            // Throw the error with as much information as is available
-            THROWP_FMT(
-                errorTypeFromCode(WEXITSTATUS(processStatus)), "%s terminated unexpectedly [%d]%s%s", strZ(this->name),
-                WEXITSTATUS(processStatus), strSize(errorStr) > 0 ? ": " : "", strSize(errorStr) > 0 ? strZ(errorStr) : "");
+            execCheckStatusError(
+                this, processStatus,
+                strTrim(strNewBuf(ioReadBuf(ioFdReadNewOpen(strNewFmt("%s error", strZ(this->name)), this->fdError, 0)))));
         }
 
         // If the process did not exit normally then it must have been a signal
-        THROW_FMT(ExecuteError, "%s terminated unexpectedly on signal %d", strZ(this->name), WTERMSIG(processStatus));
+        execCheckSignalError(this, processStatus);
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -292,20 +312,20 @@ execFdRead(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->fdRead);
+    FUNCTION_TEST_RETURN(INT, this->fdRead);
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 execOpen(Exec *this)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug)
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(EXEC, this);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
 
-    // Create pipes to communicate with the subprocess.  The names of the pipes are from the perspective of the parent process since
+    // Create pipes to communicate with the subprocess. The names of the pipes are from the perspective of the parent process since
     // the child process will use them only briefly before exec'ing.
     int pipeRead[2];
     int pipeWrite[2];
@@ -333,12 +353,12 @@ execOpen(Exec *this)
         // Assign stderr to the input side of the error pipe
         PIPE_DUP2(pipeError, 1, STDERR_FILENO);
 
-        // Execute the binary.  This statement will not return if it is successful
-        execvp(strZ(this->command), (char ** const)strLstPtr(this->param));
+        // Execute the binary. This statement will not return if it is successful
+        execvp(strZ(execCommand(this)), (char **const)strLstPtr(this->param));
 
-        // If we got here then there was an error.  We can't use a throw as we normally would because we have already shutdown
+        // If we got here then there was an error. We can't use a throw as we normally would because we have already shutdown
         // logging and we don't want to execute exit paths that might free parent resources which we still have references to.
-        fprintf(stderr, "unable to execute '%s': [%d] %s\n", strZ(this->command), errno, strerror(errno));
+        fprintf(stderr, "unable to execute '%s': [%d] %s\n", strZ(execCommand(this)), errno, strerror(errno));
         exit(errorTypeCode(&ExecuteError));
     }
 
@@ -352,58 +372,22 @@ execOpen(Exec *this)
     this->fdWrite = pipeWrite[1];
     this->fdError = pipeError[0];
 
-    // Assign file descriptors to io interfaces
-    this->ioReadFd = ioFdReadNew(strNewFmt("%s read", strZ(this->name)), this->fdRead, this->timeout);
-    this->ioWriteFd = ioFdWriteNew(strNewFmt("%s write", strZ(this->name)), this->fdWrite, this->timeout);
-    ioWriteOpen(this->ioWriteFd);
+    MEM_CONTEXT_OBJ_BEGIN(this)
+    {
+        // Assign file descriptors to io interfaces
+        this->ioReadFd = ioFdReadNew(strNewFmt("%s read", strZ(this->name)), this->fdRead, this->timeout);
+        this->ioWriteFd = ioFdWriteNewOpen(strNewFmt("%s write", strZ(this->name)), this->fdWrite, this->timeout);
 
-    // Create wrapper interfaces that check process state
-    this->ioReadExec = ioReadNewP(this, .block = true, .read = execRead, .eof = execEof, .fd = execFdRead);
-    ioReadOpen(this->ioReadExec);
-    this->ioWriteExec = ioWriteNewP(this, .write = execWrite);
-    ioWriteOpen(this->ioWriteExec);
+        // Create wrapper interfaces that check process state
+        this->pub.ioReadExec = ioReadNewP(this, .block = true, .read = execRead, .eof = execEof, .fd = execFdRead);
+        ioReadOpen(execIoRead(this));
+        this->pub.ioWriteExec = ioWriteNewP(this, .write = execWrite);
+        ioWriteOpen(execIoWrite(this));
+    }
+    MEM_CONTEXT_OBJ_END();
 
     // Set a callback so the file descriptors will get freed
-    memContextCallbackSet(this->memContext, execFreeResource, this);
+    memContextCallbackSet(objMemContext(this), execFreeResource, this);
 
     FUNCTION_LOG_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-IoRead *
-execIoRead(const Exec *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(EXEC, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->ioReadExec);
-}
-
-/**********************************************************************************************************************************/
-IoWrite *
-execIoWrite(const Exec *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(EXEC, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->ioWriteExec);
-}
-
-/**********************************************************************************************************************************/
-MemContext *
-execMemContext(const Exec *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(EXEC, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->memContext);
 }

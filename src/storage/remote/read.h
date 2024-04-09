@@ -5,14 +5,14 @@ Remote Storage Read
 #define STORAGE_REMOTE_READ_H
 
 #include "protocol/client.h"
-#include "storage/remote/storage.intern.h"
 #include "storage/read.h"
+#include "storage/remote/storage.intern.h"
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-StorageRead *storageReadRemoteNew(
+FN_EXTERN StorageRead *storageReadRemoteNew(
     StorageRemote *storage, ProtocolClient *client, const String *name, bool ignoreMissing, bool compressible,
-    unsigned int compressLevel, const Variant *limit);
+    unsigned int compressLevel, uint64_t offset, const Variant *limit);
 
 #endif

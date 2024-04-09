@@ -4,18 +4,12 @@ Posix Storage
 #ifndef STORAGE_POSIX_STORAGE_H
 #define STORAGE_POSIX_STORAGE_H
 
-/***********************************************************************************************************************************
-Object type
-***********************************************************************************************************************************/
-typedef struct StoragePosix StoragePosix;
-
-#include "storage/storage.intern.h"
+#include "storage/storage.h"
 
 /***********************************************************************************************************************************
 Storage type
 ***********************************************************************************************************************************/
-#define STORAGE_POSIX_TYPE                                          "posix"
-    STRING_DECLARE(STORAGE_POSIX_TYPE_STR);
+#define STORAGE_POSIX_TYPE                                          STRID5("posix", 0x184cdf00)
 
 /***********************************************************************************************************************************
 Constructors
@@ -32,6 +26,6 @@ typedef struct StoragePosixNewParam
 #define storagePosixNewP(path, ...)                                                                                                \
     storagePosixNew(path, (StoragePosixNewParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-Storage *storagePosixNew(const String *path, StoragePosixNewParam param);
+FN_EXTERN Storage *storagePosixNew(const String *path, StoragePosixNewParam param);
 
 #endif

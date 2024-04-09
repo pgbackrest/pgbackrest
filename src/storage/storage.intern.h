@@ -14,9 +14,10 @@ in the description of each function.
 #define STORAGE_STORAGE_INTERN_H
 
 #include "common/type/param.h"
-#include "storage/read.intern.h"
-#include "storage/storage.h"
-#include "storage/write.intern.h"
+#include "storage/info.h"
+#include "storage/list.h"
+#include "storage/read.h"
+#include "storage/write.h"
 
 /***********************************************************************************************************************************
 Default file and path modes
@@ -30,6 +31,7 @@ Error messages
 #define STORAGE_ERROR_READ_CLOSE                                    "unable to close file '%s' after read"
 #define STORAGE_ERROR_READ_OPEN                                     "unable to open file '%s' for read"
 #define STORAGE_ERROR_READ_MISSING                                  "unable to open missing file '%s' for read"
+#define STORAGE_ERROR_READ_SEEK                                     "unable to seek to %" PRIu64 " in file '%s'"
 
 #define STORAGE_ERROR_INFO                                          "unable to get info for path/file '%s'"
 #define STORAGE_ERROR_INFO_MISSING                                  "unable to get info for missing path/file '%s'"
@@ -57,6 +59,11 @@ Path expression callback function type - used to modify paths based on expressio
 typedef String *StoragePathExpressionCallback(const String *expression, const String *path);
 
 /***********************************************************************************************************************************
+Storage info callback function type - used to return storage info
+***********************************************************************************************************************************/
+typedef void (*StorageListCallback)(void *callbackData, const StorageInfo *info);
+
+/***********************************************************************************************************************************
 Required interface functions
 ***********************************************************************************************************************************/
 // Get information about a file/link/path
@@ -69,7 +76,7 @@ typedef struct StorageInterfaceInfoParam
 {
     VAR_PARAM_HEADER;
 
-    // Should symlinks be followed?  Only required on storage that supports symlinks.
+    // Should symlinks be followed? Only required on storage that supports symlinks.
     bool followLink;
 } StorageInterfaceInfoParam;
 
@@ -80,7 +87,24 @@ typedef StorageInfo StorageInterfaceInfo(
     STORAGE_COMMON_INTERFACE(thisVoid).info(thisVoid, file, level, (StorageInterfaceInfoParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 // ---------------------------------------------------------------------------------------------------------------------------------
-// Create a file read object.  The file should not be opened immediately -- open() will be called on the IoRead interface when the
+// Create a hard or symbolic link
+typedef struct StorageInterfaceLinkCreateParam
+{
+    VAR_PARAM_HEADER;
+
+    // Flag to create hard or symbolic link
+    StorageLinkType linkType;
+} StorageInterfaceLinkCreateParam;
+
+typedef void StorageInterfaceLinkCreate(
+    void *thisVoid, const String *target, const String *linkPath, StorageInterfaceLinkCreateParam param);
+
+#define storageInterfaceLinkCreateP(thisVoid, target, linkPath, ...)                                                               \
+    STORAGE_COMMON_INTERFACE(thisVoid).linkCreate(thisVoid, target, linkPath,                                                      \
+        (StorageInterfaceLinkCreateParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+// ---------------------------------------------------------------------------------------------------------------------------------
+// Create a file read object. The file should not be opened immediately -- open() will be called on the IoRead interface when the
 // file needs to be opened.
 typedef struct StorageInterfaceNewReadParam
 {
@@ -88,6 +112,9 @@ typedef struct StorageInterfaceNewReadParam
 
     // Is the file compressible? This is used when the file must be moved across a network and temporary compression is helpful.
     bool compressible;
+
+    // Where to start reading in the file
+    const uint64_t offset;
 
     // Limit bytes read from the file. NULL for no limit.
     const Variant *limit;
@@ -101,13 +128,13 @@ typedef StorageRead *StorageInterfaceNewRead(
         thisVoid, file, ignoreMissing, (StorageInterfaceNewReadParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 // ---------------------------------------------------------------------------------------------------------------------------------
-// Create a file write object.  The file should not be opened immediately -- open() will be called on the IoWrite interface when the
+// Create a file write object. The file should not be opened immediately -- open() will be called on the IoWrite interface when the
 // file needs to be opened.
 typedef struct StorageInterfaceNewWriteParam
 {
     VAR_PARAM_HEADER;
 
-    // File/path mode for storage that supports Posix-style permissions.  modePath is only used in conjunction with createPath.
+    // File/path mode for storage that supports Posix-style permissions. modePath is only used in conjunction with createPath.
     mode_t modeFile;
     mode_t modePath;
 
@@ -129,7 +156,11 @@ typedef struct StorageInterfaceNewWriteParam
     // (e.g. S3). Non-atomic writes are used in some places where there is a performance advantage and atomicity is not needed.
     bool atomic;
 
-    // Is the file compressible?  This is used when the file must be moved across a network and temporary compression is helpful.
+    // Truncate file if it exists. Disable this only in cases where the file will be manipulated directly through the file handle,
+    // which should always be the exception and shows functionality that should be added to the storage interface.
+    bool truncate;
+
+    // Is the file compressible? This is used when the file must be moved across a network and temporary compression is helpful.
     bool compressible;
 } StorageInterfaceNewWriteParam;
 
@@ -139,30 +170,29 @@ typedef StorageWrite *StorageInterfaceNewWrite(void *thisVoid, const String *fil
     STORAGE_COMMON_INTERFACE(thisVoid).newWrite(thisVoid, file, (StorageInterfaceNewWriteParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 // ---------------------------------------------------------------------------------------------------------------------------------
-// Get info for a path and all paths/files in the path (does not recurse)
+// Get info for all files/links/paths in a path (does not recurse or return info about the path passed to the function)
 //
 // See storageInterfaceInfoP() for usage of the level parameter.
-typedef struct StorageInterfaceInfoListParam
+typedef struct StorageInterfaceListParam
 {
     VAR_PARAM_HEADER;
 
     // Regular expression used to filter the results. The expression is always checked in the callback passed to
-    // storageInterfaceInfoListP() so checking the expression in the driver is entirely optional. The driver should only use the
+    // storageInterfaceIterP() so checking the expression in the driver is entirely optional. The driver should only use the
     // expression if it can improve performance or limit network transfer.
     //
     // Partial matching of the expression is fine as long as nothing that should match is excluded, e.g. it is OK to prefix match
     // using the prefix returned from regExpPrefix(). This may cause extra results to be sent to the callback but won't exclude
     // anything that matches the expression exactly.
     const String *expression;
-} StorageInterfaceInfoListParam;
+} StorageInterfaceListParam;
 
-typedef bool StorageInterfaceInfoList(
-    void *thisVoid, const String *path, StorageInfoLevel level, StorageInfoListCallback callback, void *callbackData,
-    StorageInterfaceInfoListParam param);
+typedef StorageList *StorageInterfaceList(
+    void *thisVoid, const String *path, StorageInfoLevel level, StorageInterfaceListParam param);
 
-#define storageInterfaceInfoListP(thisVoid, path, level, callback, callbackData, ...)                                              \
-    STORAGE_COMMON_INTERFACE(thisVoid).infoList(                                                                                   \
-        thisVoid, path, level, callback, callbackData, (StorageInterfaceInfoListParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define storageInterfaceListP(thisVoid, path, level, ...)                                                                          \
+    STORAGE_COMMON_INTERFACE(thisVoid).list(                                                                                       \
+        thisVoid, path, level, (StorageInterfaceListParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 // Remove a path (and optionally recurse)
@@ -235,6 +265,21 @@ typedef void StorageInterfacePathSync(void *thisVoid, const String *path, Storag
     STORAGE_COMMON_INTERFACE(thisVoid).pathSync(thisVoid, path, (StorageInterfacePathSyncParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 /***********************************************************************************************************************************
+Storage type and helper function struct
+
+An array of this struct must be passed to storageHelperInit() to enable storage drivers other than built-in Posix.
+***********************************************************************************************************************************/
+typedef Storage *(*StorageHelperFunction)(unsigned int repoIdx, bool write, StoragePathExpressionCallback pathExpressionCallback);
+
+typedef struct StorageHelper
+{
+    StringId type;                                                  // StringId that identifies the storage driver
+    StorageHelperFunction helper;                                   // Function that creates the storage
+} StorageHelper;
+
+#define STORAGE_END_HELPER                                          {.type = 0}
+
+/***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
 typedef struct StorageInterface
@@ -244,13 +289,14 @@ typedef struct StorageInterface
 
     // Required functions
     StorageInterfaceInfo *info;
-    StorageInterfaceInfoList *infoList;
+    StorageInterfaceList *list;
     StorageInterfaceNewRead *newRead;
     StorageInterfaceNewWrite *newWrite;
     StorageInterfacePathRemove *pathRemove;
     StorageInterfaceRemove *remove;
 
     // Optional functions
+    StorageInterfaceLinkCreate *linkCreate;
     StorageInterfaceMove *move;
     StorageInterfacePathCreate *pathCreate;
     StorageInterfacePathSync *pathSync;
@@ -259,8 +305,8 @@ typedef struct StorageInterface
 #define storageNewP(type, path, modeFile, modePath, write, pathExpressionFunction, driver, ...)                                    \
     storageNew(type, path, modeFile, modePath, write, pathExpressionFunction, driver, (StorageInterface){__VA_ARGS__})
 
-Storage *storageNew(
-    const String *type, const String *path, mode_t modeFile, mode_t modePath, bool write,
+FN_EXTERN Storage *storageNew(
+    StringId type, const String *path, mode_t modeFile, mode_t modePath, bool write,
     StoragePathExpressionCallback pathExpressionFunction, void *driver, StorageInterface interface);
 
 /***********************************************************************************************************************************
@@ -282,11 +328,26 @@ typedef struct StorageCommon
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
+typedef struct StoragePub
+{
+    StringId type;                                                  // Storage type
+    void *driver;                                                   // Storage driver
+    StorageInterface interface;                                     // Storage interface
+} StoragePub;
+
 // Storage driver
-void *storageDriver(const Storage *this);
+FN_INLINE_ALWAYS void *
+storageDriver(const Storage *const this)
+{
+    return THIS_PUB(Storage)->driver;
+}
 
 // Storage interface
-StorageInterface storageInterface(const Storage *this);
+FN_INLINE_ALWAYS StorageInterface
+storageInterface(const Storage *const this)
+{
+    return THIS_PUB(Storage)->interface;
+}
 
 /***********************************************************************************************************************************
 Macros for function logging
@@ -294,6 +355,6 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_INTERFACE_TYPE                                                                                        \
     StorageInterface
 #define FUNCTION_LOG_STORAGE_INTERFACE_FORMAT(value, buffer, bufferSize)                                                           \
-    objToLog(&value, "StorageInterface", buffer, bufferSize)
+    objNameToLog(&value, "StorageInterface", buffer, bufferSize)
 
 #endif

@@ -5,50 +5,39 @@ HTTP Header
 
 #include "common/debug.h"
 #include "common/io/http/header.h"
-#include "common/memContext.h"
+#include "common/io/http/request.h"
 #include "common/type/keyValue.h"
-#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 struct HttpHeader
 {
-    MemContext *memContext;                                         // Mem context
     const StringList *redactList;                                   // List of headers to redact during logging
     KeyValue *kv;                                                   // KeyValue store
 };
 
-OBJECT_DEFINE_MOVE(HTTP_HEADER);
-OBJECT_DEFINE_FREE(HTTP_HEADER);
-
 /**********************************************************************************************************************************/
-HttpHeader *
+FN_EXTERN HttpHeader *
 httpHeaderNew(const StringList *redactList)
 {
     FUNCTION_TEST_VOID();
 
-    HttpHeader *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("HttpHeader")
+    OBJ_NEW_BEGIN(HttpHeader, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        // Allocate state and set context
-        this = memNew(sizeof(HttpHeader));
-
         *this = (HttpHeader)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .redactList = strLstDup(redactList),
             .kv = kvNew(),
         };
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(HTTP_HEADER, this);
 }
 
 /**********************************************************************************************************************************/
-HttpHeader *
+FN_EXTERN HttpHeader *
 httpHeaderDup(const HttpHeader *header, const StringList *redactList)
 {
     FUNCTION_TEST_BEGIN();
@@ -56,30 +45,24 @@ httpHeaderDup(const HttpHeader *header, const StringList *redactList)
         FUNCTION_TEST_PARAM(STRING_LIST, redactList);
     FUNCTION_TEST_END();
 
-    HttpHeader *this = NULL;
+    if (header == NULL)
+        FUNCTION_TEST_RETURN(HTTP_HEADER, NULL);
 
-    if (header != NULL)
+    OBJ_NEW_BEGIN(HttpHeader, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        MEM_CONTEXT_NEW_BEGIN("HttpHeader")
+        *this = (HttpHeader)
         {
-            // Allocate state and set context
-            this = memNew(sizeof(HttpHeader));
-
-            *this = (HttpHeader)
-            {
-                .memContext = MEM_CONTEXT_NEW(),
-                .redactList = redactList == NULL ? strLstDup(header->redactList) : strLstDup(redactList),
-                .kv = kvDup(header->kv),
-            };
-        }
-        MEM_CONTEXT_NEW_END();
+            .redactList = redactList == NULL ? strLstDup(header->redactList) : strLstDup(redactList),
+            .kv = kvDup(header->kv),
+        };
     }
+    OBJ_NEW_END();
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(HTTP_HEADER, this);
 }
 
 /**********************************************************************************************************************************/
-HttpHeader *
+FN_EXTERN HttpHeader *
 httpHeaderAdd(HttpHeader *this, const String *key, const String *value)
 {
     FUNCTION_TEST_BEGIN();
@@ -96,14 +79,14 @@ httpHeaderAdd(HttpHeader *this, const String *key, const String *value)
     const Variant *keyVar = VARSTR(key);
     const Variant *valueVar = kvGet(this->kv, keyVar);
 
-    // If the key exists then append the new value.  The HTTP spec (RFC 2616, Section 4.2) says that if a header appears more than
-    // once then it is equivalent to a single comma-separated header.  There appear to be a few exceptions such as Set-Cookie, but
+    // If the key exists then append the new value. The HTTP spec (RFC 2616, Section 4.2) says that if a header appears more than
+    // once then it is equivalent to a single comma-separated header. There appear to be a few exceptions such as Set-Cookie, but
     // they should not be of concern to us here.
     if (valueVar != NULL)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            String *valueAppend = strDup(varStr(valueVar));
+            String *const valueAppend = strCat(strNew(), varStr(valueVar));
             strCatZ(valueAppend, ", ");
             strCatZ(valueAppend, strZ(value));
 
@@ -115,11 +98,11 @@ httpHeaderAdd(HttpHeader *this, const String *key, const String *value)
     else
         kvPut(this->kv, keyVar, VARSTR(value));
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(HTTP_HEADER, this);
 }
 
 /**********************************************************************************************************************************/
-const String *
+FN_EXTERN const String *
 httpHeaderGet(const HttpHeader *this, const String *key)
 {
     FUNCTION_TEST_BEGIN();
@@ -130,11 +113,11 @@ httpHeaderGet(const HttpHeader *this, const String *key)
     ASSERT(this != NULL);
     ASSERT(key != NULL);
 
-    FUNCTION_TEST_RETURN(varStr(kvGet(this->kv, VARSTR(key))));
+    FUNCTION_TEST_RETURN_CONST(STRING, varStr(kvGet(this->kv, VARSTR(key))));
 }
 
 /**********************************************************************************************************************************/
-StringList *
+FN_EXTERN StringList *
 httpHeaderList(const HttpHeader *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -143,11 +126,11 @@ httpHeaderList(const HttpHeader *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(strLstSort(strLstNewVarLst(kvKeyList(this->kv)), sortOrderAsc));
+    FUNCTION_TEST_RETURN(STRING_LIST, strLstSort(strLstNewVarLst(kvKeyList(this->kv)), sortOrderAsc));
 }
 
 /**********************************************************************************************************************************/
-HttpHeader *
+FN_EXTERN HttpHeader *
 httpHeaderPut(HttpHeader *this, const String *key, const String *value)
 {
     FUNCTION_TEST_BEGIN();
@@ -163,11 +146,38 @@ httpHeaderPut(HttpHeader *this, const String *key, const String *value)
     // Store the key
     kvPut(this->kv, VARSTR(key), VARSTR(value));
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(HTTP_HEADER, this);
 }
 
 /**********************************************************************************************************************************/
-bool
+FN_EXTERN HttpHeader *
+httpHeaderPutRange(HttpHeader *const this, const uint64_t offset, const Variant *const limit)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(HTTP_HEADER, this);
+        FUNCTION_TEST_PARAM(UINT64, offset);
+        FUNCTION_TEST_PARAM(VARIANT, limit);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(limit == NULL || varType(limit) == varTypeUInt64);
+
+    if (offset != 0 || limit != NULL)
+    {
+        String *const range = strCatFmt(strNew(), HTTP_HEADER_RANGE_BYTES "=%" PRIu64 "-", offset);
+
+        if (limit != NULL)
+            strCatFmt(range, "%" PRIu64, offset + varUInt64(limit) - 1);
+
+        httpHeaderPut(this, HTTP_HEADER_RANGE_STR, range);
+        strFree(range);
+    }
+
+    FUNCTION_TEST_RETURN(HTTP_HEADER, this);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN bool
 httpHeaderRedact(const HttpHeader *this, const String *key)
 {
     FUNCTION_TEST_BEGIN();
@@ -178,30 +188,29 @@ httpHeaderRedact(const HttpHeader *this, const String *key)
     ASSERT(this != NULL);
     ASSERT(key != NULL);
 
-    FUNCTION_TEST_RETURN(this->redactList != NULL && strLstExists(this->redactList, key));
+    FUNCTION_TEST_RETURN(BOOL, this->redactList != NULL && strLstExists(this->redactList, key));
 }
 
 /**********************************************************************************************************************************/
-String *
-httpHeaderToLog(const HttpHeader *this)
+FN_EXTERN void
+httpHeaderToLog(const HttpHeader *const this, StringStatic *const debugLog)
 {
-    String *result = strNew("{");
-    const StringList *keyList = httpHeaderList(this);
+    const VariantList *const keyList = kvKeyList(this->kv);
 
-    for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)
+    strStcCatChr(debugLog, '{');
+
+    for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
     {
-        const String *key = strLstGet(keyList, keyIdx);
+        const String *const key = varStr(varLstGet(keyList, keyIdx));
 
-        if (strSize(result) != 1)
-            strCatZ(result, ", ");
+        if (keyIdx != 0)
+            strStcCat(debugLog, ", ");
 
         if (httpHeaderRedact(this, key))
-            strCatFmt(result, "%s: <redacted>", strZ(key));
+            strStcFmt(debugLog, "%s: <redacted>", strZ(key));
         else
-            strCatFmt(result, "%s: '%s'", strZ(key), strZ(httpHeaderGet(this, key)));
+            strStcFmt(debugLog, "%s: '%s'", strZ(key), strZ(httpHeaderGet(this, key)));
     }
 
-    strCatZ(result, "}");
-
-    return result;
+    strStcCatChr(debugLog, '}');
 }

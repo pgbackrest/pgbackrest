@@ -9,19 +9,16 @@ Storage Helper
 #include "common/io/io.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
-#include "config/define.h"
 #include "config/config.h"
 #include "protocol/helper.h"
-#include "storage/azure/storage.h"
-#include "storage/cifs/storage.h"
+#include "storage/helper.h"
 #include "storage/posix/storage.h"
 #include "storage/remote/storage.h"
-#include "storage/s3/storage.h"
-#include "storage/helper.h"
 
 /***********************************************************************************************************************************
 Storage path constants
 ***********************************************************************************************************************************/
+STRING_EXTERN(STORAGE_SPOOL_ARCHIVE_STR,                            STORAGE_SPOOL_ARCHIVE);
 STRING_EXTERN(STORAGE_SPOOL_ARCHIVE_IN_STR,                         STORAGE_SPOOL_ARCHIVE_IN);
 STRING_EXTERN(STORAGE_SPOOL_ARCHIVE_OUT_STR,                        STORAGE_SPOOL_ARCHIVE_OUT);
 
@@ -40,9 +37,11 @@ Error message when writable storage is requested in dry-run mode
 /***********************************************************************************************************************************
 Local variables
 ***********************************************************************************************************************************/
-static struct StorageHelper
+static struct StorageHelperLocal
 {
     MemContext *memContext;                                         // Mem context for storage helper
+
+    const StorageHelper *helperList;                                // List of helpers to create storage
 
     Storage *storageLocal;                                          // Local read-only storage
     Storage *storageLocalWrite;                                     // Local write storage
@@ -55,7 +54,7 @@ static struct StorageHelper
 
     String *stanza;                                                 // Stanza for storage
     bool stanzaInit;                                                // Has the stanza been initialized?
-    bool dryRunInit;                                                // Has dryRun been initialized?  If not disallow writes.
+    bool dryRunInit;                                                // Has dryRun been initialized? If not disallow writes.
     bool dryRun;                                                    // Disallow writes in dry-run mode.
     RegExp *walRegExp;                                              // Regular expression for identifying wal files
 } storageHelper;
@@ -64,7 +63,7 @@ static struct StorageHelper
 Create the storage helper memory context
 ***********************************************************************************************************************************/
 static void
-storageHelperInit(void)
+storageHelperContextInit(void)
 {
     FUNCTION_TEST_VOID();
 
@@ -72,7 +71,7 @@ storageHelperInit(void)
     {
         MEM_CONTEXT_BEGIN(memContextTop())
         {
-            MEM_CONTEXT_NEW_BEGIN("StorageHelper")
+            MEM_CONTEXT_NEW_BEGIN(StorageHelper, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
             {
                 storageHelper.memContext = MEM_CONTEXT_NEW();
             }
@@ -85,7 +84,20 @@ storageHelperInit(void)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
+storageHelperInit(const StorageHelper *const helperList)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, helperList);
+    FUNCTION_TEST_END();
+
+    storageHelper.helperList = helperList;
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
 storageHelperDryRunInit(bool dryRun)
 {
     FUNCTION_TEST_VOID();
@@ -122,33 +134,33 @@ storageHelperStanzaInit(const bool stanzaRequired)
 }
 
 /**********************************************************************************************************************************/
-const Storage *
+FN_EXTERN const Storage *
 storageLocal(void)
 {
     FUNCTION_TEST_VOID();
 
     if (storageHelper.storageLocal == NULL)
     {
-        storageHelperInit();
+        storageHelperContextInit();
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
-            storageHelper.storageLocal =  storagePosixNewP(FSLASH_STR);
+            storageHelper.storageLocal = storagePosixNewP(FSLASH_STR);
         }
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(storageHelper.storageLocal);
+    FUNCTION_TEST_RETURN_CONST(STORAGE, storageHelper.storageLocal);
 }
 
-const Storage *
+FN_EXTERN const Storage *
 storageLocalWrite(void)
 {
     FUNCTION_TEST_VOID();
 
     if (storageHelper.storageLocalWrite == NULL)
     {
-        storageHelperInit();
+        storageHelperContextInit();
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
@@ -157,7 +169,7 @@ storageLocalWrite(void)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(storageHelper.storageLocalWrite);
+    FUNCTION_TEST_RETURN_CONST(STORAGE, storageHelper.storageLocalWrite);
 }
 
 /***********************************************************************************************************************************
@@ -186,11 +198,11 @@ storagePgGet(unsigned int pgIdx, bool write)
         result = storagePosixNewP(cfgOptionIdxStr(cfgOptPgPath, pgIdx), .write = write);
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STORAGE, result);
 }
 
 /**********************************************************************************************************************************/
-const Storage *
+FN_EXTERN const Storage *
 storagePgIdx(unsigned int pgIdx)
 {
     FUNCTION_TEST_BEGIN();
@@ -199,7 +211,7 @@ storagePgIdx(unsigned int pgIdx)
 
     if (storageHelper.storagePg == NULL || storageHelper.storagePg[pgIdx] == NULL)
     {
-        storageHelperInit();
+        storageHelperContextInit();
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
@@ -211,17 +223,17 @@ storagePgIdx(unsigned int pgIdx)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(storageHelper.storagePg[pgIdx]);
+    FUNCTION_TEST_RETURN_CONST(STORAGE, storageHelper.storagePg[pgIdx]);
 }
 
-const Storage *
+FN_EXTERN const Storage *
 storagePg(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(storagePgIdx(cfgOptionGroupIdxDefault(cfgOptGrpPg)));
+    FUNCTION_TEST_RETURN_CONST(STORAGE, storagePgIdx(cfgOptionGroupIdxDefault(cfgOptGrpPg)));
 }
 
-const Storage *
+FN_EXTERN const Storage *
 storagePgIdxWrite(unsigned int pgIdx)
 {
     FUNCTION_TEST_BEGIN();
@@ -234,7 +246,7 @@ storagePgIdxWrite(unsigned int pgIdx)
 
     if (storageHelper.storagePgWrite == NULL || storageHelper.storagePgWrite[pgIdx] == NULL)
     {
-        storageHelperInit();
+        storageHelperContextInit();
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
@@ -246,14 +258,14 @@ storagePgIdxWrite(unsigned int pgIdx)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(storageHelper.storagePgWrite[pgIdx]);
+    FUNCTION_TEST_RETURN_CONST(STORAGE, storageHelper.storagePgWrite[pgIdx]);
 }
 
-const Storage *
+FN_EXTERN const Storage *
 storagePgWrite(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(storagePgIdxWrite(cfgOptionGroupIdxDefault(cfgOptGrpPg)));
+    FUNCTION_TEST_RETURN_CONST(STORAGE, storagePgIdxWrite(cfgOptionGroupIdxDefault(cfgOptGrpPg)));
 }
 
 /***********************************************************************************************************************************
@@ -280,7 +292,7 @@ storageHelperRepoInit(void)
 Construct a repo path from an expression and path
 ***********************************************************************************************************************************/
 static String *
-storageRepoPathExpression(const String *expression, const String *path)
+storageRepoPathExpression(const String *const expression, const String *const path)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, expression);
@@ -289,35 +301,37 @@ storageRepoPathExpression(const String *expression, const String *path)
 
     ASSERT(expression != NULL);
 
-    String *result = NULL;
+    String *const result = strNew();
 
     if (strEq(expression, STORAGE_REPO_ARCHIVE_STR))
     {
         // Construct the base path
         if (storageHelper.stanza != NULL)
-            result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s", strZ(storageHelper.stanza));
+            strCatFmt(result, STORAGE_PATH_ARCHIVE "/%s", strZ(storageHelper.stanza));
         else
-            result = strNew(STORAGE_PATH_ARCHIVE);
+            strCat(result, STORAGE_PATH_ARCHIVE_STR);
 
         // If a subpath should be appended, determine if it is WAL path, else just append the subpath
         if (path != NULL)
         {
-            StringList *pathSplit = strLstNewSplitZ(path, "/");
-            String *file = strLstSize(pathSplit) == 2 ? strLstGet(pathSplit, 1) : NULL;
+            StringList *const pathSplit = strLstNewSplitZ(path, "/");
+            const String *const file = strLstSize(pathSplit) == 2 ? strLstGet(pathSplit, 1) : NULL;
 
             if (file != NULL && regExpMatch(storageHelper.walRegExp, file))
-                strCatFmt(result, "/%s/%s/%s", strZ(strLstGet(pathSplit, 0)), strZ(strSubN(file, 0, 16)), strZ(file));
+                strCatFmt(result, "/%s/%.16s/%s", strZ(strLstGet(pathSplit, 0)), strZ(file), strZ(file));
             else
                 strCatFmt(result, "/%s", strZ(path));
+
+            strLstFree(pathSplit);
         }
     }
     else if (strEq(expression, STORAGE_REPO_BACKUP_STR))
     {
         // Construct the base path
         if (storageHelper.stanza != NULL)
-            result = strNewFmt(STORAGE_PATH_BACKUP "/%s", strZ(storageHelper.stanza));
+            strCatFmt(result, STORAGE_PATH_BACKUP "/%s", strZ(storageHelper.stanza));
         else
-            result = strNew(STORAGE_PATH_BACKUP);
+            strCatZ(result, STORAGE_PATH_BACKUP);
 
         // Append subpath if provided
         if (path != NULL)
@@ -326,7 +340,9 @@ storageRepoPathExpression(const String *expression, const String *path)
     else
         THROW_FMT(AssertError, "invalid expression '%s'", strZ(expression));
 
-    FUNCTION_TEST_RETURN(result);
+    ASSERT(result != NULL);
+
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -347,76 +363,41 @@ storageRepoGet(unsigned int repoIdx, bool write)
     {
         result = storageRemoteNew(
             STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, storageRepoPathExpression,
-            protocolRemoteGet(protocolStorageTypeRepo, repoIdx), cfgOptionIdxUInt(cfgOptCompressLevelNetwork, repoIdx));
+            protocolRemoteGet(protocolStorageTypeRepo, repoIdx), cfgOptionUInt(cfgOptCompressLevelNetwork));
     }
-    // Use Azure storage
+    // Use local storage
     else
     {
-        const String *type = cfgOptionIdxStr(cfgOptRepoType, repoIdx);
+        // Search for the helper
+        const StringId type = cfgOptionIdxStrId(cfgOptRepoType, repoIdx);
 
-        if (strEqZ(type, STORAGE_AZURE_TYPE))
+        if (storageHelper.helperList != NULL)
         {
-            result = storageAzureNew(
-                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoPathExpression,
-                cfgOptionIdxStr(cfgOptRepoAzureContainer, repoIdx), cfgOptionIdxStr(cfgOptRepoAzureAccount, repoIdx),
-                strEqZ(cfgOptionIdxStr(cfgOptRepoAzureKeyType, repoIdx), STORAGE_AZURE_KEY_TYPE_SHARED) ?
-                    storageAzureKeyTypeShared : storageAzureKeyTypeSas,
-                cfgOptionIdxStr(cfgOptRepoAzureKey, repoIdx), STORAGE_AZURE_BLOCKSIZE_MIN,
-                cfgOptionIdxStrNull(cfgOptRepoAzureHost, repoIdx), cfgOptionIdxStr(cfgOptRepoAzureEndpoint, repoIdx),
-                cfgOptionIdxUInt(cfgOptRepoAzurePort, repoIdx), ioTimeoutMs(), cfgOptionIdxBool(cfgOptRepoAzureVerifyTls, repoIdx),
-                cfgOptionIdxStrNull(cfgOptRepoAzureCaFile, repoIdx),
-                cfgOptionIdxStrNull(cfgOptRepoAzureCaPath, repoIdx));
+            for (const StorageHelper *helper = storageHelper.helperList; helper->type != 0; helper++)
+            {
+                if (helper->type == type)
+                {
+                    result = helper->helper(repoIdx, write, storageRepoPathExpression);
+                    break;
+                }
+            }
         }
-        // Use CIFS storage
-        else if (strEqZ(type, STORAGE_CIFS_TYPE))
+
+        // If no helper was found it try Posix
+        if (result == NULL)
         {
-            result = storageCifsNew(
-                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write,
-                storageRepoPathExpression);
-        }
-        // Use Posix storage
-        else if (strEqZ(type, STORAGE_POSIX_TYPE))
-        {
+            CHECK(AssertError, type == STORAGE_POSIX_TYPE, "invalid storage type");
+
             result = storagePosixNewP(
                 cfgOptionIdxStr(cfgOptRepoPath, repoIdx), .write = write, .pathExpressionFunction = storageRepoPathExpression);
         }
-        // Use S3 storage
-        else
-        {
-            // Storage must be S3
-            CHECK(strEqZ(type, STORAGE_S3_TYPE));
-
-            // Set the default port
-            unsigned int port = cfgOptionIdxUInt(cfgOptRepoS3Port, repoIdx);
-
-            // Extract port from the endpoint and host if it is present
-            const String *endPoint = cfgOptionIdxHostPort(cfgOptRepoS3Endpoint, repoIdx, &port);
-            const String *host = cfgOptionIdxHostPort(cfgOptRepoS3Host, repoIdx, &port);
-
-            // If the port option was set explicitly then use it in preference to appended ports
-            if (cfgOptionIdxSource(cfgOptRepoS3Port, repoIdx) != cfgSourceDefault)
-                port = cfgOptionIdxUInt(cfgOptRepoS3Port, repoIdx);
-
-            result = storageS3New(
-                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoPathExpression,
-                cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx), endPoint,
-                strEqZ(cfgOptionIdxStr(cfgOptRepoS3UriStyle, repoIdx), STORAGE_S3_URI_STYLE_HOST) ?
-                    storageS3UriStyleHost : storageS3UriStylePath,
-                cfgOptionIdxStr(cfgOptRepoS3Region, repoIdx),
-                strEqZ(cfgOptionIdxStr(cfgOptRepoS3KeyType, repoIdx), STORAGE_S3_KEY_TYPE_SHARED) ?
-                    storageS3KeyTypeShared : storageS3KeyTypeAuto,
-                cfgOptionIdxStrNull(cfgOptRepoS3Key, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3KeySecret, repoIdx),
-                cfgOptionIdxStrNull(cfgOptRepoS3Token, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3Role, repoIdx),
-                STORAGE_S3_PARTSIZE_MIN, host, port, ioTimeoutMs(), cfgOptionIdxBool(cfgOptRepoS3VerifyTls, repoIdx),
-                cfgOptionIdxStrNull(cfgOptRepoS3CaFile, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3CaPath, repoIdx));
-        }
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STORAGE, result);
 }
 
 /**********************************************************************************************************************************/
-const Storage *
+FN_EXTERN const Storage *
 storageRepoIdx(unsigned int repoIdx)
 {
     FUNCTION_TEST_BEGIN();
@@ -425,7 +406,7 @@ storageRepoIdx(unsigned int repoIdx)
 
     if (storageHelper.storageRepo == NULL)
     {
-        storageHelperInit();
+        storageHelperContextInit();
         storageHelperStanzaInit(false);
         storageHelperRepoInit();
 
@@ -445,17 +426,17 @@ storageRepoIdx(unsigned int repoIdx)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(storageHelper.storageRepo[repoIdx]);
+    FUNCTION_TEST_RETURN_CONST(STORAGE, storageHelper.storageRepo[repoIdx]);
 }
 
-const Storage *
+FN_EXTERN const Storage *
 storageRepo(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(storageRepoIdx(cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
+    FUNCTION_TEST_RETURN_CONST(STORAGE, storageRepoIdx(cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
 }
 
-const Storage *
+FN_EXTERN const Storage *
 storageRepoIdxWrite(unsigned int repoIdx)
 {
     FUNCTION_TEST_BEGIN();
@@ -468,7 +449,7 @@ storageRepoIdxWrite(unsigned int repoIdx)
 
     if (storageHelper.storageRepoWrite == NULL)
     {
-        storageHelperInit();
+        storageHelperContextInit();
         storageHelperStanzaInit(false);
         storageHelperRepoInit();
 
@@ -488,14 +469,14 @@ storageRepoIdxWrite(unsigned int repoIdx)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(storageHelper.storageRepoWrite[repoIdx]);
+    FUNCTION_TEST_RETURN_CONST(STORAGE, storageHelper.storageRepoWrite[repoIdx]);
 }
 
-const Storage *
+FN_EXTERN const Storage *
 storageRepoWrite(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(storageRepoIdxWrite(cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
+    FUNCTION_TEST_RETURN_CONST(STORAGE, storageRepoIdxWrite(cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
 }
 
 /***********************************************************************************************************************************
@@ -514,7 +495,14 @@ storageSpoolPathExpression(const String *expression, const String *path)
 
     String *result = NULL;
 
-    if (strEqZ(expression, STORAGE_SPOOL_ARCHIVE_IN))
+    if (strEqZ(expression, STORAGE_SPOOL_ARCHIVE))
+    {
+        if (path == NULL)
+            result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s", strZ(storageHelper.stanza));
+        else
+            result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(storageHelper.stanza), strZ(path));
+    }
+    else if (strEqZ(expression, STORAGE_SPOOL_ARCHIVE_IN))
     {
         if (path == NULL)
             result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s/in", strZ(storageHelper.stanza));
@@ -531,18 +519,18 @@ storageSpoolPathExpression(const String *expression, const String *path)
     else
         THROW_FMT(AssertError, "invalid expression '%s'", strZ(expression));
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/
-const Storage *
+FN_EXTERN const Storage *
 storageSpool(void)
 {
     FUNCTION_TEST_VOID();
 
     if (storageHelper.storageSpool == NULL)
     {
-        storageHelperInit();
+        storageHelperContextInit();
         storageHelperStanzaInit(true);
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
@@ -553,10 +541,10 @@ storageSpool(void)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(storageHelper.storageSpool);
+    FUNCTION_TEST_RETURN_CONST(STORAGE, storageHelper.storageSpool);
 }
 
-const Storage *
+FN_EXTERN const Storage *
 storageSpoolWrite(void)
 {
     FUNCTION_TEST_VOID();
@@ -567,7 +555,7 @@ storageSpoolWrite(void)
 
     if (storageHelper.storageSpoolWrite == NULL)
     {
-        storageHelperInit();
+        storageHelperContextInit();
         storageHelperStanzaInit(true);
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
@@ -578,11 +566,11 @@ storageSpoolWrite(void)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(storageHelper.storageSpoolWrite);
+    FUNCTION_TEST_RETURN_CONST(STORAGE, storageHelper.storageSpoolWrite);
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 storageHelperFree(void)
 {
     FUNCTION_TEST_VOID();
@@ -590,7 +578,7 @@ storageHelperFree(void)
     if (storageHelper.memContext != NULL)
         memContextFree(storageHelper.memContext);
 
-    storageHelper = (struct StorageHelper){.memContext = NULL};
+    storageHelper = (struct StorageHelperLocal){.memContext = NULL, .helperList = storageHelper.helperList};
 
     FUNCTION_TEST_RETURN_VOID();
 }

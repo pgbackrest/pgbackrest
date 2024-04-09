@@ -19,14 +19,17 @@ Functions
 typedef struct StorageS3RequestAsyncParam
 {
     VAR_PARAM_HEADER;
+    const HttpHeader *header;                                       // Headers
     const HttpQuery *query;                                         // Query parameters
     const Buffer *content;                                          // Request content
+    bool sseKms;                                                    // Enable server-side encryption?
+    bool tag;                                                       // Add tags when available?
 } StorageS3RequestAsyncParam;
 
-#define storageS3RequestAsyncP(this, verb, uri, ...)                                                                               \
-    storageS3RequestAsync(this, verb, uri, (StorageS3RequestAsyncParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define storageS3RequestAsyncP(this, verb, path, ...)                                                                              \
+    storageS3RequestAsync(this, verb, path, (StorageS3RequestAsyncParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-HttpRequest *storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, StorageS3RequestAsyncParam param);
+FN_EXTERN HttpRequest *storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, StorageS3RequestAsyncParam param);
 
 // Get async response
 typedef struct StorageS3ResponseParam
@@ -39,22 +42,25 @@ typedef struct StorageS3ResponseParam
 #define storageS3ResponseP(request, ...)                                                                                           \
     storageS3Response(request, (StorageS3ResponseParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-HttpResponse *storageS3Response(HttpRequest *request, StorageS3ResponseParam param);
+FN_EXTERN HttpResponse *storageS3Response(HttpRequest *request, StorageS3ResponseParam param);
 
 // Perform sync request
 typedef struct StorageS3RequestParam
 {
     VAR_PARAM_HEADER;
+    const HttpHeader *header;                                       // Headers
     const HttpQuery *query;                                         // Query parameters
     const Buffer *content;                                          // Request content
     bool allowMissing;                                              // Allow missing files (caller can check response code)
     bool contentIo;                                                 // Is IoRead interface required to read content?
+    bool sseKms;                                                    // Enable server-side encryption?
+    bool tag;                                                       // Add tags when available?
 } StorageS3RequestParam;
 
-#define storageS3RequestP(this, verb, uri, ...)                                                                                    \
-    storageS3Request(this, verb, uri, (StorageS3RequestParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define storageS3RequestP(this, verb, path, ...)                                                                                   \
+    storageS3Request(this, verb, path, (StorageS3RequestParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-HttpResponse *storageS3Request(StorageS3 *this, const String *verb, const String *uri, StorageS3RequestParam param);
+FN_EXTERN HttpResponse *storageS3Request(StorageS3 *this, const String *verb, const String *path, StorageS3RequestParam param);
 
 /***********************************************************************************************************************************
 Macros for function logging
@@ -62,6 +68,6 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_S3_TYPE                                                                                               \
     StorageS3 *
 #define FUNCTION_LOG_STORAGE_S3_FORMAT(value, buffer, bufferSize)                                                                  \
-    objToLog(value, "StorageS3", buffer, bufferSize)
+    objNameToLog(value, "StorageS3", buffer, bufferSize)
 
 #endif

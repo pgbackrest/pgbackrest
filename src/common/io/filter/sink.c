@@ -4,23 +4,17 @@ IO Sink Filter
 #include "build.auto.h"
 
 #include "common/debug.h"
-#include "common/io/filter/filter.intern.h"
+#include "common/io/filter/filter.h"
 #include "common/io/filter/sink.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
-
-/***********************************************************************************************************************************
-Filter type constant
-***********************************************************************************************************************************/
-STRING_EXTERN(SINK_FILTER_TYPE_STR,                                 SINK_FILTER_TYPE);
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 typedef struct IoSink
 {
-    MemContext *memContext;                                         // Mem context of filter
+    bool dummy;                                                     // Struct requires one member
 } IoSink;
 
 /***********************************************************************************************************************************
@@ -29,7 +23,7 @@ Macros for function logging
 #define FUNCTION_LOG_IO_SINK_TYPE                                                                                                  \
     IoSink *
 #define FUNCTION_LOG_IO_SINK_FORMAT(value, buffer, bufferSize)                                                                     \
-    objToLog(value, "IoSink", buffer, bufferSize)
+    objNameToLog(value, "IoSink", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Discard all input
@@ -53,25 +47,15 @@ ioSinkProcess(THIS_VOID, const Buffer *input, Buffer *output)
 }
 
 /**********************************************************************************************************************************/
-IoFilter *
+FN_EXTERN IoFilter *
 ioSinkNew(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
 
-    IoFilter *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("IoSink")
+    OBJ_NEW_BEGIN(IoSink)
     {
-        IoSink *driver = memNew(sizeof(IoSink));
-
-        *driver = (IoSink)
-        {
-            .memContext = memContextCurrent(),
-        };
-
-        this = ioFilterNewP(SINK_FILTER_TYPE_STR, driver, NULL, .inOut = ioSinkProcess);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_FILTER, this);
+    FUNCTION_LOG_RETURN(IO_FILTER, ioFilterNewP(SINK_FILTER_TYPE, this, NULL, .inOut = ioSinkProcess));
 }

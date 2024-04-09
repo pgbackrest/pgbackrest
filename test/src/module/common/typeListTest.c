@@ -9,22 +9,13 @@ Test sort comparator
 static int
 testComparator(const void *item1, const void *item2)
 {
-    int int1 = *(int *)item1;
-    int int2 = *(int *)item2;
-
-    if (int1 < int2)
-        return -1;
-
-    if (int1 > int2)
-        return 1;
-
-    return 0;
+    return LST_COMPARATOR_CMP(*(int *)item1, *(int *)item2);
 }
 
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
@@ -32,20 +23,23 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("lstNew*(), lstMemContext(), lstToLog(), and lstFree()"))
     {
+        char logBuf[STACK_TRACE_PARAM_MAX];
         List *list = lstNewP(sizeof(void *));
 
         TEST_RESULT_UINT(list->itemSize, sizeof(void *), "item size");
-        TEST_RESULT_UINT(list->listSize, 0, "list size");
+        TEST_RESULT_UINT(list->pub.listSize, 0, "list size");
         TEST_RESULT_UINT(list->listSizeMax, 0, "list size max");
-        TEST_RESULT_PTR(lstMemContext(list), list->memContext, "list mem context");
+        TEST_RESULT_PTR(lstMemContext(list), objMemContext(list), "list mem context");
         TEST_RESULT_VOID(lstClear(list), "clear list");
 
         void *ptr = NULL;
         TEST_RESULT_VOID(lstAdd(list, &ptr), "add item");
-        TEST_RESULT_STR_Z(lstToLog(list), "{size: 1}", "check log");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(list, lstToLog, logBuf, sizeof(logBuf)), "bufToLog");
+        TEST_RESULT_Z(logBuf, "{size: 1}", "check log");
 
         TEST_RESULT_VOID(lstClear(list), "clear list");
-        TEST_RESULT_STR_Z(lstToLog(list), "{size: 0}", "check log after clear");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(list, lstToLog, logBuf, sizeof(logBuf)), "bufToLog");
+        TEST_RESULT_Z(logBuf, "{size: 0}", "check log");
 
         TEST_RESULT_VOID(lstFree(list), "free list");
         TEST_RESULT_VOID(lstFree(lstNewP(1)), "free empty list");
@@ -53,12 +47,12 @@ testRun(void)
 
         TEST_ASSIGN(list, lstNewP(sizeof(String *), .comparator = lstComparatorStr), "new list with params");
 
-        String *string1 = strNew("string1");
+        const String *string1 = STRDEF("string1");
         TEST_RESULT_STR_Z(*(String **)lstAdd(list, &string1), "string1", "    add string1");
-        String *string2 = strNew("string2");
+        const String *string2 = STRDEF("string2");
         TEST_RESULT_VOID(lstAdd(list, &string2), "    add string2");
 
-        String *string3 = strNew("string3");
+        const String *string3 = STRDEF("string3");
         TEST_RESULT_PTR(lstFindDefault(list, &string3, (void *)1), (void *)1, "    find string3 returns default");
         TEST_RESULT_BOOL(lstExists(list, &string3), false, "    string3 does not exist");
         TEST_RESULT_STR_Z(*(String **)lstFind(list, &string2), "string2", "    find string2");
@@ -79,12 +73,14 @@ testRun(void)
         {
             list = lstNewP(sizeof(int));
 
+            TEST_RESULT_BOOL(lstEmpty(list), true, "list empty");
+
             TEST_ERROR(lstGetLast(list), AssertError, "cannot get last from list with no values");
             TEST_ERROR(lstRemoveLast(list), AssertError, "cannot remove last from list with no values");
 
             // Add ints to the list
             for (int listIdx = 1; listIdx <= LIST_INITIAL_SIZE; listIdx++)
-                TEST_RESULT_VOID(lstAdd(list, &listIdx), "add item %d", listIdx);
+                TEST_RESULT_VOID(lstAdd(list, &listIdx), zNewFmt("add item %d", listIdx));
 
             lstMove(list, memContextPrior());
         }
@@ -92,16 +88,17 @@ testRun(void)
 
         // Insert an int at the beginning
         int insertIdx = 0;
-        TEST_RESULT_INT(*(int *)lstInsert(list, 0, &insertIdx), 0, "insert item %d", insertIdx);
+        TEST_RESULT_INT(*(int *)lstInsert(list, 0, &insertIdx), 0, zNewFmt("insert item %d", insertIdx));
 
         // Check the size
         TEST_RESULT_INT(lstSize(list), 9, "list size");
+        TEST_RESULT_BOOL(lstEmpty(list), false, "list not empty");
 
         // Read them back and check values
         for (unsigned int listIdx = 0; listIdx < lstSize(list); listIdx++)
         {
             int *item = lstGet(list, listIdx);
-            TEST_RESULT_INT(*item, listIdx, "check item %u", listIdx);
+            TEST_RESULT_INT(*item, listIdx, zNewFmt("check item %u", listIdx));
         }
 
         // Remove first item
@@ -112,7 +109,7 @@ testRun(void)
         {
             int *item = listIdx == lstSize(list) - 1 ? lstGetLast(list) : lstGet(list, listIdx);
 
-            TEST_RESULT_INT(*item, listIdx + 1, "check item %u", listIdx);
+            TEST_RESULT_INT(*item, listIdx + 1, zNewFmt("check item %u", listIdx));
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -124,10 +121,10 @@ testRun(void)
         for (int listIdx = 0; listIdx < 8; listIdx++)
         {
             int item = listIdx + 9;
-            TEST_RESULT_VOID(lstAdd(list, &item), "add item %d", item);
+            TEST_RESULT_VOID(lstAdd(list, &item), zNewFmt("add item %d", item));
         }
 
-        TEST_RESULT_INT(list->listSize, list->listSizeMax, "size equals max size");
+        TEST_RESULT_UINT(lstSize(list), list->listSizeMax, "size equals max size");
 
         // Remove last item
         TEST_RESULT_VOID(lstRemoveLast(list), "remove last item");
@@ -136,7 +133,7 @@ testRun(void)
         for (unsigned int listIdx = 0; listIdx < lstSize(list); listIdx++)
         {
             int *item = lstGet(list, listIdx);
-            TEST_RESULT_INT(*item, listIdx + 1, "check item %u", listIdx);
+            TEST_RESULT_INT(*item, listIdx + 1, zNewFmt("check item %u", listIdx));
         }
 
         TEST_ERROR(lstGet(list, lstSize(list)), AssertError, "cannot get index 15 from list with 15 value(s)");
@@ -148,12 +145,19 @@ testRun(void)
     {
         List *list = lstNewP(sizeof(int));
         lstComparatorSet(list, testComparator);
-        int value;
+        int value = 0;
 
-        value = 3; lstAdd(list, &value);
-        value = 5; lstAdd(list, &value);
-        value = 3; lstAdd(list, &value);
-        value = 2; lstAdd(list, &value);
+        TEST_RESULT_PTR(lstSort(list, sortOrderAsc), list, "list sort asc");
+        TEST_RESULT_PTR(lstFind(list, &value), NULL, "unable to find in empty list");
+
+        value = 3;
+        lstAdd(list, &value);
+        value = 5;
+        lstAdd(list, &value);
+        value = 3;
+        lstAdd(list, &value);
+        value = 2;
+        lstAdd(list, &value);
 
         TEST_RESULT_PTR(lstSort(list, sortOrderNone), list, "list sort none");
 
@@ -175,6 +179,26 @@ testRun(void)
         TEST_RESULT_INT(*(int *)lstGet(list, 1), 3, "sort value 1");
         TEST_RESULT_INT(*(int *)lstGet(list, 2), 3, "sort value 2");
         TEST_RESULT_INT(*(int *)lstGet(list, 3), 2, "sort value 3");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("lstComparatorUInt()");
+
+        unsigned int uint1 = 1;
+        unsigned int uint2 = 2;
+
+        TEST_RESULT_INT(lstComparatorUInt(&uint1, &uint1), 0, "uints are equal");
+        TEST_RESULT_BOOL(lstComparatorUInt(&uint1, &uint2) < 0, true, "first uint is less");
+        TEST_RESULT_BOOL(lstComparatorUInt(&uint2, &uint1) > 0, true, "first uint is greater");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("lstComparatorZ()");
+
+        const char *string1 = "abc";
+        const char *string2 = "def";
+
+        TEST_RESULT_INT(lstComparatorZ(&string1, &string1), 0, "strings are equal");
+        TEST_RESULT_BOOL(lstComparatorZ(&string1, &string2) < 0, true, "first string is less");
+        TEST_RESULT_BOOL(lstComparatorZ(&string2, &string1) > 0, true, "first string is greater");
     }
 
     // *****************************************************************************************************************************
@@ -188,7 +212,7 @@ testRun(void)
         for (int listIdx = 0; listIdx < testMax; listIdx++)
             lstAdd(list, &listIdx);
 
-        CHECK(lstSize(list) == (unsigned int)testMax);
+        ASSERT(lstSize(list) == (unsigned int)testMax);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("search ascending sort");
@@ -196,7 +220,7 @@ testRun(void)
         lstSort(list, sortOrderAsc);
 
         for (int listIdx = 0; listIdx < testMax; listIdx++)
-            CHECK(*(int *)lstFind(list, &listIdx) == listIdx);
+            ASSERT(*(int *)lstFind(list, &listIdx) == listIdx);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("search descending sort");
@@ -204,8 +228,8 @@ testRun(void)
         lstSort(list, sortOrderDesc);
 
         for (int listIdx = 0; listIdx < testMax; listIdx++)
-            CHECK(*(int *)lstFind(list, &listIdx) == listIdx);
+            ASSERT(*(int *)lstFind(list, &listIdx) == listIdx);
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

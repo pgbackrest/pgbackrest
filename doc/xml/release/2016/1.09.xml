@@ -1,0 +1,131 @@
+<release date="2016-10-10" version="1.09" title="9.6 Support, Configurability, and Bug Fixes">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Fixed the <cmd>check</cmd> command to prevent an error message from being logged if the backup directory does not exist.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="jason.odonnell"/>
+                </release-item-contributor-list>
+
+                <p>Fixed error message to properly display the archive command when an invalid archive command is detected.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="jens.wilke"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue where the async archiver would not be started if <cmd>archive-push</cmd> did not have enough space to queue a new WAL segment. This meant that the queue would never be cleared without manual intervention (such as calling <cmd>archive-push</cmd> directly). <postgres/> now receives errors when there is not enough space to store new WAL segments but the async process will still be started so that space is eventually freed.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="jens.wilke"/>
+                </release-item-contributor-list>
+
+                <p>Fixed a remote timeout that occurred when a local process generated checksums (during resume or restore) but did not copy files, allowing the remote to go idle.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <p>Non-exclusive backups will automatically be used on <postgres/> 9.6.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="jens.wilke"/>
+                </release-item-contributor-list>
+
+                <p>Added the <br-option>cmd-ssh</br-option> option to allow the ssh client to be specified.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="sascha.biberhofer"/>
+                </release-item-contributor-list>
+
+                <p>Added the <br-option>log-level-stderr</br-option> option to control whether console log messages are sent to <id>stderr</id> or <id>stdout</id>. By default this is set to <setting>warn</setting> which represents a change in behavior from previous versions, even though it may be more intuitive. Setting <br-option>log-level-stderr=off</br-option> will preserve the old behavior.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="jens.wilke"/>
+                </release-item-contributor-list>
+
+                <p>Set <id>application_name</id> to <id>"pgBackRest [command]"</id> for database connections.</p>
+            </release-item>
+
+            <release-item>
+                <p>Check that archive_mode is enabled when <br-option>archive-check</br-option> option enabled.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="jens.wilke"/>
+                </release-item-contributor-list>
+
+                <p>Clarified error message when unable to acquire <backrest/> advisory lock to make it clear that it is not a <postgres/> backup lock.</p>
+            </release-item>
+
+            <release-item>
+                <p><backrest/> version number included in command start INFO log output.</p>
+            </release-item>
+
+            <release-item>
+                <p>Process ID logged for local process start/stop INFO log output.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-feature-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Added <br-option>archive-timeout</br-option> option documentation to the user guide.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Added <setting>dev</setting> option to <file>doc.pl</file> to easily add the <id>dev</id> keyword to documentation builds.</p>
+            </release-item>
+        </release-development-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <p>Update CentOS/Debian package definitions.</p>
+            </release-item>
+
+            <release-item>
+                <p>Fixed missing expect output for help module.</p>
+            </release-item>
+
+            <release-item>
+                <p>Fixed broken <id>vm-max</id> option in <file>test.pl</file>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Regression tests can now be run as any properly-configured user, not just vagrant.</p>
+            </release-item>
+
+            <release-item>
+                <p>Minimize TeXLive package list to save time during VM builds.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+</release>

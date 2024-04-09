@@ -8,22 +8,27 @@ Backup Command
 #include <time.h>
 #include <unistd.h>
 
-#include "command/archive/common.h"
-#include "command/control/common.h"
+#include "command/archive/find.h"
 #include "command/backup/backup.h"
 #include "command/backup/common.h"
 #include "command/backup/file.h"
 #include "command/backup/protocol.h"
 #include "command/check/common.h"
+#include "command/control/common.h"
 #include "command/stanza/common.h"
-#include "common/crypto/cipherBlock.h"
 #include "common/compress/helper.h"
+#include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
 #include "common/io/filter/size.h"
+#include "common/lock.h"
 #include "common/log.h"
+#include "common/regExp.h"
 #include "common/time.h"
 #include "common/type/convert.h"
+#include "common/type/json.h"
+#include "config/common.h"
 #include "config/config.h"
+#include "config/parse.h"
 #include "db/helper.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
@@ -38,12 +43,11 @@ Backup Command
 /**********************************************************************************************************************************
 Generate a unique backup label that does not contain a timestamp from a previous backup
 ***********************************************************************************************************************************/
-// Helper to format the backup label
 static String *
-backupLabelFormat(BackupType type, const String *backupLabelPrior, time_t timestamp)
+backupLabelCreate(const BackupType type, const String *const backupLabelPrior, const time_t timestamp)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(ENUM, type);
+        FUNCTION_LOG_PARAM(STRING_ID, type);
         FUNCTION_LOG_PARAM(STRING, backupLabelPrior);
         FUNCTION_LOG_PARAM(TIME, timestamp);
     FUNCTION_LOG_END();
@@ -51,44 +55,7 @@ backupLabelFormat(BackupType type, const String *backupLabelPrior, time_t timest
     ASSERT((type == backupTypeFull && backupLabelPrior == NULL) || (type != backupTypeFull && backupLabelPrior != NULL));
     ASSERT(timestamp > 0);
 
-    // Format the timestamp
-    char buffer[16];
-    THROW_ON_SYS_ERROR(
-        strftime(buffer, sizeof(buffer), "%Y%m%d-%H%M%S", localtime(&timestamp)) == 0, AssertError, "unable to format time");
-
-    // If full label
-    String *result = NULL;
-
-    if (type == backupTypeFull)
-    {
-        result = strNewFmt("%sF", buffer);
-    }
-    // Else diff or incr label
-    else
-    {
-        // Get the full backup portion of the prior backup label
-        result = strSubN(backupLabelPrior, 0, 16);
-
-        // Append the diff/incr timestamp
-        strCatFmt(result, "_%s%s", buffer, type == backupTypeDiff ? "D" : "I");
-    }
-
-    FUNCTION_LOG_RETURN(STRING, result);
-}
-
-static String *
-backupLabelCreate(BackupType type, const String *backupLabelPrior, time_t timestamp)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(ENUM, type);
-        FUNCTION_LOG_PARAM(STRING, backupLabelPrior);
-        FUNCTION_LOG_PARAM(TIME, timestamp);
-    FUNCTION_LOG_END();
-
-    ASSERT((type == backupTypeFull && backupLabelPrior == NULL) || (type != backupTypeFull && backupLabelPrior != NULL));
-    ASSERT(timestamp > 0);
-
-    String *result = NULL;
+    String *result;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -101,7 +68,7 @@ backupLabelCreate(BackupType type, const String *backupLabelPrior, time_t timest
                 .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
             sortOrderDesc);
 
-        if (strLstSize(backupList) > 0)
+        if (!strLstEmpty(backupList))
             backupLabelLatest = strLstGet(backupList, 0);
 
         // Get the newest history
@@ -109,24 +76,33 @@ backupLabelCreate(BackupType type, const String *backupLabelPrior, time_t timest
             storageListP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY), .expression = STRDEF("^2[0-9]{3}$")),
             sortOrderDesc);
 
-        if (strLstSize(historyYearList) > 0)
+        if (!strLstEmpty(historyYearList))
         {
+            // For full backup compare against all backups in the history. For other backup types find backups whose name begins
+            // with full backup part of backupLabelLatest. This prevents label generation from failing when the last full backup is
+            // removed and then an diff/incr is generated from the last remaining full backup.
+            const String *const fileNameRegExp =
+                (type == backupTypeFull) ?
+                    backupRegExpP(.full = true, .differential = true, .incremental = true, .noAnchorEnd = true) :
+                    strNewFmt("^%.*sF\\_" DATE_TIME_REGEX "(D|I)", DATE_TIME_LEN, strZ(backupLabelLatest));
+
             const StringList *historyList = strLstSort(
                 storageListP(
                     storageRepo(),
                     strNewFmt(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s", strZ(strLstGet(historyYearList, 0))),
-                    .expression = strNewFmt(
-                        "%s\\.manifest\\.%s$",
-                        strZ(backupRegExpP(.full = true, .differential = true, .incremental = true, .noAnchorEnd = true)),
-                        strZ(compressTypeStr(compressTypeGz)))),
+                    .expression = strNewFmt("%s\\.manifest\\.%s$", strZ(fileNameRegExp), strZ(compressTypeStr(compressTypeGz)))),
                 sortOrderDesc);
 
-            if (strLstSize(historyList) > 0)
+            if (!strLstEmpty(historyList))
             {
-                const String *historyLabelLatest = strLstGet(historyList, 0);
+                const String *const historyLabelLatest = strLstGet(historyList, 0);
 
                 if (backupLabelLatest == NULL || strCmp(historyLabelLatest, backupLabelLatest) > 0)
-                    backupLabelLatest = historyLabelLatest;
+                {
+                    // Strip off the compression and manifest extensions in case this ends up in an error message
+                    backupLabelLatest = compressExtStrip(historyLabelLatest, compressTypeFromName(historyLabelLatest));
+                    backupLabelLatest = strSubN(backupLabelLatest, 0, strSize(backupLabelLatest) - sizeof(BACKUP_MANIFEST_EXT) + 1);
+                }
             }
         }
 
@@ -135,15 +111,15 @@ backupLabelCreate(BackupType type, const String *backupLabelPrior, time_t timest
 
         if (backupLabelLatest != NULL && strCmp(result, backupLabelLatest) <= 0)
         {
-            // If that didn't give us a later label then add one second.  It's possible that two backups (they would need to be
+            // If that didn't give us a later label then add one second. It's possible that two backups (they would need to be
             // offline or halted online) have run very close together.
             result = backupLabelFormat(type, backupLabelPrior, timestamp + 1);
 
-            // If the label is still not latest then error.  There is probably a timezone change or massive clock skew.
+            // If the label is still not latest then error. There is probably a timezone change or massive clock skew.
             if (strCmp(result, backupLabelLatest) <= 0)
             {
                 THROW_FMT(
-                    FormatError,
+                    ClockError,
                     "new backup label '%s' is not later than latest backup label '%s'\n"
                     "HINT: has the timezone changed?\n"
                     "HINT: is there clock skew?",
@@ -171,7 +147,7 @@ Get the postgres database and storage objects
 #define FUNCTION_LOG_BACKUP_DATA_TYPE                                                                                              \
     BackupData *
 #define FUNCTION_LOG_BACKUP_DATA_FORMAT(value, buffer, bufferSize)                                                                 \
-    objToLog(value, "BackupData", buffer, bufferSize)
+    objNameToLog(value, "BackupData", buffer, bufferSize)
 
 typedef struct BackupData
 {
@@ -185,36 +161,33 @@ typedef struct BackupData
     const Storage *storageStandby;                                  // Storage object for the standby
     const String *hostStandby;                                      // Host name of the standby
 
+    const InfoArchive *archiveInfo;                                 // Archive info
+    const String *archiveId;                                        // Archive where backup WAL will be stored
+
+    unsigned int timeline;                                          // Primary timeline
     unsigned int version;                                           // PostgreSQL version
     unsigned int walSegmentSize;                                    // PostgreSQL wal segment size
+    PgPageSize pageSize;                                            // PostgreSQL page size
 } BackupData;
 
 static BackupData *
-backupInit(const InfoBackup *infoBackup)
+backupInit(const InfoBackup *const infoBackup)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     ASSERT(infoBackup != NULL);
 
     // Initialize for offline backup
-    BackupData *result = memNew(sizeof(BackupData));
+    BackupData *const result = memNew(sizeof(BackupData));
     *result = (BackupData){0};
 
-    // Check that the PostgreSQL version supports backup from standby. The check is done using the stanza info because pg_control
-    // cannot be loaded until a primary is found -- which will also lead to an error if the version does not support standby. If the
-    // pg_control version does not match the stanza version then there will be an error further down.
-    InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
-
-    if (cfgOptionBool(cfgOptOnline) && cfgOptionBool(cfgOptBackupStandby) && infoPg.version < PG_VERSION_BACKUP_STANDBY)
-    {
-        THROW_FMT(
-            ConfigError, "option '" CFGOPT_BACKUP_STANDBY "' not valid for " PG_NAME " < %s",
-            strZ(pgVersionToStr(PG_VERSION_BACKUP_STANDBY)));
-    }
-
     // Don't allow backup from standby when offline
+    const InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
+
     if (!cfgOptionBool(cfgOptOnline) && cfgOptionBool(cfgOptBackupStandby))
     {
         LOG_WARN(
@@ -223,10 +196,12 @@ backupInit(const InfoBackup *infoBackup)
     }
 
     // Get database info when online
+    PgControl pgControl = {0};
+
     if (cfgOptionBool(cfgOptOnline))
     {
-        bool backupStandby = cfgOptionBool(cfgOptBackupStandby);
-        DbGetResult dbInfo = dbGet(!backupStandby, true, backupStandby);
+        const bool backupStandby = cfgOptionBool(cfgOptBackupStandby);
+        const DbGetResult dbInfo = dbGet(!backupStandby, true, backupStandby);
 
         result->pgIdxPrimary = dbInfo.primaryIdx;
         result->dbPrimary = dbInfo.primary;
@@ -240,17 +215,22 @@ backupInit(const InfoBackup *infoBackup)
             result->storageStandby = storagePgIdx(result->pgIdxStandby);
             result->hostStandby = cfgOptionIdxStrNull(cfgOptPgHost, result->pgIdxStandby);
         }
+
+        // Get pg_control info from the primary
+        pgControl = dbPgControl(result->dbPrimary);
     }
+    // Else get pg_control info directly from the file
+    else
+        pgControl = pgControlFromFile(storagePgIdx(result->pgIdxPrimary), cfgOptionStrNull(cfgOptPgVersionForce));
 
     // Add primary info
     result->storagePrimary = storagePgIdx(result->pgIdxPrimary);
     result->hostPrimary = cfgOptionIdxStrNull(cfgOptPgHost, result->pgIdxPrimary);
 
-    // Get pg_control info from the primary
-    PgControl pgControl = pgControlFromFile(result->storagePrimary);
-
+    result->timeline = pgControl.timeline;
     result->version = pgControl.version;
     result->walSegmentSize = pgControl.walSegmentSize;
+    result->pageSize = pgControl.pageSize;
 
     // Validate pg_control info against the stanza
     if (result->version != infoPg.version || pgControl.systemId != infoPg.systemId)
@@ -262,48 +242,260 @@ backupInit(const InfoBackup *infoBackup)
             strZ(pgVersionToStr(infoPg.version)), infoPg.systemId);
     }
 
-    // Only allow stop auto in PostgreSQL >= 9.3 and <= 9.5
-    if (cfgOptionBool(cfgOptStopAuto) && result->version < PG_VERSION_93)
-    {
-        LOG_WARN(CFGOPT_STOP_AUTO " option is only available in " PG_NAME " >= " PG_VERSION_93_STR);
-        cfgOptionSet(cfgOptStopAuto, cfgSourceParam, BOOL_FALSE_VAR);
-    }
-
-    // Only allow start-fast option for PostgreSQL >= 8.4
-    if (cfgOptionBool(cfgOptStartFast) && result->version < PG_VERSION_84)
-    {
-        LOG_WARN(CFGOPT_START_FAST " option is only available in " PG_NAME " >= " PG_VERSION_84_STR);
-        cfgOptionSet(cfgOptStartFast, cfgSourceParam, BOOL_FALSE_VAR);
-    }
-
-    // If checksum page is not explicity set then automatically enable it when checksums are available
+    // If checksum page is not explicitly set then automatically enable it when checksums are available
     if (!cfgOptionTest(cfgOptChecksumPage))
     {
         // If online then use the value in pg_control to set checksum-page
         if (cfgOptionBool(cfgOptOnline))
         {
-            cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, VARBOOL(pgControl.pageChecksum));
+            cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, VARBOOL(pgControl.pageChecksumVersion != 0));
         }
-        // Else set to false.  An offline cluster is likely to have false positives so better if the user enables manually.
+        // Else set to false. An offline cluster is likely to have false positives so better if the user enables manually.
         else
             cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, BOOL_FALSE_VAR);
     }
     // Else if checksums have been explicitly enabled but are not available then warn and reset. ??? We should be able to make this
     // determination when offline as well, but the integration tests don't write pg_control accurately enough to support it.
-    else if (cfgOptionBool(cfgOptOnline) && !pgControl.pageChecksum && cfgOptionBool(cfgOptChecksumPage))
+    else if (cfgOptionBool(cfgOptOnline) && pgControl.pageChecksumVersion == 0 && cfgOptionBool(cfgOptChecksumPage))
     {
         LOG_WARN(CFGOPT_CHECKSUM_PAGE " option set to true but checksums are not enabled on the cluster, resetting to false");
         cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, BOOL_FALSE_VAR);
+    }
+
+    // Get archive info
+    if (cfgOptionBool(cfgOptArchiveCheck))
+    {
+        result->archiveInfo = infoArchiveLoadFile(
+            storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cfgOptionStrId(cfgOptRepoCipherType),
+            cfgOptionStrNull(cfgOptRepoCipherPass));
+        result->archiveId = infoArchiveId(result->archiveInfo);
     }
 
     FUNCTION_LOG_RETURN(BACKUP_DATA, result);
 }
 
 /**********************************************************************************************************************************
+Build block incremental maps
+***********************************************************************************************************************************/
+// Size map. Block size is increased when the block map would be larger than a single block. The break can be calculated with this
+// formula: [block size in KiB] / (1024 / [block size in KiB] * [checksum size]) * 1073741824.
+static const ManifestBlockIncrSizeMap manifestBlockIncrSizeMapDefault[] =
+{
+    {.fileSize = 914 * 1024 * 1024, .blockSize = 88 * 1024},
+    {.fileSize = 740 * 1024 * 1024, .blockSize = 80 * 1024},
+    {.fileSize = 585 * 1024 * 1024, .blockSize = 72 * 1024},
+    {.fileSize = 448 * 1024 * 1024, .blockSize = 64 * 1024},
+    {.fileSize = 329 * 1024 * 1024, .blockSize = 56 * 1024},
+    {.fileSize = 228 * 1024 * 1024, .blockSize = 48 * 1024},
+    {.fileSize = 146 * 1024 * 1024, .blockSize = 40 * 1024},
+    {.fileSize = 96 * 1024 * 1024, .blockSize = 32 * 1024},
+    {.fileSize = 43 * 1024 * 1024, .blockSize = 24 * 1024},
+    {.fileSize = 11 * 1024 * 1024, .blockSize = 16 * 1024},
+    {.fileSize = 16 * 1024, .blockSize = 8 * 1024},
+};
+
+// Age map
+static const ManifestBlockIncrAgeMap manifestBlockIncrAgeMapDefault[] =
+{
+    {.fileAge = 4 * 7 * SEC_PER_DAY, .blockMultiplier = 0},
+    {.fileAge = 2 * 7 * SEC_PER_DAY, .blockMultiplier = 4},
+    {.fileAge = 7 * SEC_PER_DAY, .blockMultiplier = 2},
+};
+
+// Checksum size map
+static const ManifestBlockIncrChecksumSizeMap manifestBlockIncrChecksumSizeMapDefault[] =
+{
+    {.blockSize = 4 * 1024 * 1024, .checksumSize = BLOCK_INCR_CHECKSUM_SIZE_MIN + 6},
+    {.blockSize = 2 * 1024 * 1024, .checksumSize = BLOCK_INCR_CHECKSUM_SIZE_MIN + 5},
+    {.blockSize = 1024 * 1024, .checksumSize = BLOCK_INCR_CHECKSUM_SIZE_MIN + 4},
+    {.blockSize = 512 * 1024, .checksumSize = BLOCK_INCR_CHECKSUM_SIZE_MIN + 3},
+    {.blockSize = 128 * 1024, .checksumSize = BLOCK_INCR_CHECKSUM_SIZE_MIN + 2},
+    {.blockSize = 32 * 1024, .checksumSize = BLOCK_INCR_CHECKSUM_SIZE_MIN + 1},
+};
+
+// All maps
+static const ManifestBlockIncrMap manifestBlockIncrMap =
+{
+    .sizeMap = manifestBlockIncrSizeMapDefault,
+    .sizeMapSize = LENGTH_OF(manifestBlockIncrSizeMapDefault),
+    .ageMap = manifestBlockIncrAgeMapDefault,
+    .ageMapSize = LENGTH_OF(manifestBlockIncrAgeMapDefault),
+    .checksumSizeMap = manifestBlockIncrChecksumSizeMapDefault,
+    .checksumSizeMapSize = LENGTH_OF(manifestBlockIncrChecksumSizeMapDefault),
+};
+
+// Convert map size
+static unsigned int
+backupBlockIncrMapSize(const ConfigOption optionId, const unsigned int optionKeyIdx, const String *const value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+        FUNCTION_TEST_PARAM(UINT, optionKeyIdx);
+        FUNCTION_TEST_PARAM(STRING, value);
+    FUNCTION_TEST_END();
+
+    unsigned int result = 0;
+
+    TRY_BEGIN()
+    {
+        const int64_t valueI64 = cfgParseSize(value);
+
+        if (valueI64 <= UINT_MAX)
+            result = (unsigned int)valueI64;
+    }
+    CATCH_ANY()
+    {
+    }
+    TRY_END();
+
+    if (result == 0)
+    {
+        THROW_FMT(
+            OptionInvalidValueError, "'%s' is not valid for '%s' option", strZ(value),
+            cfgParseOptionKeyIdxName(optionId, optionKeyIdx));
+    }
+
+    FUNCTION_TEST_RETURN(UINT, result);
+}
+
+// Convert map checksum size
+static unsigned int
+backupBlockIncrMapChecksumSize(const ConfigOption optionId, const unsigned int optionKeyIdx, const Variant *const value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+        FUNCTION_TEST_PARAM(UINT, optionKeyIdx);
+        FUNCTION_TEST_PARAM(VARIANT, value);
+    FUNCTION_TEST_END();
+
+    unsigned int result = 0;
+
+    TRY_BEGIN()
+    {
+        result = varUIntForce(value);
+    }
+    CATCH_ANY()
+    {
+    }
+    TRY_END();
+
+    if (result < BLOCK_INCR_CHECKSUM_SIZE_MIN)
+    {
+        THROW_FMT(
+            OptionInvalidValueError, "'%s' is not valid for '%s' option", strZ(varStr(value)),
+            cfgParseOptionKeyIdxName(optionId, optionKeyIdx));
+    }
+
+    FUNCTION_TEST_RETURN(UINT, result);
+}
+
+static ManifestBlockIncrMap
+backupBlockIncrMap(void)
+{
+    FUNCTION_TEST_VOID();
+
+    FUNCTION_AUDIT_HELPER();
+
+    ManifestBlockIncrMap result = manifestBlockIncrMap;
+
+    if (cfgOptionBool(cfgOptRepoBlock))
+    {
+        // Build size map
+        const KeyValue *const manifestBlockIncrSizeKv = cfgOptionKvNull(cfgOptRepoBlockSizeMap);
+
+        if (manifestBlockIncrSizeKv != NULL)
+        {
+            List *const map = lstNewP(sizeof(ManifestBlockIncrSizeMap), .comparator = lstComparatorUInt);
+            const VariantList *const mapKeyList = kvKeyList(manifestBlockIncrSizeKv);
+
+            for (unsigned int mapKeyIdx = 0; mapKeyIdx < varLstSize(mapKeyList); mapKeyIdx++)
+            {
+                const Variant *mapKey = varLstGet(mapKeyList, mapKeyIdx);
+
+                ManifestBlockIncrSizeMap manifestBuildBlockIncrSizeMap =
+                {
+                    .fileSize = backupBlockIncrMapSize(
+                        cfgOptRepoBlockSizeMap, cfgOptionIdxDefault(cfgOptRepoBlockSizeMap), varStr(mapKey)),
+                    .blockSize = backupBlockIncrMapSize(
+                        cfgOptRepoBlockSizeMap, cfgOptionIdxDefault(cfgOptRepoBlockSizeMap),
+                        varStr(kvGet(manifestBlockIncrSizeKv, mapKey))),
+                };
+
+                lstAdd(map, &manifestBuildBlockIncrSizeMap);
+            }
+
+            lstSort(map, sortOrderDesc);
+
+            result.sizeMap = lstGet(map, 0);
+            result.sizeMapSize = lstSize(map);
+        }
+
+        // Build age map
+        const KeyValue *const manifestBlockIncrAgeKv = cfgOptionKvNull(cfgOptRepoBlockAgeMap);
+
+        if (manifestBlockIncrAgeKv != NULL)
+        {
+            List *const map = lstNewP(sizeof(ManifestBlockIncrAgeMap), .comparator = lstComparatorUInt);
+            const VariantList *const mapKeyList = kvKeyList(manifestBlockIncrAgeKv);
+
+            for (unsigned int mapKeyIdx = 0; mapKeyIdx < varLstSize(mapKeyList); mapKeyIdx++)
+            {
+                const Variant *mapKey = varLstGet(mapKeyList, mapKeyIdx);
+
+                ManifestBlockIncrAgeMap manifestBuildBlockIncrAgeMap =
+                {
+                    .fileAge = (unsigned int)(varUIntForce(mapKey) * SEC_PER_DAY),
+                    .blockMultiplier = varUIntForce(kvGet(manifestBlockIncrAgeKv, mapKey)),
+                };
+
+                lstAdd(map, &manifestBuildBlockIncrAgeMap);
+            }
+
+            lstSort(map, sortOrderDesc);
+
+            result.ageMap = lstGet(map, 0);
+            result.ageMapSize = lstSize(map);
+        }
+
+        // Build checksum size map
+        const KeyValue *const manifestBlockIncrChecksumSizeKv = cfgOptionKvNull(cfgOptRepoBlockChecksumSizeMap);
+
+        if (manifestBlockIncrChecksumSizeKv != NULL)
+        {
+            List *const map = lstNewP(sizeof(ManifestBlockIncrChecksumSizeMap), .comparator = lstComparatorUInt);
+            const VariantList *const mapKeyList = kvKeyList(manifestBlockIncrChecksumSizeKv);
+
+            for (unsigned int mapKeyIdx = 0; mapKeyIdx < varLstSize(mapKeyList); mapKeyIdx++)
+            {
+                const Variant *mapKey = varLstGet(mapKeyList, mapKeyIdx);
+
+                ManifestBlockIncrChecksumSizeMap manifestBuildBlockIncrChecksumSizeMap =
+                {
+                    .blockSize = backupBlockIncrMapSize(
+                        cfgOptRepoBlockSizeMap, cfgOptionIdxDefault(cfgOptRepoBlockChecksumSizeMap), varStr(mapKey)),
+                    .checksumSize = backupBlockIncrMapChecksumSize(
+                        cfgOptRepoBlockSizeMap, cfgOptionIdxDefault(cfgOptRepoBlockChecksumSizeMap),
+                        kvGet(manifestBlockIncrChecksumSizeKv, mapKey)),
+                };
+
+                lstAdd(map, &manifestBuildBlockIncrChecksumSizeMap);
+            }
+
+            lstSort(map, sortOrderDesc);
+
+            result.checksumSizeMap = lstGet(map, 0);
+            result.checksumSizeMapSize = lstSize(map);
+        }
+    }
+
+    FUNCTION_TEST_RETURN_TYPE(ManifestBlockIncrMap, result);
+}
+
+/**********************************************************************************************************************************
 Get time from the database or locally depending on online
 ***********************************************************************************************************************************/
 static time_t
-backupTime(BackupData *backupData, bool waitRemainder)
+backupTime(BackupData *const backupData, const bool waitRemainder)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
@@ -354,7 +546,7 @@ Create an incremental backup if type is not full and a compatible prior backup e
 ***********************************************************************************************************************************/
 // Helper to find a compatible prior backup
 static Manifest *
-backupBuildIncrPrior(const InfoBackup *infoBackup)
+backupBuildIncrPrior(const InfoBackup *const infoBackup)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
@@ -365,22 +557,22 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
     Manifest *result = NULL;
 
     // No incremental if backup type is full
-    BackupType type = backupType(cfgOptionStr(cfgOptType));
+    const BackupType type = (BackupType)cfgOptionStrId(cfgOptType);
 
     if (type != backupTypeFull)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
+            const InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
             const String *backupLabelPrior = NULL;
-            unsigned int backupTotal = infoBackupDataTotal(infoBackup);
+            const unsigned int backupTotal = infoBackupDataTotal(infoBackup);
 
             for (unsigned int backupIdx = backupTotal - 1; backupIdx < backupTotal; backupIdx--)
             {
-                 InfoBackupData backupPrior = infoBackupData(infoBackup, backupIdx);
+                const InfoBackupData backupPrior = infoBackupData(infoBackup, backupIdx);
 
                 // The prior backup for a diff must be full
-                if (type == backupTypeDiff && backupType(backupPrior.backupType) != backupTypeFull)
+                if (type == backupTypeDiff && backupPrior.backupType != backupTypeFull)
                     continue;
 
                 // The backups must come from the same cluster ??? This should enable delta instead
@@ -397,66 +589,56 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
             {
                 result = manifestLoadFile(
                     storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabelPrior)),
-                    cipherType(cfgOptionStr(cfgOptRepoCipherType)), infoPgCipherPass(infoBackupPg(infoBackup)));
-                const ManifestData *manifestPriorData = manifestData(result);
+                    cfgOptionStrId(cfgOptRepoCipherType), infoPgCipherPass(infoBackupPg(infoBackup)));
+                const ManifestData *const manifestPriorData = manifestData(result);
 
                 LOG_INFO_FMT(
                     "last backup label = %s, version = %s", strZ(manifestData(result)->backupLabel),
                     strZ(manifestData(result)->backrestVersion));
 
                 // Warn if compress-type option changed
-                if (compressTypeEnum(cfgOptionStr(cfgOptCompressType)) != manifestPriorData->backupOptionCompressType)
+                if (compressTypeEnum(cfgOptionStrId(cfgOptCompressType)) != manifestPriorData->backupOptionCompressType)
                 {
                     LOG_WARN_FMT(
                         "%s backup cannot alter " CFGOPT_COMPRESS_TYPE " option to '%s', reset to value in %s",
-                        strZ(cfgOptionStr(cfgOptType)), strZ(compressTypeStr(compressTypeEnum(cfgOptionStr(cfgOptCompressType)))),
-                        strZ(backupLabelPrior));
+                        strZ(cfgOptionDisplay(cfgOptType)), strZ(cfgOptionDisplay(cfgOptCompressType)), strZ(backupLabelPrior));
 
-                    // Set the compression type back to whatever was in the prior backup.  This is not strictly needed since we
-                    // could store compression type on a per file basis, but it seems simplest and safest for now.
+                    // Set the compression type back to whatever was in the prior backup. This is not strictly needed since we could
+                    // store compression type on a per file basis, but it seems simplest and safest for now.
                     cfgOptionSet(
                         cfgOptCompressType, cfgSourceParam, VARSTR(compressTypeStr(manifestPriorData->backupOptionCompressType)));
 
                     // There's a small chance that the prior manifest is old enough that backupOptionCompressLevel was not recorded.
-                    // There's an even smaller chance that the user will also alter compression-type in this this scenario right
-                    // after upgrading to a newer version. Because we judge this combination of events to be nearly impossible just
-                    // assert here so no test coverage is needed.
-                    CHECK(manifestPriorData->backupOptionCompressLevel != NULL);
+                    // There's an even smaller chance that the user will also alter compression-type in this scenario right after
+                    // upgrading to a newer version. Because we judge this combination of events to be nearly impossible just check
+                    // here so no test coverage is needed.
+                    CHECK(
+                        FormatError, manifestPriorData->backupOptionCompressLevel != NULL,
+                        "compress-level missing in prior manifest");
 
                     // Set the compression level back to whatever was in the prior backup
-                    cfgOptionSet(cfgOptCompressLevel, cfgSourceParam, manifestPriorData->backupOptionCompressLevel);
+                    cfgOptionSet(
+                        cfgOptCompressLevel, cfgSourceParam, VARINT64(varUInt(manifestPriorData->backupOptionCompressLevel)));
                 }
 
-                // Warn if hardlink option changed ??? Doesn't seem like this is needed?  Hardlinks are always to a directory that
-                // is guaranteed to contain a real file -- like references.  Also annoying that if the full backup was not
-                // hardlinked then an diff/incr can't be used because we need more testing.
-                if (cfgOptionBool(cfgOptRepoHardlink) != manifestPriorData->backupOptionHardLink)
-                {
-                    LOG_WARN_FMT(
-                        "%s backup cannot alter hardlink option to '%s', reset to value in %s",
-                        strZ(cfgOptionStr(cfgOptType)), cvtBoolToConstZ(cfgOptionBool(cfgOptRepoHardlink)),
-                        strZ(backupLabelPrior));
-                    cfgOptionSet(cfgOptRepoHardlink, cfgSourceParam, VARBOOL(manifestPriorData->backupOptionHardLink));
-                }
-
-                // If not defined this backup was done in a version prior to page checksums being introduced.  Just set
-                // checksum-page to false and move on without a warning.  Page checksums will start on the next full backup.
+                // If not defined this backup was done in a version prior to page checksums being introduced. Just set checksum-page
+                // to false and move on without a warning. Page checksums will start on the next full backup.
                 if (manifestData(result)->backupOptionChecksumPage == NULL)
                 {
                     cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, BOOL_FALSE_VAR);
                 }
-                // Don't allow the checksum-page option to change in a diff or incr backup.  This could be confusing as only
-                // certain files would be checksummed and the list could be incomplete during reporting.
+                // Don't allow the checksum-page option to change in a diff or incr backup. This could be confusing as only certain
+                // files would be checksummed and the list could be incomplete during reporting.
                 else
                 {
-                    bool checksumPagePrior = varBool(manifestData(result)->backupOptionChecksumPage);
+                    const bool checksumPagePrior = varBool(manifestData(result)->backupOptionChecksumPage);
 
                     // Warn if an incompatible setting was explicitly requested
                     if (checksumPagePrior != cfgOptionBool(cfgOptChecksumPage))
                     {
                         LOG_WARN_FMT(
                             "%s backup cannot alter '" CFGOPT_CHECKSUM_PAGE "' option to '%s', reset to '%s' from %s",
-                            strZ(cfgOptionStr(cfgOptType)), cvtBoolToConstZ(cfgOptionBool(cfgOptChecksumPage)),
+                            strZ(cfgOptionDisplay(cfgOptType)), strZ(cfgOptionDisplay(cfgOptChecksumPage)),
                             cvtBoolToConstZ(checksumPagePrior), strZ(manifestData(result)->backupLabel));
                     }
 
@@ -467,8 +649,8 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
             }
             else
             {
-                LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strZ(cfgOptionStr(cfgOptType)));
-                cfgOptionSet(cfgOptType, cfgSourceParam, VARSTR(backupTypeStr(backupTypeFull)));
+                LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strZ(cfgOptionDisplay(cfgOptType)));
+                cfgOptionSet(cfgOptType, cfgSourceParam, VARUINT64(backupTypeFull));
             }
         }
         MEM_CONTEXT_TEMP_END();
@@ -478,7 +660,8 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
 }
 
 static bool
-backupBuildIncr(const InfoBackup *infoBackup, Manifest *manifest, Manifest *manifestPrior, const String *archiveStart)
+backupBuildIncr(
+    const InfoBackup *const infoBackup, Manifest *const manifest, Manifest *const manifestPrior, const String *const archiveStart)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
@@ -501,7 +684,7 @@ backupBuildIncr(const InfoBackup *infoBackup, Manifest *manifest, Manifest *mani
             manifestMove(manifestPrior, MEM_CONTEXT_TEMP());
 
             // Build incremental manifest
-            manifestBuildIncr(manifest, manifestPrior, backupType(cfgOptionStr(cfgOptType)), archiveStart);
+            manifestBuildIncr(manifest, manifestPrior, (BackupType)cfgOptionStrId(cfgOptType), archiveStart);
 
             // Set the cipher subpass from prior manifest since we want a single subpass for the entire backup set
             manifestCipherSubPassSet(manifest, manifestCipherSubPass(manifestPrior));
@@ -518,156 +701,175 @@ backupBuildIncr(const InfoBackup *infoBackup, Manifest *manifest, Manifest *mani
 /***********************************************************************************************************************************
 Check for a backup that can be resumed and merge into the manifest if found
 ***********************************************************************************************************************************/
-typedef struct BackupResumeData
+// Helper to clean invalid paths/files/links out of the resumable backup path
+static void
+backupResumeClean(
+    StorageIterator *const storageItr, Manifest *const manifest, const Manifest *const manifestResume,
+    const CompressType compressType, const bool delta, const String *const backupParentPath, const String *const manifestParentName)
 {
-    Manifest *manifest;                                             // New manifest
-    const Manifest *manifestResume;                                 // Resumed manifest
-    const CompressType compressType;                                // Backup compression type
-    const bool delta;                                               // Is this a delta backup?
-    const String *backupPath;                                       // Path to the current level of the backup being cleaned
-    const String *manifestParentName;                               // Parent manifest name used to construct manifest name
-} BackupResumeData;
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_ITERATOR, storageItr);           // Storage info
+        FUNCTION_LOG_PARAM(MANIFEST, manifest);                     // New manifest
+        FUNCTION_LOG_PARAM(MANIFEST, manifestResume);               // Resumed manifest
+        FUNCTION_LOG_PARAM(ENUM, compressType);                     // Backup compression type
+        FUNCTION_LOG_PARAM(BOOL, delta);                            // Is this a delta backup?
+        FUNCTION_LOG_PARAM(STRING, backupParentPath);               // Path to the current level of the backup being cleaned
+        FUNCTION_LOG_PARAM(STRING, manifestParentName);             // Parent manifest name used to construct manifest name
+    FUNCTION_LOG_END();
 
-// Callback to clean invalid paths/files/links out of the resumable backup path
-void backupResumeCallback(void *data, const StorageInfo *info)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, data);
-        FUNCTION_TEST_PARAM(STORAGE_INFO, *storageInfo);
-    FUNCTION_TEST_END();
+    ASSERT(storageItr != NULL);
+    ASSERT(manifest != NULL);
+    ASSERT(manifestResume != NULL);
+    ASSERT(backupParentPath != NULL);
 
-    ASSERT(data != NULL);
-    ASSERT(info != NULL);
-
-    BackupResumeData *resumeData = data;
-
-    // Skip all . paths because they have already been handled on the previous level of recursion
-    if (strEq(info->name, DOT_STR))
+    MEM_CONTEXT_TEMP_RESET_BEGIN()
     {
-        FUNCTION_TEST_RETURN_VOID();
-        return;
+        while (storageItrMore(storageItr))
+        {
+            const StorageInfo info = storageItrNext(storageItr);
+
+            // Skip backup.manifest.copy -- it must be preserved to allow resume again if this process throws an error before
+            // writing the manifest for the first time
+            if (manifestParentName == NULL && strEqZ(info.name, BACKUP_MANIFEST_FILE INFO_COPY_EXT))
+                continue;
+
+            // Build the name used to lookup files in the manifest
+            const String *manifestName =
+                manifestParentName != NULL ? strNewFmt("%s/%s", strZ(manifestParentName), strZ(info.name)) : info.name;
+
+            // Build the backup path used to remove files/links/paths that are invalid
+            const String *const backupPath = strNewFmt("%s/%s", strZ(backupParentPath), strZ(info.name));
+
+            // Process file types
+            switch (info.type)
+            {
+                // Check paths
+                // -----------------------------------------------------------------------------------------------------------------
+                case storageTypePath:
+                {
+                    // If the path was not found in the new manifest then remove it
+                    if (manifestPathFindDefault(manifest, manifestName, NULL) == NULL)
+                    {
+                        LOG_DETAIL_FMT("remove path '%s' from resumed backup", strZ(storagePathP(storageRepo(), backupPath)));
+                        storagePathRemoveP(storageRepoWrite(), backupPath, .recurse = true);
+                    }
+                    // Else recurse into the path
+                    else
+                    {
+                        backupResumeClean(
+                            storageNewItrP(storageRepo(), backupPath, .sortOrder = sortOrderAsc), manifest, manifestResume,
+                            compressType, delta, backupPath, manifestName);
+                    }
+
+                    break;
+                }
+
+                // Check files
+                // -----------------------------------------------------------------------------------------------------------------
+                case storageTypeFile:
+                {
+                    // If the file is compressed then strip off the extension before doing the lookup
+                    const CompressType fileCompressType = compressTypeFromName(manifestName);
+
+                    if (fileCompressType != compressTypeNone)
+                        manifestName = compressExtStrip(manifestName, fileCompressType);
+
+                    // If the file is block incremental then strip off the extension before doing the lookup
+                    const bool blockIncr = strEndsWithZ(manifestName, BACKUP_BLOCK_INCR_EXT);
+
+                    if (blockIncr)
+                        manifestName = strSubN(manifestName, 0, strSize(manifestName) - (sizeof(BACKUP_BLOCK_INCR_EXT) - 1));
+
+                    // Check if the file can be resumed or must be removed
+                    const char *removeReason = NULL;
+
+                    if (fileCompressType != compressType && !blockIncr)
+                        removeReason = "mismatched compression type";
+                    else if (!manifestFileExists(manifest, manifestName))
+                        removeReason = "missing in manifest";
+                    else
+                    {
+                        ManifestFile file = manifestFileFind(manifest, manifestName);
+                        ASSERT(file.reference == NULL);
+
+                        if (!manifestFileExists(manifestResume, manifestName))
+                            removeReason = "missing in resumed manifest";
+                        else
+                        {
+                            const ManifestFile fileResume = manifestFileFind(manifestResume, manifestName);
+                            ASSERT(fileResume.reference == NULL);
+
+                            if (fileResume.checksumSha1 == NULL)
+                                removeReason = "no checksum in resumed manifest";
+                            else if (file.size != fileResume.size)
+                                removeReason = "mismatched size";
+                            else if (!delta && file.timestamp != fileResume.timestamp)
+                                removeReason = "mismatched timestamp";
+                            else if (file.size == 0)
+                                // ??? don't resume zero size files because Perl wouldn't -- can be removed after the migration)
+                                removeReason = "zero size";
+                            else
+                            {
+                                ASSERT(file.copy);
+                                ASSERT(file.bundleId == 0);
+                                ASSERT(file.blockIncrMapSize == 0);
+
+                                file.sizeRepo = fileResume.sizeRepo;
+                                file.checksumSha1 = fileResume.checksumSha1;
+                                file.checksumRepoSha1 = fileResume.checksumRepoSha1;
+                                file.blockIncrSize = fileResume.blockIncrSize;
+                                file.blockIncrChecksumSize = fileResume.blockIncrChecksumSize;
+                                file.blockIncrMapSize = fileResume.blockIncrMapSize;
+                                file.checksumPage = fileResume.checksumPage;
+                                file.checksumPageError = fileResume.checksumPageError;
+                                file.checksumPageErrorList = fileResume.checksumPageErrorList;
+                                file.resume = true;
+                                file.delta = delta;
+
+                                manifestFileUpdate(manifest, &file);
+                            }
+                        }
+                    }
+
+                    // Remove the file if it could not be resumed
+                    if (removeReason != NULL)
+                    {
+                        LOG_DETAIL_FMT(
+                            "remove file '%s' from resumed backup (%s)", strZ(storagePathP(storageRepo(), backupPath)),
+                            removeReason);
+                        storageRemoveP(storageRepoWrite(), backupPath);
+                    }
+
+                    break;
+                }
+
+                // Remove links. We could check that the link has not changed and preserve it but it doesn't seem worth the extra
+                // testing. The link will be recreated during the backup if needed.
+                // -----------------------------------------------------------------------------------------------------------------
+                case storageTypeLink:
+                    storageRemoveP(storageRepoWrite(), backupPath);
+                    break;
+
+                // Remove special files
+                // -----------------------------------------------------------------------------------------------------------------
+                case storageTypeSpecial:
+                    LOG_WARN_FMT("remove special file '%s' from resumed backup", strZ(storagePathP(storageRepo(), backupPath)));
+                    storageRemoveP(storageRepoWrite(), backupPath);
+                    break;
+            }
+        }
+
+        // Reset the memory context occasionally so we don't use too much memory or slow down processing
+        MEM_CONTEXT_TEMP_RESET(1000);
     }
+    MEM_CONTEXT_TEMP_END();
 
-    // Skip backup.manifest.copy -- it must be preserved to allow resume again if this process throws an error before writing the
-    // manifest for the first time
-    if (resumeData->manifestParentName == NULL && strEqZ(info->name, BACKUP_MANIFEST_FILE INFO_COPY_EXT))
-    {
-        FUNCTION_TEST_RETURN_VOID();
-        return;
-    }
-
-    // Build the name used to lookup files in the manifest
-    const String *manifestName = resumeData->manifestParentName != NULL ?
-        strNewFmt("%s/%s", strZ(resumeData->manifestParentName), strZ(info->name)) : info->name;
-
-    // Build the backup path used to remove files/links/paths that are invalid
-    const String *backupPath = strNewFmt("%s/%s", strZ(resumeData->backupPath), strZ(info->name));
-
-    // Process file types
-    switch (info->type)
-    {
-        // Check paths
-        // -------------------------------------------------------------------------------------------------------------------------
-        case storageTypePath:
-        {
-            // If the path was not found in the new manifest then remove it
-            if (manifestPathFindDefault(resumeData->manifest, manifestName, NULL) == NULL)
-            {
-                LOG_DETAIL_FMT("remove path '%s' from resumed backup", strZ(storagePathP(storageRepo(), backupPath)));
-                storagePathRemoveP(storageRepoWrite(), backupPath, .recurse = true);
-            }
-            // Else recurse into the path
-            {
-                BackupResumeData resumeDataSub = *resumeData;
-                resumeDataSub.manifestParentName = manifestName;
-                resumeDataSub.backupPath = backupPath;
-
-                storageInfoListP(
-                    storageRepo(), resumeDataSub.backupPath, backupResumeCallback, &resumeDataSub, .sortOrder = sortOrderAsc);
-            }
-
-            break;
-        }
-
-        // Check files
-        // -------------------------------------------------------------------------------------------------------------------------
-        case storageTypeFile:
-        {
-            // If the file is compressed then strip off the extension before doing the lookup
-            CompressType fileCompressType = compressTypeFromName(manifestName);
-
-            if (fileCompressType != compressTypeNone)
-                manifestName = compressExtStrip(manifestName, fileCompressType);
-
-            // Find the file in both manifests
-            const ManifestFile *file = manifestFileFindDefault(resumeData->manifest, manifestName, NULL);
-            const ManifestFile *fileResume = manifestFileFindDefault(resumeData->manifestResume, manifestName, NULL);
-
-            // Check if the file can be resumed or must be removed
-            const char *removeReason = NULL;
-
-            if (fileCompressType != resumeData->compressType)
-                removeReason = "mismatched compression type";
-            else if (file == NULL)
-                removeReason = "missing in manifest";
-            else if (file->reference != NULL)
-                removeReason = "reference in manifest";
-            else if (fileResume == NULL)
-                removeReason = "missing in resumed manifest";
-            else if (fileResume->reference != NULL)
-                removeReason = "reference in resumed manifest";
-            else if (fileResume->checksumSha1[0] == '\0')
-                removeReason = "no checksum in resumed manifest";
-            else if (file->size != fileResume->size)
-                removeReason = "mismatched size";
-            else if (!resumeData->delta && file->timestamp != fileResume->timestamp)
-                removeReason = "mismatched timestamp";
-            else if (file->size == 0)
-                // ??? don't resume zero size files because Perl wouldn't -- this can be removed after the migration)
-                removeReason = "zero size";
-            else
-            {
-                manifestFileUpdate(
-                    resumeData->manifest, manifestName, file->size, fileResume->sizeRepo, fileResume->checksumSha1, NULL,
-                    fileResume->checksumPage, fileResume->checksumPageError, fileResume->checksumPageErrorList);
-            }
-
-            // Remove the file if it could not be resumed
-            if (removeReason != NULL)
-            {
-                LOG_DETAIL_FMT(
-                    "remove file '%s' from resumed backup (%s)", strZ(storagePathP(storageRepo(), backupPath)), removeReason);
-                storageRemoveP(storageRepoWrite(), backupPath);
-            }
-
-            break;
-        }
-
-        // Remove links.  We could check that the link has not changed and preserve it but it doesn't seem worth the extra testing.
-        // The link will be recreated during the backup if needed.
-        // -------------------------------------------------------------------------------------------------------------------------
-        case storageTypeLink:
-        {
-            storageRemoveP(storageRepoWrite(), backupPath);
-            break;
-        }
-
-        // Remove special files
-        // -------------------------------------------------------------------------------------------------------------------------
-        case storageTypeSpecial:
-        {
-            LOG_WARN_FMT("remove special file '%s' from resumed backup", strZ(storagePathP(storageRepo(), backupPath)));
-            storageRemoveP(storageRepoWrite(), backupPath);
-            break;
-        }
-    }
-
-    FUNCTION_TEST_RETURN_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 // Helper to find a resumable backup
 static const Manifest *
-backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
+backupResumeFind(const Manifest *const manifest, const String *const cipherPassBackup)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
@@ -681,76 +883,94 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Only the last backup can be resumed
-        const StringList *backupList = strLstSort(
+        const StringList *const backupList = strLstSort(
             storageListP(
                 storageRepo(), STRDEF(STORAGE_REPO_BACKUP),
                 .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
             sortOrderDesc);
 
-        if (strLstSize(backupList) > 0)
+        if (!strLstEmpty(backupList))
         {
-            const String *backupLabel = strLstGet(backupList, 0);
-            const String *manifestFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel));
+            const String *const backupLabel = strLstGet(backupList, 0);
+            const String *const manifestFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel));
 
-            // Resumable backups have a copy of the manifest but no main
-            if (storageExistsP(storageRepo(), strNewFmt("%s" INFO_COPY_EXT, strZ(manifestFile))) &&
-                !storageExistsP(storageRepo(), manifestFile))
+            // Resumable backups do not have backup.manifest
+            if (!storageExistsP(storageRepo(), manifestFile))
             {
+                const bool resume = cfgOptionBool(cfgOptResume) && cfgOptionStrId(cfgOptType) == backupTypeFull;
                 bool usable = false;
-                const String *reason = STRDEF("resume is disabled");
+                const String *reason = STRDEF("resume only valid for full backup");
                 Manifest *manifestResume = NULL;
 
-                // Attempt to read the manifest file in the resumable backup to see if it can be used.  If any error at all occurs
-                // then the backup will be considered unusable and a resume will not be attempted.
-                if (cfgOptionBool(cfgOptResume))
+                if (cfgOptionStrId(cfgOptType) == backupTypeFull)
                 {
-                    reason = strNewFmt("unable to read %s" INFO_COPY_EXT, strZ(manifestFile));
+                    reason = STRDEF("partially deleted by prior resume or invalid");
 
-                    TRY_BEGIN()
+                    // Resumable backups must have backup.manifest.copy
+                    if (storageExistsP(storageRepo(), strNewFmt("%s" INFO_COPY_EXT, strZ(manifestFile))))
                     {
-                        manifestResume = manifestLoadFile(
-                            storageRepo(), manifestFile, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherPassBackup);
-                        const ManifestData *manifestResumeData = manifestData(manifestResume);
+                        reason = strNewZ("resume is disabled");
 
-                        // Check pgBackRest version. This allows the resume implementation to be changed with each version of
-                        // pgBackRest at the expense of users losing a resumable back after an upgrade, which seems worth the cost.
-                        if (!strEq(manifestResumeData->backrestVersion, manifestData(manifest)->backrestVersion))
+                        // Attempt to read the manifest file in the resumable backup to see if it can be used. If any error at all
+                        // occurs then the backup will be considered unusable and a resume will not be attempted.
+                        if (resume)
                         {
-                            reason = strNewFmt(
-                                "new " PROJECT_NAME " version '%s' does not match resumable " PROJECT_NAME " version '%s'",
-                                strZ(manifestData(manifest)->backrestVersion), strZ(manifestResumeData->backrestVersion));
+                            TRY_BEGIN()
+                            {
+                                manifestResume = manifestLoadFile(
+                                    storageRepo(), manifestFile, cfgOptionStrId(cfgOptRepoCipherType), cipherPassBackup);
+                            }
+                            CATCH_ANY()
+                            {
+                                reason = strNewFmt("unable to read %s" INFO_COPY_EXT, strZ(manifestFile));
+                            }
+                            TRY_END();
+
+                            if (manifestResume != NULL)
+                            {
+                                const ManifestData *manifestResumeData = manifestData(manifestResume);
+
+                                // Check pgBackRest version. This allows the resume implementation to be changed with each version
+                                // of pgBackRest at the expense of users losing a resumable back after an upgrade, which seems worth
+                                // the cost.
+                                if (!strEq(manifestResumeData->backrestVersion, manifestData(manifest)->backrestVersion))
+                                {
+                                    reason = strNewFmt(
+                                        "new " PROJECT_NAME " version '%s' does not match resumable " PROJECT_NAME " version '%s'",
+                                        strZ(manifestData(manifest)->backrestVersion), strZ(manifestResumeData->backrestVersion));
+                                }
+                                // Check backup type because new backup label must be the same type as resume backup label
+                                else if (manifestResumeData->backupType != cfgOptionStrId(cfgOptType))
+                                {
+                                    reason = strNewFmt(
+                                        "new backup type '%s' does not match resumable backup type '%s'",
+                                        strZ(cfgOptionDisplay(cfgOptType)), strZ(strIdToStr(manifestResumeData->backupType)));
+                                }
+                                // Check prior backup label ??? Do we really care about the prior backup label?
+                                else if (!strEq(manifestResumeData->backupLabelPrior, manifestData(manifest)->backupLabelPrior))
+                                {
+                                    reason = strNewFmt(
+                                        "new prior backup label '%s' does not match resumable prior backup label '%s'",
+                                        manifestResumeData->backupLabelPrior ?
+                                            strZ(manifestResumeData->backupLabelPrior) : "<undef>",
+                                        manifestData(manifest)->backupLabelPrior ?
+                                            strZ(manifestData(manifest)->backupLabelPrior) : "<undef>");
+                                }
+                                // Check compression. Compression can't be changed between backups so resume won't work either.
+                                else if (
+                                    manifestResumeData->backupOptionCompressType !=
+                                    compressTypeEnum(cfgOptionStrId(cfgOptCompressType)))
+                                {
+                                    reason = strNewFmt(
+                                        "new compression '%s' does not match resumable compression '%s'",
+                                        strZ(cfgOptionDisplay(cfgOptCompressType)),
+                                        strZ(compressTypeStr(manifestResumeData->backupOptionCompressType)));
+                                }
+                                else
+                                    usable = true;
+                            }
                         }
-                        // Check backup type because new backup label must be the same type as resume backup label
-                        else if (manifestResumeData->backupType != backupType(cfgOptionStr(cfgOptType)))
-                        {
-                            reason = strNewFmt(
-                                "new backup type '%s' does not match resumable backup type '%s'", strZ(cfgOptionStr(cfgOptType)),
-                                strZ(backupTypeStr(manifestResumeData->backupType)));
-                        }
-                        // Check prior backup label ??? Do we really care about the prior backup label?
-                        else if (!strEq(manifestResumeData->backupLabelPrior, manifestData(manifest)->backupLabelPrior))
-                        {
-                            reason = strNewFmt(
-                                "new prior backup label '%s' does not match resumable prior backup label '%s'",
-                                manifestResumeData->backupLabelPrior ? strZ(manifestResumeData->backupLabelPrior) : "<undef>",
-                                manifestData(manifest)->backupLabelPrior ?
-                                    strZ(manifestData(manifest)->backupLabelPrior) : "<undef>");
-                        }
-                        // Check compression. Compression can't be changed between backups so resume won't work either.
-                        else if (manifestResumeData->backupOptionCompressType != compressTypeEnum(cfgOptionStr(cfgOptCompressType)))
-                        {
-                            reason = strNewFmt(
-                                "new compression '%s' does not match resumable compression '%s'",
-                                strZ(compressTypeStr(compressTypeEnum(cfgOptionStr(cfgOptCompressType)))),
-                                strZ(compressTypeStr(manifestResumeData->backupOptionCompressType)));
-                        }
-                        else
-                            usable = true;
                     }
-                    CATCH_ANY()
-                    {
-                    }
-                    TRY_END();
                 }
 
                 // If the backup is usable then return the manifest
@@ -761,7 +981,9 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                 // Else warn and remove the unusable backup
                 else
                 {
-                    LOG_WARN_FMT("backup '%s' cannot be resumed: %s", strZ(backupLabel), strZ(reason));
+                    LOG_FMT(
+                        resume ? logLevelWarn : logLevelInfo, 0, "backup '%s' cannot be resumed: %s", strZ(backupLabel),
+                        strZ(reason));
 
                     storagePathRemoveP(
                         storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(backupLabel)), .recurse = true);
@@ -775,7 +997,7 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
 }
 
 static bool
-backupResume(Manifest *manifest, const String *cipherPassBackup)
+backupResume(Manifest *const manifest, const String *const cipherPassBackup)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
@@ -788,7 +1010,7 @@ backupResume(Manifest *manifest, const String *cipherPassBackup)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const Manifest *manifestResume = backupResumeFind(manifest, cipherPassBackup);
+        const Manifest *const manifestResume = backupResumeFind(manifest, cipherPassBackup);
 
         // If a resumable backup was found set the label and cipher subpass
         if (manifestResume)
@@ -800,24 +1022,18 @@ backupResume(Manifest *manifest, const String *cipherPassBackup)
             manifestBackupLabelSet(manifest, manifestData(manifestResume)->backupLabel);
 
             LOG_WARN_FMT(
-                "resumable backup %s of same type exists -- remove invalid files and resume",
+                "resumable backup %s of same type exists -- invalid files will be removed then the backup will resume",
                 strZ(manifestData(manifest)->backupLabel));
 
-            // If resuming a full backup then copy cipher subpass since it was used to encrypt the resumable files
-            if (manifestData(manifest)->backupType == backupTypeFull)
-                manifestCipherSubPassSet(manifest, manifestCipherSubPass(manifestResume));
+            // Copy cipher subpass since it was used to encrypt the resumable files
+            manifestCipherSubPassSet(manifest, manifestCipherSubPass(manifestResume));
 
             // Clean resumed backup
-            BackupResumeData resumeData =
-            {
-                .manifest = manifest,
-                .manifestResume = manifestResume,
-                .compressType = compressTypeEnum(cfgOptionStr(cfgOptCompressType)),
-                .delta = cfgOptionBool(cfgOptDelta),
-                .backupPath = strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(manifestData(manifest)->backupLabel)),
-            };
+            const String *const backupPath = strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(manifestData(manifest)->backupLabel));
 
-            storageInfoListP(storageRepo(), resumeData.backupPath, backupResumeCallback, &resumeData, .sortOrder = sortOrderAsc);
+            backupResumeClean(
+                storageNewItrP(storageRepo(), backupPath, .sortOrder = sortOrderAsc), manifest, manifestResume,
+                compressTypeEnum(cfgOptionStrId(cfgOptCompressType)), cfgOptionBool(cfgOptDelta), backupPath, NULL);
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -832,21 +1048,18 @@ typedef struct BackupStartResult
 {
     String *lsn;
     String *walSegmentName;
-    VariantList *dbList;
-    VariantList *tablespaceList;
+    Pack *dbList;
+    Pack *tablespaceList;
 } BackupStartResult;
 
-#define FUNCTION_LOG_BACKUP_START_RESULT_TYPE                                                                                      \
-    BackupStartResult
-#define FUNCTION_LOG_BACKUP_START_RESULT_FORMAT(value, buffer, bufferSize)                                                         \
-    objToLog(&value, "BackupStartResult", buffer, bufferSize)
-
 static BackupStartResult
-backupStart(BackupData *backupData)
+backupStart(BackupData *const backupData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     BackupStartResult result = {.lsn = NULL};
 
@@ -856,12 +1069,12 @@ backupStart(BackupData *backupData)
         if (!cfgOptionBool(cfgOptOnline))
         {
             // Check if Postgres is running and if so only continue when forced
-            if (storageExistsP(backupData->storagePrimary, PG_FILE_POSTMASTERPID_STR))
+            if (storageExistsP(backupData->storagePrimary, PG_FILE_POSTMTRPID_STR))
             {
                 if (cfgOptionBool(cfgOptForce))
                 {
                     LOG_WARN(
-                        "--no-" CFGOPT_ONLINE " passed and " PG_FILE_POSTMASTERPID " exists but --" CFGOPT_FORCE " was passed so"
+                        "--no-" CFGOPT_ONLINE " passed and " PG_FILE_POSTMTRPID " exists but --" CFGOPT_FORCE " was passed so"
                         " backup will continue though it looks like " PG_NAME " is running and the backup will probably not be"
                         " consistent");
                 }
@@ -869,8 +1082,8 @@ backupStart(BackupData *backupData)
                 {
                     THROW(
                         PgRunningError,
-                        "--no-" CFGOPT_ONLINE " passed but " PG_FILE_POSTMASTERPID " exists - looks like " PG_NAME " is running."
-                        " Shut down " PG_NAME " and try again, or use --force.");
+                        "--no-" CFGOPT_ONLINE " passed but " PG_FILE_POSTMTRPID " exists - looks like " PG_NAME " is running. Shut"
+                        " down " PG_NAME " and try again, or use --force.");
                 }
             }
         }
@@ -882,12 +1095,13 @@ backupStart(BackupData *backupData)
 
             // Start backup
             LOG_INFO_FMT(
-                "execute %sexclusive pg_start_backup(): backup begins after the %s checkpoint completes",
+                "execute %sexclusive backup start: backup begins after the %s checkpoint completes",
                 backupData->version >= PG_VERSION_96 ? "non-" : "",
                 cfgOptionBool(cfgOptStartFast) ? "requested immediate" : "next regular");
 
-            DbBackupStartResult dbBackupStartResult = dbBackupStart(
-                backupData->dbPrimary, cfgOptionBool(cfgOptStartFast), cfgOptionBool(cfgOptStopAuto));
+            const DbBackupStartResult dbBackupStartResult = dbBackupStart(
+                backupData->dbPrimary, cfgOptionBool(cfgOptStartFast), cfgOptionBool(cfgOptStopAuto),
+                cfgOptionBool(cfgOptArchiveCheck));
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {
@@ -904,20 +1118,29 @@ backupStart(BackupData *backupData)
             if (cfgOptionBool(cfgOptBackupStandby))
             {
                 LOG_INFO_FMT("wait for replay on the standby to reach %s", strZ(result.lsn));
-                dbReplayWait(backupData->dbStandby, result.lsn, (TimeMSec)(cfgOptionDbl(cfgOptArchiveTimeout) * MSEC_PER_SEC));
+                dbReplayWait(backupData->dbStandby, result.lsn, backupData->timeline, cfgOptionUInt64(cfgOptArchiveTimeout));
                 LOG_INFO_FMT("replay on the standby reached %s", strZ(result.lsn));
+            }
 
-                // The standby db object won't be used anymore so free it
-                dbFree(backupData->dbStandby);
+            // Check that WAL segments are being archived. If archiving is not working then the backup will eventually fail so
+            // better to catch it as early as possible. A segment to check may not be available on older versions of PostgreSQL or
+            // if archive-check is false.
+            if (dbBackupStartResult.walSegmentCheck != NULL)
+            {
+                LOG_INFO_FMT(
+                    "check archive for %ssegment %s",
+                    strEq(result.walSegmentName, dbBackupStartResult.walSegmentCheck) ? "" : "prior ",
+                    strZ(dbBackupStartResult.walSegmentCheck));
 
-                // The standby protocol connection won't be used anymore so free it
-                protocolRemoteFree(backupData->pgIdxStandby);
+                walSegmentFindOne(
+                    storageRepo(), backupData->archiveId, dbBackupStartResult.walSegmentCheck,
+                    cfgOptionUInt64(cfgOptArchiveTimeout));
             }
         }
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(BACKUP_START_RESULT, result);
+    FUNCTION_LOG_RETURN_STRUCT(result);
 }
 
 /***********************************************************************************************************************************
@@ -925,7 +1148,9 @@ Stop the backup
 ***********************************************************************************************************************************/
 // Helper to write a file from a string to the repository and update the manifest
 static void
-backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, time_t timestamp, const String *content)
+backupFilePut(
+    BackupData *const backupData, Manifest *const manifest, const String *const name, const time_t timestamp,
+    const String *const content)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
@@ -941,31 +1166,45 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Create file
-            const String *manifestName = strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strZ(name));
-            CompressType compressType = compressTypeEnum(cfgOptionStr(cfgOptCompressType));
+            bool repoChecksum = false;
+            const String *const manifestName = strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strZ(name));
+            const CompressType compressType = compressTypeEnum(cfgOptionStrId(cfgOptCompressType));
 
-            StorageWrite *write = storageNewWriteP(
+            StorageWrite *const write = storageNewWriteP(
                 storageRepoWrite(),
-                strNewFmt(
-                    STORAGE_REPO_BACKUP "/%s/%s%s", strZ(manifestData(manifest)->backupLabel), strZ(manifestName),
-                    strZ(compressExtStr(compressType))),
+                backupFileRepoPathP(
+                    manifestData(manifest)->backupLabel, .manifestName = manifestName,
+                    .compressType = compressTypeEnum(cfgOptionStrId(cfgOptCompressType))),
                 .compressible = true);
 
-            IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(write));
+            IoFilterGroup *const filterGroup = ioWriteFilterGroup(storageWriteIo(write));
 
             // Add SHA1 filter
-            ioFilterGroupAdd(filterGroup, cryptoHashNew(HASH_TYPE_SHA1_STR));
+            ioFilterGroupAdd(filterGroup, cryptoHashNew(hashTypeSha1));
 
             // Add compression
             if (compressType != compressTypeNone)
             {
                 ioFilterGroupAdd(
-                    ioWriteFilterGroup(storageWriteIo(write)), compressFilter(compressType, cfgOptionInt(cfgOptCompressLevel)));
+                    ioWriteFilterGroup(storageWriteIo(write)), compressFilterP(compressType, cfgOptionInt(cfgOptCompressLevel)));
+
+                repoChecksum = true;
             }
 
             // Add encryption filter if required
-            cipherBlockFilterGroupAdd(
-                filterGroup, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeEncrypt, manifestCipherSubPass(manifest));
+            if (manifestCipherSubPass(manifest) != NULL)
+            {
+                ioFilterGroupAdd(
+                    ioWriteFilterGroup(storageWriteIo(write)),
+                    cipherBlockNewP(
+                        cipherModeEncrypt, cfgOptionStrId(cfgOptRepoCipherType), BUFSTR(manifestCipherSubPass(manifest))));
+
+                repoChecksum = true;
+            }
+
+            // Capture checksum of file stored in the repo if filters that modify the output have been applied
+            if (repoChecksum)
+                ioFilterGroupAdd(filterGroup, cryptoHashNew(hashTypeSha1));
 
             // Add size filter last to calculate repo size
             ioFilterGroupAdd(filterGroup, ioSizeNew());
@@ -974,28 +1213,28 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
             storagePutP(write, BUFSTR(content));
 
             // Use base path to set ownership and mode
-            const ManifestPath *basePath = manifestPathFind(manifest, MANIFEST_TARGET_PGDATA_STR);
+            const ManifestPath *const basePath = manifestPathFind(manifest, MANIFEST_TARGET_PGDATA_STR);
 
             // Add to manifest
             ManifestFile file =
             {
                 .name = manifestName,
-                .primary = true,
                 .mode = basePath->mode & (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH),
                 .user = basePath->user,
                 .group = basePath->group,
                 .size = strSize(content),
-                .sizeRepo = varUInt64Force(ioFilterGroupResult(filterGroup, SIZE_FILTER_TYPE_STR)),
+                .sizeOriginal = strSize(content),
+                .sizeRepo = pckReadU64P(ioFilterGroupResultP(filterGroup, SIZE_FILTER_TYPE)),
                 .timestamp = timestamp,
+                .checksumSha1 = bufPtr(pckReadBinP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE, .idx = 0))),
             };
 
-            memcpy(
-                file.checksumSha1, strZ(varStr(ioFilterGroupResult(filterGroup, CRYPTO_HASH_FILTER_TYPE_STR))),
-                HASH_TYPE_SHA1_SIZE_HEX + 1);
+            if (repoChecksum)
+                file.checksumRepoSha1 = bufPtr(pckReadBinP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE, .idx = 1)));
 
             manifestFileAdd(manifest, &file);
 
-            LOG_DETAIL_FMT("wrote '%s' file returned from pg_stop_backup()", strZ(name));
+            LOG_DETAIL_FMT("wrote '%s' file returned from backup stop function", strZ(name));
         }
         MEM_CONTEXT_TEMP_END();
     }
@@ -1011,18 +1250,15 @@ typedef struct BackupStopResult
     time_t timestamp;
 } BackupStopResult;
 
-#define FUNCTION_LOG_BACKUP_STOP_RESULT_TYPE                                                                                       \
-    BackupStopResult
-#define FUNCTION_LOG_BACKUP_STOP_RESULT_FORMAT(value, buffer, bufferSize)                                                          \
-    objToLog(&value, "BackupStopResult", buffer, bufferSize)
-
 static BackupStopResult
-backupStop(BackupData *backupData, Manifest *manifest)
+backupStop(BackupData *const backupData, Manifest *const manifest)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_STRUCT();
 
     BackupStopResult result = {.lsn = NULL};
 
@@ -1032,10 +1268,10 @@ backupStop(BackupData *backupData, Manifest *manifest)
         {
             // Stop the backup
             LOG_INFO_FMT(
-                "execute %sexclusive pg_stop_backup() and wait for all WAL segments to archive",
+                "execute %sexclusive backup stop and wait for all WAL segments to archive",
                 backupData->version >= PG_VERSION_96 ? "non-" : "");
 
-            DbBackupStopResult dbBackupStopResult = dbBackupStop(backupData->dbPrimary);
+            const DbBackupStopResult dbBackupStopResult = dbBackupStop(backupData->dbPrimary);
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {
@@ -1056,29 +1292,129 @@ backupStop(BackupData *backupData, Manifest *manifest)
     else
         result.timestamp = backupTime(backupData, false);
 
-    FUNCTION_LOG_RETURN(BACKUP_STOP_RESULT, result);
+    FUNCTION_LOG_RETURN_STRUCT(result);
+}
+
+/***********************************************************************************************************************************
+Convert page checksum error pack to a VariantList
+***********************************************************************************************************************************/
+// Helper to output pages and page ranges
+static void
+backupJobResultPageChecksumOut(VariantList *const result, const unsigned int pageBegin, const unsigned int pageEnd)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(VARIANT_LIST, result);
+        FUNCTION_TEST_PARAM(UINT, pageBegin);
+        FUNCTION_TEST_PARAM(UINT, pageEnd);
+    FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
+
+    // Output a single page
+    if (pageBegin == pageEnd)
+    {
+        varLstAdd(result, varNewUInt64(pageBegin));
+    }
+    // Else output a page range
+    else
+    {
+        VariantList *errorListSub = varLstNew();
+        varLstAdd(errorListSub, varNewUInt64(pageBegin));
+        varLstAdd(errorListSub, varNewUInt64(pageEnd));
+        varLstAdd(result, varNewVarLst(errorListSub));
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+static VariantList *
+backupJobResultPageChecksum(PackRead *const checksumPageResult)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(PACK_READ, checksumPageResult);
+    FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_HELPER();
+
+    VariantList *result = NULL;
+
+    // If there is an error result array
+    if (!pckReadNullP(checksumPageResult))
+    {
+        result = varLstNew();
+        pckReadArrayBeginP(checksumPageResult);
+
+        bool first = false;
+        unsigned int pageBegin = 0;
+        unsigned int pageEnd = 0;
+
+        // Combine results into a more compact form
+        while (pckReadNext(checksumPageResult))
+        {
+            const unsigned int pageId = pckReadId(checksumPageResult) - 1;
+            pckReadObjBeginP(checksumPageResult, .id = pageId + 1);
+
+            // If first error then just store page
+            if (!first)
+            {
+                pageBegin = pageId;
+                pageEnd = pageId;
+                first = true;
+            }
+            // Expand list when the page is in sequence
+            else if (pageId == pageEnd + 1)
+            {
+                pageEnd = pageId;
+            }
+            // Else output the page or page range
+            else
+            {
+                backupJobResultPageChecksumOut(result, pageBegin, pageEnd);
+
+                // Start again with a single page range
+                pageBegin = pageId;
+                pageEnd = pageId;
+            }
+
+            pckReadObjEndP(checksumPageResult);
+        }
+
+        // Check that the array was not empty
+        CHECK(FormatError, first, "page checksum result array is empty");
+
+        // Output last page or page range
+        backupJobResultPageChecksumOut(result, pageBegin, pageEnd);
+
+        pckReadArrayEndP(checksumPageResult);
+    }
+
+    FUNCTION_LOG_RETURN(VARIANT_LIST, result);
 }
 
 /***********************************************************************************************************************************
 Log the results of a job and throw errors
 ***********************************************************************************************************************************/
-static uint64_t
+static void
 backupJobResult(
-    Manifest *manifest, const String *host, const String *const fileName, StringList *fileRemove, ProtocolParallelJob *const job,
-    const uint64_t sizeTotal, uint64_t sizeCopied)
+    Manifest *const manifest, const String *const host, const Storage *const storagePg, StringList *const fileRemove,
+    ProtocolParallelJob *const job, const bool bundle, const PgPageSize pageSize, const uint64_t sizeTotal,
+    uint64_t *const sizeProgress, unsigned int *const currentPercentComplete)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
         FUNCTION_LOG_PARAM(STRING, host);
-        FUNCTION_LOG_PARAM(STRING, fileName);
+        FUNCTION_LOG_PARAM(STORAGE, storagePg);
         FUNCTION_LOG_PARAM(STRING_LIST, fileRemove);
         FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL_JOB, job);
+        FUNCTION_LOG_PARAM(BOOL, bundle);
+        FUNCTION_LOG_PARAM(ENUM, pageSize);
         FUNCTION_LOG_PARAM(UINT64, sizeTotal);
-        FUNCTION_LOG_PARAM(UINT64, sizeCopied);
+        FUNCTION_LOG_PARAM_P(UINT64, sizeProgress);
+        FUNCTION_LOG_PARAM_P(UINT, currentPercentComplete);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
-    ASSERT(fileName != NULL);
+    ASSERT(storagePg != NULL);
     ASSERT(fileRemove != NULL);
     ASSERT(job != NULL);
 
@@ -1087,141 +1423,191 @@ backupJobResult(
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            const ManifestFile *const file = manifestFileFind(manifest, varStr(protocolParallelJobKey(job)));
             const unsigned int processId = protocolParallelJobProcessId(job);
+            const uint64_t bundleId =
+                varType(protocolParallelJobKey(job)) == varTypeUInt64 ? varUInt64(protocolParallelJobKey(job)) : 0;
+            PackRead *const jobResult = protocolParallelJobResult(job);
+            unsigned int percentComplete = 0;
 
-            const VariantList *const jobResult = varVarLst(protocolParallelJobResult(job));
-            const BackupCopyResult copyResult = (BackupCopyResult)varUIntForce(varLstGet(jobResult, 0));
-            const uint64_t copySize = varUInt64(varLstGet(jobResult, 1));
-            const uint64_t repoSize = varUInt64(varLstGet(jobResult, 2));
-            const String *const copyChecksum = varStr(varLstGet(jobResult, 3));
-            const KeyValue *const checksumPageResult = varKv(varLstGet(jobResult, 4));
-
-            // Increment backup copy progress
-            sizeCopied += copySize;
-
-            // Create log file name
-            const String *fileLog = host == NULL ? fileName : strNewFmt("%s:%s", strZ(host), strZ(fileName));
-
-            // Format log strings
-            const String *const logProgress =
-                strNewFmt(
-                    "%s, %" PRIu64 "%%", strZ(strSizeFormat(copySize)), sizeTotal == 0 ? 100 : sizeCopied * 100 / sizeTotal);
-            const String *const logChecksum = copySize != 0 ? strNewFmt(" checksum %s", strZ(copyChecksum)) : EMPTY_STR;
-
-            // If the file is in a prior backup and nothing changed, just log it
-            if (copyResult == backupCopyResultNoOp)
+            while (!pckReadNullP(jobResult))
             {
-                LOG_DETAIL_PID_FMT(
-                    processId, "match file from prior backup %s (%s)%s", strZ(fileLog), strZ(logProgress), strZ(logChecksum));
-            }
-            // Else if the repo matched the expect checksum, just log it
-            else if (copyResult == backupCopyResultChecksum)
-            {
-                LOG_DETAIL_PID_FMT(
-                    processId, "checksum resumed file %s (%s)%s", strZ(fileLog), strZ(logProgress), strZ(logChecksum));
-            }
-            // Else if the file was removed during backup add it to the list of files to be removed from the manifest when the
-            // backup is complete.  It can't be removed right now because that will invalidate the pointers that are being used for
-            // processing.
-            else if (copyResult == backupCopyResultSkip)
-            {
-                LOG_DETAIL_PID_FMT(processId, "skip file removed by database %s", strZ(fileLog));
-                strLstAdd(fileRemove, file->name);
-            }
-            // Else file was copied so update manifest
-            else
-            {
-                // If the file had to be recopied then warn that there may be an issue with corruption in the repository
-                // ??? This should really be below the message below for more context -- can be moved after the migration
-                // ??? The name should be a pg path not manifest name -- can be fixed after the migration
-                if (copyResult == backupCopyResultReCopy)
+                ManifestFile file = manifestFileFind(manifest, pckReadStrP(jobResult));
+                const BackupCopyResult copyResult = (BackupCopyResult)pckReadU32P(jobResult);
+                const bool repoInvalid = pckReadBoolP(jobResult);
+                const uint64_t copySize = pckReadU64P(jobResult);
+                const uint64_t bundleOffset = pckReadU64P(jobResult);
+                const uint64_t blockIncrMapSize = pckReadU64P(jobResult);
+                const uint64_t repoSize = pckReadU64P(jobResult);
+                const Buffer *const copyChecksum = pckReadBinP(jobResult);
+                const Buffer *const repoChecksum = pckReadBinP(jobResult);
+                PackRead *const checksumPageResult = pckReadPackReadP(jobResult);
+
+                // Increment backup copy progress. Use the original size since the size may have changed during the copy but for the
+                // purpose of reporting progress we need to increment by the original size used to generate the total size.
+                *sizeProgress += file.sizeOriginal;
+
+                // Create log file name
+                const String *const fileName = storagePathP(storagePg, manifestPathPg(file.name));
+                const String *const fileLog = host == NULL ? fileName : strNewFmt("%s:%s", strZ(host), strZ(fileName));
+
+                // Format log progress
+                String *const logProgress = strNew();
+
+                if (bundleId != 0 && copyResult != backupCopyResultNoOp && copyResult != backupCopyResultTruncate)
+                    strCatFmt(logProgress, "bundle %" PRIu64 "/%" PRIu64 ", ", bundleId, bundleOffset);
+
+                // Log original manifest size if copy size differs
+                if (copySize != file.sizeOriginal)
+                    strCatFmt(logProgress, "%s->", strZ(strSizeFormat(file.sizeOriginal)));
+
+                // Store percentComplete as an integer
+                percentComplete = sizeTotal == 0 ? 10000 : (unsigned int)(((double)*sizeProgress / (double)sizeTotal) * 10000);
+
+                strCatFmt(
+                    logProgress, "%s, %u.%02u%%", strZ(strSizeFormat(copySize)), percentComplete / 100, percentComplete % 100);
+
+                // Format log checksum
+                const String *const logChecksum =
+                    copySize != 0 ? strNewFmt(" checksum %s", strZ(strNewEncode(encodingHex, copyChecksum))) : EMPTY_STR;
+
+                // If the file is in a prior backup and nothing changed, just log it
+                if (copyResult == backupCopyResultNoOp)
                 {
-                    LOG_WARN_FMT(
-                        "resumed backup file %s does not have expected checksum %s. The file will be recopied and backup will"
-                        " continue but this may be an issue unless the resumed backup path in the repository is known to be"
-                        " corrupted.\n"
-                        "NOTE: this does not indicate a problem with the PostgreSQL page checksums.",
-                        strZ(file->name), file->checksumSha1);
+                    LOG_DETAIL_PID_FMT(
+                        processId, "match file from prior backup %s (%s)%s", strZ(fileLog), strZ(logProgress), strZ(logChecksum));
                 }
-
-                LOG_INFO_PID_FMT(processId, "backup file %s (%s)%s", strZ(fileLog), strZ(logProgress), strZ(logChecksum));
-
-                // If the file had page checksums calculated during the copy
-                ASSERT((!file->checksumPage && checksumPageResult == NULL) || (file->checksumPage && checksumPageResult != NULL));
-
-                bool checksumPageError = false;
-                const VariantList *checksumPageErrorList = NULL;
-
-                if (checksumPageResult != NULL)
+                // Else if the repo matched the expect checksum, just log it
+                else if (copyResult == backupCopyResultChecksum)
                 {
-                    // If the checksum was valid
-                    if (!varBool(kvGet(checksumPageResult, VARSTRDEF("valid"))))
+                    LOG_DETAIL_PID_FMT(
+                        processId, "checksum resumed file %s (%s)%s", strZ(fileLog), strZ(logProgress), strZ(logChecksum));
+                }
+                // Else if the file was removed during backup add it to the list of files to be removed from the manifest when the
+                // backup is complete. It can't be removed right now because that will invalidate the pointers that are being used
+                // for processing.
+                else if (copyResult == backupCopyResultSkip)
+                {
+                    LOG_DETAIL_PID_FMT(processId, "skip file removed by database %s", strZ(fileLog));
+                    strLstAdd(fileRemove, file.name);
+                }
+                // Else file was copied so update manifest
+                else
+                {
+                    LOG_DETAIL_PID_FMT(
+                        processId, "%s file %s (%s)%s", copyResult != backupCopyResultTruncate ? "backup" : "store truncated",
+                        strZ(fileLog), strZ(logProgress), strZ(logChecksum));
+
+                    // If the repo file was invalid warn that there might be corruption in the repository
+                    if (repoInvalid)
                     {
-                        checksumPageError = true;
+                        ASSERT(copyResult == backupCopyResultCopy);
 
-                        if (!varBool(kvGet(checksumPageResult, VARSTRDEF("align"))))
+                        LOG_WARN_FMT(
+                            "resumed backup file %s did not have expected checksum %s. The file was recopied and backup will"
+                            " continue but this may be an issue unless the resumed backup path in the repository is known to be"
+                            " corrupted.\n"
+                            "NOTE: this does not indicate a problem with the PostgreSQL page checksums.",
+                            strZ(file.name), strZ(strNewEncode(encodingHex, BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE))));
+                    }
+
+                    // If the file had page checksums calculated during the copy
+                    ASSERT((!file.checksumPage && checksumPageResult == NULL) || (file.checksumPage && checksumPageResult != NULL));
+
+                    bool checksumPageError = false;
+                    const VariantList *checksumPageErrorList = NULL;
+
+                    if (checksumPageResult != NULL)
+                    {
+                        checksumPageErrorList = backupJobResultPageChecksum(checksumPageResult);
+
+                        // If the checksum was valid
+                        if (!pckReadBoolP(checksumPageResult))
                         {
-                            checksumPageErrorList = NULL;
+                            checksumPageError = true;
 
-                            // ??? Update formatting after migration
-                            LOG_WARN_FMT(
-                                "page misalignment in file %s: file size %" PRIu64 " is not divisible by page size %u",
-                                strZ(fileLog), copySize, PG_PAGE_SIZE_DEFAULT);
-                        }
-                        else
-                        {
-                            // Format the page checksum errors
-                            checksumPageErrorList = varVarLst(kvGet(checksumPageResult, VARSTRDEF("error")));
-                            ASSERT(varLstSize(checksumPageErrorList) > 0);
-
-                            String *error = strNew("");
-                            unsigned int errorTotalMin = 0;
-
-                            for (unsigned int errorIdx = 0; errorIdx < varLstSize(checksumPageErrorList); errorIdx++)
+                            if (!pckReadBoolP(checksumPageResult))
                             {
-                                const Variant *const errorItem = varLstGet(checksumPageErrorList, errorIdx);
+                                checksumPageErrorList = NULL;
 
-                                // Add a comma if this is not the first item
-                                if (errorIdx != 0)
-                                    strCatZ(error, ", ");
-
-                                // If an error range
-                                if (varType(errorItem) == varTypeVariantList)
-                                {
-                                    const VariantList *const errorItemList = varVarLst(errorItem);
-                                    ASSERT(varLstSize(errorItemList) == 2);
-
-                                    strCatFmt(
-                                        error, "%" PRIu64 "-%" PRIu64, varUInt64(varLstGet(errorItemList, 0)),
-                                        varUInt64(varLstGet(errorItemList, 1)));
-                                    errorTotalMin += 2;
-                                }
-                                // Else a single error
-                                else
-                                {
-                                    ASSERT(varType(errorItem) == varTypeUInt64);
-
-                                    strCatFmt(error, "%" PRIu64, varUInt64(errorItem));
-                                    errorTotalMin++;
-                                }
+                                // ??? Update formatting after migration
+                                LOG_WARN_FMT(
+                                    "page misalignment in file %s: file size %" PRIu64 " is not divisible by page size %u",
+                                    strZ(fileLog), copySize, pageSize);
                             }
+                            else
+                            {
+                                // Format the page checksum errors
+                                CHECK(FormatError, checksumPageErrorList != NULL, "page checksum error list is missing");
+                                CHECK(FormatError, !varLstEmpty(checksumPageErrorList), "page checksum error list is empty");
 
-                            // Make message plural when appropriate
-                            const String *const plural = errorTotalMin > 1 ? STRDEF("s") : EMPTY_STR;
+                                String *error = strNew();
+                                unsigned int errorTotalMin = 0;
 
-                            // ??? Update formatting after migration
-                            LOG_WARN_FMT(
-                                "invalid page checksum%s found in file %s at page%s %s", strZ(plural), strZ(fileLog), strZ(plural),
-                                strZ(error));
+                                for (unsigned int errorIdx = 0; errorIdx < varLstSize(checksumPageErrorList); errorIdx++)
+                                {
+                                    const Variant *const errorItem = varLstGet(checksumPageErrorList, errorIdx);
+
+                                    // Add a comma if this is not the first item
+                                    if (errorIdx != 0)
+                                        strCatZ(error, ", ");
+
+                                    // If an error range
+                                    if (varType(errorItem) == varTypeVariantList)
+                                    {
+                                        const VariantList *const errorItemList = varVarLst(errorItem);
+                                        ASSERT(varLstSize(errorItemList) == 2);
+
+                                        strCatFmt(
+                                            error, "%" PRIu64 "-%" PRIu64, varUInt64(varLstGet(errorItemList, 0)),
+                                            varUInt64(varLstGet(errorItemList, 1)));
+                                        errorTotalMin += 2;
+                                    }
+                                    // Else a single error
+                                    else
+                                    {
+                                        ASSERT(varType(errorItem) == varTypeUInt64);
+
+                                        strCatFmt(error, "%" PRIu64, varUInt64(errorItem));
+                                        errorTotalMin++;
+                                    }
+                                }
+
+                                // Make message plural when appropriate
+                                const String *const plural = errorTotalMin > 1 ? STRDEF("s") : EMPTY_STR;
+
+                                // ??? Update formatting after migration
+                                LOG_WARN_FMT(
+                                    "invalid page checksum%s found in file %s at page%s %s", strZ(plural), strZ(fileLog),
+                                    strZ(plural), strZ(error));
+                            }
                         }
                     }
-                }
 
-                // Update file info and remove any reference to the file's existence in a prior backup
-                manifestFileUpdate(
-                    manifest, file->name, copySize, repoSize, strZ(copyChecksum), VARSTR(NULL), file->checksumPage,
-                    checksumPageError, checksumPageErrorList);
+                    // Update file info and remove any reference to the file's existence in a prior backup
+                    file.size = copySize;
+                    file.sizeRepo = repoSize;
+                    file.checksumSha1 = bufPtrConst(copyChecksum);
+                    file.checksumRepoSha1 = repoChecksum != NULL ? bufPtrConst(repoChecksum) : NULL;
+                    file.reference = NULL;
+                    file.checksumPageError = checksumPageError;
+                    file.checksumPageErrorList =
+                        checksumPageErrorList != NULL ? jsonFromVar(varNewVarLst(checksumPageErrorList)) : NULL;
+                    // Truncated file is not put in bundle
+                    file.bundleId = copyResult != backupCopyResultTruncate ? bundleId : 0;
+                    file.bundleOffset = bundleOffset;
+                    file.blockIncrMapSize = blockIncrMapSize;
+
+                    manifestFileUpdate(manifest, &file);
+                }
+            }
+
+            // Update currentPercentComplete and lock file when the change is significant enough
+            if (percentComplete - *currentPercentComplete > 10)
+            {
+                *currentPercentComplete = percentComplete;
+                lockWriteDataP(
+                    lockTypeBackup, .percentComplete = VARUINT(*currentPercentComplete), .sizeComplete = VARUINT64(*sizeProgress),
+                    .size = VARUINT64(sizeTotal));
             }
         }
         MEM_CONTEXT_TEMP_END();
@@ -1233,39 +1619,68 @@ backupJobResult(
     else
         THROW_CODE(protocolParallelJobErrorCode(job), strZ(protocolParallelJobErrorMessage(job)));
 
-    FUNCTION_LOG_RETURN(UINT64, sizeCopied);
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
-Save a copy of the backup manifest during processing to preserve checksums for a possible resume
+Save a copy of the backup manifest during processing to preserve checksums for a possible resume. Only save the final copy when
+resume is disabled since an incremental copy will not be used in a future backup unless resume is enabled beforehand.
 ***********************************************************************************************************************************/
 static void
-backupManifestSaveCopy(Manifest *const manifest, const String *cipherPassBackup)
+backupManifestSaveCopy(Manifest *const manifest, const String *const cipherPassBackup, const bool final)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
         FUNCTION_TEST_PARAM(STRING, cipherPassBackup);
+        FUNCTION_LOG_PARAM(BOOL, final);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
 
-    MEM_CONTEXT_TEMP_BEGIN()
+    if (final || cfgOptionBool(cfgOptResume))
     {
-        // Open file for write
-        IoWrite *write = storageWriteIo(
-            storageNewWriteP(
-                storageRepoWrite(),
-                strNewFmt(
-                    STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strZ(manifestData(manifest)->backupLabel))));
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            // Open file for write
+            IoWrite *const write = storageWriteIo(
+                storageNewWriteP(
+                    storageRepoWrite(),
+                    strNewFmt(
+                        STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strZ(manifestData(manifest)->backupLabel))));
 
-        // Add encryption filter if required
-        cipherBlockFilterGroupAdd(
-            ioWriteFilterGroup(write), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeEncrypt, cipherPassBackup);
+            // Add encryption filter if required
+            cipherBlockFilterGroupAdd(
+                ioWriteFilterGroup(write), cfgOptionStrId(cfgOptRepoCipherType), cipherModeEncrypt, cipherPassBackup);
 
-        // Save file
-        manifestSave(manifest, write);
+            // Save file
+            manifestSave(manifest, write);
+        }
+        MEM_CONTEXT_TEMP_END();
     }
-    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Check that the clusters are alive and correctly configured during the backup
+***********************************************************************************************************************************/
+static void
+backupDbPing(const BackupData *const backupData, const bool force)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
+        FUNCTION_LOG_PARAM(BOOL, force);
+    FUNCTION_LOG_END();
+
+    ASSERT(backupData != NULL);
+
+    if (cfgOptionBool(cfgOptOnline))
+    {
+        dbPing(backupData->dbPrimary, force);
+
+        if (cfgOptionBool(cfgOptBackupStandby))
+            dbPing(backupData->dbStandby, force);
+    }
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -1273,9 +1688,51 @@ backupManifestSaveCopy(Manifest *const manifest, const String *cipherPassBackup)
 /***********************************************************************************************************************************
 Process the backup manifest
 ***********************************************************************************************************************************/
-// Comparator to order ManifestFile objects by size then name
+typedef struct BackupJobData
+{
+    const Manifest *const manifest;                                 // Backup manifest
+    const String *const backupLabel;                                // Backup label (defines the backup path)
+    const bool backupStandby;                                       // Backup from standby
+    RegExp *standbyExp;                                             // Identify files that may be copied from the standby
+    const CipherType cipherType;                                    // Cipher type
+    const String *const cipherSubPass;                              // Passphrase used to encrypt files in the backup
+    const PgPageSize pageSize;                                      // Page size
+    const CompressType compressType;                                // Backup compression type
+    const int compressLevel;                                        // Compress level if backup is compressed
+    const bool delta;                                               // Is this a checksum delta backup?
+    const bool bundle;                                              // Bundle files?
+    uint64_t bundleSize;                                            // Target bundle size
+    uint64_t bundleLimit;                                           // Limit on files to bundle
+    uint64_t bundleId;                                              // Bundle id
+    const bool blockIncr;                                           // Block incremental?
+    size_t blockIncrSizeSuper;                                      // Super block size
+
+    List *queueList;                                                // List of processing queues
+} BackupJobData;
+
+// Identify files that must be copied from the primary
+static bool
+backupProcessFilePrimary(RegExp *const standbyExp, const String *const name)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(REGEXP, standbyExp);
+        FUNCTION_TEST_PARAM(STRING, name);
+    FUNCTION_TEST_END();
+
+    ASSERT(standbyExp != NULL);
+    ASSERT(name != NULL);
+
+    FUNCTION_TEST_RETURN(
+        BOOL, strEqZ(name, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) || !regExpMatch(standbyExp, name));
+}
+
+// Comparator to order ManifestFile objects by size, date, and name
+static const Manifest *backupProcessQueueComparatorManifest = NULL;
+static bool backupProcessQueueComparatorBundle;
+static uint64_t backupProcessQueueComparatorBundleLimit;
+
 static int
-backupProcessQueueComparator(const void *item1, const void *item2)
+backupProcessQueueComparator(const void *const item1, const void *const item2)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, item1);
@@ -1285,24 +1742,44 @@ backupProcessQueueComparator(const void *item1, const void *item2)
     ASSERT(item1 != NULL);
     ASSERT(item2 != NULL);
 
-    // If the size differs then that's enough to determine order
-    if ((*(ManifestFile **)item1)->size < (*(ManifestFile **)item2)->size)
-        FUNCTION_TEST_RETURN(-1);
-    else if ((*(ManifestFile **)item1)->size > (*(ManifestFile **)item2)->size)
-        FUNCTION_TEST_RETURN(1);
+    // Unpack files
+    const ManifestFile file1 = manifestFileUnpack(backupProcessQueueComparatorManifest, *(const ManifestFilePack **)item1);
+    const ManifestFile file2 = manifestFileUnpack(backupProcessQueueComparatorManifest, *(const ManifestFilePack **)item2);
 
-    // If size is the same then use name to generate a deterministic ordering (names must be unique)
-    FUNCTION_TEST_RETURN(strCmp((*(ManifestFile **)item1)->name, (*(ManifestFile **)item2)->name));
+    // If the size differs then that's enough to determine order
+    if (!backupProcessQueueComparatorBundle || file1.size > backupProcessQueueComparatorBundleLimit ||
+        file2.size > backupProcessQueueComparatorBundleLimit)
+    {
+        if (file1.size < file2.size)
+            FUNCTION_TEST_RETURN(INT, -1);
+        else if (file1.size > file2.size)
+            FUNCTION_TEST_RETURN(INT, 1);
+    }
+
+    // If bundling order by time ascending so that older files are bundled with older files and newer with newer
+    if (backupProcessQueueComparatorBundle)
+    {
+        if (file1.timestamp > file2.timestamp)
+            FUNCTION_TEST_RETURN(INT, -1);
+        else if (file1.timestamp < file2.timestamp)
+            FUNCTION_TEST_RETURN(INT, 1);
+    }
+
+    // If size/time is the same then use name to generate a deterministic ordering (names must be unique)
+    FUNCTION_TEST_RETURN(INT, strCmp(file1.name, file2.name));
 }
 
 // Helper to generate the backup queues
 static uint64_t
-backupProcessQueue(Manifest *manifest, List **queueList)
+backupProcessQueue(const BackupData *const backupData, Manifest *const manifest, BackupJobData *const jobData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
-        FUNCTION_LOG_PARAM_P(LIST, queueList);
+        FUNCTION_LOG_PARAM_P(VOID, jobData);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     ASSERT(manifest != NULL);
 
@@ -1310,56 +1787,64 @@ backupProcessQueue(Manifest *manifest, List **queueList)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Create list of process queue
-        *queueList = lstNewP(sizeof(List *));
+        // Create list of process queues (use void * instead of List * to avoid Coverity false positive)
+        jobData->queueList = lstNewP(sizeof(void *));
 
         // Generate the list of targets
-        StringList *targetList = strLstNew();
-        strLstAdd(targetList, STRDEF(MANIFEST_TARGET_PGDATA "/"));
+        StringList *const targetList = strLstNew();
+        strLstAddZ(targetList, MANIFEST_TARGET_PGDATA "/");
 
         for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
         {
-            const ManifestTarget *target = manifestTarget(manifest, targetIdx);
+            const ManifestTarget *const target = manifestTarget(manifest, targetIdx);
 
             if (target->tablespaceId != 0)
-                strLstAdd(targetList, strNewFmt("%s/", strZ(target->name)));
+                strLstAddFmt(targetList, "%s/", strZ(target->name));
         }
 
         // Generate the processing queues (there is always at least one)
-        bool backupStandby = cfgOptionBool(cfgOptBackupStandby);
-        unsigned int queueOffset = backupStandby ? 1 : 0;
+        const unsigned int queueOffset = jobData->backupStandby ? 1 : 0;
 
-        MEM_CONTEXT_BEGIN(lstMemContext(*queueList))
+        MEM_CONTEXT_BEGIN(lstMemContext(jobData->queueList))
         {
             for (unsigned int queueIdx = 0; queueIdx < strLstSize(targetList) + queueOffset; queueIdx++)
             {
-                List *queue = lstNewP(sizeof(ManifestFile *), .comparator = backupProcessQueueComparator);
-                lstAdd(*queueList, &queue);
+                List *const queue = lstNewP(sizeof(ManifestFile *), .comparator = backupProcessQueueComparator);
+                lstAdd(jobData->queueList, &queue);
             }
         }
         MEM_CONTEXT_END();
 
         // Now put all files into the processing queues
-        bool delta = cfgOptionBool(cfgOptDelta);
         uint64_t fileTotal = 0;
         bool pgControlFound = false;
 
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
         {
-            const ManifestFile *file = manifestFile(manifest, fileIdx);
+            const ManifestFilePack *const filePack = manifestFilePackGet(manifest, fileIdx);
+            const ManifestFile file = manifestFileUnpack(manifest, filePack);
 
-            // If the file is a reference it should only be backed up if delta and not zero size
-            if (file->reference != NULL && (!delta || file->size == 0))
+            // Only process files that need to be copied
+            if (!file.copy)
+            {
+                // If bundling log zero-length files as stored since they will never be copied
+                if (file.size == 0 && jobData->bundle)
+                {
+                    LOG_DETAIL_FMT(
+                        "store zero-length file %s", strZ(storagePathP(backupData->storagePrimary, manifestPathPg(file.name))));
+                }
+
                 continue;
+            }
 
             // Is pg_control in the backup?
-            if (strEq(file->name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)))
+            if (strEq(file.name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)))
                 pgControlFound = true;
 
             // Files that must be copied from the primary are always put in queue 0 when backup from standby
-            if (backupStandby && file->primary)
+            if (jobData->backupStandby && backupProcessFilePrimary(jobData->standbyExp, file.name))
             {
-                lstAdd(*(List **)lstGet(*queueList, 0), &file);
+                lstAdd(*(List **)lstGet(jobData->queueList, 0), &filePack);
             }
             // Else find the correct queue by matching the file to a target
             else
@@ -1369,10 +1854,9 @@ backupProcessQueue(Manifest *manifest, List **queueList)
 
                 do
                 {
-                    // A target should always be found
-                    CHECK(targetIdx < strLstSize(targetList));
+                    CHECK(AssertError, targetIdx < strLstSize(targetList), "backup target not found");
 
-                    if (strBeginsWith(file->name, strLstGet(targetList, targetIdx)))
+                    if (strBeginsWith(file.name, strLstGet(targetList, targetIdx)))
                         break;
 
                     targetIdx++;
@@ -1380,11 +1864,11 @@ backupProcessQueue(Manifest *manifest, List **queueList)
                 while (1);
 
                 // Add file to queue
-                lstAdd(*(List **)lstGet(*queueList, targetIdx + queueOffset), &file);
+                lstAdd(*(List **)lstGet(jobData->queueList, targetIdx + queueOffset), &filePack);
             }
 
             // Add size to total
-            result += file->size;
+            result += file.size;
 
             // Increment total files
             fileTotal++;
@@ -1397,28 +1881,32 @@ backupProcessQueue(Manifest *manifest, List **queueList)
                 FileMissingError,
                 PG_FILE_PGCONTROL " must be present in all online backups\n"
                 "HINT: is something wrong with the clock or filesystem timestamps?");
-         }
+        }
 
-        // If there are no files to backup then we'll exit with an error.  This could happen if the database is down and backup is
+        // If there are no files to backup then we'll exit with an error. This could happen if the database is down and backup is
         // called with --no-online twice in a row.
         if (fileTotal == 0)
             THROW(FileMissingError, "no files have changed since the last backup - this seems unlikely");
 
         // Sort the queues
-        for (unsigned int queueIdx = 0; queueIdx < lstSize(*queueList); queueIdx++)
-            lstSort(*(List **)lstGet(*queueList, queueIdx), sortOrderDesc);
+        backupProcessQueueComparatorManifest = manifest;
+        backupProcessQueueComparatorBundle = jobData->bundle;
+        backupProcessQueueComparatorBundleLimit = jobData->bundleLimit;
+
+        for (unsigned int queueIdx = 0; queueIdx < lstSize(jobData->queueList); queueIdx++)
+            lstSort(*(List **)lstGet(jobData->queueList, queueIdx), sortOrderDesc);
 
         // Move process queues to prior context
-        lstMove(*queueList, memContextPrior());
+        lstMove(jobData->queueList, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(UINT64, result);
 }
 
-// Helper to caculate the next queue to scan based on the client index
+// Helper to calculate the next queue to scan based on the client index
 static int
-backupJobQueueNext(unsigned int clientIdx, int queueIdx, unsigned int queueTotal)
+backupJobQueueNext(const unsigned int clientIdx, int queueIdx, const unsigned int queueTotal)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, clientIdx);
@@ -1431,28 +1919,16 @@ backupJobQueueNext(unsigned int clientIdx, int queueIdx, unsigned int queueTotal
 
     // Deal with wrapping on either end
     if (queueIdx < 0)
-        FUNCTION_TEST_RETURN((int)queueTotal - 1);
+        FUNCTION_TEST_RETURN(INT, (int)queueTotal - 1);
     else if (queueIdx == (int)queueTotal)
-        FUNCTION_TEST_RETURN(0);
+        FUNCTION_TEST_RETURN(INT, 0);
 
-    FUNCTION_TEST_RETURN(queueIdx);
+    FUNCTION_TEST_RETURN(INT, queueIdx);
 }
 
 // Callback to fetch backup jobs for the parallel executor
-typedef struct BackupJobData
-{
-    const String *const backupLabel;                                // Backup label (defines the backup path)
-    const bool backupStandby;                                       // Backup from standby
-    const String *const cipherSubPass;                              // Passphrase used to encrypt files in the backup
-    const CompressType compressType;                                // Backup compression type
-    const int compressLevel;                                        // Compress level if backup is compressed
-    const bool delta;                                               // Is this a checksum delta backup?
-    const uint64_t lsnStart;                                        // Starting lsn for the backup
-
-    List *queueList;                                                // List of processing queues
-} BackupJobData;
-
-static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx)
+static ProtocolParallelJob *
+backupJobCallback(void *const data, const unsigned int clientIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
@@ -1466,49 +1942,140 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get a new job if there are any left
-        BackupJobData *jobData = data;
+        BackupJobData *const jobData = data;
 
-        // Determine where to begin scanning the queue (we'll stop when we get back here).  When copying from the primary during
+        // Determine where to begin scanning the queue (we'll stop when we get back here). When copying from the primary during
         // backup from standby only queue 0 will be used.
-        unsigned int queueOffset = jobData->backupStandby && clientIdx > 0 ? 1 : 0;
-        int queueIdx = jobData->backupStandby && clientIdx == 0 ?
-            0 : (int)(clientIdx % (lstSize(jobData->queueList) - queueOffset));
-        int queueEnd = queueIdx;
+        const unsigned int queueOffset = jobData->backupStandby && clientIdx > 0 ? 1 : 0;
+        int queueIdx =
+            jobData->backupStandby && clientIdx == 0 ? 0 : (int)(clientIdx % (lstSize(jobData->queueList) - queueOffset));
+        const int queueEnd = queueIdx;
+
+        // Create backup job
+        ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_BACKUP_FILE);
+        PackWrite *param = NULL;
+        uint64_t fileTotal = 0;
+        uint64_t fileSize = 0;
 
         do
         {
-            List *queue = *(List **)lstGet(jobData->queueList, (unsigned int)queueIdx + queueOffset);
+            List *const queue = *(List **)lstGet(jobData->queueList, (unsigned int)queueIdx + queueOffset);
+            unsigned int fileIdx = 0;
+            bool bundle = jobData->bundle;
+            const String *fileName = NULL;
 
-            if (lstSize(queue) > 0)
+            while (fileIdx < lstSize(queue))
             {
-                const ManifestFile *file = *(ManifestFile **)lstGet(queue, 0);
+                const ManifestFile file = manifestFileUnpack(jobData->manifest, *(ManifestFilePack **)lstGet(queue, fileIdx));
 
-                // Create backup job
-                ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_BACKUP_FILE_STR);
+                // Continue if the next file would make the bundle too large. There may be a smaller one that will fit.
+                if (fileTotal > 0 && fileSize + file.size >= jobData->bundleSize)
+                {
+                    fileIdx++;
+                    continue;
+                }
 
-                protocolCommandParamAdd(command, VARSTR(manifestPathPg(file->name)));
-                protocolCommandParamAdd(
-                    command, VARBOOL(!strEq(file->name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL))));
-                protocolCommandParamAdd(command, VARUINT64(file->size));
-                protocolCommandParamAdd(command, VARBOOL(!file->primary));
-                protocolCommandParamAdd(command, file->checksumSha1[0] != 0 ? VARSTRZ(file->checksumSha1) : NULL);
-                protocolCommandParamAdd(command, VARBOOL(file->checksumPage));
-                protocolCommandParamAdd(command, VARUINT64(jobData->lsnStart));
-                protocolCommandParamAdd(command, VARSTR(file->name));
-                protocolCommandParamAdd(command, VARBOOL(file->reference != NULL));
-                protocolCommandParamAdd(command, VARUINT(jobData->compressType));
-                protocolCommandParamAdd(command, VARINT(jobData->compressLevel));
-                protocolCommandParamAdd(command, VARSTR(jobData->backupLabel));
-                protocolCommandParamAdd(command, VARBOOL(jobData->delta));
-                protocolCommandParamAdd(command, VARSTR(jobData->cipherSubPass));
+                // Is this file a block incremental?
+                const bool blockIncr = jobData->blockIncr && file.blockIncrSize > 0;
+
+                // Add common parameters before first file
+                if (param == NULL)
+                {
+                    param = protocolCommandParam(command);
+
+                    if (bundle && file.size <= jobData->bundleLimit)
+                    {
+                        pckWriteStrP(param, backupFileRepoPathP(jobData->backupLabel, .bundleId = jobData->bundleId));
+                        pckWriteU64P(param, jobData->bundleId);
+                        pckWriteBoolP(param, manifestData(jobData->manifest)->bundleRaw);
+                    }
+                    else
+                    {
+                        CHECK(AssertError, fileTotal == 0, "cannot bundle file");
+
+                        pckWriteStrP(
+                            param,
+                            backupFileRepoPathP(
+                                jobData->backupLabel, .manifestName = file.name, .compressType = jobData->compressType,
+                                .blockIncr = blockIncr));
+                        pckWriteU64P(param, 0);
+
+                        fileName = file.name;
+                        bundle = false;
+                    }
+
+                    // Provide the backup reference
+                    pckWriteU64P(param, strLstSize(manifestReferenceList(jobData->manifest)) - 1);
+
+                    pckWriteU32P(param, jobData->compressType);
+                    pckWriteI32P(param, jobData->compressLevel);
+                    pckWriteU64P(param, jobData->cipherSubPass == NULL ? cipherTypeNone : cipherTypeAes256Cbc);
+                    pckWriteStrP(param, jobData->cipherSubPass);
+                    pckWriteU32P(param, jobData->pageSize);
+                    pckWriteStrP(param, cfgOptionStrNull(cfgOptPgVersionForce));
+                }
+
+                pckWriteStrP(param, manifestPathPg(file.name));
+                pckWriteBoolP(param, file.delta);
+                pckWriteBoolP(param, !strEq(file.name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)));
+                pckWriteU64P(param, file.size);
+                pckWriteU64P(param, file.sizePrior);
+                pckWriteBoolP(param, !backupProcessFilePrimary(jobData->standbyExp, file.name));
+                pckWriteBinP(param, file.checksumSha1 != NULL ? BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE) : NULL);
+                pckWriteBoolP(param, file.checksumPage);
+                pckWriteBoolP(param, cfgOptionBool(cfgOptPageHeaderCheck));
+
+                // If block incremental then provide the location of the prior map when available
+                if (blockIncr)
+                {
+                    pckWriteU64P(param, file.blockIncrSize);
+                    pckWriteU64P(param, file.blockIncrChecksumSize);
+                    pckWriteU64P(param, jobData->blockIncrSizeSuper);
+
+                    if (file.blockIncrMapSize != 0 && !file.resume)
+                    {
+                        pckWriteStrP(
+                            param,
+                            backupFileRepoPathP(
+                                file.reference, .manifestName = file.name, .bundleId = file.bundleId, .blockIncr = true));
+                        pckWriteU64P(param, file.bundleOffset + file.sizeRepo - file.blockIncrMapSize);
+                        pckWriteU64P(param, file.blockIncrMapSize);
+                    }
+                    else
+                        pckWriteNullP(param);
+                }
+                else
+                    pckWriteU64P(param, 0);
+
+                pckWriteStrP(param, file.name);
+                pckWriteBinP(param, file.checksumRepoSha1 != NULL ? BUF(file.checksumRepoSha1, HASH_TYPE_SHA1_SIZE) : NULL);
+                pckWriteU64P(param, file.sizeRepo);
+                pckWriteBoolP(param, file.resume);
+                pckWriteBoolP(param, file.reference != NULL);
+
+                fileTotal++;
+                fileSize += file.size;
 
                 // Remove job from the queue
-                lstRemoveIdx(queue, 0);
+                lstRemoveIdx(queue, fileIdx);
 
+                // Break if not bundling or bundle size has been reached
+                if (!bundle || fileSize >= jobData->bundleSize)
+                    break;
+            }
+
+            if (fileTotal > 0)
+            {
                 // Assign job to result
-                result = protocolParallelJobMove(protocolParallelJobNew(VARSTR(file->name), command), memContextPrior());
+                MEM_CONTEXT_PRIOR_BEGIN()
+                {
+                    result = protocolParallelJobNew(bundle ? VARUINT64(jobData->bundleId) : VARSTR(fileName), command);
 
-                // Break out of the loop early since we found a job
+                    if (bundle)
+                        jobData->bundleId++;
+                }
+                MEM_CONTEXT_PRIOR_END();
+
                 break;
             }
 
@@ -1520,20 +2087,21 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(PROTOCOL_PARALLEL_JOB, result);
 }
 
 static void
-backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart, const String *cipherPassBackup)
+backupProcess(const BackupData *const backupData, Manifest *const manifest, const String *const cipherPassBackup)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
-        FUNCTION_LOG_PARAM(STRING, lsnStart);
         FUNCTION_TEST_PARAM(STRING, cipherPassBackup);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
+
+    uint64_t sizeTotal = 0;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -1541,13 +2109,50 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
         const BackupType backupType = manifestData(manifest)->backupType;
         const String *const backupLabel = manifestData(manifest)->backupLabel;
         const String *const backupPathExp = strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(backupLabel));
-        bool hardLink = cfgOptionBool(cfgOptRepoHardlink) && storageFeature(storageRepoWrite(), storageFeatureHardLink);
-        bool backupStandby = cfgOptionBool(cfgOptBackupStandby);
+        const bool hardLink = cfgOptionBool(cfgOptRepoHardlink) && storageFeature(storageRepoWrite(), storageFeatureHardLink);
+        const bool backupStandby = cfgOptionBool(cfgOptBackupStandby);
+
+        BackupJobData jobData =
+        {
+            .manifest = manifest,
+            .backupLabel = backupLabel,
+            .backupStandby = backupStandby,
+            .compressType = compressTypeEnum(cfgOptionStrId(cfgOptCompressType)),
+            .compressLevel = cfgOptionInt(cfgOptCompressLevel),
+            .cipherType = cfgOptionStrId(cfgOptRepoCipherType),
+            .cipherSubPass = manifestCipherSubPass(manifest),
+            .pageSize = backupData->pageSize,
+            .delta = cfgOptionBool(cfgOptDelta),
+            .bundle = cfgOptionBool(cfgOptRepoBundle),
+            .bundleId = 1,
+            .blockIncr = cfgOptionBool(cfgOptRepoBlock),
+
+            // Build expression to identify files that can be copied from the standby when standby backup is supported
+            .standbyExp = regExpNew(
+                strNewFmt(
+                    "^((" MANIFEST_TARGET_PGDATA "/(" PG_PATH_BASE "|" PG_PATH_GLOBAL "|%s|" PG_PATH_PGMULTIXACT "))"
+                    "|" MANIFEST_TARGET_PGTBLSPC ")/",
+                    strZ(pgXactPath(backupData->version)))),
+        };
+
+        if (jobData.bundle)
+        {
+            jobData.bundleSize = cfgOptionUInt64(cfgOptRepoBundleSize);
+            jobData.bundleLimit = cfgOptionUInt64(cfgOptRepoBundleLimit);
+        }
+
+        if (jobData.blockIncr)
+        {
+            // Set super block size based on the backup type
+            jobData.blockIncrSizeSuper =
+                backupType == backupTypeFull ?
+                    (size_t)cfgOptionUInt64(cfgOptRepoBlockSizeSuperFull) : (size_t)cfgOptionUInt64(cfgOptRepoBlockSizeSuper);
+        }
 
         // If this is a full backup or hard-linked and paths are supported then create all paths explicitly so that empty paths will
-        // exist in to repo.  Also create tablspace symlinks when symlinks are available,  This makes it possible for the user to
+        // exist in the repo. Also create tablespace symlinks when symlinks are available. This makes it possible for the user to
         // make a copy of the backup path and get a valid cluster.
-        if (backupType == backupTypeFull || hardLink)
+        if ((backupType == backupTypeFull && !jobData.bundle) || hardLink)
         {
             // Create paths when available
             if (storageFeature(storageRepoWrite(), storageFeaturePath))
@@ -1575,45 +2180,32 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
                         const String *const linkDestination = strNewFmt(
                             "../../" MANIFEST_TARGET_PGTBLSPC "/%u", target->tablespaceId);
 
-                        THROW_ON_SYS_ERROR_FMT(
-                            symlink(strZ(linkDestination), strZ(link)) == -1, FileOpenError,
-                            "unable to create symlink '%s' to '%s'", strZ(link), strZ(linkDestination));
+                        storageLinkCreateP(storageRepoWrite(), linkDestination, link);
                     }
                 }
             }
         }
 
         // Generate processing queues
-        BackupJobData jobData =
-        {
-            .backupLabel = backupLabel,
-            .backupStandby = backupStandby,
-            .compressType = compressTypeEnum(cfgOptionStr(cfgOptCompressType)),
-            .compressLevel = cfgOptionInt(cfgOptCompressLevel),
-            .cipherSubPass = manifestCipherSubPass(manifest),
-            .delta = cfgOptionBool(cfgOptDelta),
-            .lsnStart = cfgOptionBool(cfgOptOnline) ? pgLsnFromStr(lsnStart) : 0xFFFFFFFFFFFFFFFF,
-        };
-
-        uint64_t sizeTotal = backupProcessQueue(manifest, &jobData.queueList);
+        sizeTotal = backupProcessQueue(backupData, manifest, &jobData);
 
         // Create the parallel executor
-        ProtocolParallel *parallelExec = protocolParallelNew(
-            (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2, backupJobCallback, &jobData);
+        ProtocolParallel *const parallelExec = protocolParallelNew(
+            cfgOptionUInt64(cfgOptProtocolTimeout) / 2, backupJobCallback, &jobData);
 
         // First client is always on the primary
         protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypePg, backupData->pgIdxPrimary, 1));
 
-        // Create the rest of the clients on the primary or standby depending on the value of backup-standby.  Note that standby
+        // Create the rest of the clients on the primary or standby depending on the value of backup-standby. Note that standby
         // backups don't count the primary client in process-max.
-        unsigned int processMax = cfgOptionUInt(cfgOptProcessMax) + (backupStandby ? 1 : 0);
-        unsigned int pgIdx = backupStandby ? backupData->pgIdxStandby : backupData->pgIdxPrimary;
+        const unsigned int processMax = cfgOptionUInt(cfgOptProcessMax) + (backupStandby ? 1 : 0);
+        const unsigned int pgIdx = backupStandby ? backupData->pgIdxStandby : backupData->pgIdxPrimary;
 
         for (unsigned int processIdx = 2; processIdx <= processMax; processIdx++)
             protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypePg, pgIdx, processIdx));
 
         // Maintain a list of files that need to be removed from the manifest when the backup is complete
-        StringList *fileRemove = strLstNew();
+        StringList *const fileRemove = strLstNew();
 
         // Determine how often the manifest will be saved (every one percent or threshold size, whichever is greater)
         uint64_t manifestSaveLast = 0;
@@ -1623,35 +2215,42 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
             manifestSaveSize = cfgOptionUInt64(cfgOptManifestSaveThreshold);
 
         // Process jobs
-        uint64_t sizeCopied = 0;
+        uint64_t sizeProgress = 0;
+
+        // Initialize percent complete and bytes completed/total
+        unsigned int currentPercentComplete = 0;
+        lockWriteDataP(
+            lockTypeBackup, .percentComplete = VARUINT(currentPercentComplete), .sizeComplete = VARUINT64(sizeProgress),
+            .size = VARUINT64(sizeTotal));
 
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
             do
             {
-                unsigned int completed = protocolParallelProcess(parallelExec);
+                const unsigned int completed = protocolParallelProcess(parallelExec);
 
                 for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
                 {
-                    ProtocolParallelJob *job = protocolParallelResult(parallelExec);
+                    ProtocolParallelJob *const job = protocolParallelResult(parallelExec);
 
-                    sizeCopied = backupJobResult(
+                    backupJobResult(
                         manifest,
                         backupStandby && protocolParallelJobProcessId(job) > 1 ? backupData->hostStandby : backupData->hostPrimary,
-                        storagePathP(
-                            protocolParallelJobProcessId(job) > 1 ? storagePgIdx(pgIdx) : backupData->storagePrimary,
-                            manifestPathPg(manifestFileFind(manifest, varStr(protocolParallelJobKey(job)))->name)),
-                        fileRemove, job, sizeTotal, sizeCopied);
+                        protocolParallelJobProcessId(job) > 1 ? storagePgIdx(pgIdx) : backupData->storagePrimary,
+                        fileRemove, job, jobData.bundle, jobData.pageSize, sizeTotal, &sizeProgress, &currentPercentComplete);
                 }
 
                 // A keep-alive is required here for the remote holding open the backup connection
                 protocolKeepAlive();
 
+                // Check that the clusters are alive and correctly configured during the backup
+                backupDbPing(backupData, false);
+
                 // Save the manifest periodically to preserve checksums for resume
-                if (sizeCopied - manifestSaveLast >= manifestSaveSize)
+                if (sizeProgress - manifestSaveLast >= manifestSaveSize)
                 {
-                    backupManifestSaveCopy(manifest, cipherPassBackup);
-                    manifestSaveLast = sizeCopied;
+                    backupManifestSaveCopy(manifest, cipherPassBackup, false);
+                    manifestSaveLast = sizeProgress;
                 }
 
                 // Reset the memory context occasionally so we don't use too much memory or slow down processing
@@ -1664,10 +2263,10 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
 #ifdef DEBUG
         // Ensure that all processing queues are empty
         for (unsigned int queueIdx = 0; queueIdx < lstSize(jobData.queueList); queueIdx++)
-            ASSERT(lstSize(*(List **)lstGet(jobData.queueList, queueIdx)) == 0);
+            ASSERT(lstEmpty(*(List **)lstGet(jobData.queueList, queueIdx)));
 #endif
 
-        // Remove files from the manifest that were removed during the backup.  This must happen after processing to avoid
+        // Remove files from the manifest that were removed during the backup. This must happen after processing to avoid
         // invalidating pointers by deleting items from the list.
         for (unsigned int fileRemoveIdx = 0; fileRemoveIdx < strLstSize(fileRemove); fileRemoveIdx++)
             manifestFileRemove(manifest, strLstGet(fileRemove, fileRemoveIdx));
@@ -1677,31 +2276,29 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
 
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
         {
-            const ManifestFile *const file = manifestFile(manifest, fileIdx);
+            const ManifestFile file = manifestFile(manifest, fileIdx);
 
             // If the file has a reference, then it was not copied since it can be retrieved from the referenced backup. However,
             // if hardlinking is enabled the link will need to be created.
-            if (file->reference != NULL)
+            if (file.reference != NULL)
             {
                 // If hardlinking is enabled then create a hardlink for files that have not changed since the last backup
                 if (hardLink)
                 {
-                    LOG_DETAIL_FMT("hardlink %s to %s",  strZ(file->name), strZ(file->reference));
+                    LOG_DETAIL_FMT("hardlink %s to %s", strZ(file.name), strZ(file.reference));
 
                     const String *const linkName = storagePathP(
-                        storageRepo(), strNewFmt("%s/%s%s", strZ(backupPathExp), strZ(file->name), compressExt));
-                    const String *const linkDestination =  storagePathP(
+                        storageRepo(), strNewFmt("%s/%s%s", strZ(backupPathExp), strZ(file.name), compressExt));
+                    const String *const linkDestination = storagePathP(
                         storageRepo(),
-                        strNewFmt(STORAGE_REPO_BACKUP "/%s/%s%s", strZ(file->reference), strZ(file->name), compressExt));
+                        strNewFmt(STORAGE_REPO_BACKUP "/%s/%s%s", strZ(file.reference), strZ(file.name), compressExt));
 
-                    THROW_ON_SYS_ERROR_FMT(
-                        link(strZ(linkDestination), strZ(linkName)) == -1, FileOpenError,
-                        "unable to create hardlink '%s' to '%s'", strZ(linkName), strZ(linkDestination));
+                    storageLinkCreateP(storageRepoWrite(), linkDestination, linkName, .linkType = storageLinkHard);
                 }
                 // Else log the reference. With delta, it is possible that references may have been removed if a file needed to be
                 // recopied.
                 else
-                    LOG_DETAIL_FMT("reference %s to %s", strZ(file->name), strZ(file->reference));
+                    LOG_DETAIL_FMT("reference %s to %s", strZ(file.name), strZ(file.reference));
             }
         }
 
@@ -1712,12 +2309,12 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
             {
                 const String *const path = strNewFmt("%s/%s", strZ(backupPathExp), strZ(manifestPath(manifest, pathIdx)->name));
 
-                if (backupType == backupTypeFull || hardLink || storagePathExistsP(storageRepo(), path))
+                // Always sync the path if it exists or if the backup is full (without bundling) or hardlinked. In the latter cases
+                // the directory should always exist so we want to error if it does not.
+                if ((backupType == backupTypeFull && !jobData.bundle) || hardLink || storagePathExistsP(storageRepo(), path))
                     storagePathSyncP(storageRepoWrite(), path);
             }
         }
-
-        LOG_INFO_FMT("%s backup size = %s", strZ(backupTypeStr(backupType)), strZ(strSizeFormat(sizeTotal)));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -1728,117 +2325,121 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
 Check and copy WAL segments required to make the backup consistent
 ***********************************************************************************************************************************/
 static void
-backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const String *cipherPassBackup)
+backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manifest, const String *const cipherPassBackup)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
-        FUNCTION_LOG_PARAM(UINT, walSegmentSize);
         FUNCTION_TEST_PARAM(STRING, cipherPassBackup);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
 
-    // If archive logs are required to complete the backup, then check them.  This is the default, but can be overridden if the
-    // archive logs are going to a different server.  Be careful of disabling this option because there is no way to verify that the
+    // If archive logs are required to complete the backup, then check them. This is the default, but can be overridden if the
+    // archive logs are going to a different server. Be careful of disabling this option because there is no way to verify that the
     // backup will be consistent - at least not here.
-    if (cfgOptionBool(cfgOptOnline) && cfgOptionBool(cfgOptArchiveCheck))
+    if (cfgOptionBool(cfgOptArchiveCheck))
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            unsigned int timeline = cvtZToUIntBase(strZ(strSubN(manifestData(manifest)->archiveStart, 0, 8)), 16);
-            uint64_t lsnStart = pgLsnFromStr(manifestData(manifest)->lsnStart);
-            uint64_t lsnStop = pgLsnFromStr(manifestData(manifest)->lsnStop);
+            const uint64_t lsnStart = pgLsnFromStr(manifestData(manifest)->lsnStart);
+            const uint64_t lsnStop = pgLsnFromStr(manifestData(manifest)->lsnStop);
 
             LOG_INFO_FMT(
-                "check archive for segment(s) %s:%s", strZ(pgLsnToWalSegment(timeline, lsnStart, walSegmentSize)),
-                strZ(pgLsnToWalSegment(timeline, lsnStop, walSegmentSize)));
+                "check archive for segment(s) %s:%s",
+                strZ(pgLsnToWalSegment(backupData->timeline, lsnStart, backupData->walSegmentSize)),
+                strZ(pgLsnToWalSegment(backupData->timeline, lsnStop, backupData->walSegmentSize)));
 
             // Save the backup manifest before getting archive logs in case of failure
-            backupManifestSaveCopy(manifest, cipherPassBackup);
+            backupManifestSaveCopy(manifest, cipherPassBackup, false);
 
             // Use base path to set ownership and mode
-            const ManifestPath *basePath = manifestPathFind(manifest, MANIFEST_TARGET_PGDATA_STR);
+            const ManifestPath *const basePath = manifestPathFind(manifest, MANIFEST_TARGET_PGDATA_STR);
 
             // Loop through all the segments in the lsn range
-            InfoArchive *infoArchive = infoArchiveLoadFile(
-                storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-                cfgOptionStrNull(cfgOptRepoCipherPass));
-            const String *archiveId = infoArchiveId(infoArchive);
-
-            StringList *walSegmentList = pgLsnRangeToWalSegmentList(
-                manifestData(manifest)->pgVersion, timeline, lsnStart, lsnStop, walSegmentSize);
+            const StringList *const walSegmentList = pgLsnRangeToWalSegmentList(
+                backupData->timeline, lsnStart, lsnStop, backupData->walSegmentSize);
+            WalSegmentFind *const find = walSegmentFindNew(
+                storageRepo(), backupData->archiveId, strLstSize(walSegmentList) == 1, cfgOptionUInt64(cfgOptArchiveTimeout));
 
             for (unsigned int walSegmentIdx = 0; walSegmentIdx < strLstSize(walSegmentList); walSegmentIdx++)
             {
-                const String *walSegment = strLstGet(walSegmentList, walSegmentIdx);
-
-                // Find the actual wal segment file in the archive
-                const String *archiveFile = walSegmentFind(
-                    storageRepo(), archiveId, walSegment,  (TimeMSec)(cfgOptionDbl(cfgOptArchiveTimeout) * MSEC_PER_SEC));
-
-                if (cfgOptionBool(cfgOptArchiveCopy))
+                MEM_CONTEXT_TEMP_BEGIN()
                 {
-                    // Get compression type of the WAL segment and backup
-                    CompressType archiveCompressType = compressTypeFromName(archiveFile);
-                    CompressType backupCompressType = compressTypeEnum(cfgOptionStr(cfgOptCompressType));
+                    // Find the actual wal segment file (including checksum compression extension) in the archive
+                    const String *const walSegment = strLstGet(walSegmentList, walSegmentIdx);
+                    const String *const archiveFile = walSegmentFind(find, walSegment);
 
-                    // Open the archive file
-                    StorageRead *read = storageNewReadP(
-                        storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(archiveFile)));
-                    IoFilterGroup *filterGroup = ioReadFilterGroup(storageReadIo(read));
-
-                    // Decrypt with archive key if encrypted
-                    cipherBlockFilterGroupAdd(
-                        filterGroup, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeDecrypt,
-                        infoArchiveCipherPass(infoArchive));
-
-                    // Compress/decompress if archive and backup do not have the same compression settings
-                    if (archiveCompressType != backupCompressType)
+                    if (cfgOptionBool(cfgOptArchiveCopy))
                     {
-                        if (archiveCompressType != compressTypeNone)
-                            ioFilterGroupAdd(filterGroup, decompressFilter(archiveCompressType));
+                        // Copy can be a pretty expensive operation so log it
+                        LOG_DETAIL_FMT("copy segment %s to backup", strZ(walSegment));
 
-                        if (backupCompressType != compressTypeNone)
-                            ioFilterGroupAdd(filterGroup, compressFilter(backupCompressType, cfgOptionInt(cfgOptCompressLevel)));
+                        // Get compression type of the WAL segment and backup
+                        const CompressType archiveCompressType = compressTypeFromName(archiveFile);
+                        const CompressType backupCompressType = compressTypeEnum(cfgOptionStrId(cfgOptCompressType));
+
+                        // Open the archive file
+                        StorageRead *const read = storageNewReadP(
+                            storageRepo(),
+                            strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(backupData->archiveId), strZ(archiveFile)));
+                        IoFilterGroup *const filterGroup = ioReadFilterGroup(storageReadIo(read));
+
+                        // Decrypt with archive key if encrypted
+                        cipherBlockFilterGroupAdd(
+                            filterGroup, cfgOptionStrId(cfgOptRepoCipherType), cipherModeDecrypt,
+                            infoArchiveCipherPass(backupData->archiveInfo));
+
+                        // Compress/decompress if archive and backup do not have the same compression settings
+                        if (archiveCompressType != backupCompressType)
+                        {
+                            if (archiveCompressType != compressTypeNone)
+                                ioFilterGroupAdd(filterGroup, decompressFilterP(archiveCompressType));
+
+                            if (backupCompressType != compressTypeNone)
+                            {
+                                ioFilterGroupAdd(
+                                    filterGroup, compressFilterP(backupCompressType, cfgOptionInt(cfgOptCompressLevel)));
+                            }
+                        }
+
+                        // Encrypt with backup key if encrypted
+                        cipherBlockFilterGroupAdd(
+                            filterGroup, cfgOptionStrId(cfgOptRepoCipherType), cipherModeEncrypt, manifestCipherSubPass(manifest));
+
+                        // Add size filter last to calculate repo size
+                        ioFilterGroupAdd(filterGroup, ioSizeNew());
+
+                        // Copy the file
+                        const String *const manifestName = strNewFmt(
+                            MANIFEST_TARGET_PGDATA "/%s/%s", strZ(pgWalPath(manifestData(manifest)->pgVersion)), strZ(walSegment));
+
+                        storageCopyP(
+                            read,
+                            storageNewWriteP(
+                                storageRepoWrite(),
+                                backupFileRepoPathP(
+                                    manifestData(manifest)->backupLabel, manifestName, 0,
+                                    compressTypeEnum(cfgOptionStrId(cfgOptCompressType)), false)));
+
+                        // Add to manifest
+                        ManifestFile file =
+                        {
+                            .name = manifestName,
+                            .mode = basePath->mode & (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH),
+                            .user = basePath->user,
+                            .group = basePath->group,
+                            .size = backupData->walSegmentSize,
+                            .sizeOriginal = backupData->walSegmentSize,
+                            .sizeRepo = pckReadU64P(ioFilterGroupResultP(filterGroup, SIZE_FILTER_TYPE)),
+                            .timestamp = manifestData(manifest)->backupTimestampStop,
+                            .checksumSha1 = bufPtr(bufNewDecode(encodingHex, strSubN(archiveFile, 25, 40))),
+                        };
+
+                        manifestFileAdd(manifest, &file);
                     }
-
-                    // Encrypt with backup key if encrypted
-                    cipherBlockFilterGroupAdd(
-                        filterGroup, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeEncrypt,
-                        manifestCipherSubPass(manifest));
-
-                    // Add size filter last to calculate repo size
-                    ioFilterGroupAdd(filterGroup, ioSizeNew());
-
-                    // Copy the file
-                    const String *manifestName = strNewFmt(
-                        MANIFEST_TARGET_PGDATA "/%s/%s", strZ(pgWalPath(manifestData(manifest)->pgVersion)), strZ(walSegment));
-
-                    storageCopyP(
-                        read,
-                        storageNewWriteP(
-                            storageRepoWrite(),
-                            strNewFmt(
-                                STORAGE_REPO_BACKUP "/%s/%s%s", strZ(manifestData(manifest)->backupLabel), strZ(manifestName),
-                                strZ(compressExtStr(compressTypeEnum(cfgOptionStr(cfgOptCompressType)))))));
-
-                    // Add to manifest
-                    ManifestFile file =
-                    {
-                        .name = manifestName,
-                        .primary = true,
-                        .mode = basePath->mode & (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH),
-                        .user = basePath->user,
-                        .group = basePath->group,
-                        .size = walSegmentSize,
-                        .sizeRepo = varUInt64Force(ioFilterGroupResult(filterGroup, SIZE_FILTER_TYPE_STR)),
-                        .timestamp = manifestData(manifest)->backupTimestampStop,
-                    };
-
-                    memcpy(file.checksumSha1, strZ(strSubN(archiveFile, 25, 40)), HASH_TYPE_SHA1_SIZE_HEX + 1);
-
-                    manifestFileAdd(manifest, &file);
                 }
+                MEM_CONTEXT_TEMP_END();
 
                 // A keep-alive is required here for the remote holding the backup lock
                 protocolKeepAlive();
@@ -1867,11 +2468,11 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
     {
         const String *const backupLabel = manifestData(manifest)->backupLabel;
 
-        // Validation and final save of the backup manifest.  Validate in strict mode to catch as many potential issues as possible.
+        // Validation and final save of the backup manifest. Validate in strict mode to catch as many potential issues as possible.
         // -------------------------------------------------------------------------------------------------------------------------
         manifestValidate(manifest, true);
 
-        backupManifestSaveCopy(manifest, infoPgCipherPass(infoBackupPg(infoBackup)));
+        backupManifestSaveCopy(manifest, infoPgCipherPass(infoBackupPg(infoBackup)), true);
 
         storageCopy(
             storageNewReadP(
@@ -1880,26 +2481,26 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
                 storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel))));
 
         // Copy a compressed version of the manifest to history. If the repo is encrypted then the passphrase to open the manifest
-        // is required.  We can't just do a straight copy since the destination needs to be compressed and that must happen before
+        // is required. We can't just do a straight copy since the destination needs to be compressed and that must happen before
         // encryption in order to be efficient. Compression will always be gz for compatibility and since it is always available.
         // -------------------------------------------------------------------------------------------------------------------------
-        StorageRead *manifestRead = storageNewReadP(
-                storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel)));
+        StorageRead *const manifestRead = storageNewReadP(
+            storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel)));
 
         cipherBlockFilterGroupAdd(
-            ioReadFilterGroup(storageReadIo(manifestRead)), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeDecrypt,
+            ioReadFilterGroup(storageReadIo(manifestRead)), cfgOptionStrId(cfgOptRepoCipherType), cipherModeDecrypt,
             infoPgCipherPass(infoBackupPg(infoBackup)));
 
-        StorageWrite *manifestWrite = storageNewWriteP(
-                storageRepoWrite(),
-                strNewFmt(
-                    STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s/%s.manifest%s", strZ(strSubN(backupLabel, 0, 4)),
-                    strZ(backupLabel), strZ(compressExtStr(compressTypeGz))));
+        StorageWrite *const manifestWrite = storageNewWriteP(
+            storageRepoWrite(),
+            strNewFmt(
+                STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s/%s.manifest%s", strZ(strSubN(backupLabel, 0, 4)),
+                strZ(backupLabel), strZ(compressExtStr(compressTypeGz))));
 
-        ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(manifestWrite)), compressFilter(compressTypeGz, 9));
+        ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(manifestWrite)), compressFilterP(compressTypeGz, 9));
 
         cipherBlockFilterGroupAdd(
-            ioWriteFilterGroup(storageWriteIo(manifestWrite)), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeEncrypt,
+            ioWriteFilterGroup(storageWriteIo(manifestWrite)), cfgOptionStrId(cfgOptRepoCipherType), cipherModeEncrypt,
             infoPgCipherPass(infoBackupPg(infoBackup)));
 
         storageCopyP(manifestRead, manifestWrite);
@@ -1908,17 +2509,26 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
         if (storageFeature(storageRepoWrite(), storageFeaturePathSync))
             storagePathSyncP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY));
 
-        // Create a symlink to the most recent backup if supported.  This link is purely informational for the user and is never
-        // used by us since symlinks are not supported on all storage types.
+        // Create a symlink to the most recent backup if supported. This link is purely informational for the user and is never used
+        // by us since symlinks are not supported on all storage types.
         // -------------------------------------------------------------------------------------------------------------------------
-        backupLinkLatest(backupLabel);
+        backupLinkLatest(backupLabel, cfgOptionGroupIdxDefault(cfgOptGrpRepo));
 
         // Add manifest and save backup.info (infoBackupSaveFile() is responsible for proper syncing)
         // -------------------------------------------------------------------------------------------------------------------------
         infoBackupDataAdd(infoBackup, manifest);
 
         infoBackupSaveFile(
-            infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+            infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cfgOptionStrId(cfgOptRepoCipherType),
+            cfgOptionStrNull(cfgOptRepoCipherPass));
+
+        // Save archive.info/copy so the timestamps will be updated to prevent lifecycle settings from removing the files early
+        // -------------------------------------------------------------------------------------------------------------------------
+        infoArchiveSaveFile(
+            infoArchiveLoadFile(
+                storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cfgOptionStrId(cfgOptRepoCipherType),
+                cfgOptionStrNull(cfgOptRepoCipherPass)),
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE_STR, cfgOptionStrId(cfgOptRepoCipherType),
             cfgOptionStrNull(cfgOptRepoCipherPass));
     }
     MEM_CONTEXT_TEMP_END();
@@ -1927,7 +2537,7 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 cmdBackup(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
@@ -1940,37 +2550,48 @@ cmdBackup(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // If the repo option was not provided and more than one repo is configured, then log the default repo chosen
+        if (!cfgOptionTest(cfgOptRepo) && cfgOptionGroupIdxTotal(cfgOptGrpRepo) > 1)
+        {
+            LOG_INFO_FMT(
+                "repo option not specified, defaulting to %s",
+                cfgOptionGroupName(cfgOptGrpRepo, cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
+        }
+
         // Load backup.info
-        InfoBackup *infoBackup = infoBackupLoadFileReconstruct(
-            storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-            cfgOptionStrNull(cfgOptRepoCipherPass));
-        InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
-        const String *cipherPassBackup = infoPgCipherPass(infoBackupPg(infoBackup));
+        InfoBackup *const infoBackup = infoBackupLoadFileReconstruct(
+            storageRepo(), INFO_BACKUP_PATH_FILE_STR, cfgOptionStrId(cfgOptRepoCipherType), cfgOptionStrNull(cfgOptRepoCipherPass));
+        const InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
+        const String *const cipherPassBackup = infoPgCipherPass(infoBackupPg(infoBackup));
 
         // Get pg storage and database objects
-        BackupData *backupData = backupInit(infoBackup);
+        BackupData *const backupData = backupInit(infoBackup);
 
         // Get the start timestamp which will later be written into the manifest to track total backup time
-        time_t timestampStart = backupTime(backupData, false);
+        const time_t timestampStart = backupTime(backupData, false);
 
         // Check if there is a prior manifest when backup type is diff/incr
-        Manifest *manifestPrior = backupBuildIncrPrior(infoBackup);
+        Manifest *const manifestPrior = backupBuildIncrPrior(infoBackup);
 
         // Start the backup
-        BackupStartResult backupStartResult = backupStart(backupData);
+        const BackupStartResult backupStartResult = backupStart(backupData);
 
         // Build the manifest
-        Manifest *manifest = manifestNewBuild(
-            backupData->storagePrimary, infoPg.version, infoPg.catalogVersion, cfgOptionBool(cfgOptOnline),
-            cfgOptionBool(cfgOptChecksumPage), strLstNewVarLst(cfgOptionLst(cfgOptExclude)), backupStartResult.tablespaceList);
+        const ManifestBlockIncrMap blockIncrMap = backupBlockIncrMap();
+
+        Manifest *const manifest = manifestNewBuild(
+            backupData->storagePrimary, infoPg.version, infoPg.catalogVersion, timestampStart, cfgOptionBool(cfgOptOnline),
+            cfgOptionBool(cfgOptChecksumPage), cfgOptionBool(cfgOptRepoBundle), cfgOptionBool(cfgOptRepoBlock), &blockIncrMap,
+            strLstNewVarLst(cfgOptionLst(cfgOptExclude)), backupStartResult.tablespaceList);
 
         // Validate the manifest using the copy start time
         manifestBuildValidate(
-            manifest, cfgOptionBool(cfgOptDelta), backupTime(backupData, true), compressTypeEnum(cfgOptionStr(cfgOptCompressType)));
+            manifest, cfgOptionBool(cfgOptDelta), backupTime(backupData, true),
+            compressTypeEnum(cfgOptionStrId(cfgOptCompressType)));
 
         // Build an incremental backup if type is not full (manifestPrior will be freed in this call)
         if (!backupBuildIncr(infoBackup, manifest, manifestPrior, backupStartResult.walSegmentName))
-            manifestCipherSubPassSet(manifest, cipherPassGen(cipherType(cfgOptionStr(cfgOptRepoCipherType))));
+            manifestCipherSubPassSet(manifest, cipherPassGen(cfgOptionStrId(cfgOptRepoCipherType)));
 
         // Set delta if it is not already set and the manifest requires it
         if (!cfgOptionBool(cfgOptDelta) && varBool(manifestData(manifest)->backupOptionDelta))
@@ -1981,32 +2602,43 @@ cmdBackup(void)
         {
             manifestBackupLabelSet(
                 manifest,
-                backupLabelCreate(backupType(cfgOptionStr(cfgOptType)), manifestData(manifest)->backupLabelPrior, timestampStart));
+                backupLabelCreate(
+                    (BackupType)cfgOptionStrId(cfgOptType), manifestData(manifest)->backupLabelPrior, timestampStart));
         }
 
         // Save the manifest before processing starts
-        backupManifestSaveCopy(manifest, cipherPassBackup);
+        backupManifestSaveCopy(manifest, cipherPassBackup, false);
 
         // Process the backup manifest
-        backupProcess(backupData, manifest, backupStartResult.lsn, cipherPassBackup);
+        backupProcess(backupData, manifest, cipherPassBackup);
+
+        // Check that the clusters are alive and correctly configured after the backup
+        backupDbPing(backupData, true);
+
+        // The standby db object and protocol won't be used anymore so free them
+        if (cfgOptionBool(cfgOptBackupStandby))
+        {
+            dbFree(backupData->dbStandby);
+            protocolRemoteFree(backupData->pgIdxStandby);
+        }
 
         // Stop the backup
-        BackupStopResult backupStopResult = backupStop(backupData, manifest);
+        const BackupStopResult backupStopResult = backupStop(backupData, manifest);
 
         // Complete manifest
         manifestBuildComplete(
-            manifest, timestampStart, backupStartResult.lsn, backupStartResult.walSegmentName, backupStopResult.timestamp,
-            backupStopResult.lsn, backupStopResult.walSegmentName, infoPg.id, infoPg.systemId, backupStartResult.dbList,
-            cfgOptionBool(cfgOptOnline) && cfgOptionBool(cfgOptArchiveCheck),
-            !cfgOptionBool(cfgOptOnline) || (cfgOptionBool(cfgOptArchiveCheck) && cfgOptionBool(cfgOptArchiveCopy)),
-            cfgOptionUInt(cfgOptBufferSize), cfgOptionUInt(cfgOptCompressLevel), cfgOptionUInt(cfgOptCompressLevelNetwork),
-            cfgOptionBool(cfgOptRepoHardlink), cfgOptionUInt(cfgOptProcessMax), cfgOptionBool(cfgOptBackupStandby));
+            manifest, backupStartResult.lsn, backupStartResult.walSegmentName, backupStopResult.timestamp, backupStopResult.lsn,
+            backupStopResult.walSegmentName, infoPg.id, infoPg.systemId, backupStartResult.dbList,
+            cfgOptionBool(cfgOptArchiveCheck), cfgOptionBool(cfgOptArchiveCopy), cfgOptionUInt(cfgOptBufferSize),
+            cfgOptionUInt(cfgOptCompressLevel), cfgOptionUInt(cfgOptCompressLevelNetwork), cfgOptionBool(cfgOptRepoHardlink),
+            cfgOptionUInt(cfgOptProcessMax), cfgOptionBool(cfgOptBackupStandby),
+            cfgOptionTest(cfgOptAnnotation) ? cfgOptionKv(cfgOptAnnotation) : NULL);
 
         // The primary db object won't be used anymore so free it
         dbFree(backupData->dbPrimary);
 
         // Check and copy WAL segments required to make the backup consistent
-        backupArchiveCheckCopy(manifest, backupData->walSegmentSize, cipherPassBackup);
+        backupArchiveCheckCopy(backupData, manifest, cipherPassBackup);
 
         // The primary protocol connection won't be used anymore so free it. This needs to happen after backupArchiveCheckCopy() so
         // the backup lock is held on the remote which allows conditional archiving based on the backup lock. Any further access to
@@ -2016,6 +2648,12 @@ cmdBackup(void)
         // Complete the backup
         LOG_INFO_FMT("new backup label = %s", strZ(manifestData(manifest)->backupLabel));
         backupComplete(infoBackup, manifest);
+
+        // Backup info
+        LOG_INFO_FMT(
+            "%s backup size = %s, file total = %u", strZ(strIdToStr(manifestData(manifest)->backupType)),
+            strZ(strSizeFormat(infoBackupDataByLabel(infoBackup, manifestData(manifest)->backupLabel)->backupInfoSizeDelta)),
+            manifestFileTotal(manifest));
     }
     MEM_CONTEXT_TEMP_END();
 

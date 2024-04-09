@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE doc SYSTEM "manifest.dtd">
 <doc>
-    <!-- System-wide variables  -->
+    <!-- System-wide variables -->
     <variable-list>
         <variable key="project">pgBackRest</variable>
         <variable key="project-tagline">Reliable PostgreSQL Backup &amp; Restore</variable>
@@ -22,6 +22,9 @@
         <!-- Is this a development or debug build of the docs? -->
         <variable key="dev">n</variable>
         <variable key="debug">n</variable>
+
+        <!-- Add analytics to the HTML documentation? -->
+        <variable key="analytics">n</variable>
 
         <!-- Release date - static allows for reproducible builds -->
         <variable key="release-date-static">n</variable>
@@ -54,15 +57,15 @@
             $stryMonth[$month] . ' ' . $mday . ', ' . $year;
         </variable>
 
-        <!-- HTML variables  -->
+        <!-- HTML variables -->
         <variable key="html-footer" eval='y'>
             'Copyright &amp;copy; 2015' . '-' . substr('{[release-date]}', length('{[release-date]}') - 4) .
-            ', The PostgreSQL Global Development Group, &lt;a href="{[github-url-license]}">MIT License&lt;/a>.  Updated ' .
+            ', The PostgreSQL Global Development Group, &lt;a href="{[github-url-license]}">MIT License&lt;/a>. Updated ' .
             '{[release-date]}';
         </variable>
         <!-- <variable key="html-logo">&lt;img src=&quot;{[project-logo]}&quot;&gt;</variable> -->
 
-        <!-- PDF variables  -->
+        <!-- PDF variables -->
         <variable key="pdf-logo">{[doc-path]}/output/latex/logo</variable>
 
         <variable key="pdf-title1">{[project]} User Guide</variable>
@@ -83,7 +86,9 @@
         <source key="index"/>
         <source key="user-guide-index"/>
         <source key="user-guide"/>
-        <source key="reference" type="custom"/>
+        <source key="command" file="output/xml/command.xml"/>
+        <source key="configuration" file="output/xml/configuration.xml"/>
+        <source key="help" type="custom" file="../src/build/help/help.xml"/>
         <source key="release" type="custom"/>
         <source key="faq"/>
         <source key="metric"/>
@@ -98,8 +103,8 @@
             <render-source key="user-guide-index" menu="User Guides"/>
             <render-source key="user-guide"/>
             <render-source key="release" menu="Releases"/>
-            <render-source key="configuration" source="reference" menu="Configuration"/>
-            <render-source key="command" source="reference" menu="Commands"/>
+            <render-source key="configuration" source="configuration" menu="Configuration"/>
+            <render-source key="command" source="command" menu="Commands"/>
             <render-source key="faq" menu="FAQ"/>
             <render-source key="metric" menu="Metrics"/>
         </render>
@@ -114,10 +119,9 @@
 
             <!--
                 Building the contributing document has some special requirements because it runs Docker in Docker so the repo path
-                must align on the host and all Docker containers.  Run `pgbackrest/doc/doc.pl` from within the home directory of
-                the user that will do the doc build, e.g. `home/vagrant`.  If the repo is not located directly in the home
-                directory, e.g. `/home/vagrant/pgbackrest`, then a symlink may be used,
-                e.g. `ln -s /path/to/repo /home/vagrant/pgbackrest`.
+                must align on the host and all Docker containers. Run `pgbackrest/doc/doc.pl` from within the home directory of the
+                user that will do the doc build, e.g. `home/vagrant`. If the repo is not located directly in the home directory,
+                e.g. `/home/vagrant/pgbackrest`, then a symlink may be used, e.g. `ln -s /path/to/repo /home/vagrant/pgbackrest`.
             -->
             <render-source key="contributing" file="../../../CONTRIBUTING.md"/>
             <render-source key="documentation" file="../../README.md"/>

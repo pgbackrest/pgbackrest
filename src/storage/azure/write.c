@@ -6,10 +6,7 @@ Azure Storage File Write
 #include <string.h>
 
 #include "common/debug.h"
-#include "common/encode.h"
-#include "common/io/write.intern.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
 #include "common/type/xml.h"
 #include "storage/azure/write.h"
@@ -40,7 +37,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct StorageWriteAzure
 {
-    MemContext *memContext;                                         // Object mem context
     StorageWriteInterface interface;                                // Interface
     StorageAzure *storage;                                          // Storage that created this object
 
@@ -57,7 +53,7 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_WRITE_AZURE_TYPE                                                                                      \
     StorageWriteAzure *
 #define FUNCTION_LOG_STORAGE_WRITE_AZURE_FORMAT(value, buffer, bufferSize)                                                         \
-    objToLog(value, "StorageWriteAzure", buffer, bufferSize)
+    objNameToLog(value, "StorageWriteAzure", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Open the file
@@ -75,11 +71,11 @@ storageWriteAzureOpen(THIS_VOID)
     ASSERT(this->blockBuffer == NULL);
 
     // Allocate the block buffer
-    MEM_CONTEXT_BEGIN(this->memContext)
+    MEM_CONTEXT_OBJ_BEGIN(this)
     {
         this->blockBuffer = bufNew(this->blockSize);
     }
-    MEM_CONTEXT_END();
+    MEM_CONTEXT_OBJ_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -100,7 +96,7 @@ storageWriteAzureBlock(StorageWriteAzure *this)
     // nothing to do except make sure the request did not error.
     if (this->request != NULL)
     {
-        storageAzureResponseP(this->request);
+        httpResponseFree(storageAzureResponseP(this->request));
         httpRequestFree(this->request);
         this->request = NULL;
     }
@@ -127,11 +123,11 @@ storageWriteAzureBlockAsync(StorageWriteAzure *this)
         // Create the block id list
         if (this->blockIdList == NULL)
         {
-            MEM_CONTEXT_BEGIN(this->memContext)
+            MEM_CONTEXT_OBJ_BEGIN(this)
             {
                 this->blockIdList = strLstNew();
             }
-            MEM_CONTEXT_END();
+            MEM_CONTEXT_OBJ_END();
         }
 
         // Generate block id. Combine the block number with the provided file id to create a (hopefully) unique block id that won't
@@ -145,12 +141,12 @@ storageWriteAzureBlockAsync(StorageWriteAzure *this)
         httpQueryAdd(query, AZURE_QUERY_COMP_STR, AZURE_QUERY_VALUE_BLOCK_STR);
         httpQueryAdd(query, AZURE_QUERY_BLOCK_ID_STR, blockId);
 
-        MEM_CONTEXT_BEGIN(this->memContext)
+        MEM_CONTEXT_OBJ_BEGIN(this)
         {
             this->request = storageAzureRequestAsyncP(
-                this->storage, HTTP_VERB_PUT_STR, .uri = this->interface.name, .query = query, .content = this->blockBuffer);
+                this->storage, HTTP_VERB_PUT_STR, .path = this->interface.name, .query = query, .content = this->blockBuffer);
         }
-        MEM_CONTEXT_END();
+        MEM_CONTEXT_OBJ_END();
 
         strLstAdd(this->blockIdList, blockId);
     }
@@ -173,6 +169,7 @@ storageWriteAzure(THIS_VOID, const Buffer *buffer)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
+    ASSERT(buffer != NULL);
     ASSERT(this->blockBuffer != NULL);
 
     size_t bytesTotal = 0;
@@ -181,8 +178,10 @@ storageWriteAzure(THIS_VOID, const Buffer *buffer)
     do
     {
         // Copy as many bytes as possible into the block buffer
-        size_t bytesNext = bufRemains(this->blockBuffer) > bufUsed(buffer) - bytesTotal ?
-            bufUsed(buffer) - bytesTotal : bufRemains(this->blockBuffer);
+        const size_t bytesNext =
+            bufRemains(this->blockBuffer) > bufUsed(buffer) - bytesTotal ?
+                bufUsed(buffer) - bytesTotal : bufRemains(this->blockBuffer);
+
         bufCatSub(this->blockBuffer, buffer, bytesTotal, bytesNext);
         bytesTotal += bytesNext;
 
@@ -221,7 +220,7 @@ storageWriteAzureClose(THIS_VOID)
             if (this->blockIdList != NULL)
             {
                 // If there is anything left in the block buffer then write it
-                if (bufUsed(this->blockBuffer) > 0)
+                if (!bufEmpty(this->blockBuffer))
                     storageWriteAzureBlockAsync(this);
 
                 // Complete prior async request, if any
@@ -239,17 +238,17 @@ storageWriteAzureClose(THIS_VOID)
 
                 // Finalize the multi-block upload
                 storageAzureRequestP(
-                    this->storage, HTTP_VERB_PUT_STR, .uri = this->interface.name,
+                    this->storage, HTTP_VERB_PUT_STR, .path = this->interface.name,
                     .query = httpQueryAdd(httpQueryNewP(), AZURE_QUERY_COMP_STR, AZURE_QUERY_VALUE_BLOCK_LIST_STR),
-                    .content = xmlDocumentBuf(blockXml));
+                    .content = xmlDocumentBuf(blockXml), .tag = true);
             }
             // Else upload all the data in a single block
             else
             {
                 storageAzureRequestP(
-                    this->storage, HTTP_VERB_PUT_STR, .uri = this->interface.name,
+                    this->storage, HTTP_VERB_PUT_STR, .path = this->interface.name,
                     httpHeaderAdd(httpHeaderNew(NULL), AZURE_HEADER_BLOB_TYPE_STR, AZURE_HEADER_VALUE_BLOCK_BLOB_STR),
-                    .content = this->blockBuffer);
+                    .content = this->blockBuffer, .tag = true);
             }
 
             bufFree(this->blockBuffer);
@@ -262,8 +261,8 @@ storageWriteAzureClose(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-StorageWrite *
-storageWriteAzureNew(StorageAzure *storage, const String *name, uint64_t fileId, size_t blockSize)
+FN_EXTERN StorageWrite *
+storageWriteAzureNew(StorageAzure *const storage, const String *const name, const uint64_t fileId, const size_t blockSize)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_AZURE, storage);
@@ -275,27 +274,23 @@ storageWriteAzureNew(StorageAzure *storage, const String *name, uint64_t fileId,
     ASSERT(storage != NULL);
     ASSERT(name != NULL);
 
-    StorageWrite *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("StorageWriteAzure")
+    OBJ_NEW_BEGIN(StorageWriteAzure, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageWriteAzure *driver = memNew(sizeof(StorageWriteAzure));
-
-        *driver = (StorageWriteAzure)
+        *this = (StorageWriteAzure)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .storage = storage,
             .fileId = fileId,
             .blockSize = blockSize,
 
             .interface = (StorageWriteInterface)
             {
-                .type = STORAGE_AZURE_TYPE_STR,
+                .type = STORAGE_AZURE_TYPE,
                 .name = strDup(name),
                 .atomic = true,
                 .createPath = true,
                 .syncFile = true,
                 .syncPath = true,
+                .truncate = true,
 
                 .ioInterface = (IoWriteInterface)
                 {
@@ -305,10 +300,8 @@ storageWriteAzureNew(StorageAzure *storage, const String *name, uint64_t fileId,
                 },
             },
         };
-
-        this = storageWriteNew(driver, &driver->interface);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_WRITE, this);
+    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteNew(this, &this->interface));
 }

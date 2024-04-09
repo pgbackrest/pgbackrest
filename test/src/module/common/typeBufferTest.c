@@ -5,13 +5,13 @@ Test Buffers
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
     // *****************************************************************************************************************************
-    if (testBegin("bufNew(), bufNewC, bufNewUseC, bufMove(), bufSize(), bufSizeAlloc(), bufPtr(), and bufFree()"))
+    if (testBegin("bufNew*(), bufMove(), bufSize(), bufSizeAlloc(), bufPtr(), and bufFree()"))
     {
         Buffer *buffer = NULL;
 
@@ -22,12 +22,14 @@ testRun(void)
         }
         MEM_CONTEXT_TEMP_END();
 
-        TEST_RESULT_PTR(bufPtr(buffer), buffer->buffer, "buffer pointer");
+        TEST_RESULT_PTR(bufPtr(buffer), buffer->pub.buffer, "buffer pointer");
         TEST_RESULT_UINT(bufSize(buffer), 256, "buffer size");
         TEST_RESULT_UINT(bufSizeAlloc(buffer), 256, "buffer allocation size");
 
         TEST_ASSIGN(buffer, bufNewC("TEST-STR", sizeof("TEST-STR") - 1), "new buffer from string");
         TEST_RESULT_BOOL(memcmp(bufPtr(buffer), "TEST-STR", 8) == 0, true, "check buffer");
+
+        TEST_RESULT_UINT(bufSize(bufDup(bufNew(0))), 0, "duplicate empty buffer");
 
         TEST_RESULT_VOID(bufFree(buffer), "free buffer");
         TEST_RESULT_VOID(bufFree(bufNew(0)), "free empty buffer");
@@ -39,6 +41,12 @@ testRun(void)
 
         TEST_ASSIGN(buffer, bufNewC(cBuffer, sizeof(cBuffer)), "create from c buffer");
         TEST_RESULT_BOOL(memcmp(bufPtr(buffer), cBuffer, sizeof(cBuffer)) == 0, true, "check buffer");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("bufNewDecode()");
+
+        TEST_RESULT_STR_Z(strNewBuf(bufNewDecode(encodingBase64, STRDEF("eno="))), "zz", "decode base64");
+        TEST_RESULT_STR_Z(strNewBuf(bufNewDecode(encodingBase64, STRDEF(""))), "", "decode empty base64");
     }
 
     // *****************************************************************************************************************************
@@ -94,14 +102,25 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when used > new limit");
 
-        TEST_ERROR(bufLimitSet(buffer, 64), AssertError, "assertion 'limit >= this->used' failed");
+        TEST_ERROR(bufLimitSet(buffer, 64), AssertError, "assertion 'limit >= bufUsed(this)' failed");
         TEST_RESULT_VOID(bufUsedSet(buffer, 64), "set used");
 
         // Use limits to change size reporting
         TEST_RESULT_VOID(bufLimitSet(buffer, 64), "set limit");
-        TEST_RESULT_UINT(bufSize(buffer), 64, "    check limited size");
-        TEST_RESULT_VOID(bufLimitClear(buffer), "    clear limit");
-        TEST_RESULT_UINT(bufSize(buffer), 128, "    check unlimited size");
+        TEST_RESULT_UINT(bufSize(buffer), 64, "check limited size");
+        TEST_RESULT_BOOL(buffer->pub.sizeLimit, true, "check limit flag");
+
+        TEST_RESULT_VOID(bufLimitClear(buffer), "clear limit");
+        TEST_RESULT_UINT(bufSize(buffer), 128, "check unlimited size");
+        TEST_RESULT_BOOL(buffer->pub.sizeLimit, false, "check limit flag");
+
+        TEST_RESULT_VOID(bufLimitSet(buffer, 96), "set limit");
+        TEST_RESULT_UINT(bufSize(buffer), 96, "check limited size");
+        TEST_RESULT_BOOL(buffer->pub.sizeLimit, true, "check limit flag");
+
+        TEST_RESULT_VOID(bufLimitSet(buffer, 128), "set limit");
+        TEST_RESULT_UINT(bufSize(buffer), 128, "check unlimited size");
+        TEST_RESULT_BOOL(buffer->pub.sizeLimit, false, "check limit flag");
 
         // Resize to zero buffer
         TEST_RESULT_VOID(bufUsedZero(buffer), "set used to 0");
@@ -126,12 +145,6 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("bufHex()"))
-    {
-        TEST_RESULT_STR_Z(bufHex(BUFSTRDEF("ABC-CBA")), "4142432d434241", "buffer to hex");
-    }
-
-    // *****************************************************************************************************************************
     if (testBegin("bufCat*()"))
     {
         TEST_RESULT_STR_Z(strNewBuf(bufCat(bufNewC("123", 3), NULL)), "123", "cat null buffer");
@@ -150,12 +163,16 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("bufToLog()"))
     {
+        char logBuf[STACK_TRACE_PARAM_MAX];
+
         Buffer *buffer = bufNew(100);
-        TEST_RESULT_STR_Z(bufToLog(buffer), "{used: 0, size: 100}", "buf to log");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(buffer, bufToLog, logBuf, sizeof(logBuf)), "bufToLog");
+        TEST_RESULT_Z(logBuf, "{used: 0, size: 100}", "check log");
 
         bufLimitSet(buffer, 50);
-        TEST_RESULT_STR_Z(bufToLog(buffer), "{used: 0, size: 50, sizeAlloc: 100}", "buf to log");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(buffer, bufToLog, logBuf, sizeof(logBuf)), "bufToLog");
+        TEST_RESULT_Z(logBuf, "{used: 0, size: 50, sizeAlloc: 100}", "check log");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

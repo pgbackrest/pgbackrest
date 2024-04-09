@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 IO Size Filter
 
-Count all bytes that pass through the filter.  Useful for getting file/IO size if added first in a FilterGroup with IoRead or last
+Count all bytes that pass through the filter. Useful for getting file/IO size if added first in a FilterGroup with IoRead or last
 in a FilterGroup with IoWrite.
 ***********************************************************************************************************************************/
 #ifndef COMMON_IO_FILTER_SIZE_H
@@ -12,12 +12,11 @@ in a FilterGroup with IoWrite.
 /***********************************************************************************************************************************
 Filter type constant
 ***********************************************************************************************************************************/
-#define SIZE_FILTER_TYPE                                     "size"
-    STRING_DECLARE(SIZE_FILTER_TYPE_STR);
+#define SIZE_FILTER_TYPE                                     STRID5("size", 0x2e9330)
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-IoFilter *ioSizeNew(void);
+FN_EXTERN IoFilter *ioSizeNew(void);
 
 #endif

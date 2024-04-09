@@ -1,7 +1,10 @@
 /.build
 autom4te.cache
+/command/help/help.auto.c.inc
 /config.log
 /config.status
 /Makefile
 /build.auto.h
 /pgbackrest
+/postgres/interface.auto.c.inc
+/build-code

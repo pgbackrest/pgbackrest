@@ -11,7 +11,7 @@ LZ4 Common
 #include "common/debug.h"
 
 /**********************************************************************************************************************************/
-LZ4F_errorCode_t
+FN_EXTERN LZ4F_errorCode_t
 lz4Error(LZ4F_errorCode_t error)
 {
     FUNCTION_TEST_BEGIN();
@@ -21,7 +21,7 @@ lz4Error(LZ4F_errorCode_t error)
     if (LZ4F_isError(error))
         THROW_FMT(FormatError, "lz4 error: [%zd] %s", (ssize_t)error, LZ4F_getErrorName(error));
 
-    FUNCTION_TEST_RETURN(error);
+    FUNCTION_TEST_RETURN_TYPE(LZ4F_errorCode_t, error);
 }
 
 #endif // HAVE_LIBLZ4

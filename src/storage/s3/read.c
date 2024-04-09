@@ -3,17 +3,12 @@ S3 Storage Read
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include <fcntl.h>
-#include <unistd.h>
-
 #include "common/debug.h"
 #include "common/io/http/client.h"
-#include "common/io/read.intern.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
-#include "storage/s3/read.h"
 #include "storage/read.intern.h"
+#include "storage/s3/read.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -23,7 +18,6 @@ Object type
 
 typedef struct StorageReadS3
 {
-    MemContext *memContext;                                         // Object mem context
     StorageReadInterface interface;                                 // Interface
     StorageS3 *storage;                                             // Storage that created this object
 
@@ -36,7 +30,7 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_READ_S3_TYPE                                                                                          \
     StorageReadS3 *
 #define FUNCTION_LOG_STORAGE_READ_S3_FORMAT(value, buffer, bufferSize)                                                             \
-    objToLog(value, "StorageReadS3", buffer, bufferSize)
+    objNameToLog(value, "StorageReadS3", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Open the file
@@ -56,12 +50,14 @@ storageReadS3Open(THIS_VOID)
     bool result = false;
 
     // Request the file
-    MEM_CONTEXT_BEGIN(this->memContext)
+    MEM_CONTEXT_OBJ_BEGIN(this)
     {
         this->httpResponse = storageS3RequestP(
-            this->storage, HTTP_VERB_GET_STR, this->interface.name, .allowMissing = true, .contentIo = true);
+            this->storage, HTTP_VERB_GET_STR, this->interface.name,
+            .header = httpHeaderPutRange(httpHeaderNew(NULL), this->interface.offset, this->interface.limit),
+            .allowMissing = true, .contentIo = true);
     }
-    MEM_CONTEXT_END();
+    MEM_CONTEXT_OBJ_END();
 
     if (httpResponseCodeOk(this->httpResponse))
     {
@@ -69,7 +65,7 @@ storageReadS3Open(THIS_VOID)
     }
     // Else error unless ignore missing
     else if (!this->interface.ignoreMissing)
-        THROW_FMT(FileMissingError, "unable to open '%s': No such file or directory", strZ(this->interface.name));
+        THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->interface.name));
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }
@@ -110,38 +106,39 @@ storageReadS3Eof(THIS_VOID)
     ASSERT(this != NULL && this->httpResponse != NULL);
     ASSERT(httpResponseIoRead(this->httpResponse) != NULL);
 
-    FUNCTION_TEST_RETURN(ioReadEof(httpResponseIoRead(this->httpResponse)));
+    FUNCTION_TEST_RETURN(BOOL, ioReadEof(httpResponseIoRead(this->httpResponse)));
 }
 
 /**********************************************************************************************************************************/
-StorageRead *
-storageReadS3New(StorageS3 *storage, const String *name, bool ignoreMissing)
+FN_EXTERN StorageRead *
+storageReadS3New(
+    StorageS3 *const storage, const String *const name, const bool ignoreMissing, const uint64_t offset, const Variant *const limit)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_S3, storage);
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
+        FUNCTION_LOG_PARAM(UINT64, offset);
+        FUNCTION_LOG_PARAM(VARIANT, limit);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
     ASSERT(name != NULL);
+    ASSERT(limit == NULL || varUInt64(limit) > 0);
 
-    StorageRead *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("StorageReadS3")
+    OBJ_NEW_BEGIN(StorageReadS3, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageReadS3 *driver = memNew(sizeof(StorageReadS3));
-
-        *driver = (StorageReadS3)
+        *this = (StorageReadS3)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .storage = storage,
 
             .interface = (StorageReadInterface)
             {
-                .type = STORAGE_S3_TYPE_STR,
+                .type = STORAGE_S3_TYPE,
                 .name = strDup(name),
                 .ignoreMissing = ignoreMissing,
+                .offset = offset,
+                .limit = varDup(limit),
 
                 .ioInterface = (IoReadInterface)
                 {
@@ -151,10 +148,8 @@ storageReadS3New(StorageS3 *storage, const String *name, bool ignoreMissing)
                 },
             },
         };
-
-        this = storageReadNew(driver, &driver->interface);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_READ, this);
+    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadNew(this, &this->interface));
 }

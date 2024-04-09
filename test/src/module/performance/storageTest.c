@@ -11,15 +11,15 @@ stress testing as needed.
 #include "common/harnessFork.h"
 #include "common/harnessStorage.h"
 
-#include "common/crypto/hash.h"
 #include "common/compress/gz/compress.h"
 #include "common/compress/lz4/compress.h"
-#include "common/io/filter/filter.intern.h"
-#include "common/io/filter/sink.h"
+#include "common/crypto/hash.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
+#include "common/io/filter/filter.h"
+#include "common/io/filter/sink.h"
 #include "common/io/io.h"
 #include "common/type/object.h"
 #include "protocol/client.h"
@@ -28,50 +28,34 @@ stress testing as needed.
 #include "storage/remote/protocol.h"
 
 /***********************************************************************************************************************************
-Dummy callback functions
-***********************************************************************************************************************************/
-static void
-storageTestDummyInfoListCallback(void *data, const StorageInfo *info)
-{
-    (void)data;
-    (void)info;
-
-    // Do some work in the mem context to blow up the total time if this is not efficient
-    memResize(memNew(16), 32);
-}
-
-/***********************************************************************************************************************************
-Driver to test storageInfoList
+Driver to test storageNewItrP()
 ***********************************************************************************************************************************/
 typedef struct
 {
     STORAGE_COMMON_MEMBER;
     uint64_t fileTotal;
-} StorageTestPerfInfoList;
+} StorageTestPerfList;
 
-static bool
-storageTestPerfInfoList(
-    THIS_VOID, const String *path, StorageInfoLevel level, StorageInfoListCallback callback, void *callbackData,
-    StorageInterfaceInfoListParam param)
+static StorageList *
+storageTestPerfList(THIS_VOID, const String *path, StorageInfoLevel level, StorageInterfaceListParam param)
 {
-    THIS(StorageTestPerfInfoList);
-    (void)path; (void)level; (void)param;
+    THIS(StorageTestPerfList);
 
-    MEM_CONTEXT_TEMP_BEGIN()
+    (void)path;
+    (void)level;
+    (void)param;
+
+    StorageList *result = NULL;
+
+    if (this->fileTotal != 0)
     {
-        MEM_CONTEXT_TEMP_RESET_BEGIN()
-        {
-            for (uint64_t fileIdx = 0; fileIdx < this->fileTotal; fileIdx++)
-            {
-                callback(callbackData, &(StorageInfo){.exists = true, .name = STRDEF("name")});
-                MEM_CONTEXT_TEMP_RESET(1000);
-            }
-        }
-        MEM_CONTEXT_TEMP_END();
-    }
-    MEM_CONTEXT_TEMP_END();
+        result = storageLstNew(storageInfoLevelExists);
 
-    return this->fileTotal != 0;
+        for (uint64_t fileIdx = 0; fileIdx < this->fileTotal; fileIdx++)
+            storageLstAdd(result, &(StorageInfo){.exists = true, .name = STRDEF("name")});
+    }
+
+    return result;
 }
 
 /***********************************************************************************************************************************
@@ -113,86 +97,84 @@ testIoRateProcess(THIS_VOID, const Buffer *input)
 static IoFilter *
 testIoRateNew(uint64_t bytesPerSec)
 {
-    IoFilter *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("TestIoRate")
+    OBJ_NEW_BEGIN(TestIoRate, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        TestIoRate *driver = memNew(sizeof(TestIoRate));
-
-        *driver = (TestIoRate)
+        *this = (TestIoRate)
         {
             .memContext = memContextCurrent(),
             .bytesPerSec = bytesPerSec,
         };
-
-        this = ioFilterNewP(strNew("TestIoRate"), driver, NULL, .in = testIoRateProcess);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
-    return this;
+    return ioFilterNewP(STRID5("test-io-rate", 0x2d032dbd3ba4cb40), this, NULL, .in = testIoRateProcess);
 }
 
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
     // *****************************************************************************************************************************
-    if (testBegin("storageInfoList()"))
+    if (testBegin("storageNewItrP()"))
     {
-        // One million files represents a fairly large cluster
-        CHECK(testScale() <= 2000);
-        uint64_t fileTotal = (uint64_t)1000000 * testScale();
+        TEST_TITLE_FMT("list %d million files", TEST_SCALE);
 
-        HARNESS_FORK_BEGIN()
+        // One million files represents a fairly large cluster
+        ASSERT(TEST_SCALE <= 2000);
+        uint64_t fileTotal = (uint64_t)1000000 * TEST_SCALE;
+
+        HRN_FORK_BEGIN(.timeout = 60000)
         {
-            HARNESS_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN()
             {
                 // Create a basic configuration so the remote storage driver can determine the storage type
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
                 strLstAddZ(argList, "--" CFGOPT_PROCESS "=0");
-                strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
-                harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleRemote, argList);
+                hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
+                HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleRemote);
 
-                // Create a driver to test remote performance of storageInfoList() and inject it into storageRepo()
-                StorageTestPerfInfoList driver =
+                // Create a driver to test remote performance of storageNewItrP() and inject it into storageRepo()
+                StorageTestPerfList *driver = NULL;
+
+                OBJ_NEW_BASE_BEGIN(StorageTestPerfList, .childQty = MEM_CONTEXT_QTY_MAX)
                 {
-                    .interface = storageInterfaceTestDummy,
-                    .fileTotal = fileTotal,
-                };
+                    driver = OBJ_NEW_ALLOC();
 
-                driver.interface.infoList = storageTestPerfInfoList;
+                    *driver = (StorageTestPerfList)
+                    {
+                        .interface = storageInterfaceTestDummy,
+                        .fileTotal = fileTotal,
+                    };
+                }
+                OBJ_NEW_END();
 
-                storageHelper.storageRepo = memNew(sizeof(Storage *));
-                storageHelper.storageRepo[0] = storageNew(
-                    STRDEF("TEST"), STRDEF("/"), 0, 0, false, NULL, &driver, driver.interface);
+                driver->interface.list = storageTestPerfList;
+
+                Storage *storageTest = storageNew(strIdFromZ("test"), STRDEF("/"), 0, 0, false, NULL, driver, driver->interface);
+                storageHelper.storageRepoWrite = memNew(sizeof(Storage *));
+                storageHelper.storageRepoWrite[0] = storageTest;
+
+                TEST_RESULT_PTR(storageRepoWrite(), storageTest, "check test storage is used");
 
                 // Setup handler for remote storage protocol
-                IoRead *read = ioFdReadNew(strNew("storage server read"), HARNESS_FORK_CHILD_READ(), 60000);
-                ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("storage server write"), HARNESS_FORK_CHILD_WRITE(), 1000);
-                ioWriteOpen(write);
+                ProtocolServer *server = protocolServerNew(
+                    STRDEF("storage test server"), STRDEF("test"), HRN_FORK_CHILD_READ(), HRN_FORK_CHILD_WRITE());
 
-                ProtocolServer *server = protocolServerNew(strNew("storage test server"), strNew("test"), read, write);
-                protocolServerHandlerAdd(server, storageRemoteProtocol);
-                protocolServerProcess(server, NULL);
-
+                static const ProtocolServerHandler commandHandler[] = {PROTOCOL_SERVER_HANDLER_STORAGE_REMOTE_LIST};
+                protocolServerProcess(server, NULL, commandHandler, LENGTH_OF(commandHandler));
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
 
-            HARNESS_FORK_PARENT_BEGIN()
+            HRN_FORK_PARENT_BEGIN()
             {
                 // Create client
-                IoRead *read = ioFdReadNew(strNew("storage client read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 60000);
-                ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("storage client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 1000);
-                ioWriteOpen(write);
-
-                ProtocolClient *client = protocolClientNew(strNew("storage test client"), strNew("test"), read, write);
+                ProtocolClient *client = protocolClientNew(
+                    STRDEF("storage test client"), STRDEF("test"), HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0));
 
                 // Create remote storage
                 Storage *storageRemote = storageRemoteNew(
@@ -201,18 +183,27 @@ testRun(void)
                 TimeMSec timeBegin = timeMSec();
 
                 // Storage info list
-                TEST_RESULT_VOID(
-                    storageInfoListP(storageRemote, NULL, storageTestDummyInfoListCallback, NULL),
-                    "list %" PRIu64 " remote files", fileTotal);
+                uint64_t fileTotal = 0;
+                StorageIterator *storageItr = NULL;
+
+                TEST_ASSIGN(storageItr, storageNewItrP(storageRemote, NULL), "list remote files");
+
+                while (storageItrMore(storageItr))
+                {
+                    storageItrNext(storageItr);
+                    fileTotal++;
+                }
+
+                TEST_RESULT_UINT(fileTotal, fileTotal, "check callback total");
 
                 TEST_LOG_FMT("list transferred in %ums", (unsigned int)(timeMSec() - timeBegin));
 
                 // Free client
                 protocolClientFree(client);
             }
-            HARNESS_FORK_PARENT_END();
+            HRN_FORK_PARENT_END();
         }
-        HARNESS_FORK_END();
+        HRN_FORK_END();
     }
 
     // *****************************************************************************************************************************
@@ -222,8 +213,8 @@ testRun(void)
         ioBufferSizeSet(4 * 1024 * 1024);
 
         // 1MB is a fairly normal table size
-        CHECK(testScale() <= 1024 * 1024 * 1024);
-        uint64_t blockTotal = (uint64_t)1 * testScale();
+        ASSERT(TEST_SCALE <= 1024 * 1024 * 1024);
+        uint64_t blockTotal = (uint64_t)1 * TEST_SCALE;
 
         // Set iteration
         unsigned int iteration = 1;
@@ -233,11 +224,11 @@ testRun(void)
         uint64_t rateOut = 0; // MB/s (0 disables)
 
         // Get the sample pages from disk
-        Buffer *block = storageGetP(storageNewReadP(storagePosixNewP(STR(testRepoPath())), STRDEF("test/data/filecopy.table.bin")));
+        Buffer *block = storageGetP(storageNewReadP(storagePosixNewP(HRN_PATH_REPO_STR), STRDEF("test/data/filecopy.table.bin")));
         ASSERT(bufUsed(block) == 1024 * 1024);
 
         // Build the input buffer
-        Buffer *input = bufNew(blockTotal * bufSize(block));
+        Buffer *input = bufNew((size_t)blockTotal * bufSize(block));
 
         for (unsigned int blockIdx = 0; blockIdx < blockTotal; blockIdx++)
             memcpy(bufPtr(input) + (blockIdx * bufSize(block)), bufPtr(block), bufSize(block));
@@ -246,7 +237,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE_FMT(
-            "%u iteration(s) of %" PRIu64 "MiB with %" PRIu64 "MB/s input, %" PRIu64 "MB/s output", iteration,
+            "%u iteration(s) of %zuMiB with %" PRIu64 "MB/s input, %" PRIu64 "MB/s output", iteration,
             bufUsed(input) / bufUsed(block), rateIn, rateOut);
 
         #define BENCHMARK_BEGIN()                                                                                                  \
@@ -268,15 +259,7 @@ testRun(void)
                                                                                                                                    \
             uint64_t benchMarkBegin = timeMSec();                                                                                  \
                                                                                                                                    \
-            Buffer *buffer = bufNew(ioBufferSize());                                                                               \
-                                                                                                                                   \
-            do                                                                                                                     \
-            {                                                                                                                      \
-                ioRead(read, buffer);                                                                                              \
-                ioWrite(write, buffer);                                                                                            \
-                bufUsedZero(buffer);                                                                                               \
-            }                                                                                                                      \
-            while (!ioReadEof(read));                                                                                              \
+            ioCopyP(read, write);                                                                                                  \
                                                                                                                                    \
             ioReadClose(read);                                                                                                     \
             ioWriteClose(write);                                                                                                   \
@@ -289,7 +272,10 @@ testRun(void)
         uint64_t sha1Total = 1;
         uint64_t sha256Total = 1;
         uint64_t gzip6Total = 1;
+
+#ifdef HAVE_LIBLZ4
         uint64_t lz41Total = 1;
+#endif // HAVE_LIBLZ4
 
         for (unsigned int idx = 0; idx < iteration; idx++)
         {
@@ -309,7 +295,7 @@ testRun(void)
             MEM_CONTEXT_TEMP_BEGIN()
             {
                 BENCHMARK_BEGIN();
-                BENCHMARK_FILTER_ADD(cryptoHashNew(HASH_TYPE_MD5_STR));
+                BENCHMARK_FILTER_ADD(cryptoHashNew(hashTypeMd5));
                 BENCHMARK_END(md5Total);
             }
             MEM_CONTEXT_TEMP_END();
@@ -320,7 +306,7 @@ testRun(void)
             MEM_CONTEXT_TEMP_BEGIN()
             {
                 BENCHMARK_BEGIN();
-                BENCHMARK_FILTER_ADD(cryptoHashNew(HASH_TYPE_SHA1_STR));
+                BENCHMARK_FILTER_ADD(cryptoHashNew(hashTypeSha1));
                 BENCHMARK_END(sha1Total);
             }
             MEM_CONTEXT_TEMP_END();
@@ -331,7 +317,7 @@ testRun(void)
             MEM_CONTEXT_TEMP_BEGIN()
             {
                 BENCHMARK_BEGIN();
-                BENCHMARK_FILTER_ADD(cryptoHashNew(HASH_TYPE_SHA256_STR));
+                BENCHMARK_FILTER_ADD(cryptoHashNew(hashTypeSha256));
                 BENCHMARK_END(sha256Total);
             }
             MEM_CONTEXT_TEMP_END();
@@ -342,21 +328,23 @@ testRun(void)
             MEM_CONTEXT_TEMP_BEGIN()
             {
                 BENCHMARK_BEGIN();
-                BENCHMARK_FILTER_ADD(gzCompressNew(6));
+                BENCHMARK_FILTER_ADD(gzCompressNew(6, false));
                 BENCHMARK_END(gzip6Total);
             }
             MEM_CONTEXT_TEMP_END();
 
             // -------------------------------------------------------------------------------------------------------------------------
+#ifdef HAVE_LIBLZ4
             TEST_LOG_FMT("lz4 -1 iteration %u", idx + 1);
 
             MEM_CONTEXT_TEMP_BEGIN()
             {
                 BENCHMARK_BEGIN();
-                BENCHMARK_FILTER_ADD(lz4CompressNew(1));
+                BENCHMARK_FILTER_ADD(lz4CompressNew(1, false));
                 BENCHMARK_END(lz41Total);
             }
             MEM_CONTEXT_TEMP_END();
+#endif // HAVE_LIBLZ4
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -372,8 +360,11 @@ testRun(void)
         TEST_RESULT("sha1", sha1Total);
         TEST_RESULT("sha256", sha256Total);
         TEST_RESULT("gzip -6", gzip6Total);
+
+#ifdef HAVE_LIBLZ4
         TEST_RESULT("lz4 -1", lz41Total);
+#endif // HAVE_LIBLZ4
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

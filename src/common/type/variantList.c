@@ -12,126 +12,52 @@ Variant List Handler
 #include "common/type/list.h"
 #include "common/type/variantList.h"
 
-/***********************************************************************************************************************************
-Wrapper for lstNewP()
-***********************************************************************************************************************************/
-VariantList *
-varLstNew(void)
-{
-    FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN((VariantList *)lstNewP(sizeof(Variant *)));
-}
-
 /**********************************************************************************************************************************/
-VariantList *
-varLstNewStrLst(const StringList *stringList)
+FN_EXTERN VariantList *
+varLstNewStrLst(const StringList *const stringList)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING_LIST, stringList);
     FUNCTION_TEST_END();
 
-    VariantList *result = NULL;
+    VariantList *this = NULL;
 
     if (stringList != NULL)
     {
-        result = varLstNew();
+        this = varLstNew();
 
-        for (unsigned int listIdx = 0; listIdx < strLstSize(stringList); listIdx++)
-            varLstAdd(result, varNewStr(strLstGet(stringList, listIdx)));
+        MEM_CONTEXT_OBJ_BEGIN(this)
+        {
+            for (unsigned int listIdx = 0; listIdx < strLstSize(stringList); listIdx++)
+                varLstAdd(this, varNewStr(strLstGet(stringList, listIdx)));
+        }
+        MEM_CONTEXT_OBJ_END();
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(VARIANT_LIST, this);
 }
 
 /**********************************************************************************************************************************/
-VariantList *
-varLstDup(const VariantList *source)
+FN_EXTERN VariantList *
+varLstDup(const VariantList *const source)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT_LIST, source);
     FUNCTION_TEST_END();
 
-    VariantList *result = NULL;
+    VariantList *this = NULL;
 
     if (source != NULL)
     {
-        result = varLstNew();
+        this = varLstNew();
 
-        for (unsigned int listIdx = 0; listIdx < varLstSize(source); listIdx++)
-            varLstAdd(result, varDup(varLstGet(source, listIdx)));
+        MEM_CONTEXT_OBJ_BEGIN(this)
+        {
+            for (unsigned int listIdx = 0; listIdx < varLstSize(source); listIdx++)
+                varLstAdd(this, varDup(varLstGet(source, listIdx)));
+        }
+        MEM_CONTEXT_OBJ_END();
     }
 
-    FUNCTION_TEST_RETURN(result);
-}
-
-/**********************************************************************************************************************************/
-VariantList *
-varLstAdd(VariantList *this, Variant *data)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(VARIANT_LIST, this);
-        FUNCTION_TEST_PARAM(VARIANT, data);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    lstAdd((List *)this, &data);
-
-    FUNCTION_TEST_RETURN(this);
-}
-
-/**********************************************************************************************************************************/
-Variant *
-varLstGet(const VariantList *this, unsigned int listIdx)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(VARIANT_LIST, this);
-        FUNCTION_TEST_PARAM(UINT, listIdx);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(*(Variant **)lstGet((List *)this, listIdx));
-}
-
-/**********************************************************************************************************************************/
-unsigned int
-varLstSize(const VariantList *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(VARIANT_LIST, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(lstSize((List *)this));
-}
-
-/**********************************************************************************************************************************/
-VariantList *
-varLstMove(VariantList *this, MemContext *parentNew)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(VARIANT_LIST, this);
-        FUNCTION_TEST_PARAM(MEM_CONTEXT, parentNew);
-    FUNCTION_TEST_END();
-
-    ASSERT(parentNew != NULL);
-
-    lstMove((List *)this, parentNew);
-
-    FUNCTION_TEST_RETURN(this);
-}
-
-/**********************************************************************************************************************************/
-void
-varLstFree(VariantList *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(VARIANT_LIST, this);
-    FUNCTION_TEST_END();
-
-    lstFree((List *)this);
-
-    FUNCTION_TEST_RETURN_VOID();
+    FUNCTION_TEST_RETURN(VARIANT_LIST, this);
 }

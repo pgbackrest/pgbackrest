@@ -4,12 +4,13 @@ S3 Storage Read
 #ifndef STORAGE_S3_READ_H
 #define STORAGE_S3_READ_H
 
-#include "storage/s3/storage.intern.h"
 #include "storage/read.h"
+#include "storage/s3/storage.intern.h"
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-StorageRead *storageReadS3New(StorageS3 *storage, const String *name, bool ignoreMissing);
+FN_EXTERN StorageRead *storageReadS3New(
+    StorageS3 *storage, const String *name, bool ignoreMissing, uint64_t offset, const Variant *limit);
 
 #endif

@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 IO Sink Filter
 
-Consume all bytes sent to the filter without passing any on.  This filter is useful when running size/hash filters on a remote when
+Consume all bytes sent to the filter without passing any on. This filter is useful when running size/hash filters on a remote when
 no data should be returned.
 ***********************************************************************************************************************************/
 #ifndef COMMON_IO_FILTER_SINK_H
@@ -12,12 +12,11 @@ no data should be returned.
 /***********************************************************************************************************************************
 Filter type constant
 ***********************************************************************************************************************************/
-#define SINK_FILTER_TYPE                                     "sink"
-    STRING_DECLARE(SINK_FILTER_TYPE_STR);
+#define SINK_FILTER_TYPE                                     STRID5("sink", 0x5b9330)
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-IoFilter *ioSinkNew(void);
+FN_EXTERN IoFilter *ioSinkNew(void);
 
 #endif

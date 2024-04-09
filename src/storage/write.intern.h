@@ -4,8 +4,7 @@ Storage Write Interface Internal
 #ifndef STORAGE_WRITE_INTERN_H
 #define STORAGE_WRITE_INTERN_H
 
-#include "common/io/write.intern.h"
-#include "storage/write.h"
+#include "common/io/write.h"
 #include "version.h"
 
 /***********************************************************************************************************************************
@@ -18,10 +17,11 @@ Constructors
 ***********************************************************************************************************************************/
 typedef struct StorageWriteInterface
 {
-    const String *type;
+    StringId type;                                                  // Storage type
     const String *name;
 
     bool atomic;
+    bool truncate;                                                  // Truncate file if it exists
     bool createPath;
     bool compressible;                                              // Is this file compressible?
     unsigned int compressLevel;                                     // Level to use for compression
@@ -36,6 +36,6 @@ typedef struct StorageWriteInterface
     IoWriteInterface ioInterface;
 } StorageWriteInterface;
 
-StorageWrite *storageWriteNew(void *driver, const StorageWriteInterface *interface);
+FN_EXTERN StorageWrite *storageWriteNew(void *driver, const StorageWriteInterface *interface);
 
 #endif

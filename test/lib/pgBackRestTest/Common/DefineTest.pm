@@ -45,16 +45,8 @@ use constant TESTDEF_CONTAINER_REQUIRED                             => 'containe
     push @EXPORT, qw(TESTDEF_CONTAINER_REQUIRED);
 use constant TESTDEF_COVERAGE                                       => 'coverage';
     push @EXPORT, qw(TESTDEF_COVERAGE);
-use constant TESTDEF_EXPECT                                         => 'expect';
-    push @EXPORT, qw(TESTDEF_EXPECT);
 use constant TESTDEF_C                                              => 'c';
     push @EXPORT, qw(TESTDEF_C);
-use constant TESTDEF_DEFINE                                         => 'define';
-    push @EXPORT, qw(TESTDEF_DEFINE);
-use constant TESTDEF_DEFINE_TEST                                    => 'define-test';
-    push @EXPORT, qw(TESTDEF_DEFINE_TEST);
-use constant TESTDEF_DEBUG_UNIT_SUPPRESS                            => 'debugUnitSuppress';
-    push @EXPORT, qw(TESTDEF_DEBUG_UNIT_SUPPRESS);
 use constant TESTDEF_INCLUDE                                        => 'include';
     push @EXPORT, qw(TESTDEF_INCLUDE);
 use constant TESTDEF_INDIVIDUAL                                     => 'individual';
@@ -70,8 +62,6 @@ use constant TESTDEF_VM                                             => 'vm';
 
 use constant TESTDEF_COVERAGE_FULL                                  => 'full';
     push @EXPORT, qw(TESTDEF_COVERAGE_FULL);
-use constant TESTDEF_COVERAGE_PARTIAL                               => 'partial';
-    push @EXPORT, qw(TESTDEF_COVERAGE_PARTIAL);
 use constant TESTDEF_COVERAGE_NOCODE                                => 'noCode';
     push @EXPORT, qw(TESTDEF_COVERAGE_NOCODE);
 
@@ -94,18 +84,25 @@ sub testDefLoad
 
     my $hTestDef = Load($strDefineYaml);
 
+    # Keep a list of all harnesses added so far. These will make up the harness list for subsequent tests.
+    my @rhyHarnessFile = ();
+
+    # Keep a list of all modules added for coverage so far. These will make up the core list for subsequent tests.
+    my @stryCoreFile = ();
+
+    # Keep a list of modules that are test before this one so we know what is available
+    my $strTestDefine = '';
+
     # Iterate each test type
     foreach my $strModuleType (TESTDEF_UNIT, TESTDEF_INTEGRATION, TESTDEF_PERFORMANCE)
     {
         my $hModuleType = $hTestDef->{$strModuleType};
 
-        my $bExpect = false;                                        # By default don't run expect tests
         my $bContainer = true;                                      # By default run tests in a single container
         my $bIndividual = false;                                    # By default runs are all executed in the same container
 
         if ($strModuleType eq TESTDEF_INTEGRATION)
         {
-            $bExpect = true;                                        # Integration tests run expect tests
             $bContainer = false;                                    # Integration tests can run in multiple containers
             $bIndividual = true;                                    # Integration tests can change containers on each run
         }
@@ -128,8 +125,7 @@ sub testDefLoad
 
                 # Resolve variables that can be set in the module or the test
                 foreach my $strVar (
-                    TESTDEF_DEFINE, TESTDEF_DEFINE_TEST, TESTDEF_DEBUG_UNIT_SUPPRESS, TESTDEF_DB, TESTDEF_BIN_REQ, TESTDEF_VM,
-                    TESTDEF_CONTAINER_REQUIRED)
+                    TESTDEF_DB, TESTDEF_BIN_REQ, TESTDEF_VM, TESTDEF_CONTAINER_REQUIRED)
                 {
                     $hTestDefHash->{$strModule}{$strTest}{$strVar} = coalesce(
                         $hModuleTest->{$strVar}, $hModule->{$strVar}, $strVar eq TESTDEF_VM ? undef : false);
@@ -146,7 +142,6 @@ sub testDefLoad
                 $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_C} =
                     $strModuleType ne TESTDEF_INTEGRATION && $strTest !~ /perl$/ ? true : false;
                 $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_INTEGRATION} = $strModuleType eq TESTDEF_INTEGRATION ? true : false;
-                $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_EXPECT} = $bExpect;
                 $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_CONTAINER} = $bContainer;
                 $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_INDIVIDUAL} = $bIndividual;
 
@@ -161,36 +156,52 @@ sub testDefLoad
                     $hModuleTest->{&TESTDEF_COVERAGE}{$strTestFile} = TESTDEF_COVERAGE_FULL;
                 }
 
-                # Concatenate coverage for modules and tests
-                foreach my $hCoverage ($hModule->{&TESTDEF_COVERAGE}, $hModuleTest->{&TESTDEF_COVERAGE})
+                # Concatenate coverage for tests
+                foreach my $xCodeModule (@{$hModuleTest->{&TESTDEF_COVERAGE}})
                 {
-                    foreach my $strCodeModule (sort(keys(%{$hCoverage})))
+                    my $strCodeModule = undef;
+                    my $strCoverage = undef;
+
+                    if (ref($xCodeModule))
                     {
-                        if (defined($hTestDefHash->{$strModule}{$strTest}{&TESTDEF_COVERAGE}{$strCodeModule}))
-                        {
-                            confess &log(ASSERT,
-                                "${strCodeModule} is defined for coverage in both module ${strModule} and test ${strTest}");
-                        }
+                        $strCodeModule = (keys(%{$xCodeModule}))[0];
+                        $strCoverage = $xCodeModule->{$strCodeModule};
+                    }
+                    else
+                    {
+                        $strCodeModule = $xCodeModule;
+                        $strCoverage = TESTDEF_COVERAGE_FULL;
+                    }
 
-                        $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_COVERAGE}{$strCodeModule} = $hCoverage->{$strCodeModule};
+                    $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_COVERAGE}{$strCodeModule} = $strCoverage;
 
-                        # Build coverage type hash and make sure coverage type does not change
-                        if (!defined($hCoverageType->{$strCodeModule}))
-                        {
-                            $hCoverageType->{$strCodeModule} = $hCoverage->{$strCodeModule};
-                        }
-                        elsif ($hCoverageType->{$strCodeModule} ne $hCoverage->{$strCodeModule})
-                        {
-                            confess &log(ASSERT, "cannot mix coverage types for ${strCodeModule}");
-                        }
+                    # Build coverage type hash and make sure coverage type does not change
+                    if (!defined($hCoverageType->{$strCodeModule}))
+                    {
+                        $hCoverageType->{$strCodeModule} = $strCoverage;
+                    }
+                    elsif ($hCoverageType->{$strCodeModule} ne $strCoverage)
+                    {
+                        confess &log(ASSERT, "cannot mix coverage types for ${strCodeModule}");
+                    }
 
-                        # Add to coverage list
-                        push(@{$hCoverageList->{$strCodeModule}}, {strModule=> $strModule, strTest => $strTest});
+                    # Add to coverage list
+                    push(@{$hCoverageList->{$strCodeModule}}, {strModule=> $strModule, strTest => $strTest});
+
+                    # Check if this module is already in the core list
+                    if (!$hTestDefHash->{$strModule}{$strTest}{&TESTDEF_INTEGRATION} && !grep(/^$strCodeModule$/i, @stryCoreFile))
+                    {
+                        push(@stryCoreFile, $strCodeModule);
                     }
                 }
 
                 # Set include list
-                $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_INCLUDE} = $hModuleTest->{&TESTDEF_INCLUDE};
+                @{$hTestDefHash->{$strModule}{$strTest}{&TESTDEF_INCLUDE}} = ();
+
+                if (defined($hModuleTest->{&TESTDEF_INCLUDE}))
+                {
+                    push(@{$hTestDefHash->{$strModule}{$strTest}{&TESTDEF_INCLUDE}}, @{$hModuleTest->{&TESTDEF_INCLUDE}});
+                }
             }
 
             $hModuleTest->{$strModule} = \@stryModuleTest;

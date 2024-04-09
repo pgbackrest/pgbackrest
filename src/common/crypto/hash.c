@@ -5,53 +5,41 @@ Cryptographic Hash
 
 #include <string.h>
 
-#include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
 #include <openssl/hmac.h>
 
+#include "common/crypto/common.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
-#include "common/io/filter/filter.intern.h"
+#include "common/io/filter/filter.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
-#include "common/crypto/common.h"
-
-/***********************************************************************************************************************************
-Filter type constant
-***********************************************************************************************************************************/
-STRING_EXTERN(CRYPTO_HASH_FILTER_TYPE_STR,                          CRYPTO_HASH_FILTER_TYPE);
-
-/***********************************************************************************************************************************
-Hash types
-***********************************************************************************************************************************/
-STRING_EXTERN(HASH_TYPE_MD5_STR,                                    HASH_TYPE_MD5);
-STRING_EXTERN(HASH_TYPE_SHA1_STR,                                   HASH_TYPE_SHA1);
-STRING_EXTERN(HASH_TYPE_SHA256_STR,                                 HASH_TYPE_SHA256);
+#include "common/type/pack.h"
 
 /***********************************************************************************************************************************
 Hashes for zero-length files (i.e., seed value)
 ***********************************************************************************************************************************/
-STRING_EXTERN(HASH_TYPE_SHA1_ZERO_STR,                              HASH_TYPE_SHA1_ZERO);
-STRING_EXTERN(HASH_TYPE_SHA256_ZERO_STR,                            HASH_TYPE_SHA256_ZERO);
+BUFFER_EXTERN(
+    HASH_TYPE_SHA1_ZERO_BUF, 0xda, 0x39, 0xa3, 0xee, 0x5e, 0x6b, 0x4b, 0x0d, 0x32, 0x55, 0xbf, 0xef, 0x95, 0x60, 0x18, 0x90, 0xaf,
+    0xd8, 0x07, 0x09);
+BUFFER_EXTERN(
+    HASH_TYPE_SHA256_ZERO_BUF, 0xe3, 0xb0, 0xc4, 0x42, 0x98, 0xfc, 0x1c, 0x14, 0x9a, 0xfb, 0xf4, 0xc8, 0x99, 0x6f, 0xb9, 0x24, 0x27,
+    0xae, 0x41, 0xe4, 0x64, 0x9b, 0x93, 0x4c, 0xa4, 0x95, 0x99, 0x1b, 0x78, 0x52, 0xb8, 0x55);
 
 /***********************************************************************************************************************************
 Include local MD5 code
 ***********************************************************************************************************************************/
-#include "common/crypto/md5.vendor.c"
+#include "common/crypto/md5.vendor.c.inc"
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define CRYPTO_HASH_TYPE                                            CryptoHash
-#define CRYPTO_HASH_PREFIX                                          cryptoHash
-
 typedef struct CryptoHash
 {
-    MemContext *memContext;                                         // Context to store data
     const EVP_MD *hashType;                                         // Hash type (sha1, md5, etc.)
     EVP_MD_CTX *hashContext;                                        // Message hash context
-    MD5_CTX *md5Context;                                            // MD5 context (used to bypass FIPS restrictions)
+    MD5_CTX md5Context;                                             // MD5 context (used to bypass FIPS restrictions)
     Buffer *hash;                                                   // Hash in binary form
 } CryptoHash;
 
@@ -61,16 +49,26 @@ Macros for function logging
 #define FUNCTION_LOG_CRYPTO_HASH_TYPE                                                                                              \
     CryptoHash *
 #define FUNCTION_LOG_CRYPTO_HASH_FORMAT(value, buffer, bufferSize)                                                                 \
-    objToLog(value, "CryptoHash", buffer, bufferSize)
+    objNameToLog(value, "CryptoHash", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Free hash context
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(CRYPTO_HASH, LOG, logLevelTrace)
+static void
+cryptoHashFreeResource(THIS_VOID)
 {
+    THIS(CryptoHash);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(CRYPTO_HASH, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     EVP_MD_CTX_destroy(this->hashContext);
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Add message data to the hash from a Buffer
@@ -96,7 +94,7 @@ cryptoHashProcess(THIS_VOID, const Buffer *message)
     }
     // Else local MD5 implementation
     else
-        MD5_Update(this->md5Context, bufPtrConst(message), bufUsed(message));
+        MD5_Update(&this->md5Context, bufPtrConst(message), bufUsed(message));
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -115,7 +113,7 @@ cryptoHash(CryptoHash *this)
 
     if (this->hash == NULL)
     {
-        MEM_CONTEXT_BEGIN(this->memContext)
+        MEM_CONTEXT_OBJ_BEGIN(this)
         {
             // Standard OpenSSL implementation
             if (this->hashContext != NULL)
@@ -127,12 +125,12 @@ cryptoHash(CryptoHash *this)
             else
             {
                 this->hash = bufNew(HASH_TYPE_M5_SIZE);
-                MD5_Final(bufPtr(this->hash), this->md5Context);
+                MD5_Final(bufPtr(this->hash), &this->md5Context);
             }
 
             bufUsedSet(this->hash, bufSize(this->hash));
         }
-        MEM_CONTEXT_END();
+        MEM_CONTEXT_OBJ_END();
     }
 
     FUNCTION_LOG_RETURN(BUFFER, this->hash);
@@ -141,7 +139,7 @@ cryptoHash(CryptoHash *this)
 /***********************************************************************************************************************************
 Get string representation of the hash as a filter result
 ***********************************************************************************************************************************/
-static Variant *
+static Pack *
 cryptoHashResult(THIS_VOID)
 {
     THIS(CryptoHash);
@@ -152,88 +150,114 @@ cryptoHashResult(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_LOG_RETURN(VARIANT, varNewStr(bufHex(cryptoHash(this))));
+    Pack *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackWrite *const packWrite = pckWriteNewP();
+
+        pckWriteBinP(packWrite, cryptoHash(this));
+        pckWriteEndP(packWrite);
+
+        result = pckMove(pckWriteResult(packWrite), memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(PACK, result);
 }
 
 /**********************************************************************************************************************************/
-IoFilter *
-cryptoHashNew(const String *type)
+FN_EXTERN IoFilter *
+cryptoHashNew(const HashType type)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STRING, type);
+        FUNCTION_LOG_PARAM(STRING_ID, type);
     FUNCTION_LOG_END();
 
-    ASSERT(type != NULL);
+    ASSERT(type != 0);
 
     // Init crypto subsystem
     cryptoInit();
 
-    // Allocate memory to hold process state
-    IoFilter *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("CryptoHash")
+    OBJ_NEW_BEGIN(CryptoHash, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        CryptoHash *driver = memNew(sizeof(CryptoHash));
-
-        *driver = (CryptoHash)
-        {
-            .memContext = MEM_CONTEXT_NEW(),
-        };
+        *this = (CryptoHash){0};
 
         // Use local MD5 implementation since FIPS-enabled systems do not allow MD5. This is a bit misguided since there are valid
         // cases for using MD5 which do not involve, for example, password hashes. Since popular object stores, e.g. S3, require
         // MD5 for verifying payload integrity we are simply forced to provide MD5 functionality.
-        if (strEq(type, HASH_TYPE_MD5_STR))
+        if (type == hashTypeMd5)
         {
-            driver->md5Context = memNew(sizeof(MD5_CTX));
-
-            MD5_Init(driver->md5Context);
+            MD5_Init(&this->md5Context);
         }
         // Else use the standard OpenSSL implementation
         else
         {
             // Lookup digest
-            if ((driver->hashType = EVP_get_digestbyname(strZ(type))) == NULL)
-                THROW_FMT(AssertError, "unable to load hash '%s'", strZ(type));
+            char typeZ[STRID_MAX + 1];
+            strIdToZ(type, typeZ);
+
+            if ((this->hashType = EVP_get_digestbyname(typeZ)) == NULL)
+                THROW_FMT(AssertError, "unable to load hash '%s'", typeZ);
 
             // Create context
-            cryptoError((driver->hashContext = EVP_MD_CTX_create()) == NULL, "unable to create hash context");
+            cryptoError((this->hashContext = EVP_MD_CTX_create()) == NULL, "unable to create hash context");
 
             // Set free callback to ensure hash context is freed
-            memContextCallbackSet(driver->memContext, cryptoHashFreeResource, driver);
+            memContextCallbackSet(objMemContext(this), cryptoHashFreeResource, this);
 
             // Initialize context
-            cryptoError(!EVP_DigestInit_ex(driver->hashContext, driver->hashType, NULL), "unable to initialize hash context");
+            cryptoError(!EVP_DigestInit_ex(this->hashContext, this->hashType, NULL), "unable to initialize hash context");
         }
-
-        // Create param list
-        VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(type));
-
-        // Create filter interface
-        this = ioFilterNewP(CRYPTO_HASH_FILTER_TYPE_STR, driver, paramList, .in = cryptoHashProcess, .result = cryptoHashResult);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_FILTER, this);
+    // Create param list
+    Pack *paramList;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackWrite *const packWrite = pckWriteNewP();
+
+        pckWriteStrIdP(packWrite, type);
+        pckWriteEndP(packWrite);
+
+        paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(
+        IO_FILTER, ioFilterNewP(CRYPTO_HASH_FILTER_TYPE, this, paramList, .in = cryptoHashProcess, .result = cryptoHashResult));
 }
 
-IoFilter *
-cryptoHashNewVar(const VariantList *paramList)
+FN_EXTERN IoFilter *
+cryptoHashNewPack(const Pack *const paramList)
 {
-    return cryptoHashNew(varStr(varLstGet(paramList, 0)));
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK, paramList);
+    FUNCTION_TEST_END();
+
+    IoFilter *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        result = ioFilterMove(cryptoHashNew(pckReadStrIdP(pckReadNew(paramList))), memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(IO_FILTER, result);
 }
 
 /**********************************************************************************************************************************/
-Buffer *
-cryptoHashOne(const String *type, const Buffer *message)
+FN_EXTERN Buffer *
+cryptoHashOne(const HashType type, const Buffer *message)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STRING, type);
+        FUNCTION_LOG_PARAM(STRING_ID, type);
         FUNCTION_LOG_PARAM(BUFFER, message);
     FUNCTION_LOG_END();
 
-    ASSERT(type != NULL);
+    ASSERT(type != 0);
     ASSERT(message != NULL);
 
     Buffer *result = NULL;
@@ -242,7 +266,7 @@ cryptoHashOne(const String *type, const Buffer *message)
     {
         IoFilter *hash = cryptoHashNew(type);
 
-        if (bufUsed(message) > 0)
+        if (!bufEmpty(message))
             ioFilterProcessIn(hash, message);
 
         const Buffer *buffer = cryptoHash((CryptoHash *)ioFilterDriver(hash));
@@ -259,23 +283,27 @@ cryptoHashOne(const String *type, const Buffer *message)
 }
 
 /**********************************************************************************************************************************/
-Buffer *
-cryptoHmacOne(const String *type, const Buffer *key, const Buffer *message)
+FN_EXTERN Buffer *
+cryptoHmacOne(const HashType type, const Buffer *const key, const Buffer *const message)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STRING, type);
+        FUNCTION_LOG_PARAM(STRING_ID, type);
         FUNCTION_LOG_PARAM(BUFFER, key);
         FUNCTION_LOG_PARAM(BUFFER, message);
     FUNCTION_LOG_END();
 
-    ASSERT(type != NULL);
+    ASSERT(type != 0);
     ASSERT(key != NULL);
     ASSERT(message != NULL);
 
     // Init crypto subsystem
     cryptoInit();
 
-    const EVP_MD *hashType = EVP_get_digestbyname(strZ(type));
+    // Lookup digest
+    char typeZ[STRID_MAX + 1];
+    strIdToZ(type, typeZ);
+
+    const EVP_MD *hashType = EVP_get_digestbyname(typeZ);
     ASSERT(hashType != NULL);
 
     // Allocate a buffer to hold the hmac

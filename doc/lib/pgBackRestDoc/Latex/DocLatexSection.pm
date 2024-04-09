@@ -348,7 +348,7 @@ sub sectionProcess
         # Add descriptive text
         elsif ($oChild->nameGet() eq 'p')
         {
-            $strLatex .= "\n" . $self->processText($oChild->textGet()) . "\n";
+            $strLatex .= "\n\\begin{sloppypar}" . $self->processText($oChild->textGet()) . "\\end{sloppypar}\n";
         }
         # Add option descriptive text
         elsif ($oChild->nameGet() eq 'option-description')
@@ -361,7 +361,7 @@ sub sectionProcess
                 confess &log(ERROR, "unable to find ${strOption} option in sections - try adding option?");
             }
 
-            $strLatex .= "\n" . $self->processText($oDescription) . "\n";
+            $strLatex .= "\n\\begin{sloppypar}" . $self->processText($oDescription) . "\\end{sloppypar}\n";
         }
         # Add cmd descriptive text
         elsif ($oChild->nameGet() eq 'cmd-description')
@@ -374,7 +374,7 @@ sub sectionProcess
                 confess &log(ERROR, "unable to find ${strCommand} command in sections - try adding command?");
             }
 
-            $strLatex .= "\n" . $self->processText($oDescription) . "\n";
+            $strLatex .= "\n\\begin{sloppypar}" . $self->processText($oDescription) . "\\end{sloppypar}\n";
         }
         # Add a list
         elsif ($oChild->nameGet() eq 'list')
@@ -401,9 +401,9 @@ sub sectionProcess
         # Add an admonition (e.g. NOTE, WARNING, etc)
         elsif ($oChild->nameGet() eq 'admonition')
         {
-            $strLatex .= "\n\\begin{leftbar}";
-            $strLatex .= "\n\\textit{\\textbf{" . uc($oChild->paramGet('type')) . ": }";
-            $strLatex .= $self->processText($oChild->textGet()) . "}";
+            $strLatex .= "\n\\vspace{.5em}\\begin{leftbar}";
+            $strLatex .= "\n\\begin{sloppypar}\\textit{\\textbf{" . uc($oChild->paramGet('type')) . ": }";
+            $strLatex .= $self->processText($oChild->textGet()) . "}\\end{sloppypar}";
             $strLatex .= "\n\\end{leftbar}\n";
         }
         # Check if the child can be processed by a parent

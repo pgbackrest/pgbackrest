@@ -3,7 +3,7 @@ Test C Types
 ***********************************************************************************************************************************/
 #include <assert.h>
 
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
@@ -23,5 +23,5 @@ testRun(void)
         assert(!false);
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

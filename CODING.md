@@ -1,5 +1,13 @@
 # pgBackRest <br/> Coding Standards
 
+## Formatting with uncrustify
+
+pgBackRest uses uncrustify to check/update the code formatting. If the `code-format` test fails in CI then reformat the code:
+```
+pgbackrest/test/test.pl --code-format
+```
+Also review the standards in the following sections below. Some standards require further explanation and others are not enforced by uncrustify.
+
 ## Standards
 
 ### Indentation
@@ -80,9 +88,9 @@ This type of constant should mostly be used for strings. Use enums whenever poss
 
 **String Constants**
 
-String constants can be declared using the `STRING_STATIC()` macro for local strings and `STRING_EXTERN()` for strings that will be extern'd for use in other modules.
+String constants can be declared using the `STRING_STATIC()` macro for local strings and `STRING_EXTERN()` for strings that will be externed for use in other modules.
 
-Extern'd strings should be declared in the header file as:
+Externed strings should be declared in the header file as:
 ```c
 #define SAMPLE_VALUE                                                "STRING"
     STRING_DECLARE(SAMPLE_VALUE_STR);
@@ -91,7 +99,7 @@ And in the C file as:
 ```c
 STRING_EXTERN(SAMPLE_VALUE_STR,                                     SAMPLE_VALUE);
 ```
-Static strings declared in the C file are not required to have a `#define` if the `#define` version is not used. Extern'd strings must always have the `#define` in the header file.
+Static strings declared in the C file are not required to have a `#define` if the `#define` version is not used. Externed strings must always have the `#define` in the header file.
 
 **Enum Constants**
 
@@ -162,6 +170,26 @@ if (condition)
         valueThatUsesEntireLine2;
 }
 ```
+Braces should be added to `switch` statement cases that have a significant amount of code. As a general rule of thumb, if the code block in the `case` is large enough to have blank lines and/or multiple comments then it should be enclosed in braces.
+```c
+switch (int)
+{
+    case 1:
+        a = 2;
+        break;
+
+    case 2:
+    {
+        # Comment this more complex code
+        a = 1;
+        b = 2;
+
+        c = func(a, b);
+
+        break;
+    }
+}
+```
 
 #### Hints, Warnings, and Errors
 
@@ -184,6 +212,37 @@ Don't use a macro when a function could be used instead. Macros make it hard to 
 ### Objects
 
 Object-oriented programming is used extensively. The object pointer is always referred to as `this`.
+
+An object can expose internal struct members by defining a public struct that contains the members to be exposed and using inline functions to get/set the members.
+
+The header file:
+```c
+/***********************************************************************************************************************************
+Getters/setters
+***********************************************************************************************************************************/
+typedef struct ListPub
+{
+    unsigned int listSize;                                          // List size
+} ListPub;
+
+// List size
+FN_INLINE_ALWAYS unsigned int
+lstSize(const List *const this)
+{
+    return THIS_PUB(List)->listSize;
+}
+```
+`THIS_PUB()` ensures that `this != NULL` so there is no need to check that in the calling function.
+
+And the C file:
+```c
+struct List
+{
+    ListPub pub;                                                    // Publicly accessible variables
+    ...
+};
+```
+The public struct must be the first member of the private struct. The naming convention for the public struct is to add `Pub` to the end of the private struct name.
 
 ### Variadic Functions
 

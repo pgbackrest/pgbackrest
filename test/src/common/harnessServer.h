@@ -7,8 +7,11 @@ client using the hrnServerScript() functions.
 #ifndef TEST_COMMON_HARNESS_SERVER_H
 #define TEST_COMMON_HARNESS_SERVER_H
 
+#include <sys/stat.h>
+
 #include "common/io/read.h"
 #include "common/io/write.h"
+#include "common/time.h"
 
 /***********************************************************************************************************************************
 Server protocol type
@@ -20,31 +23,46 @@ typedef enum
 } HrnServerProtocol;
 
 /***********************************************************************************************************************************
-Maximum number of ports allowed for each test
+Port constants
 ***********************************************************************************************************************************/
-#define HRN_SERVER_PORT_MAX                                         4
+// Maximum number of ports allowed for each test
+#define HRN_SERVER_PORT_MAX                                         768
+
+// Bogus port to be used where the port does not matter or must fail
+#define HRN_SERVER_PORT_BOGUS                                       34342
+
+// Minimum port to be assigned to a test
+#define HRN_SERVER_PORT_MIN                                         (HRN_SERVER_PORT_BOGUS + 1)
 
 /***********************************************************************************************************************************
 Path and prefix for test certificates
 ***********************************************************************************************************************************/
-#define HRN_SERVER_CERT_PREFIX                                     "test/certificate/pgbackrest-test"
+#define HRN_SERVER_CERT_PREFIX                                     "test/certificate/pgbackrest-test-"
+#define HRN_SERVER_CERT                                            HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX "server.crt"
+#define HRN_SERVER_KEY                                             HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX "server.key"
+#define HRN_SERVER_CA                                              HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX "ca.crt"
+#define HRN_SERVER_CLIENT_CERT                                     HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX "client.crt"
+#define HRN_SERVER_CLIENT_KEY                                      HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX "client.key"
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Initialize the server
+void hrnServerInit(void);
+
 // Run server
 typedef struct HrnServerRunParam
 {
     VAR_PARAM_HEADER;
-    unsigned int port;                                              // Server port, defaults to hrnServerPort(0)
+    const String *ca;                                               // TLS CA store when protocol = hrnServerProtocolTls
     const String *certificate;                                      // TLS certificate when protocol = hrnServerProtocolTls
     const String *key;                                              // TLS key when protocol = hrnServerProtocolTls
 } HrnServerRunParam;
 
-#define hrnServerRunP(read, protocol, ...)                                                                                         \
-    hrnServerRun(read, protocol, (HrnServerRunParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define hrnServerRunP(read, protocol, port, ...)                                                                                         \
+    hrnServerRun(read, protocol, port, (HrnServerRunParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam param);
+void hrnServerRun(IoRead *read, HrnServerProtocol protocol, unsigned int port, HrnServerRunParam param);
 
 // Begin/end server script
 IoWrite *hrnServerScriptBegin(IoWrite *write);
@@ -59,15 +77,15 @@ void hrnServerScriptAccept(IoWrite *write);
 // Close the connection
 void hrnServerScriptClose(IoWrite *write);
 
-// Expect the specfified string
+// Expect the specified string
 void hrnServerScriptExpect(IoWrite *write, const String *data);
 void hrnServerScriptExpectZ(IoWrite *write, const char *data);
 
-// Reply with the specfified string
+// Reply with the specified string
 void hrnServerScriptReply(IoWrite *write, const String *data);
 void hrnServerScriptReplyZ(IoWrite *write, const char *data);
 
-// Sleep specfified milliseconds
+// Sleep specified milliseconds
 void hrnServerScriptSleep(IoWrite *write, TimeMSec sleepMs);
 
 /***********************************************************************************************************************************
@@ -77,7 +95,7 @@ Getters/Setters
 const String *hrnServerHost(void);
 
 // Port to use for testing. This will be unique for each test running in parallel to avoid conflicts. A range is allocated to each
-// test so multiple ports can be requested.
-unsigned int hrnServerPort(unsigned int portIdx);
+// test so multiple ports can be requested and no port is ever reused to eliminate rebinding issues.
+unsigned int hrnServerPortNext(void);
 
 #endif

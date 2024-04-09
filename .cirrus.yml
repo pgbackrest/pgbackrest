@@ -1,46 +1,84 @@
 # Cirrus CI Build Definitions
 # ----------------------------------------------------------------------------------------------------------------------------------
 
-# Build the branch if it is integration or ends in -ci/-cic (-cic targets only Cirrus CI)
-only_if: $CIRRUS_BRANCH == 'integration' || $CIRRUS_BRANCH =~ '.*-ci$' || $CIRRUS_BRANCH =~ '.*-cic$'
+# Build the branch if it is integration, a pull request, or ends in -ci/-cic (-cic targets only Cirrus CI)
+only_if: $CIRRUS_BRANCH == 'integration' || $CIRRUS_PR != '' || $CIRRUS_BRANCH =~ '.*-ci$' || $CIRRUS_BRANCH =~ '.*-cic$'
 
 # No auto-cancel on integration
 auto_cancellation: $CIRRUS_BRANCH != 'integration'
 
-# FreeBSD 12
+# Arm64 - disabled because it often takes several hours for the test to get queued in Cirrus CI
 # ----------------------------------------------------------------------------------------------------------------------------------
-freebsd_12_task:
-  freebsd_instance:
-    image_family: freebsd-12-1
+# arm64_task:
+#   arm_container:
+#     image: ubuntu:20.04
+#     cpu: 4
+#     memory: 2G
 
-  install_script: pkg install -y git postgresql-libpqxx pkgconf libxml2 gmake
+#   install_script:
+#     - apt-get update && apt-get install -y perl sudo locales
+#     - sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
+#     - dpkg-reconfigure --frontend=noninteractive locales
+#     - update-locale LANG=en_US.UTF-8
+#     - adduser --disabled-password --gecos "" testuser
+#     - echo '%testuser ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
+#     - chown -R testuser ${CIRRUS_WORKING_DIR?}
+
+#   script:
+#     - su - testuser -c "${CIRRUS_WORKING_DIR?}/test/ci.pl test --sudo --no-tempfs --param=c-only --param=no-coverage"
+
+# FreeBSD 13
+# ----------------------------------------------------------------------------------------------------------------------------------
+freebsd_13_task:
+  freebsd_instance:
+    image_family: freebsd-13-3
+    cpu: 4
+    memory: 4G
+
+  install_script: pkg update && pkg upgrade -y libiconv && pkg install -y bash git postgresql-libpqxx pkgconf libxml2 gmake perl5 libyaml p5-YAML-LibYAML rsync meson
 
   script:
-    - cd ${CIRRUS_WORKING_DIR}/src && ./configure
-    - gmake -s -C ${CIRRUS_WORKING_DIR}/src
-    - ${CIRRUS_WORKING_DIR}/src/pgbackrest
+    - rsync --version
+    - cd .. && perl ${CIRRUS_WORKING_DIR}/test/test.pl --min-gen --make-cmd=gmake --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup
 
   debug_script:
     - ls -lah ${CIRRUS_WORKING_DIR}
-    - cat ${CIRRUS_WORKING_DIR}/src/Makefile
 
-# MacOS Catalina
+# FreeBSD 14
 # ----------------------------------------------------------------------------------------------------------------------------------
-macos_catalina_task:
+freebsd_14_task:
+  freebsd_instance:
+    image_family: freebsd-14-0
+    cpu: 4
+    memory: 4G
+
+  install_script: pkg update && pkg upgrade -y libiconv && pkg install -y bash git postgresql-libpqxx pkgconf libxml2 gmake perl5 libyaml p5-YAML-LibYAML rsync meson
+
+  script:
+    - cd .. && perl ${CIRRUS_WORKING_DIR}/test/test.pl --min-gen --make-cmd=gmake --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup
+
+  debug_script:
+    - ls -lah ${CIRRUS_WORKING_DIR}
+
+# MacOS Ventura
+# ----------------------------------------------------------------------------------------------------------------------------------
+macos_ventura_task:
   osx_instance:
-    image: catalina-xcode
+    image: ghcr.io/cirruslabs/macos-ventura-base:latest
 
   environment:
-    LDFLAGS: -L/usr/local/opt/openssl@1.1/lib -L/usr/local/opt/libpq/lib -L/usr/local/opt/libxml2/lib
-    CPPFLAGS: -I/usr/local/opt/openssl@1.1/include -I/usr/local/opt/libpq/include -I/usr/local/opt/libxml2/include/libxml2
+    LDFLAGS: -L/opt/homebrew/opt/openssl@1.1/lib -L/opt/homebrew/opt/libpq/lib -L/opt/homebrew/opt/libxml2/lib -L/opt/homebrew/opt/libyaml/lib
+    CPPFLAGS: -I/opt/homebrew/opt/openssl@1.1/include -I/opt/homebrew/opt/libpq/include -I/opt/homebrew/opt/libxml2/include/libxml2 -I/opt/homebrew/opt/libyaml/include
+    PERL5LIB: /opt/homebrew/opt/perl5/lib/perl5
+    PKG_CONFIG_PATH: /opt/homebrew/opt/libpq/lib/pkgconfig:/opt/homebrew/opt/openssl@1.1/lib/pkgconfig
 
-  install_script: brew install openssl@1.1 libpq libxml2
+  install_script:
+     - brew install -q pkg-config openssl@1.1 libpq libxml2 libyaml meson
 
   script:
-    - cd ${CIRRUS_WORKING_DIR}/src && ./configure
-    - make -s -C ${CIRRUS_WORKING_DIR}/src
-    - ${CIRRUS_WORKING_DIR}/src/pgbackrest
+    - cd ..
+    - ${CIRRUS_WORKING_DIR}/test/test.pl --min-gen --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup --test=info
 
   debug_script:
     - ls -lah ${CIRRUS_WORKING_DIR}
-    - cat ${CIRRUS_WORKING_DIR}/src/Makefile
+    - ls -lahR /opt/homebrew/opt

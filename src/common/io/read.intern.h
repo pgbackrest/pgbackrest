@@ -30,16 +30,37 @@ typedef struct IoReadInterface
 #define ioReadNewP(driver, ...)                                                                                                    \
     ioReadNew(driver, (IoReadInterface){__VA_ARGS__})
 
-IoRead *ioReadNew(void *driver, IoReadInterface interface);
+FN_EXTERN IoRead *ioReadNew(void *driver, IoReadInterface interface);
 
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
+typedef struct IoReadPub
+{
+    void *driver;                                                   // Driver object
+    IoReadInterface interface;                                      // Driver interface
+    IoFilterGroup *filterGroup;                                     // IO filters
+    bool eofAll;                                                    // Is the read done (read and filters complete)?
+
+#ifdef DEBUG
+    bool opened;                                                    // Has the io been opened?
+    bool closed;                                                    // Has the io been closed?
+#endif
+} IoReadPub;
+
 // Driver for the read object
-void *ioReadDriver(IoRead *this);
+FN_INLINE_ALWAYS void *
+ioReadDriver(IoRead *const this)
+{
+    return THIS_PUB(IoRead)->driver;
+}
 
 // Interface for the read object
-const IoReadInterface *ioReadInterface(const IoRead *this);
+FN_INLINE_ALWAYS const IoReadInterface *
+ioReadInterface(const IoRead *const this)
+{
+    return &THIS_PUB(IoRead)->interface;
+}
 
 /***********************************************************************************************************************************
 Macros for function logging
@@ -47,6 +68,6 @@ Macros for function logging
 #define FUNCTION_LOG_IO_READ_INTERFACE_TYPE                                                                                        \
     IoReadInterface
 #define FUNCTION_LOG_IO_READ_INTERFACE_FORMAT(value, buffer, bufferSize)                                                           \
-    objToLog(&value, "IoReadInterface", buffer, bufferSize)
+    objNameToLog(&value, "IoReadInterface", buffer, bufferSize)
 
 #endif

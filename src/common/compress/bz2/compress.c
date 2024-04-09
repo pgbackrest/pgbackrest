@@ -3,31 +3,23 @@ BZ2 Compress
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include <stdio.h>
 #include <bzlib.h>
+#include <stdio.h>
 
 #include "common/compress/bz2/common.h"
 #include "common/compress/bz2/compress.h"
 #include "common/debug.h"
-#include "common/io/filter/filter.intern.h"
+#include "common/io/filter/filter.h"
 #include "common/log.h"
-#include "common/memContext.h"
+#include "common/macro.h"
 #include "common/type/object.h"
-
-/***********************************************************************************************************************************
-Filter type constant
-***********************************************************************************************************************************/
-STRING_EXTERN(BZ2_COMPRESS_FILTER_TYPE_STR,                         BZ2_COMPRESS_FILTER_TYPE);
+#include "common/type/pack.h"
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define BZ2_COMPRESS_TYPE                                           Bz2Compress
-#define BZ2_COMPRESS_PREFIX                                         bz2Compress
-
 typedef struct Bz2Compress
 {
-    MemContext *memContext;                                         // Context to store data
     bz_stream stream;                                               // Compression stream
 
     bool inputSame;                                                 // Is the same input required on the next process call?
@@ -38,27 +30,37 @@ typedef struct Bz2Compress
 /***********************************************************************************************************************************
 Render as string for logging
 ***********************************************************************************************************************************/
-static String *
-bz2CompressToLog(const Bz2Compress *this)
+static void
+bz2CompressToLog(const Bz2Compress *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{inputSame: %s, done: %s, flushing: %s, avail_in: %u}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done),
-        cvtBoolToConstZ(this->flushing), this->stream.avail_in);
+    strStcFmt(
+        debugLog, "{inputSame: %s, done: %s, flushing: %s, avail_in: %u}", cvtBoolToConstZ(this->inputSame),
+        cvtBoolToConstZ(this->done), cvtBoolToConstZ(this->flushing), this->stream.avail_in);
 }
 
 #define FUNCTION_LOG_BZ2_COMPRESS_TYPE                                                                                             \
     Bz2Compress *
 #define FUNCTION_LOG_BZ2_COMPRESS_FORMAT(value, buffer, bufferSize)                                                                \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, bz2CompressToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, bz2CompressToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Free compression stream
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(BZ2_COMPRESS, LOG, logLevelTrace)
+static void
+bz2CompressFreeResource(THIS_VOID)
 {
+    THIS(Bz2Compress);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(BZ2_COMPRESS, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     BZ2_bzCompressEnd(&this->stream);
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Compress data
@@ -133,7 +135,7 @@ bz2CompressDone(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->done);
+    FUNCTION_TEST_RETURN(BOOL, this->done);
 }
 
 /***********************************************************************************************************************************
@@ -150,47 +152,52 @@ bz2CompressInputSame(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->inputSame);
+    FUNCTION_TEST_RETURN(BOOL, this->inputSame);
 }
 
 /**********************************************************************************************************************************/
-IoFilter *
-bz2CompressNew(int level)
+FN_EXTERN IoFilter *
+bz2CompressNew(const int level, const bool raw)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(INT, level);
+        (void)raw;                                                  // Raw unsupported
     FUNCTION_LOG_END();
 
-    ASSERT(level > 0);
+    ASSERT(level >= BZ2_COMPRESS_LEVEL_MIN && level <= BZ2_COMPRESS_LEVEL_MAX);
 
-    IoFilter *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("Bz2Compress")
+    OBJ_NEW_BEGIN(Bz2Compress, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        Bz2Compress *driver = memNew(sizeof(Bz2Compress));
-
-        *driver = (Bz2Compress)
+        *this = (Bz2Compress)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .stream = {.bzalloc = NULL},
         };
 
         // Initialize context
-        bz2Error(BZ2_bzCompressInit(&driver->stream, level, 0, 0));
+        bz2Error(BZ2_bzCompressInit(&this->stream, level, 0, 0));
 
         // Set callback to ensure bz2 stream is freed
-        memContextCallbackSet(driver->memContext, bz2CompressFreeResource, driver);
-
-        // Create param list
-        VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewInt(level));
-
-        // Create filter interface
-        this = ioFilterNewP(
-            BZ2_COMPRESS_FILTER_TYPE_STR, driver, paramList, .done = bz2CompressDone, .inOut = bz2CompressProcess,
-            .inputSame = bz2CompressInputSame);
+        memContextCallbackSet(objMemContext(this), bz2CompressFreeResource, this);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_FILTER, this);
+    // Create param list
+    Pack *paramList;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackWrite *const packWrite = pckWriteNewP();
+
+        pckWriteI32P(packWrite, level);
+        pckWriteEndP(packWrite);
+
+        paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(
+        IO_FILTER,
+        ioFilterNewP(
+            BZ2_COMPRESS_FILTER_TYPE, this, paramList, .done = bz2CompressDone, .inOut = bz2CompressProcess,
+            .inputSame = bz2CompressInputSame));
 }

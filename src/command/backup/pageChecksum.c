@@ -3,57 +3,53 @@ Page Checksum Filter
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include "common/debug.h"
-#include "common/io/filter/filter.intern.h"
 #include "command/backup/pageChecksum.h"
+#include "common/debug.h"
+#include "common/io/filter/filter.h"
 #include "common/log.h"
-#include "common/memContext.h"
+#include "common/macro.h"
+#include "common/type/json.h"
 #include "common/type/object.h"
-#include "postgres/interface.h"
 #include "postgres/interface/static.vendor.h"
-
-/***********************************************************************************************************************************
-Filter type constant
-***********************************************************************************************************************************/
-STRING_EXTERN(PAGE_CHECKSUM_FILTER_TYPE_STR,                        PAGE_CHECKSUM_FILTER_TYPE);
+#include "storage/posix/storage.h"
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 typedef struct PageChecksum
 {
-    MemContext *memContext;                                         // Mem context of filter
-
+    unsigned int segmentPageTotal;                                  // Total pages in a segment
+    PgPageSize pageSize;                                            // Page size
     unsigned int pageNoOffset;                                      // Page number offset for subsequent segments
-    uint64_t lsnLimit;                                              // Lower limit of pages that could be torn
+    bool headerCheck;                                               // Perform additional header checks?
+    const String *fileName;                                         // Used to load the file to retry pages
+
+    unsigned char *pageBuffer;                                      // Buffer to hold a page while verifying the checksum
 
     bool valid;                                                     // Is the relation structure valid?
     bool align;                                                     // Is the relation alignment valid?
-    VariantList *error;                                             // List of checksum errors
-
-    unsigned int errorMin;                                          // Current min error page
-    unsigned int errorMax;                                          // Current max error page
+    PackWrite *error;                                               // List of checksum errors
 } PageChecksum;
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-String *
-pageChecksumToLog(const PageChecksum *this)
+FN_EXTERN void
+pageChecksumToLog(const PageChecksum *const this, StringStatic *const debugLog)
 {
-    return strNewFmt("{valid: %s, align: %s}", cvtBoolToConstZ(this->valid), cvtBoolToConstZ(this->align));
+    strStcFmt(debugLog, "{valid: %s, align: %s}", cvtBoolToConstZ(this->valid), cvtBoolToConstZ(this->align));
 }
 
 #define FUNCTION_LOG_PAGE_CHECKSUM_TYPE                                                                                            \
     PageChecksum *
 #define FUNCTION_LOG_PAGE_CHECKSUM_FORMAT(value, buffer, bufferSize)                                                               \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, pageChecksumToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, pageChecksumToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
-Count bytes in the input
+Verify page checksums
 ***********************************************************************************************************************************/
 static void
-pageChecksumProcess(THIS_VOID, const Buffer *input)
+pageChecksumProcess(THIS_VOID, const Buffer *const input)
 {
     THIS(PageChecksum);
 
@@ -66,10 +62,10 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
     ASSERT(input != NULL);
 
     // Calculate total pages in the buffer
-    unsigned int pageTotal = (unsigned int)(bufUsed(input) / PG_PAGE_SIZE_DEFAULT);
+    unsigned int pageTotal = (unsigned int)(bufUsed(input) / this->pageSize);
 
     // If there is a partial page make sure there is enough of it to validate the checksum
-    unsigned int pageRemainder = (unsigned int)(bufUsed(input) % PG_PAGE_SIZE_DEFAULT);
+    const unsigned int pageRemainder = (unsigned int)(bufUsed(input) % this->pageSize);
 
     if (pageRemainder != 0)
     {
@@ -95,42 +91,85 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
     {
         for (unsigned int pageIdx = 0; pageIdx < pageTotal; pageIdx++)
         {
-            // Get a non-const pointer which is required by pgPageChecksumTest() below. ??? This is not entirely kosher since we are
-            // being passed a const buffer and we should deinitely not be modifying the contents.  When pgPageChecksumTest() returns
-            // the data should be the same, but there's no question that some munging occurs.  Should we make a copy of the page
-            // before passing it into pgPageChecksumTest()?
-            unsigned char *pagePtr = UNCONSTIFY(unsigned char *, bufPtrConst(input)) + (pageIdx * PG_PAGE_SIZE_DEFAULT);
-
-            // Get a pointer to the page header at the beginning of the page
-            const PageHeaderData *pageHeader = (const PageHeaderData *)pagePtr;
-
-            // Get the page lsn
-            uint64_t pageLsn = PageXLogRecPtrGet(pageHeader->pd_lsn);
+            // Get a pointer to the page header
+            const PageHeaderData *const pageHeader = (const PageHeaderData *)(bufPtrConst(input) + pageIdx * this->pageSize);
 
             // Block number relative to all segments in the relation
-            unsigned int blockNo = this->pageNoOffset + pageIdx;
+            const unsigned int blockNo = this->pageNoOffset + pageIdx;
 
-            if (// This is a new page so don't test checksum
-                !(pageHeader->pd_upper == 0 ||
-                // LSN is after the backup started so checksum is not tested because pages may be torn
-                pageLsn >= this->lsnLimit ||
-                // Checksum is valid if a full page
-                ((this->align || pageIdx < pageTotal - 1) && pageHeader->pd_checksum == pgPageChecksum(pagePtr, blockNo))))
+            // Only validate page checksum if the page is complete
+            if (this->align || pageIdx < pageTotal - 1)
             {
-                MEM_CONTEXT_BEGIN(this->memContext)
-                {
-                    // Create the error list if it does not exist yet
-                    if (this->error == NULL)
-                        this->error = varLstNew();
+                bool pageValid = true;
 
-                    // Add page number and lsn to the error list
-                    VariantList *pair = varLstNew();
-                    varLstAdd(pair, varNewUInt(blockNo));
-                    varLstAdd(pair, varNewUInt64(pageLsn));
-                    varLstAdd(this->error, varNewVarLst(pair));
+                // Skip new all-zero pages. To speed this up first check pd_upper when header check is enabled or pd_checksum when
+                // header check is disabled. The latter is required when the page is encrypted.
+                if ((this->headerCheck && pageHeader->pd_upper == 0) || (!this->headerCheck && pageHeader->pd_checksum == 0))
+                {
+                    // Check that the entire page is zero
+                    for (unsigned int pageIdx = 0; pageIdx < this->pageSize / sizeof(size_t); pageIdx++)
+                    {
+                        if (((size_t *)pageHeader)[pageIdx] != 0)
+                        {
+                            pageValid = false;
+                            break;
+                        }
+                    }
+
+                    // If the entire page is zero it is valid
+                    if (pageValid)
+                        continue;
                 }
-                MEM_CONTEXT_END();
+
+                // Only validate the checksum if the page is valid
+                if (pageValid)
+                {
+                    // Make a copy of the page since it will be modified by the page checksum function
+                    memcpy(this->pageBuffer, pageHeader, this->pageSize);
+
+                    // Continue if the checksum matches
+                    if (pageHeader->pd_checksum == pgPageChecksum(this->pageBuffer, blockNo, this->pageSize))
+                        continue;
+                }
+
+                // On error retry the page
+                bool changed = false;
+
+                MEM_CONTEXT_TEMP_BEGIN()
+                {
+                    // Reload the page
+                    const Buffer *const pageRetry = storageGetP(
+                        storageNewReadP(
+                            storagePosixNewP(FSLASH_STR), this->fileName,
+                            .offset = (uint64_t)(blockNo % this->segmentPageTotal) * this->pageSize,
+                            .limit = VARUINT64(this->pageSize)));
+
+                    // Check if the page has changed since it was last read
+                    changed = !bufEq(pageRetry, BUF(pageHeader, this->pageSize));
+                }
+                MEM_CONTEXT_TEMP_END();
+
+                // If the page has changed then PostgreSQL must be updating it so we won't consider it to be invalid. We are not
+                // concerned about whether this new page has a valid checksum or not, since the page will be replayed from WAL on
+                // recovery. This prevents (theoretically) limitless retries for a hot page.
+                if (changed)
+                    continue;
             }
+
+            // Create the error list if it does not exist yet
+            if (this->error == NULL)
+            {
+                MEM_CONTEXT_OBJ_BEGIN(this)
+                {
+                    this->error = pckWriteNewP();
+                    pckWriteArrayBeginP(this->error);
+                }
+                MEM_CONTEXT_OBJ_END();
+            }
+
+            // Add page number and lsn to the error list
+            pckWriteObjBeginP(this->error, .id = blockNo + 1);
+            pckWriteObjEndP(this->error);
         }
 
         this->pageNoOffset += pageTotal;
@@ -142,7 +181,7 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
 /***********************************************************************************************************************************
 Return filter result
 ***********************************************************************************************************************************/
-static Variant *
+static Pack *
 pageChecksumResult(THIS_VOID)
 {
     THIS(PageChecksum);
@@ -153,111 +192,110 @@ pageChecksumResult(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    KeyValue *result = kvNew();
+    Pack *result;
 
-    if (this->error != NULL)
+    MEM_CONTEXT_OBJ_BEGIN(this)
     {
-        VariantList *errorList = varLstNew();
-        unsigned int errorIdx = 0;
-
-        // Convert the full list to an abbreviated list.  In the future we want to return the entire list so pages can be verified
-        // in the WAL.
-        do
+        // End the error array
+        if (this->error != NULL)
         {
-            unsigned int pageId = varUInt(varLstGet(varVarLst(varLstGet(this->error, errorIdx)), 0));
-
-            if (errorIdx == varLstSize(this->error) - 1)
-            {
-                varLstAdd(errorList, varNewUInt(pageId));
-                errorIdx++;
-            }
-            else
-            {
-                unsigned int pageIdNext = varUInt(varLstGet(varVarLst(varLstGet(this->error, errorIdx + 1)), 0));
-
-                if (pageIdNext > pageId + 1)
-                {
-                    varLstAdd(errorList, varNewUInt(pageId));
-                    errorIdx++;
-                }
-                else
-                {
-                    unsigned int pageIdLast = pageIdNext;
-                    errorIdx++;
-
-                    while (errorIdx < varLstSize(this->error) - 1)
-                    {
-                        pageIdNext = varUInt(varLstGet(varVarLst(varLstGet(this->error, errorIdx + 1)), 0));
-
-                        if (pageIdNext > pageIdLast + 1)
-                            break;
-
-                        pageIdLast = pageIdNext;
-                        errorIdx++;
-                    }
-
-                    VariantList *errorListSub = varLstNew();
-                    varLstAdd(errorListSub, varNewUInt(pageId));
-                    varLstAdd(errorListSub, varNewUInt(pageIdLast));
-                    varLstAdd(errorList, varNewVarLst(errorListSub));
-                    errorIdx++;
-                }
-            }
+            pckWriteArrayEndP(this->error);
+            this->valid = false;
         }
-        while (errorIdx < varLstSize(this->error));
+        // Else create a pack to hold the flags
+        else
+        {
+            this->error = pckWriteNewP();
+            pckWriteNullP(this->error);
+        }
 
-        this->valid = false;
-        kvPut(result, varNewStrZ("error"), varNewVarLst(errorList));
+        // Valid and align flags
+        pckWriteBoolP(this->error, this->valid, .defaultWrite = true);
+        pckWriteBoolP(this->error, this->align, .defaultWrite = true);
+
+        // End pack
+        pckWriteEndP(this->error);
+
+        result = pckMove(pckWriteResult(this->error), memContextPrior());
     }
+    MEM_CONTEXT_OBJ_END();
 
-    kvPut(result, VARSTRDEF("valid"), VARBOOL(this->valid));
-    kvPut(result, VARSTRDEF("align"), VARBOOL(this->align));
-
-    FUNCTION_LOG_RETURN(VARIANT, varNewKv(result));
+    FUNCTION_LOG_RETURN(PACK, result);
 }
 
 /**********************************************************************************************************************************/
-IoFilter *
-pageChecksumNew(unsigned int segmentNo, unsigned int segmentPageTotal, uint64_t lsnLimit)
+FN_EXTERN IoFilter *
+pageChecksumNew(
+    const unsigned int segmentNo, const unsigned int segmentPageTotal, const PgPageSize pageSize, const bool headerCheck,
+    const String *const fileName)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(UINT, segmentNo);
         FUNCTION_LOG_PARAM(UINT, segmentPageTotal);
-        FUNCTION_LOG_PARAM(UINT64, lsnLimit);
+        FUNCTION_LOG_PARAM(ENUM, pageSize);
+        FUNCTION_LOG_PARAM(BOOL, headerCheck);
+        FUNCTION_LOG_PARAM(STRING, fileName);
     FUNCTION_LOG_END();
 
-    IoFilter *this = NULL;
+    ASSERT(pgPageSizeValid(pageSize));
+    ASSERT(segmentPageTotal > 0 && segmentPageTotal % pageSize == 0);
 
-    MEM_CONTEXT_NEW_BEGIN("PageChecksum")
+    OBJ_NEW_BEGIN(PageChecksum, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        PageChecksum *driver = memNew(sizeof(PageChecksum));
-
-        *driver = (PageChecksum)
+        *this = (PageChecksum)
         {
-            .memContext = memContextCurrent(),
+            .segmentPageTotal = segmentPageTotal,
+            .pageSize = pageSize,
             .pageNoOffset = segmentNo * segmentPageTotal,
-            .lsnLimit = lsnLimit,
+            .headerCheck = headerCheck,
+            .fileName = strDup(fileName),
+            .pageBuffer = bufPtr(bufNew(pageSize)),
             .valid = true,
             .align = true,
         };
-
-        // Create param list
-        VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewUInt(segmentNo));
-        varLstAdd(paramList, varNewUInt(segmentPageTotal));
-        varLstAdd(paramList, varNewUInt64(lsnLimit));
-
-        this = ioFilterNewP(
-            PAGE_CHECKSUM_FILTER_TYPE_STR, driver, paramList, .in = pageChecksumProcess, .result = pageChecksumResult);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(IO_FILTER, this);
+    // Create param list
+    Pack *paramList;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackWrite *const packWrite = pckWriteNewP();
+
+        pckWriteU32P(packWrite, segmentNo);
+        pckWriteU32P(packWrite, segmentPageTotal);
+        pckWriteU32P(packWrite, pageSize);
+        pckWriteBoolP(packWrite, headerCheck);
+        pckWriteStrP(packWrite, fileName);
+        pckWriteEndP(packWrite);
+
+        paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(
+        IO_FILTER,
+        ioFilterNewP(PAGE_CHECKSUM_FILTER_TYPE, this, paramList, .in = pageChecksumProcess, .result = pageChecksumResult));
 }
 
-IoFilter *
-pageChecksumNewVar(const VariantList *paramList)
+FN_EXTERN IoFilter *
+pageChecksumNewPack(const Pack *const paramList)
 {
-    return pageChecksumNew(
-        varUIntForce(varLstGet(paramList, 0)), varUIntForce(varLstGet(paramList, 1)), varUInt64(varLstGet(paramList, 2)));
+    IoFilter *result;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackRead *const paramListPack = pckReadNew(paramList);
+        const unsigned int segmentNo = pckReadU32P(paramListPack);
+        const unsigned int segmentPageTotal = pckReadU32P(paramListPack);
+        const PgPageSize pageSize = (PgPageSize)pckReadU32P(paramListPack);
+        const bool headerCheck = pckReadBoolP(paramListPack);
+        const String *const fileName = pckReadStrP(paramListPack);
+
+        result = ioFilterMove(pageChecksumNew(segmentNo, segmentPageTotal, pageSize, headerCheck, fileName), memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    return result;
 }

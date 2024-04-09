@@ -8,17 +8,23 @@ Storage Info
 
 /***********************************************************************************************************************************
 Specify the level of information required when calling functions that return StorageInfo
+
+Each level includes the level below it, i.e. level storageInfoLevelBasic includes storageInfoLevelType which includes
+storageInfoLevelExists.
 ***********************************************************************************************************************************/
 typedef enum
 {
-    // The info type is determined by driver capabilities.  This mimics the prior behavior where drivers would always return as
-    // much information as they could.
+    // The info type is determined by driver capabilities. This mimics the prior behavior where drivers would always return as much
+    // information as they could.
     storageInfoLevelDefault = 0,
 
-    // Only test for existence.  All drivers support this type.
+    // Only test for existence. All drivers must support this level.
     storageInfoLevelExists,
 
-    // Basic information.  All drivers support this type.
+    // Include file type, e.g. storageTypeFile. All drivers must support this level.
+    storageInfoLevelType,
+
+    // Basic information. All drivers support this level.
     storageInfoLevelBasic,
 
     // Detailed information that is generally only available from filesystems such as Posix
@@ -46,15 +52,17 @@ typedef struct StorageInfo
     StorageInfoLevel level;                                         // Level of information provided
     bool exists;                                                    // Does the path/file/link exist?
 
-    // Set when info type >= storageInfoLevelBasic (undefined at lower levels)
+    // Set when info type >= storageInfoLevelType (undefined at lower levels)
     StorageType type;                                               // Type file/path/link)
+
+    // Set when info type >= storageInfoLevelBasic (undefined at lower levels)
     uint64_t size;                                                  // Size (path/link is 0)
     time_t timeModified;                                            // Time file was last modified
 
     // Set when info type >= storageInfoLevelDetail (undefined at lower levels)
     mode_t mode;                                                    // Mode of path/file/link
     uid_t userId;                                                   // User that owns the file
-    uid_t groupId;                                                  // Group that owns the file
+    gid_t groupId;                                                  // Group that owns the file
     const String *user;                                             // Name of user that owns the file
     const String *group;                                            // Name of group that owns the file
     const String *linkDestination;                                  // Destination if this is a link
@@ -66,6 +74,6 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_INFO_TYPE                                                                                             \
     StorageInfo
 #define FUNCTION_LOG_STORAGE_INFO_FORMAT(value, buffer, bufferSize)                                                                \
-    objToLog(&value, "StorageInfo", buffer, bufferSize)
+    objNameToLog(&value, "StorageInfo", buffer, bufferSize)
 
 #endif

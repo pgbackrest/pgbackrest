@@ -1,0 +1,122 @@
+<release date="2022-11-22" version="2.42" title="Bug Fixes">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <github-issue id="1877"/>
+                <github-pull-request id="1878"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="MannerMan"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="john.morris"/>
+                    <!-- Actually tester, but we don't have a tag for that yet -->
+                    <release-item-reviewer id="MannerMan"/>
+                </release-item-contributor-list>
+
+                <p>Fix memory leak in file bundle <cmd>backup</cmd>/<cmd>restore</cmd>.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="1900"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Fix protocol error on short read of remote file.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-improvement-list>
+            <release-item>
+                <github-pull-request id="1887"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Do not store references for zero-length files when bundling.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="1901"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="greg.sabino.mullane"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="greg.sabino.mullane"/>
+                    <release-item-reviewer id="david.christensen"/>
+                </release-item-contributor-list>
+
+                <p>Use more generic descriptions for <code>pg_start_backup()</code>/<code>pg_stop_backup()</code>.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <commit subject="Improve manifest file updates.">
+                    <github-pull-request id="1888"/>
+                </commit>
+                <commit subject="Add manifest flags for file processing during backup.">
+                    <github-pull-request id="1889"/>
+                </commit>
+                <commit subject="Add persistent reference list to manifest.">
+                    <github-pull-request id="1890"/>
+                </commit>
+                <commit subject="Add varint-128 encode/decode to IoRead/IoWrite.">
+                    <github-pull-request id="1891"/>
+                </commit>
+                <commit subject="Update ManifestFile booleans to bit fields."/>
+                <commit subject="Use read-only storage to calculate checksum in restoreFile()."/>
+                <commit subject="Swap command/backup and command/restore unit tests."/>
+                <commit subject="Add noTruncate flag to storageNewWriteP().">
+                    <github-pull-request id="1898"/>
+                </commit>
+                <commit subject="Pass filters to remote storage as a handler array."/>
+                <commit subject="Add backupFileRepoPathP()."/>
+                <commit subject="Shorten names in real/all integration test matrix."/>
+                <commit subject="Update cipherBlockNew() to allow optional parameters."/>
+                <commit subject="Add raw mode to CipherBlock to save space."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                    <release-item-reviewer id="reid.thompson"/>
+                    <release-item-reviewer id="john.morris"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Block incremental backup.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="1879"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="reid.thompson"/>
+                    <release-item-reviewer id="david.steele"/>
+                    <release-item-reviewer id="john.morris"/>
+                </release-item-contributor-list>
+
+                <p>Move link creation to storage interface.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-test-list>
+        <release-improvement-list>
+            <release-item>
+                <github-pull-request id="1920"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="koshi.shibagaki"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update <file>test.pl</file> <setting>--psql-bin</setting> option to match command-line help.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-test-list>
+</release>

@@ -3,14 +3,9 @@ Azure Storage Read
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include <fcntl.h>
-#include <unistd.h>
-
 #include "common/debug.h"
 #include "common/io/http/client.h"
-#include "common/io/read.intern.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
 #include "storage/azure/read.h"
 #include "storage/read.intern.h"
@@ -18,12 +13,8 @@ Azure Storage Read
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define STORAGE_READ_AZURE_TYPE                                     StorageReadAzure
-#define STORAGE_READ_AZURE_PREFIX                                   storageReadAzure
-
 typedef struct StorageReadAzure
 {
-    MemContext *memContext;                                         // Object mem context
     StorageReadInterface interface;                                 // Interface
     StorageAzure *storage;                                          // Storage that created this object
 
@@ -36,7 +27,7 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_READ_AZURE_TYPE                                                                                       \
     StorageReadAzure *
 #define FUNCTION_LOG_STORAGE_READ_AZURE_FORMAT(value, buffer, bufferSize)                                                          \
-    objToLog(value, "StorageReadAzure", buffer, bufferSize)
+    objNameToLog(value, "StorageReadAzure", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Open the file
@@ -56,12 +47,14 @@ storageReadAzureOpen(THIS_VOID)
     bool result = false;
 
     // Request the file
-    MEM_CONTEXT_BEGIN(this->memContext)
+    MEM_CONTEXT_OBJ_BEGIN(this)
     {
         this->httpResponse = storageAzureRequestP(
-            this->storage, HTTP_VERB_GET_STR, .uri = this->interface.name, .allowMissing = true, .contentIo = true);
+            this->storage, HTTP_VERB_GET_STR, .path = this->interface.name,
+            .header = httpHeaderPutRange(httpHeaderNew(NULL), this->interface.offset, this->interface.limit),
+            .allowMissing = true, .contentIo = true);
     }
-    MEM_CONTEXT_END();
+    MEM_CONTEXT_OBJ_END();
 
     if (httpResponseCodeOk(this->httpResponse))
     {
@@ -69,7 +62,7 @@ storageReadAzureOpen(THIS_VOID)
     }
     // Else error unless ignore missing
     else if (!this->interface.ignoreMissing)
-        THROW_FMT(FileMissingError, "unable to open '%s': No such file or directory", strZ(this->interface.name));
+        THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->interface.name));
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }
@@ -110,38 +103,39 @@ storageReadAzureEof(THIS_VOID)
     ASSERT(this != NULL && this->httpResponse != NULL);
     ASSERT(httpResponseIoRead(this->httpResponse) != NULL);
 
-    FUNCTION_TEST_RETURN(ioReadEof(httpResponseIoRead(this->httpResponse)));
+    FUNCTION_TEST_RETURN(BOOL, ioReadEof(httpResponseIoRead(this->httpResponse)));
 }
 
 /**********************************************************************************************************************************/
-StorageRead *
-storageReadAzureNew(StorageAzure *storage, const String *name, bool ignoreMissing)
+FN_EXTERN StorageRead *
+storageReadAzureNew(
+    StorageAzure *const storage, const String *const name, const bool ignoreMissing, const uint64_t offset,
+    const Variant *const limit)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_AZURE, storage);
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
+        FUNCTION_LOG_PARAM(UINT64, offset);
+        FUNCTION_LOG_PARAM(VARIANT, limit);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
     ASSERT(name != NULL);
 
-    StorageRead *this = NULL;
-
-    MEM_CONTEXT_NEW_BEGIN("StorageReadAzure")
+    OBJ_NEW_BEGIN(StorageReadAzure, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageReadAzure *driver = memNew(sizeof(StorageReadAzure));
-
-        *driver = (StorageReadAzure)
+        *this = (StorageReadAzure)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .storage = storage,
 
             .interface = (StorageReadInterface)
             {
-                .type = STORAGE_AZURE_TYPE_STR,
+                .type = STORAGE_AZURE_TYPE,
                 .name = strDup(name),
                 .ignoreMissing = ignoreMissing,
+                .offset = offset,
+                .limit = varDup(limit),
 
                 .ioInterface = (IoReadInterface)
                 {
@@ -151,10 +145,8 @@ storageReadAzureNew(StorageAzure *storage, const String *name, bool ignoreMissin
                 },
             },
         };
-
-        this = storageReadNew(driver, &driver->interface);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_READ, this);
+    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadNew(this, &this->interface));
 }

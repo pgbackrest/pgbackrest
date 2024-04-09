@@ -13,7 +13,6 @@ Log Handler
 #include <unistd.h>
 
 #include "common/debug.h"
-#include "common/error.h"
 #include "common/log.h"
 #include "common/time.h"
 
@@ -29,16 +28,16 @@ static LogLevel logLevelAny = logLevelError;
 // Log file descriptors
 static int logFdStdOut = STDOUT_FILENO;
 static int logFdStdErr = STDERR_FILENO;
-DEBUG_UNIT_EXTERN int logFdFile = -1;
+static int logFdFile = -1;
 
 // Has the log file banner been written yet?
-DEBUG_UNIT_EXTERN bool logFileBanner = false;
+static bool logFileBanner = false;
 
 // Is the timestamp printed in the log?
 static bool logTimestamp = false;
 
 // Default process id if none is specified
-DEBUG_UNIT_EXTERN unsigned int logProcessId = 0;
+static unsigned int logProcessId = 0;
 
 // Size of the process id field
 static int logProcessSize = 2;
@@ -65,43 +64,69 @@ static char logBuffer[LOG_BUFFER_SIZE];
 /**********************************************************************************************************************************/
 #define LOG_LEVEL_TOTAL                                             (LOG_LEVEL_MAX + 1)
 
-static const char *const logLevelList[LOG_LEVEL_TOTAL] =
+static const struct LogLevel
 {
-    "OFF",
-    "ASSERT",
-    "ERROR",
-    "PROTOCOL",
-    "WARN",
-    "INFO",
-    "DETAIL",
-    "DEBUG",
-    "TRACE",
+    const StringId id;                                              // Id
+    const char *const name;                                         // Name
+} logLevelList[LOG_LEVEL_TOTAL] =
+{
+    {
+        .id = STRID5("off", 0x18cf0),
+        .name = "OFF",
+    },
+    {
+        // No id here because this level is not user selectable
+        .name = "ASSERT",
+    },
+    {
+        .id = STRID5("error", 0x127ca450),
+        .name = "ERROR",
+    },
+    {
+        .id = STRID5("warn", 0x748370),
+        .name = "WARN",
+    },
+    {
+        .id = STRID5("info", 0x799c90),
+        .name = "INFO",
+    },
+    {
+        .id = STRID5("detail", 0x1890d0a40),
+        .name = "DETAIL",
+    },
+    {
+        .id = STRID5("debug", 0x7a88a40),
+        .name = "DEBUG",
+    },
+    {
+        .id = STRID5("trace", 0x5186540),
+        .name = "TRACE",
+    },
 };
 
-LogLevel
-logLevelEnum(const char *logLevel)
+FN_EXTERN LogLevel
+logLevelEnum(const StringId logLevelId)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRINGZ, logLevel);
+        FUNCTION_TEST_PARAM(STRING_ID, logLevelId);
     FUNCTION_TEST_END();
 
-    ASSERT(logLevel != NULL);
+    ASSERT(logLevelId != 0);
 
     LogLevel result = logLevelOff;
 
     // Search for the log level
     for (; result < LOG_LEVEL_TOTAL; result++)
-        if (strcasecmp(logLevel, logLevelList[result]) == 0)
+        if (logLevelId == logLevelList[result].id)
             break;
 
-    // If the log level was not found
-    if (result == LOG_LEVEL_TOTAL)
-        THROW_FMT(AssertError, "log level '%s' not found", logLevel);
+    // Check that the log level was found
+    CHECK(AssertError, result != LOG_LEVEL_TOTAL, "invalid log level");
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(ENUM, result);
 }
 
-const char *
+FN_EXTERN const char *
 logLevelStr(LogLevel logLevel)
 {
     FUNCTION_TEST_BEGIN();
@@ -110,11 +135,11 @@ logLevelStr(LogLevel logLevel)
 
     ASSERT(logLevel <= LOG_LEVEL_MAX);
 
-    FUNCTION_TEST_RETURN(logLevelList[logLevel]);
+    FUNCTION_TEST_RETURN_CONST(STRINGZ, logLevelList[logLevel].name);
 }
 
 /**********************************************************************************************************************************/
-DEBUG_UNIT_EXTERN void
+static void
 logAnySet(void)
 {
     FUNCTION_TEST_VOID();
@@ -130,7 +155,7 @@ logAnySet(void)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-bool
+FN_EXTERN bool
 logAny(LogLevel logLevel)
 {
     FUNCTION_TEST_BEGIN();
@@ -139,11 +164,11 @@ logAny(LogLevel logLevel)
 
     ASSERT_LOG_LEVEL(logLevel);
 
-    FUNCTION_TEST_RETURN(logLevel <= logLevelAny);
+    FUNCTION_TEST_RETURN(BOOL, logLevel <= logLevelAny);
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 logInit(
     LogLevel logLevelStdOutParam, LogLevel logLevelStdErrParam, LogLevel logLevelFileParam, bool logTimestampParam,
     unsigned int processId, unsigned int logProcessMax, bool dryRunParam)
@@ -198,7 +223,7 @@ logFileClose(void)
 }
 
 /**********************************************************************************************************************************/
-bool
+FN_EXTERN bool
 logFileSet(const char *logFile)
 {
     FUNCTION_TEST_BEGIN();
@@ -234,11 +259,11 @@ logFileSet(const char *logFile)
 
     logAnySet();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(BOOL, result);
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 logClose(void)
 {
     FUNCTION_TEST_VOID();
@@ -269,7 +294,7 @@ logRange(LogLevel logLevel, LogLevel logRangeMin, LogLevel logRangeMax)
     ASSERT_LOG_LEVEL(logRangeMax);
     ASSERT(logRangeMin <= logRangeMax);
 
-    FUNCTION_TEST_RETURN(logLevel >= logRangeMin && logLevel <= logRangeMax);
+    FUNCTION_TEST_RETURN(BOOL, logLevel >= logRangeMin && logLevel <= logRangeMax);
 }
 
 /***********************************************************************************************************************************
@@ -371,11 +396,13 @@ logPre(LogLevel logLevel, unsigned int processId, const char *fileName, const ch
     // Add time
     if (logTimestamp)
     {
+        struct tm timePart;
         TimeMSec logTimeMSec = timeMSec();
         time_t logTimeSec = (time_t)(logTimeMSec / MSEC_PER_SEC);
 
         result.bufferPos += strftime(
-            logBuffer + result.bufferPos, sizeof(logBuffer) - result.bufferPos, "%Y-%m-%d %H:%M:%S", localtime(&logTimeSec));
+            logBuffer + result.bufferPos, sizeof(logBuffer) - result.bufferPos, "%Y-%m-%d %H:%M:%S",
+            localtime_r(&logTimeSec, &timePart));
         result.bufferPos += (size_t)snprintf(
             logBuffer + result.bufferPos, sizeof(logBuffer) - result.bufferPos, ".%03d ", (int)(logTimeMSec % 1000));
     }
@@ -402,8 +429,8 @@ logPre(LogLevel logLevel, unsigned int processId, const char *fileName, const ch
     // Add debug info
     if (logLevel >= logLevelDebug)
     {
-        // Adding padding for debug and trace levels
-        for (unsigned int paddingIdx = 0; paddingIdx < ((logLevel - logLevelDebug + 1) * 4); paddingIdx++)
+        // Adding padding for debug and trace levels. Cast to handle compilers (e.g. MSVC) that coerce to signed after subtraction.
+        for (unsigned int paddingIdx = 0; paddingIdx < (unsigned int)((logLevel - logLevelDebug + 1) * 4); paddingIdx++)
         {
             logBuffer[result.bufferPos++] = ' ';
             result.indentSize++;
@@ -414,7 +441,7 @@ logPre(LogLevel logLevel, unsigned int processId, const char *fileName, const ch
             functionName);
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN_TYPE(LogPreResult, result);
 }
 
 /***********************************************************************************************************************************
@@ -444,7 +471,8 @@ logPost(LogPreResult *logData, LogLevel logLevel, LogLevel logRangeMin, LogLevel
     // Determine where to log the message based on log-level-stderr
     if (logLevel <= logLevelStdErr)
     {
-        if (logRange(logLevelStdErr, logRangeMin, logRangeMax))
+        if ((logLevelStdErr > logLevelStdOut && logRange(logLevelStdErr, logRangeMin, logRangeMax)) ||
+            (logLevelStdErr <= logLevelStdOut && logRange(logLevelStdOut, logRangeMin, logRangeMax)))
         {
             logWriteIndent(
                 logFdStdErr, logData->logBufferStdErr, logData->indentSize - (size_t)(logData->logBufferStdErr - logBuffer),
@@ -480,7 +508,7 @@ logPost(LogPreResult *logData, LogLevel logLevel, LogLevel logRangeMin, LogLevel
 }
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 logInternal(
     LogLevel logLevel, LogLevel logRangeMin, LogLevel logRangeMax, unsigned int processId, const char *fileName,
     const char *functionName, int code, const char *message)
@@ -510,7 +538,7 @@ logInternal(
     FUNCTION_TEST_RETURN_VOID();
 }
 
-void
+FN_EXTERN void
 logInternalFmt(
     LogLevel logLevel, LogLevel logRangeMin, LogLevel logRangeMax, unsigned int processId, const char *fileName,
     const char *functionName, int code, const char *format, ...)

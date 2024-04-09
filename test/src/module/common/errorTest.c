@@ -12,18 +12,18 @@ ERROR_DECLARE(TestParent1Error);
 ERROR_DECLARE(TestParent2Error);
 ERROR_DECLARE(TestChildError);
 
-ERROR_DEFINE(101, TestParent1Error, TestParent1Error);
-ERROR_DEFINE(102, TestParent2Error, TestParent1Error);
-ERROR_DEFINE(200, TestChildError, TestParent2Error);
+ERROR_DEFINE(101, TestParent1Error, false, TestParent1Error);
+ERROR_DEFINE(102, TestParent2Error, false, TestParent1Error);
+ERROR_DEFINE(200, TestChildError, false, TestParent2Error);
 
 /***********************************************************************************************************************************
 testTryRecurse - test to blow up try stack
 ***********************************************************************************************************************************/
-volatile int testTryRecurseTotal = 0;
-bool testTryRecurseCatch = false;
-bool testTryRecurseFinally = false;
+static volatile int testTryRecurseTotal = 0;
+static bool testTryRecurseCatch = false;
+static bool testTryRecurseFinally = false;
 
-void
+static void
 testTryRecurse(void)
 {
     TRY_BEGIN()
@@ -33,7 +33,7 @@ testTryRecurse(void)
 
         testTryRecurse();
     }
-    CATCH(MemoryError)
+    CATCH(UnhandledError)
     {
         testTryRecurseCatch = true;                                 // {uncoverable - catch should never be executed}
     }
@@ -45,9 +45,22 @@ testTryRecurse(void)
 }                                                                   // {uncoverable - function throws error, never returns}
 
 /***********************************************************************************************************************************
+Test error handler
+***********************************************************************************************************************************/
+static unsigned int testErrorHandlerTryDepth;
+static bool testErrorHandlerFatal;
+
+static void
+testErrorHandler(unsigned int tryDepth, bool fatal)
+{
+    testErrorHandlerFatal = fatal;
+    testErrorHandlerTryDepth = tryDepth;
+}
+
+/***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
@@ -85,7 +98,7 @@ testRun(void)
         }
         FINALLY()
         {
-            assert(errorContext.tryList[1].state == errorStateFinal);
+            assert(errorContext.tryList[1].state == errorStateTry);
             finallyDone = true;
         }
         TRY_END();
@@ -97,12 +110,38 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("errorInternalThrow()"))
+    {
+        TEST_TITLE("specify all parameters");
+
+        TRY_BEGIN()
+        {
+            errorInternalThrow(&FormatError, "file77", "function88", 99, "message100", "stacktrace200");
+        }
+        CATCH_ANY()
+        {
+            assert(errorType() == &FormatError);
+        }
+        TRY_END();
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("TRY with multiple catches"))
     {
         volatile bool tryDone = false;
         volatile bool catchDone = false;
         volatile bool finallyDone = false;
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("set error handler");
+
+        static const ErrorHandlerFunction testErrorHandlerList[] = {testErrorHandler};
+        errorHandlerSet(testErrorHandlerList, LENGTH_OF(testErrorHandlerList));
+
+        assert(errorContext.handlerList[0] == testErrorHandler);
+        assert(errorContext.handlerTotal == 1);
+
+        // -------------------------------------------------------------------------------------------------------------------------
         assert(errorTryDepth() == 0);
 
         TRY_BEGIN()
@@ -120,20 +159,39 @@ testRun(void)
                     TRY_BEGIN()
                     {
                         assert(errorTryDepth() == 4);
-                        tryDone = true;
 
-                        char bigMessage[sizeof(messageBuffer) * 32];
-                        memset(bigMessage, 'A', sizeof(bigMessage));
+                        TRY_BEGIN()
+                        {
+                            assert(errorTryDepth() == 5);
+                            tryDone = true;
+                        }
+                        FINALLY()
+                        {
+                            assert(errorContext.tryList[5].state == errorStateTry);
 
-                        THROW(AssertError, bigMessage);
+                            char bigMessage[sizeof(messageBuffer) + 128];
+                            memset(bigMessage, 'A', sizeof(bigMessage));
+
+                            THROW(AssertError, bigMessage);
+                        }
+                        TRY_END();
+                    }
+                    CATCH_ANY()
+                    {
+                        // Catch should not be executed since this error is fatal
+                        assert(false);
                     }
                     TRY_END();
                 }
-                CATCH(AssertError)
+                CATCH_FATAL()
                 {
-                    // Finally below should run even though this error has been rethrown
-                    RETHROW();
+                    assert(testErrorHandlerTryDepth == 3);
+                    assert(testErrorHandlerFatal);
+
+                    // Change to FormatError so error can be caught by normal catches
+                    THROW(FormatError, errorMessage());
                 }
+                // Should run even though an error has been thrown in the catch
                 FINALLY()
                 {
                     finallyDone = true;
@@ -142,18 +200,23 @@ testRun(void)
             }
             CATCH_ANY()
             {
+                assert(testErrorHandlerTryDepth == 2);
+                assert(!testErrorHandlerFatal);
+
                 RETHROW();
             }
             TRY_END();
         }
-        CATCH(MemoryError)
+        CATCH(UnhandledError)
         {
             assert(false);                                              // {uncoverable - catch should never be executed}
         }
         CATCH(RuntimeError)
         {
+            assert(testErrorHandlerTryDepth == 1);
+            assert(!testErrorHandlerFatal);
             assert(errorTryDepth() == 1);
-            assert(errorContext.tryList[1].state == errorStateCatch);
+            assert(errorContext.tryList[1].state == errorStateEnd);
             assert(strlen(errorMessage()) == sizeof(messageBuffer) - 1);
 
             catchDone = true;
@@ -161,6 +224,7 @@ testRun(void)
         TRY_END();
 
         assert(errorTryDepth() == 0);
+        assert(memcmp(&errorContext.error, &(Error){0}, sizeof(Error)) == 0);
 
         assert(tryDone);
         assert(catchDone);
@@ -180,15 +244,13 @@ testRun(void)
             tryDone = true;
             testTryRecurse();
         }
-        CATCH(AssertError)
+        CATCH_FATAL()
         {
             assert(errorCode() == AssertError.code);
-            assert(strcmp(errorFileName(), "test/module/common/errorTest.c") == 0);
+            assert(strcmp(errorFileName(), TEST_PGB_PATH "/test/src/module/common/errorTest.c") == 0);
             assert(strcmp(errorFunctionName(), "testTryRecurse") == 0);
             assert(errorFileLine() == 29);
-            assert(
-                strcmp(errorStackTrace(),
-                "test/module/common/errorTest:testTryRecurse:29:(test build required for parameters)") == 0);
+            assert(errorStackTrace() != NULL);
             assert(strcmp(errorMessage(), "too many nested try blocks") == 0);
             assert(strcmp(errorName(), AssertError.name) == 0);
             assert(errorType() == &AssertError);
@@ -202,6 +264,8 @@ testRun(void)
             finallyDone = true;
         }
         TRY_END();
+
+        assert(memcmp(&errorContext.error, &(Error){0}, sizeof(Error)) == 0);
 
         assert(tryDone);
         assert(catchDone);
@@ -221,7 +285,7 @@ testRun(void)
         {
             THROW_CODE(25, "message");
         }
-        CATCH_ANY()
+        CATCH_FATAL()
         {
             assert(errorCode() == 25);
             assert(strcmp(errorMessage(), "message") == 0);
@@ -256,6 +320,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("THROW_SYS_ERROR() and THROW_SYS_ERROR_FMT()"))
     {
+        THROW_ON_SYS_ERROR(false, AssertError, "no error");
         THROW_ON_SYS_ERROR_FMT(false, AssertError, "no error");
 
         TRY_BEGIN()
@@ -263,7 +328,7 @@ testRun(void)
             errno = E2BIG;
             THROW_ON_SYS_ERROR(true, AssertError, "message");
         }
-        CATCH_ANY()
+        CATCH_FATAL()
         {
             printf("%s\n", errorMessage());
             assert(errorCode() == AssertError.code);
@@ -277,7 +342,7 @@ testRun(void)
             errno = 0;
             THROW_ON_SYS_ERROR_FMT(true, AssertError, "message %d", 77);
         }
-        CATCH_ANY()
+        CATCH_FATAL()
         {
             printf("%s\n", errorMessage());
             assert(errorCode() == AssertError.code);
@@ -291,7 +356,7 @@ testRun(void)
             errno = E2BIG;
             THROW_ON_SYS_ERROR_FMT(true, AssertError, "message %d", 77);
         }
-        CATCH_ANY()
+        CATCH_FATAL()
         {
             printf("%s\n", errorMessage());
             assert(errorCode() == AssertError.code);
@@ -305,7 +370,7 @@ testRun(void)
             errno = 0;
             THROW_SYS_ERROR(AssertError, "message");
         }
-        CATCH_ANY()
+        CATCH_FATAL()
         {
             printf("%s\n", errorMessage());
             assert(errorCode() == AssertError.code);
@@ -319,7 +384,7 @@ testRun(void)
             errno = EIO;
             THROW_SYS_ERROR_FMT(AssertError, "message %d", 1);
         }
-        CATCH_ANY()
+        CATCH_FATAL()
         {
             printf("%s\n", errorMessage());
             assert(errorCode() == AssertError.code);
@@ -333,7 +398,7 @@ testRun(void)
             errno = 0;
             THROW_SYS_ERROR_FMT(AssertError, "message %d", 1);
         }
-        CATCH_ANY()
+        CATCH_FATAL()
         {
             printf("%s\n", errorMessage());
             assert(errorCode() == AssertError.code);
@@ -346,16 +411,19 @@ testRun(void)
     if (testBegin("Uncaught error"))
     {
         // Test in a fork so the process does not actually exit
-        HARNESS_FORK_BEGIN()
+        HRN_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD_BEGIN(UnhandledError.code, false)
+            HRN_FORK_CHILD_BEGIN(.expectedExitStatus = UnhandledError.code)
             {
+                // Redirect stderr to stdout (we do not care about the output here since coverage will tell us we hit the code)
+                stderr = stdout;
+
                 THROW(TestChildError, "does not get caught!");
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
         }
-        HARNESS_FORK_END();
+        HRN_FORK_END();
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

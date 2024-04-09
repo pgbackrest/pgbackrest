@@ -11,8 +11,8 @@ IO Functions
 /***********************************************************************************************************************************
 Buffer size
 
-This buffer size will be used for all IO operations that require buffers not passed by the caller.  Initially it is set to a
-conservative default with the expectation that it will be changed to a new value after options have been loaded.  In general callers
+This buffer size will be used for all IO operations that require buffers not passed by the caller. Initially it is set to a
+conservative default with the expectation that it will be changed to a new value after options have been loaded. In general callers
 should set their buffer size using ioBufferSize() but there may be cases where an alternative buffer size makes sense.
 ***********************************************************************************************************************************/
 #define IO_BUFFER_BLOCK_SIZE                                        (8 * 1024)
@@ -23,14 +23,14 @@ static size_t bufferSize = (8 * IO_BUFFER_BLOCK_SIZE);
 static TimeMSec timeoutMs = 60000;
 
 /**********************************************************************************************************************************/
-size_t
+FN_EXTERN size_t
 ioBufferSize(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(bufferSize);
+    FUNCTION_TEST_RETURN(SIZE, bufferSize);
 }
 
-void
+FN_EXTERN void
 ioBufferSizeSet(size_t bufferSizeParam)
 {
     FUNCTION_TEST_BEGIN();
@@ -43,14 +43,14 @@ ioBufferSizeSet(size_t bufferSizeParam)
 }
 
 /**********************************************************************************************************************************/
-TimeMSec
+FN_EXTERN TimeMSec
 ioTimeoutMs(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(timeoutMs);
+    FUNCTION_TEST_RETURN(TIME_MSEC, timeoutMs);
 }
 
-void
+FN_EXTERN void
 ioTimeoutMsSet(TimeMSec timeoutMsParam)
 {
     FUNCTION_TEST_BEGIN();
@@ -63,7 +63,7 @@ ioTimeoutMsSet(TimeMSec timeoutMsParam)
 }
 
 /**********************************************************************************************************************************/
-Buffer *
+FN_EXTERN Buffer *
 ioReadBuf(IoRead *read)
 {
     FUNCTION_TEST_BEGIN();
@@ -92,11 +92,56 @@ ioReadBuf(IoRead *read)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(BUFFER, result);
 }
 
 /**********************************************************************************************************************************/
-bool
+FN_EXTERN void
+ioCopy(IoRead *const source, IoWrite *const destination, const IoCopyParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_READ, source);
+        FUNCTION_TEST_PARAM(IO_WRITE, destination);
+        FUNCTION_TEST_PARAM(VARIANT, param.limit);
+    FUNCTION_TEST_END();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        Buffer *const buffer = bufNew(ioBufferSize());
+        uint64_t copied = 0;
+        bool limitReached = false;
+
+        do
+        {
+            // If a limit was specified then limit the buffer size on the last iteration
+            if (param.limit != NULL)
+            {
+                const uint64_t bufferLimit = varUInt64(param.limit) - copied;
+
+                if (bufferLimit < bufSize(buffer))
+                {
+                    bufLimitSet(buffer, (size_t)bufferLimit);
+                    limitReached = true;
+                }
+            }
+
+            // Copy bytes
+            ioRead(source, buffer);
+            ioWrite(destination, buffer);
+
+            // Update bytes copied and clear the buffer
+            copied += bufUsed(buffer);
+            bufUsedZero(buffer);
+        }
+        while (!limitReached && !ioReadEof(source));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN bool
 ioReadDrain(IoRead *read)
 {
     FUNCTION_TEST_BEGIN();
@@ -125,5 +170,5 @@ ioReadDrain(IoRead *read)
         MEM_CONTEXT_TEMP_END();
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(BOOL, result);
 }

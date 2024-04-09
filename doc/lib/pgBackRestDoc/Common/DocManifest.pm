@@ -104,12 +104,14 @@ sub new
     {
         my $oSourceHash = {};
         my $strKey = $oSource->paramGet('key');
+        my $strFile = $oSource->paramGet('file', false);
         my $strSourceType = $oSource->paramGet('type', false);
 
         logDebugMisc
         (
             $strOperation, 'load source',
             {name => 'strKey', value => $strKey},
+            {name => 'strFile', value => $strFile},
             {name => 'strSourceType', value => $strSourceType}
         );
 
@@ -119,7 +121,16 @@ sub new
             next;
         }
 
-        $$oSourceHash{doc} = new pgBackRestDoc::Common::Doc("$self->{strDocPath}/xml/${strKey}.xml");
+        # If file is defined
+        if (defined($strFile))
+        {
+            $oSourceHash->{doc} = new pgBackRestDoc::Common::Doc($self->{strDocPath} . "/${strFile}");
+        }
+        # Else should be in doc/xml
+        else
+        {
+            $$oSourceHash{doc} = new pgBackRestDoc::Common::Doc("$self->{strDocPath}/xml/${strKey}.xml");
+        }
 
         # Read variables from source
         $self->variableListParse($$oSourceHash{doc}->nodeGet('variable-list', false), $rhVariableOverride);
@@ -361,7 +372,8 @@ sub variableReplace
 
     foreach my $strName (sort(keys(%{$self->{oVariable}})))
     {
-        my $strValue = $self->{oVariable}{$strName};
+        # If the value is not defined then replace it as an empty string. This means the key *was* defined but no value given.
+        my $strValue = defined($self->{oVariable}{$strName}) ? $self->{oVariable}{$strName} : '';
 
         $strBuffer =~ s/\{\[$strName\]\}/$strValue/g;
     }

@@ -5,18 +5,17 @@ Remote Storage
 #define STORAGE_REMOTE_STORAGE_H
 
 #include "protocol/client.h"
-#include "storage/storage.intern.h"
+#include "storage/storage.h"
 
 /***********************************************************************************************************************************
 Storage type
 ***********************************************************************************************************************************/
-#define STORAGE_REMOTE_TYPE                                         "remote"
-    STRING_DECLARE(STORAGE_REMOTE_TYPE_STR);
+#define STORAGE_REMOTE_TYPE                                         STRID5("remote", 0xb47b4b20)
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-Storage *storageRemoteNew(
+FN_EXTERN Storage *storageRemoteNew(
     mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction, ProtocolClient *client,
     unsigned int compressLevel);
 

@@ -4,37 +4,38 @@ Azure Storage
 #ifndef STORAGE_AZURE_STORAGE_H
 #define STORAGE_AZURE_STORAGE_H
 
-#include "storage/storage.intern.h"
+#include "storage/storage.h"
 
 /***********************************************************************************************************************************
 Storage type
 ***********************************************************************************************************************************/
-#define STORAGE_AZURE_TYPE                                          "azure"
-    STRING_DECLARE(STORAGE_AZURE_TYPE_STR);
+#define STORAGE_AZURE_TYPE                                          STRID5("azure", 0x5957410)
 
 /***********************************************************************************************************************************
 Key type
 ***********************************************************************************************************************************/
 typedef enum
 {
-    storageAzureKeyTypeShared,
-    storageAzureKeyTypeSas,
+    storageAzureKeyTypeShared = STRID5("shared", 0x85905130),
+    storageAzureKeyTypeSas = STRID5("sas", 0x4c330),
 } StorageAzureKeyType;
 
-#define STORAGE_AZURE_KEY_TYPE_SHARED                               "shared"
-#define STORAGE_AZURE_KEY_TYPE_SAS                                  "sas"
-
 /***********************************************************************************************************************************
-Defaults
+URI style
 ***********************************************************************************************************************************/
-#define STORAGE_AZURE_BLOCKSIZE_MIN                                 ((size_t)4 * 1024 * 1024)
+typedef enum
+{
+    storageAzureUriStyleHost = STRID5("host", 0xa4de80),
+    storageAzureUriStylePath = STRID5("path", 0x450300),
+} StorageAzureUriStyle;
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-Storage *storageAzureNew(
+FN_EXTERN Storage *storageAzureNew(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *container,
-    const String *account, StorageAzureKeyType keyType, const String *key, size_t blockSize, const String *host,
-    const String *endpoint, unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath);
+    const String *account, StorageAzureKeyType keyType, const String *key, size_t blockSize, const KeyValue *tag,
+    const String *endpoint, StorageAzureUriStyle uriStyle, unsigned int port, TimeMSec timeout, bool verifyPeer,
+    const String *caFile, const String *caPath);
 
 #endif

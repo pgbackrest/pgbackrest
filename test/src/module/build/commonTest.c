@@ -1,0 +1,85 @@
+/***********************************************************************************************************************************
+Test Build Common
+***********************************************************************************************************************************/
+
+/***********************************************************************************************************************************
+Test Run
+***********************************************************************************************************************************/
+static void
+testRun(void)
+{
+    FUNCTION_HARNESS_VOID();
+
+    // *****************************************************************************************************************************
+    if (testBegin("render"))
+    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("bldEnum()");
+
+        TEST_RESULT_STR_Z(bldEnum(NULL, STRDEF("test-id/group-name")), "testId/groupName", "enum");
+        TEST_RESULT_STR_Z(bldEnum("pre", STRDEF("option-name")), "preOptionName", "enum");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("bldStrId()");
+
+        TEST_RESULT_STR_Z(bldStrId("abc"), "STRID5(\"abc\", 0xc410)", "5-bit");
+        TEST_RESULT_STR_Z(bldStrId("ABC"), "STRID6(\"ABC\", 0x289e61)", "6-bit");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("Yaml"))
+    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("parse and error");
+
+        const Buffer *buffer = BUFSTRZ(
+            "test:\n"
+            "   main: [0, 1]\n"
+            "  default: text\n");
+
+        Yaml *yaml = NULL;
+        TEST_ASSIGN(yaml, yamlNew(buffer), "new yaml")
+        TEST_RESULT_VOID(yamlEventNextCheck(yaml, yamlEventTypeMapBegin), "map begin event");
+        TEST_ERROR(
+            yamlScalarCheck(yamlEventPeek(yaml), STRDEF("xxx")), FormatError,
+            "expected scalar 'xxx' but got 'test' at line 1, column 1");
+        TEST_ERROR(
+            yamlEventCheck(yamlEventPeek(yaml), yamlEventTypeMapBegin), FormatError,
+            "expected event type 'map-begin' but got scalar 'test' at line 1, column 1");
+        TEST_RESULT_VOID(yamlScalarNextCheck(yaml, STRDEF("test")), "scalar event");
+        TEST_ERROR(
+            yamlScalarCheck(yamlEventPeek(yaml), STRDEF("test")), FormatError,
+            "expected scalar 'test' but got event type 'map-begin' at line 2, column 4");
+        TEST_RESULT_VOID(yamlEventNextCheck(yaml, yamlEventTypeMapBegin), "map begin event");
+        TEST_RESULT_VOID(yamlEventNextCheck(yaml, yamlEventTypeScalar), "scalar event");
+        TEST_RESULT_VOID(yamlEventNextCheck(yaml, yamlEventTypeSeqBegin), "seq begin event");
+        TEST_RESULT_VOID(yamlEventNextCheck(yaml, yamlEventTypeScalar), "scalar event");
+        TEST_RESULT_VOID(yamlEventNextCheck(yaml, yamlEventTypeScalar), "scalar event");
+        TEST_RESULT_VOID(yamlEventNextCheck(yaml, yamlEventTypeSeqEnd), "seq end event");
+        TEST_RESULT_VOID(yamlEventNextCheck(yaml, yamlEventTypeMapEnd), "map end event");
+        TEST_ERROR(
+            yamlEventNextCheck(yaml, yamlEventTypeScalar), FormatError,
+            "yaml parse error: did not find expected key at line: 3 column: 3");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("boolean parse");
+
+        TEST_RESULT_BOOL(yamlBoolParse((YamlEvent){.value = STRDEF("true")}), true, "true");
+        TEST_RESULT_BOOL(yamlBoolParse((YamlEvent){.value = STRDEF("false")}), false, "false");
+        TEST_ERROR(yamlBoolParse((YamlEvent){.value = STRDEF("ack")}), FormatError, "invalid boolean 'ack'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("type map (remaining types)");
+
+        TEST_RESULT_UINT(yamlEventType(YAML_STREAM_END_EVENT), yamlEventTypeStreamEnd, "stream end");
+        TEST_RESULT_UINT(yamlEventType(YAML_DOCUMENT_END_EVENT), yamlEventTypeDocEnd, "doc end");
+        TEST_RESULT_UINT(yamlEventType(YAML_ALIAS_EVENT), yamlEventTypeAlias, "alias");
+        TEST_RESULT_UINT(yamlEventType(YAML_NO_EVENT), yamlEventTypeNone, "none");
+
+        TEST_ERROR(
+            yamlEventCheck((YamlEvent){.type = yamlEventTypeAlias}, yamlEventTypeScalar), FormatError,
+            "expected event type 'scalar' but got 'alias' at line 0, column 0");
+    }
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}

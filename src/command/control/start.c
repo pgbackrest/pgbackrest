@@ -10,7 +10,7 @@ Start Command
 #include "storage/storage.h"
 
 /**********************************************************************************************************************************/
-void
+FN_EXTERN void
 cmdStart(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
@@ -30,7 +30,7 @@ cmdStart(void)
         {
             LOG_WARN_FMT(
                 "stop file does not exist%s",
-                (cfgOptionTest(cfgOptStanza) ? strZ(strNewFmt(" for stanza %s", strZ(cfgOptionStr(cfgOptStanza)))) : ""));
+                (cfgOptionTest(cfgOptStanza) ? zNewFmt(" for stanza %s", strZ(cfgOptionDisplay(cfgOptStanza))) : ""));
         }
     }
     MEM_CONTEXT_TEMP_END();

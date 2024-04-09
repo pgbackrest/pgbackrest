@@ -1,18 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE doc SYSTEM "doc.dtd">
 <doc title="{[project]}" subtitle="Reliable {[postgres]} Backup &amp; Restore" toc="n">
-    <description>{[project]} provides fast, reliable backup and restore for {[postgres]} and seamlessly scales to terabyte scale databases by implementing stream compression and parallel processing.</description>
+    <description>{[project]} is a reliable backup and restore solution for {[postgres]} that seamlessly scales up to the largest databases and workloads.</description>
 
+    <!-- ======================================================================================================================= -->
     <variable-list>
         <!-- Variables used by the rest of the script -->
         <variable key="github-url-root">https://github.com</variable>
         <variable key="github-url-base">{[github-url-root]}/pgbackrest/pgbackrest</variable>
-        <variable key="github-url-master">{[github-url-base]}/blob/master</variable>
+        <variable key="github-url-main">{[github-url-base]}/blob/main</variable>
         <variable key="github-url-issues">{[github-url-base]}/issues</variable>
         <variable key="github-url-release">{[github-url-base]}/archive/release</variable>
-        <variable key="github-url-license">{[github-url-master]}/LICENSE</variable>
-        <variable key="github-url-wiki">{[github-url-base]}/wiki</variable>
-        <variable key="github-url-wiki-backlog">{[github-url-wiki]}#backlog</variable>
+        <variable key="github-url-license">{[github-url-main]}/LICENSE</variable>
+        <variable key="github-url-projects">{[github-url-base]}/projects</variable>
+        <variable key="github-url-contributing">{[github-url-main]}/CONTRIBUTING.md</variable>
 
         <variable key="backrest-url-base">http://www.pgbackrest.org</variable>
         <variable key="backrest-page-user-guide-index">user-guide-index</variable>
@@ -26,166 +27,187 @@
         <variable key="resonate-url-base">http://www.resonate.com</variable>
     </variable-list>
 
+    <!-- ======================================================================================================================= -->
     <section id="introduction">
         <title>Introduction</title>
 
-        <p><backrest/> aims to be a reliable, easy-to-use backup and restore solution that can seamlessly scale up to the largest databases and workloads by utilizing algorithms that are optimized for database-specific requirements.</p>
+        <p><backrest/> is a reliable backup and restore solution for <postgres/> that seamlessly scales up to the largest databases and workloads.</p>
 
-        <p><backrest/> <link url="{[github-url-base]}/releases/tag/release/{[version-stable]}">v{[version-stable]}</link> is the current stable release.  Release notes are on the <link page="{[backrest-page-release]}">Releases</link> page.</p>
+        <p><backrest/> <link url="{[github-url-base]}/releases/tag/release/{[version-stable]}">v{[version-stable]}</link> is the current stable release. Release notes are on the <link page="{[backrest-page-release]}">Releases</link> page.</p>
 
-        <p>Documentation for <proper>v1</proper> can be found <link url="{[backrest-url-base]}/1">here</link>.  No further releases are planned for <proper>v1</proper> because <proper>v2</proper> is backward-compatible with <proper>v1</proper> options and repositories.</p>
+        <p>Please find us on <link url="{[github-url-base]}">GitHub</link> and give us a star if you like <backrest/>!</p>
     </section>
 
+    <!-- ======================================================================================================================= -->
     <section id="features">
         <title>Features</title>
 
+        <!-- =================================================================================================================== -->
         <section id="parallel-backup-restore">
             <title>Parallel Backup &amp; Restore</title>
 
-            <p>Compression is usually the bottleneck during backup operations but, even with now ubiquitous multi-core servers, most database backup solutions are still single-process.  <backrest/> solves the compression bottleneck with parallel processing.</p>
-
-            <p>Utilizing multiple cores for compression makes it possible to achieve 1TB/hr raw throughput even on a 1Gb/s link.  More cores and a larger pipe lead to even higher throughput.</p>
+            <p>Compression is usually the bottleneck during backup operations so <backrest/> solves this problem with parallel processing and more efficient compression algorithms such as <proper>lz4</proper> and <proper>zstd</proper>.</p>
         </section>
 
+        <!-- =================================================================================================================== -->
         <section id="local-or-remote">
             <title>Local or Remote Operation</title>
 
-            <p>A custom protocol allows <backrest/> to backup, restore, and archive locally or remotely via SSH with minimal configuration.  An interface to query <postgres/> is also provided via the protocol layer so that remote access to <postgres/> is never required, which enhances security.</p>
+            <p>A custom protocol allows <backrest/> to backup, restore, and archive locally or remotely via TLS/SSH with minimal configuration. An interface to query <postgres/> is also provided via the protocol layer so that remote access to <postgres/> is never required, which enhances security.</p>
         </section>
 
+        <!-- =================================================================================================================== -->
+        <section id="multi-repo">
+            <title>Multiple Repositories</title>
+
+            <p>Multiple repositories allow, for example, a local repository with minimal retention for fast restores and a remote repository with a longer retention for redundancy and access across the enterprise.</p>
+        </section>
+
+        <!-- =================================================================================================================== -->
         <section id="backup-types">
-            <title>Full, Incremental, &amp; Differential Backups</title>
+            <title>Full, Differential, &amp; Incremental Backups (at File or Block Level)</title>
 
-            <p>Full, differential, and incremental backups are supported.  <backrest/> is not susceptible to the time resolution issues of rsync, making differential and incremental backups completely safe.</p>
+            <p>Full, differential, and incremental backups are supported. <backrest/> is not susceptible to the time resolution issues of rsync, making differential and incremental backups safe without the requirement to checksum each file. Block-level backups save space by only copying the parts of files that have changed.</p>
         </section>
 
+        <!-- =================================================================================================================== -->
         <section id="backup-rotation">
             <title>Backup Rotation &amp; Archive Expiration</title>
 
-            <p>Retention polices can be set for full and differential backups to create coverage for any timeframe.  WAL archive can be maintained for all backups or strictly for the most recent backups.  In the latter case WAL required to make older backups consistent will be maintained in the archive.</p>
+            <p>Retention polices can be set for full and differential backups to create coverage for any time frame. The WAL archive can be maintained for all backups or strictly for the most recent backups. In the latter case WAL required to make older backups consistent will be maintained in the archive.</p>
         </section>
 
+        <!-- =================================================================================================================== -->
         <section id="backup-integrity">
             <title>Backup Integrity</title>
 
-            <p>Checksums are calculated for every file in the backup and rechecked during a restore.  After a backup finishes copying files, it waits until every WAL segment required to make the backup consistent reaches the repository.</p>
+            <p>Checksums are calculated for every file in the backup and rechecked during a restore or verify. After a backup finishes copying files, it waits until every WAL segment required to make the backup consistent reaches the repository.</p>
 
-            <p>Backups in the repository are stored in the same format as a standard <postgres/> cluster (including tablespaces).  If compression is disabled and hard links are enabled it is possible to snapshot a backup in the repository and bring up a <postgres/> cluster directly on the snapshot.  This is advantageous for terabyte-scale databases that are time consuming to restore in the traditional way.</p>
+            <p>Backups in the repository may be stored in the same format as a standard <postgres/> cluster (including tablespaces). If compression is disabled and hard links are enabled it is possible to snapshot a backup in the repository and bring up a <postgres/> cluster directly on the snapshot. This is advantageous for terabyte-scale databases that are time consuming to restore in the traditional way.</p>
 
             <p>All operations utilize file and directory level fsync to ensure durability.</p>
         </section>
 
+        <!-- =================================================================================================================== -->
         <section id="page-checksum">
             <title>Page Checksums</title>
 
-            <p><postgres/> has supported page-level checksums since 9.3.  If page checksums are enabled <backrest/> will validate the checksums for every file that is copied during a backup.  All page checksums are validated during a full backup and checksums in files that have changed are validated during differential and incremental backups.</p>
+            <p>If page checksums are enabled <backrest/> will validate the checksums for every file that is copied during a backup. All page checksums are validated during a full backup and checksums in files that have changed are validated during differential and incremental backups.</p>
 
             <p>Validation failures do not stop the backup process, but warnings with details of exactly which pages have failed validation are output to the console and file log.</p>
 
             <p>This feature allows page-level corruption to be detected early, before backups that contain valid copies of the data have expired.</p>
         </section>
 
+        <!-- =================================================================================================================== -->
         <section id="backup-resume">
             <title>Backup Resume</title>
 
-            <p>An aborted backup can be resumed from the point where it was stopped.  Files that were already copied are compared with the checksums in the manifest to ensure integrity.  Since this operation can take place entirely on the backup server, it reduces load on the database server and saves time since checksum calculation is faster than compressing and retransmitting data.</p>
+            <p>An interrupted backup can be resumed from the point where it was stopped. Files that were already copied are compared with the checksums in the manifest to ensure integrity. Since this operation can take place entirely on the repository host, it reduces load on the <postgres/> host and saves time since checksum calculation is faster than compressing and retransmitting data.</p>
         </section>
 
+        <!-- =================================================================================================================== -->
         <section id="stream-compression-checksums">
             <title>Streaming Compression &amp; Checksums</title>
 
             <p>Compression and checksum calculations are performed in stream while files are being copied to the repository, whether the repository is located locally or remotely.</p>
 
-            <p>If the repository is on a backup server, compression is performed on the database server and files are transmitted in a compressed format and simply stored on the backup server.  When compression is disabled a lower level of compression is utilized to make efficient use of available bandwidth while keeping CPU cost to a minimum.</p>
+            <p>If the repository is on a repository host, compression is performed on the <postgres/> host and files are transmitted in a compressed format and simply stored on the repository host. When compression is disabled a lower level of compression is utilized to make efficient use of available bandwidth while keeping CPU cost to a minimum.</p>
         </section>
 
+        <!-- =================================================================================================================== -->
         <section id="delta-restore">
             <title>Delta Restore</title>
 
-            <p>The manifest contains checksums for every file in the backup so that during a restore it is possible to use these checksums to speed processing enormously.  On a delta restore any files not present in the backup are first removed and then checksums are taken for the remaining files.  Files that match the backup are left in place and the rest of the files are restored as usual.  Parallel processing can lead to a dramatic reduction in restore times.</p>
+            <p>The manifest contains checksums for every file in the backup so that during a restore it is possible to use these checksums to speed processing enormously. On a delta restore any files not present in the backup are first removed and then checksums are generated for the remaining files. Files that match the backup are left in place and the rest of the files are restored as usual. Parallel processing can lead to a dramatic reduction in restore times.</p>
         </section>
 
+        <!-- =================================================================================================================== -->
         <section id="parallel-archiving">
             <title>Parallel, Asynchronous WAL Push &amp; Get</title>
 
-            <p>Dedicated commands are included for pushing WAL to the archive and getting WAL from the archive.  Both commands support parallelism to accelerate processing and run asynchronously to provide the fastest possible response time to <postgres/>.</p>
+            <p>Dedicated commands are included for pushing WAL to the archive and getting WAL from the archive. Both commands support parallelism to accelerate processing and run asynchronously to provide the fastest possible response time to <postgres/>.</p>
 
-            <p>WAL push automatically detects WAL segments that are pushed multiple times and de-duplicates when the segment is identical, otherwise an error is raised.  Asynchronous WAL push allows transfer to be offloaded to another process which compresses WAL segments in parallel for maximum throughput.  This can be a critical feature for databases with extremely high write volume.</p>
+            <p>WAL push automatically detects WAL segments that are pushed multiple times and de-duplicates when the segment is identical, otherwise an error is raised. Asynchronous WAL push allows transfer to be offloaded to another process which compresses WAL segments in parallel for maximum throughput. This can be a critical feature for databases with extremely high write volume.</p>
 
-            <p>Asynchronous WAL get maintains a local queue of WAL segments that are decompressed and ready for replay.  This reduces the time needed to provide WAL to <postgres/> which maximizes replay speed.  Higher-latency connections and storage (such as <proper>S3</proper>) benefit the most.</p>
+            <p>Asynchronous WAL get maintains a local queue of WAL segments that are decompressed and ready for replay. This reduces the time needed to provide WAL to <postgres/> which maximizes replay speed. Higher-latency connections and storage (such as <proper>S3</proper>) benefit the most.</p>
 
-            <p>The push and get commands both ensure that the database and repository match by comparing <postgres/> versions and system identifiers.  This virtually eliminates the possibility of misconfiguring the WAL archive location.</p>
+            <p>The push and get commands both ensure that the database and repository match by comparing <postgres/> versions and system identifiers. This virtually eliminates the possibility of misconfiguring the WAL archive location.</p>
         </section>
 
+        <!-- =================================================================================================================== -->
         <section id="tablespace-link-support">
             <title>Tablespace &amp; Link Support</title>
 
-            <p>Tablespaces are fully supported and on restore tablespaces can be remapped to any location.  It is also possible to remap all tablespaces to one location with a single command which is useful for development restores.</p>
+            <p>Tablespaces are fully supported and on restore tablespaces can be remapped to any location. It is also possible to remap all tablespaces to one location with a single command which is useful for development restores.</p>
 
-            <p>File and directory links are supported for any file or directory in the <postgres/> cluster.  When restoring it is possible to restore all links to their original locations, remap some or all links, or restore some or all links as normal files or directories within the cluster directory.</p>
+            <p>File and directory links are supported for any file or directory in the <postgres/> cluster. When restoring it is possible to restore all links to their original locations, remap some or all links, or restore some or all links as normal files or directories within the cluster directory.</p>
         </section>
 
+        <!-- =================================================================================================================== -->
         <section id="object-store-support">
-            <title>S3 and Azure Compatible Object Store Support</title>
+            <title>S3, Azure, and GCS Compatible Object Store Support</title>
 
-            <p><backrest/> repositories can be located in <proper>S3</proper> and <proper>Azure</proper> compatible object stores to allow for virtually unlimited capacity and retention.</p>
+            <p><backrest/> repositories can be located in <proper>S3</proper>, <proper>Azure</proper>, and GCS compatible object stores to allow for virtually unlimited capacity and retention.</p>
         </section>
 
+        <!-- =================================================================================================================== -->
         <section id="encryption">
             <title>Encryption</title>
 
             <p><backrest/> can encrypt the repository to secure backups wherever they are stored.</p>
         </section>
 
+        <!-- =================================================================================================================== -->
         <section id="postgres-compatibility">
-            <title>Compatibility with <postgres/> >= 8.3</title>
+            <title>Compatibility with ten versions of <postgres/></title>
 
-            <p><backrest/> includes support for versions down to 8.3, since older versions of PostgreSQL are still regularly utilized.</p>
+            <p><backrest/> includes support for ten versions of <postgres/>, the five supported versions and the last five EOL versions. This allows ample time to upgrade to a supported version.</p>
         </section>
     </section>
 
+    <!-- ======================================================================================================================= -->
     <section id="getting-started">
         <title>Getting Started</title>
 
         <p><backrest/> strives to be easy to configure and operate:</p>
 
         <list>
-          <list-item><link page="{[backrest-page-user-guide-index]}">User guides</link> for various operating systems and <postgres/> versions.</list-item>
-          <list-item><link page="{[backrest-page-command]}">Command reference</link> for command-line operations.</list-item>
-          <list-item><link page="{[backrest-page-configuration]}">Configuration reference</link> for creating <backrest/> configurations.</list-item>
-      </list>
+            <list-item><link page="{[backrest-page-user-guide-index]}">User guides</link> for various operating systems and <postgres/> versions.</list-item>
+            <list-item><link page="{[backrest-page-command]}">Command reference</link> for command-line operations.</list-item>
+            <list-item><link page="{[backrest-page-configuration]}">Configuration reference</link> for creating <backrest/> configurations.</list-item>
+        </list>
+
+        <p>Documentation for <proper>v1</proper> can be found <link url="{[backrest-url-base]}/1">here</link>. No further releases are planned for <proper>v1</proper> because <proper>v2</proper> is backward-compatible with <proper>v1</proper> options and repositories.</p>
     </section>
 
+    <!-- ======================================================================================================================= -->
     <section id="contributions">
         <title>Contributions</title>
 
-        <p>Contributions to <backrest/> are always welcome!
-
-        Code fixes or new features can be submitted via pull requests.  Ideas for new features and improvements to existing functionality or documentation can be <link url="{[github-url-issues]}">submitted as issues</link>.  You may want to check the <link url="{[github-url-wiki-backlog]}">Feature Backlog</link> to see if your suggestion has already been submitted.
-
-        Bug reports should be <link url="{[github-url-issues]}">submitted as issues</link>.  Please provide as much information as possible to aid in determining the cause of the problem.
-
-        You will always receive credit in the <link page="{[backrest-page-release]}">release notes</link> for your contributions.</p>
+        <p>Contributions to <backrest/> are always welcome! Please see our <link url="{[github-url-contributing]}">Contributing Guidelines</link> for details on how to contribute features, improvements or issues.</p>
     </section>
 
+    <!-- ======================================================================================================================= -->
     <section id="support">
         <title>Support</title>
 
-        <p><backrest/> is completely free and open source under the <link url="{[github-url-license]}">MIT</link> license.  You may use it for personal or commercial purposes without any restrictions whatsoever.  Bug reports are taken very seriously and will be addressed as quickly as possible.
+        <p><backrest/> is completely free and open source under the <link url="{[github-url-license]}">MIT</link> license. You may use it for personal or commercial purposes without any restrictions whatsoever. Bug reports are taken very seriously and will be addressed as quickly as possible.</p>
 
-        Creating a robust disaster recovery policy with proper replication and backup strategies can be a very complex and daunting task.  You may find that you need help during the architecture phase and ongoing support to ensure that your enterprise continues running smoothly.
+        <p>Creating a robust disaster recovery policy with proper replication and backup strategies can be a very complex and daunting task. You may find that you need help during the architecture phase and ongoing support to ensure that your enterprise continues running smoothly.</p>
 
-        <link url="{[crunchy-url-base]}">Crunchy Data</link> provides packaged versions of <backrest/> for major operating systems and expert full life-cycle commercial support for <backrest/> and all things <postgres/>.  <link url="{[crunchy-url-base]}">Crunchy Data</link> is committed to providing open source solutions with no vendor lock-in, ensuring that cross-compatibility with the community version of <backrest/> is always strictly maintained.
+        <p><link url="{[crunchy-url-base]}">Crunchy Data</link> provides packaged versions of <backrest/> for major operating systems and expert full life-cycle commercial support for <backrest/> and all things <postgres/>. <link url="{[crunchy-url-base]}">Crunchy Data</link> is committed to providing open source solutions with no vendor lock-in, ensuring that cross-compatibility with the community version of <backrest/> is always strictly maintained.</p>
 
-        Please visit <link url="{[crunchy-url-base]}">Crunchy Data</link> for more information.</p>
+        <p>Please visit <link url="{[crunchy-url-base]}">Crunchy Data</link> for more information.</p>
     </section>
 
+    <!-- ======================================================================================================================= -->
     <section id="recognition">
         <title>Recognition</title>
 
-        <p>Primary recognition goes to Stephen Frost for all his valuable advice and criticism during the development of <backrest/>.
+        <p>Primary recognition goes to Stephen Frost for all his valuable advice and criticism during the development of <backrest/>.</p>
 
-        <link url="{[crunchy-url-base]}">Crunchy Data</link> has contributed significant time and resources to <backrest/> and continues to actively support development. <link url="{[resonate-url-base]}">Resonate</link> also contributed to the development of <backrest/> and allowed early (but well tested) versions to be installed as their primary <postgres/> backup solution.</p>
+        <p><link url="{[crunchy-url-base]}">Crunchy Data</link> has contributed significant time and resources to <backrest/> and continues to actively support development. <link url="{[resonate-url-base]}">Resonate</link> also contributed to the development of <backrest/> and allowed early (but well tested) versions to be installed as their primary <postgres/> backup solution.</p>
 
         <p><link url="https://thenounproject.com/search/?q=lounge+chair&amp;i=129971">Armchair</link> graphic by <link url="https://thenounproject.com/sandorsz">Sandor Szabo</link>.</p>
     </section>

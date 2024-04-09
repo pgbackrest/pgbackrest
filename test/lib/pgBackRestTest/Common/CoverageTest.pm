@@ -26,7 +26,31 @@ use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::DefineTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::ListTest;
-use pgBackRestTest::Common::RunTest;
+
+####################################################################################################################################
+# testRunName
+#
+# Create module/test names by upper-casing the first letter and then inserting capitals after each -.
+####################################################################################################################################
+sub testRunName
+{
+    my $strName = shift;
+    my $bInitCapFirst = shift;
+
+    $bInitCapFirst = defined($bInitCapFirst) ? $bInitCapFirst : true;
+    my $bFirst = true;
+
+    my @stryName = split('\-', $strName);
+    $strName = undef;
+
+    foreach my $strPart (@stryName)
+    {
+        $strName .= ($bFirst && $bInitCapFirst) || !$bFirst ? ucfirst($strPart) : $strPart;
+        $bFirst = false;
+    }
+
+    return $strName;
+}
 
 ####################################################################################################################################
 # Generate an lcov configuration file
@@ -39,7 +63,7 @@ sub coverageLCovConfigGenerate
     my $bCoverageSummary = shift;
 
     my $strBranchFilter =
-        'OBJECT_DEFINE_[A-Z0-9_]+\(|\s{4}[A-Z][A-Z0-9_]+\([^\?]*\)|\s{4}(ASSERT|assert|switch\s)\(|\{\+{0,1}' .
+        'OBJECT_DEFINE_[A-Z0-9_]+\(|\s{4}[A-Z][A-Z0-9_]+\([^\?]*\)|\s{4}(ASSERT|CHECK|CHECK_FMT|assert|switch\s)\(|\{\+{0,1}' .
         ($bCoverageSummary ? 'uncoverable_branch' : 'uncover(ed|able)_branch');
     my $strLineFilter =
         '\{\+{0,1}' . ($bCoverageSummary ? 'uncoverable' : '(uncover(ed|able)' . ($bContainer ? '' : '|vm_covered') . ')') . '[^_]';
@@ -54,7 +78,7 @@ sub coverageLCovConfigGenerate
         "#\n" .
         '# OBJECT_DEFINE_[A-Z0-9_]+\( - exclude object definitions' . "\n" .
         '# \s{4}[A-Z][A-Z0-9_]+\([^\?]*\) - exclude macros that do not take a conditional parameter and are not themselves a parameter' . "\n" .
-        '# ASSERT/(|assert\( - exclude asserts since it usually not possible to trigger both branches' . "\n" .
+        '# ASSERT/(|CHECK/(|assert\( - exclude asserts/checks since it usually not possible to trigger both branches' . "\n" .
         '# switch \( - lcov requires default: to show complete coverage but --Wswitch-enum enforces all enum values be present' . "\n" .
         "lcov_excl_br_line=${strBranchFilter}\n" .
         "\n" .
@@ -118,12 +142,22 @@ sub coverageExtract
 
     executeTest(
         (defined($strContainerImage) ? 'docker exec -i -u ' . TEST_USER . " ${strContainerImage} " : '') .
-        "${strLCovExe} --capture --directory=${strWorkUnitPath} --o=${strLCovOut}");
+        "${strLCovExe} --capture --directory=${strWorkUnitPath} --o=${strLCovOut} 2>&1");
 
     # Generate coverage report for each module
     foreach my $strCoveredModule (@stryCoveredModule)
     {
         my $strModuleName = testRunName($strCoveredModule, false);
+
+        if ($strModuleName =~ /^test/mg)
+        {
+            $strModuleName =~ s/^test/src/mg;
+        }
+        elsif ($strModuleName =~ /^doc/mg)
+        {
+            $strModuleName =~ s/^doc/doc\/src/mg;
+        }
+
         my $strModuleOutName = $strModuleName;
         my $bTest = false;
 
@@ -134,22 +168,39 @@ sub coverageExtract
         }
 
         # Generate lcov reports
-        my $strModulePath =
-            "${strWorkPath}/repo/" .
-            (${strModuleOutName} =~ /^test\// ?
-                'test/src/module/' . substr(${strModuleOutName}, 5) : "src/${strModuleOutName}");
+        my $strModulePath = "${strWorkPath}/repo/";
+
+        if (${strModuleOutName} =~ /^src\//)
+        {
+            $strModulePath .= 'test/src/' . substr(${strModuleOutName}, 4);
+        }
+        elsif (${strModuleOutName} =~ /^test\//)
+        {
+            $strModulePath .= 'test/src/module/' . substr(${strModuleOutName}, 5);
+        }
+        elsif (${strModuleOutName} =~ /^doc\//)
+        {
+            $strModulePath .= "${strModuleOutName}";
+        }
+        else
+        {
+            $strModulePath .= "src/${strModuleOutName}";
+        }
+
         my $strLCovFile = "${strTestResultCoveragePath}/raw/${strModuleOutName}.lcov";
         my $strLCovTotal = "${strWorkTmpPath}/all.lcov";
+        my $bInc = $strModuleName =~ '\.vendor$' || $strModuleName =~ '\.auto$';
+        my $strModuleSourceFile = $strModulePath . '.c' . ($bInc ? '.inc' : '');
 
         executeTest(
-            "${strLCovExe}" . ($bTest ? ' --rc lcov_branch_coverage=0' : '') . " --extract=${strLCovOut} */${strModuleName}.c" .
-                " --o=${strLCovOutTmp}");
+            "${strLCovExe}" . ($bTest ? ' --rc lcov_branch_coverage=0' : '') . " --extract=${strLCovOut} *${strModuleName}.c" .
+            ($bInc ? '.inc' : '') . " --o=${strLCovOutTmp}");
 
         # Combine with prior run if there was one
         if ($oStorage->exists($strLCovFile))
         {
             my $strCoverage = ${$oStorage->get($strLCovOutTmp)};
-            $strCoverage =~ s/^SF\:.*$/SF:$strModulePath\.c/mg;
+            $strCoverage =~ s/^SF\:.*$/SF:$strModuleSourceFile/mg;
             $oStorage->put($strLCovOutTmp, $strCoverage);
 
             executeTest("${strLCovExe} --add-tracefile=${strLCovOutTmp} --add-tracefile=${strLCovFile} --o=${strLCovOutTmp}");
@@ -185,7 +236,7 @@ sub coverageExtract
             if (!$bTest || $iTotalLines != $iCoveredLines || $iTotalBranches != $iCoveredBranches)
             {
                 # Fix source file name
-                $strCoverage =~ s/^SF\:.*$/SF:$strModulePath\.c/mg;
+                $strCoverage =~ s/^SF\:.*$/SF:$strModuleSourceFile/mg;
 
                 $oStorage->put($oStorage->openWrite($strLCovFile, {bPathCreate => true}), $strCoverage);
 
@@ -295,6 +346,8 @@ sub coverageValidateAndGenerate
         foreach my $strCodeModule (sort(keys(%{$hCoverageActual})))
         {
             my $strCoverageFile = $strCodeModule;
+            $strCoverageFile =~ s/^test/src/mg;
+            $strCoverageFile =~ s/^doc/doc\/src/mg;
             $strCoverageFile =~ s/^module/test/mg;
             $strCoverageFile = "${strTestResultCoveragePath}/raw/${strCoverageFile}.lcov";
 
@@ -343,17 +396,29 @@ sub coverageValidateAndGenerate
             &log(INFO, "tested modules have full coverage");
         }
 
-        if ($bCoverageReport)
+        # Always generate unified coverage report if there was missing coverage. This is useful for CI.
+        if ($bCoverageReport || $result != 0)
         {
             &log(INFO, 'writing C coverage report');
 
-            executeTest(
-                "genhtml ${strLCovFile} --config-file=${strTestResultCoveragePath}/raw/lcov.conf" .
-                    " --prefix=${strWorkPath}/repo" .
-                    " --output-directory=${strTestResultCoveragePath}/lcov");
+            if ($bCoverageReport)
+            {
+                executeTest(
+                    "genhtml ${strLCovFile} --config-file=${strTestResultCoveragePath}/raw/lcov.conf" .
+                        " --prefix=${strWorkPath}/repo" .
+                        " --output-directory=${strTestResultCoveragePath}/lcov");
+            }
 
             coverageGenerate(
-                $oStorage, "${strWorkPath}/repo", "${strTestResultCoveragePath}/raw", "${strTestResultCoveragePath}/coverage.html");
+                $oStorage, "${strWorkPath}/repo", "${strTestResultCoveragePath}/raw", "${strTestResultCoveragePath}/coverage.html",
+                $bCoverageReport);
+        }
+        # Else output report status in the HTML
+        else
+        {
+            $oStorage->put(
+                "${strTestResultCoveragePath}/coverage.html",
+                "<center>[ " . ($result == 0 ? "Coverage Complete" : "No Coverage Report") . " ]</center>");
         }
 
         if ($bCoverageSummary)
@@ -363,12 +428,6 @@ sub coverageValidateAndGenerate
             coverageDocSummaryGenerate(
                 $oStorage, "${strTestResultCoveragePath}/raw", "${strTestResultSummaryPath}/metric-coverage-report.auto.xml");
         }
-    }
-
-    # Remove coverage report when no coverage or no report to avoid confusion from looking at an old report
-    if (!$bCoverageReport || !$oStorage->exists($strLCovFile))
-    {
-        executeTest("rm -rf ${strTestResultCoveragePath}");
     }
 
     return $result;
@@ -408,6 +467,7 @@ sub coverageGenerate
     my $strBasePath = shift;
     my $strCoveragePath = shift;
     my $strOutFile = shift;
+    my $bCoverageReport = shift;
 
     # Track missing coverage
     my $rhCoverage = {};
@@ -417,6 +477,10 @@ sub coverageGenerate
 
     foreach my $strFileCov (sort(keys(%{$rhManifest})))
     {
+        # If a coverage report was not requested then skip coverage of test modules. If we are here it means there was missing
+        # coverage on CI and we want to keep the report as small as possible.
+        next if !$bCoverageReport && $strFileCov =~ /Test\.lcov$/;
+
         if ($strFileCov =~ /\.lcov$/)
         {
             my $strCoverage = ${$oStorage->get("${strCoveragePath}/${strFileCov}")};
@@ -437,8 +501,8 @@ sub coverageGenerate
                     $strFile = substr($strLine, 3);
                     $rhCoverage->{$strFile} = undef;
 
-                    # Generate a random anchor so new reports will not show links as already followed.  This is also an easy way
-                    # to create valid, disambiguos links.
+                    # Generate a random anchor so new reports will not show links as already followed. This is also an easy way to
+                    # create valid, disambiguos links.
                     $rhCoverage->{$strFile}{anchor} = sha1_hex(rand(16));
                 }
                 # Mark functions as initially covered
@@ -920,7 +984,8 @@ sub coverageDocSummaryGenerate
 
     foreach my $strFileCov (sort(keys(%{$rhManifest})))
     {
-        next if $strFileCov =~ /^test\//;
+        # Skip test modules (this includes modules that start with src/ since src/ is stripped from core modules)
+        next if $strFileCov =~ /^test\// || $strFileCov =~ /^src\//;
 
         if ($strFileCov =~ /\.lcov$/)
         {

@@ -6,34 +6,24 @@ Generate a hash (sha1, md5, etc.) from a string, Buffer, or using an IoFilter.
 #ifndef COMMON_CRYPTO_HASH_H
 #define COMMON_CRYPTO_HASH_H
 
+#include "common/crypto/common.h"
 #include "common/io/filter/filter.h"
 #include "common/type/string.h"
 
 /***********************************************************************************************************************************
 Filter type constant
 ***********************************************************************************************************************************/
-#define CRYPTO_HASH_FILTER_TYPE                                     "hash"
-    STRING_DECLARE(CRYPTO_HASH_FILTER_TYPE_STR);
-
-/***********************************************************************************************************************************
-Hash types
-***********************************************************************************************************************************/
-#define HASH_TYPE_MD5                                               "md5"
-    STRING_DECLARE(HASH_TYPE_MD5_STR);
-#define HASH_TYPE_SHA1                                              "sha1"
-    STRING_DECLARE(HASH_TYPE_SHA1_STR);
-#define HASH_TYPE_SHA256                                            "sha256"
-    STRING_DECLARE(HASH_TYPE_SHA256_STR);
+#define CRYPTO_HASH_FILTER_TYPE                                     STRID5("hash", 0x44c280)
 
 /***********************************************************************************************************************************
 Hashes for zero-length files (i.e., starting hash)
 ***********************************************************************************************************************************/
 #define HASH_TYPE_MD5_ZERO                                          "d41d8cd98f00b204e9800998ecf8427e"
 #define HASH_TYPE_SHA1_ZERO                                         "da39a3ee5e6b4b0d3255bfef95601890afd80709"
-    STRING_DECLARE(HASH_TYPE_SHA1_ZERO_STR);
+BUFFER_DECLARE(HASH_TYPE_SHA1_ZERO_BUF);
 #define HASH_TYPE_SHA256_ZERO                                                                                                      \
     "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-    STRING_DECLARE(HASH_TYPE_SHA256_ZERO_STR);
+BUFFER_DECLARE(HASH_TYPE_SHA256_ZERO_BUF);
 
 /***********************************************************************************************************************************
 Hash type sizes
@@ -50,16 +40,16 @@ Hash type sizes
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-IoFilter *cryptoHashNew(const String *type);
-IoFilter *cryptoHashNewVar(const VariantList *paramList);
+FN_EXTERN IoFilter *cryptoHashNew(HashType type);
+FN_EXTERN IoFilter *cryptoHashNewPack(const Pack *paramList);
 
 /***********************************************************************************************************************************
 Helper functions
 ***********************************************************************************************************************************/
 // Get hash for one buffer
-Buffer *cryptoHashOne(const String *type, const Buffer *message);
+FN_EXTERN Buffer *cryptoHashOne(HashType type, const Buffer *message);
 
 // Get hmac for one message/key
-Buffer *cryptoHmacOne(const String *type, const Buffer *key, const Buffer *message);
+FN_EXTERN Buffer *cryptoHmacOne(HashType type, const Buffer *key, const Buffer *message);
 
 #endif

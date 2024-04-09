@@ -1,12 +1,5 @@
 # Release Build Instructions
 
-## Set location of the `pgbackrest` repo
-
-This makes the rest of the commands in the document easier to run (change to your repo path):
-```
-export PGBR_REPO=/backrest
-```
-
 ## Create a branch to test the release
 
 ```
@@ -35,12 +28,12 @@ to:
 
 ## Update code counts
 ```
-${PGBR_REPO?}/test/test.pl --code-count
+pgbackrest/test/test.pl --code-count
 ```
 
-## Build release documentation.  Be sure to install latex using the instructions from the Vagrantfile before running this step.
+## Build release documentation. Be sure to install latex using the instructions from the Vagrantfile before running this step.
 ```
-${PGBR_REPO?}/doc/release.pl --build
+pgbackrest/doc/release.pl --build
 ```
 
 ## Commit release branch and push to CI for testing
@@ -49,15 +42,49 @@ git commit -m "Release test"
 git push origin release-ci
 ```
 
+## Perform stress testing on release
+
+- Build the documentation with stress testing enabled:
+```
+pgbackrest/doc/doc.pl --out=html --include=user-guide --require=/stress --var=stress=y --var=stress-scale-table=100 --var=stress-scale-data=1000 --pre --no-cache
+```
+
+During data load the archive-push and archive-get processes can be monitored with:
+```
+docker exec -it doc-pg-primary tail -f /var/log/pgbackrest/demo-archive-push-async.log
+docker exec -it doc-pg-standby tail -f /var/log/pgbackrest/demo-archive-get-async.log
+```
+
+During backup/restore the processes can be monitored with:
+```
+docker exec -it doc-repository tail -f /var/log/pgbackrest/demo-backup.log
+docker exec -it doc-pg-standby tail -f /var/log/pgbackrest/demo-restore.log
+```
+
+Processes can generally be monitored using 'top'. Once `top` is running, press `o` then enter `COMMAND=pgbackrest`. This will filter output to pgbackrest processes.
+
+- Check for many log entries in the `archive-push`/`archive-get` logs to ensure async archiving was enabled:
+```
+docker exec -it doc-pg-primary vi /var/log/pgbackrest/demo-archive-push-async.log
+docker exec -it doc-pg-standby vi /var/log/pgbackrest/demo-archive-get-async.log
+```
+
+- Check the backup log to ensure the correct tables/data were created and backed up. It should look something like:
+```
+INFO: full backup size = 14.9GB, file total = 101004
+```
+
+- Check the restore log to ensure the correct tables/data were restored. The size and file total should match exactly.
+
 ## Clone web documentation into `doc/site`
 ```
-cd ${PGBR_REPO?}/doc
+cd pgbackrest/doc
 git clone git@github.com:pgbackrest/website.git site
 ```
 
 ## Deploy web documentation to `doc/site`
 ```
-${PGBR_REPO?}/doc/release.pl --deploy
+pgbackrest/doc/release.pl --deploy
 ```
 
 ## Final commit of release to integration
@@ -68,23 +95,23 @@ v2.14: Bug Fix and Improvements
 
 Bug Fixes:
 
-* Fix segfault when process-max > 8 for archive-push/archive-get. (Reported by Jens Wilke.)
+* Fix segfault when process-max > 8 for archive-push/archive-get. (Reported by User.)
 
 Improvements:
 
-* Bypass database checks when stanza-delete issued with force. (Contributed by Cynthia Shang. Suggested by hatifnatt.)
+* Bypass database checks when stanza-delete issued with force. (Contributed by User. Suggested by User.)
 * Add configure script for improved multi-platform support.
 
 Documentation Features:
 
-* Add user guide for CentOS/RHEL 7.
+* Add user guide for Debian.
 ```
 
 Commit to integration with the above message and push to CI.
 
-## Push to master
+## Push to main
 
-Push release commit to master once CI testing is complete.
+Push release commit to main once CI testing is complete.
 
 ## Create release on github
 
@@ -94,25 +121,25 @@ v2.14: Bug Fix and Improvements
 
 **Bug Fixes**:
 
-- Fix segfault when process-max > 8 for archive-push/archive-get. (Reported by Jens Wilke.)
+- Fix segfault when process-max > 8 for archive-push/archive-get. (Reported by User.)
 
 **Improvements**:
 
-- Bypass database checks when stanza-delete issued with force. (Contributed by Cynthia Shang. Suggested by hatifnatt.)
+- Bypass database checks when stanza-delete issued with force. (Contributed by User. Suggested by User.)
 - Add configure script for improved multi-platform support.
 
 **Documentation Features**:
 
-- Add user guide for CentOS/RHEL 7.
+- Add user guide for Debian.
 ```
 
-The first line will be the release title and the rest will be the body.  The tag field should be updated with the current version so a tag is created from master. **Be sure to select the release commit explicitly rather than auto-tagging the last commit in master!**
+The first line will be the release title and the rest will be the body. The tag field should be updated with the current version so a tag is created from main. **Be sure to select the release commit explicitly rather than auto-tagging the last commit in main!**
 
-## Push web documentation to master and deploy
+## Push web documentation to main and deploy
 ```
-cd ${PGBR_REPO?}/doc/site
+cd pgbackrest/doc/site
 git commit -m "v2.14 documentation."
-git push origin master
+git push origin main
 ```
 
 Deploy the documentation on `pgbackrest.org`.
@@ -121,9 +148,13 @@ Deploy the documentation on `pgbackrest.org`.
 
 ## Announce release on Twitter
 
-## Do a press release once per quarter
+## Publish a postgresql.org news item when there are major new features
 
-Start from the press release at https://www.postgresql.org/about/news/2057 (logon required) and update for improvements made in the last quarter. Then convert to text and send to `pgsql-announce` using https://www.postgresql.org/message-id/6b1bbd0f-08a7-bc51-7252-12bd3a645aea%40pgmasters.net as an example of how it looks in text format.
+Start from NEWS.md and update with the new date, version, and interesting features added since the last release. News items are automatically sent to the `pgsql-announce` mailing list once they have been approved.
+
+## Update PostgreSQL ecosystem wiki
+
+Update version, date, and minimum supported version (when changed): https://wiki.postgresql.org/wiki/Ecosystem:Backup#pgBackRest
 
 ## Prepare for the next release
 
@@ -143,7 +174,12 @@ to:
 
 Run deploy to generate git history (ctrl-c as soon as the file is generated):
 ```
-${PGBR_REPO?}/doc/release.pl --build
+pgbackrest/doc/release.pl --build
+```
+
+Run code count to add new release file:
+```
+pgbackrest/test/test.pl --code-count
 ```
 
 Commit and push to integration:
@@ -156,18 +192,18 @@ git push origin integration
 
 These scripts are required by `src/config` and should be updated after each release, when needed. Note that these files are updated very infrequently.
 
-Check the latest version of `automake` and see if it is > `1.16.2`:
+Check the latest version of `automake` and see if it is > `1.16.5`:
 ```
 https://git.savannah.gnu.org/gitweb/?p=automake.git
 ```
 
 If so, update the version above and copy `lib/install-sh` from the `automake` repo to the `pgbackrest` repo at `[repo]/src/build/install-sh`:
 ```
-wget -O ${PGBR_REPO?}/src/build/install-sh '[URL]'
+wget -O pgbackrest/src/build/install-sh '[URL]'
 ```
 
 Get the latest versions of `config.sub` and `config.guess`. These files are not versioned so the newest version is pulled at the beginning of the release cycle to allow time to test stability.
 ```
-wget -O ${PGBR_REPO?}/src/build/config.guess 'https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD'
-wget -O ${PGBR_REPO?}/src/build/config.sub 'https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD'
+wget -O pgbackrest/src/build/config.guess 'https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD'
+wget -O pgbackrest/src/build/config.sub 'https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD'
 ```
