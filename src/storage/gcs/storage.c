@@ -912,41 +912,61 @@ storageGcsNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWriteParam 
 }
 
 /**********************************************************************************************************************************/
+#define GCS_HEADER_CONTENTID_RESPONSE                               "response-"
+
 typedef struct StorageGcsPathRemoveData
 {
     StorageGcs *this;                                               // Storage Object
     MemContext *memContext;                                         // Mem context to create requests in
     HttpRequest *request;                                           // Async remove request
-    List *contentList;                                              // Content list currently being build
+    List *requestContentList;                                       // Content list for async request
+    List *contentList;                                              // Content list currently being built
     const String *path;                                             // Root path of remove
 } StorageGcsPathRemoveData;
 
-static HttpRequest *
-storageGcsPathRemoveInternal(StorageGcs *const this, HttpRequest *const request, List *const contentList)
+static void
+storageGcsPathRemoveInternal(StorageGcsPathRemoveData *const data)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_GCS, this);
-        FUNCTION_TEST_PARAM(HTTP_REQUEST, request);
-        FUNCTION_TEST_PARAM(LIST, contentList);
+        FUNCTION_TEST_PARAM_P(VOID, data);
     FUNCTION_TEST_END();
 
-    ASSERT(this != NULL);
+    ASSERT(data != NULL);
+    ASSERT(data->this != NULL);
 
     // Get response for async request
-    if (request != NULL)
+    if (data->request != NULL)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            HttpResponse *const response = storageGcsResponseP(request);
+            HttpResponse *const response = storageGcsResponseP(data->request);
             HttpResponseMulti *const responseMulti = httpResponseMultiNew(
                 httpResponseContent(response), httpHeaderGet(httpResponseHeader(response), HTTP_HEADER_CONTENT_TYPE_STR));
+
+            // Loop through all response parts
             HttpResponse *responsePart = httpResponseMultiNext(responseMulti);
             CHECK(FormatError, responsePart != NULL, "at least one response part is required");
 
             do
             {
+                // If not OK and not missing then retry
                 if (!httpResponseCodeOk(responsePart) && httpResponseCode(responsePart) != HTTP_RESPONSE_CODE_NOT_FOUND)
-                    httpRequestError(request, responsePart);
+                {
+                    // Extract and check content-id header
+                    const String *const contentId = httpHeaderGet(httpResponseHeader(responsePart), HTTP_HEADER_CONTENT_ID_STR);
+                    CHECK(FormatError, contentId != NULL, HTTP_HEADER_CONTENT_ID " header is not present");
+                    CHECK_FMT(
+                        FormatError,
+                        strBeginsWithZ(contentId, GCS_HEADER_CONTENTID_RESPONSE),
+                        HTTP_HEADER_CONTENT_ID " header '%s' must begin with '" GCS_HEADER_CONTENTID_RESPONSE "'", strZ(contentId));
+
+                    // Use content-id to get content
+                    const unsigned int contentIdx = cvtZToUInt(strZ(strSub(contentId, sizeof(GCS_HEADER_CONTENTID_RESPONSE) - 1)));
+                    const StorageGcsRequestPart *const content = lstGet(data->requestContentList, contentIdx);
+
+                    // Retry remove
+                    storageGcsRequestP(data->this, content->verb, .object = content->object, .allowMissing = true);
+                }
 
                 httpResponseFree(responsePart);
                 responsePart = httpResponseMultiNext(responseMulti);
@@ -955,16 +975,30 @@ storageGcsPathRemoveInternal(StorageGcs *const this, HttpRequest *const request,
         }
         MEM_CONTEXT_TEMP_END();
 
-        httpRequestFree(request);
+        // Free request
+        httpRequestFree(data->request);
+        data->request = NULL;
+
+        // Free content list
+        lstFree(data->requestContentList);
     }
 
     // Send new async request if there is more to remove
-    HttpRequest *result = NULL;
+    if (data->contentList != NULL)
+    {
+        MEM_CONTEXT_BEGIN(data->memContext)
+        {
+            data->request = storageGcsRequestAsyncP(
+                data->this, HTTP_VERB_POST_STR, .path = STRDEF("/batch/storage/v1"), .contentList = data->contentList);
+        }
+        MEM_CONTEXT_END();
 
-    if (contentList != NULL)
-        result = storageGcsRequestAsyncP(this, HTTP_VERB_POST_STR, .path = STRDEF("/batch/storage/v1"), .contentList = contentList);
+        // Store the content list for use in error handling
+        data->requestContentList = data->contentList;
+        data->contentList = NULL;
+    }
 
-    FUNCTION_TEST_RETURN(HTTP_REQUEST, result);
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 static void
@@ -1005,16 +1039,7 @@ storageGcsPathRemoveCallback(void *const callbackData, const StorageInfo *const 
         MEM_CONTEXT_OBJ_END();
 
         if (lstSize(data->contentList) == data->this->deleteMax)
-        {
-            MEM_CONTEXT_BEGIN(data->memContext)
-            {
-                data->request = storageGcsPathRemoveInternal(data->this, data->request, data->contentList);
-            }
-            MEM_CONTEXT_END();
-
-            lstFree(data->contentList);
-            data->contentList = NULL;
-        }
+            storageGcsPathRemoveInternal(data);
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -1044,14 +1069,18 @@ storageGcsPathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfa
             .path = strEq(path, FSLASH_STR) ? EMPTY_STR : path,
         };
 
-        storageGcsListInternal(this, path, storageInfoLevelType, NULL, true, storageGcsPathRemoveCallback, &data);
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            storageGcsListInternal(this, path, storageInfoLevelType, NULL, true, storageGcsPathRemoveCallback, &data);
 
-        // Call if there is more to be removed
-        if (data.contentList != NULL)
-            data.request = storageGcsPathRemoveInternal(this, data.request, data.contentList);
+            // Call if there is more to be removed
+            if (data.contentList != NULL)
+                storageGcsPathRemoveInternal(&data);
 
-        // Check response on last async request
-        storageGcsPathRemoveInternal(this, data.request, NULL);
+            // Check response on last async request
+            storageGcsPathRemoveInternal(&data);
+        }
+        MEM_CONTEXT_TEMP_END();
     }
     MEM_CONTEXT_TEMP_END();
 

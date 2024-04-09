@@ -956,6 +956,9 @@ testRun(void)
                         "    },"
                         "    {"
                         "      \"name\": \"path1/xxx.zzz\""
+                        "    },"
+                        "    {"
+                        "      \"name\": \"path2/file2\""
                         "    }"
                         "  ]"
                         "}");
@@ -979,6 +982,14 @@ testRun(void)
                         "DELETE /storage/v1/b/bucket/o/path1%2Fxxx.zzz HTTP/1.1\r\n"
                         "content-length:0\r\n"
                         "\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-transfer-encoding:binary\r\n"
+                        "content-id:2\r\n"
+                        "\r\n"
+                        "DELETE /storage/v1/b/bucket/o/path2%2Ffile2 HTTP/1.1\r\n"
+                        "content-length:0\r\n"
+                        "\r\n"
                         "\r\n--" HTTP_MULTIPART_BOUNDARY "\r\n");
                 testResponseP(
                     service, .multiPart = true,
@@ -993,7 +1004,15 @@ testRun(void)
                         "content-id:response-1\r\n"
                         "\r\n"
                         "HTTP/1.1 200 OK\r\n\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-id:response-2\r\n"
+                        "\r\n"
+                        "HTTP/1.1 300 Error\r\n\r\n"
                         "\r\n--" HTTP_MULTIPART_BOUNDARY "\r\n");
+
+                testRequestP(service, HTTP_VERB_DELETE, .object = "path2/file2");
+                testResponseP(service);
 
                 TEST_RESULT_VOID(storagePathRemoveP(storage, STRDEF("/"), .recurse = true), "remove");
 
@@ -1061,28 +1080,28 @@ testRun(void)
                         "content-type:application/http\r\n"
                         "content-id:response-0\r\n"
                         "\r\n"
-                        "HTTP/1.1 300 Error\r\n"
+                        "HTTP/1.1 305 Error\r\n"
                         "content-length:5\r\n"
                         "content-type:text\r\n\r\n"
                         "ERROR"
                         "\r\n--" HTTP_MULTIPART_BOUNDARY "\r\n");
 
+                testRequestP(service, HTTP_VERB_DELETE, .object = "path/path1/xxx.zzz");
+                testResponseP(service, .code = 300, .content = "ERROR2");
+
                 TEST_ERROR_FMT(
                     storagePathRemoveP(storage, STRDEF("/path"), .recurse = true), ProtocolError,
-                    "HTTP request failed with 300 (Error):\n"
+                    "HTTP request failed with 300:\n"
                     "*** Path/Query ***:\n"
-                    "POST /batch/storage/v1\n"
+                    "DELETE /storage/v1/b/bucket/o/path%%2Fpath1%%2Fxxx.zzz\n"
                     "*** Request Headers ***:\n"
                     "authorization: <redacted>\n"
-                    "content-length: 254\n"
-                    "content-type: multipart/mixed; boundary=" HTTP_MULTIPART_BOUNDARY "\n"
+                    "content-length: 0\n"
                     "host: %s\n"
                     "*** Response Headers ***:\n"
-                    "content-id: response-0\n"
-                    "content-length: 5\n"
-                    "content-type: application/http, text\n"
+                    "content-length: 6\n"
                     "*** Response Content ***:\n"
-                    "ERROR",
+                    "ERROR2",
                     strZ(hrnServerHost()));
 
                 ((StorageGcs *)storageDriver(storage))->deleteMax = STORAGE_GCS_DELETE_MAX;
