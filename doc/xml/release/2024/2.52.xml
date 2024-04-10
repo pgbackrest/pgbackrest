@@ -2,6 +2,17 @@
     <release-core-list>
         <release-improvement-list>
             <release-item>
+                <github-pull-request id="2321"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="michael.schout"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Allow explicit disabling of optional dependencies in meson builds.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2312"/>
 
                 <release-item-contributor-list>
