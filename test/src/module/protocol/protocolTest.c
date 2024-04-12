@@ -299,7 +299,7 @@ testRun(void)
         OBJ_NEW_BASE_BEGIN(Exec, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
         {
             protocolHelperClient.exec = OBJ_NEW_ALLOC();
-            *protocolHelperClient.exec = (Exec){.name = strNewZ("test"), .command = strNewZ("test"), .processId = INT_MAX};
+            *protocolHelperClient.exec = (Exec){.pub = {.command = strNewZ("test")}, .name = strNewZ("test"), .processId = INT_MAX};
             memContextCallbackSet(memContextCurrent(), execFreeResource, protocolHelperClient.exec);
         }
         OBJ_NEW_END();

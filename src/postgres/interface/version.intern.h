@@ -70,7 +70,7 @@ Read the version specific pg_control into a general data structure
             .timeline = ((ControlFileData *)controlFile)->checkPointCopy.ThisTimeLineID,                                           \
             .pageSize = ((ControlFileData *)controlFile)->blcksz,                                                                  \
             .walSegmentSize = ((ControlFileData *)controlFile)->xlog_seg_size,                                                     \
-            .pageChecksum = ((ControlFileData *)controlFile)->data_checksum_version != 0,                                          \
+            .pageChecksumVersion = ((ControlFileData *)controlFile)->data_checksum_version,                                        \
         };                                                                                                                         \
     }
 
@@ -88,6 +88,22 @@ Get control crc offset
     pgInterfaceControlCrcOffset##version(void)                                                                                     \
     {                                                                                                                              \
         return offsetof(ControlFileData, crc);                                                                                     \
+    }
+
+#endif
+
+/***********************************************************************************************************************************
+Invalidate control checkpoint. PostgreSQL skips the first segment so any LSN in that segment is invalid.
+***********************************************************************************************************************************/
+#if PG_VERSION > PG_VERSION_MAX
+
+#elif PG_VERSION >= PG_VERSION_93
+
+#define PG_INTERFACE_CONTROL_CHECKPOINT_INVALIDATE(version)                                                                        \
+    static void                                                                                                                    \
+    pgInterfaceControlCheckpointInvalidate##version(unsigned char *const controlFile)                                              \
+    {                                                                                                                              \
+        ((ControlFileData *)controlFile)->checkPoint = PG_CONTROL_CHECKPOINT_INVALID;                                              \
     }
 
 #endif

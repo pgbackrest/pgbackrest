@@ -7,31 +7,31 @@ only_if: $CIRRUS_BRANCH == 'integration' || $CIRRUS_PR != '' || $CIRRUS_BRANCH =
 # No auto-cancel on integration
 auto_cancellation: $CIRRUS_BRANCH != 'integration'
 
-# Arm64
+# Arm64 - disabled because it often takes several hours for the test to get queued in Cirrus CI
 # ----------------------------------------------------------------------------------------------------------------------------------
-arm64_task:
-  arm_container:
-    image: ubuntu:20.04
-    cpu: 4
-    memory: 2G
+# arm64_task:
+#   arm_container:
+#     image: ubuntu:20.04
+#     cpu: 4
+#     memory: 2G
 
-  install_script:
-    - apt-get update && apt-get install -y perl sudo locales
-    - sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
-    - dpkg-reconfigure --frontend=noninteractive locales
-    - update-locale LANG=en_US.UTF-8
-    - adduser --disabled-password --gecos "" testuser
-    - echo '%testuser ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
-    - chown -R testuser ${CIRRUS_WORKING_DIR?}
+#   install_script:
+#     - apt-get update && apt-get install -y perl sudo locales
+#     - sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
+#     - dpkg-reconfigure --frontend=noninteractive locales
+#     - update-locale LANG=en_US.UTF-8
+#     - adduser --disabled-password --gecos "" testuser
+#     - echo '%testuser ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
+#     - chown -R testuser ${CIRRUS_WORKING_DIR?}
 
-  script:
-    - su - testuser -c "${CIRRUS_WORKING_DIR?}/test/ci.pl test --sudo --no-tempfs --param=c-only --param=no-coverage"
+#   script:
+#     - su - testuser -c "${CIRRUS_WORKING_DIR?}/test/ci.pl test --sudo --no-tempfs --param=c-only --param=no-coverage"
 
 # FreeBSD 13
 # ----------------------------------------------------------------------------------------------------------------------------------
 freebsd_13_task:
   freebsd_instance:
-    image_family: freebsd-13-2
+    image_family: freebsd-13-3
     cpu: 4
     memory: 4G
 

@@ -1,0 +1,15 @@
+# Suppress issues in libssh2 on Ubuntu 20.04
+{
+    libssh2_ubuntu_20_04
+    Memcheck:Addr1
+    ...
+    obj:/usr/lib/x86_64-linux-gnu/libssh2.so.1.0.1
+    ...
+}
+{
+    libssh2_ubuntu_20_04
+    Memcheck:Leak
+    ...
+    obj:/usr/lib/x86_64-linux-gnu/libssh2.so.1.0.1
+    ...
+}

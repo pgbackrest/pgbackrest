@@ -248,7 +248,7 @@ backupInit(const InfoBackup *const infoBackup)
         // If online then use the value in pg_control to set checksum-page
         if (cfgOptionBool(cfgOptOnline))
         {
-            cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, VARBOOL(pgControl.pageChecksum));
+            cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, VARBOOL(pgControl.pageChecksumVersion != 0));
         }
         // Else set to false. An offline cluster is likely to have false positives so better if the user enables manually.
         else
@@ -256,7 +256,7 @@ backupInit(const InfoBackup *const infoBackup)
     }
     // Else if checksums have been explicitly enabled but are not available then warn and reset. ??? We should be able to make this
     // determination when offline as well, but the integration tests don't write pg_control accurately enough to support it.
-    else if (cfgOptionBool(cfgOptOnline) && !pgControl.pageChecksum && cfgOptionBool(cfgOptChecksumPage))
+    else if (cfgOptionBool(cfgOptOnline) && pgControl.pageChecksumVersion == 0 && cfgOptionBool(cfgOptChecksumPage))
     {
         LOG_WARN(CFGOPT_CHECKSUM_PAGE " option set to true but checksums are not enabled on the cluster, resetting to false");
         cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, BOOL_FALSE_VAR);
@@ -774,28 +774,32 @@ backupResumeClean(
                     if (fileCompressType != compressTypeNone)
                         manifestName = compressExtStrip(manifestName, fileCompressType);
 
+                    // If the file is block incremental then strip off the extension before doing the lookup
+                    const bool blockIncr = strEndsWithZ(manifestName, BACKUP_BLOCK_INCR_EXT);
+
+                    if (blockIncr)
+                        manifestName = strSubN(manifestName, 0, strSize(manifestName) - (sizeof(BACKUP_BLOCK_INCR_EXT) - 1));
+
                     // Check if the file can be resumed or must be removed
                     const char *removeReason = NULL;
 
-                    if (fileCompressType != compressType)
+                    if (fileCompressType != compressType && !blockIncr)
                         removeReason = "mismatched compression type";
                     else if (!manifestFileExists(manifest, manifestName))
                         removeReason = "missing in manifest";
                     else
                     {
                         ManifestFile file = manifestFileFind(manifest, manifestName);
+                        ASSERT(file.reference == NULL);
 
-                        if (file.reference != NULL)
-                            removeReason = "reference in manifest";
-                        else if (!manifestFileExists(manifestResume, manifestName))
+                        if (!manifestFileExists(manifestResume, manifestName))
                             removeReason = "missing in resumed manifest";
                         else
                         {
                             const ManifestFile fileResume = manifestFileFind(manifestResume, manifestName);
+                            ASSERT(fileResume.reference == NULL);
 
-                            if (fileResume.reference != NULL)
-                                removeReason = "reference in resumed manifest";
-                            else if (fileResume.checksumSha1 == NULL)
+                            if (fileResume.checksumSha1 == NULL)
                                 removeReason = "no checksum in resumed manifest";
                             else if (file.size != fileResume.size)
                                 removeReason = "mismatched size";
@@ -813,6 +817,9 @@ backupResumeClean(
                                 file.sizeRepo = fileResume.sizeRepo;
                                 file.checksumSha1 = fileResume.checksumSha1;
                                 file.checksumRepoSha1 = fileResume.checksumRepoSha1;
+                                file.blockIncrSize = fileResume.blockIncrSize;
+                                file.blockIncrChecksumSize = fileResume.blockIncrChecksumSize;
+                                file.blockIncrMapSize = fileResume.blockIncrMapSize;
                                 file.checksumPage = fileResume.checksumPage;
                                 file.checksumPageError = fileResume.checksumPageError;
                                 file.checksumPageErrorList = fileResume.checksumPageErrorList;
@@ -890,72 +897,78 @@ backupResumeFind(const Manifest *const manifest, const String *const cipherPassB
             // Resumable backups do not have backup.manifest
             if (!storageExistsP(storageRepo(), manifestFile))
             {
-                const bool resume = cfgOptionBool(cfgOptResume);
+                const bool resume = cfgOptionBool(cfgOptResume) && cfgOptionStrId(cfgOptType) == backupTypeFull;
                 bool usable = false;
-                const String *reason = STRDEF("partially deleted by prior resume or invalid");
+                const String *reason = STRDEF("resume only valid for full backup");
                 Manifest *manifestResume = NULL;
 
-                // Resumable backups must have backup.manifest.copy
-                if (storageExistsP(storageRepo(), strNewFmt("%s" INFO_COPY_EXT, strZ(manifestFile))))
+                if (cfgOptionStrId(cfgOptType) == backupTypeFull)
                 {
-                    reason = strNewZ("resume is disabled");
+                    reason = STRDEF("partially deleted by prior resume or invalid");
 
-                    // Attempt to read the manifest file in the resumable backup to see if it can be used. If any error at all
-                    // occurs then the backup will be considered unusable and a resume will not be attempted.
-                    if (resume)
+                    // Resumable backups must have backup.manifest.copy
+                    if (storageExistsP(storageRepo(), strNewFmt("%s" INFO_COPY_EXT, strZ(manifestFile))))
                     {
-                        TRY_BEGIN()
-                        {
-                            manifestResume = manifestLoadFile(
-                                storageRepo(), manifestFile, cfgOptionStrId(cfgOptRepoCipherType), cipherPassBackup);
-                        }
-                        CATCH_ANY()
-                        {
-                            reason = strNewFmt("unable to read %s" INFO_COPY_EXT, strZ(manifestFile));
-                        }
-                        TRY_END();
+                        reason = strNewZ("resume is disabled");
 
-                        if (manifestResume != NULL)
+                        // Attempt to read the manifest file in the resumable backup to see if it can be used. If any error at all
+                        // occurs then the backup will be considered unusable and a resume will not be attempted.
+                        if (resume)
                         {
-                            const ManifestData *manifestResumeData = manifestData(manifestResume);
+                            TRY_BEGIN()
+                            {
+                                manifestResume = manifestLoadFile(
+                                    storageRepo(), manifestFile, cfgOptionStrId(cfgOptRepoCipherType), cipherPassBackup);
+                            }
+                            CATCH_ANY()
+                            {
+                                reason = strNewFmt("unable to read %s" INFO_COPY_EXT, strZ(manifestFile));
+                            }
+                            TRY_END();
 
-                            // Check pgBackRest version. This allows the resume implementation to be changed with each version of
-                            // pgBackRest at the expense of users losing a resumable back after an upgrade, which seems worth the
-                            // cost.
-                            if (!strEq(manifestResumeData->backrestVersion, manifestData(manifest)->backrestVersion))
+                            if (manifestResume != NULL)
                             {
-                                reason = strNewFmt(
-                                    "new " PROJECT_NAME " version '%s' does not match resumable " PROJECT_NAME " version '%s'",
-                                    strZ(manifestData(manifest)->backrestVersion), strZ(manifestResumeData->backrestVersion));
+                                const ManifestData *manifestResumeData = manifestData(manifestResume);
+
+                                // Check pgBackRest version. This allows the resume implementation to be changed with each version
+                                // of pgBackRest at the expense of users losing a resumable back after an upgrade, which seems worth
+                                // the cost.
+                                if (!strEq(manifestResumeData->backrestVersion, manifestData(manifest)->backrestVersion))
+                                {
+                                    reason = strNewFmt(
+                                        "new " PROJECT_NAME " version '%s' does not match resumable " PROJECT_NAME " version '%s'",
+                                        strZ(manifestData(manifest)->backrestVersion), strZ(manifestResumeData->backrestVersion));
+                                }
+                                // Check backup type because new backup label must be the same type as resume backup label
+                                else if (manifestResumeData->backupType != cfgOptionStrId(cfgOptType))
+                                {
+                                    reason = strNewFmt(
+                                        "new backup type '%s' does not match resumable backup type '%s'",
+                                        strZ(cfgOptionDisplay(cfgOptType)), strZ(strIdToStr(manifestResumeData->backupType)));
+                                }
+                                // Check prior backup label ??? Do we really care about the prior backup label?
+                                else if (!strEq(manifestResumeData->backupLabelPrior, manifestData(manifest)->backupLabelPrior))
+                                {
+                                    reason = strNewFmt(
+                                        "new prior backup label '%s' does not match resumable prior backup label '%s'",
+                                        manifestResumeData->backupLabelPrior ?
+                                            strZ(manifestResumeData->backupLabelPrior) : "<undef>",
+                                        manifestData(manifest)->backupLabelPrior ?
+                                            strZ(manifestData(manifest)->backupLabelPrior) : "<undef>");
+                                }
+                                // Check compression. Compression can't be changed between backups so resume won't work either.
+                                else if (
+                                    manifestResumeData->backupOptionCompressType !=
+                                    compressTypeEnum(cfgOptionStrId(cfgOptCompressType)))
+                                {
+                                    reason = strNewFmt(
+                                        "new compression '%s' does not match resumable compression '%s'",
+                                        strZ(cfgOptionDisplay(cfgOptCompressType)),
+                                        strZ(compressTypeStr(manifestResumeData->backupOptionCompressType)));
+                                }
+                                else
+                                    usable = true;
                             }
-                            // Check backup type because new backup label must be the same type as resume backup label
-                            else if (manifestResumeData->backupType != cfgOptionStrId(cfgOptType))
-                            {
-                                reason = strNewFmt(
-                                    "new backup type '%s' does not match resumable backup type '%s'",
-                                    strZ(cfgOptionDisplay(cfgOptType)), strZ(strIdToStr(manifestResumeData->backupType)));
-                            }
-                            // Check prior backup label ??? Do we really care about the prior backup label?
-                            else if (!strEq(manifestResumeData->backupLabelPrior, manifestData(manifest)->backupLabelPrior))
-                            {
-                                reason = strNewFmt(
-                                    "new prior backup label '%s' does not match resumable prior backup label '%s'",
-                                    manifestResumeData->backupLabelPrior ? strZ(manifestResumeData->backupLabelPrior) : "<undef>",
-                                    manifestData(manifest)->backupLabelPrior ?
-                                        strZ(manifestData(manifest)->backupLabelPrior) : "<undef>");
-                            }
-                            // Check compression. Compression can't be changed between backups so resume won't work either.
-                            else if (
-                                manifestResumeData->backupOptionCompressType !=
-                                compressTypeEnum(cfgOptionStrId(cfgOptCompressType)))
-                            {
-                                reason = strNewFmt(
-                                    "new compression '%s' does not match resumable compression '%s'",
-                                    strZ(cfgOptionDisplay(cfgOptCompressType)),
-                                    strZ(compressTypeStr(manifestResumeData->backupOptionCompressType)));
-                            }
-                            else
-                                usable = true;
                         }
                     }
                 }
@@ -1012,9 +1025,8 @@ backupResume(Manifest *const manifest, const String *const cipherPassBackup)
                 "resumable backup %s of same type exists -- invalid files will be removed then the backup will resume",
                 strZ(manifestData(manifest)->backupLabel));
 
-            // If resuming a full backup then copy cipher subpass since it was used to encrypt the resumable files
-            if (manifestData(manifest)->backupType == backupTypeFull)
-                manifestCipherSubPassSet(manifest, manifestCipherSubPass(manifestResume));
+            // Copy cipher subpass since it was used to encrypt the resumable files
+            manifestCipherSubPassSet(manifest, manifestCipherSubPass(manifestResume));
 
             // Clean resumed backup
             const String *const backupPath = strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(manifestData(manifest)->backupLabel));
@@ -1430,8 +1442,9 @@ backupJobResult(
                 const Buffer *const repoChecksum = pckReadBinP(jobResult);
                 PackRead *const checksumPageResult = pckReadPackReadP(jobResult);
 
-                // Increment backup copy progress
-                *sizeProgress += copySize;
+                // Increment backup copy progress. Use the original size since the size may have changed during the copy but for the
+                // purpose of reporting progress we need to increment by the original size used to generate the total size.
+                *sizeProgress += file.sizeOriginal;
 
                 // Create log file name
                 const String *const fileName = storagePathP(storagePg, manifestPathPg(file.name));
@@ -2006,6 +2019,7 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
                 pckWriteBoolP(param, file.delta);
                 pckWriteBoolP(param, !strEq(file.name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)));
                 pckWriteU64P(param, file.size);
+                pckWriteU64P(param, file.sizePrior);
                 pckWriteBoolP(param, !backupProcessFilePrimary(jobData->standbyExp, file.name));
                 pckWriteBinP(param, file.checksumSha1 != NULL ? BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE) : NULL);
                 pckWriteBoolP(param, file.checksumPage);
@@ -2018,7 +2032,7 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
                     pckWriteU64P(param, file.blockIncrChecksumSize);
                     pckWriteU64P(param, jobData->blockIncrSizeSuper);
 
-                    if (file.blockIncrMapSize != 0)
+                    if (file.blockIncrMapSize != 0 && !file.resume)
                     {
                         pckWriteStrP(
                             param,
