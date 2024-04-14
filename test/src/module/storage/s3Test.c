@@ -511,10 +511,11 @@ testRun(void)
                 hrnCfgArgRaw(argList, cfgOptRepoS3Role, credRole);
                 hrnCfgArgRawStrId(argList, cfgOptRepoS3KeyType, storageS3KeyTypeAuto);
                 hrnCfgArgRawZ(argList, cfgOptRepoS3KmsKeyId, "kmskey1");
-                hrnCfgArgRawZ(argList, cfgOptRepoS3SseCustomerKey, "rA1P");
+                hrnCfgEnvRawZ(cfgOptRepoS3SseCustomerKey, "rA1P");
                 hrnCfgArgRawZ(argList, cfgOptRepoStorageTag, "Key1=Value1");
                 hrnCfgArgRawZ(argList, cfgOptRepoStorageTag, " Key 2= Value 2");
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+                hrnCfgEnvRemoveRaw(cfgOptRepoS3SseCustomerKey);
 
                 s3 = storageRepoGet(0, true);
                 driver = (StorageS3 *)storageDriver(s3);

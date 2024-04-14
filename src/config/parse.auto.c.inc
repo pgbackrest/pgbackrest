@@ -7730,6 +7730,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_RESET(true),                                                               // opt/repo-s3-sse-customer-key
         PARSE_RULE_OPTION_REQUIRED(false),                                                           // opt/repo-s3-sse-customer-key
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),                                                 // opt/repo-s3-sse-customer-key
+        PARSE_RULE_OPTION_SECURE(true),                                                              // opt/repo-s3-sse-customer-key
         PARSE_RULE_OPTION_GROUP_MEMBER(true),                                                        // opt/repo-s3-sse-customer-key
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),                                                   // opt/repo-s3-sse-customer-key
                                                                                                      // opt/repo-s3-sse-customer-key
