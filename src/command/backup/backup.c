@@ -1150,14 +1150,14 @@ Stop the backup
 static void
 backupFilePut(
     BackupData *const backupData, Manifest *const manifest, const String *const name, const time_t timestamp,
-    const Buffer *const content)
+    const String *const content)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(TIME, timestamp);
-        FUNCTION_LOG_PARAM(BUFFER, content);
+        FUNCTION_LOG_PARAM(STRING, content);
     FUNCTION_LOG_END();
 
     // Skip files with no content
@@ -1210,7 +1210,7 @@ backupFilePut(
             ioFilterGroupAdd(filterGroup, ioSizeNew());
 
             // Write file
-            storagePutP(write, content);
+            storagePutP(write, BUFSTR(content));
 
             // Use base path to set ownership and mode
             const ManifestPath *const basePath = manifestPathFind(manifest, MANIFEST_TARGET_PGDATA_STR);
@@ -1222,8 +1222,8 @@ backupFilePut(
                 .mode = basePath->mode & (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH),
                 .user = basePath->user,
                 .group = basePath->group,
-                .size = bufUsed(content),
-                .sizeOriginal = bufUsed(content),
+                .size = strSize(content),
+                .sizeOriginal = strSize(content),
                 .sizeRepo = pckReadU64P(ioFilterGroupResultP(filterGroup, SIZE_FILTER_TYPE)),
                 .timestamp = timestamp,
                 .checksumSha1 = bufPtr(pckReadBinP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE, .idx = 0))),
@@ -1284,25 +1284,8 @@ backupStop(BackupData *const backupData, Manifest *const manifest)
             LOG_INFO_FMT("backup stop archive = %s, lsn = %s", strZ(result.walSegmentName), strZ(result.lsn));
 
             // Save files returned by stop backup
-            if (backupData->version >= PG_VERSION_17)
-            {
-                ASSERT(dbBackupStopResult.backupLabel != NULL);
-                const Buffer *const pgControl = bufNewDecode(encodingHex, dbBackupStopResult.backupLabel);
-
-                backupFilePut(backupData, manifest, STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL), result.timestamp, pgControl);
-            }
-            else if (dbBackupStopResult.backupLabel != NULL)
-            {
-                backupFilePut(
-                    backupData, manifest, STRDEF(PG_FILE_BACKUPLABEL), result.timestamp, BUFSTR(dbBackupStopResult.backupLabel));
-            }
-
-            if (dbBackupStopResult.tablespaceMap != NULL)
-            {
-                backupFilePut(
-                    backupData, manifest, STRDEF(PG_FILE_TABLESPACEMAP), result.timestamp,
-                    BUFSTR(dbBackupStopResult.tablespaceMap));
-            }
+            backupFilePut(backupData, manifest, STRDEF(PG_FILE_BACKUPLABEL), result.timestamp, dbBackupStopResult.backupLabel);
+            backupFilePut(backupData, manifest, STRDEF(PG_FILE_TABLESPACEMAP), result.timestamp, dbBackupStopResult.tablespaceMap);
         }
         MEM_CONTEXT_TEMP_END();
     }
@@ -1891,8 +1874,8 @@ backupProcessQueue(const BackupData *const backupData, Manifest *const manifest,
             fileTotal++;
         }
 
-        // pg_control should always be in an online backup when PostgreSQL < 17
-        if (!pgControlFound && cfgOptionBool(cfgOptOnline) && backupData->version < PG_VERSION_17)
+        // pg_control should always be in an online backup
+        if (!pgControlFound && cfgOptionBool(cfgOptOnline))
         {
             THROW(
                 FileMissingError,

@@ -1038,13 +1038,6 @@ manifestBuildInfo(
                 FUNCTION_TEST_RETURN_VOID();
             }
 
-            // Skip pg_control when online and provided by pg_backup_stop()
-            if (buildData->online && strEqZ(manifestParentName, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL) &&
-                strEqZ(info->name, PG_FILE_PGCONTROL) && pgVersion >= PG_VERSION_17)
-            {
-                FUNCTION_TEST_RETURN_VOID();
-            }
-
             // Skip files in the root data path
             if (strEq(manifestParentName, MANIFEST_TARGET_PGDATA_STR))
             {
