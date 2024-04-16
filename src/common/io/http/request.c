@@ -345,6 +345,8 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
 }
 
 /**********************************************************************************************************************************/
+#define HTTP_MULTIPART_BOUNDARY_INIT_SIZE                           (sizeof(HTTP_MULTIPART_BOUNDARY_INIT) - 1)
+
 FN_EXTERN HttpRequestMulti *
 httpRequestMultiNew(void)
 {
@@ -354,7 +356,7 @@ httpRequestMultiNew(void)
     {
         *this = (HttpRequestMulti)
         {
-            .boundaryRaw = bufNewC(HTTP_MULTIPART_BOUNDARY, sizeof(HTTP_MULTIPART_BOUNDARY) - 1),
+            .boundaryRaw = bufNewC(HTTP_MULTIPART_BOUNDARY_INIT, HTTP_MULTIPART_BOUNDARY_INIT_SIZE),
             .contentList = lstNewP(sizeof(Buffer *)),
         };
     }
@@ -364,6 +366,8 @@ httpRequestMultiNew(void)
 }
 
 /**********************************************************************************************************************************/
+#define HTTP_MULTIPART_BOUNDARY_EXTRA_SIZE                          (sizeof(HTTP_MULTIPART_BOUNDARY_EXTRA) - 1)
+
 FN_EXTERN void
 httpRequestMultiAdd(
     HttpRequestMulti *const this, const String *const contentId, const String *const verb, const String *const path,
@@ -386,6 +390,7 @@ httpRequestMultiAdd(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Construct request header
         String *const request = strNew();
 
         strCatZ(request, HTTP_HEADER_CONTENT_TYPE ":" HTTP_HEADER_CONTENT_TYPE_HTTP "\r\n");
@@ -395,12 +400,25 @@ httpRequestMultiAdd(
 
         MEM_CONTEXT_OBJ_BEGIN(this->contentList)
         {
+            // Add content
             Buffer *const content = bufNew(strSize(request) + (param.content == NULL ? 0 : bufUsed(param.content)));
 
             bufCat(content, BUFSTR(request));
             bufCat(content, param.content);
-            lstAdd(this->contentList, &content);
 
+            // Find a boundary that is not used in the content
+            while (bufFindP(content, this->boundaryRaw) != NULL)
+            {
+                if (bufUsed(this->boundaryRaw) == HTTP_MULTIPART_BOUNDARY_INIT_SIZE + HTTP_MULTIPART_BOUNDARY_EXTRA_SIZE)
+                    THROW(AssertError, "unable to construct unique boundary");
+
+                bufCatC(
+                    this->boundaryRaw, (unsigned char *)HTTP_MULTIPART_BOUNDARY_EXTRA,
+                    bufUsed(this->boundaryRaw) - HTTP_MULTIPART_BOUNDARY_INIT_SIZE, HTTP_MULTIPART_BOUNDARY_NEXT);
+            }
+
+            // Add to list
+            lstAdd(this->contentList, &content);
             this->contentSize += bufUsed(content);
         }
         MEM_CONTEXT_OBJ_END();
@@ -411,6 +429,9 @@ httpRequestMultiAdd(
 }
 
 /**********************************************************************************************************************************/
+#define HTTP_MULTIPART_BOUNDARY_PRE_SIZE                            (sizeof(HTTP_MULTIPART_BOUNDARY_PRE) - 1)
+#define HTTP_MULTIPART_BOUNDARY_POST_SIZE                           (sizeof(HTTP_MULTIPART_BOUNDARY_POST) - 1)
+
 FN_EXTERN Buffer *
 httpRequestMultiContent(HttpRequestMulti *const this)
 {
@@ -421,8 +442,7 @@ httpRequestMultiContent(HttpRequestMulti *const this)
     ASSERT(this != NULL);
     ASSERT(!lstEmpty(this->contentList));
 
-    const size_t boundarySize =
-        bufUsed(this->boundaryRaw) + sizeof(HTTP_MULTIPART_BOUNDARY_PRE) - sizeof(HTTP_MULTIPART_BOUNDARY_POST) - 2;
+    const size_t boundarySize = bufUsed(this->boundaryRaw) + HTTP_MULTIPART_BOUNDARY_PRE_SIZE + HTTP_MULTIPART_BOUNDARY_POST_SIZE;
     Buffer *const result = bufNew(this->contentSize + ((lstSize(this->contentList) + 1) * boundarySize));
 
     MEM_CONTEXT_TEMP_BEGIN()
