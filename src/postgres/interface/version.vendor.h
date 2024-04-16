@@ -169,7 +169,7 @@ Types from src/include/catalog/catversion.h
  */
 
 /*							yyyymmddN */
-#define CATALOG_VERSION_NO	202310181
+#define CATALOG_VERSION_NO	202404022
 
 #elif PG_VERSION >= PG_VERSION_16
 
@@ -334,11 +334,6 @@ Types from src/include/catalog/pg_control.h
 #if PG_VERSION > PG_VERSION_MAX
 
 #elif PG_VERSION >= PG_VERSION_17
-
-/* Version identifier for this pg_control format */
-#define PG_CONTROL_VERSION	1700
-
-#elif PG_VERSION >= PG_VERSION_13
 
 /* Version identifier for this pg_control format */
 #define PG_CONTROL_VERSION	1300
@@ -1737,7 +1732,7 @@ Types from src/include/access/xlog_internal.h
 
 #elif PG_VERSION >= PG_VERSION_17
 
-#define XLOG_PAGE_MAGIC 0xD114	/* can be used as WAL version indicator */
+#define XLOG_PAGE_MAGIC 0xD115	/* can be used as WAL version indicator */
 
 #elif PG_VERSION >= PG_VERSION_16
 
