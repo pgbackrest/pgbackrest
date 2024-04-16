@@ -11,8 +11,12 @@ if get_option('unity') == 'on'
     # Add args to builds to prevent non-pgbackrest binaries failing due to unused functions
     arg_unity += '-Wno-unused-function'
 else
-    configuration.set('FN_EXTERN', 'extern', description: 'Extern function required by other compilation units')
-    configuration.set('VR_EXTERN_DECLARE', 'extern', description: 'Extern variable declaration required by other compilation units')
+    configuration.set(
+        'FN_EXTERN', 'extern __attribute__((visibility ("internal")))',
+        description: 'Extern function required by other compilation units')
+    configuration.set(
+        'VR_EXTERN_DECLARE', 'extern __attribute__((visibility ("internal")))',
+        description: 'Extern variable declaration required by other compilation units')
     configuration.set('VR_EXTERN_DEFINE', '', description: 'Extern variable definition required by other compilation units')
 endif
 
@@ -270,7 +274,7 @@ executable(
     src_pgbackrest,
     help_auto_c_inc,
     interface_auto_c_inc,
-    dependencies : [
+    dependencies: [
         lib_backtrace,
         lib_bz2,
         lib_openssl,
@@ -280,5 +284,6 @@ executable(
         lib_xml,
         lib_z,
         lib_zstd,
-    ]
+    ],
+    install: true,
 )

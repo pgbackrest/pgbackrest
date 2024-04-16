@@ -90,6 +90,9 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             archivePushDrop(STRDEF("pg_wal"), archivePushProcessList(STRDEF(TEST_PATH "/db/pg_wal"))), true, "wal is dropped");
+
+        // No WAL to be processed
+        TEST_RESULT_BOOL(archivePushDrop(STRDEF("pg_wal"), strLstNew()), false, "no WAL to be processed");
     }
 
     // *****************************************************************************************************************************

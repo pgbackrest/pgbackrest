@@ -1,3 +1,5 @@
 option('configdir', type: 'string', value: '/etc/pgbackrest', description: 'Configuration directory')
 option('fatal-errors', type: 'boolean', value: false, description: 'Stop compilation on first error')
-option('force-release', type: 'boolean', value: false, description: 'Force a release build (for testing only!)')
+option('liblz4', type: 'feature', value: 'auto', description: 'Enable LZ4 compression support')
+option('libssh2', type: 'feature', value: 'auto', description: 'Enable SFTP storage support')
+option('libzstd', type: 'feature', value: 'auto', description: 'Enable Zstandard compression support')

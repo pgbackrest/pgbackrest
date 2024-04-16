@@ -89,23 +89,20 @@ lstComparatorStr(const void *item1, const void *item2)
 
 /**********************************************************************************************************************************/
 FN_EXTERN int
-lstComparatorUInt(const void *const item1, const void *const item2)
+lstComparatorUInt(const void *const uintPtr1, const void *const uintPtr2)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, item1);
-        FUNCTION_TEST_PARAM_P(VOID, item2);
+        FUNCTION_TEST_PARAM_P(VOID, uintPtr1);
+        FUNCTION_TEST_PARAM_P(VOID, uintPtr2);
     FUNCTION_TEST_END();
 
-    ASSERT(item1 != NULL);
-    ASSERT(item2 != NULL);
+    ASSERT(uintPtr1 != NULL);
+    ASSERT(uintPtr2 != NULL);
 
-    if (*(unsigned int *)item1 < *(unsigned int *)item2)
-        FUNCTION_TEST_RETURN(INT, -1);
+    const unsigned int uint1 = *(unsigned int *)uintPtr1;
+    const unsigned int uint2 = *(unsigned int *)uintPtr2;
 
-    if (*(unsigned int *)item1 > *(unsigned int *)item2)
-        FUNCTION_TEST_RETURN(INT, 1);
-
-    FUNCTION_TEST_RETURN(INT, 0);
+    FUNCTION_TEST_RETURN(INT, LST_COMPARATOR_CMP(uint1, uint2));
 }
 
 /**********************************************************************************************************************************/

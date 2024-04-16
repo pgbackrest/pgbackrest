@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE doc SYSTEM "doc.dtd" [
+    <!ENTITY v2.52 SYSTEM "release/2024/2.52.xml">
+    <!ENTITY v2.51 SYSTEM "release/2024/2.51.xml">
+    <!ENTITY v2.50 SYSTEM "release/2024/2.50.xml">
     <!ENTITY v2.49 SYSTEM "release/2023/2.49.xml">
     <!ENTITY v2.48 SYSTEM "release/2023/2.48.xml">
     <!ENTITY v2.47 SYSTEM "release/2023/2.47.xml">
@@ -120,6 +123,9 @@
     </intro>
 
     <release-list>
+        &v2.52;
+        &v2.51;
+        &v2.50;
         &v2.49;
         &v2.48;
         &v2.47;

@@ -700,6 +700,10 @@ testRun(void)
         TEST_RESULT_UINT(strIdToLog(TEST_STR5ID2, buffer, sizeof(buffer)), 2, "string id with limited buffer");
         TEST_RESULT_UINT(strlen(buffer), 2, "    check length");
         TEST_RESULT_Z(buffer, "ab", "    check buffer");
+
+        TEST_RESULT_UINT(strIdToLog(0, buffer, sizeof(buffer)), 4, "null string id");
+        TEST_RESULT_UINT(strlen(buffer), 4, "    check length");
+        TEST_RESULT_Z(buffer, "null", "    check buffer");
     }
 
     // *****************************************************************************************************************************

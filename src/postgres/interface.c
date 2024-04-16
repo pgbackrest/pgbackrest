@@ -71,6 +71,9 @@ typedef struct PgInterface
     // Get control crc offset
     size_t (*controlCrcOffset)(void);
 
+    // Invalidate control checkpoint
+    void (*controlCheckpointInvalidate)(unsigned char *);
+
     // Get the control version for this version of PostgreSQL
     uint32_t (*controlVersion)(void);
 
@@ -180,7 +183,97 @@ pgWalSegmentSizeCheck(unsigned int pgVersion, unsigned int walSegmentSize)
             PG_WAL_SEGMENT_SIZE_DEFAULT);
     }
 
+    // Check that the WAL segment size is valid
+    if (!IsValidWalSegSize(walSegmentSize))
+    {
+        THROW_FMT(
+            FormatError, "wal segment size is %u but must be a power of two between %d and %d inclusive", walSegmentSize,
+            WalSegMinSize, WalSegMaxSize);
+    }
+
     FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Validate the CRC in pg_control. If the version has been forced this may required scanning pg_control for the offset. Return the
+offset found so it can be used to update the CRC.
+***********************************************************************************************************************************/
+static size_t
+pgControlCrcValidate(const Buffer *const controlFile, const PgInterface *const interface, const bool pgVersionForce)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(BUFFER, controlFile);
+        FUNCTION_LOG_PARAM_P(VOID, interface);
+        FUNCTION_LOG_PARAM(BOOL, pgVersionForce);
+    FUNCTION_LOG_END();
+
+    ASSERT(controlFile != NULL);
+    ASSERT(interface != NULL);
+
+    size_t result = interface->controlCrcOffset();
+
+    do
+    {
+        // Calculate CRC and retrieve expected CRC
+        const uint32_t crcCalculated =
+            interface->version > PG_VERSION_94 ?
+                crc32cOne(bufPtrConst(controlFile), result) : crc32One(bufPtrConst(controlFile), result);
+        const uint32_t crcExpected = *((uint32_t *)(bufPtrConst(controlFile) + result));
+
+        // If CRC does not match
+        if (crcCalculated != crcExpected)
+        {
+            // If version is forced then the CRC might be later in the file (assuming the fork added extra fields to pg_control).
+            // Increment the offset by CRC data size and continue to try again.
+            if (pgVersionForce)
+            {
+                result += sizeof(uint32_t);
+
+                if (result <= bufUsed(controlFile) - sizeof(uint32_t))
+                    continue;
+            }
+
+            // If no retry then error
+            THROW_FMT(
+                ChecksumError,
+                "calculated " PG_FILE_PGCONTROL " checksum does not match expected value\n"
+                "HINT: calculated 0x%x but expected value is 0x%x\n"
+                "%s"
+                "HINT: is " PG_FILE_PGCONTROL " corrupt?\n"
+                "HINT: does " PG_FILE_PGCONTROL " have a different layout than expected?",
+                crcCalculated, crcExpected,
+                pgVersionForce ? "HINT: checksum values may be misleading due to forced version scan\n" : "");
+        }
+
+        // Do not retry if the CRC is valid
+        break;
+    }
+    while (true);
+
+    FUNCTION_LOG_RETURN(SIZE, result);
+}
+
+/***********************************************************************************************************************************
+Update the CRC in pg_control
+***********************************************************************************************************************************/
+static void
+pgControlCrcUpdate(Buffer *const controlFile, const unsigned int pgVersion, const size_t crcOffset)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(BUFFER, controlFile);
+        FUNCTION_LOG_PARAM(UINT, pgVersion);
+        FUNCTION_LOG_PARAM(SIZE, crcOffset);
+    FUNCTION_LOG_END();
+
+    ASSERT(controlFile != NULL);
+    ASSERT(pgVersion != 0);
+    ASSERT(crcOffset != 0);
+
+    *((uint32_t *)(bufPtr(controlFile) + crcOffset)) =
+        pgVersion > PG_VERSION_94 ?
+            crc32cOne(bufPtrConst(controlFile), crcOffset) : crc32One(bufPtrConst(controlFile), crcOffset);
+
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -229,53 +322,22 @@ pgControlFromBuffer(const Buffer *controlFile, const String *const pgVersionForc
     PgControl result = interface->control(bufPtrConst(controlFile));
     result.version = interface->version;
 
-    // Check CRC
-    size_t crcOffset = interface->controlCrcOffset();
-
-    do
-    {
-        // Calculate CRC and retrieve expected CRC
-        const uint32_t crcCalculated =
-            result.version > PG_VERSION_94 ?
-                crc32cOne(bufPtrConst(controlFile), crcOffset) : crc32One(bufPtrConst(controlFile), crcOffset);
-        const uint32_t crcExpected = *((uint32_t *)(bufPtrConst(controlFile) + crcOffset));
-
-        // If CRC does not match
-        if (crcCalculated != crcExpected)
-        {
-            // If version is forced then the CRC might be later in the file (assuming the fork added extra fields to pg_control).
-            // Increment the offset by CRC data size and continue to try again.
-            if (pgVersionForce != NULL)
-            {
-                crcOffset += sizeof(uint32_t);
-
-                if (crcOffset <= bufUsed(controlFile) - sizeof(uint32_t))
-                    continue;
-            }
-
-            // If no retry then error
-            THROW_FMT(
-                ChecksumError,
-                "calculated " PG_FILE_PGCONTROL " checksum does not match expected value\n"
-                "HINT: calculated 0x%x but expected value is 0x%x\n"
-                "%s"
-                "HINT: is " PG_FILE_PGCONTROL " corrupt?\n"
-                "HINT: does " PG_FILE_PGCONTROL " have a different layout than expected?",
-                crcCalculated, crcExpected,
-                pgVersionForce == NULL ? "" : "HINT: checksum values may be misleading due to forced version scan\n");
-        }
-
-        // Do not retry if the CRC is valid
-        break;
-    }
-    while (true);
+    // Validate the CRC
+    pgControlCrcValidate(controlFile, interface, pgVersionForce != NULL);
 
     // Check the segment size
     pgWalSegmentSizeCheck(result.version, result.walSegmentSize);
 
     // Check the page size
-    if (result.pageSize != PG_PAGE_SIZE_DEFAULT)
-        THROW_FMT(FormatError, "page size is %u but must be %u", result.pageSize, PG_PAGE_SIZE_DEFAULT);
+    pgPageSizeCheck(result.pageSize);
+
+    // Check the checksum version
+    if (result.pageChecksumVersion != 0 && result.pageChecksumVersion != PG_DATA_CHECKSUM_VERSION)
+    {
+        THROW_FMT(
+            FormatError, "page checksum version is %u but only 0 and " STRINGIFY(PG_DATA_CHECKSUM_VERSION) " are valid",
+            result.pageChecksumVersion);
+    }
 
     FUNCTION_LOG_RETURN(PG_CONTROL, result);
 }
@@ -372,6 +434,27 @@ pgControlFromFile(const Storage *const storage, const String *const pgVersionFor
     bufFree(buffer);
 
     FUNCTION_LOG_RETURN(PG_CONTROL, result);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+pgControlCheckpointInvalidate(Buffer *const buffer, const String *const pgVersionForce)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(BUFFER, buffer);
+        FUNCTION_LOG_PARAM(STRING, pgVersionForce);
+    FUNCTION_LOG_END();
+
+    ASSERT(buffer != NULL);
+
+    const PgControl pgControl = pgControlFromBuffer(buffer, pgVersionForce);
+    const PgInterface *const interface = pgInterfaceVersion(pgControl.version);
+    const size_t crcOffset = pgControlCrcValidate(buffer, interface, pgVersionForce);
+
+    pgInterfaceVersion(pgControl.version)->controlCheckpointInvalidate(bufPtr(buffer));
+    pgControlCrcUpdate(buffer, interface->version, crcOffset);
+
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -701,8 +784,8 @@ FN_EXTERN void
 pgControlToLog(const PgControl *const pgControl, StringStatic *const debugLog)
 {
     strStcFmt(
-        debugLog, "{version: %u, systemId: %" PRIu64 ", walSegmentSize: %u, pageChecksum: %s}", pgControl->version,
-        pgControl->systemId, pgControl->walSegmentSize, cvtBoolToConstZ(pgControl->pageChecksum));
+        debugLog, "{version: %u, systemId: %" PRIu64 ", walSegmentSize: %u, pageChecksumVersion: %u}", pgControl->version,
+        pgControl->systemId, pgControl->walSegmentSize, pgControl->pageChecksumVersion);
 }
 
 FN_EXTERN void

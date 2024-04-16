@@ -1092,7 +1092,8 @@ testRun(void)
                     "[target:file]\n"
                     "pg_data/BOGUS={\"size\":6,\"timestamp\":1482182860}\n"
                     "pg_data/FILE3={\"reference\":\"20190101-010101F\",\"size\":0,\"timestamp\":1482182860}\n"
-                    "pg_data/FILE4={\"size\":55,\"timestamp\":1482182861}\n"
+                    "pg_data/FILE4={\"checksum\":\"ccccccccccaaaaaaaaaabbbbbbbbbbdddddddddd\",\"reference\":\"20190101-010101F\""
+                    ",\"size\":55,\"timestamp\":1482182861}\n"
                     "pg_data/PG_VERSION={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\""
                     ",\"reference\":\"20190101-010101F\",\"size\":4,\"timestamp\":1482182860}\n"
                     TEST_MANIFEST_FILE_DEFAULT
@@ -1171,9 +1172,10 @@ testRun(void)
         manifest->pub.data.backupOptionDelta = BOOL_FALSE_VAR;
         lstClear(manifest->pub.fileList);
 
+        // File goes to zero-length
         HRN_MANIFEST_FILE_ADD(
-            manifest, .name = MANIFEST_TARGET_PGDATA "/FILE1", .copy = true, .size = 4, .sizeRepo = 4, .timestamp = 1482182859,
-            .group = "test", .user = "test");
+            manifest, .name = MANIFEST_TARGET_PGDATA "/FILE1", .copy = true, .size = 0, .timestamp = 1482182859, .group = "test",
+            .user = "test");
 
         // Clear prior manifest and add a single file with later timestamp and checksum error
         lstClear(manifestPrior->pub.fileList);
@@ -1208,9 +1210,7 @@ testRun(void)
                     "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
                     "\n"
                     "[target:file]\n"
-                    "pg_data/FILE1={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\",\"checksum-page\":false"
-                    ",\"checksum-page-error\":[77],\"reference\":\"20190101-010101F_20190202-010101D\",\"size\":4"
-                    ",\"timestamp\":1482182859}\n"
+                    "pg_data/FILE1={\"size\":0,\"timestamp\":1482182859}\n"
                     TEST_MANIFEST_FILE_DEFAULT
                     "\n"
                     "[target:path]\n"
@@ -1336,6 +1336,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("block incr delta");
 
+        manifest->pub.data.backupOptionDelta = BOOL_FALSE_VAR;
+
         lstClear(manifest->pub.fileList);
         lstClear(manifestPrior->pub.fileList);
 
@@ -1353,19 +1355,28 @@ testRun(void)
             .timestamp = 1482182861, .group = "test", .user = "test");
         HRN_MANIFEST_FILE_ADD(
             manifestPrior, .name = MANIFEST_TARGET_PGDATA "/block-incr-sub", .size = 4, .sizeRepo = 4, .blockIncrSize = 8192,
-            .blockIncrMapSize = 66, .timestamp = 1482182860, .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa");
+            .blockIncrMapSize = 66, .blockIncrChecksumSize = 1, .timestamp = 1482182860,
+            .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa");
 
-        // Prior file has different block incr size
+        // Prior file has different block incr size which is preserved and new file is large enough to be block incremental
         HRN_MANIFEST_FILE_ADD(
-            manifest, .name = MANIFEST_TARGET_PGDATA "/block-incr-keep-size", .copy = true, .size = 6, .sizeRepo = 6,
+            manifest, .name = MANIFEST_TARGET_PGDATA "/block-incr-keep-size", .copy = true, .size = 8193, .sizeRepo = 6,
             .blockIncrSize = 16384, .blockIncrChecksumSize = 6, .timestamp = 1482182861, .group = "test", .user = "test");
         HRN_MANIFEST_FILE_ADD(
-            manifestPrior, .name = MANIFEST_TARGET_PGDATA "/block-incr-keep-size", .size = 4, .sizeRepo = 4, .blockIncrSize = 8192,
-            .blockIncrChecksumSize = 6, .blockIncrMapSize = 31, .timestamp = 1482182860,
+            manifestPrior, .name = MANIFEST_TARGET_PGDATA "/block-incr-keep-size", .size = 16384, .sizeRepo = 4,
+            .blockIncrSize = 8192, .blockIncrChecksumSize = 6, .blockIncrMapSize = 31, .timestamp = 1482182860,
             .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa");
 
         TEST_RESULT_VOID(
             manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, STRDEF("000000030000000300000003")), "incremental manifest");
+
+        TEST_RESULT_UINT(
+            manifestFileFind(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/block-incr-add")).sizePrior, 0, "check prior size");
+        TEST_RESULT_UINT(
+            manifestFileFind(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/block-incr-sub")).sizePrior, 0, "check prior size");
+        TEST_RESULT_UINT(
+            manifestFileFind(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/block-incr-keep-size")).sizePrior, 16384,
+            "check prior size");
 
         contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
@@ -1376,7 +1387,7 @@ testRun(void)
                     TEST_MANIFEST_HEADER_PRE
                     "backup-reference=\"20190101-010101F,20190101-010101F_20190202-010101D\"\n"
                     TEST_MANIFEST_HEADER_MID
-                    "option-delta=true\n"
+                    "option-delta=false\n"
                     "option-hardlink=false\n"
                     "option-online=true\n"
                     "\n"
@@ -1386,7 +1397,7 @@ testRun(void)
                     "[target:file]\n"
                     "pg_data/block-incr-add={\"bi\":1,\"size\":6,\"timestamp\":1482182861}\n"
                     "pg_data/block-incr-keep-size={\"bi\":1,\"bim\":31,\"checksum\":\"ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa\""
-                    ",\"reference\":\"20190101-010101F\",\"repo-size\":4,\"size\":6,\"timestamp\":1482182861}\n"
+                    ",\"reference\":\"20190101-010101F\",\"repo-size\":4,\"size\":8193,\"timestamp\":1482182861}\n"
                     "pg_data/block-incr-sub={\"size\":6,\"timestamp\":1482182861}\n"
                     TEST_MANIFEST_FILE_DEFAULT
                     "\n"

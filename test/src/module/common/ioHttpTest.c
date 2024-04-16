@@ -5,6 +5,7 @@ Test HTTP
 
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
+#include "common/io/socket/address.h"
 #include "common/io/socket/client.h"
 #include "common/io/tls/client.h"
 
@@ -24,6 +25,13 @@ static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
+
+    // Ensure that the ipv4 loopback address will be selected
+    const String *const ipLoop4 = STRDEF("127.0.0.1");
+    AddressInfo *addrInfo = NULL;
+
+    TEST_ASSIGN(addrInfo, addrInfoNew(STRDEF("localhost"), 443), "localhost addr list");
+    TEST_RESULT_VOID(addrInfoPrefer(addrInfo, lstFindIdx(addrInfo->pub.list, &ipLoop4)), "prefer 127.0.0.1");
 
     // *****************************************************************************************************************************
     if (testBegin("httpUriEncode() and httpUriDecode()"))
@@ -307,21 +315,22 @@ testRun(void)
         char logBuf[STACK_TRACE_PARAM_MAX];
         HttpClient *client = NULL;
 
-        TEST_ASSIGN(client, httpClientNew(sckClientNew(STRDEF("localhost"), hrnServerPort(0), 500, 500), 500), "new client");
+        TEST_ASSIGN(client, httpClientNew(sckClientNew(STRDEF("localhost"), HRN_SERVER_PORT_BOGUS, 500, 500), 500), "new client");
 
         TEST_ERROR_FMT(
             httpRequestResponse(httpRequestNewP(client, STRDEF("GET"), STRDEF("/")), false), HostConnectError,
-            "unable to connect to 'localhost:%u (127.0.0.1)': [111] Connection refused\n"
+            "unable to connect to 'localhost:34342 (127.0.0.1)': [111] Connection refused\n"
             "[RETRY DETAIL OMITTED]\n"
-            "[RETRY DETAIL OMITTED]",
-            hrnServerPort(0));
+            "[RETRY DETAIL OMITTED]");
 
         HRN_FORK_BEGIN()
         {
+            const unsigned int testPort = hrnServerPortNext();
+
             HRN_FORK_CHILD_BEGIN(.prefix = "test server", .timeout = 5000)
             {
                 // Start HTTP test server
-                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolSocket), "http server run");
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolSocket, testPort), "http server");
             }
             HRN_FORK_CHILD_END();
 
@@ -334,7 +343,7 @@ testRun(void)
 
                 ioBufferSizeSet(35);
 
-                TEST_ASSIGN(client, httpClientNew(sckClientNew(hrnServerHost(), hrnServerPort(0), 5000, 5000), 5000), "new client");
+                TEST_ASSIGN(client, httpClientNew(sckClientNew(hrnServerHost(), testPort, 5000, 5000), 5000), "new client");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("no output from server");
@@ -684,13 +693,15 @@ testRun(void)
 
         HRN_FORK_BEGIN()
         {
+            const unsigned int testPort = hrnServerPortNext();
+
             // Start HTTPS test server
             HRN_FORK_CHILD_BEGIN(.prefix = "test server", .timeout = 5000)
             {
                 // Set buffer size large enough for server to read expect messages
                 ioBufferSizeSet(65536);
 
-                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls), "http server run");
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls, testPort), "http server");
             }
             HRN_FORK_CHILD_END();
 
@@ -707,7 +718,7 @@ testRun(void)
                     client,
                     httpClientNew(
                         tlsClientNewP(
-                            sckClientNew(hrnServerHost(), hrnServerPort(0), 5000, 5000), hrnServerHost(), 0, 0, TEST_IN_CONTAINER),
+                            sckClientNew(hrnServerHost(), testPort, 5000, 5000), hrnServerHost(), 0, 0, TEST_IN_CONTAINER),
                         5000),
                     "new client");
 

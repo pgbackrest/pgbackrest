@@ -1,11 +1,4 @@
 ####################################################################################################################################
-# Error on release builds since we do not want anyone using meson for production yet
-####################################################################################################################################
-if not get_option('force-release') and get_option('buildtype') != 'debug' and get_option('buildtype') != 'debugoptimized'
-    error('meson is currently not supported for release builds')
-endif
-
-####################################################################################################################################
 # Write configuration
 ####################################################################################################################################
 configure_file(output: 'build.auto.h', configuration: configuration)
@@ -32,10 +25,12 @@ src_doc = [
     '../../src/build/common/yaml.c',
     '../../src/build/config/parse.c',
     '../../src/build/help/parse.c',
+    '../../src/build/help/render.c',
     '../../src/command/command.c',
     '../../src/command/exit.c',
     '../../src/command/help/help.c',
     '../../src/common/compress/bz2/common.c',
+    '../../src/common/compress/bz2/compress.c',
     '../../src/common/compress/bz2/decompress.c',
     '../../src/common/ini.c',
     '../../src/common/io/fd.c',
@@ -47,6 +42,7 @@ src_doc = [
     '../../src/config/config.c',
     '../../src/config/parse.c',
     'command/build/build.c',
+    'command/build/man.c',
     'command/build/reference.c',
     'config/load.c',
     'main.c',

@@ -25,6 +25,11 @@
     <contributor-id type="github">Flamacue</contributor-id>
 </contributor>
 
+<contributor id="adol.rodriguez">
+    <contributor-name-display>Adol Rodriguez</contributor-name-display>
+    <contributor-id type="github">adolsalamanca</contributor-id>
+</contributor>
+
 <contributor id="adrian.vondendriesch">
     <contributor-name-display>Adrian Vondendriesch</contributor-name-display>
     <contributor-id type="github">disco-stu</contributor-id>
@@ -118,6 +123,16 @@
 <contributor id="brad.nicholson">
     <contributor-name-display>Brad Nicholson</contributor-name-display>
     <contributor-id type="github">bradnicholson</contributor-id>
+</contributor>
+
+<contributor id="bradford.boyle">
+    <contributor-name-display>Bradford Boyle</contributor-name-display>
+    <contributor-id type="github">bradfordboyle</contributor-id>
+</contributor>
+
+<contributor id="brent.graveland">
+    <contributor-name-display>Brent Graveland</contributor-name-display>
+    <contributor-id type="github">graveland</contributor-id>
 </contributor>
 
 <contributor id="brian.almeida">
@@ -363,6 +378,11 @@
     <contributor-id type="github">geirra</contributor-id>
 </contributor>
 
+<contributor id="georgy.shelkovy">
+    <contributor-name-display>Georgy Shelkovy</contributor-name-display>
+    <contributor-id type="github">RekGRpth</contributor-id>
+</contributor>
+
 <contributor id="gkleen">
     <contributor-name-display>gkleen</contributor-name-display>
     <contributor-id type="github">gkleen</contributor-id>
@@ -560,6 +580,11 @@
     <contributor-id type="github">JBromage</contributor-id>
 </contributor>
 
+<contributor id="joe.wildish">
+    <contributor-name-display>Joe Wildish</contributor-name-display>
+    <contributor-id type="github">joewildish</contributor-id>
+</contributor>
+
 <contributor id="keith.fiske">
     <contributor-name-display>Keith Fiske</contributor-name-display>
     <contributor-id type="github">keithf4</contributor-id>
@@ -648,6 +673,11 @@
 <contributor id="mahomed.hussein">
     <contributor-name-display>Mahomed Hussein</contributor-name-display>
     <contributor-id type="github">mahomedh</contributor-id>
+</contributor>
+
+<contributor id="maksym.boguk">
+    <contributor-name-display>Maksym Boguk</contributor-name-display>
+    <contributor-id type="github">MaximBoguk</contributor-id>
 </contributor>
 
 <contributor id="MannerMan">
@@ -835,6 +865,16 @@
     <contributor-id type="github">vidierr</contributor-id>
 </contributor>
 
+<contributor id="rene.hojbjerg.larsen">
+    <contributor-name-display>Ren&amp;eacute; H&amp;oslash;jbjerg Larsen</contributor-name-display>
+    <contributor-id type="github">rhl-jfm</contributor-id>
+</contributor>
+
+<contributor id="robert.donovan">
+    <contributor-name-display>Robert Donovan</contributor-name-display>
+    <contributor-id type="github">rob-donovan</contributor-id>
+</contributor>
+
 <contributor id="rohit.raveendran">
     <contributor-name-display>Rohit Raveendran</contributor-name-display>
     <contributor-id type="github">rohitrav33ndran</contributor-id>
@@ -860,6 +900,11 @@
     <contributor-id type="github">shkshk90</contributor-id>
 </contributor>
 
+<contributor id="samkingno">
+    <contributor-name-display>samkingno</contributor-name-display>
+    <contributor-id type="github">samkingno</contributor-id>
+</contributor>
+
 <contributor id="sarah.conway">
     <contributor-name-display>Sarah Conway</contributor-name-display>
     <contributor-id type="github">xenophenes</contributor-id>
@@ -883,6 +928,11 @@
 <contributor id="sebastien.lardiere">
     <contributor-name-display>Lardi&amp;egrave;re S&amp;eacute;bastien</contributor-name-display>
     <contributor-id type="github">slardiere</contributor-id>
+</contributor>
+
+<contributor id="sebastian.krause">
+    <contributor-name-display>Sebastian Krause</contributor-name-display>
+    <contributor-id type="github">sekrause</contributor-id>
 </contributor>
 
 <contributor id="seth.daniel">
@@ -992,6 +1042,11 @@
 <contributor id="victor.gdalevich">
     <contributor-name-display>Victor Gdalevich</contributor-name-display>
     <contributor-id type="github">ntrvic</contributor-id>
+</contributor>
+
+<contributor id="viktor.kurilko">
+    <contributor-name-display>Viktor Kurilko</contributor-name-display>
+    <contributor-id type="github">KnightMurloc</contributor-id>
 </contributor>
 
 <contributor id="viorel.tabara">

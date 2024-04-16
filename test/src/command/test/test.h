@@ -13,8 +13,8 @@ Perform a test.
 Functions
 ***********************************************************************************************************************************/
 void cmdTest(
-    const String *pathRepo, const String *pathTest, const String *const vm, unsigned int vmId, const String *moduleName,
-    unsigned int test, uint64_t scale, LogLevel logLevel, bool logTime, const String *timeZone, bool coverage, bool profile,
-    bool optimize, bool backTrace);
+    const String *pathRepo, const String *pathTest, const String *const vm, unsigned int vmId, const String *pgVersion,
+    const String *moduleName, unsigned int test, uint64_t scale, LogLevel logLevel, bool logTime, const String *timeZone,
+    bool coverage, bool profile, bool optimize, bool backTrace);
 
 #endif
