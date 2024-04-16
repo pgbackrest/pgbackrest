@@ -954,11 +954,15 @@ testRun(void)
                             STRDEF(HTTP_MULTIPART_BOUNDARY_INIT HTTP_MULTIPART_BOUNDARY_EXTRA))),
                     AssertError, "unable to construct unique boundary");
 
+                requestMulti = httpRequestMultiNew();
                 TEST_ERROR(
                     httpRequestMultiAddP(
                         requestMulti, STRDEF("0"), HTTP_VERB_GET_STR, STRDEF("/"), .header = httpHeaderNew(NULL),
                         .content = BUFSTRDEF(HTTP_MULTIPART_BOUNDARY_INIT HTTP_MULTIPART_BOUNDARY_EXTRA)),
                     AssertError, "unable to construct unique boundary");
+                TEST_RESULT_BOOL(
+                    bufEq(requestMulti->boundaryRaw, BUFSTRDEF(HTTP_MULTIPART_BOUNDARY_INIT HTTP_MULTIPART_BOUNDARY_EXTRA)),
+                    true, "max boundary");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("end server process");
