@@ -6,9 +6,9 @@
                 <github-pull-request id="2282"/>
 
                 <release-item-contributor-list>
-                    <release-item-ideator id="udf2457"/>
+                    <release-item-ideator id="tim.jones"/>
                     <release-item-contributor id="david.steele"/>
-                    <release-item-reviewer id="udf2457"/>
+                    <release-item-reviewer id="tim.jones"/>
                 </release-item-contributor-list>
 
                 <p><proper>S3</proper> <id>SSE-C</id> encryption support.</p>
