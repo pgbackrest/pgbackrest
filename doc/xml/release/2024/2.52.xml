@@ -1,5 +1,20 @@
 <release date="XXXX-XX-XX" version="2.52dev" title="UNDER DEVELOPMENT">
     <release-core-list>
+        <release-feature-list>
+            <release-item>
+                <github-issue id="2279"/>
+                <github-pull-request id="2282"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="udf2457"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="udf2457"/>
+                </release-item-contributor-list>
+
+                <p><proper>S3</proper> <id>SSE-C</id> encryption support.</p>
+            </release-item>
+        </release-feature-list>
+
         <release-improvement-list>
             <release-item>
                 <github-pull-request id="2321"/>
