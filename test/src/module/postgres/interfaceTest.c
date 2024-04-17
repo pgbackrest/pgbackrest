@@ -61,6 +61,7 @@ testRun(void)
             "HINT: is this version of PostgreSQL supported?");
         TEST_RESULT_UINT(pgControlVersion(PG_VERSION_94), 942, "9.4 control version");
         TEST_RESULT_UINT(pgControlVersion(PG_VERSION_11), 1100, "11 control version");
+        TEST_RESULT_UINT(pgControlVersion(PG_VERSION_17), 1300, "17 control version");
     }
 
     // *****************************************************************************************************************************
@@ -105,7 +106,7 @@ testRun(void)
             "HINT: checksum values may be misleading due to forced version scan\n"
             "HINT: is pg_control corrupt?\n"
             "HINT: does pg_control have a different layout than expected?",
-            (uint32_t)(TEST_BIG_ENDIAN() ? 0x27dc2b85 : (TEST_64BIT() ? 0xe9f2e97e : 0xb371302a)));
+            (uint32_t)(TEST_BIG_ENDIAN() ? 0x27dc2b85 : (TEST_64BIT() ? 0xa9264d94 : 0xb371302a)));
 
         // -------------------------------------------------------------------------------------------------------------------------
         HRN_PG_CONTROL_PUT(
@@ -146,7 +147,7 @@ testRun(void)
             pgControlFromFile(storageTest, NULL), FormatError,
             "wal segment size is 47 but must be a power of two between 1048576 and 1073741824 inclusive");
 
-        HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_11, .walSegmentSize = (unsigned int)2 * 1024 * 1024 * 1024);
+        HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_17, .walSegmentSize = (unsigned int)2 * 1024 * 1024 * 1024);
 
         TEST_ERROR(
             pgControlFromFile(storageTest, NULL), FormatError,
@@ -234,13 +235,13 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         HRN_PG_CONTROL_PUT(
-            storageTest, PG_VERSION_16, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_16),
+            storageTest, PG_VERSION_17, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_17),
             .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88, .pageSize = pgPageSize32);
 
-        TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info v90");
-        TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "   check system id");
-        TEST_RESULT_UINT(info.version, PG_VERSION_16, "check version");
-        TEST_RESULT_UINT(info.catalogVersion, 202307071, "check catalog version");
+        TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info");
+        TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "check system id");
+        TEST_RESULT_UINT(info.version, PG_VERSION_17, "check version");
+        TEST_RESULT_UINT(info.catalogVersion, 202404022, "check catalog version");
         TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
         TEST_RESULT_UINT(info.timeline, 88, "check timeline");
         TEST_RESULT_UINT(info.pageSize, pgPageSize32, "check page size");

@@ -174,6 +174,7 @@ my $oyVm =
             PG_VERSION_12,
             PG_VERSION_13,
             PG_VERSION_14,
+            PG_VERSION_15,
         ],
     },
 
@@ -258,13 +259,13 @@ my $oyVm =
             PG_VERSION_14,
             PG_VERSION_15,
             PG_VERSION_16,
+            PG_VERSION_17,
         ],
 
         &VM_DB_TEST =>
         [
             PG_VERSION_95,
             PG_VERSION_10,
-            PG_VERSION_15,
             PG_VERSION_16,
             PG_VERSION_17,
         ],

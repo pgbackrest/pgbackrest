@@ -169,7 +169,7 @@ Types from src/include/catalog/catversion.h
  */
 
 /*							yyyymmddN */
-#define CATALOG_VERSION_NO	202404022
+#define CATALOG_VERSION_NO	202404021
 
 #elif PG_VERSION >= PG_VERSION_16
 
@@ -589,7 +589,7 @@ typedef enum DBState
 	DB_SHUTDOWNING,
 	DB_IN_CRASH_RECOVERY,
 	DB_IN_ARCHIVE_RECOVERY,
-	DB_IN_PRODUCTION
+	DB_IN_PRODUCTION,
 } DBState;
 
 #endif
