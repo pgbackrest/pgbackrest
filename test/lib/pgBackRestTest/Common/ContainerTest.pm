@@ -185,37 +185,37 @@ sub sshSetup
     my $strScript = sectionHeader() .
         "# Setup SSH\n" .
         "    mkdir ${strUserPath}/.ssh && \\\n" .
-        "    echo '-----BEGIN OPENSSH PRIVATE KEY-----' > ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAABFwAAAAdzc2gtcn' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'NhAAAAAwEAAQAAAQEAsc8oWd1xgLiXmHddELmbIlAuRaPG/MgqKOsAFF+EohFt14SA+xoC' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'wWUGORihNhMA/ivFNPEsYySaAaxlGZOMDE/4DtT8ltBybfHU5wSvBc1LFghH9yohOSJvvQ' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'mcWfwVhnRVzT1DyOkPNE2xetI6YruGVPb+gcdfmBND+XnGg7kbOXn5c50ljUeAWT6FRiiz' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'JBw7US7eMKjw31bPYTGbpmHbBeyXWu18p7xclqGxt4s3DTiZOnQ7cXseBcBn6CjCLa8iTc' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'iWdZ9/wXf/O/bNx8koHMEbQEibnwl7ZOevPJMEnGNY+G9LapQ7aKXUMMw9yGOSHjYuJSRc' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'Rv87Pfs/DwAAA8jNAyQizQMkIgAAAAdzc2gtcnNhAAABAQCxzyhZ3XGAuJeYd10QuZsiUC' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo '5Fo8b8yCoo6wAUX4SiEW3XhID7GgLBZQY5GKE2EwD+K8U08SxjJJoBrGUZk4wMT/gO1PyW' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo '0HJt8dTnBK8FzUsWCEf3KiE5Im+9CZxZ/BWGdFXNPUPI6Q80TbF60jpiu4ZU9v6Bx1+YE0' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'P5ecaDuRs5eflznSWNR4BZPoVGKLMkHDtRLt4wqPDfVs9hMZumYdsF7Jda7XynvFyWobG3' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'izcNOJk6dDtxex4FwGfoKMItryJNyJZ1n3/Bd/879s3HySgcwRtASJufCXtk5688kwScY1' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'j4b0tqlDtopdQwzD3IY5IeNi4lJFxG/zs9+z8PAAAAAwEAAQAAAQASn+ZUHhPo2G0DSrge' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo '1lzfkpJ7jOonnuJ7oryWuw1DhJvYJUhKr7DLh8THxO1Yoqj0oVUTdJJNAuUheRNQmISPjZ' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'jSxOXS+PE41EnpYN43DLKUE437im2ByeT2YhlUe56C6jtKjOOaxH6+ixzPW/yYTELdMiSl' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'J2MQpNlL5RYxbyH1MPfopreb+i6DFLuqy1Jl8LhuoerQO36EbIR7EAJ/qQgGsqzoYFZoNU' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo '5g/St9IEjWQps1vKHdj9/YQXJmHNyB4F7yLuPOdxdlCvCRVS1OXdmYFJqNThmNPZ/w+G4e' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'UIZt3JyOd4c7PvpESaU/RZFz/ISqTUm1mWJh3zj/iZCRAAAAgDYWBhm5r8tEWy0m/pmPal' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'eydwTxbR9Wz1yhyC6JHlwXyt4ER72SeR8899XdbKWisyat6Ugjz4HnujDUPFkQjL0ttArV' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'liAMIxM0n9Ci9OU5fLNhc/bgn8y82ZR3uQOYCn/4vbrT8nJ5ce/E/2wW3jWh5dOlTT/bZb' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'luTWYbPxtzAAAAgQDA/qAt6NLVYQySSdieiBwZVzlEpZ/7z0S0IPXKo91QzGrI5LFXdGxB' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'HEQJSh5JQyQwcoCy1AIdvb41qkl5Kh5GVGPZe0DPD8NLBK29ynWx2dOHbjXwtW+G2a4z/4' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo '8fr35s8K0mqwiq/VszV6dIogneXwVL7OfP+bt9ViabUaCeOwAAAIEA69tsFulwoKxzBjpv' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo '0W3CUc3DxfDPPy7pOAxBtXi3wVRNQLsGKPBUFF4O/V28AAZfl/Mr/6WTRXky0tKA5w06WB' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'hcLz519BknSxVCk1PN4f5/wp7ZO6AuBrLwoNNk+c6EXg1N76hqhC4KqG0ifM4s+iRafuvL' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'eJbYea6t56VA8T0AAAAOcnRob21wc29AcmFrZXIBAgMEBQ==' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo '-----END OPENSSH PRIVATE KEY-----' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCxzyhZ3XGAuJeYd10QuZsiUC5Fo8b8yCoo6wAUX4SiEW3XhID7GgLBZQY5GKE2EwD+K8U08S" .
-             "xjJJoBrGUZk4wMT/gO1PyW0HJt8dTnBK8FzUsWCEf3KiE5Im+9CZxZ/BWGdFXNPUPI6Q80TbF60jpiu4ZU9v6Bx1+YE0P5ecaDuRs5eflznSWNR4BZP" .
-             "oVGKLMkHDtRLt4wqPDfVs9hMZumYdsF7Jda7XynvFyWobG3izcNOJk6dDtxex4FwGfoKMItryJNyJZ1n3/Bd/879s3HySgcwRtASJufCXtk5688kwSc" .
-             "Y1j4b0tqlDtopdQwzD3IY5IeNi4lJFxG/zs9+z8P user\@pgbackrest-test' > ${strUserPath}/.ssh/authorized_keys && \\\n" .
+        "    echo '-----BEGIN RSA PRIVATE KEY-----' > ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'MIIEowIBAAKCAQEA5VySpEan5Rn7QQ5XP13YkXxTg+Xp9N+ecyDhD92OQk0VZOFn' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'EKlXUaMXH0WVjRRgjgbF78JHFbEQjUHimbzr9ev1IuDaIS42E1nUkBaHggnHNAW2' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'aqtczUDSnLGcXqd0XeDtwpjj1I0xWOeJli/xjU+eSwjzqNgX6ZX2P0uTXflu254u' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'SjOF3IARo9FiDEKQdksoxNOAhCTYgDAynmkcfJ9e87FjiTGmfnZO3H6gU2kidSFX' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'rwdHtdN3Qlv6RgCroLGAZZpmtqBorTwShWRScWAAg/OqWwLphfNbXIIHZO4EJ4S2' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'JLgsgJHb20SJ2XEI2Iln9sj+oCWgLJ2m+RLvWwIDAQABAoIBAArBC0EiQkyxf1Xe' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'txmKAWsE4iI85/oqzVJG7YvhuVdY0j16J2vLvNk05T3P9JdPqB1QqlGNEZSDSlbi' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'isjm55tkFl4tyRx61F9A5tYLWwwuVYWWFPutuuVcJOPi8gWAItUkruaLu6GjgyJQ' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo '143QA//lBp4sYRxUEX71defO19iKkDz+xEuOzYMd16j76OKMcmbnog7hbMrXR4Yi' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'kNXuhnwBadutaXLve3mZ0JowrZyHKfTUWOHgvuULpCVD5su3NdbpE2AVn1idcF8V' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'jaj6p0vtcvEnXEC69XwX+yL0TgvOE4Vu/OWg8lDWQdetONIHGbElJZvB6eyTF1nl' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'IIgLc2ECgYEA7PL3soOfH3dMNUt4KGSw1cK/kwvy7UsT6QrAPi1Cc/A4szluk6/O' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo '5YhKfTjzHW5WDmsTTAcT29MLmW8dQXeUAe/1BtIATubsav+uSelfBmUAnQj9fvKT' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'ieJ6JMf20OTbS6XODA3+jJAdApLCu61Lv6nePOuNzLY/uqSMWu9kO/sCgYEA981v' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'YIUaadFaHnPnmax0+jJMs8S5AIEjSfSIxR8oNOWNUxBBvwFd4zWTApVfZqKjmI83' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'Ng5tISxspzHseakyrIpoDqzxRQPxZF7RTO6VUX+ZQj6iIXVp9FDqWAjvDACuSky2' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'mGAiiA+fWZ1za62opgoYQZ17O17SyHF9/vJ7XCECgYANwNyXxAQMc4Q847CJx65r' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo '+e3cvyjOlTkGodUexsnAqQThgkfk0qOTtyF7uz6BStI77AMmupJwhAN8WHK+Rg6V' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'PjRevPm/mq/GVijrqVwWpu4uL0NnhvUBX9/vGpw868u+zFT1ZiqMRiEo8RPUiO6I' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'pXd82b9VTo7Mapiq/pI22QKBgC8Kb586BUabOGlZhVi11Ur9q3Pg32HKIgHTCveo' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'r4BDJ23iQyjYQJN2Qx8VbhPUwgue/FMlr+/BOCsRHhwGU5lPeOt4RyDb28I7Aa6C' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'CBR9jYF21F5XpLJ9fc8SexajNnLiVzNb5JJBrPVdH2EMiVxjxDEIjTE7EfZ9HPb9' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo '3w8hAoGBALyik3jr0W6DxzqOW0jPXPLDqp1JvzieC03nZD1scWeI8qIzUOpLX7cc' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'jaMU/8QMBRvyEcZK82Cedilm30nLf+C/FR5TsUmftS7IcjoC4Z2ZXWNOhMv22TUJ' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'Ml6z//+WSZ3qVZ5rvAeo4obwiBfe+Uh+AyyprEGgmimF9qDejcwc' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo '-----END RSA PRIVATE KEY-----' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDlXJKkRqflGftBDlc/XdiRfFOD5en0355zIOEP3Y5CTRVk4WcQqVdRoxcfRZWNFGCOBsXvwk" .
+             "cVsRCNQeKZvOv16/Ui4NohLjYTWdSQFoeCCcc0BbZqq1zNQNKcsZxep3Rd4O3CmOPUjTFY54mWL/GNT55LCPOo2BfplfY/S5Nd+W7bni5KM4XcgBGj0" .
+             "WIMQpB2SyjE04CEJNiAMDKeaRx8n17zsWOJMaZ+dk7cfqBTaSJ1IVevB0e103dCW/pGAKugsYBlmma2oGitPBKFZFJxYACD86pbAumF81tcggdk7gQn" .
+             "hLYkuCyAkdvbRInZcQjYiWf2yP6gJaAsnab5Eu9b user\@pgbackrest-test' > ${strUserPath}/.ssh/authorized_keys && \\\n" .
         "    echo 'Host *' > ${strUserPath}/.ssh/config && \\\n" .
         "    echo '    StrictHostKeyChecking no' >> ${strUserPath}/.ssh/config && \\\n";
 

@@ -257,37 +257,62 @@
         <variable key="pg-cluster-check-upgrade" if="{[os-type-is-debian]}">pg_lsclusters</variable>
         <variable key="pg-cluster-check-upgrade" if="{[os-type-is-rhel]}">systemctl status postgresql-{[pg-version-upgrade]}.service</variable>
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         <!-- Common commands -->
         <variable key="ssh-key-install">
             mkdir -p -m 700 /root/.ssh &amp;&amp; \
-            echo '-----BEGIN OPENSSH PRIVATE KEY-----' > /root/.ssh/id_rsa &amp;&amp; \
-            echo 'b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAABFwAAAAdzc2gtcn' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo 'NhAAAAAwEAAQAAAQEAsc8oWd1xgLiXmHddELmbIlAuRaPG/MgqKOsAFF+EohFt14SA+xoC' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo 'wWUGORihNhMA/ivFNPEsYySaAaxlGZOMDE/4DtT8ltBybfHU5wSvBc1LFghH9yohOSJvvQ' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo 'mcWfwVhnRVzT1DyOkPNE2xetI6YruGVPb+gcdfmBND+XnGg7kbOXn5c50ljUeAWT6FRiiz' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo 'JBw7US7eMKjw31bPYTGbpmHbBeyXWu18p7xclqGxt4s3DTiZOnQ7cXseBcBn6CjCLa8iTc' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo 'iWdZ9/wXf/O/bNx8koHMEbQEibnwl7ZOevPJMEnGNY+G9LapQ7aKXUMMw9yGOSHjYuJSRc' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo 'Rv87Pfs/DwAAA8jNAyQizQMkIgAAAAdzc2gtcnNhAAABAQCxzyhZ3XGAuJeYd10QuZsiUC' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo '5Fo8b8yCoo6wAUX4SiEW3XhID7GgLBZQY5GKE2EwD+K8U08SxjJJoBrGUZk4wMT/gO1PyW' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo '0HJt8dTnBK8FzUsWCEf3KiE5Im+9CZxZ/BWGdFXNPUPI6Q80TbF60jpiu4ZU9v6Bx1+YE0' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo 'P5ecaDuRs5eflznSWNR4BZPoVGKLMkHDtRLt4wqPDfVs9hMZumYdsF7Jda7XynvFyWobG3' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo 'izcNOJk6dDtxex4FwGfoKMItryJNyJZ1n3/Bd/879s3HySgcwRtASJufCXtk5688kwScY1' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo 'j4b0tqlDtopdQwzD3IY5IeNi4lJFxG/zs9+z8PAAAAAwEAAQAAAQASn+ZUHhPo2G0DSrge' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo '1lzfkpJ7jOonnuJ7oryWuw1DhJvYJUhKr7DLh8THxO1Yoqj0oVUTdJJNAuUheRNQmISPjZ' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo 'jSxOXS+PE41EnpYN43DLKUE437im2ByeT2YhlUe56C6jtKjOOaxH6+ixzPW/yYTELdMiSl' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo 'J2MQpNlL5RYxbyH1MPfopreb+i6DFLuqy1Jl8LhuoerQO36EbIR7EAJ/qQgGsqzoYFZoNU' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo '5g/St9IEjWQps1vKHdj9/YQXJmHNyB4F7yLuPOdxdlCvCRVS1OXdmYFJqNThmNPZ/w+G4e' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo 'UIZt3JyOd4c7PvpESaU/RZFz/ISqTUm1mWJh3zj/iZCRAAAAgDYWBhm5r8tEWy0m/pmPal' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo 'eydwTxbR9Wz1yhyC6JHlwXyt4ER72SeR8899XdbKWisyat6Ugjz4HnujDUPFkQjL0ttArV' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo 'liAMIxM0n9Ci9OU5fLNhc/bgn8y82ZR3uQOYCn/4vbrT8nJ5ce/E/2wW3jWh5dOlTT/bZb' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo 'luTWYbPxtzAAAAgQDA/qAt6NLVYQySSdieiBwZVzlEpZ/7z0S0IPXKo91QzGrI5LFXdGxB' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo 'HEQJSh5JQyQwcoCy1AIdvb41qkl5Kh5GVGPZe0DPD8NLBK29ynWx2dOHbjXwtW+G2a4z/4' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo '8fr35s8K0mqwiq/VszV6dIogneXwVL7OfP+bt9ViabUaCeOwAAAIEA69tsFulwoKxzBjpv' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo '0W3CUc3DxfDPPy7pOAxBtXi3wVRNQLsGKPBUFF4O/V28AAZfl/Mr/6WTRXky0tKA5w06WB' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo 'hcLz519BknSxVCk1PN4f5/wp7ZO6AuBrLwoNNk+c6EXg1N76hqhC4KqG0ifM4s+iRafuvL' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo 'eJbYea6t56VA8T0AAAAOcnRob21wc29AcmFrZXIBAgMEBQ==' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo '-----END OPENSSH PRIVATE KEY-----' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCxzyhZ3XGAuJeYd10QuZsiUC5Fo8b8yCoo6wAUX4SiEW3XhID7GgLBZQY5GKE2EwD+K8U08SxjJJoBrGUZk4wMT/gO1PyW0HJt8dTnBK8FzUsWCEf3KiE5Im+9CZxZ/BWGdFXNPUPI6Q80TbF60jpiu4ZU9v6Bx1+YE0P5ecaDuRs5eflznSWNR4BZPoVGKLMkHDtRLt4wqPDfVs9hMZumYdsF7Jda7XynvFyWobG3izcNOJk6dDtxex4FwGfoKMItryJNyJZ1n3/Bd/879s3HySgcwRtASJufCXtk5688kwScY1j4b0tqlDtopdQwzD3IY5IeNi4lJFxG/zs9+z8P user\@pgbackrest-test' > /root/.ssh/authorized_keys &amp;&amp; \
+            echo '-----BEGIN RSA PRIVATE KEY-----' > /root/.ssh/id_rsa &amp;&amp; \
+            echo 'MIIEowIBAAKCAQEA5VySpEan5Rn7QQ5XP13YkXxTg+Xp9N+ecyDhD92OQk0VZOFn' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'EKlXUaMXH0WVjRRgjgbF78JHFbEQjUHimbzr9ev1IuDaIS42E1nUkBaHggnHNAW2' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'aqtczUDSnLGcXqd0XeDtwpjj1I0xWOeJli/xjU+eSwjzqNgX6ZX2P0uTXflu254u' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'SjOF3IARo9FiDEKQdksoxNOAhCTYgDAynmkcfJ9e87FjiTGmfnZO3H6gU2kidSFX' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'rwdHtdN3Qlv6RgCroLGAZZpmtqBorTwShWRScWAAg/OqWwLphfNbXIIHZO4EJ4S2' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'JLgsgJHb20SJ2XEI2Iln9sj+oCWgLJ2m+RLvWwIDAQABAoIBAArBC0EiQkyxf1Xe' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'txmKAWsE4iI85/oqzVJG7YvhuVdY0j16J2vLvNk05T3P9JdPqB1QqlGNEZSDSlbi' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'isjm55tkFl4tyRx61F9A5tYLWwwuVYWWFPutuuVcJOPi8gWAItUkruaLu6GjgyJQ' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo '143QA//lBp4sYRxUEX71defO19iKkDz+xEuOzYMd16j76OKMcmbnog7hbMrXR4Yi' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'kNXuhnwBadutaXLve3mZ0JowrZyHKfTUWOHgvuULpCVD5su3NdbpE2AVn1idcF8V' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'jaj6p0vtcvEnXEC69XwX+yL0TgvOE4Vu/OWg8lDWQdetONIHGbElJZvB6eyTF1nl' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'IIgLc2ECgYEA7PL3soOfH3dMNUt4KGSw1cK/kwvy7UsT6QrAPi1Cc/A4szluk6/O' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo '5YhKfTjzHW5WDmsTTAcT29MLmW8dQXeUAe/1BtIATubsav+uSelfBmUAnQj9fvKT' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'ieJ6JMf20OTbS6XODA3+jJAdApLCu61Lv6nePOuNzLY/uqSMWu9kO/sCgYEA981v' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'YIUaadFaHnPnmax0+jJMs8S5AIEjSfSIxR8oNOWNUxBBvwFd4zWTApVfZqKjmI83' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'Ng5tISxspzHseakyrIpoDqzxRQPxZF7RTO6VUX+ZQj6iIXVp9FDqWAjvDACuSky2' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'mGAiiA+fWZ1za62opgoYQZ17O17SyHF9/vJ7XCECgYANwNyXxAQMc4Q847CJx65r' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo '+e3cvyjOlTkGodUexsnAqQThgkfk0qOTtyF7uz6BStI77AMmupJwhAN8WHK+Rg6V' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'PjRevPm/mq/GVijrqVwWpu4uL0NnhvUBX9/vGpw868u+zFT1ZiqMRiEo8RPUiO6I' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'pXd82b9VTo7Mapiq/pI22QKBgC8Kb586BUabOGlZhVi11Ur9q3Pg32HKIgHTCveo' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'r4BDJ23iQyjYQJN2Qx8VbhPUwgue/FMlr+/BOCsRHhwGU5lPeOt4RyDb28I7Aa6C' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'CBR9jYF21F5XpLJ9fc8SexajNnLiVzNb5JJBrPVdH2EMiVxjxDEIjTE7EfZ9HPb9' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo '3w8hAoGBALyik3jr0W6DxzqOW0jPXPLDqp1JvzieC03nZD1scWeI8qIzUOpLX7cc' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'jaMU/8QMBRvyEcZK82Cedilm30nLf+C/FR5TsUmftS7IcjoC4Z2ZXWNOhMv22TUJ' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'Ml6z//+WSZ3qVZ5rvAeo4obwiBfe+Uh+AyyprEGgmimF9qDejcwc' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo '-----END RSA PRIVATE KEY-----' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDlXJKkRqflGftBDlc/XdiRfFOD5en0355zIOEP3Y5CTRVk4WcQqVdRoxcfRZWNFGCOBsXvwkcVsRCNQeKZvOv16/Ui4NohLjYTWdSQFoeCCcc0BbZqq1zNQNKcsZxep3Rd4O3CmOPUjTFY54mWL/GNT55LCPOo2BfplfY/S5Nd+W7bni5KM4XcgBGj0WIMQpB2SyjE04CEJNiAMDKeaRx8n17zsWOJMaZ+dk7cfqBTaSJ1IVevB0e103dCW/pGAKugsYBlmma2oGitPBKFZFJxYACD86pbAumF81tcggdk7gQnhLYkuCyAkdvbRInZcQjYiWf2yP6gJaAsnab5Eu9b' > /root/.ssh/authorized_keys &amp;&amp; \
             echo 'Host *' > /root/.ssh/config &amp;&amp; \
             echo '    StrictHostKeyChecking no' >> /root/.ssh/config &amp;&amp; \
             chmod 600 /root/.ssh/*
