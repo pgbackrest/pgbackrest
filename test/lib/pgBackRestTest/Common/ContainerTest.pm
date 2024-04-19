@@ -185,24 +185,37 @@ sub sshSetup
     my $strScript = sectionHeader() .
         "# Setup SSH\n" .
         "    mkdir ${strUserPath}/.ssh && \\\n" .
-        "    echo '-----BEGIN RSA PRIVATE KEY-----' > ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'MIICXwIBAAKBgQDR0yJsZW5d5LcqteiOtv8d+FFeFFHDPI0VTcTOdMn1iDiIP1ou' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'X3Q2OyNjsBaDbsRJd+sp9IRq1LKX3zsBcgGZANwm0zduuNEPEU94ajS/uRoejIqY' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo '/XkKOpnEF6ZbQ2S7TaE4sWeGLvba7kUFs0QTOO+N+nV2dMbdqZf6C8lazwIDAQAB' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'AoGBAJXa6xzrnFVmwgK5BKzYuX/YF5TPgk2j80ch0ct50buQXH/Cb0/rUH5i4jWS' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'T6Hy/DFUehnuzpvV6O9auTOhDs3BhEKFRuRLn1nBwTtZny5Hh+cw7azUCEHFCJlz' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'makCrVbgawtno6oU/pFgQm1FcxD0f+Me5ruNcLHqUZsPQwkRAkEA+8pG+ckOlz6R' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'AJLIHedmfcrEY9T7sfdo83bzMOz8H5soUUP4aOTLJYCla1LO7JdDnXMGo0KxaHBP' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'l8j5zDmVewJBANVVPDJr1w37m0FBi37QgUOAijVfLXgyPMxYp2uc9ddjncif0063' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo '0Wc0FQefoPszf3CDrHv/RHvhHq97jXDwTb0CQQDgH83NygoS1r57pCw9chzpG/R0' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'aMEiSPhCvz757fj+qT3aGIal2AJ7/2c/gRZvwrWNETZ3XIZOUKqIkXzJLPjBAkEA' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'wnP799W2Y8d4/+VX2pMBkF7lG7sSviHEq1sP2BZtPBRQKSQNvw3scM7XcGh/mxmY' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'yx0qpqfKa8SKbNgI1+4iXQJBAOlg8MJLwkUtrG+p8wf69oCuZsnyv0K6UMDxm6/8' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'cbvfmvODulYFaIahaqHWEZoRo5CLYZ7gN43WHPOrKxdDL78=' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo '-----END RSA PRIVATE KEY-----' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDR0yJsZW5d5LcqteiOtv8d+FFeFFHDPI0VTcTOdMn1iDiIP1ouX3Q2OyNjsBaDbsRJd+sp9I" .
-             "Rq1LKX3zsBcgGZANwm0zduuNEPEU94ajS/uRoejIqY/XkKOpnEF6ZbQ2S7TaE4sWeGLvba7kUFs0QTOO+N+nV2dMbdqZf6C8lazw== " .
-             "user\@pgbackrest-test' > ${strUserPath}/.ssh/authorized_keys && \\\n" .
+        "    echo '-----BEGIN OPENSSH PRIVATE KEY-----' > ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAABFwAAAAdzc2gtcn' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'NhAAAAAwEAAQAAAQEAsc8oWd1xgLiXmHddELmbIlAuRaPG/MgqKOsAFF+EohFt14SA+xoC' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'wWUGORihNhMA/ivFNPEsYySaAaxlGZOMDE/4DtT8ltBybfHU5wSvBc1LFghH9yohOSJvvQ' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'mcWfwVhnRVzT1DyOkPNE2xetI6YruGVPb+gcdfmBND+XnGg7kbOXn5c50ljUeAWT6FRiiz' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'JBw7US7eMKjw31bPYTGbpmHbBeyXWu18p7xclqGxt4s3DTiZOnQ7cXseBcBn6CjCLa8iTc' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'iWdZ9/wXf/O/bNx8koHMEbQEibnwl7ZOevPJMEnGNY+G9LapQ7aKXUMMw9yGOSHjYuJSRc' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'Rv87Pfs/DwAAA8jNAyQizQMkIgAAAAdzc2gtcnNhAAABAQCxzyhZ3XGAuJeYd10QuZsiUC' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo '5Fo8b8yCoo6wAUX4SiEW3XhID7GgLBZQY5GKE2EwD+K8U08SxjJJoBrGUZk4wMT/gO1PyW' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo '0HJt8dTnBK8FzUsWCEf3KiE5Im+9CZxZ/BWGdFXNPUPI6Q80TbF60jpiu4ZU9v6Bx1+YE0' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'P5ecaDuRs5eflznSWNR4BZPoVGKLMkHDtRLt4wqPDfVs9hMZumYdsF7Jda7XynvFyWobG3' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'izcNOJk6dDtxex4FwGfoKMItryJNyJZ1n3/Bd/879s3HySgcwRtASJufCXtk5688kwScY1' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'j4b0tqlDtopdQwzD3IY5IeNi4lJFxG/zs9+z8PAAAAAwEAAQAAAQASn+ZUHhPo2G0DSrge' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo '1lzfkpJ7jOonnuJ7oryWuw1DhJvYJUhKr7DLh8THxO1Yoqj0oVUTdJJNAuUheRNQmISPjZ' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'jSxOXS+PE41EnpYN43DLKUE437im2ByeT2YhlUe56C6jtKjOOaxH6+ixzPW/yYTELdMiSl' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'J2MQpNlL5RYxbyH1MPfopreb+i6DFLuqy1Jl8LhuoerQO36EbIR7EAJ/qQgGsqzoYFZoNU' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo '5g/St9IEjWQps1vKHdj9/YQXJmHNyB4F7yLuPOdxdlCvCRVS1OXdmYFJqNThmNPZ/w+G4e' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'UIZt3JyOd4c7PvpESaU/RZFz/ISqTUm1mWJh3zj/iZCRAAAAgDYWBhm5r8tEWy0m/pmPal' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'eydwTxbR9Wz1yhyC6JHlwXyt4ER72SeR8899XdbKWisyat6Ugjz4HnujDUPFkQjL0ttArV' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'liAMIxM0n9Ci9OU5fLNhc/bgn8y82ZR3uQOYCn/4vbrT8nJ5ce/E/2wW3jWh5dOlTT/bZb' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'luTWYbPxtzAAAAgQDA/qAt6NLVYQySSdieiBwZVzlEpZ/7z0S0IPXKo91QzGrI5LFXdGxB' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'HEQJSh5JQyQwcoCy1AIdvb41qkl5Kh5GVGPZe0DPD8NLBK29ynWx2dOHbjXwtW+G2a4z/4' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo '8fr35s8K0mqwiq/VszV6dIogneXwVL7OfP+bt9ViabUaCeOwAAAIEA69tsFulwoKxzBjpv' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo '0W3CUc3DxfDPPy7pOAxBtXi3wVRNQLsGKPBUFF4O/V28AAZfl/Mr/6WTRXky0tKA5w06WB' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'hcLz519BknSxVCk1PN4f5/wp7ZO6AuBrLwoNNk+c6EXg1N76hqhC4KqG0ifM4s+iRafuvL' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'eJbYea6t56VA8T0AAAAOcnRob21wc29AcmFrZXIBAgMEBQ==' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo '-----END OPENSSH PRIVATE KEY-----' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCxzyhZ3XGAuJeYd10QuZsiUC5Fo8b8yCoo6wAUX4SiEW3XhID7GgLBZQY5GKE2EwD+K8U08S" .
+             "xjJJoBrGUZk4wMT/gO1PyW0HJt8dTnBK8FzUsWCEf3KiE5Im+9CZxZ/BWGdFXNPUPI6Q80TbF60jpiu4ZU9v6Bx1+YE0P5ecaDuRs5eflznSWNR4BZP" .
+             "oVGKLMkHDtRLt4wqPDfVs9hMZumYdsF7Jda7XynvFyWobG3izcNOJk6dDtxex4FwGfoKMItryJNyJZ1n3/Bd/879s3HySgcwRtASJufCXtk5688kwSc" .
+             "Y1j4b0tqlDtopdQwzD3IY5IeNi4lJFxG/zs9+z8P user\@pgbackrest-test' > ${strUserPath}/.ssh/authorized_keys && \\\n" .
         "    echo 'Host *' > ${strUserPath}/.ssh/config && \\\n" .
         "    echo '    StrictHostKeyChecking no' >> ${strUserPath}/.ssh/config && \\\n";
 
@@ -436,7 +449,7 @@ sub containerBuild
         $strScript .= sectionHeader() .
             "# Regenerate SSH keys\n" .
             "    rm -f /etc/ssh/ssh_host_rsa_key* && \\\n" .
-            "    ssh-keygen -t rsa -b 1024 -f /etc/ssh/ssh_host_rsa_key";
+            "    ssh-keygen -t rsa -b 2048 -f /etc/ssh/ssh_host_rsa_key";
 
         if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
         {
