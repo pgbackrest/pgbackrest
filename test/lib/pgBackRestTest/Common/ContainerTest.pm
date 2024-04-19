@@ -486,7 +486,7 @@ sub containerBuild
             if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
             {
                 $strScript .=
-                    "    rpm --import http://yum.postgresql.org/RPM-GPG-KEY-PGDG && \\\n";
+                    "rpm --import https://download.postgresql.org/pub/repos/yum/keys/RPM-GPG-KEY-PGDG && \\\n";
 
                 if ($strOS eq VM_RH7)
                 {
