@@ -38,7 +38,7 @@ archivePushFileProtocol(PackRead *const param, ProtocolServer *const server)
         const StringList *const priorErrorList = pckReadStrLstP(param);
 
         // Read repo data
-        List *repoList = lstNewP(sizeof(ArchivePushFileRepoData));
+        List *const repoList = lstNewP(sizeof(ArchivePushFileRepoData));
 
         pckReadArrayBeginP(param);
 

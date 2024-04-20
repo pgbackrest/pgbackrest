@@ -97,7 +97,7 @@ restorePathValidate(void)
 Get epoch time from formatted string
 ***********************************************************************************************************************************/
 static time_t
-getEpoch(const String *targetTime)
+getEpoch(const String *const targetTime)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, targetTime);
@@ -111,29 +111,28 @@ getEpoch(const String *targetTime)
     {
         // Build the regex to accept formats: YYYY-MM-DD HH:MM:SS with optional msec (up to 6 digits and separated from minutes by
         // a comma or period), optional timezone offset +/- HH or HHMM or HH:MM, where offset boundaries are UTC-12 to UTC+14
-        const String *expression = STRDEF(
+        const String *const expression = STRDEF(
             "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}((\\,|\\.)[0-9]{1,6})?((\\+|\\-)[0-9]{2}(:?)([0-9]{2})?)?$");
-
-        RegExp *regExp = regExpNew(expression);
+        RegExp *const regExp = regExpNew(expression);
 
         // If the target-recovery time matches the regular expression then validate it
         if (regExpMatch(regExp, targetTime))
         {
             // Strip off the date and time and put the remainder into another string
-            String *datetime = strSubN(targetTime, 0, 19);
+            const String *const datetime = strSubN(targetTime, 0, 19);
 
-            int dtYear = cvtZSubNToInt(strZ(datetime), 0, 4);
-            int dtMonth = cvtZSubNToInt(strZ(datetime), 5, 2);
-            int dtDay = cvtZSubNToInt(strZ(datetime), 8, 2);
-            int dtHour = cvtZSubNToInt(strZ(datetime), 11, 2);
-            int dtMinute = cvtZSubNToInt(strZ(datetime), 14, 2);
-            int dtSecond = cvtZSubNToInt(strZ(datetime), 17, 2);
+            const int dtYear = cvtZSubNToInt(strZ(datetime), 0, 4);
+            const int dtMonth = cvtZSubNToInt(strZ(datetime), 5, 2);
+            const int dtDay = cvtZSubNToInt(strZ(datetime), 8, 2);
+            const int dtHour = cvtZSubNToInt(strZ(datetime), 11, 2);
+            const int dtMinute = cvtZSubNToInt(strZ(datetime), 14, 2);
+            const int dtSecond = cvtZSubNToInt(strZ(datetime), 17, 2);
 
             // Confirm date and time parts are valid
             datePartsValid(dtYear, dtMonth, dtDay);
             timePartsValid(dtHour, dtMinute, dtSecond);
 
-            String *timeTargetZone = strSub(targetTime, 19);
+            const String *const timeTargetZone = strSub(targetTime, 19);
 
             // Find the + or - indicating a timezone offset was provided (there may be milliseconds before the timezone, so need to
             // skip). If a timezone offset was not provided, then local time is assumed.
@@ -144,10 +143,10 @@ getEpoch(const String *targetTime)
 
             if (idxSign != -1)
             {
-                String *timezoneOffset = strSub(timeTargetZone, (size_t)idxSign);
+                const String *const timezoneOffset = strSub(timeTargetZone, (size_t)idxSign);
 
                 // Include the sign with the hour
-                int tzHour = cvtZSubNToInt(strZ(timezoneOffset), 0, 3);
+                const int tzHour = cvtZSubNToInt(strZ(timezoneOffset), 0, 3);
                 int tzMinute = 0;
 
                 // If minutes are included in timezone offset then extract the minutes based on whether a colon separates them from
@@ -210,7 +209,7 @@ typedef struct RestoreBackupData
 
 // Helper function for restoreBackupSet
 static RestoreBackupData
-restoreBackupData(const String *backupLabel, unsigned int repoIdx, const String *backupCipherPass)
+restoreBackupData(const String *const backupLabel, const unsigned int repoIdx, const String *const backupCipherPass)
 {
     ASSERT(backupLabel != NULL);
 
@@ -277,7 +276,7 @@ restoreBackupSet(void)
             // Get the repo storage in case it is remote and encryption settings need to be pulled down
             storageRepoIdx(repoIdx);
 
-            InfoBackup *infoBackup = NULL;
+            const InfoBackup *infoBackup = NULL;
 
             // Attempt to load backup.info
             TRY_BEGIN()
@@ -308,7 +307,7 @@ restoreBackupSet(void)
             if (backupSetRequested == NULL)
             {
                 // Get the latest backup
-                InfoBackupData latestBackup = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1);
+                const InfoBackupData latestBackup = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1);
 
                 // If a target was requested, attempt to determine the backup set
                 if (targetType == CFGOPTVAL_TYPE_TIME || targetType == CFGOPTVAL_TYPE_LSN)
@@ -319,7 +318,7 @@ restoreBackupSet(void)
                     for (unsigned int keyIdx = infoBackupDataTotal(infoBackup) - 1; (int)keyIdx >= 0; keyIdx--)
                     {
                         // Get the backup data
-                        InfoBackupData backupData = infoBackupData(infoBackup, keyIdx);
+                        const InfoBackupData backupData = infoBackupData(infoBackup, keyIdx);
 
                         // If target is lsn and no backupLsnStop exists, exit this repo and log that backup may be manually selected
                         if (targetType == CFGOPTVAL_TYPE_LSN && !backupData.backupLsnStop)
@@ -352,7 +351,8 @@ restoreBackupSet(void)
                 else
                 {
                     // Is this backup part of the latest pg history?
-                    InfoPgData backupInfoPg = infoPgData(infoBackupPg(infoBackup), infoPgDataCurrentId(infoBackupPg(infoBackup)));
+                    const InfoPgData backupInfoPg = infoPgData(
+                        infoBackupPg(infoBackup), infoPgDataCurrentId(infoBackupPg(infoBackup)));
 
                     if (latestBackup.backupPgId < backupInfoPg.id)
                     {
@@ -412,7 +412,7 @@ restoreBackupSet(void)
 Validate the manifest
 ***********************************************************************************************************************************/
 static void
-restoreManifestValidate(Manifest *manifest, const String *backupSet)
+restoreManifestValidate(const Manifest *const manifest, const String *const backupSet)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
@@ -428,7 +428,7 @@ restoreManifestValidate(Manifest *manifest, const String *backupSet)
         CHECK(FormatError, manifestFileTotal(manifest) > 0, "manifest missing files");
 
         // Sanity check to ensure the manifest has not been moved to a new directory
-        const ManifestData *data = manifestData(manifest);
+        const ManifestData *const data = manifestData(manifest);
 
         if (!strEq(data->backupLabel, backupSet))
         {
@@ -448,7 +448,7 @@ restoreManifestValidate(Manifest *manifest, const String *backupSet)
 Remap the manifest based on mappings provided by the user
 ***********************************************************************************************************************************/
 static void
-restoreManifestMap(Manifest *manifest)
+restoreManifestMap(Manifest *const manifest)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
@@ -460,8 +460,8 @@ restoreManifestMap(Manifest *manifest)
     {
         // Remap the data directory
         // -------------------------------------------------------------------------------------------------------------------------
-        const String *pgPath = cfgOptionStr(cfgOptPgPath);
-        const ManifestTarget *targetBase = manifestTargetBase(manifest);
+        const String *const pgPath = cfgOptionStr(cfgOptPgPath);
+        const ManifestTarget *const targetBase = manifestTargetBase(manifest);
 
         if (!strEq(targetBase->path, pgPath))
         {
@@ -472,15 +472,15 @@ restoreManifestMap(Manifest *manifest)
         // Remap tablespaces
         // -------------------------------------------------------------------------------------------------------------------------
         const KeyValue *const tablespaceMap = cfgOptionKvNull(cfgOptTablespaceMap);
-        const String *tablespaceMapAllPath = cfgOptionStrNull(cfgOptTablespaceMapAll);
+        const String *const tablespaceMapAllPath = cfgOptionStrNull(cfgOptTablespaceMapAll);
 
         if (tablespaceMap != NULL || tablespaceMapAllPath != NULL)
         {
-            StringList *tablespaceRemapped = strLstNew();
+            StringList *const tablespaceRemapped = strLstNew();
 
             for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
             {
-                const ManifestTarget *target = manifestTarget(manifest, targetIdx);
+                const ManifestTarget *const target = manifestTarget(manifest, targetIdx);
 
                 // Is this a tablespace?
                 if (target->tablespaceId != 0)
@@ -491,13 +491,13 @@ restoreManifestMap(Manifest *manifest)
                     if (tablespaceMap != NULL)
                     {
                         // Attempt to get the tablespace by name
-                        const String *tablespacePathByName = varStr(kvGet(tablespaceMap, VARSTR(target->tablespaceName)));
+                        const String *const tablespacePathByName = varStr(kvGet(tablespaceMap, VARSTR(target->tablespaceName)));
 
                         if (tablespacePathByName != NULL)
                             strLstAdd(tablespaceRemapped, target->tablespaceName);
 
                         // Attempt to get the tablespace by id
-                        const String *tablespacePathById = varStr(
+                        const String *const tablespacePathById = varStr(
                             kvGet(tablespaceMap, VARSTR(varStrForce(VARUINT(target->tablespaceId)))));
 
                         if (tablespacePathById != NULL)
@@ -539,12 +539,12 @@ restoreManifestMap(Manifest *manifest)
             // Error on invalid tablespaces
             if (tablespaceMap != NULL)
             {
-                const VariantList *tablespaceMapList = kvKeyList(tablespaceMap);
+                const VariantList *const tablespaceMapList = kvKeyList(tablespaceMap);
                 strLstSort(tablespaceRemapped, sortOrderAsc);
 
                 for (unsigned int tablespaceMapIdx = 0; tablespaceMapIdx < varLstSize(tablespaceMapList); tablespaceMapIdx++)
                 {
-                    const String *tablespace = varStr(varLstGet(tablespaceMapList, tablespaceMapIdx));
+                    const String *const tablespace = varStr(varLstGet(tablespaceMapList, tablespaceMapIdx));
 
                     if (!strLstExists(tablespaceRemapped, tablespace))
                         THROW_FMT(TablespaceMapError, "unable to remap invalid tablespace '%s'", strZ(tablespace));
@@ -717,7 +717,7 @@ restoreManifestOwnerReplace(const String *const owner, const String *const owner
 #define RESTORE_MANIFEST_OWNER_GET(type, deref)                                                                                    \
     for (unsigned int itemIdx = 0; itemIdx < manifest##type##Total(manifest); itemIdx++)                                           \
     {                                                                                                                              \
-        Manifest##type item = deref manifest##type(manifest, itemIdx);                                                             \
+        const Manifest##type item = deref manifest##type(manifest, itemIdx);                                                       \
                                                                                                                                    \
         if (item.user == NULL)                                                                                                     \
             userNull = true;                                                                                                       \
@@ -739,7 +739,7 @@ restoreManifestOwnerReplace(const String *const owner, const String *const owner
                                                                                                                                    \
         for (unsigned int ownerIdx = 0; ownerIdx < strLstSize(type##List); ownerIdx++)                                             \
         {                                                                                                                          \
-            const String *owner = strLstGet(type##List, ownerIdx);                                                                 \
+            const String *const owner = strLstGet(type##List, ownerIdx);                                                           \
                                                                                                                                    \
             if (type##Name() == NULL || !strEq(type##Name(), owner))                                                               \
                 LOG_WARN_FMT("unknown " #type " '%s' in backup manifest mapped to current " #type, strZ(owner));                   \
@@ -765,9 +765,9 @@ restoreManifestOwner(const Manifest *const manifest, const String **const rootRe
         // Build a list of users and groups in the manifest
         // -------------------------------------------------------------------------------------------------------------------------
         bool userNull = false;
-        StringList *userList = strLstNew();
+        StringList *const userList = strLstNew();
         bool groupNull = false;
-        StringList *groupList = strLstNew();
+        StringList *const groupList = strLstNew();
 
         RESTORE_MANIFEST_OWNER_GET(File, );
         RESTORE_MANIFEST_OWNER_GET(Link, *(ManifestLink *));
@@ -861,7 +861,7 @@ restoreCleanOwnership(
 
     if (manifestUserName != NULL)
     {
-        uid_t manifestUserId = userIdFromName(manifestUserName);
+        const uid_t manifestUserId = userIdFromName(manifestUserName);
 
         if (manifestUserId != (uid_t)-1)
             expectedUserId = manifestUserId;
@@ -874,7 +874,7 @@ restoreCleanOwnership(
 
     if (manifestGroupName != NULL)
     {
-        uid_t manifestGroupId = groupIdFromName(manifestGroupName);
+        const uid_t manifestGroupId = groupIdFromName(manifestGroupName);
 
         if (manifestGroupId != (uid_t)-1)
             expectedGroupId = manifestGroupId;
@@ -897,7 +897,7 @@ restoreCleanOwnership(
 
 // Helper to update mode on a file/path
 static void
-restoreCleanMode(const String *pgPath, mode_t manifestMode, const StorageInfo *info)
+restoreCleanMode(const String *const pgPath, const mode_t manifestMode, const StorageInfo *const info)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, pgPath);
@@ -953,10 +953,10 @@ restoreCleanBuildRecurse(StorageIterator *const storageItr, const RestoreCleanCa
             }
 
             // Construct the name used to find this file/link/path in the manifest
-            const String *manifestName = strNewFmt("%s/%s", strZ(cleanData->targetName), strZ(info.name));
+            const String *const manifestName = strNewFmt("%s/%s", strZ(cleanData->targetName), strZ(info.name));
 
             // Construct the path of this file/link/path in the PostgreSQL data directory
-            const String *pgPath = strNewFmt("%s/%s", strZ(cleanData->targetPath), strZ(info.name));
+            const String *const pgPath = strNewFmt("%s/%s", strZ(cleanData->targetPath), strZ(info.name));
 
             switch (info.type)
             {
@@ -983,7 +983,7 @@ restoreCleanBuildRecurse(StorageIterator *const storageItr, const RestoreCleanCa
 
                 case storageTypeLink:
                 {
-                    const ManifestLink *manifestLink = manifestLinkFindDefault(cleanData->manifest, manifestName, NULL);
+                    const ManifestLink *const manifestLink = manifestLinkFindDefault(cleanData->manifest, manifestName, NULL);
 
                     if (manifestLink != NULL)
                     {
@@ -1010,7 +1010,7 @@ restoreCleanBuildRecurse(StorageIterator *const storageItr, const RestoreCleanCa
 
                 case storageTypePath:
                 {
-                    const ManifestPath *manifestPath = manifestPathFindDefault(cleanData->manifest, manifestName, NULL);
+                    const ManifestPath *const manifestPath = manifestPathFindDefault(cleanData->manifest, manifestName, NULL);
 
                     if (manifestPath != NULL && manifestLinkFindDefault(cleanData->manifest, manifestName, NULL) == NULL)
                     {
@@ -1070,18 +1070,18 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Is this a delta restore?
-        bool delta = cfgOptionBool(cfgOptDelta) || cfgOptionBool(cfgOptForce);
+        const bool delta = cfgOptionBool(cfgOptDelta) || cfgOptionBool(cfgOptForce);
 
         // Allocate data for each target
-        RestoreCleanCallbackData *cleanDataList = memNew(sizeof(RestoreCleanCallbackData) * manifestTargetTotal(manifest));
+        RestoreCleanCallbackData *const cleanDataList = memNew(sizeof(RestoreCleanCallbackData) * manifestTargetTotal(manifest));
 
         // Step 1: Check permissions and validity (is the directory empty without delta?) if the target directory exists
         // -------------------------------------------------------------------------------------------------------------------------
-        StringList *pathChecked = strLstNew();
+        StringList *const pathChecked = strLstNew();
 
         for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
         {
-            RestoreCleanCallbackData *cleanData = &cleanDataList[targetIdx];
+            RestoreCleanCallbackData *const cleanData = &cleanDataList[targetIdx];
 
             *cleanData = (RestoreCleanCallbackData)
             {
@@ -1118,7 +1118,7 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
             // If this is a tablespace append the tablespace identifier
             if (cleanData->target->type == manifestTargetTypeLink && cleanData->target->tablespaceId != 0)
             {
-                const String *tablespaceId = pgTablespaceId(
+                const String *const tablespaceId = pgTablespaceId(
                     manifestData(manifest)->pgVersion, manifestData(manifest)->pgCatalogVersion);
 
                 cleanData->targetName = strNewFmt("%s/%s", strZ(cleanData->targetName), strZ(tablespaceId));
@@ -1133,7 +1133,7 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
             if (!strLstExists(pathChecked, cleanData->targetPath))
                 LOG_DETAIL_FMT("check '%s' exists", strZ(cleanData->targetPath));
 
-            StorageInfo info = storageInfoP(storageLocal(), cleanData->targetPath, .ignoreMissing = true, .followLink = true);
+            const StorageInfo info = storageInfoP(storageLocal(), cleanData->targetPath, .ignoreMissing = true, .followLink = true);
             strLstAdd(pathChecked, cleanData->targetPath);
 
             if (info.exists)
@@ -1161,7 +1161,7 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
                     }
                     else
                     {
-                        const String *file = strNewFmt("%s/%s", strZ(cleanData->targetPath), strZ(cleanData->target->file));
+                        const String *const file = strNewFmt("%s/%s", strZ(cleanData->targetPath), strZ(cleanData->target->file));
 
                         if (storageExistsP(storageLocal(), file))
                         {
@@ -1213,7 +1213,7 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
 
         for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
         {
-            RestoreCleanCallbackData *cleanData = &cleanDataList[targetIdx];
+            const RestoreCleanCallbackData *const cleanData = &cleanDataList[targetIdx];
 
             // Only clean if the target exists
             if (cleanData->exists)
@@ -1227,8 +1227,8 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
                         LOG_INFO_FMT("remove invalid files/links/paths from '%s'", strZ(cleanData->targetPath));
 
                     // Check target ownership/permissions
-                    const ManifestPath *manifestPath = manifestPathFind(cleanData->manifest, cleanData->targetName);
-                    StorageInfo info = storageInfoP(storageLocal(), cleanData->targetPath, .followLink = true);
+                    const ManifestPath *const manifestPath = manifestPathFind(cleanData->manifest, cleanData->targetName);
+                    const StorageInfo info = storageInfoP(storageLocal(), cleanData->targetPath, .followLink = true);
 
                     restoreCleanOwnership(
                         cleanData->targetPath, manifestPath->user, rootReplaceUser, manifestPath->group, rootReplaceGroup,
@@ -1266,7 +1266,7 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
         // -------------------------------------------------------------------------------------------------------------------------
         for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(manifest); pathIdx++)
         {
-            const ManifestPath *path = manifestPath(manifest, pathIdx);
+            const ManifestPath *const path = manifestPath(manifest, pathIdx);
 
             // Skip the pg_tblspc path because it only maps to the manifest. We should remove this in a future release but not much
             // can be done about it for now.
@@ -1275,7 +1275,7 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
 
             // If this path has been mapped as a link then create a link. The path has already been created as part of target
             // creation (or it might have already existed).
-            const ManifestLink *link = manifestLinkFindDefault(
+            const ManifestLink *const link = manifestLinkFindDefault(
                 manifest,
                 strBeginsWith(path->name, MANIFEST_TARGET_PGTBLSPC_STR) ?
                     strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strZ(path->name)) : path->name,
@@ -1283,8 +1283,8 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
 
             if (link != NULL)
             {
-                const String *pgPath = storagePathP(storagePg(), manifestPathPg(link->name));
-                StorageInfo linkInfo = storageInfoP(storagePg(), pgPath, .ignoreMissing = true);
+                const String *const pgPath = storagePathP(storagePg(), manifestPathPg(link->name));
+                const StorageInfo linkInfo = storageInfoP(storagePg(), pgPath, .ignoreMissing = true);
 
                 // Create the link if it is missing. If it exists it should already have the correct ownership and destination.
                 if (!linkInfo.exists)
@@ -1299,8 +1299,8 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
             // Create the path normally
             else
             {
-                const String *pgPath = storagePathP(storagePg(), manifestPathPg(path->name));
-                StorageInfo pathInfo = storageInfoP(storagePg(), pgPath, .ignoreMissing = true);
+                const String *const pgPath = storagePathP(storagePg(), manifestPathPg(path->name));
+                const StorageInfo pathInfo = storageInfoP(storagePg(), pgPath, .ignoreMissing = true);
 
                 // Create the path if it is missing. If it exists it should already have the correct ownership and mode.
                 if (!pathInfo.exists)
@@ -1319,10 +1319,9 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
         // -------------------------------------------------------------------------------------------------------------------------
         for (unsigned int linkIdx = 0; linkIdx < manifestLinkTotal(manifest); linkIdx++)
         {
-            const ManifestLink *link = manifestLink(manifest, linkIdx);
-
-            const String *pgPath = storagePathP(storagePg(), manifestPathPg(link->name));
-            StorageInfo linkInfo = storageInfoP(storagePg(), pgPath, .ignoreMissing = true);
+            const ManifestLink *const link = manifestLink(manifest, linkIdx);
+            const String *const pgPath = storagePathP(storagePg(), manifestPathPg(link->name));
+            const StorageInfo linkInfo = storageInfoP(storagePg(), pgPath, .ignoreMissing = true);
 
             // Create the link if it is missing. If it exists it should already have the correct ownership and destination.
             if (!linkInfo.exists)
@@ -1344,7 +1343,7 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
 Generate the expression to zero files that are not needed for selective restore
 ***********************************************************************************************************************************/
 static String *
-restoreSelectiveExpression(Manifest *manifest)
+restoreSelectiveExpression(const Manifest *const manifest)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
@@ -1360,12 +1359,12 @@ restoreSelectiveExpression(Manifest *manifest)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Generate base expression
-            RegExp *baseRegExp = regExpNew(STRDEF("^" MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/[0-9]+/" PG_FILE_PGVERSION));
+            RegExp *const baseRegExp = regExpNew(STRDEF("^" MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/[0-9]+/" PG_FILE_PGVERSION));
 
             // Generate tablespace expression
-            const String *tablespaceId = pgTablespaceId(
+            const String *const tablespaceId = pgTablespaceId(
                 manifestData(manifest)->pgVersion, manifestData(manifest)->pgCatalogVersion);
-            RegExp *tablespaceRegExp = regExpNew(
+            RegExp *const tablespaceRegExp = regExpNew(
                 strNewFmt("^" MANIFEST_TARGET_PGTBLSPC "/[0-9]+/%s/[0-9]+/" PG_FILE_PGVERSION, strZ(tablespaceId)));
 
             // Generate a list of databases in base or in a tablespace and get all standard system databases, even in cases where
@@ -1375,12 +1374,13 @@ restoreSelectiveExpression(Manifest *manifest)
 
             for (unsigned int systemDbIdx = 0; systemDbIdx < manifestDbTotal(manifest); systemDbIdx++)
             {
-                const ManifestDb *systemDb = manifestDb(manifest, systemDbIdx);
+                const ManifestDb *const systemDb = manifestDb(manifest, systemDbIdx);
 
                 if (pgDbIsSystem(systemDb->name) || pgDbIsSystemId(systemDb->id))
                 {
                     // Build the system id list and add to the dbList for logging and checking
-                    const String *systemDbId = varStrForce(VARUINT(systemDb->id));
+                    const String *const systemDbId = varStrForce(VARUINT(systemDb->id));
+
                     strLstAdd(systemDbIdList, systemDbId);
                     strLstAdd(dbList, systemDbId);
                 }
@@ -1392,7 +1392,7 @@ restoreSelectiveExpression(Manifest *manifest)
 
                 if (regExpMatch(baseRegExp, fileName) || regExpMatch(tablespaceRegExp, fileName))
                 {
-                    String *dbId = strBase(strPath(fileName));
+                    const String *const dbId = strBase(strPath(fileName));
 
                     // In the highly unlikely event that a system database was somehow added after the backup began, it will only be
                     // found in the file list and not the manifest db section, so add it to the system database list
@@ -1413,8 +1413,8 @@ restoreSelectiveExpression(Manifest *manifest)
             LOG_DETAIL_FMT("databases found for selective restore (%s)", strZ(strLstJoin(dbList, ", ")));
 
             // Generate list with ids of databases to exclude
-            StringList *excludeDbIdList = strLstNew();
-            const StringList *excludeList = strLstNewVarLst(cfgOptionLst(cfgOptDbExclude));
+            StringList *const excludeDbIdList = strLstNew();
+            const StringList *const excludeList = strLstNewVarLst(cfgOptionLst(cfgOptDbExclude));
 
             for (unsigned int excludeIdx = 0; excludeIdx < strLstSize(excludeList); excludeIdx++)
             {
@@ -1423,7 +1423,7 @@ restoreSelectiveExpression(Manifest *manifest)
                 // If the db to exclude is not in the list as an id then search by name
                 if (!strLstExists(dbList, excludeDb))
                 {
-                    const ManifestDb *db = manifestDbFindDefault(manifest, excludeDb, NULL);
+                    const ManifestDb *const db = manifestDbFindDefault(manifest, excludeDb, NULL);
 
                     if (db == NULL || !strLstExists(dbList, varStrForce(VARUINT(db->id))))
                         THROW_FMT(DbMissingError, "database to exclude '%s' does not exist", strZ(excludeDb));
@@ -1437,7 +1437,7 @@ restoreSelectiveExpression(Manifest *manifest)
             }
 
             // Remove included databases from the list
-            const StringList *includeList = strLstNewVarLst(cfgOptionLst(cfgOptDbInclude));
+            const StringList *const includeList = strLstNewVarLst(cfgOptionLst(cfgOptDbInclude));
 
             for (unsigned int includeIdx = 0; includeIdx < strLstSize(includeList); includeIdx++)
             {
@@ -1446,7 +1446,7 @@ restoreSelectiveExpression(Manifest *manifest)
                 // If the db to include is not in the list as an id then search by name
                 if (!strLstExists(dbList, includeDb))
                 {
-                    const ManifestDb *db = manifestDbFindDefault(manifest, includeDb, NULL);
+                    const ManifestDb *const db = manifestDbFindDefault(manifest, includeDb, NULL);
 
                     if (db == NULL || !strLstExists(dbList, varStrForce(VARUINT(db->id))))
                         THROW_FMT(DbMissingError, "database to include '%s' does not exist", strZ(includeDb));
@@ -1492,7 +1492,7 @@ restoreSelectiveExpression(Manifest *manifest)
                 // system databases.
                 for (unsigned int dbIdx = 0; dbIdx < strLstSize(dbList); dbIdx++)
                 {
-                    const String *db = strLstGet(dbList, dbIdx);
+                    const String *const db = strLstGet(dbList, dbIdx);
 
                     // Create expression string or append |
                     if (expression == NULL)
@@ -1506,7 +1506,7 @@ restoreSelectiveExpression(Manifest *manifest)
                     // Filter files in tablespace directories
                     for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
                     {
-                        const ManifestTarget *target = manifestTarget(manifest, targetIdx);
+                        const ManifestTarget *const target = manifestTarget(manifest, targetIdx);
 
                         if (target->tablespaceId != 0)
                             strCatFmt(expression, "|(^%s/%s/%s/)", strZ(target->name), strZ(tablespaceId), strZ(db));
@@ -1540,7 +1540,7 @@ Generate the recovery file
 ***********************************************************************************************************************************/
 // Helper to generate recovery options
 static KeyValue *
-restoreRecoveryOption(unsigned int pgVersion)
+restoreRecoveryOption(const unsigned int pgVersion)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
@@ -1556,14 +1556,14 @@ restoreRecoveryOption(unsigned int pgVersion)
 
         if (cfgOptionTest(cfgOptRecoveryOption))
         {
-            const KeyValue *recoveryOption = cfgOptionKv(cfgOptRecoveryOption);
+            const KeyValue *const recoveryOption = cfgOptionKv(cfgOptRecoveryOption);
             recoveryOptionKey = strLstSort(strLstNewVarLst(kvKeyList(recoveryOption)), sortOrderAsc);
 
             for (unsigned int keyIdx = 0; keyIdx < strLstSize(recoveryOptionKey); keyIdx++)
             {
                 // Get the key and value
-                String *key = strLstGet(recoveryOptionKey, keyIdx);
-                const String *value = varStr(kvGet(recoveryOption, VARSTR(key)));
+                String *const key = strLstGet(recoveryOptionKey, keyIdx);
+                const String *const value = varStr(kvGet(recoveryOption, VARSTR(key)));
 
                 // Replace - in key with _. Since we use - users naturally will as well.
                 strReplaceChr(key, '-', '_');
@@ -1598,7 +1598,7 @@ restoreRecoveryOption(unsigned int pgVersion)
             // Null out options that it does not make sense to pass from the restore command to archive-get. All of these have
             // reasonable defaults so there is no danger of an error -- they just might not be optimal. In any case, it seems better
             // than, for example, passing --process-max=32 to archive-get because it was specified for restore.
-            KeyValue *optionReplace = kvNew();
+            KeyValue *const optionReplace = kvNew();
 
             kvPut(optionReplace, VARSTRDEF(CFGOPT_EXEC_ID), NULL);
             kvPut(optionReplace, VARSTRDEF(CFGOPT_JOB_RETRY), NULL);
@@ -1647,7 +1647,7 @@ restoreRecoveryOption(unsigned int pgVersion)
         // Write pause_at_recovery_target/recovery_target_action
         if (cfgOptionTest(cfgOptTargetAction))
         {
-            StringId targetAction = cfgOptionStrId(cfgOptTargetAction);
+            const StringId targetAction = cfgOptionStrId(cfgOptTargetAction);
 
             if (targetAction != CFGOPTVAL_TARGET_ACTION_PAUSE)
             {
@@ -1777,10 +1777,11 @@ restoreRecoveryWriteAutoConf(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *content = strNew();
+        String *const content = strNew();
 
         // Load postgresql.auto.conf so we can preserve the existing contents
-        Buffer *autoConf = storageGetP(storageNewReadP(storagePg(), PG_FILE_POSTGRESQLAUTOCONF_STR, .ignoreMissing = true));
+        const Buffer *const autoConf = storageGetP(
+            storageNewReadP(storagePg(), PG_FILE_POSTGRESQLAUTOCONF_STR, .ignoreMissing = true));
 
         // It is unusual for the file not to exist, but we'll continue processing by creating a blank file
         if (autoConf == NULL)
@@ -1795,7 +1796,7 @@ restoreRecoveryWriteAutoConf(
         else
         {
             // Generate a regexp that will match on all current recovery_target settings
-            RegExp *recoveryExp =
+            RegExp *const recoveryExp =
                 regExpNew(
                     STRDEF(
                         "^[\t ]*(" RECOVERY_TARGET "|" RECOVERY_TARGET_ACTION "|" RECOVERY_TARGET_INCLUSIVE "|"
@@ -1803,14 +1804,14 @@ restoreRecoveryWriteAutoConf(
                         RECOVERY_TARGET_XID ")[\t ]*="));
 
             // Check each line for recovery settings
-            const StringList *contentList = strLstNewSplit(strNewBuf(autoConf), LF_STR);
+            const StringList *const contentList = strLstNewSplit(strNewBuf(autoConf), LF_STR);
 
             for (unsigned int contentIdx = 0; contentIdx < strLstSize(contentList); contentIdx++)
             {
                 if (contentIdx != 0)
                     strCat(content, LF_STR);
 
-                const String *line = strLstGet(contentList, contentIdx);
+                const String *const line = strLstGet(contentList, contentIdx);
 
                 if (regExpMatch(recoveryExp, line))
                     strCatFmt(content, "# Removed by " PROJECT_NAME " restore on %s # ", strZ(restoreLabel));
@@ -1833,13 +1834,13 @@ restoreRecoveryWriteAutoConf(
             // case but since config parsing has already happened the target options could be in an invalid state.
             if (cfgOptionTest(cfgOptRecoveryOption))
             {
-                const KeyValue *recoveryOption = cfgOptionKv(cfgOptRecoveryOption);
-                StringList *recoveryOptionKey = strLstNewVarLst(kvKeyList(recoveryOption));
+                const KeyValue *const recoveryOption = cfgOptionKv(cfgOptRecoveryOption);
+                const StringList *const recoveryOptionKey = strLstNewVarLst(kvKeyList(recoveryOption));
 
                 for (unsigned int keyIdx = 0; keyIdx < strLstSize(recoveryOptionKey); keyIdx++)
                 {
                     // Get the key and value
-                    String *key = strLstGet(recoveryOptionKey, keyIdx);
+                    String *const key = strLstGet(recoveryOptionKey, keyIdx);
 
                     // Replace - in key with _. Since we use - users naturally will as well.
                     strReplaceChr(key, '-', '_');
@@ -1903,7 +1904,7 @@ restoreRecoveryWrite(const Manifest *const manifest, const StorageInfo *const fi
     FUNCTION_LOG_END();
 
     // Get PostgreSQL version to write recovery for
-    unsigned int pgVersion = manifestData(manifest)->pgVersion;
+    const unsigned int pgVersion = manifestData(manifest)->pgVersion;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -1927,10 +1928,10 @@ restoreRecoveryWrite(const Manifest *const manifest, const StorageInfo *const fi
             // Generate a label used to identify this restore in the recovery file
             struct tm timePart;
             char restoreTimestamp[20];
-            time_t timestamp = time(NULL);
+            const time_t timestamp = time(NULL);
 
             strftime(restoreTimestamp, sizeof(restoreTimestamp), "%Y-%m-%d %H:%M:%S", localtime_r(&timestamp, &timePart));
-            const String *restoreLabel = STR(restoreTimestamp);
+            const String *const restoreLabel = STR(restoreTimestamp);
 
             // Write recovery file based on PostgreSQL version
             if (pgVersion >= PG_VERSION_RECOVERY_GUC)
@@ -1951,7 +1952,7 @@ Generate a list of queues that determine the order of file processing
 static const Manifest *restoreProcessQueueComparatorManifest = NULL;
 
 static int
-restoreProcessQueueComparator(const void *item1, const void *item2)
+restoreProcessQueueComparator(const void *const item1, const void *const item2)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, item1);
@@ -1962,8 +1963,8 @@ restoreProcessQueueComparator(const void *item1, const void *item2)
     ASSERT(item2 != NULL);
 
     // Unpack files
-    ManifestFile file1 = manifestFileUnpack(restoreProcessQueueComparatorManifest, *(const ManifestFilePack **)item1);
-    ManifestFile file2 = manifestFileUnpack(restoreProcessQueueComparatorManifest, *(const ManifestFilePack **)item2);
+    const ManifestFile file1 = manifestFileUnpack(restoreProcessQueueComparatorManifest, *(const ManifestFilePack **)item1);
+    const ManifestFile file2 = manifestFileUnpack(restoreProcessQueueComparatorManifest, *(const ManifestFilePack **)item2);
 
     // Zero length files should be ordered at the end
     if (file1.size == 0)
@@ -2020,7 +2021,7 @@ restoreProcessQueueComparator(const void *item1, const void *item2)
 }
 
 static uint64_t
-restoreProcessQueue(Manifest *manifest, List **queueList)
+restoreProcessQueue(const Manifest *const manifest, List **const queueList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
@@ -2039,12 +2040,12 @@ restoreProcessQueue(Manifest *manifest, List **queueList)
         *queueList = lstNewP(sizeof(void *));
 
         // Generate the list of processing queues (there is always at least one)
-        StringList *targetList = strLstNew();
+        StringList *const targetList = strLstNew();
         strLstAddZ(targetList, MANIFEST_TARGET_PGDATA "/");
 
         for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
         {
-            const ManifestTarget *target = manifestTarget(manifest, targetIdx);
+            const ManifestTarget *const target = manifestTarget(manifest, targetIdx);
 
             if (target->tablespaceId != 0)
                 strLstAddFmt(targetList, "%s/", strZ(target->name));
@@ -2055,7 +2056,7 @@ restoreProcessQueue(Manifest *manifest, List **queueList)
         {
             for (unsigned int targetIdx = 0; targetIdx < strLstSize(targetList); targetIdx++)
             {
-                List *queue = lstNewP(sizeof(ManifestFile *), .comparator = restoreProcessQueueComparator);
+                List *const queue = lstNewP(sizeof(ManifestFile *), .comparator = restoreProcessQueueComparator);
                 lstAdd(*queueList, &queue);
             }
         }
@@ -2108,7 +2109,7 @@ Log the results of a job and throw errors
 ***********************************************************************************************************************************/
 // Helper function to determine if a file should be zeroed
 static bool
-restoreFileZeroed(const String *manifestName, RegExp *zeroExp)
+restoreFileZeroed(const String *const manifestName, RegExp *const zeroExp)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, manifestName);
@@ -2146,7 +2147,9 @@ restoreFilePgPath(const Manifest *const manifest, const String *const manifestNa
 }
 
 static uint64_t
-restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zeroExp, uint64_t sizeTotal, uint64_t sizeRestored)
+restoreJobResult(
+    const Manifest *const manifest, ProtocolParallelJob *const job, RegExp *const zeroExp, const uint64_t sizeTotal,
+    uint64_t sizeRestored)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
@@ -2172,7 +2175,7 @@ restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zer
                 const RestoreResult result = (RestoreResult)pckReadU32P(jobResult);
                 const uint64_t blockIncrDeltaSize = pckReadU64P(jobResult);
 
-                String *log = strCatZ(strNew(), "restore");
+                String *const log = strCatZ(strNew(), "restore");
 
                 // Note if file was zeroed (i.e. selective restore)
                 if (zeroed)
@@ -2272,7 +2275,7 @@ typedef struct RestoreJobData
 
 // Helper to calculate the next queue to scan based on the client index
 static int
-restoreJobQueueNext(unsigned int clientIdx, int queueIdx, unsigned int queueTotal)
+restoreJobQueueNext(const unsigned int clientIdx, int queueIdx, const unsigned int queueTotal)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, clientIdx);
@@ -2294,7 +2297,7 @@ restoreJobQueueNext(unsigned int clientIdx, int queueIdx, unsigned int queueTota
 
 // Callback to fetch restore jobs for the parallel executor
 static ProtocolParallelJob *
-restoreJobCallback(void *data, unsigned int clientIdx)
+restoreJobCallback(void *const data, const unsigned int clientIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
@@ -2308,18 +2311,18 @@ restoreJobCallback(void *data, unsigned int clientIdx)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get a new job if there are any left
-        RestoreJobData *jobData = data;
+        RestoreJobData *const jobData = data;
 
         // Determine where to begin scanning the queue (we'll stop when we get back here)
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_RESTORE_FILE);
+        ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_RESTORE_FILE);
         PackWrite *param = NULL;
         int queueIdx = (int)(clientIdx % lstSize(jobData->queueList));
-        int queueEnd = queueIdx;
+        const int queueEnd = queueIdx;
 
         // Create restore job
         do
         {
-            List *queue = *(List **)lstGet(jobData->queueList, (unsigned int)queueIdx);
+            List *const queue = *(List **)lstGet(jobData->queueList, (unsigned int)queueIdx);
             bool fileAdded = false;
             const String *fileName = NULL;
             uint64_t bundleId = 0;
@@ -2455,7 +2458,7 @@ cmdRestore(void)
         storagePathRemoveP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_STR, .recurse = true);
 
         // Get the backup set
-        RestoreBackupData backupData = restoreBackupSet();
+        const RestoreBackupData backupData = restoreBackupSet();
 
         // Load manifest
         RestoreJobData jobData = {.repoIdx = backupData.repoIdx};
@@ -2493,7 +2496,7 @@ cmdRestore(void)
         {
             struct tm timePart;
             char timeBuffer[20];
-            time_t backupTimestampStart = manifestData(jobData.manifest)->backupTimestampStart;
+            const time_t backupTimestampStart = manifestData(jobData.manifest)->backupTimestampStart;
 
             strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", localtime_r(&backupTimestampStart, &timePart));
             strCatFmt(message, ", recovery will start at %s", timeBuffer);
@@ -2511,20 +2514,20 @@ cmdRestore(void)
         restoreManifestOwner(jobData.manifest, &jobData.rootReplaceUser, &jobData.rootReplaceGroup);
 
         // Generate the selective restore expression
-        String *expression = restoreSelectiveExpression(jobData.manifest);
+        const String *const expression = restoreSelectiveExpression(jobData.manifest);
         jobData.zeroExp = expression == NULL ? NULL : regExpNew(expression);
 
         // Clean the data directory and build path/link structure
         restoreCleanBuild(jobData.manifest, jobData.rootReplaceUser, jobData.rootReplaceGroup);
 
         // Generate processing queues
-        uint64_t sizeTotal = restoreProcessQueue(jobData.manifest, &jobData.queueList);
+        const uint64_t sizeTotal = restoreProcessQueue(jobData.manifest, &jobData.queueList);
 
         // Save manifest to the data directory so we can restart a delta restore even if the PG_VERSION file is missing
         manifestSave(jobData.manifest, storageWriteIo(storageNewWriteP(storagePgWrite(), BACKUP_MANIFEST_FILE_STR)));
 
         // Create the parallel executor
-        ProtocolParallel *parallelExec = protocolParallelNew(
+        ProtocolParallel *const parallelExec = protocolParallelNew(
             cfgOptionUInt64(cfgOptProtocolTimeout) / 2, restoreJobCallback, &jobData);
 
         for (unsigned int processIdx = 1; processIdx <= cfgOptionUInt(cfgOptProcessMax); processIdx++)
@@ -2537,7 +2540,7 @@ cmdRestore(void)
         {
             do
             {
-                unsigned int completed = protocolParallelProcess(parallelExec);
+                const unsigned int completed = protocolParallelProcess(parallelExec);
 
                 for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
                 {
@@ -2564,15 +2567,15 @@ cmdRestore(void)
         storageRemoveP(storagePgWrite(), BACKUP_MANIFEST_FILE_STR);
 
         // Sync file link paths. These need to be synced separately because they are not linked from the data directory.
-        StringList *pathSynced = strLstNew();
+        StringList *const pathSynced = strLstNew();
 
         for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(jobData.manifest); targetIdx++)
         {
-            const ManifestTarget *target = manifestTarget(jobData.manifest, targetIdx);
+            const ManifestTarget *const target = manifestTarget(jobData.manifest, targetIdx);
 
             if (target->type == manifestTargetTypeLink && target->file != NULL)
             {
-                const String *pgPath = manifestTargetPath(jobData.manifest, target);
+                const String *const pgPath = manifestTargetPath(jobData.manifest, target);
 
                 // Don't sync the same path twice. There can be multiple links to files in the same path, but syncing it more than
                 // once makes the logs noisy and looks like a bug even though it doesn't hurt anything or realistically affect
@@ -2591,7 +2594,7 @@ cmdRestore(void)
         // Sync paths in the data directory
         for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(jobData.manifest); pathIdx++)
         {
-            const String *manifestName = manifestPath(jobData.manifest, pathIdx)->name;
+            const String *const manifestName = manifestPath(jobData.manifest, pathIdx)->name;
 
             // Skip the pg_tblspc path because it only maps to the manifest. We should remove this in a future release but not much
             // can be done about it for now.
@@ -2602,7 +2605,7 @@ cmdRestore(void)
             if (strEq(manifestName, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL)))
                 continue;
 
-            const String *pgPath = storagePathP(storagePg(), manifestPathPg(manifestName));
+            const String *const pgPath = storagePathP(storagePg(), manifestPathPg(manifestName));
 
             LOG_DETAIL_FMT("sync path '%s'", strZ(pgPath));
             storagePathSyncP(storagePgWrite(), pgPath);

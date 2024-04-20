@@ -38,7 +38,7 @@ cmdStanzaCreate(void)
             LOG_WARN("option --" CFGOPT_FORCE " is no longer supported");
 
         // Get the version and system information - validating it if the database is online
-        PgControl pgControl = pgValidate();
+        const PgControl pgControl = pgValidate();
 
         // For each repository configured, create the stanza
         for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
@@ -47,22 +47,24 @@ cmdStanzaCreate(void)
                 CFGCMD_STANZA_CREATE " for stanza '%s' on %s", strZ(cfgOptionDisplay(cfgOptStanza)),
                 cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
 
-            const Storage *storageRepoReadStanza = storageRepoIdx(repoIdx);
-            const Storage *storageRepoWriteStanza = storageRepoIdxWrite(repoIdx);
+            const Storage *const storageRepoReadStanza = storageRepoIdx(repoIdx);
+            const Storage *const storageRepoWriteStanza = storageRepoIdxWrite(repoIdx);
             InfoArchive *infoArchive = NULL;
             InfoBackup *infoBackup = NULL;
 
-            bool archiveInfoFileExists = storageExistsP(storageRepoReadStanza, INFO_ARCHIVE_PATH_FILE_STR);
-            bool archiveInfoFileCopyExists = storageExistsP(storageRepoReadStanza, INFO_ARCHIVE_PATH_FILE_COPY_STR);
-            bool backupInfoFileExists = storageExistsP(storageRepoReadStanza, INFO_BACKUP_PATH_FILE_STR);
-            bool backupInfoFileCopyExists = storageExistsP(storageRepoReadStanza, INFO_BACKUP_PATH_FILE_COPY_STR);
+            const bool archiveInfoFileExists = storageExistsP(storageRepoReadStanza, INFO_ARCHIVE_PATH_FILE_STR);
+            const bool archiveInfoFileCopyExists = storageExistsP(storageRepoReadStanza, INFO_ARCHIVE_PATH_FILE_COPY_STR);
+            const bool backupInfoFileExists = storageExistsP(storageRepoReadStanza, INFO_BACKUP_PATH_FILE_STR);
+            const bool backupInfoFileCopyExists = storageExistsP(storageRepoReadStanza, INFO_BACKUP_PATH_FILE_COPY_STR);
 
             // If neither archive info nor backup info files exist and nothing else exists in the stanza directory
             // then create the stanza
             if (!archiveInfoFileExists && !archiveInfoFileCopyExists && !backupInfoFileExists && !backupInfoFileCopyExists)
             {
-                bool archiveNotEmpty = strLstSize(storageListP(storageRepoReadStanza, STORAGE_REPO_ARCHIVE_STR)) > 0 ? true : false;
-                bool backupNotEmpty = strLstSize(storageListP(storageRepoReadStanza, STORAGE_REPO_BACKUP_STR)) > 0 ? true : false;
+                const bool archiveNotEmpty = strLstSize(
+                    storageListP(storageRepoReadStanza, STORAGE_REPO_ARCHIVE_STR)) > 0 ? true : false;
+                const bool backupNotEmpty = strLstSize(
+                    storageListP(storageRepoReadStanza, STORAGE_REPO_BACKUP_STR)) > 0 ? true : false;
 
                 // If something else exists in the backup or archive directories for this stanza, then error
                 if (archiveNotEmpty || backupNotEmpty)
@@ -73,7 +75,7 @@ cmdStanzaCreate(void)
                 }
 
                 // If the repo is encrypted, generate a cipher passphrase for encrypting subsequent archive files
-                String *cipherPassSub = cipherPassGen(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx));
+                const String *cipherPassSub = cipherPassGen(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx));
 
                 // Create and save archive info
                 infoArchive = infoArchiveNew(pgControl.version, pgControl.systemId, cipherPassSub);
