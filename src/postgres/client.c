@@ -40,7 +40,9 @@ pgClientFreeResource(THIS_VOID)
 
 /**********************************************************************************************************************************/
 FN_EXTERN PgClient *
-pgClientNew(const String *host, const unsigned int port, const String *database, const String *user, const TimeMSec timeout)
+pgClientNew(
+    const String *const host, const unsigned int port, const String *const database, const String *const user,
+    const TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, host);
@@ -76,7 +78,7 @@ pgClientNew(const String *host, const unsigned int port, const String *database,
 Just ignore notices and warnings
 ***********************************************************************************************************************************/
 static void
-pgClientNoticeProcessor(void *arg, const char *message)
+pgClientNoticeProcessor(void *const arg, const char *const message)
 {
     (void)arg;
     (void)message;
@@ -86,7 +88,7 @@ pgClientNoticeProcessor(void *arg, const char *message)
 Encode string to escape ' and \
 ***********************************************************************************************************************************/
 static String *
-pgClientEscape(const String *string)
+pgClientEscape(const String *const string)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, string);
@@ -94,7 +96,7 @@ pgClientEscape(const String *string)
 
     ASSERT(string != NULL);
 
-    String *result = strCatZ(strNew(), "'");
+    String *const result = strCatZ(strNew(), "'");
 
     // Iterate all characters in the string
     for (unsigned stringIdx = 0; stringIdx < strSize(string); stringIdx++)
@@ -115,7 +117,7 @@ pgClientEscape(const String *string)
 
 /**********************************************************************************************************************************/
 FN_EXTERN PgClient *
-pgClientOpen(PgClient *this)
+pgClientOpen(PgClient *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PG_CLIENT, this);
@@ -127,7 +129,7 @@ pgClientOpen(PgClient *this)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Base connection string
-        String *connInfo = strCatFmt(
+        String *const connInfo = strCatFmt(
             strNew(), "dbname=%s port=%u", strZ(pgClientEscape(pgClientDatabase(this))), pgClientPort(this));
 
         // Add user if specified
@@ -188,7 +190,7 @@ pgClientQuery(PgClient *const this, const String *const query, const PgClientQue
         }
 
         // Wait for a result
-        Wait *wait = waitNew(pgClientTimeout(this));
+        Wait *const wait = waitNew(pgClientTimeout(this));
         bool busy = false;
 
         do
@@ -201,7 +203,7 @@ pgClientQuery(PgClient *const this, const String *const query, const PgClientQue
         // If the query is still busy after the timeout attempt to cancel
         if (busy)
         {
-            PGcancel *cancel = PQgetCancel(this->connection);
+            PGcancel *const cancel = PQgetCancel(this->connection);
 
             // If cancel is NULL then more than likely the server process crashed or disconnected
             if (cancel == NULL)
@@ -222,7 +224,7 @@ pgClientQuery(PgClient *const this, const String *const query, const PgClientQue
         }
 
         // Get the result (even if query was cancelled -- to prevent the connection being left in a bad state)
-        PGresult *pgResult = PQgetResult(this->connection);
+        PGresult *const pgResult = PQgetResult(this->connection);
 
         TRY_BEGIN()
         {
@@ -231,7 +233,7 @@ pgClientQuery(PgClient *const this, const String *const query, const PgClientQue
                 THROW_FMT(DbQueryError, "query '%s' timed out after %" PRIu64 "ms", strZ(query), pgClientTimeout(this));
 
             // If this was a command that returned no results then we are done
-            ExecStatusType resultStatus = PQresultStatus(pgResult);
+            const ExecStatusType resultStatus = PQresultStatus(pgResult);
 
             if (resultStatus == PGRES_COMMAND_OK)
             {
@@ -254,8 +256,8 @@ pgClientQuery(PgClient *const this, const String *const query, const PgClientQue
                 // Fetch row and column values
                 PackWrite *const pack = pckWriteNewP();
 
-                int rowTotal = PQntuples(pgResult);
-                int columnTotal = PQnfields(pgResult);
+                const int rowTotal = PQntuples(pgResult);
+                const int columnTotal = PQnfields(pgResult);
 
                 if (resultType != pgClientQueryResultAny)
                 {
@@ -267,7 +269,7 @@ pgClientQuery(PgClient *const this, const String *const query, const PgClientQue
                 }
 
                 // Get column types
-                Oid *columnType = memNew(sizeof(int) * (size_t)columnTotal);
+                Oid *const columnType = memNew(sizeof(int) * (size_t)columnTotal);
 
                 for (int columnIdx = 0; columnIdx < columnTotal; columnIdx++)
                     columnType[columnIdx] = PQftype(pgResult, columnIdx);
@@ -280,7 +282,7 @@ pgClientQuery(PgClient *const this, const String *const query, const PgClientQue
 
                     for (int columnIdx = 0; columnIdx < columnTotal; columnIdx++)
                     {
-                        char *value = PQgetvalue(pgResult, rowIdx, columnIdx);
+                        const char *const value = PQgetvalue(pgResult, rowIdx, columnIdx);
 
                         // If value is zero-length then check if it is null
                         if (value[0] == '\0' && PQgetisnull(pgResult, rowIdx, columnIdx))
@@ -354,7 +356,7 @@ pgClientQuery(PgClient *const this, const String *const query, const PgClientQue
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-pgClientClose(PgClient *this)
+pgClientClose(PgClient *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PG_CLIENT, this);
