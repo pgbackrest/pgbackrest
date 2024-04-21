@@ -295,7 +295,7 @@ typedef struct ParseOption
 Get the indexed value, creating the array to contain it if needed
 ***********************************************************************************************************************************/
 static ParseOptionValue *
-parseOptionIdxValue(ParseOption *optionList, unsigned int optionId, unsigned int optionKeyIdx)
+parseOptionIdxValue(ParseOption *const optionList, const unsigned int optionId, const unsigned int optionKeyIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(PARSE_OPTION, optionList);            // Structure containing all options being parsed
@@ -833,7 +833,7 @@ typedef struct CfgParseOptionalRuleState
 
 static bool
 cfgParseOptionalRule(
-    CfgParseOptionalRuleState *optionalRules, ParseRuleOptionalType optionalRuleType, ConfigCommand commandId,
+    CfgParseOptionalRuleState *const optionalRules, const ParseRuleOptionalType optionalRuleType, const ConfigCommand commandId,
     const ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();
@@ -1129,7 +1129,7 @@ cfgParseOptionalFilterDepend(PackRead *const filter, const Config *const config,
 
 /**********************************************************************************************************************************/
 FN_EXTERN const String *
-cfgParseOptionDefault(ConfigCommand commandId, ConfigOption optionId)
+cfgParseOptionDefault(const ConfigCommand commandId, const ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, commandId);
@@ -1155,7 +1155,7 @@ cfgParseOptionDefault(ConfigCommand commandId, ConfigOption optionId)
 
 /**********************************************************************************************************************************/
 FN_EXTERN const char *
-cfgParseOptionName(ConfigOption optionId)
+cfgParseOptionName(const ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, optionId);
@@ -1168,7 +1168,7 @@ cfgParseOptionName(ConfigOption optionId)
 
 /**********************************************************************************************************************************/
 FN_EXTERN const char *
-cfgParseOptionKeyIdxName(ConfigOption optionId, unsigned int keyIdx)
+cfgParseOptionKeyIdxName(const ConfigOption optionId, const unsigned int keyIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, optionId);
@@ -1194,7 +1194,7 @@ cfgParseOptionKeyIdxName(ConfigOption optionId, unsigned int keyIdx)
 
 /**********************************************************************************************************************************/
 FN_EXTERN bool
-cfgParseOptionRequired(ConfigCommand commandId, ConfigOption optionId)
+cfgParseOptionRequired(const ConfigCommand commandId, const ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, commandId);
@@ -1227,7 +1227,7 @@ cfgParseOptionRequired(ConfigCommand commandId, ConfigOption optionId)
 
 /**********************************************************************************************************************************/
 FN_EXTERN bool
-cfgParseOptionSecure(ConfigOption optionId)
+cfgParseOptionSecure(const ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, optionId);
@@ -1240,7 +1240,7 @@ cfgParseOptionSecure(ConfigOption optionId)
 
 /**********************************************************************************************************************************/
 FN_EXTERN ConfigOptionType
-cfgParseOptionType(ConfigOption optionId)
+cfgParseOptionType(const ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, optionId);
@@ -1253,7 +1253,7 @@ cfgParseOptionType(ConfigOption optionId)
 
 /**********************************************************************************************************************************/
 FN_EXTERN bool
-cfgParseOptionValid(ConfigCommand commandId, ConfigCommandRole commandRoleId, ConfigOption optionId)
+cfgParseOptionValid(const ConfigCommand commandId, const ConfigCommandRole commandRoleId, const ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, commandId);
@@ -1296,7 +1296,7 @@ Rules:
   will not be required to exist since this is a default override.
 ***********************************************************************************************************************************/
 static void
-cfgFileLoadPart(String **config, const Buffer *configPart)
+cfgFileLoadPart(String **const config, const Buffer *const configPart)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM_P(STRING, config);
@@ -1331,12 +1331,12 @@ cfgFileLoadPart(String **config, const Buffer *configPart)
 
 static String *
 cfgFileLoad(
-    const Storage *storage,                                         // Storage to load configs
-    const ParseOption *optionList,                                  // All options and their current settings
+    const Storage *const storage,                                   // Storage to load configs
+    const ParseOption *const optionList,                            // All options and their current settings
     // NOTE: Passing defaults to enable more complete test coverage
     const String *optConfigDefault,                                 // Current default for --config option
     const String *optConfigIncludePathDefault,                      // Current default for --config-include-path option
-    const String *origConfigDefault)                                // Original --config option default (/etc/pgbackrest.conf)
+    const String *const origConfigDefault)                          // Original --config option default (/etc/pgbackrest.conf)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE, storage);
@@ -1358,14 +1358,15 @@ cfgFileLoad(
 
     // If the option is specified on the command line, then found will be true meaning the file is required to exist,
     // else it is optional
-    bool configFound = optionList[cfgOptConfig].indexList != NULL && optionList[cfgOptConfig].indexList[0].found;
+    const bool configFound = optionList[cfgOptConfig].indexList != NULL && optionList[cfgOptConfig].indexList[0].found;
     bool configRequired = configFound;
-    bool configPathRequired = optionList[cfgOptConfigPath].indexList != NULL && optionList[cfgOptConfigPath].indexList[0].found;
+    const bool configPathRequired =
+        optionList[cfgOptConfigPath].indexList != NULL && optionList[cfgOptConfigPath].indexList[0].found;
     bool configIncludeRequired =
         optionList[cfgOptConfigIncludePath].indexList != NULL && optionList[cfgOptConfigIncludePath].indexList[0].found;
 
     // Save default for later determining if must check old original default config path
-    const String *optConfigDefaultCurrent = optConfigDefault;
+    const String *const optConfigDefaultCurrent = optConfigDefault;
 
     // If the config-path option is found on the command line, then its value will override the base path defaults for config and
     // config-include-path
@@ -1406,7 +1407,7 @@ cfgFileLoad(
             configFileName = optConfigDefault;
 
         // Load the config file
-        Buffer *buffer = storageGetP(storageNewReadP(storage, configFileName, .ignoreMissing = !configRequired));
+        const Buffer *buffer = storageGetP(storageNewReadP(storage, configFileName, .ignoreMissing = !configRequired));
 
         // Convert the contents of the file buffer to the config string object
         if (buffer != NULL)
@@ -1437,7 +1438,7 @@ cfgFileLoad(
             configIncludePath = optConfigIncludePathDefault;
 
         // Get a list of conf files from the specified path -error on missing directory if the option was passed on the command line
-        StringList *list = storageListP(
+        StringList *const list = storageListP(
             storage, configIncludePath, .expression = STRDEF(".+\\.conf$"), .errorOnMissing = configIncludeRequired,
             .nullOnMissing = !configIncludeRequired);
 
@@ -1575,7 +1576,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                 arg += 2;
 
                 // Get the option name and the value when separated by =
-                const String *optionName = NULL;
+                const String *optionName;
                 const String *optionArg = NULL;
 
                 const char *const equalPtr = strchr(arg, '=');
@@ -1656,7 +1657,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                 }
 
                 // If the option has not been found yet then set it
-                ParseOptionValue *optionValue = parseOptionIdxValue(parseOptionList, option.id, option.keyIdx);
+                ParseOptionValue *const optionValue = parseOptionIdxValue(parseOptionList, option.id, option.keyIdx);
 
                 if (!optionValue->found)
                 {
@@ -1847,14 +1848,14 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                 if (strstr(keyValue, PGBACKREST_ENV) == keyValue)
                 {
                     // Find the first = char
-                    const char *equalPtr = strchr(keyValue, '=');
+                    const char *const equalPtr = strchr(keyValue, '=');
                     ASSERT(equalPtr != NULL);
 
                     // Get key and value
-                    const String *key = strReplaceChr(
+                    const String *const key = strReplaceChr(
                         strLower(strNewZN(keyValue + PGBACKREST_ENV_SIZE, (size_t)(equalPtr - (keyValue + PGBACKREST_ENV_SIZE)))),
                         '_', '-');
-                    const String *value = STR(equalPtr + 1);
+                    const String *const value = STR(equalPtr + 1);
 
                     // Find the option
                     CfgParseOptionResult option = cfgParseOptionP(key);
@@ -1950,7 +1951,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                     stanza = strLstGet(parseOptionList[cfgOptStanza].indexList[0].valueList, 0);
 
                 // Build list of sections to search for options
-                StringList *sectionList = strLstNew();
+                StringList *const sectionList = strLstNew();
 
                 if (stanza != NULL)
                 {
@@ -1964,17 +1965,17 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                 // Loop through sections to search for options
                 for (unsigned int sectionIdx = 0; sectionIdx < strLstSize(sectionList); sectionIdx++)
                 {
-                    String *section = strLstGet(sectionList, sectionIdx);
+                    const String *const section = strLstGet(sectionList, sectionIdx);
                     const StringList *const keyList = iniSectionKeyList(configParseLocal.ini, section);
-                    KeyValue *optionFound = kvNew();
+                    KeyValue *const optionFound = kvNew();
 
                     // Loop through keys to search for options
                     for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)
                     {
-                        String *key = strLstGet(keyList, keyIdx);
+                        String *const key = strLstGet(keyList, keyIdx);
 
                         // Find the optionName in the main list
-                        CfgParseOptionResult option = cfgParseOptionP(key);
+                        const CfgParseOptionResult option = cfgParseOptionP(key);
 
                         // Warn if the option not found
                         if (!option.found)
@@ -2003,8 +2004,8 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                         }
 
                         // Make sure this option does not appear in the same section with an alternate name
-                        const Variant *optionFoundKey = VARUINT64(option.id * CFG_OPTION_KEY_MAX + option.keyIdx);
-                        const Variant *optionFoundName = kvGet(optionFound, optionFoundKey);
+                        const Variant *const optionFoundKey = VARUINT64(option.id * CFG_OPTION_KEY_MAX + option.keyIdx);
+                        const Variant *const optionFoundName = kvGet(optionFound, optionFoundKey);
 
                         if (optionFoundName != NULL)
                         {
@@ -2041,7 +2042,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                         }
 
                         // Continue if this option has already been found in another section or command-line/environment
-                        ParseOptionValue *optionValue = parseOptionIdxValue(parseOptionList, option.id, option.keyIdx);
+                        ParseOptionValue *const optionValue = parseOptionIdxValue(parseOptionList, option.id, option.keyIdx);
 
                         if (optionValue->found)
                             continue;
@@ -2065,7 +2066,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                         else
                         {
                             // Get the option value
-                            const String *value = iniGet(configParseLocal.ini, section, key);
+                            const String *const value = iniGet(configParseLocal.ini, section, key);
 
                             if (strSize(value) == 0)
                             {
@@ -2127,7 +2128,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                 // If the option is in a group
                 if (parseRuleOption[optionId].group)
                 {
-                    unsigned int groupId = parseRuleOption[optionId].groupId;
+                    const unsigned int groupId = parseRuleOption[optionId].groupId;
 
                     config->optionGroup[groupId].valid = true;
 
@@ -2210,16 +2211,16 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
             for (unsigned int optionOrderIdx = 0; optionOrderIdx < CFG_OPTION_TOTAL; optionOrderIdx++)
             {
                 // Validate options based on the option resolve order. This allows resolving all options in a single pass.
-                ConfigOption optionId = optionResolveOrder[optionOrderIdx];
+                const ConfigOption optionId = optionResolveOrder[optionOrderIdx];
 
                 // Skip this option if it is not valid
                 if (!config->option[optionId].valid)
                     continue;
 
                 // Determine the option index total. For options that are not indexed the index total is 1.
-                bool optionGroup = parseRuleOption[optionId].group;
-                unsigned int optionGroupId = optionGroup ? parseRuleOption[optionId].groupId : UINT_MAX;
-                unsigned int optionListIndexTotal = optionGroup ? config->optionGroup[optionGroupId].indexTotal : 1;
+                const bool optionGroup = parseRuleOption[optionId].group;
+                const unsigned int optionGroupId = optionGroup ? parseRuleOption[optionId].groupId : UINT_MAX;
+                const unsigned int optionListIndexTotal = optionGroup ? config->optionGroup[optionGroupId].indexTotal : 1;
 
                 MEM_CONTEXT_BEGIN(config->memContext)
                 {
@@ -2228,12 +2229,12 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                 MEM_CONTEXT_END();
 
                 // Loop through the option indexes
-                ConfigOptionType optionType = cfgParseOptionType(optionId);
+                const ConfigOptionType optionType = cfgParseOptionType(optionId);
 
                 for (unsigned int optionListIdx = 0; optionListIdx < optionListIndexTotal; optionListIdx++)
                 {
                     // Get the key index by looking it up in the group or by defaulting to 0 for ungrouped options
-                    unsigned optionKeyIdx = optionGroup ? config->optionGroup[optionGroupId].indexMap[optionListIdx] : 0;
+                    const unsigned optionKeyIdx = optionGroup ? config->optionGroup[optionGroupId].indexMap[optionListIdx] : 0;
 
                     // Get the parsed value using the key index. Provide a default structure when the value was not found.
                     ParseOptionValue *parseOptionValue =
@@ -2244,7 +2245,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                     ConfigOptionValue *configOptionValue = &config->option[optionId].index[optionListIdx];
 
                     // Is the value set for this option?
-                    bool optionSet =
+                    const bool optionSet =
                         parseOptionValue->found && (optionType == cfgOptTypeBoolean || !parseOptionValue->negate) &&
                         !parseOptionValue->reset;
 
@@ -2257,7 +2258,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
 
                     if (cfgParseOptionalRule(&optionalRules, parseRuleOptionalTypeValid, config->command, optionId))
                     {
-                        PackRead *filter = pckReadNewC(optionalRules.valid, optionalRules.validSize);
+                        PackRead *const filter = pckReadNewC(optionalRules.valid, optionalRules.validSize);
                         dependResult = cfgParseOptionalFilterDepend(filter, config, optionListIdx);
 
                         // If depend not resolved and option value is set on the command-line then error. It is OK to have
@@ -2266,7 +2267,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                         // spool-path in the config file should not cause an error here, it will just end up null.
                         if (!dependResult.valid && optionSet && parseOptionValue->source == cfgSourceParam)
                         {
-                            PackRead *filter = pckReadNewC(optionalRules.valid, optionalRules.validSize);
+                            PackRead *const filter = pckReadNewC(optionalRules.valid, optionalRules.validSize);
 
                             // If there is a boolean default value just consume it since it is not needed here
                             pckReadNext(filter);
@@ -2362,8 +2363,8 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
 
                                 for (unsigned int listIdx = 0; listIdx < strLstSize(parseOptionValue->valueList); listIdx++)
                                 {
-                                    const char *pair = strZ(strLstGet(parseOptionValue->valueList, listIdx));
-                                    const char *equal = strchr(pair, '=');
+                                    const char *const pair = strZ(strLstGet(parseOptionValue->valueList, listIdx));
+                                    const char *const equal = strchr(pair, '=');
 
                                     if (equal == NULL)
                                     {
@@ -2388,8 +2389,8 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                             }
                             else
                             {
-                                String *value = strLstGet(parseOptionValue->valueList, 0);
-                                const String *valueAllow = value;
+                                String *const value = strLstGet(parseOptionValue->valueList, 0);
+                                const String *const valueAllow = value;
 
                                 // Preserve original value to display
                                 MEM_CONTEXT_BEGIN(config->memContext)
@@ -2668,7 +2669,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
             ASSERT(groupId == cfgOptGrpPg || groupId == cfgOptGrpRepo);
 
             // Get the group default option
-            unsigned int defaultOptionId = groupId == cfgOptGrpPg ? cfgOptPg : cfgOptRepo;
+            const unsigned int defaultOptionId = groupId == cfgOptGrpPg ? cfgOptPg : cfgOptRepo;
 
             // Does a default always exist?
             config->optionGroup[groupId].indexDefaultExists =
@@ -2682,7 +2683,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
             if (cfgOptionTest(defaultOptionId))
             {
                 // Search for the key
-                unsigned int optionKeyIdx = cfgOptionUInt(defaultOptionId) - 1;
+                const unsigned int optionKeyIdx = cfgOptionUInt(defaultOptionId) - 1;
                 unsigned int index = 0;
 
                 for (; index < cfgOptionGroupIdxTotal(groupId); index++)

@@ -26,7 +26,7 @@ configOptionProtocol(PackRead *const param, ProtocolServer *const server)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        VariantList *optionList = varLstNew();
+        VariantList *const optionList = varLstNew();
 
         while (pckReadNext(param))
         {
@@ -46,7 +46,7 @@ configOptionProtocol(PackRead *const param, ProtocolServer *const server)
 
 /**********************************************************************************************************************************/
 FN_EXTERN VariantList *
-configOptionRemote(ProtocolClient *client, const VariantList *paramList)
+configOptionRemote(ProtocolClient *const client, const VariantList *const paramList)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, client);
@@ -57,7 +57,7 @@ configOptionRemote(ProtocolClient *client, const VariantList *paramList)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_CONFIG_OPTION);
+        ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_CONFIG_OPTION);
         PackWrite *const param = protocolCommandParam(command);
 
         for (unsigned int paramIdx = 0; paramIdx < varLstSize(paramList); paramIdx++)
