@@ -56,7 +56,7 @@ struct HttpResponseMulti
 When response is done close/reuse the connection
 ***********************************************************************************************************************************/
 static void
-httpResponseDone(HttpResponse *this)
+httpResponseDone(HttpResponse *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(HTTP_RESPONSE, this);
@@ -101,7 +101,7 @@ httpResponseReadIgnoreUnexpectedEof(const HttpResponse *const this)
 }
 
 static size_t
-httpResponseRead(THIS_VOID, Buffer *buffer, bool block)
+httpResponseRead(THIS_VOID, Buffer *const buffer, const bool block)
 {
     THIS(HttpResponse);
 
@@ -369,7 +369,7 @@ httpResponseNewInternal(void)
 }
 
 FN_EXTERN HttpResponse *
-httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
+httpResponseNew(HttpSession *const session, const String *const verb, const bool contentCache)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(HTTP_SESSION, session);
@@ -423,7 +423,7 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
 
 /**********************************************************************************************************************************/
 FN_EXTERN const Buffer *
-httpResponseContent(HttpResponse *this)
+httpResponseContent(HttpResponse *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(HTTP_RESPONSE, this);

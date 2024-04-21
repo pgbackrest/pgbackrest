@@ -1307,7 +1307,7 @@ jsonReadToLog(const JsonRead *const this, StringStatic *const debugLog)
 
 /**********************************************************************************************************************************/
 FN_EXTERN JsonWrite *
-jsonWriteNew(JsonWriteNewParam param)
+jsonWriteNew(const JsonWriteNewParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, param.json);

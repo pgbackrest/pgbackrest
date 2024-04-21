@@ -29,7 +29,7 @@ Macros for function logging
 Discard all input
 ***********************************************************************************************************************************/
 static void
-ioSinkProcess(THIS_VOID, const Buffer *input, Buffer *output)
+ioSinkProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
 {
     THIS(IoSink);
 

@@ -77,7 +77,7 @@ tlsCertCommonName(X509 *const certificate)                                      
 /**********************************************************************************************************************************/
 // Callback to process cert passwords
 static int
-tlsCertPwd(char *buffer, const int size, const int rwFlag, void *const userData)
+tlsCertPwd(char *const buffer, const int size, const int rwFlag, void *const userData)
 {
     (void)rwFlag;
     (void)userData;

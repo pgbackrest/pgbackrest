@@ -17,7 +17,7 @@ ZST Common
 
 /**********************************************************************************************************************************/
 FN_EXTERN size_t
-zstError(size_t error)
+zstError(const size_t error)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(SIZE, error);

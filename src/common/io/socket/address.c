@@ -137,7 +137,7 @@ addrInfoSort(AddressInfo *const this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN AddressInfo *
-addrInfoNew(const String *const host, unsigned int port)
+addrInfoNew(const String *const host, const unsigned int port)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, host);
@@ -222,7 +222,7 @@ addrInfoNew(const String *const host, unsigned int port)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-addrInfoPrefer(AddressInfo *this, unsigned int index)
+addrInfoPrefer(AddressInfo *const this, const unsigned int index)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(ADDRESS_INFO, this);

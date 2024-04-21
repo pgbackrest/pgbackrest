@@ -11,7 +11,7 @@ BZ2 Common
 
 /**********************************************************************************************************************************/
 FN_EXTERN int
-bz2Error(int error)
+bz2Error(const int error)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, error);

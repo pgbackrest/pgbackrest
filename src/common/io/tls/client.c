@@ -84,7 +84,7 @@ Check if a name from the server certificate matches the hostname
 Matching is always case-insensitive since DNS is case insensitive.
 ***********************************************************************************************************************************/
 static bool
-tlsClientHostVerifyName(const String *host, const String *name)
+tlsClientHostVerifyName(const String *const host, const String *const name)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, host);
@@ -131,7 +131,7 @@ Verify that the server certificate matches the hostname we connected to
 The certificate's Common Name and Subject Alternative Names are considered.
 ***********************************************************************************************************************************/
 static bool
-tlsClientHostVerify(const String *host, X509 *certificate)
+tlsClientHostVerify(const String *const host, X509 *const certificate)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, host);
@@ -149,7 +149,7 @@ tlsClientHostVerify(const String *host, X509 *certificate)
     MEM_CONTEXT_TEMP_BEGIN()                                                                                        // {vm_covered}
     {
         // First get the subject alternative names from the certificate and compare them against the hostname
-        STACK_OF(GENERAL_NAME) *altNameStack = (STACK_OF(GENERAL_NAME) *)X509_get_ext_d2i(                          // {vm_covered}
+        STACK_OF(GENERAL_NAME) *const altNameStack = (STACK_OF(GENERAL_NAME) *)X509_get_ext_d2i(                    // {vm_covered}
             certificate, NID_subject_alt_name, NULL, NULL);                                                         // {vm_covered}
         bool altNameFound = false;                                                                                  // {vm_covered}
 
@@ -157,7 +157,7 @@ tlsClientHostVerify(const String *host, X509 *certificate)
         {
             for (int altNameIdx = 0; altNameIdx < sk_GENERAL_NAME_num(altNameStack); altNameIdx++)                  // {vm_covered}
             {
-                const GENERAL_NAME *name = sk_GENERAL_NAME_value(altNameStack, altNameIdx);                         // {vm_covered}
+                const GENERAL_NAME *const name = sk_GENERAL_NAME_value(altNameStack, altNameIdx);                   // {vm_covered}
                 altNameFound = true;                                                                                // {vm_covered}
 
                 if (name->type == GEN_DNS)                                                                          // {vm_covered}
@@ -201,7 +201,7 @@ tlsClientAuth(const TlsClient *const this, SSL *const tlsSession)
         if (this->verifyPeer)                                                                                       // {vm_covered}
         {
             // Verify that the chain of trust leads to a valid CA
-            long int verifyResult = SSL_get_verify_result(tlsSession);                                              // {vm_covered}
+            const long int verifyResult = SSL_get_verify_result(tlsSession);                                        // {vm_covered}
 
             if (verifyResult != X509_V_OK)                                                                          // {vm_covered}
             {
@@ -212,8 +212,8 @@ tlsClientAuth(const TlsClient *const this, SSL *const tlsSession)
             }
 
             // Verify that the hostname appears in the certificate
-            X509 *certificate = SSL_get_peer_certificate(tlsSession);                                               // {vm_covered}
-            bool nameResult = tlsClientHostVerify(this->host, certificate);                                         // {vm_covered}
+            X509 *const certificate = SSL_get_peer_certificate(tlsSession);                                         // {vm_covered}
+            const bool nameResult = tlsClientHostVerify(this->host, certificate);                                   // {vm_covered}
             X509_free(certificate);                                                                                 // {vm_covered}
 
             if (!nameResult)                                                                                        // {vm_covered}
@@ -251,7 +251,7 @@ tlsClientOpen(THIS_VOID)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         bool retry;
-        Wait *wait = waitNew(this->timeoutConnect);
+        Wait *const wait = waitNew(this->timeoutConnect);
         SSL *tlsSession = NULL;
 
         do

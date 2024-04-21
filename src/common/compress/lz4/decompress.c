@@ -68,7 +68,7 @@ lz4DecompressFreeResource(THIS_VOID)
 Decompress data
 ***********************************************************************************************************************************/
 static void
-lz4DecompressProcess(THIS_VOID, const Buffer *compressed, Buffer *decompressed)
+lz4DecompressProcess(THIS_VOID, const Buffer *const compressed, Buffer *const decompressed)
 {
     THIS(Lz4Decompress);
 

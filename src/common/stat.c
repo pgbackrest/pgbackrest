@@ -53,7 +53,7 @@ statInit(void)
 Get the specified stat. If it doesn't already exist it will be created.
 ***********************************************************************************************************************************/
 static Stat *
-statGetOrCreate(const String *key)
+statGetOrCreate(const String *const key)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, key);
@@ -87,7 +87,7 @@ statGetOrCreate(const String *key)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-statInc(const String *key)
+statInc(const String *const key)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, key);

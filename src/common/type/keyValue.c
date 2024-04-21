@@ -81,7 +81,7 @@ kvDup(const KeyValue *const source)
 
 /**********************************************************************************************************************************/
 FN_EXTERN unsigned int
-kvGetIdx(const KeyValue *this, const Variant *key)
+kvGetIdx(const KeyValue *const this, const Variant *const key)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(KEY_VALUE, this);
@@ -96,7 +96,7 @@ kvGetIdx(const KeyValue *this, const Variant *key)
 
     for (unsigned int listIdx = 0; listIdx < lstSize(this->list); listIdx++)
     {
-        const KeyValuePair *pair = (const KeyValuePair *)lstGet(this->list, listIdx);
+        const KeyValuePair *const pair = (const KeyValuePair *)lstGet(this->list, listIdx);
 
         // Break if the key matches
         if (varEq(key, pair->key))
@@ -115,7 +115,7 @@ Internal put key/value pair
 Handles the common logic for the external put functions. The correct mem context should be set before calling this function.
 ***********************************************************************************************************************************/
 static void
-kvPutInternal(KeyValue *this, const Variant *key, Variant *value)
+kvPutInternal(KeyValue *const this, const Variant *const key, Variant *const value)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(KEY_VALUE, this);
@@ -129,15 +129,13 @@ kvPutInternal(KeyValue *this, const Variant *key, Variant *value)
     FUNCTION_AUDIT_HELPER();
 
     // Find the key
-    unsigned int listIdx = kvGetIdx(this, key);
+    const unsigned int listIdx = kvGetIdx(this, key);
 
     // If the key was not found then add it
     if (listIdx == KEY_NOT_FOUND)
     {
         // Copy the pair
-        KeyValuePair pair;
-        pair.key = varDup(key);
-        pair.value = value;
+        const KeyValuePair pair = {.key = varDup(key), .value = value};
 
         // Add to the list
         lstAdd(this->list, &pair);
@@ -161,7 +159,7 @@ kvPutInternal(KeyValue *this, const Variant *key, Variant *value)
 
 /**********************************************************************************************************************************/
 FN_EXTERN KeyValue *
-kvPut(KeyValue *this, const Variant *key, const Variant *value)
+kvPut(KeyValue *const this, const Variant *const key, const Variant *const value)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(KEY_VALUE, this);
@@ -183,7 +181,7 @@ kvPut(KeyValue *this, const Variant *key, const Variant *value)
 
 /**********************************************************************************************************************************/
 FN_EXTERN KeyValue *
-kvAdd(KeyValue *this, const Variant *key, const Variant *value)
+kvAdd(KeyValue *const this, const Variant *const key, const Variant *const value)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(KEY_VALUE, this);
@@ -197,7 +195,7 @@ kvAdd(KeyValue *this, const Variant *key, const Variant *value)
     MEM_CONTEXT_OBJ_BEGIN(this)
     {
         // Find the key
-        unsigned int listIdx = kvGetIdx(this, key);
+        const unsigned int listIdx = kvGetIdx(this, key);
 
         // If the key was not found then add it
         if (listIdx == KEY_NOT_FOUND)
@@ -207,7 +205,7 @@ kvAdd(KeyValue *this, const Variant *key, const Variant *value)
         // Else create or add to the variant list
         else
         {
-            KeyValuePair *pair = (KeyValuePair *)lstGet(this->list, listIdx);
+            KeyValuePair *const pair = (KeyValuePair *)lstGet(this->list, listIdx);
 
             if (pair->value == NULL)
                 pair->value = varDup(value);
@@ -229,7 +227,7 @@ kvAdd(KeyValue *this, const Variant *key, const Variant *value)
 
 /**********************************************************************************************************************************/
 FN_EXTERN KeyValue *
-kvPutKv(KeyValue *this, const Variant *key)
+kvPutKv(KeyValue *const this, const Variant *const key)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(KEY_VALUE, this);
@@ -239,11 +237,10 @@ kvPutKv(KeyValue *this, const Variant *key)
     ASSERT(this != NULL);
     ASSERT(key != NULL);
 
-    KeyValue *result = NULL;
+    KeyValue *const result = kvNew();
 
     MEM_CONTEXT_OBJ_BEGIN(this)
     {
-        result = kvNew();
         kvPutInternal(this, key, varNewKv(result));
     }
     MEM_CONTEXT_OBJ_END();
@@ -253,7 +250,7 @@ kvPutKv(KeyValue *this, const Variant *key)
 
 /**********************************************************************************************************************************/
 FN_EXTERN const Variant *
-kvGet(const KeyValue *this, const Variant *key)
+kvGet(const KeyValue *const this, const Variant *const key)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(KEY_VALUE, this);
@@ -266,7 +263,7 @@ kvGet(const KeyValue *this, const Variant *key)
     Variant *result = NULL;
 
     // Find the key
-    unsigned int listIdx = kvGetIdx(this, key);
+    const unsigned int listIdx = kvGetIdx(this, key);
 
     if (listIdx != KEY_NOT_FOUND)
         result = ((KeyValuePair *)lstGet(this->list, listIdx))->value;
@@ -331,7 +328,7 @@ kvGetList(const KeyValue *const this, const Variant *const key)
 
 /**********************************************************************************************************************************/
 FN_EXTERN KeyValue *
-kvRemove(KeyValue *this, const Variant *key)
+kvRemove(KeyValue *const this, const Variant *const key)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(KEY_VALUE, this);
@@ -342,13 +339,13 @@ kvRemove(KeyValue *this, const Variant *key)
     ASSERT(key != NULL);
 
     // Find the key
-    unsigned int listIdx = kvGetIdx(this, key);
+    const unsigned int listIdx = kvGetIdx(this, key);
 
     // If the key was found, remove it
     if (listIdx != KEY_NOT_FOUND)
     {
         // Free the key/value being removed and remove from the list
-        KeyValuePair *const pair = (KeyValuePair *)lstGet(this->list, listIdx);
+        const KeyValuePair *const pair = (KeyValuePair *)lstGet(this->list, listIdx);
 
         varFree(pair->key);
         varFree(pair->value);

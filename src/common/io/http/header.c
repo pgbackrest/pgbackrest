@@ -19,7 +19,7 @@ struct HttpHeader
 
 /**********************************************************************************************************************************/
 FN_EXTERN HttpHeader *
-httpHeaderNew(const StringList *redactList)
+httpHeaderNew(const StringList *const redactList)
 {
     FUNCTION_TEST_VOID();
 
@@ -38,7 +38,7 @@ httpHeaderNew(const StringList *redactList)
 
 /**********************************************************************************************************************************/
 FN_EXTERN HttpHeader *
-httpHeaderDup(const HttpHeader *header, const StringList *redactList)
+httpHeaderDup(const HttpHeader *const header, const StringList *const redactList)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(HTTP_HEADER, header);
@@ -63,7 +63,7 @@ httpHeaderDup(const HttpHeader *header, const StringList *redactList)
 
 /**********************************************************************************************************************************/
 FN_EXTERN HttpHeader *
-httpHeaderAdd(HttpHeader *this, const String *key, const String *value)
+httpHeaderAdd(HttpHeader *const this, const String *const key, const String *const value)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(HTTP_HEADER, this);
@@ -76,8 +76,8 @@ httpHeaderAdd(HttpHeader *this, const String *key, const String *value)
     ASSERT(value != NULL);
 
     // Check if the key already exists
-    const Variant *keyVar = VARSTR(key);
-    const Variant *valueVar = kvGet(this->kv, keyVar);
+    const Variant *const keyVar = VARSTR(key);
+    const Variant *const valueVar = kvGet(this->kv, keyVar);
 
     // If the key exists then append the new value. The HTTP spec (RFC 2616, Section 4.2) says that if a header appears more than
     // once then it is equivalent to a single comma-separated header. There appear to be a few exceptions such as Set-Cookie, but
@@ -103,7 +103,7 @@ httpHeaderAdd(HttpHeader *this, const String *key, const String *value)
 
 /**********************************************************************************************************************************/
 FN_EXTERN const String *
-httpHeaderGet(const HttpHeader *this, const String *key)
+httpHeaderGet(const HttpHeader *const this, const String *const key)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(HTTP_HEADER, this);
@@ -118,7 +118,7 @@ httpHeaderGet(const HttpHeader *this, const String *key)
 
 /**********************************************************************************************************************************/
 FN_EXTERN StringList *
-httpHeaderList(const HttpHeader *this)
+httpHeaderList(const HttpHeader *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(HTTP_HEADER, this);
@@ -131,7 +131,7 @@ httpHeaderList(const HttpHeader *this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN HttpHeader *
-httpHeaderPut(HttpHeader *this, const String *key, const String *value)
+httpHeaderPut(HttpHeader *const this, const String *const key, const String *const value)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(HTTP_HEADER, this);
@@ -178,7 +178,7 @@ httpHeaderPutRange(HttpHeader *const this, const uint64_t offset, const Variant 
 
 /**********************************************************************************************************************************/
 FN_EXTERN bool
-httpHeaderRedact(const HttpHeader *this, const String *key)
+httpHeaderRedact(const HttpHeader *const this, const String *const key)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(HTTP_HEADER, this);

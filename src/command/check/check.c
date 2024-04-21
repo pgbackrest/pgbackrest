@@ -87,7 +87,7 @@ checkStandby(const DbGetResult dbGroup, const unsigned int pgPathDefinedTotal)
             LOG_INFO_FMT(CFGCMD_CHECK " %s (standby)", cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
 
             // Get the repo storage in case it is remote and encryption settings need to be pulled down (performed here for testing)
-            const Storage *storageRepo = storageRepoIdx(repoIdx);
+            const Storage *const storageRepo = storageRepoIdx(repoIdx);
 
             // Check that the backup and archive info files exist and are valid for the current database of the stanza
             checkStanzaInfoPg(
@@ -125,7 +125,7 @@ checkPrimary(const DbGetResult dbGroup)
         checkDbConfig(dbPgControl(dbGroup.primary).version, dbGroup.primaryIdx, dbGroup.primary, false);
 
         // Check configuration of each repo
-        const String **repoArchiveId = memNew(sizeof(String *) * cfgOptionGroupIdxTotal(cfgOptGrpRepo));
+        const String **const repoArchiveId = memNew(sizeof(String *) * cfgOptionGroupIdxTotal(cfgOptGrpRepo));
 
         for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
         {

@@ -37,7 +37,7 @@ struct InfoPg
 Internal constructor
 ***********************************************************************************************************************************/
 static InfoPg *
-infoPgNewInternal(InfoPgType type)
+infoPgNewInternal(const InfoPgType type)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING_ID, type);
@@ -62,7 +62,7 @@ infoPgNewInternal(InfoPgType type)
 
 /**********************************************************************************************************************************/
 FN_EXTERN InfoPg *
-infoPgNew(InfoPgType type, const String *cipherPassSub)
+infoPgNew(const InfoPgType type, const String *const cipherPassSub)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING_ID, type);
@@ -156,7 +156,7 @@ infoPgLoadCallback(void *const data, const String *const section, const String *
 }
 
 FN_EXTERN InfoPg *
-infoPgNewLoad(IoRead *read, InfoPgType type, InfoLoadNewCallback *callbackFunction, void *callbackData)
+infoPgNewLoad(IoRead *const read, const InfoPgType type, InfoLoadNewCallback *const callbackFunction, void *const callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_READ, read);
@@ -207,7 +207,7 @@ infoPgNewLoad(IoRead *read, InfoPgType type, InfoLoadNewCallback *callbackFuncti
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-infoPgAdd(InfoPg *this, const InfoPgData *infoPgData)
+infoPgAdd(InfoPg *const this, const InfoPgData *const infoPgData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_PG, this);
@@ -226,7 +226,8 @@ infoPgAdd(InfoPg *this, const InfoPgData *infoPgData)
 /**********************************************************************************************************************************/
 FN_EXTERN InfoPg *
 infoPgSet(
-    InfoPg *this, InfoPgType type, const unsigned int pgVersion, const uint64_t pgSystemId, const unsigned int pgCatalogVersion)
+    InfoPg *const this, const InfoPgType type, const unsigned int pgVersion, const uint64_t pgSystemId,
+    const unsigned int pgCatalogVersion)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_PG, this);
@@ -301,7 +302,7 @@ infoPgSaveCallback(void *const data, const String *const sectionNext, InfoSave *
         if (saveData->callbackFunction != NULL)
             saveData->callbackFunction(saveData->callbackData, STRDEF(INFO_SECTION_DB), infoSaveData);
 
-        InfoPgData pgData = infoPgDataCurrent(saveData->infoPg);
+        const InfoPgData pgData = infoPgDataCurrent(saveData->infoPg);
 
         // These need to be saved because older pgBackRest versions expect them
         if (saveData->infoPg->type == infoPgBackup)
@@ -356,7 +357,7 @@ infoPgSaveCallback(void *const data, const String *const sectionNext, InfoSave *
 }
 
 FN_EXTERN void
-infoPgSave(InfoPg *this, IoWrite *write, InfoSaveCallback *callbackFunction, void *callbackData)
+infoPgSave(InfoPg *const this, IoWrite *const write, InfoSaveCallback *const callbackFunction, void *const callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_PG, this);
@@ -398,7 +399,6 @@ infoPgArchiveId(const InfoPg *const this, const unsigned int pgDataIdx)
 
     const InfoPgData pgData = infoPgData(this, pgDataIdx);
     String *const version = pgVersionToStr(pgData.version);
-
     String *const result = strNewFmt("%s-%u", strZ(version), pgData.id);
 
     strFree(version);
@@ -408,7 +408,7 @@ infoPgArchiveId(const InfoPg *const this, const unsigned int pgDataIdx)
 
 /**********************************************************************************************************************************/
 FN_EXTERN InfoPgData
-infoPgData(const InfoPg *this, unsigned int pgDataIdx)
+infoPgData(const InfoPg *const this, const unsigned int pgDataIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(INFO_PG, this);
@@ -422,7 +422,7 @@ infoPgData(const InfoPg *this, unsigned int pgDataIdx)
 
 /**********************************************************************************************************************************/
 FN_EXTERN InfoPgData
-infoPgDataCurrent(const InfoPg *this)
+infoPgDataCurrent(const InfoPg *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_PG, this);
@@ -435,7 +435,7 @@ infoPgDataCurrent(const InfoPg *this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN unsigned int
-infoPgDataCurrentId(const InfoPg *this)
+infoPgDataCurrentId(const InfoPg *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_PG, this);
@@ -448,7 +448,7 @@ infoPgDataCurrentId(const InfoPg *this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN unsigned int
-infoPgCurrentDataId(const InfoPg *this)
+infoPgCurrentDataId(const InfoPg *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(INFO_PG, this);

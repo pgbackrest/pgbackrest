@@ -50,7 +50,7 @@ sleepMSec(const TimeMSec sleepMSec)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-datePartsValid(int year, int month, int day)
+datePartsValid(const int year, const int month, const int day)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, year);
@@ -72,7 +72,7 @@ datePartsValid(int year, int month, int day)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-timePartsValid(int hour, int minute, int second)
+timePartsValid(const int hour, const int minute, const int second)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, hour);
@@ -88,7 +88,7 @@ timePartsValid(int hour, int minute, int second)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-tzPartsValid(int tzHour, int tzMinute)
+tzPartsValid(const int tzHour, const int tzMinute)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, tzHour);                           // signed hour part of timezone
@@ -109,7 +109,7 @@ tzPartsValid(int tzHour, int tzMinute)
 
 /**********************************************************************************************************************************/
 FN_EXTERN int
-tzOffsetSeconds(int tzHour, int tzMinute)
+tzOffsetSeconds(int tzHour, const int tzMinute)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, tzHour);                           // signed hour part of timezone (e.g. -7)
@@ -133,7 +133,7 @@ tzOffsetSeconds(int tzHour, int tzMinute)
 
 /**********************************************************************************************************************************/
 FN_EXTERN bool
-yearIsLeap(int year)
+yearIsLeap(const int year)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, year);
@@ -144,7 +144,7 @@ yearIsLeap(int year)
 
 /**********************************************************************************************************************************/
 FN_EXTERN int
-dayOfYear(int year, int month, int day)
+dayOfYear(const int year, const int month, const int day)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, year);
@@ -165,7 +165,8 @@ dayOfYear(int year, int month, int day)
 
 /**********************************************************************************************************************************/
 FN_EXTERN time_t
-epochFromParts(int year, int month, int day, int hour, int minute, int second, int tzOffsetSecond)
+epochFromParts(
+    const int year, const int month, const int day, const int hour, const int minute, const int second, const int tzOffsetSecond)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, year);
