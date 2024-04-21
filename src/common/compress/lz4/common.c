@@ -12,7 +12,7 @@ LZ4 Common
 
 /**********************************************************************************************************************************/
 FN_EXTERN LZ4F_errorCode_t
-lz4Error(LZ4F_errorCode_t error)
+lz4Error(const LZ4F_errorCode_t error)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(SIZE, error);

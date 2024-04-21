@@ -62,7 +62,7 @@ backupLabelCreate(const BackupType type, const String *const backupLabelPrior, c
         const String *backupLabelLatest = NULL;
 
         // Get the newest backup
-        const StringList *backupList = strLstSort(
+        const StringList *const backupList = strLstSort(
             storageListP(
                 storageRepo(), STRDEF(STORAGE_REPO_BACKUP),
                 .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
@@ -72,7 +72,7 @@ backupLabelCreate(const BackupType type, const String *const backupLabelPrior, c
             backupLabelLatest = strLstGet(backupList, 0);
 
         // Get the newest history
-        const StringList *historyYearList = strLstSort(
+        const StringList *const historyYearList = strLstSort(
             storageListP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY), .expression = STRDEF("^2[0-9]{3}$")),
             sortOrderDesc);
 
@@ -85,8 +85,7 @@ backupLabelCreate(const BackupType type, const String *const backupLabelPrior, c
                 (type == backupTypeFull) ?
                     backupRegExpP(.full = true, .differential = true, .incremental = true, .noAnchorEnd = true) :
                     strNewFmt("^%.*sF\\_" DATE_TIME_REGEX "(D|I)", DATE_TIME_LEN, strZ(backupLabelLatest));
-
-            const StringList *historyList = strLstSort(
+            const StringList *const historyList = strLstSort(
                 storageListP(
                     storageRepo(),
                     strNewFmt(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s", strZ(strLstGet(historyYearList, 0))),
@@ -467,7 +466,7 @@ backupBlockIncrMap(void)
 
             for (unsigned int mapKeyIdx = 0; mapKeyIdx < varLstSize(mapKeyList); mapKeyIdx++)
             {
-                const Variant *mapKey = varLstGet(mapKeyList, mapKeyIdx);
+                const Variant *const mapKey = varLstGet(mapKeyList, mapKeyIdx);
 
                 ManifestBlockIncrChecksumSizeMap manifestBuildBlockIncrChecksumSizeMap =
                 {
@@ -495,7 +494,7 @@ backupBlockIncrMap(void)
 Get time from the database or locally depending on online
 ***********************************************************************************************************************************/
 static time_t
-backupTime(BackupData *const backupData, const bool waitRemainder)
+backupTime(const BackupData *const backupData, const bool waitRemainder)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
@@ -1053,7 +1052,7 @@ typedef struct BackupStartResult
 } BackupStartResult;
 
 static BackupStartResult
-backupStart(BackupData *const backupData)
+backupStart(const BackupData *const backupData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
@@ -1149,7 +1148,7 @@ Stop the backup
 // Helper to write a file from a string to the repository and update the manifest
 static void
 backupFilePut(
-    BackupData *const backupData, Manifest *const manifest, const String *const name, const time_t timestamp,
+    const BackupData *const backupData, Manifest *const manifest, const String *const name, const time_t timestamp,
     const String *const content)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -1540,7 +1539,7 @@ backupJobResult(
                                 CHECK(FormatError, checksumPageErrorList != NULL, "page checksum error list is missing");
                                 CHECK(FormatError, !varLstEmpty(checksumPageErrorList), "page checksum error list is empty");
 
-                                String *error = strNew();
+                                String *const error = strNew();
                                 unsigned int errorTotalMin = 0;
 
                                 for (unsigned int errorIdx = 0; errorIdx < varLstSize(checksumPageErrorList); errorIdx++)

@@ -1,5 +1,35 @@
 <release date="XXXX-XX-XX" version="2.52dev" title="UNDER DEVELOPMENT">
     <release-core-list>
+        <text>
+            <p><b>NOTE TO PACKAGERS</b>: The build system for <backrest/> is now <proper>meson</proper>. The <proper>autoconf</proper>/<proper>make</proper> build will not receive any new features and will be removed after a few releases.</p>
+        </text>
+
+        <release-feature-list>
+            <release-item>
+                <github-issue id="2279"/>
+                <github-pull-request id="2282"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="tim.jones"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="tim.jones"/>
+                </release-item-contributor-list>
+
+                <p><proper>S3</proper> <id>SSE-C</id> encryption support.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2328"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p><proper>PostgreSQL</proper> 17 support. </p>
+            </release-item>
+        </release-feature-list>
+
         <release-improvement-list>
             <release-item>
                 <github-pull-request id="2321"/>

@@ -48,12 +48,10 @@ restoreFile(
     ASSERT(repoFile != NULL);
 
     // Restore file results
-    List *result = NULL;
+    List *const result = lstNewP(sizeof(RestoreFileResult));
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = lstNewP(sizeof(RestoreFileResult));
-
         // Check files to determine which ones need to be restored
         for (unsigned int fileIdx = 0; fileIdx < lstSize(fileList); fileIdx++)
         {
@@ -195,7 +193,7 @@ restoreFile(
                 if (fileResult->result == restoreResultCopy && (file->size == 0 || file->zero))
                 {
                     // Create destination file
-                    StorageWrite *pgFileWrite = storageNewWriteP(
+                    StorageWrite *const pgFileWrite = storageNewWriteP(
                         storagePgWrite(), file->name, .modeFile = file->mode, .user = file->user, .group = file->group,
                         .timeModified = file->timeModified, .noAtomic = true, .noCreatePath = true, .noSyncPath = true);
 
@@ -284,7 +282,7 @@ restoreFile(
                     }
 
                     // Create pg file
-                    StorageWrite *pgFileWrite = storageNewWriteP(
+                    StorageWrite *const pgFileWrite = storageNewWriteP(
                         storagePgWrite(), file->name, .modeFile = file->mode, .user = file->user, .group = file->group,
                         .timeModified = file->timeModified, .noAtomic = true, .noCreatePath = true, .noSyncPath = true,
                         .noTruncate = file->blockChecksum != NULL);
@@ -378,7 +376,7 @@ restoreFile(
                     // Else normal file
                     else
                     {
-                        IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(pgFileWrite));
+                        IoFilterGroup *const filterGroup = ioWriteFilterGroup(storageWriteIo(pgFileWrite));
 
                         // Add decryption filter
                         if (cipherPass != NULL)
@@ -427,8 +425,6 @@ restoreFile(
             }
             MEM_CONTEXT_TEMP_END();
         }
-
-        lstMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 

@@ -59,7 +59,7 @@ ioFilterNew(const StringId type, void *const driver, Pack *const paramList, cons
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-ioFilterProcessIn(IoFilter *this, const Buffer *input)
+ioFilterProcessIn(IoFilter *const this, const Buffer *const input)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_FILTER, this);
@@ -81,7 +81,7 @@ ioFilterProcessIn(IoFilter *this, const Buffer *input)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-ioFilterProcessInOut(IoFilter *this, const Buffer *input, Buffer *output)
+ioFilterProcessInOut(IoFilter *const this, const Buffer *const input, Buffer *const output)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_FILTER, this);

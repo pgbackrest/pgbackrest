@@ -34,7 +34,7 @@ Macros for function logging
 // Can bytes be written immediately?
 ***********************************************************************************************************************************/
 static bool
-ioFdWriteReady(THIS_VOID, bool error)
+ioFdWriteReady(THIS_VOID, const bool error)
 {
     THIS(IoFdWrite);
 
@@ -65,7 +65,7 @@ ioFdWriteReady(THIS_VOID, bool error)
 Write to the file descriptor
 ***********************************************************************************************************************************/
 static void
-ioFdWrite(THIS_VOID, const Buffer *buffer)
+ioFdWrite(THIS_VOID, const Buffer *const buffer)
 {
     THIS(IoFdWrite);
 
@@ -126,7 +126,7 @@ ioFdWriteNew(const String *const name, const int fd, const TimeMSec timeout)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-ioFdWriteOneStr(int fd, const String *string)
+ioFdWriteOneStr(const int fd, const String *const string)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(INT, fd);

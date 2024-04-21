@@ -34,7 +34,7 @@ STRING_STATIC(HTTP_PROTOCOL_HTTP_STR,                               "http");
 STRING_STATIC(HTTP_PROTOCOL_HTTPS_STR,                              "https");
 
 static const String *
-httpProtocolTypeStr(HttpProtocolType type)
+httpProtocolTypeStr(const HttpProtocolType type)
 {
     switch (type)
     {
@@ -51,7 +51,7 @@ httpProtocolTypeStr(HttpProtocolType type)
 
 /**********************************************************************************************************************************/
 FN_EXTERN HttpUrl *
-httpUrlNewParse(const String *const url, HttpUrlNewParseParam param)
+httpUrlNewParse(const String *const url, const HttpUrlNewParseParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, url);
@@ -77,7 +77,7 @@ httpUrlNewParse(const String *const url, HttpUrlNewParseParam param)
                 THROW_FMT(FormatError, "invalid URL '%s'", strZ(url));
 
             // Determine whether the first part is protocol or host
-            StringList *splitUrl = strLstNewSplitZ(url, "/");
+            StringList *const splitUrl = strLstNewSplitZ(url, "/");
 
             if (strEqZ(strLstGet(splitUrl, 0), "http:"))
                 this->pub.type = httpProtocolTypeHttp;
@@ -112,7 +112,7 @@ httpUrlNewParse(const String *const url, HttpUrlNewParseParam param)
             if (strBeginsWithZ(host, "["))
             {
                 // Split closing bracket
-                StringList *splitHost = strLstNewSplitZ(host, "]");
+                const StringList *const splitHost = strLstNewSplitZ(host, "]");
                 ASSERT(strLstSize(splitHost) == 2);
 
                 // Remove opening bracket
@@ -126,7 +126,7 @@ httpUrlNewParse(const String *const url, HttpUrlNewParseParam param)
             else
             {
                 // Split on colon
-                StringList *splitHost = strLstNewSplitZ(host, ":");
+                const StringList *const splitHost = strLstNewSplitZ(host, ":");
                 ASSERT(strLstSize(splitHost) != 0);
 
                 // First part is the host
@@ -170,7 +170,7 @@ httpUrlNewParse(const String *const url, HttpUrlNewParseParam param)
                 strLstRemoveIdx(splitUrl, 0);
 
                 // Construct path and copy into local context
-                const String *path = strLstJoin(splitUrl, "/");
+                const String *const path = strLstJoin(splitUrl, "/");
 
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {

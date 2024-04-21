@@ -90,7 +90,7 @@ archivePushDrop(const String *const walPath, const StringList *const processList
 Get the list of WAL files ready to be pushed according to PostgreSQL
 ***********************************************************************************************************************************/
 static StringList *
-archivePushReadyList(const String *walPath)
+archivePushReadyList(const String *const walPath)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, walPath);
@@ -98,14 +98,12 @@ archivePushReadyList(const String *walPath)
 
     ASSERT(walPath != NULL);
 
-    StringList *result = NULL;
+    StringList *const result = strLstNew();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = strLstNew();
-
         // Read the ready files from the archive_status directory
-        StringList *readyListRaw = strLstSort(
+        const StringList *const readyListRaw = strLstSort(
             storageListP(
                 storagePg(), strNewFmt("%s/" PG_PATH_ARCHIVE_STATUS, strZ(walPath)),
                 .expression = STRDEF("\\" STATUS_EXT_READY "$"), .errorOnMissing = true),
@@ -116,8 +114,6 @@ archivePushReadyList(const String *walPath)
             const String *const ready = strLstGet(readyListRaw, readyIdx);
             strLstAddSub(result, ready, strSize(ready) - STATUS_EXT_READY_SIZE);
         }
-
-        strLstMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -133,7 +129,7 @@ PostgreSQL) are removed. Then all ready files that do not have a corresponding o
 returned for processing.
 ***********************************************************************************************************************************/
 static StringList *
-archivePushProcessList(const String *walPath)
+archivePushProcessList(const String *const walPath)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, walPath);
@@ -141,7 +137,7 @@ archivePushProcessList(const String *walPath)
 
     ASSERT(walPath != NULL);
 
-    StringList *result = NULL;
+    StringList *result;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -150,14 +146,14 @@ archivePushProcessList(const String *walPath)
 
         // Read the status files from the spool directory, then remove any files that do not end in ok and create a list of the
         // ok files for further processing
-        StringList *statusList = strLstSort(
+        const StringList *const statusList = strLstSort(
             storageListP(storageSpool(), STORAGE_SPOOL_ARCHIVE_OUT_STR, .errorOnMissing = true), sortOrderAsc);
 
-        StringList *okList = strLstNew();
+        StringList *const okList = strLstNew();
 
         for (unsigned int statusIdx = 0; statusIdx < strLstSize(statusList); statusIdx++)
         {
-            const String *statusFile = strLstGet(statusList, statusIdx);
+            const String *const statusFile = strLstGet(statusList, statusIdx);
 
             if (strEndsWithZ(statusFile, STATUS_EXT_OK))
                 strLstAddSub(okList, statusFile, strSize(statusFile) - STATUS_EXT_OK_SIZE);
@@ -169,10 +165,10 @@ archivePushProcessList(const String *walPath)
         }
 
         // Read the ready files from the archive_status directory
-        StringList *readyList = archivePushReadyList(walPath);
+        const StringList *const readyList = archivePushReadyList(walPath);
 
         // Remove ok files that are not in the ready list
-        StringList *okRemoveList = strLstMergeAnti(okList, readyList);
+        const StringList *const okRemoveList = strLstMergeAnti(okList, readyList);
 
         for (unsigned int okRemoveIdx = 0; okRemoveIdx < strLstSize(okRemoveList); okRemoveIdx++)
         {
@@ -205,7 +201,7 @@ typedef struct ArchivePushCheckResult
 } ArchivePushCheckResult;
 
 static ArchivePushCheckResult
-archivePushCheck(bool pgPathSet)
+archivePushCheck(const bool pgPathSet)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BOOL, pgPathSet);
@@ -235,16 +231,16 @@ archivePushCheck(bool pgPathSet)
                 storageRepoIdx(repoIdx);
 
                 // Get cipher type
-                CipherType repoCipherType = cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx);
+                const CipherType repoCipherType = cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx);
 
                 // Attempt to load the archive info file
-                InfoArchive *info = infoArchiveLoadFile(
+                const InfoArchive *const info = infoArchiveLoadFile(
                     storageRepoIdx(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, repoCipherType,
                     cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
 
                 // Get archive id for the most recent version -- archive-push will only operate against the most recent version
-                String *archiveId = infoPgArchiveId(infoArchivePg(info), infoPgDataCurrentId(infoArchivePg(info)));
-                InfoPgData archiveInfo = infoPgData(infoArchivePg(info), infoPgDataCurrentId(infoArchivePg(info)));
+                const String *const archiveId = infoPgArchiveId(infoArchivePg(info), infoPgDataCurrentId(infoArchivePg(info)));
+                const InfoPgData archiveInfo = infoPgData(infoArchivePg(info), infoPgDataCurrentId(infoArchivePg(info)));
 
                 // Ensure that stanza version and system identifier match pg_control when available or the other repos when
                 // pg_control is not available
@@ -316,7 +312,7 @@ cmdArchivePush(void)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Make sure there is a parameter to retrieve the WAL segment from
-        const StringList *commandParam = cfgCommandParam();
+        const StringList *const commandParam = cfgCommandParam();
 
         if (strLstSize(commandParam) != 1)
             THROW(ParamRequiredError, "WAL segment to push required");
@@ -325,8 +321,8 @@ cmdArchivePush(void)
         lockStopTest();
 
         // Get the segment name
-        String *walFile = walPath(strLstGet(commandParam, 0), cfgOptionStrNull(cfgOptPgPath), STR(cfgCommandName()));
-        String *archiveFile = strBase(walFile);
+        const String *const walFile = walPath(strLstGet(commandParam, 0), cfgOptionStrNull(cfgOptPgPath), STR(cfgCommandName()));
+        const String *const archiveFile = strBase(walFile);
 
         if (cfgOptionBool(cfgOptArchiveAsync))
         {
@@ -343,7 +339,7 @@ cmdArchivePush(void)
             }
 
             // Loop and wait for the WAL segment to be pushed
-            Wait *wait = waitNew(cfgOptionUInt64(cfgOptArchiveTimeout));
+            Wait *const wait = waitNew(cfgOptionUInt64(cfgOptArchiveTimeout));
 
             do
             {
@@ -357,13 +353,13 @@ cmdArchivePush(void)
                 if (!pushed && !forked && lockAcquireP(.returnOnNoLock = true))
                 {
                     // The async process should not output on the console at all
-                    KeyValue *optionReplace = kvNew();
+                    KeyValue *const optionReplace = kvNew();
 
                     kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_CONSOLE), VARSTRDEF("off"));
                     kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_STDERR), VARSTRDEF("off"));
 
                     // Generate command options
-                    StringList *commandExec = cfgExecParam(cfgCmdArchivePush, cfgCmdRoleAsync, optionReplace, true, false);
+                    StringList *const commandExec = cfgExecParam(cfgCmdArchivePush, cfgCmdRoleAsync, optionReplace, true, false);
                     strLstInsert(commandExec, 0, cfgExe());
                     strLstAdd(commandExec, strPath(walFile));
 
@@ -411,10 +407,10 @@ cmdArchivePush(void)
             else
             {
                 // Check archive info for each repo
-                ArchivePushCheckResult archiveInfo = archivePushCheck(cfgOptionTest(cfgOptPgPath));
+                const ArchivePushCheckResult archiveInfo = archivePushCheck(cfgOptionTest(cfgOptPgPath));
 
                 // Push the file to the archive
-                ArchivePushFileResult fileResult = archivePushFile(
+                const ArchivePushFileResult fileResult = archivePushFile(
                     walFile, cfgOptionBool(cfgOptArchiveHeaderCheck), cfgOptionBool(cfgOptArchiveModeCheck), archiveInfo.pgVersion,
                     archiveInfo.pgSystemId, archiveFile, compressTypeEnum(cfgOptionStrId(cfgOptCompressType)),
                     cfgOptionInt(cfgOptCompressLevel), archiveInfo.repoList, archiveInfo.errorList);
@@ -445,7 +441,7 @@ typedef struct ArchivePushAsyncData
 } ArchivePushAsyncData;
 
 static ProtocolParallelJob *
-archivePushAsyncCallback(void *data, unsigned int clientIdx)
+archivePushAsyncCallback(void *const data, const unsigned int clientIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
@@ -460,11 +456,11 @@ archivePushAsyncCallback(void *data, unsigned int clientIdx)
         (void)clientIdx;
 
         // Get a new job if there are any left
-        ArchivePushAsyncData *jobData = data;
+        ArchivePushAsyncData *const jobData = data;
 
         if (jobData->walFileIdx < strLstSize(jobData->walFileList))
         {
-            const String *walFile = strLstGet(jobData->walFileList, jobData->walFileIdx);
+            const String *const walFile = strLstGet(jobData->walFileList, jobData->walFileIdx);
             jobData->walFileIdx++;
 
             PackWrite *const param = protocolPackNew();
@@ -521,7 +517,7 @@ cmdArchivePushAsync(void)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Make sure there is a parameter with the wal path
-        const StringList *commandParam = cfgCommandParam();
+        const StringList *const commandParam = cfgCommandParam();
 
         if (strLstSize(commandParam) != 1)
             THROW(ParamRequiredError, "WAL path to push required");
@@ -555,8 +551,8 @@ cmdArchivePushAsync(void)
             {
                 for (unsigned int walFileIdx = 0; walFileIdx < strLstSize(jobData.walFileList); walFileIdx++)
                 {
-                    const String *walFile = strLstGet(jobData.walFileList, walFileIdx);
-                    const String *warning = archivePushDropWarning(walFile, cfgOptionUInt64(cfgOptArchivePushQueueMax));
+                    const String *const walFile = strLstGet(jobData.walFileList, walFileIdx);
+                    const String *const warning = archivePushDropWarning(walFile, cfgOptionUInt64(cfgOptArchivePushQueueMax));
 
                     archiveAsyncStatusOkWrite(archiveModePush, walFile, warning);
                     LOG_WARN(strZ(warning));
@@ -569,7 +565,7 @@ cmdArchivePushAsync(void)
                 jobData.archiveInfo = archivePushCheck(true);
 
                 // Create the parallel executor
-                ProtocolParallel *parallelExec = protocolParallelNew(
+                ProtocolParallel *const parallelExec = protocolParallelNew(
                     cfgOptionUInt64(cfgOptProtocolTimeout) / 2, archivePushAsyncCallback, &jobData);
 
                 for (unsigned int processIdx = 1; processIdx <= cfgOptionUInt(cfgOptProcessMax); processIdx++)
@@ -580,22 +576,22 @@ cmdArchivePushAsync(void)
                 {
                     do
                     {
-                        unsigned int completed = protocolParallelProcess(parallelExec);
+                        const unsigned int completed = protocolParallelProcess(parallelExec);
 
                         for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
                         {
                             protocolKeepAlive();
 
                             // Get the job and job key
-                            ProtocolParallelJob *job = protocolParallelResult(parallelExec);
-                            unsigned int processId = protocolParallelJobProcessId(job);
-                            const String *walFile = varStr(protocolParallelJobKey(job));
+                            ProtocolParallelJob *const job = protocolParallelResult(parallelExec);
+                            const unsigned int processId = protocolParallelJobProcessId(job);
+                            const String *const walFile = varStr(protocolParallelJobKey(job));
 
                             // The job was successful
                             if (protocolParallelJobErrorCode(job) == 0)
                             {
                                 // Output file warnings
-                                StringList *fileWarnList = pckReadStrLstP(protocolParallelJobResult(job));
+                                const StringList *const fileWarnList = pckReadStrLstP(protocolParallelJobResult(job));
 
                                 for (unsigned int warnIdx = 0; warnIdx < strLstSize(fileWarnList); warnIdx++)
                                     LOG_WARN_PID(processId, strZ(strLstGet(fileWarnList, warnIdx)));

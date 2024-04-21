@@ -74,7 +74,7 @@ cryptoHashFreeResource(THIS_VOID)
 Add message data to the hash from a Buffer
 ***********************************************************************************************************************************/
 static void
-cryptoHashProcess(THIS_VOID, const Buffer *message)
+cryptoHashProcess(THIS_VOID, const Buffer *const message)
 {
     THIS(CryptoHash);
 
@@ -103,7 +103,7 @@ cryptoHashProcess(THIS_VOID, const Buffer *message)
 Get binary representation of the hash
 ***********************************************************************************************************************************/
 static const Buffer *
-cryptoHash(CryptoHash *this)
+cryptoHash(CryptoHash *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(CRYPTO_HASH, this);
@@ -250,7 +250,7 @@ cryptoHashNewPack(const Pack *const paramList)
 
 /**********************************************************************************************************************************/
 FN_EXTERN Buffer *
-cryptoHashOne(const HashType type, const Buffer *message)
+cryptoHashOne(const HashType type, const Buffer *const message)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING_ID, type);
@@ -264,12 +264,12 @@ cryptoHashOne(const HashType type, const Buffer *message)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        IoFilter *hash = cryptoHashNew(type);
+        IoFilter *const hash = cryptoHashNew(type);
 
         if (!bufEmpty(message))
             ioFilterProcessIn(hash, message);
 
-        const Buffer *buffer = cryptoHash((CryptoHash *)ioFilterDriver(hash));
+        const Buffer *const buffer = cryptoHash((CryptoHash *)ioFilterDriver(hash));
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
@@ -303,11 +303,11 @@ cryptoHmacOne(const HashType type, const Buffer *const key, const Buffer *const 
     char typeZ[STRID_MAX + 1];
     strIdToZ(type, typeZ);
 
-    const EVP_MD *hashType = EVP_get_digestbyname(typeZ);
+    const EVP_MD *const hashType = EVP_get_digestbyname(typeZ);
     ASSERT(hashType != NULL);
 
     // Allocate a buffer to hold the hmac
-    Buffer *result = bufNew((size_t)EVP_MD_size(hashType));
+    Buffer *const result = bufNew((size_t)EVP_MD_size(hashType));
     bufUsedSet(result, bufSize(result));
 
     // Calculate the HMAC

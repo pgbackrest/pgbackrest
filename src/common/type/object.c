@@ -7,7 +7,7 @@ Object Helper Macros and Functions
 
 /**********************************************************************************************************************************/
 FN_EXTERN void *
-objMove(THIS_VOID, MemContext *parentNew)
+objMove(THIS_VOID, MemContext *const parentNew)
 {
     if (thisVoid != NULL)
         memContextMove(memContextFromAllocExtra(thisVoid), parentNew);

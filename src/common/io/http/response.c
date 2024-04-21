@@ -47,7 +47,7 @@ struct HttpResponse
 When response is done close/reuse the connection
 ***********************************************************************************************************************************/
 static void
-httpResponseDone(HttpResponse *this)
+httpResponseDone(HttpResponse *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(HTTP_RESPONSE, this);
@@ -92,7 +92,7 @@ httpResponseReadIgnoreUnexpectedEof(const HttpResponse *const this)
 }
 
 static size_t
-httpResponseRead(THIS_VOID, Buffer *buffer, bool block)
+httpResponseRead(THIS_VOID, Buffer *const buffer, const bool block)
 {
     THIS(HttpResponse);
 
@@ -207,7 +207,7 @@ httpResponseEof(THIS_VOID)
 
 /**********************************************************************************************************************************/
 FN_EXTERN HttpResponse *
-httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
+httpResponseNew(HttpSession *const session, const String *const verb, const bool contentCache)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(HTTP_SESSION, session);
@@ -256,7 +256,7 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
             // Read status code
             status = strSub(status, sizeof(HTTP_VERSION));
 
-            int spacePos = strChr(status, ' ');
+            const int spacePos = strChr(status, ' ');
 
             if (spacePos != 3)
                 THROW_FMT(FormatError, "response status '%s' must have a space after the status code", strZ(status));
@@ -281,13 +281,13 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
                     break;
 
                 // Split the header and store it
-                int colonPos = strChr(header, ':');
+                const int colonPos = strChr(header, ':');
 
                 if (colonPos < 0)
                     THROW_FMT(FormatError, "header '%s' missing colon", strZ(strTrim(header)));
 
-                String *headerKey = strLower(strTrim(strSubN(header, 0, (size_t)colonPos)));
-                String *headerValue = strTrim(strSub(header, (size_t)colonPos + 1));
+                const String *const headerKey = strLower(strTrim(strSubN(header, 0, (size_t)colonPos)));
+                String *const headerValue = strTrim(strSub(header, (size_t)colonPos + 1));
 
                 // Read transfer encoding (only chunked is supported)
                 if (strEq(headerKey, HTTP_HEADER_TRANSFER_ENCODING_STR))
@@ -366,7 +366,7 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
 
 /**********************************************************************************************************************************/
 FN_EXTERN const Buffer *
-httpResponseContent(HttpResponse *this)
+httpResponseContent(HttpResponse *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(HTTP_RESPONSE, this);

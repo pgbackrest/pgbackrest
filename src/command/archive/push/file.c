@@ -32,7 +32,7 @@ typedef enum
 
 // Helper to add errors to the list
 static void
-archivePushErrorAdd(StringList *errorList, unsigned int repoIdx)
+archivePushErrorAdd(StringList *const errorList, const unsigned int repoIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING_LIST, errorList);
@@ -45,7 +45,9 @@ archivePushErrorAdd(StringList *errorList, unsigned int repoIdx)
 }
 
 static bool
-archivePushFileIo(ArchivePushFileIoType type, IoWrite *write, const Buffer *buffer, unsigned int repoIdx, StringList *errorList)
+archivePushFileIo(
+    const ArchivePushFileIoType type, IoWrite *const write, const Buffer *const buffer, const unsigned int repoIdx,
+    StringList *const errorList)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING_ID, type);
@@ -125,12 +127,12 @@ archivePushFile(
         StringList *const errorList = strLstDup(priorErrorList);
 
         // Is this a WAL segment?
-        bool isSegment = walIsSegment(archiveFile);
+        const bool isSegment = walIsSegment(archiveFile);
 
         // If this is a segment compare archive version and systemId to the WAL header
         if (headerCheck && isSegment)
         {
-            PgWal walInfo = pgWalFromFile(walSource, storageLocal(), cfgOptionStrNull(cfgOptPgVersionForce));
+            const PgWal walInfo = pgWalFromFile(walSource, storageLocal(), cfgOptionStrNull(cfgOptPgVersionForce));
 
             if (walInfo.version != pgVersion || walInfo.systemId != pgSystemId)
             {
@@ -143,11 +145,11 @@ archivePushFile(
         }
 
         // Set archive destination initially to the archive file, this will be updated later for wal segments
-        String *archiveDestination = strCat(strNew(), archiveFile);
+        String *const archiveDestination = strCat(strNew(), archiveFile);
 
         // Assume that all repos need a copy of the archive file
         bool destinationCopyAny = true;
-        bool *destinationCopy = memNew(sizeof(bool) * lstSize(repoList));
+        bool *const destinationCopy = memNew(sizeof(bool) * lstSize(repoList));
 
         for (unsigned int repoListIdx = 0; repoListIdx < lstSize(repoList); repoListIdx++)
             destinationCopy[repoListIdx] = true;
@@ -159,7 +161,7 @@ archivePushFile(
             destinationCopyAny = false;
 
             // Generate a sha1 checksum for the wal segment
-            IoRead *read = storageReadIo(storageNewReadP(storageLocal(), walSource));
+            IoRead *const read = storageReadIo(storageNewReadP(storageLocal(), walSource));
             ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
             ioReadDrain(read);
 
@@ -172,7 +174,7 @@ archivePushFile(
                 const ArchivePushFileRepoData *const repoData = lstGet(repoList, repoListIdx);
 
                 // Check if the WAL segment already exists in the repo
-                const String *walSegmentFile = NULL;
+                const String *walSegmentFile;
 
                 TRY_BEGIN()
                 {
@@ -192,7 +194,8 @@ archivePushFile(
                 // If the WAL segment was found validate the checksum
                 if (walSegmentFile != NULL)
                 {
-                    String *walSegmentRepoChecksum = strSubN(walSegmentFile, strSize(archiveFile) + 1, HASH_TYPE_SHA1_SIZE_HEX);
+                    const String *const walSegmentRepoChecksum = strSubN(
+                        walSegmentFile, strSize(archiveFile) + 1, HASH_TYPE_SHA1_SIZE_HEX);
 
                     // If the checksums are the same then succeed but warn if archive-mode-check is enabled in case this is a
                     // symptom of some other issue
@@ -233,7 +236,7 @@ archivePushFile(
         if (destinationCopyAny)
         {
             // Source file is read once and copied to all repos
-            StorageRead *source = storageNewReadP(storageLocal(), walSource);
+            StorageRead *const source = storageNewReadP(storageLocal(), walSource);
 
             // Is the file compressible during the copy?
             bool compressible = true;
@@ -247,7 +250,7 @@ archivePushFile(
             }
 
             // Initialize per-repo destination files
-            StorageWrite **destination = memNew(sizeof(StorageWrite *) * lstSize(repoList));
+            StorageWrite **const destination = memNew(sizeof(StorageWrite *) * lstSize(repoList));
 
             for (unsigned int repoListIdx = 0; repoListIdx < lstSize(repoList); repoListIdx++)
             {
@@ -288,7 +291,7 @@ archivePushFile(
             }
 
             // Copy data from source to destination
-            Buffer *read = bufNew(ioBufferSize());
+            Buffer *const read = bufNew(ioBufferSize());
 
             do
             {

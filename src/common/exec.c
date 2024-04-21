@@ -89,7 +89,7 @@ execFreeResource(THIS_VOID)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             int processResult = 0;
-            Wait *wait = waitNew(this->timeout);
+            Wait *const wait = waitNew(this->timeout);
 
             do
             {
@@ -111,7 +111,7 @@ execFreeResource(THIS_VOID)
 
 /**********************************************************************************************************************************/
 FN_EXTERN Exec *
-execNew(const String *command, const StringList *param, const String *name, TimeMSec timeout)
+execNew(const String *const command, const StringList *const param, const String *const name, const TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, command);
@@ -179,7 +179,7 @@ execCheckSignalError(Exec *const this, const int status)
 }
 
 static void
-execCheck(Exec *this)
+execCheck(Exec *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(EXEC, this);
@@ -217,7 +217,7 @@ execCheck(Exec *this)
 Read from the process
 ***********************************************************************************************************************************/
 static size_t
-execRead(THIS_VOID, Buffer *buffer, bool block)
+execRead(THIS_VOID, Buffer *const buffer, const bool block)
 {
     THIS(Exec);
 
@@ -230,7 +230,7 @@ execRead(THIS_VOID, Buffer *buffer, bool block)
     ASSERT(this != NULL);
     ASSERT(buffer != NULL);
 
-    size_t result = 0;
+    size_t result;
 
     TRY_BEGIN()
     {
@@ -250,7 +250,7 @@ execRead(THIS_VOID, Buffer *buffer, bool block)
 Write to the process
 ***********************************************************************************************************************************/
 static void
-execWrite(THIS_VOID, const Buffer *buffer)
+execWrite(THIS_VOID, const Buffer *const buffer)
 {
     THIS(Exec);
 
@@ -317,7 +317,7 @@ execFdRead(const THIS_VOID)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-execOpen(Exec *this)
+execOpen(Exec *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(EXEC, this);
