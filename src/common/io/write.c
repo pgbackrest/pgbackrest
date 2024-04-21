@@ -59,7 +59,7 @@ ioWriteNew(void *const driver, const IoWriteInterface interface)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-ioWriteOpen(IoWrite *this)
+ioWriteOpen(IoWrite *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_WRITE, this);
@@ -88,7 +88,7 @@ ioWriteOpen(IoWrite *this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-ioWrite(IoWrite *this, const Buffer *buffer)
+ioWrite(IoWrite *const this, const Buffer *const buffer)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_WRITE, this);
@@ -120,7 +120,7 @@ ioWrite(IoWrite *this, const Buffer *buffer)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-ioWriteLine(IoWrite *this, const Buffer *buffer)
+ioWriteLine(IoWrite *const this, const Buffer *const buffer)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_WRITE, this);
@@ -138,7 +138,7 @@ ioWriteLine(IoWrite *this, const Buffer *buffer)
 
 /**********************************************************************************************************************************/
 FN_EXTERN bool
-ioWriteReady(IoWrite *this, IoWriteReadyParam param)
+ioWriteReady(IoWrite *const this, const IoWriteReadyParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_WRITE, this);
@@ -157,7 +157,7 @@ ioWriteReady(IoWrite *this, IoWriteReadyParam param)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-ioWriteStr(IoWrite *this, const String *string)
+ioWriteStr(IoWrite *const this, const String *const string)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_WRITE, this);
@@ -174,7 +174,7 @@ ioWriteStr(IoWrite *this, const String *string)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-ioWriteStrLine(IoWrite *this, const String *string)
+ioWriteStrLine(IoWrite *const this, const String *const string)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_WRITE, this);
@@ -212,7 +212,7 @@ ioWriteVarIntU64(IoWrite *const this, const uint64_t value)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-ioWriteFlush(IoWrite *this)
+ioWriteFlush(IoWrite *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_WRITE, this);
@@ -233,7 +233,7 @@ ioWriteFlush(IoWrite *this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-ioWriteClose(IoWrite *this)
+ioWriteClose(IoWrite *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_WRITE, this);
@@ -272,7 +272,7 @@ ioWriteClose(IoWrite *this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN int
-ioWriteFd(const IoWrite *this)
+ioWriteFd(const IoWrite *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_WRITE, this);

@@ -324,7 +324,7 @@ iniSectionKeyList(const Ini *const this, const String *const section)
     ASSERT(this->store != NULL);
     ASSERT(section != NULL);
 
-    StringList *result = NULL;
+    StringList *result;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
