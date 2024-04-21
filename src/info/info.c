@@ -94,7 +94,7 @@ BUFFER_STRDEF_STATIC(INFO_CHECKSUM_END_BUF, "}}");
 
 /**********************************************************************************************************************************/
 FN_EXTERN Info *
-infoNew(const String *cipherPass)
+infoNew(const String *const cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_TEST_PARAM(STRING, cipherPass);                 // Use FUNCTION_TEST so cipher is not logged
@@ -332,7 +332,7 @@ infoSaveValue(InfoSave *const infoSaveData, const char *const section, const cha
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-infoSave(Info *this, IoWrite *write, InfoSaveCallback *callbackFunction, void *callbackData)
+infoSave(Info *const this, IoWrite *const write, InfoSaveCallback *const callbackFunction, void *const callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO, this);
@@ -395,7 +395,7 @@ infoSave(Info *this, IoWrite *write, InfoSaveCallback *callbackFunction, void *c
 Getters/Setters
 ***********************************************************************************************************************************/
 FN_EXTERN void
-infoCipherPassSet(Info *this, const String *cipherPass)
+infoCipherPassSet(Info *const this, const String *const cipherPass)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INFO, this);
@@ -417,7 +417,7 @@ infoCipherPassSet(Info *this, const String *cipherPass)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-infoLoad(const String *error, InfoLoadCallback *callbackFunction, void *callbackData)
+infoLoad(const String *const error, InfoLoadCallback *const callbackFunction, void *const callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, error);
