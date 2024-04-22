@@ -257,31 +257,6 @@
         <variable key="pg-cluster-check-upgrade" if="{[os-type-is-debian]}">pg_lsclusters</variable>
         <variable key="pg-cluster-check-upgrade" if="{[os-type-is-rhel]}">systemctl status postgresql-{[pg-version-upgrade]}.service</variable>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         <!-- Common commands -->
         <variable key="ssh-key-install">
             mkdir -p -m 700 /root/.ssh &amp;&amp; \
