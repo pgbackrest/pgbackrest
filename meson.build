@@ -114,7 +114,7 @@ endif
 # reproducible builds and minimizes the file path in debug messages, just like an in-tree make build. For test source, prefix with
 # test/ in case there are any module name collisions.
 ####################################################################################################################################
-python3 = import('python').find_installation()
+python3 = import('python').find_installation('python3')
 
 file_prefix = run_command(
     [
