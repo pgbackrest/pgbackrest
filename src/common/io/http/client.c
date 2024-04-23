@@ -32,7 +32,7 @@ struct HttpClient
 
 /**********************************************************************************************************************************/
 FN_EXTERN HttpClient *
-httpClientNew(IoClient *ioClient, TimeMSec timeout)
+httpClientNew(IoClient *const ioClient, const TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_CLIENT, ioClient);
@@ -62,7 +62,7 @@ httpClientNew(IoClient *ioClient, TimeMSec timeout)
 
 /**********************************************************************************************************************************/
 FN_EXTERN HttpSession *
-httpClientOpen(HttpClient *this)
+httpClientOpen(HttpClient *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(HTTP_CLIENT, this);
@@ -94,7 +94,7 @@ httpClientOpen(HttpClient *this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-httpClientReuse(HttpClient *this, HttpSession *session)
+httpClientReuse(HttpClient *const this, HttpSession *const session)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(HTTP_CLIENT, this);

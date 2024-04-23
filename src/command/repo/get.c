@@ -22,19 +22,17 @@ Repository Get Command
 Write source file to destination IO
 ***********************************************************************************************************************************/
 static int
-storageGetProcess(IoWrite *destination)
+storageGetProcess(IoWrite *const destination)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_READ, destination);
     FUNCTION_LOG_END();
 
     // Get source file
-    const String *file = NULL;
-
     if (strLstSize(cfgCommandParam()) != 1)
         THROW(ParamRequiredError, "source file required");
 
-    file = strLstGet(cfgCommandParam(), 0);
+    const String *file = strLstGet(cfgCommandParam(), 0);
 
     // Assume the file is missing
     int result = 1;
@@ -45,12 +43,13 @@ storageGetProcess(IoWrite *destination)
         file = repoPathIsValid(file);
 
         // Create new file read
-        IoRead *source = storageReadIo(storageNewReadP(storageRepo(), file, .ignoreMissing = cfgOptionBool(cfgOptIgnoreMissing)));
+        IoRead *const source = storageReadIo(
+            storageNewReadP(storageRepo(), file, .ignoreMissing = cfgOptionBool(cfgOptIgnoreMissing)));
 
         // Add decryption if needed
         if (!cfgOptionBool(cfgOptRaw))
         {
-            CipherType repoCipherType = cfgOptionStrId(cfgOptRepoCipherType);
+            const CipherType repoCipherType = cfgOptionStrId(cfgOptRepoCipherType);
 
             if (repoCipherType != cipherTypeNone)
             {
@@ -72,12 +71,12 @@ storageGetProcess(IoWrite *destination)
                 // -----------------------------------------------------------------------------------------------------------------
                 if (cipherPass == NULL)
                 {
-                    StringList *filePathSplitLst = strLstNewSplit(file, FSLASH_STR);
+                    const StringList *const filePathSplitLst = strLstNewSplit(file, FSLASH_STR);
 
                     // At a minimum the path must contain archive/backup, a stanza, and a file
                     if (strLstSize(filePathSplitLst) > 2)
                     {
-                        const String *stanza = strLstGet(filePathSplitLst, 1);
+                        const String *const stanza = strLstGet(filePathSplitLst, 1);
 
                         // If stanza option is specified then it must match the given file path
                         if (cfgOptionStrNull(cfgOptStanza) != NULL && !strEq(stanza, cfgOptionStr(cfgOptStanza)))
@@ -95,7 +94,7 @@ storageGetProcess(IoWrite *destination)
                             // Find the archive passphrase
                             if (!strEndsWithZ(file, INFO_ARCHIVE_FILE) && !strEndsWithZ(file, INFO_ARCHIVE_FILE INFO_COPY_EXT))
                             {
-                                InfoArchive *info = infoArchiveLoadFile(
+                                const InfoArchive *const info = infoArchiveLoadFile(
                                     storageRepo(), strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(stanza), INFO_ARCHIVE_FILE),
                                     repoCipherType, cipherPass);
                                 cipherPass = infoArchiveCipherPass(info);
@@ -110,7 +109,7 @@ storageGetProcess(IoWrite *destination)
                             if (!strEndsWithZ(file, INFO_BACKUP_FILE) && !strEndsWithZ(file, INFO_BACKUP_FILE INFO_COPY_EXT))
                             {
                                 // Find the backup passphrase
-                                InfoBackup *info = infoBackupLoadFile(
+                                const InfoBackup *const info = infoBackupLoadFile(
                                     storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strZ(stanza), INFO_BACKUP_FILE),
                                     repoCipherType, cipherPass);
                                 cipherPass = infoBackupCipherPass(info);
@@ -120,7 +119,7 @@ storageGetProcess(IoWrite *destination)
                                     !strEndsWithZ(file, BACKUP_MANIFEST_FILE) &&
                                     !strEndsWithZ(file, BACKUP_MANIFEST_FILE INFO_COPY_EXT))
                                 {
-                                    const Manifest *manifest = manifestLoadFile(
+                                    const Manifest *const manifest = manifestLoadFile(
                                         storageRepo(),
                                         strNewFmt(
                                             STORAGE_PATH_BACKUP "/%s/%s/%s", strZ(stanza), strZ(strLstGet(filePathSplitLst, 2)),

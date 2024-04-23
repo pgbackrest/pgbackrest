@@ -139,12 +139,14 @@ my $oyVm =
             PG_VERSION_94,
             PG_VERSION_95,
             PG_VERSION_96,
+            PG_VERSION_10,
         ],
 
         &VM_DB_TEST =>
         [
             PG_VERSION_94,
             PG_VERSION_96,
+            PG_VERSION_10,
         ],
     },
 
@@ -170,10 +172,10 @@ my $oyVm =
 
         &VM_DB_TEST =>
         [
-            PG_VERSION_11,
             PG_VERSION_12,
             PG_VERSION_13,
             PG_VERSION_14,
+            PG_VERSION_15,
         ],
     },
 
@@ -181,7 +183,7 @@ my $oyVm =
     &VM_F38 =>
     {
         &VM_OS_BASE => VM_OS_BASE_RHEL,
-        &VM_IMAGE => 'fedora:36',
+        &VM_IMAGE => 'fedora:38',
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
         &VMDEF_COVERAGE_C => true,
@@ -258,14 +260,15 @@ my $oyVm =
             PG_VERSION_14,
             PG_VERSION_15,
             PG_VERSION_16,
+            PG_VERSION_17,
         ],
 
         &VM_DB_TEST =>
         [
             PG_VERSION_95,
-            PG_VERSION_10,
-            PG_VERSION_15,
+            PG_VERSION_11,
             PG_VERSION_16,
+            PG_VERSION_17,
         ],
     },
 };

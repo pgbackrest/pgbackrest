@@ -10,15 +10,14 @@ Common Handler for Control Commands
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-lockStopFileName(const String *stanza)
+lockStopFileName(const String *const stanza)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, stanza);
     FUNCTION_TEST_END();
 
-    String *result = strNewFmt("%s/%s" STOP_FILE_EXT, strZ(cfgOptionStr(cfgOptLockPath)), stanza != NULL ? strZ(stanza) : "all");
-
-    FUNCTION_TEST_RETURN(STRING, result);
+    FUNCTION_TEST_RETURN(
+        STRING, strNewFmt("%s/%s" STOP_FILE_EXT, strZ(cfgOptionStr(cfgOptLockPath)), stanza != NULL ? strZ(stanza) : "all"));
 }
 
 /**********************************************************************************************************************************/

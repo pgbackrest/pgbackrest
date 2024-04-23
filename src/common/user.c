@@ -79,7 +79,7 @@ groupId(void)
 
 /**********************************************************************************************************************************/
 FN_EXTERN gid_t
-groupIdFromName(const String *groupName)
+groupIdFromName(const String *const groupName)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, groupName);
@@ -87,7 +87,7 @@ groupIdFromName(const String *groupName)
 
     if (groupName != NULL)
     {
-        struct group *groupData = getgrnam(strZ(groupName));
+        const struct group *const groupData = getgrnam(strZ(groupName));
 
         if (groupData != NULL)
             FUNCTION_TEST_RETURN_TYPE(gid_t, groupData->gr_gid);
@@ -106,13 +106,13 @@ groupName(void)
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-groupNameFromId(gid_t groupId)
+groupNameFromId(const gid_t groupId)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, groupId);
     FUNCTION_TEST_END();
 
-    struct group *groupData = getgrgid(groupId);
+    const struct group *const groupData = getgrgid(groupId);
 
     if (groupData != NULL)
         FUNCTION_TEST_RETURN(STRING, strNewZ(groupData->gr_name));
@@ -133,13 +133,13 @@ userHome(void)
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-userHomeFromId(uid_t userId)
+userHomeFromId(const uid_t userId)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, userId);
     FUNCTION_TEST_END();
 
-    struct passwd *userData = getpwuid(userId);
+    const struct passwd *const userData = getpwuid(userId);
 
     if (userData != NULL)
         FUNCTION_TEST_RETURN(STRING, strNewZ(userData->pw_dir));
@@ -159,7 +159,7 @@ userId(void)
 
 /**********************************************************************************************************************************/
 FN_EXTERN uid_t
-userIdFromName(const String *userName)
+userIdFromName(const String *const userName)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, userName);
@@ -167,7 +167,7 @@ userIdFromName(const String *userName)
 
     if (userName != NULL)
     {
-        struct passwd *userData = getpwnam(strZ(userName));
+        const struct passwd *const userData = getpwnam(strZ(userName));
 
         if (userData != NULL)
             FUNCTION_TEST_RETURN_TYPE(uid_t, userData->pw_uid);
@@ -186,13 +186,13 @@ userName(void)
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-userNameFromId(uid_t userId)
+userNameFromId(const uid_t userId)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, userId);
     FUNCTION_TEST_END();
 
-    struct passwd *userData = getpwuid(userId);
+    const struct passwd *const userData = getpwuid(userId);
 
     if (userData != NULL)
         FUNCTION_TEST_RETURN(STRING, strNewZ(userData->pw_name));

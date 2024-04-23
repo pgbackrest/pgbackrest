@@ -38,7 +38,7 @@ ioSizeToLog(const IoSize *const this, StringStatic *const debugLog)
 Count bytes in the input
 ***********************************************************************************************************************************/
 static void
-ioSizeProcess(THIS_VOID, const Buffer *input)
+ioSizeProcess(THIS_VOID, const Buffer *const input)
 {
     THIS(IoSize);
 

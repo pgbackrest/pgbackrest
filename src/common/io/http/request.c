@@ -58,7 +58,7 @@ struct HttpRequest
 Process the request
 ***********************************************************************************************************************************/
 static HttpResponse *
-httpRequestProcess(HttpRequest *this, bool waitForResponse, bool contentCache)
+httpRequestProcess(HttpRequest *const this, const bool waitForResponse, const bool contentCache)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(HTTP_REQUEST, this);
@@ -75,7 +75,7 @@ httpRequestProcess(HttpRequest *this, bool waitForResponse, bool contentCache)
     {
         bool retry;
         ErrorRetry *const errRetry = errRetryNew();
-        Wait *wait = waitNew(httpClientTimeout(this->client));
+        Wait *const wait = waitNew(httpClientTimeout(this->client));
 
         do
         {
@@ -100,7 +100,7 @@ httpRequestProcess(HttpRequest *this, bool waitForResponse, bool contentCache)
                         session = httpClientOpen(this->client);
 
                         // Format the request and user agent
-                        String *requestStr =
+                        String *const requestStr =
                             strCatFmt(
                                 strNew(),
                                 "%s %s%s%s " HTTP_VERSION "\r\n" HTTP_HEADER_USER_AGENT ":" PROJECT_NAME "/" PROJECT_VERSION "\r\n",
@@ -108,11 +108,11 @@ httpRequestProcess(HttpRequest *this, bool waitForResponse, bool contentCache)
                                 httpRequestQuery(this) == NULL ? "" : strZ(httpQueryRenderP(httpRequestQuery(this))));
 
                         // Add headers
-                        const StringList *headerList = httpHeaderList(httpRequestHeader(this));
+                        const StringList *const headerList = httpHeaderList(httpRequestHeader(this));
 
                         for (unsigned int headerIdx = 0; headerIdx < strLstSize(headerList); headerIdx++)
                         {
-                            const String *headerKey = strLstGet(headerList, headerIdx);
+                            const String *const headerKey = strLstGet(headerList, headerIdx);
 
                             strCatFmt(
                                 requestStr, "%s:%s\r\n", strZ(headerKey), strZ(httpHeaderGet(httpRequestHeader(this), headerKey)));
@@ -181,7 +181,7 @@ httpRequestProcess(HttpRequest *this, bool waitForResponse, bool contentCache)
 
 /**********************************************************************************************************************************/
 FN_EXTERN HttpRequest *
-httpRequestNew(HttpClient *client, const String *verb, const String *path, HttpRequestNewParam param)
+httpRequestNew(HttpClient *const client, const String *const verb, const String *const path, const HttpRequestNewParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(HTTP_CLIENT, client);
@@ -221,7 +221,7 @@ httpRequestNew(HttpClient *client, const String *verb, const String *path, HttpR
 
 /**********************************************************************************************************************************/
 FN_EXTERN HttpResponse *
-httpRequestResponse(HttpRequest *this, bool contentCache)
+httpRequestResponse(HttpRequest *const this, const bool contentCache)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(HTTP_REQUEST, this);
@@ -235,7 +235,7 @@ httpRequestResponse(HttpRequest *this, bool contentCache)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-httpRequestError(const HttpRequest *this, HttpResponse *response)
+httpRequestError(const HttpRequest *const this, HttpResponse *const response)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(HTTP_REQUEST, this);
@@ -246,7 +246,7 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
     ASSERT(response != NULL);
 
     // Error code
-    String *error = strCatFmt(strNew(), "HTTP request failed with %u", httpResponseCode(response));
+    String *const error = strCatFmt(strNew(), "HTTP request failed with %u", httpResponseCode(response));
 
     // Add reason when present
     if (strSize(httpResponseReason(response)) > 0)
@@ -261,7 +261,7 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
         strCatFmt(error, "?%s", strZ(httpQueryRenderP(httpRequestQuery(this), .redact = true)));
 
     // Output request headers
-    const StringList *requestHeaderList = httpHeaderList(httpRequestHeader(this));
+    const StringList *const requestHeaderList = httpHeaderList(httpRequestHeader(this));
 
     if (!strLstEmpty(requestHeaderList))
     {
@@ -269,7 +269,7 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
 
         for (unsigned int requestHeaderIdx = 0; requestHeaderIdx < strLstSize(requestHeaderList); requestHeaderIdx++)
         {
-            const String *key = strLstGet(requestHeaderList, requestHeaderIdx);
+            const String *const key = strLstGet(requestHeaderList, requestHeaderIdx);
 
             strCatFmt(
                 error, "\n%s: %s", strZ(key),
@@ -278,8 +278,8 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
     }
 
     // Output response headers
-    const HttpHeader *responseHeader = httpResponseHeader(response);
-    const StringList *responseHeaderList = httpHeaderList(responseHeader);
+    const HttpHeader *const responseHeader = httpResponseHeader(response);
+    const StringList *const responseHeaderList = httpHeaderList(responseHeader);
 
     if (!strLstEmpty(responseHeaderList))
     {
@@ -287,7 +287,7 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
 
         for (unsigned int responseHeaderIdx = 0; responseHeaderIdx < strLstSize(responseHeaderList); responseHeaderIdx++)
         {
-            const String *key = strLstGet(responseHeaderList, responseHeaderIdx);
+            const String *const key = strLstGet(responseHeaderList, responseHeaderIdx);
             strCatFmt(error, "\n%s: %s", strZ(key), strZ(httpHeaderGet(responseHeader, key)));
         }
     }

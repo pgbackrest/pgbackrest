@@ -127,7 +127,7 @@ logLevelEnum(const StringId logLevelId)
 }
 
 FN_EXTERN const char *
-logLevelStr(LogLevel logLevel)
+logLevelStr(const LogLevel logLevel)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, logLevel);
@@ -156,7 +156,7 @@ logAnySet(void)
 }
 
 FN_EXTERN bool
-logAny(LogLevel logLevel)
+logAny(const LogLevel logLevel)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, logLevel);
@@ -170,8 +170,8 @@ logAny(LogLevel logLevel)
 /**********************************************************************************************************************************/
 FN_EXTERN void
 logInit(
-    LogLevel logLevelStdOutParam, LogLevel logLevelStdErrParam, LogLevel logLevelFileParam, bool logTimestampParam,
-    unsigned int processId, unsigned int logProcessMax, bool dryRunParam)
+    const LogLevel logLevelStdOutParam, const LogLevel logLevelStdErrParam, const LogLevel logLevelFileParam,
+    const bool logTimestampParam, const unsigned int processId, const unsigned int logProcessMax, const bool dryRunParam)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, logLevelStdOutParam);
@@ -224,7 +224,7 @@ logFileClose(void)
 
 /**********************************************************************************************************************************/
 FN_EXTERN bool
-logFileSet(const char *logFile)
+logFileSet(const char *const logFile)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRINGZ, logFile);
@@ -281,7 +281,7 @@ logClose(void)
 Determine if the log level is in the specified range
 ***********************************************************************************************************************************/
 static bool
-logRange(LogLevel logLevel, LogLevel logRangeMin, LogLevel logRangeMax)
+logRange(const LogLevel logLevel, const LogLevel logRangeMin, const LogLevel logRangeMax)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, logLevel);
@@ -301,7 +301,7 @@ logRange(LogLevel logLevel, LogLevel logRangeMin, LogLevel logRangeMax)
 Internal write function that handles errors
 ***********************************************************************************************************************************/
 static void
-logWrite(int fd, const char *message, size_t messageSize, const char *errorDetail)
+logWrite(const int fd, const char *const message, const size_t messageSize, const char *const errorDetail)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, fd);
@@ -325,7 +325,7 @@ logWrite(int fd, const char *message, size_t messageSize, const char *errorDetai
 Write out log message and indent subsequent lines
 ***********************************************************************************************************************************/
 static void
-logWriteIndent(int fd, const char *message, size_t indentSize, const char *errorDetail)
+logWriteIndent(const int fd, const char *message, const size_t indentSize, const char *const errorDetail)
 {
     // Indent buffer -- used to write out indent space without having to loop
     static const char indentBuffer[] = "                                                                                          ";
@@ -373,7 +373,9 @@ typedef struct LogPreResult
 } LogPreResult;
 
 static LogPreResult
-logPre(LogLevel logLevel, unsigned int processId, const char *fileName, const char *functionName, int code)
+logPre(
+    const LogLevel logLevel, const unsigned int processId, const char *const fileName, const char *const functionName,
+    const int code)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, logLevel);
@@ -397,8 +399,8 @@ logPre(LogLevel logLevel, unsigned int processId, const char *fileName, const ch
     if (logTimestamp)
     {
         struct tm timePart;
-        TimeMSec logTimeMSec = timeMSec();
-        time_t logTimeSec = (time_t)(logTimeMSec / MSEC_PER_SEC);
+        const TimeMSec logTimeMSec = timeMSec();
+        const time_t logTimeSec = (time_t)(logTimeMSec / MSEC_PER_SEC);
 
         result.bufferPos += strftime(
             logBuffer + result.bufferPos, sizeof(logBuffer) - result.bufferPos, "%Y-%m-%d %H:%M:%S",
@@ -447,8 +449,10 @@ logPre(LogLevel logLevel, unsigned int processId, const char *fileName, const ch
 /***********************************************************************************************************************************
 Finalize formatting and log after the message has been added to the buffer
 ***********************************************************************************************************************************/
+#define LOG_BANNER                                                  "-------------------PROCESS START-------------------\n"
+
 static void
-logPost(LogPreResult *logData, LogLevel logLevel, LogLevel logRangeMin, LogLevel logRangeMax)
+logPost(LogPreResult *const logData, const LogLevel logLevel, const LogLevel logRangeMin, const LogLevel logRangeMax)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(SIZE, logData->bufferPos);
@@ -493,9 +497,7 @@ logPost(LogPreResult *logData, LogLevel logLevel, LogLevel logRangeMin, LogLevel
                 logWrite(logFdFile, "\n", 1, "banner spacing to file");
 
             // Write process start banner
-            const char *banner = "-------------------PROCESS START-------------------\n";
-
-            logWrite(logFdFile, banner, strlen(banner), "banner to file");
+            logWrite(logFdFile, LOG_BANNER, sizeof(LOG_BANNER) - 1, "banner to file");
 
             // Mark banner as written
             logFileBanner = true;
@@ -510,8 +512,8 @@ logPost(LogPreResult *logData, LogLevel logLevel, LogLevel logRangeMin, LogLevel
 /**********************************************************************************************************************************/
 FN_EXTERN void
 logInternal(
-    LogLevel logLevel, LogLevel logRangeMin, LogLevel logRangeMax, unsigned int processId, const char *fileName,
-    const char *functionName, int code, const char *message)
+    const LogLevel logLevel, const LogLevel logRangeMin, const LogLevel logRangeMax, const unsigned int processId,
+    const char *const fileName, const char *const functionName, const int code, const char *const message)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, logLevel);
@@ -540,8 +542,8 @@ logInternal(
 
 FN_EXTERN void
 logInternalFmt(
-    LogLevel logLevel, LogLevel logRangeMin, LogLevel logRangeMax, unsigned int processId, const char *fileName,
-    const char *functionName, int code, const char *format, ...)
+    const LogLevel logLevel, const LogLevel logRangeMin, const LogLevel logRangeMax, const unsigned int processId,
+    const char *const fileName, const char *const functionName, const int code, const char *const format, ...)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, logLevel);

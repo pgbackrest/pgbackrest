@@ -30,9 +30,9 @@ cc = meson.get_compiler('c')
 # OS-specific settings
 ####################################################################################################################################
 if host_machine.system() == 'linux'
-    add_global_arguments('-D_POSIX_C_SOURCE=200809L', language : 'c')
+    add_global_arguments('-D_POSIX_C_SOURCE=200809L', language: 'c')
 elif host_machine.system() == 'darwin'
-    add_global_arguments('-D_DARWIN_C_SOURCE', language : 'c')
+    add_global_arguments('-D_DARWIN_C_SOURCE', language: 'c')
 endif
 
 ####################################################################################################################################
@@ -144,7 +144,7 @@ endif
 lib_bz2 = cc.find_library('bz2')
 
 # Find optional lz4 library
-lib_lz4 = dependency('liblz4', required: false)
+lib_lz4 = dependency('liblz4', required: get_option('liblz4'))
 
 if lib_lz4.found()
     configuration.set('HAVE_LIBLZ4', true, description: 'Is liblz4 present?')
@@ -168,14 +168,14 @@ lib_z = dependency('zlib')
 configuration.set('ZLIB_CONST', true, description: 'Require zlib const input buffer')
 
 # Find optional libssh2 library
-lib_ssh2 = dependency('libssh2', required: false)
+lib_ssh2 = dependency('libssh2', required: get_option('libssh2'))
 
 if lib_ssh2.found()
     configuration.set('HAVE_LIBSSH2', true, description: 'Is libssh2 present?')
 endif
 
 # Find optional zstd library
-lib_zstd = dependency('libzstd', version: '>=1.0', required: false)
+lib_zstd = dependency('libzstd', version: '>=1.0', required: get_option('libzstd'))
 
 if lib_zstd.found()
     configuration.set('HAVE_LIBZST', true, description: 'Is libzstd present?')

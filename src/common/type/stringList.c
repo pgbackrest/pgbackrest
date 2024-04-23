@@ -32,7 +32,7 @@ strLstInsertInternal(StringList *const this, const unsigned int listIdx, String 
 
 /**********************************************************************************************************************************/
 FN_EXTERN StringList *
-strLstNewSplitZ(const String *string, const char *delimiter)
+strLstNewSplitZ(const String *const string, const char *const delimiter)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, string);
@@ -43,7 +43,7 @@ strLstNewSplitZ(const String *string, const char *delimiter)
     ASSERT(delimiter != NULL);
 
     // Create the list
-    StringList *this = strLstNew();
+    StringList *const this = strLstNew();
 
     // Base points to the beginning of the string that is being searched
     const char *stringBase = strZ(string);
@@ -77,7 +77,7 @@ strLstNewSplitZ(const String *string, const char *delimiter)
 
 /**********************************************************************************************************************************/
 FN_EXTERN StringList *
-strLstNewVarLst(const VariantList *sourceList)
+strLstNewVarLst(const VariantList *const sourceList)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT_LIST, sourceList);
@@ -104,7 +104,7 @@ strLstNewVarLst(const VariantList *sourceList)
 
 /**********************************************************************************************************************************/
 FN_EXTERN StringList *
-strLstDup(const StringList *sourceList)
+strLstDup(const StringList *const sourceList)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING_LIST, sourceList);
@@ -131,7 +131,7 @@ strLstDup(const StringList *sourceList)
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-strLstAdd(StringList *this, const String *string)
+strLstAdd(StringList *const this, const String *const string)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING_LIST, this);
@@ -212,7 +212,7 @@ strLstAddFmt(StringList *const this, const char *const format, ...)
 }
 
 FN_EXTERN String *
-strLstAddIfMissing(StringList *this, const String *string)
+strLstAddIfMissing(StringList *const this, const String *const string)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING_LIST, this);
@@ -221,7 +221,7 @@ strLstAddIfMissing(StringList *this, const String *string)
 
     ASSERT(this != NULL);
 
-    String **result = lstFind((List *)this, &string);
+    String *const *const result = lstFind((List *)this, &string);
 
     if (result == NULL)
         FUNCTION_TEST_RETURN(STRING, strLstAdd(this, string));
@@ -230,7 +230,7 @@ strLstAddIfMissing(StringList *this, const String *string)
 }
 
 FN_EXTERN String *
-strLstAddZ(StringList *this, const char *string)
+strLstAddZ(StringList *const this, const char *const string)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING_LIST, this);
@@ -297,7 +297,7 @@ strLstFindIdx(const StringList *const this, const String *const string, const St
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-strLstInsert(StringList *this, unsigned int listIdx, const String *string)
+strLstInsert(StringList *const this, const unsigned int listIdx, const String *const string)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING_LIST, this);
@@ -320,7 +320,7 @@ strLstInsert(StringList *this, unsigned int listIdx, const String *string)
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-strLstJoinQuote(const StringList *this, const char *separator, const char *quote)
+strLstJoinQuote(const StringList *const this, const char *const separator, const char *const quote)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING_LIST, this);
@@ -332,7 +332,7 @@ strLstJoinQuote(const StringList *this, const char *separator, const char *quote
     ASSERT(separator != NULL);
     ASSERT(quote != NULL);
 
-    String *join = strNew();
+    String *const join = strNew();
 
     for (unsigned int listIdx = 0; listIdx < strLstSize(this); listIdx++)
     {
@@ -350,7 +350,7 @@ strLstJoinQuote(const StringList *this, const char *separator, const char *quote
 
 /**********************************************************************************************************************************/
 FN_EXTERN StringList *
-strLstMergeAnti(const StringList *this, const StringList *anti)
+strLstMergeAnti(const StringList *const this, const StringList *const anti)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING_LIST, this);
@@ -371,14 +371,14 @@ strLstMergeAnti(const StringList *this, const StringList *anti)
         for (unsigned int thisIdx = 0; thisIdx < strLstSize(this); thisIdx++)
         {
             bool add = true;
-            const String *listItem = strLstGet(this, thisIdx);
+            const String *const listItem = strLstGet(this, thisIdx);
             ASSERT(listItem != NULL);
 
             // If anything left in anti look for matches
             while (antiIdx < strLstSize(anti))
             {
                 ASSERT(strLstGet(anti, antiIdx) != NULL);
-                int compare = strCmp(listItem, strLstGet(anti, antiIdx));
+                const int compare = strCmp(listItem, strLstGet(anti, antiIdx));
 
                 // If the current item in this is less than the current item in anti then it will be added
                 if (compare < 0)
@@ -411,7 +411,7 @@ strLstMergeAnti(const StringList *this, const StringList *anti)
 
 /**********************************************************************************************************************************/
 FN_EXTERN const char **
-strLstPtr(const StringList *this)
+strLstPtr(const StringList *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING_LIST, this);
@@ -419,7 +419,7 @@ strLstPtr(const StringList *this)
 
     ASSERT(this != NULL);
 
-    const char **list = memNew((strLstSize(this) + 1) * sizeof(char *));
+    const char **const list = memNew((strLstSize(this) + 1) * sizeof(char *));
 
     for (unsigned int listIdx = 0; listIdx < strLstSize(this); listIdx++)
     {

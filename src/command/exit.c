@@ -19,7 +19,7 @@ Exit Routines
 Return signal names
 ***********************************************************************************************************************************/
 static const char *
-exitSignalName(SignalType signalType)
+exitSignalName(const SignalType signalType)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, signalType);
@@ -52,7 +52,7 @@ exitSignalName(SignalType signalType)
 Catch signals
 ***********************************************************************************************************************************/
 static void
-exitOnSignal(int signalType)
+exitOnSignal(const int signalType)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(INT, signalType);
@@ -105,7 +105,7 @@ exitErrorDetail(void)
 }
 
 FN_EXTERN int
-exitSafe(int result, bool error, SignalType signalType)
+exitSafe(int result, const bool error, const SignalType signalType)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INT, result);

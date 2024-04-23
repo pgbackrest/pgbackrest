@@ -27,7 +27,7 @@ cmdStop(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *stopFile = lockStopFileName(cfgOptionStrNull(cfgOptStanza));
+        const String *const stopFile = lockStopFileName(cfgOptionStrNull(cfgOptStanza));
 
         // If the stop file does not already exist, then create it
         if (!storageExistsP(storageLocal(), stopFile))
@@ -44,8 +44,8 @@ cmdStop(void)
             // If --force was specified then send term signals to running processes
             if (cfgOptionBool(cfgOptForce))
             {
-                const String *lockPath = cfgOptionStr(cfgOptLockPath);
-                StringList *lockPathFileList = strLstSort(
+                const String *const lockPath = cfgOptionStr(cfgOptLockPath);
+                const StringList *const lockPathFileList = strLstSort(
                     storageListP(storageLocal(), lockPath, .errorOnMissing = true), sortOrderAsc);
 
                 // Find each lock file and send term signals to the processes
@@ -64,7 +64,7 @@ cmdStop(void)
 
                     // Read the lock file
                     lockFile = strNewFmt("%s/%s", strZ(lockPath), strZ(lockFile));
-                    LockReadResult lockRead = lockReadFileP(lockFile, .remove = true);
+                    const LockReadResult lockRead = lockReadFileP(lockFile, .remove = true);
 
                     // If we cannot read the lock file for any reason then warn and continue to next file
                     if (lockRead.status != lockReadStatusValid)

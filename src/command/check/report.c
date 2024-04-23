@@ -37,7 +37,7 @@ checkReportConfigVal(JsonWrite *const json, const String *const optionName, cons
     {
         jsonWriteObjectBegin(json);
 
-        CfgParseOptionResult option = cfgParseOptionP(optionName);
+        const CfgParseOptionResult option = cfgParseOptionP(optionName);
 
         // Render value
         if (option.found)

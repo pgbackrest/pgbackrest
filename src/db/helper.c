@@ -14,7 +14,7 @@ Database Helper
 /**********************************************************************************************************************************/
 // Helper to get a connection to the specified pg cluster
 static Db *
-dbGetIdx(unsigned int pgIdx)
+dbGetIdx(const unsigned int pgIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(UINT, pgIdx);
@@ -22,7 +22,7 @@ dbGetIdx(unsigned int pgIdx)
 
     ASSERT(pgIdx < cfgOptionGroupIdxTotal(cfgOptGrpPg));
 
-    Db *result = NULL;
+    Db *result;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -48,7 +48,7 @@ dbGetIdx(unsigned int pgIdx)
 }
 
 FN_EXTERN DbGetResult
-dbGet(bool primaryOnly, bool primaryRequired, bool standbyRequired)
+dbGet(const bool primaryOnly, const bool primaryRequired, const bool standbyRequired)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BOOL, primaryOnly);

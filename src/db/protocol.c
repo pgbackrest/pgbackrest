@@ -50,7 +50,7 @@ dbOpenProtocol(PackRead *const param, ProtocolServer *const server)
         MEM_CONTEXT_BEGIN(lstMemContext(dbProtocolLocal.pgClientList))
         {
             // Only a single db is passed to the remote
-            PgClient *pgClient = pgClientNew(
+            PgClient *const pgClient = pgClientNew(
                 cfgOptionStrNull(cfgOptPgSocketPath), cfgOptionUInt(cfgOptPgPort), cfgOptionStr(cfgOptPgDatabase),
                 cfgOptionStrNull(cfgOptPgUser), cfgOptionUInt64(cfgOptDbTimeout));
             pgClientOpen(pgClient);
