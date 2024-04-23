@@ -43,6 +43,17 @@
             </release-item>
 
             <release-item>
+                <github-pull-request id="2338"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="michael.schout"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Dynamically find <proper>python</proper> in <proper>meson</proper> build.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2312"/>
 
                 <release-item-contributor-list>
